@@ -1,0 +1,31 @@
+# Closet Current — RECOGNITION-GROUND-TRUTH-GATE-60
+
+**RESEARCH ONLY / SCIENTIFIC NEEDS REWORK / Family Alpha Issue #255 HOLD.**
+Base: exact verified Priority #59 HEAD `7c752116545c7a6a58075b8b174833d39a39f5b7` ([no-deploy run #42050431080](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42050431080) SUCCESS: 640 inherited Node tests, 18 browser acceptance cases, 78 SHA-audited stress screenshots). Do not merge/deploy or modify production/existing staging.
+
+## Problem and independent fact check
+
+One historical validation photograph, `validation-0008`, is labeled `Accessories / Scarf` although the current closet taxonomy only supports Tops, Bottoms, Dresses, Outerwear, and Shoes. **It is deliberately retained as out-of-scope provisional evidence and a scientific blocker**, not silently removed or recoded to inflate accuracy.
+
+The historical FashionCLIP classification study [Work #34 PR #607](https://github.com/nickhaney916-lang/Closet-Current/pull/607) was genuinely executed on 59 SHA-pinned licensed JPEGs but its labels were **single-reviewer provisional**, and the frozen locked subset contained only **13 clothing photos and three non-garment controls**. The existing manifests contain **no independently adjudicated primary-color field**. There are no stored independent two-reviewer decisions or resolved color labels to justify scientific claims about camera color accuracy.
+
+The historical pinned baseline raw classification results: **9/13 correct broad category, 4/13 correct subtype, 2/3 non-clothing rejection**. The attempted prompt ensemble regressed to **8/13 category, 3/13 exact subtype, 2/3 negative rejection**. The model benchmark's category `confidence` is not a calibrated verified probability. These are previous recorded provisional counts, **not current inference**, and the 59-photo collection is not representative of family household camera photos. No current verified accuracy percentage for primary or secondary garment color exists. The historical model and the parallel #36 instance segmentation pilot PR #615 remain scientifically NEEDS REWORK and were not integrated.
+
+## Completed RECOG60 scope
+
+- Pure `ground-truth-gate.mjs` independently checks source ID/SHA/rights, frozen split exclusivity and duplicate photos; non-garments cannot be silently treated as garment examples.
+- A `verified:true` in a source manifest **is not an independently verified category, subtype or primary-color label**. Each sample must have **two distinct independently signed human visual reviews** tied to the **exact photograph SHA** with category/subtype/primary and optional secondary color. If they disagree on any field, a separate third human adjudicator must resolve it. Synthetic/demo reviews never count as real human data.
+- The gate has a minimum **100 independent genuine photo sources**, **30 locked garments**, **10 locked non-garment controls**, at least **5 locked examples per clothing category**, complete human adjudication and fully source-bound predictions. These minimums make a scientifically credible acceptance evaluation possible; they are not a substitute for an external data-quality audit.
+- Model metric denominators include **all locked garments** (abstentions count as failures for overall category/subtype/color correctness), separate accepted-subtype precision and coverage, non-garment rejection, and 95% Wilson intervals. The gate checks example benchmark goals: broad category ≥95%, subtype ≥90%, primary color ≥90%, accepted subtype precision ≥95% at ≥80% coverage, and negative-control rejection ≥95%. Numeric thresholds are research criteria, not a consumer promise. **A scientifically positive gate never authorizes a release on its own.**
+- The audit actually reads and SHA-256 verifies each of the **59 licensed JPEG fixture bytes**, checks JPEG decodability/dimensions with `sharp`, maps Commons/other provenance/licenses and frozen 32/11/16 splits, then outputs transparent machine-readable `acceptance-report.json` with scientific **NEEDS_REWORK** and all exact missing evidence.
+- Generates `reviewer-A-UNSIGNED-template.json` and `reviewer-B-UNSIGNED-template.json` with all 59 exact SHA/rights/partition metadata **and every human label deliberately null**; no invented classifications, colors, approval or reviewer sign-off.
+- Adversarial Node tests use completely **SYNTHETIC** 100-record fixtures to verify that a *hypothetical valid and fully independently adjudicated dataset* can pass, and that missing/duplicated labels, two copied reviewer IDs, unadjudicated color disagreements, cross-source prediction leakage, missing held-out rows or bad negative controls fail. Synthetic fixtures are **not scientific measurements**.
+- Dedicated strict exact-parent no-deploy CI builds and runs the complete inherited Node suite, true original photo SHA audit, release-HOLD policy and six actual owner-private browser capture→closet→Style→duplicate→V4 backup/restore→owner isolation regression scenarios. Screenshots in prior experiments are evidence of software workflow, not of recognition accuracy or physical-device performance.
+
+## Remaining actual scientific work
+
+**Required, not claimed done:** collect 100–200 license-verified real-world garment photographs representing home phone camera conditions and difficult garments; obtain two actual independent human annotations per photo for category, current-schema subtype, primary/secondary color, and ambiguity notes; adjudicate disagreements without peeking at predictions; lock the data before model selection/tuning; execute the pinned real local models across that untouched holdout; calculate instance detection separately from classification and from human-reviewed saved accuracy; run physical Android and iPhone tests. This priority **does not** add independent human annotators, create photographs, improve model weights or certify color.
+
+## Delivery
+
+Research-only strict file allowlist; draft PR, exact SHA, successful GitHub Actions run (if attained), source-hash report and blank review templates. Scientific gate is intended to remain **NEEDS_REWORK** on current data; engineering acceptance is the honest and reproducible detection of that gap, not a fabricated 95% accuracy figure. Family Alpha #255 HOLD. No merge/deploy.
