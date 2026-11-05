@@ -21,6 +21,21 @@ function jpegCrop(image,rect){
  c.width=sw;c.height=sh;c.getContext('2d').drawImage(image,sx,sy,sw,sh,0,0,sw,sh);
  return c.toDataURL('image/jpeg',.94);
 }
+// COLOR46: Reviewed JPEG crop pixels, 48x48 (as in Work31's paired research).
+// These are NOT a validated garment mask: visible background may dominate.
+// Never write a suggested color into a user's confirmed field automatically.
+async function reviewedPixelPalette46(piece){
+ try{
+  if(!window.PhotoColor?.maskedPalette||!piece?.image)return null;
+  const image=await ensureImage(piece.image);
+  if(image.naturalWidth<8||image.naturalHeight<8)return null;
+  const c=document.createElement('canvas');c.width=48;c.height=48;
+  const ctx=c.getContext('2d',{willReadFrequently:true});
+  if(!ctx)return null;
+  ctx.drawImage(image,0,0,48,48);
+  return window.PhotoColor.maskedPalette(ctx.getImageData(0,0,48,48).data,48,48);
+ }catch{return null;}
+}
 function normalizeRect(rect){
  const x=Math.max(0,Math.min(.974,Number(rect?.x)||0)),y=Math.max(0,Math.min(.974,Number(rect?.y)||0));
  return {x,y,width:Math.min(1-x,Math.max(.026,Number(rect?.width)||1-x)),height:Math.min(1-y,Math.max(.026,Number(rect?.height)||1-y))};
@@ -131,11 +146,21 @@ export function mountMultiGarmentCapture24({
   piece.recognitionStatus42='Checking the original and reviewed crop locally…';
   redraw();
   try{
-   const {recognizeReviewedCrop42}=await import('./recognition-review-42.mjs');
+   const {recognizeReviewedCrop42,boundedCropColor46}=await import('./recognition-review-42.mjs');
    if(!valid())return;
    const result=await recognizeReviewedCrop42({original:view.proof.image,crop:piece.image,
     signal:request.controller.signal,version:recognitionAssetVersion,schema,palette,categories:TYPES});
    if(!valid())return;
+   const pixels=await reviewedPixelPalette46(piece);
+   if(!valid())return;
+   const reviewedColor=boundedCropColor46(pixels,palette);
+   if(reviewedColor)result.colorReview46=reviewedColor;
+   // Category and subtype come only from the local FashionCLIP result.
+   // Pixel colors remain unverified and are never copied to human inputs.
+   if(!result.color&&reviewedColor){
+    result.color=reviewedColor.primary;
+    result.colorSource='reviewed-crop-pixel-estimate';
+   }
    if(!result.color&&typeof window.checkPhoto==='function'){
     const estimate=piece.maskApplied?piece.maskedColorEstimate:
      (await window.checkPhoto(piece.image).catch(()=>null))?.colorEstimate;
@@ -188,9 +213,16 @@ export function mountMultiGarmentCapture24({
       result.color?(result.color+(result.colorSource==='recognition'?'':' (pixel estimate)')):'Color uncertain'].join(' · ')+' · Confirm visually.':'Run local AI on this reviewed crop.'),'fine');
     review.dataset.recognition42=p.recognitionStatus42?.startsWith('Local recognition unavailable')?'error':result?'result':'status';
     review.setAttribute('role','status');
+    const colorEvidence=result?.colorReview46;
+    const preview=colorEvidence?el('p','Reviewed crop pixel color (unverified; background may affect it): '+
+     colorEvidence.primary+(colorEvidence.secondary?' / '+colorEvidence.secondary:'')+
+     ' · Check the original and confirm color yourself.','fine'):null;
+    if(preview)preview.dataset.colorReview46='unverified';
     const classify=button('Suggest category, type and color',()=>classifyReviewed42(p));
     classify.disabled=classification42?.piece===p;
-    card.append(review,classify);
+    card.append(review);
+    if(preview)card.append(preview);
+    card.append(classify);
    }
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
