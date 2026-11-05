@@ -11,7 +11,8 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
-const root=resolve('.'),dir=resolve('benchmark/independent-annotation-61/browser-evidence');
+const review63=process.env.REVIEW63==='1';
+const root=resolve('.'),dir=resolve(review63?'benchmark/reviewer-checkpoint-integrity-63/browser-evidence':'benchmark/independent-annotation-61/browser-evidence');
 await mkdir(dir,{recursive:true});
 const a=JSON.parse(await readFile('benchmark/independent-annotation-61/packet-A.json','utf8'));
 const b=JSON.parse(await readFile('benchmark/independent-annotation-61/packet-B.json','utf8'));
@@ -22,10 +23,11 @@ const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://127.0.0.1').pathname);
   if(pathname!=='/research/independent-annotation-61/review.html'&&
+     pathname!=='/research/reviewer-checkpoint-integrity-63/resume-guard.mjs'&&
      !/^\/benchmark\/fixtures\/[A-Za-z0-9._-]+\.jpg$/i.test(pathname))
    throw Error('forbidden local path');
   const bytes=await readFile(resolve(root,'.'+pathname));
-  res.writeHead(200,{'content-type':extname(pathname)==='.html'?'text/html':'image/jpeg',
+  res.writeHead(200,{'content-type':extname(pathname)==='.html'?'text/html':extname(pathname)==='.mjs'?'text/javascript':'image/jpeg',
    'cache-control':'no-store','x-content-type-options':'nosniff'});
   res.end(bytes);
  }catch{res.writeHead(404);res.end('Not found');}
@@ -33,7 +35,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const base='http://127.0.0.1:'+server.address().port;
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-const result={schema:'independent-annotation-61/browser-qa-v1',
+const result={schema:review63?'reviewer-checkpoint-integrity-63/browser-qa-v1':'independent-annotation-61/browser-qa-v1',reviewerCheckpoint63:review63,
  scientificHumanAnnotations:0,humanReviewPerformed:false,
  modelAccuracyEvidence:false,qaClickedControlsOnly:true,
  cases:[],screenshots:[],errors:[],unexpectedNetwork:[]};
@@ -104,6 +106,38 @@ try{
      await page.waitForFunction(()=>document.querySelector('#photo')?.naturalWidth>0);
      await page.getByRole('button',{name:'Record my independent review'}).click();
      assert.match(await page.locator('#progress').innerText(),/^2 \/ 59/);
+     if(review63){
+      const pending=page.waitForEvent('download');
+      await page.getByRole('button',{name:'Export my reviews as JSON'}).click();
+      const exported=await pending,checkpointBytes=await readFile(await exported.path());
+      const checkpoint=JSON.parse(checkpointBytes.toString('utf8'));
+      assert.equal(checkpoint.completed,2);assert.equal(checkpoint.incomplete,true);
+      await page.reload({waitUntil:'load'});
+      assert.equal(await page.locator('#review').isVisible(),false,'No browser autosave');
+      await page.locator('#packetFile').setInputFiles(inputA);
+      await page.locator('#review').waitFor({state:'visible'});
+      assert.match(await page.locator('#progress').innerText(),/^0 \/ 59/);
+      await page.locator('#resumeFile').setInputFiles({name:'saved-partial-review-A.json',mimeType:'application/json',buffer:checkpointBytes});
+      await page.waitForFunction(()=>document.querySelector('#checkpointStatus')?.textContent.includes('Restored 2 / 59'));
+      assert.match(await page.locator('#progress').innerText(),/^2 \/ 59/);
+      assert.equal(await page.locator('#reviewerId').inputValue(),'qa-synthetic-A');
+      assert.equal(await page.locator('#independence').isChecked(),false);
+      assert.match(await page.locator('#counter').innerText(),/Photograph 3 \/ 59/);
+      await page.getByRole('button',{name:'Previous photograph'}).click();
+      await page.getByRole('button',{name:'Previous photograph'}).click();
+      assert.equal(await page.locator('#primaryColor').inputValue(),'Blue');
+      assert.equal(await page.locator('#secondaryColor').inputValue(),'White');
+      assert.equal(await page.locator('#category').inputValue(),'Tops');
+      await page.waitForFunction(()=>document.querySelector('#photo')?.naturalWidth>0);
+      await screenshot(page,engine,width,'04-restored-partial-original-review');
+      const tampered={...checkpoint,rows:checkpoint.rows.map((r,i)=>i===0?{...r,sourceSHA256:'f'.repeat(64)}:r)};
+      await page.locator('#resumeFile').setInputFiles({name:'tampered-source-SHA.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(tampered))});
+      await page.waitForFunction(()=>document.querySelector('#checkpointStatus')?.textContent.includes('Checkpoint rejected'));
+      assert.match(await page.locator('#checkpointStatus').innerText(),/source-SHA-swapped/);
+      assert.match(await page.locator('#progress').innerText(),/^2 \/ 59/);
+      assert.equal(await page.locator('#primaryColor').inputValue(),'Blue','Bad checkpoint must not overwrite valid rows');
+      await screenshot(page,engine,width,'05-rejected-source-hash-tamper');
+     }
      await page.locator('#packetFile').setInputFiles(inputB);
      // The old role A JPEG may still have naturalWidth while the async
      // File.text() read for packet B has not completed. Wait on identity,
@@ -125,16 +159,16 @@ try{
      result.cases.push({engine,width,sourceImagesPreviewed:3,
       oneSimulatedRowExportedAndSourceSHAMatched:true,
       secondSyntheticUncertainMarkNotAdjudicated:true,
-      packetBNoPeerAnswers:true,noOriginalPhotosUploaded:true});
+      packetBNoPeerAnswers:true,checkpointResume63:review63,noOriginalPhotosUploaded:true});
     }finally{await ctx.close();}
    }
   }finally{await browser.close();}
  }
  assert.equal(result.cases.length,6);
- assert.equal(result.screenshots.length,18);
+ assert.equal(result.screenshots.length,review63?30:18);
  assert.deepEqual(result.unexpectedNetwork,[]);
  assert.deepEqual(result.errors,[]);
- console.log('BLIND61 ACTUAL OFFLINE SOURCE-JPEG HUMAN-REVIEW UI BROWSER EVIDENCE: '+
+ console.log((review63?'REVIEW63 RESUMED ORIGINAL PHOTO AND TAMPER REJECTION BROWSER PASS: ':'BLIND61 ACTUAL OFFLINE SOURCE-JPEG HUMAN-REVIEW UI BROWSER EVIDENCE: ')+
   JSON.stringify({cases:result.cases.length,screenshots:result.screenshots.length,
    humanReviewsPerformed:0,modelAccuracyMeasured:false,unexpectedNetwork:result.unexpectedNetwork.length}));
 }catch(error){
