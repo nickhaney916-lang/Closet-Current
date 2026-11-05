@@ -38,7 +38,7 @@ jobs:
           git diff --name-only 05107691cee5bbf7429b824aa0b1444fcb70ae5b HEAD > /tmp/review54-changes
           while IFS= read -r path; do
             case "$path" in
-              research/multi-garment-capture-01/recognition-review-42.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-alternatives-54.mjs|research/review-alternatives-54/*|scripts/audit-review-alternatives-54.mjs|scripts/test-review-alternatives-54-browser.mjs|scripts/audit-review-alternatives-54-browser.mjs|tests/review-alternatives-54.test.mjs|.github/workflows/review-alternatives-54-no-deploy.yml) ;;
+              research/multi-garment-capture-01/recognition-review-42.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-alternatives-54.mjs|research/review-alternatives-54/*|scripts/audit-review-alternatives-54.mjs|scripts/test-review-alternatives-54-browser.mjs|scripts/audit-review-alternatives-54-browser.mjs|scripts/audit-review54-native-52.mjs|tests/review-alternatives-54.test.mjs|.github/workflows/review-alternatives-54-no-deploy.yml) ;;
               *) echo "BLOCKED production, staging, automatic classifier, cloud or unrelated code: $path"; exit 1 ;;
             esac
           done </tmp/review54-changes
@@ -65,8 +65,8 @@ jobs:
         env:
           RECOGNITION42: '1'
         run: node scripts/test-multi-garment-capture-01-browser.mjs
-      - name: Verify genuine model asset paths and inherited 73 image screenshots
-        run: node scripts/audit-model-asset-reliability-52.mjs
+      - name: Verify 73 real model/private app screenshots and explicitly classify known WebKit teardown cancellations
+        run: node scripts/audit-review54-native-52.mjs
       - name: Native browser human-option clicks on source-pinned original with archived actual uncertain model outputs
         run: node scripts/test-review-alternatives-54-browser.mjs
       - name: Independently validate the 12 option review screenshots and all six human confirmation cases
@@ -79,6 +79,7 @@ jobs:
           path: |
             benchmark/review-alternatives-54/actual-genuine-photo-audit.json
             benchmark/review-alternatives-54/native-ui/**
+            benchmark/review-alternatives-54/native-model-audit.json
             benchmark/model-asset-reliability-52/probe.json
             benchmark/model-asset-reliability-52/acceptance.json
             benchmark/recognition-to-closet-42/acceptance.json
