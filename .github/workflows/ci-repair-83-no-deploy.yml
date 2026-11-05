@@ -1,0 +1,73 @@
+name: CI83 exact integration and historic research guard classification NO DEPLOY
+on:
+  push:
+    branches:
+      - research/full-integration-ci-repair-83-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-integration-suite-and-historical-gate-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify parent lock and research-only changes, no deploy
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=fb624d93eb0dc22f216f977eddefc8bc8b2adb8d
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/ci83-files
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/camera-scenarios.yml|.github/workflows/ci-repair-83-no-deploy.yml|research/full-integration-ci-repair-83/failure-matrix.json|research/full-integration-ci-repair-83/REPORT.md|scripts/audit-ci-repair-83.mjs|tests/ci-repair-83.test.mjs) ;;
+              *) echo "BLOCKED unrelated production, historical safeguard or other project change: $path"; exit 1 ;;
+            esac
+          done </tmp/ci83-files
+      - name: Install pinned browser and all Node regression test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 playwright@1.56.1 sharp@0.34.3
+      - name: Validate all 15 historical ancestor/scope gate failures without weakening them
+        run: node scripts/audit-ci-repair-83.mjs
+      - name: Build + all inherited and new CI83 Node regression tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: CAMERA84 native outfit-camera source+mixed-new private full browser acceptance
+        run: CAMERAMIXED84=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit 78 real camera source JPEG screenshot records
+        run: node scripts/audit-outfit-camera-mixed-save-84-browser.mjs
+      - name: MIXED80 native previously-saved-plus-new consent and owner-private original photo
+        run: MIXED80=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit 72 original-photo mixed-save screenshots
+        run: node scripts/audit-mixed-saved-new-clothes-80-browser.mjs
+      - name: CAMERA79 complete original-JPEG source owner-privacy mobile browser acceptance
+        run: node scripts/test-camera-to-closet-79-browser.mjs
+      - name: SNAPSHOT78 safe source review and owner-private outfit restore acceptance
+        run: SNAPSHOT78=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit 72 safe-source-review mobile screenshots
+        run: node scripts/audit-allowlisted-review-snapshot-78-browser.mjs
+      - name: Upload sanitized evidence and historical failure classification, no secrets or customer photos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CI83-no-deploy-exact-parent-historical-guard-matrix
+          path: |
+            research/full-integration-ci-repair-83/failure-matrix.json
+            benchmark/outfit-camera-mixed-save-84/acceptance.json
+            benchmark/mixed-saved-new-clothes-80/acceptance.json
+            benchmark/camera-to-closet-75/results.json
+            benchmark/camera-to-closet-75/screenshots-manifest.json
+            benchmark/allowlisted-review-snapshot-78/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
