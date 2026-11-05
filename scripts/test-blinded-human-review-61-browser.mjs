@@ -138,7 +138,10 @@ try{
       assert.equal(await page.locator('#primaryColor').inputValue(),'Blue','Bad checkpoint must not overwrite valid rows');
       await screenshot(page,engine,width,'05-rejected-source-hash-tamper');
      }
-     await page.locator('#packetFile').setInputFiles(inputB);
+     // Old synthetic QA deliberately has unexported review edits when switching.
+      // The strengthened human UI now requires an explicit discard decision.
+      if(!review63)page.once('dialog',dialog=>dialog.accept());
+      await page.locator('#packetFile').setInputFiles(inputB);
      // The old role A JPEG may still have naturalWidth while the async
      // File.text() read for packet B has not completed. Wait on identity,
      // source photo URL and local JPEG decode rather than stale image pixels.
