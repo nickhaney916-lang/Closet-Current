@@ -42,7 +42,7 @@ test('SAVE34 review UI locks cancellation, callbacks, image edits and snapshots 
  assert.match(ui,/cancel\.disabled=submitting/);
  assert.match(ui,/if\(submitting\)return;\s*if\(!sameOwner\(\)\)/);
  assert.match(ui,/if\(submitting\)throw Error\('A garment save is already in progress'\)/);
- assert.match(ui,/snapshotConfirmations34\(state\.pieces,schema\)/);
+ assert.match(ui,/snapshotConfirmations34\(state\.pieces,schema,proof\)/);
  assert.match(ui,/submitting=true;redraw\(\);/);
  assert.match(ui,/pieces:snapshots/);
  assert.match(ui,/view\.pieces=view\.pieces\.filter\(x=>!savedIds\.has\(x\.id\)\)/);
