@@ -28,11 +28,11 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Require prior verified PR587 SHA and source/metadata allowlist only
+      - name: Require exact Priority52 ancestry and SEG53 research-only path allowlist
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          git merge-base --is-ancestor 7cd43be5e2cdb7be7473ab029a595d6b81e725ee HEAD
-          git diff --name-only 7cd43be5e2cdb7be7473ab029a595d6b81e725ee HEAD | while IFS= read -r p; do
+          git merge-base --is-ancestor 05107691cee5bbf7429b824aa0b1444fcb70ae5b HEAD
+          git diff --name-only 05107691cee5bbf7429b824aa0b1444fcb70ae5b HEAD | while IFS= read -r p; do
             case "$p" in
               research/real-mask-evidence-31/*|research/auto-segmentation-real-model-53/*|scripts/verify-real-segformer-masks-31.mjs|tests/real-segformer-mask-31.test.mjs|tests/auto-segmentation-real-model-53.test.mjs|.gitignore|.github/workflows/real-segformer-mask-31-no-deploy.yml) ;;
               *) echo "BLOCKED unexpected actual photo/auth/model/storage/3D/production code edit: $p"; exit 1 ;;
