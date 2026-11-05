@@ -367,6 +367,14 @@ try{
    const card=page.locator('#multi24Grid .multi24-card').first();
    await card.getByRole('button',{name:'Suggest category, type and color'}).click();
    await card.locator('[data-recognition42="result"]').waitFor({timeout:250000});
+   // SUBTYPE47 genuine previously misclassified black shirt: AI subtype
+   // must be presented as a conflict, never trusted or preselected.
+   const subtypeRisk=card.locator('[data-subtype-review47="manual-required"]');
+   await subtypeRisk.waitFor({state:'visible'});
+   assert.match(await subtypeRisk.innerText(),/Sweatshirt.*T-shirt|T-shirt.*Sweatshirt/);
+   assert.match(await card.locator('[data-recognition42="result"]').innerText(),/Type uncertain/);
+   assert.equal(await card.getByLabel('Main category').inputValue(),'Uncategorized');
+   assert.equal(await card.getByLabel('Specific type').inputValue(),'Unknown');
    await fullShot(page,width,'second-source-ai-review',engine);
    await card.getByLabel('Main category').selectOption('Tops');
    await card.getByLabel('Specific type').selectOption('T-shirt');
@@ -380,6 +388,11 @@ try{
    assert.equal(row.itemType,'T-shirt');
    assert.equal(row.color,'Black');
    assert.ok(row.recognitionSuggestion42);
+   assert.equal(row.recognitionSuggestion42.itemType,null,'Dangerous AI subtype withheld');
+   assert.equal(row.recognitionSuggestion42.status,'category-only');
+   assert.equal(row.recognitionSuggestion42.subtypeReview47?.needsConfirmation,true);
+   assert.equal(row.recognitionSuggestion42.subtypeReview47?.candidate,'Sweatshirt');
+   assert.equal(row.recognitionSuggestion42.subtypeReview47?.alternative,'T-shirt');
    assert.equal(row.recognitionSuggestion42.colorReview46?.needsConfirmation,true);
    assert.equal(row.recognitionSuggestion42.colorReview46?.source,'reviewed-crop-pixels');
    shirtEvidence={sha256:fixture.sha256,source:'archived fixture commons-0003',
