@@ -10,6 +10,7 @@ import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mj
 import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
+import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -375,7 +376,7 @@ export function mountMultiGarmentCapture24({
   if(!owner){reset('Sign in before extracting garments.');return;}
   // SOURCE70: do not revoke an already human-reviewed photo for an empty or
   // oversized selection, even when the user previously approved a switch.
-  if(!file||file.size>10*1024*1024||file.size<128){
+  if(!validReplacementFile70(file)){
    status.textContent='Selected photo is missing or outside the 128-byte to 10 MB capture limit. Your existing original photo and manually reviewed garments remain unchanged.';
    return;
   }
@@ -383,8 +384,11 @@ export function mountMultiGarmentCapture24({
   // from a previous file cannot replace a newer selection or resurrect a
   // private photo after owner logout / security-mandated revoke().
   const selection=++selectionEpoch70,priorEpoch=renderVersion;
-  const pending=()=>selection===selectionEpoch70&&renderVersion===priorEpoch&&
-   getOwner()===owner&&getDb()?.name==='closet-current-user-'+owner&&!submitting;
+  const pending=()=>sourcePreflightStillCurrent70({
+    selection,currentSelection:selectionEpoch70,
+    reviewEpoch:priorEpoch,currentReviewEpoch:renderVersion,
+    owner,currentOwner:getOwner(),dbName:getDb()?.name,submitting
+   });
   status.textContent=state?'Verifying replacement JPEG before discarding your current review…':
    'Verifying full-resolution original JPEG…';
   try{
