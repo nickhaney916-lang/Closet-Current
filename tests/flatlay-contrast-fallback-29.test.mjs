@@ -81,7 +81,7 @@ test('manual source review UI keeps original photos, requires reviewed crop and 
  assert.match(code,/confirmed:false/);
  assert.match(code,/piece\.image=photo\.image/);
  assert.match(code,/atomicSaveGarments24/);
- assert.match(code,/x\.manual&&!x\.cropReviewed/);
+ assert.match(code,/x\.cropReviewed!==true/);
  assert.doesNotMatch(code,/flatlay29:true,manual:false/);
  const helper=readFileSync('research/multi-garment-capture-01/flatlay-contrast-29.mjs','utf8');
  for(const s of ['fetch(','.postMessage(','indexedDB.open','window.localStorage','PhotoColor','category=','threeDReady:true'])
