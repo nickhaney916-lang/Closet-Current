@@ -8,7 +8,7 @@ import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
-import {applyReviewAlternative54} from './review-alternatives-54.mjs';
+import {applyReviewAlternative54,renderReviewAlternatives54} from './review-alternatives-54.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -244,24 +244,12 @@ export function mountMultiGarmentCapture24({
     // REVIEW54: meaningful conflicting model evidence must remain visible
     // during uncertain recognition. Every option requires an explicit user
     // click followed by the normal individual photo/color confirmation.
-    const alternatives=result?.alternatives54;
-    if(Array.isArray(alternatives)&&alternatives.length){
-     const choices=el('div',null,'multi24-actions');
-     choices.dataset.review54='unverified-options';
-     choices.append(el('p','Other AI possibilities — not verified. Compare against the photographed crop, then confirm category, type and color yourself.','fine'));
-     for(const alternative of alternatives.slice(0,3)){
-      const label='Review option: '+alternative.category+
-       (alternative.itemType?' · '+alternative.itemType:' · type uncertain');
-      const choose=button(label,()=>{
-       if(submitting||!sameOwner()||!state?.pieces.includes(p)||
-          classification42?.piece===p)return;
-       if(applyReviewAlternative54(p,alternative,schema,TYPES))redraw();
-      });
-      choose.dataset.review54='choose-unverified';
-      choices.append(choose);
-     }
-     card.append(choices);
-    }
+    const options54=renderReviewAlternatives54(doc,result?.alternatives54,alternative=>{
+     if(submitting||!sameOwner()||!state?.pieces.includes(p)||
+        classification42?.piece===p)return;
+     if(applyReviewAlternative54(p,alternative,schema,TYPES))redraw();
+    });
+    if(options54)card.append(options54);
     card.append(classify);
    }
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
