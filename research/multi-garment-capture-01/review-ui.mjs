@@ -8,6 +8,7 @@ import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
+import {applyReviewAlternative54,renderReviewAlternatives54} from './review-alternatives-54.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -240,6 +241,15 @@ export function mountMultiGarmentCapture24({
     card.append(review);
     if(preview)card.append(preview);
     if(risk)card.append(risk);
+    // REVIEW54: meaningful conflicting model evidence must remain visible
+    // during uncertain recognition. Every option requires an explicit user
+    // click followed by the normal individual photo/color confirmation.
+    const options54=renderReviewAlternatives54(doc,result?.alternatives54,alternative=>{
+     if(submitting||!sameOwner()||!state?.pieces.includes(p)||
+        classification42?.piece===p)return;
+     if(applyReviewAlternative54(p,alternative,schema,TYPES))redraw();
+    });
+    if(options54)card.append(options54);
     card.append(classify);
    }
    card.append(selector('Main category',['Uncategorized',...TYPES],p.category,v=>{p.category=v;p.itemType='Unknown';p.confirmed=false;redraw();}));
