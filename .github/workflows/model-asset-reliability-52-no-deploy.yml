@@ -6,6 +6,8 @@ on:
   pull_request:
     paths:
       - 'scripts/probe-real-model-assets-52.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'scripts/audit-model-asset-reliability-52.mjs'
       - 'tests/model-asset-reliability-52.test.mjs'
       - 'research/model-asset-reliability-52/**'
       - '.github/workflows/model-asset-reliability-52-no-deploy.yml'
@@ -34,7 +36,7 @@ jobs:
           git diff --name-only 17d9b859252b08a763cb452804f08c717ae141cc HEAD > /tmp/model52-files
           while IFS= read -r path; do
             case "$path" in
-              scripts/probe-real-model-assets-52.mjs|tests/model-asset-reliability-52.test.mjs|research/model-asset-reliability-52/*|.github/workflows/model-asset-reliability-52-no-deploy.yml) ;;
+              scripts/probe-real-model-assets-52.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-model-asset-reliability-52.mjs|tests/model-asset-reliability-52.test.mjs|research/model-asset-reliability-52/*|.github/workflows/model-asset-reliability-52-no-deploy.yml) ;;
               *) echo "BLOCKED production, staging, model weights or unrelated code: $path"; exit 1 ;;
             esac
           done < /tmp/model52-files
@@ -46,11 +48,17 @@ jobs:
           node scripts/build.mjs
       - name: Probe actual original JPEG through local FashionCLIP worker Chromium and WebKit
         run: node scripts/probe-real-model-assets-52.mjs
+      - name: Run actual six Chromium/WebKit private mobile review and local model original/crop flows
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Audit actual source SHA, model worker features, full UI, private save, backup and screenshot SHA
+        run: node scripts/audit-model-asset-reliability-52.mjs
       - name: Archive model-load and origin/HTTP path evidence without photographs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: MODEL52-actual-worker-network-trace-HOLD
-          path: benchmark/model-asset-reliability-52/probe.json
+          path: |
+            benchmark/model-asset-reliability-52/
+            benchmark/recognition-to-closet-42/acceptance.json
           if-no-files-found: warn
           retention-days: 14
