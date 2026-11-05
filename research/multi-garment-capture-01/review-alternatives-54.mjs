@@ -76,3 +76,32 @@ export function applyReviewAlternative54(piece,choice,schema,categories){
  piece.confirmed=false;
  return true;
 }
+
+/**
+ * Shared DOM renderer for both actual capture-review UI and isolated native
+ * Chromium/WebKit acceptance. Does not read or modify garment inputs; a
+ * button click invokes the explicit human-review callback only.
+ */
+export function renderReviewAlternatives54(doc,alternatives,onSelect){
+ if(!doc?.createElement||!Array.isArray(alternatives)||!alternatives.length||
+    typeof onSelect!=='function')return null;
+ const group=doc.createElement('div');
+ group.className='multi24-actions';
+ group.dataset.review54='unverified-options';
+ group.setAttribute('aria-label','Unverified AI review alternatives');
+ const explanation=doc.createElement('p');
+ explanation.textContent='Other AI possibilities — not verified. Compare against the photographed crop, then confirm category, type and color yourself.';
+ group.append(explanation);
+ for(const c of alternatives.slice(0,MAX_OPTIONS54)){
+  if(!SUPPORTED54.includes(c?.category)||c.needsConfirmation!==true||
+     (c.itemType!==null&&(typeof c.itemType!=='string'||c.itemType.length>80)))continue;
+  const button=doc.createElement('button');
+  button.type='button';
+  button.dataset.review54='choose-unverified';
+  button.textContent='Review option: '+c.category+
+   (c.itemType?' · '+c.itemType:' · type uncertain');
+  button.addEventListener('click',()=>onSelect(c));
+  group.append(button);
+ }
+ return group.querySelector('button')?group:null;
+}
