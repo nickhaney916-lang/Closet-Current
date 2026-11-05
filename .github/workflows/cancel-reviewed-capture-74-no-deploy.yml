@@ -1,0 +1,56 @@
+name: CANCEL74 preserve human-reviewed photographed clothing on accidental Cancel NO DEPLOY
+on:
+  push:
+    branches:
+      - research/cancel-reviewed-capture-74-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cancel-reviewed-original-only-after-explicit-owner-approval:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact verified COLOR73 parent and reject unrelated production/staging changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor cfeba13b38e50b9d243544f8960901ab5d6ad50e HEAD
+          git diff --name-only cfeba13b38e50b9d243544f8960901ab5d6ad50e HEAD >/tmp/cancel74-files
+          while IFS= read -r path; do
+            case "$path" in
+              research/cancel-reviewed-capture-74/cancel-review-guard.mjs|research/multi-garment-capture-01/review-ui.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-cancel-reviewed-capture-74-browser.mjs|tests/cancel-reviewed-capture-74.test.mjs|.github/workflows/cancel-reviewed-capture-74-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated production/staging modification: $path"; exit 1 ;;
+            esac
+          done </tmp/cancel74-files
+      - name: Install pinned research browser and Node testing dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: App build and all inherited plus cancel-review Node tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Six unchanged full source-JPEG owner-private mobile browser flows
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Six genuine-source owner-review native cancel dismiss and approved cleanup flows
+        run: CANCEL74=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independent 72 real browser screenshot and private wardrobe audit
+        run: node scripts/audit-cancel-reviewed-capture-74-browser.mjs
+      - name: Archive only sanitized native screenshot and SHA evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CANCEL74-preserve-unsaved-reviewed-JPEG-on-dismiss-HOLD
+          path: |
+            benchmark/cancel-reviewed-capture-74/acceptance.json
+            benchmark/cancel-reviewed-capture-74/*.png
+          if-no-files-found: warn
+          retention-days: 14
