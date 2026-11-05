@@ -39,6 +39,8 @@ test('SEG53 run uses pinned actual SegFormer inference and keeps the evaluation 
  assert.match(worker,/modelLoadMs/);
  assert.match(worker,/inferenceMs/);
  assert.match(script,/routePinnedModelAsset/);
+ assert.match(script,/failedStage/);
+ assert.match(script,/Evidence report written, but model\/network\/browser acceptance contains recorded failures/);
  assert.match(script,/maskPixelMembershipConserved/);
  assert.match(script,/scientificVerdict:'NEEDS REWORK'/);
  for(const token of ['localStorage','indexedDB','supabase','.insert(','.upsert(','.delete('])
