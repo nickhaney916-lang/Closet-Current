@@ -12,6 +12,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
+import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
 const root=resolve('.'),dir=resolve(recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
@@ -126,13 +127,7 @@ try{
    if(u===origin+'/public/cloud-backup.js')return route.fulfill({status:200,contentType:'text/javascript',body:'window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};'});
    if(u.startsWith(origin+'/')||u.startsWith('data:')||u.startsWith('blob:'+origin))return route.continue();
    if(u.startsWith(auth+'/auth/v1/'))return authHTTP(route);
-   if(recognition42&&request.method()==='GET'){
-    const asset=new URL(u);
-    if(asset.hostname==='cdn.jsdelivr.net'&&asset.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/')||
-       asset.hostname==='huggingface.co'&&asset.pathname.startsWith('/ff13/fashion-clip/resolve/0f99955d944c39bfd9d035a02ac273c7a44a406b/')||
-       (/^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(asset.hostname)||
-        asset.hostname==='us.aws.cdn.hf.co'&&asset.pathname.startsWith('/xet-bridge-us/')))return route.continue();
-   }
+   if(recognition42&&allowedFashionClipAsset52(request))return route.continue();
    // MODEL52: preserve only method, host and pathname, never query tokens,
    // request bodies, owner identity or base64 photo content.
    const source=new URL(u);
