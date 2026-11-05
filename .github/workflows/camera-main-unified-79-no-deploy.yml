@@ -65,6 +65,8 @@ jobs:
         run: node scripts/test-camera-to-closet-79-browser.mjs
       - name: Run inherited owner-private wardrobe, outfit, backup and isolation mobile suite
         run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Run Priority 78 uncloneable-metadata snapshot acceptance across six mobile browser cases
+        run: SNAPSHOT78=1 node scripts/test-multi-garment-capture-01-browser.mjs
       - name: Independently audit inherited 72 mobile screenshots
         run: node scripts/audit-allowlisted-review-snapshot-78-browser.mjs
       - name: Assert camera workflow and no-deploy evidence
