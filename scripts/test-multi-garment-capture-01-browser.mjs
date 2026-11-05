@@ -742,6 +742,13 @@ try{
    x.originalPhoto.image==='data:image/jpeg;base64,'+bytes.toString('base64')&&
    !x.threeDReady&&x.ownerId==='multi24-A'));
   assert.deepEqual(rows.map(x=>x.category).sort(),['Bottoms','Shoes','Tops']);
+  if(snapshot78){
+   // Real native Save, separately from the noncloneable in-browser probe,
+   // must persist all three owner-confirmed crop records with source SHA.
+   assert.ok(rows.every(x=>x.ownerId==='multi24-A'&&x.sourceSHA256===sourceHash&&
+    x.originalPhoto?.sha256===sourceHash&&x.extractionReview==='human-confirmed'));
+   await fullShot(page,width,'02b-after-safe-snapshot-three-private-committed-all',engine);
+  }
   const shoes=rows.find(row=>row.category==='Shoes');
   if(recognition42){
    assert.equal(shoes.recognitionSuggestion42?.source,'local-fashionclip');
