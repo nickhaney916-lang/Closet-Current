@@ -14,6 +14,7 @@ import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-
 import {keepHumanReviewOnSameSource72} from '../same-original-photo-review-72/repeat-source-guard.mjs';
 import {needsCancelReviewConsent74,CANCEL_REVIEW_PROMPT74} from '../cancel-reviewed-capture-74/cancel-review-guard.mjs';
 import {needsRemoveReviewConsent76,REMOVE_REVIEW_PROMPT76} from '../remove-reviewed-garment-76/remove-review-guard.mjs';
+import {partitionPreviouslySaved80,MIXED_REVIEW_PROMPT80} from './previously-saved-review-80.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -575,9 +576,24 @@ export function mountMultiGarmentCapture24({
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
    });
    if(!currentReview(view,epoch))return;
-   const duplicates=duplicatePieceKeys24(existing,
-    snapshots.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
-   if(duplicates.length)throw Error('Previously saved garment detected in this exact source. Deselect duplicate pieces.');
+   // MIXED80: source-verified exact-key/near-identical manual duplicates
+   // must not block independently confirmed NEW garments. Excluding saved
+   // copies requires explicit human consent and keeps the final readwrite
+   // transaction's authoritative duplicate/owner protection unchanged.
+   const partition=partitionPreviouslySaved80({saved:existing,pieces:snapshots,proof,ownerId:owner});
+   const skipped=partition.duplicates.length;
+   if(skipped){
+    if(!partition.fresh.length)
+     throw Error('All selected garments are already saved from this original photo. Deselect them or edit existing items in My Closet.');
+    const approved=typeof window.confirm==='function'&&window.confirm(
+     skipped+' previously saved garment(s) and '+partition.fresh.length+
+     ' new confirmed garment(s). '+MIXED_REVIEW_PROMPT80
+    );
+    if(!currentReview(view,epoch))return;
+    if(!approved)
+     throw Error('Mixed save canceled. Every reviewed garment, crop, color and confirmation remains unchanged; nothing was saved.');
+    snapshots=partition.fresh;
+   }
    if(!currentReview(view,epoch))return;
    const rows=await queued(()=>atomicSaveGarments24({
     db,proof,pieces:snapshots,ownerId:owner,
@@ -594,7 +610,8 @@ export function mountMultiGarmentCapture24({
    if(!currentReview(view,epoch))return;
    try{await refreshNative();}catch{refreshFailed=true;}
    if(!currentReview(view,epoch))return;
-   status.textContent=saveReceipt34(rows.length,notificationFailed,refreshFailed);
+   status.textContent=saveReceipt34(rows.length,notificationFailed,refreshFailed)+
+    (skipped?' '+skipped+' previously saved garment(s) were skipped with your approval; existing closet items were not overwritten.':'');
   }catch(error){
    if(currentReview(view,epoch))status.textContent=persisted?
     'Garments were saved privately, but the wardrobe display could not refresh. Reload My Closet to verify.':
