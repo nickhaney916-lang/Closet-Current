@@ -77,11 +77,16 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
    const negative=row.expectedCategory==='Uncategorized';
    if(negative){
     if(row.expectedType!=='Unknown')fail('negative control subtype not Unknown '+row.id);
-   }else if(!categorySet.has(row.expectedCategory)||typeof row.expectedType!=='string'||!row.expectedType)
-    fail('invalid provisional source class '+row.id);
+   }else if(typeof row.expectedCategory!=='string'||!row.expectedCategory||
+    typeof row.expectedType!=='string'||!row.expectedType)
+    fail('missing provisional source class '+row.id);
+   // Existing historical review includes validation-0008: Accessories/Scarf.
+   // This is NOT a recognized currently saved-closet family. Preserve it as
+   // an out-of-scope label, never silently remap/delete the held-out source.
    rows.push({id:row.id,sha256:src.sha256,image:src.image,split,
     expectedCategory:row.expectedCategory,expectedType:row.expectedType,
-    preliminaryLabelOnly:true,isNegative:negative});
+    preliminaryLabelOnly:true,isNegative:negative,
+    outOfScopeProvisional:!negative&&!categorySet.has(row.expectedCategory)});
   }
  }
  // Strict coverage: unknown adjudication IDs are not silently ignored.
@@ -137,6 +142,7 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
  }
  const failures=[];
  const need=(test,reason)=>{if(!test)failures.push(reason);};
+ need(!rows.some(x=>x.outOfScopeProvisional),'unsupported-historical-taxonomy-needs-independent-scope-review');
  need(rows.length>=100,'insufficient-unique-genuine-photo-sources-min-100');
  need(lockedGarments.length>=30,'insufficient-locked-garment-sample-min-30');
  need(lockedNegatives.length>=10,'insufficient-locked-non-garment-controls-min-10');
@@ -158,7 +164,8 @@ export function auditRecognitionEvidence60({sets,sourceRows,adjudications={},pre
    validation:sets.validation.length,lockedEvaluation:locked.length,
    lockedGarments:lockedGarments.length,lockedNegatives:lockedNegatives.length,
    independentlyAdjudicated:adjudicated.size,lockedIndependentlyAdjudicated:lockedGroundTruth.length,
-   preliminaryHistoricalColorLabels:rows.filter(x=>OWN.call(sets[x.split].find(z=>z.id===x.id),'expectedPrimaryColor')).length},
+   preliminaryHistoricalColorLabels:rows.filter(x=>OWN.call(sets[x.split].find(z=>z.id===x.id),'expectedPrimaryColor')).length,
+   outOfScopeHistoricalLabels:rows.filter(x=>x.outOfScopeProvisional).map(x=>({id:x.id,split:x.split,category:x.expectedCategory,itemType:x.expectedType}))},
   perClassLockedProvisional:perClass,failures,pendingHumanReviews:pending,
   measuredIndependentMetrics:predictionQuality};
 }
