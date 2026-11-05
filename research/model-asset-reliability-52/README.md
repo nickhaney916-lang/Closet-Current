@@ -8,11 +8,19 @@ The initial no-deploy CI #41961254120 SUCCESS tested the actual `public/local-wo
 
 The observed model resource trace had HTTP 307 from `huggingface.co/ff13/fashion-clip/resolve/<exact revision>/config.json` and `preprocessor_config.json`, leading to HTTP 200 at `huggingface.co/api/resolve-cache/models/ff13/fashion-clip/<exact revision>/...`. ONNX model weights redirected with HTTP 302 to the observed official Xet CDN; pinned JS + WASM loaded via jsDelivr. HTTP redirect statuses are **not model failures**.
 
-## Source-level browser-QA defect
+## Exact root cause: a *different* SegFormer worker was deliberately blocked
 
-The inherited native browser harness allowed only direct pinned `/resolve/<sha>/` and a few binary CDN paths. It did **not** explicitly allow official `/api/resolve-cache/models/ff13/fashion-clip/<sha>/` redirects. Work #34 PR #607 had counted 12 model-related failed requests in a mobile-width browser scenario; SNAPSHOT51 PR #609 had counted 14. Neither count alone established failed FashionCLIP inference, because the same tests observed actual crop-model suggestion results and safe manual corrections. The independent worker trace proved successful actual model execution and identified the normal cache-redirect endpoint. The native browser model path must be audited without falsely interpreting HTTP redirect or a deliberately blocked QA route as a classifier outage.
+We retrieved and inspected the **actual native browser acceptance artifact** from the diagnostic run #41961694799. It showed **13 failed model requests and 13 explicitly policy-blocked requests**, and every one was the same GET:
 
-`asset-policy.mjs` is **research-QA-only** and permits GET over HTTPS only from exact pinned `ff13/fashion-clip` revision `0f99955d944c39bfd9d035a02ac273c7a44a406b` direct resolve/cache routes, pinned jsDelivr Transformers.js 3.8.1 dist assets, and known Xet CDN destinations. It blocks uploads, other model versions, other repositories, deceptive hosts and insecure HTTP. No change to the deployed app, model package, model weights, production security policy or classification threshold.
+`https://huggingface.co/Xenova/segformer_b0_clothes/resolve/a2489ea8e7ec1ee912190546bad31a4906ccca76/preprocessor_config.json`
+
+This is the *optional garment-segmentation detector*, **not** the `ff13/fashion-clip` category/subtype classifier. The test intentionally restricts external model traffic to FashionCLIP, so automatic SegFormer initialization is blocked while manual reviewed crops and actual FashionCLIP suggestions continue. The earlier report's 12–14 `huggingface.co` failed requests were therefore **incorrectly conflated with classifier failures**. The first standalone worker test independently proved 512-dimensional FashionCLIP inference with **zero failed asset requests** in Chromium and WebKit. These conclusions concern the research browser network gate, not a guarantee that every physical mobile device will cold-load reliably.
+
+The real pinned FashionCLIP asset response chain also included normal HTTP 307 from the versioned `/resolve/<sha>/config.json` and `preprocessor_config.json` to HTTP 200 under `/api/resolve-cache/models/ff13/fashion-clip/<sha>/...`. Those cache redirects were **successful, not the recorded 13 failures**. The research-only `asset-policy.mjs` now explicitly allows the exact pinned cache redirect and normal official model CDN over GET HTTPS only. No arbitrary external model requests, unpinned model, uploads or token/query logging are allowed.
+
+`modelAssetFamily52` and the independent audit enforce separate reporting: **FashionCLIP failed asset requests must equal zero** and all remaining blocked model requests must be exact expected SegFormer assets; unknown failures fail CI. The intentionally blocked SegFormer means **automatic multi-garment detection is NOT validated in this workflow**. It requires a separate genuine instance/IoU/recall benchmark before Family Alpha.
+
+**Transient environment observation:** a later GitHub Actions worker probe succeeded in Chromium but hit one WebKit `model_download` worker error even though its logged CDN requests had HTTP 200 and none were policy blocked. The earlier same worker proof passed WebKit. This intermittent error is *not silently counted as successful reliability*. It could reflect ONNX/WebKit initialization under concurrent CI resource contention; its device-level cause remains unproven. Production and staging are not modified to paper over it.
 
 ## Reproducible full native acceptance
 
