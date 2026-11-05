@@ -3,3 +3,5 @@
 dist/
 .openai/
 node_modules/
+/benchmark/real-mask-evidence-31/
+scripts/__pycache__/

@@ -1,7 +1,7 @@
 /**
- * MASK-31 genuine source-locked real SegFormer inference in Chromium and WebKit.
+ * MASK-53 source-locked real SegFormer inference in Chromium and WebKit.
  * Not a fresh independent human-labeled cohort. The same actual pinned model
- * processes three original JPEGs; we compare old/new component masks from the
+ * processes the SHA-locked public benchmark fixtures; we compare old/new masks from the
  * identical model logits, not a bounding-box union proxy.
  */
 import assert from 'node:assert/strict';
@@ -9,7 +9,6 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {createServer} from 'node:http';
 import {resolve,extname} from 'node:path';
-import {setTimeout as delay} from 'node:timers/promises';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 import {isPinnedModelAsset,routePinnedModelAsset}
@@ -21,37 +20,38 @@ const SHA=b=>createHash('sha256').update(b).digest('hex');
 const root=resolve('.'),out=resolve('benchmark/real-mask-evidence-31');
 await mkdir(out,{recursive:true});
 const sources=JSON.parse(await readFile('research/multi-review-triage-28/frozen-photo-annotations-16.json','utf8'));
-const ids=['commons-0021','two-shirts','flatlay-outfit'];
-const photoRows=ids.map(id=>{
- const row=sources.find(x=>x.id===id);
- assert.ok(row,'unrecognized licensed source '+id);return row;
-});
+// Frozen annotation pool: development and held-out only. There is no
+// independent second annotator or separate validation split.
+const lockedSources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
+const photoRows=[];
+for(const annotation of sources){
+ const locked=lockedSources.find(x=>x.id===annotation.id),path='benchmark/fixtures/'+annotation.id+'.jpg';
+ if(!locked||!locked.verified)continue;
+ try{
+  const bytes=await readFile(path),metadata=await sharp(bytes,{failOn:'truncated'}).metadata();
+  if(SHA(bytes)!==locked.sha256||metadata.format!=='jpeg')continue;
+  photoRows.push({...annotation,fixture:path,fixtureBytes:bytes.length,
+   fixtureSHA256:locked.sha256,width:metadata.width,height:metadata.height,
+   bytes:bytes.length,sha256:locked.sha256,attribution:locked.attribution,
+   source:locked.downloadUrl,sourceOriginalSHA256:annotation.sha256});
+ }catch{}
+}
+assert.ok(photoRows.length>0,'No verified source-locked benchmark fixtures overlap the annotation set');
+const ids=photoRows.map(row=>row.id);
 assert.equal(new Set(photoRows.map(x=>x.sha256)).size,ids.length);
 assert.ok(photoRows.every(x=>x.attribution?.source&&x.attribution?.license));
 const originalBuffers=new Map();
 async function fetchSource(row){
- let failure='';
- for(let attempt=0;attempt<5;attempt++){
-  if(attempt)await delay(1700*(attempt+1));
-  try{
-   const res=await fetch(row.source,{
-    headers:{'User-Agent':'ClosetCurrentSourceLockedMaskResearch31/1.0'},
-    signal:AbortSignal.timeout(90000)
-   });
-   if(!res.ok){failure='HTTP '+res.status;await res.body?.cancel();continue}
-   const bytes=Buffer.from(await res.arrayBuffer());
-   const image=await sharp(bytes,{failOn:'truncated'}).metadata();
-   assert.equal(bytes.length,row.bytes,'source original JPEG size changed');
-   assert.equal(SHA(bytes),row.sha256,'source original JPEG SHA changed');
-   assert.equal(image.format,'jpeg');assert.equal(image.width,row.width);assert.equal(image.height,row.height);
-   return bytes;
-  }catch(e){failure=e.message;}
- }
- throw Error(row.id+' original unavailable or changed: '+failure);
+ const bytes=await readFile(row.fixture);
+ const metadata=await sharp(bytes,{failOn:'truncated'}).metadata();
+ assert.equal(bytes.length,row.fixtureBytes,'source fixture size changed');
+ assert.equal(SHA(bytes),row.fixtureSHA256,'source fixture SHA changed');
+ assert.equal(metadata.format,'jpeg');assert.equal(metadata.width,row.width);assert.equal(metadata.height,row.height);
+ return bytes;
 }
 for(const row of photoRows){
  originalBuffers.set(row.id,await fetchSource(row));
- console.log('Verified unchanged licensed original',row.id,row.sha256.slice(0,12),
+ console.log('Verified unchanged licensed fixture',row.id,row.sha256.slice(0,12),
   row.width+'x'+row.height);
 }
 const mimes={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html'};
@@ -71,7 +71,10 @@ const origin='http://127.0.0.1:'+server.address().port;
 const families={4:'upper',5:'skirt',6:'bottom',7:'dress',9:'shoes'};
 const externalWrites=[],networkFailures=[],reports={};
 try{
- for(const [engine,launcher] of Object.entries({chromium,webkit})){
+ const availableEngines={chromium,webkit};
+ const requestedEngines=(process.env.MASK31_ENGINES||'chromium,webkit').split(',').filter(Boolean);
+ for(const engine of requestedEngines){
+  const launcher=availableEngines[engine];assert.ok(launcher,'Unknown browser engine '+engine);
   const cache=new Map(),browser=await launcher.launch();
   const context=await browser.newContext({viewport:{width:390,height:880},
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
@@ -99,6 +102,7 @@ try{
     const imageData='data:image/jpeg;base64,'+jpeg.toString('base64');
     // Source JPEG SHA unchanged and isolated from resized in-memory model input.
     const started=await page.evaluate(async ({row,imageData,engine})=>{
+     const memoryBefore=performance.memory?.usedJSHeapSize??null;
      const decoded=new Image();decoded.src=imageData;await decoded.decode();
      if(decoded.naturalWidth!==row.width||decoded.naturalHeight!==row.height)
       throw Error('Browser source image dimension mismatch');
@@ -134,7 +138,7 @@ try{
       credit:row.attribution.title+' · '+row.attribution.author+' · '+row.attribution.license+
        ' · '+row.attribution.source,
       expectedSHA:row.sha256});
-     return {resized:inference!==imageData};
+     return {resized:inference!==imageData,memoryBefore};
     },{row,imageData,engine});
     await page.waitForFunction(()=>window.__realMask31.done,null,{timeout:395000});
     const state=await page.evaluate(()=>window.__realMask31);
@@ -152,16 +156,21 @@ try{
     const post=data.after.map(x=>({box:x.crop,family:families[x.regionId]}));
     const before=scorePhoto(row.regions,{status:'completed',proposals:pre});
     const after=scorePhoto(row.regions,{status:'completed',proposals:post});
-    const item={id:row.id,originalSHA256:row.sha256,sourceLicense:row.attribution.license,
-      sourceOriginalDimensions:[row.width,row.height],originalBytes:row.bytes,resized:started.resized,
+ const item={id:row.id,benchmarkFixtureSHA256:row.sha256,
+      annotationOriginalSHA256:row.sourceOriginalSHA256,sourceLicense:row.attribution.license,
+      benchmarkFixtureDimensions:[row.width,row.height],benchmarkFixtureBytes:row.bytes,
+      resized:started.resized,
       modelInputDecode:engine==='webkit'?'page-canvas-decoded-analysis-JPEG-RGBA':'worker-RawImage-JPEG',
       analysisResolution:data.analysisResolution,actualPixelMapDimensions:data.modelMask,
+      modelLoadMs:data.modelLoadMs,inferenceMs:data.inferenceMs,
+      browserHeapBeforeBytes:started.memoryBefore,
+      browserHeapAfterBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),
       actualModelLabelMaskSHA256:data.sourceMapLabelsSHA256,
       perClassPixelMembershipUnchanged:true,memberCount:data.familyConservation,
       before:{...before,groups:data.before},after:{...after,groups:data.after},
       realPinnedONNXInference:true,noGarmentAutoSaved:true,independentHumanPixelMasks:false};
     entries.push(item);
-    const widths=row.id==='commons-0021'?[320,390,430]:[390];
+    const widths=[320,390,430];
     for(const width of widths){
      await page.setViewportSize({width,height:900});
      const filename=engine+'-'+row.id+'-'+width+'.png';
@@ -170,47 +179,65 @@ try{
      assert.equal(metadata.format,'png');assert.equal(metadata.width,width);
      assert.ok(png.length>11000&&metadata.height>=650);
      screenshots.push({sourceId:row.id,engine,width,filename,sha256:SHA(png),
-      sourceSHA256:row.sha256,actualModelMaskSHA256:data.sourceMapLabelsSHA256,
+     fixtureSHA256:row.sha256,actualModelMaskSHA256:data.sourceMapLabelsSHA256,
       realModelExecuted:true});
     }
     await page.setViewportSize({width:390,height:880});
-    console.log('MASK-31',engine,row.id,'genuine model masks',
+    console.log('AUTO-SEGMENTATION-53',engine,row.id,'source-locked fixture genuine model masks',
      'before',before.matches.length+'/'+before.expectedCount,
      'after',after.matches.length+'/'+after.expectedCount,
      'sourcePixelsUnchanged=true');
    }
   }finally{await context.close();await browser.close();}
   assert.deepEqual(runtimeErrors,[],'browser JS errors in '+engine);
+  const cachedAssets=await Promise.all([...cache.values()]);
   reports[engine]={realModelRuns:entries.length,sourceRows:entries,
+   modelAssetRequestCount:cache.size,
+   modelAssetPaths:[...cache.keys()].map(value=>{const url=new URL(value);return url.origin+url.pathname}),
+   modelAssetDownloadBytes:cachedAssets.reduce((sum,item)=>sum+item.body.length,0),
+   coldModelLoadMs:entries[0]?.modelLoadMs??null,
    before:summarizePhotos(entries.map(x=>x.before)),
    after:summarizePhotos(entries.map(x=>x.after)),
    screenshots,errors:runtimeErrors};
  }
  assert.deepEqual(externalWrites,[]);assert.deepEqual(networkFailures,[]);
- assert.equal(reports.chromium.realModelRuns,3);
- assert.equal(reports.webkit.realModelRuns,3);
  const allRows=Object.values(reports).flatMap(x=>x.sourceRows);
- const maskEvidence={priority:'REAL-SEGFORMER-PIXEL-MASK-31',
-  baselinePR:587,previousHead:'7cd43be5e2cdb7be7473ab029a595d6b81e725ee',
+ assert.ok(requestedEngines.every(engine=>reports[engine]?.realModelRuns===photoRows.length));
+ const maskEvidence={priority:'AUTO-SEGMENTATION-REAL-MODEL-53',
+  baselinePR:610,previousHead:'05107691cee5bbf7429b824aa0b1444fcb70ae5b',
   pinnedModel:'Xenova/segformer_b0_clothes@a2489ea8e7ec1ee912190546bad31a4906ccca76',
-  originalPhotoCount:3,genuineModelExecutions:6,
-  scope:'Three previously seen single-reviewer annotated licensed original JPEGs, not new independent unseen holdout',
-  originalSourceSHA256Verified:true,rawModelLabelPixelsUsed:true,
+  sourcePhotoCount:photoRows.length,genuineModelExecutions:allRows.length,
+  scope:'Frozen licensed single-reviewer annotation pool evaluated on SHA-locked downsampled fixture derivatives. Historical development and held-out tags are retained but are not newly blinded; some photos appeared in prior research. There is no separate validation split, blind second annotator, or independent pixel mask truth.',
+  sourceLockedFixtureSHA256Verified:true,fullResolutionAnnotationSourceWasNotInferenceInput:true,rawModelLabelPixelsUsed:true,
   sameModelOutputUsedForBeforeAndAfter:true,
   pixelMembershipExactlyPreservedByGrouping:true,
   sourceTruePixelMaskIoUAgainstIndependentHumanTruth:false,
-  independentBlindAnnotators:0,sourcePhotosChanged:false,
+  independentBlindAnnotators:0,fixturePhotosChanged:false,
   realPhotoModelAccuracyCertified:false,allSuggestionsRequireReview:true,
+  datasetSplits:Object.fromEntries(['development','held-out'].map(split=>[split,photoRows.filter(x=>x.split===split).map(x=>x.id)])),
+  independentlyLockedEvaluationAvailable:false,
+  excludedAnnotationIds:sources.filter(x=>!photoRows.some(y=>y.id===x.id)).map(x=>x.id),
+  annotationLimitations:'One reviewer supplied coarse normalized category-family boxes. There are no per-pixel ground-truth masks, independently adjudicated labels, garment subtypes, colors, non-clothing negative controls, or confusion adjudication in this cohort.',
+  detectionEvaluation:{method:'one-to-one category-family box matching at IoU >= 0.50 against frozen human boxes',
+   result:'bounding-box detection proxy only; not pixel-mask IoU or instance accuracy',
+   engines:Object.fromEntries(Object.entries(reports).map(([engine,r])=>[engine,r.after]))},
+  classificationEvaluation:{broadCategoryAccuracy:null,subtypeAccuracy:null,colorAccuracy:null,
+   reason:'SegFormer semantic-region labels are not independent category, subtype, or color ground truth; those outcomes were not independently tested in this benchmark.'},
+  instanceSeparation:{method:'connected components of semantic classes with conservative same-family shoe grouping',
+   learnedInstanceModelUsed:false,touchingSameClassGarmentsSeparatelyIdentifiable:false},
+  memoryAvailability:{javascriptHeapMeasurements:'performance.memory.usedJSHeapSize when browser exposes it; this Chromium sandbox returned the same 10000000-byte value for every before/after sample, so it is not useful for model-memory attribution and is not a process or device-memory measure',
+   physicalDeviceMemoryBytes:null,deviceMemoryApiAvailable:false},
+  browserAppFlowAcceptance:{fullClosetAppFlowTested:false,reason:'This harness is a read-only research overlay; it does not save photos, classify with FashionCLIP, sign in, write a closet, back up, restore, or separate accounts.'},
+  scientificVerdict:'NEEDS REWORK',
+  nextWork:'Add a compatible instance-segmentation method and independently adjudicated category/subtype/color plus pixel-mask benchmark; then perform signed disposable-owner browser E2E and physical-device cold-load checks.',
   unauthorizedRequests:networkFailures,externalWrites,
   familyAlpha:'HOLD',merged:false,deployed:false,
   engines:reports};
  await writeFile(out+'/report.json',JSON.stringify(maskEvidence,null,2)+'\n');
- console.log('MASK-31 REAL SOURCE-VERIFIED MODEL COMPLETED '+JSON.stringify({
-  realModelRuns:6,originals:3,
-  chromium:{before:reports.chromium.before.truePositives,
-   after:reports.chromium.after.truePositives},
-  webkit:{before:reports.webkit.before.truePositives,
-   after:reports.webkit.after.truePositives},
-  allClassMaskPixelsConserved:true,screenCaptures:10,
+ console.log('AUTO-SEGMENTATION-53 GENUINE MODEL BENCHMARK COMPLETED '+JSON.stringify({
+  realModelRuns:allRows.length,sourceFixtures:photoRows.length,
+  engines:Object.fromEntries(Object.entries(reports).map(([engine,data])=>[engine,
+   {before:data.before.truePositives,after:data.after.truePositives}])),
+  allClassMaskPixelsConserved:true,screenCaptures:Object.values(reports).reduce((n,r)=>n+r.screenshots.length,0),
   newUnseenAccuracy:false,FamilyAlpha:'HOLD'}));
 }finally{await new Promise(done=>server.close(done));}

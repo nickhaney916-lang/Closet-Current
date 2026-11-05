@@ -103,8 +103,8 @@ test('independent source research harness cannot certify new unseen-photo accura
  assert.match(file,/sourceTruePixelMaskIoUAgainstIndependentHumanTruth:false/);
  assert.match(file,/independentBlindAnnotators:0/);
  assert.match(file,/externalWrites/);
- assert.match(file,/sourceOriginalDimensions/);
- assert.match(file,/originalSourceSHA256Verified:true/);
+ assert.match(file,/benchmarkFixtureDimensions/);
+ assert.match(file,/sourceLockedFixtureSHA256Verified:true/);
 });
 
 

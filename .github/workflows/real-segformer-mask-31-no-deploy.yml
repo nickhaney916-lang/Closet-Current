@@ -1,4 +1,4 @@
-name: REAL-MASK-31 genuine pinned SegFormer original-photo model pixels comparison NO DEPLOY
+name: AUTO-SEGMENTATION-REAL-MODEL-53 pinned SegFormer benchmark NO DEPLOY
 on:
   push:
     branches:
@@ -59,44 +59,63 @@ jobs:
           import sharp from 'sharp';
           const base='benchmark/real-mask-evidence-31/';
           const r=JSON.parse(await readFile(base+'report.json','utf8'));
-          assert.equal(r.priority,'REAL-SEGFORMER-PIXEL-MASK-31');
-          assert.equal(r.originalPhotoCount,3);assert.equal(r.genuineModelExecutions,6);
+          assert.equal(r.priority,'AUTO-SEGMENTATION-REAL-MODEL-53');
+          assert.equal(r.sourcePhotoCount,15);assert.equal(r.genuineModelExecutions,30);
           assert.equal(r.sourceTruePixelMaskIoUAgainstIndependentHumanTruth,false);
           assert.equal(r.realPhotoModelAccuracyCertified,false);
           assert.equal(r.independentBlindAnnotators,0);
+          assert.equal(r.sourceLockedFixtureSHA256Verified,true);
+          assert.equal(r.fullResolutionAnnotationSourceWasNotInferenceInput,true);
           assert.equal(r.pixelMembershipExactlyPreservedByGrouping,true);
           assert.deepEqual(r.unauthorizedRequests,[]);assert.deepEqual(r.externalWrites,[]);
-          const expectedIds=['commons-0021','two-shirts','flatlay-outfit'];
+          const splitIds=[...r.datasetSplits.development,...r.datasetSplits['held-out']];
+          assert.equal(splitIds.length,15);
+          const expectedIds=r.engines.chromium.sourceRows.map(x=>x.id);
+          assert.deepEqual([...new Set(expectedIds)].sort(),[...splitIds].sort());
           const widths=[320,390,430];
           for(const engine of ['chromium','webkit']){
-            const e=r.engines[engine];assert.equal(e.realModelRuns,3);
-            assert.equal(e.sourceRows.length,3);assert.deepEqual(e.errors,[]);
+            const e=r.engines[engine];assert.equal(e.realModelRuns,15);
+            assert.equal(e.sourceRows.length,15);assert.deepEqual(e.errors,[]);
             assert.deepEqual(e.sourceRows.map(x=>x.id),expectedIds);
-            assert.equal(e.screenshots.length,5);
+            assert.equal(e.screenshots.length,45);
             for(const p of e.sourceRows){
               assert.equal(p.realPinnedONNXInference,true);
               assert.equal(p.perClassPixelMembershipUnchanged,true);
               assert.equal(p.independentHumanPixelMasks,false);
               assert.equal(p.actualModelLabelMaskSHA256.length,64);
+              assert.equal(p.benchmarkFixtureSHA256.length,64);
+              assert.equal(p.annotationOriginalSHA256.length,64);
+              assert.ok(p.inferenceMs>=0);
               assert.equal(p.before.groups.every(x=>x.needsReview===true),true);
               assert.equal(p.after.groups.every(x=>x.needsReview===true),true);
               for(const m of p.memberCount)assert.equal(m.retainedWithoutChanges,true);
             }
+            assert.ok(e.modelAssetRequestCount>0&&e.modelAssetDownloadBytes>0);
+            assert.ok(e.modelAssetPaths.length===e.modelAssetRequestCount);
+            assert.ok(e.modelAssetPaths.every(p=>p.startsWith('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/')||p.startsWith('https://huggingface.co/Xenova/segformer_b0_clothes/resolve/a2489ea8e7ec1ee912190546bad31a4906ccca76/')));
+            assert.ok(e.coldModelLoadMs>=0);
+            assert.equal(e.sourceRows.filter(x=>x.modelLoadMs!==null).length,1);
+            assert.equal(e.sourceRows[0].modelLoadMs,e.coldModelLoadMs);
+            assert.ok(e.sourceRows.every(x=>x.browserHeapBeforeBytes===null||x.browserHeapBeforeBytes>=0));
+            assert.ok(e.sourceRows.every(x=>x.browserHeapAfterBytes===null||x.browserHeapAfterBytes>=0));
             for(const photo of e.screenshots){
               assert.equal(photo.realModelExecuted,true);
+              assert.ok(widths.includes(photo.width));
+              assert.equal(photo.fixtureSHA256,e.sourceRows.find(x=>x.id===photo.sourceId).benchmarkFixtureSHA256);
               const bytes=await readFile(base+photo.filename);
               assert.equal(createHash('sha256').update(bytes).digest('hex'),photo.sha256);
               const im=await sharp(bytes).metadata();
               assert.equal(im.format,'png');assert.equal(im.width,photo.width);
             }
+            for(const id of expectedIds)assert.deepEqual(e.screenshots.filter(x=>x.sourceId===id).map(x=>x.width),widths);
           }
-          console.log('MASK-31 exact original SHA, six genuine model executions, true class mask conservation and 10 browser screenshots verified — Family Alpha HOLD');
+          console.log('AUTO-SEGMENTATION-53 exact fixture SHA, 30 genuine model executions, true class mask conservation and 90 mobile-width diagnostic screenshots verified — Family Alpha HOLD');
           EONODE
       - name: Upload ONLY sanitized group/mask SHA reports and public-source screenshots; no original JPEGs, model assets or user photos
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: REAL-MASK-31-genuine-ONNX-browser-mask-before-after-source-SHA-HOLD
+          name: AUTO-SEGMENTATION-53-genuine-ONNX-benchmark-and-browser-screenshots-HOLD
           path: |
             benchmark/real-mask-evidence-31/report.json
             benchmark/real-mask-evidence-31/*.png
