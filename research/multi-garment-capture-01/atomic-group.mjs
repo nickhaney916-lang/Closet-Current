@@ -52,6 +52,20 @@ function safeSuggestion45(input,sourcePieceKey,cropBounds){
   };
  };
  const current=safe(input),originalContext=safe(input.originalContext);
+ // SUBTYPE47: store the exact bounded ambiguity observed by the local model
+ // adapter, not an untrusted high-confidence subtype asserted as verified.
+ // The human-confirmed saved garment remains authoritative.
+ const knownConfusions={
+  Tops:{'T-shirt':'Sweatshirt','Sweatshirt':'T-shirt','Blouse':'Tunic','Tunic':'Blouse'},
+  Shoes:{'Sneakers':'Ankle boots','Ankle boots':'Sneakers'}
+ };
+ const risk=input.subtypeReview47;
+ const subtypeReview47=current.category&&current.itemType===null&&
+  risk?.needsConfirmation===true&&
+  risk.reason==='independently-observed-high-confidence-confusion'&&
+  knownConfusions[current.category]?.[risk.candidate]===risk.alternative?
+  {candidate:risk.candidate,alternative:risk.alternative,
+   reason:'independently-observed-high-confidence-confusion',needsConfirmation:true}:null;
  // COLOR46: only a bounded palette observation, never an approved color.
  // Ignore arbitrary raw pixels, opaque masks, injected metadata or confidence.
  const pixel=input.colorReview46;
@@ -64,6 +78,7 @@ function safeSuggestion45(input,sourcePieceKey,cropBounds){
   source:'local-fashionclip',
   ...current,originalContext,
   ...(colorReview46?{colorReview46}:{}),
+  ...(subtypeReview47?{subtypeReview47}:{}),
   colorSource:current.color&&['recognition','mask-pixel-estimate','crop-pixel-estimate','reviewed-crop-pixel-estimate'].includes(input.colorSource)?input.colorSource:null,
   status:current.itemType?'subtype-suggested':current.category?'category-only':'abstained',
   sourcePieceKey,cropBounds:{...cropBounds}
