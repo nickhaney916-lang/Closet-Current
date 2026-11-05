@@ -14,11 +14,6 @@ jobs:
   pinned-model-research-only:
     runs-on: ubuntu-latest
     timeout-minutes: 45
-    container:
-      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
-      options: --shm-size=1gb
-    env:
-      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
         with:
@@ -36,6 +31,9 @@ jobs:
               *) echo "BLOCKED unexpected non-research change: $path"; exit 1 ;;
             esac
           done < /tmp/instance56-files
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -43,6 +41,8 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 onnxruntime-web@1.23.2
           python -m pip install --disable-pip-version-check onnxruntime==1.23.2 numpy==2.2.6 Pillow==11.3.0
+      - name: Install Chromium and WebKit with system dependencies
+        run: npx playwright install --with-deps chromium webkit
       - name: Build application and run inherited Node regression suite
         run: |
           node scripts/build.mjs
