@@ -351,7 +351,12 @@ try{
    await editor.waitFor({state:'hidden',timeout:8000}).catch(async error=>{
     throw Error((await page.locator('#message').textContent())+' '+error.message);
    });
-   await savedCard.getByRole('button',{name:'Adjust details'}).click();
+   // REVIEW54 inherited browser stability: the color edit intentionally
+   // removes "Blue" from the card title, so never reuse a stale color-based
+   // locator to reopen the confirmed saved item.
+   const reopenedCard=page.locator('#closetGrid article.card').filter({hasText:'Sneakers'}).first();
+   await reopenedCard.getByRole('button',{name:'Adjust details'}).click();
+   await editor.waitFor({state:'visible',timeout:8000});
    assert.equal(await color.inputValue(),'');
    assert.equal(await editor.getByLabel('Item type',{exact:true}).inputValue(),'Sneakers');
    const edited=await page.evaluate(id=>new Promise((resolve,reject)=>{
