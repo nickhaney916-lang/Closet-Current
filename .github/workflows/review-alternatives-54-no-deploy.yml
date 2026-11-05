@@ -10,6 +10,7 @@ on:
       - 'research/multi-garment-capture-01/review-alternatives-54.mjs'
       - 'research/review-alternatives-54/**'
       - 'scripts/*review-alternatives-54*'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
       - 'tests/review-alternatives-54.test.mjs'
       - '.github/workflows/review-alternatives-54-no-deploy.yml'
   workflow_dispatch:
@@ -38,7 +39,7 @@ jobs:
           git diff --name-only 05107691cee5bbf7429b824aa0b1444fcb70ae5b HEAD > /tmp/review54-changes
           while IFS= read -r path; do
             case "$path" in
-              research/multi-garment-capture-01/recognition-review-42.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-alternatives-54.mjs|research/review-alternatives-54/*|scripts/audit-review-alternatives-54.mjs|scripts/test-review-alternatives-54-browser.mjs|scripts/audit-review-alternatives-54-browser.mjs|scripts/audit-review54-native-52.mjs|tests/review-alternatives-54.test.mjs|.github/workflows/review-alternatives-54-no-deploy.yml) ;;
+              research/multi-garment-capture-01/recognition-review-42.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/review-alternatives-54.mjs|research/review-alternatives-54/*|scripts/audit-review-alternatives-54.mjs|scripts/test-review-alternatives-54-browser.mjs|scripts/audit-review-alternatives-54-browser.mjs|scripts/audit-review54-native-52.mjs|scripts/test-multi-garment-capture-01-browser.mjs|tests/review-alternatives-54.test.mjs|.github/workflows/review-alternatives-54-no-deploy.yml) ;;
               *) echo "BLOCKED production, staging, automatic classifier, cloud or unrelated code: $path"; exit 1 ;;
             esac
           done </tmp/review54-changes
