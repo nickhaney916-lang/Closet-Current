@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — Independent Photo Annotation (Research HOLD)</title>
+<style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#172230;background:#f6f8fb;font-size:16px}
+*{box-sizing:border-box}body{margin:0}header{background:#12253a;color:white;padding:16px 20px}
+header h1{margin:0;font-size:1.15rem}header p{margin:7px 0 0;color:#dae4ee}
+main{max-width:900px;margin:auto;padding:14px;display:grid;gap:12px}
+.panel{background:white;border:1px solid #dbe2e8;border-radius:12px;padding:15px}
+label{display:block;font-weight:600;margin:10px 0 5px}
+input[type="text"],select,textarea,input[type="file"]{width:100%;border:1px solid #9cacbc;border-radius:7px;padding:10px;font-size:1rem;background:white;color:#172230}
+input[type="checkbox"]{width:20px;height:20px;vertical-align:middle;margin:0 7px 0 0}
+.checkboxline{display:flex;align-items:flex-start;font-weight:500;gap:3px}
+button{border:0;border-radius:8px;padding:11px 14px;background:#154f87;color:white;font-weight:650;cursor:pointer;font-size:.96rem}
+button[disabled]{opacity:.4;cursor:not-allowed}.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button.secondary{background:#e7eff6;color:#163c64}
+footer{padding:16px;color:#4b5a69;text-align:center}
+#photo{display:block;max-width:100%;max-height:520px;min-height:100px;object-fit:contain;margin:12px auto;background:#ecf1f5}
+details{color:#3d5369}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}.muted{color:#536779;font-size:.87rem}
+#message{font-weight:600;min-height:22px}#counter{font-weight:650}
+.held{background:#fff2e2;border:1px solid #e5c487;border-radius:8px;padding:8px;font-size:.88rem}
+@media(max-width:480px){.row{grid-template-columns:1fr}.panel{padding:12px}main{padding:9px}header{padding:13px}}
+</style>
+</head>
+<body>
+<header><h1>Closet Current — Independent human photo annotation</h1>
+<p>Research HOLD · offline files only · no model suggestions, previous labels or peer answers</p></header>
+<main>
+<section class="panel" id="setup">
+ <label for="packetFile">Import an unlabelled reviewer packet (A, B or adjudicator C)</label>
+ <input id="packetFile" type="file" accept="application/json,.json">
+ <label for="reviewerId">Your reviewer identifier (3–80 letters, numbers, . _ -)</label>
+ <input id="reviewerId" type="text" autocomplete="off" placeholder="e.g. external-reviewer-01" maxlength="80">
+ <label class="checkboxline" for="independence"><input id="independence" type="checkbox">I personally inspect the photographs without looking at the previous labels, model predictions or another reviewer's answers.</label>
+ <p class="held">Reviewer identity and independence are self-attested in this offline export. The software does not verify who the reviewer is. An actual independent human and a separate process audit remain necessary.</p>
+</section>
+<section class="panel" id="review" hidden>
+ <div id="counter" aria-live="polite"></div>
+ <p class="muted" id="identity"></p>
+ <img id="photo" alt="Original clothing photograph for independent visual review">
+ <p id="photoError" class="muted" role="status"></p>
+ <label for="uncertain"><input id="uncertain" type="checkbox">Cannot determine / ambiguous / outside supported closet taxonomy</label>
+ <div id="fields">
+  <div class="row">
+   <div><label for="category">Your observed category</label><select id="category"></select></div>
+   <div><label for="itemType">Your observed specific clothing type</label><select id="itemType"></select></div>
+  </div>
+  <div class="row">
+   <div><label for="primaryColor">Your observed PRIMARY color</label><select id="primaryColor"></select></div>
+   <div><label for="secondaryColor">Your observed SECONDARY color (optional)</label><select id="secondaryColor"></select></div>
+  </div>
+ </div>
+ <label for="notes">Notes / reason if uncertain</label><textarea id="notes" rows="2" maxlength="600" placeholder="Describe any ambiguity, difficult color or uncertainty"></textarea>
+ <div class="buttons">
+  <button id="previous" class="secondary" type="button">Previous photograph</button>
+  <button id="save" type="button">Record my independent review</button>
+  <button id="next" class="secondary" type="button">Next photograph</button>
+ </div>
+ <p id="message" role="status" aria-live="polite"></p>
+</section>
+<section class="panel" id="exportPanel" hidden>
+ <p id="progress" aria-live="polite"></p>
+ <button id="export" type="button">Export my reviews as JSON</button>
+ <p class="muted">Partial exports are allowed and explicitly marked incomplete. Do not send this file to another reviewer before both have finished. No image files are embedded or uploaded.</p>
+</section>
+</main>
+<footer>Review is not an automated prediction, cryptographic signature or permission to release the app.</footer>
+<script>
+'use strict';
+(() => {
+ const $=id=>document.getElementById(id);
+ const taxonomy=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
+ let packet=null,index=0,rows=new Map();
+ let photoLoaded=false;
+ const idRegex=/^[A-Za-z0-9._-]{3,80}$/;
+ function options(node,values,first='-- Select --'){
+  node.replaceChildren();
+  let none=document.createElement('option');none.value='';none.textContent=first;node.append(none);
+  for(const v of values){const o=document.createElement('option');o.value=v;o.textContent=v;node.append(o);}
+ }
+ function warn(message){$('message').textContent=message;}
+ function refreshType(){
+  const category=$('category').value;
+  if(category==='Uncategorized'){options($('itemType'),['Unknown']);$('itemType').value='Unknown';return;}
+  options($('itemType'),packet?.taxonomy?.[category]||[]);
+ }
+ function render(){
+  if(!packet)return;
+  const item=packet.items[index];
+  const row=rows.get(item.id);
+  photoLoaded=false;
+  $('photoError').textContent='Local original-photo preview; never uploaded.';
+  $('photo').src='../../benchmark/fixtures/'+encodeURIComponent(item.image);
+  $('counter').textContent='Photograph '+(index+1)+' / '+packet.total+' · Reviewer '+packet.role;
+  $('identity').textContent='Source identity '+item.id+' · SHA-256 '+item.sourceSHA256.slice(0,16)+'…';
+  $('uncertain').checked=row?.uncertain===true;
+  $('category').value=row?.category||'';
+  refreshType();
+  $('itemType').value=row?.itemType||'';
+  $('primaryColor').value=row?.primaryColor||'';
+  $('secondaryColor').value=row?.secondaryColor||'';
+  $('notes').value=row?.uncertain?row.uncertaintyReason:(row?.notes||'');
+  $('fields').hidden=$('uncertain').checked;
+  $('previous').disabled=index===0;$('next').disabled=index===packet.total-1;
+  warn(row?'Previously recorded here. You may review and replace your own answer.':'Not yet reviewed.');
+  progress();
+ }
+ function progress(){
+  if(!packet)return;
+  const uncertain=[...rows.values()].filter(x=>x.uncertain).length;
+  $('progress').textContent=rows.size+' / '+packet.total+' source photographs reviewed ('+uncertain+
+   ' marked uncertain). This does not mean independent agreement or scientific approval.';
+ }
+ $('photo').onload=()=>{photoLoaded=$('photo').naturalWidth>0;$('photoError').textContent=photoLoaded?'Original JPEG preview loaded locally.':'';};
+ $('photo').onerror=()=>{photoLoaded=false;$('photoError').textContent='Original JPEG cannot be loaded. Do not record a label. Check packet and local fixture paths.';};
+ $('category').onchange=()=>{refreshType();if($('category').value==='Uncategorized'){$('primaryColor').value='';$('secondaryColor').value='';}};
+ $('uncertain').onchange=()=>{$('fields').hidden=$('uncertain').checked;};
+ $('packetFile').onchange=async()=>{
+  packet=null;rows=new Map();$('review').hidden=true;$('exportPanel').hidden=true;
+  try{
+   const file=$('packetFile').files?.[0];if(!file)return;
+   const parsed=JSON.parse(await file.text());
+   if(parsed.schema!=='closet-current-blind-packet-61/v1'||
+      !['A','B','C'].includes(parsed.role)||typeof parsed.packetId!=='string'||
+      !Array.isArray(parsed.items)||!parsed.items.length||parsed.total!==parsed.items.length||
+      !parsed.taxonomy||!Array.isArray(parsed.colors))throw Error('Not a valid blind review packet');
+   const ids=new Set();
+   for(const i of parsed.items){
+    if(!/^[a-zA-Z0-9._-]{1,90}$/.test(i.id)||!/^[a-zA-Z0-9._-]+\.jpg$/i.test(i.image)||
+       !/^[a-f0-9]{64}$/.test(i.sourceSHA256)||ids.has(i.id))
+     throw Error('Invalid/duplicate source identity in packet');
+    ids.add(i.id);
+   }
+   // Packet hashes and source image hashes are verified by the independent
+   // Node audit on export. This browser makes no remote requests.
+   packet=parsed;index=0;
+   options($('category'),['Uncategorized',...taxonomy]);
+   options($('primaryColor'),packet.colors);
+   options($('secondaryColor'),packet.colors,'None / not applicable');
+   $('review').hidden=false;$('exportPanel').hidden=false;render();
+  }catch(e){$('photoError').textContent=e.message;alert('Packet rejected: '+e.message);}
+ };
+ $('previous').onclick=()=>{if(index>0){index--;render();}};
+ $('next').onclick=()=>{if(packet&&index<packet.items.length-1){index++;render();}};
+ $('save').onclick=()=>{
+  if(!packet)return;
+  if(!photoLoaded){warn('Cannot review: original photo has not loaded.');return;}
+  const reviewerId=$('reviewerId').value.trim();
+  if(!idRegex.test(reviewerId)||!$('independence').checked){
+   warn('Enter your reviewer ID and confirm your own independent visual review first.');return;
+  }
+  const item=packet.items[index],uncertain=$('uncertain').checked;
+  const category=uncertain?null:$('category').value,
+   itemType=uncertain?null:$('itemType').value,
+   primaryColor=uncertain?null:($('primaryColor').value||null),
+   secondaryColor=uncertain?null:($('secondaryColor').value||null);
+  const reason=$('notes').value.trim();
+  if(uncertain){if(reason.length<8){warn('Explain ambiguity / out-of-scope classification in at least 8 characters.');return;}}
+  else if(category==='Uncategorized'){
+   if(itemType!=='Unknown'||primaryColor!==null||secondaryColor!==null){
+    warn('Not clothing must use Unknown subtype and no clothing color.');return;
+   }
+  }else if(!packet.taxonomy[category]?.includes(itemType)||!packet.colors.includes(primaryColor)||
+     secondaryColor!==null&&(!packet.colors.includes(secondaryColor)||secondaryColor===primaryColor)){
+   warn('Please choose a supported category, specific type and primary color. Secondary must differ.');return;
+  }
+  const existing=[...rows.values()];
+  if(existing.length&&existing.some(r=>r.reviewerId!==reviewerId)){
+   warn('This packet already contains a different reviewer identity; do not combine people in one export.');return;
+  }
+  rows.set(item.id,{id:item.id,sourceSHA256:item.sourceSHA256,reviewerId,
+   independent:true,method:'direct-human-visual-review',
+   reviewedAt:new Date().toISOString(),category,itemType,primaryColor,secondaryColor,
+   uncertain,uncertaintyReason:uncertain?reason:null,notes:uncertain?null:reason});
+  warn('Your observation recorded locally. No data was transmitted.');progress();
+ };
+ $('export').onclick=()=>{
+  if(!packet)return;
+  const reviewerId=$('reviewerId').value.trim();
+  if(!idRegex.test(reviewerId)||!$('independence').checked){warn('Reviewer identity and independence attestation required.');return;}
+  if(!rows.size){warn('No photographs reviewed.');return;}
+  if([...rows.values()].some(x=>x.reviewerId!==reviewerId)){
+   warn('Reviewer ID changed; original observations require the same reviewer identity.');return;
+  }
+  const exp={schema:'closet-current-human-review-61/v1',packetId:packet.packetId,
+    role:packet.role,reviewerId,independent:true,method:'direct-human-visual-review',
+    completed:rows.size,total:packet.total,incomplete:rows.size!==packet.total,
+    identityVerification:'SELF_ATTESTED_NOT_INDEPENDENTLY_VERIFIED',
+    modelPredictionsViewed:false,reviewerPeerAnswersViewed:false,
+    rows:packet.items.filter(x=>rows.has(x.id)).map(x=>rows.get(x.id))};
+  const blob=new Blob([JSON.stringify(exp,null,2)+'\n'],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='Closet-Current-Reviewer-'+packet.role+'-'+reviewerId+'.json';
+  document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  warn('Review JSON exported locally. '+(exp.incomplete?'This is a PARTIAL review.':'All photographs have a recorded response.'));
+ };
+})();
+</script>
+</body>
+</html>
