@@ -293,6 +293,10 @@ try{
   }));
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
 
+  if(detector57){
+   assert.ok((await page.evaluate(()=>window.__detector57Audit?.requests))>=2,
+    'Original source and duplicate reimport both issued native detector worker requests');
+  }
   const byCategory=Object.fromEntries(rows.map(x=>[x.category,x.id]));
   // INTEGRATION-12: same real native owner source and wardrobe drive Style.
   // Three photographed garments make exactly ONE genuine pinned look, never
@@ -470,10 +474,6 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  if(detector57){
-   assert.ok((await page.evaluate(()=>window.__detector57Audit?.requests))>=2,
-    'Original source and duplicate reimport both issued real native worker requests');
-  }
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
