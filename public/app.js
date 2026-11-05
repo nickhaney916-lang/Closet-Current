@@ -321,7 +321,7 @@ function render(){
   // LABELSYNC66 is an isolated opt-in research correction. Exact owner
   // source and CAS checks remain authoritative; only previously generated
   // titles can follow an explicit category/type/color correction.
-  if(new URLSearchParams(location.search).get('correctedName66')==='research'&&
+  if(typeof location!=='undefined'&&new URLSearchParams(location.search).get('correctedName66')==='research'&&
      expectedSavedRow.sourcePieceKey){
    const {syncOwnerGarmentName66}=await import('../research/corrected-name-index-66/owner-label-sync.mjs');
    updated.name=syncOwnerGarmentName66(before,updated).name;
