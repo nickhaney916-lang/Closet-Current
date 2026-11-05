@@ -24,7 +24,8 @@ const cancel74=process.env.CANCEL74==='1';
 const remove76=process.env.REMOVE76==='1';
 const color77=process.env.COLOR77==='1';
 const snapshot78=process.env.SNAPSHOT78==='1';
-const mixed80=process.env.MIXED80==='1';
+const cameraMixed84=process.env.CAMERAMIXED84==='1';
+const mixed80=process.env.MIXED80==='1'||cameraMixed84;
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -42,7 +43,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(mixed80?'benchmark/mixed-saved-new-clothes-80':snapshot78?'benchmark/allowlisted-review-snapshot-78':color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(cameraMixed84?'benchmark/outfit-camera-mixed-save-84':mixed80?'benchmark/mixed-saved-new-clothes-80':snapshot78?'benchmark/allowlisted-review-snapshot-78':color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -207,8 +208,31 @@ try{
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status().active&&window.multi24Research?.active===true&&window.closetIndex02?.state()?.ready===true,null,{timeout:45000});
   await page.evaluate(()=>switchView('scan'));
   await page.locator('#captureOutfit').click();
-  await page.locator('#outfitUpload').setInputFiles({name:'Shirt_and_tie_jeans_and_Converse.jpg',mimeType:'image/jpeg',buffer:bytes});
+  if(cameraMixed84){
+   const nativeCameraInput=page.locator('#outfitCamera');
+   assert.equal(await nativeCameraInput.getAttribute('capture'),'environment',
+    'The real native whole-outfit camera input must request the rear camera');
+   assert.match(await nativeCameraInput.getAttribute('accept'),/image\//);
+   assert.equal(await nativeCameraInput.isVisible(),true);
+  }
+  await page.locator(cameraMixed84?'#outfitCamera':'#outfitUpload').setInputFiles({
+   name:'Shirt_and_tie_jeans_and_Converse.jpg',mimeType:'image/jpeg',buffer:bytes});
   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
+  if(cameraMixed84){
+   const native=await page.evaluate(async()=>{
+    const original=document.querySelector('#multi24Research .multi24-source')?.src;
+    const raw=Uint8Array.from(atob(original.split(',')[1]),x=>x.charCodeAt(0));
+    const digest=await crypto.subtle.digest('SHA-256',raw);
+    return {originalSHA256:[...new Uint8Array(digest)].map(b=>b.toString(16).padStart(2,'0')).join(''),
+     pickerCleared:document.getElementById('outfitCamera').value==='',
+     owner:window.multi24Research.debug().owner,
+     sourceSHA256:window.multi24Research.debug().sourceSHA256};
+   });
+   assert.equal(native.originalSHA256,sourceHash,'Native outfit picker must preserve ORIGINAL photo bytes, not a recompressed crop');
+   assert.equal(native.sourceSHA256,sourceHash,'Native outfit picker must preserve source SHA evidence');
+   assert.equal(native.pickerCleared,true,'Native outfit camera input must clear to allow repeat selection');
+   assert.equal(native.owner,'multi24-A','Verified source must enter the currently signed owner review');
+  }
   await page.locator('#multi24Research .multi24-source').scrollIntoViewIfNeeded();
   await shot(page,width,'01-original-source',engine);
   await fullShot(page,width,'01-original-source-all',engine);
@@ -714,6 +738,24 @@ try{
     crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
    }));
    assert.equal(before.pieces.filter(x=>x.confirmed).length,3);
+   if(cameraMixed84){
+    // A canceled native camera picker dispatches no change event. This is
+    // event-level cancellation coverage; physical phone OS is NOT tested.
+    await page.locator('#outfitCamera').dispatchEvent('cancel');
+    const afterCancel=await page.evaluate(()=>({
+     original:document.querySelector('#multi24Research .multi24-source')?.src,
+     source:window.multi24Research.debug().sourceSHA256,
+     pieces:window.multi24Research.debug().pieces,
+     crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+    }));
+    assert.deepEqual(afterCancel,before,'Canceling native outfit-camera input must retain original photo, crops and confirmations');
+    const count=await page.evaluate(()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items').objectStore('items').count();
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+    }));
+    assert.equal(count,1,'Native outfit picker cancellation must not write pending garments');
+    await fullShot(page,width,'02x-native-outfit-camera-cancel-preserves-reviewed-crops-all',engine);
+   }
    await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
    // An in-app dialog works reliably AFTER asynchronous IndexedDB lookup,
    // unlike window.confirm() suppressed without mobile user activation.
@@ -845,7 +887,7 @@ try{
   }
   // Real UI reimport: the same JPEG and the same hand-reviewed garment
   // must not silently generate a duplicate record or partially save again.
-  await page.locator('#outfitUpload').setInputFiles({
+  await page.locator(cameraMixed84?'#outfitCamera':'#outfitUpload').setInputFiles({
    name:'same-exact-licensed-photo.jpg',mimeType:'image/jpeg',buffer:bytes
   });
   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
@@ -1217,6 +1259,7 @@ try{
    unknownColorConfirmBlocked77:color77,
     reviewSnapshotSanitized78:snapshot78,
     mixedPreviouslySavedAndNew80:mixed80,
+    nativeOutfitCameraToMixedSave84:cameraMixed84,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
