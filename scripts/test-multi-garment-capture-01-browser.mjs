@@ -14,10 +14,17 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
+const detector65=process.env.DETECTOR65==='1';
+const detector65Modes={
+ 'chromium/320':'constructor','chromium/390':'post',
+ 'chromium/430':'runtime','webkit/320':'messageerror',
+ 'webkit/390':'timeout','webkit/430':'manualstop'
+};
 const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
-if(detector57&&recognition42)throw Error('DETECTOR57 and RECOGNITION42 are separate independent model and native UI evaluations');
-const root=resolve('.'),dir=resolve(detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
+if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
+const root=resolve('.'),dir=resolve(detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -140,6 +147,14 @@ try{
    return route.abort(); // unlisted model URL cannot bypass privacy routing.
   });
   const page=await context.newPage();
+  const failureMode65=detector65?detector65Modes[engine+'/'+width]:null;
+  if(detector65){
+   // Fault messages are synthetic ONLY. Actual original licensed JPEG,
+   // owner-private IDB, crop editor, style and backup are genuine.
+   await page.addInitScript({content:'window.__DETECTOR65_MODE='+JSON.stringify(failureMode65)+';'});
+   await page.addInitScript({content:await readFile(
+    'research/detector-recovery-65/failure-worker-fixture.js','utf8')});
+  }
   if(detector57){
    if(detector58)await page.addInitScript({content:'window.__DETECTOR58=true;'});
    // Only untrusted detector worker replies are replayed. Genuine source
@@ -171,6 +186,32 @@ try{
   await page.locator('#multi24Research .multi24-source').scrollIntoViewIfNeeded();
   await shot(page,width,'01-original-source',engine);
   await fullShot(page,width,'01-original-source-all',engine);
+  if(detector65){
+   const stopAI=page.getByRole('button',{name:'Stop AI; keep manual review'});
+   if(failureMode65==='manualstop'){
+    await stopAI.waitFor({state:'visible'});
+    await stopAI.click();
+   }else{
+    await page.waitForFunction(()=>{
+     const status=document.querySelector('#multi24Status')?.textContent||'';
+     return /Local detection (could not start|worker failed|returned an unreadable message)|Local segmentation timed out/.test(status);
+    },null,{timeout:30000});
+   }
+   assert.match(await page.locator('#multi24Status').innerText(),
+    /verified original photo.*Nothing was automatically saved/);
+   assert.equal(await page.locator('#multi24Research .multi24-source').isVisible(),true);
+   assert.equal(await page.getByRole('button',{name:'Add missed piece'}).isEnabled(),true);
+   assert.equal(await stopAI.isDisabled(),true);
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
+   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),0);
+   const countBefore=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const req=db.transaction('items').objectStore('items').count();
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   }));
+   assert.equal(countBefore,0,'Failed worker must not save an unreviewed crop');
+   assert.equal(await page.evaluate(()=>window.multi24Research?.debug().sourceSHA256),sourceHash);
+   await fullShot(page,width,'01b-worker-failed-manual-ready-all',engine);
+  }
   if(detector57){
    const first=page.locator('#multi24Grid .multi24-card').first();
    await first.waitFor({timeout:30000});
@@ -492,7 +533,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
@@ -504,7 +545,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log((detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
+ console.log((detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
