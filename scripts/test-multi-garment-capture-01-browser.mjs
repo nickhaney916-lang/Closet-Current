@@ -15,6 +15,9 @@ import sharp from 'sharp';
 import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
 const name66=process.env.NAME66==='1';
+const near67=process.env.NEARDUP67==='1';
+if(near67&&(name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'))
+ throw Error('NEARDUP67 native manual crop regression is a distinct source-identity acceptance mode');
 if(name66&&recognition42)throw Error('NAME66 label consistency tests must not run AI inference');
 const detector65=process.env.DETECTOR65==='1';
 const detector65Modes={
@@ -26,7 +29,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -339,7 +342,29 @@ try{
    }
    assert.equal(await unreviewed.getAttribute('data-crop-reviewed55'),'unreviewed');
   }else await page.getByRole('button',{name:'Add missed piece'}).click();
+  // NEARDUP67: genuine crop-editor accessibility action after the first
+  // ordinary crop. Native ArrowRight on the top-left handle changes LEFT
+  // by exactly 0.01 normalized units while preserving right/bottom;
+  // with the observed ~0.61-wide shirt crop its IoU remains >0.98.
+  // This creates a reliably DIFFERENT rounded manual key at every viewport;
+  // subpixel pointer drags can round to the same key on phones.
   await realCrop(page,0,cases[0]);
+  if(near67){
+   const firstCard=page.locator('#multi24Grid .multi24-card').first();
+   await firstCard.getByRole('button',{name:'Adjust crop/mask'}).click();
+   const dialog=page.locator('dialog.photo-crop-editor');
+   await dialog.waitFor({state:'visible'});
+   const corner=dialog.locator('.crop-handle.nw');
+   await corner.focus();
+   await corner.press('ArrowRight');
+   await dialog.getByRole('button',{name:'Save crop'}).click();
+   await dialog.waitFor({state:'hidden'});
+   const current=await page.evaluate(()=>window.multi24Research.debug().pieces[0].instanceKey);
+   const saved=rows.find(row=>row.category==='Tops').sourcePieceKey;
+   assert.notEqual(sourceHash+'/'+current,saved,
+    'Native crop-adjustment must produce a DIFFERENT rounded key for NEARDUP67');
+   await fullShot(page,width,'03b-manual-same-shirt-shifted-crop-all',engine);
+  }
   const dup=page.locator('#multi24Grid .multi24-card').first();
   await dup.getByLabel('Main category').selectOption('Tops');
   await dup.getByLabel('Specific type').selectOption('Button-down shirt');
@@ -347,7 +372,9 @@ try{
   await dup.getByLabel('I confirm this visible garment, category and color').check();
   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('Save rejected'),null,{timeout:30000});
-  assert.match(await page.locator('#multi24Status').innerText(),/duplicate/i);
+  assert.match(await page.locator('#multi24Status').innerText(),
+   near67?/near-duplicate/i:/duplicate/i,
+   'Changed crop key must still be recognized as the same human-confirmed original garment');
   const afterDuplicateCount=await page.evaluate(()=>new Promise((resolve,reject)=>{
    const q=db.transaction('items').objectStore('items').count();
    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
@@ -607,6 +634,7 @@ try{
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
+   nearDuplicateCropKeyRejected67:near67,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
@@ -619,7 +647,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log((name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
+ console.log((near67?'NEARDUP67 SHIFTED MANUAL CROP SAME SOURCE PRIVATE DUPLICATE REJECTED BROWSER PASS: ':name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));

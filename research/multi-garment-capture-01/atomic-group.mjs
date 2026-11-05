@@ -4,6 +4,7 @@
  * No independent wardrobe, cloud endpoint, inference service or 3D assertion.
  */
 import {verifyStoredCanonical,jpegBytes,digestBytes} from '../capture-proof-01/source-proof.mjs';
+import {nearDuplicateSourceRegions67} from './source-near-duplicate-67.mjs';
 export const COMMIT43_TYPES=Object.freeze({
  Tops:Object.freeze(['T-shirt','Blouse','Button-down shirt','Polo','Tank top','Sweater','Sweatshirt','Hoodie','Tunic','Other']),
  Bottoms:Object.freeze(['Jeans','Trousers','Leggings','Shorts','Skirt','Joggers','Other']),
@@ -253,6 +254,11 @@ export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner
  if(new Set(records.map(x=>x.id)).size!==records.length||
     new Set(records.map(x=>x.sourcePieceKey)).size!==records.length)
   fail('duplicate records inside one batch');
+ // NEARDUP67: same photo/manual near-identical crops are not two items just
+ // because their 0.001-rounded keys differ. Preserve genuinely distinct
+ // source regions, subtypes and colors.
+ if(records.some((row,i)=>nearDuplicateSourceRegions67(records.slice(0,i),[row]).length))
+  fail('near-duplicate human-reviewed garment regions in this source; adjust distinct crops');
  return new Promise((resolve,reject)=>{
   let completed=false;
   const transaction=db.transaction('items','readwrite'),store=transaction.objectStore('items');
@@ -267,6 +273,11 @@ export async function atomicSaveGarments24({db,proof,pieces,ownerId,currentOwner
     const existingIds=new Set(existing.map(x=>x.id));
     if(records.some(x=>existingIds.has(x.id))||duplicatePieceKeys24(existing,records).length)
      fail('duplicate original garment detected; no pieces saved');
+    // The authoritative duplicate check belongs inside the SAME owner
+    // readwrite IndexedDB transaction. Another tab or reimport with a
+    // slightly different manual crop must not create a duplicate.
+    if(nearDuplicateSourceRegions67(existing,records).length)
+     fail('near-duplicate original garment detected in the same reviewed photo; adjust crop for truly different garments; no pieces saved');
     for(const record of records)store.add(record);
    }catch(error){try{transaction.abort();}catch{};reject(error);}
   };
