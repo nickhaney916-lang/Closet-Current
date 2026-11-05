@@ -127,7 +127,7 @@ export function mountMultiGarmentCapture24({
  }
  let classification42;
  function cancelClassification42(){classification42?.controller.abort();classification42=null;}
- function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;closeMixedConsent80?.();job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;}
+ function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;closeMixedConsent80?.();}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
  // Terminate the detector and revoke its session identity BEFORE first async
