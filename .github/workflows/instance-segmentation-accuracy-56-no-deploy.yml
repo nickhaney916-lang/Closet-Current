@@ -41,8 +41,10 @@ jobs:
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 onnxruntime-web@1.23.2
           python -m pip install --disable-pip-version-check onnxruntime==1.23.2 numpy==2.2.6 Pillow==11.3.0
-      - name: Install Chromium and WebKit browser binaries
-        run: npx playwright install chromium webkit
+      - name: Install WebKit system dependencies and Chromium/WebKit browser binaries
+        run: |
+          npx playwright install-deps webkit
+          npx playwright install chromium webkit
       - name: Build application and run inherited Node regression suite
         run: |
           node scripts/build.mjs
