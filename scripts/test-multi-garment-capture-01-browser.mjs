@@ -12,6 +12,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
+import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
 const root=resolve('.'),dir=resolve(recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
@@ -45,7 +46,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port,auth='https://hlkgymugtfbirlpunsra.supabase.co';
-const diagnostics={modelRequestFailures:[],source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
+const diagnostics={modelRequestTrace52:{blocked:[],responses:[]},modelRequestFailures:[],source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
 let browser;
 async function shot(page,width,stage,engine='chromium'){
  const png=await page.screenshot({animations:'disabled',fullPage:false});
@@ -126,21 +127,26 @@ try{
    if(u===origin+'/public/cloud-backup.js')return route.fulfill({status:200,contentType:'text/javascript',body:'window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};'});
    if(u.startsWith(origin+'/')||u.startsWith('data:')||u.startsWith('blob:'+origin))return route.continue();
    if(u.startsWith(auth+'/auth/v1/'))return authHTTP(route);
-   if(recognition42&&request.method()==='GET'){
-    const asset=new URL(u);
-    if(asset.hostname==='cdn.jsdelivr.net'&&asset.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/')||
-       asset.hostname==='huggingface.co'&&asset.pathname.startsWith('/ff13/fashion-clip/resolve/0f99955d944c39bfd9d035a02ac273c7a44a406b/')||
-       (/^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(asset.hostname)||
-        asset.hostname==='us.aws.cdn.hf.co'&&asset.pathname.startsWith('/xet-bridge-us/')))return route.continue();
-   }
+   if(recognition42&&allowedFashionClipAsset52(request))return route.continue();
+   // MODEL52: preserve only method, host and pathname, never query tokens,
+   // request bodies, owner identity or base64 photo content.
+   const source=new URL(u);
+   if(recognition42&&['huggingface.co','cdn.jsdelivr.net','us.aws.cdn.hf.co'].includes(source.hostname))
+    diagnostics.modelRequestTrace52.blocked.push({engine,width,method:request.method(),host:source.hostname,path:source.pathname});
    if(request.method()!=='GET')diagnostics.unexpectedUploads.push({width,method:request.method(),url:u});
-   return route.abort(); // model not available: prove human-reviewed fallback.
+   return route.abort(); // unlisted model URL cannot bypass privacy routing.
   });
   const page=await context.newPage();
   context.on('requestfailed',request=>{
    const host=new URL(request.url()).hostname;
    if(recognition42&&['cdn.jsdelivr.net','huggingface.co','us.aws.cdn.hf.co'].includes(host))
-    diagnostics.modelRequestFailures.push({engine,width,host,reason:request.failure()?.errorText});
+    diagnostics.modelRequestFailures.push({engine,width,method:request.method(),
+     host,path:new URL(request.url()).pathname,reason:request.failure()?.errorText});
+  });
+  context.on('response',response=>{
+   const request=response.request(),u=new URL(request.url());
+   if(recognition42&&['huggingface.co','cdn.jsdelivr.net','us.aws.cdn.hf.co'].includes(u.hostname))
+    diagnostics.modelRequestTrace52.responses.push({engine,width,method:request.method(),host:u.hostname,path:u.pathname,status:response.status()});
   });
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
   const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';

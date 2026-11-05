@@ -1,0 +1,70 @@
+name: MODEL52 actual mobile browser FashionCLIP asset cold load NO DEPLOY
+on:
+  push:
+    branches:
+      - research/model-asset-reliability-52-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'scripts/probe-real-model-assets-52.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'scripts/audit-model-asset-reliability-52.mjs'
+      - 'tests/model-asset-reliability-52.test.mjs'
+      - 'research/model-asset-reliability-52/**'
+      - '.github/workflows/model-asset-reliability-52-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-photo-actual-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict SNAPSHOT51 successful parent and no deployment or other app changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 17d9b859252b08a763cb452804f08c717ae141cc HEAD
+          git diff --name-only 17d9b859252b08a763cb452804f08c717ae141cc HEAD > /tmp/model52-files
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/probe-real-model-assets-52.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-model-asset-reliability-52.mjs|tests/model-asset-reliability-52.test.mjs|research/model-asset-reliability-52/*|.github/workflows/model-asset-reliability-52-no-deploy.yml) ;;
+              *) echo "BLOCKED production, staging, model weights or unrelated code: $path"; exit 1 ;;
+            esac
+          done < /tmp/model52-files
+      - name: Install pinned test-only packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Run inherited full Node regression plus MODEL52 network-origin safety tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Build release-shaped research app only
+        run: |
+          node --check scripts/probe-real-model-assets-52.mjs
+          node --check scripts/audit-model-asset-reliability-52.mjs
+          node --check scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/build.mjs
+      - name: Probe actual original JPEG through local FashionCLIP worker Chromium and WebKit
+        run: node scripts/probe-real-model-assets-52.mjs
+      - name: Run actual six Chromium/WebKit private mobile review and local model original/crop flows
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Audit actual source SHA, model worker features, full UI, private save, backup and screenshot SHA
+        run: node scripts/audit-model-asset-reliability-52.mjs
+      - name: Archive model-load and origin/HTTP path evidence without photographs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MODEL52-actual-worker-network-trace-HOLD
+          path: |
+            benchmark/model-asset-reliability-52/
+            benchmark/recognition-to-closet-42/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
