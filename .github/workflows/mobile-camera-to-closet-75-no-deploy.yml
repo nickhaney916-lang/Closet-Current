@@ -1,0 +1,79 @@
+name: MOBILE-CAMERA-TO-CLOSET-INTEGRATION-75 NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'public/index.html'
+      - 'public/photo-import.js'
+      - 'research/capture-proof-01/source-proof.mjs'
+      - 'research/mobile-camera-to-closet-integration-75/**'
+      - 'tests/capture-proof-01.test.mjs'
+      - 'tests/photo-import.test.cjs'
+      - 'scripts/test-camera-to-closet-75-browser.mjs'
+      - 'benchmark/camera-to-closet-75/**'
+      - '.github/workflows/mobile-camera-to-closet-75-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  integrated-camera-to-private-closet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Pin Priority 74 base and enforce exact changed-file scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor f51d4f82c456a2e1442417a8330f024b14d6c344 HEAD
+          git diff --name-only f51d4f82c456a2e1442417a8330f024b14d6c344 HEAD | while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/index.html|public/photo-import.js|research/capture-proof-01/source-proof.mjs|research/mobile-camera-to-closet-integration-75/*|tests/capture-proof-01.test.mjs|tests/photo-import.test.cjs|scripts/test-camera-to-closet-75-browser.mjs|benchmark/camera-to-closet-75/*|.github/workflows/mobile-camera-to-closet-75-no-deploy.yml) ;;
+              *) echo "MOBILE-CAMERA-TO-CLOSET-75 unauthorized path: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build, syntax and complete Node regression suite
+        run: |
+          node --check public/app.js
+          node --check public/photo-import.js
+          node --check public/photo-import.js
+          node --check research/capture-proof-01/source-proof.mjs
+          node --check tests/capture-proof-01.test.mjs
+          node --check scripts/test-camera-to-closet-75-browser.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real-page Chromium and WebKit mobile-width integration
+        run: node scripts/test-camera-to-closet-75-browser.mjs
+      - name: Assert source, viewport, screenshot and no-deploy evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/camera-to-closet-75/results.json','utf8'));
+          const s=JSON.parse(readFileSync('benchmark/camera-to-closet-75/screenshots-manifest.json','utf8'));
+          assert.equal(r.verdict,'PASS');
+          assert.deepEqual(r.results.map(x=>x.engine+':'+x.width),['chromium:320','chromium:390','chromium:430','webkit:320','webkit:390','webkit:430']);
+          assert.ok(r.results.every(x=>x.singleCameraOriginalBytesPreserved&&x.nativePickerCancelKeepsReview&&!x.actualPhysicalPhone));
+          assert.equal(r.sourcePhoto.sha256,'fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667');
+          assert.equal(r.physicalAndroidTested,false); assert.equal(r.physicalIphoneTested,false);
+          assert.equal(r.productionDeployed,false); assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(s.count,72); assert.equal(s.screenshots.length,72);
+          assert.ok(s.screenshots.every(x=>/^[0-9a-f]{64}$/.test(x.sha256)&&x.bytes>0&&x.width>0&&x.height>0&&x.entropy>0));
+          console.log('Six mobile browser runs and 66 image audits; physical phone acceptance unclaimed; NO DEPLOY');
+          NODE
+      - name: Upload screenshot evidence and machine-readable results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MOBILE-CAMERA-TO-CLOSET-INTEGRATION-75-NO-DEPLOY-HOLD
+          path: benchmark/camera-to-closet-75/
+          if-no-files-found: warn

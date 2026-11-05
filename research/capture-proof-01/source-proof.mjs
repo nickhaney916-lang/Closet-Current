@@ -22,6 +22,22 @@ function decodeBase64(text){
 }
 function validJPEG(bytes){return bytes.length>=4&&bytes[0]===255&&bytes[1]===216&&
  bytes.at(-2)===255&&bytes.at(-1)===217;}
+/** Byte-signature media identification. Extensions and picker MIME are hints only. */
+export function sniffPhotoMime(bytes){
+ if(!(bytes instanceof Uint8Array)||bytes.length<12)return null;
+ const ascii=(a,b)=>String.fromCharCode(...bytes.subarray(a,b));
+ if(validJPEG(bytes))return 'image/jpeg';
+ if(bytes.length>=8&&bytes[0]===137&&ascii(1,4)==='PNG'&&bytes[4]===13&&bytes[5]===10&&bytes[6]===26&&bytes[7]===10)return 'image/png';
+ if(ascii(0,6)==='GIF87a'||ascii(0,6)==='GIF89a')return 'image/gif';
+ if(ascii(0,4)==='RIFF'&&ascii(8,12)==='WEBP')return 'image/webp';
+ if(ascii(4,8)==='ftyp'){
+  const brand=ascii(8,12),brands=new Set([brand,...(ascii(16,Math.min(bytes.length,64)).match(/.{4}/g)||[])]);
+  if(['avif','avis'].some(x=>brands.has(x)))return 'image/avif';
+  if(['heic','heix','hevc','hevx','heim','heis','hevm','hevs'].some(x=>brands.has(x)))return 'image/heic';
+  if(['mif1','msf1'].some(x=>brands.has(x)))return 'image/heif';
+ }
+ return null;
+}
 export function jpegBytes(dataUrl){
  const m=typeof dataUrl==='string'&&dataUrl.match(JPEG);
  assert(m,'canonical original must be JPEG data');
@@ -39,11 +55,11 @@ function pixelDimensions(w,h){
   w*h<=MAX_PIXELS,'invalid image dimensions');
 }
 function makeProof({image,sha256,width,height,origin,originalFileSha256,
-  originalFileType,originalFileBytes,transformed,orientation,orientationConversion}){
+  originalFileType,originalFileBytes,transformed,orientation,orientationConversion,fileTypeMismatch}){
  return Object.freeze({
   image,originalPhoto:Object.freeze({image,sha256,width,height,
    origin,originalFileSha256:originalFileSha256||sha256,
-   originalFileType:originalFileType||'image/jpeg',
+   originalFileType:originalFileType||'image/jpeg',fileTypeMismatch:!!fileTypeMismatch,
    originalFileBytes:originalFileBytes??null,
    transformed:!!transformed,orientation:orientation??1,
    orientationConversion:orientationConversion||'none'}),
@@ -111,11 +127,13 @@ export async function importCanonicalPhoto(file,{
  const bytes=new Uint8Array(await file.arrayBuffer());
  assert(bytes.length===file.size,'imported file changed during read');
  const originalFileSha256=await digestBytes(bytes,cryptoProvider);
- const declaredType=(file.type||'').toLowerCase();
- const recognizedJPEG=validJPEG(bytes);
- // Never trust file extension as proof of JPEG type.
+ const declaredType=(file.type||'').toLowerCase().trim();
+ const sniffedType=sniffPhotoMime(bytes),recognizedJPEG=sniffedType==='image/jpeg';
  if(declaredType==='image/jpeg'&&!recognizedJPEG)throw Error('CAPTURE-PROOF-01 false JPEG MIME');
- const blob=new Blob([bytes],{type:declaredType||'application/octet-stream'});
+ assert(sniffedType,'unsupported or unrecognized image signature');
+ const normalizedDeclared=declaredType==='image/jpg'?'image/jpeg':declaredType;
+ if(normalizedDeclared&&normalizedDeclared!==sniffedType)throw Error('CAPTURE-PROOF-01 file type contradicts image bytes');
+ const blob=new Blob([bytes],{type:sniffedType});
  const image=await decode(blob);
  const width=image.naturalWidth||image.width,height=image.naturalHeight||image.height;
  pixelDimensions(width,height);
@@ -123,11 +141,11 @@ export async function importCanonicalPhoto(file,{
   const dataUrl='data:image/jpeg;base64,'+b64(bytes);
   const orientation=jpegOrientation(bytes);
   return makeProof({image:dataUrl,sha256:originalFileSha256,width,height,origin:'import',
-   originalFileSha256,originalFileType:declaredType||'image/jpeg',
+   originalFileSha256,originalFileType:sniffedType,
    originalFileBytes:bytes.length,transformed:false,orientation:orientation||'unknown',
    orientationConversion:orientation&&orientation!==1?'browser-exif-display-only':'none'});
  }
- assert(declaredType.startsWith('image/'),'unsupported image format');
+ assert(sniffedType.startsWith('image/'),'unsupported image format');
  const canvas=makeCanvas();canvas.width=width;canvas.height=height;
  const ctx=canvas.getContext('2d');
  assert(ctx,'image conversion unavailable');
@@ -136,7 +154,8 @@ export async function importCanonicalPhoto(file,{
  const converted=canvas.toDataURL('image/jpeg',.94);
  const jpeg=jpegBytes(converted),sha256=await digestBytes(jpeg,cryptoProvider);
  return makeProof({image:converted,sha256,width,height,origin:'import',
-  originalFileSha256,originalFileType:declaredType,originalFileBytes:bytes.length,
+  originalFileSha256,originalFileType:sniffedType,
+  fileTypeMismatch:!!declaredType&&normalizedDeclared!==sniffedType,originalFileBytes:bytes.length,
   transformed:true,orientation:'browser-decoded',
   orientationConversion:'browser-decoded-to-jpeg'});
 }
