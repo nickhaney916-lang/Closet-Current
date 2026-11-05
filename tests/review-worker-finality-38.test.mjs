@@ -12,7 +12,16 @@ test('same owner with a new source uses fresh monotonic review epoch, never shar
  assert.match(app,/function currentLoading\(epoch,owner\)/);
  assert.match(app,/renderVersion===epoch&&getOwner\(\)===owner/);
  assert.match(app,/if\(!currentLoading\(epoch,owner\)\)return;/);
- assert.match(app,/if\(currentLoading\(epoch,owner\)\)reset\(/);
+ // SOURCE70 strengthens the same-owner epoch contract: a bad staged replacement
+ // may NOT reset or revoke the prior source. The old assertion required a
+ // destructive error reset, which is now a user-work-loss regression.
+ assert.match(app,/if\(state\)\{\s*if\(!currentLoading\(epoch,owner\)\)return;/);
+ assert.match(app,/if\(pending\(\)\)status\.textContent='Could not verify selected replacement photo:/);
+ const sourceStart=app.indexOf('async function startFile(file)');
+ const sourceBody=app.slice(sourceStart,app.indexOf('async function commit()',sourceStart));
+ assert.ok(sourceBody.indexOf('const proof=await makeProof(file,owner)')<
+  sourceBody.indexOf('revoke();canceled=false;'));
+ assert.doesNotMatch(sourceBody.slice(sourceBody.lastIndexOf('}catch(error)')),/reset\(/);
  assert.match(app,/const view=state,epoch=renderVersion/);
 });
 test('stale editor save requires the EXACT source epoch, source object and selected crop membership',()=>{
