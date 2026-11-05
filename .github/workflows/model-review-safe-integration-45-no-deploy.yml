@@ -1,0 +1,129 @@
+name: MODEL45 source-verified FashionCLIP to private closet + safe category color memory NO DEPLOY
+on:
+  push:
+    branches:
+      - research/model-review-safe-integration-45-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'public/outfit-capture.js'
+      - 'research/multi-garment-capture-01/**'
+      - 'research/model-review-safe-integration-45/**'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'tests/recognition-review-42.test.mjs'
+      - 'tests/model-review-safe-integration-45.test.mjs'
+      - '.github/workflows/model-review-safe-integration-45-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actual-fashionclip-private-closet-and-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact verified priority44 parent, source-only opt-in integration allowlist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor ea99a7508728c8041d7faba25c29b4452792c070 HEAD
+          git diff --name-only ea99a7508728c8041d7faba25c29b4452792c070 HEAD > /tmp/model45-changes
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/outfit-capture.js|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/recognition-review-42.mjs|research/multi-garment-capture-01/recognition-review-42.md|research/model-review-safe-integration-45/*|tests/recognition-review-42.test.mjs|tests/model-review-safe-integration-45.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|.github/workflows/model-review-safe-integration-45-no-deploy.yml) ;;
+              *) echo "BLOCKED: out of scope model/owner/cloud/staging/deployment/other project $path"; exit 1 ;;
+            esac
+          done < /tmp/model45-changes
+      - name: Pin browser engine dependencies with no package modifications
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Complete app build plus inherited node and true source owner/category/model tests
+        run: |
+          node --check public/app.js
+          node --check public/outfit-capture.js
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check research/multi-garment-capture-01/atomic-group.mjs
+          node --check scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Original owner source epoch real Chromium and WebKit
+        run: node scripts/verify-review-source-epoch-34.mjs
+      - name: Immutable owner reviewed-save receipt real Chromium and WebKit
+        run: node scripts/verify-review-save-finality-34.mjs
+      - name: No late segmentation worker mutation after Save real Chromium and WebKit
+        run: node scripts/verify-review-worker-finality-38.mjs
+      - name: Original JPEG human color source authority real Chromium and WebKit
+        run: node scripts/verify-color-provenance-integration-41.mjs
+      - name: Final garment category/subtype persistence and atomic rejection real browsers
+        run: node scripts/verify-category-subtype-commit-43.mjs
+      - name: Confirmed private saved clothing learning real native editor and owner IndexedDB
+        run: node scripts/verify-confirmed-edit-memory-44.mjs
+      - name: GENUINE pinned FashionCLIP ORIGINAL JPEG + reviewed crop to native private closet and outfits
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independent real original model browser evidence + screenshot and attribution audit
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          const directory='benchmark/recognition-to-closet-42/';
+          const r=JSON.parse(await readFile(directory+'acceptance.json','utf8'));
+          assert.equal(r.source.sha256,'e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff');
+          assert.equal(r.source.sourceHashPinned,true);
+          assert.equal(r.source.license,'https://creativecommons.org/licenses/by-sa/2.0/');
+          assert.equal(r.cases.length,6);
+          assert.deepEqual(r.unexpectedUploads,[]);
+          assert.deepEqual(r.errors,[]);
+          let examined=0;
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const result=r.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(result,'Missing engine / viewport '+engine+' '+width);
+            assert.equal(result.sourceSHA256,r.source.sha256);
+            assert.equal(result.reopenedUserColorClear,true);
+            assert.equal(result.ownerPrivate,true);
+            assert.equal(result.outfitSaved,true);
+            assert.equal(result.reimportDuplicateBlocked,true);
+            assert.equal(result.v4Backup,true);
+            assert.equal(result.v4Restore,true);
+            assert.equal(result.recognitionEvidence?.source,'local-fashionclip');
+            assert.equal(result.recognitionEvidence.sourcePieceKey.slice(0,64),r.source.sha256);
+            assert.equal(result.recognitionEvidence.status!==undefined,true);
+            assert.equal(result.shirtEvidence?.source==='archived fixture commons-0003', engine==='chromium'&&width===390);
+          }
+          assert.ok(r.screenshots.length>=36,'genuine result and UI screenshots missing');
+          for(const screenshot of r.screenshots){
+            const image=await readFile(directory+screenshot.file);
+            const meta=await sharp(image).metadata(),stats=await sharp(image).stats();
+            assert.equal(createHash('sha256').update(image).digest('hex'),screenshot.sha256);
+            assert.equal(meta.format,'png');
+            assert.equal(meta.width,screenshot.width);
+            assert.ok(image.length>4000&&meta.height>=400);
+            assert.ok(stats.channels.some(x=>x.stdev>6));
+            examined++;
+          }
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const contact=await readFile(directory+'contact-'+engine+'-'+width+'.png');
+            const m=await sharp(contact).metadata(),stats=await sharp(contact).stats();
+            assert.equal(m.format,'png');assert.ok(m.width>=width*2&&m.height===920);
+            assert.ok(stats.channels.some(x=>x.stdev>6));
+          }
+          console.log('MODEL45 genuine FashionCLIP, licensed original+reviewed crop/private owner IndexedDB: 6/6; '+examined+' screenshot SHA audits; 6 contacts nonblank; no automatic accuracy certification');
+          EONODE
+      - name: Archive only licensed fixture screenshots and sanitized research acceptance
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MODEL45-source-verified-FashionCLIP-private-index-HOLD
+          path: |
+            benchmark/recognition-to-closet-42/acceptance.json
+            benchmark/recognition-to-closet-42/*.png
+          if-no-files-found: warn
+          retention-days: 21
