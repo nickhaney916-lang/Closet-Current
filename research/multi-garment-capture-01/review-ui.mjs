@@ -374,16 +374,20 @@ export function mountMultiGarmentCapture24({
   if(submitting){status.textContent='Finish the current save first.';return;}
   const owner=getOwner(),epoch=renderVersion;
   if(!owner){reset('Sign in before extracting garments.');return;}
-  // SOURCE70: do not revoke an already human-reviewed photo for an empty or
-  // oversized selection, even when the user previously approved a switch.
+  // RACE71: even an unusable newer file is a selection attempt. Advance
+  // the attempt epoch BEFORE the size/type eligibility gate: otherwise a
+  // previous valid JPEG still hashing/decoding can finish late, prompt to
+  // discard human-reviewed crops, and replace the photo the user kept.
+  // This does not revoke the existing original or its reviewed garments.
+  const selection=++selectionEpoch70,priorEpoch=epoch;
+  // SOURCE70: an empty/oversized file cannot discard existing review.
+  // A rejected selection nevertheless supersedes any older in-flight proof.
   if(!validReplacementFile70(file)){
    status.textContent='Selected photo is missing or outside the 128-byte to 10 MB capture limit. Your existing original photo and manually reviewed garments remain unchanged.';
    return;
   }
-  // Each selection attempt has an independent epoch. A late proof or decode
-  // from a previous file cannot replace a newer selection or resurrect a
-  // private photo after owner logout / security-mandated revoke().
-  const selection=++selectionEpoch70,priorEpoch=epoch;
+  // Monotonic epoch and exact owner/review identity prevent an older source
+  // from reappearing after another selection, logout or session reset.
   const pending=()=>sourcePreflightStillCurrent70({
     selection,currentSelection:selectionEpoch70,
     reviewEpoch:priorEpoch,currentReviewEpoch:renderVersion,
