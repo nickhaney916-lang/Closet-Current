@@ -14,9 +14,10 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
-const detector57=process.env.DETECTOR57==='1';
+const detector58=process.env.DETECTOR58==='1';
+const detector57=process.env.DETECTOR57==='1'||detector58;
 if(detector57&&recognition42)throw Error('DETECTOR57 and RECOGNITION42 are separate independent model and native UI evaluations');
-const root=resolve('.'),dir=resolve(detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -140,6 +141,7 @@ try{
   });
   const page=await context.newPage();
   if(detector57){
+   if(detector58)await page.addInitScript({content:'window.__DETECTOR58=true;'});
    // Only untrusted detector worker replies are replayed. Genuine source
    // JPEG, native crop editor, owner DB, save, style and restore are real.
    await page.addInitScript({content:await readFile(
@@ -172,7 +174,13 @@ try{
   if(detector57){
    const first=page.locator('#multi24Grid .multi24-card').first();
    await first.waitFor({timeout:30000});
-   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('1 unverified region'),null,{timeout:30000});
+   if(detector58){
+    await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('12 unverified regions')&&document.getElementById('multi24Status')?.textContent.includes('988 extra'),null,{timeout:45000});
+    assert.equal(await page.locator('#multi24Grid .multi24-card').count(),12,
+     '1000 detector messages must not make more than 12 automatic JPEG regions or DOM cards');
+    await fullShot(page,width,'01b-flood-bounded-12-all',engine);
+    for(let i=0;i<11;i++)await page.locator('#multi24Grid .multi24-card').last().getByRole('button',{name:'Remove detection'}).click();
+   }else await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('1 unverified region'),null,{timeout:30000});
    assert.equal(await page.locator('#multi24Grid .multi24-card').count(),1);
    assert.equal(await first.getAttribute('data-crop-reviewed55'),'unreviewed');
    assert.equal(await first.locator('[data-crop-review55="required"]').count(),1);
@@ -276,6 +284,11 @@ try{
   if(detector57){
    const unreviewed=page.locator('#multi24Grid .multi24-card').first();
    await unreviewed.waitFor({timeout:30000});
+   if(detector58){
+    await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('988 extra'),null,{timeout:45000});
+    assert.equal(await page.locator('#multi24Grid .multi24-card').count(),12);
+    for(let i=0;i<11;i++)await page.locator('#multi24Grid .multi24-card').last().getByRole('button',{name:'Remove detection'}).click();
+   }
    assert.equal(await unreviewed.getAttribute('data-crop-reviewed55'),'unreviewed');
   }else await page.getByRole('button',{name:'Add missed piece'}).click();
   await realCrop(page,0,cases[0]);
@@ -474,7 +487,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
@@ -486,7 +499,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log((detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
+ console.log((detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));

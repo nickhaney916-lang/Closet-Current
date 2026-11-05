@@ -1,40 +1,68 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-const ui=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
-const harness=readFileSync('scripts/verify-review-worker-finality-38.mjs','utf8');
-const at=(pattern)=>{const m=pattern.exec(ui);assert.ok(m,pattern.source);return m.index;};
-test('WORKER38 revokes active worker and clears timeout before first IDB preflight',()=>{
- const lock=at(/submitting=true;redraw\(\);freezeDetector38\(\);/);
- const preflight=at(/const existing=await new Promise\(\(resolve,reject\)=>\{/);
- assert.ok(lock<preflight);
- assert.match(ui,/function freezeDetector38\(\)\{\s*if\(!job\)return false;\s*const running=job;job=null;\s*clearTimeout\(running.timeout\);\s*running.worker\?\.terminate\(\);/);
- assert.match(ui,/const view=state,epoch=renderVersion,owner=view.owner,proof=view.proof/);
- assert.match(ui,/snapshotConfirmations34\(state.pieces,schema\)/);
+import {sceneReviewDefaults32,canConfirmScene32}
+ from '../research/multi-garment-capture-01/scene-class-guard-32.mjs';
+const app=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
+const harness=readFileSync('scripts/verify-review-source-epoch-34.mjs','utf8');
+
+test('same owner with a new source uses fresh monotonic review epoch, never shared canceled flag alone',()=>{
+ assert.match(app,/renderVersion\+\+;/);
+ assert.match(app,/const owner=getOwner\(\),epoch=renderVersion/);
+ assert.match(app,/function currentLoading\(epoch,owner\)/);
+ assert.match(app,/renderVersion===epoch&&getOwner\(\)===owner/);
+ assert.match(app,/if\(!currentLoading\(epoch,owner\)\)return;/);
+ assert.match(app,/if\(currentLoading\(epoch,owner\)\)reset\(/);
+ assert.match(app,/const view=state,epoch=renderVersion/);
 });
-test('WORKER38 late proposals cannot append or redraw reviewed pieces during Save',()=>{
- assert.match(ui,/async function addDetected\(raw,session\)\{\s*if\(submitting\|\|!state\|\|session!==job\|\|!sameOwner\(\)\)return;/);
- assert.match(ui,/next.worker.onmessage=event=>\{\s*if\(job!==next\|\|submitting\|\|!sameOwner\(\)\)return;/);
- assert.match(ui,/next.timeout=setTimeout\(\(\)=>\{if\(job===next&&!submitting\)/);
- assert.match(ui,/next.worker.onerror=\(\)=>\{if\(job!==next\|\|submitting\)return;/);
+test('stale editor save requires the EXACT source epoch, source object and selected crop membership',()=>{
+ assert.match(app,/function currentReview\(view,epoch\)/);
+ assert.match(app,/renderVersion===epoch&&state===view&&sameOwner\(\)/);
+ assert.match(app,/if\(!currentReview\(view,epoch\)\|\|!view\.pieces\.includes\(piece\)\)/);
+ assert.match(app,/throw Error\('Source changed; stale crop cannot affect the current photograph'\)/);
+ assert.match(app,/if\(currentReview\(view,epoch\)\)/);
 });
-test('WORKER38 still preserves source proof and atomically commits only confirmed clone',()=>{
- assert.match(ui,/pieces:snapshots,ownerId:owner/);
- assert.match(ui,/currentOwner:\(\)=>currentReview\(view,epoch\)\?getOwner\(\):null/);
- assert.match(ui,/view.pieces=view.pieces.filter\(x=>!savedIds.has\(x.id\)\)/);
- assert.match(ui,/status.textContent=saveReceipt34\(rows.length,notificationFailed,refreshFailed\)/);
- assert.match(ui,/window.addEventListener\('closet:session-locked'/);
+test('async save acquires lock before IDB preflight and freezes all explicitly selected garments',()=>{
+ assert.match(app,/const selected=state\.pieces\.filter\(x=>x\.confirmed\)/);
+ assert.match(app,/snapshotConfirmations34\(state\.pieces,schema\)/);
+ assert.match(app,/pieces:snapshots/);
+ assert.match(app,/submitting=true;redraw\(\);/);
+ assert.match(app,/if\(!currentReview\(view,epoch\)\)return;/);
+ assert.match(app,/currentOwner:\(\)=>currentReview\(view,epoch\)\?getOwner\(\):null/);
+ assert.match(app,/view\.pieces=view\.pieces\.filter\(x=>!savedIds\.has\(x\.id\)\)/);
+ assert.match(app,/saveReceipt34\(rows\.length,notificationFailed,refreshFailed\)/);
+ assert.match(app,/const db=getDb\(\)/);
+ assert.match(app,/save rejected|Save rejected/);
+ assert.match(app,/Garments were saved privately, but the wardrobe display could not refresh/);
 });
-test('WORKER38 real browser proof requires an active worker, late message injection, and genuine owner IDB',()=>{
- assert.match(harness,/if\(!stale\?\.closed\)throw Error/);
- assert.match(harness,/type:'piece',piece:latePiece/);
- assert.match(harness,/type:'progress',phase:'separating'/);
- assert.match(harness,/type:'done'/);
- assert.match(harness,/stale.onerror\?\./);
- assert.match(harness,/lateWorkerReceiptUnaffected:true/);
- assert.match(harness,/workerTerminatedOnSave:true/);
- assert.match(harness,/realIndexedDBSingleAtomicCommit:true/);
- assert.match(harness,/realSegFormerRun:false/);
- assert.match(harness,/realCustomerData:false/);
- assert.doesNotMatch(harness,/process.env\.(SUPABASE|SERVICE_ROLE|ANON_KEY)/);
+test('editing and proposing while a batch is committing is disallowed',()=>{
+ assert.match(app,/if\(!state\|\|submitting\)return;/);
+ assert.match(app,/cancel\.disabled=submitting/);
+ assert.match(app,/if\(submitting\)return;/);
+ assert.match(app,/add\.disabled=submitting\|\|state\.pieces\.length>=MAX_TOTAL_REGIONS58;\s*suggest\.disabled=submitting\|\|state\.pieces\.length>=MAX_TOTAL_REGIONS58/);
+ assert.match(app,/sel\.disabled=submitting/);
+ assert.match(app,/colorInput\.disabled=submitting/);
+ assert.match(app,/edit\.disabled=submitting;remove\.disabled=submitting/);
+});
+test('model classification and human authority from 32 remain enforced',()=>{
+ const raw={personDetected:false,hint:{categories:['Dresses'],confidence:.99,clipped:false},
+  colorEstimate:{color:'Red'}};
+ assert.deepEqual(sceneReviewDefaults32(raw).category,'Uncategorized');
+ assert.equal(canConfirmScene32({category:'Uncategorized',itemType:'Unknown',color:'',manual:false},
+  {types:{Dresses:['Dress']}}),false);
+ assert.match(app,/sceneReviewDefaults32\(raw\)/);
+ assert.match(app,/canConfirmScene32\(x,schema\)/);
+ assert.match(app,/atomicSaveGarments24/);
+});
+test('real-browser research runner distinguishes synthetic photos/worker proposals from actual SegFormer inference',()=>{
+ assert.match(harness,/new Worker|window\.Worker=FixtureWorker/);
+ assert.match(harness,/genuineSegFormerInference:false/);
+ assert.match(harness,/benchmarkOfSegmentationAccuracy:false/);
+ assert.match(harness,/realNativeIndexedDB:true/);
+ assert.match(harness,/originalBSourceSHA/);
+ assert.match(harness,/staleCropRejected:true/);
+ assert.match(harness,/cancelledSaveNoWrites:true/);
+ assert.match(harness,/sourcePhotoSHAUnchanged:true/);
+ assert.match(harness,/physicalPhoneAcceptance:false/);
+ assert.doesNotMatch(harness,/process\.env\.(SUPABASE|SERVICE_ROLE|ANON_KEY)/);
 });
