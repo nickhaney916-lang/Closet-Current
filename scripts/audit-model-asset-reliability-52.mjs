@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
+import {modelAssetFamily52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const base='benchmark/model-asset-reliability-52/';
 const probe=JSON.parse(await readFile(base+'probe.json','utf8'));
 const dir='benchmark/recognition-to-closet-42/';
@@ -53,13 +54,26 @@ for(const record of [...app.modelRequestTrace52.blocked,...app.modelRequestFailu
  assert.ok(!/data:image|Bearer|token=|signature=|access_token/i.test(record.path));
  assert.ok(record.path.length<1024);
 }
+// The inherited full-app test intentionally refuses a *different* optional
+// segmentation worker. Count that as blocked SegFormer QA, never as failed
+// FashionCLIP category/type inference or as a real hosted network outage.
+const blockedSegFormer=app.modelRequestTrace52.blocked.filter(x=>modelAssetFamily52(x)==='optional-segformer');
+const failedSegFormer=app.modelRequestFailures.filter(x=>modelAssetFamily52(x)==='optional-segformer');
+const nonSegformerBlocked=app.modelRequestTrace52.blocked.filter(x=>modelAssetFamily52(x)!=='optional-segformer');
+const nonSegformerFailed=app.modelRequestFailures.filter(x=>modelAssetFamily52(x)!=='optional-segformer');
+assert.deepEqual(nonSegformerBlocked,[],'Unexpected classifier/runtime or unknown model asset blocked');
+assert.deepEqual(nonSegformerFailed,[],'Unexpected classifier/runtime or unknown model asset failure');
+assert.equal(failedSegFormer.length,blockedSegFormer.length);
 const output={
  schema:'model-asset-reliability-52/v1',
  actualFeatureEncoder:{engines:['chromium','webkit'],width:390,featureDimensions:512,
   sourceSHA256:probe.sourceSHA256,realPredictions:probe.cases.map(x=>({engine:x.engine,category:x.topCategory,strong:x.strong,choiceCount:x.choiceCount}))},
  fullReviewSave:{browserCases,engines:['chromium','webkit'],widths:[320,390,430],
   photosSentToExternalServices:0,realScreenshotsSHAudited:audited,
-  realLocalSuggestionEvidenced:true,modelRequestFailures:app.modelRequestFailures.length,
+  realLocalSuggestionEvidenced:true,fashionClipAssetFailures:nonSegformerFailed.length,
+  optionalSegFormerBlockedByQAGate:blockedSegFormer.length,
+  optionalSegFormerIsNotTested:true,
+  modelRequestFailures:app.modelRequestFailures.length,
   browserHarnessBlockedRequests:app.modelRequestTrace52.blocked.length,
   failures:app.modelRequestFailures,blocked:app.modelRequestTrace52.blocked,
   responses:app.modelRequestTrace52.responses},
