@@ -555,7 +555,7 @@ export function mountMultiGarmentCapture24({
   if(!selected.length)return status.textContent='Select at least one reviewed garment.';
   let references,snapshots;
   try{
-   ({references,snapshots}=snapshotConfirmations34(state.pieces,schema));
+   ({references,snapshots}=snapshotConfirmations34(state.pieces,schema,proof));
    // Preserve original explicit human-confirmation and manual crop-review guard.
    if(snapshots.some(x=>!canConfirmScene32(x,schema)||x.cropReviewed!==true||
        !validCrop24(x.cropBounds)))
