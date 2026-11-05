@@ -1,0 +1,240 @@
+{
+  "assignment": "INSTANCE-SEGMENTATION-ACCURACY-56",
+  "modelRevision": "670bd8b4a9a94c687c85df0b1376497c40a3759b",
+  "modelSha256": "485bc106721febbd82fe24297e12a9fb49a435a552afff1e6b76308716555f76",
+  "mode": "actual ONNX Runtime Web WASM inference on SHA-recorded public benchmark fixture JPEG bytes; some fixtures are resized derivatives; read-only harness; no closet saves",
+  "browsers": {
+    "chromium": {
+      "coldModelLoadMs": 1017.7000000001863,
+      "photos": [
+        {
+          "photo": "commons-0021",
+          "sourceSha256": "04c0ca5bed1bee26e83be98b9a992619b0777811a7fb8a99fe955939334bbd8c",
+          "dimensions": [
+            564,
+            628
+          ],
+          "proposalCount": 5,
+          "proposals": [
+            {
+              "classId": 7,
+              "className": "trousers",
+              "confidence": 0.9637888669967651,
+              "box": [
+                119.68450927734375,
+                49.90446472167969,
+                277.1825256347656,
+                398.59246826171875
+              ],
+              "maskPixels": 0,
+              "maskSha256": "6886a87ad33eb2b022540e68eba9f4ccfd1ca13612193260ba98279701b25823"
+            },
+            {
+              "classId": 7,
+              "className": "trousers",
+              "confidence": 0.9493985772132874,
+              "box": [
+                119.89668273925781,
+                49.58393859863281,
+                217.62364196777344,
+                396.90972900390625
+              ],
+              "maskPixels": 1137,
+              "maskSha256": "65d158d87a38e0e8749084e7ca06f598c76a542ccceb32d81c0f5fc8f3814d26"
+            },
+            {
+              "classId": 7,
+              "className": "trousers",
+              "confidence": 0.8960078358650208,
+              "box": [
+                211.8294677734375,
+                49.18324279785156,
+                276.8375244140625,
+                390.51605224609375
+              ],
+              "maskPixels": 1121,
+              "maskSha256": "3e76d59bb31ae2e2eead945b78b0bb5dca42da336dcc6e30ac04f87577cc8118"
+            },
+            {
+              "classId": 7,
+              "className": "trousers",
+              "confidence": 0.8864235281944275,
+              "box": [
+                211.85765075683594,
+                50.473968505859375,
+                276.88616943359375,
+                390.6473388671875
+              ],
+              "maskPixels": 1135,
+              "maskSha256": "7c48072b5363750295a9fb88b44dd2dc6d92f39963d613eaca9775575e9df19d"
+            },
+            {
+              "classId": 0,
+              "className": "short_sleeve_top",
+              "confidence": 0.7682892084121704,
+              "box": [
+                155.99868774414062,
+                -0.03076171875,
+                271.2095031738281,
+                59.05158996582031
+              ],
+              "maskPixels": 395,
+              "maskSha256": "7c96e70fd79868dd094a750ec550d22b36142db3b93dda6fd98d5666c401a9ba"
+            }
+          ],
+          "coldLoadMs": 1017.7000000001863,
+          "inferenceMs": 561.7000000001863
+        },
+        {
+          "photo": "commons-0033",
+          "sourceSha256": "7e31adee6fabca386faabd8ca6f0f1f4d93291f74cb84a6ab10cb4bd724cd2f7",
+          "dimensions": [
+            1920,
+            2400
+          ],
+          "proposalCount": 6,
+          "proposals": [
+            {
+              "classId": 1,
+              "className": "long_sleeve_top",
+              "confidence": 0.9483188390731812,
+              "box": [
+                102.39085388183594,
+                0.20154571533203125,
+                286.16802978515625,
+                162.12643432617188
+              ],
+              "maskPixels": 714,
+              "maskSha256": "3573b4bb2f28dbfcc5aa2754e21dc95502b18ea4e20532462437c588725af840"
+            },
+            {
+              "classId": 6,
+              "className": "shorts",
+              "confidence": 0.9412814378738403,
+              "box": [
+                107.81878662109375,
+                102.11140441894531,
+                256.86126708984375,
+                253.5626678466797
+              ],
+              "maskPixels": 0,
+              "maskSha256": "6886a87ad33eb2b022540e68eba9f4ccfd1ca13612193260ba98279701b25823"
+            },
+            {
+              "classId": 6,
+              "className": "shorts",
+              "confidence": 0.9202059507369995,
+              "box": [
+                108.00505065917969,
+                101.75003814697266,
+                195.8988037109375,
+                244.75765991210938
+              ],
+              "maskPixels": 600,
+              "maskSha256": "f80d18377c623d0db5057ca7e2561800d6239c62ad3f00ecb6aa31e4a0b6cabd"
+            },
+            {
+              "classId": 6,
+              "className": "shorts",
+              "confidence": 0.8948396444320679,
+              "box": [
+                190.7602996826172,
+                108.94183349609375,
+                256.7923889160156,
+                253.7987518310547
+              ],
+              "maskPixels": 525,
+              "maskSha256": "93c3eed4cfebedf1c8f89d443e324bf185fcad6863728b2c9820683d60bf6e24"
+            },
+            {
+              "classId": 1,
+              "className": "long_sleeve_top",
+              "confidence": 0.8378737568855286,
+              "box": [
+                102.03350830078125,
+                -0.24826812744140625,
+                143.714111328125,
+                82.31664276123047
+              ],
+              "maskPixels": 76,
+              "maskSha256": "acf776988dca890c40590cb52d6e0a415c39a4d711c08280a6c11f779bbd5240"
+            },
+            {
+              "classId": 1,
+              "className": "long_sleeve_top",
+              "confidence": 0.8333711624145508,
+              "box": [
+                244.78326416015625,
+                -0.9345016479492188,
+                286.6824645996094,
+                92.2376708984375
+              ],
+              "maskPixels": 106,
+              "maskSha256": "6e8aa3fdaf7792cc9ca9c4f65475204e47c71209995e7e4453701f241c6f70cb"
+            }
+          ],
+          "coldLoadMs": 1017.7000000001863,
+          "inferenceMs": 207.89999999990687
+        },
+        {
+          "photo": "commons-0080",
+          "sourceSha256": "4675887ee36dbaeb894faf1e0879b05473f39fb555024424d52fcdce37d35bb9",
+          "dimensions": [
+            1920,
+            1280
+          ],
+          "proposalCount": 1,
+          "proposals": [
+            {
+              "classId": 7,
+              "className": "trousers",
+              "confidence": 0.6128044128417969,
+              "box": [
+                104.4011001586914,
+                145.69381713867188,
+                315.5887451171875,
+                243.78236389160156
+              ],
+              "maskPixels": 204,
+              "maskSha256": "4682b8ead49a8741990008ff7ab54f546a7d3caf2cf9318bdffe5f8a8438e9bc"
+            }
+          ],
+          "coldLoadMs": 1017.7000000001863,
+          "inferenceMs": 249
+        }
+      ],
+      "screenshots": [
+        {
+          "engine": "chromium",
+          "width": 320,
+          "height": 1910,
+          "file": "chromium-320.png",
+          "bytes": 402290,
+          "sha256": "ec20d8349beb20455a41172fc7e98897eeda6a7def061ad68469e89998672495"
+        },
+        {
+          "engine": "chromium",
+          "width": 390,
+          "height": 1987,
+          "file": "chromium-390.png",
+          "bytes": 549179,
+          "sha256": "067e006e29d8100b57fecf437a2bd43a40e1a18c7bf614a0ee3b5e01461b7f91"
+        },
+        {
+          "engine": "chromium",
+          "width": 430,
+          "height": 2079,
+          "file": "chromium-430.png",
+          "bytes": 639664,
+          "sha256": "6410883d6cd648dc04a376fba298878eded9bc1c21ef75b7f712baacfcbc2ebb"
+        }
+      ],
+      "errors": [],
+      "outsideRequests": []
+    }
+  },
+  "physicalDeviceTest": false,
+  "privateClosetFlow": false,
+  "accountIsolation": false,
+  "backupRestore": false
+}
