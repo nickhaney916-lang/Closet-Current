@@ -16,6 +16,9 @@ import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/
 const recognition42=process.env.RECOGNITION42==='1';
 const name66=process.env.NAME66==='1';
 const near67=process.env.NEARDUP67==='1';
+const switch68=process.env.SWITCH68==='1';
+if(switch68&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
+ throw Error('SWITCH68 must use isolated genuine photo and human review browser acceptance');
 if(near67&&(name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'))
  throw Error('NEARDUP67 native manual crop regression is a distinct source-identity acceptance mode');
 if(name66&&recognition42)throw Error('NAME66 label consistency tests must not run AI inference');
@@ -29,7 +32,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -50,6 +53,14 @@ const fetchOriginal=async()=>{
 const bytes=await fetchOriginal(),expectedHash='e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff';
 const sourceHash=sha(bytes);
 if(expectedHash)assert.equal(sourceHash,expectedHash,'Licensed original changed; reject stale source lock');
+const replacementBytes=switch68?await readFile('benchmark/fixtures/commons-0046.jpg'):null;
+const replacementHash=switch68?sha(replacementBytes):null;
+if(switch68){
+ assert.equal(replacementHash,'7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead');
+ assert.notEqual(replacementHash,sourceHash);
+ const meta=await sharp(replacementBytes).metadata();
+ assert.equal(meta.format,'jpeg');assert.ok(meta.width>200&&meta.height>200);
+}
 const types={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html','.css':'text/css','.json':'application/json','.bin':'application/octet-stream','.jpg':'image/jpeg','.png':'image/png','.glb':'model/gltf-binary'};
 const server=createServer(async(req,res)=>{
  try{
@@ -291,6 +302,42 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
+  if(switch68){
+   // A genuinely distinct, separately licensed original JPEG is selected
+   // while all three human-corrected garments are still only in memory.
+   // Dismiss the real browser confirm and verify every photo byte/crop/label
+   // remains selected with no implicit save.
+   const before=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src),
+    original:document.querySelector('#multi24Research .multi24-source')?.src
+   }));
+   assert.equal(before.pieces.length,3);
+   assert.ok(before.pieces.every(x=>x.confirmed));
+   let cancelPrompt='';
+   page.once('dialog',async dialog=>{cancelPrompt=dialog.message();await dialog.dismiss();});
+   await page.locator('#outfitUpload').setInputFiles({
+    name:'replacement-commons-0046.jpg',mimeType:'image/jpeg',buffer:replacementBytes
+   });
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes('Photo switch canceled'));
+   assert.match(cancelPrompt,/Discard that review.*Choose Cancel/);
+   const retained=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src),
+    original:document.querySelector('#multi24Research .multi24-source')?.src
+   }));
+   assert.deepEqual(retained,before,
+    'Dismissed switch retains immutable JPEG SHA, three genuine crops and all confirmed type/color choices');
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+   const none=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').count();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   }));
+   assert.equal(none,0,'Cancel switch must neither auto-save nor destroy review');
+   await fullShot(page,width,'02a-cancel-switch-preserves-three-reviewed-crops-all',engine);
+  }
   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('3 separately confirmed garments'),null,{timeout:45000});
   const rows=await page.evaluate(()=>new Promise((resolve,reject)=>{
@@ -380,6 +427,35 @@ try{
    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
   }));
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
+  if(switch68){
+   // After a legitimate duplicate-save rejection the old source still has
+   // exactly one manually confirmed crop. Approving an explicit switch must
+   // revoke that UNSAVED crop, never the three already committed garments.
+   const prior=await page.evaluate(()=>window.multi24Research.debug());
+   assert.equal(prior.sourceSHA256,sourceHash);
+   assert.equal(prior.pieces.length,1);
+   assert.equal(prior.pieces[0].confirmed,true);
+   let approvePrompt='';
+   page.once('dialog',async dialog=>{approvePrompt=dialog.message();await dialog.accept();});
+   await page.locator('#outfitUpload').setInputFiles({
+    name:'replacement-commons-0046.jpg',mimeType:'image/jpeg',buffer:replacementBytes
+   });
+   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,replacementHash,{timeout:30000});
+   assert.match(approvePrompt,/Discard that review.*Choose Cancel/);
+   const switched=await page.evaluate(()=>window.multi24Research.debug());
+   assert.equal(switched.sourceSHA256,replacementHash);
+   assert.ok(switched.pieces.every(p=>p.confirmed===false),
+    'Accepted switch cannot carry a previous image confirmed item into new photo');
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
+   const retained=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').getAll();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   }));
+   assert.equal(retained.length,3);
+   assert.ok(retained.every(x=>x.sourceSHA256===sourceHash&&x.ownerId==='multi24-A'),
+    'Committed owner-private closet remains intact after explicit unsaved switch');
+   await fullShot(page,width,'03b-approved-switch-clears-unsaved-keeps-private-closet-all',engine);
+  }
 
   if(detector57){
    assert.ok((await page.evaluate(()=>window.__detector57Audit?.requests))>=2,
@@ -635,6 +711,7 @@ try{
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
    nearDuplicateCropKeyRejected67:near67,
+   uncommittedPhotoSwitchProtected68:switch68,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
@@ -647,7 +724,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log((near67?'NEARDUP67 SHIFTED MANUAL CROP SAME SOURCE PRIVATE DUPLICATE REJECTED BROWSER PASS: ':name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
+ console.log((switch68?'SWITCH68 GENUINE PHOTO CANCEL/ACCEPT + OWNER PRIVATE V4 BROWSER PASS: ':near67?'NEARDUP67 SHIFTED MANUAL CROP SAME SOURCE PRIVATE DUPLICATE REJECTED BROWSER PASS: ':name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
