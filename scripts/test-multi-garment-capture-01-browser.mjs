@@ -352,8 +352,9 @@ try{
     if(actualCategory!=='Tops'||actualType!=='Button-down shirt'||actualColor!=='White')
      throw Error('Native human shirt fields unexpected');
     if(snapped.name!==undefined||snapped.arbitraryNonCloneable!==undefined||
-      snapped.hugeBinaryMetadata!==undefined||snapped.hint.privateToken!==undefined||
-      snapped.hint.noncloneable!==undefined||
+      snapped.hugeBinaryMetadata!==undefined||snapped.hint?.privateToken!==undefined||
+      snapped.hint?.noncloneable!==undefined||
+      snapped.hint!==null||
       snapped.recognitionSuggestion42.secretUncloneable!==undefined)
      throw Error('Unexpected untrusted metadata survived pre-clone allowlist');
     if(snapped.image!==crop||snapped.color!==actualColor||snapped.category!==actualCategory||
