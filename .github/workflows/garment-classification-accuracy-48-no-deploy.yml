@@ -46,6 +46,10 @@ jobs:
               *) echo "BLOCKED deployment, model-runtime default, cloud or unrelated file: $p"; exit 1 ;;
             esac
           done </tmp/classification48-paths
+      - name: Install OpenSSL runtime for the pinned research Python
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates libssl3
       - name: Set up pinned research Python with pip for text-embedding regeneration
         uses: actions/setup-python@v5
         with:
