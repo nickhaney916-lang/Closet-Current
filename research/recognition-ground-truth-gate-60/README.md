@@ -5,6 +5,8 @@ Base: exact verified Priority #59 HEAD `7c752116545c7a6a58075b8b174833d39a39f5b7
 
 ## Problem and independent fact check
 
+One historical validation photograph, `validation-0008`, is labeled `Accessories / Scarf` although the current closet taxonomy only supports Tops, Bottoms, Dresses, Outerwear, and Shoes. **It is deliberately retained as out-of-scope provisional evidence and a scientific blocker**, not silently removed or recoded to inflate accuracy.
+
 The historical FashionCLIP classification study [Work #34 PR #607](https://github.com/nickhaney916-lang/Closet-Current/pull/607) was genuinely executed on 59 SHA-pinned licensed JPEGs but its labels were **single-reviewer provisional**, and the frozen locked subset contained only **13 clothing photos and three non-garment controls**. The existing manifests contain **no independently adjudicated primary-color field**. There are no stored independent two-reviewer decisions or resolved color labels to justify scientific claims about camera color accuracy.
 
 The historical pinned baseline raw classification results: **9/13 correct broad category, 4/13 correct subtype, 2/3 non-clothing rejection**. The attempted prompt ensemble regressed to **8/13 category, 3/13 exact subtype, 2/3 negative rejection**. The model benchmark's category `confidence` is not a calibrated verified probability. These are previous recorded provisional counts, **not current inference**, and the 59-photo collection is not representative of family household camera photos. No current verified accuracy percentage for primary or secondary garment color exists. The historical model and the parallel #36 instance segmentation pilot PR #615 remain scientifically NEEDS REWORK and were not integrated.
