@@ -421,6 +421,12 @@ export function mountMultiGarmentCapture24({
     }
    }
    if(!pending())return;
+   // Retain the inherited same-owner, same-source-epoch guard for any
+   // existing active review. First-photo and after-Cancel imports have no
+   // old state, so do not require the previous canceled=false flag.
+   if(state){
+    if(!currentLoading(epoch,owner))return;
+   }
    // The new photo is now verified AND explicitly authorized. This is the
    // sole commit point where the old review is revoked. Previously COMMITTED
    // owner-private wardrobe rows are never touched by a source switch.
