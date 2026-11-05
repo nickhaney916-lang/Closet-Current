@@ -1,0 +1,98 @@
+{
+  "a T-shirt": [
+    "a T-shirt",
+    "a lightweight jersey knit T-shirt with a simple neckline and short sleeves",
+    "a basic knit tee with a straight body and no hood or thick ribbed cuffs",
+    "a casual cotton tee shirt made from thin jersey fabric"
+  ],
+  "a sweatshirt": [
+    "a sweatshirt",
+    "a thick fleece pullover sweatshirt with ribbed neck, cuffs, and waistband",
+    "a warm heavy knit pullover with a crew neckline and ribbed hems",
+    "a casual fleece top with thick fabric and ribbed sleeve cuffs"
+  ],
+  "a blouse": [
+    "a blouse",
+    "a woven blouse with a refined neckline, shaped seams, or button front",
+    "a lightweight woven top with blouse-like drape and a waist or hip length hem",
+    "a women's blouse with a collar, darts, or delicate woven fabric"
+  ],
+  "a tunic": [
+    "a tunic",
+    "a long loose top with a hem extending below the hips toward the upper thigh",
+    "a tunic top worn over pants or leggings with an elongated body",
+    "a loose longline shirt that covers the hips"
+  ],
+  "sneakers": [
+    "sneakers",
+    "athletic sneakers with a low shoe upper, laces, and a rubber sole",
+    "casual sport shoes with a flexible low-cut upper and rubber outsole",
+    "lace-up trainers with a sneaker-shaped upper and sole"
+  ],
+  "ankle boots": [
+    "ankle boots",
+    "short boots with a structured upper that covers the ankle and a boot shaft",
+    "ankle-high leather boots with a distinct shaft above the foot",
+    "closed footwear with an ankle-covering boot upper and boot-style sole"
+  ],
+  "a skirt": [
+    "a skirt",
+    "a lower-body garment with one continuous skirt panel and no divided leg openings",
+    "a separate skirt with a waistband and an undivided hem opening",
+    "a garment worn from the waist that hangs as one continuous panel"
+  ],
+  "a pair of shorts": [
+    "a pair of shorts",
+    "short pants with two separate leg openings and a center crotch seam",
+    "a lower-body garment divided into two short trouser legs",
+    "short trousers with a waistband and two distinct leg openings"
+  ],
+  "a casual dress": [
+    "a casual dress",
+    "a one-piece garment with a bodice attached to a skirt portion",
+    "a single dress garment with connected upper body and skirt sections",
+    "a casual one-piece women's dress with a continuous bodice and skirt"
+  ],
+  "a jacket": [
+    "a jacket",
+    "a shorter outerwear garment ending around the waist or hip",
+    "a waist-length or hip-length outer layer with sleeves and a front opening",
+    "a short coat-like outer garment with a jacket-length body"
+  ],
+  "a coat": [
+    "a coat",
+    "a longer outerwear garment extending below the hip with a coat-length body",
+    "a long warm outer layer with sleeves, lining, and a front fastening",
+    "a full-length or thigh-length outer garment with a coat silhouette"
+  ],
+  "a pair of jeans": [
+    "a pair of jeans",
+    "denim trousers with visible denim weave, rivets, and jeans-style seams",
+    "five-pocket denim pants with thick topstitching and metal rivets",
+    "blue or colored denim jeans with characteristic seams and pockets"
+  ],
+  "a pair of trousers": [
+    "a pair of trousers",
+    "woven non-denim pants with a smooth tailored finish and trouser seams",
+    "long pants made from woven suiting fabric rather than denim",
+    "tailored trousers with a fly closure and smooth woven fabric"
+  ],
+  "a hoodie": [
+    "a hoodie",
+    "a sweatshirt with an attached hood and often a front kangaroo pocket",
+    "a hooded fleece pullover with drawstrings at the neckline",
+    "a hooded sweatshirt with visible hood fabric behind the neck"
+  ],
+  "flat shoes": [
+    "flat shoes",
+    "closed-toe flat shoes with a low profile and no heel or ankle shaft",
+    "simple closed flats with a low shoe upper and thin sole",
+    "low-profile closed shoes that do not have straps or a tall boot shaft"
+  ],
+  "sandals": [
+    "sandals",
+    "open footwear with visible toe opening and straps across the foot",
+    "shoes with exposed toes or open sides held by straps",
+    "open-toe summer footwear with a sandal sole and straps"
+  ]
+}

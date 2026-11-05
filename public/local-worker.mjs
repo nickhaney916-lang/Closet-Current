@@ -13,7 +13,10 @@ async function load(){
   scannerStage='catalog_import';const version=new URL(import.meta.url).search;
   const {makeVectorScorer,loadVectorAssets}=await import('./vector-scorer.mjs'+version);
   const {prepareRecognitionPhoto,fitWholePhoto}=await import('./recognition-photo.mjs'+version);
-  const {metadata,vectors}=await loadVectorAssets('recognition-vectors.json'+version,'recognition-vectors.bin'+version);
+  const workerQuery=new URL(import.meta.url).search;
+  const profile=/[?&]recognitionProfile=accuracy48(?:&|$)/.test(workerQuery)?'accuracy48':'baseline';
+  const assetBase=profile==='accuracy48'?'recognition-vectors-accuracy-48':'recognition-vectors';
+  const {metadata,vectors}=await loadVectorAssets(assetBase+'.json'+version,assetBase+'.bin'+version);
   const processor=await AutoProcessor.from_pretrained(metadata.model,{revision:metadata.revision});
   const vision=await CLIPVisionModelWithProjection.from_pretrained(metadata.model,{revision:metadata.revision,device:'wasm',dtype:'q8',progress_callback:event=>{
    const weights=String(event.file||'').endsWith('.onnx');if(weights)scannerStage='model_download';
@@ -42,7 +45,7 @@ async function load(){
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
   const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
-  scannerStage='ready';return {whole,center,skirtPadding,coatNearFull,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
+  scannerStage='ready';return {whole,center,skirtPadding,coatNearFull,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision+(profile==='accuracy48'?'/classification-accuracy-48-prompt-ensemble-v1':'')};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }

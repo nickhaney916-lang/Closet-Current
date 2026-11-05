@@ -13,7 +13,8 @@ import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 const recognition42=process.env.RECOGNITION42==='1';
-const root=resolve('.'),dir=resolve(recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const classification48=process.env.CLASSIFICATION48==='1';
+const root=resolve('.'),dir=resolve(classification48?'benchmark/classification-accuracy-48/native-acceptance':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -144,7 +145,7 @@ try{
   });
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
   const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
-  await page.goto(url+(recognition42?'&recognitionReview42=research':''),{waitUntil:'domcontentloaded'});
+  await page.goto(url+(recognition42?'&recognitionReview42=research':'')+(classification48?'&classificationAccuracy48=research':''),{waitUntil:'domcontentloaded'});
   await login(page,'multi24-A');await boardSeed(page);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status().active&&window.multi24Research?.active===true&&window.closetIndex02?.state()?.ready===true,null,{timeout:45000});
@@ -162,7 +163,7 @@ try{
    const p=cases[i];
    await realCrop(page,i,p);
    const card=page.locator('#multi24Grid .multi24-card').nth(i);
-   if(recognition42&&i===2){
+   if(recognition42&&(i===2||classification48)){
     await card.getByRole('button',{name:'Suggest category, type and color'}).click();
     const result=card.locator('[data-recognition42="result"], [data-recognition42="error"]');
     await result.waitFor({timeout:250000});
@@ -179,7 +180,7 @@ try{
     assert.equal(await card.getByLabel('Specific type').inputValue(),'Unknown');
     assert.equal(await card.getByLabel('Color (confirm visually)').inputValue(),'');
     assert.ok(await card.getByLabel('I confirm this visible garment, category and color').isDisabled());
-    await fullShot(page,width,'ai-suggestion-before-review',engine);
+    await fullShot(page,width,classification48?'ai-suggestion-before-review-'+i:'ai-suggestion-before-review',engine);
    }
    await card.getByLabel('Main category').selectOption(p.category);
    await card.getByLabel('Specific type').selectOption(p.itemType);
@@ -353,7 +354,7 @@ try{
    await editor.getByRole('button',{name:'Cancel'}).click();
   }
   let shirtEvidence=null;
-  if(recognition42&&engine==='chromium'&&width===390){
+   if(recognition42&&!classification48&&engine==='chromium'&&width===390){
    const manifest=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
    const fixture=manifest.find(source=>source.id==='commons-0003');
    const shirt=await readFile('benchmark/fixtures/'+fixture.image);
