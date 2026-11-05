@@ -78,12 +78,16 @@ test('MIXED80 malformed proof or missing owner fails closed',()=>{
 test('MIXED80 native UI requires explicit consent, preserves reviewed cards on refusal, and retains owner-private atomic guard',()=>{
  const ui=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
  const pre=ui.indexOf('partitionPreviouslySaved80({saved:existing,pieces:snapshots,proof,ownerId:owner})');
- const prompt=ui.indexOf('window.confirm(' ,pre);
+ const prompt=ui.indexOf('await askMixedSavedConsent80(',pre);
  const declined=ui.indexOf('if(!approved)',prompt);
  const atom=ui.indexOf('const rows=await queued(()=>atomicSaveGarments24({',declined);
  assert.ok(pre>0&&prompt>pre&&declined>prompt&&atom>declined);
  assert.match(ui.slice(declined,atom),/Mixed save canceled.*Every reviewed garment/);
  assert.match(ui.slice(prompt,atom),/snapshots=partition.fresh/);
+ assert.match(ui,/dialog\.showModal\(\)/);
+ assert.match(ui,/closeMixedConsent80\?\.\(\)/);
+ assert.match(ui,/button\('Keep my review'/);
+ assert.match(ui,/button\('Save new garments only'/);
  assert.match(ui,/view\.pieces=view\.pieces\.filter\(x=>!savedIds\.has\(x\.id\)\)/);
  assert.match(ui,/currentOwner:\(\)=>currentReview\(view,epoch\)\?getOwner\(\):null/);
  assert.match(ui,/if\(!currentReview\(view,epoch\)\)return/);
