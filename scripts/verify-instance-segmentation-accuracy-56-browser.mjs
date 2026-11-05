@@ -73,6 +73,6 @@ try{
     browsers:results,physicalDeviceTest:false,privateClosetFlow:false,accountIsolation:false,backupRestore:false};
   await writeFile(`${dir}/browser-report.json`,JSON.stringify(report,null,2)+'\n');
   console.log(JSON.stringify({photos:Object.fromEntries(Object.entries(results).map(([engine,x])=>[engine,x.photos.length])),
-    screenshots:Object.values(results).flatMap(x=>x.screenshots).length,coldLoadMs:Object.fromEntries(Object.entries(results).map(([engine,x])=>[engine,x.coldModelLoadMs])),
+    screenshots:Object.values(results).flatMap(x=>x.screenshots).length,coldLoadMs:Object.fromEntries(Object.entries(results).map(([engine,x])=>[engine,x.coldModelLoadMs])),meanWarmInferenceMs:Object.fromEntries(Object.entries(results).map(([engine,x])=>[engine,Number((x.photos.reduce((n,p)=>n+p.inferenceMs,0)/x.photos.length).toFixed(1))])),
     outsideRequests:0,report:`${dir}/browser-report.json`},null,2));
 }finally{await new Promise(done=>server.close(done));}
