@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {allowedFashionClipAsset52,MODEL52_REVISION} from '../research/model-asset-reliability-52/asset-policy.mjs';
+import {allowedFashionClipAsset52,MODEL52_REVISION,SEGFORMER52_REVISION,modelAssetFamily52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const request=(url,method='GET')=>({url:()=>url,method:()=>method});
 const good=[
  'https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js',
@@ -39,4 +39,20 @@ test('MODEL52 blocks unpinned model versions, other repositories, deceptive host
 test('MODEL52 invalid opaque network requests default to blocked',()=>{
  for(const arg of [null,undefined,{}, {url:()=>{throw Error('no URL');},method:()=> 'GET'},{url:()=> 'bad-url',method:()=> 'GET'}])
   assert.equal(allowedFashionClipAsset52(arg),false);
+});
+
+test('MODEL52 archived browser failure belongs to optional blocked SegFormer, not FashionCLIP',()=>{
+ const seg={host:'huggingface.co',method:'GET',
+  path:'/Xenova/segformer_b0_clothes/resolve/'+SEGFORMER52_REVISION+'/preprocessor_config.json'};
+ assert.equal(modelAssetFamily52(seg),'optional-segformer');
+ assert.equal(modelAssetFamily52({host:'huggingface.co',
+  path:'/api/resolve-cache/models/Xenova/segformer_b0_clothes/'+SEGFORMER52_REVISION+'/preprocessor_config.json'}),'optional-segformer');
+ assert.equal(modelAssetFamily52({host:'huggingface.co',
+  path:'/ff13/fashion-clip/resolve/'+MODEL52_REVISION+'/config.json'}),'fashionclip');
+ assert.equal(modelAssetFamily52({host:'huggingface.co',
+  path:'/api/resolve-cache/models/ff13/fashion-clip/'+MODEL52_REVISION+'/config.json'}),'fashionclip');
+ assert.equal(modelAssetFamily52({host:'huggingface.co',
+  path:'/Xenova/segformer_b0_clothes/resolve/main/config.json'}),'unknown');
+ assert.equal(modelAssetFamily52({host:'huggingface.co',
+  path:'/ff13/other-model/resolve/'+MODEL52_REVISION+'/config.json'}),'unknown');
 });
