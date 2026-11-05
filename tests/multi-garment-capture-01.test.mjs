@@ -106,3 +106,24 @@ test('manual missed region must have an explicitly reviewed valid crop, not a gu
  assert.ok(validCrop24({x:.12,y:.34,width:.23,height:.3}));
  assert.equal(pieceKey24(proof.sourceSHA256,p.instanceKey),proof.sourceSHA256+'/manual-120-340-230-300');
 });
+
+test('DETECTOR57 direct atomic API fails closed for auto-detected unreviewed crop and cannot partially save group',async()=>{
+ const proof=await source();
+ const bad={...piece('auto','Tops','Blue',0),manual:false,cropReviewed:false};
+ assert.throws(()=>verifiedRecord24({proof,ownerId:'auto-gate-57',piece:bad}),/crop review/);
+ const db=await fakeDB('auto-gate-57');
+ const args={db,proof,ownerId:'auto-gate-57',currentOwner:()=> 'auto-gate-57'};
+ await assert.rejects(atomicSaveGarments24({...args,pieces:[piece('other','Bottoms','Blue',1),bad]}),/crop review/);
+ assert.equal((await getAll(db)).length,0,'No first garment from group can survive unreviewed automatic crop');
+ const accepted=await atomicSaveGarments24({...args,pieces:[{...bad,cropReviewed:true}]});
+ assert.equal(accepted.length,1,'Explicit reviewed auto crop remains permitted');
+ assert.equal((await getAll(db))[0].sourceCropReviewed,true);
+ db.close();
+});
+test('DETECTOR57 crop review is an exact boolean, not a model score, string, object or category estimate',async()=>{
+ const proof=await source(),base={...piece('score','Tops','Blue',0),manual:false};
+ for(const cropReviewed of [undefined,null,false,0,1,'true',{},[]]){
+  assert.throws(()=>verifiedRecord24({proof,ownerId:'score57',piece:{...base,cropReviewed}}),/crop review/);
+ }
+ assert.equal(verifiedRecord24({proof,ownerId:'score57',piece:{...base,cropReviewed:true}}).sourceCropReviewed,true);
+});
