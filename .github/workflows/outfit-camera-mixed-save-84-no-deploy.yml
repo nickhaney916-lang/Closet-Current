@@ -1,0 +1,88 @@
+name: CAMERA84 whole-outfit rear camera to verified owner-consented private multi-save NO DEPLOY
+on:
+  push:
+    branches:
+      - research/outfit-camera-mixed-save-e2e-84-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-outfit-camera-real-photo-to-owner-private-wardrobe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Lock exact verified CAMERA82 head and research-only changed files
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=955afd0018df32d3d893dc64d1232b79406b56d2
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/camera84-paths
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-outfit-camera-mixed-save-84-browser.mjs|tests/outfit-camera-mixed-save-84.test.mjs|research/outfit-camera-mixed-save-84/REPORT.md|.github/workflows/outfit-camera-mixed-save-84-no-deploy.yml) ;;
+              *) echo "Blocked unapproved changed file: $path"; exit 1 ;;
+            esac
+          done </tmp/camera84-paths
+          ! git diff --name-only "$BASE" HEAD | grep -E '^(public/|supabase/|deploy/|\.env|server/)'
+      - name: Install pinned research-only browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and run full inherited plus CAMERA84 Node regression suite
+        run: |
+          node --check scripts/test-multi-garment-capture-01-browser.mjs
+          node --check scripts/audit-outfit-camera-mixed-save-84-browser.mjs
+          node --check tests/outfit-camera-mixed-save-84.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Six genuine licensed source JPEG outfit-camera-to-confirmed-private-mixed-save mobile browser workflows
+        run: CAMERAMIXED84=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently hash-check 78 actual camera-intake mobile screenshots and owner privacy acceptance
+        run: node scripts/audit-outfit-camera-mixed-save-84-browser.mjs
+      - name: Verify inherited MIXED80 original-photo owner-consent path unaffected
+        run: |
+          MIXED80=1 node scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/audit-mixed-saved-new-clothes-80-browser.mjs
+      - name: Verify existing CAMERA79 JPEG capture path unaffected
+        run: node scripts/test-camera-to-closet-79-browser.mjs
+      - name: Assert unchanged mobile camera proof and no release claim
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const read=p=>JSON.parse(readFileSync(p,'utf8'));
+          const a=read('benchmark/outfit-camera-mixed-save-84/acceptance.json');
+          const b=read('benchmark/mixed-saved-new-clothes-80/acceptance.json');
+          const c=read('benchmark/camera-to-closet-75/results.json');
+          const m=read('benchmark/camera-to-closet-75/screenshots-manifest.json');
+          assert.equal(a.cases.length,6);assert.equal(a.screenshots.length,78);
+          assert.ok(a.cases.every(x=>x.nativeOutfitCameraToMixedSave84&&x.mixedPreviouslySavedAndNew80&&x.ownerPrivate&&x.reimportDuplicateBlocked&&x.v4Backup&&x.v4Restore));
+          assert.equal(b.cases.length,6);assert.equal(b.screenshots.length,72);
+          assert.equal(c.verdict,'PASS');assert.equal(c.results.length,6);assert.equal(m.count,72);
+          assert.equal(c.physicalAndroidTested,false);assert.equal(c.physicalIphoneTested,false);
+          assert.equal(c.productionDeployed,false);assert.equal(c.familyAlpha,'HOLD');
+          console.log('CAMERA84: camera photo → three manually reviewed source-bound garments → owner-consented two-new-only atomic save → private outfit/restore/owner isolation PASS. Simulated camera input, no physical phone acceptance, NO DEPLOY.');
+          NODE
+      - name: Preserve sanitized research screenshot and manifest evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CAMERA84-genuine-source-native-outfit-input-HOLD-NO-DEPLOY
+          path: |
+            benchmark/outfit-camera-mixed-save-84/acceptance.json
+            benchmark/outfit-camera-mixed-save-84/*.png
+            benchmark/mixed-saved-new-clothes-80/acceptance.json
+            benchmark/camera-to-closet-75/results.json
+            benchmark/camera-to-closet-75/screenshots-manifest.json
+          if-no-files-found: warn
+          retention-days: 14
