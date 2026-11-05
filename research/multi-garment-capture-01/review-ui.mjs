@@ -372,7 +372,7 @@ export function mountMultiGarmentCapture24({
  }
  async function startFile(file){
   if(submitting){status.textContent='Finish the current save first.';return;}
-  const owner=getOwner();
+  const owner=getOwner(),epoch=renderVersion;
   if(!owner){reset('Sign in before extracting garments.');return;}
   // SOURCE70: do not revoke an already human-reviewed photo for an empty or
   // oversized selection, even when the user previously approved a switch.
@@ -383,7 +383,7 @@ export function mountMultiGarmentCapture24({
   // Each selection attempt has an independent epoch. A late proof or decode
   // from a previous file cannot replace a newer selection or resurrect a
   // private photo after owner logout / security-mandated revoke().
-  const selection=++selectionEpoch70,priorEpoch=renderVersion;
+  const selection=++selectionEpoch70,priorEpoch=epoch;
   const pending=()=>sourcePreflightStillCurrent70({
     selection,currentSelection:selectionEpoch70,
     reviewEpoch:priorEpoch,currentReviewEpoch:renderVersion,
@@ -425,10 +425,10 @@ export function mountMultiGarmentCapture24({
    // sole commit point where the old review is revoked. Previously COMMITTED
    // owner-private wardrobe rows are never touched by a source switch.
    revoke();canceled=false;
-   const epoch=renderVersion;
+   const committedEpoch=renderVersion;
    state={owner,proof,decoded,pieces:[]};
    original.src=proof.image;original.hidden=false;redraw();
-   if(!currentLoading(epoch,owner))return;
+   if(!currentLoading(committedEpoch,owner))return;
    const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
    // Real 300s model timeout. The standalone browser QA fixture can
    // accelerate this timer only in an isolated test page.
