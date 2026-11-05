@@ -61,7 +61,7 @@ export function reviewAlternatives54(cropResult,schema,categories){
  * The existing owner's submit transaction independently validates every field.
  */
 export function applyReviewAlternative54(piece,choice,schema,categories){
- if(!piece||typeof piece!=='object'||piece.confirmed===true||piece.cropReviewed!==true||
+ if(!piece||typeof piece!=='object'||piece.cropReviewed!==true||
     !choice||choice.needsConfirmation!==true)return false;
  const normalized=boundedCandidate54(choice,schema,categories);
  if(!normalized||normalized.category!==choice.category||
