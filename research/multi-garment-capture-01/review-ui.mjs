@@ -13,6 +13,7 @@ import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-gua
 import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
 import {keepHumanReviewOnSameSource72} from '../same-original-photo-review-72/repeat-source-guard.mjs';
 import {needsCancelReviewConsent74,CANCEL_REVIEW_PROMPT74} from '../cancel-reviewed-capture-74/cancel-review-guard.mjs';
+import {needsRemoveReviewConsent76,REMOVE_REVIEW_PROMPT76} from '../remove-reviewed-garment-76/remove-review-guard.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -327,7 +328,30 @@ export function mountMultiGarmentCapture24({
     save.disabled=!state.pieces.some(x=>x.confirmed);};
    confirmLabel.append(confirmBox,doc.createTextNode('I confirm this visible garment, category and color'));card.append(confirmLabel);
    const controls=el('div',null,'multi24-actions'),edit=button('Adjust crop/mask',()=>crop(p));
-   const remove=button('Remove detection',()=>{if(submitting||!state||!state.pieces.includes(p))return;if(classification42?.piece===p)cancelClassification42();state.pieces.splice(state.pieces.indexOf(p),1);redraw();});
+   const remove=button('Remove detection',()=>{
+    if(submitting||!state||!state.pieces.includes(p))return;
+    // REMOVE76: one mistaken tap must not destroy personally cropped and
+    // corrected clothing. Untouched automatic proposals remain one-tap.
+    if(!sameOwner()){reset('Account changed; unconfirmed photos cleared.');return;}
+    if(needsRemoveReviewConsent76({
+     currentOwner:getOwner(),reviewOwner:state.owner,dbName:getDb()?.name,
+     piece:p,submitting
+    })){
+     const approved=typeof window.confirm==='function'&&window.confirm(REMOVE_REVIEW_PROMPT76);
+     if(!approved){
+      if(!sameOwner())reset('Account changed; unconfirmed photos cleared.');
+      else status.textContent='Garment removal canceled. Your reviewed crop and clothing corrections remain unchanged; nothing was saved.';
+      return;
+     }
+    }
+    // Never retain or transfer one owner's source after a session change.
+    if(!sameOwner()){reset('Account changed; unconfirmed photos cleared.');return;}
+    if(!state.pieces.includes(p))return;
+    if(classification42?.piece===p)cancelClassification42();
+    state.pieces.splice(state.pieces.indexOf(p),1);
+    redraw();
+    status.textContent='One unsaved review region removed. Other reviewed garments and the original photograph remain unchanged; nothing was saved.';
+   });
    edit.disabled=submitting;remove.disabled=submitting;
    controls.append(edit,remove);card.append(controls);
    if(submitting)for(const control of card.querySelectorAll('button,input,select'))control.disabled=true;

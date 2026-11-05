@@ -21,6 +21,7 @@ const source71=process.env.SOURCE71==='1';
 const source72=process.env.SOURCE72==='1';
 const edit73=process.env.COLOR73==='1';
 const cancel74=process.env.CANCEL74==='1';
+const remove76=process.env.REMOVE76==='1';
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -38,7 +39,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -308,6 +309,76 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
+
+  if(remove76){
+   // The real owner has three individually cropped and manually confirmed
+   // garments from a SHA-locked licensed original JPEG. Clicking Remove
+   // detection on one of them must not silently throw their review away.
+   const fullBefore=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src)
+   }));
+   assert.equal(fullBefore.pieces.length,3);
+   assert.ok(fullBefore.pieces.every(p=>p.confirmed));
+   let deniedDialog='',deniedPrompts=0;
+   page.once('dialog',async dlg=>{deniedPrompts++;deniedDialog=dlg.message();await dlg.dismiss();});
+   await page.locator('#multi24Grid .multi24-card').last().getByRole('button',{name:'Remove detection'}).click();
+   assert.equal(deniedPrompts,1,'Human-reviewed crop removal must request consent exactly once');
+   assert.match(deniedDialog,/Remove this one garment.*Choose Cancel to keep/);
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+    'Garment removal canceled'),null,{timeout:30000});
+   const afterDeny=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src)
+   }));
+   assert.deepEqual(afterDeny,fullBefore,
+    'Dismissing per-garment remove retains exact original, 3 crop JPEGs and edited details');
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+   await fullShot(page,width,'02a-dismiss-remove-keeps-three-reviewed-garments-all',engine);
+
+   let acceptedDialog='',acceptedPrompts=0;
+   page.once('dialog',async dlg=>{acceptedPrompts++;acceptedDialog=dlg.message();await dlg.accept();});
+   await page.locator('#multi24Grid .multi24-card').last().getByRole('button',{name:'Remove detection'}).click();
+   assert.equal(acceptedPrompts,1);
+   assert.match(acceptedDialog,/Remove this one garment/);
+   const afterAccept=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src)
+   }));
+   assert.equal(afterAccept.pieces.length,2,'Consent removes exactly the chosen unsaved garment');
+   assert.equal(afterAccept.proof,fullBefore.proof);
+   assert.equal(afterAccept.original,fullBefore.original);
+   assert.deepEqual(afterAccept.pieces,fullBefore.pieces.slice(0,2),
+    'Shirt and jeans reviewed categories, crop byte data, colors and confirmations must remain');
+   assert.deepEqual(afterAccept.images,fullBefore.images.slice(0,2));
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true,
+    'The two remaining approved garments must still be eligible for Save');
+   assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').count();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   })),0,'Removing an unsaved garment cannot silently modify any private closet row');
+   await fullShot(page,width,'02b-approve-removes-only-shoe-preserves-other-two-all',engine);
+
+   // Demonstrate recovery: re-add the shoe as a freshly marked region, use
+   // the real interactive crop editor and explicitly re-confirm all details.
+   await page.getByRole('button',{name:'Add missed piece'}).click();
+   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),3);
+   await realCrop(page,2,cases[2]);
+   const recoveredShoe=page.locator('#multi24Grid .multi24-card').last();
+   assert.equal(await recoveredShoe.getByLabel('I confirm this visible garment, category and color').isChecked(),false);
+   await recoveredShoe.getByLabel('Main category').selectOption(cases[2].category);
+   await recoveredShoe.getByLabel('Specific type').selectOption(cases[2].itemType);
+   await recoveredShoe.getByLabel('Color (confirm visually)').fill(cases[2].color);
+   await recoveredShoe.getByLabel('I confirm this visible garment, category and color').check();
+   assert.ok((await page.evaluate(()=>window.multi24Research.debug().pieces)).every(x=>x.confirmed));
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+  }
 
   if(cancel74){
    // Actual licensed JPEG and three human-confirmed crop images in owner A.
@@ -936,6 +1007,7 @@ try{
    invalidSelectionDefeatsStaleValidProof71:source71,
    partialColorEditSavesOtherConfirmed73:edit73,
    cancellationPreservesHumanReview74:cancel74,
+   individualReviewRemoveSafeguard76:remove76,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
