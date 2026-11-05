@@ -33,6 +33,11 @@ export function reviewAlternatives54(cropResult,schema,categories){
  if(!cropResult||typeof cropResult!=='object'||!schema?.types||!Array.isArray(categories))return Object.freeze([]);
  const d=cropResult.diagnostics;
  if(!d||typeof d!=='object'||Array.isArray(d))return Object.freeze([]);
+ // Never offer a lower-ranked garment from a scene whose leading broad
+ // category is non-garment/unsupported. Negative-control tests showed this
+ // can otherwise manufacture a credible-looking clothing suggestion.
+ if(Array.isArray(d.category)&&d.category.length&&
+    !validCategory54(d.category[0]?.category,schema,categories))return Object.freeze([]);
  const raw=[];
  // Distinct diagnostic views may contradict; preserve both rather than
  // silently choosing the model's most confident-looking wrong answer.
