@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - research/minimal-piece-snapshot-51-main-20261104-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/atomic-group.mjs'
+      - 'research/minimal-piece-snapshot-51/**'
+      - 'tests/minimal-piece-snapshot-51.test.mjs'
+      - '.github/workflows/minimal-piece-snapshot-51-no-deploy.yml'
   workflow_dispatch:
 permissions:
   contents: read
