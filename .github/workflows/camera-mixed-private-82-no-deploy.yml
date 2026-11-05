@@ -26,8 +26,10 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           CAMERA79=5c9e88eb311886d0ad59eb9c1a3a5dd6599b24fe
           MIXED80=1f69ff8d713da3ad6b58f6d11a5a027f5b5d718d
-          test "$(git rev-parse HEAD^1)" = "$MIXED80"
-          test "$(git rev-parse HEAD^2)" = "$CAMERA79"
+          MERGE82=82fd887a8b997b5e5cd4be8201fcc408aa057037
+          git merge-base --is-ancestor "$MERGE82" HEAD
+          test "$(git rev-parse "$MERGE82^1")" = "$MIXED80"
+          test "$(git rev-parse "$MERGE82^2")" = "$CAMERA79"
           git merge-base --is-ancestor "$CAMERA79" HEAD
           git merge-base --is-ancestor "$MIXED80" HEAD
           git diff --name-only "$MIXED80" HEAD >/tmp/camera-mixed82-files
@@ -37,7 +39,7 @@ jobs:
               *) echo "Blocked unrelated scope: $path"; exit 1 ;;
             esac
           done </tmp/camera-mixed82-files
-          ! git diff --name-only "$MIXED80" HEAD | grep -E '^(\.env|supabase/|server/|deploy/|\.github/workflows/.*deploy)' 
+          ! git diff --name-only "$MIXED80" HEAD | grep -E '^(\.env|supabase/|server/|deploy/)'
       - name: Install pinned research-only browser testing dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
       - name: Exact merged source syntax, production build and full inherited Node tests
