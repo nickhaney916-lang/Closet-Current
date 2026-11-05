@@ -45,7 +45,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port,auth='https://hlkgymugtfbirlpunsra.supabase.co';
-const diagnostics={modelRequestFailures:[],source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
+const diagnostics={modelRequestTrace52:{blocked:[],responses:[]},modelRequestFailures:[],source:{url:sourceUrl,page:sourcePage,license,creator:'Rasmus K. Kristiansen',sha256:sourceHash,bytes:bytes.length,sourceHashPinned:!!expectedHash},cases:[],screenshots:[],unexpectedUploads:[],errors:[]};
 let browser;
 async function shot(page,width,stage,engine='chromium'){
  const png=await page.screenshot({animations:'disabled',fullPage:false});
@@ -133,14 +133,25 @@ try{
        (/^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(asset.hostname)||
         asset.hostname==='us.aws.cdn.hf.co'&&asset.pathname.startsWith('/xet-bridge-us/')))return route.continue();
    }
+   // MODEL52: preserve only method, host and pathname, never query tokens,
+   // request bodies, owner identity or base64 photo content.
+   const source=new URL(u);
+   if(recognition42&&['huggingface.co','cdn.jsdelivr.net','us.aws.cdn.hf.co'].includes(source.hostname))
+    diagnostics.modelRequestTrace52.blocked.push({engine,width,method:request.method(),host:source.hostname,path:source.pathname});
    if(request.method()!=='GET')diagnostics.unexpectedUploads.push({width,method:request.method(),url:u});
-   return route.abort(); // model not available: prove human-reviewed fallback.
+   return route.abort(); // unlisted model URL cannot bypass privacy routing.
   });
   const page=await context.newPage();
   context.on('requestfailed',request=>{
    const host=new URL(request.url()).hostname;
    if(recognition42&&['cdn.jsdelivr.net','huggingface.co','us.aws.cdn.hf.co'].includes(host))
-    diagnostics.modelRequestFailures.push({engine,width,host,reason:request.failure()?.errorText});
+    diagnostics.modelRequestFailures.push({engine,width,method:request.method(),
+     host,path:new URL(request.url()).pathname,reason:request.failure()?.errorText});
+  });
+  context.on('response',response=>{
+   const request=response.request(),u=new URL(request.url());
+   if(recognition42&&['huggingface.co','cdn.jsdelivr.net','us.aws.cdn.hf.co'].includes(u.hostname))
+    diagnostics.modelRequestTrace52.responses.push({engine,width,method:request.method(),host:u.hostname,path:u.pathname,status:response.status()});
   });
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
   const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
