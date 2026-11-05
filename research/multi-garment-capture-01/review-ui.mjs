@@ -11,6 +11,7 @@ import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
 import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
+import {keepHumanReviewOnSameSource72} from '../same-original-photo-review-72/repeat-source-guard.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -411,6 +412,18 @@ export function mountMultiGarmentCapture24({
     inference=c.toDataURL('image/jpeg',.9);
    }
    if(!pending())return;
+   // SOURCE72: repeated selection of the byte-identical verified original
+   // is NOT consent to discard active human-reviewed crop/type/color.
+   // Exact SHA, owner and human-review evidence must all match. Empty review
+   // still permits deliberate reimport to check duplicates or missed items.
+   if(keepHumanReviewOnSameSource72({
+    currentSHA256:state?.proof?.sourceSHA256,nextSHA256:proof.sourceSHA256,
+    currentOwner:owner,reviewOwner:state?.owner,pieces:state?.pieces,
+    submitting
+   })){
+    if(pending())status.textContent='Same verified original photograph selected. Your current reviewed crops, clothing types and colors remain unchanged; nothing was saved.';
+    return;
+   }
    // Retain SWITCH68's explicit owner choice, but only ask after successful
    // source validation. User cancellation preserves original, review cards,
    // all crop bytes and any previous confirmed category/subtype/color.
