@@ -46,19 +46,18 @@ jobs:
               *) echo "BLOCKED deployment, model-runtime default, cloud or unrelated file: $p"; exit 1 ;;
             esac
           done </tmp/classification48-paths
-      - name: Install OpenSSL runtime for the pinned research Python
+      - name: Install system Python package manager in the Playwright container
         run: |
           apt-get update
-          apt-get install -y --no-install-recommends ca-certificates libssl3
-      - name: Set up pinned research Python with pip for text-embedding regeneration
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+          apt-get install -y --no-install-recommends ca-certificates python3-pip python3-venv
       - name: Install pinned local research runtime dependencies
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
-          python3 -m pip install --user -r scripts/recognition-requirements.txt
+          /usr/bin/python3 -m venv /tmp/classification48-python
+          /tmp/classification48-python/bin/python -m pip install -r scripts/recognition-requirements.txt
       - name: Rebuild candidate text vectors with exact pinned FashionCLIP text encoder
+        env:
+          PYTHON: /tmp/classification48-python/bin/python
         run: node scripts/build-classification-accuracy-48-candidate.mjs
       - name: Validate app build and complete inherited Node regression suite
         run: |
@@ -91,3 +90,4 @@ jobs:
             benchmark/classification-accuracy-48/native-acceptance/**
           if-no-files-found: warn
           retention-days: 30
+b3cebc4876e9a3c43c34e888c91b8364ad2fd519
