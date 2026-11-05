@@ -584,7 +584,7 @@ export function mountMultiGarmentCapture24({
    const skipped=partition.duplicates.length;
    if(skipped){
     if(!partition.fresh.length)
-     throw Error('All selected garments are already saved from this original photo. Deselect them or edit existing items in My Closet.');
+     throw Error('Duplicate original garment detected: all selected garments are already saved from this original photo. Deselect them or edit existing items in My Closet.');
     const approved=typeof window.confirm==='function'&&window.confirm(
      skipped+' previously saved garment(s) and '+partition.fresh.length+
      ' new confirmed garment(s). '+MIXED_REVIEW_PROMPT80
