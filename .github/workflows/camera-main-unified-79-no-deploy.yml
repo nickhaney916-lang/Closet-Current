@@ -1,0 +1,100 @@
+name: CAMERA-TO-CLOSET-MAIN-INTEGRATION-79 NO DEPLOY
+on:
+  push:
+    branches:
+      - research/camera-main-unified-79-work-HOLD
+  pull_request:
+    branches:
+      - research/allowlisted-review-snapshot-78-main-20261105-HOLD
+    paths:
+      - 'public/app.js'
+      - 'public/index.html'
+      - 'public/photo-import.js'
+      - 'research/capture-proof-01/source-proof.mjs'
+      - 'research/camera-main-unified-79/**'
+      - 'research/multi-garment-capture-01/**'
+      - 'tests/camera-main-unified-79.test.mjs'
+      - 'tests/capture-proof-01.test.mjs'
+      - 'tests/photo-import.test.cjs'
+      - 'scripts/test-camera-to-closet-79-browser.mjs'
+      - '.github/workflows/camera-main-unified-79-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  camera-review-private-closet-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Validate Priority 78 parent and integration-only paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=0117f227b65ce2ae72729ca864ef38e26e6b74ce
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n 1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/integration79-files
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/index.html|public/photo-import.js|research/capture-proof-01/source-proof.mjs|research/camera-main-unified-79/*|research/multi-garment-capture-01/*|tests/camera-main-unified-79.test.mjs|tests/capture-proof-01.test.mjs|tests/photo-import.test.cjs|tests/allowlisted-review-snapshot-78.test.mjs|tests/auth-review-session-36.test.mjs|tests/detector-manual-recovery-65.test.mjs|tests/review-save-finality-34.test.mjs|tests/review-source-epoch-34.test.mjs|tests/review-worker-finality-38.test.mjs|scripts/test-camera-to-closet-79-browser.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-allowlisted-review-snapshot-78-browser.mjs|benchmark/camera-to-closet-75/*|benchmark/allowlisted-review-snapshot-78/*|.github/workflows/camera-main-unified-79-no-deploy.yml) ;;
+              *) echo "CAMERA79 unauthorized integration path: $path"; exit 1 ;;
+            esac
+          done </tmp/integration79-files
+      - name: Install pinned test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and run complete Node regression suite
+        run: |
+          node --check public/app.js
+          node --check public/photo-import.js
+          node --check research/capture-proof-01/source-proof.mjs
+          node --check tests/camera-main-unified-79.test.mjs
+          node --check scripts/test-camera-to-closet-79-browser.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Run camera-to-review original-photo browser acceptance
+        run: node scripts/test-camera-to-closet-79-browser.mjs
+      - name: Run inherited owner-private wardrobe, outfit, backup and isolation mobile suite
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Run Priority 78 uncloneable-metadata snapshot acceptance across six mobile browser cases
+        run: SNAPSHOT78=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit inherited 72 mobile screenshots
+        run: node scripts/audit-allowlisted-review-snapshot-78-browser.mjs
+      - name: Assert camera workflow and no-deploy evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const c=JSON.parse(readFileSync('benchmark/camera-to-closet-75/results.json','utf8'));
+          const cs=JSON.parse(readFileSync('benchmark/camera-to-closet-75/screenshots-manifest.json','utf8'));
+          assert.equal(c.verdict,'PASS');
+          assert.deepEqual(c.results.map(x=>x.engine+':'+x.width),['chromium:320','chromium:390','chromium:430','webkit:320','webkit:390','webkit:430']);
+          assert.ok(c.results.every(x=>x.singleCameraOriginalBytesPreserved&&x.nativePickerCancelKeepsReview&&!x.actualPhysicalPhone));
+          assert.equal(c.sourcePhoto.sha256,'fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667');
+          assert.equal(c.physicalAndroidTested,false);assert.equal(c.physicalIphoneTested,false);
+          assert.equal(c.productionDeployed,false);assert.equal(c.familyAlpha,'HOLD');
+          assert.equal(cs.count,72);assert.equal(cs.screenshots.length,72);
+          assert.ok(cs.screenshots.every(x=>/^[0-9a-f]{64}$/.test(x.sha256)&&x.bytes>0&&x.width>0&&x.height>0&&x.entropy>0));
+          const inherited=JSON.parse(readFileSync('benchmark/allowlisted-review-snapshot-78/acceptance.json','utf8'));
+          assert.equal(inherited.cases.length,6);assert.equal(inherited.screenshots.length,72);
+          console.log('CAMERA79: six Chromium/WebKit viewport cases plus inherited owner-private closet suite; phone hardware not claimed; NO DEPLOY');
+          NODE
+      - name: Upload sanitized browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: CAMERA-TO-CLOSET-MAIN-INTEGRATION-79-NO-DEPLOY-HOLD
+          path: |
+            benchmark/camera-to-closet-75/
+            benchmark/allowlisted-review-snapshot-78/
+          if-no-files-found: warn
+          retention-days: 14
