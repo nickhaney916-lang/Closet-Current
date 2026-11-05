@@ -18,8 +18,9 @@ const name66=process.env.NAME66==='1';
 const near67=process.env.NEARDUP67==='1';
 const source70=process.env.SOURCE70==='1';
 const source71=process.env.SOURCE71==='1';
+const source72=process.env.SOURCE72==='1';
 const switch68=process.env.SWITCH68==='1';
-const photoSwitch70=switch68||source70||source71;
+const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
  throw Error('SWITCH68 must use isolated genuine photo and human review browser acceptance');
 if(near67&&(name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'))
@@ -35,7 +36,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -318,7 +319,7 @@ try{
    }));
    assert.equal(before.pieces.length,3);
    assert.ok(before.pieces.every(x=>x.confirmed));
-   if(source70||source71){
+   if(source70||source71||source72){
     // A file that falsely claims JPEG MIME, and a valid JPEG envelope with
     // a corrupt undecodable interior, MUST be rejected before replacing the
     // original or prompting the person to discard three confirmed crops.
@@ -358,6 +359,32 @@ try{
      await fullShot(page,width,invalidIndex===0?
       '02b-invalid-false-jpeg-preserves-reviewed-original-all':
       '02c-undecodable-jpeg-envelope-preserves-reviewed-original-all',engine);
+    }
+    if(source72){
+     // SOURCE72 real native file-input re-selection, exactly identical bytes
+     // to the original licensed JPEG during three UNSAVED human crop/type/color
+     // confirmations. Must not ask to discard, restart or change owner review.
+     await page.locator('#outfitUpload').setInputFiles({
+      name:'same-original-three-confirmed-garments.jpg',mimeType:'image/jpeg',
+      buffer:bytes
+     });
+     await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+      'Same verified original photograph selected'),null,{timeout:30000});
+     const kept=await page.evaluate(()=>({
+      proof:window.multi24Research.debug().sourceSHA256,
+      pieces:window.multi24Research.debug().pieces,
+      images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src),
+      original:document.querySelector('#multi24Research .multi24-source')?.src
+     }));
+     assert.deepEqual(kept,before,
+      'Identical JPEG must preserve all three real crop bytes, category/type/color and confirmations');
+     assert.equal(unexpectedPrompts,0,'Same original photo must never demand discarding human review');
+     assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+     assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{
+      const r=db.transaction('items').objectStore('items').count();
+      r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+     })),0,'Repeated same photo cannot silently save private clothing');
+     await fullShot(page,width,'02e-same-original-preserves-three-reviewed-all',engine);
     }
     if(source71){
      // RACE71: older real JPEG bytes are held mid-read while a newer file
@@ -800,7 +827,8 @@ try{
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
    nearDuplicateCropKeyRejected67:near67,
    uncommittedPhotoSwitchProtected68:photoSwitch70,
-   verifiedPhotoSwitch70:source70||source71,
+   verifiedPhotoSwitch70:source70||source71||source72,
+    sameOriginalReviewPreserved72:source72,
    invalidSelectionDefeatsStaleValidProof71:source71,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
