@@ -14,6 +14,8 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
+const name66=process.env.NAME66==='1';
+if(name66&&recognition42)throw Error('NAME66 label consistency tests must not run AI inference');
 const detector65=process.env.DETECTOR65==='1';
 const detector65Modes={
  'chromium/320':'constructor','chromium/390':'post',
@@ -24,7 +26,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -175,7 +177,7 @@ try{
   });
   page.on('pageerror',e=>diagnostics.errors.push({width,message:e.message}));
   const url=origin+'/public/index.html?multi24=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
-  await page.goto(url+(recognition42?'&recognitionReview42=research':''),{waitUntil:'domcontentloaded'});
+  await page.goto(url+(recognition42?'&recognitionReview42=research':'')+(name66?'&correctedName66=research':''),{waitUntil:'domcontentloaded'});
   await login(page,'multi24-A');await boardSeed(page);
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status().active&&window.multi24Research?.active===true&&window.closetIndex02?.state()?.ready===true,null,{timeout:45000});
@@ -526,6 +528,77 @@ try{
     attribution:fixture.attribution,suggestion:row.recognitionSuggestion42,
     confirmed:{category:row.category,itemType:row.itemType,color:row.color}};
   }
+  if(name66){
+   // LABELSYNC66: real native owner-A saved details editor and real private
+   // IndexedDB corrections. Typed values are synthetic QA actions, NOT
+   // independent recognition accuracy labels or model inference.
+   await page.evaluate(()=>switchView('closet'));
+   await page.locator('#search').fill('Blue Sneakers');
+   const oldCard=page.locator('#closetGrid article.card').filter({hasText:'Blue Sneakers'});
+   assert.equal(await oldCard.count(),1,'Source-derived name should start Blue Sneakers');
+   await fullShot(page,width,'05a-before-correction-old-blue-shoes-all',engine);
+   await oldCard.getByRole('button',{name:'Adjust details'}).click();
+   const editor=page.locator('dialog.clothing-editor');
+   await editor.waitFor({state:'visible'});
+   assert.equal(await editor.getByLabel('Item name',{exact:true}).inputValue(),'Blue Sneakers');
+   await editor.locator('details.optional-details').evaluate(d=>{d.open=true;});
+   await editor.getByLabel('Item type',{exact:true}).selectOption('Ankle boots');
+   await editor.getByLabel('Color',{exact:true}).fill('Black');
+   await editor.getByRole('button',{name:'Save changes'}).click();
+   await editor.waitFor({state:'hidden',timeout:30000});
+   const corrected=await page.evaluate(id=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').get(id);
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   }),byCategory.Shoes);
+   assert.equal(corrected.name,'Black Ankle boots',
+    'Auto-generated name should follow confirmed human color/subtype correction');
+   assert.equal(corrected.itemType,'Ankle boots');
+   assert.equal(corrected.color,'Black');
+   assert.equal(corrected.colorSource,'user');
+   assert.equal(corrected.category,'Shoes');
+   assert.equal(corrected.sourceSHA256,sourceHash);
+   assert.equal(corrected.originalPhoto.sha256,sourceHash);
+   assert.equal(corrected.originalPhoto.image,'data:image/jpeg;base64,'+bytes.toString('base64'));
+   assert.equal(corrected.photoOnly,true);
+   assert.equal(corrected.threeDReady,false);
+   await page.locator('#search').fill('Blue Sneakers');
+   assert.equal(await page.locator('#closetGrid article.card').count(),0,
+    'Stale generated title must NOT make corrected Black boots match Blue Sneakers search');
+   await page.locator('#search').fill('Black Ankle boots');
+   const renamed=page.locator('#closetGrid article.card').filter({hasText:'Black Ankle boots'});
+   assert.equal(await renamed.count(),1);
+   await fullShot(page,width,'05b-after-correction-new-black-boots-all',engine);
+   // V4 real private owner export/import round trip must preserve corrected
+   // title + category/type/color alongside the canonical original JPEG.
+   const correctedBackup=await page.evaluate(async()=> (await window.restoreAtomic01Bridge.exportJSON()).data);
+   assert.equal(correctedBackup.version,4);
+   const backupShoe=correctedBackup.items.find(x=>x.id===byCategory.Shoes);
+   assert.deepEqual([backupShoe.name,backupShoe.itemType,backupShoe.color],
+    ['Black Ankle boots','Ankle boots','Black']);
+   await page.evaluate(id=>new Promise((resolve,reject)=>{
+    const tx=db.transaction('items','readwrite');
+    tx.objectStore('items').delete(id);
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+   }),byCategory.Shoes);
+   const restored=await page.evaluate(doc=>
+    window.restoreAtomic01Bridge.importBackup(doc,{confirm:()=>true}),correctedBackup);
+   assert.equal(restored.cancelled,undefined);
+   const recovered=await page.evaluate(id=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').get(id);
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   }),byCategory.Shoes);
+   assert.deepEqual([recovered.name,recovered.category,recovered.itemType,recovered.color],
+    ['Black Ankle boots','Shoes','Ankle boots','Black']);
+   assert.equal(recovered.originalPhoto.sha256,sourceHash);
+   await page.reload({waitUntil:'domcontentloaded'});
+   await page.waitForFunction(()=>window.closetAuth?.user?.id==='multi24-A'&&items?.length===3);
+   await page.evaluate(()=>switchView('closet'));
+   await page.locator('#search').fill('Black Ankle boots');
+   assert.equal(await page.locator('#closetGrid article.card').count(),1,
+    'Corrected saved name should survive real V4 restore and reload');
+   await page.locator('#search').fill('Blue Sneakers');
+   assert.equal(await page.locator('#closetGrid article.card').count(),0);
+  }
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
@@ -533,7 +606,8 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
+   correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
@@ -545,7 +619,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log((detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
+ console.log((name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
