@@ -147,7 +147,7 @@ import {validateResume63,verifyPacketDigest63} from '../reviewer-checkpoint-inte
       !parsed.taxonomy||!Array.isArray(parsed.colors))throw Error('Not a valid blind review packet');
    const ids=new Set();
    for(const i of parsed.items){
-    if(!/^[a-zA-Z0-9._-]{1,90}$/.test(i.id)||!/^[a-zA-Z0-9._-]+\\.jpg$/i.test(i.image)||
+    if(!/^[a-zA-Z0-9._-]{1,90}$/.test(i.id)||!/^[a-zA-Z0-9._-]+\.jpg$/i.test(i.image)||
        !/^[a-f0-9]{64}$/.test(i.sourceSHA256)||ids.has(i.id))
      throw Error('Invalid/duplicate source identity in packet');
     ids.add(i.id);
