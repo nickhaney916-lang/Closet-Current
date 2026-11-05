@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Closet Current — actual SegFormer pixel mask comparison</title>
+<title>Closet Current — AUTO-SEGMENTATION-53 SegFormer benchmark</title>
 <style>
 *{box-sizing:border-box}body{font:14px/1.45 system-ui;background:#f4f4f6;color:#242631;margin:0}
 main{max-width:990px;margin:auto;padding:12px}
@@ -17,8 +17,8 @@ h2{font-size:15px;margin:10px 0 5px}.note{padding:8px;border-radius:7px;backgrou
 code{font-size:11px;overflow-wrap:anywhere}#status{padding:10px;background:#eff1ff}
 footer{font-size:11px;overflow-wrap:anywhere}
 </style></head><body><main>
-<h1>Real model pixel-mask evidence — source-verified photographs</h1>
-<p class="note">RESEARCH ONLY · Same original JPEG and same real pinned SegFormer logits. Orange: old review groups. Blue: new review groups. Green dashed: single-reviewer reference boxes. Semi-transparent colors are actual pixel labels, not invented masks. All suggestions unverified.</p>
+<h1>Genuine SegFormer masks — source-locked benchmark fixtures</h1>
+<p class="note">RESEARCH ONLY · Same SHA-locked licensed benchmark fixture and same pinned SegFormer logits. Orange: old review groups. Blue: shoe-pair review groups. Green dashed: frozen single-reviewer reference boxes. Semi-transparent colors are actual pixel labels. All proposals need review.</p>
 <p id="status" role="status">Model not started</p>
 <div class="compare">
 <section class="panel"><h2>Before shoe grouping</h2><div id="before" class="photo"><img alt="Licensed original clothing photograph"></div><p id="before-summary"></p></section>
@@ -85,7 +85,7 @@ window.runRealMask31=async({sourceId,sourceData,analysisData,analysisRGBA=null,a
      ' review proposals; '+result[type].filter(p=>p.regionId===9).length+
      ' shoe region(s). Every crop needs user confirmation.';
    }
-   $('model-summary').textContent='Original SHA '+expectedSHA.slice(0,16)+
+   $('model-summary').textContent='Fixture SHA '+expectedSHA.slice(0,16)+
     '… · Mask SHA '+result.sourceMapLabelsSHA256.slice(0,16)+
     '… · Source pixel membership unchanged: '+result.maskPixelMembershipConserved;
    $('status').textContent='Real SegFormer model completed. Source and actual mask hashes verified.';

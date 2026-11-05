@@ -5,8 +5,10 @@
  * Original JPEG stays in browser for overlay, never transmitted by this worker.
  */
 let modelPromise;
+let modelLoadReported=false;
 async function loaded(id){
  if(!modelPromise)modelPromise=(async()=>{
+  const loadStarted=performance.now();
   self.postMessage({id,type:'progress',phase:'loading'});
   const {AutoModelForSemanticSegmentation,AutoProcessor,RawImage,env}=
    await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
@@ -19,7 +21,7 @@ async function loaded(id){
    progress_callback:e=>self.postMessage({id,type:'progress',phase:'loading',
     percent:Number.isFinite(e.progress)?Math.round(e.progress):null})
   });
-  return {model,processor,RawImage};
+  return {model,processor,RawImage,modelLoadMs:performance.now()-loadStarted};
  })().catch(e=>{modelPromise=null;throw e});
  return modelPromise;
 }
@@ -57,7 +59,9 @@ self.onmessage=event=>{
        v=>Number.isInteger(v)&&v>0&&v<=8192)||
       req.originalWidth*req.originalHeight>48000000)
     throw Error('Invalid bounded source-locked model request');
-   const {model,processor,RawImage}=await loaded(id);
+   const loadedModel=await loaded(id),{model,processor,RawImage}=loadedModel;
+   const modelLoadMs=modelLoadReported?null:loadedModel.modelLoadMs;
+   modelLoadReported=true;
    self.postMessage({id,type:'progress',phase:'infer'});
    // WebKit intermittently rejects createImageBitmap(Blob) in a module
    // worker. The page can transfer the exact decoded *analysis JPEG* RGBA
@@ -75,7 +79,9 @@ self.onmessage=event=>{
    }else input=await RawImage.read(req.analysisImage);
    if(input.width>3072||input.height>3072||input.width*input.height>3072*3072)
     throw Error('Oversized inference input');
+   const inferenceStarted=performance.now();
    const logits=await model(await processor(input));
+   const inferenceMs=performance.now()-inferenceStarted;
    const {clothingLabelMap}=await import('../../public/outfit-segmentation.mjs');
    const {visibleGarmentGroups24}=await import('../multi-garment-capture-01/visible-groups.mjs');
    const {visibleGarmentGroups24:oldGroups}=await import('./legacy-visible-groups.mjs');
@@ -102,6 +108,7 @@ self.onmessage=event=>{
     modelRevision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',
     model:'Xenova/segformer_b0_clothes',
     analysisResolution:[input.width,input.height],
+    modelLoadMs,inferenceMs,
     modelMask:[map.width,map.height],
     personDetected:map.personDetected,
     sourceMapLabelsSHA256:await sha(map.labels),
