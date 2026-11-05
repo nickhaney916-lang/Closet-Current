@@ -28,7 +28,7 @@ jobs:
           git diff --name-only e865c0b0f9e663c6d6da2bcd9d14122e2b3dd13a HEAD >/tmp/snapshot78-files
           while IFS= read -r path; do
             case "$path" in
-              research/multi-garment-capture-01/review-save-finality-34.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/atomic-group.mjs|tests/review-save-finality-34.test.mjs|tests/allowlisted-review-snapshot-78.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-allowlisted-review-snapshot-78-browser.mjs|.github/workflows/allowlisted-review-snapshot-78-no-deploy.yml) ;;
+              research/multi-garment-capture-01/review-save-finality-34.mjs|research/multi-garment-capture-01/review-ui.mjs|research/multi-garment-capture-01/atomic-group.mjs|tests/review-save-finality-34.test.mjs|tests/allowlisted-review-snapshot-78.test.mjs|tests/auth-review-session-36.test.mjs|tests/detector-manual-recovery-65.test.mjs|tests/review-source-epoch-34.test.mjs|tests/review-worker-finality-38.test.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-allowlisted-review-snapshot-78-browser.mjs|.github/workflows/allowlisted-review-snapshot-78-no-deploy.yml) ;;
               *) echo "BLOCKED unrelated production/staging modification: $path"; exit 1 ;;
             esac
           done </tmp/snapshot78-files
