@@ -290,7 +290,11 @@ export function mountMultiGarmentCapture24({
    card.append(selector('Specific type',['Unknown',...(schema.types[p.category]||[])],p.itemType,v=>{p.itemType=v;p.confirmed=false;redraw();}));
    let confirmBox;
    const colorLabel=input('Color (confirm visually)',p.color,v=>{
-    p.color=v.trim();p.confirmed=false;save.disabled=true;
+    // COLOR73: editing THIS garment revokes only its confirmation.
+    // Other human-confirmed garments must remain eligible for atomic Save;
+    // do not redraw the text field or lose the keyboard focus mid-edit.
+    p.color=v.trim();p.confirmed=false;
+    save.disabled=submitting||!state.pieces.some(x=>x.confirmed);
     if(confirmBox){confirmBox.checked=false;confirmBox.disabled=!canConfirmScene32(p,schema);}
    });
    const colorInput=colorLabel.querySelector('input');colorInput.setAttribute('list','multi24Colors');
