@@ -1,0 +1,65 @@
+name: SWITCH68 preserve unsaved manual photo review before source change NO DEPLOY
+on:
+  push:
+    branches:
+      - research/unsaved-photo-switch-68-main-20261105-HOLD
+  pull_request:
+    paths:
+      - 'research/photo-switch-guard-68/**'
+      - 'research/multi-garment-capture-01/review-ui.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'scripts/audit-photo-switch-68-browser.mjs'
+      - 'tests/photo-switch-guard-68.test.mjs'
+      - '.github/workflows/unsaved-photo-switch-68-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  licensed-original-manual-review-safe-switch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict exact verified NEARDUP67 parent with no staging production or other project edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 6f7873a6f513596bd3a7f41d8578a2304228f769 HEAD
+          git diff --name-only 6f7873a6f513596bd3a7f41d8578a2304228f769 HEAD >/tmp/switch68-files
+          while IFS= read -r path; do
+            case "$path" in
+              research/photo-switch-guard-68/*|research/multi-garment-capture-01/review-ui.mjs|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-photo-switch-68-browser.mjs|tests/photo-switch-guard-68.test.mjs|.github/workflows/unsaved-photo-switch-68-no-deploy.yml) ;;
+              *) echo "BLOCKED unrelated production/staging/other project change: $path"; exit 1 ;;
+            esac
+          done </tmp/switch68-files
+      - name: Install pinned native browser and all Node dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build existing app and run inherited plus 16 source-safe human-review privacy tests
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Six original licensed JPEG manual human-confirmed owner-private native browser regressions
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Six new actual two licensed original JPEG source-switch Cancel and Accept browser workflows
+        run: SWITCH68=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit 72 real mobile source-switch private-closet screenshot hashes pixels and content
+        run: node scripts/audit-photo-switch-68-browser.mjs
+      - name: Archive sanitized authentic original source SHA and 72 mobile screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SWITCH68-original-photo-manual-review-keep-discard-two-source-HOLD
+          path: |
+            benchmark/multi-garment-capture-01/acceptance.json
+            benchmark/photo-switch-guard-68/acceptance.json
+            benchmark/photo-switch-guard-68/*.png
+          if-no-files-found: warn
+          retention-days: 14
