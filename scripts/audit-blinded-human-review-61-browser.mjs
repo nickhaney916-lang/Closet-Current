@@ -8,7 +8,9 @@ import {readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-const dir='benchmark/independent-annotation-61/browser-evidence';
+const review63=process.env.REVIEW63==='1';
+const dir=review63?'benchmark/reviewer-checkpoint-integrity-63/browser-evidence':
+ 'benchmark/independent-annotation-61/browser-evidence';
 const report=JSON.parse(await readFile(dir+'/acceptance.json','utf8'));
 assert.equal(report.failure,undefined);
 assert.equal(report.humanReviewPerformed,false);
@@ -18,7 +20,8 @@ assert.equal(report.qaClickedControlsOnly,true);
 assert.deepEqual(report.unexpectedNetwork,[]);
 assert.deepEqual(report.errors,[]);
 assert.equal(report.cases.length,6);
-assert.equal(report.screenshots.length,18);
+assert.equal(report.screenshots.length,review63?30:18);
+if(review63)assert.equal(report.reviewerCheckpoint63,true);
 const keys=new Set(),files=new Set();
 for(const c of report.cases){
  keys.add(c.engine+'/'+c.width);
@@ -44,9 +47,10 @@ for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
  for(const stage of [
   '01-original-blank-visual-review',
   '02-synthetic-click-only-annotated',
-  '03-other-reviewer-isolated-no-peer-label'
+  '03-other-reviewer-isolated-no-peer-label',
+  ...(review63?['04-restored-partial-original-review','05-rejected-source-hash-tamper']:[])
  ])assert.ok(files.has(engine+'-'+width+'-'+stage+'.png'));
 }
-console.log('BLIND61 REAL BROWSER SOURCE-IMAGE/REVIEWER ISOLATION AND 18 SHA-256 SCREENSHOTS AUDITED: '+
+console.log((review63?'REVIEW63 SOURCE-LOCKED RESUME/REJECTION 30 REAL MOBILE SCREENSHOTS SHA-AUDITED: ':'BLIND61 REAL BROWSER SOURCE-IMAGE/REVIEWER ISOLATION AND 18 SHA-256 SCREENSHOTS AUDITED: ')+
  JSON.stringify({cases:report.cases.length,screenshots:report.screenshots.length,
   actualHumanLabels:0,claimsOfModelImprovement:false}));
