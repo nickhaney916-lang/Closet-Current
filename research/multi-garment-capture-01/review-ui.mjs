@@ -14,6 +14,7 @@ import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-
 import {keepHumanReviewOnSameSource72} from '../same-original-photo-review-72/repeat-source-guard.mjs';
 import {needsCancelReviewConsent74,CANCEL_REVIEW_PROMPT74} from '../cancel-reviewed-capture-74/cancel-review-guard.mjs';
 import {needsRemoveReviewConsent76,REMOVE_REVIEW_PROMPT76} from '../remove-reviewed-garment-76/remove-review-guard.mjs';
+import {partitionPreviouslySaved80,MIXED_REVIEW_PROMPT80} from './previously-saved-review-80.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -77,6 +78,7 @@ export function mountMultiGarmentCapture24({
  const grid=el('div',null,'multi24-grid');grid.id='multi24Grid';
  const actions=el('div',null,'multi24-actions');
  let state=null,canceled=false,job=null,renderVersion=0,selectionEpoch70=0,submitting=false;
+ let closeMixedConsent80=null;
  const cancel=button('Cancel extraction',()=>{
   if(submitting){status.textContent='Saving is in progress. Cancellation is unavailable once saving begins.';return;}
   // CANCEL74: an accidental touch must not destroy user-reviewed crops.
@@ -125,7 +127,7 @@ export function mountMultiGarmentCapture24({
  }
  let classification42;
  function cancelClassification42(){classification42?.controller.abort();classification42=null;}
- function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;}
+ function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;closeMixedConsent80?.();}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
  // Terminate the detector and revoke its session identity BEFORE first async
@@ -547,6 +549,37 @@ export function mountMultiGarmentCapture24({
     String(error?.message||error)+'. Your current original photo and reviewed clothing remain unchanged; nothing was saved.';
   }
  }
+ // MIXED80: native window.confirm() opened AFTER asynchronous IDB work can
+ // be suppressed on mobile without a user gesture. Show a real accessible
+ // in-app decision; never infer approval. Closing the session cancels it.
+ function askMixedSavedConsent80(message,view,epoch){
+  return new Promise(resolve=>{
+   if(!currentReview(view,epoch))return resolve(false);
+   const dialog=el('dialog',null,'multi24-mixed-dialog');
+   dialog.setAttribute('aria-label','Review saved and new clothing');
+   dialog.append(el('h4','Save only new garments?'));
+   dialog.append(el('p',message));
+   const actions=el('div',null,'multi24-actions');
+   const keep=button('Keep my review',()=>finish(false));
+   const approve=button('Save new garments only',()=>finish(true),'primary');
+   actions.append(keep,approve);dialog.append(actions);
+   let settled=false;
+   const finish=value=>{
+    if(settled)return;settled=true;
+    if(closeMixedConsent80===closeMixed)closeMixedConsent80=null;
+    try{if(dialog.open)dialog.close();}catch{}
+    dialog.remove();
+    resolve(value&&currentReview(view,epoch));
+   };
+   const closeMixed=()=>finish(false);
+   closeMixedConsent80=closeMixed;
+   dialog.addEventListener('cancel',e=>{e.preventDefault();finish(false);});
+   dialog.addEventListener('close',()=>finish(false));
+   root.append(dialog);
+   try{dialog.showModal();keep.focus();}
+   catch{finish(false);}
+  });
+ }
  async function commit(){
   if(submitting)return;
   if(!state||!sameOwner())return reset('Account changed. No garments saved.');
@@ -575,9 +608,25 @@ export function mountMultiGarmentCapture24({
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
    });
    if(!currentReview(view,epoch))return;
-   const duplicates=duplicatePieceKeys24(existing,
-    snapshots.map(x=>({sourcePieceKey:pieceKey24(proof.sourceSHA256,x.instanceKey)})));
-   if(duplicates.length)throw Error('Previously saved garment detected in this exact source. Deselect duplicate pieces.');
+   // MIXED80: source-verified exact-key/near-identical manual duplicates
+   // must not block independently confirmed NEW garments. Excluding saved
+   // copies requires explicit human consent and keeps the final readwrite
+   // transaction's authoritative duplicate/owner protection unchanged.
+   const partition=partitionPreviouslySaved80({saved:existing,pieces:snapshots,proof,ownerId:owner});
+   const skipped=partition.duplicates.length;
+   if(skipped){
+    if(!partition.fresh.length)
+     throw Error('Duplicate original garment detected: all selected garments are already saved from this original photo. Deselect them or edit existing items in My Closet.');
+    const approved=await askMixedSavedConsent80(
+     skipped+' previously saved garment(s) and '+partition.fresh.length+
+     ' new confirmed garment(s). '+MIXED_REVIEW_PROMPT80,
+     view,epoch
+    );
+    if(!currentReview(view,epoch))return;
+    if(!approved)
+     throw Error('Mixed save canceled. Every reviewed garment, crop, color and confirmation remains unchanged; nothing was saved.');
+    snapshots=partition.fresh;
+   }
    if(!currentReview(view,epoch))return;
    const rows=await queued(()=>atomicSaveGarments24({
     db,proof,pieces:snapshots,ownerId:owner,
@@ -594,7 +643,8 @@ export function mountMultiGarmentCapture24({
    if(!currentReview(view,epoch))return;
    try{await refreshNative();}catch{refreshFailed=true;}
    if(!currentReview(view,epoch))return;
-   status.textContent=saveReceipt34(rows.length,notificationFailed,refreshFailed);
+   status.textContent=saveReceipt34(rows.length,notificationFailed,refreshFailed)+
+    (skipped?' '+skipped+' previously saved garment(s) were skipped with your approval; existing closet items were not overwritten.':'');
   }catch(error){
    if(currentReview(view,epoch))status.textContent=persisted?
     'Garments were saved privately, but the wardrobe display could not refresh. Reload My Closet to verify.':

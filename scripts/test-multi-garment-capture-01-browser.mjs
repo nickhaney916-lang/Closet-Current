@@ -24,6 +24,7 @@ const cancel74=process.env.CANCEL74==='1';
 const remove76=process.env.REMOVE76==='1';
 const color77=process.env.COLOR77==='1';
 const snapshot78=process.env.SNAPSHOT78==='1';
+const mixed80=process.env.MIXED80==='1';
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -41,7 +42,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(snapshot78?'benchmark/allowlisted-review-snapshot-78':color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(mixed80?'benchmark/mixed-saved-new-clothes-80':snapshot78?'benchmark/allowlisted-review-snapshot-78':color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -681,6 +682,81 @@ try{
    assert.equal(none,0,'Cancel switch must neither auto-save nor destroy review');
    await fullShot(page,width,'02a-cancel-switch-preserves-three-reviewed-crops-all',engine);
   }
+  if(mixed80){
+   // Real original JPEG: first save ONLY human-confirmed shirt. Then crop
+   // the same saved shirt again alongside the two truly new reviewed items.
+   const label='I confirm this visible garment, category and color';
+   for(const i of [1,2])
+    await page.locator('#multi24Grid .multi24-card').nth(i).getByLabel(label).uncheck();
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+    '1 separately confirmed garment saved together'),null,{timeout:45000});
+   const initial=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const r=db.transaction('items').objectStore('items').getAll();
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   }));
+   assert.equal(initial.length,1);assert.equal(initial[0].category,'Tops');
+   assert.equal((await page.evaluate(()=>window.multi24Research.debug().pieces)).length,2);
+   await page.getByRole('button',{name:'Add missed piece'}).click();
+   await realCrop(page,2,cases[0]);
+   const cards=page.locator('#multi24Grid .multi24-card');
+   assert.equal(await cards.count(),3);
+   const again=cards.last();
+   await again.getByLabel('Main category').selectOption('Tops');
+   await again.getByLabel('Specific type').selectOption('Button-down shirt');
+   await again.getByLabel('Color (confirm visually)').fill('White');
+   await again.getByLabel(label).check();
+   for(const i of [0,1])await cards.nth(i).getByLabel(label).check();
+   const before=await page.evaluate(()=>({
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    source:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+   }));
+   assert.equal(before.pieces.filter(x=>x.confirmed).length,3);
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   // An in-app dialog works reliably AFTER asynchronous IndexedDB lookup,
+   // unlike window.confirm() suppressed without mobile user activation.
+   const decision=page.locator('dialog.multi24-mixed-dialog');
+   await decision.waitFor({state:'visible',timeout:30000});
+   assert.match(await decision.innerText(),/previously saved garment.*new confirmed garment/i);
+   assert.equal(await decision.getByRole('button',{name:'Keep my review'}).isVisible(),true);
+   assert.equal(await decision.getByRole('button',{name:'Save new garments only'}).isVisible(),true);
+   await decision.getByRole('button',{name:'Keep my review'}).click();
+   await decision.waitFor({state:'hidden'});
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+    'Mixed save canceled'),null,{timeout:45000});
+   const kept=await page.evaluate(()=>({
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    source:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+   }));
+   assert.deepEqual(kept,before,'Declined mixed save cannot modify any original, crop or human correction');
+   assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const r=db.transaction('items').objectStore('items').count();
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   })),1,'Declined mixed save cannot write another item');
+   await fullShot(page,width,'02a-mixed-duplicate-dismiss-keeps-new-confirmed-all',engine);
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await decision.waitFor({state:'visible',timeout:30000});
+   await decision.getByRole('button',{name:'Save new garments only'}).click();
+   await decision.waitFor({state:'hidden'});
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+    '2 separately confirmed garments saved together'),null,{timeout:45000});
+   const all=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const r=db.transaction('items').objectStore('items').getAll();
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   }));
+   assert.equal(all.length,3,'Must save only jeans and shoes, retaining previous shirt');
+   assert.deepEqual(all.find(x=>x.id===initial[0].id),initial[0],
+    'Already-saved shirt row must remain byte-identical without update or duplicate');
+   assert.deepEqual(all.map(x=>x.category).sort(),['Bottoms','Shoes','Tops']);
+   assert.ok(all.every(x=>x.ownerId==='multi24-A'&&x.originalPhoto.sha256===sourceHash));
+   assert.equal(await page.evaluate(()=>window.multi24Research.debug().pieces.length),0,
+    'Only after approved private save may redundant reviewed duplicates close');
+   await fullShot(page,width,'02b-approve-skip-saved-shirt-save-jeans-shoes-all',engine);
+  }
   if(edit73){
    // Actual licensed JPEG: changing only the shoe color must keep the two
    // other human-confirmed garment crops saveable without auto-confirming shoe.
@@ -723,7 +799,7 @@ try{
    await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
    await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes(
     '1 separately confirmed garment saved together'),null,{timeout:45000});
-  }else{
+  }else if(!mixed80){
    await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
    await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('3 separately confirmed garments'),null,{timeout:45000});
   }
@@ -1140,6 +1216,7 @@ try{
    individualReviewRemoveSafeguard76:remove76,
    unknownColorConfirmBlocked77:color77,
     reviewSnapshotSanitized78:snapshot78,
+    mixedPreviouslySavedAndNew80:mixed80,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
