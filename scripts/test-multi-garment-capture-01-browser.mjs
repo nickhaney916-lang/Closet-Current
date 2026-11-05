@@ -22,6 +22,7 @@ const source72=process.env.SOURCE72==='1';
 const edit73=process.env.COLOR73==='1';
 const cancel74=process.env.CANCEL74==='1';
 const remove76=process.env.REMOVE76==='1';
+const color77=process.env.COLOR77==='1';
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -39,7 +40,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -309,6 +310,64 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
+
+  if(color77){
+   // Three genuinely human-reviewed original JPEG crops from owner A. After
+   // explicitly confirming all 3, editing only shoe color to unsupported
+   // "unknown" variants must revoke its prior confirmation and DISABLE the
+   // shoe checkbox without disabling the other two authorized garments.
+   const original=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    photo:document.querySelector('#multi24Research .multi24-source')?.src,
+    pieces:window.multi24Research.debug().pieces,
+    crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+   }));
+   assert.equal(original.pieces.length,3);
+   assert.ok(original.pieces.every(x=>x.confirmed));
+   const shoe=page.locator('#multi24Grid .multi24-card').last();
+   const color=shoe.getByLabel('Color (confirm visually)');
+   const checkbox=shoe.getByLabel('I confirm this visible garment, category and color');
+   const save=page.getByRole('button',{name:'Save confirmed pieces together'});
+   for(const invalid of ['unknown',' UNKNOWN ','UnKnOwN','Unknown','   ']){
+    await color.fill(invalid);
+    assert.equal(await checkbox.isChecked(),false,
+     'Any blank/Unknown placeholder must revoke an earlier approved shoe color');
+    assert.equal(await checkbox.isDisabled(),true,
+     'The invalid color must not be presented as ready for human confirmation');
+    assert.equal(await save.isEnabled(),true,
+     'The two other independently approved garments must remain eligible for private Save');
+    const current=await page.evaluate(()=>window.multi24Research.debug().pieces);
+    assert.equal(current.filter(x=>x.confirmed).length,2);
+    assert.ok(current.slice(0,2).every(x=>x.confirmed));
+   }
+   await fullShot(page,width,'02a-invalid-unknown-color-confirm-disabled-all',engine);
+   const unchanged=await page.evaluate(()=>({
+    proof:window.multi24Research.debug().sourceSHA256,
+    photo:document.querySelector('#multi24Research .multi24-source')?.src,
+    crops:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+   }));
+   assert.equal(unchanged.proof,original.proof);
+   assert.equal(unchanged.photo,original.photo);
+   assert.deepEqual(unchanged.crops,original.crops);
+   assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').count();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   })),0,'Unknown color edits must never auto-save any owner-private garment');
+
+   // Restoring an explicitly reviewed, genuine non-placeholder color makes
+   // the confirmation available again; require the real owner to check it.
+   for(const accepted of ['Navy','Charcoal','Blue']){
+    await color.fill(accepted);
+    assert.equal(await checkbox.isDisabled(),false,
+     'Human-selected valid custom color must remain confirmable');
+    assert.equal(await checkbox.isChecked(),false);
+   }
+   await checkbox.check();
+   assert.equal(await checkbox.isChecked(),true);
+   assert.equal(await save.isEnabled(),true);
+   assert.ok((await page.evaluate(()=>window.multi24Research.debug().pieces)).every(x=>x.confirmed));
+   await fullShot(page,width,'02b-corrected-color-manually-reconfirmed-all',engine);
+  }
 
   if(remove76){
    // The real owner has three individually cropped and manually confirmed
@@ -1008,6 +1067,7 @@ try{
    partialColorEditSavesOtherConfirmed73:edit73,
    cancellationPreservesHumanReview74:cancel74,
    individualReviewRemoveSafeguard76:remove76,
+   unknownColorConfirmBlocked77:color77,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
