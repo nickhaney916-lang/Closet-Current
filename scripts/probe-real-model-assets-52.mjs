@@ -9,6 +9,7 @@ import {createHash} from 'node:crypto';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
+import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 
 const root=resolve('.'),dir=resolve('benchmark/model-asset-reliability-52');
 await mkdir(dir,{recursive:true});
@@ -33,16 +34,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 const result={priority:'MODEL-ASSET-RELIABILITY-52',sourceSHA256,photoUploadCount:0,cases:[],blocked:[],failures:[],responses:[],errors:[]};
-function allowedExternal(request){
- if(request.method()!=='GET')return false;
- let u;try{u=new URL(request.url());}catch{return false;}
- if(u.protocol!=='https:')return false;
- if(u.hostname==='cdn.jsdelivr.net')return u.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/');
- if(u.hostname==='huggingface.co')return u.pathname.startsWith('/ff13/fashion-clip/resolve/'+modelRevision+'/');
- if(/^(cas-bridge|cas-server|transfer)\.xethub\.hf\.co$/.test(u.hostname))return true;
- if(u.hostname==='us.aws.cdn.hf.co')return u.pathname.startsWith('/xet-bridge-us/');
- return false;
-}
+
 function label(request){
  const u=new URL(request.url());
  return {method:request.method(),host:u.host,path:u.pathname};
@@ -55,7 +47,7 @@ try{
   await context.route('**/*',route=>{
    const request=route.request(),url=request.url();
    if(url.startsWith(origin+'/')||url.startsWith('data:')||url.startsWith('blob:'+origin))return route.continue();
-   if(allowedExternal(request))return route.continue();
+   if(allowedFashionClipAsset52(request))return route.continue();
    const item=label(request);
    if(request.method()!=='GET')result.photoUploadCount++;
    result.blocked.push({engine,...item});
