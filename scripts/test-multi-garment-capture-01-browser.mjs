@@ -20,6 +20,7 @@ const source70=process.env.SOURCE70==='1';
 const source71=process.env.SOURCE71==='1';
 const source72=process.env.SOURCE72==='1';
 const edit73=process.env.COLOR73==='1';
+const cancel74=process.env.CANCEL74==='1';
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -37,7 +38,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -307,6 +308,38 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
+
+  if(cancel74){
+   // Actual licensed JPEG and three human-confirmed crop images in owner A.
+   const before=await page.evaluate(()=>({
+    source:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    cropImages:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+   }));
+   assert.equal(before.pieces.length,3);
+   assert.ok(before.pieces.every(p=>p.confirmed));
+   let message='',prompts=0;
+   page.once('dialog',async dlg=>{prompts++;message=dlg.message();await dlg.dismiss();});
+   await page.getByRole('button',{name:'Cancel extraction'}).click();
+   assert.equal(prompts,1,'Unfinished owner human-review requires one cancel warning');
+   assert.match(message,/Discard this unfinished review.*Choose Cancel to keep/);
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+    'Extraction cancellation dismissed'),null,{timeout:30000});
+   const after=await page.evaluate(()=>({
+    source:window.multi24Research.debug().sourceSHA256,
+    pieces:window.multi24Research.debug().pieces,
+    original:document.querySelector('#multi24Research .multi24-source')?.src,
+    cropImages:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(i=>i.src)
+   }));
+   assert.deepEqual(after,before,'Dismissing cancel must preserve exact SHA, crop image bytes and corrected labels');
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+   assert.equal(await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').count();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   })),0,'Declined cancellation must neither save nor delete any private garment');
+   await fullShot(page,width,'02a-dismiss-cancel-keeps-three-human-reviewed-source-all',engine);
+  }
   if(photoSwitch70){
    // A genuinely distinct, separately licensed original JPEG is selected
    // while all three human-corrected garments are still only in memory.
@@ -587,6 +620,32 @@ try{
    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
   }));
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
+  if(cancel74){
+   // After duplicate-save rejection a real, manually confirmed unsaved crop
+   // remains; the earlier three saved private garments are a separate record.
+   const old=await page.evaluate(()=>window.multi24Research.debug());
+   assert.equal(old.pieces.length,1);
+   assert.equal(old.pieces[0].confirmed,true);
+   let prompts=0,message='';
+   page.once('dialog',async dlg=>{prompts++;message=dlg.message();await dlg.accept();});
+   await page.getByRole('button',{name:'Cancel extraction'}).click();
+   assert.equal(prompts,1);
+   assert.match(message,/Discard this unfinished review/);
+   await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+    'Unfinished extraction canceled'),null,{timeout:30000});
+   const cleared=await page.evaluate(()=>window.multi24Research.debug());
+   assert.equal(cleared.sourceSHA256,undefined,'Approved cancel must revoke original bytes');
+   assert.equal(cleared.pieces.length,0);
+   assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0);
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
+   const committed=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').getAll();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   }));
+   assert.equal(committed.length,3,'Approved cancel cannot erase previously committed wardrobe');
+   assert.ok(committed.every(x=>x.ownerId==='multi24-A'&&x.sourceSHA256===sourceHash));
+   await fullShot(page,width,'03c-accept-cancel-revokes-unsaved-keeps-three-private-all',engine);
+  }
   if(photoSwitch70){
    // After a legitimate duplicate-save rejection the old source still has
    // exactly one manually confirmed crop. Approving an explicit switch must
@@ -876,6 +935,7 @@ try{
     sameOriginalReviewPreserved72:source72,
    invalidSelectionDefeatsStaleValidProof71:source71,
    partialColorEditSavesOtherConfirmed73:edit73,
+   cancellationPreservesHumanReview74:cancel74,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }

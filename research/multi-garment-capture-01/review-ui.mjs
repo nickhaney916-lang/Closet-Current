@@ -12,6 +12,7 @@ import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.m
 import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
 import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
 import {keepHumanReviewOnSameSource72} from '../same-original-photo-review-72/repeat-source-guard.mjs';
+import {needsCancelReviewConsent74,CANCEL_REVIEW_PROMPT74} from '../cancel-reviewed-capture-74/cancel-review-guard.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -77,6 +78,23 @@ export function mountMultiGarmentCapture24({
  let state=null,canceled=false,job=null,renderVersion=0,selectionEpoch70=0,submitting=false;
  const cancel=button('Cancel extraction',()=>{
   if(submitting){status.textContent='Saving is in progress. Cancellation is unavailable once saving begins.';return;}
+  // CANCEL74: an accidental touch must not destroy user-reviewed crops.
+  // Mandatory auth/logout/session-lock/pagehide cleanup remains prompt-free.
+  if(state&&!sameOwner()){reset('Account changed; unconfirmed photos cleared.');return;}
+  if(needsCancelReviewConsent74({
+   currentOwner:getOwner(),reviewOwner:state?.owner,dbName:getDb()?.name,
+   pieces:state?.pieces,submitting
+  })){
+   const approved=typeof window.confirm==='function'&&window.confirm(CANCEL_REVIEW_PROMPT74);
+   if(!approved){
+    if(state&&!sameOwner())reset('Account changed; unconfirmed photos cleared.');
+    else status.textContent='Extraction cancellation dismissed. Your original photograph and reviewed clothing are still available; nothing was saved.';
+    return;
+   }
+  }
+  // An owner or session switch while a native confirm is visible cannot
+  // cause old private photos to be kept or transferred to another account.
+  if(state&&!sameOwner()){reset('Account changed; unconfirmed photos cleared.');return;}
   reset('Unfinished extraction canceled; nothing was saved.');
  });
  const add=button('Add missed piece',()=>{if(!state||submitting)return;
