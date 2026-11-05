@@ -227,7 +227,8 @@ export function minimalPieceSnapshot51(piece,proof){
   id:p.id,instanceKey:p.instanceKey,image:p.image,cropBounds,
   cropReviewed:p.cropReviewed,confirmed:p.confirmed,category:p.category,
   itemType:p.itemType,color:p.color,manual:p.manual,
-  name:typeof p.name==='string'?p.name.slice(0,120):p.name,
+  // Drop malformed/noncloneable arbitrary names, which are NOT user labels.
+  name:typeof p.name==='string'?p.name.slice(0,120):undefined,
   hint:sanitizeSegmentHint50(p.hint,{manual:p.manual===true}),
   maskApplied:p.maskApplied===true,recognitionSuggestion42
  };
