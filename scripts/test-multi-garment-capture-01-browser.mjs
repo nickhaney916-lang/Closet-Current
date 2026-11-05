@@ -23,6 +23,7 @@ const edit73=process.env.COLOR73==='1';
 const cancel74=process.env.CANCEL74==='1';
 const remove76=process.env.REMOVE76==='1';
 const color77=process.env.COLOR77==='1';
+const snapshot78=process.env.SNAPSHOT78==='1';
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -40,7 +41,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(snapshot78?'benchmark/allowlisted-review-snapshot-78':color77?'benchmark/unknown-color-confirm-gate-77':remove76?'benchmark/remove-reviewed-garment-76':cancel74?'benchmark/cancel-reviewed-capture-74':edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -310,6 +311,69 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
+
+  if(snapshot78){
+   // Real native owner-A review cards, exact licensed original JPG and actual
+   // crop pixels/labels are exercised by the same browser. This read-only
+   // in-page function check injects ONLY deliberately invalid extra metadata
+   // into a separate review snapshot probe; it never modifies live UI state.
+   const safe=await page.evaluate(async sourceHash=>{
+    const {snapshotConfirmations34}=await import('/research/multi-garment-capture-01/review-save-finality-34.mjs');
+    const card=document.querySelector('#multi24Grid .multi24-card');
+    const source=document.querySelector('#multi24Research .multi24-source')?.src;
+    const crop=card.querySelector('img').src;
+    const actualCategory=card.querySelector('select')?.value;
+    const actualType=card.querySelectorAll('select')[1]?.value;
+    const actualColor=card.querySelector('input[type="text"]')?.value;
+    const croppedBytes=Uint8Array.from(atob(crop.split(',')[1]),c=>c.charCodeAt(0));
+    const cropHash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',croppedBytes)))
+      .map(x=>x.toString(16).padStart(2,'0')).join('');
+    const piece={
+     id:crypto.randomUUID(),instanceKey:card.dataset.pieceKey,
+     cropBounds:{x:.12,y:.11,width:.3,height:.35},image:crop,
+     category:actualCategory,itemType:actualType,color:actualColor,
+     manual:true,cropReviewed:true,confirmed:true,
+     name:()=>{},arbitraryNonCloneable:()=>{},
+     hugeBinaryMetadata:new Uint8Array(1000000),
+     hint:{categories:['Tops'],types:['Button-down shirt'],confidence:.9,
+      noncloneable:()=>{},privateToken:'do-not-leak'},
+     recognitionSuggestion42:{
+      source:'local-fashionclip',category:'Tops',itemType:'Button-down shirt',
+      color:'White',colorSource:'recognition',
+      inputBinding49:{hashAlgorithm:'SHA-256',sourceSHA256:sourceHash,
+       cropSHA256:cropHash,requestedAssetTag:'native-review78'},
+      secretUncloneable:()=>{}
+     }
+    };
+    const {snapshots}=snapshotConfirmations34([piece],{types:{Tops:['Button-down shirt']}},{sourceSHA256:sourceHash});
+    const snapped=snapshots[0];
+    if(!source?.startsWith('data:image/jpeg;base64,')||!crop?.startsWith('data:image/jpeg;base64,'))
+     throw Error('Actual native source/crop bytes missing');
+    if(actualCategory!=='Tops'||actualType!=='Button-down shirt'||actualColor!=='White')
+     throw Error('Native human shirt fields unexpected');
+    if(snapped.name!==undefined||snapped.arbitraryNonCloneable!==undefined||
+      snapped.hugeBinaryMetadata!==undefined||snapped.hint?.privateToken!==undefined||
+      snapped.hint?.noncloneable!==undefined||
+      snapped.hint!==null||
+      snapped.recognitionSuggestion42.secretUncloneable!==undefined)
+     throw Error('Unexpected untrusted metadata survived pre-clone allowlist');
+    if(snapped.image!==crop||snapped.color!==actualColor||snapped.category!==actualCategory||
+      snapped.itemType!==actualType||snapped.confirmed!==true||
+      snapped.recognitionSuggestion42.inputBinding49.cropSHA256!==cropHash||
+      snapped.recognitionSuggestion42.inputBinding49.sourceSHA256!==sourceHash)
+     throw Error('Genuine original-photo review fields and safely bounded AI receipt changed');
+    return {safe:true,cropHash,sourceHash,sourcePresent:source.length>10000,
+     cloneable:true,category:snapped.category,itemType:snapped.itemType,color:snapped.color,
+     untrustedFieldsStripped:true,validBoundedModelReceipt:true};
+   },sourceHash);
+   assert.equal(safe.safe,true);
+   assert.equal(safe.sourceHash,sourceHash);
+   assert.match(safe.cropHash,/^[0-9a-f]{64}$/);
+   assert.equal(safe.validBoundedModelReceipt,true);
+   assert.equal(safe.untrustedFieldsStripped,true);
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+   await fullShot(page,width,'02a-uncloneable-review-metadata-accepted-safely-all',engine);
+  }
 
   if(color77){
    // Three genuinely human-reviewed original JPEG crops from owner A. After
@@ -679,6 +743,13 @@ try{
    x.originalPhoto.image==='data:image/jpeg;base64,'+bytes.toString('base64')&&
    !x.threeDReady&&x.ownerId==='multi24-A'));
   assert.deepEqual(rows.map(x=>x.category).sort(),['Bottoms','Shoes','Tops']);
+  if(snapshot78){
+   // Real native Save, separately from the noncloneable in-browser probe,
+   // must persist all three owner-confirmed crop records with source SHA.
+   assert.ok(rows.every(x=>x.ownerId==='multi24-A'&&x.sourceSHA256===sourceHash&&
+    x.originalPhoto?.sha256===sourceHash&&x.extractionReview==='human-confirmed'));
+   await fullShot(page,width,'02b-after-safe-snapshot-three-private-committed-all',engine);
+  }
   const shoes=rows.find(row=>row.category==='Shoes');
   if(recognition42){
    assert.equal(shoes.recognitionSuggestion42?.source,'local-fashionclip');
@@ -1068,6 +1139,7 @@ try{
    cancellationPreservesHumanReview74:cancel74,
    individualReviewRemoveSafeguard76:remove76,
    unknownColorConfirmBlocked77:color77,
+    reviewSnapshotSanitized78:snapshot78,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }

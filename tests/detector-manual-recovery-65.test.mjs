@@ -48,7 +48,7 @@ test('RECOVERY65 user can stop slow AI without deleting verified source or bypas
 test('RECOVERY65 manual fallback is not a false save or 3D readiness assertion',()=>{
  assert.match(ui,/cropReviewed:false/);
  assert.match(ui,/canConfirmScene32\(x,schema\)/);
- assert.match(ui,/snapshotConfirmations34\(state\.pieces,schema\)/);
+ assert.match(ui,/snapshotConfirmations34\(state\.pieces,schema,proof\)/);
  assert.match(ui,/atomicSaveGarments24/);
  assert.match(ui,/original\.src=proof\.image/);
  assert.match(ui,/sameOwner\(\)/);
