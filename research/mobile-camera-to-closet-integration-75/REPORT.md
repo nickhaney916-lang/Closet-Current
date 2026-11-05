@@ -1,6 +1,6 @@
 # MOBILE-CAMERA-TO-CLOSET-INTEGRATION-75
 
-**Status: PENDING CI; physical-device acceptance blocked.** This is a research-only integration, based on Priority #74's exact commit `f51d4f82c456a2e1442417a8330f024b14d6c344`. It does not alter staging, production, authentication secrets, Family Alpha issue #255, or either separate project.
+**Status: exact-head engineering and browser CI PASS; physical-device and signed-cloud acceptance remain blocked.** This is a research-only integration, based on Priority #74's exact commit `f51d4f82c456a2e1442417a8330f024b14d6c344`. It does not alter staging, production, authentication secrets, Family Alpha issue #255, or either separate project.
 
 ## Cross-branch compatibility
 
@@ -33,11 +33,20 @@ The runner is configured for Chromium and WebKit at 320, 390, and 430 CSS pixels
 
 - Local build: passed.
 - Local full Node suite: **764/764 passed** (761 inherited, plus three new source-validation cases).
-- Local Chromium/WebKit run: unavailable because this runtime lacks `libgstreamer-1.0`, `libgtk-4`, `libgraphene`, and other Playwright system libraries. The dedicated CI workflow runs in a pinned Playwright container; do not call browser acceptance passed until that exact-head workflow succeeds and publishes artifacts.
+- Local Chromium/WebKit run: unavailable because this runtime lacks `libgstreamer-1.0`, `libgtk-4`, `libgraphene`, and other Playwright system libraries. The dedicated CI workflow runs in a pinned Playwright container; the exact-head dedicated workflow below succeeded and published the screenshot/results artifact.
 - Physical Android/iPhone test: not performed; outstanding acceptance blocker.
 - Authentication mode in browser script: simulated local test owner. No real customer account or private wardrobe photo was used.
 - Production deployed / existing staging changed / Family Alpha status changed: **No / No / No**.
 
 ## Final delivery
 
-Final SHA, draft PR URL, exact-head workflow URL, uploaded evidence artifact, final regression totals, and final acceptance status are added here after the CI result is available. Do not merge, deploy, or target production.
+- Final HEAD: `e17a628fa74883b70ac9043d258f5889d7353631` (direct child of the exact Priority #74 SHA).
+- Draft PR: https://github.com/nickhaney916-lang/Closet-Current/pull/632
+- Exact-head no-deploy run: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42097613460 — **success**; changed-file scope, build, 764 Node tests, Chromium/WebKit mobile flows, source/screenshot assertions, and artifact upload all passed.
+- Evidence artifact: `MOBILE-CAMERA-TO-CLOSET-INTEGRATION-75-NO-DEPLOY-HOLD` (72 PNGs plus results and screenshot manifest; SHA-256 `a15e0c883d1d6449b1768c48265101cc11745a039e3fe203ce7c5f69022f2583`).
+- Browser matrix: Chromium and WebKit at 320, 390, and 430 px; 6/6 cases; 72/72 screenshots recorded and audited. The CI browser uses a simulated camera stream/auth/recognition workers and real browser file input, image decoding, canvas, WebCrypto, and IndexedDB.
+- Source JPEG: Wikimedia Commons `commons-0002.jpg`, verified SHA-256 `fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667`; attribution/license are in the locked source manifest. Manual T-shirt/Tops/Blue correction was saved to synthetic owner-scoped IndexedDB; it is not a model accuracy result.
+- Physical Android/iPhone camera, OS picker/permission prompts, HEIC-on-device, real signed auth/cloud backup/restore, and OS gallery side effects were **not tested**. HEIC/HEIF is only accepted when the platform decoder succeeds; browser/hardware compatibility remains unknown.
+- Engineering/browser verdict: PASS for this opt-in research path and the included inherited tests. Physical device and signed cloud verdicts: NOT PERFORMED. Universal recognition: not measured. Family Alpha: HOLD. No production/staging change, merge, or deployment.
+
+Other pre-existing per-priority workflows triggered by the shared-file PR failed at their stricter changed-file-scope guard; the dedicated #75 workflow independently ran the complete Node suite and the inherited #74 browser flows successfully. No code from #70–#74 was deleted or weakened. Do not merge, deploy, or target production.
