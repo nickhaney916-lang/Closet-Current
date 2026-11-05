@@ -144,7 +144,10 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
     !JPEG24.test(piece.image)||typeof piece.id!=='string'||!piece.id||
     typeof piece.instanceKey!=='string'||!piece.instanceKey)
   fail('unreviewed or invalid piece');
- if(piece.manual&&!piece.cropReviewed)fail('manually detected piece needs crop review');
+ // DETECTOR57: validate crop review at the final immutable row boundary.
+ // A caller bypassing native UI cannot self-assert that an automatic detector
+ // crop was reviewed. Both manual and model regions require explicit review.
+ if(piece.cropReviewed!==true)fail('detected piece requires explicit crop review');
  const sourcePieceKey=pieceKey24(proof.sourceSHA256,piece.instanceKey);
  const segmentHint50=sanitizeSegmentHint50(piece.hint,{manual:piece.manual===true});
  return {

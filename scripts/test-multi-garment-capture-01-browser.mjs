@@ -14,7 +14,9 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/asset-policy.mjs';
 const recognition42=process.env.RECOGNITION42==='1';
-const root=resolve('.'),dir=resolve(recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const detector57=process.env.DETECTOR57==='1';
+if(detector57&&recognition42)throw Error('DETECTOR57 and RECOGNITION42 are separate independent model and native UI evaluations');
+const root=resolve('.'),dir=resolve(detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -137,6 +139,12 @@ try{
    return route.abort(); // unlisted model URL cannot bypass privacy routing.
   });
   const page=await context.newPage();
+  if(detector57){
+   // Only untrusted detector worker replies are replayed. Genuine source
+   // JPEG, native crop editor, owner DB, save, style and restore are real.
+   await page.addInitScript({content:await readFile(
+    'research/detector-proposal-native-acceptance-57/injected-detector-worker.js','utf8')});
+  }
   context.on('requestfailed',request=>{
    const host=new URL(request.url()).hostname;
    if(recognition42&&['cdn.jsdelivr.net','huggingface.co','us.aws.cdn.hf.co'].includes(host))
@@ -161,13 +169,45 @@ try{
   await page.locator('#multi24Research .multi24-source').scrollIntoViewIfNeeded();
   await shot(page,width,'01-original-source',engine);
   await fullShot(page,width,'01-original-source-all',engine);
-  for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
+  if(detector57){
+   const first=page.locator('#multi24Grid .multi24-card').first();
+   await first.waitFor({timeout:30000});
+   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('1 unverified region'),null,{timeout:30000});
+   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),1);
+   assert.equal(await first.getAttribute('data-crop-reviewed55'),'unreviewed');
+   assert.equal(await first.locator('[data-crop-review55="required"]').count(),1);
+   assert.equal(await first.getByLabel('Main category').inputValue(),'Tops',
+    'Even a convincing category is not an explicitly reviewed detector crop');
+   assert.equal(await first.getByLabel('Color (confirm visually)').inputValue(),'Blue',
+    'Even a convincing color is not an owner-confirmed detector crop');
+   await first.getByLabel('Specific type').selectOption('Button-down shirt');
+   assert.equal(await first.getByLabel('I confirm this visible garment, category and color').isDisabled(),true,
+    'Score=1, affirmative person flag and plausible taxonomy cannot bypass human crop review');
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
+   const before=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const q=db.transaction('items').objectStore('items').count();
+    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+   }));
+   assert.equal(before,0,'No unreviewed detector proposal persisted');
+   await fullShot(page,width,'01a-detector-unreviewed-all',engine);
+   await shot(page,width,'01a-detector-unreviewed',engine);
+   for(let i=0;i<2;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
+  }else{
+   for(let i=0;i<3;i++)await page.getByRole('button',{name:'Add missed piece'}).click();
+  }
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),3);
   let aiSuggestion;
   for(let i=0;i<3;i++){
    const p=cases[i];
    await realCrop(page,i,p);
    const card=page.locator('#multi24Grid .multi24-card').nth(i);
+   if(detector57&&i===0){
+    assert.equal(await card.getAttribute('data-crop-reviewed55'),'confirmed',
+     'Only genuine crop editor Save crop can transition detector piece to reviewed');
+    assert.equal(await card.locator('[data-crop-review55="required"]').count(),0);
+    assert.equal(await card.getByLabel('I confirm this visible garment, category and color').isChecked(),false,
+     'Crop review never implicitly confirms category, subtype or color');
+   }
    if(recognition42&&i===2){
     await card.getByRole('button',{name:'Suggest category, type and color'}).click();
     const result=card.locator('[data-recognition42="result"], [data-recognition42="error"]');
@@ -201,6 +241,10 @@ try{
    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
   }));
   assert.equal(rows.length,3);assert.equal(new Set(rows.map(x=>x.sourcePieceKey)).size,3);
+  if(detector57){
+   assert.equal(rows.filter(x=>x.sourcePieceKey.endsWith('/seg-0-100-100-700-700-1')).length,1);
+   assert.ok(rows.every(x=>x.sourceCropReviewed===true&&x.extractionReview==='human-confirmed'));
+  }
   assert.equal(new Set(rows.map(x=>x.id)).size,3);
   assert.ok(rows.every(x=>x.sourceSHA256===sourceHash&&x.originalPhoto.sha256===sourceHash&&
    x.originalPhoto.image==='data:image/jpeg;base64,'+bytes.toString('base64')&&
@@ -229,7 +273,11 @@ try{
    name:'same-exact-licensed-photo.jpg',mimeType:'image/jpeg',buffer:bytes
   });
   await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,sourceHash,{timeout:30000});
-  await page.getByRole('button',{name:'Add missed piece'}).click();
+  if(detector57){
+   const unreviewed=page.locator('#multi24Grid .multi24-card').first();
+   await unreviewed.waitFor({timeout:30000});
+   assert.equal(await unreviewed.getAttribute('data-crop-reviewed55'),'unreviewed');
+  }else await page.getByRole('button',{name:'Add missed piece'}).click();
   await realCrop(page,0,cases[0]);
   const dup=page.locator('#multi24Grid .multi24-card').first();
   await dup.getByLabel('Main category').selectOption('Tops');
@@ -245,6 +293,10 @@ try{
   }));
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
 
+  if(detector57){
+   assert.ok((await page.evaluate(()=>window.__detector57Audit?.requests))>=2,
+    'Original source and duplicate reimport both issued native detector worker requests');
+  }
   const byCategory=Object.fromEntries(rows.map(x=>[x.category,x.id]));
   // INTEGRATION-12: same real native owner source and wardrobe drive Style.
   // Three photographed garments make exactly ONE genuine pinned look, never
@@ -422,7 +474,7 @@ try{
   await shot(page,width,'05-logout-photo-cleared',engine);
   await login(page,'multi24-B');
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
-  diagnostics.cases.push({engine,width,pieces:3,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
+  diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
  // Reproducible image contact sheet from actual screenshots, no generated cloth.
@@ -434,7 +486,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log('INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: '+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license}));
+ console.log((detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
