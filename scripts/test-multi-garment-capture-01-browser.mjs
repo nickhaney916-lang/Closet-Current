@@ -16,8 +16,10 @@ import {allowedFashionClipAsset52} from '../research/model-asset-reliability-52/
 const recognition42=process.env.RECOGNITION42==='1';
 const name66=process.env.NAME66==='1';
 const near67=process.env.NEARDUP67==='1';
+const source70=process.env.SOURCE70==='1';
 const switch68=process.env.SWITCH68==='1';
-if(switch68&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
+const photoSwitch70=switch68||source70;
+if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
  throw Error('SWITCH68 must use isolated genuine photo and human review browser acceptance');
 if(near67&&(name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'))
  throw Error('NEARDUP67 native manual crop regression is a distinct source-identity acceptance mode');
@@ -32,7 +34,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -53,9 +55,9 @@ const fetchOriginal=async()=>{
 const bytes=await fetchOriginal(),expectedHash='e3df4503a89c244b28fa344ec170d6554fc06ad1d7cd331014fcb277df19d5ff';
 const sourceHash=sha(bytes);
 if(expectedHash)assert.equal(sourceHash,expectedHash,'Licensed original changed; reject stale source lock');
-const replacementBytes=switch68?await readFile('benchmark/fixtures/commons-0046.jpg'):null;
-const replacementHash=switch68?sha(replacementBytes):null;
-if(switch68){
+const replacementBytes=photoSwitch70?await readFile('benchmark/fixtures/commons-0046.jpg'):null;
+const replacementHash=photoSwitch70?sha(replacementBytes):null;
+if(photoSwitch70){
  assert.equal(replacementHash,'7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead');
  assert.notEqual(replacementHash,sourceHash);
  const meta=await sharp(replacementBytes).metadata();
@@ -302,7 +304,7 @@ try{
   }
   await fullShot(page,width,'02-three-reviewed-pieces-all',engine);
   await shot(page,width,'02-three-reviewed-pieces',engine);
-  if(switch68){
+  if(photoSwitch70){
    // A genuinely distinct, separately licensed original JPEG is selected
    // while all three human-corrected garments are still only in memory.
    // Dismiss the real browser confirm and verify every photo byte/crop/label
@@ -315,6 +317,49 @@ try{
    }));
    assert.equal(before.pieces.length,3);
    assert.ok(before.pieces.every(x=>x.confirmed));
+   if(source70){
+    // A file that falsely claims JPEG MIME, and a valid JPEG envelope with
+    // a corrupt undecodable interior, MUST be rejected before replacing the
+    // original or prompting the person to discard three confirmed crops.
+    const attempts=[
+     {name:'not-really-a-jpeg.jpg',buffer:Buffer.alloc(300,65)},
+     {name:'jpeg-envelope-but-corrupt.jpg',buffer:Buffer.concat([
+      Buffer.from([255,216]),Buffer.alloc(296,0),Buffer.from([255,217])
+     ])}
+    ];
+    let unexpectedPrompts=0;
+    const unexpected=async dlg=>{unexpectedPrompts++;await dlg.dismiss();};
+    page.on('dialog',unexpected);
+    for(let invalidIndex=0;invalidIndex<attempts.length;invalidIndex++){
+     await page.locator('#outfitUpload').setInputFiles({
+      name:attempts[invalidIndex].name,mimeType:'image/jpeg',
+      buffer:attempts[invalidIndex].buffer
+     });
+     await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+      'Could not verify selected replacement photo'),null,{timeout:30000});
+     assert.match(await page.locator('#multi24Status').innerText(),
+      /reviewed clothing remain unchanged; nothing was saved/);
+     const after=await page.evaluate(()=>({
+      proof:window.multi24Research.debug().sourceSHA256,
+      pieces:window.multi24Research.debug().pieces,
+      images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src),
+      original:document.querySelector('#multi24Research .multi24-source')?.src
+     }));
+     assert.deepEqual(after,before,
+      'Malformed or undecodable source must not revoke original JPEG or human category/subtype/color/crops');
+     assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+     assert.equal(unexpectedPrompts,0,'Invalid files must never demand approval to discard existing review');
+     const count=await page.evaluate(()=>new Promise((resolve,reject)=>{
+      const q=db.transaction('items').objectStore('items').count();
+      q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+     }));
+     assert.equal(count,0,'Invalid replacement cannot persist or erase clothing records');
+     await fullShot(page,width,invalidIndex===0?
+      '02b-invalid-false-jpeg-preserves-reviewed-original-all':
+      '02c-undecodable-jpeg-envelope-preserves-reviewed-original-all',engine);
+    }
+    page.off('dialog',unexpected);
+   }
    let cancelPrompt='';
    page.once('dialog',async dialog=>{cancelPrompt=dialog.message();await dialog.dismiss();});
    await page.locator('#outfitUpload').setInputFiles({
@@ -427,7 +472,7 @@ try{
    q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
   }));
   assert.equal(afterDuplicateCount,3,'Reimport failed closed without any new duplicate record');
-  if(switch68){
+  if(photoSwitch70){
    // After a legitimate duplicate-save rejection the old source still has
    // exactly one manually confirmed crop. Approving an explicit switch must
    // revoke that UNSAVED crop, never the three already committed garments.
@@ -711,7 +756,8 @@ try{
   assert.equal(await page.evaluate(()=>items.length),0,'Owner B cannot see A original photo or private items');
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
    nearDuplicateCropKeyRejected67:near67,
-   uncommittedPhotoSwitchProtected68:switch68,
+   uncommittedPhotoSwitchProtected68:photoSwitch70,
+   verifiedPhotoSwitch70:source70,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
@@ -724,7 +770,7 @@ try{
  }
  assert.deepEqual(diagnostics.unexpectedUploads,[]);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));
- console.log((switch68?'SWITCH68 GENUINE PHOTO CANCEL/ACCEPT + OWNER PRIVATE V4 BROWSER PASS: ':near67?'NEARDUP67 SHIFTED MANUAL CROP SAME SOURCE PRIVATE DUPLICATE REJECTED BROWSER PASS: ':name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
+ console.log((source70?'SOURCE70 INVALID/MALFORMED JPEG PRESERVES REVIEW + VALID PHOTO CANCEL/APPROVE PRIVATE OUTFIT PASS: ':switch68?'SWITCH68 GENUINE PHOTO CANCEL/ACCEPT + OWNER PRIVATE V4 BROWSER PASS: ':near67?'NEARDUP67 SHIFTED MANUAL CROP SAME SOURCE PRIVATE DUPLICATE REJECTED BROWSER PASS: ':name66?'LABELSYNC66 ORIGINAL-PHOTO REVIEW -> CORRECTED SEARCH -> PRIVATE V4 RESTORE BROWSER PASS: ':detector65?'RECOVERY65 WORKER FAILURE -> REAL ORIGINAL PHOTO MANUAL PRIVATE CLOSET PASS: ':detector58?'BOUNDS58 1000-MESSAGE DETECTOR FLOOD -> 12 AUTOS + REAL PRIVATE REVIEW PASS: ':detector57?'DETECTOR57 WORKER REPLAY -> REAL SOURCE / CROP / PRIVATE CLOSET GATE SUCCESS: ':'INTEGRATION12 MULTI CAPTURE -> NATIVE STYLE BROWSER SUCCESS: ')+JSON.stringify({sourceSHA256:sourceHash,cases:diagnostics.cases.length,screenshots:diagnostics.screenshots.length,license,detector57,realSegFormerAccuracyMeasured:false}));
 }catch(error){
  diagnostics.failure=String(error.stack||error);
  await writeFile(dir+'/acceptance.json',JSON.stringify(diagnostics,null,2));

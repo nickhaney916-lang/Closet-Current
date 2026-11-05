@@ -10,6 +10,7 @@ import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mj
 import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
+import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -72,7 +73,7 @@ export function mountMultiGarmentCapture24({
  const status=el('p','Choose a photo to separate visible garments.','multi24-status');status.id='multi24Status';status.setAttribute('role','status');root.append(status);
  const grid=el('div',null,'multi24-grid');grid.id='multi24Grid';
  const actions=el('div',null,'multi24-actions');
- let state=null,canceled=false,job=null,renderVersion=0,submitting=false;
+ let state=null,canceled=false,job=null,renderVersion=0,selectionEpoch70=0,submitting=false;
  const cancel=button('Cancel extraction',()=>{
   if(submitting){status.textContent='Saving is in progress. Cancellation is unavailable once saving begins.';return;}
   reset('Unfinished extraction canceled; nothing was saved.');
@@ -104,7 +105,7 @@ export function mountMultiGarmentCapture24({
  }
  let classification42;
  function cancelClassification42(){classification42?.controller.abort();classification42=null;}
- function revoke(){cancelClassification42();canceled=true;renderVersion++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;}
+ function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
  // Terminate the detector and revoke its session identity BEFORE first async
@@ -371,37 +372,69 @@ export function mountMultiGarmentCapture24({
  }
  async function startFile(file){
   if(submitting){status.textContent='Finish the current save first.';return;}
-  // SWITCH68: importing/taking a replacement photo must not silently erase
-  // this same signed-in owner's uncommitted manual crop and clothing details.
-  // Auth session changes and pagehide still revoke immediately, without UI.
-  if(file&&shouldAskBeforePhotoSwitch68({
-   currentOwner:getOwner(),reviewOwner:state?.owner,pieces:state?.pieces,
-   submitting
-  })){
-   const approved=typeof window.confirm==='function'&&window.confirm(DISCARD_PROMPT68);
-   if(!approved){
-    status.textContent='Photo switch canceled. Your current original photo, crops and confirmed clothing details are still available. No items were saved.';
-    return;
-   }
-  }
-  revoke();canceled=false;
   const owner=getOwner(),epoch=renderVersion;
-  if(!owner){status.textContent='Sign in before extracting garments.';return;}
-  if(!file||file.size>10*1024*1024){status.textContent='Choose a photo no larger than 10 MB.';return;}
-  status.textContent='Verifying full-resolution original JPEG…';
+  if(!owner){reset('Sign in before extracting garments.');return;}
+  // SOURCE70: do not revoke an already human-reviewed photo for an empty or
+  // oversized selection, even when the user previously approved a switch.
+  if(!validReplacementFile70(file)){
+   status.textContent='Selected photo is missing or outside the 128-byte to 10 MB capture limit. Your existing original photo and manually reviewed garments remain unchanged.';
+   return;
+  }
+  // Each selection attempt has an independent epoch. A late proof or decode
+  // from a previous file cannot replace a newer selection or resurrect a
+  // private photo after owner logout / security-mandated revoke().
+  const selection=++selectionEpoch70,priorEpoch=epoch;
+  const pending=()=>sourcePreflightStillCurrent70({
+    selection,currentSelection:selectionEpoch70,
+    reviewEpoch:priorEpoch,currentReviewEpoch:renderVersion,
+    owner,currentOwner:getOwner(),dbName:getDb()?.name,submitting
+   });
+  status.textContent=state?'Verifying replacement JPEG before discarding your current review…':
+   'Verifying full-resolution original JPEG…';
   try{
+   // TWO-PHASE SOURCE REPLACEMENT: complete SHA proof, image decode and
+   // optional bounded inference preview BEFORE changing the current review.
+   // An invalid, unsupported or corrupt JPEG cannot discard saved work.
    const proof=await makeProof(file,owner);
-   if(!currentLoading(epoch,owner))return;
+   if(!pending())return;
    const decoded=await ensureImage(proof.image);
-   if(!currentLoading(epoch,owner))return;
-   state={owner,proof,decoded,pieces:[]};original.src=proof.image;original.hidden=false;redraw();
+   if(!pending())return;
    let inference=proof.image;
    if(Math.max(decoded.naturalWidth,decoded.naturalHeight)>3072){
     const scale=3072/Math.max(decoded.naturalWidth,decoded.naturalHeight);
     const c=el('canvas');c.width=Math.round(decoded.naturalWidth*scale);c.height=Math.round(decoded.naturalHeight*scale);
-    c.getContext('2d').drawImage(decoded,0,0,c.width,c.height);inference=c.toDataURL('image/jpeg',.9);
+    c.getContext('2d').drawImage(decoded,0,0,c.width,c.height);
+    inference=c.toDataURL('image/jpeg',.9);
    }
-   if(!currentLoading(epoch,owner))return;
+   if(!pending())return;
+   // Retain SWITCH68's explicit owner choice, but only ask after successful
+   // source validation. User cancellation preserves original, review cards,
+   // all crop bytes and any previous confirmed category/subtype/color.
+   if(shouldAskBeforePhotoSwitch68({
+    currentOwner:owner,reviewOwner:state?.owner,pieces:state?.pieces,
+    submitting
+   })){
+    const approved=typeof window.confirm==='function'&&window.confirm(DISCARD_PROMPT68);
+    if(!approved){
+     if(pending())status.textContent='Photo switch canceled. Your current original photo, crops and confirmed clothing details are still available. No items were saved.';
+     return;
+    }
+   }
+   if(!pending())return;
+   // Retain the inherited same-owner, same-source-epoch guard for any
+   // existing active review. First-photo and after-Cancel imports have no
+   // old state, so do not require the previous canceled=false flag.
+   if(state){
+    if(!currentLoading(epoch,owner))return;
+   }
+   // The new photo is now verified AND explicitly authorized. This is the
+   // sole commit point where the old review is revoked. Previously COMMITTED
+   // owner-private wardrobe rows are never touched by a source switch.
+   revoke();canceled=false;
+   const committedEpoch=renderVersion;
+   state={owner,proof,decoded,pieces:[]};
+   original.src=proof.image;original.hidden=false;redraw();
+   if(!currentLoading(committedEpoch,owner))return;
    const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
    // Real 300s model timeout. The standalone browser QA fixture can
    // accelerate this timer only in an isolated test page.
@@ -444,8 +477,11 @@ export function mountMultiGarmentCapture24({
     detectorFallback65(next,'Local detection could not start.');
    }
   }catch(error){
-   // A stale proof/decode must never clear a more recently selected source.
-   if(currentLoading(epoch,owner))reset('Could not verify photo: '+String(error.message||error));
+   // A bad photo is a validation error, not consent to discard the existing
+   // verified source. Retain all review state; stale concurrent errors are
+   // not permitted to overwrite the current source/status.
+   if(pending())status.textContent='Could not verify selected replacement photo: '+
+    String(error?.message||error)+'. Your current original photo and reviewed clothing remain unchanged; nothing was saved.';
   }
  }
  async function commit(){
