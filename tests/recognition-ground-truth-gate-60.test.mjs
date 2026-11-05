@@ -21,6 +21,9 @@ test('RECOG60 actual source photo manifest has 59 unique SHA locked 32/11/16',()
  assert.equal(r.counts.lockedGarments,13);
  assert.equal(r.counts.lockedNegatives,3);
  assert.deepEqual(Object.values(r.perClassLockedProvisional),[3,3,2,2,3]);
+ assert.deepEqual(r.counts.outOfScopeHistoricalLabels,
+  [{id:'validation-0008',split:'validation',category:'Accessories',itemType:'Scarf'}],
+  'Preserve real accessory source even though current saved-closet taxonomy has no Accessories class');
 });
 test('RECOG60 all current provisional visual-review flags are insufficient for independent certification',()=>{
  const r=actual();
@@ -31,6 +34,7 @@ test('RECOG60 all current provisional visual-review flags are insufficient for i
  assert.equal(r.measuredIndependentMetrics,null);
  assert.equal(r.releaseAuthorized,false);
  assert.equal(r.pendingHumanReviews.length,59);
+ assert.ok(r.failures.includes('unsupported-historical-taxonomy-needs-independent-scope-review'));
  assert.ok(r.failures.includes('independent-human-ground-truth-or-primary-color-missing'));
  assert.ok(r.failures.includes('no-complete-per-photo-pinned-model-results'));
 });
