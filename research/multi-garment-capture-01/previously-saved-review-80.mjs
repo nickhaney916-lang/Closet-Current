@@ -23,7 +23,10 @@ export function partitionPreviouslySaved80({saved,pieces,proof,ownerId}={}){
   // All user confirmations and crop validity have already passed through
   // snapshotConfirmations34. This conservative preflight cannot save them.
   const sourcePieceKey=pieceKey24(proof.sourceSHA256,piece.instanceKey);
-  const sameOwnerRows=saved.filter(x=>x&&x.ownerId===ownerId);
+  const sameOwnerRows=saved.filter(x=>x&&x.ownerId===ownerId&&
+   x.sourceHashVerified===true&&
+   x.sourceSHA256===proof.sourceSHA256&&
+   x.originalPhoto?.sha256===proof.sourceSHA256);
   const isExact=sameOwnerRows.some(x=>x.id===piece.id||
    x.sourcePieceKey===sourcePieceKey);
   const preview={
