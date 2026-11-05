@@ -1,3 +1,14 @@
+/**
+ * COLOR46: A reviewed crop's pixel palette is an UNVERIFIED observation.
+ * This function only constrains labels, and never infers a mask or certifies
+ * garment color. It is independent of FashionCLIP's text-classification guess.
+ */
+export function boundedCropColor46(pixels,palette){
+ if(!pixels||!Array.isArray(palette)||!palette.includes(pixels.primary))return null;
+ const secondary=palette.includes(pixels.secondary)&&pixels.secondary!==pixels.primary?pixels.secondary:null;
+ return {source:'reviewed-crop-pixels',primary:pixels.primary,secondary,needsConfirmation:true};
+}
+
 export function normalizeSuggestion42(result, schema, palette, categories) {
  const choice=result?.choices?.[0];
  const types=schema.types[choice?.category];
