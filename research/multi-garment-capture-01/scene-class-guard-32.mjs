@@ -15,8 +15,11 @@
  */
 export const SCENE32_MIN_UNCALIBRATED_MASK_SCORE=0.95;
 const VALID_CATEGORIES=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
+// COLOR77: native confirmation must agree with the authoritative final
+// atomic private save gate. Case/whitespace variants of "Unknown" are NOT
+// verified clothing colors; never allow their checkbox to be checked.
 const cleanColor=value=>typeof value==='string'&&value.trim().length>0&&
- value.trim().length<=120&&value.trim()!=='Unknown'?value.trim():'';
+ value.trim().length<=120&&value.trim().toLowerCase()!=='unknown'?value.trim():'';
 
 export function sceneReviewDefaults32(raw) {
  const h=raw?.hint;
