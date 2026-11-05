@@ -7,6 +7,7 @@ import {atomicSaveGarments24,validCrop24,pieceKey24,duplicatePieceKeys24} from '
 import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
+import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
@@ -75,7 +76,9 @@ export function mountMultiGarmentCapture24({
   if(submitting){status.textContent='Saving is in progress. Cancellation is unavailable once saving begins.';return;}
   reset('Unfinished extraction canceled; nothing was saved.');
  });
- const add=button('Add missed piece',()=>{if(!state||submitting)return;const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
+ const add=button('Add missed piece',()=>{if(!state||submitting)return;
+  if(state.pieces.length>=MAX_TOTAL_REGIONS58){status.textContent='Review limit of 24 regions reached. Remove an incorrect region before adding another.';return;}
+  const crop={x:0,y:0,width:1,height:1};state.pieces.push({id:crypto.randomUUID(),instanceKey:manualKey(crop),cropBounds:crop,image:state.proof.image,manual:true,cropReviewed:false,category:'Uncategorized',itemType:'Unknown',color:'',confirmed:false,maskApplied:false,hint:null});redraw();});
  const suggest=button('Suggest missed regions on a plain backdrop',()=>suggestFlatlay());
  const save=button('Save confirmed pieces together',()=>commit(),'primary');
  actions.append(add,suggest,save,cancel);
@@ -192,7 +195,10 @@ export function mountMultiGarmentCapture24({
  function selector(label,options,value,change){const wrap=el('label',label),sel=el('select');for(const v of options){const option=el('option',v);option.value=v;sel.append(option);}sel.value=options.includes(value)?value:options[0];sel.disabled=submitting;sel.onchange=()=>{if(!submitting)change(sel.value);};wrap.append(sel);return wrap;}
  function redraw(){
   if(!state)return;grid.replaceChildren();
-  original.hidden=false;add.disabled=submitting;suggest.disabled=submitting;cancel.disabled=submitting;
+  original.hidden=false;
+  add.disabled=submitting||state.pieces.length>=MAX_TOTAL_REGIONS58;
+  suggest.disabled=submitting||state.pieces.length>=MAX_TOTAL_REGIONS58;
+  cancel.disabled=submitting;
   const review=organizeReview28(state.pieces);
   root.dataset.priorityCount=String(review.priority.length);
   root.dataset.additionalCount=String(review.additional.length);
@@ -288,6 +294,7 @@ export function mountMultiGarmentCapture24({
   }
   let added=0;
   for(const rect of suggestion.boxes){
+   if(state.pieces.length>=MAX_TOTAL_REGIONS58)break;
    const cropBounds=normalizeRect(rect),instanceKey=manualKey(cropBounds);
    // Preserve existing detected and user marked pieces; do not create
    // duplicate same-source proposals on repeated clicks.
@@ -314,9 +321,10 @@ export function mountMultiGarmentCapture24({
   return denominator>0?intersection/denominator:0;
  }
  async function addDetected(raw,session){
-  if(submitting||!state||session!==job||!sameOwner())return;
-  if(!raw?.instanceKey||!/^seg-[0-9-]+$/.test(raw.instanceKey)||!validCrop24(raw.cropBounds)||
-    !Array.isArray(raw.hint?.categories)||!raw.hint.categories.some(x=>TYPES.includes(x)))return;
+  if(submitting||!state||session!==job||!sameOwner()||
+    state.pieces.length>=MAX_TOTAL_REGIONS58)return;
+  // Incoming raw is already minimized by intakeProposal58. Do not retain
+  // arbitrary worker metadata or generate unbounded JPEG crops.
   if(state.pieces.some(x=>x.instanceKey===raw.instanceKey))return;
   const sourceImage=state.decoded,box=normalizeRect(raw.cropBounds);
   // A real model score is not proof of garment type; without affirmative
@@ -326,7 +334,7 @@ export function mountMultiGarmentCapture24({
    id:crypto.randomUUID(),instanceKey:raw.instanceKey,cropBounds:box,
    image:jpegCrop(sourceImage,box),manual:false,cropReviewed:false,
    category,itemType:'Unknown',color:defaults.color,confirmed:false,
-   sceneReviewReason:defaults.reason,hint:{...raw.hint},maskApplied:false
+   sceneReviewReason:defaults.reason,hint:raw.hint,maskApplied:false
   });redraw();
  }
  async function startFile(file){
@@ -349,20 +357,27 @@ export function mountMultiGarmentCapture24({
     c.getContext('2d').drawImage(decoded,0,0,c.width,c.height);inference=c.toDataURL('image/jpeg',.9);
    }
    if(!currentLoading(epoch,owner))return;
-   const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null};job=next;
+   const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null,received:0,ignored:0};job=next;
    next.timeout=setTimeout(()=>{if(job===next&&!submitting){next.worker?.terminate();job=null;status.textContent='Local segmentation timed out. You can mark pieces manually; nothing was auto-saved.';}},300000);
    next.worker=new Worker('outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
    next.worker.onmessage=event=>{
     if(job!==next||submitting||!sameOwner())return;
     const data=event.data;if(data?.id!==next.id)return;
-    if(data.type==='piece')next.pending.push(addDetected(data.piece,next));
+    if(data.type==='piece'){
+      next.received++;
+      const accepted=intakeProposal58(data.piece,state?.pieces||[],next.received);
+      if(accepted.accepted)next.pending.push(addDetected(accepted.piece,next));
+      else next.ignored++;
+     }
     if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
     if(data.type==='done'||data.type==='error'){
      Promise.all(next.pending).finally(()=>{
       if(job!==next)return;
       clearTimeout(next.timeout);next.worker.terminate();job=null;
       status.textContent=data.type==='error'?'Automatic extraction unavailable. Add and crop pieces manually; no items saved.':
-       state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. Stronger suggestions appear first, other regions remain below. Confirm each or Add missed piece.';
+       state.pieces.length+' unverified region'+(state.pieces.length===1?'':'s')+' found. '+
+        (next.ignored?next.ignored+' extra, duplicate or invalid detector proposals were ignored for mobile reliability. ':'')+
+        'Stronger suggestions appear first, other regions remain below. Inspect each crop or Add missed piece.';
      });
     }
    };
