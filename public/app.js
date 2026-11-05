@@ -554,7 +554,8 @@ function localRequest(type,image,itemId,hint){
  return new Promise((resolve,reject)=>{
   try{
    if(!localWorker){
-    localWorker=new Worker('local-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
+    const researchProfile=typeof location!=='undefined'&&new URLSearchParams(location.search).get('classificationAccuracy48')==='research'?'&recognitionProfile=accuracy48':'';
+    localWorker=new Worker('local-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:'?')+researchProfile,{type:'module'});
     const worker=localWorker;
     localWorker.onmessage=event=>{
      if(worker!==localWorker)return;

@@ -1,0 +1,95 @@
+name: GARMENT-CLASSIFICATION-ACCURACY-48 actual-photo paired recognition NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'public/benchmark-runner.mjs'
+      - 'public/local-worker.mjs'
+      - 'public/recognition-vectors-accuracy-48.*'
+      - 'research/garment-classification-accuracy-48/**'
+      - 'research/multi-garment-capture-01/recognition-review-42.mjs'
+      - 'scripts/audit-classification-accuracy-48-dataset.mjs'
+      - 'scripts/audit-classification-accuracy-48-screenshots.mjs'
+      - 'scripts/build-classification-accuracy-48-candidate.mjs'
+      - 'scripts/evaluate-classification-accuracy-48.mjs'
+      - 'scripts/run-browser-photo-benchmark.mjs'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'tests/classification-accuracy-48.test.mjs'
+      - '.github/workflows/garment-classification-accuracy-48-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actual-local-model-paired-photo-evaluation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PYTHON: python3
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Enforce exact verified SUBTYPE47 parent and research-only path allowlist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5c55e8fe462af19fbae31618a2e587175260f68c HEAD
+          git diff --name-only 5c55e8fe462af19fbae31618a2e587175260f68c HEAD > /tmp/classification48-paths
+          while IFS= read -r p; do
+            case "$p" in
+              public/app.js|public/benchmark-runner.mjs|public/local-worker.mjs|public/recognition-vectors-accuracy-48.bin|public/recognition-vectors-accuracy-48.json|research/garment-classification-accuracy-48/*|research/multi-garment-capture-01/recognition-review-42.mjs|scripts/audit-classification-accuracy-48-dataset.mjs|scripts/audit-classification-accuracy-48-screenshots.mjs|scripts/build-classification-accuracy-48-candidate.mjs|scripts/evaluate-classification-accuracy-48.mjs|scripts/run-browser-photo-benchmark.mjs|scripts/test-multi-garment-capture-01-browser.mjs|tests/classification-accuracy-48.test.mjs|.github/workflows/garment-classification-accuracy-48-no-deploy.yml) ;;
+              benchmark/classification-accuracy-48/dataset-audit.json|public/app.js|public/benchmark-runner.mjs|public/local-worker.mjs|public/recognition-vectors-accuracy-48.bin|public/recognition-vectors-accuracy-48.json|research/garment-classification-accuracy-48/*|research/multi-garment-capture-01/recognition-review-42.mjs|scripts/audit-classification-accuracy-48-dataset.mjs|scripts/audit-classification-accuracy-48-screenshots.mjs|scripts/build-classification-accuracy-48-candidate.mjs|scripts/evaluate-classification-accuracy-48.mjs|scripts/run-browser-photo-benchmark.mjs|scripts/test-multi-garment-capture-01-browser.mjs|tests/classification-accuracy-48.test.mjs|.github/workflows/garment-classification-accuracy-48-no-deploy.yml) ;;
+              *) echo "BLOCKED deployment, model-runtime default, cloud or unrelated file: $p"; exit 1 ;;
+            esac
+          done </tmp/classification48-paths
+      - name: Install system Python package manager in the Playwright container
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates python3-pip python3-venv
+      - name: Install pinned local research runtime dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+          /usr/bin/python3 -m venv /tmp/classification48-python
+          /tmp/classification48-python/bin/python -m pip install -r scripts/recognition-requirements.txt
+      - name: Rebuild candidate text vectors with exact pinned FashionCLIP text encoder
+        env:
+          PYTHON: /tmp/classification48-python/bin/python
+        run: node scripts/build-classification-accuracy-48-candidate.mjs
+      - name: Validate app build and complete inherited Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Audit all licensed original photographs and fixed dataset partitions
+        run: node scripts/audit-classification-accuracy-48-dataset.mjs
+      - name: Run identical genuine photos through actual local baseline and candidate models
+        run: |
+          mkdir -p benchmark/photos benchmark/classification-accuracy-48/results
+          cp benchmark/fixtures/*.jpg benchmark/photos/
+          for split in reviewed-32 fresh-11 holdout-16; do
+            CLASSIFICATION_PROFILE=baseline node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-${split}.json" "benchmark/classification-accuracy-48/results/${split}-baseline"
+            CLASSIFICATION_PROFILE=accuracy48 node scripts/run-browser-photo-benchmark.mjs "benchmark/manifest-${split}.json" "benchmark/classification-accuracy-48/results/${split}-candidate"
+            node scripts/evaluate-classification-accuracy-48.mjs "benchmark/manifest-${split}.json" "benchmark/classification-accuracy-48/results/${split}-baseline/results.json" "benchmark/classification-accuracy-48/results/${split}-candidate/results.json" > "benchmark/classification-accuracy-48/results/${split}-comparison.json"
+          done
+      - name: Verify actual candidate mobile-width owner-private correction, save, duplicate, outfit and restore paths
+        env:
+          RECOGNITION42: '1'
+          CLASSIFICATION48: '1'
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Audit screenshot hashes, dimensions, visible content and model availability
+        run: node scripts/audit-classification-accuracy-48-screenshots.mjs
+      - name: Upload exact-head recognition, latency, privacy and screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: GARMENT-CLASSIFICATION-ACCURACY-48-exact-head-evidence
+          path: |
+            benchmark/classification-accuracy-48/dataset-audit.json
+            benchmark/classification-accuracy-48/results/**
+            benchmark/classification-accuracy-48/native-acceptance/**
+          if-no-files-found: warn
+          retention-days: 30

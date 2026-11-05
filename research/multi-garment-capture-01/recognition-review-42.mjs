@@ -52,7 +52,8 @@ export function normalizeSuggestion42(result, schema, palette, categories) {
 
 export async function recognizeReviewedCrop42({original,crop,version,signal,schema,palette,categories}) {
  signal.throwIfAborted();
- const worker=new Worker('local-worker.mjs'+(version?'?v='+encodeURIComponent(version):''),{type:'module'});
+ const profile=typeof location!=='undefined'&&new URLSearchParams(location.search).get('classificationAccuracy48')==='research'?'&recognitionProfile=accuracy48':'';
+ const worker=new Worker('local-worker.mjs'+(version?'?v='+encodeURIComponent(version):'?')+profile,{type:'module'});
  try {
   const request=image=>new Promise((resolve,reject)=>{
    signal.throwIfAborted();

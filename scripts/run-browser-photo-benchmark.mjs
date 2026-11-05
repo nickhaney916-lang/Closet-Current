@@ -4,6 +4,7 @@ import {readFile,readdir,mkdir,writeFile} from 'node:fs/promises';
 import {extname,join,resolve} from 'node:path';
 const root=resolve('dist'),photoDir=resolve('benchmark/photos'),manifest=resolve(process.argv[2]||'benchmark/manifest-reviewed-32.json');
 const outputDir=resolve(process.argv[3]||'benchmark/output');
+const profile=process.env.CLASSIFICATION_PROFILE==='accuracy48'?'accuracy48':'baseline';
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.bin':'application/octet-stream','.css':'text/css','.webmanifest':'application/manifest+json'};
 const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname;const name=resolve(root,'.'+decodeURIComponent(p==='/'?'/index.html':p));if(!name.startsWith(root+'/'))throw Error('Forbidden');const data=await readFile(name);res.writeHead(200,{'Content-Type':types[extname(name)]||'application/octet-stream','Access-Control-Allow-Origin':'*'});res.end(data);}catch{res.writeHead(404);res.end('Not found');}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
@@ -13,7 +14,7 @@ try{
  const context=await browser.newContext({acceptDownloads:true});const page=await context.newPage();
  page.on('console',msg=>console.log('Browser:',msg.type(),msg.text().slice(0,300)));
  page.on('pageerror',e=>console.log('Page error:',e.message));
- await page.goto('http://127.0.0.1:'+port+'/benchmark.html');
+ await page.goto('http://127.0.0.1:'+port+'/benchmark.html'+(profile==='accuracy48'?'?recognitionProfile=accuracy48':''));
  await page.locator('#manifest').setInputFiles(manifest);
  const names=(await readdir(photoDir)).filter(x=>/\.(jpg|png|webp)$/i.test(x)).map(x=>join(photoDir,x));
  await page.locator('#photos').setInputFiles(names);
@@ -70,6 +71,6 @@ try{
   unstable:stability.filter(x=>!x.stable).map(x=>({id:x.id,expectedCategory:x.expectedCategory,correctViewCount:x.correctViewCount,views:x.views}))
  }));
 
-const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
+const errors=result.filter(x=>x.error);const reasons=Object.fromEntries([...new Set(result.map(x=>x.reason|| (x.error?'runtime_error':'accepted')))].map(reason=>[reason,result.filter(x=>(x.reason||(x.error?'runtime_error':'accepted'))===reason).length]));console.log('Rejection reasons:',JSON.stringify(reasons));console.log('Actual browser inference results:',result.length,'profile:',profile,'errors:',errors.length);console.log('Error examples:',JSON.stringify(errors.slice(0,8)));await writeFile(join(outputDir,'run-summary.json'),JSON.stringify({count:result.length,profile,errors:errors.length,reasons,errorExamples:errors.slice(0,8)},null,2));
  if(errors.length)process.exitCode=1;
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
