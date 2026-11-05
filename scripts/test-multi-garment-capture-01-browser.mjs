@@ -17,8 +17,9 @@ const recognition42=process.env.RECOGNITION42==='1';
 const name66=process.env.NAME66==='1';
 const near67=process.env.NEARDUP67==='1';
 const source70=process.env.SOURCE70==='1';
+const source71=process.env.SOURCE71==='1';
 const switch68=process.env.SWITCH68==='1';
-const photoSwitch70=switch68||source70;
+const photoSwitch70=switch68||source70||source71;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
  throw Error('SWITCH68 must use isolated genuine photo and human review browser acceptance');
 if(near67&&(name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'))
@@ -34,7 +35,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -317,7 +318,7 @@ try{
    }));
    assert.equal(before.pieces.length,3);
    assert.ok(before.pieces.every(x=>x.confirmed));
-   if(source70){
+   if(source70||source71){
     // A file that falsely claims JPEG MIME, and a valid JPEG envelope with
     // a corrupt undecodable interior, MUST be rejected before replacing the
     // original or prompting the person to discard three confirmed crops.
@@ -357,6 +358,48 @@ try{
      await fullShot(page,width,invalidIndex===0?
       '02b-invalid-false-jpeg-preserves-reviewed-original-all':
       '02c-undecodable-jpeg-envelope-preserves-reviewed-original-all',engine);
+    }
+    if(source71){
+     // RACE71: older real JPEG bytes are held mid-read while a newer file
+     // is rejected by the native UI's size gate. Last selection must win.
+     await page.evaluate(async()=>{
+      const original=document.querySelector('#multi24Research .multi24-source').src;
+      const binary=atob(original.slice(original.indexOf(',')+1));
+      const realBytes=Uint8Array.from(binary,ch=>ch.charCodeAt(0));
+      const slow=new File([realBytes],'older-delayed-real-jpeg.jpg',{type:'image/jpeg'});
+      let startedRead,releaseRead;
+      const started=new Promise(resolve=>{startedRead=resolve;});
+      Object.defineProperty(slow,'arrayBuffer',{value:()=>new Promise(resolve=>{
+       releaseRead=resolve;startedRead();
+      })});
+      const pending=window.multi24Research.startFile(slow);
+      await started;
+      window.__race71={finish:async()=>{
+       releaseRead(realBytes.buffer);
+       await pending;
+      }};
+     });
+     await page.locator('#outfitUpload').setInputFiles({
+      name:'newer-invalid-eight-bytes.jpg',mimeType:'image/jpeg',
+      buffer:Buffer.alloc(8,1)
+     });
+     await page.waitForFunction(()=>document.querySelector('#multi24Status')?.textContent.includes(
+      'outside the 128-byte to 10 MB capture limit'),null,{timeout:30000});
+     const rejectedStatus=await page.locator('#multi24Status').innerText();
+     await page.evaluate(async()=>{await window.__race71.finish();delete window.__race71;});
+     const raced=await page.evaluate(()=>({
+      proof:window.multi24Research.debug().sourceSHA256,
+      pieces:window.multi24Research.debug().pieces,
+      images:[...document.querySelectorAll('#multi24Grid .multi24-card img')].map(x=>x.src),
+      original:document.querySelector('#multi24Research .multi24-source')?.src
+     }));
+     assert.deepEqual(raced,before,
+      'Late valid JPEG proof must not replace original or three real reviewed garment crops');
+     assert.equal(unexpectedPrompts,0,'Older valid JPEG proof cannot prompt after a newer invalid selection');
+     assert.equal(await page.locator('#multi24Status').innerText(),rejectedStatus,
+      'Late source proof cannot overwrite newer invalid-selection status');
+     assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true);
+     await fullShot(page,width,'02d-last-invalid-choice-defeats-older-valid-proof-all',engine);
     }
     page.off('dialog',unexpected);
    }
@@ -757,7 +800,8 @@ try{
   diagnostics.cases.push({engine,width,pieces:3,detectorMessageReplay57:detector57,detectorFloodBound58:detector58,detectorFailureRecovery65:detector65,detectorFaultMode65:failureMode65,
    nearDuplicateCropKeyRejected67:near67,
    uncommittedPhotoSwitchProtected68:photoSwitch70,
-   verifiedPhotoSwitch70:source70,
+   verifiedPhotoSwitch70:source70||source71,
+   invalidSelectionDefeatsStaleValidProof71:source71,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
