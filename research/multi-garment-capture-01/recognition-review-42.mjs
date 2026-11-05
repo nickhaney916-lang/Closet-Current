@@ -1,3 +1,4 @@
+import {reviewAlternatives54} from './review-alternatives-54.mjs';
 import {jpegBytes,digestBytes} from '../capture-proof-01/source-proof.mjs';
 
 // INPUT49: SHA-256 binds actual reviewed JPEG bytes to each local classifier
@@ -103,11 +104,16 @@ export async function recognizeReviewedCrop42({original,crop,version,signal,sche
   const originalContext=normalizeSuggestion42(await request(original),schema,palette,categories);
   const cropResult=await request(crop);
   const rawSuggestion=normalizeSuggestion42(cropResult,schema,palette,categories);
+  // REVIEW54: only real crop diagnostics, never the multi-garment original.
+  // These candidates are unverified human review options, not predictions
+  // promoted to a saved category or subtype.
+  const alternatives54=reviewAlternatives54(cropResult,schema,categories);
   const {suggestion,subtypeReview47}=guardConfusableSubtype47(rawSuggestion,schema);
   // A confident model does not imply an independently verified subtype:
   // known unsafe top/shoe pairs explicitly downgrade to category-only advice.
   // Never promote the full-original context into a missing crop label.
   return {source:'local-fashionclip',originalContext,...suggestion,
+   alternatives54,
    ...(subtypeReview47?{subtypeReview47}:{}),
    colorSource:suggestion.color?'recognition':null,
    status:suggestion.itemType?'subtype-suggested':suggestion.category?'category-only':'abstained'};
