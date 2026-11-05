@@ -9,7 +9,7 @@
  *
  * Never changes logits, masks, originals, source hashes, owner data or saved
  * records. Every proposed garment still needs a human category, subtype,
- * color and an explicit confirmation.
+ * color, a user-reviewed crop, and an explicit confirmation.
  */
 export const SCENE32_MIN_UNCALIBRATED_MASK_SCORE=0.95;
 const VALID_CATEGORIES=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
@@ -40,5 +40,5 @@ export function canConfirmScene32(piece,schema) {
  const types=schema?.types?.[piece?.category];
  return !!(piece&&VALID_CATEGORIES.has(piece.category)&&
   Array.isArray(types)&&types.includes(piece.itemType)&&
-  cleanColor(piece.color)&&(!piece.manual||piece.cropReviewed===true));
+  cleanColor(piece.color)&&piece.cropReviewed===true);
 }
