@@ -9,6 +9,7 @@ import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
 import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
+import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -370,6 +371,19 @@ export function mountMultiGarmentCapture24({
  }
  async function startFile(file){
   if(submitting){status.textContent='Finish the current save first.';return;}
+  // SWITCH68: importing/taking a replacement photo must not silently erase
+  // this same signed-in owner's uncommitted manual crop and clothing details.
+  // Auth session changes and pagehide still revoke immediately, without UI.
+  if(file&&shouldAskBeforePhotoSwitch68({
+   currentOwner:getOwner(),reviewOwner:state?.owner,pieces:state?.pieces,
+   submitting
+  })){
+   const approved=typeof window.confirm==='function'&&window.confirm(DISCARD_PROMPT68);
+   if(!approved){
+    status.textContent='Photo switch canceled. Your current original photo, crops and confirmed clothing details are still available. No items were saved.';
+    return;
+   }
+  }
   revoke();canceled=false;
   const owner=getOwner(),epoch=renderVersion;
   if(!owner){status.textContent='Sign in before extracting garments.';return;}
