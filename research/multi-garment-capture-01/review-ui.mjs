@@ -129,6 +129,7 @@ export function mountMultiGarmentCapture24({
      piece.maskedColorEstimate=photo.maskApplied?photo.maskedColorEstimate:null;
      // LABEL59 old detector pixel evidence is not valid for an adjusted crop.
      piece.modelColorHint59='';
+     piece.modelHintStale59=true;
      piece.cropReviewed=true;if(piece.manual)piece.instanceKey=manualKey(piece.cropBounds);
      piece.confirmed=false;redraw();
     }
@@ -224,7 +225,7 @@ export function mountMultiGarmentCapture24({
      p.sceneReviewReason&&p.sceneReviewReason!=='model-suggestion-requires-human-confirmation'?' · Model class needs manual review':'')+
     ' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
-   if(!p.manual&&Array.isArray(p.hint?.categories)&&p.hint.categories.length){
+   if(!p.manual&&!p.modelHintStale59&&Array.isArray(p.hint?.categories)&&p.hint.categories.length){
     const suggestedFamily=p.hint.categories.join(' / ');
     const suggestedColor=p.modelColorHint59?' · possible color '+p.modelColorHint59:'';
     const note=el('p','Unverified detector hint: '+suggestedFamily+suggestedColor+
