@@ -120,7 +120,8 @@ export function reconcileHumanExports61(packetA,reviewA,packetB,reviewB,packetC=
   if(packetC.role!=='C'||[a.reviewerId,b.reviewerId].includes(c.reviewerId))
    err('third human must have distinct reviewer identity');
   recordsC=new Map(c.rows.map(x=>[x.id,x]));
-  if([...recordsC.keys()].some(id=>!idsA.has(id)))err('unmatched third reviewer source');
+  if([...recordsC].some(([id,row])=>!idsA.has(id)||idsA.get(id).sourceSHA256!==row.sourceSHA256))
+   err('unmatched third reviewer source or photograph SHA');
  }
  const adjudications={},disagreements=[],pending=[],accepted=[];
  for(const [id,p] of idsA){
