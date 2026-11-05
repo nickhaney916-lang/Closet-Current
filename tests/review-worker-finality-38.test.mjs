@@ -33,7 +33,7 @@ test('stale editor save requires the EXACT source epoch, source object and selec
 });
 test('async save acquires lock before IDB preflight and freezes all explicitly selected garments',()=>{
  assert.match(app,/const selected=state\.pieces\.filter\(x=>x\.confirmed\)/);
- assert.match(app,/snapshotConfirmations34\(state\.pieces,schema\)/);
+ assert.match(app,/snapshotConfirmations34\(state\.pieces,schema,proof\)/);
  assert.match(app,/pieces:snapshots/);
  assert.match(app,/submitting=true;redraw\(\);/);
  assert.match(app,/if\(!currentReview\(view,epoch\)\)return;/);
