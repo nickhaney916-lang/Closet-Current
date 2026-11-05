@@ -10,9 +10,11 @@ test('SAFETY55 real unreviewed automatic segmentation cannot become a confirmed 
 });
 test('SAFETY55 unreviewed automatic model score 1, person evidence and valid category still cannot authorize save',()=>{
  const auto=sceneReviewDefaults32({personDetected:true,hint:{categories:['Tops'],clipped:false,confidence:1},colorEstimate:{color:'Blue'}});
- assert.equal(auto.category,'Tops');
+ assert.equal(auto.category,'Uncategorized','LABEL59 removes automatically prefilled categories');
+ assert.equal(auto.color,'','LABEL59 removes automatically prefilled color');
  assert.equal(canConfirmScene32({...auto,itemType:'T-shirt',cropReviewed:false},schema),false);
- assert.equal(canConfirmScene32({...auto,itemType:'T-shirt',cropReviewed:true},schema),true);
+ assert.equal(canConfirmScene32({...auto,itemType:'T-shirt',cropReviewed:true},schema),false);
+ assert.equal(canConfirmScene32({...auto,category:'Tops',color:'Blue',itemType:'T-shirt',cropReviewed:true},schema),true);
 });
 test('SAFETY55 unknown subtype, blank color, stale or missing crop review always reject',()=>{
  for(const cropReviewed of [undefined,null,false,0,'true']){

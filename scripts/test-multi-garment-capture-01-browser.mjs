@@ -184,11 +184,14 @@ try{
    assert.equal(await page.locator('#multi24Grid .multi24-card').count(),1);
    assert.equal(await first.getAttribute('data-crop-reviewed55'),'unreviewed');
    assert.equal(await first.locator('[data-crop-review55="required"]').count(),1);
-   assert.equal(await first.getByLabel('Main category').inputValue(),'Tops',
-    'Even a convincing category is not an explicitly reviewed detector crop');
-   assert.equal(await first.getByLabel('Color (confirm visually)').inputValue(),'Blue',
-    'Even a convincing color is not an owner-confirmed detector crop');
-   await first.getByLabel('Specific type').selectOption('Button-down shirt');
+   assert.equal(await first.getByLabel('Main category').inputValue(),'Uncategorized',
+    'LABEL59 high detector confidence must never preselect owner garment category');
+   assert.equal(await first.getByLabel('Color (confirm visually)').inputValue(),'',
+    'LABEL59 model pixel color must never prefill authoritative owner color');
+   assert.equal(await first.getByLabel('Specific type').inputValue(),'Unknown');
+   const hint59=first.locator('[data-model-hint59="unverified"]');
+   assert.match(await hint59.innerText(),/Unverified detector hint: Tops.*possible color Blue/);
+   assert.match(await hint59.innerText(),/Select the correct category, type and color yourself/);
    assert.equal(await first.getByLabel('I confirm this visible garment, category and color').isDisabled(),true,
     'Score=1, affirmative person flag and plausible taxonomy cannot bypass human crop review');
    assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
@@ -249,6 +252,8 @@ try{
    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
   }));
   assert.equal(rows.length,3);assert.equal(new Set(rows.map(x=>x.sourcePieceKey)).size,3);
+  if(detector57)assert.equal(JSON.stringify(rows).includes('modelColorHint59'),false,
+   'Volatile detector color hint must not enter permanent owner-private wardrobe');
   if(detector57){
    assert.equal(rows.filter(x=>x.sourcePieceKey.endsWith('/seg-0-100-100-700-700-1')).length,1);
    assert.ok(rows.every(x=>x.sourceCropReviewed===true&&x.extractionReview==='human-confirmed'));

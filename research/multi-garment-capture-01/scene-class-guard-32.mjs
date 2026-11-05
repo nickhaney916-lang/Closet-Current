@@ -3,9 +3,11 @@
  *
  * Real original-photo SegFormer evidence (#588) mislabeled overlapping shirts
  * as skirt and a flat-lay outfit as a dress fragment. A segmentation pixel
- * confidence is NOT a calibrated garment-category probability. In the absence
- * of affirmative person evidence, or with cropped/ambiguous/low-score regions,
- * the label must not pre-fill the user's category or color.
+ * confidence is NOT a calibrated garment-category probability. Genuine
+ * SegFormer and instance-model benchmarks have inadequate independent accuracy.
+ * Even when a worker claims personDetected=true, score=1, single category and
+ * unclipped mask, the category and pixel color must NEVER pre-fill the owner's
+ * authoritative review fields. Suggestions are display-only and unverified.
  *
  * Never changes logits, masks, originals, source hashes, owner data or saved
  * records. Every proposed garment still needs a human category, subtype,
@@ -22,17 +24,17 @@ export function sceneReviewDefaults32(raw) {
   [...new Set(h.categories.filter(x=>VALID_CATEGORIES.has(x)))]:[];
  const hasPerson=raw?.personDetected===true;
  const safeShape=h?.clipped===false;
- const score=typeof h?.confidence==='number'?h.confidence:NaN;
- const strong=Number.isFinite(score)&&score>=SCENE32_MIN_UNCALIBRATED_MASK_SCORE&&score<=1;
  const unique=categories.length===1;
- const preselect=hasPerson&&safeShape&&strong&&unique;
  const reason=!hasPerson?'no-person-evidence':!unique?'ambiguous-category':
-  !safeShape?'clipped-or-unverified-mask':'uncalibrated-mask-score';
+  !safeShape?'clipped-or-unverified-mask':'model-label-unverified';
+ // LABEL59: mask confidence and person flags are not verified category OR
+ // color correctness. Always leave editable owner fields at empty defaults.
+ // Even an apparent 1.0 score cannot preselect or authorize later saving.
  return {
-  category:preselect?categories[0]:'Uncategorized',
-  color:preselect?cleanColor(raw?.colorEstimate?.color):'',
-  reason:preselect?'model-suggestion-requires-human-confirmation':reason,
-  requiresExplicitClassification:!preselect
+  category:'Uncategorized',
+  color:'',
+  reason,
+  requiresExplicitClassification:true
  };
 }
 

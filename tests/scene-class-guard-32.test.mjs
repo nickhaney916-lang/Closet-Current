@@ -28,10 +28,12 @@ test('untrusted/missing person state fails closed and cannot imply clothing iden
   assert.equal(sceneReviewDefaults32(raw).category,'Uncategorized');
  }
 });
-test('worn garment with a strong single uncut model region may PRESELECT but never confirm automatically',()=>{
- const result=sceneReviewDefaults32(item(4,{personDetected:true}));
- assert.deepEqual(result,{category:'Tops',color:'Green',reason:'model-suggestion-requires-human-confirmation',requiresExplicitClassification:false});
- assert.equal(canConfirmScene32({...result,itemType:'Unknown'},schema),false);
+test('LABEL59 worn garment strong person and score=0.999 remain empty owner category/color until explicit selection',()=>{
+ const raw=item(4,{personDetected:true}),original=structuredClone(raw);
+ const result=sceneReviewDefaults32(raw);
+ assert.deepEqual(result,{category:'Uncategorized',color:'',reason:'model-label-unverified',requiresExplicitClassification:true});
+ assert.equal(canConfirmScene32({...result,itemType:'T-shirt',cropReviewed:true},schema),false);
+ assert.deepEqual(raw,original,'Model data and source crop must not be mutated');
 });
 test('ambiguous, clipped, invalid-score or weak person masks require manual category selection',()=>{
  const scenarios=[

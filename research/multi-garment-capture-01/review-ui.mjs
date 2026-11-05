@@ -127,6 +127,9 @@ export function mountMultiGarmentCapture24({
      delete piece.recognitionStatus42;
      piece.image=photo.image;piece.cropBounds={...photo.cropBounds};piece.maskApplied=!!photo.maskApplied;
      piece.maskedColorEstimate=photo.maskApplied?photo.maskedColorEstimate:null;
+     // LABEL59 old detector pixel evidence is not valid for an adjusted crop.
+     piece.modelColorHint59='';
+     piece.modelHintStale59=true;
      piece.cropReviewed=true;if(piece.manual)piece.instanceKey=manualKey(piece.cropBounds);
      piece.confirmed=false;redraw();
     }
@@ -222,6 +225,13 @@ export function mountMultiGarmentCapture24({
      p.sceneReviewReason&&p.sceneReviewReason!=='model-suggestion-requires-human-confirmation'?' · Model class needs manual review':'')+
     ' · requires review; not automatically confirmed','fine');
    card.append(image,caption);
+   if(!p.manual&&!p.modelHintStale59&&Array.isArray(p.hint?.categories)&&p.hint.categories.length){
+    const suggestedFamily=p.hint.categories.join(' / ');
+    const suggestedColor=p.modelColorHint59?' · possible color '+p.modelColorHint59:'';
+    const note=el('p','Unverified detector hint: '+suggestedFamily+suggestedColor+
+     '. These are not confirmed. Select the correct category, type and color yourself.','fine');
+    note.dataset.modelHint59='unverified';card.append(note);
+   }
    if(p.cropReviewed!==true){
     const cropWarning=el('p','Unverified detection: inspect the original and use Adjust crop/mask before you can confirm or save this garment. Model confidence is not garment accuracy.','fine');
     cropWarning.dataset.cropReview55='required';cropWarning.setAttribute('role','status');
@@ -334,7 +344,9 @@ export function mountMultiGarmentCapture24({
    id:crypto.randomUUID(),instanceKey:raw.instanceKey,cropBounds:box,
    image:jpegCrop(sourceImage,box),manual:false,cropReviewed:false,
    category,itemType:'Unknown',color:defaults.color,confirmed:false,
-   sceneReviewReason:defaults.reason,hint:raw.hint,maskApplied:false
+   sceneReviewReason:defaults.reason,hint:raw.hint,
+   modelColorHint59:typeof raw.colorEstimate?.color==='string'?raw.colorEstimate.color:'',
+   maskApplied:false
   });redraw();
  }
  async function startFile(file){
