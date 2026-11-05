@@ -151,7 +151,10 @@ export async function verifiedModelPieces49(pieces,proof){
     binding.sourceSHA256===proof.sourceSHA256&&
     /^[0-9a-f]{64}$/.test(binding.cropSHA256||'')&&
     /^[A-Za-z0-9._-]{1,80}$/.test(binding.requestedAssetTag||'')&&
-    (await digestBytes(jpegBytes(piece.image)))===binding.cropSHA256;
+    (await (async()=>{
+     const bytes=jpegBytes(piece.image);
+     return bytes.length>=128&&await digestBytes(bytes)===binding.cropSHA256;
+    })());
   }catch{/* Forged image bytes must not poison user-confirmed clothing. */}
   if(!valid)delete piece.recognitionSuggestion42;
  }
