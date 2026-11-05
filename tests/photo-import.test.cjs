@@ -10,5 +10,11 @@ vm.runInContext(source.slice(source.indexOf('async function importClothingPhotos
  ctx.batch[0].category='Tops';assert.equal(ctx.batch[1].category,'Uncategorized');
  await ctx.importClothingPhotos([{name:'bad.heic',type:'image/heic',size:100},{name:'three.jpg',type:'image/jpeg',size:200},{name:'large.png',type:'image/png',size:11000000}]);
  assert.equal(ctx.batch.length,3);assert.equal(ctx.batch[0].category,'Tops');assert.match(ctx.messageText,/could not open/);assert.match(ctx.messageText,/larger than 10 MB/);
+ const extensionOnly=await ctx.readPhotoBatch([{name:'iphone-photo.HEIC',type:'',size:250}],
+  async file=>'data:'+file.name,()=>true);
+ assert.equal(extensionOnly.added,1,'supported extension remains selectable when a mobile picker omits MIME');
+ const unsupported=await ctx.readPhotoBatch([{name:'photo.bin',type:'application/octet-stream',size:250}],
+  async file=>'data:'+file.name,()=>true);
+ assert.equal(unsupported.added,0);assert.match(unsupported.errors.join(' '),/not an image/);
  console.log('Multiple photos create independent review entries; partial failures preserve imported and existing items.');
 })().catch(e=>{console.error(e);process.exitCode=1});

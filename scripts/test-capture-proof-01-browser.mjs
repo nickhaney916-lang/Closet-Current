@@ -4,8 +4,9 @@
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
-import {readFile,mkdir,writeFile} from 'node:fs/promises';
+import {readFile,mkdir,writeFile,rm} from 'node:fs/promises';
 import {extname,resolve} from 'node:path';
+import {createHash} from 'node:crypto';
 import {chromium,webkit} from 'playwright';
 const root=resolve('.');
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json','.png':'image/png','.jpg':'image/jpeg'};
@@ -23,6 +24,9 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const host='http://127.0.0.1:'+server.address().port;
+const nativeCameraFixture=await readFile('benchmark/fixtures/commons-0002.jpg');
+const nativeCameraFixtureSHA=createHash('sha256').update(nativeCameraFixture).digest('hex');
+assert.equal(nativeCameraFixtureSHA,'fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667');
 const out='benchmark/capture-proof-01';await mkdir(out,{recursive:true});
 const fakeAuth='window.closetAuth={ready:Promise.resolve(),user:{id:"capture-proof-a",email:"fixture@example.invalid"}};document.getElementById("authGate").hidden=true;document.getElementById("appShell").hidden=false;';
 const fakeCloud='window.closetCloud={beforeWrite:async()=>{},changed:()=>{},start:async()=>{},stop:async()=>{}};';
@@ -99,8 +103,12 @@ const preload=()=>{
  Object.defineProperty(window,'Worker',{configurable:true,value:ResearchWorker});
 };
 let results=[],errors=[],outbound=[];
+const engines=(process.env.CAPTURE_PROOF_ENGINES||'chromium,webkit').split(',')
+ .filter(name=>name==='chromium'||name==='webkit')
+ .map(name=>[name,name==='chromium'?chromium:webkit]);
+if(!engines.length)throw Error('CAPTURE_PROOF_ENGINES must name chromium and/or webkit');
 try{
- for(const [name,engine]of [['chromium',chromium],['webkit',webkit]]){
+ for(const [name,engine]of engines){
   const browser=await engine.launch({headless:true,args:name==='chromium'?['--disable-dev-shm-usage']:[]});
   try{
    for(const width of [320,390,430]){
@@ -121,7 +129,7 @@ try{
        return route.abort();
       outbound.push(name+'/'+width+':'+url);return route.abort();
      });
-     await page.goto(host+'/public/index.html?captureProof01=after&index02=after&index04=after',
+     await page.goto(host+'/public/index.html?captureProof01=after&mobileCamera69=after&index02=after&index04=after',
       {waitUntil:'domcontentloaded'});
      await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,null,{timeout:30000});
      await page.evaluate(()=>switchView('scan'));
@@ -170,6 +178,36 @@ try{
      await page.waitForFunction(()=>!localPending.size,{timeout:30000});
      assert.equal(await page.locator('#reviewGrid article.photo-result').count(),1);
      await page.screenshot({path:out+'/'+name+'-'+width+'-04-review-original.png',fullPage:true});
+     // The single-item native handoff is a real file input, not a mocked
+     // camera API. setInputFiles supplies an actual licensed original JPEG.
+     // The OS picker itself and its cancel UI cannot be exercised headlessly.
+     await page.evaluate(()=>switchView('scan'));
+     await page.locator('#singleCameraCapture').setInputFiles({
+      name:'licensed-native-camera.jpg',mimeType:'image/jpeg',buffer:nativeCameraFixture});
+     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='licensed-native-camera.jpg'&&
+      x.sourceHashVerified===true),null,{timeout:25000});
+     const nativeHandoff=await page.evaluate(async()=>{
+      const p=batch.find(x=>x.importFilename==='licensed-native-camera.jpg');
+      const bytes=Uint8Array.from(atob(p.image.split(',')[1]),x=>x.charCodeAt(0));
+      const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),
+       x=>x.toString(16).padStart(2,'0')).join('');
+      return {count:batch.length,sha:hash,sourceSha:p.sourceSHA256,
+       originalSha:p.originalPhoto.originalFileSha256,unchanged:p.originalPhoto.transformed===false,
+       exactDataURL:p.originalPhoto.image===p.image,singleVerified:p.singleGarmentVerified,
+       saved:(await readAll()).length,inputCleared:document.getElementById('singleCameraCapture').value==='',
+       telemetry:window.__mobileCameraLifecycle69||null};
+     });
+     assert.equal(nativeHandoff.sha,nativeCameraFixtureSHA);
+     assert.equal(nativeHandoff.sourceSha,nativeCameraFixtureSHA);
+     assert.equal(nativeHandoff.originalSha,nativeCameraFixtureSHA);
+     assert.equal(nativeHandoff.unchanged,true);assert.equal(nativeHandoff.exactDataURL,true);
+     assert.equal(nativeHandoff.singleVerified,false);assert.equal(nativeHandoff.saved,0);
+     assert.equal(nativeHandoff.inputCleared,true);
+     const beforeNativeCancel=await page.evaluate(()=>batch.map(x=>x.sourceSHA256));
+     await page.locator('#singleCameraCapture').dispatchEvent('cancel');
+     assert.deepEqual(await page.evaluate(()=>batch.map(x=>x.sourceSHA256)),beforeNativeCancel,
+      'cancel event must leave all imported/review images intact');
+     await page.screenshot({path:out+'/'+name+'-'+width+'-11-device-camera-handoff.png',fullPage:true});
      // Real native file chooser: PNG is converted at original dimensions,
      // with separate file and canonical SHA values recorded accurately.
      await page.evaluate(()=>switchView('scan'));
@@ -181,7 +219,7 @@ try{
      });
      await page.locator('#clothingPhotos').setInputFiles([{
       name:'licensed-fixture.png',mimeType:'image/png',buffer:Buffer.from(png,'base64')}]);
-     await page.waitForFunction(()=>batch.length>=2,{timeout:25000});
+     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='licensed-fixture.png'),null,{timeout:25000});
      const imported=await page.evaluate(async()=>{
       const i=batch.find(x=>x.importFilename==='licensed-fixture.png');
       const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',
@@ -232,7 +270,7 @@ try{
       const imported=batch.find(x=>x.importFilename==='licensed-fixture.png');
       imported.originalPhoto.image=items.find(x=>x.itemType==='T-shirt').image;
      });
-     await page.locator('#reviewGrid article.photo-result').first().getByRole('button',{name:'Adjust',exact:true}).click();
+     await page.locator('#reviewGrid article.photo-result').nth(1).getByRole('button',{name:'Adjust',exact:true}).click();
      await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Bottoms');
      await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('Jeans');
      await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Purple');
@@ -319,6 +357,9 @@ try{
       tamperedSourceRefused:true,failedPlaybackStopped:true,
       visibilityInterruptStopped:true,logoutDuringPendingHashDiscarded:true,
       outfitOriginalHandoff:true,logoutClearsPrivateIndex:true,
+      singleItemDeviceCameraFileHandoff:true,nativePickerCancelKeepsReview:true,
+      browserImportTelemetry:nativeHandoff.telemetry,
+      genuineOSCameraHandoffTested:false,
       actualPhysicalPhone:false});
     }finally{await context.close();}
    }
@@ -330,6 +371,7 @@ try{
   physicalAndroidTested:false,physicalIphoneTested:false,
   freshNeuralInference:false,familyAlpha:'HOLD'};
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
+ await rm(out+'/failure.json',{force:true});
  console.log('CAPTURE-PROOF-01 browser integrity and review PASS',JSON.stringify(results));
 }catch(e){
  await writeFile(out+'/failure.json',JSON.stringify({error:String(e),errors,outbound,results},null,2));

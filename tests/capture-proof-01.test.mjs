@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {webcrypto,createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {captureCanonicalJPEG,importCanonicalPhoto,verifyStoredCanonical,
- jpegBytes,jpegOrientation,digestBytes} from '../research/capture-proof-01/source-proof.mjs';
+ jpegBytes,jpegOrientation,digestBytes,sniffPhotoMime} from '../research/capture-proof-01/source-proof.mjs';
 
 const jpeg=Uint8Array.from([255,216,255,224,0,8,74,70,73,70,255,217]);
 const original='data:image/jpeg;base64,'+Buffer.from(jpeg).toString('base64');
@@ -52,6 +52,25 @@ test('PNG→full-resolution JPEG preserves separate real source hash and explici
  assert.equal(p.originalPhoto.transformed,true);
  assert.equal(p.originalPhoto.orientationConversion,'browser-decoded-to-jpeg');
  assert.equal(await verifyStoredCanonical(p,{cryptoProvider:webcrypto}),true);
+});
+test('byte sniffing handles absent or incorrect picker MIME without trusting the filename',async()=>{
+ const png=Uint8Array.from([137,80,78,71,13,10,26,10,0,0,0,0]);
+ let decodeType='',canvasShape=null;
+ const p=await importCanonicalPhoto(file(png,'','iphone-photo.HEIC'),{
+  ...options,
+  decode:async blob=>{decodeType=blob.type;return fakeDecode();},
+  makeCanvas:()=>({set width(v){canvasShape={...(canvasShape||{}),width:v};},
+   set height(v){canvasShape={...(canvasShape||{}),height:v};},
+   getContext:()=>({fillRect(){},drawImage(){}}),
+   toDataURL:()=>original})
+ });
+ assert.equal(sniffPhotoMime(png),'image/png');
+ assert.equal(decodeType,'image/png');
+ assert.equal(p.originalPhoto.originalFileType,'image/png');
+ assert.equal(p.originalPhoto.fileTypeMismatch,false);
+ assert.equal(p.originalPhoto.transformed,true);
+ const heic=Uint8Array.from([0,0,0,24,102,116,121,112,104,101,105,99]);
+ assert.equal(sniffPhotoMime(heic),'image/heic');
 });
 test('EXIF orientation recorded without false claim that original JPEG bytes were converted',async()=>{
  const exif=Buffer.from([
@@ -115,6 +134,12 @@ test('actual opt-in app connects original before model and preserves original ha
  assert.ok(crop.includes('...(item.originalPhoto||{}),image:source'));
  assert.ok(outfit.includes('originalSourceProof:guarded?job.proof:null'));
  assert.ok(html.includes('captureCameraFacing'));
+ assert.ok(html.includes('singleCameraCapture'));
+ assert.ok(html.includes('capture="environment"'));
+ assert.ok(app.includes("get('mobileCamera69')==='after'"));
+ assert.ok(app.includes("$('singleCameraCapture').onchange"));
+ assert.ok(app.includes('if(!files.length)return'));
+ assert.ok(app.includes('mobileCameraLifecycle69={'));
 });
 test('no unapproved network, native gallery, cloud or model upload is present in proof producer',()=>{
  const src=readFileSync('research/capture-proof-01/source-proof.mjs','utf8');
