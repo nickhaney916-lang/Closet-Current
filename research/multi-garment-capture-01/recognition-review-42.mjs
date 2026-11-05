@@ -9,6 +9,34 @@ export function boundedCropColor46(pixels,palette){
  return {source:'reviewed-crop-pixels',primary:pixels.primary,secondary,needsConfirmation:true};
 }
 
+/**
+ * SUBTYPE47: A conservative review gate informed by independently reproduced
+ * high-confidence FashionCLIP confusions (PR #599): T-shirt / Sweatshirt,
+ * Blouse / Tunic, and Sneakers / Ankle boots. This does NOT correct a model
+ * prediction or establish category accuracy. It withholds an unsafe specific
+ * subtype from the main AI suggestion, retaining a human-review comparison.
+ * Broad category remains independently unverified until the person confirms.
+ */
+export const CONFUSABLE_SUBTYPES47=Object.freeze({
+ Tops:Object.freeze({'T-shirt':'Sweatshirt','Sweatshirt':'T-shirt','Blouse':'Tunic','Tunic':'Blouse'}),
+ Shoes:Object.freeze({'Sneakers':'Ankle boots','Ankle boots':'Sneakers'})
+});
+export function guardConfusableSubtype47(suggestion,schema){
+ const category=suggestion?.category,choice=suggestion?.itemType;
+ const alternative=CONFUSABLE_SUBTYPES47[category]?.[choice];
+ if(!alternative||!Array.isArray(schema?.types?.[category])||
+    !schema.types[category].includes(choice)||!schema.types[category].includes(alternative))
+  return {suggestion,subtypeReview47:null};
+ return {
+  suggestion:{...suggestion,itemType:null},
+  subtypeReview47:{
+   candidate:choice,alternative,
+   reason:'independently-observed-high-confidence-confusion',
+   needsConfirmation:true
+  }
+ };
+}
+
 export function normalizeSuggestion42(result, schema, palette, categories) {
  const choice=result?.choices?.[0];
  const types=schema.types[choice?.category];
@@ -51,9 +79,13 @@ export async function recognizeReviewedCrop42({original,crop,version,signal,sche
   });
   const originalContext=normalizeSuggestion42(await request(original),schema,palette,categories);
   const cropResult=await request(crop);
-  const suggestion=normalizeSuggestion42(cropResult,schema,palette,categories);
-  // The full-frame result is context only. It cannot supply a missing crop label.
+  const rawSuggestion=normalizeSuggestion42(cropResult,schema,palette,categories);
+  const {suggestion,subtypeReview47}=guardConfusableSubtype47(rawSuggestion,schema);
+  // A confident model does not imply an independently verified subtype:
+  // known unsafe top/shoe pairs explicitly downgrade to category-only advice.
+  // Never promote the full-original context into a missing crop label.
   return {source:'local-fashionclip',originalContext,...suggestion,
+   ...(subtypeReview47?{subtypeReview47}:{}),
    colorSource:suggestion.color?'recognition':null,
    status:suggestion.itemType?'subtype-suggested':suggestion.category?'category-only':'abstained'};
  } finally {
