@@ -35,7 +35,7 @@ test('AUTH36 removes cached original photos and blocks both old workers and crop
  assert.match(outfit,/window\.addEventListener\('closet:session-locked'/);
  assert.match(outfit,/lastOutfitPhoto='';lastOutfitSourceProof=null;outfitActiveId=null/);
  assert.match(review,/window\.addEventListener\('closet:session-locked'/);
- assert.match(review,/snapshotConfirmations34\(state\.pieces,schema\)/);
+ assert.match(review,/snapshotConfirmations34\(state\.pieces,schema,proof\)/);
  assert.match(review,/currentOwner:\(\)=>currentReview\(view,epoch\)\?getOwner\(\):null/);
 });
 
