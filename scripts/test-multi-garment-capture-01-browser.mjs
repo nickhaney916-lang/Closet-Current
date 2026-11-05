@@ -213,7 +213,9 @@ try{
    assert.equal(await nativeCameraInput.getAttribute('capture'),'environment',
     'The real native whole-outfit camera input must request the rear camera');
    assert.match(await nativeCameraInput.getAttribute('accept'),/image\//);
-   assert.equal(await nativeCameraInput.isVisible(),true);
+   assert.equal(await page.locator('#wholeOutfitCapture').isVisible(),true,
+    'The user-facing whole-outfit camera panel must be visible');
+   assert.equal(await nativeCameraInput.count(),1,'The capture input exists inside its visible native-label control');
   }
   await page.locator(cameraMixed84?'#outfitCamera':'#outfitUpload').setInputFiles({
    name:'Shirt_and_tie_jeans_and_Converse.jpg',mimeType:'image/jpeg',buffer:bytes});
