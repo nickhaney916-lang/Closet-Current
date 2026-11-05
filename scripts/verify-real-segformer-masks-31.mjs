@@ -142,7 +142,27 @@ try{
     },{row,imageData,engine});
     await page.waitForFunction(()=>window.__realMask31.done,null,{timeout:395000});
     const state=await page.evaluate(()=>window.__realMask31);
-    if(state.error||!state.report)throw Error('Actual SegFormer inference failed for '+engine+'/'+row.id+': '+state.error);
+    if(state.error||!state.report){
+     const failure=String(state.error||'Worker returned no result');
+     const failedScore=scorePhoto(row.regions,{status:'failed',proposals:[]});
+     const item={id:row.id,benchmarkFixtureSHA256:row.sha256,
+      annotationOriginalSHA256:row.sourceOriginalSHA256,sourceLicense:row.attribution.license,
+      benchmarkFixtureDimensions:[row.width,row.height],benchmarkFixtureBytes:row.bytes,
+      realPinnedONNXInference:false,failedStage:failure,independentHumanPixelMasks:false,
+      before:{...failedScore,groups:[]},after:{...failedScore,groups:[]}};
+     entries.push(item);
+     for(const width of [320,390,430]){
+      await page.setViewportSize({width,height:900});
+      const filename=engine+'-'+row.id+'-'+width+'.png';
+      const png=await page.screenshot({path:out+'/'+filename,fullPage:true});
+      const metadata=await sharp(png).metadata();
+      assert.equal(metadata.format,'png');assert.equal(metadata.width,width);
+      screenshots.push({sourceId:row.id,engine,width,filename,sha256:SHA(png),
+       fixtureSHA256:row.sha256,actualModelMaskSHA256:null,realModelExecuted:false,failure});
+     }
+     console.log('AUTO-SEGMENTATION-53',engine,row.id,'model failure recorded:',failure.slice(0,200));
+     continue;
+    }
     const data=state.report;
     assert.equal(data.sourceId,row.id);assert.equal(data.sourceSHA256,row.sha256);
     assert.equal(data.model,'Xenova/segformer_b0_clothes');
@@ -189,7 +209,7 @@ try{
      'sourcePixelsUnchanged=true');
    }
   }finally{await context.close();await browser.close();}
-  assert.deepEqual(runtimeErrors,[],'browser JS errors in '+engine);
+  const modelErrors=entries.filter(x=>!x.realPinnedONNXInference).map(x=>({id:x.id,stage:x.failedStage}));
   const cachedAssets=await Promise.all([...cache.values()]);
   reports[engine]={realModelRuns:entries.length,sourceRows:entries,
    modelAssetRequestCount:cache.size,
@@ -198,19 +218,20 @@ try{
    coldModelLoadMs:entries[0]?.modelLoadMs??null,
    before:summarizePhotos(entries.map(x=>x.before)),
    after:summarizePhotos(entries.map(x=>x.after)),
-   screenshots,errors:runtimeErrors};
+   screenshots,errors:runtimeErrors,modelErrors};
  }
- assert.deepEqual(externalWrites,[]);assert.deepEqual(networkFailures,[]);
  const allRows=Object.values(reports).flatMap(x=>x.sourceRows);
  assert.ok(requestedEngines.every(engine=>reports[engine]?.realModelRuns===photoRows.length));
  const maskEvidence={priority:'AUTO-SEGMENTATION-REAL-MODEL-53',
   baselinePR:610,previousHead:'05107691cee5bbf7429b824aa0b1444fcb70ae5b',
   pinnedModel:'Xenova/segformer_b0_clothes@a2489ea8e7ec1ee912190546bad31a4906ccca76',
-  sourcePhotoCount:photoRows.length,genuineModelExecutions:allRows.length,
+  sourcePhotoCount:photoRows.length,modelRunAttempts:allRows.length,
+  genuineModelExecutions:allRows.filter(x=>x.realPinnedONNXInference).length,
+  modelFailures:allRows.filter(x=>!x.realPinnedONNXInference).map(x=>({id:x.id,stage:x.failedStage})),
   scope:'Frozen licensed single-reviewer annotation pool evaluated on SHA-locked downsampled fixture derivatives. Historical development and held-out tags are retained but are not newly blinded; some photos appeared in prior research. There is no separate validation split, blind second annotator, or independent pixel mask truth.',
   sourceLockedFixtureSHA256Verified:true,fullResolutionAnnotationSourceWasNotInferenceInput:true,rawModelLabelPixelsUsed:true,
   sameModelOutputUsedForBeforeAndAfter:true,
-  pixelMembershipExactlyPreservedByGrouping:true,
+  pixelMembershipExactlyPreservedByGrouping:allRows.length>0&&allRows.every(x=>x.realPinnedONNXInference&&x.perClassPixelMembershipUnchanged),
   sourceTruePixelMaskIoUAgainstIndependentHumanTruth:false,
   independentBlindAnnotators:0,fixturePhotosChanged:false,
   realPhotoModelAccuracyCertified:false,allSuggestionsRequireReview:true,
@@ -235,9 +256,11 @@ try{
   engines:reports};
  await writeFile(out+'/report.json',JSON.stringify(maskEvidence,null,2)+'\n');
  console.log('AUTO-SEGMENTATION-53 GENUINE MODEL BENCHMARK COMPLETED '+JSON.stringify({
-  realModelRuns:allRows.length,sourceFixtures:photoRows.length,
+  modelRunAttempts:allRows.length,realModelRuns:allRows.filter(x=>x.realPinnedONNXInference).length,sourceFixtures:photoRows.length,
   engines:Object.fromEntries(Object.entries(reports).map(([engine,data])=>[engine,
    {before:data.before.truePositives,after:data.after.truePositives}])),
   allClassMaskPixelsConserved:true,screenCaptures:Object.values(reports).reduce((n,r)=>n+r.screenshots.length,0),
   newUnseenAccuracy:false,FamilyAlpha:'HOLD'}));
+ if(externalWrites.length||networkFailures.length||allRows.some(x=>!x.realPinnedONNXInference)||Object.values(reports).some(x=>x.errors.length))
+  throw Error('Evidence report written, but model/network/browser acceptance contains recorded failures.');
 }finally{await new Promise(done=>server.close(done));}
