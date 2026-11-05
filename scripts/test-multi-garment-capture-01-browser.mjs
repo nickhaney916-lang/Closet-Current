@@ -19,6 +19,7 @@ const near67=process.env.NEARDUP67==='1';
 const source70=process.env.SOURCE70==='1';
 const source71=process.env.SOURCE71==='1';
 const source72=process.env.SOURCE72==='1';
+const edit73=process.env.COLOR73==='1';
 const switch68=process.env.SWITCH68==='1';
 const photoSwitch70=switch68||source70||source71||source72;
 if(photoSwitch70&&(near67||name66||process.env.DETECTOR57==='1'||process.env.DETECTOR58==='1'||process.env.DETECTOR65==='1'||recognition42))
@@ -36,7 +37,7 @@ const detector58=process.env.DETECTOR58==='1';
 const detector57=process.env.DETECTOR57==='1'||detector58;
 if((detector57||detector65)&&recognition42)throw Error('DETECTOR65 and RECOGNITION42 are independent reliability and inference evaluations');
 if(detector65&&detector57)throw Error('DETECTOR65 cannot be used with DETECTOR57/58');
-const root=resolve('.'),dir=resolve(source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
+const root=resolve('.'),dir=resolve(edit73?'benchmark/color-edit-partial-save-73':source72?'benchmark/same-original-photo-review-72':source71?'benchmark/invalid-selection-race-71':source70?'benchmark/verified-photo-switch-70':switch68?'benchmark/photo-switch-guard-68':near67?'benchmark/source-near-duplicate-67':name66?'benchmark/corrected-name-index-66':detector65?'benchmark/detector-recovery-65':detector58?'benchmark/bounded-detection-review-58':detector57?'benchmark/detector-proposal-native-57':recognition42?'benchmark/recognition-to-closet-42':'benchmark/multi-garment-capture-01');
 await mkdir(dir,{recursive:true});
 const sourceUrl='https://upload.wikimedia.org/wikipedia/commons/b/b0/Shirt_and_tie%2C_jeans_and_Converse.jpg';
 const license='https://creativecommons.org/licenses/by-sa/2.0/';
@@ -453,8 +454,52 @@ try{
    assert.equal(none,0,'Cancel switch must neither auto-save nor destroy review');
    await fullShot(page,width,'02a-cancel-switch-preserves-three-reviewed-crops-all',engine);
   }
-  await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
-  await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('3 separately confirmed garments'),null,{timeout:45000});
+  if(edit73){
+   // Actual licensed JPEG: changing only the shoe color must keep the two
+   // other human-confirmed garment crops saveable without auto-confirming shoe.
+   const first=page.locator('#multi24Grid .multi24-card').first();
+   const second=page.locator('#multi24Grid .multi24-card').nth(1);
+   const third=page.locator('#multi24Grid .multi24-card').nth(2);
+   const confirmed='I confirm this visible garment, category and color';
+   const changed=third.getByLabel('Color (confirm visually)');
+   await changed.fill('Green');
+   assert.equal(await changed.inputValue(),'Green');
+   assert.equal(await third.getByLabel(confirmed).isChecked(),false);
+   assert.equal(await first.getByLabel(confirmed).isChecked(),true);
+   assert.equal(await second.getByLabel(confirmed).isChecked(),true);
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isEnabled(),true,
+    'The two previously confirmed garments must remain eligible for Save');
+   assert.equal(await page.evaluate(()=>window.multi24Research.debug().pieces.filter(x=>x.confirmed).length),2);
+   await fullShot(page,width,'02a-color-edited-other-two-saveable-all',engine);
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes(
+    '2 separately confirmed garments saved together'),null,{timeout:45000});
+   const onlyTwo=await page.evaluate(()=>new Promise((resolve,reject)=>{
+    const r=db.transaction('items').objectStore('items').getAll();
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   }));
+   assert.equal(onlyTwo.length,2,'Only two verified source crops may save');
+   assert.deepEqual(onlyTwo.map(x=>x.category).sort(),['Bottoms','Tops']);
+   assert.ok(onlyTwo.every(x=>x.sourceSHA256===sourceHash&&x.ownerId==='multi24-A'&&
+    x.sourceCropReviewed===true&&x.extractionReview==='human-confirmed'));
+   const remaining=await page.evaluate(()=>window.multi24Research.debug());
+   assert.equal(remaining.pieces.length,1,'Edited third garment remains in unsaved review');
+   assert.deepEqual([remaining.pieces[0].category,remaining.pieces[0].color,remaining.pieces[0].confirmed],
+    ['Shoes','Green',false]);
+   assert.equal(await page.getByRole('button',{name:'Save confirmed pieces together'}).isDisabled(),true);
+   await fullShot(page,width,'02b-only-two-private-committed-unconfirmed-shoe-retained-all',engine);
+   // Restore shoe color with explicit human reconfirmation before the inherited
+   // complete private owned Style, outfit, restore, duplicate and logout flow.
+   const shoe=page.locator('#multi24Grid .multi24-card').first();
+   await shoe.getByLabel('Color (confirm visually)').fill('Blue');
+   await shoe.getByLabel(confirmed).check();
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes(
+    '1 separately confirmed garment saved together'),null,{timeout:45000});
+  }else{
+   await page.getByRole('button',{name:'Save confirmed pieces together'}).click();
+   await page.waitForFunction(()=>document.getElementById('multi24Status')?.textContent.includes('3 separately confirmed garments'),null,{timeout:45000});
+  }
   const rows=await page.evaluate(()=>new Promise((resolve,reject)=>{
    const r=db.transaction('items').objectStore('items').getAll();
    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
@@ -830,6 +875,7 @@ try{
    verifiedPhotoSwitch70:source70||source71||source72,
     sameOriginalReviewPreserved72:source72,
    invalidSelectionDefeatsStaleValidProof71:source71,
+   partialColorEditSavesOtherConfirmed73:edit73,
    correctedAutoNameAndIndex66:name66,stylePinnedAndSaved:true,styleLooks:style.lookCount,sourceSHA256:sourceHash,reviewAccuracy:'3/3 human confirmed',aiSuggestion:aiSuggestion??null,reopenedUserColorClear:recognition42,shirtEvidence,recognitionEvidence:shoes.recognitionSuggestion42??null,outfitSaved:true,v4Backup:true,v4Restore:true,reimportDuplicateBlocked:true,ownerPrivate:true});
   await context.close();await browser.close();browser=null;
  }
