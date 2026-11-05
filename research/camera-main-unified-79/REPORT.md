@@ -1,6 +1,6 @@
 # CAMERA-TO-CLOSET-MAIN-INTEGRATION-79 — Final engineering report
 
-**Final status: PASS for research-browser integration; physical handset acceptance NOT VERIFIED.** This is an isolated research implementation and has not been merged or deployed. Family Alpha Issue #255 remains HOLD.
+**Final status: NEEDS REWORK for PR-wide checks.** The dedicated integration acceptance passed, but pre-existing branch-locked PR workflows fail before testing at their unrelated ancestor checks. Physical handset acceptance is NOT VERIFIED. This is an isolated research implementation and has not been merged or deployed. Family Alpha Issue #255 remains HOLD.
 
 ## Verified references
 
@@ -32,6 +32,8 @@ On exact tested head `af9db31ca60bec45af7ae05561dca14936ba2ebe`, the dedicated r
 - **Artifact:** [sanitized browser evidence and screenshots](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42120782126/artifacts/13459060947), SHA-256 `8f2716e4ea20f75c4b212f1524753c586d1d3ca7380724b295cfb9e7974e067c`.
 
 The first workflow attempt exposed a missing invocation of the Priority #78 `SNAPSHOT78=1` browser pass before its screenshot audit. That was corrected in the workflow, and the exact-head rerun above passed the snapshot tests and audit. No assertions were weakened.
+
+The pull request also triggered several existing priority-specific workflows from the target branch. Those jobs failed before their test steps at hard-coded ancestor gates for their own separate research bases (for example, CAPTURE-PROOF-01 run [#42120791647](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42120791647) requires commit `f1a79f697d978dba7462fc725d05503cbbf8385c`, which is not an ancestor of this Priority #78-based branch). Their tests were skipped; these failures do not invalidate the dedicated Priority #79 workflow, which independently validates the correct #78 parent and passes. The PR remains draft and must stay unmerged.
 
 ## Physical devices and boundaries
 
