@@ -105,7 +105,15 @@ try{
      await page.getByRole('button',{name:'Record my independent review'}).click();
      assert.match(await page.locator('#progress').innerText(),/^2 \/ 59/);
      await page.locator('#packetFile').setInputFiles(inputB);
-     await page.waitForFunction(()=>document.querySelector('#photo')?.naturalWidth>0);
+     // The old role A JPEG may still have naturalWidth while the async
+     // File.text() read for packet B has not completed. Wait on identity,
+     // source photo URL and local JPEG decode rather than stale image pixels.
+     await page.waitForFunction(expected=>{
+       const counter=document.querySelector('#counter')?.textContent||'';
+       const photo=document.querySelector('#photo');
+       return counter.includes('Reviewer B')&&photo?.naturalWidth>0&&
+        decodeURIComponent(photo.getAttribute('src')||'').endsWith(expected);
+     },b.items[0].image,{timeout:30000});
      assert.match(await page.locator('#counter').innerText(),/Reviewer B/);
      assert.equal(await page.locator('#category').inputValue(),'');
      assert.equal(await page.locator('#primaryColor').inputValue(),'');
