@@ -1,0 +1,66 @@
+name: NEARDUP67 canonical original-source manual crop duplicate guard NO DEPLOY
+on:
+  push:
+    branches:
+      - research/source-near-duplicate-67-main-20261105-HOLD
+  pull_request:
+    paths:
+      - 'research/multi-garment-capture-01/atomic-group.mjs'
+      - 'research/multi-garment-capture-01/source-near-duplicate-67.mjs'
+      - 'research/source-near-duplicate-67/**'
+      - 'scripts/test-multi-garment-capture-01-browser.mjs'
+      - 'scripts/audit-source-near-duplicate-67-browser.mjs'
+      - 'tests/source-near-duplicate-67.test.mjs'
+      - '.github/workflows/source-near-duplicate-67-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-source-owner-private-near-duplicate-rejection:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact successful LABELSYNC66 parent and strict research-only changed-file scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor d032e1a1957944883c7f589cd05f663d01c3f68b HEAD
+          git diff --name-only d032e1a1957944883c7f589cd05f663d01c3f68b HEAD > /tmp/near67-allow
+          while IFS= read -r path; do
+            case "$path" in
+              research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/source-near-duplicate-67.mjs|research/source-near-duplicate-67/*|scripts/test-multi-garment-capture-01-browser.mjs|scripts/audit-source-near-duplicate-67-browser.mjs|tests/source-near-duplicate-67.test.mjs|.github/workflows/source-near-duplicate-67-no-deploy.yml) ;;
+              *) echo "BLOCKED production/staging/other-project edit: $path"; exit 1 ;;
+            esac
+          done < /tmp/near67-allow
+      - name: Install pinned browser and all inherited Node regression test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build app and run all inherited Node tests plus source-SHA geometric duplicate protections
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Six untouched genuine-photo original manual crop owner-private native E2E regressions
+        run: node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Six new genuine original source + shifted manual re-crop duplicate private browser cases
+        run: NEARDUP67=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independent SHA/dimensions/nonblank audit of 66 actual browser screenshots
+        run: node scripts/audit-source-near-duplicate-67-browser.mjs
+      - name: Archive only sanitized source identity, full browser acceptance, and 66 PNGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NEARDUP67-original-photo-manual-recrop-private-duplicate-prevention-HOLD
+          path: |
+            benchmark/multi-garment-capture-01/acceptance.json
+            benchmark/source-near-duplicate-67/acceptance.json
+            benchmark/source-near-duplicate-67/*.png
+          if-no-files-found: warn
+          retention-days: 14
