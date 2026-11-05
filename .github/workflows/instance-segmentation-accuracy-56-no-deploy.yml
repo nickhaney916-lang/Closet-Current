@@ -36,6 +36,9 @@ jobs:
               *) echo "BLOCKED unexpected non-research change: $path"; exit 1 ;;
             esac
           done < /tmp/instance56-files
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
       - name: Install pinned browser dependencies and Python inference runtime
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 onnxruntime-web@1.23.2
