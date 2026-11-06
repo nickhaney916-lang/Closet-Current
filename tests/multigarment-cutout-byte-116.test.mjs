@@ -94,7 +94,7 @@ test('PHOTO116 changing source or reviewed cutout while SECOND async hash pendin
  }}};
  const r=make();
  const promise=evaluate(r,[],{cryptoProvider:provider});
- for(let i=0;i<20&&typeof resume!=='function';i++)await Promise.resolve();
+ for(let i=0;i<100&&typeof resume!=='function';i++)await new Promise(resolve=>setImmediate(resolve));
  assert.equal(typeof resume,'function');
  r.segmentHint.cutoutImage=jpg(cut2);
  resume();
@@ -109,7 +109,7 @@ test('PHOTO116 owner switch during cutout SHA verification is rejected before an
   return new Promise(resolve=>{resume=()=>webcrypto.subtle.digest('SHA-256',b).then(resolve);});
  }}};
  const pending=evaluate(make(),[],{cryptoProvider:provider,currentOwner:()=>currentOwner});
- for(let i=0;i<20&&typeof resume!=='function';i++)await Promise.resolve();
+ for(let i=0;i<100&&typeof resume!=='function';i++)await new Promise(resolve=>setImmediate(resolve));
  assert.equal(typeof resume,'function');
  currentOwner='different-owner';
  resume();
