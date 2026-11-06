@@ -7,7 +7,7 @@ test('PHOTO120 actual app Adjust is gated by THREE independent research-only URL
  assert.ok(app.includes("get('reviewedSave120')==='research'&&"));
  assert.ok(app.includes(' captureProof01Active&&index04ResearchActive;'));
  assert.ok(app.includes("const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);"));
- assert.ok(app.includes('if(reviewedCapture120){'));
+ assert.ok(app.includes("if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){"));
  assert.ok(app.includes('await savePiece(value,batch.filter('),'unchanged default app save fallback remains');
 });
 test('PHOTO120 explicit individual garment and exact category subtype color confirmation is never prechecked',()=>{
