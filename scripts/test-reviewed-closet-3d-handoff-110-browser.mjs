@@ -124,9 +124,11 @@ try{
    const baseline=await snapshot(denim,'before-save');
    const before=await page.evaluate(()=>window.cc110LookState());
    assert.equal(before.readyToSave,true);
-   // In-page DOM click is untrusted and must not impersonate human consent.
+   // In-page DOM click is untrusted and must not mutate the existing saved
+   // look. The second denim iteration legitimately starts with a prior look.
+   const beforeUntrusted=await page.evaluate(()=>window.cc110LookState());
    await page.evaluate(()=>document.getElementById('cc110Save').click());
-   assert.equal(await page.evaluate(()=>window.cc110LookState().hasSavedLook),false);
+   assert.deepEqual(await page.evaluate(()=>window.cc110LookState()),beforeUntrusted);
    await page.locator('#cc110Save').click();
    await page.waitForFunction(()=>window.cc110LookState?.()?.hasSavedLook===true&&
     window.cc110LookState().lastOutcome==='licensed-original-look-saved-in-memory');
