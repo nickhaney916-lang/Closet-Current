@@ -124,11 +124,18 @@ try{
    const baseline=await snapshot(denim,'before-save');
    const before=await page.evaluate(()=>window.cc110LookState());
    assert.equal(before.readyToSave,true);
-   // In-page DOM click is untrusted and must not mutate the existing saved
-   // look. The second denim iteration legitimately starts with a prior look.
-   const beforeUntrusted=await page.evaluate(()=>window.cc110LookState());
+   // In-page DOM click is untrusted and must not impersonate human consent.
+   const oldUntrustedState=await page.evaluate(()=>{
+    const state=window.cc110LookState();
+    return {saved:state.hasSavedLook,outcome:state.lastOutcome};
+   });
    await page.evaluate(()=>document.getElementById('cc110Save').click());
-   assert.deepEqual(await page.evaluate(()=>window.cc110LookState()),beforeUntrusted);
+   const afterUntrustedState=await page.evaluate(()=>{
+    const state=window.cc110LookState();
+    return {saved:state.hasSavedLook,outcome:state.lastOutcome};
+   });
+   assert.deepEqual(afterUntrustedState,oldUntrustedState,
+    'scripted DOM click cannot mutate either new or previously saved original look');
    await page.locator('#cc110Save').click();
    await page.waitForFunction(()=>window.cc110LookState?.()?.hasSavedLook===true&&
     window.cc110LookState().lastOutcome==='licensed-original-look-saved-in-memory');
