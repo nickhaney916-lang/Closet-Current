@@ -35,13 +35,35 @@ export function validateNative3D05Selection({consumer,originalNativeAuth,win,doc
  if(!Number.isInteger(index)||index<0||index>=storage.saved.length)
   throw Error('NATIVE05 Open an existing saved outfit before viewing in 3D');
  const item=storage.saved[index];
- if(!goodId(item?.outfit3dId)||item.ownerId!==undefined&&item.ownerId!==originalNativeAuth.user.id)
+ if(!goodId(item?.id)||!goodId(item?.outfit3dId)||item.ownerId!==undefined&&item.ownerId!==originalNativeAuth.user.id)
   throw Error('NATIVE05 existing owner-private outfit3dId required');
  if(!item.slots||typeof item.slots!=='object'||Array.isArray(item.slots)||
   !Object.keys(item.slots).length||!Object.entries(item.slots).every(([k,id])=>slotNames.has(k)&&goodId(id)))
   throw Error('NATIVE05 invalid saved garment identity');
- return {id:item.outfit3dId,slots:structuredClone(item.slots),
+ return {id:item.outfit3dId,savedId:item.id,slots:structuredClone(item.slots),
   name:item.name||'My outfit',ownerId:originalNativeAuth.user.id};
+}
+/**
+ * PRIORITY88: A request captures exactly one owner, selected saved-board row,
+ * donor ID, photo-bound slot identities and display name. Every asynchronous
+ * boundary must recheck the LIVE native consumer state before showing a
+ * source-bound WebGL garment. Neither a stale slot nor a merely restored
+ * matching 3D ID is authorization to preview another saved outfit.
+ */
+export function requireCurrentNative3D05Selection88({
+ consumer,originalNativeAuth,win,doc,admitted,selectedIndex
+}={}){
+ if(!admitted||!Number.isInteger(selectedIndex)||selectedIndex<0)
+  throw Error('NATIVE88 invalid original outfit admission');
+ const current=validateNative3D05Selection({consumer,originalNativeAuth,win,doc});
+ if(consumer.selected!==selectedIndex||
+    current.savedId!==admitted.savedId||
+    current.id!==admitted.id||
+    current.ownerId!==admitted.ownerId||
+    current.name!==admitted.name||
+    !sameSlots(current.slots,admitted.slots))
+  throw Error('NATIVE88 saved outfit changed during 3D loading; reopen a current outfit');
+ return current;
 }
 export async function mountNative3D05({
  win=globalThis.window,doc=win?.document,
@@ -69,7 +91,7 @@ export async function mountNative3D05({
  if(!anchor||!anchor.parentElement)
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
- let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false;
+ let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
@@ -108,37 +130,50 @@ export async function mountNative3D05({
  }
  async function open(){
   if(closed)throw Error('NATIVE05 private preview disposed');
-  if(opened)throw Error('NATIVE05 close the current 3D preview before reopening');
-  const request=++attempt;
+  if(opened||opening)throw Error('NATIVE05 close the current 3D preview before reopening');
+  const selectedIndex=consumer.selected,request=++attempt;
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
-  button.disabled=true;notify('Verifying owner wardrobe and loading original-photo anatomical 3D…');
+  const requireFresh=()=>{
+   if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
+   return requireCurrentNative3D05Selection88({
+    consumer,originalNativeAuth:nativeAuth,win,doc,admitted:selected,selectedIndex
+   });
+  };
+  opening=true;button.disabled=true;
   try{
+   notify('Verifying owner wardrobe and loading original-photo anatomical 3D…');
    if(!epoch)epoch=createNativeAuthEpoch01({nativeAuth,win,doc});
    const lease=epoch.status().active?
     {ownerId:nativeAuth.user.id,generation:epoch.auth.getSessionGeneration()}:
     await epoch.attest();
    if(request!==attempt||lease.ownerId!==selected.ownerId||!epoch.status().active)
     throw Error('NATIVE05 original account changed before viewer admission');
+   requireFresh(); // A different saved board must not cross the donor import boundary.
    const donor=await importPinnedDonor();
+   requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
     throw Error('NATIVE05 exact pinned 3D donor not available');
    panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
+   requireFresh(); // Do not open a donor after the native outfit changed.
    lockDonorEditing();
    opened=selected.id;
    await panel.open(); // genuine anatomical WebGL rig and source-verified loaders
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
+   requireFresh(); // The WebGL model may take seconds; recheck source + owner.
    const target=doc.getElementById('outfit3D01Saved');
    if(!target||![...target.options].some(x=>x.value===selected.id))
     throw Error('NATIVE05 saved outfit absent in verified owner 3D donor');
    target.value=selected.id;
    target.dispatchEvent(new win.Event('change',{bubbles:true}));
    const plan=panel.controller.openSaved(selected.id);
+   requireFresh(); // No stale picked ID may finish after user switched outfits.
    if(!sameSlots(selected.slots,plan.slots)||plan.ownerId!==selected.ownerId)
     throw Error('NATIVE05 stale/out-of-date garment IDs; preview blocked');
    // Donor's source/3D selection changes happen asynchronously on event.
    // The read-only evidence below never calls the donor save/delete methods.
    lockDonorEditing();
+   requireFresh(); // The public successful preview receipt must refer to the same row.
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
@@ -146,7 +181,7 @@ export async function mountNative3D05({
   }catch(e){
    cleanup('3D not available · original clothing photographs preserved. '+String(e.message||e));
    throw e;
-  }finally{button.disabled=false;}
+  }finally{opening=false;button.disabled=false;}
  }
  button.onclick=()=>open().catch(()=>{});
  const state=()=>{
