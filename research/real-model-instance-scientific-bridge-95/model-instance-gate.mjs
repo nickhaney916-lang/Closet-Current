@@ -50,16 +50,25 @@ function manifest95({sources,partitions,extraSegformerSources}){
   }
  }
  if(partitionById.size!==59)fail('not every true original photo frozen exactly once');
+ // The old segmentation pilot contains DIFFERENT historical samples
+ // under some IDs also used by the 59-photo classifier collection. Joining
+ // every old pilot row by a matching name would invent identity. Only the
+ // three exact P86 SegFormer inference inputs are a permitted join, each
+ // verified against the original SHA rather than the shared filename alone.
+ const selectedSemanticIDs=new Set(SEGFORMER86_SEMANTIC_MAPS_95.map(x=>x[1]));
  const segmentSources=new Map();
  for(const s of extraSegformerSources){
+  if(!selectedSemanticIDs.has(s?.id))continue;
   if(!ID.test(s?.id||'')||!SHA.test(s?.sha256||'')||
    !s.attribution?.source||!s.attribution?.license||segmentSources.has(s.id))
    fail('semantic source without original SHA/license or duplicate');
   segmentSources.set(s.id,s);
  }
- for(const [id,row] of byId){
-  const additional=segmentSources.get(id);
-  if(additional&&additional.sha256!==row.sha256)
+ if(segmentSources.size!==selectedSemanticIDs.size)
+  fail('missing authentic SegFormer original source identities');
+ for(const id of selectedSemanticIDs){
+  const source=byId.get(id),additional=segmentSources.get(id);
+  if(source&&additional.sha256!==source.sha256)
    fail('SegFormer/classifier original SHA mismatch '+id);
  }
  return {byId,partitionById,segmentSources};
