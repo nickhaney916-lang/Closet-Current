@@ -1,0 +1,225 @@
+name: PHOTO108 bilateral original-photo denim left right replay true 163 bone WebGL NO DEPLOY
+on:
+  push:
+    branches:
+      - research/denim-bilateral-pose-replay-108-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-original-163-bone-denim-independent-left-right-calves-and-source-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact independently green PHOTO106 ancestor and only eight added research/test/report/workflow paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=9d7782e358edb20672685fe97af255aca8d0d8b1
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo108-allowed
+          while IFS= read -r path; do
+            case "$path" in
+              research/denim-bilateral-pose-replay-108/bilateral-pose-policy.mjs|research/denim-bilateral-pose-replay-108/real-source-bilateral-audit.mjs|research/denim-bilateral-pose-replay-108/REPORT.md|scripts/install-denim-bilateral-108.mjs|scripts/test-denim-bilateral-108-browser.mjs|scripts/audit-denim-bilateral-108.mjs|tests/denim-bilateral-pose-replay-108.test.mjs|.github/workflows/denim-bilateral-pose-replay-108-no-deploy.yml) ;;
+              *) echo "REFUSE unauthorized default app/production/staging/cloud/private photos/other project modification: $path"; exit 1 ;;
+            esac
+          done </tmp/photo108-allowed
+          test "$(wc -l </tmp/photo108-allowed)" -eq 8
+      - name: Install exact inherited Node real WebGL test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Unchanged app build and full inherited plus PHOTO108 actual independently controlled bilateral source knee/garment/contact Node tests
+        run: |
+          node --check research/photo-denim-pose-fold-contact-104/fold-profile.mjs
+          node --check research/photo-denim-pose-fold-contact-104/pose-responsive-denim-folds.mjs
+          node --check scripts/install-denim-pose-fold-contact-104.mjs
+          node --check scripts/test-denim-pose-fold-contact-104-browser.mjs
+          node --check scripts/audit-denim-pose-fold-contact-104.mjs
+          node --check research/photo-denim-panel-normal-continuity-105/rear-seam-normal-continuity.mjs
+          node --check scripts/install-denim-panel-normal-105.mjs
+          node --check scripts/test-denim-panel-normal-105-browser.mjs
+          node --check scripts/audit-denim-panel-normal-105.mjs
+          node --check research/photo-denim-calf-drape-geometry-106/calf-drape-policy.mjs
+          node --check research/photo-denim-calf-drape-geometry-106/source-ankle-calf-drape.mjs
+          node --check scripts/install-photo-denim-calf-106.mjs
+          node --check scripts/test-photo-denim-calf-106-browser.mjs
+          node --check scripts/audit-photo-denim-calf-106.mjs
+          node --check research/denim-bilateral-pose-replay-108/bilateral-pose-policy.mjs
+          node --check research/denim-bilateral-pose-replay-108/real-source-bilateral-audit.mjs
+          node --check scripts/install-denim-bilateral-108.mjs
+          node --check scripts/test-denim-bilateral-108-browser.mjs
+          node --check scripts/audit-denim-bilateral-108.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assemble genuine exact pinned PR541 anatomical source original three-d donor in TEMPORARY detached research worktree
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .photo103-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo103-donor-541"
+          test "$(git -C .photo103-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .photo103-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .photo103-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .photo103-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .photo103-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .photo103-donor-541
+          node scripts/install-denim-bilateral-108.mjs .photo103-donor-541
+          cp scripts/test-photographed-denim-knee-103-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-photographed-denim-knee-103.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-pose-fold-contact-104-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-pose-fold-contact-104.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-panel-normal-105-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-panel-normal-105.mjs .photo103-donor-541/scripts/
+          cp scripts/test-photo-denim-calf-106-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-photo-denim-calf-106.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-bilateral-108-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-bilateral-108.mjs .photo103-donor-541/scripts/
+          cd .photo103-donor-541
+          node --check research/three-d-104/fold-profile.mjs
+          node --check research/three-d-104/pose-responsive-denim-folds.mjs
+          node --check research/three-d-105/rear-seam-normal-continuity.mjs
+          node --check research/three-d-106/calf-drape-policy.mjs
+          node --check research/three-d-106/source-ankle-calf-drape.mjs
+          node --check research/three-d-108/bilateral-pose-policy.mjs
+          node --check research/three-d-108/real-source-bilateral-audit.mjs
+          node --check research/three-d-15/outfit-controller.mjs
+          node --check research/three-d-15/showroom.mjs
+          node --check research/three-d-69/index-to-real-garment-demo.mjs
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Inherited PHOTO103 genuine dual original jeans male female 163-bone skinned Chromium 390px pose regressions
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-photographed-denim-knee-103-browser.mjs
+      - name: Actual source licensed original 163-bone photographed denim pose-responsive front-protected rear fold on/off contact and reset real Chromium
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-denim-pose-fold-contact-104-browser.mjs
+      - name: Real source photograph 163 bone denim neutral-rear panel shading 320 390 430 mobile front side rear Chromium WebGL
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-denim-panel-normal-105-browser.mjs
+      - name: PHOTO106 true original photographed 163-bone calf fall geometric before after at 320 390 430 mobile front side rear Chromium WebGL
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-photo-denim-calf-106-browser.mjs
+      - name: PHOTO108 authentic original 163-bone denim both knee bilateral source pose replays 80 real WebGL screenshots
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-denim-bilateral-108-browser.mjs
+      - name: Independently audit inherited PHOTO103 44 PHOTO104 48 PHOTO105 60 PHOTO106 84 plus PHOTO108 80 genuine original photos
+        run: |
+          cd .photo103-donor-541
+          node scripts/audit-photographed-denim-knee-103.mjs
+          node scripts/audit-denim-pose-fold-contact-104.mjs
+          node scripts/audit-denim-panel-normal-105.mjs
+          node scripts/audit-photo-denim-calf-106.mjs
+          node scripts/audit-denim-bilateral-108.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const p103=JSON.parse(readFileSync('benchmark/three-d-103-audit/acceptance.json','utf8'));
+          assert.equal(p103.acceptedGenuineWebGLChromiumFrames,44);
+          assert.equal(p103.realRigBones,163);
+          const a=JSON.parse(readFileSync('benchmark/three-d-104-audit/acceptance.json','utf8'));
+          assert.equal(a.independentlyAuditedWebGLScreenshots,48);
+          assert.equal(a.originalSourceDenimImages,2);
+          assert.equal(a.figureModels,2);
+          assert.equal(a.realSkinnedBones,163);
+          assert.equal(a.poseConditionedActualNeutralRearVertices,true);
+          assert.equal(a.immutableOriginalPhotographedFrontUVAndPixels,true);
+          assert.equal(a.sampledRealSkinnedBodyContactNotWorsened,true);
+          assert.equal(a.deterministicSourcePoseReset,true);
+          assert.equal(a.continuousPhysics,false);
+          assert.equal(a.sweptCollisionFreeProof,false);
+          assert.equal(a.independentHumanVisualApproved,false);
+          assert.equal(a.physicalPhonesTested,false);
+          assert.equal(a.actualSignedCloudRLSVerified,false);
+          assert.equal(a.releaseAuthorized,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          const n=JSON.parse(readFileSync('benchmark/three-d-105-audit/acceptance.json','utf8'));
+          assert.equal(n.independentlyVerifiedGenuineWebGLSnapshots,60);
+          assert.equal(n.anatomicalSourceRigBones,163);
+          assert.deepEqual(n.mobileCSSViewports,[320,390,430]);
+          assert.deepEqual(n.frontSideRearViews,[0,90,180]);
+          assert.equal(n.realSourceNeutralRearSeamLightingChange,true);
+          assert.equal(n.sourcePhotoAndOriginalVisibleFrontNormalsPreserved,true);
+          assert.equal(n.actualSkinnedBodyContactUnchangedAtSampledPoses,true);
+          assert.equal(n.sourceUnphotographedReverseStillUnphotographed,true);
+          assert.equal(n.noIndependentHumanPhotorealismApproval,true);
+          assert.equal(n.continuousFabricPhysicsNotVerified,true);
+          assert.equal(n.physicalAndroidIphoneNotVerified,true);
+          assert.equal(n.actualSignedMultiAccountCloudRLSNotVerified,true);
+          assert.equal(n.releaseAuthorized,false);
+          assert.equal(n.familyAlpha,'HOLD');
+          const calf=JSON.parse(readFileSync('benchmark/three-d-106-audit/acceptance.json','utf8'));
+          assert.equal(calf.independentlyVerifiedGenuineWebGLFrames,84);
+          assert.equal(calf.realSkinnedOriginalSourceRigBones,163);
+          assert.equal(calf.independentlyLicensedOriginalJeansPhotos,2);
+          assert.deepEqual(calf.sampledKneeAnglesDegrees,[0,8,16]);
+          assert.deepEqual(calf.sampledMobileViewportsCSS,[320,390,430]);
+          assert.equal(calf.originalPhotoPreserved,true);
+          assert.equal(calf.photographedSourceFrontUVRestNormalsAndSkinUnmodified,true);
+          assert.equal(calf.trulyChangedSourceNeutralCalf3DGeometry,true);
+          assert.equal(calf.trueBodyContactNotWorseAtSampledPoses,true);
+          assert.equal(calf.realPhotographedDenimRearProvided,false);
+          assert.equal(calf.continuousPhysicalClothPhysicsDemonstrated,false);
+          assert.equal(calf.independentHumanPhotorealismAcceptance,false);
+          assert.equal(calf.actualPhysicalAndroidIphoneTested,false);
+          assert.equal(calf.realSignedTwoOrFourAccountCloudRLSVerified,false);
+          assert.equal(calf.releaseAuthorized,false);
+          assert.equal(calf.familyAlpha,'HOLD');
+          const bil=JSON.parse(readFileSync('benchmark/three-d-108-audit/acceptance.json','utf8'));
+          assert.equal(bil.independentGenuineOriginalPhotoWebGLScreenshots,80);
+          assert.equal(bil.genuine163BoneOriginalRig,true);
+          assert.equal(bil.originalLicensedJeansSources,2);
+          assert.equal(bil.bothMaleFemaleFigureSources,true);
+          assert.equal(bil.genuineLeftRightBothPoseSamplesPerCombination,10);
+          assert.equal(bil.noPixelAccumulationAfterAlternatingAndRepeatedPoses,true);
+          assert.equal(bil.sourcePhotoUVRestFrontAndSkinUnchanged,true);
+          assert.equal(bil.trueCalfGeometryBothSidesMovedUnderOwnAnatomicalKnee,true);
+          assert.equal(bil.everySampleRealSkinnedBodyContactNeverIncreased,true);
+          assert.equal(bil.noPhotographedRearInvented,true);
+          assert.equal(bil.continuousClothPhysicsNotVerified,true);
+          assert.equal(bil.fullSweptCollisionFreedomNotVerified,true);
+          assert.equal(bil.physicalPhoneNotTested,true);
+          assert.equal(bil.independentHumanPhotorealismNotApproved,true);
+          assert.equal(bil.liveSignedMultiAccountRLSNotVerified,true);
+          assert.equal(bil.releaseAuthorized,false);
+          assert.equal(bil.familyAlpha,'HOLD');
+          NODE
+      - name: Artifacts ONLY original publicly licensed photographed denim 163-bone bilateral replay frames and redacted SHA receipts NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO108-licensed-original-163-bone-bilateral-denim-knees-source-replay-HOLD-NO-DEPLOY
+          path: |
+            research/denim-bilateral-pose-replay-108/REPORT.md
+            .photo103-donor-541/benchmark/three-d-103-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-104/acceptance.json
+            .photo103-donor-541/benchmark/three-d-104/*.png
+            .photo103-donor-541/benchmark/three-d-104-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-105/acceptance.json
+            .photo103-donor-541/benchmark/three-d-105/*.png
+            .photo103-donor-541/benchmark/three-d-105-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-106/acceptance.json
+            .photo103-donor-541/benchmark/three-d-106/*.png
+            .photo103-donor-541/benchmark/three-d-106-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-108/acceptance.json
+            .photo103-donor-541/benchmark/three-d-108/*.png
+            .photo103-donor-541/benchmark/three-d-108-audit/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
