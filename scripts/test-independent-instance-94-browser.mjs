@@ -50,7 +50,11 @@ async function take(page,engine,width,name){
  result.screenshots.push({filename,width,height:meta.height,sha256:sha(png),bytes:png.length});
 }
 async function polygon(page,points){
- const canvas=page.locator('#photoCanvas'),box=await canvas.boundingBox();
+ const canvas=page.locator('#photoCanvas');
+ // Selecting labels scrolls the mobile viewport below the source canvas.
+ // Move the real original JPEG surface back onscreen before pointer clicks.
+ await canvas.scrollIntoViewIfNeeded();
+ const box=await canvas.boundingBox();
  assert.ok(box?.width>0&&box?.height>0);
  for(const [x,y] of points)await page.mouse.click(
   box.x+box.width*x,box.y+box.height*y);
