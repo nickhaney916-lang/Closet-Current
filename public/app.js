@@ -27,6 +27,11 @@ async function captureProofFromFile(file,owner){
 }
 // INDEX-04 research-only: absent by default; no deploy or ordinary scanner change.
 const index04ResearchActive=new URLSearchParams(location.search).get('index04')==='after';
+// PHOTO120: deliberate, multi-flag opt-in, only on an isolated research host.
+// Original JPEG capture and the safety-first INDEX04 review gate are mandatory.
+// No change to the normal application's Adjust / save flow without ALL flags.
+const reviewedSave120Active=new URLSearchParams(location.search).get('reviewedSave120')==='research'&&
+ captureProof01Active&&index04ResearchActive;
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
@@ -205,6 +210,30 @@ function adjustPhoto(item){
  }
  const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
  cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
+ // PHOTO120 only for actual *unsaved* camera captures, not a saved-piece edit.
+ // Owner must explicitly confirm category/type/color and garment source before
+ // the separately SHA-proven atomic research commit. Never auto-check them.
+ const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);
+ let reviewConfirmed120=null,garmentConfirmed120=null;
+ if(reviewedCapture120){
+  const confirmBox=node('div',null,'reviewed-save120-confirmation');
+  confirmBox.style.cssText='border:1px solid #a7b5ce;border-radius:10px;padding:12px;margin:12px 0;background:#f5f7fc;min-width:0';
+  const help=node('p','Review the original photograph above. Confirm the garment category, type and color before saving privately.','fine');
+  confirmBox.append(help);
+  const reviewLabel=node('label'),reviewCheck=node('input');
+  reviewCheck.type='checkbox';reviewCheck.required=true;
+  reviewCheck.setAttribute('aria-label','I verified the category, clothing type and color');
+  reviewLabel.append(reviewCheck,document.createTextNode(' I verified the category, clothing type and color'));
+  confirmBox.append(reviewLabel);reviewConfirmed120=reviewCheck;
+  const sourceLabel=node('label'),sourceCheck=node('input');
+  sourceCheck.type='checkbox';sourceCheck.required=true;
+  const multi=!!(item.outfitSourceId||item.cropBounds||item.segmentHint);
+  sourceCheck.setAttribute('aria-label',multi?'I reviewed this specific separated garment':'I confirmed this photo shows one garment');
+  sourceLabel.append(sourceCheck,document.createTextNode(multi?
+   ' I reviewed this specific separated garment':' I confirmed this photo shows one garment'));
+  confirmBox.append(sourceLabel);garmentConfirmed120=sourceCheck;
+  form.append(confirmBox);
+ }
  // CORRECTION10: opening and canceling Adjust must not mutate the saved
  // garment or turn unconfirmed classification into human review. Snapshot
  // the exact original row BEFORE any dialog work for atomic stale-tab CAS.
@@ -223,12 +252,64 @@ function adjustPhoto(item){
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   // COLOR41: Save does not prove an AI-estimated color was changed by the user.
   // clothingFields itself marks colorSource='user' on explicit color input.
+  if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){
+   if(!reviewConfirmed120?.checked||!garmentConfirmed120?.checked)
+    throw Error('Confirm the photographed garment and its category, type and color.');
+   const owner=window.closetAuth?.user?.id,auth=window.closetAuth;
+   if(!owner||!auth||db?.name!=='closet-current-user-'+owner||
+      $('authGate')?.hidden!==true||$('appShell')?.hidden!==false||
+      !batch.includes(item))
+    throw Error('The private camera draft or signed-in account changed.');
+   const multi=!!(item.outfitSourceId||item.cropBounds||item.segmentHint);
+   const review={
+    confirmed:true,recordId:item.id,originalSHA256:item.sourceSHA256,
+    category:value.category,itemType:value.itemType,color:value.color,
+    name:value.name,singleGarmentConfirmed:!multi&&garmentConfirmed120.checked,
+    instanceConfirmed:multi&&garmentConfirmed120.checked,
+    ...(multi?{cutoutSHA256:item.segmentHint?.cutoutSHA256}:{}),
+   };
+   // P119 is the only writer for this research-only newly captured piece.
+   // It independently re-hashes original JPEG (+ cutout JPEG for multi),
+   // rechecks the actual saved owner draft and wardrobe *inside* the IDB
+   // transaction, and atomically inserts the reviewed item/removes its draft.
+   const liveOwner=()=>window.closetAuth===auth&&auth.user?.id===owner&&
+     db?.name==='closet-current-user-'+owner&&
+     $('authGate')?.hidden===true&&$('appShell')?.hidden===false?owner:null;
+   const assertLease=()=>{
+    auth.assertCurrent?.();
+    return liveOwner()===owner&&batch.includes(item)&&
+     dialog.isConnected&&dialog.open&&
+     reviewConfirmed120.checked&&garmentConfirmed120.checked;
+   };
+   const {commitHumanReviewedPhoto119}=await import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs');
+   const result=await queued(()=>commitHumanReviewedPhoto119({
+    db,ownerId:owner,currentOwner:liveOwner,record:item,review,assertLease
+   }));
+   if(!result.saved)throw Error('Original photograph or garment review could not be verified; nothing was saved.');
+   // Do not duplicate or overwrite P119's already-atomic owner draft update.
+   // Reload the actual committed wardrobe entry, not local AI proposals.
+   const stored=await new Promise((resolve,reject)=>{
+    const request=db.transaction('items','readonly').objectStore('items').get(item.id);
+    request.onsuccess=()=>resolve(request.result);
+    request.onerror=()=>reject(request.error);
+   });
+   if(!stored||stored.ownerId!==owner||stored.sourceSHA256!==item.sourceSHA256)
+    throw Error('Saved garment needs a safe wardrobe reload.');
+   if(!items.some(x=>x.id===item.id))items.push(normalizeClothing(stored));
+   batch=batch.filter(x=>x.id!==item.id);
+   await nativeIndex07Refresh();
+   dialog.close();render();scheduleMemoryReview();
+   message('Reviewed '+stored.itemType+' · '+stored.color+' saved to your private closet. Original photograph preserved.');
+   return;
+  }
   await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow});
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
  }catch(error){
   save.disabled=false;
-  message(correction10?'Saved garment not overwritten. '+String(error.message||error)+
+  message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
+   ' Your original photo remains available for review.':
+   correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
    'Could not save changes. Try again.');
  }};
