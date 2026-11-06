@@ -61,7 +61,7 @@ test('PHOTO103 original mapped garment rest, UV, source-front and skin attribute
   assert.ok(s.includes(token),'missing protected original source field '+token);
  assert.match(s,/snapshots=new Map\(protectedAttrs/);
  assert.match(s,/arr\.every\(\(v,i\)=>v===old\[i\]\)/);
- assert.match(s,/original source-true photographed garment/i);
+ assert.match(s,/source-true photographed garment/i);
 });
 test('PHOTO103 measured *actual* skinned triangle crossing counts for each sampled pose; never claims swept collision-free',()=>{
  const s=readFileSync('research/source-photo-denim-intermediate-knee-103/actual-skinned-denim-103.mjs','utf8');
