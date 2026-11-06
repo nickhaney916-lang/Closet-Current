@@ -57,6 +57,7 @@ export function mountReviewedLookResearchPanel110(doc,host){
   guest=$('cc110OwnerSwitch'),message=$('cc110LookMessage');
  let simulated=Object.freeze({authenticated:true,ownerId:RESEARCH_OWNER_110,generation:BENCHMARK_GEN});
  let saved=null,mode='none',disposed=false,busy=false,lastOutcome=null;
+ const lifecycleIsRevoked=()=>host.cc109PoseUIState?.()?.lifecycleRevoked===true;
  const isOriginal=()=>simulated.ownerId===RESEARCH_OWNER_110&&
   simulated.generation===BENCHMARK_GEN;
  const sourceInfo=()=>{
@@ -86,10 +87,14 @@ export function mountReviewedLookResearchPanel110(doc,host){
  };
  const update=()=>{
   if(disposed)return;
+  const lifecycleValid=!lifecycleIsRevoked();
+  if(!lifecycleValid&&saved){
+   saved=null;mode='closed';lastOutcome='mobile-lifecycle-source-revoked';
+  }
   let valid=null;
   try{valid=validateCurrent();}catch{}
-  save.disabled=busy||!valid||valid.status!=='verified-public-research-3d';
-  reopen.disabled=busy||!saved||!isOriginal();
+  save.disabled=busy||!lifecycleValid||!valid||valid.status!=='verified-public-research-3d';
+  reopen.disabled=busy||!lifecycleValid||!saved||!isOriginal();
  };
  const saveCurrent=e=>{
   if(!e.isTrusted||save.disabled||disposed)return;
@@ -183,11 +188,16 @@ export function mountReviewedLookResearchPanel110(doc,host){
  });
  const onReview=()=>update();
  originalReview.addEventListener('change',onReview);
+ const onLifecycle=()=>update();
+ for(const type of ['visibilitychange','freeze','pageshow'])
+  doc.addEventListener(type,onLifecycle);
+ host.addEventListener('pagehide',onLifecycle);
  const onHide=()=>{mode='closed';saved=null;update();};
  host.addEventListener('pagehide',onHide);
  const report=()=>Object.freeze({
   mounted:!disposed,mode,hasSavedLook:!!saved,ownerMatchesSaved:!!saved&&
    saved.ownerId===simulated.ownerId&&saved.generation===simulated.generation,
+  savedSourceSHA256s:saved?Object.freeze({...saved.sourceSHA256s}):null,
   readyToSave:!save.disabled,readyToReopen:!reopen.disabled,
   lastOutcome,originalLicensedBenchmarkOnly:true,
   syntheticAccountOnly:true,realAuthenticatedAccount:false,
@@ -205,6 +215,9 @@ export function mountReviewedLookResearchPanel110(doc,host){
   privateTest.removeEventListener('click',privateFallback);
   guest.removeEventListener('click',changeOwner);
   originalReview.removeEventListener('change',onReview);
+  for(const type of ['visibilitychange','freeze','pageshow'])
+   doc.removeEventListener(type,onLifecycle);
+  host.removeEventListener('pagehide',onLifecycle);
   host.removeEventListener('pagehide',onHide);
   root.remove();style.remove();
   if(host.cc110LookState===report)delete host.cc110LookState;

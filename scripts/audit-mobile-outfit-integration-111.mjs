@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
+import {readFile,readdir} from 'node:fs/promises';
+import sharp from 'sharp';
+
+const root='benchmark/three-d-111';
+const report=JSON.parse(await readFile(root+'/acceptance.json','utf8'));
+const files=(await readdir(root)).filter(x=>x.endsWith('.png')).sort();
+assert.equal(report.priority,'INDEPENDENT-MOBILE-3D-OUTFIT-INTEGRATION-111');
+assert.equal(report.anatomicalRigBones,163);
+assert.deepEqual(report.responsiveCSSWidths,[320,390,430]);
+assert.deepEqual(report.viewsDegrees,[0,90,180]);
+assert.equal(report.screenshots.length,9);
+assert.deepEqual(files.sort(),report.screenshots.map(x=>x.file).sort());
+const expected=new Set();
+for(const width of report.responsiveCSSWidths)for(const angle of report.viewsDegrees)expected.add(`${width}:${angle}`);
+for(const receipt of report.screenshots){
+ const bytes=await readFile(root+'/'+receipt.file);
+ assert.equal(createHash('sha256').update(bytes).digest('hex'),receipt.sha256,receipt.file);
+ const image=await sharp(bytes).metadata();
+ assert.equal(image.format,'png');assert.equal(image.width,receipt.width);assert.equal(image.height,receipt.height);
+ const stats=await sharp(bytes).stats();
+ assert.ok(stats.channels.some(c=>c.stdev>7),`blank image: ${receipt.file}`);
+ assert.equal(receipt.webgl,true);assert.equal(receipt.anatomicalRigBones,163);
+ assert.equal(receipt.sourceSHA256s.top,report.originalPhotographs.shirt);
+ assert.equal(receipt.sourceSHA256s.bottom,report.originalPhotographs.publicJeans);
+ expected.delete(`${receipt.widthCSS}:${receipt.cameraDegrees}`);
+}
+assert.equal(expected.size,0);
+assert.equal(report.actualSavedLookReopen,true);
+assert.equal(report.originalPhotoIdentityVerified,true);
+assert.equal(report.lifecycleFreezeEventOnRealWebGL,true);
+assert.equal(report.sourceConcealedOnRevocation,true);
+assert.equal(report.sameDocumentReopenRejected,true);
+assert.equal(report.reloadRequiresFreshReview,true);
+assert.equal(report.freshReviewAllowsNewSaveAndReopen,true);
+assert.equal(report.signedRealAccount,false);assert.equal(report.cloudRLSVerified,false);
+assert.equal(report.physicalAndroidChrome,'NOT VERIFIED');
+assert.equal(report.physicalIphoneSafari,'NOT VERIFIED');
+assert.equal(report.familyAlpha,'HOLD');assert.equal(report.releaseAuthorized,false);
+assert.deepEqual(report.externalRequests,[]);assert.deepEqual(report.browserErrors,[]);assert.deepEqual(report.crashes,[]);
+console.log('PRIORITY111_INTEGRATION_AUDIT PASS 9 nonblank SHA-audited real WebGL frames; 320/390/430 × front/side/rear; source JPEG, saved-look lifecycle, pose and fresh-review gates verified. Physical phones and signed-account RLS NOT VERIFIED.');

@@ -124,21 +124,21 @@ try{
    const baseline=await snapshot(denim,'before-save');
    const before=await page.evaluate(()=>window.cc110LookState());
    assert.equal(before.readyToSave,true);
+   const previouslySavedSources=before.savedSourceSHA256s;
    // In-page DOM click is untrusted and must not impersonate human consent.
-   const oldUntrustedState=await page.evaluate(()=>{
-    const state=window.cc110LookState();
-    return {saved:state.hasSavedLook,outcome:state.lastOutcome};
-   });
    await page.evaluate(()=>document.getElementById('cc110Save').click());
-   const afterUntrustedState=await page.evaluate(()=>{
-    const state=window.cc110LookState();
-    return {saved:state.hasSavedLook,outcome:state.lastOutcome};
-   });
-   assert.deepEqual(afterUntrustedState,oldUntrustedState,
-    'scripted DOM click cannot mutate either new or previously saved original look');
+   const afterUntrusted=await page.evaluate(()=>window.cc110LookState());
+   assert.equal(afterUntrusted.hasSavedLook,before.hasSavedLook,
+    'untrusted click must not create or replace a saved outfit');
+   assert.deepEqual(afterUntrusted.savedSourceSHA256s,previouslySavedSources,
+    'untrusted click cannot alter the source JPEG identity of a prior saved outfit');
    await page.locator('#cc110Save').click();
    await page.waitForFunction(()=>window.cc110LookState?.()?.hasSavedLook===true&&
-    window.cc110LookState().lastOutcome==='licensed-original-look-saved-in-memory');
+    window.cc110LookState().lastOutcome==='licensed-original-look-saved-in-memory'&&
+    window.cc110LookState().savedSourceSHA256s?.top===
+     'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64');
+   assert.equal((await page.evaluate(()=>window.cc110LookState().savedSourceSHA256s.bottom)),SHA[denim],
+    'trusted save must bind the currently reviewed source photo and selected garment');
    const other=denim==='public'?'second':'public';
    await page.locator('#swap').click();
    await page.waitForFunction(source=>window.cc69Diagnostics?.()?.currentSelection===source,
