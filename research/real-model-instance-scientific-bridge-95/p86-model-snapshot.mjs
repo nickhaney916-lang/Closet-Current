@@ -21,7 +21,7 @@ export const P86_MODEL_ORIGIN_95=Object.freeze({
  }),
  segFormer:Object.freeze({repository:'Xenova/segformer_b0_clothes',
   revision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',
-  rawReportSHA256:'placeholder',
+  rawReportSHA256:'0188f49f5650a244316c12861dc0f23c1344f93d19d2d9882b4b066989402581',
   releaseLicense:'UNSPECIFIED_BLOCKED'
  })
 });
