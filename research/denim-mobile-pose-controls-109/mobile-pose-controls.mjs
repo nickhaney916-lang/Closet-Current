@@ -4,7 +4,7 @@
  * No private account, images, localStorage, telemetry or cloth physics.
  */
 import {validateBilateralSourcePose108}
- from '../three-d-108/bilateral-pose-policy.mjs';
+ from '../denim-bilateral-pose-replay-108/bilateral-pose-policy.mjs';
 
 const SOURCES=Object.freeze({
  public:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
