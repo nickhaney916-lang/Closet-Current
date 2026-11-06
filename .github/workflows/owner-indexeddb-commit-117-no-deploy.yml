@@ -16,7 +16,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Strict exact green PHOTO116 parent and FOUR research-only source/test/report/CI file changes
+      - name: Strict exact green PHOTO116 parent and FIVE research-only source/test/report/CI file changes
         run: |
           BASE=758fee507505037735126d07c5203ef4ebd64896
           test "$(git merge-base HEAD "$BASE")" = "$BASE"
@@ -25,11 +25,11 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/photo117-paths
           while IFS= read -r path; do
             case "$path" in
-              research/owner-indexeddb-commit-117/atomic-reviewed-save.mjs|tests/owner-indexeddb-commit-117.test.mjs|research/owner-indexeddb-commit-117/REPORT.md|.github/workflows/owner-indexeddb-commit-117-no-deploy.yml) ;;
+              research/owner-indexeddb-commit-117/atomic-reviewed-save.mjs|tests/owner-indexeddb-commit-117.test.mjs|research/owner-indexeddb-commit-117/REPORT.md|.github/workflows/owner-indexeddb-commit-117-no-deploy.yml|scripts/test-owner-indexeddb-commit-117-browser.mjs) ;;
               *) echo "REFUSE unauthorized production, staging, app, source-photo, cloud, saved data or other project change: $path"; exit 1 ;;
             esac
           done </tmp/photo117-paths
-          test "$(wc -l </tmp/photo117-paths)" -eq 4
+          test "$(wc -l </tmp/photo117-paths)" -eq 5
           git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
       - name: Install exact inherited Node research dependencies with no lockfile modifications
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
@@ -71,4 +71,54 @@ jobs:
           path: |
             research/owner-indexeddb-commit-117/REPORT.md
             tests/owner-indexeddb-commit-117.test.mjs
+          retention-days: 14
+
+  real-chromium-owner-indexeddb-original-source-proof:
+    needs: genuine-verified-original-owner-atomic-indexeddb-research-no-deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install pinned Chromium source-only acceptance dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Real original licensed JPEG browser WebCrypto and owner IndexedDB atomic save at 320 390 430
+        run: node scripts/test-owner-indexeddb-commit-117-browser.mjs
+      - name: Audit no-personal-photo browser evidence and no model accuracy inflation
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const result=JSON.parse(readFileSync('benchmark/owner-indexeddb-commit-117/browser-results.json'));
+          assert.equal(result.realBrowser,'Chromium');
+          assert.equal(result.scenarios.length,3);
+          assert.deepEqual(result.scenarios.map(x=>x.width),[320,390,430]);
+          assert.equal(result.scientificColorOrSubtypeAccuracyMeasured,false);
+          assert.equal(result.actualCloudAuthRLSVerified,false);
+          assert.equal(result.realProductionAppWired,false);
+          assert.equal(result.actualPhysicalPhonesTested,false);
+          assert.equal(result.familyAlpha,'HOLD');
+          for(const x of result.scenarios){
+            assert.equal(x.saved,true);
+            assert.equal(x.originalJPEGUnchanged,true);
+            assert.equal(x.duplicateReopenBlocked,true);
+            assert.equal(x.foreignOwnerDBBlocked,true);
+            assert.equal(x.futureMetadataPreserved,true);
+            assert.equal(x.noPrivatePhotoOrOwnerInResponse,true);
+          }
+          NODE
+      - name: Archive genuine Chromium browser storage evidence with no user photos or deployment
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO117-real-Chromium-IndexedDB-320-390-430-HOLD-NO-DEPLOY
+          path: benchmark/owner-indexeddb-commit-117/browser-results.json
           retention-days: 14
