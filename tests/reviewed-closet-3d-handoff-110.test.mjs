@@ -163,6 +163,7 @@ test('PHOTO112 unsupported private 2D fallback and owner switch revoke stale pos
  const panel=readFileSync('research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs','utf8');
  for(const anchor of [
   "const avatar=doc.getElementById('avatar')",
+  "#avatar[hidden]{display:none!important}",
   "originalReview.checked=false;",
   "avatar.hidden=true;",
   "originalReview.dispatchEvent(new Event('change',{bubbles:true}))",
