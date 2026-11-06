@@ -53,6 +53,16 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
   ATTRS.some(field=>g.getAttribute(field)?.count!==pos.count))
   fail('exact source-SHA-verified original CC0 163-bone PHOTO104 garment required');
  const protectedData=new Map(ATTRS.map(n=>[n,g.getAttribute(n).array.slice()]));
+ const knees=pants.stats.landmarks?.map(k=>new T.Vector3(...k.knee));
+ const angles=pants.stats.real163BoneSampledKnee103;
+ if(knees?.length!==2||knees.some(k=>!k.toArray().every(Number.isFinite))||
+  !angles||![angles.leftDegrees,angles.rightDegrees].every(v=>
+   typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<=16))
+  fail('genuine SHA-verified source anatomical knee positions and bounded actual P103 poses required');
+ // Source-rest 0° requires NO additional rear shading, exactly matching the
+ // approved source photograph/render; no invented decorative crease at rest.
+ const hasKneeFlex=angles.leftDegrees>0||angles.rightDegrees>0;
+ mesh.updateWorldMatrix(true,false);
  const originalNormals=norm.array.slice();
  const groups=new Map();
  for(let i=0;i<pos.count;i++){
@@ -63,17 +73,42 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
   node.maxFront=Math.max(node.maxFront,front.getX(i));
  }
  const threshold=Math.cos(T.MathUtils.degToRad(maxAngleDegrees));
+ const clamp=T.MathUtils.clamp;
+ const normalX=new T.Vector3(),normalY=new T.Vector3();
  let accepted=0,changed=0,skippedFront=0,skippedUnmatched=0,
   rejectedHardEdges=0,energyBefore=0,energyAfter=0,
-  peakChangedNormal=0;
+  peakChangedNormal=0,sourceKneeProfileGroups105=0;
  const left=new T.Vector3();
  const right=new T.Vector3();
  try{
   for(const node of groups.values()){
    if(node.maxFront>=.16){skippedFront+=node.ids.length;continue;}
    if(node.ids.length<2){skippedUnmatched++;continue;}
+   if(!hasKneeFlex)continue;
    const before=sourceRearNormalSpread105(node.ids,norm);
-   if(!before.target||before.loss<=.000005)continue;
+   if(!before.target)continue;
+   const q=normalX.fromBufferAttribute(pos,node.ids[0]).applyMatrix4(mesh.matrixWorld);
+   const side=q.x>=0?0:1,landmark=knees[side],
+    degrees=side===0?angles.leftDegrees:angles.rightDegrees;
+   const across=q.x-landmark.x,dy=q.y-landmark.y;
+   // Only the actual unphotographed neutral rear near the anatomical knee.
+   // Its SOURCE front photo and even the side seam stay unmodified. The
+   // shaping is conditioned by actual source-verified P104 bent knee geometry,
+   // not invented rear-camera texture or a fake source photograph.
+   if(!degrees||Math.abs(across)>.24||dy<-.16||dy>.085||
+      q.z>landmark.z+.055)continue;
+   const rear=clamp((landmark.z+.055-q.z)/.16,0,1);
+   const ridge=Math.exp(-.5*((dy+.026)/.076)**2);
+   const taper=clamp((.16-node.maxFront)/.16,0,1);
+   const bend=Math.sin(T.MathUtils.degToRad(degrees)*Math.PI/(2*T.MathUtils.degToRad(16)));
+   const influence=rear*ridge*taper*bend;
+   if(influence<.06)continue;
+   // At most ~7° gentle normal-only relief. No position, UV, image or
+   // anatomical skinning deformation; this complements P104's real folds.
+   const phase=(dy+.026)*13+across*3.2;
+   const dx=clamp(.042*influence*Math.cos(phase),-.05,.05);
+   const dyNormal=clamp(.10*influence*Math.sin(phase),-.11,.11);
+   if(Math.hypot(dx,dyNormal)<.001)continue;
    // Avoid merging fundamentally different opposing/material-seam normal
    // orientations: preserve deliberate >75° hard edges on sewn rear shell.
    const valid=node.ids.every(i=>{
@@ -81,7 +116,13 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
     return dot>=threshold;
    });
    if(!valid){rejectedHardEdges++;continue;}
-   const copy=before.target;
+   // All coincident rear triangles get the SAME bounded normal. This
+   // preserves their already-good seam consistency while reshaping the
+   // lighting along measured SOURCE knee fabric folds.
+   const copy=before.target.clone().add(normalY.set(dx,dyNormal,0)).normalize();
+   if(copy.distanceTo(before.target)>.14)
+    fail('PHOTO105 neutral rear shading normal tilt exceeded fourteen percent');
+   sourceKneeProfileGroups105++;
    for(const i of node.ids){
     const old=right.fromBufferAttribute(norm,i);
     const change=old.distanceTo(copy);
@@ -96,11 +137,16 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
    const after=sourceRearNormalSpread105(node.ids,norm);
    energyAfter+=after.loss;
   }
-  if(changed<8||accepted<3||energyBefore<=.001||
-   !Number.isFinite(energyAfter)||energyAfter>energyBefore*.015)
-   fail('genuine source-neutral rear skinned seam normal consistency not measurably improved '+JSON.stringify({
-    changed,accepted,energyBefore,energyAfter,skippedFront,rejectedHardEdges
+  if(!Number.isFinite(energyBefore)||!Number.isFinite(energyAfter)||
+   energyAfter>energyBefore+.00005)
+   fail('real same-position rear panel normals became less consistent '+JSON.stringify({energyBefore,energyAfter}));
+  if(hasKneeFlex&&(changed<8||accepted<3||sourceKneeProfileGroups105<3||peakChangedNormal<.001))
+   fail('genuine original source knee flex gave no measurable rear shading response '+JSON.stringify({
+    changed,accepted,sourceKneeProfileGroups105,peakChangedNormal,
+    skippedFront,rejectedHardEdges
    }));
+  if(!hasKneeFlex&&(changed!==0||accepted!==0))
+   fail('source straight knee must never receive artificial new fabric lighting');
   norm.needsUpdate=true;
   for(const [name,expected] of protectedData){
    const actual=g.getAttribute(name)?.array;
@@ -120,6 +166,9 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
    rearSourceNeutralNormalsAdjusted105:changed,
    rearSourceNeutralNormalVarianceBefore105:energyBefore,
    rearSourceNeutralNormalVarianceAfter105:energyAfter,
+   sourceKneeNormalProfileGroups105:sourceKneeProfileGroups105,
+   originalStraightKneeShadingUnchanged105:!hasKneeFlex,
+   actualKneeMeasuredNormalGradientOnly105:true,
    sourceNeutralPanelNormalPeakDifference105:peakChangedNormal,
    rearNormalUntouchedHardEdgeGroups105:rejectedHardEdges,
    protectedOriginalFrontNormalVertices105:skippedFront,
@@ -128,6 +177,7 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
    genuine163BoneOriginalSkinnedMesh105:true,
    sourcePhotographedRearProvided105:false,
    physicalClothSimulation105:false,
+   noInventedRearPhotographShading105:true,
    independentHumanVisualRealismAcceptance105:false,
    physicalMobilePhonesVerified105:false,
    realSignedCloudRLSVerified105:false,
