@@ -43,6 +43,15 @@ export function checkedMobileSourcePose109(left,right){
   familyAlpha:'HOLD',releaseAuthorized:false
  });
 }
+/** PHOTO110: deterministic, fail-closed browser/mobile lifecycle boundary. */
+export function mobileSourceLifecycleRevocation110({eventType,hidden=false,
+ visibilityState='visible',persisted=false}={}){
+ if(eventType==='freeze'||eventType==='pagehide')return true;
+ if(eventType==='pageshow')return persisted===true;
+ if(eventType==='visibilitychange')
+  return hidden===true||visibilityState==='hidden'||visibilityState==='prerender';
+ return false;
+}
 export function mountSourceDenimMobilePoseControls109(doc,host){
  if(!doc?.getElementById||!host?.addEventListener)
   throw Error('PHOTO109 original local document and browser required');
@@ -86,7 +95,7 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
  const bar=doc.getElementById('cc109PoseButtons');
  const msg=doc.getElementById('cc109PoseMessage');
  const buttons=new Map();
- let busy=false,invalidated=false,last=null,disposed=false;
+ let busy=false,invalidated=false,last=null,disposed=false,lifecycleRevoked=false;
  const source=()=>{
   const d=host.cc69Diagnostics?.();
   const p=d?.actual3DGarment;
@@ -100,13 +109,17 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
    hasPoseAdapter:typeof host.cc108BilateralPose==='function'
   };
  };
- const eligible=()=>!busy&&!invalidated&&!disposed&&mobileSourcePoseAdmission109(source());
+ const eligible=()=>!busy&&!invalidated&&!disposed&&!lifecycleRevoked&&
+  doc.hidden!==true&&!['hidden','prerender'].includes(doc.visibilityState)&&
+  mobileSourcePoseAdmission109(source());
  const update=()=>{
   const good=eligible();
   for(const b of buttons.values())b.disabled=!good;
   if(!good&&!busy&&!disposed){
    msg.dataset.pose='none';
-   if(invalidated)
+   if(lifecycleRevoked)
+    msg.textContent='Mobile viewer hidden, frozen or restored from history. Reload, verify original photo and review again. Family Alpha HOLD.';
+   else if(invalidated)
     msg.textContent='Original photographed garment source changed or pose rejected. Re-review and wear verified denim. HOLD.';
    else
     msg.textContent='Review and wear original licensed jeans to enable poses. Family Alpha HOLD.';
@@ -114,7 +127,7 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
   return good;
  };
  const clear=()=>{
-  last=null;invalidated=false;msg.dataset.pose='none';
+  last=null;if(!lifecycleRevoked)invalidated=false;msg.dataset.pose='none';
   for(const b of buttons.values())b.setAttribute('aria-pressed','false');
   update();
  };
@@ -191,10 +204,33 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
  observer.observe(doc.getElementById('status'),{
   childList:true,characterData:true,subtree:true
  });
- const onHide=()=>{busy=false;invalidated=true;last=null;update();};
+ // PHOTO110: tab switch, prerender/freeze, navigation and BFCache restore
+ // permanently revoke this document's reviewed source session.
+ // A click/change or re-checking consent MUST NOT make a stale pose usable.
+ const revokeForLifecycle=(eventType,persisted=false)=>{
+  if(!mobileSourceLifecycleRevocation110({
+   eventType,hidden:doc.hidden,visibilityState:doc.visibilityState,persisted
+  }))return false;
+  lifecycleRevoked=true;busy=false;invalidated=true;last=null;
+  for(const b of buttons.values())b.setAttribute('aria-pressed','false');
+  const avatar=doc.getElementById('avatar');
+  if(avatar)avatar.style.visibility='hidden';
+  update();
+  return true;
+ };
+ const onVisibilityChange=()=>revokeForLifecycle('visibilitychange');
+ const onFreeze=()=>revokeForLifecycle('freeze');
+ const onPageShow=e=>revokeForLifecycle('pageshow',e?.persisted===true);
+ const onHide=()=>revokeForLifecycle('pagehide');
+ doc.addEventListener('visibilitychange',onVisibilityChange);
+ doc.addEventListener('freeze',onFreeze);
+ host.addEventListener('freeze',onFreeze);
+ host.addEventListener('pageshow',onPageShow);
  host.addEventListener('pagehide',onHide);
  const report=()=>Object.freeze({
   mounted:!disposed,enabled:eligible(),
+  lifecycleRevoked,requiresFreshSourceReviewAfterReload:lifecycleRevoked,
+  sourceRenderConcealed:doc.getElementById('avatar')?.style.visibility==='hidden',
   originalLicensedSourceOnly:true,
   publiclyLicensedSource:source().selected,
   currentFigure:source().figure,
@@ -211,11 +247,17 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
   doc.removeEventListener('click',onClick);
   doc.removeEventListener('change',onChange);
   host.removeEventListener('pagehide',onHide);
+  host.removeEventListener('freeze',onFreeze);
+  doc.removeEventListener('freeze',onFreeze);
+  host.removeEventListener('pageshow',onPageShow);
+  doc.removeEventListener('visibilitychange',onVisibilityChange);
   root.remove();style.remove();
   if(host.cc109PoseUIState===report)delete host.cc109PoseUIState;
  };
  host.cc109PoseUIState=report;
  host.addEventListener('pagehide',dispose,{once:true});
+ if(doc.hidden===true||['hidden','prerender'].includes(doc.visibilityState))
+  revokeForLifecycle('visibilitychange');
  update();
  return {report,dispose};
 }

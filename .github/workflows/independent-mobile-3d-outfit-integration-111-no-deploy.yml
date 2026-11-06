@@ -1,0 +1,105 @@
+name: Priority 111 mobile saved outfit lifecycle and original-photo WebGL NO DEPLOY
+on:
+  push:
+    branches:
+      - research/independent-mobile-3d-outfit-integration-111-20261106
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  saved-outfit-owner-lifecycle-source-webgl-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact sibling baseline, integration-only changed paths and no production edits
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=c5930d200b8bbd1632b188fb5216bc233cffae8d
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/priority111-allowed
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/denim-mobile-lifecycle-gate-110-no-deploy.yml|.github/workflows/reviewed-closet-3d-handoff-110-no-deploy.yml|.github/workflows/independent-mobile-3d-outfit-integration-111-no-deploy.yml|research/denim-mobile-lifecycle-gate-110/REPORT.md|research/denim-mobile-pose-controls-109/mobile-pose-controls.mjs|research/reviewed-closet-3d-handoff-110/REPORT.md|research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs|research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs|research/independent-mobile-3d-outfit-integration-111/REPORT.md|scripts/audit-reviewed-closet-3d-handoff-110.mjs|scripts/install-reviewed-closet-3d-handoff-110.mjs|scripts/test-denim-mobile-pose-controls-109-browser.mjs|scripts/test-reviewed-closet-3d-handoff-110-browser.mjs|scripts/test-mobile-outfit-integration-111-browser.mjs|scripts/audit-mobile-outfit-integration-111.mjs|tests/denim-mobile-lifecycle-gate-110.test.mjs|tests/reviewed-closet-3d-handoff-110.test.mjs|tests/mobile-outfit-integration-111.test.mjs) ;;
+              *) echo "REFUSE default app/production/staging/cloud/private-photo/other-project file: $path"; exit 1 ;;
+            esac
+          done </tmp/priority111-allowed
+          test "$(wc -l </tmp/priority111-allowed)" -eq 18
+      - name: Install pinned Node browser and image dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Unchanged application build, all inherited regressions, and Priority 111 syntax
+        run: |
+          node --check research/denim-mobile-pose-controls-109/mobile-pose-controls.mjs
+          node --check research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs
+          node --check research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs
+          node --check scripts/test-reviewed-closet-3d-handoff-110-browser.mjs
+          node --check scripts/test-mobile-outfit-integration-111-browser.mjs
+          node --check scripts/audit-mobile-outfit-integration-111.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assemble exact detached original PR541 163-bone CC0 humanoid and public-photo donors
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .photo103-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo103-donor-541"
+          test "$(git -C .photo103-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .photo103-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .photo103-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .photo103-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .photo103-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .photo103-donor-541
+          node scripts/install-denim-bilateral-108.mjs .photo103-donor-541
+          node scripts/install-denim-mobile-pose-controls-109.mjs .photo103-donor-541
+          node scripts/install-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541
+          cp scripts/test-denim-mobile-pose-controls-109-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-mobile-pose-controls-109.mjs .photo103-donor-541/scripts/
+          cp scripts/test-reviewed-closet-3d-handoff-110-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541/scripts/
+          cp scripts/test-mobile-outfit-integration-111-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-mobile-outfit-integration-111.mjs .photo103-donor-541/scripts/
+          cd .photo103-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: PHOTO109 actual mobile background revocation and original 24-frame source reset audit
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-denim-mobile-pose-controls-109-browser.mjs
+          node scripts/audit-denim-mobile-pose-controls-109.mjs
+      - name: PHOTO110 saved source outfit, licensed original 163-bone 3D, unsupported-photo 2D fallback and owner isolation
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-reviewed-closet-3d-handoff-110-browser.mjs
+          node scripts/audit-reviewed-closet-3d-handoff-110.mjs
+      - name: Priority 111 combined saved outfit, mobile lifecycle, real WebGL, pose and fresh-review acceptance
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-mobile-outfit-integration-111-browser.mjs
+          node scripts/audit-mobile-outfit-integration-111.mjs
+      - name: Archive only public-license benchmark screenshots and redacted SHA acceptance receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: priority111-public-original-source-real-webgl-mobile-evidence
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            .photo103-donor-541/benchmark/three-d-109/*.png
+            .photo103-donor-541/benchmark/three-d-109/acceptance.json
+            .photo103-donor-541/benchmark/three-d-110/*.png
+            .photo103-donor-541/benchmark/three-d-110/acceptance.json
+            .photo103-donor-541/benchmark/three-d-111/*.png
+            .photo103-donor-541/benchmark/three-d-111/acceptance.json
