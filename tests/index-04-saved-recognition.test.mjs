@@ -78,8 +78,12 @@ test('06 same verified source and single garment already saved is an exact dupli
  assert.equal(r.duplicateStatus,'reject');
  assert.ok(r.reviewReasons.includes('verified-source-and-segment-duplicate'));
 });
-test('07 separate genuine source-bound cutouts from same outfit photo are never deleted as duplicates',async()=>{
- const proof={verified:true,originalSHA256:sha,cutoutSHA256:'a'.repeat(64),clipped:false};
+test('07 distinct cutout JPEG bytes from same outfit remain distinct but REQUIRE human category/type review',async()=>{
+ const rawCutout=Buffer.from([255,216,7,8,9,10,255,217]);
+ const cutoutImage='data:image/jpeg;base64,'+rawCutout.toString('base64');
+ const cutoutSHA256=createHash('sha256').update(rawCutout).digest('hex');
+ const proof={verified:true,ownerReviewedInstance:true,originalSHA256:sha,
+  cutoutSHA256,cutoutImage,clipped:false};
  const record=candidate({singleGarmentVerified:false,
   outfitSourceId:'outfit-17',segmentHint:proof,
   originalPhoto:{image:original,sha256:sha},
@@ -88,10 +92,15 @@ test('07 separate genuine source-bound cutouts from same outfit photo are never 
   singleGarmentVerified:false,cutoutSHA256:'c'.repeat(64)});
  const r=await evaluate(record,recognition(),[previous]);
  assert.equal(r.duplicateStatus,'allow');
- assert.equal(r.autoSaveSafe,true);
+ assert.equal(r.autoSaveSafe,false,'model type from whole photo is not proven to belong to the cutout');
  assert.equal(r.sourceKind,'verified-cutout');
- const review=await evaluate({...record,segmentHint:{...proof,verified:false}});
- assert.equal(review.autoSaveSafe,false);
+ assert.ok(r.reviewReasons.includes('multi-garment-category-and-type-needs-owner-review'));
+ const notHashed=await evaluate({...record,segmentHint:{...proof,cutoutSHA256:'a'.repeat(64)}});
+ assert.equal(notHashed.autoSaveSafe,false);
+ assert.notEqual(notHashed.sourceKind,'verified-cutout');
+ const notReviewed=await evaluate({...record,segmentHint:{...proof,ownerReviewedInstance:false}});
+ assert.equal(notReviewed.autoSaveSafe,false);
+ assert.notEqual(notReviewed.sourceKind,'verified-cutout');
 });
 test('08 manual corrections beat fresh wrong predictions; do not auto overwrite selected skirt',async()=>{
  const r=await evaluate(candidate({userAdjusted:true,category:'Bottoms',
