@@ -8,6 +8,7 @@ export function evaluateLockedSnapshot(snapshot){
  if(snapshot?.schema!=='closet-current-real-photo-locked-snapshot-115/v1')throw Error('unsupported snapshot schema');
  if(snapshot.sourceCommit!=='51aeeacdff675175f89a17dd64c1281e0aa7cee8'||snapshot.workflowRunId!==42143014654||snapshot.artifactId!==13469256263||snapshot.artifactSHA256!=='65f72decb1ed6f62d4c45079520c7337c5fce643a4679a3eeb34ff9bd36c6c3b')throw Error('unrecognized inference provenance');
  if(snapshot.model?.name!=='FashionCLIP'||snapshot.model?.revision!=='0f99955d944c39bfd9d035a02ac273c7a44a406b'||snapshot.partition!=='locked-evaluation')throw Error('model or partition mismatch');
+ if(snapshot.model?.quantization!=='q8'||snapshot.inferenceParameters?.hypothesisTemplate!=='A photo of {}.'||snapshot.inferenceParameters?.categoryMinimumScore!==0.45||snapshot.inferenceParameters?.categoryMinimumTopTwoMargin!==0.15||snapshot.inferenceParameters?.fullCatalogMinimumScore!==0.6||snapshot.inferenceParameters?.fullCatalogMinimumTopTwoMargin!==0.2)throw Error('inference parameters mismatch');
  if(snapshot.independentHumanAdjudications!==0||snapshot.labelStatus!=='provisional legacy labels; not independent ground truth')throw Error('ground-truth status mismatch');
  if(!Array.isArray(snapshot.samples)||snapshot.samples.length!==16)throw Error('expected all 16 locked output rows');
  const ids=new Set(),hashes=new Set();
