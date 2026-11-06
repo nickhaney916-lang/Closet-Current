@@ -48,6 +48,7 @@ const authOrigin='https://hlkgymugtfbirlpunsra.supabase.co';
 let browser=null;
 const external=[],errors=[],cases=[],screens=[],navigations=[],crashes=[];
 let tokenCount=0;
+const native88=process.env.NATIVE88==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -167,6 +168,39 @@ try{
   // A clicked original saved outfit rather than donor-created selection.
   await page.locator('#savedBoards button').first().click();
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+  let staleSelectionBlocked88=false;
+  if(native88&&width===390){
+   // NATIVE88 genuine browser race: pause pinned WebGL donor's lazy import
+   // while a signed-in owner switches between existing saved outfits.
+   const path='**/donor/research/outfit-3d-01/research-panel.mjs*';
+   let releaseDonor,notifyDonor;
+   const pause=new Promise(resolve=>{releaseDonor=resolve;});
+   const requested=new Promise(resolve=>{notifyDonor=resolve;});
+   await page.route(path,async route=>{
+    notifyDonor();
+    await pause;
+    await route.continue();
+   });
+   const pending=page.evaluate(async()=>{
+    try{await window.native3D05Bridge.open();return {ok:true};}
+    catch(e){return {ok:false,reason:String(e?.message||e)};}
+   });
+   await Promise.race([requested,new Promise((_,reject)=>setTimeout(
+    ()=>reject(Error('NATIVE88 did not intercept actual pinned donor import')),45000))]);
+   await page.locator('#savedBoards button').nth(1).click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),1);
+   releaseDonor();
+   const returned=await Promise.race([pending,new Promise((_,reject)=>setTimeout(
+    ()=>reject(Error('NATIVE88 stale donor request did not settle')),90000))]);
+   await page.unroute(path);
+   assert.equal(returned.ok,false,'Changed saved outfit must block stale source-bound 3D');
+   assert.match(returned.reason,/NATIVE88 saved outfit changed/);
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await page.locator('#savedBoards button').first().click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+   staleSelectionBlocked88=true;
+  }
   // Real end-user button click: do NOT hold one long-running Playwright
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
@@ -227,6 +261,7 @@ try{
   await take(page,width,'05-B-private-missing-source-fallback');
   assert.deepEqual(await readBoard(page),bStored);
   cases.push({width,realNativeBuilder:true,exactSourceDonorPR541:true,
+   ...(native88?{staleSelectionBlocked88:width===390?staleSelectionBlocked88:'not-tested-in-this-viewport'}:{}),
    authenticPhotoSourcedDress3D:true,bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,
