@@ -1,0 +1,72 @@
+name: COLOR85 reviewed crop opaque background color warning NO DEPLOY
+on:
+  push:
+    branches:
+      - research/crop-background-color-safety-85-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  conservative-photo-color-and-private-wardrobe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact CI83 parent and minimal no-deploy research scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=0700306a63e4409cd8e2e03ee1c812684c1be39a
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/color85-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/multi-garment-capture-01/review-ui.mjs|research/crop-background-color-safety-85/color-safety.mjs|research/crop-background-color-safety-85/REPORT.md|tests/crop-background-color-safety-85.test.mjs|.github/workflows/crop-background-color-safety-85-no-deploy.yml) ;;
+              *) echo "BLOCKED unauthorized app, production, staging or other project file: $path"; exit 1 ;;
+            esac
+          done </tmp/color85-paths
+      - name: Install pinned test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 playwright@1.56.1 sharp@0.34.3
+      - name: Complete build and Node regression suite
+        run: |
+          node --check research/crop-background-color-safety-85/color-safety.mjs
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: CAMERA84 native whole-outfit original photo → verified private mixed-save mobile acceptance
+        run: CAMERAMIXED84=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Verify 78 original-JPEG mobile camera screenshots
+        run: node scripts/audit-outfit-camera-mixed-save-84-browser.mjs
+      - name: MIXED80 original photo private new-only saved clothes and owner consent
+        run: MIXED80=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit 72 original-photo mixed-save screenshots
+        run: node scripts/audit-mixed-saved-new-clothes-80-browser.mjs
+      - name: CAMERA79 source-safe camera cancellation and owner-private capture
+        run: node scripts/test-camera-to-closet-79-browser.mjs
+      - name: SNAPSHOT78 private safely-cloned review, Style and restore acceptance
+        run: SNAPSHOT78=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Independently audit 72 safe snapshot mobile screenshots
+        run: node scripts/audit-allowlisted-review-snapshot-78-browser.mjs
+      - name: Preserve research-only sanitized evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: COLOR85-background-conflict-research-HOLD-NO-DEPLOY
+          path: |
+            research/crop-background-color-safety-85/REPORT.md
+            benchmark/outfit-camera-mixed-save-84/acceptance.json
+            benchmark/mixed-saved-new-clothes-80/acceptance.json
+            benchmark/camera-to-closet-75/results.json
+            benchmark/allowlisted-review-snapshot-78/acceptance.json
+          retention-days: 14
+          if-no-files-found: warn
