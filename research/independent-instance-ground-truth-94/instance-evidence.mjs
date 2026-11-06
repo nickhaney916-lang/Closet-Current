@@ -7,7 +7,7 @@
  * not pretend QA-generated geometry is scientific ground truth.
  */
 import {createHash} from 'node:crypto';
-import {validReviewTaxonomy43} from '../multi-garment-capture-01/atomic-group.mjs';
+import {validReviewTaxonomy43,COMMIT43_TYPES} from '../multi-garment-capture-01/atomic-group.mjs';
 import {COLORS60} from '../recognition-ground-truth-gate-60/ground-truth-gate.mjs';
 
 export const INSTANCE_PACKET_94='closet-current-blind-instance-packet-94/v1';
@@ -42,7 +42,7 @@ export function makeInstancePacket94({sources,role,onlyIds=null}={}){
    'historical-label','model-prediction','reviewer-peer-answer','locked-holdout-split'],
   taxonomy:Object.freeze({
    categories:['Tops','Bottoms','Dresses','Outerwear','Shoes'],
-   colors:[...COLORS60]
+   colors:[...COLORS60],types:Object.fromEntries(Object.entries(COMMIT43_TYPES).map(([key,values])=>[key,[...values]]))
   }),items};
 }
 export function verifyPacket94(packet){
