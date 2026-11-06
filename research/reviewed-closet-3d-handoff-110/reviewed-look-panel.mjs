@@ -33,6 +33,8 @@ export function mountReviewedLookResearchPanel110(doc,host){
   '#cc110Buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}',
   '#cc110Buttons button{width:100%;min-height:48px;font-size:13px;white-space:normal;padding:9px 5px}',
   '#cc110LookMessage{overflow-wrap:break-word;min-height:36px}',
+  // Donor sets canvas{display:block}; do not let that override HTML hidden.
+  '#avatar[hidden]{display:none!important}',
   '@media(max-width:350px){#cc110Buttons button{font-size:12px}}'
  ].join('\n');
  doc.head.append(style);
