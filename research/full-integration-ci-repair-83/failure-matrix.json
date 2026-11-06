@@ -1,0 +1,170 @@
+{
+  "priority": "83 FULL-INTEGRATION-CI-REPAIR",
+  "parent_priority": 84,
+  "parent_sha": "fb624d93eb0dc22f216f977eddefc8bc8b2adb8d",
+  "reviewed_commit": "fb624d93eb0dc22f216f977eddefc8bc8b2adb8d",
+  "source_pull_request": 638,
+  "date": "2026-11-05",
+  "source_log_disclosure": "From actual failed GitHub Action job logs of PR #638; all 15 historical gates explicitly rejected a later inherited .github/workflows/allowlisted-review-snapshot-78-no-deploy.yml file as out-of-scope BEFORE running application tests. They are not evidence of test failures or of passing on the current integration.",
+  "historical": [
+    {
+      "id": "DETECTOR57",
+      "run_id": 42130935888,
+      "workflow": ".github/workflows/detector-proposal-native-acceptance-57-no-deploy.yml",
+      "reference_sha": "77af898d0cf67f963d13f487da1ecfe2e96fe035",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "LABEL59",
+      "run_id": 42130936085,
+      "workflow": ".github/workflows/model-label-no-prefill-59-no-deploy.yml",
+      "reference_sha": "3f0bb1b5fb0ccc90ad8f74c024dfbab8ea889d36",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "SWITCH68",
+      "run_id": 42130935941,
+      "workflow": ".github/workflows/unsaved-photo-switch-68-no-deploy.yml",
+      "reference_sha": "6f7873a6f513596bd3a7f41d8578a2304228f769",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "COLOR46",
+      "run_id": 42130935969,
+      "workflow": ".github/workflows/reviewed-region-color-46-no-deploy.yml",
+      "reference_sha": "8bdc4fbc72b4b55afa7535c30bf539b2187201d9",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "SUBTYPE47",
+      "run_id": 42130935907,
+      "workflow": ".github/workflows/confusable-subtype-review-47-no-deploy.yml",
+      "reference_sha": "76867d53e183729e7799e69de098aa6b7ade59a9",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "RACE71",
+      "run_id": 42130935893,
+      "workflow": ".github/workflows/invalid-selection-race-71-no-deploy.yml",
+      "reference_sha": "cf65ad8a38096f394f86f3ba884abc8ffcc6a891",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "BOUNDS58",
+      "run_id": 42130935980,
+      "workflow": ".github/workflows/bounded-detection-review-58-no-deploy.yml",
+      "reference_sha": "f2aaf736f19213c2dadc25ad0d12bcc575129ee0",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "RECOVERY65",
+      "run_id": 42130935881,
+      "workflow": ".github/workflows/detector-manual-recovery-65-no-deploy.yml",
+      "reference_sha": "78e6ecdaeb836626ee2c31dedfbf4b627036271c",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "INPUT49",
+      "run_id": 42130936075,
+      "workflow": ".github/workflows/model-crop-evidence-binding-49-no-deploy.yml",
+      "reference_sha": "5c55e8fe462af19fbae31618a2e587175260f68c",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "MODEL52",
+      "run_id": 42130936083,
+      "workflow": ".github/workflows/model-asset-reliability-52-no-deploy.yml",
+      "reference_sha": "17d9b859252b08a763cb452804f08c717ae141cc",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "NEARDUP67",
+      "run_id": 42130936422,
+      "workflow": ".github/workflows/source-near-duplicate-67-no-deploy.yml",
+      "reference_sha": "d032e1a1957944883c7f589cd05f663d01c3f68b",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "SOURCE70",
+      "run_id": 42130936017,
+      "workflow": ".github/workflows/verified-photo-switch-70-no-deploy.yml",
+      "reference_sha": "143ff1294cabd531b8eb6ad23b5a2c9f62b3dc9a",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "NATIVE12",
+      "run_id": 42130936068,
+      "workflow": ".github/workflows/native-multi-style-12-no-deploy.yml",
+      "reference_sha": "058aeda3c46303e481d6c84223bae6a2464667fd",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "MODEL45",
+      "run_id": 42130935973,
+      "workflow": ".github/workflows/model-review-safe-integration-45-no-deploy.yml",
+      "reference_sha": "ea99a7508728c8041d7faba25c29b4452792c070",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    },
+    {
+      "id": "LABELSYNC66",
+      "run_id": 42130935940,
+      "workflow": ".github/workflows/corrected-name-index-66-no-deploy.yml",
+      "reference_sha": "fb35cf9d45a63775743ac86522c95d7286523757",
+      "first_unapproved_path": ".github/workflows/allowlisted-review-snapshot-78-no-deploy.yml",
+      "failed_at": "strict historical changed-file allowlist",
+      "test_steps_executed": false,
+      "disposition": "historical research scope-only check; retain unchanged; apply new exact-parent verified integration suite instead"
+    }
+  ],
+  "actual_dependency_failure": {
+    "run_id": 42130927627,
+    "workflow": ".github/workflows/camera-scenarios.yml",
+    "failed_at": "Run complete Node test suite (all application and recognition tests)",
+    "source_error": "Cannot find module 'fake-indexeddb'",
+    "observed_test_pass": 677,
+    "observed_test_fail": 14,
+    "notes": "The workflow did not install the test-only packages; the verified #84 isolated workflow installed pinned test dependencies and passed 801/801; fix original general workflow by installing pinned test-only requirements. Different tests may also require three, Playwright, sharp."
+  }
+}
