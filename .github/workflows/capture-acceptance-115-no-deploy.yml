@@ -1,0 +1,67 @@
+name: PHOTO115 independent real-photo capture-to-closet audit NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-photo-capture-closet-acceptance-115-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-pinned-real-photo-acceptance-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact P114 parent and strict research-only allowlist
+        run: |
+          BASE=268306135eba9d49ac00e8fe9842955bec59c6bf
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo115-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/capture-acceptance-115/evidence.json|research/capture-acceptance-115/evaluate.mjs|research/capture-acceptance-115/REPORT.md|tests/capture-acceptance-115.test.mjs|.github/workflows/capture-acceptance-115-no-deploy.yml) ;;
+              *) echo "REFUSE application, production, existing staging, cloud, model, customer image or unrelated change: $path"; exit 1 ;;
+            esac
+          done </tmp/photo115-paths
+          test "$(wc -l </tmp/photo115-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
+      - name: Install fixed inherited Node regression dependencies without lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Recompute exact locked real-photo output audit and new acceptance regressions
+        run: |
+          node --check research/capture-acceptance-115/evaluate.mjs
+          node --check tests/capture-acceptance-115.test.mjs
+          node research/capture-acceptance-115/evaluate.mjs > /tmp/photo115-audit.json
+          node --test tests/capture-acceptance-115.test.mjs
+      - name: Full inherited application, recognition, source, privacy and outfit regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify report scientific and safety gates
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const report=readFileSync('research/capture-acceptance-115/REPORT.md','utf8');
+          const audit=JSON.parse(readFileSync('/tmp/photo115-audit.json','utf8'));
+          assert.equal(audit.evaluatedLockedPhotos,16);
+          assert.equal(audit.independentScientificAccuracy,'UNVERIFIED: no independently adjudicated human ground truth');
+          assert.equal(audit.instanceMaskIoU,null);
+          assert.equal(audit.primaryColorAccuracy,null);
+          for(const marker of ['Family Alpha Issue #255 remains HOLD','Production and existing staging were not modified','8','13','4','null']) assert.ok(report.includes(marker),marker);
+          NODE
+      - name: Archive only compact audit report, no photographs or model files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO115-source-pinned-locked-real-photo-audit-HOLD-NO-DEPLOY
+          path: |
+            research/capture-acceptance-115/evidence.json
+            research/capture-acceptance-115/evaluate.mjs
+            research/capture-acceptance-115/REPORT.md
+            /tmp/photo115-audit.json
+          retention-days: 14
