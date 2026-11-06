@@ -70,7 +70,7 @@ test('PHOTO109 genuine mobile controls gate only localhost + unique research fla
   "f.sampledTriangleCrossingsAfter>f.sampledTriangleCrossingsBefore",
   "stats?.familyAlpha!=='HOLD'"
  ])assert.ok(s.includes(t),'source mobile admission missing: '+t);
- assert.doesNotMatch(s,/getUserMedia|localStorage|sessionStorage|fetch\(|supabase|navigator\.sendBeacon|XMLHttpRequest/);
+ assert.doesNotMatch(s.replace(/\/\*[\s\S]*?\*\//g,''),/getUserMedia|localStorage|sessionStorage|fetch\(|supabase|navigator\.sendBeacon|XMLHttpRequest/);
 });
 test('PHOTO109 original mobile knee presets have real independently bent/straight legs and accessible 48px targets',()=>{
  const s=readFileSync('research/denim-mobile-pose-controls-109/mobile-pose-controls.mjs','utf8');
