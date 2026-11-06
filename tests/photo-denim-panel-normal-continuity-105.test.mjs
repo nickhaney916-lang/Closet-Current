@@ -69,8 +69,8 @@ test('PHOTO105 real rear normal angular energy must decrease and front image/res
  const s=readFileSync('research/photo-denim-panel-normal-continuity-105/rear-seam-normal-continuity.mjs','utf8');
  for(const part of ['pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWeight',
   'energyAfter>energyBefore*.015',
-  'normalVarianceBefore105:energyBefore',
-  'normalVarianceAfter105:energyAfter',
+  'rearSourceNeutralNormalVarianceBefore105:energyBefore',
+  'rearSourceNeutralNormalVarianceAfter105:energyAfter',
   'originalSourcePhotoUVRestSkinAndFrontNormalsUnchanged105:true'])
   assert.ok(s.includes(part),part);
  assert.match(s,/actual\.every\(\(v,i\)=>v===expected\[i\]\)/);
