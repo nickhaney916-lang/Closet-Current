@@ -252,7 +252,7 @@ function adjustPhoto(item){
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   // COLOR41: Save does not prove an AI-estimated color was changed by the user.
   // clothingFields itself marks colorSource='user' on explicit color input.
-  if(reviewedCapture120){
+  if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){
    if(!reviewConfirmed120?.checked||!garmentConfirmed120?.checked)
     throw Error('Confirm the photographed garment and its category, type and color.');
    const owner=window.closetAuth?.user?.id,auth=window.closetAuth;
@@ -307,7 +307,7 @@ function adjustPhoto(item){
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
  }catch(error){
   save.disabled=false;
-  message(reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
+  message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
