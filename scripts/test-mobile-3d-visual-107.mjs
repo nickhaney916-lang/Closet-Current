@@ -73,16 +73,24 @@ async function testDirectMobileControls(page){
  const turned=(await page.evaluate(()=>window.cc69Diagnostics())).camera;
  const rotationDelta=Math.abs(((turned-start+540)%360)-180);
  assert.ok(rotationDelta>1,'direct mobile-viewer drag did not rotate the camera');
- await setView(page,0);
  const before=(await page.evaluate(()=>window.cc69Diagnostics())).cameraDistance;
  await page.mouse.move(box.x+box.width*.5,box.y+box.height*.5);
  await page.mouse.wheel(0,-180);await page.waitForTimeout(100);
  const after=(await page.evaluate(()=>window.cc69Diagnostics())).cameraDistance;
  assert.ok(Number.isFinite(before)&&Number.isFinite(after)&&Math.abs(after-before)>.02,
   'direct mobile-viewer wheel input did not change camera distance');
- await setView(page,0);
  return {rotationResponded:true,rotationDeltaDegrees:+rotationDelta.toFixed(2),
   zoomResponded:true,cameraDistanceBefore:+before.toFixed(4),cameraDistanceAfter:+after.toFixed(4)};
+}
+async function reopenViewerAfterInput(page,figure){
+ await page.reload();
+ await page.waitForFunction(()=>window.cc69Diagnostics?.()?.rig?.bones===163&&window.cc69Diagnostics().loaded===true,null,{timeout:180000});
+ if(figure==='male'){
+  await page.locator('#model').selectOption('male');
+  await page.waitForFunction(()=>window.cc69Diagnostics?.()?.figure==='male'&&window.cc69Diagnostics().loaded===true,null,{timeout:120000});
+ }
+ await page.locator('#review').check();await page.locator('#wear').click();
+ await page.waitForFunction(()=>window.cc69Diagnostics?.()?.actual3DGarment?.realPhotoApplied===true,null,{timeout:120000});
 }
 const frameTiming=page=>page.evaluate(()=>new Promise(resolve=>{
  const a=performance.now();let n=0;const tick=()=>{if(++n>=61)resolve({rafFrameCount:n,elapsedMs:+(performance.now()-a).toFixed(2),meanMs:+((performance.now()-a)/n).toFixed(3)});else requestAnimationFrame(tick)};requestAnimationFrame(tick);
@@ -115,6 +123,7 @@ async function runBrowser(engine,name){
     await page.locator('#review').check();await page.locator('#wear').click();
     await page.waitForFunction(()=>window.cc69Diagnostics?.()?.actual3DGarment?.realPhotoApplied===true,null,{timeout:120000});
     const inputAcceptance=await testDirectMobileControls(page);
+    await reopenViewerAfterInput(page,figure);
     const memStart=await page.evaluate(()=>({usedJSHeapSize:performance.memory?.usedJSHeapSize??null,totalJSHeapSize:performance.memory?.totalJSHeapSize??null}));
     for(const denim of ['public','second']){
      if(denim==='second'){
