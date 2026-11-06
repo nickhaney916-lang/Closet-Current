@@ -190,7 +190,7 @@ try{
   realAnatomicalSkinnedPhotoDenimIntermediateMotion:true,
   distinctOriginalDenimSources:2,maleAndFemaleVerified:true,
   viewportCSSWidth:390,sourcePosesDegrees:[0,4,8,12,16],
-  cameraAngles:[45,90],realBrowser:'Chromium',screenshots:photos.length,
+  cameraAngles:[45,90],realBrowser:'Chromium',screenshotCount:photos.length,
   independentPhotoSources:sourceShirt?3:0,
   realSkinnedBodyGarmentTriangleContactsMeasured:true,
   contactsAcrossEntireSweptIntervalCertified:false,
