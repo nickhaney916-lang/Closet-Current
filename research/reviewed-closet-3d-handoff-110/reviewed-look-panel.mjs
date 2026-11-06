@@ -20,7 +20,8 @@ export function mountReviewedLookResearchPanel110(doc,host){
  const anchor=doc.getElementById('cc109MobileControls');
  const originalReview=doc.getElementById('review');
  const clear=doc.getElementById('clear');
- if(!anchor||!originalReview||!clear||!doc.getElementById('wear')||
+ const avatar=doc.getElementById('avatar');
+ if(!anchor||!originalReview||!clear||!avatar||!doc.getElementById('wear')||
     !doc.getElementById('swap')||!doc.getElementById('status'))
   throw Error('PHOTO110 actual original reviewed 3D controls unavailable');
  const style=doc.createElement('style');
@@ -32,6 +33,8 @@ export function mountReviewedLookResearchPanel110(doc,host){
   '#cc110Buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}',
   '#cc110Buttons button{width:100%;min-height:48px;font-size:13px;white-space:normal;padding:9px 5px}',
   '#cc110LookMessage{overflow-wrap:break-word;min-height:36px}',
+  // Donor sets canvas{display:block}; do not let that override HTML hidden.
+  '#avatar[hidden]{display:none!important}',
   '@media(max-width:350px){#cc110Buttons button{font-size:12px}}'
  ].join('\n');
  doc.head.append(style);
@@ -128,6 +131,9 @@ export function mountReviewedLookResearchPanel110(doc,host){
       !d?.actual3DGarment?.realPhotoApplied||
       d.actual3DGarment.originalPhotoSHA256s?.bottom!==plan.sourceSHA256s.bottom)
     throw Error('actual research source garment was not safely restored');
+   // Reveal the original WebGL scene only after the saved licensed JPEG has
+   // been re-admitted by exact owner, session, source SHA and genuine mesh.
+   avatar.hidden=false;
    mode='restored-public';lastOutcome='actual-original-3d-restored';
    message.textContent='Reviewed saved look reopened on real original photographed 163-bone humanoid. Source SHA preserved · Family Alpha HOLD.';
   }catch{
@@ -141,11 +147,11 @@ export function mountReviewedLookResearchPanel110(doc,host){
   // Only synthetic public-free METADATA. Never a real user's JPEG/image.
   const owner='synthetic-private-example-110',generation=1;
   const a={id:'synthetic-top-1',sourceId:'synthetic-top-1',
-   ownerId:owner,category:'Tops',itemType:'T-shirt',
+   ownerId:owner,category:'Tops',itemType:'T-shirt',color:'Black',
    ownerReviewed:true,sourcePhotoOriginal:true,
    sourceSHA256:'a'.repeat(64),photographic3DReconstructionApproved:false};
   const b={id:'synthetic-jeans-1',sourceId:'synthetic-jeans-1',
-   ownerId:owner,category:'Bottoms',itemType:'Jeans',
+   ownerId:owner,category:'Bottoms',itemType:'Jeans',color:'Blue',
    ownerReviewed:true,sourcePhotoOriginal:true,
    sourceSHA256:'b'.repeat(64),photographic3DReconstructionApproved:false};
   const selected=planReviewedSourceLook110({
@@ -158,6 +164,11 @@ export function mountReviewedLookResearchPanel110(doc,host){
   if(selected.status!=='original-photo-2d-fallback'||
     selected.genuineResearch163Bone3DReady)
    throw Error('PHOTO110 unsupported/private real photograph must not become invented mesh');
+  // Never leave licensed-source pose controls or its old 3D scene active
+  // while the UI advertises a different, unsupported private-photo fallback.
+  originalReview.checked=false;
+  avatar.hidden=true;
+  originalReview.dispatchEvent(new Event('change',{bubbles:true}));
   clear.click();
   mode='private-fallback';lastOutcome='original-photo-2d-fallback';
   message.textContent='Other personal photos are NOT reconstructed as 3D. Use the saved original photo/2D board until a real garment fit is verified. No private photos were loaded. HOLD.';
@@ -167,6 +178,10 @@ export function mountReviewedLookResearchPanel110(doc,host){
   if(!e.isTrusted||disposed||busy)return;
   simulated=Object.freeze({authenticated:true,ownerId:'synthetic-other-account-110',
    generation:simulated.generation+1});
+  // Changing the synthetic owner revokes the old visual/source review too.
+  originalReview.checked=false;
+  avatar.hidden=true;
+  originalReview.dispatchEvent(new Event('change',{bubbles:true}));
   clear.click();mode='owner-rotated';
   lastOutcome='previous-owner-saved-look-revoked';
   // Retain old saved token for a negative auth test; it is no longer usable.
@@ -181,7 +196,16 @@ export function mountReviewedLookResearchPanel110(doc,host){
  observer.observe(doc.getElementById('status'),{
   childList:true,characterData:true,subtree:true
  });
- const onReview=()=>update();
+ const onReview=()=>{
+  // Only an explicit fresh review of the genuine licensed original source
+  // may reveal the 163-bone research scene after 2D fallback revocation.
+  if(originalReview.checked){
+   try{
+    if(validateCurrent()?.status==='verified-public-research-3d')avatar.hidden=false;
+   }catch{}
+  }
+  update();
+ };
  originalReview.addEventListener('change',onReview);
  const onHide=()=>{mode='closed';saved=null;update();};
  host.addEventListener('pagehide',onHide);

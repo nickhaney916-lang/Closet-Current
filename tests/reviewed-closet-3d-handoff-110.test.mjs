@@ -114,6 +114,73 @@ test('PHOTO110 saved look reopening requires same exact owner and generation',()
   }),/PHOTO110/);
  }
 });
+test('PHOTO112 saved look preserves only existing reviewed label and source-record identity, never predicts color',()=>{
+ const d=make();
+ const plan=planReviewedSourceLook110(d);
+ assert.deepEqual(plan.reviewedColors,{top:'Black',bottom:'Blue'});
+ assert.deepEqual(plan.sourceIds,{top:'licensed-shirt',bottom:'licensed-jeans-1'});
+ assert.equal(plan.reviewedColorProvenance,'owner-reviewed-index-claim-not-independently-model-verified');
+ assert.equal(Object.isFrozen(plan.reviewedColors),true);
+ assert.equal(Object.isFrozen(plan.sourceIds),true);
+ assert.equal(requireUnchangedReviewedLook110(plan,d).status,'verified-public-research-3d');
+ assert.equal(plan.truePrivateWardrobe3DReady,false);
+ assert.equal(plan.realSignedCloudRLSVerified,false);
+ assert.equal(plan.familyAlpha,'HOLD');
+});
+test('PHOTO112 corrected reviewed color or new source record must revoke saved outfit, even if original JPEG SHA is unchanged',()=>{
+ for(const owner of [RESEARCH_OWNER_110,'synthetic-private-color-owner']){
+  for(const patch of [{color:'Navy'},{sourceId:'new-original-record-same-bytes'}]){
+   const d=make(owner);
+   const saved=planReviewedSourceLook110(d);
+   const jeans=d.indexed.byId.get('licensed-jeans-1');
+   const unchangedSHA=jeans.sourceSHA256;
+   Object.assign(jeans,patch);
+   assert.equal(jeans.sourceSHA256,unchangedSHA);
+   assert.throws(()=>requireUnchangedReviewedLook110(saved,d),/PHOTO110/);
+   const now=planReviewedSourceLook110(d);
+   assert.equal(now.status,'original-photo-2d-fallback',
+    'unapproved benchmark-label/source changes must not claim genuine 3D');
+   assert.equal(now.originalPhotoNotReconstructed,true);
+  }
+ }
+});
+test('PHOTO112 refuse missing or unsafe reviewed color; never copy model guessed label into saved look',()=>{
+ for(const color of [undefined,null,'',' Blue','Blue ','Blue\nRed','<script>','Very'.repeat(20),{},'Blue  Red']){
+  const d=make();d.indexed.byId.get('licensed-jeans-1').color=color;
+  assert.throws(()=>planReviewedSourceLook110(d),/PHOTO110/,'color '+String(color));
+ }
+ for(const patch of [
+  {reviewedColors:undefined},{sourceIds:undefined},
+  {reviewedColors:{top:'Black',bottom:'Navy'}},
+  {sourceIds:{top:'licensed-shirt',bottom:'different-source'}}
+ ]){
+  const d=make('synthetic-private-source-owner');
+  const saved=planReviewedSourceLook110(d);
+  assert.throws(()=>requireUnchangedReviewedLook110({...saved,...patch},d),/PHOTO110/);
+ }
+});
+test('PHOTO112 unsupported private 2D fallback and owner switch revoke stale pose and visible source before fresh review',()=>{
+ const panel=readFileSync('research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs','utf8');
+ for(const anchor of [
+  "const avatar=doc.getElementById('avatar')",
+  "itemType:'T-shirt',color:'Black'",
+  "itemType:'Jeans',color:'Blue'",
+  "#avatar[hidden]{display:none!important}",
+  "originalReview.checked=false;",
+  "avatar.hidden=true;",
+  "originalReview.dispatchEvent(new Event('change',{bubbles:true}))",
+  "if(validateCurrent()?.status==='verified-public-research-3d')avatar.hidden=false"
+ ])assert.ok(panel.includes(anchor),anchor);
+ const browser=readFileSync('scripts/test-reviewed-closet-3d-handoff-110-browser.mjs','utf8');
+ for(const anchor of [
+  "page.locator('#cc110Private').click()",
+  "page.locator('#avatar').isHidden(),true",
+  "page.locator('#review').isChecked(),false",
+  "page.locator('#review').check()",
+  "page.locator('#wear').click()",
+  "page.locator('#avatar').isHidden(),false"
+ ])assert.ok(browser.includes(anchor),anchor);
+});
 test('PHOTO110 does not read private image bytes or network or persistent browser storage',()=>{
  const source=readFileSync('research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs','utf8');
  assert.doesNotMatch(source,/fetch\(|XMLHttpRequest|localStorage|sessionStorage|getUserMedia|indexedDB|supabase|FormData/);

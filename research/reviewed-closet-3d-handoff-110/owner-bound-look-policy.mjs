@@ -13,6 +13,10 @@ export const RESEARCH_SOURCE_110=Object.freeze({
   second:'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a'
 });
 const SHA=/^[a-f0-9]{64}$/;
+// Preserve an already human-reviewed label, never infer a color from a filename,
+// benchmark mesh or 3D appearance. Reject missing/control/unsafe index labels.
+const reviewedColor110=c=>typeof c==='string'&&c.length<=48&&c.trim()===c&&
+ /^[\p{L}\p{N}]+(?:[ /-][\p{L}\p{N}]+)*$/u.test(c);
 const fail=msg=>{throw Error('PHOTO110 '+msg);};
 const isRecord=o=>o&&typeof o==='object'&&!Array.isArray(o);
 const requireText=(s,max=180)=>typeof s==='string'&&s.length>0&&s.length<=max;
@@ -28,7 +32,7 @@ function requireFresh110(session,readCurrent){
 function matchingOriginalItem110(item,ownerId,category,itemType){
  return isRecord(item)&&item.ownerId===ownerId&&
   requireText(item.id)&&requireText(item.sourceId)&&
-  SHA.test(item.sourceSHA256||'')&&
+  SHA.test(item.sourceSHA256||'')&&reviewedColor110(item.color)&&
   item.ownerReviewed===true&&item.sourcePhotoOriginal===true&&
   item.category===category&&item.itemType===itemType&&
   item.photographic3DReconstructionApproved!==true;
@@ -50,6 +54,7 @@ export function planReviewedSourceLook110({session,indexed,board,
     !matchingOriginalItem110(bottom,session.ownerId,'Bottoms','Jeans'))
   fail('saved original shirt and jeans need reviewed same-owner category/subtype/source photo');
  const benchmark=session.ownerId===RESEARCH_OWNER_110 &&
+   top.color==='Black'&&bottom.color==='Blue'&&
    top.id==='licensed-shirt'&&top.sourceId==='licensed-shirt'&&
    top.sourceSHA256===RESEARCH_SOURCE_110.shirt&&
    ((bottom.id==='licensed-jeans-1'&&bottom.sourceId==='licensed-jeans-1'&&
@@ -64,6 +69,9 @@ export function planReviewedSourceLook110({session,indexed,board,
   selectedPublicDenimSource:selected,
   outfitSlots:Object.freeze({top:top.id,bottom:bottom.id}),
   sourceSHA256s:Object.freeze({top:top.sourceSHA256,bottom:bottom.sourceSHA256}),
+  sourceIds:Object.freeze({top:top.sourceId,bottom:bottom.sourceId}),
+  reviewedColors:Object.freeze({top:top.color,bottom:bottom.color}),
+  reviewedColorProvenance:'owner-reviewed-index-claim-not-independently-model-verified',
   ownerId:session.ownerId,generation:session.generation,
   itemTypeVerified:true,originalSourcePhotoIdentityPreserved:true,
   originalPhotoNotReconstructed:!benchmark,
@@ -80,6 +88,7 @@ export function requireUnchangedReviewedLook110(saved,{session,indexed,
  readCurrentSession}={}){
  if(!isRecord(saved)||saved.releaseAuthorized!==false||
     !isRecord(saved.outfitSlots)||!isRecord(saved.sourceSHA256s)||
+    !isRecord(saved.sourceIds)||!isRecord(saved.reviewedColors)||
     saved.ownerId!==session?.ownerId||saved.generation!==session?.generation)
   fail('stale or cross-owner saved outfit cannot be reopened');
  const next=planReviewedSourceLook110({
@@ -88,6 +97,10 @@ export function requireUnchangedReviewedLook110(saved,{session,indexed,
  if(saved.status!==next.status||
     saved.sourceSHA256s.top!==next.sourceSHA256s.top||
     saved.sourceSHA256s.bottom!==next.sourceSHA256s.bottom||
+    saved.sourceIds.top!==next.sourceIds.top||
+    saved.sourceIds.bottom!==next.sourceIds.bottom||
+    saved.reviewedColors.top!==next.reviewedColors.top||
+    saved.reviewedColors.bottom!==next.reviewedColors.bottom||
     saved.selectedPublicDenimSource!==next.selectedPublicDenimSource)
   fail('saved outfit source JPEG, category or owner changed since review');
  return next;
