@@ -83,7 +83,7 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
  try{
   for(const node of groups.values()){
    if(node.maxFront>=.16){skippedFront+=node.ids.length;continue;}
-   if(node.ids.length<2){skippedUnmatched++;continue;}
+   if(node.ids.length<2)skippedUnmatched++; // Still shade real single rear triangles; paired seams share one normal.
    if(!hasKneeFlex)continue;
    const before=sourceRearNormalSpread105(node.ids,norm);
    if(!before.target)continue;
