@@ -108,6 +108,18 @@ export function requireNative3D05WardrobeRevision93({
   throw Error('NATIVE93 private wardrobe refreshed; reverify JPEG bytes before 3D');
  return Object.freeze({...actual});
 }
+/**
+ * NATIVE102: Mobile OS/browser backgrounding is not evidence that an existing
+ * original-photo WebGL admission is still current. Never admit while hidden.
+ * The owner must explicitly reopen after becoming visible, re-running the
+ * independent original-JPEG WebCrypto admissions from NATIVE92.
+ */
+export function requireNative3D05Visible102({doc}={}){
+ if(!doc||doc.hidden===true||
+   doc.visibilityState==='hidden'||doc.visibilityState==='prerender')
+  throw Error('NATIVE102 hidden browser must close photographed 3D; reopen when visible');
+ return true;
+}
 export async function mountNative3D05({
  win=globalThis.window,doc=win?.document,
  consumer=win?.nativeLossless04Bridge,
@@ -159,6 +171,7 @@ export async function mountNative3D05({
  function revokeChangedSource89(){
   if(!displayedSelection89||cleaning||closed)return false;
   try{
+   requireNative3D05Visible102({doc});
    requireCurrentNative3D05Selection88({
     consumer,originalNativeAuth:nativeAuth,win,doc,
     admitted:displayedSelection89.admitted,
@@ -187,6 +200,22 @@ export async function mountNative3D05({
   const target=doc.getElementById(id);
   if(target)selectionObserver89?.observe(target,{childList:true,subtree:true});
  }
+ // NATIVE102: A mobile tab can be hidden/frozen without pagehide or a
+ // wardrobe DOM mutation. Close the actual displayed private donor immediately
+ // and invalidate any in-flight WebGL admission. Never dispose valid owner auth
+ // or mutate the user's saved outfit/cloud state on a normal tab switch.
+ const onBackground102=()=>{
+  if(closed||cleaning||!(opened||panel||opening))return;
+  if(doc.hidden===true||doc.visibilityState==='hidden'||
+    doc.visibilityState==='prerender')
+   cleanup('Browser backgrounded · photographed 3D preview closed; reopen to verify original JPEG');
+ };
+ const onFreeze102=()=>{
+  if(!closed&&!cleaning&&(opened||panel||opening))
+   cleanup('Browser frozen · photographed 3D preview closed; reopen to verify original JPEG');
+ };
+ doc.addEventListener('visibilitychange',onBackground102);
+ doc.addEventListener('freeze',onFreeze102);
  win.addEventListener('closet:alpha-session-changed',invalidate);
  win.addEventListener('pagehide',invalidate);
  doc.getElementById('logout').addEventListener('click',logout,true);
@@ -210,6 +239,7 @@ export async function mountNative3D05({
  }
  async function open(){
   if(closed)throw Error('NATIVE05 private preview disposed');
+  requireNative3D05Visible102({doc});
   if(opened||opening)throw Error('NATIVE05 close the current 3D preview before reopening');
   const selectedIndex=consumer.selected,request=++attempt;
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
@@ -217,6 +247,7 @@ export async function mountNative3D05({
   const selectedRevision93=requireNative3D05WardrobeRevision93({consumer,ownerId:selected.ownerId});
   const requireFresh=()=>{
    if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
+   requireNative3D05Visible102({doc});
    const current=requireCurrentNative3D05Selection88({
     consumer,originalNativeAuth:nativeAuth,win,doc,admitted:selected,selectedIndex
    });
@@ -288,6 +319,8 @@ export async function mountNative3D05({
  }
  button.onclick=()=>open().catch(()=>{});
  const state=()=>{
+  // Also reject a hidden donor even if the browser skipped visibilitychange.
+  onBackground102();
   // Also enforce source admission when a board state changed without a DOM
   // redraw, including programmatic imported/restore state and tab switches.
   revokeChangedSource89();
@@ -308,6 +341,8 @@ export async function mountNative3D05({
  const close=()=>cleanup();
  const dispose=()=>{
   if(closed)return;closed=true;
+  doc.removeEventListener('visibilitychange',onBackground102);
+  doc.removeEventListener('freeze',onFreeze102);
   win.removeEventListener('closet:alpha-session-changed',invalidate);
   win.removeEventListener('pagehide',invalidate);
   doc.getElementById('logout').removeEventListener('click',logout,true);
