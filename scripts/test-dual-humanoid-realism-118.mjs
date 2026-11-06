@@ -70,7 +70,11 @@ async function runEngine(engine,name){
  let browser;
  try{browser=await engine.launch({headless:true,args:['--no-sandbox','--disable-dev-shm-usage','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader','--enable-webgl']});}
  catch(error){browserResults.push({browser:name,supported:false,reason:String(error.message).slice(0,220)});if(name==='chromium')throw error;return;}
- browserResults.push({browser:name,supported:true});
+ const probe=await browser.newPage();
+ const webgl=await probe.evaluate(()=>{const c=document.createElement('canvas');const gl=c.getContext('webgl2')||c.getContext('webgl');return {available:!!gl,renderer:gl?gl.getParameter(gl.RENDERER):null};});
+ await probe.close();
+ if(!webgl.available){browserResults.push({browser:name,supported:false,reason:'WebGL context unavailable'});await browser.close();if(name==='chromium')throw Error('Chromium WebGL unavailable');return;}
+ browserResults.push({browser:name,supported:true,webglRenderer:webgl.renderer});
  try{
   for(const figure of figures)for(const width of widths)for(const mode of ['before','after']){
    const context=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
