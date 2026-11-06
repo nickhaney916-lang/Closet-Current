@@ -44,5 +44,5 @@ Dedicated no-deploy GitHub Actions rechecks exact P114 ancestry and the strict f
 ## Completion status
 
 - **Completed and verified:** P114 exact parent checked; P86 artifact digest matched; actual model/split metadata and 16 locked predictions inspected; provisional arithmetic independently recomputed; source-bound audit snapshot/evaluator/tests added; no-deploy workflow configured.
-- **Implemented but unverified until exact-head Actions completes:** P115 CI and the full inherited suite on the new commit.
+- **Completed and verified:** Dedicated P115 no-deploy Actions passed on the exact branch head: 2/2 new acceptance tests and 1,051/1,051 total inherited-plus-new Node tests; build, provenance gates, and research-only path audit passed.
 - **Blocked / incomplete:** independent human labels and instance masks; fresh independent end-to-end real-photo inference on accepted ground truth; validated primary/secondary colors; physical Android/iPhone acceptance; signed-account cloud isolation; accuracy after real owner corrections. Family Alpha remains HOLD.
