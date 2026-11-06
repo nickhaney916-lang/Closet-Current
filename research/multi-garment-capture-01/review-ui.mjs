@@ -15,6 +15,7 @@ import {keepHumanReviewOnSameSource72} from '../same-original-photo-review-72/re
 import {needsCancelReviewConsent74,CANCEL_REVIEW_PROMPT74} from '../cancel-reviewed-capture-74/cancel-review-guard.mjs';
 import {needsRemoveReviewConsent76,REMOVE_REVIEW_PROMPT76} from '../remove-reviewed-garment-76/remove-review-guard.mjs';
 import {partitionPreviouslySaved80,MIXED_REVIEW_PROMPT80} from './previously-saved-review-80.mjs';
+import {assessCropBackdropRisk85} from '../crop-background-color-safety-85/color-safety.mjs';
 const TYPES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
 const palette=['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'];
 const $=(root,id)=>root.getElementById(id);
@@ -40,7 +41,11 @@ async function reviewedPixelPalette46(piece){
   const ctx=c.getContext('2d',{willReadFrequently:true});
   if(!ctx)return null;
   ctx.drawImage(image,0,0,48,48);
-  return window.PhotoColor.maskedPalette(ctx.getImageData(0,0,48,48).data,48,48);
+  const pixels=ctx.getImageData(0,0,48,48).data;
+  const color=window.PhotoColor.maskedPalette(pixels,48,48);
+  if(!color)return null;
+  // COLOR85: opaque JPEG edges may be background rather than garment pixels.
+  return {...color,backdropRisk85:assessCropBackdropRisk85(pixels,48,48,window.PhotoColor.family)};
  }catch{return null;}
 }
 function normalizeRect(rect){
@@ -210,7 +215,10 @@ export function mountMultiGarmentCapture24({
    result.inputBinding49=binding49;
    const pixels=await reviewedPixelPalette46(piece);
    if(!valid())return;
-   const reviewedColor=boundedCropColor46(pixels,palette);
+   const backdropRisk85=pixels?.backdropRisk85;
+   if(backdropRisk85?.unsafeToSuggestColor)
+    result.colorRisk85='background-may-dominate-crop';
+   const reviewedColor=backdropRisk85?.unsafeToSuggestColor?null:boundedCropColor46(pixels,palette);
    if(reviewedColor)result.colorReview46=reviewedColor;
    // Category and subtype come only from the local FashionCLIP result.
    // Pixel colors remain unverified and are never copied to human inputs.
@@ -218,7 +226,7 @@ export function mountMultiGarmentCapture24({
     result.color=reviewedColor.primary;
     result.colorSource='reviewed-crop-pixel-estimate';
    }
-   if(!result.color&&typeof window.checkPhoto==='function'){
+   if(!result.color&&!backdropRisk85?.unsafeToSuggestColor&&typeof window.checkPhoto==='function'){
     const estimate=piece.maskApplied?piece.maskedColorEstimate:
      (await window.checkPhoto(piece.image).catch(()=>null))?.colorEstimate;
     if(!valid())return;
@@ -292,6 +300,9 @@ export function mountMultiGarmentCapture24({
      colorEvidence.primary+(colorEvidence.secondary?' / '+colorEvidence.secondary:'')+
      ' · Check the original and confirm color yourself.','fine'):null;
     if(preview)preview.dataset.colorReview46='unverified';
+    const backdropNotice=result?.colorRisk85==='background-may-dominate-crop'?
+     el('p','Color suggestion withheld: crop edges may be background, not fabric. Adjust the crop/mask and confirm the garment color visually. Nothing was auto-filled.','fine'):null;
+    if(backdropNotice)backdropNotice.dataset.colorRisk85='review-required';
     // SUBTYPE47: show conflicting candidate types but NEVER preselect either.
     // An AI "strong" tag is not a calibrated probability or human verification.
     const subtypeRisk=result?.subtypeReview47;
@@ -304,6 +315,7 @@ export function mountMultiGarmentCapture24({
     classify.disabled=classification42?.piece===p;
     card.append(review);
     if(preview)card.append(preview);
+    if(backdropNotice)card.append(backdropNotice);
     if(risk)card.append(risk);
     card.append(classify);
    }
