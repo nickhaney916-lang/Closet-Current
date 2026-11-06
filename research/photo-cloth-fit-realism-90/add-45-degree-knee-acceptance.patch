@@ -1,0 +1,38 @@
+--- a/scripts/test-three-d-78-genuine-knee-pose-browser.mjs
++++ b/scripts/test-three-d-78-genuine-knee-pose-browser.mjs
+@@ -143,7 +143,7 @@
+      alternativeKneePoses:alternatives,
+      actualTriangleIntersectionClassification:mode==='after'?p.actualSkinnedDenimBodyCrossingCategories77:null,
+      humanApproved:false,hardwarePhoneApproved:false,releaseAuthorized:false};
+-    for(const angle of [0,90,180]){
++    for(const angle of [0,45,90,180]){
+      const view=await page.evaluate(a=>window.cc69SetView(a),angle);
+      assert.ok(Math.abs(view.camera-angle)<.015);
+      await page.waitForTimeout(90);
+@@ -162,7 +162,7 @@
+  for(const width of [320,390])for(const figure of ['female','male'])
+   for(const denim of ['public','second']){
+    const changes={};
+-   for(const angle of [0,90,180]){
++   for(const angle of [0,45,90,180]){
+     const before=frames[[figure,width,'before',denim,angle].join('-')];
+     const after=frames[[figure,width,'after',denim,angle].join('-')];
+     changes[angle]=await countChanged(before,after);
+@@ -180,7 +180,7 @@
+   genuineCC0Original3D:true,realAnatomicalBones:163,
+   licensedPhotographicShirtAndTwoJeans:true,originalPhotoBytesPreserved:true,
+   originalPhotographProvenanceVerified:true,realSkinned3DRearFabricMovement:true,
+-  widths:[320,390],angles:[0,90,180],screenshots:48,
++  widths:[320,390],angles:[0,45,90,180],screenshots:64,
+   cameraPhotoToUniversal3DReady:false,backPhotoInvented:false,
+   truePosedBodyGarmentTriangleIntersectionAudited:true,
+   contactDiagnosticReadOnly:true,
+@@ -195,7 +195,7 @@
+   '3D78 source photograph mapping must remain byte-identical; real source-skinned knee articulation allowed');
+  await writeFile(directory+'/browser-results.json',JSON.stringify(report,null,2));
+  console.log('THREE_D78_ORIGINAL_163_BONE_PHOTO_DENIM_KNEE_POSES',JSON.stringify({
+-  cases:cases.length,comparisons:comparisons.length,images:48,
++  cases:cases.length,comparisons:comparisons.length,images:64,
+   perView:comparisons.map(c=>({figure:c.figure,width:c.width,denim:c.denim,changed:c.changes})),
+   realContactCounts:cases.map(c=>({figure:c.figure,denim:c.denim,mode:c.mode,pose:c.kneePose,crossings:c.actualSkinnedBodyCrossingSegments,
+    alternatives:c.alternativeKneePoses,classified:c.actualTriangleIntersectionClassification})),

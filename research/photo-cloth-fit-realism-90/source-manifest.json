@@ -1,0 +1,73 @@
+{
+  "priority": "PHOTO-CLOTH-FIT-REALISM-90",
+  "verifiedParent": "e6c2ef87499b354bc8440bfdc9ab3a92980f92f0",
+  "pinnedRendererSource": "df6885d6011cb33fb22dceb81a08f35a0ac4dd61",
+  "researchOnly": true,
+  "familyAlpha": "HOLD",
+  "garments": [
+    {
+      "id": "commons-0003",
+      "kind": "long-sleeve shirt",
+      "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "title": "Zwart shirt met lange mouwen van merk Armani Jeans, opdruk letters ‘AJ’ op voorkant, maat M, objectnr 86975-3.JPG",
+      "author": "Armani?",
+      "credit": "Museum Rotterdam collection item 86975-3",
+      "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+      "license": "CC BY-SA 3.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/3.0/",
+      "photoCoverage": "front only"
+    },
+    {
+      "id": "commons-public-domain-jeans-2005",
+      "kind": "laid-flat photographed jeans",
+      "sha256": "b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c",
+      "cutoutSha256": "e51ed275c6ff1c18d37dfbb821d8994576868f707c551da4fcccea1eaa4b9441",
+      "author": "Oktaeder; uploaded by Juanmak",
+      "source": "https://commons.wikimedia.org/wiki/File:Jeans.jpg",
+      "license": "Public domain",
+      "photoCoverage": "front only"
+    },
+    {
+      "id": "commons-cc-by-sa-denimjeans2-2008",
+      "kind": "laid-flat photographed denim",
+      "sha256": "aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a",
+      "cutoutSha256": "4cf80f77fa34d04844d7310de180135df607248847ea17b1aed4ef613d0cb3db",
+      "author": "Manda.L.Isch; original source photograph postprocessed by Petru Dimitriu",
+      "source": "https://commons.wikimedia.org/wiki/File:Denimjeans2.JPG",
+      "license": "CC BY-SA 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "photoCoverage": "front only"
+    },
+    {
+      "id": "commons-0053",
+      "kind": "black dress with white trim",
+      "sha256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+      "title": "Dress, match (AM 2017.66.33-1).jpg",
+      "credit": "API data Catalogue record Photo",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg",
+      "license": "CC BY 4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "photoCoverage": "front only"
+    }
+  ],
+  "humanoids": [
+    {
+      "kind": "male",
+      "sha256": "d15a07e2b4cf1d08a3b91cb212a9a06a91438077f05a3f2a62f45351e8a71eb8",
+      "bones": 163,
+      "license": "CC0-1.0",
+      "source": "https://www.innerscene.com/tools/library/3d-parts/male-base-mesh-3d-person-rigged-a-pose-380e6d89"
+    },
+    {
+      "kind": "female",
+      "sha256": "a571a5872a5f9d75c013ce6d88b3484436cf2109bf133fbc31e42c41f52389f1",
+      "bones": 163,
+      "license": "CC0-1.0",
+      "source": "https://www.innerscene.com/tools/library/3d-parts/female-base-mesh-3d-person-rigged-a-pose-dba97ed5"
+    }
+  ],
+  "photorealismAccepted": false,
+  "inventedRearPhoto": false,
+  "physicalPhoneTested": false,
+  "productionDeployed": false
+}
