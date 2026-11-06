@@ -79,7 +79,9 @@ jobs:
           node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/priority86/locked-evaluation/results.json > benchmark/output/priority86/locked-evaluation/evaluation-provisional.json
       - name: Run real pinned SegFormer inference and mask evidence in Chromium and WebKit
         run: node scripts/verify-real-segformer-masks-31.mjs
-      - name: Verify mobile original-photo review, confirmed-only private saving, Style and owner isolation
+      - name: Verify actual FashionCLIP suggestion enters original-photo human review and owner-private confirmed save
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Verify camera original-photo review, confirmed-only private saving, Style and owner isolation at mobile widths
         run: |
           CAMERAMIXED84=1 node scripts/test-multi-garment-capture-01-browser.mjs
           node scripts/audit-outfit-camera-mixed-save-84-browser.mjs
@@ -110,6 +112,8 @@ jobs:
             benchmark/output/priority86/
             benchmark/real-mask-evidence-31/report.json
             benchmark/real-mask-evidence-31/*.png
+            benchmark/recognition-to-closet-42/acceptance.json
+            benchmark/recognition-to-closet-42/*.png
             benchmark/outfit-camera-mixed-save-84/acceptance.json
             benchmark/outfit-camera-mixed-save-84/*.png
           if-no-files-found: warn

@@ -15,6 +15,16 @@ The inherited source collection is 59 unique SHA-pinned licensed JPEGs: 32 devel
 
 This priority adds no fabricated labels and does not retune thresholds against the locked subset. Its no-deploy workflow runs the real pinned models on genuine originals, preserves source hashes and partitions, records runtime failures and latency, evaluates the legacy labels only as exploratory provisional comparisons, and archives outputs without original photos. Model execution, software integration and scientific acceptance are distinct verdicts.
 
+## First complete model execution — exploratory provisional labels only
+
+On exact P86 commit `9efa35990c8915c2695c255022e4b7d190119ef5`, dedicated [no-deploy Actions run #42140753198](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42140753198) completed successfully. FashionCLIP q8 produced one real inference record for every original: **32/32 development, 11/11 validation, 16/16 locked evaluation; zero runtime errors**. This is actual pinned-model execution, not a simulated response. Each partition's evaluator output is in the run artifact. Latency, prediction, reason/abstention and source ID are recorded there.
+
+The 16-photo legacy locked partition includes only 13 provisional garment labels and three provisional non-garment controls. Against those inherited labels, model outputs were **8/13 broad category**, **4/13 exact subtype**, and **3/3 negative controls rejected**, with **5/13 garment abstentions** counted incorrect for the category/subtype denominators. This reproduces a weak, high-abstention exploratory result. Because the labels are not independently adjudicated, these are not scientific accuracy estimates, include no population confidence intervals, and cannot establish a measured improvement. Color accuracy was not scored.
+
+The pinned SegFormer executed **six genuine ONNX inferences** (three unchanged licensed originals in Chromium and WebKit; zero runtime failures). On the previously reviewed three-photo coarse-box pilot, the model-grouping diagnostic changed from 2/8 to 3/8 coarse region matches in each engine, with 4 false proposals and 5 missed regions after grouping; **this is not independent instance recall or mask quality** and no pixel-mask IoU was available. The held sources had prior single-review annotations, so this cannot establish unseen-photo generalization.
+
+The same run passed the existing 320/390/430 Chromium/WebKit camera→manual-review→private-closet integration: **6 browser cases, 78 screenshot hashes audited, zero unexpected uploads**. It verified original-photo SHA preservation, confirmed-only save, private owner separation and outfit/restore compatibility. A separate actual FashionCLIP suggestion→human-corrected save case is included in the final workflow and must pass on the final commit before the engineering verdict is closed.
+
 ## Known gaps
 
 1. At least 100 appropriately licensed images and independently adjudicated labels are not present. Two distinct reviewers plus a third-person disagreement adjudicator are required, all bound to original-photo SHA; no automated review or current single-review labels substitute.
