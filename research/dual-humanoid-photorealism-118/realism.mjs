@@ -54,7 +54,6 @@ function hairFor(root,kind){
  parent.updateWorldMatrix(true,false);root.updateWorldMatrix(true,true);
  // Use Object3D.attach to preserve the measured world-space fit while making
  // the hair follow the rig's head bone when one is present.
- parent.attach(group);
  if(kind==='female'){
   // Two separated, tapered side locks and a rear fall give the female figure
   // a shoulder-length silhouette while leaving eyes, cheeks, neckline and
@@ -88,6 +87,7 @@ function hairFor(root,kind){
    ],w*.075,light,7);
   }
  }
+ parent.attach(group);
  return {group,headRegion:{width:w,height:h,depth:d,vertices:headBounds(root).count,headBone:head?.name||null}};
 }
 function improveSkinMaterial(material){
