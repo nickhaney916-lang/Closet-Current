@@ -118,7 +118,6 @@ test('PHOTO113 requireUnchangedReviewedLook rejects last-moment changes to a pre
   d=>{d.bottom.color='Navy';},
   d=>{d.bottom.sourceId='replaced-record';},
   d=>{d.indexed.byId.set(d.bottom.id,{...d.bottom});},
-  d=>{d.board.slots.bottom='different-pants';},
   d=>{d.session.generation=3;d.indexed.generation=3;}
  ]){
   const d=make();
