@@ -1,0 +1,182 @@
+{
+  "schema": "closet-current-real-photo-locked-snapshot-115/v1",
+  "sourceCommit": "51aeeacdff675175f89a17dd64c1281e0aa7cee8",
+  "workflowRunId": 42143014654,
+  "artifactId": 13469256263,
+  "artifactSHA256": "65f72decb1ed6f62d4c45079520c7337c5fce643a4679a3eeb34ff9bd36c6c3b",
+  "independentHumanAdjudications": 0,
+  "model": {
+    "name": "FashionCLIP",
+    "repository": "ff13/fashion-clip",
+    "revision": "0f99955d944c39bfd9d035a02ac273c7a44a406b",
+    "weightsSHA256": [
+      "c6d61df38ae56329347400dc42a285a4233d0c681744fb37f52129b5fe248952",
+      "f475dd7a30bdebf09ba2efc06a3928f0a327179fbcfb30149685d1b5f66b1852"
+    ],
+    "runtime": "ONNX/WASM browser execution"
+  },
+  "partition": "locked-evaluation",
+  "labelStatus": "provisional legacy labels; not independent ground truth",
+  "samples": [
+    {
+      "sampleId": "commons-0003",
+      "sourceSHA256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "provisionalCategory": "Tops",
+      "provisionalSubtype": "T-shirt",
+      "predictionCategory": "Tops",
+      "predictionSubtype": "Sweatshirt",
+      "abstained": false,
+      "reason": null
+    },
+    {
+      "sampleId": "commons-0014",
+      "sourceSHA256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+      "provisionalCategory": "Tops",
+      "provisionalSubtype": "Blouse",
+      "predictionCategory": "Tops",
+      "predictionSubtype": "Tunic",
+      "abstained": false,
+      "reason": null
+    },
+    {
+      "sampleId": "commons-0016",
+      "sourceSHA256": "e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24",
+      "provisionalCategory": "Tops",
+      "provisionalSubtype": "Blouse",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "checks_disagree"
+    },
+    {
+      "sampleId": "commons-0025",
+      "sourceSHA256": "54de15a268c8cbdd767b9247da91abd22efa546004623eec23da1b2492625f9d",
+      "provisionalCategory": "Bottoms",
+      "provisionalSubtype": "Jeans",
+      "predictionCategory": "Bottoms",
+      "predictionSubtype": "Jeans",
+      "abstained": false,
+      "reason": null
+    },
+    {
+      "sampleId": "commons-0036",
+      "sourceSHA256": "5668ffc3c84aaecd8c25854e3da13c62a06a04cf9d294411b33d42e40d5e6386",
+      "provisionalCategory": "Bottoms",
+      "provisionalSubtype": "Skirt",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "category_uncertain"
+    },
+    {
+      "sampleId": "commons-0040",
+      "sourceSHA256": "b681dc1dbc32dde043fbf9e208437f60e83fa37365ad8023012b2df866cb637e",
+      "provisionalCategory": "Bottoms",
+      "provisionalSubtype": "Skirt",
+      "predictionCategory": "Bottoms",
+      "predictionSubtype": "Skirt",
+      "abstained": false,
+      "reason": null
+    },
+    {
+      "sampleId": "commons-0049",
+      "sourceSHA256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+      "provisionalCategory": "Dresses",
+      "provisionalSubtype": "Dress",
+      "predictionCategory": "Dresses",
+      "predictionSubtype": "Unknown",
+      "abstained": false,
+      "reason": "dress_type_review"
+    },
+    {
+      "sampleId": "commons-0059",
+      "sourceSHA256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "provisionalCategory": "Dresses",
+      "provisionalSubtype": "Dress",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "type_uncertain"
+    },
+    {
+      "sampleId": "commons-0060",
+      "sourceSHA256": "198cd0d18fc3d2b9e2ff7d30ca024e860ee4b90dac3165890ed4e3721e5f153f",
+      "provisionalCategory": "Outerwear",
+      "provisionalSubtype": "Jacket",
+      "predictionCategory": "Outerwear",
+      "predictionSubtype": "Jacket",
+      "abstained": false,
+      "reason": "outerwear_independent_agreement"
+    },
+    {
+      "sampleId": "commons-0062",
+      "sourceSHA256": "ed42247af077518ac3532d851a4330ae7cd69bee9969ab3f784431cfbc61f350",
+      "provisionalCategory": "Outerwear",
+      "provisionalSubtype": "Jacket",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "checks_disagree"
+    },
+    {
+      "sampleId": "commons-0077",
+      "sourceSHA256": "b968758a00cd458040b90ca31a48c5aafe6f3cab4fe708f021bc3a341a58cf70",
+      "provisionalCategory": "Shoes",
+      "provisionalSubtype": "Sneakers",
+      "predictionCategory": "Shoes",
+      "predictionSubtype": "Sneakers",
+      "abstained": false,
+      "reason": null
+    },
+    {
+      "sampleId": "commons-0078",
+      "sourceSHA256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+      "provisionalCategory": "Shoes",
+      "provisionalSubtype": "Sneakers",
+      "predictionCategory": "Shoes",
+      "predictionSubtype": "Ankle boots",
+      "abstained": false,
+      "reason": null
+    },
+    {
+      "sampleId": "commons-0095",
+      "sourceSHA256": "4905ac445855b950a116ac4074e87f6c3c5b7159d1e923089e17a2bdd26d8f3d",
+      "provisionalCategory": "Shoes",
+      "provisionalSubtype": "Boots",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "category_uncertain"
+    },
+    {
+      "sampleId": "commons-0046",
+      "sourceSHA256": "7f94b8bc8edc340200f0353968f54868dc72e3180bc191530e19f2a82ce91ead",
+      "provisionalCategory": "Uncategorized",
+      "provisionalSubtype": "Unknown",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "category_uncertain"
+    },
+    {
+      "sampleId": "commons-0086",
+      "sourceSHA256": "d9c3beb00a82f49356d80628bacf985f1985f709b651e1eb50c9f2feaaea440c",
+      "provisionalCategory": "Uncategorized",
+      "provisionalSubtype": "Unknown",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "category_uncertain"
+    },
+    {
+      "sampleId": "commons-0090",
+      "sourceSHA256": "ed9f58647fcbda1d033b6fdfdf1cf1d4c72c1b36bed0f40e16fea07495ed6baf",
+      "provisionalCategory": "Uncategorized",
+      "provisionalSubtype": "Unknown",
+      "predictionCategory": null,
+      "predictionSubtype": null,
+      "abstained": true,
+      "reason": "category_uncertain"
+    }
+  ]
+}
