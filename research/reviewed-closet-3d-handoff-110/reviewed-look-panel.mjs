@@ -20,7 +20,8 @@ export function mountReviewedLookResearchPanel110(doc,host){
  const anchor=doc.getElementById('cc109MobileControls');
  const originalReview=doc.getElementById('review');
  const clear=doc.getElementById('clear');
- if(!anchor||!originalReview||!clear||!doc.getElementById('wear')||
+ const avatar=doc.getElementById('avatar');
+ if(!anchor||!originalReview||!clear||!avatar||!doc.getElementById('wear')||
     !doc.getElementById('swap')||!doc.getElementById('status'))
   throw Error('PHOTO110 actual original reviewed 3D controls unavailable');
  const style=doc.createElement('style');
@@ -158,6 +159,11 @@ export function mountReviewedLookResearchPanel110(doc,host){
   if(selected.status!=='original-photo-2d-fallback'||
     selected.genuineResearch163Bone3DReady)
    throw Error('PHOTO110 unsupported/private real photograph must not become invented mesh');
+  // Never leave licensed-source pose controls or its old 3D scene active
+  // while the UI advertises a different, unsupported private-photo fallback.
+  originalReview.checked=false;
+  avatar.hidden=true;
+  originalReview.dispatchEvent(new Event('change',{bubbles:true}));
   clear.click();
   mode='private-fallback';lastOutcome='original-photo-2d-fallback';
   message.textContent='Other personal photos are NOT reconstructed as 3D. Use the saved original photo/2D board until a real garment fit is verified. No private photos were loaded. HOLD.';
@@ -167,6 +173,10 @@ export function mountReviewedLookResearchPanel110(doc,host){
   if(!e.isTrusted||disposed||busy)return;
   simulated=Object.freeze({authenticated:true,ownerId:'synthetic-other-account-110',
    generation:simulated.generation+1});
+  // Changing the synthetic owner revokes the old visual/source review too.
+  originalReview.checked=false;
+  avatar.hidden=true;
+  originalReview.dispatchEvent(new Event('change',{bubbles:true}));
   clear.click();mode='owner-rotated';
   lastOutcome='previous-owner-saved-look-revoked';
   // Retain old saved token for a negative auth test; it is no longer usable.
@@ -181,7 +191,16 @@ export function mountReviewedLookResearchPanel110(doc,host){
  observer.observe(doc.getElementById('status'),{
   childList:true,characterData:true,subtree:true
  });
- const onReview=()=>update();
+ const onReview=()=>{
+  // Only an explicit fresh review of the genuine licensed original source
+  // may reveal the 163-bone research scene after 2D fallback revocation.
+  if(originalReview.checked){
+   try{
+    if(validateCurrent()?.status==='verified-public-research-3d')avatar.hidden=false;
+   }catch{}
+  }
+  update();
+ };
  originalReview.addEventListener('change',onReview);
  const onHide=()=>{mode='closed';saved=null;update();};
  host.addEventListener('pagehide',onHide);
