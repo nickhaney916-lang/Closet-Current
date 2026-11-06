@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current — Independent individual garment masks | Research HOLD</title>
+<style>
+:root{font:16px system-ui,-apple-system,sans-serif;color:#1c2b3d;background:#f3f6fa}
+*{box-sizing:border-box}body{margin:0}header{padding:15px;background:#172c45;color:#fff}
+header h1{margin:0;font-size:1.2rem}header p{margin:5px 0;color:#dfeaf3}
+main{max-width:890px;margin:auto;padding:12px;display:grid;gap:12px}
+.panel{border:1px solid #d9e0e8;border-radius:12px;background:white;padding:13px}
+label{display:block;font-weight:650;margin:9px 0 4px}
+input,select,textarea{max-width:100%;width:100%;border:1px solid #a1b1c2;border-radius:8px;padding:10px;font:inherit;color:inherit;background:white}
+input[type=checkbox]{width:20px;height:20px;vertical-align:middle}
+button{border:0;border-radius:7px;background:#175a91;color:white;font-weight:650;padding:10px 12px;font:inherit;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}.light{background:#e5eef8;color:#173b5f}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.canvasBox{display:flex;align-items:center;justify-content:center;min-height:190px;background:#eaf0f6;overflow:hidden;border-radius:8px}
+canvas{display:block;max-width:100%;width:auto;height:auto;touch-action:manipulation;cursor:crosshair}
+.muted{font-size:.86rem;color:#53667c}.warn{padding:9px;background:#fff1db;border-radius:8px}
+#status{min-height:24px;font-weight:600}#savedMasks{font-size:.86rem}
+@media(max-width:480px){.row{grid-template-columns:1fr}main{padding:8px}.panel{padding:10px}}
+</style></head><body>
+<header><h1>Closet Current — Independent individual garment masks</h1>
+<p>Research HOLD · Review each real original JPEG · no model suggestions or existing labels · offline local export only</p></header>
+<main>
+<section class="panel">
+<label for="packetFile">Import a source-verified blinded packet (A, B or independent adjudicator C)</label>
+<input id="packetFile" type="file" accept=".json,application/json">
+<label for="reviewerId">Actual reviewer identifier</label>
+<input id="reviewerId" type="text" maxlength="80" autocomplete="off" placeholder="e.g. human-reviewer-01">
+<label for="independent"><input type="checkbox" id="independent"> I independently visually inspect the original photograph; I have not seen model predictions, historical labels or other reviewer answers.</label>
+<p class="warn">The software cannot verify your human identity or independence. Automated QA clicks never count as actual human-labeled truth. Export the JSON yourself: nothing is saved in browser storage or uploaded.</p>
+</section>
+<section class="panel" id="review" hidden>
+ <p id="counter" aria-live="polite"></p>
+ <p id="identity" class="muted"></p>
+ <div class="canvasBox"><canvas id="photoCanvas" width="720" height="400" aria-label="Original JPEG, tap vertices around each garment" title="Tap mask vertices on the original photograph"></canvas></div>
+ <p id="sourceStatus" class="muted" role="status">The source bytes must match their SHA before annotation.</p>
+ <p class="muted">Tap 3 or more points around ONE garment. Choose its category, specific subtype and colors, then close the polygon. Repeat for every visible garment, including overlapping garments.</p>
+ <div class="row">
+ <div><label for="category">Garment category</label><select id="category"></select></div>
+ <div><label for="itemType">Specific garment type</label><select id="itemType"></select></div>
+ <div><label for="primaryColor">Primary color</label><select id="primaryColor"></select></div>
+ <div><label for="secondaryColor">Secondary color (optional)</label><select id="secondaryColor"></select></div>
+ </div>
+ <div class="controls">
+  <button id="closeMask" type="button">Close this garment polygon</button>
+  <button id="undoVertex" type="button" class="light">Undo vertex</button>
+  <button id="clearVertices" type="button" class="light">Clear current vertices</button>
+  <button id="removeMask" type="button" class="light">Remove last mask</button>
+ </div>
+ <p id="vertexStatus" class="muted">0 current vertices.</p>
+ <p id="savedMasks" aria-live="polite">0 recorded garment polygons.</p>
+ <label for="noGarments"><input id="noGarments" type="checkbox"> I inspected this photograph and found NO recognizable clothing garments.</label>
+ <label for="note">Observation / reason for no-garment (at least 8 characters when none)</label>
+ <textarea id="note" rows="2" maxlength="600" placeholder="Source-specific reviewer observation; no model prediction"></textarea>
+ <div class="controls">
+  <button id="record" type="button">Record this photograph review</button>
+  <button id="previous" type="button" class="light">Previous original</button>
+  <button id="next" type="button" class="light">Next original</button>
+ </div>
+ <p id="status" role="status" aria-live="polite"></p>
+</section>
+<section class="panel" id="output" hidden>
+ <p id="progress" aria-live="polite">0 human observations recorded.</p>
+ <button type="button" id="export">Export my source-bound polygons as JSON</button>
+ <p class="muted">Exports do not contain JPEG bytes. Two actual different human reviewers and a third adjudicator for disagreements are required; this UI is not scientific acceptance by itself.</p>
+</section>
+</main>
+<script type="module">
+const $=id=>document.getElementById(id);
+const SHA=/^[a-f0-9]{64}$/;
+const schema='closet-current-blind-instance-packet-94/v1';
+const reviewSchema='closet-current-human-instance-review-94/v1';
+let packet=null,index=0,loaded=false,vertices=[],instances=[],reviewed=new Map(),photo=null,epoch=0,dirty=false;
+const ctx=$('photoCanvas').getContext('2d',{willReadFrequently:false});
+const status=x=>{$('status').textContent=x;};
+const hex=bytes=>Array.from(new Uint8Array(bytes),v=>v.toString(16).padStart(2,'0')).join('');
+const hash=async text=>hex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)));
+const options=(node,values,defaultLabel='-- Choose --')=>{
+ node.replaceChildren();const z=new Option(defaultLabel,'');node.append(z);
+ for(const v of values)node.append(new Option(v,v));
+};
+function types(){const c=$('category').value;options($('itemType'),packet?.taxonomy?.types?.[c]||[]);}
+function draw(){
+ const canvas=$('photoCanvas');ctx.clearRect(0,0,canvas.width,canvas.height);
+ if(photo)ctx.drawImage(photo,0,0,canvas.width,canvas.height);
+ else{ctx.fillStyle='#e8eef5';ctx.fillRect(0,0,canvas.width,canvas.height);}
+ const paint=(points,closed,color)=>{
+  if(!points.length)return;
+  ctx.beginPath();ctx.moveTo(points[0].x*canvas.width,points[0].y*canvas.height);
+  for(let i=1;i<points.length;i++)ctx.lineTo(points[i].x*canvas.width,points[i].y*canvas.height);
+  if(closed)ctx.closePath();
+  ctx.strokeStyle=color;ctx.lineWidth=3;ctx.stroke();
+  if(closed){ctx.fillStyle='rgba(44,129,211,.14)';ctx.fill();}
+  for(const p of points){ctx.beginPath();ctx.arc(p.x*canvas.width,p.y*canvas.height,4,0,2*Math.PI);
+   ctx.fillStyle=color;ctx.fill();}
+ };
+ for(const x of instances)paint(x.polygon,true,'#1c72be');
+ paint(vertices,false,'#d9482f');
+ $('vertexStatus').textContent=vertices.length+' current vertices. Tap the image to add more.';
+ $('savedMasks').textContent=instances.length+' individual garment polygons on this original photo.';
+}
+async function render(){
+ if(!packet)return;
+ const active=++epoch,item=packet.items[index];
+ loaded=false;photo=null;vertices=[];instances=reviewed.get(item.id)?.instances.map(x=>({...x,polygon:x.polygon.map(p=>({...p}))}))||[];
+ $('counter').textContent='Original photograph '+(index+1)+' / '+packet.total+' · independent reviewer role '+packet.role;
+ $('identity').textContent='Locked source ID '+item.id+' · SHA-256 '+item.sourceSHA256.slice(0,20)+'…';
+ $('noGarments').checked=reviewed.get(item.id)?.noGarments||false;
+ $('note').value=reviewed.get(item.id)?.note||'';
+ $('sourceStatus').textContent='Checking exact locally served JPEG bytes against its locked SHA-256…';
+ $('previous').disabled=index===0;$('next').disabled=index>=packet.total-1;
+ draw();status('Source photo integrity pending.');
+ try{
+  const url='../../benchmark/fixtures/'+encodeURIComponent(item.image);
+  const response=await fetch(url,{cache:'no-store'});
+  if(!response.ok)throw Error('Original local JPEG missing');
+  const bytes=await response.arrayBuffer();
+  const digest=hex(await crypto.subtle.digest('SHA-256',bytes));
+  if(digest!==item.sourceSHA256)throw Error('Source JPEG bytes/SHA mismatch — annotation blocked');
+  const blob=new Blob([bytes],{type:'image/jpeg'});
+  const objectUrl=URL.createObjectURL(blob);
+  const pic=new Image();
+  try{await new Promise((resolve,reject)=>{
+   pic.onload=resolve;pic.onerror=()=>reject(Error('Original JPEG could not decode'));
+   pic.src=objectUrl;
+  });}finally{URL.revokeObjectURL(objectUrl);}
+  if(epoch!==active)return;
+  if(!pic.naturalWidth||!pic.naturalHeight)throw Error('Original JPEG dimensions unavailable');
+  photo=pic;const w=Math.min(820,pic.naturalWidth),h=Math.max(1,Math.round(w*pic.naturalHeight/pic.naturalWidth));
+  $('photoCanvas').width=w;$('photoCanvas').height=h;loaded=true;
+  $('sourceStatus').textContent='Verified actual original JPEG bytes · SHA-256 match · local preview only.';
+  draw();status(reviewed.has(item.id)?'Your prior observation loaded for editing.':'Ready for independent polygon annotation.');
+ }catch(e){if(epoch!==active)return;loaded=false;photo=null;draw();
+  $('sourceStatus').textContent='SOURCE INTEGRITY FAILURE: '+e.message;
+  status('Do not record unverified source.');}
+}
+function updateProgress(){
+ $('progress').textContent=reviewed.size+' / '+packet.total+
+ ' photographed originals manually recorded. This is self-attested input, not independently verified ground truth.'+
+ (dirty?' Export now; changes exist only in memory.':'');
+}
+$('packetFile').onchange=async()=>{
+ const file=$('packetFile').files?.[0];if(!file)return;
+ if(dirty&&!confirm('Discard unexported source-bound polygon observations?'))return;
+ try{
+  if(file.size>300000)throw Error('Packet too large for offline source review');
+  const p=JSON.parse(await file.text());
+  if(p.schema!==schema||!['A','B','C'].includes(p.role)||!Array.isArray(p.items)||
+    p.total!==p.items.length||!p.items.length||p.items.length>500||!SHA.test(p.packetId)||
+    !Array.isArray(p.taxonomy?.categories)||!p.taxonomy?.types||!Array.isArray(p.taxonomy?.colors))
+   throw Error('Invalid blinded source packet');
+  const known=new Set(),shas=new Set();
+  for(const x of p.items){
+   if(!/^[A-Za-z0-9._-]{1,90}$/.test(x.id)||!SHA.test(x.sourceSHA256)||
+     !/^[A-Za-z0-9._-]+\.jpg$/i.test(x.image)||
+     Object.keys(x).sort().join(',')!=='id,image,sourceSHA256'||
+     known.has(x.id)||shas.has(x.sourceSHA256))
+    throw Error('Untrusted duplicate or unblinded original source');
+   known.add(x.id);shas.add(x.sourceSHA256);
+  }
+  const canonical=JSON.stringify({schema,role:p.role,items:p.items.map(x=>({
+   id:x.id,image:x.image,sourceSHA256:x.sourceSHA256}))});
+  if(await hash(canonical)!==p.packetId)throw Error('Source packet SHA-256 incorrect');
+  packet=p;index=0;reviewed=new Map();instances=[];dirty=false;
+  options($('category'),p.taxonomy.categories);
+  options($('primaryColor'),p.taxonomy.colors);
+  options($('secondaryColor'),p.taxonomy.colors,'None');
+  types();$('review').hidden=false;$('output').hidden=false;
+  $('reviewerId').value='';$('independent').checked=false;
+  await render();updateProgress();
+ }catch(e){$('review').hidden=true;$('output').hidden=true;status('Packet rejected: '+e.message);
+  $('packetFile').setCustomValidity(e.message);}
+};
+$('category').onchange=types;
+$('photoCanvas').onclick=ev=>{
+ if(!loaded||!packet||$('noGarments').checked)return;
+ const r=$('photoCanvas').getBoundingClientRect();
+ if(!r.width||!r.height)return;
+ const x=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));
+ const y=Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height));
+ if(vertices.length>=96){status('Maximum 96 polygon vertices.');return;}
+ vertices.push({x:Math.round(x*1e5)/1e5,y:Math.round(y*1e5)/1e5});draw();
+};
+$('closeMask').onclick=()=>{
+ if(!loaded){status('Original source has not passed SHA-256 verification.');return;}
+ if($('noGarments').checked){status('Clear NO garments before recording a polygon.');return;}
+ if(vertices.length<3){status('Tap at least three garment-boundary vertices.');return;}
+ if(!$('category').value||!$('itemType').value||!$('primaryColor').value){
+  status('Choose this garment category, exact type and primary color.');return;
+ }
+ const polygon=vertices.map(p=>({...p}));
+ const area=Math.abs(polygon.reduce((n,c,i)=>n+c.x*polygon[(i+1)%polygon.length].y-
+  polygon[(i+1)%polygon.length].x*c.y,0))/2;
+ if(area<0.0001){status('Polygon is too small or degenerate.');return;}
+ const secondary=$('secondaryColor').value||null;
+ if(secondary===$('primaryColor').value){status('Secondary color must differ from primary.');return;}
+ instances.push({category:$('category').value,itemType:$('itemType').value,
+  primaryColor:$('primaryColor').value,secondaryColor:secondary,polygon});
+ vertices=[];draw();status('Garment polygon added. Draw the next garment or record this photo.');
+};
+$('undoVertex').onclick=()=>{vertices.pop();draw();};
+$('clearVertices').onclick=()=>{vertices=[];draw();};
+$('removeMask').onclick=()=>{instances.pop();draw();};
+$('noGarments').onchange=()=>{
+ if($('noGarments').checked&&(instances.length||vertices.length)){
+  if(!confirm('Discard garment masks and mark this verified original photo as no clothing?')){
+   $('noGarments').checked=false;return;
+  }
+  instances=[];vertices=[];draw();
+ }
+};
+$('record').onclick=()=>{
+ if(!packet||!loaded){status('Verified original JPEG required before review.');return;}
+ if(!/^[A-Za-z0-9._-]{3,80}$/.test($('reviewerId').value.trim())||
+  !$('independent').checked){status('Enter reviewer identity and personally attest independence.');return;}
+ if(vertices.length){status('Close or clear the unfinished garment polygon first.');return;}
+ const noGarments=$('noGarments').checked,note=$('note').value.trim();
+ if(noGarments&&(!note||note.length<8)){status('Explain why this photo has no garments.');return;}
+ if(!noGarments&&!instances.length){status('At least one completed garment mask or explicit no-garment observation required.');return;}
+ const item=packet.items[index],reviewerId=$('reviewerId').value.trim();
+ reviewed.set(item.id,{id:item.id,sourceSHA256:item.sourceSHA256,
+  reviewerId,reviewedAt:new Date().toISOString(),noGarments,note,
+  instances:instances.map(x=>({...x,polygon:x.polygon.map(p=>({...p}))}))});
+ dirty=true;status('Your source-bound observation recorded. Export before leaving.');updateProgress();
+};
+$('next').onclick=()=>{if(index<packet.items.length-1){index++;render();}};
+$('previous').onclick=()=>{if(index>0){index--;render();}};
+$('export').onclick=()=>{
+ if(!packet||!reviewed.size||!$('independent').checked){
+  status('Record and personally attest observations before exporting.');return;
+ }
+ const reviewerId=$('reviewerId').value.trim();
+ if([...reviewed.values()].some(x=>x.reviewerId!==reviewerId)){
+  status('The reviewer identity changed; do not combine independent reviewers.');return;
+ }
+ const payload={schema:reviewSchema,role:packet.role,packetId:packet.packetId,
+  reviewerId,method:'direct-human-visual-review',independent:true,
+  identityVerification:'SELF_ATTESTED_NOT_VERIFIED',
+  rows:[...reviewed.values()]};
+ const bytes=new Blob([JSON.stringify(payload,null,2)+'\n'],{type:'application/json'});
+ const href=URL.createObjectURL(bytes),a=document.createElement('a');
+ a.href=href;a.download='instance-review-'+packet.role+'-'+reviewerId+'.json';
+ a.click();setTimeout(()=>URL.revokeObjectURL(href),1000);
+ dirty=false;updateProgress();
+ status('Source IDs/SHAs and polygon labels exported; no original JPEG included.');
+};
+</script></body></html>
