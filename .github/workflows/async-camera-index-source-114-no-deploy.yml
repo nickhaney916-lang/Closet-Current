@@ -1,0 +1,74 @@
+name: PHOTO114 original camera JPEG async index source integrity NO DEPLOY
+on:
+  push:
+    branches:
+      - research/async-camera-index-source-snapshot-114-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-async-original-camera-index-review-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact green PHOTO113 parent and only four source-only research files
+        run: |
+          BASE=48331ef36e0b799e6b0980fdeb6e90ae8e72eb1b
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo114-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/index-04/verified-saved-recognition.mjs|tests/async-camera-index-source-114.test.mjs|research/async-camera-index-source-114/REPORT.md|.github/workflows/async-camera-index-source-114-no-deploy.yml) ;;
+              *) echo "REFUSE unauthorized default app, production, existing staging, cloud, model, customer image or other project modification: $path"; exit 1 ;;
+            esac
+          done </tmp/photo114-paths
+          test "$(wc -l </tmp/photo114-paths)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
+      - name: Install deterministic inherited Node regression dependencies without lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Exact research source syntax and new async original JPEG race acceptance
+        run: |
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check tests/async-camera-index-source-114.test.mjs
+          node scripts/build.mjs
+          node --test tests/async-camera-index-source-114.test.mjs
+          node --test tests/index-04-saved-recognition.test.mjs
+      - name: Full inherited application, recognition, source, privacy and outfit Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify strict photo source guard and research-only family hold
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const source=readFileSync('research/index-04/verified-saved-recognition.mjs','utf8');
+          const report=readFileSync('research/async-camera-index-source-114/REPORT.md','utf8');
+          const app=readFileSync('public/app.js','utf8');
+          for(const marker of [
+            'decisionFingerprint114(record,recognition,independent)',
+            'const savedFingerprint114=JSON.stringify(savedIndex)',
+            'const liveSavedIndex=buildOwnerWardrobeIndex(ownerId,savedItems)',
+            'assertSourceUnchanged114();',
+            'const ownerAtDecision114=currentOwner();'
+          ])assert.ok(source.includes(marker),marker);
+          assert.ok(app.includes("get('index04')==='after'"));
+          assert.ok(app.includes('if(!decision.autoSaveSafe)'));
+          assert.ok(report.includes('Family Alpha remains HOLD'));
+          assert.ok(report.includes('42308140721'));
+          assert.doesNotMatch(source,/fetch\s*\(|XMLHttpRequest|localStorage|indexedDB\.open|postMessage|new Worker/);
+          NODE
+      - name: Archive only research source report and SHA race test NO PHOTOS NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO114-original-JPEG-async-source-index-race-HOLD-NO-DEPLOY
+          path: |
+            research/async-camera-index-source-114/REPORT.md
+            tests/async-camera-index-source-114.test.mjs
+          retention-days: 14
