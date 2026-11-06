@@ -90,5 +90,5 @@ test('NATIVE93 genuine original-photo Chromium test edits source bytes AFTER mod
   'postOpenUnchangedSHASourceRevoked93'])
   assert.ok(s.includes(t),'missing browser acceptance: '+t);
  assert.match(s,/privateSavedBoardUnchanged:true/);
- assert.match(s,/actual owner wardrobe refresh/i);
+ assert.match(s,/real owner wardrobe refresh/i);
 });
