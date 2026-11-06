@@ -1,0 +1,34 @@
+{
+  "schema": "closet-current-independent-3d-visual-review/v1",
+  "status": "BLANK_INTAKE_NO_REVIEWS_COLLECTED",
+  "reviewerRecord": "Store reviewer identity separately in an access-controlled location; do not put personal details in this public repository.",
+  "blindedImageSetId": "",
+  "displayConditions": {
+    "showSourcePhotoAlongside3D": true,
+    "showAngleAndPose": true,
+    "hideDevelopmentVersionUntilScoringIsLocked": true,
+    "doNotClaimTheNeutralRearIsPhotographed": true
+  },
+  "scale": {
+    "1": "Severe visible failure",
+    "5": "Mixed quality with obvious defects",
+    "8": "Strong quality with limited visible defects",
+    "10": "Exceptional and consistent; only use with independent corroboration"
+  },
+  "ratings": {
+    "anatomicalRealism": null,
+    "clothingToBodyContact": null,
+    "waistHipKneeAnkleFit": null,
+    "fabricDrapeAndFolds": null,
+    "sourcePhotoAndColorFidelity": null,
+    "garmentSilhouette": null,
+    "seamAndEdgeContinuity": null,
+    "frontSideRearConsistency": null,
+    "mobileReadability": null,
+    "overallRealism": null
+  },
+  "defectObservations": [],
+  "comparisonPreference": null,
+  "humanAcceptanceDecision": "NOT YET VERIFIED",
+  "reviewedAt": null
+}
