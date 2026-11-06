@@ -1,0 +1,140 @@
+name: PHOTO119 original JPEG manual corrections to private owner closet NO DEPLOY
+on:
+  push:
+    branches:
+      - research/manual-reviewed-original-private-save-119-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-source-human-reviewed-atomic-owner-private-closet:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require independently green P117 parent and exactly FIVE research-only files
+        run: |
+          BASE=d63989331a53a43c1374d77abbff05df5316cead
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo119-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/manual-reviewed-private-save-119/reviewed-source-commit.mjs|tests/manual-reviewed-private-save-119.test.mjs|scripts/test-manual-reviewed-private-save-119-browser.mjs|research/manual-reviewed-private-save-119/REPORT.md|.github/workflows/manual-reviewed-private-save-119-no-deploy.yml) ;;
+              *) echo "REFUSE unauthorized default app, production, staging, cloud, original user JPEG, model, 3D or other-project change: $path"; exit 1 ;;
+            esac
+          done </tmp/photo119-paths
+          test "$(wc -l </tmp/photo119-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
+      - name: Install pinned inherited research dependencies with NO lockfile change
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: New actual original-JPEG owner-confirmed category subtype color and IndexedDB atomic commit tests
+        run: |
+          node --check research/manual-reviewed-private-save-119/reviewed-source-commit.mjs
+          node --check tests/manual-reviewed-private-save-119.test.mjs
+          node --check scripts/test-manual-reviewed-private-save-119-browser.mjs
+          node scripts/build.mjs
+          node --test tests/manual-reviewed-private-save-119.test.mjs
+          node --test tests/owner-indexeddb-commit-117.test.mjs tests/multigarment-cutout-byte-116.test.mjs tests/index-04-saved-recognition.test.mjs
+      - name: Run ALL inherited recognition, camera, wardrobe, owner privacy, saved look and 3D Node tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Audit explicit corrections, original JPEG hashing, atomic rollback and family HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const s=readFileSync('research/manual-reviewed-private-save-119/reviewed-source-commit.mjs','utf8');
+          const r=readFileSync('research/manual-reviewed-private-save-119/REPORT.md','utf8');
+          for(const m of [
+            'verifyOriginalSourceBytes',
+            'previewOwnerWardrobeAddition',
+            "db.transaction(['items','state'],'readwrite')",
+            "tx.objectStore('items').add(value)",
+            "tx.objectStore('state').put({...draft,batch:remaining})",
+            "ownerReviewed:true,sourcePhotoOriginal:true",
+            'sourceHashVerified:true',
+            'draftSourceMatches(draft,record,ownerId)'
+          ])assert.ok(s.includes(m),m);
+          assert.ok(r.includes('Family Alpha HOLD'));
+          assert.ok(r.includes('42312616444'));
+          assert.ok(r.includes('not wired into the shipping app'));
+          assert.doesNotMatch(s,/fetch\s*\(|XMLHttpRequest|localStorage|sendBeacon|supabase/);
+          NODE
+      - name: Archive NO-PHOTO research tests and engineering limits; never deploy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO119-human-reviewed-original-source-private-save-NO-DEPLOY
+          path: |
+            research/manual-reviewed-private-save-119/REPORT.md
+            tests/manual-reviewed-private-save-119.test.mjs
+          retention-days: 14
+
+  human-review-actual-chromium-webkit-mobile-browser:
+    needs: original-source-human-reviewed-atomic-owner-private-closet
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install exact inherited browser test dependencies (NO lockfile changes)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Genuine original-photo manual review controls and private IndexedDB at 320 390 430 Chromium plus 390 WebKit
+        run: node scripts/test-manual-reviewed-private-save-119-browser.mjs
+      - name: Verify real-browser screen evidence and explicitly unproven model / JWT / device claims
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,existsSync,statSync,readdirSync} from 'node:fs';
+          const dir='benchmark/manual-reviewed-private-save-119';
+          const p=JSON.parse(readFileSync(dir+'/browser-results.json','utf8'));
+          assert.deepEqual(p.counts,{Chromium:3,WebKit:1});
+          assert.deepEqual(p.scenarios.map(x=>[x.engine,x.width]),[
+            ['Chromium',320],['Chromium',390],['Chromium',430],['WebKit',390]
+          ]);
+          for(const row of p.scenarios){
+            assert.equal(row.actualBrowserIndexedDB,true);
+            assert.equal(row.actualWebCrypto,true);
+            assert.equal(row.humanReviewUiFunctional,true);
+            assert.equal(row.originalPublicJPEGPreserved,true);
+            assert.equal(row.twoSyntheticOwnerDatabaseIsolation,true);
+            assert.equal(row.duplicateReopenBlocked,true);
+            assert.equal(row.foreignOwnerAccessBlocked,true);
+            assert.equal(row.unrelatedDraftPreserved,true);
+            assert.equal(row.noHorizontalOverflow,true);
+            assert.equal(row.realSignedAccountsTested,false);
+            assert.equal(row.scientificGarmentRecognitionAccuracyTested,false);
+            assert.equal(row.productionAppIntegrated,false);
+            assert.equal(row.familyAlpha,'HOLD');
+            assert.equal(row.releaseAuthorized,false);
+          }
+          assert.equal(p.actualRecognizedGarmentTypeVerified,false);
+          assert.equal(p.realSignedCloudRLSVerified,false);
+          assert.equal(p.actualPhysicalMobileHardwareTested,false);
+          const images=readdirSync(dir).filter(x=>x.endsWith('.png'));
+          assert.equal(images.length,8);
+          for(const file of images){
+            assert.ok(existsSync(dir+'/'+file));
+            assert.ok(statSync(dir+'/'+file).size>1000);
+          }
+          NODE
+      - name: Archive ONLY original licensed research UI screenshots and test metadata (NO customer photo and NO DEPLOY)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO119-real-Chromium-WebKit-mobile-human-review-320-390-430-HOLD
+          path: benchmark/manual-reviewed-private-save-119/
+          retention-days: 14
