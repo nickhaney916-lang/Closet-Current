@@ -144,11 +144,11 @@ export function mountReviewedLookResearchPanel110(doc,host){
   // Only synthetic public-free METADATA. Never a real user's JPEG/image.
   const owner='synthetic-private-example-110',generation=1;
   const a={id:'synthetic-top-1',sourceId:'synthetic-top-1',
-   ownerId:owner,category:'Tops',itemType:'T-shirt',
+   ownerId:owner,category:'Tops',itemType:'T-shirt',color:'Black',
    ownerReviewed:true,sourcePhotoOriginal:true,
    sourceSHA256:'a'.repeat(64),photographic3DReconstructionApproved:false};
   const b={id:'synthetic-jeans-1',sourceId:'synthetic-jeans-1',
-   ownerId:owner,category:'Bottoms',itemType:'Jeans',
+   ownerId:owner,category:'Bottoms',itemType:'Jeans',color:'Blue',
    ownerReviewed:true,sourcePhotoOriginal:true,
    sourceSHA256:'b'.repeat(64),photographic3DReconstructionApproved:false};
   const selected=planReviewedSourceLook110({
