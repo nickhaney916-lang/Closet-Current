@@ -49,6 +49,7 @@ let browser=null;
 const external=[],errors=[],cases=[],screens=[],navigations=[],crashes=[];
 let tokenCount=0;
 const native88=process.env.NATIVE88==='1';
+const native89=process.env.NATIVE89==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -226,6 +227,43 @@ try{
   await take(page,width,'03-genuine-163-bone-side-dress');
   await page.locator('#outfit3D01Back').click();
   await take(page,width,'04-genuine-163-bone-rear-neutral');
+  if(native89&&width===390){
+   // NATIVE89: actual source/owner viewer is already WebGL READY. A native
+   // saved outfit selection change must revoke its previously visible
+   // original photographs and mesh; it is not enough to reject a future open.
+   await page.evaluate(()=>window.nativeLossless04Bridge.selectSaved(1));
+   await page.waitForFunction(()=>
+     window.native3D05Bridge?.state().active===false&&
+     document.getElementById('native3D05Status')?.textContent.includes('stale source-photo 3D preview closed'),
+     null,{timeout:20000});
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),0,
+     'Stale source private photographs must be removed on live selection change');
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true,
+     'Revoking stale WebGL must not revoke the valid native account/editor');
+   assert.deepEqual(await readBoard(page),ownerOriginal,
+     'Preview revocation must never overwrite owner private wardrobe');
+   const img=await page.screenshot({fullPage:false,animations:'disabled'});
+   const measure=await sharp(img).metadata(),stats=await sharp(img).stats();
+   assert.equal(measure.width,390);
+   assert.ok(img.length>4500&&stats.channels.some(c=>c.stdev>7));
+   await mkdir('benchmark/native-3d-89',{recursive:true});
+   const name='stale-photo-preview-cleared-390.png';
+   await writeFile('benchmark/native-3d-89/'+name,img);
+   await writeFile('benchmark/native-3d-89/acceptance.json',
+     JSON.stringify({priority:'NATIVE-3D-LIVE-SOURCE-89',
+      file:name,sha256:digest(img),width:390,height:measure.height,
+      originalOutfitPrivate:true,oldSource3DRemoved:true,
+      originalBoardUnmodified:true,nativeSessionActive:true,
+      actualModelAlreadyRendered:true,physicalPhoneVerified:false,
+      realSignedCloudVerified:false,productionDeployed:false,
+      familyAlpha:'HOLD'},null,2)+'\n');
+   await page.evaluate(()=>window.nativeLossless04Bridge.selectSaved(0));
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+     window.native3D05Bridge.state().viewerMode==='dress'&&
+     window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+  }
   // Explicit scene close must NOT invalidate still-signed-in consumer editor.
   await page.evaluate(()=>window.native3D05Bridge.close());
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -266,6 +304,7 @@ try{
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,
    sessionLogoutClears3D:true,consumerStillActiveAfterViewerClose:true,
+   ...(native89?{liveSourceRevocation89:width===390?'verified':'not-tested-in-this-viewport'}:{}),
    separateAccountBPrivate:true,missingIDsRetained:true,
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});
