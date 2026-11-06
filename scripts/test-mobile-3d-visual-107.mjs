@@ -52,7 +52,14 @@ async function capture(page,label,meta){
  receipts.push({file,sha256:hash(png),width:image.width,height:image.height,...meta});return png;
 }
 const q='?denimDrape73=after&calf74=after&folds75=after&continuity76=after&contact77=on&knee78=on&knee103=on&knee104=on&knee105=on&knee106=on';
-const setView=async(page,degrees)=>{const x=await page.evaluate(a=>window.cc69SetView(a),degrees);assert.ok(Math.abs(x.camera-degrees)<.02);};
+const setView=async(page,degrees)=>{
+ await page.waitForTimeout(120);
+ const x=await page.evaluate(a=>window.cc69SetView(a),degrees);
+ await page.waitForTimeout(120);
+ const delta=Math.abs(((Number(x.camera)-degrees+540)%360)-180);
+ assert.ok(Number.isFinite(Number(x.camera))&&delta<.02,
+  `camera angle did not settle to ${degrees} degrees (reported ${x.camera}, delta ${delta})`);
+};
 async function testDirectMobileControls(page){
  await setView(page,0);
  const box=await page.locator('#avatar').boundingBox();assert.ok(box&&box.width>80&&box.height>100);

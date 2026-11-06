@@ -122,7 +122,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Upload reviewer-blind screenshot packet separately from controller answer key — NO DEPLOY
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: P107-blinded-64-case-PHOTO105-PHOTO106-human-review-packet
@@ -132,7 +132,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Upload unblinding map as a separate artifact — do not share with reviewers
-        if: always()
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: P107-separate-review-unblinding-key-DO-NOT-SHARE-WITH-REVIEWERS
