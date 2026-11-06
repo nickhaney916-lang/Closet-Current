@@ -80,22 +80,6 @@ async function shot(page,width,engine,stage){
  const file=engine+'-'+width+'-'+stage+'.png';await writeFile(dir+'/'+file,png);
  report.screenshots.push({file,engine,width,stage,height:meta.height,sha256:sha(png)});
 }
-async function photoReview(page,bytes){
- await page.locator('#outfitUpload').setInputFiles({name:'COLOR87-QA-test-photo.jpg',
-  mimeType:'image/jpeg',buffer:bytes});
- await page.waitForFunction(hash=>window.multi24Research?.debug().sourceSHA256===hash,
-  sha(bytes),{timeout:30000});
- await page.waitForFunction(()=>!window.multi24Research?.debug().working,null,{timeout:30000});
- await page.getByRole('button',{name:'Add missed piece'}).click();
- const card=page.locator('#multi24Grid .multi24-card').first();
- await card.getByRole('button',{name:'Adjust crop/mask'}).click();
- const crop=page.locator('dialog.photo-crop-editor');
- await crop.waitFor({state:'visible'});
- await crop.getByRole('button',{name:'Whole photo'}).click();
- await crop.getByRole('button',{name:'Save crop'}).click();
- await crop.waitFor({state:'hidden',timeout:30000});
- assert.equal(await card.getByAttribute('data-crop-reviewed55'),undefined);
-}
 try{
  for(const [engine,launcher]of [['chromium',chromium],['webkit',webkit]])
  for(const width of [320,390,430]){
