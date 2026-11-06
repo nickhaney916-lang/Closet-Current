@@ -1,0 +1,66 @@
+name: PHOTO113 atomic reviewed saved-look source snapshot NO DEPLOY
+on:
+  push:
+    branches:
+      - research/atomic-reviewed-look-snapshot-113-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  atomic-reviewed-original-source-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact independently green PHOTO112 parent and exactly four read-only research files
+        run: |
+          BASE=fe3bb0e3142a7e617bfb691b71a3f9a7415cdbb6
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo113-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs|tests/atomic-reviewed-look-113.test.mjs|research/atomic-reviewed-look-113/REPORT.md|.github/workflows/atomic-reviewed-look-113-no-deploy.yml) ;;
+              *) echo "REFUSE unapproved application, staging, production, cloud, customer image, or other-project modification: $path"; exit 1 ;;
+            esac
+          done </tmp/photo113-paths
+          test "$(wc -l </tmp/photo113-paths)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
+      - name: Install inherited locked real Node regression dependencies without changing package files
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Syntax and research source only acceptance
+        run: |
+          node --check research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs
+          node --check tests/atomic-reviewed-look-113.test.mjs
+          node scripts/build.mjs
+          node --test tests/atomic-reviewed-look-113.test.mjs
+      - name: All inherited application research regressions and strict source owner review gates
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify genuine 163-bone source donor is inherited and NOT claimed rerun on PHOTO113
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const report=readFileSync('research/atomic-reviewed-look-113/REPORT.md','utf8');
+          assert.ok(report.includes('42306390744'));
+          assert.ok(report.includes('It **does not claim to rerun the slow WebGL browser suite**'));
+          assert.ok(report.includes('Family Alpha: HOLD'));
+          const source=readFileSync('research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs','utf8');
+          assert.ok(source.includes('sourceUnchanged113(topRecord,top)'));
+          assert.ok(source.includes('sourceUnchanged113(bottomRecord,bottom)'));
+          assert.ok(source.includes("releaseAuthorized:false,familyAlpha:'HOLD'"));
+          NODE
+      - name: Archive research-only report and test evidence NO IMAGES NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO113-atomic-review-source-snapshot-HOLD-NO-DEPLOY
+          path: |
+            research/atomic-reviewed-look-113/REPORT.md
+            tests/atomic-reviewed-look-113.test.mjs
+          retention-days: 14
