@@ -1,0 +1,84 @@
+name: SOURCE97 seven genuinely new Commons originals pinned SHA quarantine NO DEPLOY
+on:
+  push:
+    branches:
+      - research/new-real-commons-candidate-cohort-97-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-jpeg-unique-real-source-quarantine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict exact P96 verified ancestor, six research-only new files, no deploy
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=26662c589c58a3a11669ab789ffc09a3f8514ee7
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/source97-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/new-real-commons-candidate-cohort-97/source-candidates.json|research/new-real-commons-candidate-cohort-97/source-gate.mjs|research/new-real-commons-candidate-cohort-97/REPORT.md|scripts/verify-new-real-commons-candidates-97.mjs|tests/new-real-commons-candidates-97.test.mjs|.github/workflows/new-real-commons-candidate-cohort-97-no-deploy.yml) ;;
+              *) echo "BLOCKED unauthorized app, original JPEG, classifier, production, staging or other project changes: $path"; exit 1 ;;
+            esac
+          done </tmp/source97-paths
+          test "$(wc -l </tmp/source97-paths)" -eq 6
+      - name: Install pinned research-only original JPEG and actual mobile browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Full inherited app build, Node security, SOURCE97 sha/license/duplicate regressions
+        run: |
+          node --check research/new-real-commons-candidate-cohort-97/source-gate.mjs
+          node --check scripts/verify-new-real-commons-candidates-97.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Independently redownload seven original Commons JPEGs and verify PINNED SHA-256 and exact bytes
+        run: node scripts/verify-new-real-commons-candidates-97.mjs --strict
+      - name: Original P94 genuine JPEG 59-source A B C blind packets remain intact
+        run: node scripts/build-independent-instance-packets-94.mjs
+      - name: Preserve 320 390 430 actual Chromium/WebKit original-photo polygon reviewer UI
+        run: node scripts/test-independent-instance-94-browser.mjs
+      - name: Preserve 20 original source-bound independent browser screenshot SHA audit
+        run: node scripts/audit-independent-instance-94-browser.mjs
+      - name: Research-only discovery cannot claim independently SHA-pinned or scientific accuracy
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/new-real-commons-candidate-cohort-97/source-acceptance.json','utf8'));
+          assert.equal(x.exactSourceCountFrozen,59);
+          assert.equal(x.oldModelExposedQuarantined,2);
+          assert.equal(x.newOriginalJPEGsDownloaded,7);
+          assert.equal(x.distinctPhotoSHAsAcrossAll68,68);
+          assert.equal(x.newSourcesSHAIndependentlyPinned,7);
+          assert.equal(x.scientificallyAcceptedNewSources,0);
+          assert.equal(x.confirmedHumanInstanceMasks,0);
+          assert.equal(x.sourceQualificationVerdict,'SHA_PINNED_BUT_QUARANTINED');
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          console.log('SOURCE97 independently re-downloaded seven Commons original JPEGs matched pinned SHA/size; still quarantined with zero human truth; HOLD.');
+          NODE
+      - name: Archive attribution and original SHA receipts only; never store source JPEGs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SOURCE97-original-7-COMMONS-SHA-second-pass-pinned-quarantine-HOLD-NO-DEPLOY
+          path: |
+            research/new-real-commons-candidate-cohort-97/source-candidates.json
+            research/new-real-commons-candidate-cohort-97/REPORT.md
+            benchmark/new-real-commons-candidate-cohort-97/source-acceptance.json
+            benchmark/independent-instance-ground-truth-94/browser-evidence/results.json
+          if-no-files-found: warn
+          retention-days: 14
