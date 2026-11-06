@@ -53,9 +53,12 @@ async function capture(page,label,meta){
 }
 const q='?denimDrape73=after&calf74=after&folds75=after&continuity76=after&contact77=on&knee78=on&knee103=on&knee104=on&knee105=on&knee106=on';
 const setView=async(page,degrees)=>{
- await page.waitForTimeout(120);
- const x=await page.evaluate(a=>window.cc69SetView(a),degrees);
- await page.waitForTimeout(120);
+ await page.evaluate(a=>window.cc69SetView(a),degrees);
+ await page.waitForFunction(target=>{
+  const camera=Number(window.cc69Diagnostics()?.camera);
+  return Number.isFinite(camera)&&Math.abs(((camera-target+540)%360)-180)<.02;
+ },degrees,{timeout:5000,polling:50});
+ const x=await page.evaluate(()=>window.cc69Diagnostics());
  const delta=Math.abs(((Number(x.camera)-degrees+540)%360)-180);
  assert.ok(Number.isFinite(Number(x.camera))&&delta<.02,
   `camera angle did not settle to ${degrees} degrees (reported ${x.camera}, delta ${delta})`);
