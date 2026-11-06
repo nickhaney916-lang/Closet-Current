@@ -319,10 +319,10 @@ export async function mountNative3D05({
  }
  button.onclick=()=>open().catch(()=>{});
  const state=()=>{
-  // Also reject a hidden donor even if the browser skipped visibilitychange.
-  onBackground102();
   // Also enforce source admission when a board state changed without a DOM
   // redraw, including programmatic imported/restore state and tab switches.
+  // NATIVE102 additionally closes any photo 3D after an unobserved hide.
+  onBackground102();
   revokeChangedSource89();
   let active=false;
   try{active=!closed&&epoch?.status().active===true&&panel?.state().privateVisible===true;}
