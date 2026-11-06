@@ -48,7 +48,7 @@ test('PHOTO104 3D fold implementation must use genuine original skinned denim SH
  const s=readFileSync('research/photo-denim-pose-fold-contact-104/pose-responsive-denim-folds.mjs','utf8');
  for(const name of [
   'auditPhotographedDenimKneeStep103','auditTrueSkinnedPhotographedDenimContact77',
-  'sourceSHA','mesh.skeleton','bones','pantsSourceFront',
+  'sourceSHA','skeleton?.bones?.length!==163','pantsSourceFront',
   'poseDenimFoldAmplitude104','sourceKneeFold104','originalSourceJPEGAndRGBNotModified104:true'
  ])assert.ok(s.includes(name),'missing genuine source/rig verification: '+name);
  assert.doesNotMatch(s,/getUserMedia|supabase|localStorage|sessionStorage|fetch\(/);
@@ -142,7 +142,7 @@ test('PHOTO104 strict original 103 ancestor no-deploy workflow must run complete
   'node scripts/test-photographed-denim-knee-103-browser.mjs',
   'node scripts/test-denim-pose-fold-contact-104-browser.mjs',
   'node scripts/audit-denim-pose-fold-contact-104.mjs',
-  'test "$(wc -l </tmp/photo104-allowed)" -eq 7'
+  'test "$(wc -l </tmp/photo104-allowed)" -eq 8'
  ])assert.ok(s.includes(l),'missing genuine no deploy step '+l);
  assert.doesNotMatch(s,/deploy-pages|gh-pages|npm publish/);
 });
