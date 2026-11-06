@@ -61,7 +61,7 @@ async function capture(page,figure,mode,width,deg,browserName,diagnostics){
  assert.ok(stats.channels.some(c=>c.stdev>7),'blank WebGL frame');
  const file=`${browserName}-${figure}-${mode}-w${width}-a${deg}.png`;
  await writeFile(out+'/'+file,png);
- const row={file,sha256:hash(png),widthCSS:width,viewDegrees:deg,figure,mode,
+ const row={file,sha256:hash(png),browser:browserName,widthCSS:width,viewDegrees:deg,figure,mode,
   screenshotWidth:meta.width,screenshotHeight:meta.height,
   sourceHashes:diagnostics.actual3DGarment.originalPhotoSHA256s,rigBones:diagnostics.rig.bones};
  screens.push(row);return png;
