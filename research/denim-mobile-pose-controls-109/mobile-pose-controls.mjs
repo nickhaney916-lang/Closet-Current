@@ -223,6 +223,7 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
  const onPageShow=e=>revokeForLifecycle('pageshow',e?.persisted===true);
  const onHide=()=>revokeForLifecycle('pagehide');
  doc.addEventListener('visibilitychange',onVisibilityChange);
+ doc.addEventListener('freeze',onFreeze);
  host.addEventListener('freeze',onFreeze);
  host.addEventListener('pageshow',onPageShow);
  host.addEventListener('pagehide',onHide);
@@ -247,6 +248,7 @@ export function mountSourceDenimMobilePoseControls109(doc,host){
   doc.removeEventListener('change',onChange);
   host.removeEventListener('pagehide',onHide);
   host.removeEventListener('freeze',onFreeze);
+  doc.removeEventListener('freeze',onFreeze);
   host.removeEventListener('pageshow',onPageShow);
   doc.removeEventListener('visibilitychange',onVisibilityChange);
   root.remove();style.remove();
