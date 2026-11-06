@@ -24,8 +24,8 @@ import {validatePhotographedDenimKnees103}
 const protectedAttrs=['position','pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWeight'];
 const fail=msg=>{throw Error('3D103 '+msg);};
 const source=Object.freeze({
- public:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
- second:'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a'
+ 'commons-public-domain-jeans-2005':'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+ 'commons-cc-by-sa-denimjeans2-2008':'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a'
 });
 const actualSourceIds=Object.keys(source);
 const assertOriginal=(root,pants)=>{
