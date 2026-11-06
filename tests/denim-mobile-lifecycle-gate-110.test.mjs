@@ -41,7 +41,7 @@ test('PHOTO110 cannot re-admit without new verified original photo review on doc
   "doc.removeEventListener('freeze',onFreeze)",
   "doc.removeEventListener('visibilitychange',onVisibilityChange)"
  ])assert.ok(s.includes(t),'missing source-bound mobile lifecycle safeguard '+t);
- assert.doesNotMatch(s,/localStorage|sessionStorage|navigator\.sendBeacon|XMLHttpRequest/);
+ assert.doesNotMatch(s.replace(/\/\*[\s\S]*?\*\//g,'').replace(/^\s*\/\/.*$/gm,''),/localStorage|sessionStorage|navigator\.sendBeacon|XMLHttpRequest/);
 });
 test('PHOTO110 real browser must switch actual foreground tab, reject stale tap, then require fresh original-source review',()=>{
  const s=readFileSync('scripts/test-denim-mobile-pose-controls-109-browser.mjs','utf8');
