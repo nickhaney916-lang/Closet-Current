@@ -1,0 +1,89 @@
+name: SOURCE100 independent source-locked multi-garment A B C instance conflict triage NO DEPLOY
+on:
+  push:
+    branches:
+      - research/source97-instance-conflict-triage-100-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-JPEG-independent-instance-disagreement-triage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict original P99 green SHA parent, FIVE research-only additions, block application/model/private/production/staging
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=a096c5d9e6cea9068f145ee0712d5227bc166adb
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/source100-allowed
+          while IFS= read -r path; do
+            case "$path" in
+              research/source97-instance-conflict-triage-100/triage-gate.mjs|research/source97-instance-conflict-triage-100/REPORT.md|scripts/audit-source97-triage-100.mjs|tests/source97-instance-conflict-triage-100.test.mjs|.github/workflows/source97-instance-conflict-triage-100-no-deploy.yml) ;;
+              *) echo "BLOCKED unauthorized app, source JPEG, model, staging/production, customer data or other project change: $path"; exit 1 ;;
+            esac
+          done </tmp/source100-allowed
+          test "$(wc -l </tmp/source100-allowed)" -eq 5
+      - name: Install pinned research-only exact photograph and mobile browser packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Full inherited app build, entire Node regression and adversarial maximum-cardinality mask tests
+        run: |
+          node --check research/source97-instance-conflict-triage-100/triage-gate.mjs
+          node --check scripts/audit-source97-triage-100.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real evidence EMPTY redacted reviewer queue with no human or mask claims
+        run: |
+          node scripts/audit-source97-triage-100.mjs --empty >/tmp/source100-no-real-human-queue.json
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('/tmp/source100-no-real-human-queue.json','utf8'));
+          assert.equal(x.photoCohort,7);
+          assert.equal(x.originalFrozen,59);
+          assert.equal(x.olderQuarantine,2);
+          assert.equal(x.counts.AWAITING_INDEPENDENT_A_B,7);
+          assert.equal(x.scientificAcceptedNewSources,0);
+          assert.equal(x.independentlyVerifiedHumanReviewers,0);
+          assert.equal(x.eligibleOriginalPhotoGapUntil100,41);
+          assert.equal(x.perInstancePrecision,null);
+          assert.equal(x.perInstanceRecall,null);
+          assert.equal(x.perInstanceMaskIoU,null);
+          assert.equal(x.categoryAccuracy,null);
+          assert.equal(x.subtypeAccuracy,null);
+          assert.equal(x.primaryColorAccuracy,null);
+          assert.equal(x.secondaryColorAccuracy,null);
+          assert.equal(x.redactedNoMaskVerticesOrPhotos,true);
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          console.log('SOURCE100: seven source IDs awaiting independent humans, zero scientific truth, NO DEPLOY.');
+          NODE
+      - name: Independently redownload all seven pinned Commons originals, and verify 59 frozen + 2 older originals source SHAs
+        run: node scripts/verify-new-real-commons-candidates-97.mjs --strict
+      - name: Preserve inherited actual original-photo polygon review in Chromium and WebKit at 320 390 430 widths
+        run: |
+          node scripts/build-independent-instance-packets-94.mjs
+          node scripts/test-independent-instance-94-browser.mjs
+          node scripts/audit-independent-instance-94-browser.mjs
+      - name: Archive ONLY redacted zero-human source triage and report, never JPEGs, reviewer JSON, masks or screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SOURCE100-original-JPEG-instance-conflict-triage-metadata-only-HOLD
+          path: |
+            research/source97-instance-conflict-triage-100/REPORT.md
+            /tmp/source100-no-real-human-queue.json
+          if-no-files-found: warn
+          retention-days: 14
