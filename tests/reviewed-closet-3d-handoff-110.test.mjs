@@ -36,7 +36,7 @@ test('PHOTO110 benchmark owner original two licensed source photos mapped to exa
   assert.equal(p.releaseAuthorized,false);
   assert.equal(Object.isFrozen(p),true);
   assert.equal(Object.isFrozen(p.outfitSlots),true);
- });
+ }
 });
 test('PHOTO110 reviewed private-like synthetic owner stays ORIGINAL photo/2D, no fabricated fitted 3D',()=>{
  const d=make('synthetic-owner-private-A',3);
