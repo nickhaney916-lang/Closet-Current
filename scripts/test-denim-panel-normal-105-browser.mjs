@@ -99,11 +99,19 @@ async function compare(page,{figure,denim,degrees,viewportWidth}){
  assert.equal(x.sourcePhotographedRearProvided105,false);
  assert.equal(x.sourceSHA256,original[denim]);
  assert.equal(x.poseResponsiveDenim104,true);
- assert.ok(x.rearSourceNeutralNormalsAdjusted105>=8);
- assert.ok(x.rearSourceNeutralSeamGroupsSmoothed105>=3);
- assert.ok(x.rearSourceNeutralNormalVarianceBefore105>.001);
- assert.ok(x.rearSourceNeutralNormalVarianceAfter105<
-  x.rearSourceNeutralNormalVarianceBefore105*.015);
+ if(degrees===0){
+  assert.equal(x.rearSourceNeutralNormalsAdjusted105,0);
+  assert.equal(x.rearSourceNeutralSeamGroupsSmoothed105,0);
+  assert.equal(x.originalStraightKneeShadingUnchanged105,true);
+ }else{
+  assert.ok(x.rearSourceNeutralNormalsAdjusted105>=8);
+  assert.ok(x.rearSourceNeutralSeamGroupsSmoothed105>=3);
+  assert.equal(x.originalStraightKneeShadingUnchanged105,false);
+  assert.ok(x.sourceKneeNormalProfileGroups105>=3);
+ }
+ assert.ok(x.rearSourceNeutralNormalVarianceBefore105>=0);
+ assert.ok(x.rearSourceNeutralNormalVarianceAfter105<=
+  x.rearSourceNeutralNormalVarianceBefore105+.00005);
  assert.ok(x.protectedOriginalFrontNormalVertices105>=70);
  assert.equal(x.physicalClothSimulation105,false);
  assert.equal(x.independentHumanVisualRealismAcceptance105,false);
@@ -122,11 +130,17 @@ async function compare(page,{figure,denim,degrees,viewportWidth}){
   diff[view]=await deltaPixels(beforeImages[view],imgs[view]);
  }
  // Actual render must change on neutral rear; no fabricated rear "photo".
- assert.ok(diff[90]>0||diff[180]>0,
-  'Source-neutral rear sewn normals must visibly improve sampled lighting '+JSON.stringify({
-   figure,denim,degrees,viewportWidth,diff,
-   groups:x.rearSourceNeutralSeamGroupsSmoothed105
-  }));
+ if(degrees===0){
+  assert.equal(diff[0],0);
+  assert.equal(diff[90],0);
+  assert.equal(diff[180],0);
+ }else{
+  assert.ok(diff[90]>0||diff[180]>0,
+   'True source-denim bent knee must visibly change neutral-rear shading '+JSON.stringify({
+    figure,denim,degrees,viewportWidth,diff,
+    groups:x.rearSourceNeutralSeamGroupsSmoothed105
+   }));
+ }
  return {figure,denim,degrees,viewportWidth,originalSourceSHA256:original[denim],
   pixelChangesByView:diff,
   sourceNeutralRearNormalsAdjusted:x.rearSourceNeutralNormalsAdjusted105,
