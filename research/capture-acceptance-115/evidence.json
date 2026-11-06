@@ -13,7 +13,8 @@
       "c6d61df38ae56329347400dc42a285a4233d0c681744fb37f52129b5fe248952",
       "f475dd7a30bdebf09ba2efc06a3928f0a327179fbcfb30149685d1b5f66b1852"
     ],
-    "runtime": "ONNX/WASM browser execution"
+    "runtime": "ONNX/WASM browser execution",
+    "quantization": "q8"
   },
   "partition": "locked-evaluation",
   "labelStatus": "provisional legacy labels; not independent ground truth",
@@ -178,5 +179,14 @@
       "abstained": true,
       "reason": "category_uncertain"
     }
-  ]
+  ],
+  "inferenceParameters": {
+    "hypothesisTemplate": "A photo of {}.",
+    "categoryMinimumScore": 0.45,
+    "categoryMinimumTopTwoMargin": 0.15,
+    "fullCatalogMinimumScore": 0.6,
+    "fullCatalogMinimumTopTwoMargin": 0.2,
+    "selectedOutput": "top ranked category/subtype suggestion, or explicit abstention",
+    "source": "public/recognition-engine.mjs at source commit 51aeeacdff675175f89a17dd64c1281e0aa7cee8"
+  }
 }
