@@ -34,6 +34,69 @@ const freeze=x=>Object.freeze(x);
 function safeName(v){return typeof v==='string'?v.slice(0,80):'';}
 
 /**
+ * PHOTO114: only fields that influence original-photo source, recognition,
+ * human corrections, independent subtype proof and prospective closet save.
+ * Keep JPEG strings in transient in-memory comparisons only; NEVER export,
+ * persist or log this fingerprint or the customer's saved records.
+ *
+ * A pending SHA-256 digest permits the event loop to process edits/logout.
+ * The decision and the exact saved wardrobe must therefore be revalidated
+ * after that await and every subsequent live-owner callback.
+ */
+function decisionFingerprint114(record,recognition,independent){
+ return JSON.stringify({
+  record:{
+   id:record.id,ownerId:record.ownerId,userId:record.userId,accountId:record.accountId,
+   image:record.image,sourceSHA256:record.sourceSHA256,
+   originalPhotoSHA256:record.originalPhotoSHA256,
+   originalPhoto:record.originalPhoto?{
+    sha256:record.originalPhoto.sha256,image:record.originalPhoto.image,
+    width:record.originalPhoto.width,height:record.originalPhoto.height
+   }:null,
+   recognitionPhoto:record.recognitionPhoto?{image:record.recognitionPhoto.image}:null,
+   sourceHashVerified:record.sourceHashVerified,
+   singleGarmentVerified:record.singleGarmentVerified,
+   segmentHint:record.segmentHint?{
+    verified:record.segmentHint.verified,
+    originalSHA256:record.segmentHint.originalSHA256,
+    cutoutSHA256:record.segmentHint.cutoutSHA256,
+    clipped:record.segmentHint.clipped
+   }:null,
+   cropBounds:record.cropBounds,outfitSourceId:record.outfitSourceId,
+   category:record.category,itemType:record.itemType,color:record.color,
+   colorSource:record.colorSource,confirmedColor:record.confirmedColor,
+   confirmedCategory:record.confirmedCategory,userAdjusted:record.userAdjusted,
+   possibleDuplicate:record.possibleDuplicate,
+   requiresOwnershipConfirmation:record.requiresOwnershipConfirmation
+  },
+  recognition:{
+   strong:recognition?.strong,
+   first:recognition?.choices?.[0]?{
+    category:recognition.choices[0].category,
+    itemType:recognition.choices[0].itemType
+   }:null,
+   categoryConfirmed:recognition?.categoryConfirmed,
+   preprocessingRecovery:recognition?.preprocessingRecovery,
+   reason:recognition?.reason,
+   skirtDressConflictRequiresReview:
+    recognition?.diagnostics?.skirtDressConflict?.requiresManualReview,
+   proposedColor:recognition?.details?.color
+  },
+  independent:independent?{
+   executed:independent.executed,fullVocabulary:independent.fullVocabulary,
+   differentViews:independent.differentViews,
+   primary:independent.primary?{
+    category:independent.primary.category,itemType:independent.primary.itemType
+   }:null,
+   confirmation:independent.confirmation?{
+    category:independent.confirmation.category,itemType:independent.confirmation.itemType
+   }:null
+  }:null
+ });
+}
+
+
+/**
  * ownerId: the signed-in account ID, never caller-supplied from the candidate.
  * currentOwner(): live auth identity checked after the asynchronous SHA proof.
  * savedItems: real previously committed owner-scoped IndexedDB snapshot.
@@ -53,6 +116,18 @@ export async function evaluateOwnerSavedRecognition04({
  // Validates every saved record, prevents stale owner details from being
  // included in a supposedly private index, and rejects duplicate saved IDs.
  const savedIndex=buildOwnerWardrobeIndex(ownerId,savedItems);
+ // Snapshot after the first real signed-owner check and before SHA-256 yields.
+ const inputFingerprint114=decisionFingerprint114(record,recognition,independent);
+ const savedFingerprint114=JSON.stringify(savedIndex);
+ const assertSourceUnchanged114=()=>{
+  if(decisionFingerprint114(record,recognition,independent)!==inputFingerprint114)
+   throw Error('INDEX-04 source, reviewed color or recognition changed during original JPEG proof');
+  // Rebuild only normalized, private metadata; no saved photo bytes, links,
+  // storage or customer item data are included in the comparator.
+  const liveSavedIndex=buildOwnerWardrobeIndex(ownerId,savedItems);
+  if(JSON.stringify(liveSavedIndex)!==savedFingerprint114)
+   throw Error('INDEX-04 saved closet changed during original JPEG proof');
+ };
  const src=identity(record);
  const raw=bytesFromDataJPEG(src.original);
  let byteVerified=false;
@@ -61,6 +136,7 @@ export async function evaluateOwnerSavedRecognition04({
   byteVerified=checked.verified;
  }
  if(currentOwner()!==ownerId)throw Error('INDEX-04 owner changed during source proof');
+ assertSourceUnchanged114();
  const garmentCount=record.outfitSourceId||record.segmentHint?2:1;
  const segment=record.segmentHint?.verified===true&&
   SHA.test(record.segmentHint.cutoutSHA256||'')&&
@@ -100,6 +176,7 @@ export async function evaluateOwnerSavedRecognition04({
  };
  const duplicate=previewOwnerWardrobeAddition(savedIndex,ownerId,candidate);
  if(currentOwner()!==ownerId)throw Error('INDEX-04 owner changed during index comparison');
+ assertSourceUnchanged114();
  const reasons=[...review.reviewReasons];
  if(!src.consistent)reasons.push('conflicting-original-source-hashes');
  if(!byteVerified)reasons.push('original-JPEG-identity-not-verified');
@@ -107,9 +184,12 @@ export async function evaluateOwnerSavedRecognition04({
  if(duplicate.status!=='allow')reasons.push(duplicate.reason);
  if(record.userAdjusted===true)reasons.push('manual-correction-must-win');
  const unique=freeze([...new Set(reasons)]);
+ const ownerAtDecision114=currentOwner();
+ if(ownerAtDecision114!==ownerId)
+  throw Error('INDEX-04 owner changed before final automatic closet save decision');
+ assertSourceUnchanged114();
  const autoSaveSafe=review.autoIndex===true&&!review.needsReview&&
-   duplicate.status==='allow'&&source.verified&&!record.userAdjusted&&
-   currentOwner()===ownerId;
+   duplicate.status==='allow'&&source.verified&&!record.userAdjusted;
  // Do not return owner items, photo bytes, image URLs or decoded pixels.
  return freeze({autoSaveSafe,needsReview:!autoSaveSafe,reviewReasons:unique,
   sourceKind:source.verified?review.sourceKind:'unverified',
