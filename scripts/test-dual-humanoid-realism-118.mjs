@@ -7,7 +7,7 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 
 const root=resolve('.'),out='benchmark/three-d-118';
-const source={shirt:'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe800dfd5c9d574f6e47',
+const source={shirt:'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64',
  jeans:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c'};
 const views=[0,90,270,180,45,225],widths=[320,390,430],figures=['female','male'];
 const hash=b=>createHash('sha256').update(b).digest('hex');
@@ -39,7 +39,7 @@ async function ready(page,figure,mode){
  assert.equal(d.actual3DGarment.originalPhotoSHA256s.top,source.shirt);
  assert.equal(d.actual3DGarment.originalPhotoSHA256s.bottom,source.jeans);
  if(mode==='after'){
-  const overlay=await page.locator('#avatar canvas').getAttribute('data-realism118');
+  const overlay=await page.locator('#avatar').getAttribute('data-realism118');
   assert.ok(overlay,'P118 opt-in diagnostics missing');
   const p=JSON.parse(overlay);assert.equal(p.figure,figure);assert.equal(p.sourceGarmentGeometryChanged,false);
   assert.ok(p.bodyMaterials>=1&&p.hairMeshes>=8);assert.ok(p.headRegion.vertices>80);
@@ -49,7 +49,7 @@ async function ready(page,figure,mode){
 function angleDelta(a,b){return Math.abs(((Number(a)-b+540)%360)-180);}
 async function setView(page,deg){
  await page.evaluate(a=>window.cc69SetView(a),deg);
- await page.waitForFunction(t=>angleDelta(window.cc69Diagnostics()?.camera,t)<.05,deg,{timeout:10000,polling:50});
+ await page.waitForFunction(t=>Math.abs(((Number(window.cc69Diagnostics()?.camera)-t+540)%360)-180)<.05,deg,{timeout:10000,polling:50});
  const d=await page.evaluate(()=>window.cc69Diagnostics());
  assert.ok(angleDelta(d.camera,deg)<.05,'camera did not reach '+deg);
  return d;
