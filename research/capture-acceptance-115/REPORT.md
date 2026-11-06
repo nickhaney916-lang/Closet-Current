@@ -8,7 +8,7 @@ P115 branches directly from verified P114 commit `268306135eba9d49ac00e8fe984295
 
 I downloaded and independently SHA-256 checked the actual P86 GitHub Actions artifact: **artifact #13469256263**, run [#42143014654](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42143014654), source commit `51aeeacdff675175f89a17dd64c1281e0aa7cee8`, artifact digest `65f72decb1ed6f62d4c45079520c7337c5fce643a4679a3eeb34ff9bd36c6c3b`. The archived source audit identifies 59 unique, byte-SHA-verified licensed JPEGs split 32 development / 11 validation / 16 locked evaluation.
 
-Actual inference provenance: FashionCLIP `ff13/fashion-clip@0f99955d944c39bfd9d035a02ac273c7a44a406b`, ONNX/WASM browser execution; pinned vision and text weight hashes are in [evidence.json](./evidence.json). The source run reports inference on 59/59 originals with zero runtime failures. P115 preserves all 16 actual locked model outputs bound to their source SHA in a compact audit snapshot; it does not modify or expose image bytes or embeddings.
+Actual inference provenance: FashionCLIP `ff13/fashion-clip@0f99955d944c39bfd9d035a02ac273c7a44a406b`, q8 ONNX/WASM browser execution; pinned vision/text weight hashes and the hypothesis template plus recorded category/full-catalog thresholds are in [evidence.json](./evidence.json). The source run reports inference on 59/59 originals with zero runtime failures. P115 preserves all 16 actual locked model outputs bound to their source SHA in a compact audit snapshot; it does not modify or expose image bytes or embeddings.
 
 ## Locked-split result
 
