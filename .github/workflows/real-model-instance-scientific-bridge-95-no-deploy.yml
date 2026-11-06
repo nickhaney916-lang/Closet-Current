@@ -1,0 +1,95 @@
+name: MODEL95 actual photo-model evidence to per-garment human instance science NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-model-instance-scientific-bridge-95-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-p86-p94-instance-scientific-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict verified P94 parent / six research-only files / no deploy
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=af45582557104fc435703c90de26e19b52e9eace
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/model95-changed
+          while IFS= read -r path; do
+            case "$path" in
+              research/real-model-instance-scientific-bridge-95/p86-model-snapshot.mjs|research/real-model-instance-scientific-bridge-95/model-instance-gate.mjs|research/real-model-instance-scientific-bridge-95/REPORT.md|scripts/audit-model-instance-science-95.mjs|tests/real-model-instance-scientific-bridge-95.test.mjs|.github/workflows/real-model-instance-scientific-bridge-95-no-deploy.yml) ;;
+              *) echo "BLOCKED app, production, existing staging, model or other work branch modification: $path"; exit 1 ;;
+            esac
+          done </tmp/model95-changed
+          test "$(wc -l </tmp/model95-changed)" -eq 6
+      - name: Install pinned test-only real-browser and source-JPEG audit dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Full app build and ALL inherited plus MODEL95 scientific guard Node tests
+        run: |
+          node --check research/real-model-instance-scientific-bridge-95/p86-model-snapshot.mjs
+          node --check research/real-model-instance-scientific-bridge-95/model-instance-gate.mjs
+          node --check scripts/audit-model-instance-science-95.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Real 59 original licensed JPEGs and exact P86 classifier/semantic scientific gate
+        run: node scripts/audit-model-instance-science-95.mjs
+      - name: Inherit actual P94 A/B/C blind original-photo mask packets
+        run: node scripts/build-independent-instance-packets-94.mjs
+      - name: Inherit six real original-JPEG Chromium and WebKit mobile polygon flows
+        run: node scripts/test-independent-instance-94-browser.mjs
+      - name: Inherit independent P94 20 screenshot byte SHA/dimension audits
+        run: node scripts/audit-independent-instance-94-browser.mjs
+      - name: Absolute release and scientific instance accuracy HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/model-instance-science-95/acceptance.json','utf8'));
+          assert.equal(x.sourcesVerifiedWithRealJPEGBytes,59);
+          assert.equal(x.actualFashionCLIPWholePhotoModelRuns,59);
+          assert.equal(x.actualSegFormerSemanticModelRuns,6);
+          assert.equal(x.independentHumanInstanceTruth,0);
+          assert.equal(x.actualInstanceIdentityModelPredictions,0);
+          for(const key of ['instanceIoUFromActualHumanTruth','instanceDetectionPrecision',
+            'instanceDetectionRecall','categoryInstanceAccuracy','subtypeInstanceAccuracy',
+            'primaryColorInstanceAccuracy','secondaryColorInstanceAccuracy'])
+            assert.equal(x[key],null,key+' may not be fabricated');
+          assert.equal(x.trueSegFormerModelLicenseUnconfirmed,true);
+          assert.equal(x.scoreFromLegacyPhotoLabels,false);
+          assert.equal(x.scoreFromBoxes,false);
+          assert.equal(x.scientificVerdict,'NEEDS_REWORK');
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          assert.equal(x.deployed,false);
+          assert.equal(x.productionModified,false);
+          assert.equal(x.existingStagingModified,false);
+          console.log('MODEL95 genuine existing photo inference evidence bound, native instance scoring guarded. Independent human masks ZERO; scientific NEEDS_REWORK; Family Alpha HOLD; NO DEPLOY.');
+          NODE
+      - name: Archive sanitized model-lineage / blocked human-science receipts and P94 screenshot proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MODEL95-59-real-photo-6-semantic-0-human-instance-20-browser-HOLD-NO-DEPLOY
+          path: |
+            research/real-model-instance-scientific-bridge-95/REPORT.md
+            research/real-model-instance-scientific-bridge-95/p86-model-snapshot.mjs
+            benchmark/model-instance-science-95/acceptance.json
+            benchmark/independent-instance-ground-truth-94/build-audit.json
+            benchmark/independent-instance-ground-truth-94/browser-evidence/results.json
+            benchmark/independent-instance-ground-truth-94/browser-evidence/*.png
+          if-no-files-found: warn
+          retention-days: 14
