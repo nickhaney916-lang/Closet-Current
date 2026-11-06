@@ -140,7 +140,10 @@ try{
      await page.locator('#previous').click();await imageReady(page);
     }
     await page.locator('#packetFile').setInputFiles(packetFileB);
-    await page.locator('#review').waitFor({state:'visible'});
+    // Packet imports are async, and #review was already visible for role A.
+    // Never accept old A progress or previously verified A image as B proof.
+    await page.waitForFunction(()=>document.querySelector('#counter')?.textContent.includes('role B')&&
+     document.querySelector('#progress')?.textContent.startsWith('0 / 59'),null,{timeout:30000});
     await imageReady(page);result.sourceJPEGChecks++;
     assert.match(await page.locator('#counter').innerText(),/role B/);
     assert.match(await page.locator('#progress').innerText(),/^0 \/ 59/);
