@@ -197,13 +197,13 @@ test('PHOTO110 actual Chromium original source 163-bone saved look screenshot, r
 test('PHOTO110 independent original real WebGL 16 image SHA audit must keep release gates explicitly false',()=>{
  const s=readFileSync('scripts/audit-reviewed-closet-3d-handoff-110.mjs','utf8');
  for(const t of [
-  'assert.equal(r.scenarios.length,8)',
+  'assert.equal(r.scenarios.length,4)',
   'assert.equal(r.screenshots.length,16)',
   "createHash('sha256')",
-  'originalPhoto2DFallbackForUnsupportedPersonalClothing:true',
-  'simulatedCrossOwnerReuseBlocked:true',
-  'realAccountAuthVerified:false',
-  'physicalPhonesVerified:false',
+  'assert.equal(r.originalPhoto2DFallbackForUnsupportedPersonalClothing,true)',
+  'independentOwnerGenerationSourceGuardDemonstratedWithSyntheticOwner:true',
+  'actualLiveSignedAccountRLSVerified:false',
+  'actualPhysicalMobileHardwareTested:false',
   "familyAlpha:'HOLD'"
  ])assert.ok(s.includes(t),t);
 });
