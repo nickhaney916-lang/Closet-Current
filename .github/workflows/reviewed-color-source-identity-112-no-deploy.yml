@@ -1,0 +1,176 @@
+name: PHOTO112 reviewed color/source-record identity with real original source 3D NO DEPLOY
+on:
+  push:
+    branches:
+      - research/reviewed-color-source-identity-112-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research-verified-color-and-source-record-identity-on-original-163-bone-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact P110 research-only parent and five approved PHOTO112 metadata, regression, report and CI changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=e09c74206981308856137f621313331fc58f6374
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo112-allowed
+          while IFS= read -r path; do
+            case "$path" in
+              research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs|tests/reviewed-closet-3d-handoff-110.test.mjs|scripts/test-reviewed-closet-3d-handoff-110-browser.mjs|research/reviewed-color-source-identity-112/REPORT.md|.github/workflows/reviewed-color-source-identity-112-no-deploy.yml) ;;
+              *) echo "REFUSE unauthorized app/production/staging/cloud/private photos/other project modification: $path"; exit 1 ;;
+            esac
+          done </tmp/photo112-allowed
+          test "$(wc -l </tmp/photo112-allowed)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json supabase
+          echo "PHOTO112 five research-only files, source-color and sourceId review gate; no merge or deploy."
+      - name: Install exact inherited Node real WebGL test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: PHOTO112 reviewed color correction and sourceId stale-restore regressions plus all inherited Node tests
+        run: |
+          node --check research/photo-denim-pose-fold-contact-104/fold-profile.mjs
+          node --check research/photo-denim-pose-fold-contact-104/pose-responsive-denim-folds.mjs
+          node --check scripts/install-denim-pose-fold-contact-104.mjs
+          node --check scripts/test-denim-pose-fold-contact-104-browser.mjs
+          node --check scripts/audit-denim-pose-fold-contact-104.mjs
+          node --check research/photo-denim-panel-normal-continuity-105/rear-seam-normal-continuity.mjs
+          node --check scripts/install-denim-panel-normal-105.mjs
+          node --check scripts/test-denim-panel-normal-105-browser.mjs
+          node --check scripts/audit-denim-panel-normal-105.mjs
+          node --check research/photo-denim-calf-drape-geometry-106/calf-drape-policy.mjs
+          node --check research/photo-denim-calf-drape-geometry-106/source-ankle-calf-drape.mjs
+          node --check scripts/install-photo-denim-calf-106.mjs
+          node --check scripts/test-photo-denim-calf-106-browser.mjs
+          node --check scripts/audit-photo-denim-calf-106.mjs
+          node --check research/denim-bilateral-pose-replay-108/bilateral-pose-policy.mjs
+          node --check research/denim-bilateral-pose-replay-108/real-source-bilateral-audit.mjs
+          node --check scripts/install-denim-bilateral-108.mjs
+          node --check scripts/test-denim-bilateral-108-browser.mjs
+          node --check scripts/audit-denim-bilateral-108.mjs
+          node --check research/denim-mobile-pose-controls-109/mobile-pose-controls.mjs
+          node --check scripts/install-denim-mobile-pose-controls-109.mjs
+          node --check scripts/test-denim-mobile-pose-controls-109-browser.mjs
+          node --check scripts/audit-denim-mobile-pose-controls-109.mjs
+          node --check research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs
+          node --check research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs
+          node --check scripts/install-reviewed-closet-3d-handoff-110.mjs
+          node --check scripts/test-reviewed-closet-3d-handoff-110-browser.mjs
+          node --check scripts/audit-reviewed-closet-3d-handoff-110.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assemble genuine exact pinned PR541 anatomical source original three-d donor in TEMPORARY detached research worktree
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .photo103-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo103-donor-541"
+          test "$(git -C .photo103-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .photo103-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .photo103-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .photo103-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .photo103-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .photo103-donor-541
+          node scripts/install-denim-bilateral-108.mjs .photo103-donor-541
+          node scripts/install-denim-mobile-pose-controls-109.mjs .photo103-donor-541
+          node scripts/install-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541
+          cp scripts/test-photographed-denim-knee-103-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-photographed-denim-knee-103.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-pose-fold-contact-104-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-pose-fold-contact-104.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-panel-normal-105-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-panel-normal-105.mjs .photo103-donor-541/scripts/
+          cp scripts/test-photo-denim-calf-106-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-photo-denim-calf-106.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-bilateral-108-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-bilateral-108.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-mobile-pose-controls-109-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-mobile-pose-controls-109.mjs .photo103-donor-541/scripts/
+          cp scripts/test-reviewed-closet-3d-handoff-110-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541/scripts/
+          cd .photo103-donor-541
+          node --check research/three-d-104/fold-profile.mjs
+          node --check research/three-d-104/pose-responsive-denim-folds.mjs
+          node --check research/three-d-105/rear-seam-normal-continuity.mjs
+          node --check research/three-d-106/calf-drape-policy.mjs
+          node --check research/three-d-106/source-ankle-calf-drape.mjs
+          node --check research/three-d-108/bilateral-pose-policy.mjs
+          node --check research/three-d-108/real-source-bilateral-audit.mjs
+          node --check research/three-d-109/mobile-pose-controls.mjs
+          node --check research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs
+          node --check research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs
+          node --check research/three-d-15/outfit-controller.mjs
+          node --check research/three-d-15/showroom.mjs
+          node --check research/three-d-69/index-to-real-garment-demo.mjs
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Exact P109 genuine original photographed jeans mobile UI parent 24 real Chromium source-bound 3D frames
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-denim-mobile-pose-controls-109-browser.mjs
+      - name: PHOTO112 real original-photo browser saved-look replay and untrusted DOM no-change regression
+        run: |
+          cd .photo103-donor-541
+          node scripts/test-reviewed-closet-3d-handoff-110-browser.mjs
+      - name: Independent SHA audit original licensed P109 24 real WebGL and P110 16 indexed saved-look source images, keep private 2D and Alpha HOLD
+        run: |
+          cd .photo103-donor-541
+          node scripts/audit-denim-mobile-pose-controls-109.mjs
+          node scripts/audit-reviewed-closet-3d-handoff-110.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const p109=JSON.parse(readFileSync('benchmark/three-d-109-audit/acceptance.json','utf8'));
+          assert.equal(p109.independentlyVerifiedRealMobileWebGLPNGFrames,24);
+          assert.equal(p109.originalSourceSkinnedRigBones,163);
+          assert.equal(p109.exactSourcePoseResetPixelsIdentical,true);
+          assert.equal(p109.skinnedBodyContactNonworsening,true);
+          assert.equal(p109.realSignedMultiAccountCloudRLSVerified,false);
+          assert.equal(p109.familyAlpha,'HOLD');
+          const look=JSON.parse(readFileSync('benchmark/three-d-110-audit/acceptance.json','utf8'));
+          assert.equal(look.independentlyVerifiedLicensedOriginal163BoneWebGLFrames,16);
+          assert.equal(look.actualResearchReviewedSavedLookReopens,8);
+          assert.equal(look.originalPhotoReopenAllPixelExact,true);
+          assert.equal(look.independentOwnerGenerationSourceGuardDemonstratedWithSyntheticOwner,true);
+          assert.equal(look.unverifiedPersonalPhotoRemainsOriginal2DFallback,true);
+          assert.equal(look.actualLiveSignedAccountRLSVerified,false);
+          assert.equal(look.arbitraryRealPrivatePhotograph3DReconstructionVerified,false);
+          assert.equal(look.publicBenchmarkSoleReconstructible3DSource,true);
+          assert.equal(look.noRealCustomerPhotographsProcessed,true);
+          assert.equal(look.noPersistentBrowserStorageUsed,true);
+          assert.equal(look.actualPhysicalMobileHardwareTested,false);
+          assert.equal(look.independentHumanRealismApproval,false);
+          assert.equal(look.releaseAuthorized,false);
+          assert.equal(look.familyAlpha,'HOLD');
+          NODE
+      - name: Archive ONLY approved original licensed denim WebGL screenshots and redacted SHA evidence NO PRIVATE PHOTOS NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO112-original-source-reviewed-color-3D-2D-fallback-HOLD-NO-DEPLOY
+          path: |
+            research/reviewed-color-source-identity-112/REPORT.md
+            .photo103-donor-541/benchmark/three-d-109/acceptance.json
+            .photo103-donor-541/benchmark/three-d-109/*.png
+            .photo103-donor-541/benchmark/three-d-109-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-110/acceptance.json
+            .photo103-donor-541/benchmark/three-d-110/*.png
+            .photo103-donor-541/benchmark/three-d-110-audit/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
