@@ -22,6 +22,9 @@ html=html.replace(anchor,
  '<script type="module" src="../three-d-109/mobile-pose-controls.mjs"></script>'+
  '</body></html>');
 await mkdir(join(root,'research/three-d-109'),{recursive:true});
+await mkdir(join(root,'research/denim-bilateral-pose-replay-108'),{recursive:true});
+await copyFile('research/denim-bilateral-pose-replay-108/bilateral-pose-policy.mjs',
+ join(root,'research/denim-bilateral-pose-replay-108/bilateral-pose-policy.mjs'));
 await copyFile('research/denim-mobile-pose-controls-109/mobile-pose-controls.mjs',
  join(root,'research/three-d-109/mobile-pose-controls.mjs'));
 await writeFile(htmlPath,html);
