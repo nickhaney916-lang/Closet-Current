@@ -45,6 +45,8 @@ jobs:
           node --check tests/capture-acceptance-115.test.mjs
           node research/capture-acceptance-115/evaluate.mjs > /tmp/photo115-audit.json
           node --test tests/capture-acceptance-115.test.mjs
+      - name: Build inherited static test fixtures
+        run: node scripts/build.mjs
       - name: Full inherited application, recognition, source, privacy and outfit regressions
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Verify report scientific and safety gates
