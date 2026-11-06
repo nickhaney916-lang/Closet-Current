@@ -21,7 +21,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact P110 research-only parent and five approved PHOTO112 metadata, regression, report and CI changes
+      - name: Exact P110 research-only parent and six approved PHOTO112 policy, UI, regression, report and CI files
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=e09c74206981308856137f621313331fc58f6374
@@ -31,13 +31,13 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/photo112-allowed
           while IFS= read -r path; do
             case "$path" in
-              research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs|tests/reviewed-closet-3d-handoff-110.test.mjs|scripts/test-reviewed-closet-3d-handoff-110-browser.mjs|research/reviewed-color-source-identity-112/REPORT.md|.github/workflows/reviewed-color-source-identity-112-no-deploy.yml) ;;
+              research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs|research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs|tests/reviewed-closet-3d-handoff-110.test.mjs|scripts/test-reviewed-closet-3d-handoff-110-browser.mjs|research/reviewed-color-source-identity-112/REPORT.md|.github/workflows/reviewed-color-source-identity-112-no-deploy.yml) ;;
               *) echo "REFUSE unauthorized app/production/staging/cloud/private photos/other project modification: $path"; exit 1 ;;
             esac
           done </tmp/photo112-allowed
-          test "$(wc -l </tmp/photo112-allowed)" -eq 5
+          test "$(wc -l </tmp/photo112-allowed)" -eq 6
           git diff --exit-code "$BASE" HEAD -- public index.html package.json supabase
-          echo "PHOTO112 five research-only files, source-color and sourceId review gate; no merge or deploy."
+          echo "PHOTO112 six research-only files, source-color/sourceId and private-fallback visual revocation; no merge or deploy."
       - name: Install exact inherited Node real WebGL test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
       - name: PHOTO112 reviewed color correction and sourceId stale-restore regressions plus all inherited Node tests
