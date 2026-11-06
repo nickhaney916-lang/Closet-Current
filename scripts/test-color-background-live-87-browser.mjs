@@ -186,6 +186,11 @@ try{
   assert.ok(two.every(x=>x.ownerId==='multi24-A'&&x.color==='Blue'&&x.colorSource==='user'));
   await shot(page,width,engine,'04-two-owner-private-human-confirmed-sources');
 
+  const worker=await page.evaluate(()=>window.__color87WorkerFixture);
+  assert.equal(worker.classification,4,
+   'Two original plus two reviewed JPEG classifier requests across two sources');
+  assert.equal(worker.detection,2,
+   'Two genuine outfit intake requests per owner-A reviewer session');
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,null,{timeout:30000});
@@ -194,9 +199,6 @@ try{
   assert.equal((await storage(page)).length,0,'Other account cannot see A synthetic original photo');
   await shot(page,width,engine,'05-logout-and-owner-B-private-empty');
   assert.ok(errors.length===0,'Unexpected app errors: '+JSON.stringify(errors));
-  const worker=await page.evaluate(()=>window.__color87WorkerFixture);
-  assert.equal(worker.classification,4,'Two original + two reviewed JPEG classifier requests per test photo');
-  assert.equal(worker.detection,2,'Two genuine outfit intake requests per reviewer');
   report.cases.push({engine,width,riskySourceSHA256:sha(risky),safeSourceSHA256:sha(safe),
    opaqueBackgroundHintSuppressed:true,solidColorHintUnverified:true,manualPrivateSaves:2,
    humanColorNotAutofilled:true,sourceSHAUnchanged:true,workerSimulated:true,ownerIsolation:true});
