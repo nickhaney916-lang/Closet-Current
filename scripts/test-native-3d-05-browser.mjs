@@ -485,7 +485,10 @@ try{
    await page.evaluate(()=>{
     delete document.hidden;delete document.visibilityState;
    });
-   await page.evaluate(()=>window.native3D05Bridge.open());
+   // Use the same actual browser touch button as the known-good #93
+   // reopen sequence. A raw page.evaluate() promise can be invalidated by
+   // donor-managed document navigation during 3D reattachment.
+   await page.locator('#native3D05Preview').click();
    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
     window.native3D05Bridge.state().bones===163,null,{timeout:150000});
    assert.deepEqual(await readBoard(page),ownerOriginal);
