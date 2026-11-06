@@ -2,7 +2,7 @@ import {readFileSync} from 'node:fs';
 
 const SHA=/^[0-9a-f]{64}$/;
 const CATEGORIES=['Tops','Bottoms','Dresses','Outerwear','Shoes'];
-const TYPES=['T-shirt','Blouse','Sweater','Tunic','Sweatshirt','Jeans','Trousers','Shorts','Skirt','Dress','Jacket','Coat','Blazer','Sneakers','Ankle boots','Boots'];
+const TYPES=['T-shirt','Blouse','Sweater','Tunic','Sweatshirt','Jeans','Trousers','Shorts','Skirt','Dress','Jacket','Coat','Blazer','Sneakers','Ankle boots','Boots','Unknown'];
 
 export function evaluateLockedSnapshot(snapshot){
  if(snapshot?.schema!=='closet-current-real-photo-locked-snapshot-115/v1')throw Error('unsupported snapshot schema');
