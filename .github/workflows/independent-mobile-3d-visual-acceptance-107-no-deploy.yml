@@ -1,0 +1,141 @@
+name: P107 independent photographed clothing 3D mobile visual acceptance — NO DEPLOY
+on:
+  push:
+    branches:
+      - research/independent-mobile-3d-visual-acceptance-107
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-bound-webgl-mobile-visual-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Prove exact completed PHOTO106 ancestry and only six scoped additions
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=9d7782e358edb20672685fe97af255aca8d0d8b1
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p107-allowed
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/independent-mobile-3d-visual-acceptance-107-no-deploy.yml|research/independent-mobile-3d-visual-acceptance-107/REPORT.md|research/independent-mobile-3d-visual-acceptance-107/review/scorecard.json|scripts/test-mobile-3d-visual-107.mjs|scripts/audit-mobile-3d-visual-107.mjs|tests/independent-mobile-3d-visual-acceptance-107.test.mjs) ;;
+              *) echo "REFUSE default app, production, staging, private source, or unrelated path: $path"; exit 1 ;;
+            esac
+          done </tmp/p107-allowed
+          test "$(wc -l </tmp/p107-allowed)" -eq 6
+      - name: Install pinned Node and real-browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Run inherited application build and complete Node suite plus P107 safeguards
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Assemble exact detached original PR541 donor with accepted PHOTO103 104 105 106 research overlays
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .photo103-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo103-donor-541"
+          ln -s ../node_modules .photo103-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .photo103-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .photo103-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .photo103-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .photo103-donor-541
+          cp scripts/test-photographed-denim-knee-103-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-photographed-denim-knee-103.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-pose-fold-contact-104-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-pose-fold-contact-104.mjs .photo103-donor-541/scripts/
+          cp scripts/test-denim-panel-normal-105-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-panel-normal-105.mjs .photo103-donor-541/scripts/
+          cp scripts/test-photo-denim-calf-106-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-photo-denim-calf-106.mjs .photo103-donor-541/scripts/
+          cp scripts/test-mobile-3d-visual-107.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-mobile-3d-visual-107.mjs .photo103-donor-541/scripts/
+          cd .photo103-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          node scripts/test-photographed-denim-knee-103-browser.mjs
+          node scripts/test-denim-pose-fold-contact-104-browser.mjs
+          node scripts/test-denim-panel-normal-105-browser.mjs
+          node scripts/test-photo-denim-calf-106-browser.mjs
+          node scripts/test-mobile-3d-visual-107.mjs
+          node scripts/audit-photographed-denim-knee-103.mjs
+          node scripts/audit-denim-pose-fold-contact-104.mjs
+          node scripts/audit-denim-panel-normal-105.mjs
+          node scripts/audit-photo-denim-calf-106.mjs
+          node scripts/audit-mobile-3d-visual-107.mjs
+      - name: Strict HOLD, source, screenshot and geometric regression assertions
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('.photo103-donor-541/benchmark/three-d-107/acceptance.json','utf8'));
+          assert.equal(x.chromiumGenuineWebGLScreenshots,384);
+          assert.equal(x.blindedHumanReviewPackage.pairedCases,64);
+          assert.equal(x.blindedHumanReviewPackage.images,128);
+          assert.deepEqual(x.cameraAnglesDegrees,[0,45,90,135,180,225,270,315]);
+          assert.deepEqual(x.viewportWidthsCSS,[320,390,430]);
+          assert.deepEqual(x.kneeAnglesDegrees,[0,16]);
+          assert.equal(x.rigBones,163);
+          assert.equal(x.photo106CalfGeometryExercised,true);
+          assert.equal(x.humanVisualAcceptance,'NOT YET VERIFIED');
+          assert.equal(x.physicalAndroidAndIphone,'NOT VERIFIED');
+          assert.equal(x.liveSignedCloudRLS,'NOT VERIFIED');
+          assert.equal(x.releaseAuthorized,false);assert.equal(x.familyAlpha,'HOLD');
+          const a=JSON.parse(readFileSync('.photo103-donor-541/benchmark/three-d-107-audit/acceptance.json','utf8'));
+          assert.equal(a.chromiumScreenshots,384);
+          assert.equal(a.bodyIntersectionCountsNotWorsenedVsP105BaselineAtEverySample,true);
+          assert.equal(a.humanVisualAcceptance,'NOT YET VERIFIED');
+          assert.equal(a.releaseAuthorized,false);assert.equal(a.familyAlpha,'HOLD');
+          const calf=JSON.parse(readFileSync('.photo103-donor-541/benchmark/three-d-106-audit/acceptance.json','utf8'));
+          assert.equal(calf.independentlyVerifiedGenuineWebGLFrames,84);
+          assert.equal(calf.realSkinnedOriginalSourceRigBones,163);
+          assert.equal(calf.trueBodyContactNotWorseAtSampledPoses,true);
+          assert.equal(calf.releaseAuthorized,false);assert.equal(calf.familyAlpha,'HOLD');
+          NODE
+      - name: Upload only public licensed photo WebGL screenshots, redacted measurements, and review scorecard — NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P107-public-source-photographed-3D-mobile-visual-evidence-HOLD-NO-DEPLOY
+          path: |
+            research/independent-mobile-3d-visual-acceptance-107/REPORT.md
+            research/independent-mobile-3d-visual-acceptance-107/review/scorecard.json
+            .photo103-donor-541/benchmark/three-d-107/
+            .photo103-donor-541/benchmark/three-d-107-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-106/acceptance.json
+            .photo103-donor-541/benchmark/three-d-106/*.png
+            .photo103-donor-541/benchmark/three-d-106-audit/acceptance.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload reviewer-blind screenshot packet separately from controller answer key — NO DEPLOY
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P107-blinded-64-case-PHOTO105-PHOTO106-human-review-packet
+          path: |
+            .photo103-donor-541/benchmark/three-d-107/review-manifest.json
+            .photo103-donor-541/benchmark/three-d-107/review-blinded/*.png
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload unblinding map as a separate artifact — do not share with reviewers
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P107-separate-review-unblinding-key-DO-NOT-SHARE-WITH-REVIEWERS
+          path: .photo103-donor-541/benchmark/three-d-107-controller-key.json
+          if-no-files-found: warn
+          retention-days: 14
