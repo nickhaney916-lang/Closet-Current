@@ -17,7 +17,7 @@ const SECOND='aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a';
 const fail=msg=>{throw Error('PHOTO105 '+msg);};
 const rounded=v=>Math.round(v*100000); // same real-source sewn vertex, 10 micron scale
 const key=(a,i)=>[rounded(a.getX(i)),rounded(a.getY(i)),rounded(a.getZ(i))].join(':');
-const spread=(ids,n)=>{
+export const sourceRearNormalSpread105=(ids,n)=>{
  const out=new T.Vector3(),a=new T.Vector3(),b=new T.Vector3();
  for(const i of ids)out.add(a.fromBufferAttribute(n,i));
  const length=out.length();
@@ -72,7 +72,7 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
   for(const node of groups.values()){
    if(node.maxFront>=.16){skippedFront+=node.ids.length;continue;}
    if(node.ids.length<2){skippedUnmatched++;continue;}
-   const before=spread(node.ids,norm);
+   const before=sourceRearNormalSpread105(node.ids,norm);
    if(!before.target||before.loss<=.000005)continue;
    // Avoid merging fundamentally different opposing/material-seam normal
    // orientations: preserve deliberate >75° hard edges on sewn rear shell.
@@ -93,7 +93,7 @@ export function smoothActualPhotoDenimPanelNormals105(pants,{maxAngleDegrees=75}
    }
    accepted++;
    energyBefore+=before.loss;
-   const after=spread(node.ids,norm);
+   const after=sourceRearNormalSpread105(node.ids,norm);
    energyAfter+=after.loss;
   }
   if(changed<8||accepted<3||energyBefore<=.001||
