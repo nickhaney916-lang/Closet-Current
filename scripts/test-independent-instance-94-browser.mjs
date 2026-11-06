@@ -74,7 +74,11 @@ try{
     const page=await context.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(e.message));
     page.on('request',req=>{
-     if(!req.url().startsWith(base+'/'))result.unexpectedNetwork.push(req.url());
+     // Decoded, source-hashed JPEG is displayed only from a same-origin
+     // browser-local blob URL. This is not a network upload or external host.
+     if(!req.url().startsWith(base+'/')&&
+        !req.url().startsWith('blob:'+base+'/'))
+      result.unexpectedNetwork.push(req.url());
     });
     await page.goto(base+'/research/independent-instance-ground-truth-94/annotate.html',
      {waitUntil:'load'});
