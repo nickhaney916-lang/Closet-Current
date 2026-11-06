@@ -186,11 +186,12 @@ try{
   await page.locator('#wear').click();
   await page.waitForFunction(()=>window.cc110LookState?.()?.readyToSave===true&&
    window.cc109PoseUIState?.()?.enabled===true,null,{timeout:180000});
-  assert.equal(await page.locator('#avatar').isHidden(),false);
   await page.locator('#cc110Reopen').click();
   await page.waitForFunction(()=>window.cc110LookState?.()?.mode==='restored-public'&&
    window.cc109PoseUIState?.()?.enabled===true,
    null,{timeout:180000});
+  assert.equal(await page.locator('#avatar').isHidden(),false,
+   'only source-verified 3D reopen reveals the old licensed scene');
   await page.locator('#cc109Both8').click();
   const movement=(await page.evaluate(()=>window.cc109PoseUIState())).lastPose;
   assert.deepEqual([movement.left,movement.right],[8,8]);
