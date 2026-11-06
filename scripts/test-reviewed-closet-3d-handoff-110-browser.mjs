@@ -170,9 +170,23 @@ try{
   await page.waitForFunction(()=>window.cc110LookState?.()?.mode==='private-fallback'&&
    window.cc109PoseUIState?.()?.enabled===false);
   assert.equal(await page.locator('#cc109Both8').isDisabled(),true);
+  assert.equal(await page.locator('#review').isChecked(),false);
+  assert.equal(await page.locator('#avatar').isHidden(),true,
+   'fallback must conceal the unrelated old licensed 3D scene');
   assert.equal(await page.evaluate(()=>window.cc110LookState().arbitraryUserPhotosRenderedIn3D),false);
   assert.equal(await page.evaluate(()=>window.cc110LookState().customerPhotoBytesAccessible),false);
   assert.equal(await page.evaluate(()=>window.cc110LookState().hasSavedLook),true);
+  // Even with an in-memory public token, fallback must not silently re-admit
+  // the previous photograph before a real explicit source review.
+  await page.locator('#cc110Reopen').click();
+  await page.waitForFunction(()=>window.cc110LookState?.()?.mode==='blocked'&&
+   window.cc109PoseUIState?.()?.enabled===false);
+  assert.equal(await page.locator('#avatar').isHidden(),true);
+  await page.locator('#review').check();
+  await page.locator('#wear').click();
+  await page.waitForFunction(()=>window.cc110LookState?.()?.readyToSave===true&&
+   window.cc109PoseUIState?.()?.enabled===true,null,{timeout:180000});
+  assert.equal(await page.locator('#avatar').isHidden(),false);
   await page.locator('#cc110Reopen').click();
   await page.waitForFunction(()=>window.cc110LookState?.()?.mode==='restored-public'&&
    window.cc109PoseUIState?.()?.enabled===true,
@@ -198,6 +212,8 @@ try{
   assert.equal(await page.locator('#cc110Reopen').isDisabled(),true);
   assert.equal(await page.locator('#cc110Save').isDisabled(),true);
   assert.equal(await page.locator('#cc109Both8').isDisabled(),true);
+  assert.equal(await page.locator('#review').isChecked(),false);
+  assert.equal(await page.locator('#avatar').isHidden(),true);
   assert.equal(await page.evaluate(()=>window.cc110LookState().signedCloudRLSVerified),false);
   scenarios.push({figure,width,looks:scenario,
    syntheticPrivateOriginalPhoto2DFallback:true,
