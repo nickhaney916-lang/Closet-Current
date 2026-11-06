@@ -1,0 +1,93 @@
+name: INTAKE96 original licensed multi-garment JPEG verification and quarantine NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-multigarment-candidate-intake-96-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-real-wikimedia-jpegs-with-scientific-quarantine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict exact verified P95 parent and 6 research-only paths; no deploy
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=e1473010be68cf01d7607996a4a9a1879bb6899b
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/intake96-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/real-multigarment-candidate-intake-96/candidate-manifest.json|research/real-multigarment-candidate-intake-96/intake-gate.mjs|research/real-multigarment-candidate-intake-96/REPORT.md|scripts/verify-real-candidate-intake-96.mjs|tests/real-multigarment-candidate-intake-96.test.mjs|.github/workflows/real-multigarment-candidate-intake-96-no-deploy.yml) ;;
+              *) echo "BLOCKED unauthorized source, production, existing staging or frozen research cohort change: $path"; exit 1;;
+            esac
+          done </tmp/intake96-paths
+          test "$(wc -l </tmp/intake96-paths)" -eq 6
+      - name: Install pinned test-only photo, mobile-browser and inherited app dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and full inherited plus new SOURCE96 source-policy Node tests
+        run: |
+          node --check research/real-multigarment-candidate-intake-96/intake-gate.mjs
+          node --check scripts/verify-real-candidate-intake-96.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Download genuine two public Commons photo originals and independently verify 61 original photo SHA identities
+        run: node scripts/verify-real-candidate-intake-96.mjs
+      - name: Original licensed P94 individual-garment A B C blank source packets remain unchanged
+        run: node scripts/build-independent-instance-packets-94.mjs
+      - name: Genuine original JPEG human annotation QA in Chromium/WebKit at 320 390 430
+        run: node scripts/test-independent-instance-94-browser.mjs
+      - name: Independent P94 original-photo screenshot SHA audit
+        run: node scripts/audit-independent-instance-94-browser.mjs
+      - name: Fail closed on frozen-source mutation, made-up human evidence or new scientific totals
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/real-multigarment-candidate-intake-96/acceptance.json','utf8'));
+          assert.equal(r.existingFrozenOriginalJPEGsVerified,59);
+          assert.equal(r.newlyByteVerifiedCandidateJPEGs,2);
+          assert.equal(r.cohortContainsNow,59);
+          assert.equal(r.researchQuarantinedCandidateCount,2);
+          assert.equal(r.additionalAcceptedScientificPhotos,0);
+          assert.equal(r.additionalIndependentHumanInstanceTruth,0);
+          assert.equal(r.sourceMinimumStillMissing,41);
+          assert.equal(r.sourceSampleSizeGatePassed,false);
+          assert.equal(r.lockedEvaluationUntouched,true);
+          assert.equal(r.realModelAccuracyRecalculated,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          for(const c of r.candidates){
+           assert.equal(c.originalJPEGBytesVerified,true);
+           assert.equal(c.sourceDimensionsVerified,true);
+           assert.equal(c.approvedForModelAccuracy,false);
+           assert.equal(c.scientificallyEligibleForFrozenHoldout,false);
+          }
+          console.log('SOURCE96 59 frozen + TWO real licensed quarantined public candidate originals SHA VERIFIED. 41 eligible photo gap persists. 0 human masks. HOLD. No deploy.');
+          NODE
+      - name: Publish only source SHA, attribution and scientific HOLD receipt; never actual photos
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: SOURCE96-59-frozen-2-quarantined-real-originals-0-human-HOLD-NO-DEPLOY
+          path: |
+            research/real-multigarment-candidate-intake-96/REPORT.md
+            research/real-multigarment-candidate-intake-96/candidate-manifest.json
+            benchmark/real-multigarment-candidate-intake-96/acceptance.json
+            benchmark/independent-instance-ground-truth-94/build-audit.json
+            benchmark/independent-instance-ground-truth-94/browser-evidence/results.json
+          if-no-files-found: warn
+          retention-days: 14

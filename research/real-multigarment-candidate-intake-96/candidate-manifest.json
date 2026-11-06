@@ -1,0 +1,54 @@
+{
+  "schema": "closet-current-multigarment-source-intake-96/v1",
+  "researchOnly": true,
+  "existingFrozenSources": 59,
+  "priorModelSeen": true,
+  "licenseVerification": "ATTRIBUTION_RECORDED_NOT_INDEPENDENTLY_LEGALLY_ADJUDICATED",
+  "realHumanInstanceMasks": 0,
+  "additionalAcceptedScientificPhotos": 0,
+  "lockedEvaluationModified": false,
+  "candidates": [
+    {
+      "id": "candidate96-overlapping-shirts",
+      "existingPilotId": "two-shirts",
+      "filename": "two-shirts-original.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/2/27/Shirts_-_Photo_A_Day_7_1_2009_%283681113424%29.jpg",
+      "sha256": "4608661009cc84c365cbbc8349ca119b214553daa6f76ecd9edab345f5859cc4",
+      "bytes": 3379522,
+      "width": 3264,
+      "height": 2448,
+      "scenario": "overlapping-clothing",
+      "independentGarmentCount": null,
+      "originalModelSeen": true,
+      "independentHumanAnnotation": false,
+      "provenance": {
+        "title": "Shirts - Photo A Day 7 1 2009 (3681113424).jpg",
+        "author": "Atomic Taco",
+        "source": "https://commons.wikimedia.org/wiki/File:Shirts_-_Photo_A_Day_7_1_2009_%283681113424%29.jpg",
+        "license": "CC BY-SA 2.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/"
+      }
+    },
+    {
+      "id": "candidate96-flatlay-outfit",
+      "existingPilotId": "flatlay-outfit",
+      "filename": "flatlay-outfit-original.jpg",
+      "downloadUrl": "https://upload.wikimedia.org/wikipedia/commons/3/3b/Clothing_flatlay_%28Unsplash%29.jpg",
+      "sha256": "adb60164c269198e15276bc3a9d5e4fb970676fe00a46d38fd7ea755b27cf360",
+      "bytes": 2501268,
+      "width": 4773,
+      "height": 3182,
+      "scenario": "multiple-garments-flatlay",
+      "independentGarmentCount": null,
+      "originalModelSeen": true,
+      "independentHumanAnnotation": false,
+      "provenance": {
+        "title": "Clothing flatlay (Unsplash).jpg",
+        "author": "NordWood Themes",
+        "source": "https://commons.wikimedia.org/wiki/File:Clothing_flatlay_%28Unsplash%29.jpg",
+        "license": "CC0 1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+      }
+    }
+  ]
+}
