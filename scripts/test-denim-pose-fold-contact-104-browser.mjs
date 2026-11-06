@@ -129,7 +129,7 @@ try{
     assert.equal(p.originalPhotoUVRestFrontSkinPositionsBytePreserved77,true);
     assert.equal(p.neutralRearOnlyFold104,true);
     assert.equal(p.sourceSHA256,sources[denim]);
-    assert.equal(p.originalPhotoJPEGAndRGBUnmodified104===true||degrees===0,true);
+    assert.equal(p.originalSourceJPEGAndRGBNotModified104===true||degrees===0,true);
     assert.equal(p.realClothPhysicsSimulated104,false);
     assert.equal(p.continuousSweptCollisionCertified104,false);
     assert.equal(p.independentHumanPhotorealismApproved104,false);
