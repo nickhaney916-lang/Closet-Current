@@ -159,6 +159,25 @@ test('PHOTO112 refuse missing or unsafe reviewed color; never copy model guessed
   assert.throws(()=>requireUnchangedReviewedLook110({...saved,...patch},d),/PHOTO110/);
  }
 });
+test('PHOTO112 unsupported private 2D fallback and owner switch revoke stale pose and visible source before fresh review',()=>{
+ const panel=readFileSync('research/reviewed-closet-3d-handoff-110/reviewed-look-panel.mjs','utf8');
+ for(const anchor of [
+  "const avatar=doc.getElementById('avatar')",
+  "originalReview.checked=false;",
+  "avatar.hidden=true;",
+  "originalReview.dispatchEvent(new Event('change',{bubbles:true}))",
+  "if(validateCurrent()?.status==='verified-public-research-3d')avatar.hidden=false"
+ ])assert.ok(panel.includes(anchor),anchor);
+ const browser=readFileSync('scripts/test-reviewed-closet-3d-handoff-110-browser.mjs','utf8');
+ for(const anchor of [
+  "page.locator('#cc110Private').click()",
+  "page.locator('#avatar').isHidden(),true",
+  "page.locator('#review').isChecked(),false",
+  "page.locator('#review').check()",
+  "page.locator('#wear').click()",
+  "page.locator('#avatar').isHidden(),false"
+ ])assert.ok(browser.includes(anchor),anchor);
+});
 test('PHOTO110 does not read private image bytes or network or persistent browser storage',()=>{
  const source=readFileSync('research/reviewed-closet-3d-handoff-110/owner-bound-look-policy.mjs','utf8');
  assert.doesNotMatch(source,/fetch\(|XMLHttpRequest|localStorage|sessionStorage|getUserMedia|indexedDB|supabase|FormData/);
