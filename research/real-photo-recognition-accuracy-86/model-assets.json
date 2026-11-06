@@ -1,0 +1,35 @@
+{
+  "schema": "real-photo-recognition-accuracy-86/model-assets-v1",
+  "researchOnly": true,
+  "models": [
+    {
+      "name": "FashionCLIP",
+      "repository": "ff13/fashion-clip",
+      "revision": "0f99955d944c39bfd9d035a02ac273c7a44a406b",
+      "license": "MIT",
+      "runtime": "Transformers.js 3.8.1, ONNX Runtime Web WASM, q8, browser worker",
+      "weights": [
+        {"path": "onnx/vision_model_quantized.onnx", "bytes": 89117653, "sha256": "c6d61df38ae56329347400dc42a285a4233d0c681744fb37f52129b5fe248952"},
+        {"path": "onnx/text_model_quantized.onnx", "bytes": 64504547, "sha256": "f475dd7a30bdebf09ba2efc06a3928f0a327179fbcfb30149685d1b5f66b1852"},
+        {"path": "tokenizer.json", "bytes": 2224119, "sha256": "f7f3b7af117d467b58374797691a6438d3e6b9e9cef800dfd5dced7f697a90cd"}
+      ],
+      "hashNote": "ONNX SHA-256 values are Hugging Face LFS object identities at the immutable revision. tokenizer.json SHA-256 was computed from the downloaded bytes at that immutable revision."
+    },
+    {
+      "name": "SegFormer B0 Clothes",
+      "repository": "Xenova/segformer_b0_clothes",
+      "revision": "a2489ea8e7ec1ee912190546bad31a4906ccca76",
+      "license": "UNSPECIFIED in the pinned converted model repository; use blocked for release until license compatibility is confirmed",
+      "runtime": "Transformers.js 3.8.1, ONNX Runtime Web WASM, fp32, browser worker",
+      "weights": [
+        {"path": "onnx/model.onnx", "bytes": 15199746, "sha256": "02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3"}
+      ],
+      "hashNote": "SHA-256 is the Hugging Face LFS object identity at the immutable revision. Upstream base model is mattmdjaga/segformer_b0_clothes; no license is declared in the pinned converted repository card."
+    }
+  ],
+  "comparison": {
+    "FashionCLIPAlternativeModelExecuted": false,
+    "reason": "No alternate licensed clothing classifier with verified weights and a complete independent comparison dataset is already integrated. The same FashionCLIP vision weights in q8 constitute the current runtime, not an independent candidate model.",
+    "SegFormerRole": "semantic clothing-region segmentation; not an instance-identity model or category/subtype alternative"
+  }
+}

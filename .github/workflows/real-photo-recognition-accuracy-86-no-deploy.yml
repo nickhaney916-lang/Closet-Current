@@ -1,0 +1,122 @@
+name: REAL-PHOTO-RECOGNITION-ACCURACY-86 strict research model and mobile evidence NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-photo-recognition-accuracy-86-work-HOLD
+  pull_request:
+    paths:
+      - 'research/real-photo-recognition-accuracy-86/**'
+      - 'scripts/audit-real-photo-recognition-accuracy-86.mjs'
+      - 'tests/real-photo-recognition-accuracy-86.test.mjs'
+      - '.github/workflows/real-photo-recognition-accuracy-86-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-photo-model-and-mobile-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact Priority 85 ancestry and strict research-only path allowlist
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=b5167567d4a47e2ce720ccd3727647c037974b3a
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p86-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/real-photo-recognition-accuracy-86/*|scripts/audit-real-photo-recognition-accuracy-86.mjs|tests/real-photo-recognition-accuracy-86.test.mjs|.github/workflows/real-photo-recognition-accuracy-86-no-deploy.yml) ;;
+              *) echo "BLOCKED production, existing staging, app integration, or unrelated file: $path"; exit 1 ;;
+            esac
+          done < /tmp/p86-paths
+      - name: Install fixed research test and image dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build the application and run all inherited and Priority 86 Node regressions
+        run: |
+          node --check scripts/audit-real-photo-recognition-accuracy-86.mjs
+          node --check tests/real-photo-recognition-accuracy-86.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify every genuine source JPEG, exact SHA, attribution, and frozen split partition
+        run: |
+          node scripts/audit-recognition-ground-truth-60.mjs
+          node scripts/audit-real-photo-recognition-accuracy-86.mjs
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          const r=JSON.parse(await readFile('benchmark/recognition-ground-truth-gate-60/acceptance-report.json','utf8'));
+          assert.equal(r.scientificVerdict,'NEEDS_REWORK');
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.counts.sourceRows,59);assert.equal(r.counts.uniqueSHA256,59);
+          assert.equal(r.counts.independentlyAdjudicated,0);
+          assert.equal(r.counts.preliminaryHistoricalColorLabels,0);
+          const p86=JSON.parse(await readFile('benchmark/real-photo-recognition-accuracy-86/source-audit.json','utf8'));
+          assert.equal(p86.independentHumanAnnotations.sourceBoundAdjudications,r.counts.independentlyAdjudicated);
+          EONODE
+      - name: Download only SHA-pinned public licensed originals from the locked source list
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+      - name: Execute real FashionCLIP ONNX q8 inference on development originals
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output/priority86/development
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/output/priority86/development/results.json > benchmark/output/priority86/development/evaluation-provisional.json
+      - name: Execute real FashionCLIP ONNX q8 inference on validation originals
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/priority86/validation
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/output/priority86/validation/results.json > benchmark/output/priority86/validation/evaluation-provisional.json
+      - name: Execute real FashionCLIP ONNX q8 inference on untouched legacy locked originals
+        run: |
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/priority86/locked-evaluation
+          node scripts/evaluate-recognition-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/output/priority86/locked-evaluation/results.json > benchmark/output/priority86/locked-evaluation/evaluation-provisional.json
+      - name: Run real pinned SegFormer inference and mask evidence in Chromium and WebKit
+        run: node scripts/verify-real-segformer-masks-31.mjs
+      - name: Verify actual FashionCLIP suggestion enters original-photo human review and owner-private confirmed save
+        run: RECOGNITION42=1 node scripts/test-multi-garment-capture-01-browser.mjs
+      - name: Verify camera original-photo review, confirmed-only private saving, Style and owner isolation at mobile widths
+        run: |
+          CAMERAMIXED84=1 node scripts/test-multi-garment-capture-01-browser.mjs
+          node scripts/audit-outfit-camera-mixed-save-84-browser.mjs
+      - name: Assert separate non-scientific and locked scientific verdicts
+        if: always()
+        run: |
+          node --input-type=module <<'EONODE'
+          import assert from 'node:assert/strict';
+          import {readFile} from 'node:fs/promises';
+          const gt=JSON.parse(await readFile('benchmark/recognition-ground-truth-gate-60/acceptance-report.json','utf8'));
+          assert.equal(gt.scientificVerdict,'NEEDS_REWORK');assert.equal(gt.releaseAuthorized,false);
+          for(const split of ['development','validation','locked-evaluation']){
+            try {
+              const rows=JSON.parse(await readFile(`benchmark/output/priority86/${split}/results.json`,'utf8'));
+              if(!Array.isArray(rows)||rows.some(r=>r.error))throw Error('model inference error or malformed predictions: '+split);
+              const manifest=JSON.parse(await readFile(`benchmark/manifest-${split==='development'?'reviewed-32':split==='validation'?'fresh-11':'holdout-16'}.json`,'utf8'));
+              assert.equal(rows.length,manifest.length,'incomplete real inference '+split);
+            } catch(e) { throw e; }
+          }
+          EONODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: REAL-PHOTO-RECOGNITION-ACCURACY-86-source-bound-model-evidence-HOLD
+          path: |
+            benchmark/real-photo-recognition-accuracy-86/source-audit.json
+            benchmark/recognition-ground-truth-gate-60/acceptance-report.json
+            benchmark/output/priority86/
+            benchmark/real-mask-evidence-31/report.json
+            benchmark/real-mask-evidence-31/*.png
+            benchmark/recognition-to-closet-42/acceptance.json
+            benchmark/recognition-to-closet-42/*.png
+            benchmark/outfit-camera-mixed-save-84/acceptance.json
+            benchmark/outfit-camera-mixed-save-84/*.png
+          if-no-files-found: warn
+          retention-days: 14
