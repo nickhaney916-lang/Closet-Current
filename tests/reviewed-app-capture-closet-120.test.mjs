@@ -30,7 +30,7 @@ test('PHOTO120 only the exact owner/current app session and same unsaved draft m
  assert.ok(app.includes("const {commitHumanReviewedPhoto119}=await import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs');"));
 });
 test('PHOTO120 after real atomic IDB commit, only actual saved row informs wardrobe, no duplicate post-commit draft rewrite',()=>{
- const start=app.indexOf('if(reviewedCapture120){',app.indexOf('form.onsubmit=async event=>'));
+ const start=app.indexOf("if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){",app.indexOf('form.onsubmit=async event=>'));
  const finish=app.indexOf('  await savePiece(value,batch.filter',start);
  assert.ok(start>0&&finish>start);
  const branch=app.slice(start,finish);
