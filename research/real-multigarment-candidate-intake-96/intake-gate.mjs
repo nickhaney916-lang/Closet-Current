@@ -100,7 +100,7 @@ export async function verifyOriginalCandidateJPEG96(row,bytes){
  const meta=await sharp(data,{failOn:'truncated'}).metadata();
  if(meta.format!=='jpeg'||meta.width!==row.width||meta.height!==row.height)
   fail('original JPEG image format or dimensions changed');
- if(!meta.pages||meta.pages!==1)fail('unexpected multi-page original photo');
+ if(meta.pages!==undefined&&meta.pages!==1)fail('unexpected multi-page original photo');
  return Object.freeze({id:row.id,sourceSHA256:row.sha256,
   width:meta.width,height:meta.height,bytes:data.length,originalVerified:true});
 }
