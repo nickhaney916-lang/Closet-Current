@@ -12,13 +12,20 @@ Draft PR #665 / Priority #110 already binds a saved photographed shirt and jeans
 - Freeze **reviewedColors.top/bottom** and **sourceIds.top/bottom** alongside the existing original source SHA-256s in the in-memory saved-look plan. The plan carries metadata only, never JPEG bytes or private customer photos.
 - On reopen compare the currently owner-scoped category, subtype, source hashes, sourceIds and both reviewed color labels. A correction, new source record, missing label, unsafe label, source revision or owner change fails closed, even if the original JPEG SHA-256 is unchanged.
 - The only genuine 163-bone photographic donor benchmark requires exact verified public-fixture shirt **Black** and jeans **Blue** labels in addition to existing licensed original JPEG/source IDs. Any mismatch stays on explicit original-photo/2D fallback, never fabricates a different garment's fitted mesh.
-- Fix inherited P110 real WebGL browser test's untrusted-click regression: the second denim iteration already has a legitimate saved look. Assert an untrusted DOM click leaves the complete saved-look report unchanged, rather than falsely expecting no saved look.
+- Adopt and independently retain the upstream P110 corrected untrusted-click check: the second denim iteration already has a legitimate saved look, and an untrusted DOM click must leave its saved state unchanged.
+- **Additional CI-exposed safety defect fixed:** the simulated private-photo 2D fallback and synthetic owner rotation previously called clear without revoking original review, leaving the prior public 3D pose controls eligible. Revoke review, hide the previous 3D avatar, dispatch a change event, disable pose controls; require explicit fresh review of the authentic public source before displaying the original 3D figure and restoring its saved look.
 
 ## Independent tests / acceptance
 
-- New Node regression cases for exact reviewed-color/sourceId retention; corrected color vs unchanged SHA; sourceId rotation vs unchanged SHA; both original-public and synthetic-private research owner; unsafe or absent label; forged/missing saved metadata; and fallback without inventing 3D.
+- New Node regression cases for exact reviewed-color/sourceId retention; corrected color vs unchanged SHA; sourceId rotation vs unchanged SHA; both original-public and synthetic-private research owner; unsafe or absent label; forged/missing saved metadata; and fallback pose/visual concealment with explicit human re-review before 3D readmission.
 - Preserve P110 8 public-source browser restore scenarios at female 320/390/430 CSS widths and male 390 CSS width, two licensed original denim sources, 16 before/after genuine WebGL frames and inherited parent 24 photographed-denim pose frames.
 - Re-run full inherited Node suite, exact no-deploy source audit, temporary pinned public donor and original-source screenshot SHA audit in the dedicated P112 CI.
+
+## Independent failure investigation and verified correction scope
+
+The first P112 original-source real browser CI ([run #42304088934](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42304088934)) passed the strict path scope, full Node regressions, original pinned research donor assembly and 24 genuine photographed-denim mobile pose screenshots, but **FAILED** waiting for the simulated private-photo fallback to disable original 3D pose eligibility (browser wait at the fallback/pose assertion). This was a genuine source-state defect, not a reason to weaken or skip the browser test.
+
+The correction explicitly revokes review on private fallback and synthetic owner rotation, visually conceals the old licensed 163-bone avatar, and denies stale saved-look reopening until the original source is reviewed again. The browser suite now asserts actual avatar concealment, pose denial, blocked stale reopen, fresh review, original licensed re-admission and 3D reopen. This is still a synthetic research boundary only, not an authenticated private wardrobe UI.
 
 ## Critical limitations
 
