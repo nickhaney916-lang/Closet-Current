@@ -92,11 +92,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
+ let displayedSelection89=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -107,6 +108,36 @@ export async function mountNative3D05({
  }
  const invalidate=()=>cleanup('Account/session changed · private 3D preview cleared',{revoke:true});
  const logout=()=>cleanup('Signed out · private 3D preview cleared',{revoke:true});
+ // NATIVE89: The source admission is not permanent. A change after the
+ // WebGL scene opens must revoke that source photo and 3D mesh before any
+ // public state() call reports it as still active. The actual consumer board
+ // remains untouched; the donor view is read-only and may only be reopened
+ // by a fresh explicit selection.
+ function revokeChangedSource89(){
+  if(!displayedSelection89||cleaning||closed)return false;
+  try{
+   requireCurrentNative3D05Selection88({
+    consumer,originalNativeAuth:nativeAuth,win,doc,
+    admitted:displayedSelection89.admitted,
+    selectedIndex:displayedSelection89.selectedIndex
+   });
+   if(!epoch?.status().active)throw Error('Native owner lease ended');
+   return false;
+  }catch{
+   cleanup('Saved outfit changed · stale source-photo 3D preview closed');
+   return true;
+  }
+ }
+ // The native Outfit Builder re-renders these controls whenever it selects,
+ // edits or restores an outfit. Watch the rendered user selection instead of
+ // adding a separate save path or wrapping the consumer controller.
+ const mutationHost=win.MutationObserver;
+ const selectionObserver89=typeof mutationHost==='function'?
+  new mutationHost(()=>revokeChangedSource89()):null;
+ for(const id of ['savedBoards','boardSlots']){
+  const target=doc.getElementById(id);
+  if(target)selectionObserver89?.observe(target,{childList:true,subtree:true});
+ }
  win.addEventListener('closet:alpha-session-changed',invalidate);
  win.addEventListener('pagehide',invalidate);
  doc.getElementById('logout').addEventListener('click',logout,true);
@@ -174,6 +205,11 @@ export async function mountNative3D05({
    // The read-only evidence below never calls the donor save/delete methods.
    lockDonorEditing();
    requireFresh(); // The public successful preview receipt must refer to the same row.
+   displayedSelection89={admitted:selected,selectedIndex};
+   // If native board mutation is queued during the final WebGL frame,
+   // always re-check before announcing success.
+   revokeChangedSource89();
+   if(!displayedSelection89)throw Error('NATIVE89 saved outfit changed as 3D became visible');
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
@@ -185,6 +221,9 @@ export async function mountNative3D05({
  }
  button.onclick=()=>open().catch(()=>{});
  const state=()=>{
+  // Also enforce source admission when a board state changed without a DOM
+  // redraw, including programmatic imported/restore state and tab switches.
+  revokeChangedSource89();
   let active=false;
   try{active=!closed&&epoch?.status().active===true&&panel?.state().privateVisible===true;}
   catch{}
@@ -206,6 +245,7 @@ export async function mountNative3D05({
   win.removeEventListener('pagehide',invalidate);
   doc.getElementById('logout').removeEventListener('click',logout,true);
   cleanup('3D research viewer disposed',{revoke:true});
+  selectionObserver89?.disconnect();
   button.remove();status.remove();
  };
  notify('Choose a saved outfit, then preview verified 3D (unsaved edits must be saved).');
