@@ -26,7 +26,7 @@ assert.equal(r.viewportCSSWidth,390);
 assert.deepEqual(r.sourcePosesDegrees,[0,4,8,12,16]);
 assert.deepEqual(r.cameraAngles,[45,90]);
 assert.equal(r.realBrowser,'Chromium');
-assert.equal(r.screenshots,44);
+assert.equal(r.screenshotCount,44);
 assert.equal(r.realSkinnedBodyGarmentTriangleContactsMeasured,true);
 assert.equal(r.contactsAcrossEntireSweptIntervalCertified,false);
 assert.equal(r.physicallySimulatedGravityCloth,false);
