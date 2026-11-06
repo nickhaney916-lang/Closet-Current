@@ -172,7 +172,7 @@ try{
    'Same-color background/center should not be spuriously suppressed');
   const normal=card.locator('[data-color-review46="unverified"]');
   await normal.waitFor({state:'visible'});
-  assert.match(await normal.innerText(),/Reviewed crop pixel color.*Blue.*unverified/i);
+  assert.match(await normal.innerText(),/Reviewed crop pixel color.*unverified.*Blue/i);
   assert.equal(await card.getByLabel('Color (confirm visually)').inputValue(),'');
   await shot(page,width,engine,'03-solid-blue-pixel-advice-still-unverified');
   await card.getByLabel('Main category').selectOption('Tops');
