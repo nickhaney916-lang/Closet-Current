@@ -16,7 +16,9 @@ test('P86 source-audit script binds real original bytes, licensing, and disjoint
  const script=await readFile('scripts/audit-real-photo-recognition-accuracy-86.mjs','utf8');
  assert.match(script,/createHash\('sha256'\)/);assert.match(script,/failOn:'truncated'/);
  assert.match(script,/Partition duplicates or source leakage/);
- assert.match(script,/independentHumanAnnotations/);
+ assert.match(script,/ground-truth-gate-60\/acceptance-report\.json/);
+ assert.match(script,/counts\.independentlyAdjudicated/);
+ assert.doesNotMatch(script,/reviewers:0|primaryColorLabels:0|instanceMasks:0/);
  assert.match(script,/scientific:'NEEDS_REWORK'/);
 });
 

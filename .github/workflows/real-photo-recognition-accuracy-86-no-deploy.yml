@@ -51,8 +51,8 @@ jobs:
           node --test tests/*.test.cjs tests/*.test.mjs
       - name: Verify every genuine source JPEG, exact SHA, attribution, and frozen split partition
         run: |
-          node scripts/audit-real-photo-recognition-accuracy-86.mjs
           node scripts/audit-recognition-ground-truth-60.mjs
+          node scripts/audit-real-photo-recognition-accuracy-86.mjs
           node --input-type=module <<'EONODE'
           import assert from 'node:assert/strict';
           import {readFile} from 'node:fs/promises';
@@ -62,6 +62,8 @@ jobs:
           assert.equal(r.counts.sourceRows,59);assert.equal(r.counts.uniqueSHA256,59);
           assert.equal(r.counts.independentlyAdjudicated,0);
           assert.equal(r.counts.preliminaryHistoricalColorLabels,0);
+          const p86=JSON.parse(await readFile('benchmark/real-photo-recognition-accuracy-86/source-audit.json','utf8'));
+          assert.equal(p86.independentHumanAnnotations.sourceBoundAdjudications,r.counts.independentlyAdjudicated);
           EONODE
       - name: Download only SHA-pinned public licensed originals from the locked source list
         run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json

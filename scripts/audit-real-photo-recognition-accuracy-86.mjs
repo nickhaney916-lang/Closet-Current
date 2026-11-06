@@ -10,7 +10,8 @@ const files={
  development:await read('benchmark/manifest-reviewed-32.json'),
  validation:await read('benchmark/manifest-fresh-11.json'),
  'locked-evaluation':await read('benchmark/manifest-holdout-16.json'),
- assets:await read('research/real-photo-recognition-accuracy-86/model-assets.json')
+ assets:await read('research/real-photo-recognition-accuracy-86/model-assets.json'),
+ groundTruth:await read('benchmark/recognition-ground-truth-gate-60/acceptance-report.json')
 };
 assert.equal(files.sources.length,59,'P86 expects the inherited 59 licensed source list');
 const ids=new Set(),hashes=new Set(),audited=[];
@@ -33,11 +34,13 @@ for(const [split,rows] of Object.entries({development:files.development,validati
  }
 }
 assert.equal(ids.size,59);assert.equal(hashes.size,59);
-const independentLabels=0;
+const independentLabels=files.groundTruth.counts.independentlyAdjudicated;
+assert.ok(Number.isSafeInteger(independentLabels)&&independentLabels>=0);
 const report={schema:'real-photo-recognition-accuracy-86/v1',priority:86,
  sourceCommit:'b5167567d4a47e2ce720ccd3727647c037974b3a',researchOnly:true,
  immutableOriginals:{unique:ids.size,sha256Verified:audited.length,allJPEG:true,splitCounts:{development:files.development.length,validation:files.validation.length,'locked-evaluation':files['locked-evaluation'].length}},
- independentHumanAnnotations:{verified:independentLabels,reviewers:0,adjudications:0,primaryColorLabels:0,secondaryColorLabels:0,instanceMasks:0},
+ independentHumanAnnotations:{sourceBoundAdjudications:independentLabels,
+  lockedSourceBoundAdjudications:files.groundTruth.counts.lockedIndependentlyAdjudicated},
  modelAssets:files.assets.models.map(x=>({name:x.name,repository:x.repository,revision:x.revision,license:x.license,weightIdentities:x.weights})),
  acceptance:{engineering:'PENDING_REAL_MODEL_AND_BROWSER_ACTIONS',scientific:'NEEDS_REWORK',releaseAuthorized:false,
   blockers:['fewer than 100 appropriately licensed photos','no independent source-bound human labels','no independent primary/secondary color truth','no independent garment-instance mask truth','SegFormer model license unspecified','no physical Android/iPhone test']},
