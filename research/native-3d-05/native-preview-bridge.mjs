@@ -85,6 +85,29 @@ export function captureNative3D05Sources91({consumer,admitted,expected}={}){
   throw Error('NATIVE91 photographed garment source changed; reopen current outfit');
  return actual;
 }
+/**
+ * NATIVE93: source SHA metadata can remain unchanged after a wardrobe refresh
+ * while the original JPEG bytes were replaced. A successful NATIVE92 byte
+ * digest is not permanent approval: a new owner-private wardrobe snapshot
+ * ends the old 3D admission. Fresh explicit preview must rehash JPEG bytes.
+ */
+export function requireNative3D05WardrobeRevision93({
+ consumer,ownerId,expected
+}={}){
+ if(typeof consumer?.readOnlyWardrobeRevision93!=='function'||
+    !ownerId||typeof ownerId!=='string')
+  throw Error('NATIVE93 owner-private wardrobe revision unavailable');
+ const actual=consumer.readOnlyWardrobeRevision93();
+ if(!actual||actual.ownerId!==ownerId||
+    !Number.isSafeInteger(actual.revision)||actual.revision<1||
+    !Number.isSafeInteger(actual.generation))
+  throw Error('NATIVE93 invalid owner-private wardrobe revision');
+ if(expected&&(actual.ownerId!==expected.ownerId||
+    actual.generation!==expected.generation||
+    actual.revision!==expected.revision))
+  throw Error('NATIVE93 private wardrobe refreshed; reverify JPEG bytes before 3D');
+ return Object.freeze({...actual});
+}
 export async function mountNative3D05({
  win=globalThis.window,doc=win?.document,
  consumer=win?.nativeLossless04Bridge,
@@ -112,12 +135,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -143,6 +166,9 @@ export async function mountNative3D05({
    });
    captureNative3D05Sources91({
     consumer,admitted:displayedSelection89.admitted,expected:displayedSources91
+   });
+   requireNative3D05WardrobeRevision93({
+    consumer,ownerId:displayedSelection89.admitted.ownerId,expected:displayedRevision93
    });
    if(!epoch?.status().active)throw Error('Native owner lease ended');
    return false;
@@ -188,12 +214,14 @@ export async function mountNative3D05({
   const selectedIndex=consumer.selected,request=++attempt;
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
   const selectedSources91=captureNative3D05Sources91({consumer,admitted:selected});
+  const selectedRevision93=requireNative3D05WardrobeRevision93({consumer,ownerId:selected.ownerId});
   const requireFresh=()=>{
    if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
    const current=requireCurrentNative3D05Selection88({
     consumer,originalNativeAuth:nativeAuth,win,doc,admitted:selected,selectedIndex
    });
    captureNative3D05Sources91({consumer,admitted:selected,expected:selectedSources91});
+   requireNative3D05WardrobeRevision93({consumer,ownerId:selected.ownerId,expected:selectedRevision93});
    return current;
   };
   const attestOriginalBytes92=async()=>{
@@ -244,6 +272,7 @@ export async function mountNative3D05({
    requireFresh(); // The public successful preview receipt must refer to the same row.
    displayedSelection89={admitted:selected,selectedIndex};
    displayedSources91=selectedSources91;
+   displayedRevision93=selectedRevision93;
    // If native board mutation is queued during the final WebGL frame,
    // always re-check before announcing success.
    revokeChangedSource89();

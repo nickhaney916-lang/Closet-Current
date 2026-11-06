@@ -52,6 +52,7 @@ const native88=process.env.NATIVE88==='1';
 const native89=process.env.NATIVE89==='1';
 const native91=process.env.NATIVE91==='1';
 const native92=process.env.NATIVE92==='1';
+const native93=process.env.NATIVE93==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -377,6 +378,80 @@ try{
     window.native3D05Bridge.state().bones===163,null,{timeout:150000});
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
+  if(native93&&width===390){
+   // NATIVE93: corrupt live source BYTES only AFTER original 163-bone model
+   // and permitted original photo have already been rendered. Retain the
+   // saved garment ID and BOTH recorded SHA fields. The native viewer must
+   // revoke on a real owner wardrobe refresh even though #91 metadata and
+   // the saved outfit have not changed. There is no polling or fake model.
+   const putPhoto93=async image=>{
+    await page.evaluate(({image})=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
+     const req=store.get('native05-A-dress');
+     req.onsuccess=()=>{
+      const row=req.result;
+      if(row?.ownerId!=='native05-A')return reject(Error('Wrong wardrobe owner'));
+      row.originalPhoto.image=image;
+      row.image=image;
+      // Keep sourceSHA256 and originalPhoto.sha256 UNCHANGED deliberately.
+      store.put(row);
+     };
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error);
+    }),{image});
+    await page.evaluate(()=>window.nativeLossless04Bridge.refreshWardrobe());
+   };
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),4);
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().bones),163);
+   const beforeRevision=await page.evaluate(()=>
+    window.nativeLossless04Bridge.readOnlyWardrobeRevision93());
+   await putPhoto93(photos['commons-0003'].image);
+   const afterRevision=await page.evaluate(()=>
+    window.nativeLossless04Bridge.readOnlyWardrobeRevision93());
+   assert.equal(afterRevision.ownerId,beforeRevision.ownerId);
+   assert.equal(afterRevision.revision,beforeRevision.revision+1);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.readOnlyGarmentSources91(
+    ['native05-A-dress']).sources[0].sha256),photos['commons-0053'].sha256);
+   // Wait for automatic native DOM mutation revocation. Do NOT call the
+   // bridge state getter until after the old private photo is already gone.
+   await page.waitForFunction(()=>document.getElementById('native3D05Status')
+    ?.textContent.includes('stale source-photo 3D preview closed')&&
+    document.querySelectorAll('#outfit3D01Photos img').length===0,
+    null,{timeout:30000});
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await assert.rejects(page.evaluate(()=>window.native3D05Bridge.open()),
+    /NATIVE92 ORIGINAL JPEG BYTES DO NOT MATCH SOURCE SHA/);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   const png=await page.screenshot({fullPage:false,animations:'disabled'});
+   const meta=await sharp(png).metadata(),stats=await sharp(png).stats();
+   assert.equal(meta.width,390);
+   assert.ok(png.length>4500&&stats.channels.some(ch=>ch.stdev>7));
+   await mkdir('benchmark/native-3d-93',{recursive:true});
+   const filename='post-open-unchanged-SHA-photo-bytes-revoked-390.png';
+   await writeFile('benchmark/native-3d-93/'+filename,png);
+   await writeFile('benchmark/native-3d-93/acceptance.json',
+    JSON.stringify({priority:'NATIVE-3D-WARDROBE-REFRESH-93',
+     file:filename,width:390,height:meta.height,sha256:digest(png),
+     originalSHA:photos['commons-0053'].sha256,
+     unapprovedBytesSHA:photos['commons-0003'].sha256,
+     sourcePhotoPreviouslyRendered:true,realOriginalWebGLBones:163,
+     savedGarmentIdUnchanged:true,shaMetadataIntentionallyUnchanged:true,
+     ownerWardrobeRevisionIncremented:true,automaticVisible3DRevocation:true,
+     privatePhotoRemovedBeforeStateRead:true,
+     reOpenCorruptSourceBlockedByWebCrypto:true,privateSavedBoardUnchanged:true,
+     validNativeOwnerSessionPreserved:true,physicalPhoneVerified:false,
+     realSignedCloudVerified:false,modelAccuracyMeasured:false,
+     productionDeployed:false,familyAlpha:'HOLD'
+    },null,2)+'\n');
+   await putPhoto93(photos['commons-0053'].image);
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+    window.native3D05Bridge.state().viewerMode==='dress'&&
+    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+  }
   // Explicit scene close must NOT invalidate still-signed-in consumer editor.
   await page.evaluate(()=>window.native3D05Bridge.close());
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -420,6 +495,7 @@ try{
    ...(native89?{liveSourceRevocation89:width===390?'verified':'not-tested-in-this-viewport'}:{}),
    ...(native91?{sameGarmentIdPhotoSourceRevision91:width===390?'verified':'not-tested-in-this-viewport'}:{}),
    ...(native92?{tamperedOriginalJPEGBlocked92:width===390?tamperedOriginalBlocked92:'not-tested-in-this-viewport'}:{}),
+   ...(native93?{postOpenUnchangedSHASourceRevoked93:width===390?'verified':'not-tested-in-this-viewport'}:{}),
    separateAccountBPrivate:true,missingIDsRetained:true,
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});

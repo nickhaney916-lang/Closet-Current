@@ -58,7 +58,7 @@ export async function createNativeConsumerBoard04({
   throw Error('BOARD04 requires real native page/auth and explicit research-only URL gate');
  const original=nativeAuth,epoch=createNativeAuthEpoch01({nativeAuth,win,doc});
  let closed=false,stored=null,cloud=null,wardrobe=[],expected=null,
-  opened=null,draft=null,dirty=false,loaded=false,admitted=null,io=null,editSerial=0;
+  opened=null,draft=null,dirty=false,loaded=false,admitted=null,io=null,editSerial=0,wardrobeRevision93=0;
  const fail=(code)=>{throw Error('BOARD04 '+code);};
  const invalidate=()=>{loaded=false;stored=null;cloud=null;wardrobe=[];expected=null;
   opened=null;draft=null;dirty=false;admitted=null;editSerial++;
@@ -94,6 +94,7 @@ export async function createNativeConsumerBoard04({
   io=adapter;admitted=lease;stored=clone(snap.board);cloud=clone(snap.cloud);
   wardrobe=clone(snap.items);expected=boardFingerprint02(stored);
   draft=clone(stored.current);opened=null;dirty=false;loaded=true;
+  wardrobeRevision93++; // NATIVE93: loading a new owner-local source snapshot revokes prior 3D admission.
   emit('Private saved outfits loaded without rewriting storage · research only');
   return {loaded:true,ownerPrivate:true,readOnly:true,
    savedCount:stored.saved.length,missingIds:missingCount(),
@@ -122,6 +123,7 @@ export async function createNativeConsumerBoard04({
    ids.add(row.id);
   }
   wardrobe=next;
+  wardrobeRevision93++; // NATIVE93: even unchanged SHA metadata cannot authorize old visible JPEG bytes.
   emit('Saved closet updated · current outfit and unsaved edits preserved');
   return {refreshed:true,itemCount:next.length,ownerPrivate:true,
    originalSavedBoardUnchanged:true,releaseAuthorized:false};
@@ -174,6 +176,18 @@ export async function createNativeConsumerBoard04({
      verified.some((row,i)=>JSON.stringify(row)!==JSON.stringify(before.sources[i])))
    fail('NATIVE92_SOURCE_CHANGED_DURING_CRYPTO');
   return Object.freeze({ownerId:lease.ownerId,sources:Object.freeze(verified)});
+ };
+ // NATIVE93: strictly read-only monotonic private wardrobe refresh epoch.
+ // The epoch changes whenever a new wardrobe snapshot is adopted. It never
+ // returns an original image and does not change saved outfit CAS records.
+ // A 3D viewer must revoke its prior photo admission after any refresh
+ // and require a new genuine NATIVE92 byte-level digest before displaying.
+ const readOnlyWardrobeRevision93=()=>{
+  if(new URLSearchParams(win.location.search).get('native3D05')!=='research')
+   fail('NATIVE93_3D_RESEARCH_NOT_ENABLED');
+  const lease=alive();
+  return Object.freeze({ownerId:lease.ownerId,generation:lease.generation,
+   revision:wardrobeRevision93});
  };
  // STYLE-OWNED-LIVE-03: strictly research-only native owner wardrobe read.
  // The generator never reads a separate database or writes private photos.
@@ -367,7 +381,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
