@@ -131,6 +131,9 @@ export function mountReviewedLookResearchPanel110(doc,host){
       !d?.actual3DGarment?.realPhotoApplied||
       d.actual3DGarment.originalPhotoSHA256s?.bottom!==plan.sourceSHA256s.bottom)
     throw Error('actual research source garment was not safely restored');
+   // Reveal the original WebGL scene only after the saved licensed JPEG has
+   // been re-admitted by exact owner, session, source SHA and genuine mesh.
+   avatar.hidden=false;
    mode='restored-public';lastOutcome='actual-original-3d-restored';
    message.textContent='Reviewed saved look reopened on real original photographed 163-bone humanoid. Source SHA preserved · Family Alpha HOLD.';
   }catch{
