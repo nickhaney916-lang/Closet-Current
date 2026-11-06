@@ -114,6 +114,6 @@ test('PHOTO103 full inherited no-deploy CI exact green P102 parent and real pinn
  assert.match(ci,/node scripts\/install-photographed-denim-knee-103\.mjs \.photo103-donor-541/);
  assert.match(ci,/node scripts\/test-photographed-denim-knee-103-browser\.mjs/);
  assert.match(ci,/node scripts\/audit-photographed-denim-knee-103\.mjs/);
- assert.match(ci,/test "\$\(wc -l </tmp\/photo103-allowed\)" -eq 8/);
+  assert.equal(ci.includes('test "$(wc -l </tmp/photo103-allowed)" -eq 8'),true);
  assert.doesNotMatch(ci,/gh-pages|deploy-pages|npm publish/);
 });
