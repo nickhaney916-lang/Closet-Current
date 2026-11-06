@@ -25,7 +25,7 @@ function headBounds(root){
 function addTube(group,points,radius,material,radial=7){
  const curve=new T.CatmullRomCurve3(points.map(p=>new T.Vector3(...p)));
  const mesh=new T.Mesh(new T.TubeGeometry(curve,14,radius,radial,false),material);
- mesh.castShadow=true;mesh.receiveShadow=true;group.add(mesh);return mesh;
+ mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.ownedMaterial=true;group.add(mesh);return mesh;
 }
 function hairFor(root,kind){
  const {box,total,top}=headBounds(root),size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3());
@@ -36,7 +36,7 @@ function hairFor(root,kind){
  // A fitted scalp cap sits above the existing forehead and facial landmarks.
  const cap=new T.Mesh(new T.SphereGeometry(1,32,20,0,Math.PI*2,0,1.78),dark);
  cap.position.set(center.x,top-h*.22,center.z-d*.04);
- cap.scale.set(w*.57,h*.58,d*.61);cap.castShadow=true;cap.receiveShadow=true;group.add(cap);
+ cap.scale.set(w*.57,h*.58,d*.61);cap.castShadow=true;cap.receiveShadow=true;cap.userData.ownedMaterial=true;group.add(cap);
  // Fine swept strands break the smooth cap silhouette without a helmet shell.
  for(let i=0;i<7;i++){
   const t=i/6,side=i%2?1:-1;
@@ -78,7 +78,7 @@ function hairFor(root,kind){
     [x+(strand-2)*w*.045,top-h*1.12,center.z-d*.30]
    ],w*.065,strand%2?light:dark,7);
   }
- }else{
+ }else if(kind==='male'){
   // Short temple pieces and fine crown strands read as a close natural cut.
   for(const side of [-1,1]){
    addTube(group,[
