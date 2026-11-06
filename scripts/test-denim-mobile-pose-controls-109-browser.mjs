@@ -184,6 +184,54 @@ try{
     userInteractionTrustedOnly:true,
     releaseAuthorized:false,familyAlpha:'HOLD'});
   }
+  // PHOTO110: real Chromium mobile tab switch revokes the already-reviewed,
+  // previously visible original-source garment even after this tab returns.
+  const backgroundTab=await context.newPage();
+  await backgroundTab.goto('about:blank');
+  await backgroundTab.bringToFront();
+  await page.waitForTimeout(200);
+  await page.bringToFront();
+  await page.waitForFunction(()=>
+   window.cc109PoseUIState?.()?.lifecycleRevoked===true,
+   null,{timeout:15000});
+  await backgroundTab.close();
+  assert.equal(await page.locator('#cc109Both16').isDisabled(),true,
+   'old source pose stays blocked after mobile background and foreground');
+  assert.equal(await page.evaluate(()=>
+   window.cc109PoseUIState().sourceRenderConcealed),true,
+   'original licensed 3D render cannot remain on-screen after source revocation');
+  await page.locator('#review').uncheck();
+  await page.locator('#review').check();
+  await page.locator('#wear').click();
+  assert.equal(await page.locator('#cc109Both16').isDisabled(),true,
+   'checking review again cannot bypass sticky source-session revocation');
+  assert.equal(await page.evaluate(()=>
+   window.cc109PoseUIState().requiresFreshSourceReviewAfterReload),true);
+  await page.reload();
+  await page.waitForFunction(()=>
+   window.cc109PoseUIState?.()?.mounted===true&&
+   window.cc69Diagnostics?.()?.loaded===true,null,{timeout:180000});
+  assert.equal(await page.locator('#cc109Both16').isDisabled(),true,
+   'fresh document must require original photograph review and wear again');
+  await page.locator('#review').check();
+  await page.locator('#wear').click();
+  await page.waitForFunction(()=>
+   window.cc109PoseUIState?.()?.enabled===true,null,{timeout:180000});
+  // Chrome Page Lifecycle freeze is a document event (some hosts forward
+  // it through window too). Must fail closed on either.
+  await page.evaluate(()=>document.dispatchEvent(new Event('freeze')));
+  assert.equal(await page.evaluate(()=>
+   window.cc109PoseUIState().lifecycleRevoked),true);
+  assert.equal(await page.locator('#cc109Left8').isDisabled(),true);
+  await page.locator('#review').uncheck();
+  await page.locator('#review').check();
+  assert.equal(await page.locator('#cc109Left8').isDisabled(),true);
+  // A full reload is the only route to renewed photo verification/review.
+  await page.reload();
+  await page.waitForFunction(()=>
+   window.cc109PoseUIState?.()?.mounted===true&&
+   window.cc69Diagnostics?.()?.loaded===true,null,{timeout:180000});
+  assert.equal(await page.locator('#cc109Both16').isDisabled(),true);
   // Clearing the verified source unmounts the pose interaction admission.
   await page.locator('#clear').click();
   await page.waitForFunction(()=>window.cc109PoseUIState?.()?.enabled===false,
