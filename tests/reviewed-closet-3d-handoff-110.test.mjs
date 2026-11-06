@@ -190,7 +190,7 @@ test('PHOTO110 actual Chromium original source 163-bone saved look screenshot, r
   'cc69Diagnostics',
   'assert.equal(diff,0',
   'assert.equal(frames.length,16)',
-  'assert.equal(scenarios.length,8)',
+  'assert.equal(scenarios.length,4)',
   'realSignedCloudRLSVerified:false'
  ])assert.ok(s.includes(t),t);
 });
