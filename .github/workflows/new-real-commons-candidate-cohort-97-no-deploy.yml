@@ -44,8 +44,8 @@ jobs:
           node --check scripts/verify-new-real-commons-candidates-97.mjs
           node scripts/build.mjs
           node --test tests/*.test.cjs tests/*.test.mjs
-      - name: First pass discover full SHA receipts for seven truly new Commons originals
-        run: node scripts/verify-new-real-commons-candidates-97.mjs --discover
+      - name: Independently redownload seven original Commons JPEGs and verify PINNED SHA-256 and exact bytes
+        run: node scripts/verify-new-real-commons-candidates-97.mjs --strict
       - name: Original P94 genuine JPEG 59-source A B C blind packets remain intact
         run: node scripts/build-independent-instance-packets-94.mjs
       - name: Preserve 320 390 430 actual Chromium/WebKit original-photo polygon reviewer UI
@@ -62,19 +62,19 @@ jobs:
           assert.equal(x.oldModelExposedQuarantined,2);
           assert.equal(x.newOriginalJPEGsDownloaded,7);
           assert.equal(x.distinctPhotoSHAsAcrossAll68,68);
-          assert.equal(x.newSourcesSHAIndependentlyPinned,0);
+          assert.equal(x.newSourcesSHAIndependentlyPinned,7);
           assert.equal(x.scientificallyAcceptedNewSources,0);
           assert.equal(x.confirmedHumanInstanceMasks,0);
-          assert.equal(x.sourceQualificationVerdict,'DISCOVERY_NOT_VERIFIED_PINNED');
+          assert.equal(x.sourceQualificationVerdict,'SHA_PINNED_BUT_QUARANTINED');
           assert.equal(x.releaseAuthorized,false);
           assert.equal(x.familyAlpha,'HOLD');
-          console.log('SOURCE97 seven remote original SHA receipts discovered, NOT Pinned, NOT scientific. Frozen benchmark unchanged; Family Alpha HOLD.');
+          console.log('SOURCE97 independently re-downloaded seven Commons original JPEGs matched pinned SHA/size; still quarantined with zero human truth; HOLD.');
           NODE
       - name: Archive attribution and original SHA receipts only; never store source JPEGs
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: SOURCE97-original-7-COMMONS-SHA-discovery-quarantined-HOLD-NO-DEPLOY
+          name: SOURCE97-original-7-COMMONS-SHA-second-pass-pinned-quarantine-HOLD-NO-DEPLOY
           path: |
             research/new-real-commons-candidate-cohort-97/source-candidates.json
             research/new-real-commons-candidate-cohort-97/REPORT.md
