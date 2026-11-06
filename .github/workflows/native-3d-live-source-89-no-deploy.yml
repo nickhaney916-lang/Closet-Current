@@ -1,0 +1,108 @@
+name: NATIVE89 original-photo anatomical 3D live-source revocation NO DEPLOY
+on:
+  push:
+    branches:
+      - research/native-3d-live-source-revocation-89-main-20261105-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-owner-native-outfit-and-original-163-bone-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact independently green COLOR87 ancestor and research-only path scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=8399c82d786f47cf13e9e837d6af6e9f582950ae
+          git merge-base --is-ancestor "$BASE" HEAD
+          FIRST=$(git rev-list --reverse "$BASE..HEAD" | head -n1)
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/native88-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/native-3d-05/native-preview-bridge.mjs|scripts/test-native-3d-05-browser.mjs|tests/native-3d-live-source-89.test.mjs|scripts/audit-native-3d-live-source-89.mjs|research/native-3d-live-source-89/REPORT.md|.github/workflows/native-3d-live-source-89-no-deploy.yml) ;;
+              *) echo "BLOCKED any production/staging/auth/cloud/other project change: $p"; exit 1 ;;
+            esac
+          done </tmp/native88-paths
+      - name: Install pinned test-only browser WebGL and IndexedDB dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Compile app and run all inherited + NATIVE88 regression tests
+        run: |
+          node --check research/native-3d-05/native-preview-bridge.mjs
+          node --check scripts/test-native-3d-05-browser.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Checkout exact unchanged source-photo 163-bone independent PR541 donor
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Actual original source 163-bone WebGL on mobile 320 390 430 and genuine delayed donor import race
+        run: NATIVE88=1 NATIVE89=1 node scripts/test-native-3d-05-browser.mjs
+      - name: Independently verify source-true WebGL 15 real native mobile screenshots
+        run: node scripts/audit-native-3d-05.mjs
+      - name: Independently audit live post-open 3D photo-source revocation view
+        run: node scripts/audit-native-3d-live-source-89.mjs
+      - name: Verify exact source selection race and post-open revocation, fallback and HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/native-3d-05/results.json','utf8'));
+          const a=JSON.parse(readFileSync('benchmark/native-3d-05-audit/acceptance.json','utf8'));
+          assert.equal(x.priority,'NATIVE-3D-05');
+          assert.equal(x.cases,3);
+          assert.equal(x.screenshots,15);
+          assert.equal(x.realWebGL,true);
+          assert.deepEqual(x.errors,[]);
+          assert.deepEqual(x.crashes,[]);
+          assert.equal(x.evidence.find(e=>e.width===390)?.staleSelectionBlocked88,true);
+          assert.equal(x.evidence.find(e=>e.width===390)?.liveSourceRevocation89,'verified');
+          for(const row of x.evidence){
+            assert.equal(row.bones,163);
+            assert.equal(row.authenticPhotoSourcedDress3D,true);
+            assert.equal(row.noOutfitMutation,true);
+            assert.equal(row.separateAccountBPrivate,true);
+            assert.equal(row.releaseAuthorized,false);
+          }
+          assert.equal(a.verifiedGenuine3DFrames,9);
+          assert.equal(a.verifiedBrowserScreenshots,15);
+          assert.equal(a.realSignedUsersVerified,false);
+          assert.equal(a.realPhysicalPhonesVerified,false);
+          assert.equal(a.familyAlpha,'HOLD');
+          console.log('NATIVE89: old saved source revoked after viewer is visible; real 163-bone WebGL screenshot/reopen and original source safety PASS. No geometry/cloud release claim.');
+          NODE
+      - name: Preserve sanitized authentic rig and source-owner QA screenshot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NATIVE89-live-3D-saved-source-revocation-HOLD-NO-DEPLOY
+          path: |
+            research/native-3d-live-source-89/REPORT.md
+            benchmark/native-3d-05/results.json
+            benchmark/native-3d-05/*.png
+            benchmark/native-3d-05-audit/acceptance.json
+            benchmark/native-3d-05-audit/*.jpg
+            benchmark/native-3d-89/
+          if-no-files-found: warn
+          retention-days: 14
