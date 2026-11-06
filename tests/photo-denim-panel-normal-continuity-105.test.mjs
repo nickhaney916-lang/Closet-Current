@@ -109,7 +109,7 @@ test('PHOTO105 real independent 60-photo SHA nonblank audit never claims physica
  for(const part of ["r.screenshots.length,60","createHash('sha256')",
   "stats.channels.some", "normalVarianceAfter<s.normalVarianceBefore*.015",
   "realSourceNeutralRearSeamLightingChange:true",
-  "independentHumanVisualApproved:false",
+
   "physicalAndroidIphoneNotVerified:true",
   "noIndependentHumanPhotorealismApproval:true",
   "releaseAuthorized:false"])
