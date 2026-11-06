@@ -53,6 +53,7 @@ const native89=process.env.NATIVE89==='1';
 const native91=process.env.NATIVE91==='1';
 const native92=process.env.NATIVE92==='1';
 const native93=process.env.NATIVE93==='1';
+const native102=process.env.NATIVE102==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -452,6 +453,83 @@ try{
     window.native3D05Bridge.state().bones===163,null,{timeout:150000});
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
+  if(native102&&width===390){
+   // Genuine photo-backed original 163-bone donor MUST be visible before the
+   // simulated mobile tab-hidden lifecycle event. Browser API lifecycle is
+   // emulated through real Chromium DOM events; NOT a physical phone test.
+   const before102=await page.evaluate(()=>window.native3D05Bridge.state());
+   assert.equal(before102.modelReady,true);
+   assert.equal(before102.bones,163);
+   const hidden=await page.evaluate(()=>{
+    Object.defineProperty(document,'hidden',{configurable:true,value:true});
+    Object.defineProperty(document,'visibilityState',{configurable:true,value:'hidden'});
+    document.dispatchEvent(new Event('visibilitychange'));
+    return {
+     status:document.getElementById('native3D05Status')?.textContent,
+     photos:document.querySelectorAll('#outfit3D01Photos img').length,
+     signedIn:window.nativeLossless04Bridge.status().active
+    };
+   });
+   assert.match(hidden.status,/Browser backgrounded.*preview closed/);
+   assert.equal(hidden.photos,0,'Hidden tab must synchronously dispose original private 3D photo');
+   assert.equal(hidden.signedIn,true,'Normal tab background must not log out owner');
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+   await assert.rejects(page.evaluate(()=>window.native3D05Bridge.open()),
+    /NATIVE102 hidden browser must close photographed 3D/);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   const background=await page.screenshot({fullPage:false,animations:'disabled'});
+   const bgMeta=await sharp(background).metadata();
+   assert.equal(bgMeta.width,390);
+   await mkdir('benchmark/native-3d-102',{recursive:true});
+   await writeFile('benchmark/native-3d-102/background-source-revoked-390.png',background);
+   await page.evaluate(()=>{
+    delete document.hidden;delete document.visibilityState;
+   });
+   // Use the same actual browser touch button as the known-good #93
+   // reopen sequence. A raw page.evaluate() promise can be invalidated by
+   // donor-managed document navigation during 3D reattachment.
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   // A different mobile lifecycle freeze can also occur without pagehide.
+   const frozen=await page.evaluate(()=>{
+    document.dispatchEvent(new Event('freeze'));
+    return {
+     status:document.getElementById('native3D05Status')?.textContent,
+     photos:document.querySelectorAll('#outfit3D01Photos img').length,
+     signedIn:window.nativeLossless04Bridge.status().active
+    };
+   });
+   assert.match(frozen.status,/Browser frozen.*preview closed/);
+   assert.equal(frozen.photos,0);
+   assert.equal(frozen.signedIn,true);
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   const freezePng=await page.screenshot({fullPage:false,animations:'disabled'});
+   const freezeMeta=await sharp(freezePng).metadata();
+   assert.equal(freezeMeta.width,390);
+   await writeFile('benchmark/native-3d-102/freeze-source-revoked-390.png',freezePng);
+   await writeFile('benchmark/native-3d-102/acceptance.json',
+    JSON.stringify({
+     priority:'NATIVE-MOBILE-VISIBILITY-SOURCE-REVOKE-102',
+     browser:'Chromium',simulatedBrowserVisibility:true,
+     actualPhysicalAndroidIPhone:false,viewportCSSWidth:390,
+     authenticSourceJPEG:true,realOriginalWebGLBones:163,
+     hiddenEventClosedSourceBeforeStateRead:true,
+     hiddenOpenBlocked:true,sourceReopenPassedActualNATIVE92OriginalBytes:true,
+     freezeEventClosedSourceBeforeStateRead:true,
+     originalOwnerSavedOutfitUnchanged:true,signedOwnerStillActive:true,
+     originalPhotographsInArtifacts:false,
+     screenshots:[
+      {file:'background-source-revoked-390.png',sha256:digest(background),
+       width:bgMeta.width,height:bgMeta.height},
+      {file:'freeze-source-revoked-390.png',sha256:digest(freezePng),
+       width:freezeMeta.width,height:freezeMeta.height}
+     ],
+     realSignedCloudRLS:false,releaseAuthorized:false,familyAlpha:'HOLD'
+    },null,2)+'\n');
+  }
   // Explicit scene close must NOT invalidate still-signed-in consumer editor.
   await page.evaluate(()=>window.native3D05Bridge.close());
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -496,6 +574,7 @@ try{
    ...(native91?{sameGarmentIdPhotoSourceRevision91:width===390?'verified':'not-tested-in-this-viewport'}:{}),
    ...(native92?{tamperedOriginalJPEGBlocked92:width===390?tamperedOriginalBlocked92:'not-tested-in-this-viewport'}:{}),
    ...(native93?{postOpenUnchangedSHASourceRevoked93:width===390?'verified':'not-tested-in-this-viewport'}:{}),
+   ...(native102?{mobileVisibilitySourceRevoked102:width===390?'verified-in-Chromium-lifecycle-simulation':'not-tested-in-this-viewport'}:{}),
    separateAccountBPrivate:true,missingIDsRetained:true,
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});
