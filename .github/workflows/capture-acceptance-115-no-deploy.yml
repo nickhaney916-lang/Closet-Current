@@ -3,6 +3,12 @@ on:
   push:
     branches:
       - research/real-photo-capture-closet-acceptance-115-main-20261106-HOLD
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - research/capture-acceptance-115/**
+      - tests/capture-acceptance-115.test.mjs
+      - .github/workflows/capture-acceptance-115-no-deploy.yml
   workflow_dispatch:
 permissions:
   contents: read
