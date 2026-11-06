@@ -125,6 +125,32 @@ export async function createNativeConsumerBoard04({
   return {refreshed:true,itemCount:next.length,ownerPrivate:true,
    originalSavedBoardUnchanged:true,releaseAuthorized:false};
  };
+ // NATIVE91: bounded read-only exact ORIGINAL SOURCE receipt for a known
+ // selected outfit. Original JPEG bytes never leave the existing wardrobe.
+ // A same-id photo replacement or correction changes this source identity.
+ const readOnlyGarmentSources91=(ids)=>{
+  if(new URLSearchParams(win.location.search).get('native3D05')!=='research')
+   fail('NATIVE91_3D_RESEARCH_NOT_ENABLED');
+  const lease=alive();
+  if(!Array.isArray(ids)||ids.length<1||ids.length>9||
+     ids.some(x=>!validId(x))||new Set(ids).size!==ids.length)
+   fail('NATIVE91_INVALID_SOURCE_SELECTION');
+  const sources=ids.map(garmentId=>{
+   const row=wardrobe.find(x=>x.id===garmentId);
+   const hash=row?.sourceSHA256;
+   if(!row||row.ownerId!==lease.ownerId||
+      typeof hash!=='string'||!/^[a-f0-9]{64}$/.test(hash)||
+      row.originalPhoto?.sha256!==hash||
+      row.sourceHash!==undefined&&row.sourceHash!==hash||
+      typeof row.originalPhoto?.image!=='string'||
+      !row.originalPhoto.image.startsWith('data:image/jpeg;base64,'))
+    fail('NATIVE91_MISSING_OR_CHANGED_ORIGINAL_SOURCE');
+   return Object.freeze({id:row.id,sha256:hash,
+    category:String(row.category||''),itemType:String(row.itemType||''),
+    color:String(row.color||''),secondaryColor:String(row.secondaryColor||'')});
+  });
+  return Object.freeze({ownerId:lease.ownerId,sources:Object.freeze(sources)});
+ };
  // STYLE-OWNED-LIVE-03: strictly research-only native owner wardrobe read.
  // The generator never reads a separate database or writes private photos.
  // A fresh lease/fingerprint proves the very same BOARD04 owner epoch and
@@ -317,7 +343,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyWardrobe,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
