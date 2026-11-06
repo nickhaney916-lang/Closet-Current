@@ -14,7 +14,7 @@ test('CI83 fifteen historic failures remain accurately classified rather than fa
  const data=JSON.parse(file('research/full-integration-ci-repair-83/failure-matrix.json'));
  assert.equal(data.historical.length,15);
  assert.equal(new Set(data.historical.map(r=>r.run_id)).size,15);
- assert.ok(data.historical.every(r=>r.test_steps_executed===false&&r.failed_at.includes('scope')));
+ assert.ok(data.historical.every(r=>r.test_steps_executed===false&&r.failed_at.includes('allowlist')));
  assert.equal(data.actual_dependency_failure.run_id,42130927627);
  assert.match(data.actual_dependency_failure.source_error,/fake-indexeddb/);
 });
