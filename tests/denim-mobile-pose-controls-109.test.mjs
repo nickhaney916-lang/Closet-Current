@@ -151,7 +151,7 @@ test('PHOTO109 independent 24 real original photo SHA screenshot audit refuses f
   'independentlyVerifiedRealMobileWebGLPNGFrames:24',
   'trueChromiumMobileCSSWidths:[320,390,430]',
   'sourceReviewAndGenuineSHA256Admission:true',
-  'physicalAndroidIphoneHardwareTested:false',
+  'actualPhysicalIphoneAndroidHardwareTested:false',
   "familyAlpha:'HOLD'"
  ])assert.ok(s.includes(t),'independent audited source missing '+t);
 });
