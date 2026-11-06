@@ -1,0 +1,125 @@
+name: PHOTO120 actual app original photo Adjust private closet NO DEPLOY
+on:
+  push:
+    branches:
+      - research/reviewed-app-capture-closet-120-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-research-app-manual-photo-save-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require EXACT green P119 parent and ONLY five authorized isolated research files
+        run: |
+          BASE=90a9e39f5851809188bf1a5f9bd839ba92821789
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo120-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|tests/reviewed-app-capture-closet-120.test.mjs|scripts/test-reviewed-app-capture-closet-120-browser.mjs|research/reviewed-app-capture-closet-120/REPORT.md|.github/workflows/reviewed-app-capture-closet-120-no-deploy.yml) ;;
+              *) echo "PHOTO120 STOP unauthorized production, existing staging, app index/theme, customer photo, cloud, model, 3D or other project file: $path"; exit 1 ;;
+            esac
+          done </tmp/photo120-paths
+          test "$(wc -l </tmp/photo120-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public/index.html public/auth.js public/cloud-backup.js package.json package-lock.json supabase
+      - name: Install inherited deterministic source-only Node research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Syntax and build original app research opt-in, static main integration checks
+        run: |
+          node --check public/app.js
+          node --check tests/reviewed-app-capture-closet-120.test.mjs
+          node --check scripts/test-reviewed-app-capture-closet-120-browser.mjs
+          node scripts/build.mjs
+          node --test tests/reviewed-app-capture-closet-120.test.mjs
+          node --test tests/manual-reviewed-private-save-119.test.mjs tests/owner-indexeddb-commit-117.test.mjs tests/index-04-saved-recognition.test.mjs
+      - name: Full inherited 3D, camera, recognition, owner privacy, source and app Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Explicit opt-in user confirmation and no production auth/cloud or scientific claims audit
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const app=readFileSync('public/app.js','utf8');
+          const report=readFileSync('research/reviewed-app-capture-closet-120/REPORT.md','utf8');
+          assert.ok(app.includes("get('reviewedSave120')==='research'&&"));
+          assert.ok(app.includes(' captureProof01Active&&index04ResearchActive'));
+          assert.ok(app.includes('reviewCheck.required=true;'));
+          assert.ok(app.includes('sourceCheck.required=true;'));
+          assert.ok(app.includes('await queued(()=>commitHumanReviewedPhoto119({'));
+          assert.ok(app.includes("const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id)"));
+          assert.ok(report.includes('Family Alpha Issue #255 remains HOLD'));
+          assert.ok(report.includes('NOT touched or deployed'));
+          assert.ok(report.includes('42313829988'));
+          NODE
+      - name: Preserve report and test-only no-deploy evidence, never customer images
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO120-main-research-actual-Adjust-atomic-closet-NO-DEPLOY
+          path: |
+            research/reviewed-app-capture-closet-120/REPORT.md
+            tests/reviewed-app-capture-closet-120.test.mjs
+          retention-days: 14
+
+  real-app-chromium-webkit-original-photo-adjust-save-mobile:
+    needs: exact-parent-research-app-manual-photo-save-regressions
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install inherited Chromium and WebKit research acceptance dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Actual app original photo Add to Adjust to private closet 320/390/430 Chromium and 390 WebKit
+        run: node scripts/test-reviewed-app-capture-closet-120-browser.mjs
+      - name: Audit four original photo screenshot scenarios and no overstated model or account claims
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync,statSync} from 'node:fs';
+          const dir='benchmark/reviewed-app-capture-closet-120';
+          const p=JSON.parse(readFileSync(dir+'/browser-results.json','utf8'));
+          assert.equal(p.scenarios.length,4);
+          assert.deepEqual(p.scenarios.map(x=>[x.browser,x.width]),[
+            ['chromium',320],['chromium',390],['chromium',430],['webkit',390]
+          ]);
+          for(const row of p.scenarios){
+            for(const f of ['realAppPage','actualPhotoUploadInput','originalSourceIndependentHash',
+              'actualUserCorrectionForm','actualOwnerBoundIndexedDB','actualMyClosetSaved',
+              'duplicateSourceRejected','manualConfirmationRequired','noHorizontalOverflow'])
+              assert.equal(row[f],true,f);
+            for(const f of ['actualAIModelExecution','actualSignedCloudRLS','physicalPhoneTested',
+              'productionDeployed','releaseAuthorized'])assert.equal(row[f],false,f);
+            assert.equal(row.familyAlpha,'HOLD');
+          }
+          assert.equal(p.realAuthenticatedCloudUsers,false);
+          assert.equal(p.physicalPhoneCameraVerified,false);
+          assert.equal(p.productionDeployed,false);
+          const images=readdirSync(dir).filter(x=>x.endsWith('.png'));
+          assert.equal(images.length,12,'three actual app screenshots per mobile viewport');
+          for(const name of images)assert.ok(statSync(dir+'/'+name).size>1000,name);
+          NODE
+      - name: Archive only original-license real app screenshot and status evidence NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO120-REAL-app-Chromium-WebKit-Adjust-private-closet-320-390-430-HOLD-NO-DEPLOY
+          path: benchmark/reviewed-app-capture-closet-120/
+          retention-days: 14
