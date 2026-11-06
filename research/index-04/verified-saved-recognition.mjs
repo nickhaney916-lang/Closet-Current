@@ -58,6 +58,8 @@ function decisionFingerprint114(record,recognition,independent){
    singleGarmentVerified:record.singleGarmentVerified,
    segmentHint:record.segmentHint?{
     verified:record.segmentHint.verified,
+    cutoutImage:record.segmentHint.cutoutImage,
+    ownerReviewedInstance:record.segmentHint.ownerReviewedInstance,
     originalSHA256:record.segmentHint.originalSHA256,
     cutoutSHA256:record.segmentHint.cutoutSHA256,
     clipped:record.segmentHint.clipped
@@ -138,12 +140,30 @@ export async function evaluateOwnerSavedRecognition04({
  if(currentOwner()!==ownerId)throw Error('INDEX-04 owner changed during source proof');
  assertSourceUnchanged114();
  const garmentCount=record.outfitSourceId||record.segmentHint?2:1;
- const segment=record.segmentHint?.verified===true&&
-  SHA.test(record.segmentHint.cutoutSHA256||'')&&
-  record.segmentHint.originalSHA256===src.expected?{
-   verified:true,cutoutSHA256:record.segmentHint.cutoutSHA256,
-   originalSHA256:src.expected,clipped:record.segmentHint.clipped===true
-  }:{verified:false,clipped:record.segmentHint?.clipped===true};
+ // PHOTO116: SHA strings and an object flag are never cutout-byte evidence.
+ // The original camera JPEG remains canonical. The cutout's own JPEG MUST
+ // separately hash to its claimed digest, be different from the original,
+ // and have an explicit instance-specific OWNER review. No source pixels leave
+ // the local process and a digest alone does not prove true instance masking.
+ const hint=record.segmentHint;
+ const cutoutBytes=hint?.verified===true&&hint.ownerReviewedInstance===true&&
+  hint.clipped!==true&&SHA.test(hint.cutoutSHA256||'')&&
+  hint.originalSHA256===src.expected&&
+  typeof hint.cutoutImage==='string'&&hint.cutoutImage!==src.original
+  ?bytesFromDataJPEG(hint.cutoutImage):null;
+ let verifiedCutoutBytes=false;
+ if(byteVerified&&cutoutBytes){
+  const cutoutProof=await verifyOriginalSourceBytes(
+   cutoutBytes,hint.cutoutSHA256,cryptoProvider);
+  verifiedCutoutBytes=cutoutProof.verified;
+  if(currentOwner()!==ownerId)
+   throw Error('INDEX-04 owner changed during cutout JPEG proof');
+  assertSourceUnchanged114();
+ }
+ const segment=verifiedCutoutBytes?{
+  verified:true,cutoutSHA256:hint.cutoutSHA256,
+  originalSHA256:src.expected,clipped:false
+ }:{verified:false,clipped:hint?.clipped===true};
  const singleGarmentVerified=record.singleGarmentVerified===true&&
   garmentCount===1&&!record.cropBounds;
  const source={verified:byteVerified&&
@@ -181,6 +201,10 @@ export async function evaluateOwnerSavedRecognition04({
  if(!src.consistent)reasons.push('conflicting-original-source-hashes');
  if(!byteVerified)reasons.push('original-JPEG-identity-not-verified');
  if(!source.verified)reasons.push('single-garment-or-cutout-not-proven');
+ // A photograph with multiple garments needs an individual human category/
+ // subtype decision. A hash-verified cutout alone cannot prove segmentation,
+ // nor that a whole-photo model prediction belongs to that cutout.
+ if(garmentCount!==1)reasons.push('multi-garment-category-and-type-needs-owner-review');
  if(duplicate.status!=='allow')reasons.push(duplicate.reason);
  if(record.userAdjusted===true)reasons.push('manual-correction-must-win');
  const unique=freeze([...new Set(reasons)]);
@@ -189,7 +213,7 @@ export async function evaluateOwnerSavedRecognition04({
   throw Error('INDEX-04 owner changed before final automatic closet save decision');
  assertSourceUnchanged114();
  const autoSaveSafe=review.autoIndex===true&&!review.needsReview&&
-   duplicate.status==='allow'&&source.verified&&!record.userAdjusted;
+   garmentCount===1&&duplicate.status==='allow'&&source.verified&&!record.userAdjusted;
  // Do not return owner items, photo bytes, image URLs or decoded pixels.
  return freeze({autoSaveSafe,needsReview:!autoSaveSafe,reviewReasons:unique,
   sourceKind:source.verified?review.sourceKind:'unverified',

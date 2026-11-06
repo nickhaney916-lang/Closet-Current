@@ -1,0 +1,72 @@
+name: PHOTO116 real original plus per-cutout JPEG SHA verification NO DEPLOY
+on:
+  push:
+    branches:
+      - research/multigarment-cutout-byte-identity-116-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research-verified-original-and-reviewed-cutout-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact independently green PHOTO114 parent and five strictly authorized research-only files
+        run: |
+          BASE=268306135eba9d49ac00e8fe9842955bec59c6bf
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo116-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/index-04/verified-saved-recognition.mjs|tests/index-04-saved-recognition.test.mjs|tests/multigarment-cutout-byte-116.test.mjs|research/multigarment-cutout-byte-116/REPORT.md|.github/workflows/multigarment-cutout-byte-116-no-deploy.yml) ;;
+              *) echo "REFUSE unauthorized public app, production, staging, model, cloud, user photo or other project modification: $path"; exit 1 ;;
+            esac
+          done </tmp/photo116-paths
+          test "$(wc -l </tmp/photo116-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
+      - name: Install inherited research Node dependencies without modifying lockfiles
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Real SHA-256 double-JPEG cutout source and manual multi-garment review acceptance
+        run: |
+          node --check research/index-04/verified-saved-recognition.mjs
+          node --check tests/multigarment-cutout-byte-116.test.mjs
+          node scripts/build.mjs
+          node --test tests/multigarment-cutout-byte-116.test.mjs
+          node --test tests/index-04-saved-recognition.test.mjs tests/async-camera-index-source-114.test.mjs
+      - name: All inherited original-camera, local recognition, owner-index, mobile and research Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Enforce review-only for unproved multi-garment masks; forbid fabricated model accuracy claims
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const source=readFileSync('research/index-04/verified-saved-recognition.mjs','utf8');
+          const report=readFileSync('research/multigarment-cutout-byte-116/REPORT.md','utf8');
+          for(const marker of [
+            'const cutoutProof=await verifyOriginalSourceBytes(',
+            'hint.ownerReviewedInstance===true',
+            'hint.cutoutImage!==src.original',
+            "reasons.push('multi-garment-category-and-type-needs-owner-review')",
+            "garmentCount===1&&duplicate.status==='allow'"
+          ])assert.ok(source.includes(marker),marker);
+          assert.ok(report.includes('Family Alpha HOLD'));
+          assert.ok(report.includes('Cutout JPEG SHA proves **cutout identity only**'));
+          assert.ok(report.includes('42308965004'));
+          assert.doesNotMatch(source,/fetch\s*\(|XMLHttpRequest|localStorage|indexedDB\.open|postMessage|new Worker/);
+          NODE
+      - name: Preserve no-photo no-deploy audit artifacts only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO116-original-cutout-byte-identity-human-review-HOLD-NO-DEPLOY
+          path: |
+            research/multigarment-cutout-byte-116/REPORT.md
+            tests/multigarment-cutout-byte-116.test.mjs
+          retention-days: 14
