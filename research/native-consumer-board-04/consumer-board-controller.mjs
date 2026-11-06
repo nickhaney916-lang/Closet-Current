@@ -367,7 +367,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,attestOriginalPhotoBytes92,readOnlyWardrobe,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
