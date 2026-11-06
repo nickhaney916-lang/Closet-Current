@@ -301,7 +301,7 @@ export function mountMultiGarmentCapture24({
      ' · Check the original and confirm color yourself.','fine'):null;
     if(preview)preview.dataset.colorReview46='unverified';
     const backdropNotice=result?.colorRisk85==='background-may-dominate-crop'?
-     el('p','Color suggestion withheld: crop edges may be background, not fabric. Adjust the crop/mask and confirm the garment color visually. Nothing was auto-filled.','fine'):null;
+     el('p','Pixel-color estimate withheld: crop edges may be background, not fabric. Separate AI guesses are also unverified. Adjust the crop/mask and confirm the garment color visually. Nothing was auto-filled.','fine'):null;
     if(backdropNotice)backdropNotice.dataset.colorRisk85='review-required';
     // SUBTYPE47: show conflicting candidate types but NEVER preselect either.
     // An AI "strong" tag is not a calibrated probability or human verification.
