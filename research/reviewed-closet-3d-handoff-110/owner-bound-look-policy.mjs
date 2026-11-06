@@ -20,6 +20,20 @@ const reviewedColor110=c=>typeof c==='string'&&c.length<=48&&c.trim()===c&&
 const fail=msg=>{throw Error('PHOTO110 '+msg);};
 const isRecord=o=>o&&typeof o==='object'&&!Array.isArray(o);
 const requireText=(s,max=180)=>typeof s==='string'&&s.length>0&&s.length<=max;
+// PHOTO113: freeze the inspected *primitive metadata* before the final live
+// session callback. That callback can synchronously observe a wardrobe edit;
+// never use a post-callback item value with a pre-callback 3D decision.
+const REVIEWED_FIELDS_113=Object.freeze([
+ 'id','ownerId','sourceId','sourceSHA256','color','category','itemType',
+ 'ownerReviewed','sourcePhotoOriginal','photographic3DReconstructionApproved',
+ 'releaseAuthorized','sourceFrom','originalOutfitGroup','garmentMeshVerified'
+]);
+const snapshotReviewed113=item=>Object.freeze(Object.fromEntries(
+ REVIEWED_FIELDS_113.map(key=>[key,item[key]])
+));
+const sourceUnchanged113=(item,snapshot)=>isRecord(item)&&
+ REVIEWED_FIELDS_113.every(key=>Object.is(item[key],snapshot[key]));
+
 function requireFresh110(session,readCurrent){
  if(!session?.authenticated||!requireText(session.ownerId,128)||
     !Number.isSafeInteger(session.generation)||session.generation<0||
@@ -49,10 +63,17 @@ export function planReviewedSourceLook110({session,indexed,board,
   !requireText(board.slots.top)||!requireText(board.slots.bottom)||
   board.slots.top===board.slots.bottom)
   fail('two valid owner-scoped saved top/bottom outfit slot records required');
- const top=indexed.byId.get(board.slots.top),bottom=indexed.byId.get(board.slots.bottom);
- if(!matchingOriginalItem110(top,session.ownerId,'Tops','T-shirt')||
-    !matchingOriginalItem110(bottom,session.ownerId,'Bottoms','Jeans'))
+ const topRecord=indexed.byId.get(board.slots.top),bottomRecord=indexed.byId.get(board.slots.bottom);
+ if(!matchingOriginalItem110(topRecord,session.ownerId,'Tops','T-shirt')||
+    !matchingOriginalItem110(bottomRecord,session.ownerId,'Bottoms','Jeans'))
   fail('saved original shirt and jeans need reviewed same-owner category/subtype/source photo');
+ const top=snapshotReviewed113(topRecord),bottom=snapshotReviewed113(bottomRecord);
+ const initial=Object.freeze({
+  ownerId:session.ownerId,generation:session.generation,
+  indexedById:indexed.byId,indexOwner:indexed.ownerId,
+  indexGeneration:indexed.generation,indexRelease:indexed.releaseAuthorized,
+  slotsRef:board.slots,topSlot:board.slots.top,bottomSlot:board.slots.bottom
+ });
  const benchmark=session.ownerId===RESEARCH_OWNER_110 &&
    top.color==='Black'&&bottom.color==='Blue'&&
    top.id==='licensed-shirt'&&top.sourceId==='licensed-shirt'&&
@@ -64,6 +85,21 @@ export function planReviewedSourceLook110({session,indexed,board,
  const selected=benchmark?
   (bottom.id==='licensed-jeans-1'?'public':'second'):null;
  requireFresh110(session,readCurrentSession);
+ // Defend against same-turn source edits, source-ID rebinding, slot changes,
+ // owner rotation and changes to the index generation or release gate.
+ // A valid previous decision is NOT a valid ticket for a new source state.
+ if(session.ownerId!==initial.ownerId||session.generation!==initial.generation||
+    session.authenticated!==true||indexed.ownerId!==initial.indexOwner||
+    indexed.generation!==initial.indexGeneration||
+    indexed.releaseAuthorized!==initial.indexRelease||
+    indexed.byId!==initial.indexedById||
+    !isRecord(board.slots)||board.slots!==initial.slotsRef||
+    Object.keys(board.slots).length!==2||
+    board.slots.top!==initial.topSlot||board.slots.bottom!==initial.bottomSlot||
+    indexed.byId.get(initial.topSlot)!==topRecord||
+    indexed.byId.get(initial.bottomSlot)!==bottomRecord||
+    !sourceUnchanged113(topRecord,top)||!sourceUnchanged113(bottomRecord,bottom))
+  fail('reviewed source, owner, index, or outfit changed during final source admission');
  return Object.freeze({
   status:benchmark?'verified-public-research-3d':'original-photo-2d-fallback',
   selectedPublicDenimSource:selected,
