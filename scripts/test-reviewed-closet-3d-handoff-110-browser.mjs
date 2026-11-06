@@ -125,8 +125,17 @@ try{
    const before=await page.evaluate(()=>window.cc110LookState());
    assert.equal(before.readyToSave,true);
    // In-page DOM click is untrusted and must not impersonate human consent.
+   const oldUntrustedState=await page.evaluate(()=>{
+    const state=window.cc110LookState();
+    return {saved:state.hasSavedLook,outcome:state.lastOutcome};
+   });
    await page.evaluate(()=>document.getElementById('cc110Save').click());
-   assert.equal(await page.evaluate(()=>window.cc110LookState().hasSavedLook),false);
+   const afterUntrustedState=await page.evaluate(()=>{
+    const state=window.cc110LookState();
+    return {saved:state.hasSavedLook,outcome:state.lastOutcome};
+   });
+   assert.deepEqual(afterUntrustedState,oldUntrustedState,
+    'scripted DOM click cannot mutate either new or previously saved original look');
    await page.locator('#cc110Save').click();
    await page.waitForFunction(()=>window.cc110LookState?.()?.hasSavedLook===true&&
     window.cc110LookState().lastOutcome==='licensed-original-look-saved-in-memory');
