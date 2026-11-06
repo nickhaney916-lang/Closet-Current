@@ -156,7 +156,7 @@ async function runBrowser(engine,name){
         // Side-by-side PHOTO105/PHOTO106 pair at the same source, figure,
         // pose and view. Image filenames carry anonymous A/B labels; the
         // version key is emitted as a separate unblinding artifact.
-        if(name==='chromium'&&cycle===0&&width===390&&knee===16){
+        if(name==='chromium'&&width===390&&knee===16){
          await page.evaluate(d=>window.cc105KneeStep(d,0),knee);await setView(page,view);
          const prior=await page.locator('#avatar').screenshot({animations:'disabled'});
          await page.evaluate(d=>window.cc106CalfDrape(d,0),knee);await setView(page,view);
