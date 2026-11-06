@@ -28,6 +28,8 @@ test('rejects duplicate, mismatched, or relabeled source evidence',()=>{
  assert.throws(()=>evaluateLockedSnapshot(duplicate),/duplicate original-photo SHA/);
  const changed=structuredClone(snapshot);changed.artifactSHA256='0'.repeat(64);
  assert.throws(()=>evaluateLockedSnapshot(changed),/unrecognized inference provenance/);
+ const params=structuredClone(snapshot);params.inferenceParameters.hypothesisTemplate='A photo of a garment.';
+ assert.throws(()=>evaluateLockedSnapshot(params),/inference parameters mismatch/);
  const mislabeled=structuredClone(snapshot);mislabeled.samples[0].abstained=true;
  assert.throws(()=>evaluateLockedSnapshot(mislabeled),/abstention disagrees/);
 });
