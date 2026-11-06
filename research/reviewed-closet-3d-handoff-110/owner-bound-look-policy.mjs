@@ -72,7 +72,7 @@ export function planReviewedSourceLook110({session,indexed,board,
   ownerId:session.ownerId,generation:session.generation,
   indexedById:indexed.byId,indexOwner:indexed.ownerId,
   indexGeneration:indexed.generation,indexRelease:indexed.releaseAuthorized,
-  topSlot:board.slots.top,bottomSlot:board.slots.bottom
+  slotsRef:board.slots,topSlot:board.slots.top,bottomSlot:board.slots.bottom
  });
  const benchmark=session.ownerId===RESEARCH_OWNER_110 &&
    top.color==='Black'&&bottom.color==='Blue'&&
@@ -93,7 +93,8 @@ export function planReviewedSourceLook110({session,indexed,board,
     indexed.generation!==initial.indexGeneration||
     indexed.releaseAuthorized!==initial.indexRelease||
     indexed.byId!==initial.indexedById||
-    !isRecord(board.slots)||Object.keys(board.slots).length!==2||
+    !isRecord(board.slots)||board.slots!==initial.slotsRef||
+    Object.keys(board.slots).length!==2||
     board.slots.top!==initial.topSlot||board.slots.bottom!==initial.bottomSlot||
     indexed.byId.get(initial.topSlot)!==topRecord||
     indexed.byId.get(initial.bottomSlot)!==bottomRecord||
