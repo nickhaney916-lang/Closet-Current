@@ -10,6 +10,7 @@
 import {createNativeAuthEpoch01} from './native-session-epoch-550-pinned.mjs';
 import {createExistingBoard02IO} from '../board-lossless-02/existing-idb-cas.mjs';
 import {boardFingerprint02,validateBoard02} from '../board-lossless-02/lossless-board.mjs';
+import {attestOriginalJPEGBytes92} from '../native-original-photo-integrity-92/original-jpeg-byte-attestation.mjs';
 
 export const NATIVE_CONSUMER_BOARD_04=Object.freeze({
  featureGate:'nativeLossless04=research',nativeConsumerControls:true,
@@ -150,6 +151,29 @@ export async function createNativeConsumerBoard04({
     color:String(row.color||''),secondaryColor:String(row.secondaryColor||'')});
   });
   return Object.freeze({ownerId:lease.ownerId,sources:Object.freeze(sources)});
+ };
+ // NATIVE92: cryptographically attest ORIGINAL JPEG BYTES for every selected
+ // source. All photo data stays inside the owner-private board closure; only
+ // the SHA-verified metadata receipt leaves. Compare the current wardrobe
+ // objects after asynchronous WebCrypto to fail closed on concurrent refresh.
+ const attestOriginalPhotoBytes92=async(ids)=>{
+  const before=readOnlyGarmentSources91(ids),lease=alive();
+  const sources=ids.map(id=>wardrobe.find(row=>row.id===id));
+  const verified=[];
+  for(const row of sources)
+   verified.push(await attestOriginalJPEGBytes92({
+    row,ownerId:lease.ownerId,cryptoImpl:win.crypto,
+    decodeBase64:win.atob.bind(win)
+   }));
+  if(epoch.auth.getSessionGeneration()!==lease.generation||
+     lease.ownerId!==alive().ownerId||
+     sources.some((row,i)=>row!==wardrobe.find(x=>x.id===ids[i])))
+   fail('NATIVE92_SOURCE_CHANGED_DURING_CRYPTO');
+  const after=readOnlyGarmentSources91(ids);
+  if(JSON.stringify(after)!==JSON.stringify(before)||
+     verified.some((row,i)=>JSON.stringify(row)!==JSON.stringify(before.sources[i])))
+   fail('NATIVE92_SOURCE_CHANGED_DURING_CRYPTO');
+  return Object.freeze({ownerId:lease.ownerId,sources:Object.freeze(verified)});
  };
  // STYLE-OWNED-LIVE-03: strictly research-only native owner wardrobe read.
  // The generator never reads a separate database or writes private photos.
@@ -343,7 +367,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;

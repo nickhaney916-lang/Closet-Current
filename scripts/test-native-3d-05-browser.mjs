@@ -51,6 +51,7 @@ let tokenCount=0;
 const native88=process.env.NATIVE88==='1';
 const native89=process.env.NATIVE89==='1';
 const native91=process.env.NATIVE91==='1';
+const native92=process.env.NATIVE92==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -170,6 +171,58 @@ try{
   // A clicked original saved outfit rather than donor-created selection.
   await page.locator('#savedBoards button').first().click();
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+  let tamperedOriginalBlocked92=false;
+  if(native92&&width===390){
+   // A genuine but WRONG licensed JPEG replaces the stored bytes under the
+   // SAME item ID; sourceSHA256 and originalPhoto.sha256 are deliberately
+   // unchanged. Metadata-only NATIVE91 correctly cannot see this failure;
+   // only genuine WebCrypto over the bytes can protect the 3D renderer.
+   const putPhoto=async image=>{
+    await page.evaluate(({image})=>new Promise((resolve,reject)=>{
+     const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
+     const get=store.get('native05-A-dress');
+     get.onsuccess=()=>{
+      const row=get.result;
+      if(row?.ownerId!=='native05-A')return reject(Error('Wrong test account'));
+      row.originalPhoto.image=image;row.image=image;
+      // Deliberately retain BOTH original SHA metadata fields.
+      store.put(row);
+     };
+     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error);
+    }),{image});
+    await page.evaluate(()=>window.nativeLossless04Bridge.refreshWardrobe());
+   };
+   await putPhoto(photos['commons-0003'].image);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.readOnlyGarmentSources91(
+    ['native05-A-dress']).sources[0].sha256),photos['commons-0053'].sha256);
+   await assert.rejects(page.evaluate(()=>window.native3D05Bridge.open()),
+    /NATIVE92 ORIGINAL JPEG BYTES DO NOT MATCH SOURCE SHA/);
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   const png=await page.screenshot({fullPage:false,animations:'disabled'});
+   const meta=await sharp(png).metadata(),stats=await sharp(png).stats();
+   assert.equal(meta.width,390);
+   assert.ok(png.length>4500&&stats.channels.some(x=>x.stdev>7));
+   await mkdir('benchmark/native-3d-92',{recursive:true});
+   const filename='forged-unchanged-SHA-blocked-before-WebGL-390.png';
+   await writeFile('benchmark/native-3d-92/'+filename,png);
+   await writeFile('benchmark/native-3d-92/acceptance.json',
+    JSON.stringify({priority:'NATIVE-3D-ORIGINAL-JPEG-BYTES-92',
+     file:filename,width:390,height:meta.height,sha256:digest(png),
+     originalSHA:photos['commons-0053'].sha256,
+     replacementBytesSHA:photos['commons-0003'].sha256,
+     licensedOriginalJPEGs:true,shaMetadataIntentionallyUnchanged:true,
+     genuineBrowserWebCryptoRejectsBytes:true,donorNotOpenedForMismatchedBytes:true,
+     savedBoardUnchanged:true,ownerSessionPreserved:true,
+     physicalPhoneVerified:false,realSignedCloudVerified:false,
+     modelAccuracyMeasured:false,productionDeployed:false,familyAlpha:'HOLD'
+    },null,2)+'\n');
+   await putPhoto(photos['commons-0053'].image);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   tamperedOriginalBlocked92=true;
+  }
   let staleSelectionBlocked88=false;
   if(native88&&width===390){
    // NATIVE88 genuine browser race: pause pinned WebGL donor's lazy import
@@ -366,6 +419,7 @@ try{
    sessionLogoutClears3D:true,consumerStillActiveAfterViewerClose:true,
    ...(native89?{liveSourceRevocation89:width===390?'verified':'not-tested-in-this-viewport'}:{}),
    ...(native91?{sameGarmentIdPhotoSourceRevision91:width===390?'verified':'not-tested-in-this-viewport'}:{}),
+   ...(native92?{tamperedOriginalJPEGBlocked92:width===390?tamperedOriginalBlocked92:'not-tested-in-this-viewport'}:{}),
    separateAccountBPrivate:true,missingIDsRetained:true,
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});

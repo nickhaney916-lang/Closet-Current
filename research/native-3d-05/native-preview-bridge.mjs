@@ -196,6 +196,15 @@ export async function mountNative3D05({
    captureNative3D05Sources91({consumer,admitted:selected,expected:selectedSources91});
    return current;
   };
+  const attestOriginalBytes92=async()=>{
+   if(typeof consumer.attestOriginalPhotoBytes92!=='function')
+    throw Error('NATIVE92 private original-byte SHA attestation unavailable');
+   const actual=await consumer.attestOriginalPhotoBytes92(Object.values(selected.slots));
+   requireFresh(); // A concurrent source revision cannot finish an old attestation.
+   if(JSON.stringify(actual)!==JSON.stringify(selectedSources91))
+    throw Error('NATIVE92 original source receipt changed during byte attestation');
+   return actual;
+  };
   opening=true;button.disabled=true;
   try{
    notify('Verifying owner wardrobe and loading original-photo anatomical 3D…');
@@ -206,6 +215,7 @@ export async function mountNative3D05({
    if(request!==attempt||lease.ownerId!==selected.ownerId||!epoch.status().active)
     throw Error('NATIVE05 original account changed before viewer admission');
    requireFresh(); // A different saved board must not cross the donor import boundary.
+   await attestOriginalBytes92(); // Cryptographic JPEG bytes, not metadata alone.
    const donor=await importPinnedDonor();
    requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
@@ -218,6 +228,7 @@ export async function mountNative3D05({
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
    requireFresh(); // The WebGL model may take seconds; recheck source + owner.
+   await attestOriginalBytes92(); // Repeat after slow WebGL to close byte-level TOCTOU.
    const target=doc.getElementById('outfit3D01Saved');
    if(!target||![...target.options].some(x=>x.value===selected.id))
     throw Error('NATIVE05 saved outfit absent in verified owner 3D donor');
