@@ -1,0 +1,127 @@
+name: P131 dual humanoid eye facial definition and real mobile WebGL NO DEPLOY
+on:
+  push:
+    branches:
+      - research/dual-humanoid-face-definition-131-main-20261106-HOLD
+  pull_request:
+    branches:
+      - research/source-review-atomic-cloud-merge-130-main-20261106-HOLD
+    paths:
+      - 'research/dual-humanoid-face-definition-131/**'
+      - 'scripts/install-dual-humanoid-face-131.mjs'
+      - 'scripts/prepare-dual-humanoid-face-131-webgl-test.mjs'
+      - 'tests/dual-humanoid-face-definition-131.test.mjs'
+      - '.github/workflows/dual-humanoid-face-definition-131-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dual-figure-head-bone-face-real-webgl-131:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact independently green P130 parent and SIX research-only touched paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=5ce8f51ebbf65d275197a21bdaa7818801b4b49b
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p131-paths
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/dual-humanoid-face-definition-131-no-deploy.yml|research/dual-humanoid-face-definition-131/face-definition.mjs|research/dual-humanoid-face-definition-131/REPORT.md|scripts/install-dual-humanoid-face-131.mjs|scripts/prepare-dual-humanoid-face-131-webgl-test.mjs|tests/dual-humanoid-face-definition-131.test.mjs) ;;
+              *) echo "REFUSE non-research original app, prod, staging, auth, cloud, garment/rig or parallel edit: $path"; exit 1 ;;
+            esac
+          done </tmp/p131-paths
+          test "$(wc -l </tmp/p131-paths)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json benchmark/fixtures research/style-owned-live-03 research/restore-atomic-01 research/source-review-atomic-cloud-merge-130
+      - name: Install strictly pinned research Node and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build unchanged source and run real 163-bone facial geometry tests
+        run: |
+          node --check research/dual-humanoid-face-definition-131/face-definition.mjs
+          node --check scripts/install-dual-humanoid-face-131.mjs
+          node --check scripts/prepare-dual-humanoid-face-131-webgl-test.mjs
+          node --check tests/dual-humanoid-face-definition-131.test.mjs
+          node scripts/build.mjs
+          node --test tests/dual-humanoid-face-definition-131.test.mjs
+      - name: Run every inherited camera, authentication, privacy, photo-source, clothing and 3D Node regression
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Independently reconstruct original pinned CC0 163-bone male/female donor
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git fetch --no-tags origin 672247f7121e92bba32b81cec74efddb2b69c817
+          git worktree add --detach .face131-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.face131-donor-541"
+          ln -s ../node_modules .face131-donor-541/node_modules
+          cd .face131-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Load pinned P118 skin and hair RESEARCH ONLY into detached donor without merging parallel P118
+        run: |
+          mkdir -p .face131-donor-541/research/dual-humanoid-photorealism-118
+          git show 672247f7121e92bba32b81cec74efddb2b69c817:research/dual-humanoid-photorealism-118/realism.mjs > .face131-donor-541/research/dual-humanoid-photorealism-118/realism.mjs
+          git show 672247f7121e92bba32b81cec74efddb2b69c817:scripts/install-dual-humanoid-realism-118.mjs > .face131-donor-541/scripts/install-dual-humanoid-realism-118.mjs
+          git show 672247f7121e92bba32b81cec74efddb2b69c817:scripts/test-dual-humanoid-realism-118.mjs > .face131-donor-541/scripts/test-dual-humanoid-realism-118.mjs
+          cd .face131-donor-541
+          node scripts/install-dual-humanoid-realism-118.mjs .
+      - name: Install P131 original-head-bone facial definition and derive genuine P118 versus P131 mobile WebGL matrix
+        run: |
+          node scripts/install-dual-humanoid-face-131.mjs .face131-donor-541
+          node scripts/prepare-dual-humanoid-face-131-webgl-test.mjs .face131-donor-541
+          cd .face131-donor-541
+          node --check scripts/test-dual-humanoid-face-131.mjs
+          node scripts/test-dual-humanoid-face-131.mjs
+      - name: Independently require 72 genuine Chromium WebGL A/B frames, 163 original source bones, both figures, and 12 comparisons
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='.face131-donor-541/benchmark/three-d-131/';
+          const r=JSON.parse(readFileSync(root+'acceptance.json','utf8'));
+          assert.equal(r.schema,'dual-humanoid-face-definition-131-webgl/v1');
+          assert.deepEqual(r.figures,['female','male']);
+          assert.deepEqual(r.viewportWidthsCSS,[320,390,430]);
+          assert.deepEqual(r.viewDegrees,[0,90,270,180,45,225]);
+          assert.equal(r.chromiumScreenshots,72);
+          assert.equal(r.baselineComparisonPairs,12);
+          assert.equal(r.rigBones,163);
+          assert.equal(r.facialDefinitionComparedToP118,true);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.releaseAuthorized,false);
+          assert.ok(r.browserResults.some(x=>x.browser==='chromium'&&x.supported===true));
+          for(const image of r.screenshots){
+            assert.equal(image.rigBones,163);
+            assert.equal(image.sourceHashes.top,'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64');
+            assert.equal(image.sourceHashes.bottom,'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c');
+            assert.equal(createHash('sha256').update(readFileSync(root+image.file)).digest('hex'),image.sha256);
+          }
+          for(const gender of ['female','male']){
+            assert.ok(readFileSync(root+'comparison-'+gender+'-before-after.png').length>10000);
+          }
+          console.log('P131_REAL_DUAL_FIGURE_WEBGL_ACCEPTANCE '+JSON.stringify({chromiumScreenshots:r.chromiumScreenshots,totalScreenshots:r.renderedScreenshots,baselineComparisonPairs:r.baselineComparisonPairs,webkit:r.browserResults.find(x=>x.browser==='webkit'),familyAlpha:r.familyAlpha,productionDeployed:false,photorealismHumanScore:'NOT_ASSESSED'}));
+          NODE
+      - name: Archive real WebGL screenshots, BEFORE/AFTER contact sheets, SHA receipts and independent review instructions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P131-dual-figure-original-163-bone-real-WebGL-before-after-HOLD-NO-DEPLOY
+          path: |
+            research/dual-humanoid-face-definition-131/REPORT.md
+            .face131-donor-541/benchmark/three-d-131/
+          if-no-files-found: warn
+          retention-days: 14
