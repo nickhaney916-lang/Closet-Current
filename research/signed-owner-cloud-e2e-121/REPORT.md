@@ -6,40 +6,35 @@
 
 - Research branch: `research/signed-owner-cloud-e2e-121-main-20261106-HOLD`
 - Parent: Priority #120 exact verified commit `2d996a3aa1ed4f8dbad50a7a7553fb9121723c5d`, draft PR [#675](https://github.com/nickhaney916-lang/Closet-Current/pull/675).
-- Scope is additive security regression coverage and a no-deploy workflow. The baseline UI integration remains in the parent; no auth, cloud client, SQL migration, app runtime, customer record, credential or photograph is changed here.
+- Scope: additive security regression coverage, a no-deploy workflow, and its technical report. No auth, cloud client, SQL migration, app runtime, customer record, credential, or photograph was changed.
 
-## Evidence classifications
-
-### VERIFIED from inspected repository configuration
+## VERIFIED: repository configuration and CI
 
 - `supabase/cloud-backup.sql` enables RLS on `closet_backups`, grants authenticated-only row operations, and uses `auth.uid()` for row visibility and write checks.
 - `save_closet_backup` is `SECURITY INVOKER`, derives `owner_id` from `auth.uid()`, rejects missing authentication and checks expected revisions. It has no caller-supplied owner parameter.
 - The `closet-private` bucket is configured non-public. Its four object policies bind the first storage path segment to `auth.uid()`.
 - `public/auth.js` refresh handling rejects a refreshed token whose user differs from the currently expected user. Logout removes the stored session and reloads the page to tear down current in-memory app state.
-- `docs/CLOUD-BACKUP.md` records an earlier validation using two disposable synthetic Supabase accounts (private upload/download, revision checks, cross-owner/anonymous denial and cleanup), plus rollback policy checks. It also says the browser restore suite used a controlled HTTP backend, and identifies refresh-loss-on-existing-session as not independently reproduced. This is inherited documentation, not a fresh P121 backend run.
-- Existing Priority #120 evidence is real app import/Adjust/IndexedDB/mobile-browser acceptance with controlled auth and recognition fixtures. It is not real signed-account cloud proof.
+- [Dedicated exact-head P121 GitHub Actions run #42324957206](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42324957206): **SUCCESS**. The lineage/scope check passed; the six P121 configuration regressions passed **6/6**; complete inherited Node app/research suite passed **1,102/1,102**; inherited real-app mobile browser acceptance passed **4/4**; evidence audit passed.
+- Mobile browser acceptance inherited from P120 exercised the real app import/Adjust/reviewed-save flow in Chromium at **320, 390, 430 px** and WebKit at **390 px**. **12 screenshots** were generated and uploaded as the workflow artifact. These are emulated browser sizes, not physical phones.
+- During CI setup, the initial browser run found missing Playwright binaries; the next run found container Git safe-directory setup and a mismatched evidence-field assertion. Those workflow defects were corrected. The final run passed all workflow jobs.
+- No P121 runtime authorization fix is claimed. The new static checks validate source configuration; they do not independently exercise server-side authorization.
 
-### IMPLEMENTED — NOT VERIFIED
+## IMPLEMENTED — NOT VERIFIED: cloud proof
 
-- Added `tests/signed-owner-cloud-e2e-121.test.mjs`, six built-in Node checks that pin the repository's security configuration and explicitly prevent the controlled browser cloud mock from being described as JWT/RLS evidence.
-- Added a branch-scoped, read-only GitHub Actions workflow. It enforces parent lineage and a three-path research allowlist, and is configured to run the full inherited Node suite and Priority #120 actual-app Chromium/WebKit workflow with non-secret screenshot artifacts.
-- Exact-head test execution was not established during this handoff. The linked GitHub Actions tools returned no run records or commit statuses for the P121 head, so no P121 test count, browser outcome, screenshot count, or CI success is claimed. The workflow itself remains available on the PR branch for execution.
-- No runtime authorization logic or defect fix is claimed. Static assertions do not constitute server-side authorization testing.
+The repository's `docs/CLOUD-BACKUP.md` records an earlier run using two disposable synthetic Supabase accounts (private upload/download, revision checks, cross-owner/anonymous denial and cleanup) and rollback policy checks. It also says the browser restore suite used a controlled HTTP backend and that refresh-loss-on-an-existing-session was not independently reproduced. That is inherited documentation, not fresh P121 backend evidence.
 
-### BLOCKED: isolated authenticated end-to-end execution
+This run had no provisioned disposable local Supabase Auth/Postgres/Storage stack, local credentials, or safe test project. Credentials for the existing connected Supabase project were not used, and no paid cloud resource or external accounts were created. Therefore P121 does **not** independently verify real signed JWTs, remotely enforced RLS, signed-account photo access, two-account cloud separation, token expiry/revocation, authenticated backup/restore, corrupt/aborted restore rollback, or cross-account recovery. Earlier documentation is not represented as fresh proof.
 
-This run has no provisioned disposable local Supabase Auth/Postgres/Storage stack, local credentials, or safe test project. Credentials for the existing connected Supabase project were not used. No new paid cloud resource or external accounts were created. Therefore this priority does **not** independently repeat actual signed JWT, RLS, storage ownership, expiration/revocation, cloud backup/restore, or true two-account end-to-end behavior. Earlier repository documentation is inherited evidence only; it is not fresh P121 verification.
+## BLOCKED: broader acceptance
 
-Also BLOCKED on this run: direct physical Android/iPhone camera capture and hardware acceptance. Emulated browser widths do not establish physical-device results.
-
-## Acceptance boundaries
-
-- Two synthetic owner IDs in the inherited P120 browser tests prove local IndexedDB namespace separation only.
+- Real signed-account/JWT/RLS and cloud recovery execution needs an isolated local Supabase environment or separately authorized disposable test project and credentials.
+- Physical Android/iPhone camera capture and hardware/browser acceptance are unavailable here.
+- Two synthetic owner IDs in inherited browser tests prove local IndexedDB namespace separation only.
 - The existing cloud mock uses controlled route responses and cannot prove signed JWT authenticity or remote enforcement.
 - Human category/type/color correction and original JPEG SHA are verified by inherited P120 browser evidence; classification truth is not.
 - Local IndexedDB writes and cloud backup are separate operations. No distributed transaction across them is claimed.
-- The inherited cloud backup design documents verifying cloud images and complete documents before atomic local mirror replacement, retaining drafts, and revision-based stale-write rejection. P121 did not reproduce its restore failure cases against a real backend.
-- No user photos, access tokens, passwords, or personal information are included in the workflow artifact paths.
+- The inherited backup design documents verified downloads before atomic local mirror replacement, draft retention and revision-based stale-write rejection; P121 did not replay its interruption/corruption matrix against a real backend.
+- CI artifacts contain source-only screenshots and results, with no user photos, tokens, passwords, or personal information.
 
 ## Files added
 
