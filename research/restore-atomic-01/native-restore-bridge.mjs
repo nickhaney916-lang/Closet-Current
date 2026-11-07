@@ -49,14 +49,22 @@ export async function createNativeRestore01({
    // Validate all photos and all saved references BEFORE asking to replace.
    const receipt=await validateRestore01(data,{ownerId:lease.ownerId});
    const snap=await readOwnerSnapshot01(db,assertLease);
-   if(!confirm({incoming:receipt,existing:snap.rows.items.length,
-    savedExisting:snap.restore.state['outfit-board']?.saved?.length||0}))
-    return {cancelled:true,originalUntouched:true};
+   // PHOTO127: confirmation can be an asynchronous UI promise. A Promise
+   // object itself is truthy even when it resolves to false. Only an EXACT
+   // affirmative result permits the atomic owner-private replacement.
+   const approved=await confirm({incoming:receipt,existing:snap.rows.items.length,
+    savedExisting:snap.restore.state['outfit-board']?.saved?.length||0});
    assertLease();assert3DClosed();
+   if(approved!==true)return {cancelled:true,originalUntouched:true};
+   // The lease must be valid AFTER the owner's decision, not only before
+   // an arbitrarily long asynchronous confirmation dialog.
    const result=await restoreOwner01({db,assertLease,backup:data,
     ownerId:lease.ownerId,expectedFingerprint:snap.fingerprint,confirmed:true});
    assertLease();
    await onRestored();
+   // onRestored may await UI/database refresh; sign-out or token rotation
+   // during it must not notify a subsequent account's cloud synchronizer.
+   assertLease();
    win.closetCloud?.changed?.();
    return {...result,receipt,realSignedCloudRecovery:false};
   }finally{operation=false;}
