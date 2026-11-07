@@ -32,6 +32,13 @@ const index04ResearchActive=new URLSearchParams(location.search).get('index04')=
 // No change to the normal application's Adjust / save flow without ALL flags.
 const reviewedSave120Active=new URLSearchParams(location.search).get('reviewedSave120')==='research'&&
  captureProof01Active&&index04ResearchActive;
+// PHOTO122: newly human-confirmed camera originals → existing owner Style tab.
+// No new outfit generator, photo store, 3D claims, or non-research behavior.
+const reviewedStyle122Active=reviewedSave120Active&&
+ new URLSearchParams(location.search).get('reviewedStyle122')==='research'&&
+ new URLSearchParams(location.search).get('styleOwned03')==='research'&&
+ new URLSearchParams(location.search).get('nativeLossless04')==='research'&&
+ new URLSearchParams(location.search).get('nativeIndex07')==='research';
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
@@ -327,6 +334,58 @@ function renderRecognitionNotice(){
  const progress=$('recognitionProgress');progress.hidden=!loading;
  if(loading){if(recognitionState.percent===null)progress.removeAttribute('value');else progress.value=recognitionState.percent;}
 }
+/**
+ * PHOTO122 user-initiated research-only shortcut from the ACTUAL confirmed
+ * original-photo result card to the existing native Style My New Clothes.
+ * The style controller independently re-hashes each private wardrobe JPEG.
+ * Never guess 3 looks if the owned closet lacks compatible pieces.
+ */
+async function styleJustReviewedPhoto122(itemId,expectedSHA){
+ if(!reviewedStyle122Active)throw Error('PHOTO122 explicit opt-in required');
+ const auth=window.closetAuth,owner=auth?.user?.id,originalDb=db;
+ const live=()=>owner&&window.closetAuth===auth&&auth.user?.id===owner&&
+  db===originalDb&&db?.name==='closet-current-user-'+owner&&
+  $('authGate')?.hidden===true&&$('appShell')?.hidden===false;
+ if(!live())throw Error('Private signed-in wardrobe unavailable');
+ const tracked=items.find(row=>row.id===itemId&&row.ownerId===owner&&
+  row.sourceSHA256===expectedSHA);
+ if(!tracked||!sessionCapturedIds.has(itemId)||batch.some(x=>x.id===itemId))
+  throw Error('Reviewed original is not in your saved closet');
+ const persisted=await new Promise((resolve,reject)=>{
+  try{
+   const q=originalDb.transaction('items','readonly').objectStore('items').get(itemId);
+   q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(Error('Private saved garment unavailable'));
+  }catch{reject(Error('Private saved garment unavailable'));}
+ });
+ if(!live()||!persisted||persisted.ownerId!==owner||
+    persisted.sourceHashVerified!==true||persisted.ownerReviewed!==true||
+    persisted.userAdjusted!==true||persisted.sourceSHA256!==expectedSHA||
+    persisted.originalPhoto?.sha256!==expectedSHA||
+    persisted.originalPhoto?.image!==persisted.image||
+    persisted.category==='Uncategorized'||persisted.itemType==='Unknown'||
+    !persisted.color||persisted.color==='Unknown')
+  throw Error('Saved owner garment or original JPEG changed; reopen My Closet');
+ // The native wardrobe bridge is the only source of owned clothing IDs.
+ // Reopen/re-hash this saved snapshot before selecting a pinned new garment.
+ await nativeIndex07Refresh();
+ if(!live())throw Error('Owner signed out while refreshing the saved closet');
+ const panel=window.styleOwnedLive03Bridge;
+ if(!panel?.selectGarment||!panel?.generate)
+  throw Error('Style My New Clothes owner-private viewer is unavailable');
+ await panel.selectGarment(itemId);
+ if(!live())throw Error('Owner changed while selecting the photographed garment');
+ const suggestions=await panel.generate();
+ if(!live()||panel.status()?.pinnedId!==itemId||
+    suggestions?.combinations?.some(look=>look.pinnedId!==itemId))
+  throw Error('Pinned item or owner changed while creating outfit choices');
+ switchView('stylist');
+ const count=suggestions?.combinations?.length||0;
+ if(count<3)message('Your saved photo is pinned. '+count+
+  ' complete owned outfits are available; add compatible clothes to reach three.');
+ return Object.freeze({pinnedId:itemId,lookCount:count,
+  originalSHA256Verified:panel.status().sourceSHA256Verified===true,
+  familyAlpha:'HOLD',releaseAuthorized:false});
+}
 function renderPhotoResults(grid,results){
  grid.replaceChildren();
  if(!results.length){const box=node('div',null,'empty');box.append(node('h3','Your photos appear here'),node('p','Take a photo to add your first piece.'));grid.append(box);return;}
@@ -343,6 +402,23 @@ function renderPhotoResults(grid,results){
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
   const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
+  // Only a successfully saved, exact owner-reviewed camera original receives
+  // the single-tap three-owned-outfits shortcut on the REAL Photo results card.
+  if(typeof reviewedStyle122Active!=='undefined'&&reviewedStyle122Active&&
+     saved&&sessionCapturedIds.has(item.id)&&item.ownerReviewed===true&&
+     item.sourceHashVerified===true&&item.userAdjusted===true){
+   const style=node('button','Get 3 outfits with this piece','secondary');
+   style.type='button';style.classList.add('reviewed-style122');
+   style.dataset.savedItemId=item.id;
+   style.onclick=async()=>{
+    style.disabled=true;
+    try{await styleJustReviewedPhoto122(item.id,item.sourceSHA256);}
+    catch(error){message('Could not style that saved photo safely. '+String(error.message||error)+
+      '. Your closet and saved outfits are unchanged.');}
+    finally{style.disabled=false;}
+   };
+   body.append(style);
+  }
   card.append(image,body);grid.append(card);
  }
 }
