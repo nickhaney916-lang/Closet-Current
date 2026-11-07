@@ -93,7 +93,23 @@ async function updateColor(page,itemId,color){
  }),{itemId,color});
 }
 async function waitStatus(page,value){
- await page.waitForFunction(v=>document.getElementById('owner146Status')?.textContent.includes(v),value,{timeout:35000});
+ try{
+  await page.waitForFunction(v=>document.getElementById('owner146Status')?.textContent.includes(v),value,{timeout:12000});
+ }catch(e){
+  const diagnostics=await page.evaluate(async()=>{
+   let record=null;
+   try{record=await new Promise((ok,bad)=>{
+    const q=db.transaction('items','readonly').objectStore('items').get('p146-reviewed-shirt');
+    q.onsuccess=()=>ok(q.result);q.onerror=()=>bad(q.error);
+   });}catch{}
+   return {status:document.getElementById('owner146Status')?.textContent,
+    hasModal:!!document.querySelector('#ownerReview146Modal')?.open,
+    accountMenuOpen:!!document.querySelector('header .account-menu')?.open,
+    restoredColor:record?.color,
+    bridge:window.ownerReviewedCloud146?.state?.()};
+  });
+  throw Error('P146 expected status '+value+'; observed '+JSON.stringify(diagnostics));
+ }
 }
 async function openMenu(page){
  const menu=page.locator('header .account-menu');
