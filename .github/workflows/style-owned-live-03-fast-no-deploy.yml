@@ -99,7 +99,7 @@ jobs:
           const restore=readFileSync('research/restore-atomic-01/atomic-restore.mjs','utf8');
           assert.ok(p125.includes('Family Alpha')&&p125.includes('sourceReviewUnchanged125'));
           assert.ok(p126.includes('Family Alpha')&&p126.includes('verifyReviewedCutouts126'));
-          assert.ok(p127.includes('Family Alpha')&&p127.includes('awaited'));
+          assert.ok(p127.includes('Family Alpha')&&p127.includes('confirm')&&p127.includes('Promise'));
           for(const fragment of [
             'const approved=await confirm(',
             'if(approved!==true)return {cancelled:true,originalUntouched:true};',
