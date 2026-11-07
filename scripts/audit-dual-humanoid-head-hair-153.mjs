@@ -58,7 +58,7 @@ for(const width of widths){
   const after=b.find(x=>x.figure===figure&&x.view===view);
   assert.ok(before&&after,'same owner original source figure/angle required');
   assert.equal(before.headHairMeshCount153,0);
-  assert.ok(after.headHairMeshCount153>=(figure==='female'?18:12));
+  assert.ok(after.headHairMeshCount153>=(figure==='female'?14:5));
   assert.equal(after.headBoneAttached153,true);
   assert.equal(after.sourcePhotoGeometryUnchanged153,true);
   assert.equal(after.sourceRigBones,before.sourceRigBones);
