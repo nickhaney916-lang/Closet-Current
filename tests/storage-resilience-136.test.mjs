@@ -58,7 +58,7 @@ test('STORAGE136 aborted multi-record transaction commits neither partial garmen
 test('STORAGE136 owner databases stay isolated and bounded closet rendering keeps lazy image decoding',async()=>{
  const app=await readFile(new URL('../public/app.js',import.meta.url),'utf8');
  assert.match(app,/const closetPageSize136=48/);assert.match(app,/visible\.slice\(0,closetRendered136\)/);
- assert.match(app,/im\.loading='lazy';if\(visible\.length>100\)im\.decoding='async';im\.src=item\.image/);
+ assert.match(app,/observeWardrobeThumbnail/);assert.doesNotMatch(app,/im\.src=item\.image/);assert.match(app,/wardrobeIndex/);
  assert.match(app,/Your existing closet and saved outfits remain in place/);
  const a=await open('closet-current-user-owner-a-136'),b=await open('closet-current-user-owner-b-136');
  let tx=a.transaction('items','readwrite');tx.objectStore('items').add(row('owner-a','private-a',Buffer.from('a'),Buffer.from('cut-a')));await done(tx);

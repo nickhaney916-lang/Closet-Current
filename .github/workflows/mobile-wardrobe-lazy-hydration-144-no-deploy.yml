@@ -1,0 +1,94 @@
+name: P144 lazy wardrobe hydration · research only · no deploy
+on:
+  push:
+    branches: [research/mobile-wardrobe-lazy-hydration-144-work56-20261107-HOLD]
+  pull_request:
+    branches: [research/app-plus-cross-browser-recovery-143-main-20261107-HOLD]
+    paths:
+      - 'public/app.js'
+      - 'public/index.html'
+      - 'public/wardrobe-index.js'
+      - 'public/cloud-backup.js'
+      - 'public/outfit-board.js'
+      - 'public/closet-browser.js'
+      - 'public/closet-stylist.js'
+      - 'public/navigation.js'
+      - 'public/trends.js'
+      - 'research/manual-reviewed-private-save-119/reviewed-source-commit.mjs'
+      - 'research/native-correction-10/owner-correction-cas.mjs'
+      - 'research/restore-atomic-01/atomic-restore.mjs'
+      - 'research/cloud-backup-browser-140/backup-review.html'
+      - 'research/cloud-restore-browser-138/restore-review.html'
+      - 'research/cloud-roundtrip-browser-141/roundtrip-review.html'
+      - 'research/cross-browser-cloud-recovery-142/device-backup-restore.html'
+      - 'tests/automatic-indexing.test.cjs'
+      - 'tests/clothing-memory.test.cjs'
+      - 'tests/confirmed-edit-memory-44.test.cjs'
+      - 'tests/lazy-wardrobe-hydration-144.test.mjs'
+      - 'tests/manual-reviewed-private-save-119.test.mjs'
+      - 'tests/photo-results.test.cjs'
+      - 'tests/review-color-provenance-23.test.cjs'
+      - 'tests/reviewed-app-capture-closet-120.test.mjs'
+      - 'tests/reviewed-cutout-owned-style-124.test.mjs'
+      - 'tests/storage-resilience-136.test.mjs'
+      - 'scripts/test-mobile-wardrobe-lazy-hydration-144.mjs'
+      - '.github/workflows/mobile-wardrobe-lazy-hydration-144-no-deploy.yml'
+      - 'benchmark/mobile-wardrobe-lazy-hydration-144/**'
+      - 'research/mobile-wardrobe-lazy-hydration-144/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research-browser-and-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact P143 ancestry and research-only file scope
+        run: |
+          BASE=663d42d721881dc3b5716259c49ea89ec5681d54
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p144-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/index.html|public/wardrobe-index.js|public/cloud-backup.js|public/outfit-board.js|public/closet-browser.js|public/closet-stylist.js|public/navigation.js|public/trends.js|research/manual-reviewed-private-save-119/reviewed-source-commit.mjs|research/native-correction-10/owner-correction-cas.mjs|research/restore-atomic-01/atomic-restore.mjs|research/cloud-backup-browser-140/backup-review.html|research/cloud-restore-browser-138/restore-review.html|research/cloud-roundtrip-browser-141/roundtrip-review.html|research/cross-browser-cloud-recovery-142/device-backup-restore.html|research/mobile-wardrobe-lazy-hydration-144/*|tests/automatic-indexing.test.cjs|tests/clothing-memory.test.cjs|tests/confirmed-edit-memory-44.test.cjs|tests/lazy-wardrobe-hydration-144.test.mjs|tests/manual-reviewed-private-save-119.test.mjs|tests/photo-results.test.cjs|tests/review-color-provenance-23.test.cjs|tests/reviewed-app-capture-closet-120.test.mjs|tests/reviewed-cutout-owned-style-124.test.mjs|tests/storage-resilience-136.test.mjs|scripts/test-mobile-wardrobe-lazy-hydration-144.mjs|.github/workflows/mobile-wardrobe-lazy-hydration-144-no-deploy.yml|benchmark/mobile-wardrobe-lazy-hydration-144/*) ;;
+              *) echo "REFUSE out-of-scope or protected path: $path"; exit 1 ;;
+            esac
+          done </tmp/p144-paths
+          test -s /tmp/p144-paths
+          git diff --exit-code "$BASE" HEAD -- supabase package.json package-lock.json public/auth.js public/local-worker.mjs research/index-04
+      - name: Install pinned browser and test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build application and run focused lazy-photo and integrity tests
+        run: |
+          node --check public/app.js
+          node --check public/cloud-backup.js
+          node --check scripts/test-mobile-wardrobe-lazy-hydration-144.mjs
+          node --test tests/lazy-wardrobe-hydration-144.test.mjs tests/storage-resilience-136.test.mjs tests/manual-reviewed-private-save-119.test.mjs tests/reviewed-app-capture-closet-120.test.mjs tests/reviewed-cutout-owned-style-124.test.mjs tests/cloud-backup.test.cjs
+          node scripts/build.mjs
+      - name: Run full inherited Node regressions at this commit
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install real Chromium and WebKit engines
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run P136 exact-head versus P144 wardrobe sizes and 320/390/430 browser cases
+        env:
+          P144_REPEATS: '3'
+          P144_ENGINES: chromium,webkit
+        run: node scripts/test-mobile-wardrobe-lazy-hydration-144.mjs
+      - name: Upload exact-head browser screenshots and JSON benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p144-lazy-wardrobe-browser-evidence-${{ github.sha }}
+          path: benchmark/mobile-wardrobe-lazy-hydration-144/
+          if-no-files-found: error
+          retention-days: 60

@@ -90,7 +90,8 @@ export async function commitNativeCorrection10({
   const bad=e=>{if(settled)return;settled=true;reject(e);};
   try{
    assertOwner();
-   tx=db.transaction(nextBatch===null?['items']:['items','state'],'readwrite');
+   const stores=[...(nextBatch===null?['items']:['items','state']),...(db.objectStoreNames.contains('wardrobeIndex')?['wardrobeIndex']:[]),...(db.objectStoreNames.contains('wardrobeThumbs')?['wardrobeThumbs']:[])];
+   tx=db.transaction(stores,'readwrite');
    const items=tx.objectStore('items'),state=nextBatch===null?null:tx.objectStore('state');
    const request=items.get(before.id);
    request.onsuccess=()=>{
@@ -100,6 +101,8 @@ export async function commitNativeCorrection10({
       throw Error('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR');
      identity(request.result,after);
      items.put(structuredClone(after));
+     if(db.objectStoreNames.contains('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(globalThis.ClosetWardrobeIndex?.metadata?globalThis.ClosetWardrobeIndex.metadata(after):after);
+     if(db.objectStoreNames.contains('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(after.id);
      if(state)state.put({id:'draft',batch:structuredClone(nextBatch)});
     }catch(error){conflict=error;try{tx.abort();}catch{}}
    };

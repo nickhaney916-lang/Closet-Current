@@ -34,7 +34,7 @@ function renderTrendMatches(){
  const result=matchOutfit(lookPieces,items,$('lookSeason').value==='All seasons'?'':$('lookSeason').value),close=result.filter(x=>x.status==='match').length,substitutes=result.filter(x=>x.status==='substitute').length;
  $('matchSummary').textContent=`${close} of ${result.length} close matches · ${substitutes} possible substitutes · ${result.filter(x=>x.status==='gap').length} gaps`;
  for(const match of result){const card=node('article',null,'match-card'),{component,best,status}=match;card.append(node('span',status==='match'?'FROM YOUR CLOSET':status==='substitute'?'POSSIBLE SUBSTITUTE':'FILL A GAP','match-tag '+status),node('h3',component.label||component.itemType));
- if(best){const image=node('img');image.src=best.item.image;image.alt=best.item.name;card.append(image,node('h4',best.item.name),node('p',best.reasons.join(' · ')),node('p',best.missing.join(' · '),'match-differences'));}
+ if(best){const image=node('img');observeWardrobeThumbnail(image,best.item);image.alt=best.item.name;card.append(image,node('h4',best.item.name),node('p',best.reasons.join(' · ')),node('p',best.missing.join(' · '),'match-differences'));}
  else card.append(node('p',component.category==='Uncategorized'||component.itemType==='Unknown'?'Choose a category and item type above to match this piece.':'No saved item in this category.'));
  if(status!=='match'&&component.category!=='Uncategorized'&&component.itemType!=='Unknown'){
   const reuse=inspirationLooks.filter(look=>look.pieces.some(p=>p.category===component.category&&p.itemType===component.itemType)).length;
