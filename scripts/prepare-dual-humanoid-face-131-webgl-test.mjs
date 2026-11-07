@@ -32,6 +32,11 @@ replaceOnce("const result={schema:'dual-humanoid-photorealism-118-webgl/v1',",
  "const result={schema:'dual-humanoid-face-definition-131-webgl/v1',");
 replaceOnce("sourcePhotoHashes:source,rigBones:163,baselineComparisonPairs:comparison.length,",
  "sourcePhotoHashes:source,rigBones:163,baselineComparisonPairs:comparison.length,facialDefinitionComparedToP118:true,");
+
+replaceOnce("for(const figure of figures)for(const mode of ['before','after']){",
+ "for(const figure of figures)for(const mode of (name==='webkit'?['after']:['before','after'])){");
+replaceOnce("const sourceRig=JSON.stringify((await page.evaluate(()=>window.cc69Diagnostics())).actual3DGarment);\n    for(const deg of views){",
+ "const sourceRig=JSON.stringify((await page.evaluate(()=>window.cc69Diagnostics())).actual3DGarment);\n    for(const deg of (name==='webkit'?[0,90,180,270]:views)){");
 replaceOnce("screenshotsSha256:hash(Buffer.from(JSON.stringify(screens)))}));",
  "screenshotsSha256:hash(Buffer.from(JSON.stringify(screens))),facialDefinitionComparedToP118:true}));");
 await writeFile(output,s);
