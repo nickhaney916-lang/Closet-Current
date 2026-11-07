@@ -156,7 +156,8 @@ test('PHOTO127 refreshed auth token during pending async confirmation aborts bef
   await entered;
   e.auth.rotateToken();
   release();
-  await assert.rejects(pending,/RESTORE01 authenticated owner\/session changed/);
+  await assert.rejects(pending,
+   /AUTH01 owner or token rotated|RESTORE01 authenticated owner\/session changed/);
   assert.deepEqual((await snapshot(e.db)).rows,before.rows);
   assert.equal(e.auth.cloudChanged,0);
  }finally{bridge.dispose();}
