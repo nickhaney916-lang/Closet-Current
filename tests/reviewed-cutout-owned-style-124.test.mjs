@@ -218,11 +218,11 @@ test('PHOTO124 source checks and screenshot labels never claim a learned mask or
  for(const fragment of [
   "const reviewedCutout124Active=reviewedCloset123Active&&",
   "get('reviewedCutout124')==='research';",
-  "reviewedStored123=isReviewedSource123",
+  "const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&",
   "if(reviewedCutoutStored124){",
   "im.src=item.segmentHint.cutoutImage",
   'Owner-reviewed visible cutout · 2D photo only',
-  'cutout124:reviewedCutoutStored124',
+  'cutout124:true',
   'persisted.segmentHint.cutoutImage'
  ])assert.ok(app.includes(fragment),fragment);
  assert.ok(app.includes('get 3 outfits')||app.includes('Get 3 outfits'));
