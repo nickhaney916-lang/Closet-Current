@@ -51,9 +51,11 @@ export function createSignedOwnerCloud129({auth,db,baseURL,anonKey,fetcher=globa
  async function backup({expectedRemoteRevision}={}){
   const lease=await begin(),unlock=lock(lease);
   try{
-   const {packed}=await build(lease),remote=await readRemote(lease),current=remote?.revision||0;
+   const {snapshot,packed}=await build(lease),remote=await readRemote(lease),current=remote?.revision||0;
    if(expectedRemoteRevision!==undefined&&expectedRemoteRevision!==current){const e=Error('P129 stale cloud revision; no overwrite performed');e.code='conflict';throw e;}
    await upload(lease,packed.assets);await check(lease);
+   const latest=await readOwnerSnapshot01(db,()=>checkSync(lease));await check(lease);
+   if(latest.fingerprint!==snapshot.fingerprint){const e=Error('P129 local wardrobe changed during cloud backup; retry without overwriting a stale snapshot');e.code='conflict';throw e;}
    const r=await request(lease,'/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:current,p_document:packed.document}}),result=await r.json();await check(lease);
    const revision=Array.isArray(result)?result[0]:result;if(revision===null){const e=Error('P129 cloud revision compare-and-swap conflict');e.code='conflict';throw e;}
    if(!Number.isSafeInteger(revision)||revision<=current)fail('invalid saved cloud revision');
