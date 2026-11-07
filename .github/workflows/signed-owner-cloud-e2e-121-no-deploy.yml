@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - research/signed-owner-cloud-e2e-121-main-20261106-HOLD
+  pull_request:
+    branches:
+      - research/reviewed-app-capture-closet-120-main-20261106-HOLD
   workflow_dispatch:
 permissions:
   contents: read
