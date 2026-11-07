@@ -54,8 +54,10 @@ try{
    assert.equal(b.rowCount,0,'A may not enumerate B backup');
    const edit=await pg.query('update public.closet_backups set revision=revision+1 where owner_id=$1 returning owner_id',[ownerB]);
    assert.equal(edit.rowCount,0);
-   const del=await pg.query('delete from public.closet_backups where owner_id=$1 returning owner_id',[ownerB]);
-   assert.equal(del.rowCount,0);
+   // Actual schema grants SELECT, INSERT, UPDATE only. Direct DELETE is
+   // more strongly denied by table privileges, before RLS evaluation.
+   await assert.rejects(pg.query('delete from public.closet_backups where owner_id=$1 returning owner_id',[ownerB]),
+    err=>err.code==='42501');
    await assert.rejects(pg.query('insert into public.closet_backups(owner_id,revision,document) values($1,99,$2::jsonb)',
     [randomUUID(),JSON.stringify(doc(ownerA))]),e=>e.code==='42501');
    const own=await pg.query('select document from public.closet_backups where owner_id=$1',[ownerA]);
