@@ -1,0 +1,115 @@
+name: P136 mobile wardrobe storage resilience NO DEPLOY
+on:
+  push:
+    branches: [research/mobile-wardrobe-storage-resilience-136-work54-20261107-HOLD]
+  pull_request:
+    branches: [research/local-remote-consent-fence-134-main-20261107-HOLD]
+    paths:
+      - 'public/app.js'
+      - 'tests/storage-resilience-136.test.mjs'
+      - 'scripts/test-storage-resilience-136-browser.mjs'
+      - 'benchmark/storage-resilience-136/results.json'
+      - 'benchmark/storage-resilience-136/chromium-320-500-browse.png'
+      - 'benchmark/storage-resilience-136/chromium-390-500-browse.png'
+      - 'benchmark/storage-resilience-136/chromium-430-500-browse.png'
+      - 'research/mobile-wardrobe-storage-resilience-136/REPORT.md'
+      - '.github/workflows/mobile-wardrobe-storage-resilience-136-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-scope-node-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact verified P134 parent and research-only paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=59ec81353d03a6a5443c9370f209d7e367456e26
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p136-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|tests/storage-resilience-136.test.mjs|scripts/test-storage-resilience-136-browser.mjs|benchmark/storage-resilience-136/results.json|benchmark/storage-resilience-136/chromium-320-500-browse.png|benchmark/storage-resilience-136/chromium-390-500-browse.png|benchmark/storage-resilience-136/chromium-430-500-browse.png|research/mobile-wardrobe-storage-resilience-136/REPORT.md|.github/workflows/mobile-wardrobe-storage-resilience-136-no-deploy.yml) ;;
+              *) echo "Refusing protected source, production, staging, or parallel path: $path"; exit 1 ;;
+            esac
+          done < /tmp/p136-paths
+          test "$(wc -l < /tmp/p136-paths)" -eq 9
+          git diff --exit-code "$BASE" HEAD -- supabase public/auth.js public/outfit-board.js public/cloud-backup.js public/cloud-backup-engine.js public/cloud-backup-bridge.js
+      - name: Install pinned research-only test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Syntax, focused local-storage proof, and build
+        run: |
+          node --check public/app.js
+          node --check scripts/test-storage-resilience-136-browser.mjs
+          node --test tests/storage-resilience-136.test.mjs
+          node scripts/build.mjs
+      - name: Complete inherited Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  real-mobile-sized-chromium-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Compare exact P134 baseline with bounded closet rendering
+        env:
+          P136_PARENT_SHA: 59ec81353d03a6a5443c9370f209d7e367456e26
+          P136_REPEATS: '3'
+          P136_ENGINES: chromium,webkit
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node scripts/test-storage-resilience-136-browser.mjs
+      - name: Verify all scales, two engines, viewport screenshots, and no errors
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
+          assert.equal(r.cases.length,36);
+          assert.deepEqual(r.screenshots.map(x=>[x.engine,x.width]),[
+            ['chromium',320],['chromium',390],['chromium',430],
+            ['webkit',320],['webkit',390],['webkit',430]
+          ]);
+          assert.deepEqual(r.errors,[]);
+          assert.equal(r.claims.physicalAndroid,false);
+          assert.equal(r.claims.physicalIPhone,false);
+          for(const size of [25,100,250,500,1000]){
+            const baseline=r.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===size&&!x.screenshot&&x.baseline);
+            const optimized=r.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===size&&!x.screenshot&&!x.baseline);
+            assert.equal(baseline.length,3);assert.equal(optimized.length,3);
+            assert.ok(baseline.every(x=>x.cardsVisible===size));
+            assert.ok(optimized.every(x=>x.cardsVisible===(size<=100?size:48)));
+          }
+          NODE
+      - name: Upload browser screenshots and benchmark artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P136-mobile-wardrobe-storage-browser-benchmark
+          path: benchmark/storage-resilience-136/
+          retention-days: 14
