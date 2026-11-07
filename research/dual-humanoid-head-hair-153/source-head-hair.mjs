@@ -99,11 +99,11 @@ function shell(group,face,figure,cz){
    const side=Math.abs(Math.cos(phi));
    // A soft, asymmetric above-eye hairline rather than the floating P118
    // upper hemisphere. P153 hair is attached to the same real head bone.
-   const fall=(figure==='female'?.29:.255)+back*(figure==='female'?.18:.11)+side*.042;
+   const fall=(figure==='female'?.41:.39)+back*(figure==='female'?.15:.11)+side*.045;
    const latitude=smooth(t);
-   const x=cx+w*.515*rad*Math.cos(phi);
-   const z=cz+d*.525*rad*Math.sin(phi);
-   const y=top+h*.012-h*fall*latitude+
+   const x=cx+w*.615*rad*Math.cos(phi);
+   const z=cz+d*.635*rad*Math.sin(phi);
+   const y=top+h*.14-h*fall*latitude+
      h*.010*Math.sin(phi*3+figure.length)*Math.pow(t,3);
    if(![x,y,z].every(finite))fail('invalid source-based scalp vertex');
    verts.push(x,y,z);
@@ -124,10 +124,10 @@ function hairRibbon(group,face,cz,{
  const segments=10,verts=[],indices=[];
  for(let i=0;i<=segments;i++){
   const t=i/segments,curve=smooth(t);
-  const xx=cx+side*w*(originX+drift*curve);
+  const xx=cx+side*w*(originX+drift*curve+.026*Math.sin(Math.PI*t));
   const zz=cz+d*(originZ-.18*curve)+d*.014*Math.sin(t*4+seed);
   const yy=top-h*(.24+drop*t);
-  const half=w*width*(1-.42*curve);
+  const half=w*width*(1-.91*curve);
   for(const edge of [-1,1]){
    verts.push(xx+half*edge,yy+edge*h*.008*Math.sin(3*t+seed),
     zz-d*.019*Math.cos(edge+seed)*Math.sin(Math.PI*t));
@@ -145,10 +145,10 @@ function subtleCrownLines(group,face,cz,figure){
  for(let i=0;i<n;i++){
   const fraction=(i+1)/(n+1),side=i%2?-1:1;
   const arc=new THREE.CatmullRomCurve3([
-   new THREE.Vector3(cx+side*w*.035,top+h*.014,cz+d*.018),
-   new THREE.Vector3(cx+side*w*(.18+fraction*.08),top-h*.022,cz+d*.25),
-   new THREE.Vector3(cx+side*w*(.29+fraction*.12),top-h*.104,cz+d*.43),
-   new THREE.Vector3(cx+side*w*(.38+fraction*.10),top-h*.195,cz+d*.44)
+   new THREE.Vector3(cx+side*w*.035,top+h*.150,cz+d*.018),
+   new THREE.Vector3(cx+side*w*(.18+fraction*.08),top+h*.092,cz+d*.25),
+   new THREE.Vector3(cx+side*w*(.29+fraction*.12),top+h*.015,cz+d*.43),
+   new THREE.Vector3(cx+side*w*(.38+fraction*.10),top-h*.095,cz+d*.51)
   ]);
   const tube=new THREE.Mesh(new THREE.TubeGeometry(
    arc,18,Math.max(.00028,w*.0032),4,false),
@@ -223,22 +223,22 @@ export function applySourceHeadHair153(root,figure){
     hairRibbon(hair,face,centerZ,{side,seed:j+1,
      originX:.445+j*.023,originZ:.30-j*.09,
      drop:.79+j*.13,drift:.12+j*.022,
-     width:.065+j*.013,color:j%2?0x44322b:0x372820});
+     width:.044+j*.010,color:j%2?0x44322b:0x372820});
   }
-  for(let j=0;j<6;j++){
-   const x=(j-2.5)/2.5;
+  for(let j=0;j<8;j++){
+   const x=(j-3.5)/3.5;
    hairRibbon(hair,face,centerZ,{side:x<0?-1:1,seed:j+10,
     originX:Math.abs(x)*.39,originZ:-.36,
     drop:1.02+(j%3)*.08,drift:.03,
-    width:.085,color:j%2?0x4a372e:0x392720});
+    width:.055,color:j%2?0x4a372e:0x392720});
   }
  }else{
   for(const side of [-1,1]){
-   for(let j=0;j<3;j++)
+   for(let j=0;j<2;j++)
     hairRibbon(hair,face,centerZ,{side,seed:j+21,
      originX:.44+j*.018,originZ:.10-j*.08,
-     drop:.21+j*.022,drift:.02,
-     width:.048,color:j%2?0x47372d:0x352822});
+     drop:.14+j*.025,drift:.012,
+     width:.029,color:j%2?0x47372d:0x352822});
   }
  }
  subtleCrownLines(hair,face,centerZ,figure);
