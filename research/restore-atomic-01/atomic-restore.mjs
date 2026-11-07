@@ -195,7 +195,8 @@ export async function restoreOwner01({db,assertLease,backup,ownerId,expectedFing
   let tx,complete=false;
   const fail=e=>{if(complete)return;complete=true;try{tx?.abort();}catch{}reject(e);};
   try{
-   tx=db.transaction(['items','state'],'readwrite');
+   const stores=['items','state',...(db.objectStoreNames.contains('wardrobeIndex')?['wardrobeIndex']:[]),...(db.objectStoreNames.contains('wardrobeThumbs')?['wardrobeThumbs']:[])];
+   tx=db.transaction(stores,'readwrite');
    const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();
    let ar,br;
    const stage=()=>{
@@ -211,6 +212,8 @@ export async function restoreOwner01({db,assertLease,backup,ownerId,expectedFing
      const items=tx.objectStore('items'),state=tx.objectStore('state');
      items.clear();
      for(const item of target.items)items.put(item);
+     if(db.objectStoreNames.contains('wardrobeIndex')){const index=tx.objectStore('wardrobeIndex');index.clear();for(const item of target.items)index.put(globalThis.ClosetWardrobeIndex?.metadata?globalThis.ClosetWardrobeIndex.metadata(item):item);}
+     if(db.objectStoreNames.contains('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').clear();
      for(const id of allowedStates){
       if(own(wanted,id))state.put(wanted[id]);else state.delete(id);
      }

@@ -103,7 +103,7 @@ let fixture=null,service=null,restoreService=null,busy=false,resolveDecision=nul
 function setStatus(message,state='neutral'){$('status').textContent=message;$('status').dataset.state=state;}
 async function openDB(ownerId){
  return new Promise((ok,bad)=>{
-  const r=indexedDB.open('closet-current-user-'+ownerId,2);
+  const r=indexedDB.open('closet-current-user-'+ownerId);
   r.onupgradeneeded=()=>{
    const db=r.result;
    if(!db.objectStoreNames.contains('items'))db.createObjectStore('items',{keyPath:'id'});

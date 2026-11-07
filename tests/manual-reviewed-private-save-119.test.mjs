@@ -302,7 +302,7 @@ test('PHOTO119 explicit review only; no untrusted classifier, personal photo tra
  const s=readFileSync('research/manual-reviewed-private-save-119/reviewed-source-commit.mjs','utf8');
  for(const word of [
   'verifyOriginalSourceBytes',
-  "db.transaction(['items','state'],'readwrite')",
+  "const stores=['items','state',...(db.objectStoreNames.contains('wardrobeIndex')?['wardrobeIndex']:[]),...(db.objectStoreNames.contains('wardrobeThumbs')?['wardrobeThumbs']:[])]",
   "tx.objectStore('items').add(value)",
   "tx.objectStore('state').put({...draft,batch:remaining})",
   "ownerReviewed:true,sourcePhotoOriginal:true",

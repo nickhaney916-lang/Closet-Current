@@ -25,7 +25,7 @@ async function newPhotoSubmit(source){
   batch:[{id:source.id}],items:[],captureProof01Active:false,
   expectedSavedRow:null,correction10:false,
   ClothingMemory:M,
-  savePiece:async val=>{persisted=clone(val);},
+  savePiece:async val=>{persisted=clone(val);},wardrobeMetadata:row=>row,updateWardrobeMetadataRow:async row=>row,hasWardrobeStore:()=>false,
   persistDraft:async()=>{},scheduleMemoryReview:()=>{},render:()=>{},
   dialog:{close:()=>{closed=true;}},message:()=>{},
   Date,structuredClone
@@ -45,7 +45,7 @@ async function savedClosetSubmit(source,{cas=false}={}){
   queued:async work=>work(),
   commitOwnerCorrection10:async val=>{persisted=clone(val);calls++;},
   nativeIndex07Refresh:async()=>{},
-  writeAll:async rows=>{persisted=clone(rows[0]);calls++;},
+  writeAll:async rows=>{persisted=clone(rows[0]);calls++;},wardrobeMetadata:row=>row,updateWardrobeMetadataRow:async row=>row,hasWardrobeStore:()=>false,
   render:()=>{},scheduleMemoryReview:()=>{},message:()=>{},
   dialog:{close:()=>{closed=true;}}
  };

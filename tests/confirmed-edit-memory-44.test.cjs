@@ -48,7 +48,7 @@ async function runSavedEdit(before,formData,{cas=false,stale=false}={}){
  const sandbox={
   f:{},ok:{disabled:false},item:clone(original),draft:clone(edited),
   collect:()=>normalize(clone(edited)),expectedSavedRow:cas?clone(original):null,
-  ClothingMemory,queued:work=>work(),
+  ClothingMemory,queued:work=>work(),wardrobeMetadata:row=>row,updateWardrobeMetadataRow:async row=>row,hasWardrobeStore:()=>false,
   async commitOwnerCorrection10(next,expected){
    attempted++;
    const current=await readCurrent();
@@ -56,6 +56,7 @@ async function runSavedEdit(before,formData,{cas=false,stale=false}={}){
    await putOne(db,next);
   },
   async writeAll(rows){attempted++;for(const row of rows)await putOne(db,row);},
+  wardrobeMetadata:row=>row,updateWardrobeMetadataRow:async row=>row,hasWardrobeStore:()=>false,
   nativeIndex07Refresh:async()=>{refreshes++;},
   dialog:{close:()=>{closed=true;}},render:()=>{rendered++;},
   scheduleMemoryReview:()=>{},message:t=>errors.push(t)

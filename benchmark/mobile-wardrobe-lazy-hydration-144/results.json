@@ -1,0 +1,1086 @@
+{
+  "priority": 144,
+  "parent": "df28329d09d40f8c234027940057fe0a2579f0d1",
+  "environment": {
+    "node": "v24.22.1",
+    "platform": "linux",
+    "arch": "x64",
+    "engines": [
+      "chromium"
+    ],
+    "viewports": [
+      320,
+      390,
+      430
+    ],
+    "repeats": 3,
+    "sizes": [
+      25,
+      100,
+      250,
+      500,
+      1000
+    ]
+  },
+  "syntheticJPEG": {
+    "generated": true,
+    "originalBytes": 63434,
+    "cutoutBytes": 54473,
+    "sharedOriginalPerTwoGarments": true,
+    "comparison": "P136 exact-head application versus P144 lazy-index application"
+  },
+  "cases": [
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 25,
+      "baseline": true,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 13628897,
+      "retainedAfterRepeatedNavigationBytes": 13636277,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 178.8,
+      "reloadToClosetReadyMs": 962.3,
+      "elapsedMs": 283.6,
+      "cardsVisible": 25,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 7862900,
+      "jsHeapBytes": 13640699,
+      "storageEstimate": {
+        "usage": 5774918,
+        "quota": 631242631
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 25,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 4781537,
+      "retainedAfterRepeatedNavigationBytes": 3936053,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 124.2,
+      "reloadToClosetReadyMs": 2005.9,
+      "elapsedMs": 167,
+      "cardsVisible": 25,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 7862900,
+      "jsHeapBytes": 3940927,
+      "storageEstimate": {
+        "usage": 5817769,
+        "quota": 538617983
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 25,
+      "baseline": true,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 13439304,
+      "retainedAfterRepeatedNavigationBytes": 13446684,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 105,
+      "reloadToClosetReadyMs": 584.7,
+      "elapsedMs": 122.9,
+      "cardsVisible": 25,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 7862900,
+      "jsHeapBytes": 13451106,
+      "storageEstimate": {
+        "usage": 5774918,
+        "quota": 603232630
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 25,
+      "baseline": false,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 4835855,
+      "retainedAfterRepeatedNavigationBytes": 3802552,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 106.3,
+      "reloadToClosetReadyMs": 2220.7,
+      "elapsedMs": 163.2,
+      "cardsVisible": 25,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 7862900,
+      "jsHeapBytes": 3807426,
+      "storageEstimate": {
+        "usage": 5818013,
+        "quota": 657875696
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 25,
+      "baseline": true,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 13471335,
+      "retainedAfterRepeatedNavigationBytes": 13478715,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 107.1,
+      "reloadToClosetReadyMs": 594.9,
+      "elapsedMs": 208.6,
+      "cardsVisible": 25,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 7862900,
+      "jsHeapBytes": 13483153,
+      "storageEstimate": {
+        "usage": 5774918,
+        "quota": 633170255
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 25,
+      "baseline": false,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 5882590,
+      "retainedAfterRepeatedNavigationBytes": 3976427,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 81.2,
+      "reloadToClosetReadyMs": 1681.9,
+      "elapsedMs": 168.7,
+      "cardsVisible": 25,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 7862900,
+      "jsHeapBytes": 3981301,
+      "storageEstimate": {
+        "usage": 5817769,
+        "quota": 532448638
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 100,
+      "baseline": true,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 26681091,
+      "retainedAfterRepeatedNavigationBytes": 26688595,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 265.8,
+      "reloadToClosetReadyMs": 1136.5,
+      "elapsedMs": 214.7,
+      "cardsVisible": 100,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 31451600,
+      "jsHeapBytes": 26693017,
+      "storageEstimate": {
+        "usage": 23089437,
+        "quota": 582318352
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 100,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 7319629,
+      "retainedAfterRepeatedNavigationBytes": 3703278,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 478.9,
+      "reloadToClosetReadyMs": 2607.5,
+      "elapsedMs": 183.7,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 31451600,
+      "jsHeapBytes": 3708152,
+      "storageEstimate": {
+        "usage": 23227187,
+        "quota": 552594497
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 100,
+      "baseline": true,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 34687693,
+      "retainedAfterRepeatedNavigationBytes": 34695073,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 293.9,
+      "reloadToClosetReadyMs": 833.1,
+      "elapsedMs": 243.7,
+      "cardsVisible": 100,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 31451600,
+      "jsHeapBytes": 34699495,
+      "storageEstimate": {
+        "usage": 23089437,
+        "quota": 641463219
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 100,
+      "baseline": false,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 4674246,
+      "retainedAfterRepeatedNavigationBytes": 3686102,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 343.6,
+      "reloadToClosetReadyMs": 2111.2,
+      "elapsedMs": 190,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 31451600,
+      "jsHeapBytes": 3690976,
+      "storageEstimate": {
+        "usage": 23227187,
+        "quota": 662323998
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 100,
+      "baseline": true,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 34684769,
+      "retainedAfterRepeatedNavigationBytes": 34692149,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 300,
+      "reloadToClosetReadyMs": 860.4,
+      "elapsedMs": 270.8,
+      "cardsVisible": 100,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 31451600,
+      "jsHeapBytes": 34696571,
+      "storageEstimate": {
+        "usage": 23089437,
+        "quota": 542528932
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 100,
+      "baseline": false,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 5554911,
+      "retainedAfterRepeatedNavigationBytes": 4185690,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 334.1,
+      "reloadToClosetReadyMs": 461,
+      "elapsedMs": 128.5,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 31451600,
+      "jsHeapBytes": 4190564,
+      "storageEstimate": {
+        "usage": 23226873,
+        "quota": 683249604
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 250,
+      "baseline": true,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 67446507,
+      "retainedAfterRepeatedNavigationBytes": 67453887,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 807.2,
+      "reloadToClosetReadyMs": 1505.4,
+      "elapsedMs": 130.4,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 78629000,
+      "jsHeapBytes": 67458309,
+      "storageEstimate": {
+        "usage": 57675608,
+        "quota": 650888384
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 250,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 9335904,
+      "retainedAfterRepeatedNavigationBytes": 4312205,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 641.8,
+      "reloadToClosetReadyMs": 1853.1,
+      "elapsedMs": 122,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 78629000,
+      "jsHeapBytes": 4317079,
+      "storageEstimate": {
+        "usage": 57874293,
+        "quota": 573085456
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 250,
+      "baseline": true,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 65619449,
+      "retainedAfterRepeatedNavigationBytes": 65626829,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 743.2,
+      "reloadToClosetReadyMs": 673.1,
+      "elapsedMs": 303.7,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 78629000,
+      "jsHeapBytes": 65631251,
+      "storageEstimate": {
+        "usage": 57675608,
+        "quota": 635126834
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 250,
+      "baseline": false,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 5247513,
+      "retainedAfterRepeatedNavigationBytes": 4288754,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 628.1,
+      "reloadToClosetReadyMs": 1747.6,
+      "elapsedMs": 221.3,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 78629000,
+      "jsHeapBytes": 4293628,
+      "storageEstimate": {
+        "usage": 57874049,
+        "quota": 536070691
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 250,
+      "baseline": true,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 67301127,
+      "retainedAfterRepeatedNavigationBytes": 67308507,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 694,
+      "reloadToClosetReadyMs": 1081.9,
+      "elapsedMs": 145.6,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 78629000,
+      "jsHeapBytes": 67312929,
+      "storageEstimate": {
+        "usage": 57675608,
+        "quota": 620890364
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 250,
+      "baseline": false,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 7774602,
+      "retainedAfterRepeatedNavigationBytes": 4477697,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 730.8,
+      "reloadToClosetReadyMs": 589.9,
+      "elapsedMs": 143.9,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 78629000,
+      "jsHeapBytes": 4482571,
+      "storageEstimate": {
+        "usage": 57874049,
+        "quota": 608848975
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": true,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 127823836,
+      "retainedAfterRepeatedNavigationBytes": 127831216,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 1434,
+      "reloadToClosetReadyMs": 1742.6,
+      "elapsedMs": 232.4,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 127835638,
+      "storageEstimate": {
+        "usage": 115346317,
+        "quota": 572008778
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 14321043,
+      "retainedAfterRepeatedNavigationBytes": 4489756,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 1189.2,
+      "reloadToClosetReadyMs": 1453.6,
+      "elapsedMs": 161,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 4494630,
+      "storageEstimate": {
+        "usage": 115619599,
+        "quota": 574466614
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": true,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 127792888,
+      "retainedAfterRepeatedNavigationBytes": 127800268,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 1202.4,
+      "reloadToClosetReadyMs": 1479.3,
+      "elapsedMs": 180.9,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 127804690,
+      "storageEstimate": {
+        "usage": 115346317,
+        "quota": 668018969
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": false,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 7687305,
+      "retainedAfterRepeatedNavigationBytes": 4482742,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 1193.9,
+      "reloadToClosetReadyMs": 1218,
+      "elapsedMs": 128.2,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 4487616,
+      "storageEstimate": {
+        "usage": 115619599,
+        "quota": 686500009
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": true,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 124765488,
+      "retainedAfterRepeatedNavigationBytes": 124772868,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 1497.1,
+      "reloadToClosetReadyMs": 2117.9,
+      "elapsedMs": 172.5,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 124777290,
+      "storageEstimate": {
+        "usage": 115346317,
+        "quota": 545301858
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": false,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 8447826,
+      "retainedAfterRepeatedNavigationBytes": 4136010,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 1965.7,
+      "reloadToClosetReadyMs": 2051.2,
+      "elapsedMs": 193.5,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 4140884,
+      "storageEstimate": {
+        "usage": 115619599,
+        "quota": 563299523
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 1000,
+      "baseline": true,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 238947915,
+      "retainedAfterRepeatedNavigationBytes": 238955295,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 2983.9,
+      "reloadToClosetReadyMs": 2903.2,
+      "elapsedMs": 162.1,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 314516000,
+      "jsHeapBytes": 238959717,
+      "storageEstimate": {
+        "usage": 230689704,
+        "quota": 607168302
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 1000,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 5396840,
+      "retainedAfterRepeatedNavigationBytes": 4526367,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 5429.6,
+      "reloadToClosetReadyMs": 5443.5,
+      "elapsedMs": 421,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 314516000,
+      "jsHeapBytes": 4531241,
+      "storageEstimate": {
+        "usage": 231111839,
+        "quota": 524487475
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 1000,
+      "baseline": true,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 239723467,
+      "retainedAfterRepeatedNavigationBytes": 239730847,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 5240.4,
+      "reloadToClosetReadyMs": 2261.4,
+      "elapsedMs": 228.1,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 314516000,
+      "jsHeapBytes": 239735269,
+      "storageEstimate": {
+        "usage": 230689704,
+        "quota": 572002165
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 1000,
+      "baseline": false,
+      "repeat": 2,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 8056412,
+      "retainedAfterRepeatedNavigationBytes": 4535278,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 2741.3,
+      "reloadToClosetReadyMs": 1536.9,
+      "elapsedMs": 163.8,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 314516000,
+      "jsHeapBytes": 4540152,
+      "storageEstimate": {
+        "usage": 231109802,
+        "quota": 566313631
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 1000,
+      "baseline": true,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 239762671,
+      "retainedAfterRepeatedNavigationBytes": 239770051,
+      "activeObjectURLsAfterRepeatedNavigation": 0,
+      "bulkWriteMs": 3722.8,
+      "reloadToClosetReadyMs": 2785,
+      "elapsedMs": 212.8,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 314516000,
+      "jsHeapBytes": 239774473,
+      "storageEstimate": {
+        "usage": 230689704,
+        "quota": 684551537
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 1000,
+      "baseline": false,
+      "repeat": 3,
+      "screenshot": false,
+      "heapBeforeRepeatedNavigation": 9838989,
+      "retainedAfterRepeatedNavigationBytes": 4526812,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 3948.8,
+      "reloadToClosetReadyMs": 1624.6,
+      "elapsedMs": 166,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 314516000,
+      "jsHeapBytes": 4531686,
+      "storageEstimate": {
+        "usage": 231109802,
+        "quota": 636666186
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "count": 500,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": true,
+      "heapBeforeRepeatedNavigation": 7149018,
+      "retainedAfterRepeatedNavigationBytes": 4547696,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 1664,
+      "reloadToClosetReadyMs": 2530,
+      "elapsedMs": 187.8,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 4552570,
+      "storageEstimate": {
+        "usage": 115619599,
+        "quota": 629405346
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "count": 500,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": true,
+      "heapBeforeRepeatedNavigation": 9232519,
+      "retainedAfterRepeatedNavigationBytes": 4206922,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 1449,
+      "reloadToClosetReadyMs": 694.4,
+      "elapsedMs": 213.4,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 4211796,
+      "storageEstimate": {
+        "usage": 115619599,
+        "quota": 572635890
+      }
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "count": 500,
+      "baseline": false,
+      "repeat": 1,
+      "screenshot": true,
+      "heapBeforeRepeatedNavigation": 12058180,
+      "retainedAfterRepeatedNavigationBytes": 4551152,
+      "activeObjectURLsAfterRepeatedNavigation": 1,
+      "bulkWriteMs": 1626.3,
+      "reloadToClosetReadyMs": 1613.7,
+      "elapsedMs": 206.3,
+      "cardsVisible": 48,
+      "initialCards": 0,
+      "sourceJPEGBytes": 63434,
+      "cutoutJPEGBytes": 54473,
+      "recordPhotoPayloadBytes": 157258000,
+      "jsHeapBytes": 4556026,
+      "storageEstimate": {
+        "usage": 115619599,
+        "quota": 618602663
+      }
+    }
+  ],
+  "summary": [
+    {
+      "garments": 25,
+      "baseline": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 208.6,
+          "p95Ms": 283.6
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 107.1,
+          "p95Ms": 178.8
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 594.9,
+          "p95Ms": 962.3
+        }
+      },
+      "optimized": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 167,
+          "p95Ms": 168.7
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 106.3,
+          "p95Ms": 124.2
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 2005.9,
+          "p95Ms": 2220.7
+        }
+      },
+      "note": "p95 is nearest-rank max for 3 repeats; interpret as observed tail, not a stable population estimate"
+    },
+    {
+      "garments": 100,
+      "baseline": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 243.7,
+          "p95Ms": 270.8
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 293.9,
+          "p95Ms": 300
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 860.4,
+          "p95Ms": 1136.5
+        }
+      },
+      "optimized": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 183.7,
+          "p95Ms": 190
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 343.6,
+          "p95Ms": 478.9
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 2111.2,
+          "p95Ms": 2607.5
+        }
+      },
+      "note": "p95 is nearest-rank max for 3 repeats; interpret as observed tail, not a stable population estimate"
+    },
+    {
+      "garments": 250,
+      "baseline": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 145.6,
+          "p95Ms": 303.7
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 743.2,
+          "p95Ms": 807.2
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 1081.9,
+          "p95Ms": 1505.4
+        }
+      },
+      "optimized": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 143.9,
+          "p95Ms": 221.3
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 641.8,
+          "p95Ms": 730.8
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 1747.6,
+          "p95Ms": 1853.1
+        }
+      },
+      "note": "p95 is nearest-rank max for 3 repeats; interpret as observed tail, not a stable population estimate"
+    },
+    {
+      "garments": 500,
+      "baseline": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 180.9,
+          "p95Ms": 232.4
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 1434,
+          "p95Ms": 1497.1
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 1742.6,
+          "p95Ms": 2117.9
+        }
+      },
+      "optimized": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 161,
+          "p95Ms": 193.5
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 1193.9,
+          "p95Ms": 1965.7
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 1453.6,
+          "p95Ms": 2051.2
+        }
+      },
+      "note": "p95 is nearest-rank max for 3 repeats; interpret as observed tail, not a stable population estimate"
+    },
+    {
+      "garments": 1000,
+      "baseline": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 212.8,
+          "p95Ms": 228.1
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 3722.8,
+          "p95Ms": 5240.4
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 2785,
+          "p95Ms": 2903.2
+        }
+      },
+      "optimized": {
+        "cardRender": {
+          "repeats": 3,
+          "p50Ms": 166,
+          "p95Ms": 421
+        },
+        "bulkWrite": {
+          "repeats": 3,
+          "p50Ms": 3948.8,
+          "p95Ms": 5429.6
+        },
+        "reloadToReady": {
+          "repeats": 3,
+          "p50Ms": 1624.6,
+          "p95Ms": 5443.5
+        }
+      },
+      "note": "p95 is nearest-rank max for 3 repeats; interpret as observed tail, not a stable population estimate"
+    }
+  ],
+  "backupSerialization": [
+    {
+      "count": 25,
+      "durationMs": 62.4,
+      "bytes": 5760924,
+      "engine": "Chromium",
+      "where": "browser JSON serialization only; no cloud request"
+    },
+    {
+      "count": 100,
+      "durationMs": 172.8,
+      "bytes": 23043324,
+      "engine": "Chromium",
+      "where": "browser JSON serialization only; no cloud request"
+    },
+    {
+      "count": 250,
+      "durationMs": 572.9,
+      "bytes": 57608274,
+      "engine": "Chromium",
+      "where": "browser JSON serialization only; no cloud request"
+    },
+    {
+      "count": 500,
+      "durationMs": 1207.7,
+      "bytes": 115216524,
+      "engine": "Chromium",
+      "where": "browser JSON serialization only; no cloud request"
+    },
+    {
+      "count": 1000,
+      "durationMs": 1960.4,
+      "bytes": 230433024,
+      "engine": "Chromium",
+      "where": "browser JSON serialization only; no cloud request"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "chromium-320-500-browse.png",
+      "engine": "chromium",
+      "width": 320,
+      "sha256": "2db7bda75001fcad1bfb8d470b20e0ef1d775de0e87c73ef4ccfa88e3356735c",
+      "cardsVisible": 48
+    },
+    {
+      "file": "chromium-390-500-browse.png",
+      "engine": "chromium",
+      "width": 390,
+      "sha256": "ba1b2ca285d1dd02fdd6ec599e76ca47f7843ef64f2092f4ff7fd6c56a9ab99d",
+      "cardsVisible": 48
+    },
+    {
+      "file": "chromium-430-500-browse.png",
+      "engine": "chromium",
+      "width": 430,
+      "sha256": "679a30ef7286ed610d8f560ca6d5ad583817889bb94cb3b13bc918160f06eb13",
+      "cardsVisible": 48
+    }
+  ],
+  "errors": [],
+  "claims": {
+    "physicalAndroid": false,
+    "physicalIPhone": false,
+    "liveCloud": false,
+    "customerData": false,
+    "quotaFailureRealDevice": false
+  }
+}

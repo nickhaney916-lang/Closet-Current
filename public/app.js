@@ -54,6 +54,10 @@ const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(async()=>{window.closetAuth?.assertCurrent?.();await window.closetCloud?.beforeWrite(db);window.closetAuth?.assertCurrent?.();return work();});writes=result.catch(()=>{});result.catch(error=>{if(error?.name==='QuotaExceededError'||error?.cause?.name==='QuotaExceededError')message('Browser storage is full. Your existing closet and saved outfits remain in place. Free space and try again.');});result.then(()=>window.closetCloud?.changed()).catch(()=>{});result.then(()=>window.closetIndex02?.refresh()).catch(()=>{});return result;}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
+let photoOwnerGeneration=0;
+const wardrobePhotoUrls=new Set(),thumbnailLoads=new Map();
+let thumbnailObserver=null,thumbnailActive=0,thumbnailEpoch=0;
+const thumbnailQueue=[];
 // STORAGE136: all saved records remain available to search, outfits and
 // backup; only the visible closet-card window is bounded. This changes DOM
 // and image decoding work, never persisted records or protected JPEG bytes.
@@ -71,7 +75,7 @@ window.addEventListener('closet:session-locked',()=>{
  localJobs.clear();
  localWorker?.terminate();localWorker=null;
  try{db?.close();}catch{}
- db=null;items=[];batch=[];
+ photoOwnerGeneration++;releaseWardrobePhotos();db=null;items=[];batch=[];
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -81,6 +85,66 @@ window.addEventListener('closet:session-locked',()=>{
 });
 
 function message(t){$('message').textContent=t;}
+function releaseWardrobePhotos(){
+ thumbnailObserver?.disconnect();thumbnailObserver=null;thumbnailEpoch++;
+ for(const url of wardrobePhotoUrls)URL.revokeObjectURL(url);
+ wardrobePhotoUrls.clear();thumbnailLoads.clear();
+}
+function acquireThumbnailSlot(){if(thumbnailActive<2){thumbnailActive++;return Promise.resolve();}return new Promise(resolve=>thumbnailQueue.push(()=>{thumbnailActive++;resolve();}));}
+function releaseThumbnailSlot(){thumbnailActive=Math.max(0,thumbnailActive-1);thumbnailQueue.shift()?.();}
+function observeWardrobeThumbnail(img,item,variant='image'){
+ img._closetItem=item;img._closetVariant=variant;
+ if(!('IntersectionObserver'in window)){img._closetVisible=true;loadWardrobeThumbnail(img,item,variant);return;}
+ if(!thumbnailObserver)thumbnailObserver=new IntersectionObserver(entries=>{for(const entry of entries){const target=entry.target;target._closetVisible=entry.isIntersecting;if(entry.isIntersecting){if(!target.dataset.objectUrl)loadWardrobeThumbnail(target,target._closetItem,target._closetVariant);}else{const url=target.dataset.objectUrl;if(url){URL.revokeObjectURL(url);wardrobePhotoUrls.delete(url);delete target.dataset.objectUrl;target.removeAttribute('src');}}}}, {rootMargin:'240px'});
+ thumbnailObserver.observe(img);
+}
+function itemOwner(){return window.closetAuth?.user?.id||null;}
+function updateWardrobeMetadataRow(item,{invalidateThumbnail=false}={}){
+ const row=wardrobeMetadata(item);
+ if(!db?.objectStoreNames?.contains('wardrobeIndex'))return Promise.resolve(row);
+ return new Promise((resolve,reject)=>{
+  const stores=['wardrobeIndex',...(invalidateThumbnail&&hasWardrobeStore('wardrobeThumbs')?['wardrobeThumbs']:[])];
+  const tx=db.transaction(stores,'readwrite');tx.objectStore('wardrobeIndex').put(row);
+  if(invalidateThumbnail&&hasWardrobeStore('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(item.id);
+  tx.oncomplete=()=>resolve(row);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Wardrobe index update stopped'));
+ });
+}
+function readFullItem(id,database=db){return new Promise((resolve,reject)=>{const r=database.transaction('items','readonly').objectStore('items').get(id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});}
+async function createThumbnailBlob(image){
+ if(typeof image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Saved photo is not a verified JPEG');
+ const raw=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));
+ if(raw.length>8388608||raw[0]!==255||raw[1]!==216)throw Error('Saved photo is invalid');
+ const bitmap=await createImageBitmap(new Blob([raw],{type:'image/jpeg'}));
+ try{
+  const scale=Math.min(1,320/Math.max(bitmap.width,bitmap.height)),canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+  const context=canvas.getContext('2d',{alpha:false});if(!context)throw Error('Thumbnail canvas is unavailable');
+  context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+  return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Thumbnail encoding failed')),'image/jpeg',0.78));
+ }finally{bitmap.close?.();}
+}
+async function loadWardrobeThumbnail(img,item,variant='image'){
+ const owner=itemOwner(),generation=photoOwnerGeneration,id=item.id,database=db,key=owner+':'+generation+':'+thumbnailEpoch+':'+id+':'+variant,thumbKey=variant==='cutout'?id+'::cutout':id;
+ if(!owner||database?.name!=='closet-current-user-'+owner)return;
+ const ticket=crypto.randomUUID();img.dataset.photoTicket=ticket;img.loading='lazy';img.decoding='async';
+ let task=thumbnailLoads.get(key);
+ if(!task){task=(async()=>{await acquireThumbnailSlot();try{
+  const cached=await new Promise((resolve,reject)=>{const r=database.transaction('wardrobeThumbs','readonly').objectStore('wardrobeThumbs').get(thumbKey);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});
+  const expectedSHA=variant==='cutout'?(item.cutoutSHA256||item.segmentHint?.cutoutSHA256||null):(item.sourceSHA256||item.originalPhoto?.sha256||null);
+  if(cached?.blob&&cached.sourceSHA256===expectedSHA)return cached.blob;
+  const full=await readFullItem(id,database);if(!full||itemOwner()!==owner||db!==database||database?.name!=='closet-current-user-'+owner)throw Error('Photo owner changed');
+  const image=variant==='cutout'?full.segmentHint?.cutoutImage:full.image;if(typeof image!=='string')throw Error('Requested garment photo is unavailable');if(variant==='cutout'&&expectedSHA){const bytes=Uint8Array.from(atob(image.split(',')[1]||''),c=>c.charCodeAt(0)),digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');if(digest!==expectedSHA)throw Error('Reviewed cutout source identity changed');}else if(item.sourceSHA256&&full.sourceSHA256&&item.sourceSHA256!==full.sourceSHA256)throw Error('Saved source identity changed');
+  const blob=await createThumbnailBlob(image);await new Promise((resolve,reject)=>{const tx=database.transaction('wardrobeThumbs','readwrite');tx.objectStore('wardrobeThumbs').put({key:thumbKey,blob,width:320,sourceSHA256:expectedSHA});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Thumbnail save stopped'));});
+  return blob;
+ }finally{releaseThumbnailSlot();}})().finally(()=>thumbnailLoads.delete(key));thumbnailLoads.set(key,task);}
+ try{const blob=await task;if(generation!==photoOwnerGeneration||itemOwner()!==owner||!img.isConnected||!img._closetVisible||img.dataset.photoTicket!==ticket)return;const url=URL.createObjectURL(blob);wardrobePhotoUrls.add(url);img.src=url;img.dataset.objectUrl=url;}
+ catch{if(img.isConnected&&img.dataset.photoTicket===ticket)img.removeAttribute('src');}
+}
+async function openSavedItem(item,action){
+ const owner=itemOwner(),generation=photoOwnerGeneration,database=db;const full=await readFullItem(item.id,database);
+ if(!full||generation!==photoOwnerGeneration||itemOwner()!==owner||db!==database||database?.name!=='closet-current-user-'+owner){message('This garment is no longer available in the signed-in closet.');return;}
+ action(normalizeClothing(full));
+}
 function switchView(view){
  if(!document.getElementById(view)?.classList.contains('view'))return;
  if((stream||cameraOpening)&&view!=='scan')stopCamera();
@@ -92,8 +156,8 @@ function switchView(view){
  const heading=section.querySelector?.('h1,h2');if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
-function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('closet-current-user-'+window.closetAuth.user.id,2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('items'))r.result.createObjectStore('items',{keyPath:'id'});if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
-function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('closet-current-user-'+window.closetAuth.user.id,3);r.onupgradeneeded=()=>{const database=r.result,tx=r.transaction;if(!database.objectStoreNames.contains('items'))database.createObjectStore('items',{keyPath:'id'});if(!database.objectStoreNames.contains('state'))database.createObjectStore('state',{keyPath:'id'});if(!database.objectStoreNames.contains('wardrobeIndex')){const index=database.createObjectStore('wardrobeIndex',{keyPath:'id'});index.createIndex('category','category');index.createIndex('itemType','itemType');index.createIndex('savedAt','savedAt');const cursor=tx.objectStore('items').openCursor();cursor.onsuccess=()=>{const value=cursor.result;if(!value)return;try{index.put(wardrobeMetadata(value.value));value.continue();}catch(error){tx.abort();}};}if(!database.objectStoreNames.contains('wardrobeThumbs'))database.createObjectStore('wardrobeThumbs',{keyPath:'key'});};r.onversionchange=()=>{try{r.result.close();}catch{}};r.onblocked=()=>message('Updating wardrobe storage safely. Close other Closet Current tabs and retry. Your saved photos remain unchanged.');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('wardrobeIndex').objectStore('wardrobeIndex').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 // NATIVE-INDEX-07 opt-in only: refresh the original native outfit controller
 // after a committed saved-item mutation, not on every draft/photo write.
 // Owner/session/CAS attestation is performed by the controller itself.
@@ -115,8 +179,8 @@ async function nativeIndex07Refresh(){
  catch(error){const status=$('boardSaveStatus');if(status)
   status.textContent='New clothing saved; outfit builder needs a safe reload. '+String(error.message||error);}
 }
-function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).then(async value=>{await nativeIndex07Refresh();return value;});}
-function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);})).then(async value=>{await nativeIndex07Refresh();return value;});}
+function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const stores=['items',...(hasWardrobeStore('wardrobeIndex')?['wardrobeIndex']:[]),...(hasWardrobeStore('wardrobeThumbs')?['wardrobeThumbs']:[])],tx=db.transaction(stores,'readwrite'),store=tx.objectStore('items');for(const v of values){store.put(v);if(hasWardrobeStore('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(wardrobeMetadata(v));if(hasWardrobeStore('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(v.id);}tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Garment save stopped'));})).then(async value=>{await nativeIndex07Refresh();return value;});}
+function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const stores=['items',...(hasWardrobeStore('wardrobeIndex')?['wardrobeIndex']:[]),...(hasWardrobeStore('wardrobeThumbs')?['wardrobeThumbs']:[])],tx=db.transaction(stores,'readwrite');tx.objectStore('items').delete(id);if(hasWardrobeStore('wardrobeIndex'))tx.objectStore('wardrobeIndex').delete(id);if(hasWardrobeStore('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Garment removal stopped'));})).then(async value=>{await nativeIndex07Refresh();return value;});}
 function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 async function captureProofVerifyBeforeSave(value){
@@ -161,8 +225,8 @@ function savePiece(value,nextBatch,{expectedSavedRow=null}={}){return queued(asy
  // unchanged existing save path. No change on the default app URL.
  if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research')
   return commitOwnerCorrection10(value,expectedSavedRow,nextBatch);
- return new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');
- tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+ return new Promise((resolve,reject)=>{const stores=['items','state',...(hasWardrobeStore('wardrobeIndex')?['wardrobeIndex']:[]),...(hasWardrobeStore('wardrobeThumbs')?['wardrobeThumbs']:[])],tx=db.transaction(stores,'readwrite');
+ tx.objectStore('items').put(value);if(hasWardrobeStore('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(wardrobeMetadata(value));if(hasWardrobeStore('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(value.id);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
 }).then(async result=>{await nativeIndex07Refresh();return result;});}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
@@ -208,7 +272,7 @@ function cropClothingPhoto(item){
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
-function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id);button.onclick=()=>cropClothingPhoto(item);return button;}
+function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id);button.onclick=()=>{if(typeof openSavedItem==='function'&&!item.image&&db)openSavedItem(item,full=>cropClothingPhoto(full));else cropClothingPhoto(item);};return button;}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
@@ -316,7 +380,8 @@ function adjustPhoto(item){
    });
    if(!stored||stored.ownerId!==owner||stored.sourceSHA256!==item.sourceSHA256)
     throw Error('Saved garment needs a safe wardrobe reload.');
-   if(!items.some(x=>x.id===item.id))items.push(normalizeClothing(stored));
+   await updateWardrobeMetadataRow(stored,{invalidateThumbnail:true});
+   if(!items.some(x=>x.id===item.id))items.push(normalizeClothing(wardrobeMetadata(stored)));
    batch=batch.filter(x=>x.id!==item.id);
    await nativeIndex07Refresh();
    dialog.close();render();scheduleMemoryReview();
@@ -324,7 +389,7 @@ function adjustPhoto(item){
    return;
   }
   await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow});
-  const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
+  const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,wardrobeMetadata(value));else items.push(typeof wardrobeMetadata==='function'?wardrobeMetadata(value):value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
  }catch(error){
   save.disabled=false;
@@ -469,6 +534,7 @@ function renderPhotoResults(grid,results){
  }
 }
 function render(){
+ releaseWardrobePhotos();
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
  renderRecognitionNotice();
  const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
@@ -482,8 +548,8 @@ function render(){
  if(closetKey136!==closetQueryKey136){closetQueryKey136=closetKey136;closetRendered136=closetPageSize136;}
  const visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
- const page=visible.length<=100?visible:visible.slice(0,closetRendered136);
- for(const item of page){const card=node('article',null,'card'),im=node('img');im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
+ const page=visible.length<=closetPageSize136?visible:visible.slice(0,closetRendered136);
+ for(const item of page){const card=node('article',null,'card'),im=node('img');im.loading='lazy';im.decoding='async';im.alt=item.name;observeWardrobeThumbnail(im,item);const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary');edit.onclick=()=>{const open=full=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
  if(nativeCorrection10Active()){
   // Mobile saved-item editors can otherwise extend past the viewport and
   // their Save/Cancel buttons become covered by scrolling clothing fields.
@@ -498,8 +564,8 @@ function render(){
   dialog.style.overflowX='hidden';
   dialog.style.overscrollBehavior='contain';
   dialog.style.scrollPaddingBottom='12px';
- }const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
-  expectedSavedRow=nativeCorrection10Active()?structuredClone(item):null,
+ }const f=node('form');const draft=structuredClone(full),collect=clothingFields(f,draft),
+  expectedSavedRow=nativeCorrection10Active()?structuredClone(full):null,
   ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');
  f.className='card';f.style.padding='15px';
  if(expectedSavedRow){
@@ -538,9 +604,10 @@ function render(){
    updated.name=syncOwnerGarmentName66(before,updated).name;
   }
   await queued(()=>commitOwnerCorrection10(updated,before,null));
+  if(typeof updateWardrobeMetadataRow==='function')await updateWardrobeMetadataRow(updated);
   await nativeIndex07Refresh();
  }else await writeAll([updated]);
- Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
+ Object.assign(item,typeof wardrobeMetadata==='function'?wardrobeMetadata(updated):updated);dialog.close();render();scheduleMemoryReview();
  }catch(error){
   message(expectedSavedRow?
    String(error.message||error).includes('CORRECTION10_STALE_SAVED_GARMENT')?
@@ -556,7 +623,7 @@ function render(){
   }
   actionRow.append(ok,cancel);f.append(actionRow);
  }else f.append(ok,cancel);
- dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+ dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};if(typeof openSavedItem==='function'&&!item.image&&db)openSavedItem(item,open);else open(item);};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
  const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
   reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
   item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
@@ -580,12 +647,13 @@ function render(){
   item.segmentHint?.cutoutImage!==item.originalPhoto?.image&&
   typeof item.segmentHint?.cutoutImage==='string'&&
   item.multipleGarments!==true;
- if(reviewedCutoutStored124){
+  if(reviewedCutoutStored124){
+  observeWardrobeThumbnail(im,item,'cutout');
   // Label truthfully: a manually reviewed region is a visible 2D photograph,
   // not a learned segment/mask or an accepted 3D garment.
-  im.src=item.segmentHint.cutoutImage;
+  loadWardrobeThumbnail(im,item);
   im.alt='Owner-reviewed photograph cutout, 2D-only: '+(item.name||item.itemType);
-  body.append(node('p','Owner-reviewed visible cutout · 2D photo only','fine'));
+  body.append(node('p','Owner-reviewed cutout · 2D photo only','fine'));
  }
  const styleNew=node('button',reviewedCutoutStored124?'Get 3 outfits with this piece · 2D photo only':
   reviewedStored123?'Get 3 outfits with this piece':'Style this piece','secondary');
@@ -876,6 +944,8 @@ async function enableLocal(){
  })();
  return localLoadPromise;
 }
+function wardrobeMetadata(item){const project=globalThis.ClosetWardrobeIndex?.metadata;if(project)return project(item);const row=structuredClone(item);delete row.image;if(row.originalPhoto)delete row.originalPhoto.image;if(row.recognitionPhoto)delete row.recognitionPhoto.image;if(row.segmentHint)delete row.segmentHint.cutoutImage;return row;}
+function hasWardrobeStore(name){return !!db?.objectStoreNames?.contains?.(name);}
 function segmentationAllows(item,choice){
  const hint=item.segmentHint;if(!hint)return true;
  return !hint.clipped&&Array.isArray(hint.categories)&&hint.categories.includes(choice.category)&&(!hint.types?.length||choice.itemType==='Unknown'||hint.types.includes(choice.itemType));
@@ -895,13 +965,13 @@ async function saveIndexed(item,index04ApprovedOwner=null){
   if(!db)return reject(Error('Browser storage is unavailable.'));
   if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||
      (index04Active&&(window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner)))return resolve(false);
-  const tx=db.transaction(['items','state'],'readwrite');
-  tx.objectStore('items').put(value);
+  const stores=['items','state',...(hasWardrobeStore('wardrobeIndex')?['wardrobeIndex']:[]),...(hasWardrobeStore('wardrobeThumbs')?['wardrobeThumbs']:[])],tx=db.transaction(stores,'readwrite');
+  tx.objectStore('items').put(value);if(hasWardrobeStore('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(wardrobeMetadata(value));if(hasWardrobeStore('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(value.id);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
   tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
  }));
  if(!saved)return false;
- if(!items.some(x=>x.id===item.id))items.push(value);
+ if(!items.some(x=>x.id===item.id))items.push(wardrobeMetadata(value));
  batch=batch.filter(x=>x.id!==item.id);persistDraft();await nativeIndex07Refresh();return true;
 }
 async function recognizeItem(item){
@@ -913,7 +983,11 @@ async function recognizeItem(item){
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
-  if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
+  if(matches.some(x=>x.image&&x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
+  if(typeof readFullItem==='function'&&db&&db.objectStoreNames?.contains?.('wardrobeIndex')){
+   const owner=itemOwner(),generation=photoOwnerGeneration,likely=matches.filter(x=>x.visualSignature&&similarPhotos(quality.signature,x.visualSignature)).slice(0,6);
+   for(const prior of likely){let full;try{full=await readFullItem(prior.id);}catch{continue;}if(owner!==itemOwner()||generation!==photoOwnerGeneration)return false;if(full?.image===item.image&&full.image){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}}
+  }
   item.possibleDuplicate=matches.some(x=>Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
@@ -1040,7 +1114,8 @@ async function reviewRecognitionMemory(){
  memoryReviewRunning=true;let completed=0;
  try{if(!localReady)await enableLocal();for(const target of targets){
   if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
-  const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
+  const owner=itemOwner(),generation=photoOwnerGeneration;let target;try{target=await readFullItem(targetMeta.id);}catch{break;}if(!target||owner!==itemOwner()||generation!==photoOwnerGeneration)break;
+  const before=JSON.stringify(wardrobeMetadata(target)),image=target.recognitionPhoto?.image||target.image;let result;
   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
   const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
   if(!ClothingMemory.valid(result.recognitionMemory))continue;
@@ -1052,10 +1127,10 @@ closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
 
 function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
- let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
+ let saved=null;const stores=['items',...(db.objectStoreNames?.contains?.('wardrobeIndex')?['wardrobeIndex']:[])],tx=db.transaction(stores,'readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
  read.onsuccess=()=>{const current=read.result;if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
  saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
- if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
+ if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);if(db.objectStoreNames?.contains?.('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(wardrobeMetadata(saved));
  };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
 }));}
 

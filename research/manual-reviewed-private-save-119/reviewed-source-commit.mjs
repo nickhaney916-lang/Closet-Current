@@ -75,8 +75,9 @@ async function snapshot(db){
  return new Promise((resolve,reject)=>{
   let items,draft,tx;
   try{
-   tx=db.transaction(['items','state'],'readonly');
-   tx.objectStore('items').getAll().onsuccess=e=>{items=e.target.result;};
+   const indexStore=db.objectStoreNames.contains('wardrobeIndex')?'wardrobeIndex':'items';
+   tx=db.transaction([indexStore,'state'],'readonly');
+   tx.objectStore(indexStore).getAll().onsuccess=e=>{items=e.target.result;};
    tx.objectStore('state').get('draft').onsuccess=e=>{draft=e.target.result;};
    tx.oncomplete=()=>resolve({items,draft});
    tx.onabort=()=>reject(Error('PHOTO119 original wardrobe snapshot aborted'));
@@ -141,6 +142,8 @@ function transactionCommit({db,ownerId,currentOwner,assertLease,record,
     checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
     const remaining=draft.batch.filter(x=>x.id!==record.id);
     tx.objectStore('items').add(value); // never overwrite existing saved ID
+    if(db.objectStoreNames.contains('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(globalThis.ClosetWardrobeIndex?.metadata?globalThis.ClosetWardrobeIndex.metadata(value):value);
+    if(db.objectStoreNames.contains('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(value.id);
     // A lease/owner rotation after add() aborts BOTH stores together.
     checkLive({db,ownerId,currentOwner,assertLease,record,review,initial});
     tx.objectStore('state').put({...draft,batch:remaining});
@@ -148,8 +151,9 @@ function transactionCommit({db,ownerId,currentOwner,assertLease,record,
    }catch{abort();}
   }
   try{
-   tx=db.transaction(['items','state'],'readwrite');
-   tx.objectStore('items').getAll().onsuccess=e=>{items=e.target.result;admit();};
+   const stores=['items','state',...(db.objectStoreNames.contains('wardrobeIndex')?['wardrobeIndex']:[]),...(db.objectStoreNames.contains('wardrobeThumbs')?['wardrobeThumbs']:[])];
+   tx=db.transaction(stores,'readwrite');
+   tx.objectStore(db.objectStoreNames.contains('wardrobeIndex')?'wardrobeIndex':'items').getAll().onsuccess=e=>{items=e.target.result;admit();};
    tx.objectStore('state').get('draft').onsuccess=e=>{draft=e.target.result;admit();};
    tx.oncomplete=()=>resolve(verdict('saved',kind));
    tx.onabort=()=>reject(abortReason||Error('PHOTO119 owner transaction aborted'));

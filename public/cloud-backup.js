@@ -7,7 +7,21 @@
  function transact(stores,mode,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(stores,mode);let value;try{value=fn(tx);}catch(e){tx.abort();reject(e);return;}tx.oncomplete=()=>resolve(typeof value==='function'?value():value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Storage transaction stopped'));});}
  async function marker(){let value;await transact(['state'],'readonly',tx=>{const r=tx.objectStore('state').get('cloud-sync');r.onsuccess=()=>value=r.result;});return value||markerDefault();}
  async function markDirty(){await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});}
- async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
+ async function snapshot(){let items,state;await transact(['wardrobeIndex','state'],'readonly',tx=>{const a=tx.objectStore('wardrobeIndex').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
+ async function mapStoredImages(value,source,sources){
+  if(typeof value==='string'&&value.startsWith('data:image/')){const bytes=imageBytes(value),path=user+'/'+await hash(bytes)+'.jpg';if(!sources.has(path))sources.set(path,source);return 'closet-photo:'+path;}
+  if(Array.isArray(value)){const out=[];for(let i=0;i<value.length;i++)out.push(await mapStoredImages(value[i],{...source,field:[...source.field,i]},sources));return out;}
+  if(value&&typeof value==='object'){const out={};for(const [key,child]of Object.entries(value)){if(key==='__proto__'||key==='constructor'||key==='prototype')throw Error('Unsafe cloud data key');out[key]=await mapStoredImages(child,{...source,field:[...source.field,key]},sources);}return out;}
+  return value;
+ }
+ async function encodeSnapshot(local){
+  const sources=new Map(),items=[];
+  for(const row of local.items){const full=await new Promise((resolve,reject)=>{const r=db.transaction('items','readonly').objectStore('items').get(row.id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});if(!full)throw Error('Wardrobe changed during backup');if(full.originalPhoto?.image&&full.originalPhoto?.sha256&&await hash(imageBytes(full.originalPhoto.image))!==full.originalPhoto.sha256)throw Error('Original JPEG SHA-256 changed before backup');if(full.segmentHint?.cutoutImage&&full.segmentHint?.cutoutSHA256&&await hash(imageBytes(full.segmentHint.cutoutImage))!==full.segmentHint.cutoutSHA256)throw Error('Reviewed cutout JPEG SHA-256 changed before backup');items.push(await mapStoredImages(full,{store:'items',id:row.id,field:[]},sources));}
+  const state={};for(const [id,row]of Object.entries(local.state))state[id]=await mapStoredImages(row,{store:'state',id,field:[]},sources);
+  return {document:E.validateDocument({schemaVersion:1,items,state}),sources};
+ }
+ async function uploadSources(sources){for(const [path,source]of sources){const value=await new Promise((resolve,reject)=>{const r=db.transaction(source.store,'readonly').objectStore(source.store).get(source.id);r.onsuccess=()=>resolve(r.result||null);r.onerror=()=>reject(r.error);});if(!value)throw Error('Photo source changed during cloud backup');let image=value;for(const part of source.field)image=image?.[part];const bytes=imageBytes(image);if(await hash(bytes)!==path.split('/')[1].slice(0,-4))throw Error('Photo source integrity changed during backup');await upload(new Map([[path,bytes]]));}}
+
  async function api(path,{body,method='GET',contentType='application/json'}={},again=false){
   if(window.closetAuth?.user?.id!==user)throw Error('Account changed');
   const token=await window.closetAuth.getAccessToken({force:again}),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
@@ -36,7 +50,7 @@
      !await guard.allowCloud({document:local,revision,expectedRevision})))return false;
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
   let applied=false;
-  await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
+  await callbacks.capture(()=>transact(db.objectStoreNames.contains('wardrobeIndex')?['items','state','wardrobeIndex','wardrobeThumbs']:['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();if(db.objectStoreNames.contains('wardrobeIndex'))tx.objectStore('wardrobeIndex').clear();if(db.objectStoreNames.contains('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').clear();for(const item of local.items){store.put(item);if(db.objectStoreNames.contains('wardrobeIndex'))tx.objectStore('wardrobeIndex').put(ClosetWardrobeIndex.metadata(item));if(db.objectStoreNames.contains('wardrobeThumbs'))tx.objectStore('wardrobeThumbs').delete(item.id);}for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
   if(applied)await callbacks.restored?.();return applied;
  }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
@@ -50,7 +64,7 @@
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision)){schedule();return;}}
     status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
    }
-   status('Backing up your closet…');const encoded=await encode(local);let document=encoded.document;
+   status('Backing up your closet…');const encoded=await encodeSnapshot(local);let document=encoded.document;
    if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){
     if(keepBoth){
      const ids=new Map(m.resolutionIds||[]);document=E.keepBothDocuments(m.baseDocument,document,remote.document,row=>{const key=E.canonical(row);if(!ids.has(key))ids.set(key,crypto.randomUUID());return ids.get(key);});
@@ -58,7 +72,7 @@
      await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>store.put({...r.result,resolutionIds:[...ids]});});
     }else document=E.mergeDocuments(m.baseDocument,document,remote.document);
    }
-   await upload(encoded.photos);if(mine!==generation)return;
+   await uploadSources(encoded.sources);if(mine!==generation)return;
    const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}}),revision=await response.json();
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
    // If another local save happened during upload, keep its durable pending flag.

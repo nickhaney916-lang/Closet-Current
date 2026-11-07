@@ -89,7 +89,7 @@ function setStatus(message,state='neutral'){
 }
 async function openDB(ownerId){
  return new Promise((ok,bad)=>{
-  const r=indexedDB.open('closet-current-user-'+ownerId,2);
+  const r=indexedDB.open('closet-current-user-'+ownerId);
   r.onupgradeneeded=()=>{
    const db=r.result;
    if(!db.objectStoreNames.contains('items'))db.createObjectStore('items',{keyPath:'id'});

@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict'),vm=require(
 const source=fs.readFileSync('public/app.js','utf8');
 function setup(){
  function node(tag,text){return {tag,text:text||'',children:[],append(...children){this.children.push(...children);},replaceChildren(...children){this.children=children;}};}
- const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],localPending:new Set(),localReady:true,adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
+ const c={recognitionState:{phase:'idle',percent:null,activeId:null},node,items:[],db:null,localPending:new Set(),localReady:true,openSavedItem:(item,action)=>action(item),adjustPhoto(item){c.adjusted=item;},cropClothingPhoto(item){c.cropped=item;}};
  vm.createContext(c);vm.runInContext(source.slice(source.indexOf('function cropButton('),source.indexOf('function adjustPhoto(')),c);vm.runInContext(source.slice(source.indexOf('function renderPhotoResults('),source.indexOf('function render(){')),c);
  return {c,grid:node('div')};
 }
