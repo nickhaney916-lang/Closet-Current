@@ -1,0 +1,19 @@
+# Closet Current — MAIN PRIORITY #154 · Original-Surface Facial Contour Fidelity
+
+**Family Alpha GitHub Issue #255 HOLD. RESEARCH ONLY, NO PRODUCTION, NO EXISTING STAGING, NO MERGE, NO DEPLOY, NO HOSTED CLOUD OR OTHER PROJECT WRITES.**
+
+## Highest-impact next facial realism gap
+Main P153 [draft PR #708](https://github.com/nickhaney916-lang/Closet-Current/pull/708) exact final `d9b554207b0cc082d74b4c4741549cc495405553`, successful [Actions #42421728512](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42421728512), passed 1,254/1,254 Node tests and 36 same-original-3D-figure before/after screenshots, verifying a head-bone-anchored scalp based on actual original skinned donor triangles. Manual screenshot inspection found remaining unrealistic flat nose, mouth and eye socket transition. Do not repeat the previous synthetic hat mistakes. Parallel #57 / P150 continues independent avatar/photo garment work; P154 is a **detached source-face integration** on the verified main P153 line, not a patch to Parallel #57's own branch.
+
+## New engineering
+
+- `research/dual-humanoid-facial-contours-154/face-contours.mjs`: independently samples the existing genuine 163-bone CC0 original head skin in world space. Finds actual front face samples adjacent to P131's preexisting original eyes, preserves their count and parent. Creates understated source-bound 3D nasal ridge/tip/alar accents, mouth upper/lower lip contours, and two lower-eyelid creases; attaches ONLY these added meshes to the genuine source Head bone. No new face mesh, altered skeleton, face identity/portrait reconstruction, photo processing or skin shader change.
+- Original P153 scalp/hair geometry unchanged. Original photographed outfit and saved board unchanged. All new geometry/materials have explicit ownership and are safely disposed when figure is changed or 3D preview is closed.
+- `scripts/install-dual-humanoid-facial-contours-154.mjs` operates ONLY on exact pinned donor `.p150-donor-541` (head `df6885d6011cb33fb22dceb81a08f35a0ac4dd61`) with P150 + P152 shader correction + P153 scalp research installed in that order. It does not write source PRs #706–#708, production or existing staging.
+- Negative tests check that new face detail is never applied to a missing / wrong-gender / non-163-bone body or absent original P131 eyes, and that disposal preserves original hair and face geometry.
+- A dedicated no-deploy exact-P153-parent source-scope CI tests full inherited Node suite, unchanged app build, and genuine 3D browser saved-outfit preview. It captures **18 matched original before/after mobile Chromium pairs (36 screenshots)** across 2 humanoids, 320/390/430 CSS px and front/side/rear, independently SHA-audits image bytes, checks changed **front and side face** pixels (rear has no fake facial detail), verifies original P131 eye count, P153 scalp count, 163 source skeleton bones, and the original photographed garment mesh count. WebKit must still render all 3 mobile widths with real original 3D.
+
+## Scientific limits and release gates
+This is source-based low-amplitude research contour work, **not** a photorealistic human or a faithful personal likeness. Automated image differences do not prove natural human anatomy or flattering appearance. If actual screenshots show a floating snout/lips, covered eyes, an unchanged face, missing hair/skin or wrong clothing, the visual gate remains failed until repaired. Physical Android/iPhone, real Supabase-signed hosted two-owner RLS, arbitrary owner photos fitted on humanoids, natural clothing and hair physics remain unverified. Original source JPEGs and private saved outfit/owner state are unchanged.
+
+**Research delivery must remain HOLD and unmerged until exact final-head CI and independently inspected before/after screenshots pass. Family Alpha remains HOLD even if this scoped research passes.**
