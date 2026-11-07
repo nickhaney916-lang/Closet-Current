@@ -45,8 +45,14 @@ replaceOnce("screenshotsSha256:hash(Buffer.from(JSON.stringify(screens)))}));",
 // in a finally block without weakening any screenshot/source assertions.
 const lifecycleAnchor='const errors=[],external=[],crashes=[],screens=[],browserResults=[],comparison=[];';
 assert.equal(s.split(lifecycleAnchor).length,2,'FACE131 expected single server lifetime anchor');
-s=s.replace(lifecycleAnchor,lifecycleAnchor+'\\ntry {');
-s += '\\n} finally {\\n  server.closeAllConnections();\\n  await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));\\n}\\n';
+s=s.replace(lifecycleAnchor,lifecycleAnchor+String.fromCharCode(10)+'try {');
+s += String.fromCharCode(10)+[
+  '} finally {',
+  '  server.closeAllConnections();',
+  '  await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));',
+  '}',
+  ''
+].join(String.fromCharCode(10));
 
 await writeFile(output,s);
 console.log(JSON.stringify({generated:true,from:'pinned P118 actual WebGL tester',
