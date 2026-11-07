@@ -2,6 +2,24 @@
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
  let db=null,user=null,enabled=false,syncing=false,timer=null,retryDelay=2000,callbacks={},generation=0;
+ // P145: research-host-only owner-reviewed mode. The ordinary legacy cloud
+ // writer MUST NOT run next to the independent consent-bound P134/P137 flow.
+ // This guard does not mount P134/P137 or authorize cloud mutation.
+ const reviewHold145=()=>{
+  try{return new URLSearchParams(location.search).get('ownerReview145')==='research'&&
+    ['localhost','127.0.0.1','[::1]'].includes(location.hostname);}
+  catch{return false;}
+ };
+ const reviewHoldText145='Research-only: automatic cloud backup and restore are paused. Owner-reviewed recovery is not installed in the ordinary app.';
+ function stopForReview145(){
+  if(!reviewHold145())return false;
+  enabled=false;generation++;clearTimeout(timer);timer=null;
+  for(const id of ['syncCloset','resolveCloudConflict']){
+   const button=document.getElementById(id);if(button){button.hidden=true;button.onclick=null;}
+  }
+  status(reviewHoldText145);
+  return true;
+ }
  const empty=()=>({schemaVersion:1,items:[],state:{}}),markerDefault=()=>({id:'cloud-sync',baseVersion:0,baseDocument:null,localRevision:0,dirty:false});
  function status(text){if(['Cloud backup up to date','Your closet will back up automatically'].includes(text)){const button=document.getElementById('resolveCloudConflict');if(button)button.hidden=true;}const p=document.getElementById('cloudStatus');if(p){p.hidden=false;p.textContent=text;}const banner=document.getElementById('cloudBanner');if(banner){banner.textContent=text;banner.hidden=['Cloud backup up to date','Your closet will back up automatically'].includes(text);}}
  function transact(stores,mode,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(stores,mode);let value;try{value=fn(tx);}catch(e){tx.abort();reject(e);return;}tx.oncomplete=()=>resolve(typeof value==='function'?value():value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Storage transaction stopped'));});}
@@ -9,8 +27,11 @@
  async function markDirty(){await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});}
  async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
  async function api(path,{body,method='GET',contentType='application/json'}={},again=false){
+  if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
   if(window.closetAuth?.user?.id!==user)throw Error('Account changed');
-  const token=await window.closetAuth.getAccessToken({force:again}),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
+  const token=await window.closetAuth.getAccessToken({force:again});
+  if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
+  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
   try{
    const response=await fetch(BASE+path,{method,signal:controller.signal,headers:{apikey:KEY,Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':contentType})},body:body===undefined?undefined:contentType==='application/json'?JSON.stringify(body):body,cache:'no-store'});
    if(response.status===401&&!again)return await api(path,{body,method,contentType},true);
@@ -41,6 +62,7 @@
  }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false}={}){
+  if(stopForReview145())return;
   if(!enabled||syncing)return;syncing=true;const mine=generation;let dirtyAtStart=false;
   try{
    let {local,m}=await callbacks.capture(snapshot);dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote();
@@ -71,13 +93,14 @@
   }finally{syncing=false;}
  }
  window.closetCloud={
-  async start(database,settings){db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  ownerReviewHold145:reviewHold145,
+  async start(database,settings){if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
   },
-  async beforeWrite(database){if(enabled&&database===db)await markDirty();},
-  changed(){if(enabled){status('Saved on this device · cloud backup pending');schedule();}},sync
+  async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db)await markDirty();},
+  changed(){if(stopForReview145())return;if(enabled){status('Saved on this device · cloud backup pending');schedule();}},sync
  };
- window.addEventListener('pageshow',event=>{if(event.persisted&&db&&window.closetAuth?.user?.id===user){enabled=true;sync();}});
+ window.addEventListener('pageshow',event=>{if(stopForReview145())return;if(event.persisted&&db&&window.closetAuth?.user?.id===user){enabled=true;sync();}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
  window.addEventListener('pagehide',()=>{generation++;clearTimeout(timer);enabled=false;});
 })();
