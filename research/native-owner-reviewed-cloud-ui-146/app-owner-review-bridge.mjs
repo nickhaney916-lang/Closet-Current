@@ -164,9 +164,11 @@ export async function mountOwnerReviewedCloud146({
    assertLocalOwner();
    const r=await operation();
    assertLocalOwner();
-   if(r?.cancelled)status('Cancelled. Your wardrobe and saved outfits were preserved.');
-   else if(r?.saved)status('Reviewed cloud backup saved at revision '+r.revision+'.');
-   else if(r?.restored)status('Verified cloud wardrobe and saved outfits restored on this device.');
+   // P129 restore receipts contain a numeric `saved` outfit count.
+   // Never mistake that number for a boolean backup-success receipt.
+   if(r?.cancelled===true)status('Cancelled. Your wardrobe and saved outfits were preserved.');
+   else if(r?.restored===true)status('Verified cloud wardrobe and saved outfits restored on this device.');
+   else if(r?.saved===true)status('Reviewed cloud backup saved at revision '+r.revision+'.');
    else status('Private count-only preview checked. No photographs displayed.');
    return r;
   }catch(e){
