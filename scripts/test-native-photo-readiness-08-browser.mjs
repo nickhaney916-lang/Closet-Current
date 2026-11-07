@@ -418,7 +418,7 @@ try{
   await seed(page,'native05-B');
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active&&
-   !!window.native3D05Bridge,{timeout:30000});
+   !!window.native3D05Bridge&&window.restoreAtomic01Bridge?.status()?.active===true,{timeout:30000});
   await page.evaluate(()=>switchView('builder'));
   const bStored=await readBoard(page),bItems=await readItems(page);
   await assert.rejects(page.evaluate(doc=>
