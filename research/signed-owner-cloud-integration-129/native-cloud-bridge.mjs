@@ -34,9 +34,9 @@ export function createSignedOwnerCloud129({auth,db,baseURL,anonKey,fetcher=globa
  }
  async function upload(lease,assets){
   for(const [path,bytes] of assets){
-   await check(lease);const hash=path.split('/')[1]?.replace(/\.jpg$/,'');
-   if(!path.startsWith(lease.id+'/')||!SHA.test(hash||''))fail('foreign or malformed immutable photo path');
-   const endpoint=photoURL(path),response=await fetcher(baseURL+endpoint,{method:'POST',cache:'no-store',headers:{apikey:anonKey,Authorization:'Bearer '+lease.token,'Content-Type':'image/jpeg','x-upsert':'false'},body:bytes});
+   await check(lease);const objectPath=path.startsWith('closet-photo:')?path.slice('closet-photo:'.length):'',parts=objectPath.split('/'),hash=parts[1]?.replace(/\.jpg$/,'');
+   if(parts.length!==2||parts[0]!==lease.id||!SHA.test(hash||''))fail('foreign or malformed immutable photo path');
+   const endpoint=photoURL(objectPath),response=await fetcher(baseURL+endpoint,{method:'POST',cache:'no-store',headers:{apikey:anonKey,Authorization:'Bearer '+lease.token,'Content-Type':'image/jpeg','x-upsert':'false'},body:bytes});
    await check(lease);if(response.ok)continue;if(response.status!==400&&response.status!==409)fail('private JPEG upload failed ('+response.status+')');
    const existing=await request(lease,endpoint),data=new Uint8Array(await existing.arrayBuffer());await check(lease);
    const actual=[...new Uint8Array(await subtle.digest('SHA-256',data))].map(x=>x.toString(16).padStart(2,'0')).join('');await check(lease);
