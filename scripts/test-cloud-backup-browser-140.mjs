@@ -182,12 +182,13 @@ try{
    assert.equal(docs.has(ownerId),false,'cloud must initially be absent');
 
    // Read-only empty cloud preview must never transfer/upload JPEGs.
+   const baselineUploads=events.uploads,baselineStorageReads=events.storageReads;
    await page.locator('#preview').click();
    await waitStatus(page,'Preview checked');
    assert.equal(await page.locator('#localClothes').innerText(),'1');
    assert.equal(await page.locator('#remoteClothes').innerText(),'0');
    assert.match(await page.locator('#revision').innerText(),/create-only/);
-   assert.equal(events.uploads,0);assert.equal(events.storageReads,0);
+   assert.equal(events.uploads,baselineUploads);assert.equal(events.storageReads,baselineStorageReads);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),
     true,'mobile UI must fit phone-sized width');
    await screenshot(page,engine,width,'01-no-cloud-preview');
