@@ -44,6 +44,10 @@ const reviewedStyle122Active=reviewedSave120Active&&
 // a fresh owner-bound persisted source + category/color integrity check is.
 const reviewedCloset123Active=reviewedStyle122Active&&
  new URLSearchParams(location.search).get('reviewedCloset123')==='research';
+// PHOTO124: separately proven SHA-256 of P119 owner-reviewed cutout bytes,
+// only for source-honest, photo-only styling of one human-confirmed instance.
+const reviewedCutout124Active=reviewedCloset123Active&&
+ new URLSearchParams(location.search).get('reviewedCutout124')==='research';
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
@@ -345,10 +349,12 @@ function renderRecognitionNotice(){
  * The style controller independently re-hashes each private wardrobe JPEG.
  * Never guess 3 looks if the owned closet lacks compatible pieces.
  */
-async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false}={}){
+async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false,cutout124=false}={}){
  if(!reviewedStyle122Active)throw Error('PHOTO122 explicit opt-in required');
  if(fromCloset123&&!reviewedCloset123Active)
   throw Error('PHOTO123 saved closet styling requires explicit research opt-in');
+ if(cutout124&&(!fromCloset123||!reviewedCutout124Active))
+  throw Error('PHOTO124 source-bound cutout needs independent research opt-in');
  const auth=window.closetAuth,owner=auth?.user?.id,originalDb=db;
  const live=()=>owner&&window.closetAuth===auth&&auth.user?.id===owner&&
   db===originalDb&&db?.name==='closet-current-user-'+owner&&
@@ -370,10 +376,27 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
     persisted.userAdjusted!==true||
     (fromCloset123&&(persisted.sourcePhotoOriginal!==true||
       persisted.reviewProvenance!=='explicit-owner-claim-not-independent-review-evidence'||
-      persisted.singleGarmentVerified!==true))||
+      (!cutout124&&persisted.singleGarmentVerified!==true)))||
+    (cutout124&&(
+      persisted.singleGarmentVerified!==false||
+      persisted.humanReviewedSource!==true||
+      persisted.confirmedCategory!==true||persisted.confirmedColor!==true||
+      persisted.colorSource!=='user'||persisted.multipleGarments===true||
+      persisted.segmentHint?.ownerReviewedInstance!==true||
+      persisted.segmentHint?.verified!==true||
+      persisted.segmentHint?.clipped===true||
+      persisted.segmentHint?.originalSHA256!==expectedSHA||
+      persisted.segmentHint?.cutoutSHA256!==persisted.cutoutSHA256||
+      !/^[a-f0-9]{64}$/.test(persisted.cutoutSHA256||'')||
+      persisted.cutoutSHA256===expectedSHA||
+      !persisted.segmentHint?.cutoutImage||
+      persisted.segmentHint.cutoutImage===persisted.originalPhoto?.image||
+      !persisted.outfitSourceId))||
     persisted.sourceSHA256!==expectedSHA||
     persisted.originalPhoto?.sha256!==expectedSHA||
-    persisted.originalPhoto?.image!==persisted.image||
+    (!cutout124&&persisted.originalPhoto?.image!==persisted.image)||
+    (cutout124&&persisted.image!==persisted.originalPhoto?.image&&
+      persisted.image!==persisted.segmentHint?.cutoutImage)||
     persisted.category==='Uncategorized'||persisted.itemType==='Unknown'||
     !persisted.color||persisted.color==='Unknown')
   throw Error('Saved owner garment or original JPEG changed; reopen My Closet');
@@ -387,6 +410,12 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
  await panel.selectGarment(itemId);
  if(!live())throw Error('Owner changed while selecting the photographed garment');
  const suggestions=await panel.generate();
+ // PHOTO124: the existing native Style panel must actually show the SECOND
+ // SHA-256-verified instance cutout, never silently show the full original
+ // or fabricate 3D surfaces for an unverified garment.
+ if(cutout124&&document.querySelector('#styleOwned03Pinned img')?.getAttribute('src')!==
+    persisted.segmentHint.cutoutImage)
+  throw Error('Visible reviewed cutout was not independently verified for 2D styling');
  if(!live()||panel.status()?.pinnedId!==itemId||
     suggestions?.combinations?.some(look=>look.pinnedId!==itemId))
   throw Error('Pinned item or owner changed while creating outfit choices');
@@ -516,21 +545,46 @@ function render(){
   actionRow.append(ok,cancel);f.append(actionRow);
  }else f.append(ok,cancel);
  dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
- const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
+ const isReviewedSource123=typeof reviewedCloset123Active!=='undefined'&&
   reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
   item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
-  item.singleGarmentVerified===true&&
   item.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence';
+ const reviewedCutoutStored124=typeof reviewedCutout124Active!=='undefined'&&
+  reviewedCutout124Active&&isReviewedSource123&&item.humanReviewedSource===true&&
+  item.singleGarmentVerified===false&&item.confirmedCategory===true&&
+  item.confirmedColor===true&&item.colorSource==='user'&&
+  item.segmentHint?.verified===true&&
+  item.segmentHint?.ownerReviewedInstance===true&&
+  item.segmentHint?.clipped!==true&&
+  item.segmentHint?.originalSHA256===item.sourceSHA256&&
+  item.segmentHint?.cutoutSHA256===item.cutoutSHA256&&
+  /^[a-f0-9]{64}$/.test(item.cutoutSHA256||'')&&
+  item.cutoutSHA256!==item.sourceSHA256&&
+  item.segmentHint?.cutoutImage!==item.originalPhoto?.image&&
+  typeof item.segmentHint?.cutoutImage==='string'&&
+  item.multipleGarments!==true;
+ const reviewedStored123=isReviewedSource123&&
+  (item.singleGarmentVerified===true||reviewedCutoutStored124);
+ if(reviewedCutoutStored124){
+  // Label truthfully: a manually reviewed region is a visible 2D photograph,
+  // not a learned segment/mask or an accepted 3D garment.
+  im.src=item.segmentHint.cutoutImage;
+  im.alt='Owner-reviewed photograph cutout, 2D-only: '+(item.name||item.itemType);
+  body.append(node('p','Owner-reviewed visible cutout · 2D photo only','fine'));
+ }
  const styleNew=node('button',reviewedStored123?'Get 3 outfits with this piece':'Style this piece','secondary');
  styleNew.type='button';
  if(reviewedStored123){
   styleNew.classList.add('reviewed-closet123');
+  if(reviewedCutoutStored124)styleNew.classList.add('reviewed-cutout124');
   styleNew.dataset.savedItemId=item.id;
  }
  styleNew.onclick=async()=>{
   styleNew.disabled=true;
   try{
-   if(reviewedStored123)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{fromCloset123:true});
+   if(reviewedStored123)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{
+    fromCloset123:true,cutout124:reviewedCutoutStored124
+   });
    else{
     switchView('stylist');
     if(!window.styleOwnedLive03Bridge?.selectGarment)
