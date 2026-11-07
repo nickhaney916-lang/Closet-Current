@@ -106,6 +106,8 @@ jobs:
           assert.equal(s.split(anchor).length,2,'P154 pinned native WebGL snapshot evidence anchor mismatch');
           s=s.replace(anchor,anchor+
            'headHairMeshCount153:overlay.headHair153?.hairMeshes||0,'+
+           'headBoneAttached153:overlay.headHair153?.headAttached||false,'+
+           'sourcePhotoGeometryUnchanged153:overlay.headHair153?.originalGarmentGeometryChanged===false,'+
            'faceContourMeshCount154:overlay.faceContours154?.contourMeshes||0,'+
            'originalSourceBodyUnmodified154:overlay.faceContours154?.changedOriginalHead===false,');
           writeFileSync(file,s);
