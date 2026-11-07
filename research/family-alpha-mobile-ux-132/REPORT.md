@@ -71,11 +71,11 @@ Changes are limited to interface labels/styles and this isolated acceptance harn
 
 ## CI and delivery update
 
-- Exact final P132 commit: `8824ae666bbe80f0127609c6e66e3e625c90a809`; exact parent P130: `5ce8f51ebbf65d275197a21bdaa7818801b4b49b`.
+- Exact P132 implementation commit: `8824ae666bbe80f0127609c6e66e3e625c90a809`; it contains all UI, test, and workflow changes. Its exact parent P130 is `5ce8f51ebbf65d275197a21bdaa7818801b4b49b`.
 - Draft PR #688: https://github.com/nickhaney916-lang/Closet-Current/pull/688 (open, unmerged).
-- Exact-head P132 workflow run #42384547901: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42384547901 — both Node regression and genuine Chromium/WebKit mobile browser jobs passed.
+- Exact implementation-head P132 workflow run #42384547901: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42384547901 — both Node regression and genuine Chromium/WebKit mobile browser jobs passed. The subsequent report-only commit also passed the same workflow in run #42384751612: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42384751612.
 - The exact-head browser job used a pinned Playwright container, required both engines, and completed six engine/viewport cases (320, 390, 430 CSS-pixel portrait; 390/430 landscape and return). The job captured both browser engines; no physical phones were used.
 - Screenshot/accessibility artifact `P132-family-alpha-chromium-webkit-320-390-430-screenshots`, artifact ID `13579072611`: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42384547901/artifacts/13579072611. Includes 42 PNGs, 26 axe JSON reports, and `results.json`.
 - Node report/script artifact `P132-family-alpha-mobile-ux-node-report`, artifact ID `13578074357`: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42384547901/artifacts/13578074357.
-- An inherited unrelated `CAPTURE-PROOF-01 Original Camera+Import Chromium WebKit NO DEPLOY` PR-triggered workflow failed its separate path allowlist. It is not the P132 workflow and its assignment-owned files were not changed.
+- An inherited unrelated `CAPTURE-PROOF-01 Original Camera+Import Chromium WebKit NO DEPLOY` PR-triggered workflow failed at its `INDEX-04` path-scope check because the diff includes `.github/workflows/allowlisted-review-snapshot-78-no-deploy.yml`, a file outside that workflow allowlist. It is not the P132 workflow; no file in that other assignment was changed.
 - The PR remains draft and the P130-based research branch remains isolated. No merge, deployment, staging/production modification, live-account verification, or family release occurred.
