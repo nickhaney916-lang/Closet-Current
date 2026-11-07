@@ -9,7 +9,7 @@ const ownerA=randomUUID(),jpeg=readFileSync('benchmark/fixtures/commons-0002.jpg
 const sha=async b=>[...new Uint8Array(await webcrypto.subtle.digest('SHA-256',b))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const data=b=>'data:image/jpeg;base64,'+b.toString('base64');
 function response(status,body,bytes){return{ok:status>=200&&status<300,status,json:async()=>body,arrayBuffer:async()=>bytes?.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};}
-async function fixture({confirm=async()=>true}={}){
+async function fixture({confirm=async()=>true,onUpload=async()=>{}}={}){
  const dbreq=indexedDB.open('closet-current-user-'+ownerA,2);
  const db=await new Promise((resolve,reject)=>{dbreq.onupgradeneeded=()=>{dbreq.result.createObjectStore('items',{keyPath:'id'});dbreq.result.createObjectStore('state',{keyPath:'id'});};dbreq.onsuccess=()=>resolve(dbreq.result);dbreq.onerror=()=>reject(dbreq.error);});
  const put=(store,row)=>new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(row);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
@@ -23,7 +23,7 @@ async function fixture({confirm=async()=>true}={}){
   assert.equal(opts.headers.apikey,'research-anon-key');
   if(url.includes('/storage/v1/object/closet-private/')){
    const path=decodeURIComponent(url.split('/closet-private/')[1]);
-   if(opts.method==='POST'){if(!path.startsWith(ownerA+'/'))return response(403,{});if(objects.has(path))return response(409,{});objects.set(path,new Uint8Array(opts.body));return response(200,{});}
+   if(opts.method==='POST'){if(!path.startsWith(ownerA+'/'))return response(403,{});if(objects.has(path))return response(409,{});objects.set(path,new Uint8Array(opts.body));await onUpload();return response(200,{});}
    if(!path.startsWith(ownerA+'/'))return response(403,{});if(!objects.has(path))return response(404,{});return response(200,{},objects.get(path));
   }
   if(url.includes('/rest/v1/closet_backups?'))return response(200,remote?[remote]:[]);
@@ -43,6 +43,12 @@ test('P129 backs up private owner JPEG assets and manifest through authenticated
  assert.equal(f.remote.owner_id,ownerA);assert([...f.objects.keys()][0].startsWith(ownerA+'/'));
  assert.equal(JSON.stringify(f.remote.document).includes('data:image/jpeg;base64,'),false);
  assert.equal(f.bridge.status().realSignedJWTVerified,false);f.db.close();
+});
+test('P129 local wardrobe edits during photo upload abort before cloud manifest save',async()=>{
+ let f;
+ f=await fixture({onUpload:async()=>{await new Promise((resolve,reject)=>{const tx=f.db.transaction('items','readwrite'),r=tx.objectStore('items').get('p129-owner-top');r.onsuccess=()=>tx.objectStore('items').put({...r.result,color:'Blue'});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});}});
+ await assert.rejects(f.bridge.backup({expectedRemoteRevision:0}),e=>e.code==='conflict');
+ assert.equal(f.remote,null);f.db.close();
 });
 test('P129 stale cloud revisions never overwrite newer remote wardrobe',async()=>{
  const f=await fixture();await f.bridge.backup({expectedRemoteRevision:0});f.remote={...f.remote,revision:2,document:{...f.remote.document,newer:true}};
