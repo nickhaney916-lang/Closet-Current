@@ -18,10 +18,8 @@ export const VISIBLE_SKIN_152=Object.freeze({
  garmentGeometryChanged:false,originalPhotoJPEGSHAChanged:false,
  original163BoneRigChanged:false
 });
-const old=String.raw`    roughnessFactor=mix(roughnessFactor,.70+skinCloud118*.035,uNaturalSkin118*(1.0-baseCoverage));
-    ${rough}`;
-const fixed=String.raw`    ${rough}
-    roughnessFactor=mix(roughnessFactor,.70+skinCloud118*.035,uNaturalSkin118*(1.0-baseCoverage));`;
+const old="    roughnessFactor=mix(roughnessFactor,.70+skinCloud118*.035,uNaturalSkin118*(1.0-baseCoverage));\n    ${rough}";
+const fixed="    ${rough}\n    roughnessFactor=mix(roughnessFactor,.70+skinCloud118*.035,uNaturalSkin118*(1.0-baseCoverage));";
 export function repairPinnedP118Shader152(source){
  if(typeof source!=='string'||source.length<1000||
     source.split(old).length!==2||source.includes(fixed))
