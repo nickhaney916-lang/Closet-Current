@@ -1,0 +1,24 @@
+# Closet Current — Main Priority #153 / Source-Anchored Dual-Humanoid Hair
+
+**RESEARCH ONLY · Family Alpha GitHub Issue #255 HOLD · draft unmerged · no production, existing staging, hosted Supabase, Delta Ebb or Drive Duel changes/deployments.**
+
+## Baseline and reason
+
+P152's [draft PR #707](https://github.com/nickhaney916-lang/Closet-Current/pull/707) exact `d5319ed3531839b7dd158075603db09f62f3f2bf` successfully repaired the original invisible head/body skin shader from Parallel #57 P150. [Actions #42419389522](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42419389522) completed **2/2 jobs, 1,248 full Node tests, 36 authentic before/after source-3D screenshots and 3 true WebKit WebGL cases**. Source figures are visible again but real screenshot inspection showed an overly small floating brown cap, minimal hair silhouette and noticeable facial geometry. The next most valuable, **independently testable** visual improvement is the hair/head presentation while keeping the source geometry, privacy and clothing untouched.
+
+P153 is directly descended from P152, not Parallel #57 branch #706. P153 references Parallel #57 exact source `6e576da9d7ff6a0a439a7762cf333670d20f0131` only inside a disposable detached P541 donor `df6885d6011cb33fb22dceb81a08f35a0ac4dd61`. It applies P152's isolated skin fix before comparing its own visuals so the before and after always show a visible original source head.
+
+## Code
+
+- `source-head-hair.mjs`: legitimate Three.js mesh geometry procedurally constructed from the P131 **source skinned-vertex sampled head bounds**, two original eye surface anchors and the existing original **163-bone Head bone**; it covers the source scalp rather than leaving a tiny floating cap. Rather than reconstructing a cone, the crown copies only actual SHA-pinned donor scalp triangles, skin-transformed by the existing 163-bone skeleton and displaced 5.5 mm outward to avoid source scalp poking through. Male retains short scalp and tapered temple panels; female adds light tapered side/rear panels. Floating synthetic crown strokes were removed after inspecting failed intermediate screenshots. Both are restricted to the face/head, no owner/user likeness or photo identity.
+- The first experimental cone-like crown was visibly hat-shaped despite passing some automated pixel checks and has been rejected in favor of donor-original skinned scalp topology. The original P150 floating cap is temporarily hidden by the new overlay; previously correct P152 source skin, old anatomically skinned face, genuine 163-bone rig, P131 eye/nose anatomy, owner-reviewed garment mesh, original cropped/photo source and output outfit identifiers remain unchanged. P153 overlay is fully disposed/removed when the original P150 figure is switched or redrawn, including geometry and owned materials, restoring original cap visibility.
+- `install-dual-humanoid-head-hair-153.mjs` refuses all targets except pinned isolated `.p150-donor-541`, then copies source module only to the detached donor and extends exact original `applyDualHumanoid150` with a P153 opt-in research layer. The P150 parallel branch, shipping app and existing CI test files are not edited.
+- Targeted Node unit tests fail closed on missing P150/P131 source head, unknown gender, absent original skeleton, unsafe filesystem target, stale/duplicate overlay and verify cleanup.
+- Dedicated no-deploy CI: exact P152 ancestry and precisely six research-only paths, full inherited Node regression + native app build, original P150 actual owner saved-outfit research view in Chromium at 320/390/430 with both genders and front/side/rear, captured **18 before + 18 after** genuine photo-backed WebGL screenshots and individually SHA-audited.
+- Independent pixel audit verifies an actual changed head silhouette for **all 18** view/width/gender pairs while preserving the real P152 visible source-skin region, P131 face mesh count, anatomical skeleton count, original P150 photographed dress/garment mesh count, owner A/B isolation and unsupported clothes' photo-only fallback. After change, WebKit separately exercises the same 3 mobile widths with genuine 163-bone WebGL.
+
+## Explicit limitations / acceptance honesty
+
+Only a genuine screenshot comparison can establish visible improvement; increasing geometry vertices without a pixel change is NOT an accepted result. A source-attached procedural hairstyle and real source face do NOT demonstrate realistic personal hair, a photographed person's identity, realistic iris/eyelids/ears/nose/lips, full-body clothing physics, actual customer's arbitrary photo to 3D, physical Android/iPhone testing, or hosted signed-cloud two-owner RLS. Do not assign an invented 10/10 photorealism score. No Family Alpha approval.
+
+**Status: only exact-final-head green Node + genuine WebGL + independent screenshot audit establish P153 source-hair integration verification; human photo-realism acceptance remains HOLD.**
