@@ -575,7 +575,7 @@ function render(){
   im.alt='Owner-reviewed photograph cutout, 2D-only: '+(item.name||item.itemType);
   body.append(node('p','Owner-reviewed visible cutout · 2D photo only','fine'));
  }
- const styleNew=node('button',reviewedCutoutStored124?'Get 3 outfits with this piece':
+ const styleNew=node('button',reviewedCutoutStored124?'Get 3 outfits with this piece · 2D photo only':
   reviewedStored123?'Get 3 outfits with this piece':'Style this piece','secondary');
  styleNew.type='button';
  if(reviewedStored123||reviewedCutoutStored124){
