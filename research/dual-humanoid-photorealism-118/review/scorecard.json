@@ -1,0 +1,31 @@
+{
+  "schema": "dual-humanoid-photorealism-118-review/v1",
+  "humanReview": "PENDING; no numerical realism score may be asserted before independent reviewers complete it",
+  "target": 10,
+  "figures": {
+    "female": {
+      "facialRealism": null,
+      "skinRealism": null,
+      "hairAndEyes": null,
+      "bodyAnatomy": null,
+      "posture": null,
+      "frontSideRearConsistency": null,
+      "clothingIntegration": null,
+      "overallCredibility": null,
+      "visibleMannequinTraits": []
+    },
+    "male": {
+      "facialRealism": null,
+      "skinRealism": null,
+      "hairAndEyes": null,
+      "bodyAnatomy": null,
+      "posture": null,
+      "frontSideRearConsistency": null,
+      "clothingIntegration": null,
+      "overallCredibility": null,
+      "visibleMannequinTraits": []
+    }
+  },
+  "releaseAuthorized": false,
+  "familyAlpha": "HOLD"
+}

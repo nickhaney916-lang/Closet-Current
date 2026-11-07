@@ -1,0 +1,104 @@
+name: P118 dual humanoid photorealism and real WebGL mobile acceptance NO DEPLOY
+on:
+  push:
+    branches:
+      - research/dual-humanoid-photorealism-118-main-20261106-HOLD
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - research/dual-humanoid-photorealism-118/**
+      - scripts/install-dual-humanoid-realism-118.mjs
+      - scripts/test-dual-humanoid-realism-118.mjs
+      - tests/dual-humanoid-photorealism-118.test.mjs
+      - .github/workflows/dual-humanoid-photorealism-118-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  dual-humanoid-realism:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact PR669 parent and research-only changed-path boundary
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=5a225aa9c6530cc178bb7f48a4525be7527bcf7c
+          test "$(git merge-base HEAD "$BASE")" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p118-paths
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/dual-humanoid-photorealism-118-no-deploy.yml|research/dual-humanoid-photorealism-118/REPORT.md|research/dual-humanoid-photorealism-118/review/scorecard.json|research/dual-humanoid-photorealism-118/realism.mjs|scripts/install-dual-humanoid-realism-118.mjs|scripts/test-dual-humanoid-realism-118.mjs|tests/dual-humanoid-photorealism-118.test.mjs) ;;
+              *) echo "REFUSE default app, production, existing staging, private source or unrelated work: $path"; exit 1 ;;
+            esac
+          done </tmp/p118-paths
+          test "$(wc -l </tmp/p118-paths)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public index.html package.json package-lock.json supabase
+      - name: Install fixed Node test and WebGL dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build unchanged application and run inherited plus P118 regressions
+        run: |
+          node scripts/build.mjs
+          node --check research/dual-humanoid-photorealism-118/realism.mjs
+          node --check scripts/install-dual-humanoid-realism-118.mjs
+          node --check scripts/test-dual-humanoid-realism-118.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Reconstruct exact licensed CC0 PR541 163-bone research donor
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .photo118-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo118-donor-541"
+          ln -s ../node_modules .photo118-donor-541/node_modules
+          cd .photo118-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Install opt-in P118 overlay only in detached donor and run both-figure WebGL A/B mobile matrix
+        run: |
+          node scripts/install-dual-humanoid-realism-118.mjs .photo118-donor-541
+          cp scripts/test-dual-humanoid-realism-118.mjs .photo118-donor-541/scripts/
+          cd .photo118-donor-541
+          node scripts/test-dual-humanoid-realism-118.mjs
+      - name: Assert genuine dual-figure screenshots, source identity and honest acceptance
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const a=JSON.parse(readFileSync('.photo118-donor-541/benchmark/three-d-118/acceptance.json','utf8'));
+          assert.equal(a.chromiumScreenshots,72);
+          assert.equal(a.baselineComparisonPairs,12);
+          assert.equal(a.rigBones,163);
+          assert.deepEqual(a.viewDegrees,[0,90,270,180,45,225]);
+          assert.deepEqual(a.viewportWidthsCSS,[320,390,430]);
+          assert.equal(a.familyAlpha,'HOLD');
+          assert.equal(a.releaseAuthorized,false);
+          assert.ok(a.browserResults.some(x=>x.browser==='chromium'&&x.supported===true));
+          for(const r of a.screenshots.filter(x=>x.browser==='chromium')){
+            assert.equal(r.rigBones,163);
+            assert.equal(r.sourceHashes.top,'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64');
+            assert.equal(r.sourceHashes.bottom,'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c');
+          }
+          NODE
+      - name: Upload only original-source WebGL screenshots, comparisons, and acceptance JSON NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P118-dual-humanoid-real-WebGL-before-after-HOLD-NO-DEPLOY
+          path: |
+            research/dual-humanoid-photorealism-118/REPORT.md
+            research/dual-humanoid-photorealism-118/review/scorecard.json
+            .photo118-donor-541/benchmark/three-d-118/
+          if-no-files-found: warn
+          retention-days: 14
