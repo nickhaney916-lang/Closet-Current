@@ -123,7 +123,7 @@ jobs:
           assert(p132.engines.filter(x=>x.width>=390).every(x=>x.syntheticThreeOutfits&&x.swapPreservesOtherSelections&&x.savedAndReopened));
           const photo=JSON.parse(readFileSync('benchmark/reviewed-photo-to-three-owned-looks-122/results.json','utf8'));
           assert.equal(photo.cases.length,6);assert(photo.cases.every(x=>x.threeRealOriginalOwnedLooks&&x.actualPhotoReviewToStyleShortcut&&x.ownerBPrivate&&x.photosUnchanged));
-          assert.equal(photo.realSignedServerRLS,false);assert.equal(photo.actualPhysicalAndroidOrIphone,false);assert.equal(photo.arbitraryFitted3D,false);
+          assert.equal(photo.realSignedServerRLS,false);assert.equal(photo.realPhysicalAndroidOrIphone,false);assert.equal(photo.arbitraryFitted3D,false);
           const restore=JSON.parse(readFileSync('benchmark/cloud-restore-browser-138/results.json','utf8'));
           assert.equal(restore.cases.length,6);assert(restore.cases.every(x=>x.actualBrowserP137Consent&&x.atomicSavedOutfitRestore&&x.localEditDuringConsentRejected&&x.remoteSameRevisionOrVersionEditRejected));
           const storage=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
