@@ -36,7 +36,7 @@ async function response(req,res){
   let filepath=supported.get(pathname);
   if(!filepath&&pathname.startsWith('/vendor/three/')){
    const tail=pathname.slice('/vendor/three/'.length);
-   if(!/^(build\/three\.module\.js|examples\/jsm\/[a-zA-Z0-9_./-]+\.js)$/.test(tail)||
+   if(!/^(build\/three\.(?:module|core)\.js|examples\/jsm\/[a-zA-Z0-9_./-]+\.js)$/.test(tail)||
     tail.includes('..'))throw Error('P155 disallowed external JS');
    filepath='node_modules/three/'+tail;
   }
