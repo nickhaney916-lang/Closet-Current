@@ -12,7 +12,7 @@ const digest=async bytes=>[...new Uint8Array(await webcrypto.subtle.digest('SHA-
 const endpoint=(ownerId)=>'/rest/v1/closet_backups?owner_id=eq.'+ownerId+'&select=owner_id,revision,document';
 const response=(status,payload,bytes)=>({ok:status>=200&&status<300,status,
  json:async()=>payload,arrayBuffer:async()=>bytes?.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)});
-function fixture({approval=async()=>true,remoteExists=true,onRead=async()=>{}}={}){
+function fixture({approval=async()=>true,remoteExists=true,onRead=async()=>{},onBackup=async()=>{}}={}){
  const ownerId=randomUUID(),otherId=randomUUID();
  const token='P133-test-token-owner-A-research-long';
  const session={user:{id:ownerId},token,valid:true};
@@ -31,6 +31,7 @@ function fixture({approval=async()=>true,remoteExists=true,onRead=async()=>{}}={
  let readCount=0;const requests=[],writes=[];
  const bridge={
   async backup({expectedRemoteRevision}){
+   await onBackup();
    writes.push(expectedRemoteRevision);
    const actual=remote?.revision||0;
    if(expectedRemoteRevision!==actual){
@@ -175,23 +176,14 @@ test('P133 second operation during pending owner prompt is refused, and lock cle
  release();await pending;
  assert.equal(f.p.status().busy,false);
 });
-test('P133 remote CAS changed after final preview still rejected by delegated P132/P129 writer',async()=>{
+test('P133 delegated CAS rejects a competing write AFTER the second manifest preview',async()=>{
  let f;
- f=fixture({approval:async()=>true});
- // The mock P129 bridge simulates a second writer racing after P133's second GET.
- // We mutate exactly as the delegate is entered, after P133 has validated both reads.
- const original=f.remote;f.remote=original;
- const delegate=f.p;
- // Instead of forging a revision number we trigger change at second GET's return.
- let read=0;
- const g=fixture({onRead:async()=>{read++;}});
- const newRevision=g.remote.revision+1;
- const fake=()=>newRevision;
- assert.equal(fake(),4);
- const r=await delegate.backupWithOwnerPreview();
- assert.equal(r.saved,true);
- assert.equal(g.writes.length,0);
- // The true live CAS scenario is exercised by the unchanged P132/P129 suite.
+ f=fixture({onBackup:async()=>{f.remote={...f.remote,revision:f.remote.revision+1};}});
+ await assert.rejects(f.p.backupWithOwnerPreview(),e=>e.code==='conflict');
+ assert.equal(f.readCount,2);
+ assert.deepEqual(f.writes,[3]);
+ assert.equal(f.remote.revision,4);
+ assert.equal(f.p.status().busy,false);
 });
 async function realPhotoFixture({confirmReplace=async()=>true}={}){
  const ownerId=randomUUID();
