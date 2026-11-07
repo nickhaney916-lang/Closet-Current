@@ -1,0 +1,145 @@
+name: P134 local-remote reviewed cloud owner consent fence NO DEPLOY
+on:
+  push:
+    branches: [research/local-remote-consent-fence-134-main-20261107-HOLD]
+  pull_request:
+    branches: [research/remote-cloud-reviewed-preview-133-main-20261107-HOLD]
+    paths:
+      - 'research/remote-cloud-reviewed-preview-133/**'
+      - 'tests/local-remote-consent-fence-134.test.mjs'
+      - '.github/workflows/local-remote-consent-fence-134-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  remote-preview-and-owner-consent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict P133 parent and exactly four research-only files
+        run: |
+          BASE=d1b8211462e419c7d2552694c2518a695e218cf9
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p134-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/local-remote-consent-fence-134/owner-local-remote-fence.mjs|research/local-remote-consent-fence-134/REPORT.md|tests/local-remote-consent-fence-134.test.mjs|.github/workflows/local-remote-consent-fence-134-no-deploy.yml) ;;
+              *) echo "REFUSE protected source, production, staging or parallel owner: $path"; exit 1 ;;
+            esac
+          done </tmp/p134-paths
+          test "$(wc -l </tmp/p134-paths)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json benchmark research/remote-cloud-reviewed-preview-133 research/owner-cloud-revision-consent-132 research/signed-owner-cloud-integration-129 research/source-review-atomic-cloud-merge-130 research/dual-humanoid-face-definition-131
+      - name: Pin test packages without changing lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: P134 syntax and focused actual P129 native bridge tests
+        run: |
+          node --check research/local-remote-consent-fence-134/owner-local-remote-fence.mjs
+          node --check tests/local-remote-consent-fence-134.test.mjs
+          node --test tests/local-remote-consent-fence-134.test.mjs tests/remote-cloud-reviewed-preview-133.test.mjs tests/owner-cloud-revision-consent-132.test.mjs tests/signed-owner-cloud-integration-129.test.mjs
+      - name: Rebuild unchanged Closet Current app
+        run: node scripts/build.mjs
+      - name: Entire inherited Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Protect research-only, unsigned cloud limit
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const code=readFileSync('research/local-remote-consent-fence-134/owner-local-remote-fence.mjs','utf8');
+          for(const s of ['createOwnerRemotePreview133','readOwnerSnapshot01','exportBackup01','validateRestore01','await assertSameLocal(current.lease,current.local)','localSnapshotBoundToDecision:true',"familyAlpha:'HOLD'"])assert.ok(code.includes(s),s);
+          NODE
+  disposable-real-postgres-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p132-temporary-only
+          POSTGRES_DB: p132_temporary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p132_temporary"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p132-temporary-only@127.0.0.1:5432/p132_temporary
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p132-temporary-only
+      PGDATABASE: p132_temporary
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source SQL, real policy and original photo fixtures unchanged
+        run: git diff --exit-code d1b8211462e419c7d2552694c2518a695e218cf9 HEAD -- public supabase benchmark research/two-owner-cloud-rls-recovery-128
+      - name: Install disposable PostgreSQL command line and driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Bootstrap original PostgreSQL RLS policies from unchanged repository SQL
+        run: psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Run actual two-owner PostgreSQL RLS and CAS checks
+        run: node scripts/test-two-owner-postgres-rls-128.mjs
+  inherited-mobile-browser-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned research-only browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Inherited actual app Chromium and WebKit 320 390 430 mobile cases
+        run: node scripts/test-owner-confirmation-mobile-restore-127-browser.mjs
+      - name: Assert six independent browser flows and no false live cloud claim
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/owner-confirmation-mobile-restore-127/results.json','utf8'));
+          assert.equal(r.cases.length,6);
+          assert.deepEqual(r.cases.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          assert.equal(r.realSignedServerRLS,false);
+          assert.equal(r.realPhysicalAndroidOrIphone,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.errors,[]);
+          NODE
+      - name: Archive real inherited mobile screenshots, NOT P134 cloud UI proof
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P134-inherited-mobile-NOT-live-cloud-or-physical-device
+          path: benchmark/owner-confirmation-mobile-restore-127/
+          retention-days: 14
