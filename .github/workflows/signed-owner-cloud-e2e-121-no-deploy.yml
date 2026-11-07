@@ -71,9 +71,11 @@ jobs:
             assert.equal(row.actualUserCorrectionForm,true);
             assert.equal(row.noHorizontalOverflow,true);
             assert.equal(row.actualSignedCloudRLS,false);
-            assert.equal(row.realAuthenticatedCloudUsers,false);
             assert.equal(row.physicalPhoneTested,false);
           }
+          assert.equal(p.realAuthenticatedCloudUsers,false);
+          assert.equal(p.physicalPhoneCameraVerified,false);
+          assert.equal(p.productionDeployed,false);
           const images=readdirSync(dir).filter(x=>x.endsWith('.png'));
           assert.equal(images.length,12);
           for(const name of images)assert.ok(statSync(dir+'/'+name).size>1000,name);
