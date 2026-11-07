@@ -298,6 +298,9 @@ try{
     sourcePhotosRetained:await page.locator('#outfit3D01Photos img').count(),
     outfitUnmodified:true,physicalPhoneApproved:false,familyAlpha:'HOLD'});
    await page.evaluate(()=>window.native3D05Bridge.close());
+   // On narrow WebKit viewports the account actions live inside a closed
+   // disclosure. Open the actual visible control before invoking logout.
+   await page.locator('.account-menu > summary').click();
    await page.locator('#logout').click();
    await page.waitForFunction(()=>window.closetAuth?.user===null&&
     document.getElementById('authGate')?.hidden===false);
