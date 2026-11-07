@@ -109,7 +109,9 @@ jobs:
           P136_PARENT_SHA: 59ec81353d03a6a5443c9370f209d7e367456e26
           P136_REPEATS: '3'
           P136_ENGINES: chromium,webkit
-        run: node scripts/test-storage-resilience-136-browser.mjs
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node scripts/test-storage-resilience-136-browser.mjs
       - name: Assert all app journeys, mobile widths, large closet results, source safeguards and simulated account limits
         run: |
           node --input-type=module <<'NODE'
