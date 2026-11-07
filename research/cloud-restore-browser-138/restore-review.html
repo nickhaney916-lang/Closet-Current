@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light">
+<title>Closet Current — research cloud restore preview</title>
+<style>
+:root {font: 16px/1.45 system-ui,-apple-system,sans-serif;color:#13243c;background:#f5f7fa}
+*{box-sizing:border-box}
+body{margin:0}
+main{max-width:560px;margin:0 auto;padding:clamp(12px,4vw,24px)}
+h1{font-size:1.45rem;line-height:1.15;margin:9px 0 4px}
+h2{font-size:1.08rem;line-height:1.25;margin:4px 0 12px}
+p{margin:0 0 12px}
+small{display:block;color:#43546c}
+.card{border:1px solid #ccd5e2;border-radius:14px;padding:16px;background:white;margin:16px 0;box-shadow:0 1px 3px #17263b11}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{background:#f2f6fa;padding:12px;border-radius:10px;min-width:0}
+.stat strong{display:block;font-size:1.65rem;font-variant-numeric:tabular-nums}
+.stat span{font-size:.87rem}
+button{font:inherit;font-weight:700;border:1px solid #263f64;border-radius:11px;min-height:48px;padding:10px 14px;cursor:pointer}
+button:focus-visible{outline:3px solid #006ce1;outline-offset:3px}
+.primary{color:white;background:#174b84}
+.secondary{background:white;color:#174b84}
+.actions{display:grid;grid-template-columns:1fr;gap:8px}
+[hidden]{display:none!important}
+#status{min-height:44px;padding:12px;border-radius:10px;background:#e9eef4}
+#status[data-state=error]{background:#fff2f0;color:#861f1d}
+#status[data-state=success]{background:#e7f7ec;color:#11552e}
+dialog{border:1px solid #6a778b;border-radius:16px;width:min(calc(100% - 28px),470px);max-height:calc(100dvh - 30px);overflow:auto;padding:20px;box-shadow:0 20px 60px #0c1c3370}
+dialog::backdrop{background:#0e1829a8}
+.warning{font-weight:700;color:#7b321a}
+dialog .actions{grid-template-columns:1fr 1fr}
+footer{font-size:.77rem;color:#41516c;margin:20px 0 6px}
+@media(max-width:350px){dialog .actions{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+ <small>RESEARCH-ONLY PROTOTYPE · NO LIVE CLOUD · FAMILY ALPHA HOLD</small>
+ <h1>Restore my closet</h1>
+ <p>Compare your saved outfits before replacing this device's wardrobe.</p>
+ <section class="card" aria-labelledby="comparison-title">
+  <h2 id="comparison-title">Private backup preview</h2>
+  <div id="comparison" class="grid" aria-live="polite">
+   <div class="stat"><span>On this device</span><strong id="localClothes">—</strong><span>clothing items</span></div>
+   <div class="stat"><span>Cloud backup</span><strong id="remoteClothes">—</strong><span>clothing items</span></div>
+   <div class="stat"><span>Saved outfits here</span><strong id="localOutfits">—</strong></div>
+   <div class="stat"><span>Cloud saved outfits</span><strong id="remoteOutfits">—</strong></div>
+  </div>
+  <small id="revision">Cloud revision not read</small>
+ </section>
+ <section class="card" aria-label="Restore choices">
+  <p><strong>This is a replacement, not a merge.</strong> Changes saved only on this device could be lost.</p>
+  <div class="actions">
+   <button class="secondary" id="preview" type="button">Review local and cloud counts</button>
+   <button class="primary" id="restore" type="button">Restore cloud backup…</button>
+  </div>
+ </section>
+ <p id="status" role="status" aria-live="polite" data-state="neutral">Research fixture not loaded.</p>
+ <dialog id="confirm" role="alertdialog" aria-labelledby="confirmTitle" aria-describedby="confirmWarning">
+  <h2 id="confirmTitle">Replace this device's wardrobe?</h2>
+  <p id="confirmWarning" class="warning">This removes local-only changes and saved outfits. There is no automatic merge.</p>
+  <div class="grid" aria-label="Compared counts">
+   <div class="stat"><span>Local clothes</span><strong id="dialogLocalClothes">—</strong></div>
+   <div class="stat"><span>Cloud clothes</span><strong id="dialogRemoteClothes">—</strong></div>
+   <div class="stat"><span>Local outfits</span><strong id="dialogLocalOutfits">—</strong></div>
+   <div class="stat"><span>Cloud outfits</span><strong id="dialogRemoteOutfits">—</strong></div>
+  </div>
+  <p><small>Original and cutout JPEG integrity was checked. No photos or clothing descriptions are displayed here.</small></p>
+  <div class="actions">
+   <button class="secondary" id="cancel" type="button">Keep my closet</button>
+   <button class="primary" id="approve" type="button">Replace with cloud</button>
+  </div>
+ </dialog>
+ <footer>Isolated simulation with synthetic accounts and private fake HTTP. Not an installed Closet Current feature. No production, staging, real signed JWT or physical device acceptance.</footer>
+</main>
+<script type="module">
+import {createCloudRestoreGuard137}
+ from '../cloud-restore-owner-safety-137/owner-restore-guard.mjs';
+import {createSignedOwnerCloud129}
+ from '../signed-owner-cloud-integration-129/native-cloud-bridge.mjs';
+
+const $=id=>document.getElementById(id);
+let fixture=null,guard=null,busy=false,lastOutcome=null,resolveDecision=null,lastDecision=null;
+function setStatus(message,state='neutral'){
+ $('status').textContent=message;$('status').dataset.state=state;
+}
+async function openDB(ownerId){
+ return new Promise((ok,bad)=>{
+  const r=indexedDB.open('closet-current-user-'+ownerId,2);
+  r.onupgradeneeded=()=>{
+   const db=r.result;
+   if(!db.objectStoreNames.contains('items'))db.createObjectStore('items',{keyPath:'id'});
+   if(!db.objectStoreNames.contains('state'))db.createObjectStore('state',{keyPath:'id'});
+  };
+  r.onsuccess=()=>ok(r.result);r.onerror=()=>bad(r.error);
+ });
+}
+async function put(store,row){
+ return new Promise((ok,bad)=>{
+  const tx=fixture.db.transaction(store,'readwrite');
+  tx.objectStore(store).put(row);tx.oncomplete=ok;tx.onerror=()=>bad(tx.error);
+ });
+}
+async function get(store,id){
+ return new Promise((ok,bad)=>{
+  const tx=fixture.db.transaction(store,'readonly');
+  const req=tx.objectStore(store).get(id);
+  req.onsuccess=()=>ok(req.result);req.onerror=()=>bad(req.error);
+ });
+}
+function display(preview){
+ $('localClothes').textContent=String(preview.localGarmentCount);
+ $('remoteClothes').textContent=String(preview.remoteGarmentCount);
+ $('localOutfits').textContent=String(preview.localSavedOutfitCount);
+ $('remoteOutfits').textContent=String(preview.remoteSavedOutfitCount);
+ $('revision').textContent='Private cloud revision '+preview.remoteRevision;
+}
+function consent(info){
+ lastDecision=info;
+ $('dialogLocalClothes').textContent=String(info.localGarmentCount);
+ $('dialogRemoteClothes').textContent=String(info.remoteGarmentCount);
+ $('dialogLocalOutfits').textContent=String(info.localSavedOutfitCount);
+ $('dialogRemoteOutfits').textContent=String(info.remoteSavedOutfitCount);
+ $('confirm').showModal();
+ return new Promise(ok=>{resolveDecision=ok;});
+}
+function settle(choice){
+ if(!resolveDecision)return;
+ const done=resolveDecision;resolveDecision=null;
+ $('confirm').close();done(choice===true);
+}
+$('approve').addEventListener('click',()=>settle(true));
+$('cancel').addEventListener('click',()=>settle(false));
+$('confirm').addEventListener('cancel',event=>{
+ event.preventDefault();settle(false);
+});
+async function run(fn){
+ if(!guard||busy)return;
+ busy=true;$('preview').disabled=true;$('restore').disabled=true;
+ setStatus('Verifying owner and wardrobe photos…');
+ try{
+  const result=await fn();
+  lastOutcome={kind:'success',result};
+  setStatus(result?.restored?'Restored cloud wardrobe and saved outfits.':
+   result?.cancelled?'Cancelled. Your local closet was preserved.':
+   'Preview checked with private owner metadata.',
+   result?.restored?'success':'neutral');
+  return result;
+ }catch(error){
+  lastOutcome={kind:'error',code:error.code||'unknown',message:String(error.message)};
+  const safe=error.code==='local-changed'?
+   'Local closet changed. Restore stopped without replacing your edits.':
+   error.code==='remote-changed'||error.code==='cloud-missing'?
+   'Cloud backup changed. Restore stopped; review again.':
+   error.code==='owner-session-revoked'?
+   'Session changed. Restore stopped.':
+   'Restore could not be completed safely. Your local closet was preserved.';
+  setStatus(safe,'error');
+  return null;
+ }finally{
+  busy=false;$('preview').disabled=false;$('restore').disabled=false;
+ }
+}
+$('preview').addEventListener('click',()=>run(async()=>{
+ const preview=await guard.previewRestore();display(preview);
+ return preview;
+}));
+$('restore').addEventListener('click',()=>run(async()=>{
+ const r=await guard.restoreWithOwnerReview();
+ if(r.restored){
+  const p=await guard.previewRestore();display(p);
+ }
+ return r;
+}));
+window.research138={
+ async seed(data){
+  if(fixture)throw Error('research fixture already initialized');
+  if(!data?.ownerId||!data?.token||!data?.original||!data?.cutout)
+   throw Error('explicit synthetic owner and genuine JPEG fixture required');
+  const db=await openDB(data.ownerId);
+  const session={user:{id:data.ownerId},token:data.token,valid:true};
+  const auth={user:session.user,
+   assertCurrent(){if(!session.valid)throw Error('session revoked');},
+   async getAccessToken(){if(!session.valid)throw Error('session revoked');return session.token;}
+  };
+  fixture={db,session,auth};
+  const item={
+   id:'research-p138-reviewed-shirt',ownerId:data.ownerId,
+   image:data.original,originalPhoto:{image:data.original,sha256:data.originalSHA},
+   sourceSHA256:data.originalSHA,sourceHashVerified:true,sourcePhotoOriginal:true,
+   humanReviewedSource:true,singleGarmentVerified:false,
+   outfitSourceId:'p138-licensed-source',
+   cutoutSHA256:data.cutoutSHA,
+   segmentHint:{verified:true,ownerReviewedInstance:true,clipped:false,
+    originalSHA256:data.originalSHA,cutoutSHA256:data.cutoutSHA,
+    cutoutImage:data.cutout},
+   category:'Tops',itemType:'T-shirt',color:'Green',colorSource:'user',
+   ownerReviewed:true,userAdjusted:true,confirmedCategory:true,confirmedColor:true,
+   reviewProvenance:'explicit-owner-claim-not-independent-review-evidence',threeDReady:false
+  };
+  await put('items',item);
+  await put('state',{id:'outfit-board',
+   current:{slots:{top:item.id}},
+   saved:[{id:'cloud-outfit-p138',ownerId:data.ownerId,slots:{top:item.id}}]
+  });
+  const opts={
+   auth,db,baseURL:location.origin,anonKey:'p138-synthetic-local-only',
+   fetcher:fetch.bind(window),subtle:crypto.subtle
+  };
+  // Genuine P129 backup creates encrypted-transport-style private Storage
+  // paths and server revision CAS in an isolated local fake research server.
+  const writer=createSignedOwnerCloud129({...opts,confirmRestore:async()=>false});
+  const first=await writer.backup({expectedRemoteRevision:0});
+  if(!first.saved||first.photoObjects!==2||first.revision!==1)
+   throw Error('P129 original + cutout must be actually backed up');
+  guard=createCloudRestoreGuard137({
+   ...opts,confirmReplaceLocal:consent,
+   onRestored:async()=>{}
+  });
+  setStatus('Research backup ready. Review both wardrobes.');
+  return {saved:first.saved,revision:first.revision,photoObjects:first.photoObjects};
+ },
+ async changeLocal(color='Violet',extraOutfit=false){
+  const row=await get('items','research-p138-reviewed-shirt');
+  await put('items',{...row,color});
+  if(extraOutfit){
+   const board=await get('state','outfit-board');
+   await put('state',{...board,saved:[...board.saved,{
+    id:'local-only-new-look-p138',ownerId:fixture.session.user.id,
+    slots:{top:'research-p138-reviewed-shirt'}
+   }]});
+  }
+ },
+ async state(){
+  return {item:await get('items','research-p138-reviewed-shirt'),
+   board:await get('state','outfit-board'),lastOutcome,lastDecision,
+   busy,dialogOpen:$('confirm').open,status:$('status').textContent};
+ },
+ invalidateOwner(){
+  fixture.session.valid=false;guard?.revoke();
+ },
+ ownerId(){return fixture?.session.user.id},
+ flags(){return {researchOnly:true,signedJWTVerified:false,
+  actualP137BrowserMounted:!!guard,familyAlpha:'HOLD',
+  productionAuthorized:false};}
+};
+</script>
+</body>
+</html>
