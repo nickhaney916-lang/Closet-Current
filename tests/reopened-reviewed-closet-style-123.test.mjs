@@ -138,7 +138,7 @@ test('PHOTO123 reloaded original reviewed garment can pin three previously owned
  assert.equal((await get(db,'items',saved.id)).originalPhoto.image,image);
 }));
 test('PHOTO123 unsupported unreviewed/cutout source is excluded from shortcut; existing Style this piece path retained',()=>{
- const code=app.slice(app.indexOf("if(new URLSearchParams(location.search).get('styleOwned03')==='research'){const style"),
+ const code=app.slice(app.indexOf("if(new URLSearchParams(location.search).get('styleOwned03')==='research'){\n const reviewedStored123"),
   app.indexOf("actions.append(edit,cropButton(item),del);"));
  assert.ok(code.includes("item.singleGarmentVerified===true"));
  assert.ok(code.includes("item.reviewProvenance==="));
