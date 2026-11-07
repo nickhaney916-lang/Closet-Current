@@ -49,6 +49,8 @@ jobs:
           node --check research/signed-owner-cloud-integration-129/native-cloud-bridge.mjs
           node --check tests/signed-owner-cloud-integration-129.test.mjs
           node --test tests/signed-owner-cloud-integration-129.test.mjs
+      - name: Build generated PWA files required by the complete repository suite
+        run: node scripts/build.mjs
       - name: Full inherited repository Node regressions
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: P129 exact-head research-boundary assertions
