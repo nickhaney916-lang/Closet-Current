@@ -76,18 +76,18 @@ jobs:
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
-          git worktree add --detach .p149-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p149-donor-541"
-          test "$(git -C .p149-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-          ln -s ../node_modules .p149-donor-541/node_modules
-          node scripts/install-photographed-denim-knee-103.mjs .p149-donor-541
-          node scripts/install-denim-pose-fold-contact-104.mjs .p149-donor-541
-          node scripts/install-denim-panel-normal-105.mjs .p149-donor-541
-          node scripts/install-photo-denim-calf-106.mjs .p149-donor-541
-          node scripts/install-denim-bilateral-108.mjs .p149-donor-541
-          node scripts/install-denim-mobile-pose-controls-109.mjs .p149-donor-541
-          node scripts/install-reviewed-closet-3d-handoff-110.mjs .p149-donor-541
-          cd .p149-donor-541
+          git worktree add --detach .photo103-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo103-donor-541"
+          test "$(git -C .photo103-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .photo103-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .photo103-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .photo103-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .photo103-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .photo103-donor-541
+          node scripts/install-denim-bilateral-108.mjs .photo103-donor-541
+          node scripts/install-denim-mobile-pose-controls-109.mjs .photo103-donor-541
+          node scripts/install-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541
+          cd .photo103-donor-541
           node scripts/build-three-d-31-jeans-proposal.mjs
           node scripts/build-three-d-37-second-jeans.mjs
           node scripts/build-work47-benchmark.mjs
