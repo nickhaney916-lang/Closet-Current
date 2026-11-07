@@ -64,6 +64,30 @@ async function mapSource(root,callback,depth=0){
  }
  return root;
 }
+/**
+ * PHOTO128 foreign-path preflight: validate the ENTIRE decoded object graph
+ * synchronously before launching even one parallel private storage fetch.
+ * Without this, Promise.all on an item list could fetch a valid owner path
+ * before discovering a malicious foreign cutout path in a sibling field.
+ */
+export function assertOwnerCloudPaths128(root,ownerId,depth=0){
+ if(depth>36)throw Error('PHOTO128 excessive cloud source nesting');
+ if(Array.isArray(root)){
+  for(const child of root)assertOwnerCloudPaths128(child,ownerId,depth+1);
+  return;
+ }
+ if(root&&typeof root==='object'){
+  for(const [key,value] of Object.entries(root)){
+   if(['__proto__','constructor','prototype'].includes(key))
+    throw Error('PHOTO128 unsafe cloud metadata');
+   if(imageKey(key)&&typeof value==='string'&&value){
+    const match=/^closet-photo:([a-f0-9-]{36})\/([a-f0-9]{64})\.jpg$/.exec(value);
+    if(!match||match[1]!==ownerId||!validSHA(match[2]))
+     throw Error('PHOTO128 foreign or invalid owner JPEG object path');
+   }else assertOwnerCloudPaths128(value,ownerId,depth+1);
+  }
+ }
+}
 export async function packageOwnerCloudCutouts128({
  backup,ownerId,assertLease,subtle=globalThis.crypto?.subtle
 }={}){
@@ -104,6 +128,9 @@ export async function reopenOwnerCloudCutouts128({
  if(snapshot?.ownerId!==ownerId||snapshot?.schemaVersion!==1||
     !Array.isArray(snapshot.items))
   throw Error('PHOTO128 owner-bound private cloud document required');
+ // Validate every nested source/cutout path before ANY private object IO.
+ assertOwnerCloudPaths128(snapshot,ownerId);
+ assertLease();
  const cache=new Map();
  const restored=await mapSource(snapshot,async value=>{
   const match=/^closet-photo:([a-f0-9-]{36})\/([a-f0-9]{64})\.jpg$/.exec(value);
