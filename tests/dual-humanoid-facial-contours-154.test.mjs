@@ -53,7 +53,7 @@ test('P154 tiny native contour must be sampled from actual source vertices, not 
  assert.match(text,/nose-tip/);
  assert.match(text,/upper-lip-contour/);
  assert.match(text,/lower-lip-contour/);
- assert.match(text,/under-eye-contour/);
+ assert.match(text,/lower-eye-contour/);
  assert.match(text,/bone\.attach\(group\)/);
  assert.doesNotMatch(text,/new THREE\.ConeGeometry/);
  assert.doesNotMatch(text,/data:image\/|https?:\/\//);
