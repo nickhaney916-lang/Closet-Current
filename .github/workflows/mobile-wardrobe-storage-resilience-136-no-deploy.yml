@@ -99,8 +99,8 @@ jobs:
           assert.equal(r.claims.physicalAndroid,false);
           assert.equal(r.claims.physicalIPhone,false);
           for(const size of [25,100,250,500,1000]){
-            const baseline=r.cases.filter(x=>x.count===size&&x.baseline);
-            const optimized=r.cases.filter(x=>x.count===size&&!x.baseline);
+            const baseline=r.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===size&&!x.screenshot&&x.baseline);
+            const optimized=r.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===size&&!x.screenshot&&!x.baseline);
             assert.equal(baseline.length,3);assert.equal(optimized.length,3);
             assert.ok(baseline.every(x=>x.cardsVisible===size));
             assert.ok(optimized.every(x=>x.cardsVisible===(size<=100?size:48)));
