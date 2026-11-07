@@ -563,8 +563,12 @@ function render(){
   item.segmentHint?.cutoutImage!==item.originalPhoto?.image&&
   typeof item.segmentHint?.cutoutImage==='string'&&
   item.multipleGarments!==true;
- const reviewedStored123=isReviewedSource123&&
-  (item.singleGarmentVerified===true||reviewedCutoutStored124);
+ // Preserve the exact independently accepted P123 single-original gate.
+ // PHOTO124 adds a separate 2D cutout condition; it never broadens that gate.
+ const reviewedOriginalStored123=isReviewedSource123&&
+  item.singleGarmentVerified===true&&
+  item.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence';
+ const reviewedStored123=reviewedOriginalStored123||reviewedCutoutStored124;
  if(reviewedCutoutStored124){
   // Label truthfully: a manually reviewed region is a visible 2D photograph,
   // not a learned segment/mask or an accepted 3D garment.
