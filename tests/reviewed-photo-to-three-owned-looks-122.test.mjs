@@ -116,8 +116,8 @@ test('PHOTO122 first original JPEG human-reviewed user correction can pin THREE 
   assert.ok(rows.some(x=>x.id===look.slots.shoes));
   assert.equal(look.sourceSHA256ById[saved.id],sha);
   assert.equal(look.certified3D,false);
-  assert.equal(look.releaseAuthorized,false);
  }
+ assert.equal(result.releaseAuthorized,false,'authorization is a generator response field, not an outfit field');
  const changed=validateOwnedSwap03(rows,{
   ownerId,pinnedId:saved.id,slots:result.combinations[0].slots,
   slot:'bottom',itemId:result.combinations[0].slots.bottom==='jeans-blue'?
