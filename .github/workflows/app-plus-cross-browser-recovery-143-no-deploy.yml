@@ -137,7 +137,42 @@ jobs:
         with:
           node-version: '22'
       - name: Pinned research-only browser dependencies
-        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: P139 native app family alpha accessibility, closet navigation and saved outfits
+        env:
+          ARTIFACT_DIR: benchmark/app-plus-cross-browser-recovery-143/mobile-ux
+        run: node scripts/test-family-alpha-mobile-ux-132.mjs
+      - name: P122 licensed JPEG owner reviewed clothing to three actual owned looks
+        run: node scripts/test-reviewed-photo-to-three-owned-looks-122-browser.mjs
+      - name: P136 native app owner photo and 25 through 1000 garment browser storage matrix
+        env:
+          P136_PARENT_SHA: 59ec81353d03a6a5443c9370f209d7e367456e26
+          P136_REPEATS: '3'
+          P136_ENGINES: chromium,webkit
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node scripts/test-storage-resilience-136-browser.mjs
+      - name: Assert mobile UX, real owned outfits, verified wardrobe performance and explicit limitations
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const ui=JSON.parse(readFileSync('benchmark/app-plus-cross-browser-recovery-143/mobile-ux/results.json','utf8'));
+          assert.deepEqual(ui.engines.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          assert(ui.engines.every(x=>!x.errors?.length));
+          const owned=JSON.parse(readFileSync('benchmark/reviewed-photo-to-three-owned-looks-122/results.json','utf8'));
+          assert.equal(owned.cases.length,6);
+          assert(owned.cases.every(x=>x.threeRealOriginalOwnedLooks&&x.ownerBPrivate&&x.photosUnchanged));
+          assert.equal(owned.realSignedServerRLS,false);
+          const perf=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
+          assert.equal(perf.cases.length,36);
+          assert.deepEqual(perf.errors,[]);
+          for(const n of [25,100,250,500,1000]){
+            const samples=perf.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===n&&!x.screenshot&&!x.baseline);
+            assert.equal(samples.length,3);
+            assert(samples.every(x=>x.cardsVisible===(n<=100?n:48)));
+          }
+          NODE
       - name: P142 real two-independent-process Chromium WebKit same-owner cloud recovery and stale CAS
         run: node scripts/test-cross-browser-cloud-recovery-142.mjs
       - name: Verify six independent cross-browser A/B directions and 66 real screenshot files
@@ -180,41 +215,6 @@ jobs:
         run: node scripts/test-cloud-restore-browser-138.mjs
       - name: Inherited original app mobile regression separately
         run: node scripts/test-owner-confirmation-mobile-restore-127-browser.mjs
-      - name: P139 native app family alpha accessibility, closet navigation and saved outfits
-        env:
-          ARTIFACT_DIR: benchmark/app-plus-cross-browser-recovery-143/mobile-ux
-        run: node scripts/test-family-alpha-mobile-ux-132.mjs
-      - name: P122 licensed JPEG owner reviewed clothing to three actual owned looks
-        run: node scripts/test-reviewed-photo-to-three-owned-looks-122-browser.mjs
-      - name: P136 native app owner photo and 25 through 1000 garment browser storage matrix
-        env:
-          P136_PARENT_SHA: 59ec81353d03a6a5443c9370f209d7e367456e26
-          P136_REPEATS: '3'
-          P136_ENGINES: chromium,webkit
-        run: |
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          node scripts/test-storage-resilience-136-browser.mjs
-      - name: Assert mobile UX, real owned outfits, verified wardrobe performance and explicit limitations
-        run: |
-          node --input-type=module <<'NODE'
-          import assert from 'node:assert/strict';
-          import {readFileSync} from 'node:fs';
-          const ui=JSON.parse(readFileSync('benchmark/app-plus-cross-browser-recovery-143/mobile-ux/results.json','utf8'));
-          assert.deepEqual(ui.engines.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
-          assert(ui.engines.every(x=>!x.errors?.length));
-          const owned=JSON.parse(readFileSync('benchmark/reviewed-photo-to-three-owned-looks-122/results.json','utf8'));
-          assert.equal(owned.cases.length,6);
-          assert(owned.cases.every(x=>x.threeRealOriginalOwnedLooks&&x.ownerBPrivate&&x.photosUnchanged));
-          assert.equal(owned.realSignedServerRLS,false);
-          const perf=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
-          assert.equal(perf.cases.length,36);
-          assert.deepEqual(perf.errors,[]);
-          for(const n of [25,100,250,500,1000]){
-            const samples=perf.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===n&&!x.screenshot&&!x.baseline);
-            assert.equal(samples.length,3);
-            assert(samples.every(x=>x.cardsVisible===(n<=100?n:48)));
-          }
-          NODE
       - name: Assert six independent browser flows and no false live cloud claim
         run: |
           node --input-type=module <<'NODE'
