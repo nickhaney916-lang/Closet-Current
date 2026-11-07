@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' data: blob:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'self'; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'">
+<title>Closet Current P155 | Licensed human model foundation laboratory — HOLD</title>
+<script type="importmap">
+{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}
+</script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;font-family:system-ui,-apple-system,sans-serif;background:#edf1f5;color:#182b36}
+header{padding:12px 14px;background:#172c40;color:white}
+header strong{font-size:15px}
+header p{margin:5px 0 0;font-size:12px;opacity:.85}
+main{position:relative;max-width:940px;margin:auto;min-height:670px}
+#view{display:block;width:100%;height:610px;touch-action:pan-y}
+#status{position:absolute;left:12px;top:12px;border-radius:7px;background:#ffffffed;padding:7px 11px;font-size:12px;font-weight:650;max-width:230px}
+#info{position:absolute;bottom:18px;left:12px;max-width:300px;font-size:12px;line-height:1.4;background:#fffffff2;border-radius:8px;padding:10px}
+#notice{font-size:11px;background:#fff9d8;border-top:1px solid #d6bc75;padding:10px 14px;line-height:1.55}
+#view{border-bottom:1px solid #b3c3d3}
+</style>
+</head>
+<body>
+<header>
+ <strong>Closet Current · Foundation Research P155</strong>
+ <p>Licensed actual GLB model · Not the owner's saved outfit · Family Alpha HOLD</p>
+</header>
+<main>
+  <canvas id="view" aria-label="Genuine WebGL licensed Rocketbox male or female avatar research preview"></canvas>
+  <div id="status" role="status">Loading licensed 3D source …</div>
+  <div id="info">Microsoft Rocketbox · MIT licensed<br>Research test avatar includes baked-in clothes.<br>Original owner photographed clothing NOT fitted to this candidate.</div>
+</main>
+<div id="notice">P155 ISOLATED / HOLD: This model is never substituted for an owner wardrobe. Original 163-bone photograph-based outfit viewer remains the fallback. No production deployment or owner-photo upload.</div>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const url=new URL(location.href),figure=url.searchParams.get('figure')||'female',
+ view=url.searchParams.get('view')||'front',mobileWidth=innerWidth,
+ allowed={female:'ananya.glb',male:'aarav.glb'};
+if(!Object.prototype.hasOwnProperty.call(allowed,figure)||!['front','side','back','face'].includes(view))
+ throw Error('P155 refuses unlisted figure/view');
+const canvas=document.getElementById('view'),label=document.getElementById('status');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,preserveDrawingBuffer:true,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
+renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);
+renderer.setClearColor(0xe7edf2,1);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.18;
+const scene=new THREE.Scene();
+const hemi=new THREE.HemisphereLight(0xf1f9ff,0x707a7a,2.05);scene.add(hemi);
+const key=new THREE.DirectionalLight(0xfff2e0,3.3);key.position.set(3.2,5.2,6.1);scene.add(key);
+const fill=new THREE.DirectionalLight(0xb7d5fe,1.5);fill.position.set(-4.2,3.3,2.3);scene.add(fill);
+const rim=new THREE.DirectionalLight(0xffffff,1.3);rim.position.set(-1,3.1,-5);scene.add(rim);
+const camera=new THREE.PerspectiveCamera(34,canvas.clientWidth/canvas.clientHeight,.02,500);
+let root=null,renderLoop=0;
+const state={loaded:false,actualWebGL:!!renderer.getContext(),
+ contextVersion:renderer.capabilities.isWebGL2?'WebGL2':'WebGL1',
+ figure,view,licensedMIT:true,bakedGarments:true,
+ ownerClothesApplied:false,original163BoneFallbackPreserved:true,
+ faceHumanRealismAccepted:false,
+ releaseAuthorized:false,familyAlpha:'HOLD',
+ error:null};
+window.__cc155Status=()=>({...state,frames:renderLoop,
+ webglDrawCalls:renderer.info.render.calls,
+ triangles:renderer.info.render.triangles,
+ sourceAsset:allowed[figure]});
+const loader=new GLTFLoader();
+loader.load('/assets/'+allowed[figure],gltf=>{
+ root=gltf.scene;
+ if(!root)throw Error('P155 GLTF scene missing');
+ scene.add(root);
+ const bounds=new THREE.Box3().setFromObject(root);
+ if(bounds.isEmpty())throw Error('P155 empty real GLB body');
+ const center=bounds.getCenter(new THREE.Vector3()),size=bounds.getSize(new THREE.Vector3());
+ const height=Math.max(size.y,.3);
+ // Independent render at actual dimensions; never bake user-wardrobe outfit
+ // pixels into a candidate library model.
+ const fit=view==='face'?.31:1.0;
+ const d=height*.5/Math.tan(THREE.MathUtils.degToRad(camera.fov*.5));
+ const dist=d*(view==='face'?.19:1.10);
+ const target=new THREE.Vector3(center.x,view==='face'?bounds.max.y-height*.16:center.y,center.z);
+ if(view==='face')target.set(center.x,bounds.max.y-height*.13,center.z);
+ const from=view==='back'?[0,0,-1]:view==='side'?[1,0,0]:[0,0,1];
+ camera.position.set(target.x+from[0]*dist,target.y+height*.02,target.z+from[2]*dist);
+ camera.lookAt(target);camera.updateProjectionMatrix();
+ let meshes=0,skinned=0,materialCount=0,faceOrHead=0,bones=0,animated=0;
+ root.traverse(o=>{
+  if(o.isMesh){meshes++;materialCount+=Array.isArray(o.material)?o.material.length:1;}
+  if(o.isSkinnedMesh){skinned++;bones=Math.max(bones,o.skeleton?.bones?.length||0);}
+  if(o.isBone&&/head/i.test(o.name))faceOrHead++;
+ });
+ if(skinned<1||bones<15||meshes<1||faceOrHead<1)
+  throw Error('P155 genuine humanoid armature, source head and original skin mesh absent');
+ Object.assign(state,{loaded:true,modelMeshes:meshes,skinnedMeshes:skinned,
+   maxBones:bones,materialCount,headBoneCount:faceOrHead,
+   boundsMeters:{height:size.y,width:size.x,depth:size.z},
+   near:camera.near,far:camera.far,
+   sourceFaceMeshPresent:true,sourceGarmentCompatibility:'REJECTED_BAKED_CLOTHING'});
+ label.textContent='Real '+figure+' · '+view.toUpperCase()+' · research only';
+},undefined,e=>{state.error=String(e);label.textContent='Source unavailable: original 163-bone fallback required';});
+function draw(){
+ if(root){
+  renderer.render(scene,camera);
+  renderLoop++;
+ }
+ requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
