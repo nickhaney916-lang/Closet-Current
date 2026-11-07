@@ -223,12 +223,14 @@ async function runRestore(job){
   else setStatus('Restore preview checked. No photos were downloaded.');
   return result;
  }catch(e){
-  lastRestoreOutcome={kind:'error',code:e.code||'unknown',message:String(e.message)};
-  const safe=e.code==='local-changed'?
+  const failureCode=e.code||(/\b(?:owner|session)\b.*\brevoked\b/i.test(String(e.message))?
+   'owner-session-revoked':'unknown');
+  lastRestoreOutcome={kind:'error',code:failureCode,message:String(e.message)};
+  const safe=failureCode==='local-changed'?
    'Local closet changed. Restore stopped before replacing it.':
-   e.code==='remote-changed'||e.code==='cloud-missing'?
+   failureCode==='remote-changed'||failureCode==='cloud-missing'?
    'Cloud backup changed. Restore stopped; review again.':
-   e.code==='owner-session-revoked'?
+   failureCode==='owner-session-revoked'?
    'Owner session changed. Restore stopped.':
    'Restore stopped safely. The local wardrobe was preserved.';
   setStatus(safe,'error');return null;
