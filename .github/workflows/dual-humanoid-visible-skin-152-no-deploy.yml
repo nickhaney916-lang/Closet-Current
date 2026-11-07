@@ -1,0 +1,168 @@
+name: P152 restore visible head and hands in pinned P150 source WebGL BEFORE/AFTER NO DEPLOY
+on:
+  push:
+    branches:
+      - research/dual-humanoid-visible-skin-152-main-20261107-HOLD
+  pull_request:
+    branches:
+      - research/native-photo-readiness-revocation-151-main-20261107-HOLD
+    paths:
+      - research/dual-humanoid-visible-skin-152/**
+      - scripts/install-dual-humanoid-visible-skin-152.mjs
+      - scripts/audit-dual-humanoid-visible-skin-152.mjs
+      - tests/dual-humanoid-visible-skin-152.test.mjs
+      - .github/workflows/dual-humanoid-visible-skin-152-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-main-source-scope-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict exact P151 main parent and research-only six-file allowlist
+        run: |
+          BASE=d8f66ee67489e3a6d136f41f2c6f310054a266a5
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p152-files
+          while IFS= read -r p; do
+            case "$p" in
+              research/dual-humanoid-visible-skin-152/pinned-p118-shader-repair.mjs|research/dual-humanoid-visible-skin-152/REPORT.md|scripts/install-dual-humanoid-visible-skin-152.mjs|scripts/audit-dual-humanoid-visible-skin-152.mjs|tests/dual-humanoid-visible-skin-152.test.mjs|.github/workflows/dual-humanoid-visible-skin-152-no-deploy.yml) ;;
+              *) echo "P152 REFUSE production, staging, P150 parallel or unsupported source edit: $p"; exit 1 ;;
+            esac
+          done </tmp/p152-files
+          test "$(wc -l </tmp/p152-files)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/native-photo-readiness-08 research/native-photo-readiness-revocation-151 research/dual-humanoid-visual-evidence-149 research/dual-humanoid-photorealism-118 research/dual-humanoid-photorealistic-integration-150
+      - name: Install pinned disposable test tools only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Research skin-shader syntax, fail-closed exact source and independent unit tests
+        run: |
+          node --check research/dual-humanoid-visible-skin-152/pinned-p118-shader-repair.mjs
+          node --check scripts/install-dual-humanoid-visible-skin-152.mjs
+          node --check scripts/audit-dual-humanoid-visible-skin-152.mjs
+          node --test tests/dual-humanoid-visible-skin-152.test.mjs
+      - name: Build unchanged Closet Current normal app and verify whole inherited suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  exact-p150-real-browser-same-original-before-after:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned original-photo 3D browser/geometry and pixel-audit libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Assemble completely isolated exact parallel #57 P150 source and exact source PR541 163-bone donor
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P150=6e576da9d7ff6a0a439a7762cf333670d20f0131
+          P118=672247f7121e92bba32b81cec74efddb2b69c817
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git fetch --no-tags origin "$P150" "$P118" "$P541"
+          git worktree add --detach .p150-donor-541 "$P541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p150-donor-541"
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = "$P541"
+          ln -s ../node_modules .p150-donor-541/node_modules
+          cd .p150-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          mkdir -p research/dual-humanoid-photorealism-118
+          git -C .. show "$P118":scripts/install-dual-humanoid-realism-118.mjs > scripts/install-dual-humanoid-realism-118.mjs
+          cd ..
+          for p in research/dual-humanoid-photorealism-118/realism.mjs research/dual-humanoid-face-definition-131/face-definition.mjs research/dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs scripts/install-dual-humanoid-face-131.mjs scripts/install-dual-humanoid-photorealistic-integration-150.mjs; do
+            test ! -e "$p"
+            mkdir -p "$(dirname "$p")"
+            git show "$P150:$p" > "$p"
+          done
+          git show "$P150:scripts/test-native-3d-05-browser.mjs" > scripts/test-native-3d-05-p150-152.mjs
+          node --check scripts/test-native-3d-05-p150-152.mjs
+          node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-face-131.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-photorealistic-integration-150.mjs .p150-donor-541
+          git show "$P150:research/dual-humanoid-photorealism-118/realism.mjs" >/tmp/p152-original-P150-realism.mjs
+          cmp /tmp/p152-original-P150-realism.mjs .p150-donor-541/research/dual-humanoid-photorealism-118/realism.mjs
+          ln -s .p150-donor-541 .native05-donor-541
+          node .p150-donor-541/scripts/test-dual-humanoid-realism-118.mjs --help >/dev/null 2>&1 || true
+      - name: Reproduce actual P150 invisible skin on the real native signed-in research saved-dress UI at 320/390/430
+        run: |
+          P150=1 node scripts/test-native-3d-05-p150-152.mjs
+          mkdir -p benchmark/dual-humanoid-visible-skin-152/before
+          cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/dual-humanoid-visible-skin-152/before/
+          cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/dual-humanoid-visible-skin-152/before/
+          cp benchmark/native-3d-05/results.json benchmark/dual-humanoid-visible-skin-152/before/native-result.json
+          test "$(find benchmark/dual-humanoid-visible-skin-152/before -name '*.png' | wc -l)" -eq 18
+      - name: Apply exactly one pinned P118 shader declaration-order correction ONLY on disposable donor
+        run: |
+          cmp /tmp/p152-original-P150-realism.mjs .p150-donor-541/research/dual-humanoid-photorealism-118/realism.mjs
+          node scripts/install-dual-humanoid-visible-skin-152.mjs .p150-donor-541
+          ! cmp /tmp/p152-original-P150-realism.mjs .p150-donor-541/research/dual-humanoid-photorealism-118/realism.mjs
+          node --check .p150-donor-541/research/dual-humanoid-photorealism-118/realism.mjs
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - name: After exact fix rerender the SAME real original-JPEG saved outfit, both source figures, all three native mobile widths
+        run: |
+          P150=1 node scripts/test-native-3d-05-p150-152.mjs
+          mkdir -p benchmark/dual-humanoid-visible-skin-152/after
+          cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/dual-humanoid-visible-skin-152/after/
+          cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/dual-humanoid-visible-skin-152/after/
+          cp benchmark/native-3d-05/results.json benchmark/dual-humanoid-visible-skin-152/after/native-result.json
+          test "$(find benchmark/dual-humanoid-visible-skin-152/after -name '*.png' | wc -l)" -eq 18
+      - name: Verify fixed P150 source figure still starts in REAL WebKit mobile WebGL, not synthetic fallback
+        run: |
+          P150=1 P150_BROWSER=webkit node scripts/test-native-3d-05-p150-152.mjs
+          cp benchmark/native-3d-05/results.json benchmark/dual-humanoid-visible-skin-152/after/native-webkit-result.json
+      - name: Independently byte-hash all 36 real before/after 163-bone screenshot PNGs and assert all 18 skull/skin regions visibly return
+        run: node scripts/audit-dual-humanoid-visible-skin-152.mjs
+      - name: Enforce no invented 10/10 realism, no photo/garment writes and immutable HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/dual-humanoid-visible-skin-152/audit/acceptance.json','utf8'));
+          assert.equal(x.realChromiumBeforeAfterScreenshotPairs,18);
+          assert.equal(x.originalBeforeAndAfterPNGFilesVerified,36);
+          assert.equal(x.webkitReal163BoneViewportCases,3);
+          assert.equal(x.skullAndExposedSourceSkinVisibleAgain,true);
+          assert.equal(x.savedOutfitAndGarmentMeshCountsUnchanged,true);
+          assert.equal(x.independentHumanFaceRealismApproved,false);
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          console.log('P152 actual original 163-bone skin visible after minimal shader repair; photorealism and family release STILL HOLD');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P152-P150-actual-163-bone-SKIN-RESTORE-36-views-HOLD-NO-DEPLOY
+          path: |
+            research/dual-humanoid-visible-skin-152/REPORT.md
+            benchmark/dual-humanoid-visible-skin-152/before/*.png
+            benchmark/dual-humanoid-visible-skin-152/before/screens-*.json
+            benchmark/dual-humanoid-visible-skin-152/after/*.png
+            benchmark/dual-humanoid-visible-skin-152/after/screens-*.json
+            benchmark/dual-humanoid-visible-skin-152/audit/acceptance.json
+            benchmark/dual-humanoid-visible-skin-152/after/native-*.json
+          if-no-files-found: warn
+          retention-days: 14
