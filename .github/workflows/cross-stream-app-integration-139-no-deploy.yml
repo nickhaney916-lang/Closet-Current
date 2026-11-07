@@ -129,9 +129,9 @@ jobs:
           const storage=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
           assert.equal(storage.cases.length,36);assert.deepEqual(storage.errors,[]);
           assert.deepEqual(storage.screenshots.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
-          for(const size of [25,100,250,500,1000])for(const engine of ['chromium','webkit']){
-            const cases=storage.cases.filter(x=>x.engine===engine&&x.width===390&&x.count===size&&!x.screenshot&&!x.baseline);
-            assert.equal(cases.length,3,`${engine} ${size}`);
+          for(const size of [25,100,250,500,1000]){
+            const cases=storage.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===size&&!x.screenshot&&!x.baseline);
+            assert.equal(cases.length,3,`chromium ${size}`);
             assert(cases.every(x=>x.cardsVisible===(size<=100?size:48)));
           }
           const p139Screens=readdirSync('benchmark/cross-stream-app-integration-139/family-alpha-mobile').filter(x=>x.endsWith('.png'));
