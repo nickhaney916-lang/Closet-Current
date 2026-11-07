@@ -9,7 +9,7 @@ const ownerA=randomUUID(),jpeg=readFileSync('benchmark/fixtures/commons-0002.jpg
 const sha=async b=>[...new Uint8Array(await webcrypto.subtle.digest('SHA-256',b))].map(x=>x.toString(16).padStart(2,'0')).join('');
 const data=b=>'data:image/jpeg;base64,'+b.toString('base64');
 function response(status,body,bytes){return{ok:status>=200&&status<300,status,json:async()=>body,arrayBuffer:async()=>bytes?.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)};}
-async function fixture({confirm=async()=>true,onUpload=async()=>{}}={}){
+async function fixture({confirm=async()=>true,onUpload=async()=>{},onRemoteRead=async()=>{}}={}){
  const dbreq=indexedDB.open('closet-current-user-'+ownerA,2);
  const db=await new Promise((resolve,reject)=>{dbreq.onupgradeneeded=()=>{dbreq.result.createObjectStore('items',{keyPath:'id'});dbreq.result.createObjectStore('state',{keyPath:'id'});};dbreq.onsuccess=()=>resolve(dbreq.result);dbreq.onerror=()=>reject(dbreq.error);});
  const put=(store,row)=>new Promise((resolve,reject)=>{const tx=db.transaction(store,'readwrite');tx.objectStore(store).put(row);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
@@ -26,7 +26,7 @@ async function fixture({confirm=async()=>true,onUpload=async()=>{}}={}){
    if(opts.method==='POST'){if(!path.startsWith(ownerA+'/'))return response(403,{});if(objects.has(path))return response(409,{});objects.set(path,new Uint8Array(opts.body));await onUpload();return response(200,{});}
    if(!path.startsWith(ownerA+'/'))return response(403,{});if(!objects.has(path))return response(404,{});return response(200,{},objects.get(path));
   }
-  if(url.includes('/rest/v1/closet_backups?'))return response(200,remote?[remote]:[]);
+  if(url.includes('/rest/v1/closet_backups?')){await onRemoteRead();return response(200,remote?[remote]:[]);}
   if(url.endsWith('/rest/v1/rpc/save_closet_backup')){
    const rpc=typeof opts.body==='string'?JSON.parse(opts.body):opts.body,expected=remote?.revision||0;if(rpc.p_expected_revision!==expected)return response(200,null);
    if(rpc.p_document.ownerId!==ownerA)return response(403,{});
@@ -67,9 +67,12 @@ test('P129 user cancellation leaves the local wardrobe untouched',async()=>{
  const after=await new Promise((resolve,reject)=>{const r=f.db.transaction('items','readonly').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);});
  assert.equal(after.length,before.length);f.db.close();
 });
-test('P129 logout/account switch and token replacement invalidate delayed session work',async()=>{
- const f=await fixture();await f.bridge.backup({expectedRemoteRevision:0});f.session.token='rotated-token-B';f.session.user.id=randomUUID();
- await assert.rejects(f.bridge.restore({expectedRemoteRevision:1}),/owner|token|session|account/i);f.db.close();
+test('P129 logout/account switch and token replacement revoke a late authenticated cloud response',async()=>{
+ let entered,resume;const started=new Promise(r=>entered=r),waiting=new Promise(r=>resume=r);
+ const f=await fixture({onRemoteRead:async()=>{entered();await waiting;}});
+ const operation=f.bridge.backup({expectedRemoteRevision:0});await started;
+ f.session.token='rotated-token-B';f.session.user.id=randomUUID();resume();
+ await assert.rejects(operation,/owner|token|session|account/i);assert.equal(f.remote,null);f.db.close();
 });
 test('P129 implementation fails closed and explicitly disclaims signed-JWT verification',()=>{
  const src=readFileSync('research/signed-owner-cloud-integration-129/native-cloud-bridge.mjs','utf8');
