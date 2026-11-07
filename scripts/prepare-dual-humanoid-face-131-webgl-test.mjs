@@ -39,6 +39,15 @@ replaceOnce("const sourceRig=JSON.stringify((await page.evaluate(()=>window.cc69
  "const sourceRig=JSON.stringify((await page.evaluate(()=>window.cc69Diagnostics())).actual3DGarment);\n    for(const deg of (name==='webkit'?[0,90,180,270]:views)){");
 replaceOnce("screenshotsSha256:hash(Buffer.from(JSON.stringify(screens)))}));",
  "screenshotsSha256:hash(Buffer.from(JSON.stringify(screens))),facialDefinitionComparedToP118:true}));");
+// The pinned P118 harness starts a local HTTP server but never closes it.
+// In CI, Chromium finishes all 72 WebGL frames, prints its receipt and then
+// keeps Node alive until the 180-minute job is cancelled. Close the server
+// in a finally block without weakening any screenshot/source assertions.
+const lifecycleAnchor='const errors=[],external=[],crashes=[],screens=[],browserResults=[],comparison=[];';
+assert.equal(s.split(lifecycleAnchor).length,2,'FACE131 expected single server lifetime anchor');
+s=s.replace(lifecycleAnchor,lifecycleAnchor+'\\ntry {');
+s += '\\n} finally {\\n  server.closeAllConnections();\\n  await new Promise((resolve,reject)=>server.close(error=>error?reject(error):resolve()));\\n}\\n';
+
 await writeFile(output,s);
 console.log(JSON.stringify({generated:true,from:'pinned P118 actual WebGL tester',
  scope:'detached donor only',figures:2,engineModes:['chromium','webkit'],
