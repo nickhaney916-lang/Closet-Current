@@ -1,47 +1,76 @@
 # Closet Current — Priority #139: Cross-stream app integration
 
-**Research only · draft PR · Family Alpha Issue #255 remains HOLD · no production or staging changes.**
+**Research integration candidate · draft PR #695 · Family Alpha Issue #255 remains HOLD · no production or staging changes.**
 
-## Parent and source selection
+## Candidate and dependency decisions
 
-- Exact parent: P138 `5a589dfe2f6fb744cade4150c3058f2d6a19ea3b`.
-- Candidate branch: `research/cross-stream-app-integration-139-work55-20261107-HOLD`.
-- Compatible completed changes cherry-picked: Family Alpha mobile navigation and accessibility P132 (reviewed head `e6adacd1e83ece145f7d0d825fa916b224e48e83`), then large-wardrobe browsing/storage-resilience P136 (reviewed head `df28329d09d40f8c234027940057fe0a2579f0d1`). P136's tested `public/app.js` changes coexist with P132 navigation and P138's separate research-only restore dialog.
-- P138 remains the parent, preserving P137/P138 consent and revision checks. Its research files and the P134 consent chain were not rewritten.
-- P130 source-merge work, P129 signed-cloud integration, live cloud credentials, and unfinished P51/P53 deliveries were excluded. P122/P123 owned-outfit and P110 3D modules are treated as test-only pre-existing research, not transplanted from those owners' branches.
+- Branch: `research/cross-stream-app-integration-139-work55-20261107-HOLD`
+- Parent: P138 `5a589dfe2f6fb744cade4150c3058f2d6a19ea3b`
+- Final tested candidate before this report-only update: `73560b392ef56fc7c7483dd9a74ea5770ee3b410`
+- Integrated completed source changes: P132 Mobile UX `e6adacd1e83ece145f7d0d825fa916b224e48e83` and P136 Large Wardrobe `df28329d09d40f8c234027940057fe0a2579f0d1`, applied on top of P138 and checked in the combined app.
+- P137/P138 protected restore remains the parent research path and is exercised as a separate browser journey. P134/P137/P138 recovery code was not transplanted into the shipped app.
+- P129/P51 signed-cloud work and P53 recognition work were excluded. Their exact verified, compatible deliveries were unavailable or explicitly retained by their owners.
+- P122 photo-to-owned-outfits and P109/P110 WebGL work are separately mounted for research acceptance only. Their modules were not copied into the candidate. P109/P110 run in a detached, exact-SHA donor worktree.
 
 ## Files changed from P138
 
-The imported P132/P136 changes are limited to `public/app.js`, `public/app-theme.css`, `public/capture-navigation.js`, `public/index.html`, their focused tests, test runners, reports, benchmarks and no-deploy workflows. This priority adds only this report and `.github/workflows/cross-stream-app-integration-139-no-deploy.yml`. Production/auth/cloud schemas, storage policies, recognition model, outfit-board core, 3D donor source, credentials and other projects are outside the diff.
+P132/P136 integration files: `public/app.js`, `public/app-theme.css`, `public/capture-navigation.js`, `public/index.html`, `tests/capture-navigation.test.cjs`, `tests/storage-resilience-136.test.mjs`, `scripts/test-family-alpha-mobile-ux-132.mjs`, `scripts/test-storage-resilience-136-browser.mjs`, their two existing research reports/workflows, and the P136 benchmark JSON/three Chromium screenshots.
+
+P139 adds `.github/workflows/cross-stream-app-integration-139-no-deploy.yml` and this report. No auth, production cloud, database schema, RLS policy, credential, production deployment, existing staging, recognition model, outfit-board core, or 3D donor source changed.
 
 ## Acceptance matrix
 
-Status is pending exact-head CI until the draft branch workflow finishes; no pending run is counted as a pass.
-
-| Requirement | Status | Evidence boundary |
+| Requirement | Status | Actual evidence and limits |
 |---|---|---|
-| Mobile navigation/accessibility | REVIEW | P132 actual app tests are included at Chromium/WebKit 320/390/430, with camera permission denial, axe checks and synthetic outfit save/reopen. This is viewport emulation, not a physical phone. |
-| Large closet browsing, 25–1,000 records | REVIEW | P136 compares the real app against P134 using browser IndexedDB, original and cutout JPEG bytes, saved outfit reload, three repeats per case and Chromium/WebKit. Exact timings and failure conditions will be attached from P139 CI. |
-| Camera photo → private closet and correction | REVIEW | P122 browser path uses a licensed real JPEG, actual app review UI, human correction, WebCrypto original hash and owner-local IndexedDB. Camera sensor and model output are fixtures; this is not physical camera or recognition-accuracy proof. |
-| Recognition accuracy | REVIEW | Existing recognition gate tests enforce uncertainty and review; this integration does not claim automatic model accuracy. The P122 browser uses controlled low-confidence model output then human correction. |
-| Three actual owned outfits; pin/swap/save/reopen | REVIEW | P122 exercises real saved owned rows; P132 separately exercises a synthetic five-garment roster. No owned garments are invented in the P122 source-photo path. CI asserts the saved-outfit results. |
-| Original photo integrity | REVIEW | P122 original licensed JPEG SHA and byte preservation checks plus inherited original/cutout privacy regressions. No user wardrobe photographs are used. |
-| Protected cloud recovery | REVIEW | P137/P138 tests use synthetic owners and browser consent UI with local/remote revision races and atomic outfit restore. They do not mount into the shipping app and do not establish live signed-account RLS. |
-| Two-owner privacy / Postgres RLS | REVIEW | Synthetic browser owner isolation and disposable local PostgreSQL RLS/CAS checks; no real signed Supabase accounts or live schema access. |
-| 2D fallback and 3D compatibility | REVIEW | Existing P110 source-licensed research demonstrates WebGL saved-look previews and private-photo 2D fallback on male/female donors. It remains an isolated research route; arbitrary user clothes, shoes, dresses on both figures, integrated shipping 3D, and independent realism are not all established by this priority. |
-| Full inherited regressions and build | REVIEW | P139 workflow runs complete Node suite and app build at its exact final commit. |
-| Family Alpha readiness | FAIL / HOLD | Research-only gates, synthetic account fixtures, unverified recognition accuracy and no physical-device acceptance leave Family Alpha on HOLD. |
+| Photo selection to private closet | PASS (research path) | Six Chromium/WebKit cases at 320/390/430 used a genuine licensed JPEG in the real review-to-style app route, verified the original SHA-256 `fef606d6ed7354a2238f1bcc2584942747ca6fa4a2b16b2e9eec21f639d10667`, stored the reviewed item in owner-local IndexedDB, and reopened it. Image-file selection was exercised; a physical camera sensor was not. |
+| Automatic recognition accuracy | REVIEW | The browser case deliberately uses a controlled low-confidence recognition fixture followed by human correction. It proves review and persistence, not model accuracy. P53 remains an independent dependency. |
+| Human correction/source identity | PASS (research path) | Reviewed category/subtype/color and original source identity remain attached to the saved owner-local item; original bytes were unchanged. |
+| Three owned outfit suggestions, pin/swap/save/reopen | PASS (research path) | Six browser cases show three distinct outfits from exact saved owned rows and original photographs; pinning, undo, swap, native compare-and-swap save, photo identity, and reopen were checked. No user wardrobe was accessed; the fixture owner has actual licensed original-photo test rows. P132 also verifies a separate synthetic roster save/reopen flow. |
+| Original and cutout JPEG protection | PASS for tested paths | Original JPEG hash/bytes and P136 generated original/cutout JPEG data were retained; duplicate source / transaction behavior is covered by inherited regressions. Does not cover every phone quota or device crash condition. |
+| Protected restore and saved outfit IDs | REVIEW | Six real-browser consent UI cases plus inherited tests verified atomic outfit restore and rejection of both local edits during approval and remote revision changes. This is research-only restore UI, not the shipping app restore path and not a live cloud test. |
+| Two-owner privacy and RLS/CAS | PASS for isolated synthetic paths | Synthetic browser owner separation and disposable PostgreSQL owner RLS/revision-CAS tests passed. No personal closet data, live Supabase schema, signed JWT, or real authenticated accounts were used. |
+| Male/female 3D donor | PASS for the isolated donor demo; app integration REVIEW | Actual Chromium WebGL evidence used male and female original 163-bone CC0 rigs and two publicly licensed photographed denim sources: P109 generated 24 verified mobile frames with independent knee motion/reset; P110 generated 16 licensed-source WebGL frames and verified 8 saved-look reopens. Unsupported private user photographs remain exact 2D fallback. These are not the candidate’s normal saved-outfit viewer and do not prove dresses/shoes, arbitrary private-photo reconstruction, fabric simulation, or photorealism. |
+| Large wardrobe 25–1,000 | PASS for browser benchmark | Chromium at 390 CSS px ran three baseline/optimized repeats at each size; 250+ displays 48 cards initially. WebKit and Chromium each passed a real 500-item responsive screenshot smoke check at 320/390/430. Timings below are hosted-browser results, not physical-device guarantees. |
+| Mobile UX/accessibility | PASS for tested browser viewports | Chromium and WebKit at 320/390/430 passed navigation, overflow/error assertions and axe checks; permission-denied camera handling passed. Meaningful 390/430 landscape checks passed. This is viewport emulation, not Android/iPhone hardware acceptance. |
+| Failure/recovery matrix | REVIEW | Current focused suites pass source changes, duplicate/CAS, denied camera, restore races, fallback and related regression paths. Not every requested injected fault (real storage quota exhaustion, corrupt/missing photo, interrupted phone save, revoked live session, offline camera/model recovery) was independently exercised. |
+| Build and inherited regressions | PASS | Exact tested candidate built; full Node suite **1,212/1,212** passed; focused integration suite **58/58** passed; disposable PostgreSQL RLS/CAS passed. |
+| Family Alpha readiness | FAIL / HOLD | The research candidate does not satisfy release readiness: model accuracy, real authenticated cloud, actual devices, application-wide 3D and human visual approval remain open. Issue #255 remains HOLD. |
 
-## Current findings and limits
+## Large-wardrobe measurements
 
-The integrated shipped-app changes are limited to mobile readability/navigation, camera review wording and bounded DOM rendering for large closet grids. P136 bounds visible card work to 48 above 100 matches and provides “Show more”; all stored records remain available to search, outfit references and backup. The P136 tests verify transactional original/cutout byte and outfit persistence at each size. The exact P139 browser benchmark must provide the measured times before they are reported.
+P136 results used synthetic but valid original/cutout JPEG fixture bytes, IndexedDB, Chromium at 390 CSS px, three repeats per baseline/optimized case. Table shows median card-render / bulk-write / reload-to-ready milliseconds (p50); screenshot smoke was separately run in WebKit at all three widths.
 
-Camera-to-outfit evidence intentionally separates a genuine licensed JPEG and browser SHA calculation from controlled recognition output. The recognition result is a low-confidence test fixture; category, subtype and color are accepted only through human review in the proof. The integration does not turn the licensed test photograph into a user's owned garment or imply model accuracy.
+| Garments | Baseline p50 (render / write / reload ms) | Optimized p50 (render / write / reload ms) | Optimized visible cards |
+|---:|---:|---:|---:|
+| 25 | 199.5 / 61.7 / 246.7 | 605.1 / 72.8 / 486.4 | 25 |
+| 100 | 250.3 / 257.4 / 504.5 | 310.1 / 257.5 / 470.3 | 100 |
+| 250 | 541.3 / 634.2 / 507.5 | 153.7 / 622.2 / 482.3 | 48 |
+| 500 | 398.9 / 1,104.9 / 898.6 | 164.7 / 1,110.8 / 869.1 | 48 |
+| 1,000 | 725.3 / 1,884.5 / 1,421.1 | 164.3 / 1,906.6 / 1,444.1 | 48 |
 
-Cloud restore remains an owner-consented research dialog with fail-closed local and remote revision checks. Local synthetic accounts and disposable PostgreSQL do not establish live JWT, Storage policy or signed two-account acceptance; this is not a live signed-account test. The new workflow never writes to live Supabase.
+Each p95 is the largest of three observations and is not a stable population estimate. Bounded rendering materially reduced card-render time at 250–1,000, while 25/100-card timing, bulk-write and reload-to-ready were neutral or slower in this run. This integration therefore demonstrates bounded UI work, not a blanket performance improvement.
 
-P110 WebGL evidence concerns indexed public licensed garment sources on authenticated synthetic research identities; an arbitrary private photographed garment remains 2D. It is not a photorealism score or a completed standard-app 3D integration. This candidate preserves that boundary and does not edit the humanoid source.
+## Browser and 3D evidence
 
-## Release boundary
+- Exact-head P139 browser job passed at `73560b392ef56fc7c7483dd9a74ea5770ee3b410`, with no browser errors.
+- P132: Chromium/WebKit at 320/390/430; denied camera permission; synthetic outfit swap/save/reopen.
+- P122: 6 Chromium/WebKit licensed-photo cases, 51 screenshots, real review UI, original SHA, three saved owned looks, swap/save/reopen and synthetic owner isolation. This does not establish automatic recognition.
+- P138: 6 Chromium/WebKit restore consent cases, 36 screenshots, local/remote revision-change rejection and atomic saved-outfit restore.
+- P136: 36 performance/screenshot cases, 6 responsive 500-item screenshots, zero recorded case errors.
+- P109: 24 verified mobile WebGL frames, 163-bone male/female rigs, exact source reset. Physical devices and human realism approval were false.
+- P110: 16 licensed original-source WebGL frames, 8 saved-look reopens, all reopened pixels exact; private unverified photo remained in original 2D fallback.
+- The combined Actions artifact contains 175 PNGs plus result JSON/audit receipts, including actual browser screenshots, axe output and P136 timings: [P139 browser and WebGL artifacts](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42401992944/artifacts/13585862982).
 
-This branch is a research integration candidate, not Family Alpha release acceptance. Do not merge it to `main`, production or existing staging. Family Alpha remains **HOLD**. Actual signed-account cloud acceptance, scientific recognition accuracy, broad photo-to-3D fitting, physical Android/iPhone acceptance and visual realism review remain next-stage blockers.
+## Exact-head verification
+
+- Workflow run: [P139 exact-head run 42401992944](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42401992944).
+- Exact tested candidate before report-only update: `73560b392ef56fc7c7483dd9a74ea5770ee3b410`.
+- All three P139 jobs succeeded: exact parent/scope and full regressions; disposable PostgreSQL owner RLS/CAS; genuine Chromium/WebKit app, performance and donor browser tests.
+- Full inherited suite: 1,212 passed, 0 failed. Focused integration suite: 58 passed, 0 failed.
+- Integration/scope artifact: [P139 reports and regression artifacts](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42401992944/artifacts/13585439680).
+
+## Scope boundary and next work
+
+The cross-stream candidate cherry-picks compatible completed P132/P136 changes onto P138. It does not incorporate unfinished P51 authenticated-cloud or P53 recognition work. No live signed-account acceptance was claimed, and live Supabase was not touched. No production, existing staging, merge, or deployment was performed.
+
+The research integration is complete as a candidate, with Family Alpha still **HOLD**. Recommended next integration priority: wait for P51 and P53 verified heads, then implement one authenticated, real-device capture-to-owned-closet acceptance on isolated authorized infrastructure; keep personal-photo-to-3D and human realism as separate release gates.
