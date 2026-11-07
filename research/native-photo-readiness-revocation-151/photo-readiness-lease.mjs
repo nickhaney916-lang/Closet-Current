@@ -14,6 +14,10 @@ export const PHOTO151=Object.freeze({
  productionAuthorized:false,releaseAuthorized:false,familyAlpha:'HOLD'
 });
 const UUID=/^[a-zA-Z0-9_-]{1,180}$/;
+// Do not return even an unknown future saved-look field (which could contain
+// photo bytes or account data). Keep the complete continuity fingerprint in
+// module-private storage keyed to the short-lived immutable receipt only.
+const privateSavedState151=new WeakMap();
 const fail=msg=>{const e=Error('PHOTO151 '+msg);e.code='PHOTO151_STALE_PRIVATE_PHOTO';throw e;};
 const ensure=x=>typeof x==='string'&&UUID.test(x);
 const visible=doc=>doc&&doc.hidden!==true&&doc.visibilityState!=='hidden'&&doc.visibilityState!=='prerender';
@@ -46,19 +50,22 @@ function sessionState({win,doc,board,db,auth,ownerId}={}){
  // includes all original owner-confirmed slot IDs, source metadata, layers.
  const fingerprint=JSON.stringify(saved);
  if(fingerprint.length>100000)fail('saved outfit metadata exceeds bounded limit');
- return Object.freeze({ownerId,selectedIndex:status.selected,
-  savedId:saved.id,revision:epoch.revision,generation:epoch.generation,
-  fingerprint});
+ const receipt=Object.freeze({ownerId,selectedIndex:status.selected,
+  savedId:saved.id,revision:epoch.revision,generation:epoch.generation});
+ privateSavedState151.set(receipt,fingerprint);
+ return receipt;
 }
 export function captureReadinessLease151(context){
  return sessionState(context);
 }
 export function assertReadinessLease151(lease,context){
- if(!lease||typeof lease!=='object')fail('missing original read lease');
+ if(!lease||typeof lease!=='object'||!privateSavedState151.has(lease))
+  fail('missing or forged original read lease');
  const live=sessionState(context);
  if(live.ownerId!==lease.ownerId||live.selectedIndex!==lease.selectedIndex||
     live.savedId!==lease.savedId||live.revision!==lease.revision||
-    live.generation!==lease.generation||live.fingerprint!==lease.fingerprint)
+    live.generation!==lease.generation||
+    privateSavedState151.get(live)!==privateSavedState151.get(lease))
   fail('saved outfit, original photo source or owner changed after attestation');
  return true;
 }
