@@ -8,7 +8,7 @@ import {createServer} from 'node:http';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
@@ -45,7 +45,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const origin='http://127.0.0.1:'+server.address().port;
 const authOrigin='https://hlkgymugtfbirlpunsra.supabase.co';
-let browser=null;
+let browser=null,debugPage=null;
 const external=[],errors=[],cases=[],screens=[],navigations=[],crashes=[];
 let tokenCount=0;
 const native88=process.env.NATIVE88==='1';
@@ -138,8 +138,20 @@ try{
  for(const width of [320,390,430]){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
   // 163-bone canvas contexts, renderer memory and stale browser navigation.
-  browser=await chromium.launch({headless:true,args:[
-   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const browserType=process.env.P150_BROWSER==='webkit'?webkit:chromium;
+  try{
+   browser=await browserType.launch(browserType===chromium?{headless:true,args:[
+    '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{headless:true});
+  }catch(error){
+   if(process.env.P150_BROWSER!=='webkit')throw error;
+   const reason=String(error?.message||error);
+   if(!/missing dependencies|Missing libraries|Executable doesn't exist/i.test(reason))throw error;
+   const widths=[320,390,430];
+   for(const unavailableWidth of widths.slice(widths.indexOf(width)))
+    cases.push({width:unavailableWidth,engine:'webkit',supported:false,reason,
+     testedViewport:false,physicalPhoneApproved:false,familyAlpha:'HOLD'});
+   break;
+  }
   const ctx=await browser.newContext({viewport:{width,height:920},deviceScaleFactor:1,
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await ctx.route('**/*',route=>{
@@ -153,12 +165,12 @@ try{
     host:new URL(u).hostname});
    return route.abort();
   });
-  const page=await ctx.newPage();
+  const page=await ctx.newPage();debugPage=page;
   page.on('pageerror',e=>errors.push({width,message:e.message}));
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research',
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(process.env.P150==='1'?'&humanoid150=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -261,16 +273,93 @@ try{
   // Real end-user button click: do NOT hold one long-running Playwright
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
+  const p150OpenStarted=Date.now();
   await page.locator('#native3D05Preview').click();
+  if(process.env.P150_BROWSER==='webkit'){
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady||
+    document.getElementById('native3D05Status')?.textContent.includes('3D not available')||
+    document.getElementById('native3D05Status')?.textContent.includes('Original-photo/2D fallback')||
+    document.getElementById('outfit3D01Status')?.textContent.includes('Original-photo/2D fallback'),
+    null,{timeout:Number(process.env.P150_TIMEOUT||90000)});
+   const webkitState=await page.evaluate(()=>window.native3D05Bridge.state());
+   if(webkitState.modelReady){
+    assert.equal(webkitState.bones,163);
+    if(process.env.P150==='1')await page.waitForFunction(()=>{
+     const c=document.getElementById('outfit3D01Canvas');return !!c?.dataset.humanoid150;
+    },null,{timeout:60000});
+   }else{
+    assert.ok((await page.locator('#outfit3D01Photos img').count())>=1,
+     'WebKit no-WebGL fallback must retain actual owned garment photographs');
+    assert.deepEqual(await readBoard(page),ownerOriginal,
+     'WebKit renderer fallback must preserve the owner saved outfit');
+   }
+   await take(page,width,webkitState.modelReady?'webkit-real-163-bone':'webkit-photo-fallback');
+   cases.push({width,engine:'webkit',realWebGL:webkitState.modelReady,
+    sourcePhotosRetained:await page.locator('#outfit3D01Photos img').count(),
+    outfitUnmodified:true,physicalPhoneApproved:false,familyAlpha:'HOLD'});
+   await page.evaluate(()=>window.native3D05Bridge.close());
+   await page.locator('#logout').click();
+   await page.waitForFunction(()=>window.closetAuth?.user===null&&
+    document.getElementById('authGate')?.hidden===false);
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
+   await page.close();debugPage=null;await ctx.close();await browser.close();browser=null;
+   continue;
+  }
   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
    window.native3D05Bridge.state().viewerMode==='dress'&&
-   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   window.native3D05Bridge.state().bones===163,null,{timeout:Number(process.env.P150_TIMEOUT||150000)});
+  const p150InitialLoadMs=Date.now()-p150OpenStarted;
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
   assert.equal(state.meshCount>=1,true);
   assert.ok(state.fallbackCount>=3,'Jacket coat shoes must remain photo-only');
   assert.equal(await page.locator('#outfit3D01Photos img').count(),4);
+  if(process.env.P150==='1'){
+   const evidenceDir='benchmark/dual-humanoid-photorealistic-integration-150';
+   await mkdir(evidenceDir,{recursive:true});
+   const renderEvidence=[];let figureSwitchMs=0;
+   const captureP150=async(figure,view)=>{
+    const png=await page.screenshot({fullPage:false,animations:'disabled'});
+    const meta=await sharp(png).metadata();assert.equal(meta.width,width);
+    const filename=`${figure}-${view}-${width}.png`;
+    await writeFile(evidenceDir+'/'+filename,png);
+    const metrics=await page.evaluate(()=>({canvas:{frames:Number(document.getElementById('outfit3D01Canvas')?.dataset.frames||0),model:document.getElementById('outfit3D01Canvas')?.dataset.model},viewer:window.native3D05Bridge.state()}));
+    const overlay=JSON.parse(await page.locator('#outfit3D01Canvas').getAttribute('data-humanoid150'));
+    renderEvidence.push({figure,view,width,file:filename,sha256:digest(png),actualWebGL:true,
+     sourceRigBones:overlay.sourceRigBones,skinBodyMaterials:overlay.skinHair.bodyMaterials,
+     hairMeshes:overlay.skinHair.hairMeshes,prunedHairStrands:overlay.skinHair.prunedHairStrands,
+     facialMeshes:overlay.face.faceMeshes,photorealismProven:overlay.photorealismProven,
+     canvas:metrics.canvas,viewerMode:metrics.viewer.viewerMode,garmentMeshes:metrics.viewer.meshCount,
+     openingLatencyMs:p150InitialLoadMs,figureSwitchLatencyMs:figureSwitchMs});
+   };
+   const marker=async figure=>page.waitForFunction(expected=>{
+    const c=document.getElementById('outfit3D01Canvas');
+    if(!c?.dataset.humanoid150||c.dataset.model!==expected)return false;
+    const r=JSON.parse(c.dataset.humanoid150);
+    return r.figure===expected&&r.sourceRigBones===163&&r.face?.eyeCount===2&&
+      r.face?.photorealismProven===false&&r.releaseAuthorized===false;
+   },figure,{timeout:150000});
+   await marker('female');
+   for(const view of ['Front','Side','Back']){
+    await page.locator('#outfit3D01'+view).click();
+    await captureP150('female',view.toLowerCase());
+   }
+   const switchStarted=Date.now();
+   await page.locator('#outfit3D01Model').selectOption('male');
+   await marker('male');
+   figureSwitchMs=Date.now()-switchStarted;
+   for(const view of ['Front','Side','Back']){
+    await page.locator('#outfit3D01'+view).click();
+    await captureP150('male',view.toLowerCase());
+   }
+   assert.equal(renderEvidence.length,6);
+   await writeFile(evidenceDir+`/screens-${width}.json`,JSON.stringify(renderEvidence,null,2)+'\n');
+   await page.locator('#outfit3D01Model').selectOption('female');
+   await marker('female');
+   assert.deepEqual(await readBoard(page),ownerOriginal,'P150 appearance overlay must not mutate private saved outfit');
+  }
+
   assert.equal(await page.locator('#outfit3D01Save').isDisabled(),true);
   assert.equal(await page.locator('#outfit3D01Delete').isDisabled(),true);
   assert.equal(await page.locator('#outfit3D01Slot-layer2').isDisabled(),true);
@@ -317,7 +406,7 @@ try{
    await page.locator('#native3D05Preview').click();
    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
      window.native3D05Bridge.state().viewerMode==='dress'&&
-     window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+     window.native3D05Bridge.state().bones===163,null,{timeout:Number(process.env.P150_TIMEOUT||150000)});
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
   if(native91&&width===390){
@@ -376,7 +465,7 @@ try{
    await page.locator('#native3D05Preview').click();
    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
     window.native3D05Bridge.state().viewerMode==='dress'&&
-    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+    window.native3D05Bridge.state().bones===163,null,{timeout:Number(process.env.P150_TIMEOUT||150000)});
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
   if(native93&&width===390){
@@ -450,7 +539,7 @@ try{
    await page.locator('#native3D05Preview').click();
    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
     window.native3D05Bridge.state().viewerMode==='dress'&&
-    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+    window.native3D05Bridge.state().bones===163,null,{timeout:Number(process.env.P150_TIMEOUT||150000)});
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
   if(native102&&width===390){
@@ -490,7 +579,7 @@ try{
    // donor-managed document navigation during 3D reattachment.
    await page.locator('#native3D05Preview').click();
    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
-    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+    window.native3D05Bridge.state().bones===163,null,{timeout:Number(process.env.P150_TIMEOUT||150000)});
    assert.deepEqual(await readBoard(page),ownerOriginal);
    // A different mobile lifecycle freeze can also occur without pagehide.
    const frozen=await page.evaluate(()=>{
@@ -564,7 +653,7 @@ try{
    t=>t.includes('Missing saved clothing')),true);
   await take(page,width,'05-B-private-missing-source-fallback');
   assert.deepEqual(await readBoard(page),bStored);
-  cases.push({width,realNativeBuilder:true,exactSourceDonorPR541:true,
+  cases.push({width,realWebGL:true,realNativeBuilder:true,exactSourceDonorPR541:true,
    ...(native88?{staleSelectionBlocked88:width===390?staleSelectionBlocked88:'not-tested-in-this-viewport'}:{}),
    authenticPhotoSourcedDress3D:true,bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
@@ -578,16 +667,18 @@ try{
    separateAccountBPrivate:true,missingIDsRetained:true,
    physicalPhoneApproved:false,liveSignedRLS:false,releaseAuthorized:false,
    familyAlpha:'HOLD'});
-  await page.close();await ctx.close();
+  await page.close();debugPage=null;await ctx.close();
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,15);
+ const webkitRun=process.env.P150_BROWSER==='webkit';
+ const webkitUnavailable=webkitRun&&cases.length===3&&cases.every(x=>x.supported===false);
+ assert.equal(cases.length,3);assert.equal(screens.length,webkitUnavailable?0:(webkitRun?3:15));
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:'NATIVE-3D-05',cases:3,screenshots:15,
-  browser:'chromium',widths:[320,390,430],
+ const result={priority:'NATIVE-3D-05',cases:3,screenshots:screens.length,
+  browser:webkitRun?'webkit':'chromium',browserSupported:!webkitUnavailable,widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
   realSignedRLS:false,originalUserSavedStateUnmodified:true,
@@ -596,12 +687,14 @@ try{
   evidence:cases,screens,errors,external,
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
- console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
-   real163BoneWebGL:true,realMobileScreenshots:15,familyAlpha:'HOLD'}));
+ console.log(webkitUnavailable?'P150_WEBKIT_UNAVAILABLE':'NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
+   browser:webkitRun?'webkit':'chromium',browserSupported:!webkitUnavailable,
+   real163BoneWebGL:cases.some(x=>x.realWebGL===true),realMobileScreenshots:screens.length,
+   reason:webkitUnavailable?cases[0].reason:undefined,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,
-  screens:screens.length,errors,external,navigations,crashes},null,2));throw error;
+  screens:screens.length,errors,external,navigations,crashes,diagnostic:await debugPage?.evaluate(()=>({native:window.native3D05Bridge?.state(),nativeStatus:document.getElementById('native3D05Status')?.textContent,boardStatus:document.getElementById('boardSaveStatus')?.textContent,panelStatus:document.getElementById('outfit3D01Status')?.textContent,dialog:document.getElementById('outfit3D01Dialog')?.open,canvas:document.getElementById('outfit3D01Canvas')?.dataset}))},null,2));throw error;
 }finally{
  await browser?.close();await new Promise(done=>server.close(done));
 }
