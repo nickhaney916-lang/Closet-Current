@@ -10,8 +10,51 @@
  * This is a 3D appearance improvement, not "10/10" human photorealism.
  */
 import * as THREE from 'three';
-import {measureSkinnedFace131}
- from '../dual-humanoid-face-definition-131/face-definition.mjs';
+
+// P131 exists only in Parallel #57's detached donor. Keep the measurement
+// self-contained so main P153 is independently executable without importing
+// or changing parallel source. Method is the same original-skinned-vertex
+// measurement that P131 uses; ONLY source body meshes contribute.
+function measureOriginalHead153(root){
+ root.updateMatrixWorld(true);
+ const points=[],bounds=new THREE.Box3(),tmp=new THREE.Vector3();
+ root.traverse(o=>{
+  if(!o.isSkinnedMesh||o.userData?.work56Garment)return;
+  o.updateMatrixWorld(true);o.skeleton?.update();
+  const attr=o.geometry?.attributes?.position;
+  if(!attr||typeof o.applyBoneTransform!=='function')return;
+  for(let i=0;i<attr.count;i++){
+   const p=o.applyBoneTransform(i,tmp.fromBufferAttribute(attr,i))
+    .applyMatrix4(o.matrixWorld).clone();
+   if(![p.x,p.y,p.z].every(Number.isFinite))
+    throw Error('HAIR153 invalid original skinned vertex');
+   points.push(p);bounds.expandByPoint(p);
+  }
+ });
+ if(points.length<120||!Number.isFinite(bounds.max.y))
+  throw Error('HAIR153 original 163-bone source body absent');
+ const centerX=(bounds.min.x+bounds.max.x)/2,top=bounds.max.y;
+ const candidates=points.filter(p=>p.y>=top-.345&&Math.abs(p.x-centerX)<.205);
+ const headBounds=new THREE.Box3();
+ for(const p of candidates)headBounds.expandByPoint(p);
+ if(candidates.length<80||!Number.isFinite(headBounds.min.z))
+  throw Error('HAIR153 original source head vertices absent');
+ const dims=headBounds.getSize(new THREE.Vector3());
+ const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+ const width=clamp(dims.x,.12,.27),height=clamp(dims.y,.18,.34),
+  depth=clamp(dims.z,.10,.27);
+ const cx=(headBounds.min.x+headBounds.max.x)/2,eyeY=top-height*.47;
+ const anchors=[];
+ for(const side of [-1,1]){
+  const x=cx+side*width*.185;
+  const pts=candidates.filter(p=>Math.abs(p.x-x)<width*.11&&
+   Math.abs(p.y-eyeY)<height*.075);
+  if(pts.length<4)throw Error('HAIR153 original facial skin eye-depth samples absent');
+  anchors.push({side,samples:pts.length,skinZ:Math.max(...pts.map(p=>p.z))});
+ }
+ return Object.freeze({top,centerX:cx,width,height,depth,
+  anchors, sampledHeadVertices:candidates.length});
+}
 
 export const HAIR153=Object.freeze({
  priority:153,figures:Object.freeze(['female','male']),
@@ -160,7 +203,7 @@ export function applySourceHeadHair153(root,figure){
  const before=sourceCounts(root);
  if(before.maxBones!==163||before.bodyMeshes<1)
   fail('unchanged source 163-bone skinned body required');
- const face=measureSkinnedFace131(root);
+ const face=measureOriginalHead153(root);
  const head=headBone(root);
  if(!head||face.sampledHeadVertices<80||face.width<.11||face.height<.15)
   fail('source head bone and surface unavailable');
