@@ -26,6 +26,7 @@ jobs:
           persist-credentials: false
       - name: Require exact P120 parent and only three authorized research files
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=2d996a3aa1ed4f8dbad50a7a7553fb9121723c5d
           test "$(git merge-base HEAD "$BASE")" = "$BASE"
           FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
