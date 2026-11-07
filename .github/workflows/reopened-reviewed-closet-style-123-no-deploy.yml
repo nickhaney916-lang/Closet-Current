@@ -1,0 +1,146 @@
+name: PHOTO123 reopened original My Closet 3 owned outfits NO DEPLOY
+on:
+  push:
+    branches:
+      - research/reopened-reviewed-closet-style-123-main-20261106-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reopened-reviewed-original-to-owner-style-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Strict exact independently green P122 ancestor and exactly FIVE authorized research paths
+        run: |
+          BASE=e6bfb95f83be8cf3e6d96c0e1d99429a9d5ecedb
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/photo123-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|tests/reopened-reviewed-closet-style-123.test.mjs|scripts/test-reopened-reviewed-closet-style-123-browser.mjs|research/reopened-reviewed-closet-style-123/REPORT.md|.github/workflows/reopened-reviewed-closet-style-123-no-deploy.yml) ;;
+              *) echo "REFUSE unauthorized production, staging, authentication, cloud, source fixture, WebGL, humanoid or other project edit: $path"; exit 1 ;;
+            esac
+          done </tmp/photo123-paths
+          test "$(wc -l </tmp/photo123-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/index.html public/cloud-backup.js public/outfit-board.js research/style-owned-live-03 research/native-consumer-board-04 benchmark/fixtures package.json package-lock.json supabase
+      - name: Reuse pinned inherited research dependencies, without lockfile edits
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Real original-byte reviewed-save plus pinned three owned outfits unit acceptance
+        run: |
+          node --check public/app.js
+          node --check scripts/test-reopened-reviewed-closet-style-123-browser.mjs
+          node --check tests/reopened-reviewed-closet-style-123.test.mjs
+          node scripts/build.mjs
+          node --test tests/reopened-reviewed-closet-style-123.test.mjs
+          node --test tests/manual-reviewed-private-save-119.test.mjs tests/reviewed-app-capture-closet-120.test.mjs tests/reviewed-photo-to-three-owned-looks-122.test.mjs tests/style-owned-live-03.test.mjs
+      - name: FULL inherited camera, source, review, styling, saved looks, backup, 3D and privacy Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Source audit explicit review, no imaginary outfits or substitute save databases, Family Alpha HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const app=readFileSync('public/app.js','utf8');
+          const r=readFileSync('research/reopened-reviewed-closet-style-123/REPORT.md','utf8');
+          for(const term of [
+            "get('reviewedStyle122')==='research'&&",
+            "get('reviewedCloset123')==='research';",
+            "const reviewedCloset123Active=reviewedStyle122Active&&",
+            "persisted.sourcePhotoOriginal!==true",
+            "item.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence'",
+            'reviewed-closet123',
+            "const reviewedStyle122Active=reviewedSave120Active&&",
+            'styleJustReviewedPhoto122(item.id,item.sourceSHA256)',
+            'persisted.originalPhoto?.sha256!==expectedSHA',
+            'persisted.originalPhoto?.image!==persisted.image',
+            'await nativeIndex07Refresh()',
+            'await panel.selectGarment(itemId)',
+            'await panel.generate()',
+            'Get 3 outfits with this piece',
+            "familyAlpha:'HOLD',releaseAuthorized:false"
+          ])assert.ok(app.includes(term),term);
+          assert.ok(r.includes('Family Alpha'));
+          assert.ok(r.includes('42324924006'));
+          assert.ok(r.includes('not actual independently signed remote JWTs')&&
+            r.includes('server-enforced cloud RLS'));
+          NODE
+      - name: Upload only no-private-photo technical report and test definition
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO123-no-deploy-research-verified-source-to-owned-outfits-node
+          path: |
+            research/reopened-reviewed-closet-style-123/REPORT.md
+            tests/reopened-reviewed-closet-style-123.test.mjs
+          retention-days: 14
+
+  genuine-source-photo-to-saved-three-outfits-browser:
+    needs: reopened-reviewed-original-to-owner-style-node
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install no-lockfile research browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Real app original photo to owner-review to one-tap 3 pinned owned outfit results and V4 source backup
+        run: node scripts/test-reopened-reviewed-closet-style-123-browser.mjs
+      - name: Independent browser evidence, original licensed JPEG, swap/save/reopen, owner isolation and no false 3D claims
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync,readdirSync,statSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const dir='benchmark/reopened-reviewed-closet-style-123';
+          const res=JSON.parse(readFileSync(dir+'/results.json','utf8'));
+          assert.equal(res.priority,'PHOTO123-REOPENED-REVIEWED-CLOSET-THREE-OUTFITS');
+          assert.equal(res.cases.length,6);
+          assert.deepEqual(res.cases.map(x=>[x.engine,x.width]),[
+            ['chromium',320],['chromium',390],['chromium',430],
+            ['webkit',320],['webkit',390],['webkit',430]
+          ]);
+          for(const c of res.cases){
+            assert.equal(c.threeRealOriginalOwnedLooks,true);
+            assert.equal(c.actualPhotoReviewToStyleShortcut,true);
+            assert.equal(c.reopenedOwnerClosetShortcut,true);
+            assert.equal(c.reloadSessionNotRequired,true);
+            assert.equal(c.P120OwnerReviewAlreadyComplete,true);
+            assert.equal(c.photoDoesNotRequireSecondReview,true);
+            assert.equal(c.undoPinCAS,true);
+            assert.equal(c.ownerBPrivate,true);
+            assert.equal(c.photosUnchanged,true);
+          }
+          assert.equal(res.realSignedServerRLS,false);
+          assert.equal(res.realPhysicalAndroidOrIphone,false);
+          assert.equal(res.arbitraryFitted3D,false);
+          assert.equal(res.familyAlpha,'HOLD');
+          assert.equal(res.releaseAuthorized,false);
+          assert.deepEqual(res.errors,[]);
+          assert.deepEqual(res.crashes,[]);
+          assert.deepEqual(res.external,[]);
+          const screenshots=readdirSync(dir).filter(x=>x.endsWith('.png'));
+          assert.equal(screenshots.length,63);
+          for(const f of screenshots)assert.ok(statSync(dir+'/'+f).size>6000);
+          NODE
+      - name: Archive only public-license camera/photo and six browser scenario screenshots NO DEPLOY
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PHOTO123-REAL-app-3-pinned-owned-outfits-Chromium-WebKit-320-390-430-HOLD
+          path: benchmark/reopened-reviewed-closet-style-123/
+          retention-days: 14

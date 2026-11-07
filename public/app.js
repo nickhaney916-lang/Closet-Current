@@ -39,6 +39,11 @@ const reviewedStyle122Active=reviewedSave120Active&&
  new URLSearchParams(location.search).get('styleOwned03')==='research'&&
  new URLSearchParams(location.search).get('nativeLossless04')==='research'&&
  new URLSearchParams(location.search).get('nativeIndex07')==='research';
+// PHOTO123: explicit additional gate for a reviewed original reopened from
+// My Closet after a browser reload. No session-capture ID needed after reload;
+// a fresh owner-bound persisted source + category/color integrity check is.
+const reviewedCloset123Active=reviewedStyle122Active&&
+ new URLSearchParams(location.search).get('reviewedCloset123')==='research';
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
@@ -340,8 +345,10 @@ function renderRecognitionNotice(){
  * The style controller independently re-hashes each private wardrobe JPEG.
  * Never guess 3 looks if the owned closet lacks compatible pieces.
  */
-async function styleJustReviewedPhoto122(itemId,expectedSHA){
+async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false}={}){
  if(!reviewedStyle122Active)throw Error('PHOTO122 explicit opt-in required');
+ if(fromCloset123&&!reviewedCloset123Active)
+  throw Error('PHOTO123 saved closet styling requires explicit research opt-in');
  const auth=window.closetAuth,owner=auth?.user?.id,originalDb=db;
  const live=()=>owner&&window.closetAuth===auth&&auth.user?.id===owner&&
   db===originalDb&&db?.name==='closet-current-user-'+owner&&
@@ -349,7 +356,8 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA){
  if(!live())throw Error('Private signed-in wardrobe unavailable');
  const tracked=items.find(row=>row.id===itemId&&row.ownerId===owner&&
   row.sourceSHA256===expectedSHA);
- if(!tracked||!sessionCapturedIds.has(itemId)||batch.some(x=>x.id===itemId))
+ if(!tracked||(!fromCloset123&&(!sessionCapturedIds.has(itemId)||batch.some(x=>x.id===itemId)))||
+    (fromCloset123&&batch.some(x=>x.id===itemId)))
   throw Error('Reviewed original is not in your saved closet');
  const persisted=await new Promise((resolve,reject)=>{
   try{
@@ -359,7 +367,11 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA){
  });
  if(!live()||!persisted||persisted.ownerId!==owner||
     persisted.sourceHashVerified!==true||persisted.ownerReviewed!==true||
-    persisted.userAdjusted!==true||persisted.sourceSHA256!==expectedSHA||
+    persisted.userAdjusted!==true||
+    (fromCloset123&&(persisted.sourcePhotoOriginal!==true||
+      persisted.reviewProvenance!=='explicit-owner-claim-not-independent-review-evidence'||
+      persisted.singleGarmentVerified!==true))||
+    persisted.sourceSHA256!==expectedSHA||
     persisted.originalPhoto?.sha256!==expectedSHA||
     persisted.originalPhoto?.image!==persisted.image||
     persisted.category==='Uncategorized'||persisted.itemType==='Unknown'||
@@ -503,7 +515,34 @@ function render(){
   }
   actionRow.append(ok,cancel);f.append(actionRow);
  }else f.append(ok,cancel);
- dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){const styleNew=node('button','Style this piece','secondary');styleNew.type='button';styleNew.onclick=async()=>{switchView('stylist');try{if(!window.styleOwnedLive03Bridge?.selectGarment)throw Error('Style My New Clothes is not ready');await window.styleOwnedLive03Bridge.selectGarment(item.id);}catch(error){message(String(error.message||error));}};actions.append(styleNew);}actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
+ dialog.append(f);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+ const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
+  reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
+  item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
+  item.singleGarmentVerified===true&&
+  item.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence';
+ const styleNew=node('button',reviewedStored123?'Get 3 outfits with this piece':'Style this piece','secondary');
+ styleNew.type='button';
+ if(reviewedStored123){
+  styleNew.classList.add('reviewed-closet123');
+  styleNew.dataset.savedItemId=item.id;
+ }
+ styleNew.onclick=async()=>{
+  styleNew.disabled=true;
+  try{
+   if(reviewedStored123)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{fromCloset123:true});
+   else{
+    switchView('stylist');
+    if(!window.styleOwnedLive03Bridge?.selectGarment)
+     throw Error('Style My New Clothes is not ready');
+    await window.styleOwnedLive03Bridge.selectGarment(item.id);
+   }
+  }catch(error){message('Could not reopen saved clothing for private styling. '+
+    String(error.message||error)+'. Your closet and outfits are unchanged.');}
+  finally{styleNew.disabled=false;}
+ };
+ actions.append(styleNew);
+}actions.append(edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
 }
