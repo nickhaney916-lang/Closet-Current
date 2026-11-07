@@ -5,14 +5,14 @@ on:
   pull_request:
     branches: [research/owner-cloud-revision-consent-132-main-20261107-HOLD]
     paths:
-      - 'research/owner-cloud-revision-consent-132/**'
+      - 'research/remote-cloud-reviewed-preview-133/**'
       - 'tests/remote-cloud-reviewed-preview-133.test.mjs'
       - '.github/workflows/remote-cloud-reviewed-preview-133-no-deploy.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  full-node-and-owner-consent:
+  remote-preview-and-owner-consent:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -24,20 +24,20 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict P129 parent and exactly four research-only files
+      - name: Strict P132 parent and exactly four research-only files
         run: |
           BASE=cd6a3b1775032c8694e8fdaccf4108732c1ec4b9
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
           test "$(git rev-parse "$FIRST^")" = "$BASE"
-          git diff --name-only "$BASE" HEAD >/tmp/p132-paths
+          git diff --name-only "$BASE" HEAD >/tmp/p133-paths
           while IFS= read -r path; do
             case "$path" in
               research/remote-cloud-reviewed-preview-133/remote-preview-owner.mjs|research/remote-cloud-reviewed-preview-133/REPORT.md|tests/remote-cloud-reviewed-preview-133.test.mjs|.github/workflows/remote-cloud-reviewed-preview-133-no-deploy.yml) ;;
               *) echo "REFUSE protected source, production, staging or parallel owner: $path"; exit 1 ;;
             esac
-          done </tmp/p132-paths
-          test "$(wc -l </tmp/p132-paths)" -eq 4
+          done </tmp/p133-paths
+          test "$(wc -l </tmp/p133-paths)" -eq 4
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json benchmark research/owner-cloud-revision-consent-132 research/signed-owner-cloud-integration-129 research/source-review-atomic-cloud-merge-130 research/dual-humanoid-face-definition-131
       - name: Pin test packages without changing lockfile
         run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
