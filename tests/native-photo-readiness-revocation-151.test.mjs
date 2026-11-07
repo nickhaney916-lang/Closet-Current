@@ -92,3 +92,18 @@ test('P151 an old receipt remains revoked after a fresh independent owner-visibl
  assert.throws(()=>assertReadinessLease151(old,f.context),/PHOTO151/);
  assert.equal(assertReadinessLease151(newer,f.context),true);
 });
+
+test('P151 never exports unknown future saved metadata containing private image bytes or bearer text',()=>{
+ const f=fixture();
+ f.row.future={image:'data:image/jpeg;base64,VERY_PRIVATE_BYTES',
+  jwt:'Bearer not-a-real-test-token',nested:{source:'top-secret'}};
+ const receipt=captureReadinessLease151(f.context);
+ const serialized=JSON.stringify(receipt);
+ assert.equal(serialized.includes('VERY_PRIVATE_BYTES'),false);
+ assert.equal(serialized.includes('Bearer'),false);
+ assert.equal(serialized.includes('top-secret'),false);
+ assert.equal('fingerprint' in receipt,false);
+ assert.equal(assertReadinessLease151(receipt,f.context),true);
+ assert.throws(()=>assertReadinessLease151({...receipt},f.context),
+  /PHOTO151.*(forged|missing)/);
+});
