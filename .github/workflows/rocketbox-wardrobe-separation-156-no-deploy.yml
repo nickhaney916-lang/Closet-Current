@@ -1,0 +1,131 @@
+name: P156 exact Rocketbox skinned-geometry wardrobe isolation and original outfit fallback NO DEPLOY
+on:
+  push:
+    branches: [research/rocketbox-wardrobe-separation-156-main-20261107-HOLD]
+  pull_request:
+    branches: [research/dual-human-foundation-candidate-155-main-20261107-HOLD]
+    paths:
+      - research/rocketbox-wardrobe-separation-156/**
+      - scripts/test-rocketbox-head-only-156-browser.mjs
+      - scripts/audit-rocketbox-head-separation-156.mjs
+      - tests/rocketbox-wardrobe-separation-156.test.mjs
+      - .github/workflows/rocketbox-wardrobe-separation-156-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-outfit-regressions-no-release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P155 main ancestor and narrow research-only paths
+        run: |
+          set -eu
+          BASE=675b6face8b0453ee1e4c8433c7177b14415bfed
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p156-files
+          while IFS= read -r p; do
+            case "$p" in
+              research/rocketbox-wardrobe-separation-156/*|scripts/test-rocketbox-head-only-156-browser.mjs|scripts/audit-rocketbox-head-separation-156.mjs|tests/rocketbox-wardrobe-separation-156.test.mjs|.github/workflows/rocketbox-wardrobe-separation-156-no-deploy.yml) ;;
+              *) echo "P156 REFUSE changing source production existing staging or other projects: $p"; exit 1;;
+            esac
+          done </tmp/p156-files
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/dual-human-foundation-candidate-155
+      - name: Test-only local deps, no lockfile modification
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Source-level defensive anatomy and privacy checks
+        run: |
+          node --check research/rocketbox-wardrobe-separation-156/analyze-source-anatomy.mjs
+          node --check research/rocketbox-wardrobe-separation-156/extract-source-head.mjs
+          node --check scripts/test-rocketbox-head-only-156-browser.mjs
+          node --check scripts/audit-rocketbox-head-separation-156.mjs
+          node --test tests/rocketbox-wardrobe-separation-156.test.mjs
+      - name: Original complete app and inherited regression suite must stay green
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  real-original-male-female-skin-clothing-rig-anatomy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source hash and original mesh parser tests, no shipping app code
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 sharp@0.34.3 playwright@1.56.1
+      - name: Retrieve exact signed provenance MIT Rocketbox GLB ONLY within disposable research CI
+        run: |
+          set -eu
+          SRC=https://raw.githubusercontent.com/927tanmay/react-ai-voice-avatar/fc1398c2f8ba600c3676a5277684ed4f3e2731d7/assets/avatars
+          mkdir -p benchmark/dual-human-foundation-candidate-155/assets
+          for file in ananya.glb aarav.glb; do
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 "$SRC/$file" -o "benchmark/dual-human-foundation-candidate-155/assets/$file"
+          done
+          curl --fail --silent --show-error --location --retry 3 --max-time 40 "$SRC/LICENSE.md" -o benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          curl --fail --silent --show-error --location --retry 3 --max-time 40 https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/LICENSE.md -o benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          grep -q "Male_Adult_04" benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          grep -q "Female_Adult_07" benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          grep -q "MIT License" benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          test "$(wc -c <benchmark/dual-human-foundation-candidate-155/assets/ananya.glb)" -eq 4480100
+          test "$(wc -c <benchmark/dual-human-foundation-candidate-155/assets/aarav.glb)" -eq 4673948
+      - name: Independently examine real GLB 80-bone rig, anatomical body/garment topology per original face and original texture material
+        run: node research/rocketbox-wardrobe-separation-156/analyze-source-anatomy.mjs
+      - name: Extract actual source face/hair GLB from both figures and physically REMOVE vendor jacket/pants/body primitive bytes and original body textures
+        run: node research/rocketbox-wardrobe-separation-156/extract-source-head.mjs
+      - name: 24 real Chromium mobile WebGL skinned 80-bone HEAD ONLY frames with original baked clothing removed
+        run: P156_ENGINE=chromium node scripts/test-rocketbox-head-only-156-browser.mjs
+      - name: 24 real WebKit mobile WebGL skinned 80-bone HEAD ONLY frames with unchanged owner closet
+        run: P156_ENGINE=webkit node scripts/test-rocketbox-head-only-156-browser.mjs
+      - name: Independently reverify all 48 real screenshots and extracted binary face/hair GLB SHA-256
+        run: node scripts/audit-rocketbox-head-separation-156.mjs
+      - name: Preserve original photographed owner clothing and forbid unsafe dress/coat substitution
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const audit=JSON.parse(readFileSync('benchmark/rocketbox-wardrobe-separation-156/audit/real-source-anatomy.json'));
+          assert.equal(audit.originalPinnedMITAssetsExamined,2);
+          assert.equal(audit.originalOwnerWardrobePreserved,true);
+          for(const {report,verdict} of audit.cases){
+            assert.equal(report.originalRigBones,80);
+            assert.equal(report.originalWardrobeViewerRequired,true);
+            assert.equal(verdict.canReplaceOriginalPhotographedOutfit,false);
+            assert.equal(verdict.releaseAuthorized,false);
+            assert.ok(report.primitives.every(p=>p.skinned));
+          }
+          console.log('P156 genuine dual-GLB clothes/body/face topology classified; original owner wardrobe remains research-safe HOLD');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P156-original-glb-skin-clothing-material-mesh-anatomy-HOLD-NO-DEPLOY
+          path: |
+            benchmark/rocketbox-wardrobe-separation-156/audit/*.json
+            benchmark/rocketbox-wardrobe-separation-156/heads/*.glb
+            benchmark/rocketbox-wardrobe-separation-156/screens/chromium/*.png
+            benchmark/rocketbox-wardrobe-separation-156/screens/webkit/*.png
+            benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+            benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+            research/rocketbox-wardrobe-separation-156/REPORT.md
+          if-no-files-found: warn
+          retention-days: 14
