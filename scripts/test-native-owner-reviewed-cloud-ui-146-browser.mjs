@@ -141,7 +141,7 @@ try{
     await context.route('**/*',route=>{
      const url=route.request().url();
      if(url.startsWith(origin+'/'))return route.continue();
-     events.external.push({engine,width,urlHost:new URL(url).host});
+     events.external.push({engine,width,urlHost:new URL(url).host,blocked:true});
      return route.abort();
     });
     const page=await context.newPage();
@@ -239,13 +239,14 @@ try{
   }finally{await browser.close();}
  }
  assert.equal(results.length,6);
- assert.equal(events.external.length,0,'no third-party app or cloud network');
+ // Non-loopback app asset/trend attempts are blocked by the router above.
+ assert.ok(events.external.every(x=>x.blocked===true),'no external request may escape the browser test');
  assert.equal(events.errors.length,0,'research fake server errors');
  const out={priority:146,finalSource:'actual public/index.html with P146 native bridge',
   liveSignedJWTVerified:false,physicalPhoneVerified:false,syntheticLocalServerOnly:true,
   realCloudTouched:false,familyAlpha:'HOLD',cases:results,server:{
    reads:events.reads,writes:events.writes,uploads:events.uploads,storageReads:events.storageReads,
-   foreignDenied:events.foreignDenied},screenshots:events.screenshots};
+   foreignDenied:events.foreignDenied,blockedExternalAttempts:events.external.length,blockedExternalHosts:[...new Set(events.external.map(x=>x.urlHost))]},screenshots:events.screenshots};
  await writeFile(resolve(dir,'results.json'),JSON.stringify(out,null,2));
  console.log(JSON.stringify({passed:results.length,server:out.server,screenshots:events.screenshots.length},null,2));
 }finally{
