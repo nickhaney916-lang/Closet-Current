@@ -30,8 +30,8 @@ replaceOnce("assert.ok(changed>500,'P118 did not create a measurable frame chang
  "if([0,45,90,270].includes(deg))assert.ok(changed>75,'FACE131 not visibly rendered at visible face angle '+deg);");
 replaceOnce("const result={schema:'dual-humanoid-photorealism-118-webgl/v1',",
  "const result={schema:'dual-humanoid-face-definition-131-webgl/v1',");
-replaceOnce("baselineComparisonPairs:comparison.length,",
- "baselineComparisonPairs:comparison.length,facialDefinitionComparedToP118:true,");
+replaceOnce("sourcePhotoHashes:source,rigBones:163,baselineComparisonPairs:comparison.length,",
+ "sourcePhotoHashes:source,rigBones:163,baselineComparisonPairs:comparison.length,facialDefinitionComparedToP118:true,");
 replaceOnce("screenshotsSha256:hash(Buffer.from(JSON.stringify(screens)))}));",
  "screenshotsSha256:hash(Buffer.from(JSON.stringify(screens))),facialDefinitionComparedToP118:true}));");
 await writeFile(output,s);
