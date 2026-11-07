@@ -163,10 +163,11 @@ try{
       tx.oncomplete=ok;tx.onerror=()=>bad(tx.error);tx.onabort=()=>bad(tx.error);
     }),{item:item(ownerId),ownerId});
     await openMenu(page);
+    const privateJPEGReadsBeforePreview=events.storageReads;
     await page.locator('#owner146Preview').click();
     await waitStatus(page,'Private count-only preview checked.');
     assert.match(await page.locator('#owner146Counts').innerText(),/Device: 1 clothes, 1 outfits. Cloud: 0 clothes, 0 outfits/);
-    assert.equal(events.storageReads,0,'preview must not fetch original or cutout photos');
+    assert.equal(events.storageReads,privateJPEGReadsBeforePreview,'preview must not fetch original or cutout photos');
     await screenshot(page,engine,width,'01-native-count-preview');
 
     await page.locator('#owner146Backup').click();
