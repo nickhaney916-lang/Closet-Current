@@ -94,4 +94,4 @@ This priority delivers a measured rendering improvement but is **not full phone-
 
 Recommended next integration priority: **P137 — owner-scoped lazy photo hydration and lossless photo-store index**. Benchmark a metadata-first local read path and selected/visible-photo hydration against the current `items` schema. Preserve original and cutout JPEGs byte-for-byte, shared-source associations, SHA identities, owner isolation, saved outfit references, cloud backup format, and 2D/3D fallback. Require migration rollback tests and Chromium/WebKit acceptance before integration.
 
-**Draft PR:** attached to the main development controller after branch publication. **No merge or deployment is authorized by this assignment.**
+**Draft PR:** [#693 — P136 large-wardrobe browsing and storage resilience](https://github.com/nickhaney916-lang/Closet-Current/pull/693). **No merge or deployment is authorized by this assignment.**
