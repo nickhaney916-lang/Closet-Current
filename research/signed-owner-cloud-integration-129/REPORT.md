@@ -23,7 +23,7 @@ Backup snapshots and rechecks the owner-local closet, independently verifies ori
 
 ## Acceptance limits and release blockers
 
-The P129 fake transport uses deterministic test access-token strings. It is **not** cryptographically signed JWT issuance, live PostgREST/Storage RLS, or authenticated two-account cloud acceptance. The inherited PostgreSQL test injects local claim settings, not signed JWTs. The inherited mobile test uses mocked auth/cloud endpoints and the actual closet UI, but does not exercise the P129 bridge or remote cloud. Physical Android/iPhone acceptance is not available.
+The P129 fake transport uses deterministic test access-token strings. It is **not cryptographically signed JWTs**; it also does not provide live PostgREST/Storage RLS or authenticated two-account cloud acceptance. The inherited PostgreSQL test injects local claim settings, not signed JWTs. The inherited mobile test uses mocked auth/cloud endpoints and the actual closet UI, but does not exercise the P129 bridge or remote cloud. Physical Android/iPhone acceptance is not available; physical Android/iPhone devices remain unverified.
 
 Therefore Priority #129 is **not complete** against the assignment's definition. Remaining essential acceptance is (1) a separately authorized mount in the normal cloud writer while retaining the research gate, (2) isolated signed-account A/B HTTP verification for database and Storage authorization, and (3) an actual-app browser flow that invokes the mounted bridge for capture/review, backup, restore and reload. Physical device verification remains incomplete. A local signed Supabase stack was not available; production and existing staging were intentionally not used.
 
