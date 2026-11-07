@@ -106,4 +106,8 @@ test('FACE131 consent, source identity and security boundaries remain research-o
  assert.ok(installer.includes("realism118"));
  assert.ok(tester.includes('webkit')&&tester.includes('chromium'));
  assert.ok(tester.includes('P118 actual WebGL'));
+ assert.ok(tester.includes("const lifecycleAnchor='const errors=[]"),'must target actual source server');
+ assert.ok(tester.includes("String.fromCharCode(10)+'try {'"),'generated harness must start try block');
+ assert.ok(tester.includes('server.closeAllConnections()'),'must prevent held-open keep-alive connections');
+ assert.ok(tester.includes('server.close(error=>error?reject(error):resolve())'),'must close HTTP test server on success and error');
 });
