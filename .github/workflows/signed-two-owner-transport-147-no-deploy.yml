@@ -1,0 +1,131 @@
+name: P147 locally signed RS256 two-owner native cloud and real PostgreSQL RLS NO DEPLOY
+on:
+  push:
+    branches: [research/signed-two-owner-transport-147-main-20261107-HOLD]
+  pull_request:
+    branches: [research/native-owner-reviewed-cloud-ui-146-main-20261107-HOLD]
+    paths:
+      - 'research/signed-two-owner-transport-147/**'
+      - 'scripts/test-signed-two-owner-147-browser.mjs'
+      - 'scripts/test-signed-jwt-postgres-147.mjs'
+      - 'tests/signed-two-owner-transport-147.test.mjs'
+      - '.github/workflows/signed-two-owner-transport-147-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-head-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P146 parent, six research paths and no live or shipping code changes
+        run: |
+          BASE=8b2975a4529b0cf88572261d1bdf9ea3873ca68c
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n 1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p147-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/signed-two-owner-transport-147/ephemeral-signed-identity.mjs|research/signed-two-owner-transport-147/REPORT.md|scripts/test-signed-two-owner-147-browser.mjs|scripts/test-signed-jwt-postgres-147.mjs|tests/signed-two-owner-transport-147.test.mjs|.github/workflows/signed-two-owner-transport-147-no-deploy.yml) ;;
+              *) echo "REFUSE protected source or parallel work $path"; exit 1 ;;
+            esac
+          done </tmp/p147-paths
+          test "$(wc -l </tmp/p147-paths)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public supabase research/native-owner-reviewed-cloud-ui-146 research/local-remote-consent-fence-134 research/cloud-restore-owner-safety-137 research/signed-owner-cloud-integration-129 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
+      - name: Pinned no-lockfile test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Syntax and signed JWT negative owner tests
+        run: |
+          node --check research/signed-two-owner-transport-147/ephemeral-signed-identity.mjs
+          node --check scripts/test-signed-two-owner-147-browser.mjs
+          node --check scripts/test-signed-jwt-postgres-147.mjs
+          node --test tests/signed-two-owner-transport-147.test.mjs
+      - name: Native app build unaffected
+        run: node scripts/build.mjs
+      - name: All inherited Node regressions at exact HEAD
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  real-postgres-signed-jwt-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p147-temporary-only
+          POSTGRES_DB: p147_ephemeral
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p147_ephemeral"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P147_POSTGRES_URL: postgresql://postgres:p147-temporary-only@127.0.0.1:5432/p147_ephemeral
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p147-temporary-only
+      PGDATABASE: p147_ephemeral
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: PostgreSQL local client and pin test driver without modifying lockfile
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Install unchanged real Supabase schema into disposable PostgreSQL 17 only
+        run: |
+          git diff --exit-code 8b2975a4529b0cf88572261d1bdf9ea3873ca68c HEAD -- supabase/cloud-backup.sql research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Verify cryptographically signed subjects through real PostgreSQL RLS and CAS
+        run: node scripts/test-signed-jwt-postgres-147.mjs
+      - name: Previous independently verified RLS regression
+        run: |
+          P128_POSTGRES_URL="$P147_POSTGRES_URL" node scripts/test-two-owner-postgres-rls-128.mjs
+  actual-native-chromium-webkit-signed-two-owners:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned research-only real-browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4
+      - name: Two real native account browser contexts per engine and viewport with signed JWT private transport
+        run: node scripts/test-signed-two-owner-147-browser.mjs
+        env:
+          ARTIFACT_DIR: benchmark/signed-two-owner-transport-147
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p147-signed-two-owner-native-mobile-evidence
+          path: benchmark/signed-two-owner-transport-147/
+          if-no-files-found: warn
