@@ -5,14 +5,14 @@ on:
   pull_request:
     branches: [research/remote-cloud-reviewed-preview-133-main-20261107-HOLD]
     paths:
-      - 'research/remote-cloud-reviewed-preview-133/**'
+      - 'research/local-remote-consent-fence-134/**'
       - 'tests/local-remote-consent-fence-134.test.mjs'
       - '.github/workflows/local-remote-consent-fence-134-no-deploy.yml'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
-  remote-preview-and-owner-consent:
+  local-remote-owner-consent-fence:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
