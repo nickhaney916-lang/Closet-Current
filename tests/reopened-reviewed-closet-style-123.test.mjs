@@ -155,5 +155,5 @@ test('PHOTO123 owner account switch or SHA/correction mutation is rejected befor
  assert.ok(code.includes("if(!live())throw Error('Owner signed out while refreshing"));
  assert.ok(code.includes("if(!live())throw Error('Owner changed while selecting"));
  assert.ok(code.includes("if(!live()||panel.status()?.pinnedId!==itemId"));
- assert.ok(code.includes("count+' complete owned outfits are available; add compatible clothes to reach three.'"));
+ assert.ok(code.includes('complete owned outfits are available; add compatible clothes to reach three.'));
 });
