@@ -5,6 +5,7 @@
  * ONE IndexedDB readwrite transaction, or none of them are changed.
  */
 import {validateBoard02} from '../board-lossless-02/lossless-board.mjs';
+import {reviewedSourceBoundCutout124} from '../style-owned-live-03/native-style-panel.mjs';
 
 export const RESTORE01=Object.freeze({
  gate:'restoreAtomic01=research&nativeLossless04=research',
@@ -68,6 +69,36 @@ async function inspectImages(x,visited=new WeakSet()){
  }
  return count;
 }
+/**
+ * PHOTO126 — P119/P124 owner-reviewed MULTI-GARMENT cutout bytes are nested
+ * under segmentHint.cutoutImage, not a field called "image". RESTORE01's
+ * recursive original-image validator does not inspect this property.
+ * Enforce the complete source+owner-review claim AND rehash this SECOND JPEG
+ * independently, before allowing any atomic owner wardrobe replacement.
+ * Legacy rows with no claimed cutout remain untouched and never acquire a
+ * reviewed-cutout or 3D certification via this backup validator.
+ */
+export async function verifyReviewedCutouts126(value,{ownerId}={}){
+ if(!Array.isArray(value?.items)||!goodId(ownerId))
+  throw Error('PHOTO126 private restore contents required');
+ let count=0;
+ for(const row of value.items){
+  const hint=row?.segmentHint;
+  const claimsReviewedCutout=row?.cutoutSHA256!==undefined||
+   hint?.cutoutSHA256!==undefined||hint?.cutoutImage!==undefined||
+   (row?.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence'&&
+    row?.singleGarmentVerified===false&&row?.outfitSourceId!==undefined);
+  if(!claimsReviewedCutout)continue;
+  if(row.ownerId!==ownerId||!reviewedSourceBoundCutout124(row)||
+     row.threeDReady===true)
+   throw Error('PHOTO126 incomplete owner-reviewed source/cutout provenance');
+  // This promise checks genuine bytes (not only JPEG markers or saved SHA).
+  // P119 originalPhoto.image is independently verified by inspectImages().
+  await photoProof(hint.cutoutImage,{hash:row.cutoutSHA256});
+  count++;
+ }
+ return count;
+}
 function validateShape(value,{ownerId,mode='file'}={}){
  walk(value);
  if(!goodId(ownerId))throw Error('RESTORE01 active owner required');
@@ -113,8 +144,10 @@ function validateShape(value,{ownerId,mode='file'}={}){
 export async function validateRestore01(value,{ownerId,mode='file'}={}){
  validateShape(value,{ownerId,mode});
  const count=await inspectImages(value);
+ const reviewedCutoutJPEGsVerified=await verifyReviewedCutouts126(value,{ownerId});
  // Metadata retained unchanged, including temporarily missing outfit IDs.
  return Object.freeze({valid:true,photoFieldsVerified:count,
+  reviewedCutoutJPEGsVerified,
   itemCount:value.items.length,savedCount:value.state['outfit-board']?.saved.length||0,
   originalRecordsUnmodified:true,missingOutfitReferencesAllowed:true});
 }
@@ -151,9 +184,13 @@ export async function restoreOwner01({db,assertLease,backup,ownerId,expectedFing
  if(!db||typeof db.transaction!=='function'||typeof assertLease!=='function'||
     typeof expectedFingerprint!=='string')
   throw Error('RESTORE01 owner database and compare-and-swap snapshot required');
- assertLease();await validateRestore01(backup,{ownerId});
+ // Clone BEFORE async hash verification. Otherwise callers could mutate a
+ // correctly verified backup while digest() is pending, and restoreOwner01
+ // would later clone and commit DIFFERENT, unverified photo/review bytes.
+ assertLease();const target=clone(backup);
+ await validateRestore01(target,{ownerId});
  assertLease();
- const target=clone(backup),wanted=target.state;
+ const wanted=target.state;
  return new Promise((resolve,reject)=>{
   let tx,complete=false;
   const fail=e=>{if(complete)return;complete=true;try{tx?.abort();}catch{}reject(e);};
