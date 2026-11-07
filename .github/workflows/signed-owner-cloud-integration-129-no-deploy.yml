@@ -1,0 +1,158 @@
+name: P129 signed-owner cloud bridge research NO DEPLOY
+on:
+  push:
+    branches:
+      - research/signed-owner-cloud-integration-129-main-20261106-HOLD
+  pull_request:
+    branches:
+      - research/two-owner-cloud-rls-recovery-128-main-20261106-HOLD
+    paths:
+      - 'research/signed-owner-cloud-integration-129/native-cloud-bridge.mjs'
+      - 'tests/signed-owner-cloud-integration-129.test.mjs'
+      - 'research/signed-owner-cloud-integration-129/REPORT.md'
+      - '.github/workflows/signed-owner-cloud-integration-129-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  node-and-existing-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact P128 parent and four-path research allowlist
+        run: |
+          BASE=caccf49bbcf5512122f981debb111f723d7385ac
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p129-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/signed-owner-cloud-integration-129/native-cloud-bridge.mjs|tests/signed-owner-cloud-integration-129.test.mjs|research/signed-owner-cloud-integration-129/REPORT.md|.github/workflows/signed-owner-cloud-integration-129-no-deploy.yml) ;;
+              *) echo "REFUSE protected source, production, staging, schema, fixture, humanoid, or unrelated path: $path"; exit 1 ;;
+            esac
+          done </tmp/p129-paths
+          test "$(wc -l </tmp/p129-paths)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public supabase benchmark package.json package-lock.json research/restore-atomic-01 research/two-owner-cloud-rls-recovery-128 research/style-owned-live-03
+      - name: Install research-only test dependencies without lockfile mutation
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: P129 syntax and authenticated bridge tests
+        run: |
+          node --check research/signed-owner-cloud-integration-129/native-cloud-bridge.mjs
+          node --check tests/signed-owner-cloud-integration-129.test.mjs
+          node --test tests/signed-owner-cloud-integration-129.test.mjs
+      - name: Build generated PWA files required by the complete repository suite
+        run: node scripts/build.mjs
+      - name: Full inherited repository Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: P129 exact-head research-boundary assertions
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const source=readFileSync('research/signed-owner-cloud-integration-129/native-cloud-bridge.mjs','utf8');
+          const report=readFileSync('research/signed-owner-cloud-integration-129/REPORT.md','utf8');
+          for(const s of ['packageOwnerCloudCutouts128','reopenOwnerCloudCutouts128','save_closet_backup','restoreOwner01','approved!==true','realSignedJWTVerified:false','productionAuthorized:false']) assert.ok(source.includes(s),s);
+          for(const s of ['Family Alpha','not cryptographically signed JWTs','physical Android/iPhone']) assert.ok(report.includes(s),s);
+          NODE
+  inherited-real-app-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install inherited actual-app browser dependencies without lockfile mutation
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Actual Closet Current browser app acceptance inherited from P127, 320/390/430 Chromium and WebKit
+        run: node scripts/test-owner-confirmation-mobile-restore-127-browser.mjs
+      - name: Ensure inherited mobile scenarios make no false cloud, JWT or physical-device claim
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/owner-confirmation-mobile-restore-127/results.json','utf8'));
+          assert.equal(r.cases.length,6);
+          assert.deepEqual(r.cases.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          assert.equal(r.realSignedServerRLS,false);assert.equal(r.realPhysicalAndroidOrIphone,false);assert.equal(r.familyAlpha,'HOLD');assert.deepEqual(r.errors,[]);
+          NODE
+      - name: Archive inherited public-license mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P129-inherited-mobile-only-not-cloud-or-device-acceptance
+          path: benchmark/owner-confirmation-mobile-restore-127/
+          retention-days: 14
+  disposable-postgres-policy-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p129-ephemeral-only
+          POSTGRES_DB: p129_ephemeral
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p129_ephemeral"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p129-ephemeral-only@127.0.0.1:5432/p129_ephemeral
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p129-ephemeral-only
+      PGDATABASE: p129_ephemeral
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce inherited research-only parent scope
+        run: |
+          test "$(git merge-base caccf49bbcf5512122f981debb111f723d7385ac HEAD)" = caccf49bbcf5512122f981debb111f723d7385ac
+          git diff --exit-code caccf49bbcf5512122f981debb111f723d7385ac HEAD -- public supabase benchmark package.json package-lock.json
+      - name: Install disposable postgres client and pinned test driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Bootstrap unmodified repository SQL in ephemeral PostgreSQL 17
+        run: psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Run inherited real PostgreSQL RLS policies and CAS checks
+        run: node scripts/test-two-owner-postgres-rls-128.mjs
+      - name: Archive technical-only policy test definitions
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P129-inherited-disposable-PostgreSQL-policy-only
+          path: |
+            scripts/test-two-owner-postgres-rls-128.mjs
+            research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+          retention-days: 14
