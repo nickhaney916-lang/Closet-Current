@@ -79,7 +79,7 @@ try{
    page.on('pageerror',e=>errors.push(e.message));
    page.on('console',e=>{if(e.type()==='error')errors.push(e.text());});
    page.on('requestfailed',r=>failures.push(r.url()+' '+r.failure()?.errorText));
-   page.on('request',r=>{if(!r.url().startsWith(origin))requests.push(r.url());});
+   page.on('request',r=>{if(!r.url().startsWith(origin)&&!r.url().startsWith('blob:'+origin)&&!r.url().startsWith('data:'))requests.push(r.url());});
    try{
     await page.goto(origin+'/lab?figure='+candidate.key+'&view='+view,
      {waitUntil:'domcontentloaded',timeout:45000});
