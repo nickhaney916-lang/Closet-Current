@@ -104,8 +104,13 @@ jobs:
             'const approved=await confirm(',
             'if(approved!==true)return {cancelled:true,originalUntouched:true};',
             'await onRestored();',
-            'assertLease();\\n   win.closetCloud?.changed?.();'
-          ])assert.ok(bridge.includes(fragment.replace('\\\\n','\\n')),fragment);
+            'win.closetCloud?.changed?.();'
+          ])assert.ok(bridge.includes(fragment),fragment);
+          const callbackAt=bridge.indexOf('await onRestored();');
+          const leaseAt=bridge.indexOf('assertLease();',callbackAt);
+          const cloudAt=bridge.indexOf('win.closetCloud?.changed?.();',callbackAt);
+          assert.ok(callbackAt>=0&&leaseAt>callbackAt&&cloudAt>leaseAt,
+            'PHOTO127 post-refresh auth lease must precede cloud dirty notification');
           for(const part of [
             'export async function verifyReviewedCutouts126(value,{ownerId}={})',
             'await photoProof(hint.cutoutImage,{hash:row.cutoutSHA256})',
