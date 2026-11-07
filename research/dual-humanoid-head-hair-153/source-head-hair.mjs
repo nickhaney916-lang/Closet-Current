@@ -88,33 +88,58 @@ function surface(group,verts,indices,base,name){
  const mesh=owned(new THREE.Mesh(geom,toned(base)),name,group);
  return mesh;
 }
-function shell(group,face,figure,cz){
+/**
+ * Extract ONLY the actual skinned donor's original HEAD / crown polygons,
+ * preserving anatomical skull curvature rather than inventing a helmet or
+ * cone. Vertex positions are skin-transformed by the pinned 163-bone rig,
+ * then placed 4mm above the original scalp so the source skin cannot poke
+ * through the rendered hair surface. That scalp is attached to the genuine
+ * donor head bone by the caller; the underlying GLB is untouched.
+ */
+function shell(group,root,face,figure,cz){
  const {top,centerX:cx,width:w,height:h,depth:d}=face;
- const cols=40,rows=12,verts=[],indices=[];
- for(let row=0;row<=rows;row++){
-  const t=row/rows,rad=Math.sin(t*1.48);
-  for(let j=0;j<=cols;j++){
-   const phi=j/cols*Math.PI*2,front=Math.max(0,Math.sin(phi));
-   const back=Math.max(0,-Math.sin(phi));
-   const side=Math.abs(Math.cos(phi));
-   // A soft, asymmetric above-eye hairline rather than the floating P118
-   // upper hemisphere. P153 hair is attached to the same real head bone.
-   const fall=(figure==='female'?.41:.39)+back*(figure==='female'?.15:.11)+side*.045;
-   const latitude=smooth(t);
-   const x=cx+w*.615*rad*Math.cos(phi);
-   const z=cz+d*.635*rad*Math.sin(phi);
-   const y=top+h*.14-h*fall*latitude+
-     h*.010*Math.sin(phi*3+figure.length)*Math.pow(t,3);
-   if(![x,y,z].every(finite))fail('invalid source-based scalp vertex');
-   verts.push(x,y,z);
-   if(row<rows&&j<cols){
-    const q=row*(cols+1)+j;
-    indices.push(q,q+1,q+cols+1,q+1,q+cols+2,q+cols+1);
+ const verts=[],indexes=[],scalpCenter=new THREE.Vector3(cx,top-h*.22,cz);
+ const tmp=new THREE.Vector3(),maximumTriangles=12000;
+ root.updateMatrixWorld(true);
+ root.traverse(o=>{
+  if(verts.length/9>=maximumTriangles||!o.isSkinnedMesh||o.userData?.work56Garment)return;
+  const geom=o.geometry,attr=geom?.attributes?.position;
+  if(!attr||attr.count<100||typeof o.applyBoneTransform!=='function')return;
+  o.updateMatrixWorld(true);o.skeleton?.update();
+  const idx=geom.index,triangles=idx?idx.count/3:attr.count/3;
+  const point=i=>o.applyBoneTransform(i,tmp.fromBufferAttribute(attr,i))
+   .applyMatrix4(o.matrixWorld).clone();
+  const eligible=q=>{
+   const front=q.z>cz+d*.08,limit=top-h*(front?.275:.355);
+   return q.y>=limit&&q.y<=top+h*.03&&
+    Math.abs(q.x-cx)<w*.59&&Math.abs(q.z-cz)<d*.61;
+  };
+  for(let t=0;t<triangles&&verts.length/9<maximumTriangles;t++){
+   const ia=idx?idx.getX(t*3):t*3,
+    ib=idx?idx.getX(t*3+1):t*3+1,
+    ic=idx?idx.getX(t*3+2):t*3+2;
+   const aa=point(ia),bb=point(ib),cc=point(ic);
+   if(!eligible(aa)||!eligible(bb)||!eligible(cc))continue;
+   const faceNormal=bb.clone().sub(aa).cross(cc.clone().sub(aa)).normalize();
+   const center=aa.clone().add(bb).add(cc).multiplyScalar(1/3);
+   const radial=center.sub(scalpCenter).normalize();
+   if(faceNormal.lengthSq()<.5||radial.lengthSq()<.5)continue;
+   const base=verts.length/3;
+   for(const p of [aa,bb,cc]){
+    const dir=p.clone().sub(scalpCenter).normalize();
+    p.addScaledVector(dir,.0055);
+    verts.push(p.x,p.y,p.z);
    }
+   indexes.push(base,base+1,base+2);
   }
- }
- return surface(group,verts,indices,
-  figure==='female'?0x34251f:0x312722,'scalp-shell');
+ });
+ const tris=indexes.length/3;
+ if(tris<25||tris>maximumTriangles)
+  fail('original CC0 scalp topology absent or over-budget: '+tris);
+ const mesh=surface(group,verts,indexes,
+  figure==='female'?0x352621:0x302622,'actual-skinned-scalp');
+ mesh.userData.sourceScalpTriangles153=tris;
+ return mesh;
 }
 function hairRibbon(group,face,cz,{
  side=1,originX=.46,originZ=.18,drop=1.1,drift=.1,
@@ -216,7 +241,7 @@ export function applySourceHeadHair153(root,figure){
  hair.name=groupName;
  // The geometry is positioned in measured donor WORLD space. Attach preserves
  // that location while parenting to the REAL existing source-head bone.
- shell(hair,face,figure,centerZ);
+ shell(hair,root,face,figure,centerZ);
  if(figure==='female'){
   for(const side of [-1,1]){
    for(let j=0;j<3;j++)
@@ -241,7 +266,8 @@ export function applySourceHeadHair153(root,figure){
      width:.029,color:j%2?0x47372d:0x352822});
   }
  }
- subtleCrownLines(hair,face,centerZ,figure);
+ // No unsupported floating synthetic crown tubes: the actual skinned
+ // scalp triangles provide the source-specific crown silhouette.
  // Avoid covering the source face with the legacy crown cap. It will be
  // reenabled by clearSourceHeadHair153, or disposed by P150 on figure swap.
  for(const child of p150.children)child.visible=false;
@@ -260,7 +286,7 @@ export function applySourceHeadHair153(root,figure){
    triangles+=(o.geometry?.index?.count||0)/3;
   }
  });
- if(hairMeshes<(figure==='female'?18:12)||triangles<200)
+ if(hairMeshes<(figure==='female'?14:5)||triangles<25)
   fail('incomplete layered hair geometry');
  return Object.freeze({
   figure,sourceRigBones:163,sourceBodyMeshes:after.bodyMeshes,
