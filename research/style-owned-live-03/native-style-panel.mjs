@@ -90,6 +90,40 @@ function needsExplicitSingleReview(row){
   row?.possibleDuplicate!==true&&row?.saveFailed!==true&&
   row?.category!=='Uncategorized';
 }
+/**
+ * PHOTO125 — compare every source/review-sensitive field from the initial
+ * wardrobe snapshot with the final owner-private snapshot after async SHA
+ * verification. A board fingerprint may remain unchanged when a correction,
+ * crop review, photo-only status, or owner approval changes. Only exact same
+ * reviewed bytes AND metadata may be offered to the outfit generator.
+ * Deliberately compare image strings by identity, not by reserializing JPEGs.
+ */
+export function sourceReviewUnchanged125(initial,current){
+ if(!initial||!current)return false;
+ const fields=[
+  'id','ownerId','name','category','itemType','color','colorSource',
+  'sourceSHA256','sourceHashVerified','sourcePhotoOriginal','sourcePhotoId',
+  'outfitSourceId','sourcePieceKey','sourceExtraction','derivedAssetType',
+  'extractionReview','sourceCropReviewed','image','cutoutSHA256',
+  'singleGarmentVerified','multipleGarments','photoOnly','threeDReady',
+  'humanReviewedSource','ownerReviewed','userAdjusted','reviewProvenance',
+  'confirmedCategory','confirmedColor','localAnalyzed','indexingLevel',
+  'indexedAt','scanFailed','saveFailed','requiresOwnershipConfirmation',
+  'possibleDuplicate'
+ ];
+ if(fields.some(key=>initial[key]!==current[key]))return false;
+ for(const [key,keys] of Object.entries({
+  originalPhoto:['image','sha256'],
+  segmentHint:['verified','ownerReviewedInstance','clipped','originalSHA256',
+   'cutoutSHA256','cutoutImage'],
+  confirmedDetails:['category','itemType'],
+  extractionBounds:['x','y','width','height']
+ })){
+  if(Boolean(initial[key])!==Boolean(current[key]))return false;
+  if(keys.some(field=>initial[key]?.[field]!==current[key]?.[field]))return false;
+ }
+ return true;
+}
 export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map(),allowCutout124=false,subtle=globalThis.crypto?.subtle}={}){
  if(!(singleItemReviews instanceof Map))throw Error('STYLE03 owner-bound single-item reviews required');
  if(!board?.readOnlyWardrobe||!board?.sessionLease||!board?.status?.().active)
@@ -170,9 +204,11 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
  // Check the fields used by the outfit generator against the fresh owner
  // snapshot; never rely on an out-of-date cached category after a correction.
  const byId=new Map(after.items.map(row=>[row.id,row]));
+ const initialById=new Map(first.items.map(row=>[row.id,row]));
  for(const item of [...verified,...pending]){
   const fresh=byId.get(item.id);
-  if(!fresh||fresh.category!==item.category||fresh.itemType!==item.itemType||
+  if(!sourceReviewUnchanged125(initialById.get(item.id),fresh)||
+     fresh.category!==item.category||fresh.itemType!==item.itemType||
      fresh.sourceSHA256!==item.sourceSHA256||
      fresh.originalPhoto?.sha256!==item.sourceSHA256||
      fresh.originalPhoto?.image!==(item.originalPhoto?.image||item.genuinePhoto)||
@@ -183,6 +219,12 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
       reviewedSourceBoundCutout124(fresh)!==true)))
    throw Error('STYLE03 wardrobe photo or category changed during verification');
  }
+ // The final snapshot itself may revoke a session (for example, sign-out
+ // during database read). Perform the last active lease check AFTER reading it.
+ const finalLease=board.sessionLease();
+ if(!board.status()?.active||finalLease.ownerId!==first.ownerId||
+    finalLease.generation!==first.generation)
+  throw Error('STYLE03 authentication/owner changed at final review lease');
  return Object.freeze({ownerId:first.ownerId,generation:first.generation,
   fingerprint:first.boardFingerprint,items:Object.freeze(verified),
   pending:Object.freeze(pending),rejected:Object.freeze(rejected),originalSHA256Verified:true,
