@@ -676,7 +676,7 @@ try{
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
  const webkitRun=process.env.P150_BROWSER==='webkit';
  const webkitUnavailable=webkitRun&&cases.length===3&&cases.every(x=>x.supported===false);
- assert.equal(cases.length,3);assert.equal(screens.length,webkitUnavailable?0:(webkitRun?3:15));
+ assert.equal(cases.length,3);assert.equal(screens.length,webkitUnavailable?0:(webkitRun?6:15));
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
