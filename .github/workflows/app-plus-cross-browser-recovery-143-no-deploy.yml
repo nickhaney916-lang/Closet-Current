@@ -1,0 +1,245 @@
+name: P143 verified app plus owner cross-browser cloud combined research NO DEPLOY
+on:
+  push:
+    branches: [research/app-plus-cross-browser-recovery-143-main-20261107-HOLD]
+  pull_request:
+    branches: [research/cross-browser-cloud-recovery-142-main-20261107-HOLD]
+    paths:
+      - 'research/app-plus-cross-browser-recovery-143/**'
+      - 'public/app.js'
+      - 'public/app-theme.css'
+      - 'public/capture-navigation.js'
+      - 'public/index.html'
+      - 'tests/capture-navigation.test.cjs'
+      - 'tests/storage-resilience-136.test.mjs'
+      - 'scripts/test-family-alpha-mobile-ux-132.mjs'
+      - 'scripts/test-storage-resilience-136-browser.mjs'
+      - '.github/workflows/app-plus-cross-browser-recovery-143-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  app-plus-cross-browser-recovery-143:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict P142 parent and exact P139 app source blobs, only ten research-composition files
+        run: |
+          BASE=6f4cabb4aa895da408c67b411ea6869121559bdc
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p143-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/app-theme.css|public/capture-navigation.js|public/index.html|tests/capture-navigation.test.cjs|tests/storage-resilience-136.test.mjs|scripts/test-family-alpha-mobile-ux-132.mjs|scripts/test-storage-resilience-136-browser.mjs|research/app-plus-cross-browser-recovery-143/REPORT.md|.github/workflows/app-plus-cross-browser-recovery-143-no-deploy.yml) ;;
+              *) echo "REFUSE protected source, production, staging or parallel owner: $path"; exit 1 ;;
+            esac
+          done </tmp/p143-paths
+          test "$(wc -l </tmp/p143-paths)" -eq 10
+          test "$(git rev-parse HEAD:public/app.js)" = 7eafef3bf1724bc1899cb06d3290f6ee174968ba
+          test "$(git rev-parse HEAD:public/app-theme.css)" = f80a3193cb1230b79a6f2820472e577419935afd
+          test "$(git rev-parse HEAD:public/capture-navigation.js)" = 4cefe1cf2943431032bdb359a84e9e7332b8ee26
+          test "$(git rev-parse HEAD:public/index.html)" = efabf2ef80710841c64b981a084a93f4a3526de4
+          test "$(git rev-parse HEAD:tests/capture-navigation.test.cjs)" = 33bb41ee5baa63d34f6f68fa44b66f8aaf5c0c01
+          test "$(git rev-parse HEAD:tests/storage-resilience-136.test.mjs)" = e3d35d67f8fb13b2608b0d9e48f14d6ad061df9f
+          test "$(git rev-parse HEAD:scripts/test-family-alpha-mobile-ux-132.mjs)" = 90939449802ff1bfe3c8324eb199ed461bad74a4
+          test "$(git rev-parse HEAD:scripts/test-storage-resilience-136-browser.mjs)" = 63eca7ae20b186f0ffc80d7bccb8165898a527f5
+          git diff --exit-code "$BASE" HEAD -- supabase package.json package-lock.json benchmark public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/outfit-board.js research/cross-browser-cloud-recovery-142 research/cloud-roundtrip-browser-141 research/cloud-backup-browser-140 research/cloud-restore-browser-138 research/cloud-restore-owner-safety-137 research/local-remote-consent-fence-134 research/remote-cloud-reviewed-preview-133 research/owner-cloud-revision-consent-132 research/signed-owner-cloud-integration-129 research/source-review-atomic-cloud-merge-130 research/dual-humanoid-face-definition-131
+      - name: Pin test packages without changing lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: P143 app syntax and P139/P142 focused safety proof tests
+        run: |
+          node --check public/app.js
+          node --check scripts/test-family-alpha-mobile-ux-132.mjs
+          node --check scripts/test-storage-resilience-136-browser.mjs
+          node --check scripts/test-cross-browser-cloud-recovery-142.mjs
+          node --test tests/capture-navigation.test.cjs tests/storage-resilience-136.test.mjs tests/cloud-restore-owner-safety-137.test.mjs tests/local-remote-consent-fence-134.test.mjs tests/remote-cloud-reviewed-preview-133.test.mjs tests/owner-cloud-revision-consent-132.test.mjs tests/signed-owner-cloud-integration-129.test.mjs
+      - name: Rebuild unchanged Closet Current app
+        run: node scripts/build.mjs
+      - name: Entire inherited Node regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Protect research-only, unsigned cloud limit
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const code=readFileSync('research/cross-browser-cloud-recovery-142/device-backup-restore.html','utf8');
+          for(const part of ['createLocalRemoteFence134','createCloudRestoreGuard137','role="alertdialog"','Keep cloud backup','Replace cloud backup','Keep local closet','Replace from cloud','restoreWithOwnerReview','backupWithReviewedConsent',"familyAlpha:'HOLD'"])assert.ok(code.includes(part),part);
+          NODE
+  disposable-real-postgres-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p132-temporary-only
+          POSTGRES_DB: p132_temporary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p132_temporary"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p132-temporary-only@127.0.0.1:5432/p132_temporary
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p132-temporary-only
+      PGDATABASE: p132_temporary
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify source SQL, real policy and original photo fixtures unchanged
+        run: git diff --exit-code 6f4cabb4aa895da408c67b411ea6869121559bdc HEAD -- supabase benchmark research/two-owner-cloud-rls-recovery-128 public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/outfit-board.js
+      - name: Install disposable PostgreSQL command line and driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Bootstrap original PostgreSQL RLS policies from unchanged repository SQL
+        run: psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Run actual two-owner PostgreSQL RLS and CAS checks
+        run: node scripts/test-two-owner-postgres-rls-128.mjs
+  inherited-mobile-browser-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned research-only browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: P139 native app family alpha accessibility, closet navigation and saved outfits
+        env:
+          ARTIFACT_DIR: benchmark/app-plus-cross-browser-recovery-143/mobile-ux
+        run: node scripts/test-family-alpha-mobile-ux-132.mjs
+      - name: P122 licensed JPEG owner reviewed clothing to three actual owned looks
+        run: node scripts/test-reviewed-photo-to-three-owned-looks-122-browser.mjs
+      - name: P136 native app owner photo and 25 through 1000 garment browser storage matrix
+        env:
+          P136_PARENT_SHA: 59ec81353d03a6a5443c9370f209d7e367456e26
+          P136_REPEATS: '3'
+          P136_ENGINES: chromium,webkit
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          node scripts/test-storage-resilience-136-browser.mjs
+      - name: Assert mobile UX, real owned outfits, verified wardrobe performance and explicit limitations
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const ui=JSON.parse(readFileSync('benchmark/app-plus-cross-browser-recovery-143/mobile-ux/results.json','utf8'));
+          assert.deepEqual(ui.engines.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          assert(ui.engines.every(x=>!x.errors?.length));
+          const owned=JSON.parse(readFileSync('benchmark/reviewed-photo-to-three-owned-looks-122/results.json','utf8'));
+          assert.equal(owned.cases.length,6);
+          assert(owned.cases.every(x=>x.threeRealOriginalOwnedLooks&&x.ownerBPrivate&&x.photosUnchanged));
+          assert.equal(owned.realSignedServerRLS,false);
+          const perf=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
+          assert.equal(perf.cases.length,36);
+          assert.deepEqual(perf.errors,[]);
+          for(const n of [25,100,250,500,1000]){
+            const samples=perf.cases.filter(x=>x.engine==='chromium'&&x.width===390&&x.count===n&&!x.screenshot&&!x.baseline);
+            assert.equal(samples.length,3);
+            assert(samples.every(x=>x.cardsVisible===(n<=100?n:48)));
+          }
+          NODE
+      - name: P142 real two-independent-process Chromium WebKit same-owner cloud recovery and stale CAS
+        run: node scripts/test-cross-browser-cloud-recovery-142.mjs
+      - name: Verify six independent cross-browser A/B directions and 66 real screenshot files
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/cross-browser-cloud-recovery-142/results.json','utf8'));
+          assert.equal(r.cases.length,6);
+          assert.equal(r.screenshots.length,66);
+          assert.deepEqual(r.cases.map(x=>[x.order,x.width]),[['chromium-to-webkit',320],['chromium-to-webkit',390],['chromium-to-webkit',430],['webkit-to-chromium',320],['webkit-to-chromium',390],['webkit-to-chromium',430]]);
+          assert(r.cases.every(x=>x.actualSeparateChromiumAndWebKitProcesses&&x.sameSyntheticOwnerOnTwoIndependentIndexedDBStores&&x.cloudOriginalAndCutoutSHAImmutable&&x.deviceBBackupRevisionOneRestored&&x.ownerDeclinePreservedLocalOnlyLook&&x.lateRemoteBackupCASRefused&&x.staleBrowserLocalOutfitsPreserved&&x.updatedRev2OutfitIDsRestored&&x.postConsentRemoteRestoreRaceRefused&&x.localOwnerEditDuringRestoreRefused&&x.deviceBExplicitBackupRevisionFour&&x.bidirectionalAtoBThenBtoARecovery&&x.originalAndCutoutSHAReverifiedBothDirections&&x.foreignSyntheticOwnerDenied));
+          assert.equal(r.actualSeparateChromiumAndWebKitBrowserProcesses,true);
+          assert.equal(r.sameSyntheticOwnerAtoBThenBtoARoundTrip,true);
+          assert.equal(r.realHostedCryptographicSignedJWTA_BTested,false);
+          assert.equal(r.physicalSmartphonesTested,false);
+          assert.equal(r.shippingCloudUIInstalled,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.pageErrors,[]);
+          assert.deepEqual(r.failed,[]);
+          assert.deepEqual(r.externalNetwork,[]);
+          NODE
+      - name: Inherited P141 one-owner same-browser backup restore roundtrip
+        run: node scripts/test-cloud-roundtrip-browser-141.mjs
+      - name: Assert six inherited P141 one-owner mobile browser cases and 54 screenshots
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/cloud-roundtrip-browser-141/results.json','utf8'));
+          assert.equal(r.cases.length,6);
+          assert.equal(r.screenshots.length,54);
+          assert(r.cases.every(x=>x.actualP134AndP137MountedTogether&&x.savedOutfitsRoundTripExactID&&x.originalAndCutoutSHAProved&&x.ownerRevocationNoWrite));
+          assert.equal(r.realHostedSignedJwtABAccountAcceptance,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          NODE
+      - name: Inherited P140 research cloud backup owner decision browser matrix
+        run: node scripts/test-cloud-backup-browser-140.mjs
+      - name: Inherited P138 actual research restore consent browser matrix
+        run: node scripts/test-cloud-restore-browser-138.mjs
+      - name: Inherited original app mobile regression separately
+        run: node scripts/test-owner-confirmation-mobile-restore-127-browser.mjs
+      - name: Assert six independent browser flows and no false live cloud claim
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/owner-confirmation-mobile-restore-127/results.json','utf8'));
+          assert.equal(r.cases.length,6);
+          assert.deepEqual(r.cases.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          assert.equal(r.realSignedServerRLS,false);
+          assert.equal(r.realPhysicalAndroidOrIphone,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.errors,[]);
+          NODE
+      - name: Archive actual cross-browser device, owner-roundtrip, backup, restore and unchanged app evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P143-app-plus-cross-device-private-recovery-NOT-live-signed
+          path: |
+            benchmark/cross-browser-cloud-recovery-142/
+            benchmark/app-plus-cross-browser-recovery-143/
+            benchmark/reviewed-photo-to-three-owned-looks-122/
+            benchmark/storage-resilience-136/
+            benchmark/cloud-roundtrip-browser-141/
+            benchmark/cloud-backup-browser-140/
+            benchmark/cloud-restore-browser-138/
+            benchmark/owner-confirmation-mobile-restore-127/
+          retention-days: 14
