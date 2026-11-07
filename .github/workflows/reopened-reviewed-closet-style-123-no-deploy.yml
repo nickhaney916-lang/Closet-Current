@@ -16,7 +16,7 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Strict exact independently green P120 ancestor and exactly FIVE authorized research paths
+      - name: Strict exact independently green P122 ancestor and exactly FIVE authorized research paths
         run: |
           BASE=e6bfb95f83be8cf3e6d96c0e1d99429a9d5ecedb
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
@@ -69,8 +69,8 @@ jobs:
           ])assert.ok(app.includes(term),term);
           assert.ok(r.includes('Family Alpha'));
           assert.ok(r.includes('42324924006'));
-          assert.ok(r.includes('NOT a real JWT/RLS')||
-            r.includes('not a real JWT/RLS'));
+          assert.ok(r.includes('not actual independently signed remote JWTs')&&
+            r.includes('server-enforced cloud RLS'));
           NODE
       - name: Upload only no-private-photo technical report and test definition
         if: always()
