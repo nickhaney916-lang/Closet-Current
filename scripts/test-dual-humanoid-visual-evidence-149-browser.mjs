@@ -14,7 +14,7 @@ import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 import {PHOTO149,evaluateVisualEvidence149}
  from '../research/dual-humanoid-visual-evidence-149/source-visual-gate.mjs';
-const root=resolve('.'),donor=resolve('.p149-donor-541'),
+const root=resolve('.'),donor=resolve('.photo103-donor-541'),
  folder=resolve('benchmark/dual-humanoid-visual-evidence-149');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 await mkdir(folder,{recursive:true});
