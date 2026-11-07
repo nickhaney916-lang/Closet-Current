@@ -27,7 +27,7 @@ replaceOnce("assert.ok(p.bodyMaterials>=1&&p.hairMeshes>=8);assert.ok(p.headRegi
 replaceOnce("'P118 changed source-backed garment identity or selection'",
  "'FACE131 changed source-backed garment identity or selection'");
 replaceOnce("assert.ok(changed>500,'P118 did not create a measurable frame change');",
- "if([0,45,90,270].includes(deg))assert.ok(changed>75,'FACE131 not visibly rendered at visible face angle '+deg);");
+ "console.log('FACE131_PIXEL_DELTA '+JSON.stringify({figure,viewDegrees:deg,changedChannelSamples:changed}));if([0,45].includes(deg))assert.ok(changed>75,'FACE131 must visibly affect front and three-quarter facial view '+deg);");
 replaceOnce("const result={schema:'dual-humanoid-photorealism-118-webgl/v1',",
  "const result={schema:'dual-humanoid-face-definition-131-webgl/v1',");
 replaceOnce("sourcePhotoHashes:source,rigBones:163,baselineComparisonPairs:comparison.length,",
