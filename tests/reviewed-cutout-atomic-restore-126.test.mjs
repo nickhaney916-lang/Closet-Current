@@ -195,15 +195,16 @@ test('PHOTO126 asynchronous preflight verifies the same cloned bytes eventually 
  // Break the target DB before the valid restore so the source must be copied.
  await clear(e.db);
  const before=await inspect(e.db);
- const originalCrypto=globalThis.crypto;
+ const originalCryptoDescriptor=Object.getOwnPropertyDescriptor(globalThis,'crypto');
  let unblock,notify;
  const entered=new Promise(resolve=>{notify=resolve;});
  const gate=new Promise(resolve=>{unblock=resolve;});
  let started=false;
- globalThis.crypto={subtle:{digest:async (algorithm,raw)=>{
-  if(!started){started=true;notify();await gate;}
-  return webcrypto.subtle.digest(algorithm,raw);
- }}};
+ Object.defineProperty(globalThis,'crypto',{configurable:true,writable:true,
+  value:{subtle:{digest:async (algorithm,raw)=>{
+   if(!started){started=true;notify();await gate;}
+   return webcrypto.subtle.digest(algorithm,raw);
+  }}}});
  try{
   const pending=restoreOwner01({db:e.db,backup,ownerId:e.owner,
    expectedFingerprint:before.fingerprint,confirmed:true,assertLease:()=>{}});
@@ -219,7 +220,8 @@ test('PHOTO126 asynchronous preflight verifies the same cloned bytes eventually 
   assert.equal(after.segmentHint.cutoutImage,cutoutImage);
  }finally{
   if(unblock)unblock();
-  globalThis.crypto=originalCrypto;
+  if(originalCryptoDescriptor)Object.defineProperty(globalThis,'crypto',originalCryptoDescriptor);
+  else delete globalThis.crypto;
  }
 }));
 
