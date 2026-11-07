@@ -112,9 +112,9 @@ test('PHOTO128 genuine private cloud double-JPEG round trip recovers exact owner
   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
  });
  const before=await readOwnerSnapshot01(e.db,()=>{});
- const data={format:'closet-current',version:4,ownerId:e.owner,
+ const restorePayload={format:'closet-current',version:4,ownerId:e.owner,
   items:opened.document.items,state:opened.document.state};
- const reply=await restoreOwner01({db:e.db,backup:data,ownerId:e.owner,
+ const reply=await restoreOwner01({db:e.db,backup:restorePayload,ownerId:e.owner,
   expectedFingerprint:before.fingerprint,confirmed:true,assertLease:e.lease});
  assert.equal(reply.restored,true);
  const after=await readOwnerSnapshot01(e.db,()=>{});
@@ -129,8 +129,7 @@ test('PHOTO128 genuine private cloud double-JPEG round trip recovers exact owner
  };
  const roster=await verifiedPrivateStyleRoster03(board,{allowCutout124:true,subtle:webcrypto.subtle});
  assert.equal(roster.items.length,1);
- assert.equal(roster.items[0].genuinePhoto,dataURI());
- function dataURI(){return data(cutout);}
+ assert.equal(roster.items[0].genuinePhoto,data(cutout));
  assert.equal(roster.items[0].threeDReady,false);
  assert.equal(opened.realSignedJWTVerified,false);
 }));
