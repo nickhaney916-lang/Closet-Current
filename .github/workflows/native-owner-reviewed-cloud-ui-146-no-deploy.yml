@@ -1,0 +1,84 @@
+name: P146 actual app owner-reviewed cloud account UI NO DEPLOY
+on:
+  push:
+    branches: [research/native-owner-reviewed-cloud-ui-146-main-20261107-HOLD]
+  pull_request:
+    branches: [research/legacy-cloud-owner-review-fence-145-main-20261107-HOLD]
+    paths:
+      - public/cloud-backup-bridge.js
+      - research/native-owner-reviewed-cloud-ui-146/**
+      - tests/native-owner-reviewed-cloud-ui-146.test.mjs
+      - scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+      - .github/workflows/native-owner-reviewed-cloud-ui-146-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-scope-and-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P145 parent, six paths, no production/staging or live cloud change
+        run: |
+          BASE=c69dc9ef9b264759e99a028f549569111e5efb06
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p146-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/cloud-backup-bridge.js|research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs|research/native-owner-reviewed-cloud-ui-146/REPORT.md|tests/native-owner-reviewed-cloud-ui-146.test.mjs|scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs|.github/workflows/native-owner-reviewed-cloud-ui-146-no-deploy.yml) ;;
+              *) echo "REFUSE unexpected protected path: $path"; exit 1 ;;
+            esac
+          done </tmp/p146-paths
+          test "$(wc -l </tmp/p146-paths)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public/index.html public/app.js public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/outfit-board.js supabase research/cross-browser-cloud-recovery-142 research/local-remote-consent-fence-134 research/cloud-restore-owner-safety-137 research/signed-owner-cloud-integration-129
+      - name: Pinned no-lockfile research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Syntax, P145 hold and P146 precise-mode safety
+        run: |
+          node --check public/cloud-backup-bridge.js
+          node --check research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs
+          node --check scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+          node --test tests/native-owner-reviewed-cloud-ui-146.test.mjs tests/legacy-cloud-owner-review-fence-145.test.cjs
+      - name: Actual app rebuild
+        run: node scripts/build.mjs
+      - name: Complete inherited regression suite at final exact SHA
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  real-mobile-viewport-native-cloud-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned isolated browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4
+      - name: Real public app account-menu + P134/P137 fake-private-cloud full consent workflow
+        run: node scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+        env:
+          ARTIFACT_DIR: benchmark/native-owner-reviewed-cloud-ui-146
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: p146-real-app-owner-reviewed-cloud-mobile
+          path: benchmark/native-owner-reviewed-cloud-ui-146/
+          if-no-files-found: warn
