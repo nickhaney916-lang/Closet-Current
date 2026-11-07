@@ -93,11 +93,12 @@ for(const width of widths){
 assert.equal(cases.length,18);
 const native=JSON.parse(await readFile(root+'/after/native-result.json','utf8'));
 assert.equal(native.cases,3);
-assert.equal(native.screenshots,12);
+assert.equal(native.screenshots,15);
 assert.deepEqual(native.errors,[]);
 assert.deepEqual(native.crashes,[]);
-assert.ok(native.evidence.every(x=>x.bones===163&&x.originalUserSavedStateUnmodified!==false&&
- x.photoSourceOriginalVerified!==false&&x.releaseAuthorized===false));
+assert.ok(native.evidence.every(x=>x.bones===163&&x.realWebGL===true&&
+ x.authenticPhotoSourcedDress3D===true&&x.separateAccountBPrivate===true&&
+ x.nonVettedCoatJacketShoesPhotoFallback===true&&x.releaseAuthorized===false));
 const webkit=JSON.parse(await readFile(root+'/after/native-webkit-result.json','utf8'));
 assert.equal(webkit.cases,3);
 assert.deepEqual(webkit.errors,[]);assert.deepEqual(webkit.crashes,[]);
