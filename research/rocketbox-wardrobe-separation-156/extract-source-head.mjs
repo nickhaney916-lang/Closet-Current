@@ -113,21 +113,53 @@ function repackSelected(doc,bin,candidate){
  };
  for(const id of [...oldAccessors].sort((a,b)=>a-b)){
   const a=doc.accessors?.[id];
-  if(!a||!Number.isInteger(a.bufferView)||a.sparse)
-   fail('unsupported source head/hair accessor '+id);
-  const v=doc.bufferViews?.[a.bufferView],elem=(comp[a.componentType]||0)*
-   (dimensions[a.type]||0);
-  if(!v||!elem||!Number.isInteger(a.count)||a.count<1)
+  if(!a)fail('missing immutable head/hair accessor '+id);
+  const v=Number.isInteger(a.bufferView)?doc.bufferViews?.[a.bufferView]:null;
+  const elem=(comp[a.componentType]||0)*(dimensions[a.type]||0);
+  if(!elem||!Number.isInteger(a.count)||a.count<1||a.count>2000000)
    fail('corrupt skinned face accessor '+id);
-  const stride=v.byteStride||elem,start=(v.byteOffset||0)+(a.byteOffset||0);
   const copy=Buffer.alloc(a.count*elem);
-  for(let j=0;j<a.count;j++){
-   const k=start+j*stride;
-   if(k+elem>bin.length)fail('face accessor out of source binary bounds');
-   bin.copy(copy,j*elem,k,k+elem);
+  if(v){
+   const stride=v.byteStride||elem,start=(v.byteOffset||0)+(a.byteOffset||0);
+   if(stride<elem)fail('overlapped original face element stride');
+   for(let j=0;j<a.count;j++){
+    const k=start+j*stride;
+    if(k+elem>bin.length)fail('face accessor out of source binary bounds');
+    bin.copy(copy,j*elem,k,k+elem);
+   }
+  }else if(!a.sparse){
+   fail('unbacked non-sparse head accessor '+id);
+  }
+  // Exporters encode facial expressions as sparse deltas over an implicit
+  // zero base. Reconstruct those ORIGINAL exact delta values into tightly
+  // packed dense accessors. Never drop expression morph targets or copy body
+  // garment interleaved buffers into the new research head-only asset.
+  if(a.sparse){
+   const sp=a.sparse;
+   const type=sp.indices?.componentType;
+   const scalarSize=type===5121?1:type===5123?2:type===5125?4:0;
+   const iv=doc.bufferViews?.[sp.indices?.bufferView],
+    vv=doc.bufferViews?.[sp.values?.bufferView];
+   if(!scalarSize||!iv||!vv||!Number.isInteger(sp.count)||
+      sp.count<1||sp.count>a.count)
+    fail('corrupt sparse face expression data '+id);
+   const indexAt=(idx)=>{
+    const offset=(iv.byteOffset||0)+(sp.indices.byteOffset||0)+idx*scalarSize;
+    if(offset+scalarSize>bin.length)fail('out-of-bounds source sparse index');
+    return scalarSize===1?bin.readUInt8(offset):
+     scalarSize===2?bin.readUInt16LE(offset):bin.readUInt32LE(offset);
+   };
+   for(let k=0;k<sp.count;k++){
+    const index=indexAt(k),start=(vv.byteOffset||0)+
+     (sp.values.byteOffset||0)+k*elem;
+    if(index>=a.count||start+elem>bin.length)
+     fail('sparse face morph target delta out of source bounds');
+    bin.copy(copy,index*elem,start,start+elem);
+   }
   }
   const next=cloneJSON(a);
-  next.bufferView=append(copy,v.target);
+  delete next.sparse;
+  next.bufferView=append(copy,v?.target);
   next.byteOffset=0;
   mapAcc.set(id,accessors.length);accessors.push(next);
  }
