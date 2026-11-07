@@ -1,0 +1,129 @@
+name: P149 genuine dual-humanoid six-view original-photo WebGL visual acceptance NO DEPLOY
+on:
+  push:
+    branches: [research/dual-humanoid-visual-evidence-149-main-20261107-HOLD]
+  pull_request:
+    branches: [research/isolated-hosted-supabase-acceptance-148-main-20261107-HOLD]
+    paths:
+      - research/dual-humanoid-visual-evidence-149/**
+      - scripts/test-dual-humanoid-visual-evidence-149-browser.mjs
+      - scripts/audit-dual-humanoid-visual-evidence-149.mjs
+      - tests/dual-humanoid-visual-evidence-149.test.mjs
+      - .github/workflows/dual-humanoid-visual-evidence-149-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-node-and-privacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P148 parent, six allowlisted research paths and no production/parallel modifications
+        run: |
+          BASE=0dedf3f8bae08dde92ccab8e44cbfb2cf47fe456
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p149-scope
+          while IFS= read -r path; do
+            case "$path" in
+              research/dual-humanoid-visual-evidence-149/source-visual-gate.mjs|research/dual-humanoid-visual-evidence-149/REPORT.md|scripts/test-dual-humanoid-visual-evidence-149-browser.mjs|scripts/audit-dual-humanoid-visual-evidence-149.mjs|tests/dual-humanoid-visual-evidence-149.test.mjs|.github/workflows/dual-humanoid-visual-evidence-149-no-deploy.yml) ;;
+              *) echo "REFUSE unexpected production, staging, 3D donor, parallel work or cloud change: $path"; exit 1 ;;
+            esac
+          done </tmp/p149-scope
+          test "$(wc -l </tmp/p149-scope)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public supabase research/native-3d-05 research/three-d-69 research/native-owner-reviewed-cloud-ui-146 research/isolated-hosted-supabase-acceptance-148 research/signed-two-owner-transport-147 package.json package-lock.json
+      - name: Install exact temporary Node research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 sharp@0.34.3 playwright@1.56.1 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Validate code and protect independent human approval requirement
+        run: |
+          node --check research/dual-humanoid-visual-evidence-149/source-visual-gate.mjs
+          node --check scripts/test-dual-humanoid-visual-evidence-149-browser.mjs
+          node --check scripts/audit-dual-humanoid-visual-evidence-149.mjs
+          node --test tests/dual-humanoid-visual-evidence-149.test.mjs
+      - name: Unchanged native app build
+        run: node scripts/build.mjs
+      - name: Complete inherited Node regressions at exact head
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  genuine-licensed-webgl-two-humanoids-six-angle-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned original WebGL browser and image inspection research-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Assemble genuine EXACT unchanged PR541 163-bone donor, licensed shirt/denim and already verified drape improvements
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .p149-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p149-donor-541"
+          test "$(git -C .p149-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .p149-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .p149-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .p149-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .p149-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .p149-donor-541
+          node scripts/install-denim-bilateral-108.mjs .p149-donor-541
+          node scripts/install-denim-mobile-pose-controls-109.mjs .p149-donor-541
+          node scripts/install-reviewed-closet-3d-handoff-110.mjs .p149-donor-541
+          cd .p149-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Actual pinned 163-bone original licensed 3D front side rear and three-quarter full mobile matrix in Chromium and WebKit
+        run: |
+          P149_ENGINES=chromium,webkit node scripts/test-dual-humanoid-visual-evidence-149-browser.mjs
+      - name: Independently inspect 144 real WebGL PNG source hashes, screenshot nonblank and camera-angle differences
+        run: node scripts/audit-dual-humanoid-visual-evidence-149.mjs
+      - name: Verify source truth and preserve family HOLD; human photorealism cannot self-approve
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/dual-humanoid-visual-evidence-149/audit/acceptance.json','utf8'));
+          assert.equal(x.independentScreenshotSHAAndPixelsAudited,144);
+          assert.equal(x.distinctCameraViewPairs,24);
+          assert.equal(x.coverage.completeSourceGarmentViewportAngleCoverage,true);
+          assert.equal(x.coverage.expectedFrames,144);
+          assert.equal(x.coverage.independentHumanRealismReviewComplete,false);
+          assert.equal(x.coverage.dressShoesJacketLayeringVerified,false);
+          assert.equal(x.coverage.actualRealPersonalPhotoReconstructionAccepted,false);
+          assert.equal(x.coverage.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          console.log('P149 verified real source-photo WebGL dual gender all-angle images, not subjective appearance or physical hardware. FAMILY ALPHA HOLD.');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P149-dual-humanoid-real-original-3D-144-views-HOLD-NO-DEPLOY
+          path: |
+            research/dual-humanoid-visual-evidence-149/REPORT.md
+            benchmark/dual-humanoid-visual-evidence-149/manifest.json
+            benchmark/dual-humanoid-visual-evidence-149/audit/acceptance.json
+            benchmark/dual-humanoid-visual-evidence-149/*.png
+          if-no-files-found: warn
+          retention-days: 14
