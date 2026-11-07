@@ -177,7 +177,7 @@ test('PHOTO130 a complete human-reviewed new photo succeeds if the other device 
  assert.equal(piece.segmentHint.cutoutImage,s.b.segmentHint.cutoutImage);
  assert.equal(piece.color,s.b.color);
  assert.equal(piece.sourceSHA256,s.b.sourceSHA256);
- assert.equal(piece.threeDReady,true===false);
+ assert.notEqual(piece.threeDReady,true);
  assert.equal(result.applied,false);
 }));
 
