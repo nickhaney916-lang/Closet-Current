@@ -34,6 +34,8 @@ grant execute on function storage.foldername(text) to authenticated,anon;
 
 \i supabase/cloud-backup.sql
 
+-- Supabase Storage enables RLS on its objects table by default; local stub must match.
+alter table storage.objects enable row level security;
 revoke all on storage.objects from public,anon;
 grant select,insert,update,delete on storage.objects to authenticated;
 grant usage,select on sequence storage.objects_id_seq to authenticated;
