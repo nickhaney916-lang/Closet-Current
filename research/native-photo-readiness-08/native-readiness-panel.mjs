@@ -5,6 +5,8 @@
  * Opt-in research only. Family Alpha HOLD. Does not write IndexedDB/cloud.
  */
 import {assessWardrobePhoto01} from '../user-photo-3d-01/photo-readiness.mjs';
+import {captureReadinessLease151,assertReadinessLease151}
+ from '../native-photo-readiness-revocation-151/photo-readiness-lease.mjs';
 
 const goodId=x=>typeof x==='string'&&x.length>0&&x.length<=180&&!/[\u0000-\u001f]/.test(x);
 const slotNames=new Set(['top','bottom','layer','layer2','layer3','shoes','bag','accessory','finish']);
@@ -84,6 +86,7 @@ export async function mountNativeReadiness08({
  onStatus=()=>{}
 }={}){
  const params=new URLSearchParams(win?.location?.search||'');
+ const sourceLease151=params.get('readinessLease151')==='research';
  if(params.get('sourceReadiness08')!=='research'||
     params.get('nativeLossless04')!=='research'||params.get('native3D05')!=='research'||
     !win||!doc||!board||!db||!doc.getElementById('nativeLossless04Controls')||
@@ -112,17 +115,45 @@ export async function mountNativeReadiness08({
  root.append(button,status,grid);
  doc.getElementById('nativeLossless04Controls').after(root);
  doc.head.append(style);
- let closed=false,request=0,last=null;
+ let closed=false,request=0,last=null,liveLease151=null,pendingLease151=null;
+ const leaseContext151=()=>({win,doc,board,db,auth:originalAuth,ownerId});
  const notify=s=>{status.textContent=s;onStatus(s);};
  const alive=()=>!closed&&win.closetAuth===originalAuth&&
   originalAuth.user?.id===ownerId&&db.name==='closet-current-user-'+ownerId&&
   doc.getElementById('authGate')?.hidden===true&&
-  doc.getElementById('appShell')?.hidden===false&&board.status().active===true;
+  doc.getElementById('appShell')?.hidden===false&&board.status().active===true&&
+  (!sourceLease151||(doc.hidden!==true&&doc.visibilityState!=='hidden'&&
+    doc.visibilityState!=='prerender'));
  const clear=(reason='Select a saved outfit to check source readiness.')=>{
-  request++;last=null;grid.replaceChildren();
+  request++;last=null;liveLease151=null;pendingLease151=null;grid.replaceChildren();
   if(!closed)notify(reason);
  };
  const revoke=()=>{clear('Owner session changed · private photo status cleared');button.disabled=true;};
+ // PHOTO151: even if a source revision bypasses the P08 parent onChange,
+ // a later state read/mutation must never report or display a stale
+ // original private JPEG as currently owner/source approved.
+ const sourceCurrent151=()=>{
+  if(!sourceLease151||!(liveLease151||pendingLease151))return true;
+  try{assertReadinessLease151(liveLease151||pendingLease151,leaseContext151());return true;}
+  catch{clear('Saved outfit or source photo changed · recheck original JPEG before showing private readiness');return false;}
+ };
+ const onHidden151=()=>{
+  if(doc.hidden===true||doc.visibilityState==='hidden'||doc.visibilityState==='prerender')
+   clear('Phone browser backgrounded · previous private photo readiness cleared');
+ };
+ const onFreeze151=()=>clear('Phone browser frozen · private photo readiness cleared');
+ const onLocked151=()=>revoke();
+ const observer151=sourceLease151&&typeof win.MutationObserver==='function'?
+  new win.MutationObserver(()=>sourceCurrent151()):null;
+ if(sourceLease151){
+  doc.addEventListener('visibilitychange',onHidden151);
+  doc.addEventListener('freeze',onFreeze151);
+  win.addEventListener('closet:session-locked',onLocked151);
+  for(const id of ['savedBoards','boardSlots']){
+   const node=doc.getElementById(id);
+   if(node)observer151?.observe(node,{childList:true,subtree:true});
+  }
+ }
  win.addEventListener('closet:alpha-session-changed',revoke);
  win.addEventListener('pagehide',revoke);
  doc.getElementById('logout').addEventListener('click',revoke,true);
@@ -133,12 +164,15 @@ export async function mountNativeReadiness08({
   if(!Number.isInteger(selected)||selected<0||selected>=stored.saved.length)
    throw Error('READINESS08 select an existing saved outfit first');
   const saved=structuredClone(stored.saved[selected]);
+  const lease151=sourceLease151?captureReadinessLease151(leaseContext151()):null;
   const call=++request;button.disabled=true;grid.replaceChildren();
+  if(sourceLease151){last=null;liveLease151=null;pendingLease151=lease151;}
   notify('Checking SHA-256 of your original clothing photographs locally…');
   const assertOwner=()=>{
    if(call!==request||!alive()||board.status().dirty||
       board.status().selected!==selected)
     throw Error('READINESS08 owner/outfit changed during source verification');
+   if(sourceLease151)assertReadinessLease151(lease151,leaseContext151());
   };
   try{
    assertOwner();
@@ -160,12 +194,14 @@ export async function mountNativeReadiness08({
     copy.append(title,grade,why);article.append(copy);fragment.append(article);
    }
    assertOwner();grid.replaceChildren(fragment);last=result;
+   if(sourceLease151){liveLease151=lease151;pendingLease151=null;}
    notify(result.entries.length+' saved outfit slots checked · '+result.review+' need review · '+
     result.photoOnly+' photo-only · '+result.missing+' missing · '+
     result.ready+' human-approved 3D ready. Original JPEGs unchanged.');
    return result;
   }catch(error){
    if(call===request){grid.replaceChildren();last=null;
+    if(sourceLease151){liveLease151=null;pendingLease151=null;}
     notify('Could not verify this saved outfit. No clothing data changed. '+String(error.message||error));}
    throw error;
   }finally{if(!closed&&alive())button.disabled=false;}
@@ -177,12 +213,23 @@ export async function mountNativeReadiness08({
   win.removeEventListener('closet:alpha-session-changed',revoke);
   win.removeEventListener('pagehide',revoke);
   doc.getElementById('logout').removeEventListener('click',revoke,true);
+  if(sourceLease151){
+   doc.removeEventListener('visibilitychange',onHidden151);
+   doc.removeEventListener('freeze',onFreeze151);
+   win.removeEventListener('closet:session-locked',onLocked151);
+   observer151?.disconnect();
+  }
   root.remove();style.remove();
  }
  return Object.freeze({run,clear,dispose,
-  state:()=>Object.freeze({active:alive(),count:alive()?last?.entries.length||0:0,
+  state:()=>{
+   if(sourceLease151)sourceCurrent151();
+   return Object.freeze({active:alive(),count:alive()?last?.entries.length||0:0,
    ready:alive()?last?.ready||0:0,review:alive()?last?.review||0:0,
    photoOnly:alive()?last?.photoOnly||0:0,missing:alive()?last?.missing||0:0,
-   originalJPEGPixelsPreserved:true,productionAuthorized:false,familyAlpha:'HOLD'}),
+   originalJPEGPixelsPreserved:true,productionAuthorized:false,familyAlpha:'HOLD',
+   sourceContinuity151:sourceLease151,sourceLeaseCurrent151:sourceLease151?
+    Boolean(liveLease151&&alive()):null});
+  },
   researchOnly:true,releaseAuthorized:false});
 }
