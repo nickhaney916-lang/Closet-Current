@@ -5,7 +5,7 @@
  */
 import {suggestThreeNativeOwned03,validateOwnedSwap03,eligibleSlot03}
  from './three-owned-looks-native.mjs';
-import {verifyOriginalPhoto01} from '../user-photo-3d-01/photo-readiness.mjs';
+import {verifyOriginalPhoto01,strictJPEGBytes01} from '../user-photo-3d-01/photo-readiness.mjs';
 
 const STATUS=Object.freeze({featureGate:'styleOwned03=research',
  actualNativeStyleScreen:true,existingNativeCAS:true,releaseAuthorized:false,
@@ -34,6 +34,35 @@ export function reviewedVisiblePiece12(row){
   row.singleGarmentVerified===false&&row.multipleGarments!==true&&
   row.photoOnly===true&&row.threeDReady===false;
 }
+/**
+ * PHOTO124 — P119's TWO independently source-hashed image identities for a
+ * manually reviewed single cutout from a multi-garment original photograph.
+ * This predicate verifies metadata only. Admission MUST also digest the
+ * actual cutout JPEG bytes with SHA-256 under the same owner/wardrobe lease.
+ * It does NOT certify semantic segmentation or any 3D garment surface.
+ */
+export function reviewedSourceBoundCutout124(row){
+ const h=row?.segmentHint,sha=row?.sourceSHA256;
+ return /^[a-f0-9]{64}$/.test(sha||'')&&
+  /^[a-f0-9]{64}$/.test(row?.cutoutSHA256||'')&&
+  row.cutoutSHA256!==sha&&
+  row.sourcePhotoOriginal===true&&row.humanReviewedSource===true&&
+  row.ownerReviewed===true&&row.userAdjusted===true&&
+  row.sourceHashVerified===true&&row.singleGarmentVerified===false&&
+  row.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence'&&
+  row.confirmedCategory===true&&row.confirmedColor===true&&
+  row.colorSource==='user'&&typeof row.color==='string'&&row.color.trim()!==''&&
+  row.color!=='Unknown'&&row.category!=='Uncategorized'&&
+  typeof row.itemType==='string'&&row.itemType!==''&&row.itemType!=='Unknown'&&
+  typeof row.outfitSourceId==='string'&&row.outfitSourceId.length>0&&
+  row.multipleGarments!==true&&
+  h?.verified===true&&h.ownerReviewedInstance===true&&h.clipped!==true&&
+  h.originalSHA256===sha&&h.cutoutSHA256===row.cutoutSHA256&&
+  row.originalPhoto?.sha256===sha&&
+  typeof row.originalPhoto?.image==='string'&&
+  typeof h.cutoutImage==='string'&&h.cutoutImage!==row.originalPhoto.image&&
+  (row.image===row.originalPhoto.image||row.image===h.cutoutImage);
+}
 function confirmed(row){
  return row?.userAdjusted===true||
   row?.confirmedDetails?.category===row?.category&&
@@ -41,26 +70,27 @@ function confirmed(row){
   row?.localAnalyzed===true&&row?.indexingLevel==='specific-type'&&
    typeof row?.indexedAt==='string'&&row?.scanFailed!==true;
 }
-function allowed(row,{reviewedSingle=false}={}){
+function allowed(row,{reviewedSingle=false,reviewedCutout124=false}={}){
  const reviewedCrop=reviewedVisiblePiece12(row);
  return row?.requiresOwnershipConfirmation!==true&&row?.possibleDuplicate!==true&&
-  (row?.singleGarmentVerified!==false||reviewedSingle===true||reviewedCrop)&&row?.multipleGarments!==true&&
+  (row?.singleGarmentVerified!==false||reviewedSingle===true||reviewedCrop||reviewedCutout124)&&row?.multipleGarments!==true&&
   // Worker failures remain recorded. Human correction + independent original
   // SHA verification + one-item approval may permit only PHOTO-based styling.
   (row?.scanFailed!==true||(row?.userAdjusted===true&&
-    (row?.singleGarmentVerified!==false||reviewedSingle===true||reviewedCrop)))&&
+    (row?.singleGarmentVerified!==false||reviewedSingle===true||reviewedCrop||reviewedCutout124)))&&
   row?.saveFailed!==true&&row?.category!=='Uncategorized';
 }
 function needsExplicitSingleReview(row){
  // Never invite a false "whole original shows one piece" confirmation for
  // a known multi-garment crop with incomplete or corrupt region evidence.
- return row?.sourceExtraction!=='visible-only'&&row?.derivedAssetType!=='reviewed-jpeg-crop'&&
+ return !row?.segmentHint&&!row?.outfitSourceId&&
+  row?.sourceExtraction!=='visible-only'&&row?.derivedAssetType!=='reviewed-jpeg-crop'&&
   confirmed(row)&&row?.userAdjusted===true&&row?.singleGarmentVerified===false&&
   row?.multipleGarments!==true&&row?.requiresOwnershipConfirmation!==true&&
   row?.possibleDuplicate!==true&&row?.saveFailed!==true&&
   row?.category!=='Uncategorized';
 }
-export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map()}={}){
+export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map(),allowCutout124=false}={}){
  if(!(singleItemReviews instanceof Map))throw Error('STYLE03 owner-bound single-item reviews required');
  if(!board?.readOnlyWardrobe||!board?.sessionLease||!board?.status?.().active)
   throw Error('STYLE03 native owner-only Outfit Builder unavailable');
@@ -74,11 +104,12 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
    throw Error('STYLE03 private wardrobe ID or account mismatch');
   all.add(row.id);
   const reviewable=needsExplicitSingleReview(row);
+  const cutoutCandidate=allowCutout124&&reviewedSourceBoundCutout124(row);
   const authorization=singleItemReviews.get(row.id);
   const explicitlyApproved=reviewable&&authorization?.ownerId===first.ownerId&&
    authorization.generation===first.generation&&authorization.sha256===row.sourceSHA256&&
    authorization.category===row.category&&authorization.itemType===row.itemType;
-  if(!confirmed(row)||!allowed(row,{reviewedSingle:explicitlyApproved})){
+  if(!confirmed(row)||!allowed(row,{reviewedSingle:explicitlyApproved,reviewedCutout124:cutoutCandidate})){
    if(reviewable){
     try{
      const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId});
@@ -103,11 +134,29 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
    if(after.ownerId!==first.ownerId||after.generation!==first.generation)
     throw Error('STYLE03 owner changed during original photograph digest');
    const cropped=reviewedVisiblePiece12(row);
+   let genuinePhoto=cropped?row.image:row.originalPhoto.image;
+   let cutoutSHA256Verified=false;
+   if(cutoutCandidate){
+    const cutoutBytes=strictJPEGBytes01(row.segmentHint.cutoutImage);
+    if(!globalThis.crypto?.subtle?.digest)
+     throw Error('PHOTO124 cutout SHA-256 unavailable');
+    const digest=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',cutoutBytes));
+    const actual=[...digest].map(x=>x.toString(16).padStart(2,'0')).join('');
+    if(actual!==row.cutoutSHA256||actual!==row.segmentHint.cutoutSHA256)
+     throw Error('PHOTO124 owner cutout JPEG bytes do not match SHA-256');
+    const lease=board.sessionLease();
+    if(lease.ownerId!==first.ownerId||lease.generation!==first.generation)
+     throw Error('PHOTO124 owner changed while verifying visible cutout');
+    genuinePhoto=row.segmentHint.cutoutImage;
+    cutoutSHA256Verified=true;
+   }
    verified.push(Object.freeze({...row,sourceVerified:true,categoryConfirmed:true,
     sourceSHA256:proof.sha256,originalByteLength:proof.byteLength,
-    genuinePhoto:cropped?row.image:row.originalPhoto.image,
-    visibleCropPhotoOnly:cropped,sourcePhotoFallbackRequired:cropped||row.photoOnly===true,
-    threeDReady:cropped?false:row.threeDReady}));
+    genuinePhoto,
+    visibleCropPhotoOnly:cropped||cutoutSHA256Verified,
+    sourcePhotoFallbackRequired:cropped||cutoutSHA256Verified||row.photoOnly===true,
+    cutoutSHA256Verified,sourceCutoutSHA256:cutoutSHA256Verified?row.cutoutSHA256:null,
+    threeDReady:cropped||cutoutSHA256Verified?false:row.threeDReady}));
   }catch(error){
    if(!board.status().active)throw Error('STYLE03 authentication revoked during source verification');
    rejected.push({id:row.id,reason:String(error.message||error)});
@@ -126,7 +175,12 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
   if(!fresh||fresh.category!==item.category||fresh.itemType!==item.itemType||
      fresh.sourceSHA256!==item.sourceSHA256||
      fresh.originalPhoto?.sha256!==item.sourceSHA256||
-     fresh.originalPhoto?.image!==(item.originalPhoto?.image||item.genuinePhoto))
+     fresh.originalPhoto?.image!==(item.originalPhoto?.image||item.genuinePhoto)||
+     (item.cutoutSHA256Verified&&(
+      fresh.cutoutSHA256!==item.sourceCutoutSHA256||
+      fresh.segmentHint?.cutoutSHA256!==item.sourceCutoutSHA256||
+      fresh.segmentHint?.cutoutImage!==item.genuinePhoto||
+      reviewedSourceBoundCutout124(fresh)!==true)))
    throw Error('STYLE03 wardrobe photo or category changed during verification');
  }
  return Object.freeze({ownerId:first.ownerId,generation:first.generation,
@@ -138,6 +192,12 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
 export async function mountStyleOwnedLive03({
  win=window,doc=win.document,board,onStatus=()=>{}
 }={}){
+ const allowCutout124=new URLSearchParams(win.location.search).get('reviewedCutout124')==='research'&&
+  new URLSearchParams(win.location.search).get('reviewedCloset123')==='research'&&
+  new URLSearchParams(win.location.search).get('reviewedStyle122')==='research'&&
+  new URLSearchParams(win.location.search).get('reviewedSave120')==='research'&&
+  new URLSearchParams(win.location.search).get('captureProof01')==='after'&&
+  new URLSearchParams(win.location.search).get('index04')==='after';
  if(new URLSearchParams(win.location.search).get('styleOwned03')!=='research'||
     new URLSearchParams(win.location.search).get('nativeLossless04')!=='research'||
     new URLSearchParams(win.location.search).get('nativeIndex07')!=='research'||
@@ -298,7 +358,7 @@ export async function mountStyleOwnedLive03({
   if(busy)return false;
   busy=true;refreshButton.disabled=true;
   try{
-   const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
+   const previous=snapshot,loaded=await verifiedPrivateStyleRoster03(board,{singleItemReviews,allowCutout124});
    snapshot=loaded;revoked=false;
    if(proposedRosterSignature&&rosterSignature(loaded)!==proposedRosterSignature){
     proposalStale=true;
