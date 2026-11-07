@@ -143,7 +143,9 @@ function authResponse(route){
  return route.abort();
 }
 async function capture(page,width,engine,stage){
- await page.locator('#styleOwned03').scrollIntoViewIfNeeded();
+ const style=page.locator('#styleOwned03');
+ if(await style.isVisible())await style.scrollIntoViewIfNeeded();
+ else await page.locator('#reviewGrid').scrollIntoViewIfNeeded();
  const bytes=await page.screenshot({animations:'disabled',fullPage:false});
  const info=await sharp(bytes).metadata(),stats=await sharp(bytes).stats();
  assert.equal(info.width,width);assert.equal(info.height,900);
