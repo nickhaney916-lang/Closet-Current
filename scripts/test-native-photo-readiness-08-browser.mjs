@@ -11,6 +11,8 @@ import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
 import sharp from 'sharp';
 const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-photo-readiness-08';
+const lease151=process.env.P151==='1',dir151='benchmark/native-photo-readiness-151';
+const source151Screens=[];if(lease151)await mkdir(dir151,{recursive:true});
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -156,7 +158,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research&restoreAtomic01=research&nativeIndex07=research&index02=after&captureProof01=after&index04=after&sourceReadiness08=research',
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research&restoreAtomic01=research&nativeIndex07=research&index02=after&captureProof01=after&index04=after&sourceReadiness08=research'+(lease151?'&readinessLease151=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -304,6 +306,57 @@ try{
   const originalAttested=await readItems(page);
   assert.equal(originalAttested.length,6);
   await take(page,width,'07-A-verified-source-readiness');
+  if(lease151){
+   const capture151=async stage=>{
+    const png=await page.screenshot({fullPage:false,animations:'disabled'});
+    const meta=await sharp(png).metadata(),stat=await sharp(png).stats();
+    assert.equal(meta.width,width);assert.ok(png.length>4000&&
+     stat.channels.some(x=>x.stdev>7));
+    const file='chromium-'+width+'-'+stage+'.png';
+    await writeFile(dir151+'/'+file,png);
+    source151Screens.push({file,width,stage,sha256:digest(png)});
+   };
+   assert.equal(await page.evaluate(()=>window.nativePhotoReadiness08Bridge.state().sourceLeaseCurrent151),true);
+   // Genuine browser P151 policy: backgrounding must REMOVE private original
+   // JPEG cards immediately; returning to foreground never restores an
+   // expired evidence receipt without a NEW owner click and SHA verification.
+   await page.evaluate(()=>{
+    window.__photo151Hidden=true;
+    Object.defineProperty(document,'visibilityState',{configurable:true,
+     get(){return window.__photo151Hidden?'hidden':'visible';}});
+    document.dispatchEvent(new Event('visibilitychange'));
+   });
+   await page.waitForFunction(()=>window.nativePhotoReadiness08Bridge?.state()?.count===0);
+   assert.equal(await page.locator('#nativeReadiness08Results img').count(),0);
+   assert.equal(await page.evaluate(()=>window.nativePhotoReadiness08Bridge.state().sourceLeaseCurrent151),false);
+   await capture151('01-background-private-source-cleared');
+   await page.evaluate(()=>{
+    window.__photo151Hidden=false;
+    document.dispatchEvent(new Event('visibilitychange'));
+   });
+   assert.equal(await page.evaluate(()=>window.nativePhotoReadiness08Bridge.state().count),0,
+    'foreground cannot silently re-display a stale private source image');
+   await page.locator('#nativeReadiness08Check').click();
+   await page.waitForFunction(()=>window.nativePhotoReadiness08Bridge?.state()?.count===4);
+   assert.equal(await page.locator('#nativeReadiness08Results img').count(),4);
+   assert.equal(await page.evaluate(()=>window.nativePhotoReadiness08Bridge.state().sourceLeaseCurrent151),true);
+   await capture151('02-explicit-owner-recheck-restores-images');
+   // No camera/photo bytes or source metadata change, but an owner-private
+   // wardrobe refresh means an earlier WebCrypto receipt is no longer current.
+   await page.evaluate(()=>window.nativeLossless04Bridge.refreshWardrobe());
+   await page.waitForFunction(()=>window.nativePhotoReadiness08Bridge?.state()?.count===0);
+   assert.equal(await page.locator('#nativeReadiness08Results img').count(),0);
+   await page.locator('#nativeReadiness08Check').click();
+   await page.waitForFunction(()=>window.nativePhotoReadiness08Bridge?.state()?.count===4);
+   // A frozen browser tab cannot retain stale source-photo cards.
+   await page.evaluate(()=>document.dispatchEvent(new Event('freeze')));
+   await page.waitForFunction(()=>window.nativePhotoReadiness08Bridge?.state()?.count===0);
+   assert.equal(await page.locator('#nativeReadiness08Results img').count(),0);
+   await page.locator('#nativeReadiness08Check').click();
+   await page.waitForFunction(()=>window.nativePhotoReadiness08Bridge?.state()?.count===4);
+   assert.deepEqual(await readBoard(page),expectedBoard,
+    'P151 backdrop/revision/freeze must never edit saved owner outfits');
+  }
   // Real end-user button click: do NOT hold one long-running Playwright
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
@@ -365,7 +418,7 @@ try{
   await seed(page,'native05-B');
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active&&
-   !!window.native3D05Bridge,{timeout:30000});
+   !!window.native3D05Bridge&&window.restoreAtomic01Bridge?.status()?.active===true,{timeout:30000});
   await page.evaluate(()=>switchView('builder'));
   const bStored=await readBoard(page),bItems=await readItems(page);
   await assert.rejects(page.evaluate(doc=>
@@ -416,6 +469,25 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
+ if(lease151){
+  assert.equal(source151Screens.length,6);
+  for(const entry of source151Screens)
+   assert.equal(digest(await readFile(dir151+'/'+entry.file)),entry.sha256);
+  await writeFile(dir151+'/acceptance.json',JSON.stringify({
+   priority:'NATIVE-PHOTO-READINESS-REVOCATION-151',
+   screenshots:source151Screens,
+   cases:3,widths:[320,390,430],
+   backgroundPrivatePhotoCleared:true,
+   explicitOwnerRecheckRequired:true,
+   ownerWardrobeRefreshRevokes:true,
+   browserFreezeRevokes:true,
+   nativeAuthSyntheticHTTPFixtureOnly:true,
+   originalJPEGSHAReverified:true,
+   noPhotoOrOutfitWritesFromLease:true,
+   physicalPhoneTested:false,productionAuthorized:false,
+   familyAlpha:'HOLD'
+  },null,2));
+ }
  const result={priority:'NATIVE-PHOTO-READINESS-08',cases:3,screenshots:24,
   browser:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
