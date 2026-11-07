@@ -26,7 +26,7 @@ The baseline is the actual `public/app.js` fetched from exact P134 parent SHA `5
 
 Test photos are locally generated geometric-garment JPEGs: original 63,434 bytes; independently cropped cutout 54,473 bytes. Related garments share a logical source ID in pairs. Browser seed rows model the current repeated source/cutout data URL shape. These are not user photos and are not used to claim recognition accuracy.
 
-Local environment: Linux x64, Node v24.22.1, Playwright 1.56.1, Chromium 141 headless. Actual mobile-sized browser contexts use 320, 390, and 430 CSS px. Local Chromium verified all 33 cases and captured three screenshots. The locally installed WebKit binary could not launch because the host lacks GTK/WebKit runtime libraries; the dedicated pinned Playwright CI container is configured to run WebKit at all three widths. These runs are browser emulation, not physical Android/iPhone certification.
+Local environment: Linux x64, Node v24.22.1, Playwright 1.56.1, Chromium 141 headless. Actual mobile-sized browser contexts use 320, 390, and 430 CSS px. Local Chromium verified all 33 cases and captured three screenshots. The locally installed WebKit binary could not launch because the host lacks GTK/WebKit runtime libraries. The dedicated pinned Playwright CI container completed the exact-head run successfully on source HEAD `565c0146ff7a7e998a0c82d73cab054429b09982`: Chromium and WebKit viewport cases at 320/390/430 passed, with six actual browser screenshots in artifact `13584246306`. These are browser-emulation results, not physical Android/iPhone certification.
 
 ## Results — browser rendering and reload
 
@@ -75,7 +75,7 @@ This assignment does not claim an image-memory solution. A follow-up should spli
 | No silent saved-outfit deletion | PASS | Abort and reload recovery checks |
 | Real quota exhaustion recovery | REVIEW | Exception reporting implemented; real quota exhaustion not induced |
 | Measured performance improvement | PASS, scoped | 51–85% p50 improvement in 250–1,000-item card opening; not DB I/O |
-| 320/390/430 mobile-sized acceptance | REVIEW | Chromium local screenshots pass; WebKit awaits CI; no physical devices |
+| 320/390/430 mobile-sized browser acceptance | PASS | Exact-head Chromium/WebKit CI passed at all widths with six screenshots; no physical devices |
 | Production and staging untouched | PASS | Exact-path CI allowlist; research branch only |
 
 ## Automated verification and deliverables
@@ -83,7 +83,7 @@ This assignment does not claim an image-memory solution. A follow-up should spli
 - Focused P136 tests: 3/3 pass.
 - Full inherited Node suite on the final P136 source: 1,198/1,198 pass.
 - `node scripts/build.mjs`: pass.
-- Chromium local browser benchmark: 33/33 cases, 3/3 genuine 500-item screenshots, zero page errors. The CI workflow runs both Chromium and WebKit at 320/390/430, verifies six screenshots, all five sizes and three timing repeats, then uploads artifacts.
+- Exact-head no-deploy CI run [#42397164146](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42397164146): **SUCCESS, 2/2 jobs**. The Node job passed **1,198/1,198 tests**. The browser job passed 36/36 comparison and viewport cases across Chromium and WebKit, verified all five wardrobe sizes and six screenshots, and uploaded [benchmark/screenshots artifact #13584246306](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42397164146/artifacts/13584246306). Local Chromium also passed its 33/33 cases.
 - Benchmark data: `benchmark/storage-resilience-136/results.json`.
 - Screenshots: `benchmark/storage-resilience-136/chromium-{320,390,430}-500-browse.png`.
 - No production deployment, existing staging modification, live cloud request, or Family Alpha release occurred.
