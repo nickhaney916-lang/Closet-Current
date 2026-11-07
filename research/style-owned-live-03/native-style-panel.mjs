@@ -90,7 +90,7 @@ function needsExplicitSingleReview(row){
   row?.possibleDuplicate!==true&&row?.saveFailed!==true&&
   row?.category!=='Uncategorized';
 }
-export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map(),allowCutout124=false}={}){
+export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new Map(),allowCutout124=false,subtle=globalThis.crypto?.subtle}={}){
  if(!(singleItemReviews instanceof Map))throw Error('STYLE03 owner-bound single-item reviews required');
  if(!board?.readOnlyWardrobe||!board?.sessionLease||!board?.status?.().active)
   throw Error('STYLE03 native owner-only Outfit Builder unavailable');
@@ -112,7 +112,7 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
   if(!confirmed(row)||!allowed(row,{reviewedSingle:explicitlyApproved,reviewedCutout124:cutoutCandidate})){
    if(reviewable){
     try{
-     const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId});
+     const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId,subtle});
      const lease=board.sessionLease();
      if(lease.ownerId!==first.ownerId||lease.generation!==first.generation)
       throw Error('STYLE03 original photo owner changed during review');
@@ -129,7 +129,7 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
    continue;
   }
   try{
-   const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId});
+   const proof=await verifyOriginalPhoto01(row,{ownerId:first.ownerId,subtle});
    const after=board.sessionLease();
    if(after.ownerId!==first.ownerId||after.generation!==first.generation)
     throw Error('STYLE03 owner changed during original photograph digest');
@@ -138,9 +138,9 @@ export async function verifiedPrivateStyleRoster03(board,{singleItemReviews=new 
    let cutoutSHA256Verified=false;
    if(cutoutCandidate){
     const cutoutBytes=strictJPEGBytes01(row.segmentHint.cutoutImage);
-    if(!globalThis.crypto?.subtle?.digest)
+    if(!subtle?.digest)
      throw Error('PHOTO124 cutout SHA-256 unavailable');
-    const digest=new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256',cutoutBytes));
+    const digest=new Uint8Array(await subtle.digest('SHA-256',cutoutBytes));
     const actual=[...digest].map(x=>x.toString(16).padStart(2,'0')).join('');
     if(actual!==row.cutoutSHA256||actual!==row.segmentHint.cutoutSHA256)
      throw Error('PHOTO124 owner cutout JPEG bytes do not match SHA-256');
