@@ -1,6 +1,6 @@
 # Priority 144 — lazy wardrobe hydration (research only)
 
-**Status:** research implementation complete; exact-head hosted Chromium/WebKit acceptance is pending. Family Alpha remains **HOLD**. No production or existing staging changes were made.
+**Status:** research implementation complete. The verified implementation head `759b694de9fc152f81a31c712c714f2f934e0cb0` passed exact-head hosted Chromium/WebKit and full regression acceptance (run #42410507063). Family Alpha remains **HOLD**. No production or existing staging changes were made.
 
 ## Branch and dependency
 
@@ -38,7 +38,7 @@ The browser suite also exercised 320, 390, and 430 CSS-pixel layouts; 48-card in
 - Full Node inherited suite: 1,217/1,217 passed on the final local rerun (the prior concurrent run produced one transient timeout in an inherited SHA test; that test passed 9/9 in isolation and the full rerun).
 - Build: `node scripts/build.mjs` succeeded.
 - Browser benchmark: 33 Chromium cases, 3 screenshots, 0 page errors. Screenshots and raw measurements are in `benchmark/mobile-wardrobe-lazy-hydration-144/`.
-- Local WebKit launch is unavailable in this container because Playwright's WebKit system libraries are absent. The dedicated GitHub Actions workflow installs Chromium and WebKit with system dependencies and repeats the browser suite on the final PR head. Do not count WebKit as accepted until that exact-head workflow passes.
+- Local WebKit launch is unavailable in this container because Playwright's WebKit system libraries are absent. Exact-head GitHub Actions run #42410507063 installed both engines and passed 36 cases across Chromium and WebKit; this is browser emulation, not physical-device acceptance. The initial `ubuntu-latest` attempt resolved to unsupported Ubuntu 26.04 and failed during Playwright installation; the no-deploy workflow now pins Ubuntu 24.04.
 - No real smartphone, live signed Supabase account, or customer wardrobe was used. No AI model recognition was run. The fixture workflow does not establish recognition accuracy, photorealistic 3D quality, hosted cloud security, or physical-device readiness.
 - Cloud backup is source-streamed. Protected restore still decodes the full replacement document to prepare its atomic transaction; peak restore memory for large remote wardrobes remains an unmeasured limitation.
 
@@ -54,15 +54,15 @@ The browser suite also exercised 320, 390, and 430 CSS-pixel layouts; 48-card in
 | Saved outfit reopen | PASS (synthetic) | Persisted outfit ID and garment references reloaded after browser restart. |
 | Repeated navigation/object URL cleanup | PASS (Chromium emulation) | Six cycles, bounded retained heap, one visible URL. |
 | Chromium at 320/390/430 | PASS (emulated) | Screenshots in benchmark directory. |
-| WebKit at 320/390/430 | REVIEW | Hosted exact-head workflow pending; local WebKit unavailable. |
+| WebKit at 320/390/430 | PASS (emulated) | Exact-head GitHub Actions run #42410507063; three viewport screenshots. |
 | Interrupted write / owner isolation | PASS (synthetic IndexedDB) | Transaction abort and two-owner fixture tests. |
 | Cloud recovery compatibility | REVIEW | P143 protected research baseline retained; no signed live cloud run. Restore peak-memory limit above. |
 | Live camera-to-closet recognition | REVIEW | Not exercised here; synthetic fixtures only and no model accuracy claim. |
-| Full inherited Node suite | REVIEW | First run 1,216/1,217; isolated failure passes alone; rerun pending. |
+| Full inherited Node suite | PASS | 1,217/1,217 on local rerun and exact-head GitHub Actions run #42410507063. |
 | Family Alpha | HOLD | No physical-device, genuine capture/recognition, signed-account, or family user acceptance. |
 
 ## Source files
 
 Implementation: `public/app.js`, `public/wardrobe-index.js`, `public/index.html`, `public/cloud-backup.js`, `public/closet-browser.js`, `public/closet-stylist.js`, `public/navigation.js`, `public/outfit-board.js`, `public/trends.js`; P119/P138/P140/P141/P142 recovery adapters were updated to keep the new metadata index coherent during reviewed saves and atomic restore.
 
-Tests, workflow, browser runner, screenshots, and raw JSON benchmark results are part of this branch. The exact final commit SHA and hosted workflow run must be recorded after the draft PR is created.
+Tests, workflow, browser runner, screenshots, and raw JSON benchmark results are part of this branch. Exact verified implementation head: `759b694de9fc152f81a31c712c714f2f934e0cb0`. Exact-head Actions run #42410507063 passed 2/2 validation phases (browser/regression job and artifact upload). Artifact: https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42410507063/artifacts/13589427447. The workflow reruns on any later branch head; final head and newest run are recorded in the draft PR description.
