@@ -69,3 +69,20 @@ test('P156 original skinned-source parsing explicitly records material mesh and 
  assert.match(s,/photoBasedGarmentFitAfterRemovalProven:false/);
  assert.doesNotMatch(s,/https?:\/\//);
 });
+
+test('P156 isolated head-only GLB extraction requires the exact original licensed SHA before touching any body or hair primitive',async()=>{
+ const {extractSourceHeadOnly156}=await import('../research/rocketbox-wardrobe-separation-156/extract-source-head.mjs');
+ assert.throws(()=>extractSourceHeadOnly156(Buffer.alloc(1024),CANDIDATES155[0]),/size mismatch|GLB/);
+ assert.throws(()=>extractSourceHeadOnly156(Buffer.alloc(CANDIDATES155[1].size),CANDIDATES155[1]),/hash|SHA|mismatch/i);
+ assert.throws(()=>extractSourceHeadOnly156(Buffer.alloc(1024),{...CANDIDATES155[0]}),/pinned/);
+});
+test('P156 actual binary repacker removes the body+garment material AND physically excludes jacket/pants source textures, preserving face/hair original skeleton',()=>{
+ const s=readFileSync('research/rocketbox-wardrobe-separation-156/extract-source-head.mjs','utf8');
+ assert.match(s,/sourceNames\.join/);
+ assert.match(s,/\[prefix\+'body',prefix\+'head',prefix\+'opacity'\]/);
+ assert.match(s,/kept=\[cloneJSON\(pri\[1\]\),cloneJSON\(pri\[2\]\)\]/);
+ assert.match(s,/oldTextureIDs\.includes\(originalBodyTexture\)/);
+ assert.match(s,/skin\.inverseBindMatrices|skin of doc\.skins/);
+ assert.match(s,/sourceBodyTrianglesAndAccessorsDiscarded:true/);
+ assert.match(s,/originalUserWardrobeReplaced:false/);
+});
