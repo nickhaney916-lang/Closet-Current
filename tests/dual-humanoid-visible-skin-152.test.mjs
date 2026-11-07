@@ -2,8 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {VISIBLE_SKIN_152,repairPinnedP118Shader152,assertP152ShaderScope}
  from '../research/dual-humanoid-visible-skin-152/pinned-p118-shader-repair.mjs';
-const originalRough=String.raw`    roughnessFactor=mix(roughnessFactor,.70+skinCloud118*.035,uNaturalSkin118*(1.0-baseCoverage));
-    ${rough}`;
+const originalRough="    roughnessFactor=mix(roughnessFactor,.70+skinCloud118*.035,uNaturalSkin118*(1.0-baseCoverage));\n    ${rough}";
 const fixture=()=>`// pin
 const rough='#include <roughnessmap_fragment>';
 if(!shader.fragmentShader.includes(rough))throw Error('REAL118 expected standard PBR roughness stage');
@@ -26,7 +25,7 @@ test('P152 precise, reversible single shader-scope order repair preserves entire
  assert.equal(result.content.length,input.length);
  assert.notEqual(result.content,input);
  const fragment=result.content.slice(result.content.indexOf('shader.fragmentShader=shader.fragmentShader.replace(rough,'));
- assert.equal(assertP152ShaderScope(fragment.replace('${rough}','<escape />')),true);
+ assert.equal(assertP152ShaderScope(fragment.replace('${rough}','#include <roughnessmap_fragment>')),true);
  // The fixed source must keep the Three.js roughnessmap include BEFORE
  // the custom skin roughness factor. No model, material or JPEG code changes.
  const left=fragment.indexOf('${rough}');
