@@ -30,6 +30,7 @@ async function audit(page,label){
 async function open(browser,width,height){
  const context=await browser.newContext({viewport:{width,height},isMobile:true,hasTouch:true,deviceScaleFactor:2,serviceWorkers:'block'});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ if(width===320)await page.addInitScript(()=>{Object.defineProperty(navigator,'mediaDevices',{configurable:true,value:{getUserMedia:async()=>{throw new DOMException('Camera permission denied by the mobile UX fixture.','NotAllowedError');}}});});
  await page.route('**/auth.js',route=>route.fulfill({contentType:'text/javascript',body:"window.closetAuth={user:{id:'family-alpha-mobile-ux-fixture'},ready:Promise.resolve(),assertCurrent(){return true}};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
  await page.route('**/raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json*',route=>route.fulfill({path:resolve('public/trend-data.json'),contentType:'application/json'}));
  await page.goto(base);await page.evaluate(()=>closetReady);await page.evaluate(()=>outfitBoardReady);
@@ -58,7 +59,6 @@ try{
     assert.match(await page.locator('#closetCategories').innerText(),/Shirts|Dresses|Shoes|Your/);
     await page.locator('.main-nav').getByRole('button',{name:'Add Clothes',exact:true}).click();await page.getByRole('heading',{name:'Add clothes'}).waitFor();await screenshot(page,tag+'-camera');
     if(width===320){
-     await context.grantPermissions([], {origin:base});
      await page.getByRole('button',{name:'Take photos',exact:true}).click();
      await page.waitForFunction(()=>/permission|could not|camera|device not found/i.test(document.querySelector('#message').textContent),null,{timeout:10000});
      await audit(page,tag+'-camera-denied');await screenshot(page,tag+'-camera-denied');
