@@ -1,0 +1,130 @@
+name: P155 licensed realistic male female GLB independent WebGL feasibility NO DEPLOY
+on:
+  push:
+    branches:
+      - research/dual-human-foundation-candidate-155-main-20261107-HOLD
+  pull_request:
+    branches:
+      - research/dual-humanoid-facial-contours-154-main-20261107-HOLD
+    paths:
+      - research/dual-human-foundation-candidate-155/**
+      - scripts/test-dual-human-foundation-155-browser.mjs
+      - scripts/audit-dual-human-foundation-155.mjs
+      - tests/dual-human-foundation-candidate-155.test.mjs
+      - .github/workflows/dual-human-foundation-155-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-original-outfit-stays-safe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require exact verified original main P154 ancestry and 8 strictly research-only files
+        run: |
+          BASE=c7fe572a5e6c4a18b1cef9ffbd550aee473f2f4c
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p155-files
+          while IFS= read -r p; do
+            case "$p" in
+              research/dual-human-foundation-candidate-155/foundation-manifest.mjs|research/dual-human-foundation-candidate-155/inspect-gltf.mjs|research/dual-human-foundation-candidate-155/licensed-visual-lab.html|research/dual-human-foundation-candidate-155/REPORT.md|scripts/test-dual-human-foundation-155-browser.mjs|scripts/audit-dual-human-foundation-155.mjs|tests/dual-human-foundation-candidate-155.test.mjs|.github/workflows/dual-human-foundation-155-no-deploy.yml) ;;
+              *) echo "P155 REFUSE any shipping asset, production, staging, other project or prior research source edit: $p"; exit 1 ;;
+            esac
+          done </tmp/p155-files
+          test "$(wc -l </tmp/p155-files)" -eq 8
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/dual-humanoid-facial-contours-154 research/dual-humanoid-head-hair-153 research/dual-humanoid-visible-skin-152
+      - name: Install immutable test-only dependencies, no shipping lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Source and GLB binary parser syntax; negative privacy, owner photo and license fallback tests
+        run: |
+          node --check research/dual-human-foundation-candidate-155/foundation-manifest.mjs
+          node --check research/dual-human-foundation-candidate-155/inspect-gltf.mjs
+          node --check scripts/test-dual-human-foundation-155-browser.mjs
+          node --check scripts/audit-dual-human-foundation-155.mjs
+          node --test tests/dual-human-foundation-candidate-155.test.mjs
+      - name: Original shipping app build and entire inherited Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  real-pinned-mit-source-male-female-mobile-threejs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Browser and original glTF inspector; pinned only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0
+      - name: Download two exact source GLBs from immutable GitHub commit ONLY to CI's disposable research benchmark
+        run: |
+          set -eu
+          SRC=https://raw.githubusercontent.com/927tanmay/react-ai-voice-avatar/fc1398c2f8ba600c3676a5277684ed4f3e2731d7/assets/avatars
+          mkdir -p benchmark/dual-human-foundation-candidate-155/assets
+          for file in ananya.glb aarav.glb; do
+            curl --fail --show-error --silent --location --retry 3 --connect-timeout 20 --max-time 180 "$SRC/$file" -o "benchmark/dual-human-foundation-candidate-155/assets/$file"
+          done
+          curl --fail --show-error --silent --location --retry 3 --max-time 45 "$SRC/LICENSE.md" -o benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          curl --fail --show-error --silent --location --retry 3 --max-time 45 https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/LICENSE.md -o benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          grep -q 'Male_Adult_04' benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          grep -q 'Female_Adult_07' benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          grep -q 'MIT License' benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          grep -q 'Copyright (c) 2020 Microsoft' benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          test "$(wc -c <benchmark/dual-human-foundation-candidate-155/assets/ananya.glb)" -eq 4480100
+          test "$(wc -c <benchmark/dual-human-foundation-candidate-155/assets/aarav.glb)" -eq 4673948
+      - name: Independently inspect real source GLB binary geometry, skeleton, textures, no external asset URLs and git blob SHA1
+        run: node research/dual-human-foundation-candidate-155/inspect-gltf.mjs
+      - name: Genuine locally-served WebGL licensed source models male and female in Chromium phone 320/390/430 front/side/back/face
+        run: P155_ENGINE=chromium node scripts/test-dual-human-foundation-155-browser.mjs
+      - name: Actual WebKit mobile 320/390/430 genuine original 3D GLB with no vendor-origin browser requests
+        run: P155_ENGINE=webkit node scripts/test-dual-human-foundation-155-browser.mjs
+      - name: Independently re-hash all 48 genuine 3D screenshots and reject misrepresentation of baked vendor clothes as owner wardrobe
+        run: node scripts/audit-dual-human-foundation-155.mjs
+      - name: Explicitly hold release until genuine photographed garment fit plus human visual approval
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const p=JSON.parse(readFileSync('benchmark/dual-human-foundation-candidate-155/audit/final-verdict.json'));
+          assert.equal(p.originalGLBBinarySourceCount,2);
+          assert.equal(p.actualGenuineMobileWebGLScreenshots,48);
+          assert.equal(p.originalWardrobePrivatePhotoViewerPreserved,true);
+          assert.equal(p.mayReplaceCurrentLiveOwnerGarmentModel,false);
+          assert.equal(p.photoGarmentRetargetingCompleted,false);
+          assert.equal(p.independentHuman10outof10ScoreApproved,false);
+          assert.equal(p.releaseAuthorized,false);
+          assert.equal(p.familyAlpha,'HOLD');
+          console.log('P155 independent model candidates verified, but NOT live owned wardrobe compatible or accepted 10/10');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P155-2-real-MIT-Rocketbox-3D-human-candidates-48-mobile-WebGL-evidence-HOLD
+          path: |
+            benchmark/dual-human-foundation-candidate-155/audit/*.json
+            benchmark/dual-human-foundation-candidate-155/screens/chromium/*.png
+            benchmark/dual-human-foundation-candidate-155/screens/webkit/*.png
+            benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+            benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+            research/dual-human-foundation-candidate-155/REPORT.md
+          if-no-files-found: warn
+          retention-days: 14
