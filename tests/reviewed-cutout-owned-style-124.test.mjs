@@ -194,7 +194,7 @@ test('PHOTO124 owner/sign-out rotation while secondary SHA digest pending fails 
  await start;
  e.revoke();
  release();
- await assert.rejects(pending,/STYLE03 wardrobe\/owner changed|STYLE03 owner changed|STYLE03 signed-in owner changed/);
+ await assert.rejects(pending,/STYLE03 authentication revoked during source verification|STYLE03 wardrobe\/owner changed|STYLE03 owner changed|STYLE03 signed-in owner changed/);
 }));
 test('PHOTO124 one owner cannot read a second owner cutout even with spoofed review metadata',()=>setup(async e=>{
  const foreign={...e.row,id:'foreign',ownerId:'a-different-owner'};
