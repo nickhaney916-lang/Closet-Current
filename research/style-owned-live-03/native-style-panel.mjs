@@ -485,7 +485,7 @@ export async function mountStyleOwnedLive03({
   busy=true;generate.disabled=true;
   try{
    // Reverify source and owner after any newly committed photo/index change.
-   snapshot=await verifiedPrivateStyleRoster03(board,{singleItemReviews});
+   snapshot=await verifiedPrivateStyleRoster03(board,{singleItemReviews,allowCutout124});
    live();
    if(!byId(pinId))fail('SELECTED_PHOTO_WAS_REMOVED_OR_UNVERIFIED');
    proposalStale=false;proposedRosterSignature=rosterSignature(snapshot);
