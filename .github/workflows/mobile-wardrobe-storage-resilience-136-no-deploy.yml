@@ -41,7 +41,7 @@ jobs:
           git diff --name-only "$BASE" HEAD > /tmp/p136-paths
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|tests/storage-resilience-136.test.mjs|scripts/test-storage-resilience-136-browser.mjs|benchmark/storage-resilience-136/results.json|research/mobile-wardrobe-storage-resilience-136/REPORT.md|.github/workflows/mobile-wardrobe-storage-resilience-136-no-deploy.yml) ;;
+              public/app.js|tests/storage-resilience-136.test.mjs|scripts/test-storage-resilience-136-browser.mjs|benchmark/storage-resilience-136/results.json|benchmark/storage-resilience-136/chromium-320-500-browse.png|benchmark/storage-resilience-136/chromium-390-500-browse.png|benchmark/storage-resilience-136/chromium-430-500-browse.png|research/mobile-wardrobe-storage-resilience-136/REPORT.md|.github/workflows/mobile-wardrobe-storage-resilience-136-no-deploy.yml) ;;
               *) echo "Refusing protected source, production, staging, or parallel path: $path"; exit 1 ;;
             esac
           done < /tmp/p136-paths
