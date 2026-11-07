@@ -1,0 +1,249 @@
+name: P139 cross-stream app integration research NO DEPLOY
+on:
+  push:
+    branches: [research/cross-stream-app-integration-139-work55-20261107-HOLD]
+  pull_request:
+    branches: [research/cloud-restore-browser-138-main-20261107-HOLD]
+    paths:
+      - 'public/app.js'
+      - 'public/app-theme.css'
+      - 'public/capture-navigation.js'
+      - 'public/index.html'
+      - 'tests/capture-navigation.test.cjs'
+      - 'tests/storage-resilience-136.test.mjs'
+      - 'scripts/test-family-alpha-mobile-ux-132.mjs'
+      - 'scripts/test-storage-resilience-136-browser.mjs'
+      - 'research/family-alpha-mobile-ux-132/**'
+      - 'research/mobile-wardrobe-storage-resilience-136/**'
+      - 'research/cross-stream-app-integration-139/**'
+      - '.github/workflows/cross-stream-app-integration-139-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-and-full-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require exact P138 parent and isolated integration file scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5a589dfe2f6fb744cade4150c3058f2d6a19ea3b
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p139-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/app-theme.css|public/capture-navigation.js|public/index.html|tests/capture-navigation.test.cjs|tests/storage-resilience-136.test.mjs|scripts/test-family-alpha-mobile-ux-132.mjs|scripts/test-storage-resilience-136-browser.mjs|benchmark/storage-resilience-136/results.json|benchmark/storage-resilience-136/chromium-320-500-browse.png|benchmark/storage-resilience-136/chromium-390-500-browse.png|benchmark/storage-resilience-136/chromium-430-500-browse.png|research/family-alpha-mobile-ux-132/REPORT.md|research/mobile-wardrobe-storage-resilience-136/REPORT.md|.github/workflows/family-alpha-mobile-ux-132-no-deploy.yml|.github/workflows/mobile-wardrobe-storage-resilience-136-no-deploy.yml|research/cross-stream-app-integration-139/REPORT.md|.github/workflows/cross-stream-app-integration-139-no-deploy.yml) ;;
+              *) echo "REFUSE changes outside P132/P136 and P139 research scope: $path"; exit 1 ;;
+            esac
+          done </tmp/p139-paths
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/cloud-backup-bridge.js public/outfit-board.js public/closet-stylist-engine.js public/recognition-engine.mjs public/garment-mask-engine.js supabase
+          git diff --exit-code "$BASE" HEAD -- research/cloud-restore-browser-138 research/cloud-restore-owner-safety-137 research/local-remote-consent-fence-134 research/reviewed-photo-to-three-owned-looks-122 research/reviewed-closet-3d-handoff-110
+      - name: Install pinned research-only dependencies without lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build and run the complete inherited Node regression suite
+        run: |
+          node --check public/app.js
+          node --check scripts/test-family-alpha-mobile-ux-132.mjs
+          node --check scripts/test-storage-resilience-136-browser.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Verify exact combined research suites, original photo outfits, cloud safeguards and viewer fallback
+        run: |
+          node --test tests/capture-navigation.test.cjs tests/storage-resilience-136.test.mjs tests/reviewed-photo-to-three-owned-looks-122.test.mjs tests/reopened-reviewed-closet-style-123.test.mjs tests/cloud-restore-owner-safety-137.test.mjs tests/native-3d-05.test.mjs tests/reviewed-closet-3d-handoff-110.test.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=readFileSync('research/cross-stream-app-integration-139/REPORT.md','utf8');
+          for(const term of ['Family Alpha: HOLD','research-only','Recognition result','synthetic','not a live signed-account test','not physical Android or iPhone'])assert.ok(r.toLowerCase().includes(term.toLowerCase()),term);
+          NODE
+      - name: Archive integration report and machine-readable source boundary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P139-integration-source-scope-and-node-regressions-NO-DEPLOY
+          path: research/cross-stream-app-integration-139/REPORT.md
+          retention-days: 14
+
+  genuine-browser-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      REQUIRE_WEBKIT: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browsers and photo-only research dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4 playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: P132 actual application navigation and synthetic owned-outfit save/reopen in Chromium and WebKit
+        env:
+          ARTIFACT_DIR: benchmark/cross-stream-app-integration-139/family-alpha-mobile
+        run: node scripts/test-family-alpha-mobile-ux-132.mjs
+      - name: P122 actual licensed JPEG review, real owned garments and three outfits in both engines
+        run: node scripts/test-reviewed-photo-to-three-owned-looks-122-browser.mjs
+      - name: P138 actual owner-consented recovery dialog in both engines
+        run: node scripts/test-cloud-restore-browser-138.mjs
+      - name: P136 actual baseline comparison and 25 to 1000 wardrobe size matrix in both engines
+        env:
+          P136_PARENT_SHA: 59ec81353d03a6a5443c9370f209d7e367456e26
+          P136_REPEATS: '3'
+          P136_ENGINES: chromium,webkit
+        run: node scripts/test-storage-resilience-136-browser.mjs
+      - name: Assert all app journeys, mobile widths, large closet results, source safeguards and simulated account limits
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync,statSync} from 'node:fs';
+          const p132=JSON.parse(readFileSync('benchmark/cross-stream-app-integration-139/family-alpha-mobile/results.json','utf8'));
+          assert.deepEqual(p132.engines.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          assert(p132.engines.every(x=>!x.errors?.length));
+          assert(p132.engines.filter(x=>x.width>=390).every(x=>x.syntheticThreeOutfits&&x.swapPreservesOtherSelections&&x.savedAndReopened));
+          const photo=JSON.parse(readFileSync('benchmark/reviewed-photo-to-three-owned-looks-122/results.json','utf8'));
+          assert.equal(photo.cases.length,6);assert(photo.cases.every(x=>x.threeRealOriginalOwnedLooks&&x.actualPhotoReviewToStyleShortcut&&x.ownerBPrivate&&x.photosUnchanged));
+          assert.equal(photo.realSignedServerRLS,false);assert.equal(photo.actualPhysicalAndroidOrIphone,false);assert.equal(photo.arbitraryFitted3D,false);
+          const restore=JSON.parse(readFileSync('benchmark/cloud-restore-browser-138/results.json','utf8'));
+          assert.equal(restore.cases.length,6);assert(restore.cases.every(x=>x.actualBrowserP137Consent&&x.atomicSavedOutfitRestore&&x.localEditDuringConsentRejected&&x.remoteSameRevisionOrVersionEditRejected));
+          const storage=JSON.parse(readFileSync('benchmark/storage-resilience-136/results.json','utf8'));
+          assert.equal(storage.cases.length,36);assert.deepEqual(storage.errors,[]);
+          assert.deepEqual(storage.screenshots.map(x=>[x.engine,x.width]),[['chromium',320],['chromium',390],['chromium',430],['webkit',320],['webkit',390],['webkit',430]]);
+          for(const size of [25,100,250,500,1000])for(const engine of ['chromium','webkit']){
+            const cases=storage.cases.filter(x=>x.engine===engine&&x.width===390&&x.count===size&&!x.screenshot&&!x.baseline);
+            assert.equal(cases.length,3,`${engine} ${size}`);
+            assert(cases.every(x=>x.cardsVisible===(size<=100?size:48)));
+          }
+          const p139Screens=readdirSync('benchmark/cross-stream-app-integration-139/family-alpha-mobile').filter(x=>x.endsWith('.png'));
+          assert(p139Screens.length>=20);for(const f of p139Screens)assert(statSync('benchmark/cross-stream-app-integration-139/family-alpha-mobile/'+f).size>1000);
+          NODE
+      - name: Assemble unchanged verified P109/P110 donor in a temporary detached research worktree
+        run: |
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 53f2ad344dc56a1477e343531c423aed0e66c17d dd6bac3fa9ff640d4f562cf925337440bdb5cf8f 3a572193987cb29389727426136c6eb3ac326783 dfb40889c4c1221fb1833b859e8a11ef38aeb76e
+          git worktree add --detach .photo103-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.photo103-donor-541"
+          test "$(git -C .photo103-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          ln -s ../node_modules .photo103-donor-541/node_modules
+          node scripts/install-photographed-denim-knee-103.mjs .photo103-donor-541
+          node scripts/install-denim-pose-fold-contact-104.mjs .photo103-donor-541
+          node scripts/install-denim-panel-normal-105.mjs .photo103-donor-541
+          node scripts/install-photo-denim-calf-106.mjs .photo103-donor-541
+          node scripts/install-denim-bilateral-108.mjs .photo103-donor-541
+          node scripts/install-denim-mobile-pose-controls-109.mjs .photo103-donor-541
+          node scripts/install-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541
+          cp scripts/test-denim-mobile-pose-controls-109-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-denim-mobile-pose-controls-109.mjs .photo103-donor-541/scripts/
+          cp scripts/test-reviewed-closet-3d-handoff-110-browser.mjs .photo103-donor-541/scripts/
+          cp scripts/audit-reviewed-closet-3d-handoff-110.mjs .photo103-donor-541/scripts/
+          cd .photo103-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+          node --test tests/outfit-3d-01.test.mjs
+      - name: Verify genuine 163-bone male/female WebGL compatibility, rotation, source retention and 2D fallback
+        run: |
+          (cd .photo103-donor-541 && node scripts/test-denim-mobile-pose-controls-109-browser.mjs)
+          (cd .photo103-donor-541 && node scripts/test-reviewed-closet-3d-handoff-110-browser.mjs)
+          (cd .photo103-donor-541 && node scripts/audit-denim-mobile-pose-controls-109.mjs)
+          (cd .photo103-donor-541 && node scripts/audit-reviewed-closet-3d-handoff-110.mjs)
+          cd .photo103-donor-541
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const p109=JSON.parse(readFileSync('benchmark/three-d-109-audit/acceptance.json','utf8'));
+          assert.equal(p109.independentlyVerifiedRealMobileWebGLPNGFrames,24);
+          assert.equal(p109.originalSourceSkinnedRigBones,163);
+          assert.equal(p109.realSignedMultiAccountCloudRLSVerified,false);
+          const look=JSON.parse(readFileSync('benchmark/three-d-110-audit/acceptance.json','utf8'));
+          assert.equal(look.independentlyVerifiedLicensedOriginal163BoneWebGLFrames,16);
+          assert.equal(look.actualResearchReviewedSavedLookReopens,8);
+          assert.equal(look.originalPhotoReopenAllPixelExact,true);
+          assert.equal(look.unverifiedPersonalPhotoRemainsOriginal2DFallback,true);
+          assert.equal(look.actualLiveSignedAccountRLSVerified,false);
+          assert.equal(look.arbitraryRealPrivatePhotograph3DReconstructionVerified,false);
+          assert.equal(look.actualPhysicalMobileHardwareTested,false);
+          assert.equal(look.independentHumanRealismApproval,false);
+          assert.equal(look.releaseAuthorized,false);
+          assert.equal(look.familyAlpha,'HOLD');
+          NODE
+      - name: Archive actual browser screenshots, axe output, recovery UI and performance timings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P139-real-Chromium-WebKit-mobile-closet-outfits-cloud-and-wardrobe-results
+          path: |
+            benchmark/cross-stream-app-integration-139/family-alpha-mobile/
+            benchmark/reviewed-photo-to-three-owned-looks-122/
+            benchmark/cloud-restore-browser-138/
+            benchmark/storage-resilience-136/
+            .photo103-donor-541/benchmark/three-d-109/acceptance.json
+            .photo103-donor-541/benchmark/three-d-109/*.png
+            .photo103-donor-541/benchmark/three-d-109-audit/acceptance.json
+            .photo103-donor-541/benchmark/three-d-110/acceptance.json
+            .photo103-donor-541/benchmark/three-d-110/*.png
+            .photo103-donor-541/benchmark/three-d-110-audit/acceptance.json
+          retention-days: 14
+
+  disposable-postgres-owner-rls:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p139-temporary-only
+          POSTGRES_DB: p139_temporary
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p139_temporary"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p139-temporary-only@127.0.0.1:5432/p139_temporary
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p139-temporary-only
+      PGDATABASE: p139_temporary
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable PostgreSQL client and driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Bootstrap unchanged isolated RLS policy and run two-owner access and CAS checks
+        run: |
+          psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+          node scripts/test-two-owner-postgres-rls-128.mjs
+

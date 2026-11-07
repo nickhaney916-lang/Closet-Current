@@ -1,0 +1,79 @@
+name: P132 family mobile UX and accessibility NO DEPLOY
+on:
+  push:
+    branches:
+      - research/family-alpha-mobile-ux-132-parallel-52-20261107-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  family-alpha-mobile-ux-node-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact verified P130 parent and allowlisted research-only changes
+        run: |
+          BASE=5ce8f51ebbf65d275197a21bdaa7818801b4b49b
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p132-paths
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/family-alpha-mobile-ux-132-no-deploy.yml|public/app-theme.css|public/capture-navigation.js|public/index.html|scripts/test-family-alpha-mobile-ux-132.mjs|tests/capture-navigation.test.cjs|research/family-alpha-mobile-ux-132/REPORT.md) ;;
+              *) echo "REFUSE unauthorized cloud, auth, recognition, image provenance, 3D geometry, staging, production, or other project edit: $path"; exit 1 ;;
+            esac
+          done </tmp/p132-paths
+          test "$(wc -l </tmp/p132-paths)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-backup-bridge.js public/app.js public/outfit-board.js public/closet-stylist-engine.js public/recognition-engine.mjs public/garment-mask-engine.js supabase benchmark/fixtures
+      - name: Install pinned browser and regression-only dependencies without a lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 axe-core@4.10.3 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build, syntax, focused navigation regression, and full repository Node suite
+        run: |
+          node --check scripts/test-family-alpha-mobile-ux-132.mjs
+          node --check public/capture-navigation.js
+          node --check public/navigation.js
+          node scripts/build.mjs
+          node --test tests/capture-navigation.test.cjs tests/navigation.test.cjs tests/capture.test.cjs tests/outfit-board.test.cjs tests/outfit-matcher.test.cjs tests/closet-stylist.test.cjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Upload no-deploy UI test definition and report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P132-family-alpha-mobile-ux-node-report
+          path: |
+            research/family-alpha-mobile-ux-132/REPORT.md
+            scripts/test-family-alpha-mobile-ux-132.mjs
+          retention-days: 14
+  genuine-chromium-webkit-mobile-browser-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      REQUIRE_WEBKIT: '1'
+      ARTIFACT_DIR: artifacts/family-alpha-mobile-ux-132
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install pinned browser-test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 axe-core@4.10.3
+      - name: Run real mobile viewport accessibility and interaction matrix
+        run: node scripts/test-family-alpha-mobile-ux-132.mjs
+      - name: Archive genuine browser screenshots, axe results and run summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P132-family-alpha-chromium-webkit-320-390-430-screenshots
+          path: artifacts/family-alpha-mobile-ux-132/
+          retention-days: 14
