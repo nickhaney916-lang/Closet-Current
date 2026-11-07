@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' blob: data:; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' blob: data:; img-src 'self' blob: data:; worker-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'none'">
+<title>Closet Current P156 · Actual source head extraction, no built-in garments · HOLD</title>
+<script type="importmap">{"imports":{"three":"/vendor/three/build/three.module.js","three/addons/":"/vendor/three/examples/jsm/"}}</script>
+<style>
+*{box-sizing:border-box}html,body{margin:0;background:#e8eef2;color:#1e3041;font-family:system-ui,-apple-system,sans-serif}
+header{padding:12px 14px;background:#183149;color:#fff;font-size:15px;font-weight:700}
+header small{display:block;font-weight:400;opacity:.85;margin-top:5px;font-size:12px}
+main{max-width:850px;margin:auto;position:relative}
+canvas{display:block;width:100%;height:610px;touch-action:pan-y}
+#readout{position:absolute;left:10px;top:10px;padding:9px 10px;background:#ffffffef;border-radius:9px;font-size:12px;font-weight:650}
+#note{position:absolute;bottom:16px;left:10px;right:10px;background:#ffffffed;border:1px solid #d6e1e8;border-radius:8px;padding:8px 12px;font-size:12px;line-height:1.4}
+footer{background:#fff4d2;border-top:1px solid #cbbd8e;padding:12px 15px;font-size:12px}
+</style>
+</head>
+<body>
+<header>Closet Current · P156 Anatomical Source Head Research
+<small>Real licensed Rocketbox head and hair only · Original jacket and pants geometry removed · Family Alpha HOLD</small></header>
+<main>
+<canvas id="view" aria-label="Actual 80-bone GLB head and hair without source model body clothing"></canvas>
+<div id="readout" role="status">Verifying source 3D …</div>
+<div id="note">This is ONLY the real licensed source face/hair. There is deliberately no torso or clothing. The original 163-bone Closet Current photographed-clothing preview remains the owner wardrobe viewer.</div>
+</main>
+<footer>MIT-licensed source (Microsoft Rocketbox) | 80-bone source rig | Not integrated into owner's photographed garments | No production deploy | Research HOLD</footer>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
+const qs=new URL(location.href).searchParams;
+const gender=qs.get('figure')||'female',view=qs.get('view')||'front';
+const names={female:'female-licensed-face-hair-only.glb',male:'male-licensed-face-hair-only.glb'};
+if(!(gender in names)||!['front','side','back','face'].includes(view))
+ throw Error('P156 denies source identity or view not in pinned male female matrix');
+const canvas=document.getElementById('view'),label=document.getElementById('readout');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,
+ preserveDrawingBuffer:true,alpha:false,powerPreference:'high-performance'});
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.5));
+renderer.setSize(canvas.clientWidth,canvas.clientHeight,false);
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+renderer.setClearColor(0xe8eef2,1);
+renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.18;
+const scene=new THREE.Scene();
+scene.add(new THREE.HemisphereLight(0xf6fbff,0x78808a,2.0));
+const key=new THREE.DirectionalLight(0xffeee0,3.6);key.position.set(1.9,3.3,4);scene.add(key);
+const fill=new THREE.DirectionalLight(0xbcd6ff,1.35);fill.position.set(-2.4,2.5,2);scene.add(fill);
+const rim=new THREE.DirectionalLight(0xffffff,1.15);rim.position.set(-1.8,2,-3);scene.add(rim);
+const camera=new THREE.PerspectiveCamera(35,canvas.clientWidth/canvas.clientHeight,.01,30);
+const state={loaded:false,genuineSkinnedSourceHead:false,sourceBodyMaterialPresent:true,
+ originalVendorGarmentStillVisible:true,figure:gender,view,
+ actualWebGL:Boolean(renderer.getContext()),frameCount:0,renderTriangles:0,
+ originalUserGarmentApplied:false,original163BoneWardrobeUnmodified:true,
+ releaseAuthorized:false,familyAlpha:'HOLD',error:null};
+window.__cc156Status=()=>({...state,frames:state.frameCount,
+ drawCalls:renderer.info.render.calls,triangles:renderer.info.render.triangles});
+const loader=new GLTFLoader();
+loader.load('/heads/'+names[gender],g=>{
+ const root=g.scene;if(!root)throw Error('P156 source head GLB missing scene');
+ scene.add(root);
+ let meshes=0,skinned=0,maxBoneCount=0,materials=[],faces=0,other=0;
+ root.traverse(o=>{
+  if(!o.isMesh)return;
+  meshes++;
+  if(o.isSkinnedMesh){skinned++;maxBoneCount=Math.max(maxBoneCount,o.skeleton?.bones?.length||0);}
+  for(const m of Array.isArray(o.material)?o.material:[o.material]){
+   if(m?.name)materials.push(m.name);
+  }
+ });
+ const unique=[...new Set(materials)];
+ const prefix=gender==='female'?'f007_':'m006_';
+ if(unique.length!==2||unique.sort().join('|')!==
+  [prefix+'head',prefix+'opacity'].sort().join('|'))
+  throw Error('P156 source body material/clothing not physically separated');
+ if(skinned<1||maxBoneCount!==80)
+  throw Error('P156 original GLB head must still have 80 actual source bones');
+ const bounds=new THREE.Box3().setFromObject(root),size=bounds.getSize(new THREE.Vector3()),
+  center=bounds.getCenter(new THREE.Vector3());
+ if(bounds.isEmpty()||size.y<.14||size.y>.75)
+  throw Error('P156 3D geometry outside real source head anatomical bounds: '+size.y);
+ if(size.x>.65||size.z>.7)
+  throw Error('P156 source body/jacket geometry leaked into isolated head');
+ const target=center.clone();target.y+=.01;
+ // Face view goes close enough to inspect eyes and lips on genuine texture.
+ const distance=view==='face'?size.y*1.08:size.y*2.1;
+ const from=view==='side'?[1,0,0]:view==='back'?[0,0,-1]:[0,0,1];
+ camera.position.set(target.x+from[0]*distance,
+  target.y+size.y*.06,target.z+from[2]*distance);
+ camera.lookAt(target);camera.updateProjectionMatrix();
+ Object.assign(state,{loaded:true,genuineSkinnedSourceHead:true,
+  sourceBodyMaterialPresent:false,originalVendorGarmentStillVisible:false,
+  meshes,skinnedMeshes:skinned,maxBoneCount,
+  sourceMaterialNames:unique,
+  headWidth:size.x,headHeight:size.y,headDepth:size.z,
+  highQualityTexfacePresent:true});
+ label.textContent=gender.toUpperCase()+' '+view.toUpperCase()+' · Only source head/hair';
+},undefined,e=>{state.error=String(e);label.textContent='Head model failed source verification';});
+function render(){
+ renderer.render(scene,camera);
+ state.frameCount++;
+ requestAnimationFrame(render);
+}
+render();
+</script>
+</body></html>
