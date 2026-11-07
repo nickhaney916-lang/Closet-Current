@@ -76,24 +76,32 @@ async function runEngine(engine,name){
  if(!webgl.available){browserResults.push({browser:name,supported:false,reason:'WebGL context unavailable'});await browser.close();if(name==='chromium')throw Error('Chromium WebGL unavailable');return;}
  browserResults.push({browser:name,supported:true,webglRenderer:webgl.renderer});
  try{
-  for(const figure of figures)for(const width of widths)for(const mode of ['before','after']){
-   const context=await browser.newContext({viewport:{width,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
+  // Load each figure/mode once, then resize the live WebGL viewer across all
+  // three mobile widths. This preserves the full view matrix without reloading
+  // the 163-bone model for every viewport.
+  for(const figure of figures)for(const mode of ['before','after']){
+   const context=await browser.newContext({viewport:{width:390,height:900},deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
    const page=await context.newPage();
    page.on('pageerror',e=>errors.push({browser:name,message:String(e.message)}));
-   page.on('crash',()=>crashes.push({browser:name,figure,width,mode}));
+   page.on('crash',()=>crashes.push({browser:name,figure,mode}));
    page.on('request',r=>{if(!r.url().startsWith(origin)&&!r.url().startsWith('data:')&&!r.url().startsWith('blob:'+origin))external.push(new URL(r.url()).origin);});
-   const d=await ready(page,figure,mode);
-   const sourceRig=JSON.stringify(d.actual3DGarment);
-   for(const deg of views){
-    const d2=await setView(page,deg);
-    assert.equal(d2.rig.bones,163);
-    assert.equal(JSON.stringify(d2.actual3DGarment),sourceRig,'P118 changed source-backed garment identity or selection');
-    await capture(page,figure,mode,width,deg,name,d2);
+   await ready(page,figure,mode);
+   for(const width of widths){
+    await page.setViewportSize({width,height:900});
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const sourceRig=JSON.stringify((await page.evaluate(()=>window.cc69Diagnostics())).actual3DGarment);
+    for(const deg of views){
+     const d2=await setView(page,deg);
+     assert.equal(d2.rig.bones,163);
+     assert.equal(JSON.stringify(d2.actual3DGarment),sourceRig,'P118 changed source-backed garment identity or selection');
+     await capture(page,figure,mode,width,deg,name,d2);
+    }
    }
    await context.close();
   }
  }finally{await browser.close();}
 }
+
 await runEngine(chromium,'chromium');
 await runEngine(webkit,'webkit');
 // Pair actual WebGL before/after pixels at matching 390px camera views.
