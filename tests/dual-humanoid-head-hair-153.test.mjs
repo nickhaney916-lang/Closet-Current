@@ -62,3 +62,14 @@ test('P153 installer refuses any production, staging, repository root or nonexac
  assert.match(module,/originalGarmentGeometryChanged:false/);
  assert.doesNotMatch(module,/https?:\/\//);
 });
+
+test('P153 hair scalp is physically projected from exact original skinned donor triangles, not guessed replacement hat geometry',()=>{
+ const text=readFileSync('research/dual-humanoid-head-hair-153/source-head-hair.mjs','utf8');
+ assert.match(text,/sourceScalpTriangles153/);
+ assert.match(text,/o\.applyBoneTransform\(i,/);
+ assert.match(text,/idx\.getX\(t\*3\)/);
+ assert.match(text,/p\.addScaledVector\(dir,\.0055\)/);
+ assert.match(text,/tris<25\|\|tris>maximumTriangles/);
+ assert.doesNotMatch(text,/new THREE\.ConeGeometry/);
+ assert.doesNotMatch(text,/new THREE\.SphereGeometry/);
+});
