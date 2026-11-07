@@ -1,15 +1,16 @@
-name: PHOTO126 reviewed cutout atomic backup restore NO DEPLOY
+name: PHOTO127 explicit owner-approved mobile restore NO DEPLOY
 on:
   push:
     branches:
-      - research/reviewed-cutout-atomic-restore-126-main-20261106-HOLD
+      - research/owner-confirmation-mobile-restore-127-main-20261106-HOLD
   pull_request:
     branches:
-      - research/owner-review-lease-125-main-20261106-HOLD
+      - research/reviewed-cutout-atomic-restore-126-main-20261106-HOLD
     paths:
-      - 'research/restore-atomic-01/atomic-restore.mjs'
-      - 'tests/reviewed-cutout-atomic-restore-126.test.mjs'
-      - 'research/reviewed-cutout-atomic-restore-126/REPORT.md'
+      - 'research/restore-atomic-01/native-restore-bridge.mjs'
+      - 'tests/owner-confirmation-restore-127.test.mjs'
+      - 'scripts/test-owner-confirmation-mobile-restore-127-browser.mjs'
+      - 'research/owner-confirmation-mobile-restore-127/REPORT.md'
       - '.github/workflows/style-owned-live-03-fast-no-deploy.yml'
   workflow_dispatch:
 permissions:
@@ -24,21 +25,21 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Strict independently green P125 parent and exactly FOUR P126 research-only paths
+      - name: Strict independently green P126 parent and exactly FIVE P127 research-only paths
         run: |
-          BASE=034d6c7db24d98df5d2ba14a73e84b948ecf1c64
+          BASE=c69681a6d45c5b3c5492a9a5a8d2c669f116a394
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
           test "$(git rev-parse "$FIRST^")" = "$BASE"
-          git diff --name-only "$BASE" HEAD >/tmp/photo126-paths
+          git diff --name-only "$BASE" HEAD >/tmp/photo127-paths
           while IFS= read -r path; do
             case "$path" in
-              research/restore-atomic-01/atomic-restore.mjs|tests/reviewed-cutout-atomic-restore-126.test.mjs|research/reviewed-cutout-atomic-restore-126/REPORT.md|.github/workflows/style-owned-live-03-fast-no-deploy.yml) ;;
+              research/restore-atomic-01/native-restore-bridge.mjs|tests/owner-confirmation-restore-127.test.mjs|scripts/test-owner-confirmation-mobile-restore-127-browser.mjs|research/owner-confirmation-mobile-restore-127/REPORT.md|.github/workflows/style-owned-live-03-fast-no-deploy.yml) ;;
               *) echo "REFUSE unauthorized production, staging, authentication, cloud, source fixture, WebGL, humanoid or other project edit: $path"; exit 1 ;;
             esac
-          done </tmp/photo126-paths
-          test "$(wc -l </tmp/photo126-paths)" -eq 4
-          git diff --exit-code "$BASE" HEAD -- public/app.js public/auth.js public/index.html public/cloud-backup.js public/outfit-board.js research/style-owned-live-03 research/native-consumer-board-04 benchmark/fixtures package.json package-lock.json supabase
+          done </tmp/photo127-paths
+          test "$(wc -l </tmp/photo127-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/auth.js public/index.html public/cloud-backup.js public/outfit-board.js research/style-owned-live-03 research/restore-atomic-01/atomic-restore.mjs research/native-consumer-board-04 benchmark/fixtures package.json package-lock.json supabase
       - name: Reuse pinned inherited research dependencies, without lockfile edits
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
       - name: Real original-byte reviewed-save plus pinned three owned outfits unit acceptance
@@ -48,11 +49,14 @@ jobs:
           node --check tests/reviewed-cutout-owned-style-124.test.mjs
           node --check tests/owner-review-lease-125.test.mjs
           node --check tests/reviewed-cutout-atomic-restore-126.test.mjs
+          node --check tests/owner-confirmation-restore-127.test.mjs
+          node --check scripts/test-owner-confirmation-mobile-restore-127-browser.mjs
+          node --check research/restore-atomic-01/native-restore-bridge.mjs
           node --check research/restore-atomic-01/atomic-restore.mjs
           node --check research/style-owned-live-03/native-style-panel.mjs
           node scripts/build.mjs
-          node --test tests/reviewed-cutout-owned-style-124.test.mjs tests/owner-review-lease-125.test.mjs tests/reviewed-cutout-atomic-restore-126.test.mjs tests/restore-atomic-01.test.mjs
-          node --test tests/manual-reviewed-private-save-119.test.mjs tests/reviewed-app-capture-closet-120.test.mjs tests/reviewed-photo-to-three-owned-looks-122.test.mjs tests/reopened-reviewed-closet-style-123.test.mjs tests/style-owned-live-03.test.mjs tests/restore-atomic-01.test.mjs
+          node --test tests/reviewed-cutout-owned-style-124.test.mjs tests/owner-review-lease-125.test.mjs tests/reviewed-cutout-atomic-restore-126.test.mjs tests/owner-confirmation-restore-127.test.mjs tests/restore-atomic-01.test.mjs
+          node --test tests/manual-reviewed-private-save-119.test.mjs tests/reviewed-app-capture-closet-120.test.mjs tests/reviewed-photo-to-three-owned-looks-122.test.mjs tests/reopened-reviewed-closet-style-123.test.mjs tests/style-owned-live-03.test.mjs tests/restore-atomic-01.test.mjs tests/owner-confirmation-restore-127.test.mjs
       - name: FULL inherited camera, source, review, styling, saved looks, backup, 3D and privacy Node regressions
         run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Source audit explicit review, no imaginary outfits or substitute save databases, Family Alpha HOLD
@@ -90,9 +94,18 @@ jobs:
           assert.ok(style.includes('threeDReady:cropped||cutoutSHA256Verified?false:row.threeDReady'));
           const p125=readFileSync('research/owner-review-lease-125/REPORT.md','utf8');
           const p126=readFileSync('research/reviewed-cutout-atomic-restore-126/REPORT.md','utf8');
+          const p127=readFileSync('research/owner-confirmation-mobile-restore-127/REPORT.md','utf8');
+          const bridge=readFileSync('research/restore-atomic-01/native-restore-bridge.mjs','utf8');
           const restore=readFileSync('research/restore-atomic-01/atomic-restore.mjs','utf8');
           assert.ok(p125.includes('Family Alpha')&&p125.includes('sourceReviewUnchanged125'));
           assert.ok(p126.includes('Family Alpha')&&p126.includes('verifyReviewedCutouts126'));
+          assert.ok(p127.includes('Family Alpha')&&p127.includes('awaited'));
+          for(const fragment of [
+            'const approved=await confirm(',
+            'if(approved!==true)return {cancelled:true,originalUntouched:true};',
+            'await onRestored();',
+            'assertLease();\\n   win.closetCloud?.changed?.();'
+          ])assert.ok(bridge.includes(fragment.replace('\\\\n','\\n')),fragment);
           for(const part of [
             'export async function verifyReviewedCutouts126(value,{ownerId}={})',
             'await photoProof(hint.cutoutImage,{hash:row.cutoutSHA256})',
@@ -109,10 +122,10 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: PHOTO126-no-deploy-double-JPEG-restore-node
+          name: PHOTO127-no-deploy-owner-consent-and-lease-node
           path: |
-            research/reviewed-cutout-atomic-restore-126/REPORT.md
-            tests/reviewed-cutout-atomic-restore-126.test.mjs
+            research/owner-confirmation-mobile-restore-127/REPORT.md
+            tests/owner-confirmation-restore-127.test.mjs
           retention-days: 14
 
   genuine-source-photo-to-saved-three-outfits-browser:
@@ -133,15 +146,15 @@ jobs:
       - name: Install no-lockfile research browser dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
       - name: Real app original photo to owner-review to one-tap 3 pinned owned outfit results and V4 source backup
-        run: node scripts/test-reviewed-cutout-owned-style-124-browser.mjs
+        run: node scripts/test-owner-confirmation-mobile-restore-127-browser.mjs
       - name: Independent browser evidence, original licensed JPEG, swap/save/reopen, owner isolation and no false 3D claims
         run: |
           node --input-type=module <<'NODE'
           import {readFileSync,readdirSync,statSync} from 'node:fs';
           import assert from 'node:assert/strict';
-          const dir='benchmark/reviewed-cutout-owned-style-124';
+          const dir='benchmark/owner-confirmation-mobile-restore-127';
           const res=JSON.parse(readFileSync(dir+'/results.json','utf8'));
-          assert.equal(res.priority,'PHOTO124-SOURCE-BOUND-CUTOUT-2D-OWNED-OUTFITS');
+          assert.equal(res.priority,'PHOTO127-OWNER-CONFIRMED-MOBILE-CUTOUT-RESTORE');
           assert.equal(res.cases.length,6);
           assert.deepEqual(res.cases.map(x=>[x.engine,x.width]),[
             ['chromium',320],['chromium',390],['chromium',430],
@@ -164,6 +177,14 @@ jobs:
             assert.equal(c.undoPinCAS,true);
             assert.equal(c.ownerBPrivate,true);
             assert.equal(c.photosUnchanged,true);
+            assert.equal(c.restore127?.ownerApprovalDeclineNoWrite,true);
+            assert.equal(c.restore127?.nonBooleanApprovalNoWrite,true);
+            assert.equal(c.restore127?.tamperedValidJPEGRejected,true);
+            assert.equal(c.restore127?.realV4AtomicRestore,true);
+            assert.equal(c.restore127?.fullBrowserReload,true);
+            assert.equal(c.restore127?.savedOutfitsUnchanged,true);
+            assert.equal(c.restore127?.threePinnedOwned2DLooks,true);
+            assert.equal(c.restore127?.signedJWTOrCloudRLS,false);
           }
           assert.equal(res.realSignedServerRLS,false);
           assert.equal(res.realPhysicalAndroidOrIphone,false);
@@ -174,13 +195,13 @@ jobs:
           assert.deepEqual(res.crashes,[]);
           assert.deepEqual(res.external,[]);
           const screenshots=readdirSync(dir).filter(x=>x.endsWith('.png'));
-          assert.equal(screenshots.length,75);
+          assert.equal(screenshots.length,93);
           for(const f of screenshots)assert.ok(statSync(dir+'/'+f).size>6000);
           NODE
       - name: Archive only public-license camera/photo and six browser scenario screenshots NO DEPLOY
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: PHOTO126-inherited-real-app-Chromium-WebKit-320-390-430-HOLD
-          path: benchmark/reviewed-cutout-owned-style-124/
+          name: PHOTO127-native-owner-confirmed-V4-restore-Chromium-WebKit-320-390-430-HOLD
+          path: benchmark/owner-confirmation-mobile-restore-127/
           retention-days: 14
