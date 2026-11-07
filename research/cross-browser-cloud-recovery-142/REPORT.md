@@ -1,0 +1,29 @@
+# Closet Current — MAIN Priority #142 / CROSS-BROWSER-CLOUD-RECOVERY-142
+
+**ISOLATED RESEARCH ONLY · Family Alpha Issue #255 HOLD · DRAFT/UNMERGED · NO PRODUCTION OR EXISTING STAGING CHANGE, MERGE OR DEPLOY.**
+
+## Exact verified parent and assignment boundaries
+
+Parent is exact independently green P141 [draft PR #696](https://github.com/nickhaney916-lang/Closet-Current/pull/696) HEAD `e5f4c524a5bb943f4ab98813ceeadfc907b228f0`. [No-deploy GitHub Actions #42400905679](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42400905679) was **SUCCESS 3/3** with **60/60 focused Node**, **1,209/1,209 entire Node regressions**, **8/8 actual disposable PostgreSQL 17 RLS/CAS** and the new same-owner single-browser P141 **6/6 with 54 genuine screenshots**; P140 backup, P138 restore and unchanged actual-app mobile browser flows passed 18/18 more cases with 177 screenshots.
+
+P141 validated an owner within **one browser process/session**. P142 independently validates **two separate running browser engines and non-shared per-device IndexedDB** against the same shared remote revision, with cross-device races, bidirectional JPEG recovery and a third synthetic unauthorized owner. This is **not** the cross-stream shipping-app integration owned by Parallel #55, signed hosted cloud acceptance owned by Parallel #51, UX #52, recognition #53, storage #54, or humanoid research. No existing file or branch owned by those assignments is modified.
+
+## Implementation
+
+- New `research/cross-browser-cloud-recovery-142/device-backup-restore.html` is a standalone research-only P141-derived phone-width interface mounting the **unchanged actual** P134/P133/P132/P129 backup and P137/P129/P128/P126 restore services. The two independent instances share a synthetic owner ID and bearer string but have **separate actual browser processes, contexts and IndexedDB storage**. All reads/writes go to one isolated local fake HTTP/Storage/owner-revision CAS backend. No production, staging, signed live user, customer photo, or hosted cloud is contacted.
+- New `scripts/test-cross-browser-cloud-recovery-142.mjs` drives **Chromium→WebKit and WebKit→Chromium**, each at **320/390/430 CSS pixels**: **6 independent two-engine pairs**. Per pair, browser A and browser B are separately launched and seed the same valid legally sourced SHA-locked Commons original JPEG and separately encoded reviewed cutout. They do not share local browser storage.
+- Browser A creates revision 1 on cloud with genuine P129 immutable owner-private original+cutout objects. Browser B independently edits its local garment Blue, creates a local outfit, then **cancels** P137 restore and proves local preserved; subsequently approves P137 restore and recovers the original Green garment with exact source/cutout SHA and original saved look ID from cloud.
+- Browser B begins owner-approved **stale cloud backup** with local Teal garment and local-only outfit; while its actual alert dialog is open, browser A edits Orange, creates a new saved outfit and commits revision 2. B's later approval is refused by P134/P133 as remote-changed; B's local Teal and B-only outfit survive and remote remains authoritative Orange. B then explicitly restores A's revision 2 and two exact saved-look IDs.
+- Browser B begins **stale restore** while A commits Purple at revision 3; B's later approval is refused by P137's full remote revision + manifest fingerprint recheck. A local edit Pink during B's subsequent restore owner dialog rejects late consent and protects Pink.
+- Browser B explicitly chooses to back up its Pink wardrobe at remote revision 4, including the reviewed source JPEG and both exact saved-outfit IDs; Browser A later explicitly approves P137 restore and recovers B's Pink source with unchanged original+cutout SHA and matching owned outfits. Full **A→B and B→A** recovered after actual owner decisions.
+- Third distinct synthetic owner receives only its empty own backup list and is denied both the A/B owner's backup manifest and original source private Storage GET. Tests verify no horizontal scrolling, no photos/source/garment details in owner dialogues, error-free browser executions, no unexpected external network requests.
+- Capture **11 screenshot states × 6 paired browser-size cases = 66 real PNGs**, with image SHA checks, source licensing evidence and machine-readable benchmark record; run unchanged P141 6-browser cycle/54 screenshots, P140 6-backup cases/48, P138 6-restore cases/36, and inherited real shipping-app browser 6 cases/93 screenshots **separately**. Expected total **30 actual browser scenarios and 297 screenshot files** if all successful.
+- Run full inherited 1,209 Node suite, focused P141-P129 cloud proofs, disposable real PostgreSQL 17 RLS/CAS checks and strict exact-parent, exactly four new research-file allowlist. No shipping app, SQL, production, existing staging, cloud policy or other parallel branch modified.
+
+## Limitations and release gates
+
+These are **actual isolated Chromium/WebKit browser engines**, but not physical phones. Owner bearer strings are synthetic **unsigned** tokens checked by a local fake HTTP service; this is **not** a cryptographically verified hosted Supabase two-account JWT or authenticated live RLS/Storage acceptance. The third owner is a synthetic privacy denial, not a real hosted login. Concurrent server CAS and metadata rechecks do not form one distributed atomic transaction spanning cloud and client, and cannot guarantee global serializability after final checks.
+
+The research HTML page is NOT installed in the actual shipping Closet Current UI, and live cloud safety remains a gate for Parallel #51/#55 integration. Family Alpha Issue #255 remains **HOLD**. No production/staging modification, merge or deployment is authorized.
+
+**Final exact P142 HEAD CI result must be verified and documented before marking research delivery complete.**
