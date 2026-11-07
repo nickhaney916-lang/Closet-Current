@@ -26,7 +26,10 @@ function nativeLossless04RestoreSafe(){
  // P146: the actual account menu mounts P134/P137 only on a loopback
  // research host with both explicit flags. P145 pauses the legacy writer
  // before this adapter is mounted. The adapter rejects real access tokens.
- if(new URLSearchParams(location.search).get('ownerReview146')==='research'){
+ if(location.protocol==='http:'&&
+    ['localhost','127.0.0.1','[::1]'].includes(location.hostname)&&
+    new URLSearchParams(location.search).get('ownerReview145')==='research'&&
+    new URLSearchParams(location.search).get('ownerReview146')==='research'){
   const {ownerReviewedMode146,mountOwnerReviewedCloud146}=
    await import('../research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs');
   if(!ownerReviewedMode146())throw Error('P146 owner review only works in isolated local research mode');
