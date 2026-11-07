@@ -9,7 +9,7 @@
  */
 import {createSign,createVerify,generateKeyPairSync,randomUUID} from 'node:crypto';
 
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PREFIX='p146-synthetic-local-only-';
 const b64=x=>Buffer.from(typeof x==='string'?x:JSON.stringify(x)).toString('base64url');
 const json=x=>JSON.parse(Buffer.from(x,'base64url').toString('utf8'));
