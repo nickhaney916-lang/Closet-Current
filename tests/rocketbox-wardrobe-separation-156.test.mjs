@@ -64,7 +64,7 @@ test('P156 original skinned-source parsing explicitly records material mesh and 
  assert.match(s,/inspectPinnedCandidate155\(bytes,candidate\)/);
  assert.match(s,/gitBlobSHA1/);
  assert.match(s,/componentMap/);
- assert.match(s,/primitive\.material/);
+ assert.match(s,/prim\.material/);
  assert.match(s,/sourceRig80ToOriginal163MappingComplete:false/);
  assert.match(s,/photoBasedGarmentFitAfterRemovalProven:false/);
  assert.doesNotMatch(s,/https?:\/\//);
