@@ -39,6 +39,13 @@ async function scenario(run){
   segmentHint:{verified:true,ownerReviewedInstance:true,clipped:false,
    originalSHA256:sourceSHA,cutoutSHA256:cropSHA,cutoutImage:cropImage},
   category:'Uncategorized',itemType:'Unknown',color:'Unknown'};
+ // PHOTO119 must atomically remove the reviewed source from the owner's
+ // previously captured private draft. A guessed unsaved row is not enough.
+ await new Promise((resolve,reject)=>{
+  const tx=db.transaction('state','readwrite');
+  tx.objectStore('state').put({id:'draft',batch:[structuredClone(source)]});
+  tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
+ });
  const saved=await commitHumanReviewedPhoto119({
   db,ownerId,currentOwner:()=>ownerId,record:source,
   review:{confirmed:true,recordId:source.id,originalSHA256:sourceSHA,
