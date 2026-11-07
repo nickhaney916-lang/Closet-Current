@@ -28,65 +28,64 @@ function addTube(group,points,radius,material,radial=7){
  mesh.castShadow=true;mesh.receiveShadow=true;mesh.userData.ownedMaterial=true;group.add(mesh);return mesh;
 }
 function hairFor(root,kind){
- const {box,total,top}=headBounds(root),size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3());
+ const {box,top}=headBounds(root),size=box.getSize(new T.Vector3()),center=box.getCenter(new T.Vector3());
  const w=clamp(size.x,.095,.22),h=clamp(size.y,.15,.30),d=clamp(size.z,.09,.21);
  const group=new T.Group();group.name='research-procedural-hair-118';
  const dark=new T.MeshStandardMaterial({color:0x30221d,roughness:.84,metalness:0});
  const light=new T.MeshStandardMaterial({color:0x49352c,roughness:.88,metalness:0});
- // A fitted scalp cap sits above the existing forehead and facial landmarks.
- const cap=new T.Mesh(new T.SphereGeometry(1,32,20,0,Math.PI*2,0,1.78),dark);
- cap.position.set(center.x,top-h*.22,center.z-d*.04);
- cap.scale.set(w*.57,h*.58,d*.61);cap.castShadow=true;cap.receiveShadow=true;cap.userData.ownedMaterial=true;group.add(cap);
- // Fine swept strands break the smooth cap silhouette without a helmet shell.
+ // Keep the generated hair above and behind facial landmarks. A shallow crown
+ // cap avoids covering the eyes, nose, cheeks, or most of the source skull.
+ const cap=new T.Mesh(new T.SphereGeometry(1,32,16,0,Math.PI*2,0,1.38),dark);
+ cap.position.set(center.x,top-h*.12,center.z);
+ cap.scale.set(w*.48,h*.31,d*.48);cap.castShadow=true;cap.receiveShadow=true;
+ cap.userData.ownedMaterial=true;group.add(cap);
+ // Fine crown strands add a restrained hairline without crossing the face.
  for(let i=0;i<7;i++){
-  const t=i/6,side=i%2?1:-1;
-  const x=center.x+side*w*(.38-.20*t);
+  const t=i/6,x=center.x+(t-.5)*w*.72;
   addTube(group,[
-   [x,top-h*(.08+.05*t),center.z+d*.05],
-   [center.x+side*w*(.20-.10*t),top-h*(.02+.05*t),center.z-d*.02],
-   [center.x-side*w*.02,top-h*(.12+.08*t),center.z-d*.28]
-  ],Math.max(.0018,w*.018),i%3===0?light:dark,5);
+   [x,top-h*.08,center.z-d*.04],
+   [x+(t-.5)*w*.10,top-h*.015,center.z+d*.02],
+   [x+(t-.5)*w*.16,top-h*.10,center.z+d*.15]
+  ],Math.max(.0015,w*.012),i%3===0?light:dark,5);
+ }
+ if(kind==='female'){
+  // Narrow side locks follow the temples toward the rear sides of the neck;
+  // the longer rear fall is placed behind the face-facing (-Z) side.
+  for(const side of [-1,1]){
+   for(let strand=0;strand<2;strand++){
+    const offset=(strand-.5)*w*.07;
+    addTube(group,[
+     [center.x+side*w*.37+offset,top-h*.20,center.z+d*.06],
+     [center.x+side*w*.49+offset,top-h*.43,center.z+d*.16],
+     [center.x+side*w*.46+offset,top-h*.78,center.z+d*.20],
+     [center.x+side*w*.36+offset,top-h*.98,center.z+d*.17]
+    ],w*.047,strand===0?dark:light,6);
+   }
+  }
+  for(let strand=0;strand<5;strand++){
+   const x=center.x+(strand-2)*w*.15;
+   addTube(group,[
+    [x,top-h*.14,center.z+d*.20],
+    [x+(strand-2)*w*.025,top-h*.62,center.z+d*.34],
+    [x+(strand-2)*w*.035,top-h*1.02,center.z+d*.25]
+   ],w*.035,strand%2?light:dark,6);
+  }
+ }else{
+  // Short, fine sideburns sit at the temples, clear of the eyes and ears.
+  for(const side of [-1,1]){
+   addTube(group,[
+    [center.x+side*w*.43,top-h*.25,center.z+d*.08],
+    [center.x+side*w*.48,top-h*.42,center.z+d*.16],
+    [center.x+side*w*.44,top-h*.57,center.z+d*.18]
+   ],w*.035,light,6);
+  }
  }
  const headBones=[];
  root.traverse(o=>{if(o.isBone&&/head/i.test(o.name))headBones.push(o);});
  const head=headBones.sort((a,b)=>b.getWorldPosition(new T.Vector3()).y-a.getWorldPosition(new T.Vector3()).y)[0];
  const parent=head||root;
  parent.updateWorldMatrix(true,false);root.updateWorldMatrix(true,true);
- // Use Object3D.attach to preserve the measured world-space fit while making
- // the hair follow the rig's head bone when one is present.
- if(kind==='female'){
-  // Two separated, tapered side locks and a rear fall give the female figure
-  // a shoulder-length silhouette while leaving eyes, cheeks, neckline and
-  // the source shirt's shoulder edge visible.
-  for(const side of [-1,1]){
-   for(let strand=0;strand<3;strand++){
-    const offset=(strand-1)*w*.09;
-    addTube(group,[
-     [center.x+side*(w*.36+offset),top-h*.18,center.z+d*.02],
-     [center.x+side*(w*.53+offset),top-h*.38,center.z-d*.10],
-     [center.x+side*(w*.48+offset),top-h*.78,center.z-d*.06],
-     [center.x+side*(w*.37+offset),top-h*1.05,center.z-d*.14]
-    ],w*(strand===1?.105:.075),strand===1?dark:light,7);
-   }
-  }
-  for(let strand=0;strand<5;strand++){
-   const x=center.x+(strand-2)*w*.16;
-   addTube(group,[
-    [x,top-h*.18,center.z-d*.34],
-    [x+(strand-2)*w*.035,top-h*.64,center.z-d*.48],
-    [x+(strand-2)*w*.045,top-h*1.12,center.z-d*.30]
-   ],w*.065,strand%2?light:dark,7);
-  }
- }else if(kind==='male'){
-  // Short temple pieces and fine crown strands read as a close natural cut.
-  for(const side of [-1,1]){
-   addTube(group,[
-    [center.x+side*w*.46,top-h*.30,center.z],
-    [center.x+side*w*.51,top-h*.48,center.z-d*.02],
-    [center.x+side*w*.43,top-h*.66,center.z+d*.02]
-   ],w*.075,light,7);
-  }
- }
+ // Preserve the fitted world-space geometry while parenting it to the head.
  parent.attach(group);
  return {group,headRegion:{width:w,height:h,depth:d,vertices:headBounds(root).count,headBone:head?.name||null}};
 }
