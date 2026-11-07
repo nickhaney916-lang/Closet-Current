@@ -50,7 +50,7 @@ export function createOwnerRemotePreview133({
  async function lease(){
   auth.assertCurrent?.();
   const ownerId=auth.user?.id,version=epoch;
-  if(!UUID.test(ownerId||''))fail('owner-session-revoked','valid active owner unavailable');
+  if(!UUID.test(ownerId||''))fail('owner-session-revoked','valid active owner unavailable (type='+typeof ownerId+', length='+(typeof ownerId==='string'?ownerId.length:0)+')');
   const token=await auth.getAccessToken();
   if(typeof token!=='string'||token.length<20)
    fail('owner-session-revoked','active owner token unavailable');
