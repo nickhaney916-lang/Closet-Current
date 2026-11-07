@@ -47,7 +47,7 @@ jobs:
           test "$(wc -l </tmp/p143-paths)" -eq 10
           test "$(git rev-parse HEAD:public/app.js)" = 7eafef3bf1724bc1899cb06d3290f6ee174968ba
           test "$(git rev-parse HEAD:public/app-theme.css)" = f80a3193cb1230b79a6f2820472e577419935afd
-          test "$(git rev-parse HEAD:public/capture-navigation.js)" = 4cefe1cf2943431032bdb359a84e9e7332b
+          test "$(git rev-parse HEAD:public/capture-navigation.js)" = 4cefe1cf2943431032bdb359a84e9e7332b8ee26
           test "$(git rev-parse HEAD:public/index.html)" = efabf2ef80710841c64b981a084a93f4a3526de4
           test "$(git rev-parse HEAD:tests/capture-navigation.test.cjs)" = 33bb41ee5baa63d34f6f68fa44b66f8aaf5c0c01
           test "$(git rev-parse HEAD:tests/storage-resilience-136.test.mjs)" = e3d35d67f8fb13b2608b0d9e48f14d6ad061df9f
