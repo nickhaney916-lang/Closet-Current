@@ -178,8 +178,9 @@ export async function runHostedTwoOwner169(config,{fetchImpl=fetch,nonce=randomU
   check([401,403,404].includes(attack.status),'cross-owner Storage INSERT unexpectedly succeeded');
   record('cross-owner-storage-write-denied');
   const anonymous=await request169(anon,docsPath(A.id));
+  const anonymousRows=anonymous.status===200?await readJSON169(anonymous,'anonymous backup SELECT'):null;
   check(anonymous.status===401||anonymous.status===403||
-      (anonymous.status===200&&Array.isArray(await anonymous.json())&&(await scopedRows(B,A.id)).length===0),
+      (anonymous.status===200&&Array.isArray(anonymousRows)&&anonymousRows.length===0),
     'anonymous private backup SELECT exposed');
   record('anonymous-backup-read-denied');
   // The Auth server revokes refresh tokens at signout; already-issued JWTs may
