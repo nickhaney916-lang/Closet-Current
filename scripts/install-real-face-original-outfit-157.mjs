@@ -64,7 +64,7 @@ panel=panel.replace(panelImport,panelImport+
 const beforeShade="installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();";
 assert.equal(panel.split(beforeShade).length,2,'P157 donor async 163-bone load source clothing barrier changed');
 panel=panel.replace(beforeShade,
- "installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();if(faceDefinition150)await preloadLicensedSourceHead157(kind);shade(lastColor);front();");
+ "installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();if(faceDefinition150)void preloadLicensedSourceHead157(kind).then(readyHead=>{if(!readyHead||finish||token!==loading||!selected||current!==kind)return;try{shade(lastColor);front();console.info('P157_VERIFIED_LICENCED_HEAD_ON_AUTHENTIC_OWNER_OUTFIT',kind);}catch(e){console.error('P157_RESEARCH_FACE_GRAFT_REFUSED',String(e?.message||e));}});");
 await writeFile(showroom,panel);
 console.log('P157_EXACT_PINNED_LICENCED_SOURCE_HEAD_INSTALLED '+JSON.stringify({
  originalSourceSHA:commit,
