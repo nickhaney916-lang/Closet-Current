@@ -28,11 +28,11 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/p61-files
           while IFS= read -r p; do
             case "$p" in
-              research/photo-dress-anatomical-drape-61/dress-drape.mjs|research/photo-dress-anatomical-drape-61/REPORT.md|research/photo-garment-anatomical-fitting-60/fit-contract.mjs|scripts/install-photo-dress-anatomical-drape-61.mjs|tests/photo-dress-anatomical-drape-61.test.mjs|.github/workflows/photo-dress-anatomical-drape-61-no-deploy.yml) ;;
+              research/photo-dress-anatomical-drape-61/dress-drape.mjs|research/photo-dress-anatomical-drape-61/REPORT.md|research/photo-garment-anatomical-fitting-60/fit-contract.mjs|scripts/install-photo-dress-anatomical-drape-61.mjs|scripts/test-photo-dress-anatomical-drape-61-browser.mjs|tests/photo-dress-anatomical-drape-61.test.mjs|.github/workflows/photo-dress-anatomical-drape-61-no-deploy.yml) ;;
               *) echo "P61 refuses app, shirt, owner data, cloud, staging, production, or parallel branch path: $p"; exit 1 ;;
             esac
           done </tmp/p61-files
-          test "$(wc -l </tmp/p61-files)" -eq 6
+          test "$(wc -l </tmp/p61-files)" -eq 7
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json scripts/build.mjs research/native-3d-05 research/native-photo-anatomical-fit-integration-171
       - name: Run P61 geometry contracts and full inherited Node regression suite
         run: |
@@ -78,11 +78,10 @@ jobs:
           cd ..
           node scripts/install-photo-dress-anatomical-drape-61.mjs .p61-donor
           test "$(git -C .p61-donor rev-parse HEAD)" = "$P541"
-      - name: Render actual skinned dress before and after at six views, two poses and three mobile widths
+      - name: Render isolated P61 before and after on the real skinned P541 dress
         run: |
           cd .p61-donor
-          node scripts/test-three-d-15-browser.mjs
-          node scripts/test-three-d-15-evidence.mjs
+          node scripts/test-photo-dress-anatomical-drape-61-browser.mjs
           node --check research/photo-dress-anatomical-drape-61/dress-drape.mjs
       - name: Upload original photo source, genuine WebGL screenshots and audit results
         if: always()
@@ -93,9 +92,6 @@ jobs:
             .p61-donor/benchmark/work47/manifest.json
             .p61-donor/benchmark/work47/assets/commons-0053.jpg
             .p61-donor/benchmark/work47/assets/commons-0053.png
-            .p61-donor/benchmark/three-d-15/*dress*HOLD.png
-            .p61-donor/research/three-d-15/evidence/female-dress-before-after-HOLD.jpg
-            .p61-donor/research/three-d-15/evidence/male-dress-before-after-HOLD.jpg
-            .p61-donor/research/three-d-15/evidence/results.json
+            .p61-donor/benchmark/photo-dress-drape-61/
           if-no-files-found: warn
           retention-days: 14
