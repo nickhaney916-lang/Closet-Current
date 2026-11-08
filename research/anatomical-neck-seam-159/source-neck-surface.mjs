@@ -121,6 +121,32 @@ function poseRing(root,source,targetY,figure,licensed){
   sampledOriginalSkinnedVertices:points.length,originalRigBones:skelBones,
   sourceY:targetY});
 }
+function originalLicensedSkinNeckMinY(graft,figure){
+ // P157 overall bounding box includes opacity hair primitives. To assert
+ // actual NECK overlap we must measure the real P156 MIT HEAD skin mesh,
+ // never long hair or vendor baked garments.
+ let lowest=Infinity,highest=-Infinity,faces=0,skinnedBones=0;
+ const v=new THREE.Vector3();
+ graft.updateMatrixWorld(true);
+ graft.traverse(o=>{
+  if(!o.isSkinnedMesh||!hasLicensedFace(o,figure))return;
+  if(!o.geometry?.attributes?.position||typeof o.applyBoneTransform!=='function')
+   fail('original licensed head skin source unavailable for neck overlap');
+  skinnedBones=Math.max(skinnedBones,o.skeleton?.bones?.length||0);
+  o.skeleton?.update();o.updateWorldMatrix(true,false);
+  const attr=o.geometry.attributes.position;
+  for(let i=0;i<attr.count;i++){
+   const p=o.applyBoneTransform(i,v.fromBufferAttribute(attr,i))
+    .applyMatrix4(o.matrixWorld);
+   if(![p.x,p.y,p.z].every(finite))fail('licensed face source nonfinite');
+   lowest=Math.min(lowest,p.y);highest=Math.max(highest,p.y);faces++;
+  }
+ });
+ if(skinnedBones!==80||faces<500||!finite(lowest)||!finite(highest))
+  fail('original licensed head face-only 80 bone surface not proven');
+ return Object.freeze({lowestSkinWorldY:lowest,highestSkinWorldY:highest,
+  originalFaceVertices:faces,sourceHeadRigBones:skinnedBones});
+}
 function sourceGarments(root){
  let body=0,garments=0,bones=0;
  root.traverse(o=>{
@@ -155,6 +181,42 @@ export function applySourceMeasuredNeck159(root,figure,context){
   fail('unverified P156 real face palette in anatomy bridge');
  const before=sourceGarments(root);
  const cutoff=mask.cutoff;
+ const originalHeadSkin=originalLicensedSkinNeckMinY(graft,figure);
+ const originalNeckOverlap=cutoff-originalHeadSkin.lowestSkinWorldY;
+ if(originalNeckOverlap>.020){
+  // The first genuine P159 front/side images showed a double artificial
+  // choker/collar beneath the jaw. P156 already carries ORIGINAL skinned
+  // head/neck material well below P157's masked torso cutoff. DO NOT draw
+  // another neck over existing licensed source skin. This is a safe measured
+  // no-op, not evidence that a topological neck weld was achieved.
+  console.info('P159_ORIGINAL_LICENSED_NECK_OVERLAP_NO_DUPLICATE_SURFACE',
+   JSON.stringify({figure,measuredActualSkinOverlapMeters:originalNeckOverlap,
+    originalMITFaceVertices:originalHeadSkin.originalFaceVertices,
+    sourceBodyRigBones:before.bones,originalGarments:before.garments}));
+  return Object.freeze({
+   figure,sourceHeadRigBones:80,originalBodyRigBones:163,
+   originalMITHeadSHA256:candidate.sha256,
+   originalHeadSkinLowerWorldY:originalHeadSkin.lowestSkinWorldY,
+   originalHeadMaskWorldY:cutoff,
+   originalLicensedHeadFaceSkinnedVertices:originalHeadSkin.originalFaceVertices,
+   measuredOriginalNeckOverlapMeters:originalNeckOverlap,
+   noAdditionalGeometryRequired:true,bridgeSkinnedHeadAttached:false,
+   bridgeTriangles:0,upperSourceSkinnedVertices:0,lowerSourceSkinnedVertices:0,
+   gapSpannedMeters:0,
+   originalOwnerPhotographedGarmentMeshesBefore:before.garments,
+   originalOwnerPhotographedGarmentMeshesAfter:before.garments,
+   originalSourceSkinnedBodyMeshesBefore:before.body,
+   originalSourceSkinnedBodyMeshesAfter:before.body,
+   sourceMannequinMeshIndicesReplaced:false,
+   originalLicensedHeadMeshModified:false,
+   originalGarmentOrSourceJPEGPixelsModified:false,
+   physicalNeckTopologyWelded:false,physicalPhoneApproval:false,
+   familyAlpha:'HOLD',releaseAuthorized:false,
+   reason:'MEASURED_ORIGINAL_LICENSED_NECK_OVERLAP_PREVENTS_DUPLICATE_COLLAR'
+  });
+ }
+ // Only if a *genuine uncovered anatomical gap* exists may we sample the
+ // two real neck rings and investigate an independently-owned fitted bridge.
  const topY=cutoff+Math.min(.038,source.h*.125),
   bottomY=cutoff-Math.min(.034,source.h*.12);
  if(![cutoff,topY,bottomY].every(finite)||topY-bottomY<.045||
