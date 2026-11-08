@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exactly inherited verified P157 and six isolated P158 files, no shipping app or photo writes
+      - name: Exactly inherited verified P157 and seven isolated P158 files, no shipping app or photo writes
         run: |
           set -eu
           BASE=1063f0f229b7b7b26e1eebb6c784706ebcc0661c
@@ -38,11 +38,11 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/p158-files
           while IFS= read -r p; do
             case "$p" in
-              research/licensed-face-skin-neck-harmony-158/skin-neck-harmony.mjs|research/licensed-face-skin-neck-harmony-158/REPORT.md|scripts/install-licensed-face-skin-neck-158.mjs|scripts/audit-licensed-face-skin-neck-harmony-158.mjs|tests/licensed-face-skin-neck-harmony-158.test.mjs|.github/workflows/licensed-face-skin-neck-harmony-158-no-deploy.yml) ;;
+              research/licensed-face-skin-neck-harmony-158/skin-neck-harmony.mjs|research/licensed-face-skin-neck-harmony-158/REPORT.md|scripts/install-licensed-face-skin-neck-158.mjs|scripts/audit-pinned-source-face-albedo-158.mjs|scripts/audit-licensed-face-skin-neck-harmony-158.mjs|tests/licensed-face-skin-neck-harmony-158.test.mjs|.github/workflows/licensed-face-skin-neck-harmony-158-no-deploy.yml) ;;
               *) echo "P158 REFUSE shipping app, P157 accepted baseline, wardrobe, staging or production mutation: $p"; exit 1 ;;
             esac
           done </tmp/p158-files
-          test "$(wc -l </tmp/p158-files)" -eq 6
+          test "$(wc -l </tmp/p158-files)" -eq 7
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/real-face-original-photo-body-graft-157 research/rocketbox-wardrobe-separation-156
       - name: P158 reversible source albedo sampler and exact installer syntax; real 163-bone app regression
         run: |
@@ -53,6 +53,7 @@ jobs:
           node --check research/licensed-face-skin-neck-harmony-158/skin-neck-harmony.mjs
           node --check scripts/install-licensed-face-skin-neck-158.mjs
           node --check scripts/audit-licensed-face-skin-neck-harmony-158.mjs
+          node --check scripts/audit-pinned-source-face-albedo-158.mjs
           node --test tests/real-face-original-photo-body-graft-157.test.mjs tests/licensed-face-skin-neck-harmony-158.test.mjs
       - name: Unchanged native app build and entire inherited test suite
         run: |
@@ -170,6 +171,8 @@ jobs:
           node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
           node --check .p150-donor-541/research/dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs
           test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - name: Independently extract and SHA-verify exact real MIT licensed female and male albedo PNGs and original source skin medians
+        run: node scripts/audit-pinned-source-face-albedo-158.mjs
       - name: BEFORE P158 identical accepted P157 authentic licensed head plus original 163-bone owner dress Chromium 320/390/430 female/male front/side/back
         run: |
           P150=1 node scripts/test-native-3d-05-p150-157.mjs
@@ -228,6 +231,7 @@ jobs:
             benchmark/licensed-face-skin-neck-harmony-158/after/screens-*.json
             benchmark/licensed-face-skin-neck-harmony-158/after/native-*.json
             benchmark/licensed-face-skin-neck-harmony-158/audit/acceptance.json
+            benchmark/licensed-face-skin-neck-harmony-158/audit/pinned-verified-face-palettes.json
             benchmark/rocketbox-wardrobe-separation-156/audit/safe-head-extraction.json
             benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
             benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
