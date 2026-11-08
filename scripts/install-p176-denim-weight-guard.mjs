@@ -60,8 +60,8 @@ const finalAudit=[
  "     }else activeInvalidSlots++;",
  "     p176SkinAudits.push({mesh:garmentMesh.name,bones:boneCount,repairedZeroWeightSlots,activeInvalidSlots,weightsChanged:false,positionsChanged:false});",
  "    }",
- "    globalThis.__P176SkinAudits176={slot,audits:p176SkinAudits};
-    if(p176SkinAudits.some(x=>x.repairedZeroWeightSlots||x.activeInvalidSlots)){",
+ "    globalThis.__P176SkinAudits176={slot,audits:p176SkinAudits};",
+ "    if(p176SkinAudits.some(x=>x.repairedZeroWeightSlots||x.activeInvalidSlots)){",
  "     built[slot].stats={...built[slot].stats,p176FinalSkinAudit:p176SkinAudits};",
  "     console.log('P176_FINAL_SKIN_ATTRIBUTE_AUDIT',JSON.stringify({slot,audits:p176SkinAudits}));",
  "    }",
