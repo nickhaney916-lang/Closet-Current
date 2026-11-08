@@ -74,5 +74,5 @@ test('P157 donor installer refuses any real app or parallel source, only copies 
  assert.match(install,/createHash\('sha256'\)/);
  assert.match(install,/faceContours154=applyOriginalFaceContours154/);
  assert.match(install,/licensedHead157=applyLicensedSourceHead157/);
- assert.doesNotMatch(install,/public\/index|public\/app|production|staging.*writeFile/);
+ assert.doesNotMatch(install,/resolve\(donor,'public|resolve\(donor,'supabase|outfit3D01Save/);
 });
