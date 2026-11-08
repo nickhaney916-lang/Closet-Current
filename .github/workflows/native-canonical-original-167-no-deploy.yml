@@ -1,0 +1,124 @@
+name: P167 native original camera JPEG reviewed closet to owned Style real browser — NO DEPLOY
+on:
+  push:
+    branches:
+      - research/native-canonical-closet-style-167-main-20261108-HOLD
+  pull_request:
+    branches:
+      - research/full-application-integration-20261107-HOLD
+    paths:
+      - public/app.js
+      - public/closet-stylist.js
+      - public/style-photo-preview-gate-165.mjs
+      - public/native-*-167.mjs
+      - scripts/test-native-canonical-original-167-browser.mjs
+      - tests/native-canonical-original-167.test.mjs
+      - tests/reviewed-app-capture-closet-120.test.mjs
+      - research/native-canonical-original-167/**
+      - .github/workflows/native-canonical-original-167-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-regression-and-real-app-mobile-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact Work719 parent and strict twelve-file P167 native security and legacy regression check allowlist
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=0eaa99fe1e1a07b253a4ef2b1b5a0dc7192a2a00
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/integration-files
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/closet-stylist.js|public/style-photo-preview-gate-165.mjs|public/native-canonical-photo-source-167.mjs|public/native-original-index-gate-167.mjs|public/native-owner-wardrobe-index-167.mjs|public/native-reviewed-private-save-167.mjs|scripts/test-native-canonical-original-167-browser.mjs|tests/native-canonical-original-167.test.mjs|tests/reviewed-app-capture-closet-120.test.mjs|research/native-canonical-original-167/REPORT.md|.github/workflows/native-canonical-original-167-no-deploy.yml) ;;
+              *) echo "Refusing unrelated, cloud, auth, source-photo, staging or production change: $path"; exit 1 ;;
+            esac
+          done < /tmp/integration-files
+          test "$(wc -l < /tmp/integration-files)" -eq 12
+          git diff --exit-code "$BASE" HEAD -- supabase public/auth.js public/cloud-backup.js public/index.html public/closet-stylist-engine.js scripts/test-style-focused-item-browser.mjs
+      - name: Install isolated pinned test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build the application and prove every canonical source dependency is included in deployable dist
+        run: |
+          node scripts/build.mjs
+          for p in native-canonical-photo-source-167.mjs native-original-index-gate-167.mjs native-owner-wardrobe-index-167.mjs native-reviewed-private-save-167.mjs style-photo-preview-gate-165.mjs; do
+            test -s "dist/$p" || { echo "Missing actual app deployment module: $p"; exit 1; }
+          done
+          node --check dist/native-reviewed-private-save-167.mjs
+          node --check dist/style-photo-preview-gate-165.mjs
+      - name: Run full functional and regression suite
+        run: node --test tests/*.cjs tests/*.mjs
+      - name: Real flag-free mobile app saved gallery JPEG with atomic owner-reviewed source to three outfits and verified 2D original
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Independently audit six distinct original photo UI and six full styled-outfit screenshot receipts
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const base='benchmark/native-canonical-closet-style-167/';
+          const proof=JSON.parse(readFileSync(base+'canonical-original-acceptance.json','utf8'));
+          const native=JSON.parse(readFileSync(base+'results.json','utf8'));
+          assert.equal(proof.priority,167);assert.equal(proof.verdict,'PASS');
+          assert.equal(proof.cases.length,6);assert.equal(native.cases.length,6);
+          assert.equal(proof.sameOriginalSHAInAllSix,true);
+          assert.equal(proof.realFilePickerImport,true);
+          assert.equal(proof.normalFlagFreeAppURL,true);
+          assert.equal(proof.userFacingVerifiedOriginal2D,true);
+          assert.equal(proof.arbitraryGarment3DFitted,false);
+          assert.equal(proof.releaseAuthorized,false);
+          const receipts=[],seen=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const x=proof.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(x);assert.equal(x.mode,'verified-original-photo-2d');
+            assert.equal(x.realNativeUpload,true);
+            for(const suffix of ['native-verified-original-2d','saved-three-owned-looks']){
+              const bytes=readFileSync(base+engine+'-'+width+'-'+suffix+'.png');
+              assert.equal(bytes.subarray(1,4).toString(),'PNG');
+              assert.equal(bytes.readUInt32BE(16),width);
+              assert.ok(bytes.length>8000);
+              const digest=createHash('sha256').update(bytes).digest('hex');
+              assert.ok(!seen.has(digest));seen.add(digest);
+              receipts.push({engine,width,type:suffix,sha256:digest,bytes:bytes.length});
+            }
+          }
+          assert.equal(receipts.length,12);
+          const result={priority:167,verdict:'PASS',actualMobileScreens:12,
+            sixNativeSourceVerifiedOriginal2D:true,
+            threeOwnedOutfitsAndSwapTwoBoardsAfterReload:true,physicalDevice:false,
+            hostedCloudTwoOwners:false,newBlouse3DFitted:false,
+            familyAlpha:'HOLD',releaseAuthorized:false,evidence:receipts};
+          writeFileSync(base+'independent-audit.json',JSON.stringify(result,null,2));
+          console.log('P167_REAL_FLAG_FREE_ORIGINAL_OWNER_PHOTO_APP_12_BROWSER_SCREENS_PASS '+JSON.stringify({
+            screens:12,engines:['chromium','webkit'],widths:[320,390,430],familyAlpha:'HOLD'}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P167-native-original-private-review-3-looks-original-2D-12-browser-screens-HOLD
+          path: |
+            benchmark/native-canonical-closet-style-167/results.json
+            benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+            benchmark/native-canonical-closet-style-167/independent-audit.json
+            benchmark/native-canonical-closet-style-167/failure.json
+            benchmark/native-canonical-closet-style-167/*.png
+          if-no-files-found: ignore
+          retention-days: 14

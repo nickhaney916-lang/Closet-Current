@@ -17,8 +17,57 @@ window.addEventListener('closet:session-locked',()=>{
  $('stylistFocusItem').replaceChildren(new Option('Use my whole closet',''));
  styledCollectionResults=[];renderStyledCollection();
 });
+// P167 research integration: signed original photo preview is part of the
+// normal Style My New Clothes card rendering in this isolated app branch.
+// No arbitrary-photo 3D garment is substituted or claimed.
+let originalPhotoPreview167=null,originalPhotoMountSerial167=0;
+function currentPhotoOwnerSession167(){
+ const a=window.closetAuth;
+ a?.assertCurrent?.();
+ let token=null;
+ try{token=JSON.parse(localStorage.getItem('closet-current-auth-v1')||'null');}catch{}
+ return {authenticated:!!a?.user?.id&&$('authGate')?.hidden===true&&$('appShell')?.hidden===false,
+  ownerId:a?.user?.id,epoch:token?.epoch,privateDbName:db?.name};
+}
+async function signedOwnerSavedRows167(){
+ const start=currentPhotoOwnerSession167();
+ if(!start.authenticated||start.privateDbName!=='closet-current-user-'+start.ownerId||!start.epoch)
+  throw Error('Private owner session is unavailable');
+ const saved=await readAll();
+ const end=currentPhotoOwnerSession167();
+ if(!end.authenticated||start.ownerId!==end.ownerId||start.epoch!==end.epoch||
+   start.privateDbName!==end.privateDbName)
+  throw Error('Owner changed while reading private saved garments');
+ return saved;
+}
+async function mountOriginalPhotoPreview167(){
+ const ticket=++originalPhotoMountSerial167;
+ originalPhotoPreview167?.dispose();
+ originalPhotoPreview167=null;
+ if(!styledCollectionResults.some(x=>!!x?.focusItemId))return;
+ try{
+  const mod=await import('./style-photo-preview-gate-165.mjs');
+  if(ticket!==originalPhotoMountSerial167)return;
+  const viewer=mod.createStyledOwnerPhotoPreview165({
+    grid:$('styledCollectionResults'),
+    readResults:()=>styledCollectionResults,
+    readOwnerItems:signedOwnerSavedRows167,
+    getSession:currentPhotoOwnerSession167,
+    events:window
+  });
+  if(ticket!==originalPhotoMountSerial167){viewer.dispose();return;}
+  viewer.mount();
+  originalPhotoPreview167=viewer;
+ }catch{
+  if(ticket===originalPhotoMountSerial167&&styledCollectionResults.length)
+   $('stylistStatus').textContent='Outfits are ready. Original clothing photo preview is unavailable in this session; sign in and try again.';
+ }
+}
 function renderStyledCollection(){
- const grid=$('styledCollectionResults');grid.replaceChildren();
+ const grid=$('styledCollectionResults');
+ ++originalPhotoMountSerial167;
+ originalPhotoPreview167?.dispose();originalPhotoPreview167=null;
+ grid.replaceChildren();
  $('stylistFreshness').textContent=trendFreshnessText();
  for(const [index,result]of styledCollectionResults.entries()){
   const board=cleanOutfitBoard(result.board,items),changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length;
@@ -40,6 +89,7 @@ function renderStyledCollection(){
   save.onclick=async()=>{save.disabled=true;const status=node('p',null,'fine');card.append(status);try{await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');const saved=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);savedOutfitBoards.push(saved);try{await persistBoardState();}catch(error){savedOutfitBoards.pop();throw error;}status.textContent='Saved. Find it in Outfit builder → Saved outfits.';save.textContent='Saved';renderSavedOutfitBoards();}catch(error){status.textContent=error.message||'Could not save this outfit.';save.disabled=false;}};
   actions.append(edit,save);card.append(actions);grid.append(card);
  }
+ void mountOriginalPhotoPreview167();
 }
 $('styleCollectionForm').onsubmit=async event=>{
  event.preventDefault();const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
