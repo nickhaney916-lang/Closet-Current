@@ -1,0 +1,110 @@
+name: P172 source photographed shirt torso physical geometry research NO DEPLOY
+on:
+  push:
+    branches:
+      - research/source-photo-physical-torso-fit-172-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  strict-parent-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P170 parent, five-file research-only allowlist
+        run: |
+          set -eu
+          BASE=76315c4c08274a510c55bade91e76f1db89a129a
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p172-files
+          while IFS= read -r p; do
+            case "$p" in
+              research/photo-torso-contour-172/torso-contour.mjs|research/photo-torso-contour-172/REPORT.md|scripts/install-photo-torso-contour-172.mjs|tests/photo-torso-contour-172.test.mjs|.github/workflows/photo-torso-contour-172-no-deploy.yml) ;;
+              *) echo "P172 refuses nonresearch garment, cloud, production or parallel modification: $p"; exit 1 ;;
+            esac
+          done </tmp/p172-files
+          test "$(wc -l </tmp/p172-files)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json scripts/build.mjs research/native-3d-05 research/native-photo-anatomical-fit-integration-171
+          node --check research/photo-torso-contour-172/torso-contour.mjs
+          node --check scripts/install-photo-torso-contour-172.mjs
+      - name: Install only pinned CI dev dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Exercise physical front-torso mesh, source safety and installer tests
+        run: node --test tests/photo-torso-contour-172.test.mjs
+      - name: Build unchanged app and execute entire inherited Node suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.cjs tests/*.mjs
+  real-chromium-original-photo-163-bone-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned real WebGL browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2 fake-indexeddb@6.2.4
+      - name: Reconstruct genuine P541 and P60 only in detached worktrees
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          P60=6fe5e46b91533a96f3c0d86950ea077cb355c459
+          git fetch --no-tags origin "$P541" "$P60"
+          git worktree add --detach .p172-donor-541 "$P541"
+          git worktree add --detach .p172-p60 "$P60"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p172-donor-541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p172-p60"
+          test "$(git -C .p172-donor-541 rev-parse HEAD)" = "$P541"
+          test "$(git -C .p172-p60 rev-parse HEAD)" = "$P60"
+          ln -s ../node_modules .p172-donor-541/node_modules
+          ln -s ../node_modules .p172-p60/node_modules
+          cd .p172-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Install P60 proven real-photo PBR followed by P172 physical shirt contour, do not edit saved sources
+        run: |
+          set -eu
+          cd .p172-p60
+          node scripts/install-photo-cloth-realism-164.mjs ../.p172-donor-541
+          cd ..
+          node scripts/install-photo-torso-contour-172.mjs .p172-donor-541
+          node --check .p172-donor-541/research/three-d-15/outfit-controller.mjs
+          node --check .p172-donor-541/scripts/test-three-d-15-browser.mjs
+          test "$(git -C .p172-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          test "$(git -C .p172-p60 rev-parse HEAD)" = 6fe5e46b91533a96f3c0d86950ea077cb355c459
+      - name: Actual original sourced physical shirt 163-bone real WebGL acceptance at 320 390 430
+        run: |
+          cd .p172-donor-541
+          node scripts/test-three-d-15-browser.mjs
+          node scripts/test-three-d-15-evidence.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P172-true-original-photo-rigged-shirt-contour-3D-mobile-HOLD
+          path: |
+            .p172-donor-541/benchmark/three-d-15/
+            .p172-donor-541/research/three-d-15/evidence/
+            .p172-donor-541/benchmark/work47/manifest.json
+          retention-days: 14
+          if-no-files-found: warn
