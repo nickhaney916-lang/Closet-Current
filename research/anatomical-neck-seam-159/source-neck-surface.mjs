@@ -50,8 +50,32 @@ function poseRing(root,source,targetY,figure,licensed){
      !o.geometry?.attributes?.position)fail('original posed surface unavailable');
   skelBones=Math.max(skelBones,o.skeleton.bones.length);
   o.skeleton.update();o.updateWorldMatrix(true,false);meshes++;
-  const attr=o.geometry.attributes.position;
+  const attr=o.geometry.attributes.position,
+   indices=o.geometry.attributes.skinIndex,
+   weights=o.geometry.attributes.skinWeight;
+  // Torso meshes include thousands of shoulder, chest and *back* vertices
+  // near the collar height, many distributed behind the actual neck joint.
+  // Those broad torso samples gave a spurious 16.2 cm depth mismatch in the
+  // first real Chromium P159 run. Restrict donor samples to vertices actually
+  // weighted to the ORIGINAL neck/head joints, not a bounding-box median of
+  // the entire chest or a guessed front-facing cylinder.
+  const neckJoints=new Set();
+  if(!licensed){
+   if(!indices||!weights)fail('original body skin weights missing');
+   o.skeleton.bones.forEach((b,i)=>{
+    if(/neck|head/i.test(b.name||''))neckJoints.add(i);
+   });
+   if(!neckJoints.size)fail('original 163-bone neck joint names unavailable');
+  }
   for(let i=0;i<attr.count;i++){
+   if(!licensed){
+    let jointWeight=0;
+    for(let k=0;k<4;k++){
+     const bone=Math.round(indices.getComponent(i,k));
+     if(neckJoints.has(bone))jointWeight+=weights.getComponent(i,k);
+    }
+    if(jointWeight<.12)continue;
+   }
    const v=o.applyBoneTransform(i,tmp.fromBufferAttribute(attr,i))
     .applyMatrix4(o.matrixWorld);
    if(![v.x,v.y,v.z].every(finite))fail('nonfinite original skinned vertex');
@@ -66,9 +90,14 @@ function poseRing(root,source,targetY,figure,licensed){
  if(points.length<6)fail('no measured original collar/neck ring at '+targetY.toFixed(5)+' ('+
   (licensed?'MIT head':'original body')+' sampled='+points.length+')');
  const xs=points.map(p=>p[0]),zs=points.map(p=>p[2]);
- const midX=quantile(xs,.5),midZ=quantile(zs,.5);
- const xRadius=(quantile(xs,.91)-quantile(xs,.09))*.5;
- const zRadius=(quantile(zs,.91)-quantile(zs,.09))*.5;
+ // The original neck cross-section is a closed skin surface. Using a
+ // vertex-frequency median biases depth toward denser back-side triangles;
+ // a bounded 10th/90th percentile *outline midpoint* is a stable geometric
+ // center of the physical ring rather than a topology-density histogram.
+ const lowX=quantile(xs,.09),highX=quantile(xs,.91),
+  lowZ=quantile(zs,.09),highZ=quantile(zs,.91);
+ const midX=(lowX+highX)*.5,midZ=(lowZ+highZ)*.5;
+ const xRadius=(highX-lowX)*.5,zRadius=(highZ-lowZ)*.5;
  if(![midX,midZ,xRadius,zRadius].every(finite))
   fail('original source collar radii not finite');
  // The original sampled head bounding center includes the protruding nose,
@@ -140,6 +169,11 @@ export function applySourceMeasuredNeck159(root,figure,context){
  // unrelated whole-head bounding-box centers. Large head/body misalignment
  // must still be refused, never hidden with a guessed artificial collar.
  const ringCenterDistance=Math.hypot(upper.x-lower.x,upper.z-lower.z);
+ console.info('P159_ORIGINAL_NECK_JOINT_WEIGHTED_RING_MEASURED',
+  JSON.stringify({figure,
+   upper:{x:upper.x,z:upper.z,rx:upper.rx,rz:upper.rz,samples:upper.sampledOriginalSkinnedVertices},
+   lower:{x:lower.x,z:lower.z,rx:lower.rx,rz:lower.rz,samples:lower.sampledOriginalSkinnedVertices},
+   actualNeckRingDistance: ringCenterDistance,worldCutoffY:cutoff}));
  if(!finite(ringCenterDistance)||ringCenterDistance>.125||
     Math.abs(upper.x-lower.x)>.095)
   fail('independently measured MIT neck and original torso rings do not meet '+
