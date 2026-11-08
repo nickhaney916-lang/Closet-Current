@@ -55,6 +55,7 @@ const native92=process.env.NATIVE92==='1';
 const native93=process.env.NATIVE93==='1';
 const native102=process.env.NATIVE102==='1';
 const photoFit171=process.env.PHOTO_FIT171==='1';
+const photoTorso173=process.env.PHOTO_TORSO173==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -83,7 +84,10 @@ function fixture(owner){
     {id:owner+'-missing-saved',outfit3dId:owner+'-missing-3D',
      ownerId:owner,name:'Missing lower garment',
      slots:{top:owner+'-shirt',bottom:owner+'-lost-denim',shoes:owner+'-shoes'},
-     futureSourceKeys:{ver:2}}],
+     futureSourceKeys:{ver:2}},
+    {id:owner+'-shirt-saved',outfit3dId:owner+'-verified-shirt-3D',
+     ownerId:owner,name:'Source-true original photographed shirt',
+     slots:{top:owner+'-shirt'},futureSourceKeys:{ver:3}}],
    futureBoardVersion:'never-drop'}
  };
 }
@@ -159,7 +163,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -545,6 +549,48 @@ try{
      realSignedCloudRLS:false,releaseAuthorized:false,familyAlpha:'HOLD'
     },null,2)+'\n');
   }
+  if(photoTorso173){
+   // THE ACTUAL saved owner shirt from the consumer board, not a donor-created
+   // fake selection. P171 and P173 must be present on the loaded P541 model.
+   await page.evaluate(()=>window.native3D05Bridge.close());
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await page.locator('#savedBoards button').nth(2).click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),2);
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>
+    window.native3D05Bridge?.state().photoSourceTorso173===true ||
+    document.getElementById('native3D05Status')?.textContent.includes('P173 original photographed shirt geometry unavailable'),
+    null,{timeout:150000});
+   const shirtState=await page.evaluate(()=>window.native3D05Bridge.state());
+   const fitStatus=await page.evaluate(()=>
+    document.getElementById('native3D05Status')?.textContent||'no source-fit status');
+   assert.equal(shirtState.photoSourceTorso173,true,
+    'P173 actual native owner shirt source geometry missing: '+fitStatus);
+   assert.equal(shirtState.photoSourceFit171,true);
+   assert.equal(shirtState.viewerMode,'shirt');
+   assert.equal(shirtState.bones,163);
+   assert.ok(shirtState.physicalShirtVertices173>30,
+    'Must physically reshape original skinned mesh, not a shader or screenshot');
+   assert.ok(shirtState.physicalShirtMaxMoveMeters173>=.006&&
+    shirtState.physicalShirtMaxMoveMeters173<=.0201);
+   assert.equal(shirtState.ownerPhoto3DArbitraryFittingApproved,false);
+   assert.equal(shirtState.photorealismApproved,false);
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),1,
+    'Actual signed owner photographed shirt must remain visible');
+   assert.equal(await page.locator('#outfit3D01Save').isDisabled(),true);
+   await page.locator('#outfit3D01Front').click();
+   await take(page,width,'06-owner-physical-shirt-front');
+   await page.locator('#outfit3D01Side').click();
+   await take(page,width,'07-owner-physical-shirt-side');
+   await page.locator('#outfit3D01Back').click();
+   await take(page,width,'08-owner-shirt-neutral-inferred-rear');
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await page.evaluate(()=>window.native3D05Bridge.close());
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().photoSourceTorso173),false);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
+   await page.locator('#savedBoards button').first().click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+  }
   // Explicit scene close must NOT invalidate still-signed-in consumer editor.
   await page.evaluate(()=>window.native3D05Bridge.close());
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -581,7 +627,9 @@ try{
   assert.deepEqual(await readBoard(page),bStored);
   cases.push({width,realNativeBuilder:true,exactSourceDonorPR541:true,
    ...(native88?{staleSelectionBlocked88:width===390?staleSelectionBlocked88:'not-tested-in-this-viewport'}:{}),
-   authenticPhotoSourcedDress3D:true,bones:163,renderedGenuineMeshes:state.meshCount,
+   authenticPhotoSourcedDress3D:true,
+   ...(photoTorso173?{actualSignedOwnerSourceShirtPhysicallyContoured173:true}:{}),
+   bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,
    sessionLogoutClears3D:true,consumerStillActiveAfterViewerClose:true,
@@ -597,11 +645,11 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,15);
+ assert.equal(cases.length,3);assert.equal(screens.length,photoTorso173?24:15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:'NATIVE-3D-05',cases:3,screenshots:15,
+ const result={priority:'NATIVE-3D-05',cases:3,screenshots:photoTorso173?24:15,
   browser:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
