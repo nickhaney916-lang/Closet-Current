@@ -2,14 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {readFileSync} from 'node:fs';
-import {verifyOwnerSavedPhoto165} from '../public/style-photo-preview-gate-165.mjs';
+import {verifyOwnerSavedPhoto165,verifyLegacySavedPhoto165} from '../public/style-photo-preview-gate-165.mjs';
 const bytes=Buffer.alloc(256,42), original='data:image/jpeg;base64,'+bytes.toString('base64');
 const id='owner-review-165-private',epoch='verified-session-165';
 const sha=createHash('sha256').update(bytes).digest('hex');
 const item=()=>({id:'new-owner-blouse',ownerId:id,name:'New reviewed blouse',category:'Tops',
  itemType:'Blouse',sourcePhotoOriginal:true,sourceHashVerified:true,sourceSHA256:sha,
  image:original,originalPhoto:{image:original,sha256:sha},userAdjusted:true,ownerReviewed:true});
-const run=({row=item(),current=item(),getSession=()=>({authenticated:true,ownerId:id,epoch}),
+const run=({row=item(),current=item(),getSession=()=>({authenticated:true,ownerId:id,epoch,privateDbName:'closet-current-user-'+id}),
   readOwnerItems=()=>[current]}={})=>
  verifyOwnerSavedPhoto165({item:row,getSession,readOwnerItems});
 test('P165 real original SHA256 bytes accepted only for currently authenticated, saved, reviewed owner source photo',async()=>{
@@ -43,21 +43,22 @@ test('P165 rejects fake source JPEG bytes, invalid data schemes and unverified c
  await assert.rejects(run({row:y}),/unavailable as a verified local image/);
 });
 test('P165 rejects actual owner revocation, changed epoch, deleted saved item, and stale source after async hash',async()=>{
- await assert.rejects(run({getSession:()=>({authenticated:false,ownerId:id,epoch})}),/Sign in/);
+ await assert.rejects(run({getSession:()=>({authenticated:false,ownerId:id,epoch,privateDbName:'closet-current-user-'+id})}),/Sign in/);
  await assert.rejects(run({readOwnerItems:()=>[]}),/changed during/);
  const changed=item();changed.sourceSHA256='f'.repeat(64);
  await assert.rejects(run({readOwnerItems:()=>[changed]}),/changed during/);
  let i=0;
- await assert.rejects(run({getSession:()=>({authenticated:true,ownerId:id,epoch:++i>1?'new-epoch':epoch})}),/Account changed/);
+ await assert.rejects(run({getSession:()=>({authenticated:true,ownerId:id,epoch:++i>1?'new-epoch':epoch,privateDbName:'closet-current-user-'+id})}),/Account changed/);
 });
 test('P165 source verified UI has accessible photo-only original output, never a fake Three.js fit, secure text insertion, handles owner lock/review changes',()=>{
  const s=readFileSync('public/style-photo-preview-gate-165.mjs','utf8');
- for(const marker of ['See original photo (2D)','3D fitting is not yet verified',
+ for(const marker of ['See saved photo (2D)','3D fitting is not yet verified',
   'No generic garment has been substituted','aria-label','aria-live',
   'closet:session-locked','closet:style-owned-inventory-committed',
   'crypto.subtle.digest','readOwnerItems','sourcePhotoOriginal',
   "presentationMode:'verified-original-photo-2d'","garmentActuallyFittedIn3D:false",
-  'originalPhoto?.image||item.image','same(start,requireLive(getSession))'])
+  'originalPhoto?.image||item.image','same(start,requireLive(getSession))',
+  'saved-photo-unverified-original-2d','original-camera image provenance is not independently verified'])
   assert.ok(s.includes(marker),'signed original photo UI missing '+marker);
  assert.equal(s.includes('innerHTML'),false,'never inject garment names or photo URLs as unsafe HTML');
  assert.equal(s.includes('new THREE.'),false,'never fabricate a generic 3D garment');
@@ -67,7 +68,7 @@ test('P165 scratch full-app Work source browser runner injects genuine owner pho
  for(const marker of ['assert.equal(generated.selected,focusedId)',
   "await card.getByRole('button',{name:'Save outfit'}).click();",
   "await page.locator('#saveBoard').click();",
-  "See original photo (2D)","mod.createStyledOwnerPhotoPreview165",
+  "See saved photo (2D)","mod.createStyledOwnerPhotoPreview165",
   'wrongOwnerRejected','sourceTamperingRejected','unreviewedRejected',
   'revokedSessionRejected','window.__P165.dispose()',
   'verified-original-2d.png','benchmark/style-photo-preview-165/results.json'])
@@ -95,4 +96,28 @@ test('P165 no deploy CI strict six new research files; exact P164 parent, exact 
   'benchmark/style-photo-preview-165/',
   'test -z "$(git ls-files -u)"'])
   assert.ok(s.includes(marker),'strict product source or no-deploy P165 evidence missing '+marker);
+});
+
+test('P165 legacy standard-app owner-scoped saved photo visibly loads only as original-source-UNVERIFIED 2D and computes ephemeral bytes SHA',async()=>{
+ const legacy={id:'new-reviewed-blouse',name:'New reviewed blouse',userAdjusted:true,category:'Tops',itemType:'Blouse',image:original};
+ const g=()=>({authenticated:true,ownerId:id,epoch,privateDbName:'closet-current-user-'+id});
+ const r=await verifyLegacySavedPhoto165({item:legacy,getSession:g,readOwnerItems:()=>[legacy]});
+ assert.equal(r.presentationMode,'saved-photo-unverified-original-2d');
+ assert.equal(r.sourceSHA256,sha);
+ assert.equal(r.originalSourceIndependentlyVerified,false);
+ assert.equal(r.privateOwnerDatabaseVerified,true);
+ assert.equal(r.garmentActuallyFittedIn3D,false);
+});
+test('P165 legacy photo source cannot escape signed owner db, review, or photo-change identity',async()=>{
+ const legacy={id:'new-reviewed-blouse',userAdjusted:true,category:'Tops',image:original};
+ const auth=()=>({authenticated:true,ownerId:id,epoch,privateDbName:'closet-current-user-'+id});
+ const verify=(item,session=auth,read=()=>[item])=>verifyLegacySavedPhoto165({item,getSession:session,readOwnerItems:read});
+ await assert.rejects(verify({...legacy,ownerId:'another-account'}),/owner wardrobe/);
+ await assert.rejects(verify({...legacy,userAdjusted:false}),/owner wardrobe/);
+ await assert.rejects(verify({...legacy,sourceSHA256:'f'.repeat(64)}),/owner wardrobe/);
+ await assert.rejects(verify({...legacy,image:'https://other.example/fake.jpg'}),/local JPEG or PNG/);
+ await assert.rejects(verify(legacy,()=>({authenticated:true,ownerId:id,epoch,privateDbName:'closet-current-user-other'})),/Sign in/);
+ await assert.rejects(verify(legacy,auth,()=>[]),/changed while checking/);
+ let c=0;
+ await assert.rejects(verify(legacy,()=>({authenticated:true,ownerId:id,epoch:++c>1?'new':epoch,privateDbName:'closet-current-user-'+id})),/Account changed/);
 });
