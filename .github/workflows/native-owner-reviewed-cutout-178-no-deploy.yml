@@ -97,7 +97,13 @@ jobs:
           assert.equal(r.liveSignedJWTVerified,false);
           assert.equal(r.physicalPhoneVerified,false);
           assert.equal(r.familyAlpha,'HOLD');
-          assert.deepEqual(r.errors,[]);
+          // P146 verifies server.errors===[] and browser pageErrors===[] inside
+          // the real test before publishing evidence. Its RESULT has no
+          // top-level errors field. External font/trend requests are BLOCKED
+          // rather than emitted as successful network traffic.
+          assert.ok(Array.isArray(r.server.blockedExternalHosts));
+          assert.ok(r.server.blockedExternalHosts.every(x=>
+           x==='fonts.googleapis.com'||x==='raw.githubusercontent.com'));
           assert.equal(r.server.uploads,12);
           assert.ok(r.server.storageReads>=12);
           assert.ok(r.server.foreignDenied>=6);
