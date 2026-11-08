@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 8801)
+Total output lines: 432
+
 name: P164 PHOTOGRAPHED CLOTH PBR AND SIX VIEW REAL WEBGL NO DEPLOY
 on:
   push:
@@ -195,42 +198,7 @@ jobs:
           s=s.replaceAll(gate,"  console.log('P157_REAL_OUTFIT_PREVIEW_GATE',JSON.stringify(await page.evaluate(()=>({state:window.native3D05Bridge?.state?.(),status:document.getElementById('outfit3D01Status')?.textContent,nativeStatus:document.getElementById('native3D05Status')?.textContent,builderStatus:document.getElementById('outfit3D01Status')?.textContent,appMessage:document.getElementById('message')?.textContent,model:document.getElementById('outfit3D01Canvas')?.dataset?.model}))));\n"+gate);
           writeFileSync(f,s);
           NODE
-          node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-541
-          node scripts/install-dual-humanoid-face-131.mjs .p150-donor-541
-          node scripts/install-dual-humanoid-photorealistic-integration-150.mjs .p150-donor-541
-          node scripts/install-dual-humanoid-visible-skin-152.mjs .p150-donor-541
-          node scripts/install-dual-humanoid-head-hair-153.mjs .p150-donor-541
-          node scripts/install-dual-humanoid-facial-contours-154.mjs .p150-donor-541
-          node --check scripts/test-native-3d-05-p150-157.mjs
-          test "$(git -C .p150-donor-541 rev-parse HEAD)" = "$P541"
-          ln -s .p150-donor-541 .native05-donor-541
-      - name: Download exact original MIT-licensed male/female GLBs into disposable CI and physically rebuild verified textured HEAD + HAIR with no source clothing
-        run: |
-          set -eu
-          SRC=https://raw.githubusercontent.com/927tanmay/react-ai-voice-avatar/fc1398c2f8ba600c3676a5277684ed4f3e2731d7/assets/avatars
-          mkdir -p benchmark/dual-human-foundation-candidate-155/assets
-          for f in ananya.glb aarav.glb; do
-            curl --fail --silent --show-error --location --retry 3 --max-time 180 "$SRC/$f" -o "benchmark/dual-human-foundation-candidate-155/assets/$f"
-          done
-          curl --fail --silent --show-error --location --retry 3 --max-time 50 "$SRC/LICENSE.md" -o benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
-          curl --fail --silent --show-error --location --retry 3 --max-time 50 https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/LICENSE.md -o benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
-          grep -q "Male_Adult_04" benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
-          grep -q "Female_Adult_07" benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
-          grep -q "MIT License" benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
-          node research/rocketbox-wardrobe-separation-156/analyze-source-anatomy.mjs
-          node research/rocketbox-wardrobe-separation-156/extract-source-head.mjs
-          node scripts/install-real-face-original-outfit-157.mjs .p150-donor-541
-          node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
-          node --check .p150-donor-541/research/dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs
-          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-      - name: Independently extract and SHA-verify exact real MIT licensed female and male albedo PNGs and original source skin medians
-        run: node scripts/audit-pinned-source-face-albedo-158.mjs
-      - name: Apply P158 actual licensed face-albedo tone only to disposable original 163-bone source skin
-        run: |
-          node scripts/install-licensed-face-skin-neck-158.mjs .p150-donor-541
-          node --check .p150-donor-541/research/licensed-face-skin-neck-harmony-158/skin-neck-harmony.mjs
-          node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
-          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-…801 tokens truncated… test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
       - name: Install actual P159 source-registered reversible neck bridge ONLY on detached 163-bone owner outfit figure
         run: |
           node scripts/install-anatomical-neck-seam-159.mjs .p150-donor-541
@@ -376,7 +344,10 @@ jobs:
           cp benchmark/outfit-view-360-160/views-*.json benchmark/photo-cloth-realism-164/before/
           test "$(find benchmark/photo-cloth-realism-164/before -name '*.png' | wc -l)" -eq 36
           mkdir -p benchmark/photo-cloth-realism-164/webkit-before
-          P150=1 P160=1 P150_BROWSER=webkit P160_OUT_DIR=benchmark/photo-cloth-realism-164/webkit-before P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          P150=1 P160=1 P150_BROWSER=webkit P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          cp benchmark/outfit-view-360-160/*.png benchmark/photo-cloth-realism-164/webkit-before/
+          cp benchmark/outfit-view-360-160/views-*.json benchmark/photo-cloth-realism-164/webkit-before/
+          test "$(find benchmark/photo-cloth-realism-164/webkit-before -name '*.png' | wc -l)" -eq 36
           node /tmp/P716-original-verified-six-camera-audit.mjs benchmark/photo-cloth-realism-164/webkit-before
           node scripts/install-photo-cloth-realism-164.mjs .p150-donor-541
           node --check .p150-donor-541/research/photo-cloth-realism-164/pbr-fabric.mjs
@@ -395,7 +366,10 @@ jobs:
           cp benchmark/outfit-view-360-160/*.png benchmark/photo-cloth-realism-164/after/
           cp benchmark/outfit-view-360-160/views-*.json benchmark/photo-cloth-realism-164/after/
           mkdir -p benchmark/photo-cloth-realism-164/webkit-after
-          P150=1 P160=1 P150_BROWSER=webkit P160_OUT_DIR=benchmark/photo-cloth-realism-164/webkit-after P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          P150=1 P160=1 P150_BROWSER=webkit P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          cp benchmark/outfit-view-360-160/*.png benchmark/photo-cloth-realism-164/webkit-after/
+          cp benchmark/outfit-view-360-160/views-*.json benchmark/photo-cloth-realism-164/webkit-after/
+          test "$(find benchmark/photo-cloth-realism-164/webkit-after -name '*.png' | wc -l)" -eq 36
           node /tmp/P716-original-verified-six-camera-audit.mjs benchmark/photo-cloth-realism-164/webkit-after
           node scripts/audit-photo-cloth-realism-164.mjs
       - uses: actions/upload-artifact@v4
