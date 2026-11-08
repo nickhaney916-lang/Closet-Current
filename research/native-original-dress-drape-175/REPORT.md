@@ -1,0 +1,15 @@
+# CLOSET CURRENT — MAIN PRIORITY #175 (Family Alpha HOLD)
+
+## Independently verified source to real owner-saved 3D physical dress integration
+
+**Strict context:** Main P174 exact verified parent `267dd4e35cd5f68707e128b661ca5a0e7075b951` (PR #734, all 3 no-deploy CI passed, 1,359/1,359 Node tests). Parallel #61 exact verified SHA `e091afeac14534bc6af4762fd5e250ec688a775e` from PR #733, two CI jobs passed, 120 genuine WebGL visual screenshots (female+male); exact original P61 dress module Git blob **`9d795a439eb3491e8f1d1f95873a8bcb7cc27bf6`**. P541 163-bone anatomical donor, P60 source original photo fitting, P172+P173 physical shirt torso and P174 bilateral shoulder preserved.
+
+**Implementation:** The *actual signed owner selected native source saved-outfit viewer* (not the standalone research showroom) receives Parallel #61's physical photographed-dress shaping, triggered only by explicit `photoDress175=research`. P61 original source code installed from pinned Git blob, no modifications to its original research branch. It remeasures anatomical torso sections, physically shapes bodice by at most 12.9mm and adds seven-pleat soft side/rear skirt relief within an independently bounded 18.97mm net displacement and 6mm hem fall. Original Commons licensed garment photo SHA, UV/dressRest, original skin indices and weights, base 163-bone rig and front center source photo are untouched. Back texture is *INFERRED neutral*, not original photography. No persistent writes or new database interfaces.
+
+P175 native source admission requires: existing owner ID and currently selected original saved item ID, read-only wardrobe photo SHA, P171 exact original photo/P60 skinned source/P164 PBR proof and P61 actual moved bodice and skirt vertex counts, bounded maxima, source/UV/rest/skin/material preservation receipts. After proof, the bridge re-hashes original JPEG bytes, revalidates current owner session/outfit and only then presents an authentic P175 physical dress source-ready signal. Dresses only — shirt remains P173+P174, unsupported owner photos stay honest 2D.
+
+**Independent no-deploy acceptance:** strict 9-research-path exact P174 parent; 8 focused source/owner adversarial tests and complete inherited Node suite; baseline P174 original 163-bone saved dress and P175 modified native scene at 320, 390, 430 CSS pixels in Chromium with genuine front, side, inferred rear screenshot pixel pairs; 48 independently source-SHA-checked screenshot images, new side/rear visible pixel delta requirement; unchanged everyday privately reviewed original JPEG→closet→three owned looks→original 2D fallback in Chromium + WebKit at 320/390/430 with 12 SHA-checked images.
+
+**Not in scope:** arbitrary user's new-camera photo→3D reconstruction, true photographed back, automatic human fit/collision simulation, real phone acceptance, hosted Supabase two-owner RLS, 10/10 photorealism, independent human approval or production/staging/Family Alpha release. Every path remains on isolated unmerged draft branch, no merges/deployments.
+
+**Status: implementation provided; exact-head CI must finish before calling #175 complete.**

@@ -57,6 +57,7 @@ const native102=process.env.NATIVE102==='1';
 const photoFit171=process.env.PHOTO_FIT171==='1';
 const photoTorso173=process.env.PHOTO_TORSO173==='1';
 const photoSleeve174=process.env.PHOTO_SLEEVE174==='1';
+const photoDress175=process.env.PHOTO_DRESS175==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -164,7 +165,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -279,7 +280,33 @@ try{
     document.getElementById('native3D05Status')?.textContent.includes('P171 source-bound'),
     null,{timeout:30000});
   }
+  if(photoDress175){
+   // Actual signed owner board opens the already saved original dress,
+   // never constructs a generic fake owner photo garment.
+   await page.waitForFunction(()=>
+    window.native3D05Bridge?.state().photoSourceDress175===true||
+    document.getElementById('native3D05Status')?.textContent.includes(
+     'P175 original photographed dress bodice/skirt 3D unavailable'),
+    null,{timeout:30000});
+  }
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
+  if(photoDress175){
+   const originalDressStatus=await page.evaluate(()=>
+    document.getElementById('native3D05Status')?.textContent||'no status');
+   assert.equal(state.photoSourceDress175,true,
+    'P175 genuine original physical dress was not fitted in native saved 3D: '+originalDressStatus);
+   assert.equal(state.photoSourceFit171,true);
+   assert.equal(state.viewerMode,'dress');
+   assert.equal(state.bones,163);
+   assert.ok(state.physicalDressBodiceVertices175>=100);
+   assert.ok(state.physicalDressSkirtVertices175>=100);
+   assert.ok(state.physicalDressMaxBodiceMeters175>=.001&&
+    state.physicalDressMaxBodiceMeters175<=.0129001);
+   assert.ok(state.physicalDressMaxSkirtMeters175>=.001&&
+    state.physicalDressMaxSkirtMeters175<=.01905);
+   assert.equal(state.photorealismApproved,false);
+   assert.equal(state.ownerPhoto3DArbitraryFittingApproved,false);
+  }
   if(photoFit171){
    const reason171=await page.evaluate(()=>document.getElementById('native3D05Status')?.textContent||'no status');
    assert.equal(state.photoSourceFit171,true,
@@ -658,6 +685,7 @@ try{
    authenticPhotoSourcedDress3D:true,
    ...(photoTorso173?{actualSignedOwnerSourceShirtPhysicallyContoured173:true}:{}),
    ...(photoSleeve174?{actualSignedOwnerBilateralShoulderSeamPhysicallyEased174:true}:{}),
+   ...(photoDress175?{actualSignedOwnerPhotographedDressPhysicallyReshaped175:true}:{}),
    bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,
