@@ -53,6 +53,8 @@ assert.equal(b.split(countAnchor).length,2,'Pinned P541 steady-state resource as
 b=b.replace(countAnchor,"const resourceKey=[model,width,mode].join('/'),resource={geometries:attached.geometries,textures:attached.textures,garmentMeshes:attached.outfit.garmentMeshes};if(version==='before')resourceCounts.set(resourceKey,resource);else assert.deepEqual(resource,resourceCounts.get(resourceKey),'P61 must not grow steady-state GPU resources');const expected=attached.geometries;");
 b=b.replace("assert.equal((await state(page)).geometries,version==='after'?11:10);","assert.equal((await state(page)).geometries,expected);");
 b=b.replace("outfitGeometry:13,dressGeometry:version==='after'?11:10","outfitGeometry:attached.geometries,dressGeometry:attached.geometries");
+b=b.replace("outfitGeometry:attached.geometries,dressGeometry:attached.geometries,removedGeometry:9,textures:3",
+  "resources:{shirtPants:resourceCounts.get([model,width,'shirt-pants'].join('/')),dress:resourceCounts.get([model,width,'dress'].join('/'))}");
 const angleLoop="for(const view of ['front','threequarter','side','back']){\n      await page.locator('#'+view).click();";
 assert.equal(b.split(angleLoop).length,2,'Pinned P541 four-view capture loop changed');
 b=b.replace(angleLoop,"for(const view of ['front','threequarter','side','side-left','side-right','back']){\n      if(view==='side-left')await page.evaluate(()=>window.work61ViewAt(-90));else if(view==='side-right')await page.evaluate(()=>window.work61ViewAt(90));else await page.locator('#'+view).click();");
