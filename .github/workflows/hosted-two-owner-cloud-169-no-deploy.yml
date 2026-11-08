@@ -1,0 +1,153 @@
+name: P169 independent cloud hosted acceptance harness and local signed RLS NO DEPLOY
+on:
+  push:
+    branches:
+      - research/hosted-two-owner-cloud-acceptance-169-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-and-full-node-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact P168 parent and five new research-only paths
+        run: |
+          set -eu
+          BASE=c84802685f57f17bda2b3133264e08322dc064f9
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git rev-parse "$(git rev-list --reverse "$BASE..HEAD" | head -n1)^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p169-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/hosted-two-owner-cloud-169/hosted-acceptance.mjs|research/hosted-two-owner-cloud-169/REPORT.md|scripts/run-hosted-two-owner-169.mjs|tests/hosted-two-owner-cloud-169.test.mjs|.github/workflows/hosted-two-owner-cloud-169-no-deploy.yml) ;;
+              *) echo "P169 refused unrelated production/staging or Work edit: $p"; exit 1 ;;
+            esac
+          done </tmp/p169-paths
+          test "$(wc -l </tmp/p169-paths)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json scripts/build.mjs
+          node --check research/hosted-two-owner-cloud-169/hosted-acceptance.mjs
+          node --check scripts/run-hosted-two-owner-169.mjs
+      - name: Pinned isolated regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual app build remains unchanged and available
+        run: node scripts/build.mjs
+      - name: Explicit live-host opt-in must fail closed without credentials
+        run: |
+          if env -u CLOSET169_ISOLATED_WRITE_APPROVAL -u CLOSET169_URL -u CLOSET169_PROJECT_REF \
+            -u CLOSET169_PUBLISHABLE_KEY -u CLOSET169_OWNER_A_EMAIL -u CLOSET169_OWNER_A_PASSWORD \
+            -u CLOSET169_OWNER_B_EMAIL -u CLOSET169_OWNER_B_PASSWORD \
+            node scripts/run-hosted-two-owner-169.mjs; then
+            echo "P169 attempted unauthorised hosted acceptance"; exit 1
+          fi
+      - name: Execute local actual HTTP RS256 two-owner policy contract negatives
+        run: node --test tests/hosted-two-owner-cloud-169.test.mjs
+      - name: Entire inherited repository suite
+        run: node --test tests/*.cjs tests/*.mjs
+  existing-actual-postgres-RLS-signed-jwt-independent:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p169-disposable-only
+          POSTGRES_DB: p169_disposable
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p169_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P147_POSTGRES_URL: postgresql://postgres:p169-disposable-only@127.0.0.1:5432/p169_disposable
+      P128_POSTGRES_URL: postgresql://postgres:p169-disposable-only@127.0.0.1:5432/p169_disposable
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p169-disposable-only
+      PGDATABASE: p169_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned PostgreSQL driver and client
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Apply UNCHANGED Supabase schema to disposable local Postgres ONLY
+        run: |
+          git diff --exit-code c84802685f57f17bda2b3133264e08322dc064f9 HEAD -- supabase/cloud-backup.sql research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Cryptographically signed ephemeral two-owner JWT to genuine PostgreSQL RLS and private Storage table
+        run: node scripts/test-signed-jwt-postgres-147.mjs
+      - name: Independent original two-owner RLS regression against local Postgres
+        run: node scripts/test-two-owner-postgres-rls-128.mjs
+  inherited-native-owned-photo-styling-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned no-deploy browser fixtures
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Browser baseline unchanged after hosted runner research
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Verify exact original JPEG + phone-size screenshot receipt count
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='benchmark/native-canonical-closet-style-167/';
+          const p=JSON.parse(readFileSync(root+'canonical-original-acceptance.json','utf8'));
+          assert.equal(p.verdict,'PASS');assert.equal(p.cases.length,6);
+          assert.equal(p.sameOriginalSHAInAllSix,true);
+          const digests=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            for(const suffix of ['native-verified-original-2d','saved-three-owned-looks']){
+              const bytes=readFileSync(root+engine+'-'+width+'-'+suffix+'.png');
+              assert.equal(bytes.subarray(1,4).toString(),'PNG');
+              assert.equal(bytes.readUInt32BE(16),width);
+              digests.add(createHash('sha256').update(bytes).digest('hex'));
+            }
+          }
+          assert.equal(digests.size,12);
+          assert.equal(p.familyAlpha,'HOLD');
+          console.log('P169_SIX_APP_MOBILE_CASES_TWELVE_REAL_SCREENS_PASS_NO_HOSTED_WRITE');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P169-local-cloud-acceptance-contract-and-inherited-native-outfits-no-deploy
+          path: |
+            benchmark/native-canonical-closet-style-167/*.png
+            benchmark/native-canonical-closet-style-167/results.json
+            benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+            benchmark/native-canonical-closet-style-167/failure.json
+          if-no-files-found: warn
+          retention-days: 14
