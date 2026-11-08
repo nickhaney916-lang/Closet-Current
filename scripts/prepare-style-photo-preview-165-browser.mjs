@@ -24,7 +24,7 @@ const inject=String.raw`
        const getSession=()=>{
          window.closetAuth.assertCurrent();
          const stored=JSON.parse(localStorage.getItem('closet-current-auth-v1')||'null');
-         return {authenticated:!!window.closetAuth.user?.id,ownerId:window.closetAuth.user?.id,epoch:stored?.epoch};
+         return {authenticated:!!window.closetAuth.user?.id,ownerId:window.closetAuth.user?.id,epoch:stored?.epoch,privateDbName:db?.name};
        };
        const ctrl=mod.createStyledOwnerPhotoPreview165({
          grid:document.getElementById('styledCollectionResults'),
@@ -45,16 +45,16 @@ const inject=String.raw`
        };
        const wrongOwner=await refuse({...real,ownerId:'not-this-authenticated-owner'});
        const swappedSource=await refuse({...real,sourceSHA256:'f'.repeat(64)});
-       const unreviewed=await refuse({...real,sourceHashVerified:false});
+       const unreviewed=await refuse({...real,userAdjusted:false});
        let revoked=false;
        try{await mod.verifyOwnerSavedPhoto165({item:real,
-         getSession:()=>({authenticated:false,ownerId:real.ownerId,epoch:'revoked'}),
+         getSession:()=>({authenticated:false,ownerId:real.ownerId,epoch:'revoked',privateDbName:db?.name}),
          readOwnerItems:()=>items});}catch{revoked=true;}
        if(!wrongOwner||!swappedSource||!unreviewed||!revoked)
          throw Error('P165 verified original private signed owner fail-closed tests did not reject');
        return {count,owner:real.ownerId,originalSHA:real.sourceSHA256,
          sourcePhotoOriginal:real.sourcePhotoOriginal,sourceHashVerified:real.sourceHashVerified,
-         sourceImageKind:real.originalPhoto?.image?'canonical-originalPhoto':'stored-image',
+         sourceImageKind:real.originalPhoto?.image?'canonical-originalPhoto':'legacy-saved-image',
          initialItemsUnchanged:before===JSON.stringify(items.map(x=>({id:x.id,sha:x.sourceSHA256,image:x.image}))),
          wrongOwnerRejected:wrongOwner,sourceTamperingRejected:swappedSource,
          unreviewedRejected:unreviewed,revokedSessionRejected:revoked};
@@ -66,15 +66,18 @@ const inject=String.raw`
      assert.equal(mounted.unreviewedRejected,true);
      assert.equal(mounted.revokedSessionRejected,true);
      await page.locator('#styledCollectionResults .styled-outfit').first()
-       .getByRole('button',{name:'See original photo (2D)'}).click();
+       .getByRole('button',{name:'See saved photo (2D)'}).click();
      await page.waitForFunction(()=>document.querySelectorAll(
        '#styledCollectionResults .style-original-photo-preview-165 img').length===1,null,{timeout:15000});
-     const sourceEvidence=await page.evaluate(()=>{
+     const sourceEvidence=await page.evaluate(async()=>{
        const p=document.querySelector('#styledCollectionResults .style-original-photo-preview-165');
        const i=p?.querySelector('img');
        const t=p?.querySelector('[data-three-d-fitted]');
        const real=items.find(x=>x.id===styledCollectionResults[0].focusItemId);
-       return {mode:p?.dataset.garmentPreviewMode,
+       const bytes=i?.src?new Uint8Array(await (await fetch(i.src)).arrayBuffer()):null;
+       const hash=bytes?await crypto.subtle.digest('SHA-256',bytes):null;
+       const imageSHA=hash?[...new Uint8Array(hash)].map(v=>v.toString(16).padStart(2,'0')).join(''):null;
+       return {mode:p?.dataset.garmentPreviewMode,imageSHA,
         fitted:t?.dataset.threeDFitted,srcMatchesOriginal:i?.src===(real.originalPhoto?.image||real.image),
         photoVisible:!!i?.complete&&i?.naturalWidth>0,
         alt:i?.alt,disclaimer:t?.textContent,
@@ -84,7 +87,9 @@ const inject=String.raw`
         noLicensedResearchDressSubstitution:!p?.textContent.includes('commons-0053'),
         state:window.__P165.getState()};
      });
-     assert.equal(sourceEvidence.mode,'verified-original-photo-2d');
+     assert.ok(['verified-original-photo-2d','saved-photo-unverified-original-2d'].includes(sourceEvidence.mode));
+     assert.match(sourceEvidence.imageSHA,/^[a-f0-9]{64}$/);
+     assert.equal(sourceEvidence.mode==='verified-original-photo-2d',mounted.sourceHashVerified===true&&mounted.sourcePhotoOriginal===true);
      assert.equal(sourceEvidence.fitted,'false');
      assert.equal(sourceEvidence.srcMatchesOriginal,true);
      assert.equal(sourceEvidence.photoVisible,true);
@@ -94,9 +99,12 @@ const inject=String.raw`
      assert.equal(sourceEvidence.state.familyAlpha,'HOLD');
      assert.equal(sourceEvidence.overflow,false);
      assert.match(sourceEvidence.disclaimer,/3D fitting is not yet verified/);
+     if(sourceEvidence.mode==='saved-photo-unverified-original-2d')assert.match(sourceEvidence.disclaimer,/original-camera image provenance is not independently verified/);
      await page.screenshot({path:'benchmark/style-photo-preview-165/'+engine+'-'+width+'-verified-original-2d.png',fullPage:true});
      await page.evaluate(()=>window.__P165.dispose());
-     resultsP165.push({engine,width,originalSHA:mounted.originalSHA,sourceImageKind:mounted.sourceImageKind,
+     resultsP165.push({engine,width,originalSHA:sourceEvidence.imageSHA,
+       sourceImageKind:mounted.sourceImageKind,originalSourceIndependentlyVerified:sourceEvidence.mode==='verified-original-photo-2d',
+       actualVisibleMode:sourceEvidence.mode,
        wrongOwnerRejected:true,sourceTamperingRejected:true,
        unreviewedRejected:true,revokedSessionRejected:true,
        sameSavedOwner:true,actualVerifiedOriginalImageVisible:true,originalOwnerPhotoUnchanged:true,
@@ -112,7 +120,9 @@ content=content.replace(endAnchor,endAnchor+String.raw`
  await writeFile('benchmark/style-photo-preview-165/results.json',JSON.stringify({
   priority:165,verdict:'PASS',engine:['chromium','webkit'],cases:resultsP165,
   actualRealAppOwnerSavedNewItemToThreeOutfits:true,
-  originalSourceJPEGIndependentSHA256Verified:true,
+  savedImageBytesSHA256CheckedInBrowser:true,
+  originalSourceVerifiedOnlyWhereCanonicalProofPresent:true,
+  legacySavedPhotoAlwaysMarkedUnverifiedOriginal:true,
   privateOwnerRevalidationAndNegativeGatesVerified:true,
   original3DClothingFitClaimed:false,originalPhotoTwoDFallback:true,
   originalGarmentPreserved:true,syntheticCameraOnly:true,physicalPhoneTested:false,
