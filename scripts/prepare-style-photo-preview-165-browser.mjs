@@ -40,14 +40,14 @@ const inject=String.raw`
        if(!real)throw Error('P165 source new blouse identity not retained in actual owner closet');
        const before=JSON.stringify(items.map(x=>({id:x.id,sha:x.sourceSHA256,image:x.image})));
        const refuse=async item=>{
-         try{await mod.verifyOwnerSavedPhoto165({item,getSession,readOwnerItems:()=>items});return false;}
+         try{await (item.sourceSHA256?mod.verifyOwnerSavedPhoto165:mod.verifyLegacySavedPhoto165)({item,getSession,readOwnerItems:()=>items});return false;}
          catch{return true;}
        };
        const wrongOwner=await refuse({...real,ownerId:'not-this-authenticated-owner'});
        const swappedSource=await refuse({...real,sourceSHA256:'f'.repeat(64)});
        const unreviewed=await refuse({...real,userAdjusted:false});
        let revoked=false;
-       try{await mod.verifyOwnerSavedPhoto165({item:real,
+       try{await (real.sourceSHA256?mod.verifyOwnerSavedPhoto165:mod.verifyLegacySavedPhoto165)({item:real,
          getSession:()=>({authenticated:false,ownerId:real.ownerId,epoch:'revoked',privateDbName:db?.name}),
          readOwnerItems:()=>items});}catch{revoked=true;}
        if(!wrongOwner||!swappedSource||!unreviewed||!revoked)
