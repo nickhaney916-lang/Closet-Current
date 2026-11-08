@@ -27,12 +27,16 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
  if(!item||typeof item.id!=='string'||!item.id||
    item.ownerId!==previous.ownerId||!HEX64.test(item.sourceSHA256||'')||
    item.sourcePhotoOriginal!==true||item.sourceHashVerified!==true||
-   typeof item.image!=='string'||item.image.length>18_000_000)
+   typeof (item.originalPhoto?.image||item.image)!=='string'||
+   (item.originalPhoto?.image||item.image).length>18_000_000)
   throw Error('Saved original photograph needs owner review before preview');
- const match=item.image.match(ALLOWED);
+ const original=item.originalPhoto?.image||item.image;
+ if(item.originalPhoto&&item.originalPhoto.sha256!==item.sourceSHA256)
+  throw Error('Original source identity metadata changed');
+ const match=original.match(ALLOWED);
  if(!match)throw Error('Original saved photo unavailable as a verified local image');
  let bytes;
- try{const r=await fetch(item.image);bytes=new Uint8Array(await r.arrayBuffer());}
+ try{const r=await fetch(original);bytes=new Uint8Array(await r.arrayBuffer());}
  catch{throw Error('Unable to verify saved original photograph');}
  if(bytes.length<80||bytes.length>8_000_000)
   throw Error('Original saved photograph size is unsafe');
@@ -44,12 +48,13 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
  if(!Array.isArray(latest))throw Error('Private closet no longer available');
  const saved=latest.find(x=>x?.id===item.id);
  if(!saved||saved.ownerId!==previous.ownerId||saved.sourceSHA256!==actual||
-  saved.image!==item.image||saved.sourcePhotoOriginal!==true||saved.sourceHashVerified!==true)
+  (saved.originalPhoto?.image||saved.image)!==original||
+  saved.sourcePhotoOriginal!==true||saved.sourceHashVerified!==true)
   throw Error('Saved garment changed during original photograph validation');
  if(originalOwnerSession&&!same(previous,originalOwnerSession))
   throw Error('Original owner session changed');
  return Object.freeze({itemId:item.id,ownerId:previous.ownerId,epoch:previous.epoch,
-  sourceSHA256:actual,photo:item.image,name:String(item.name||item.itemType||'Saved garment').slice(0,140),
+  sourceSHA256:actual,photo:original,name:String(item.name||item.itemType||'Saved garment').slice(0,140),
   presentationMode:'verified-original-photo-2d',
   garmentActuallyFittedIn3D:false,
   originalPhotoStillPrivate:true,unseenBackPhotographed:false,
