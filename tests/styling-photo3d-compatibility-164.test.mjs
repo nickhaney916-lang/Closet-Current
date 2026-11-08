@@ -18,8 +18,10 @@ test('P164 composes both source streams into a SINGLE real ephemeral Git checkou
   'both original code and original 3D job must test real scratch source merge');
  assert.equal(workflow.split('test "$(git rev-parse -q --verify MERGE_HEAD)" = "$WORK"').length,3);
  assert.equal(workflow.split('test -z "$(git ls-files -u)"').length,3);
- assert.equal(workflow.split('test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes)').length,5,
-  'two jobs independently check Work diff against source P163 and unmerged four P164 new files');
+ assert.equal(workflow.split('test -z "$(comm -12 /tmp/p164-sorted-work /tmp/p164-sorted-p163)"').length,3,
+  'both jobs enforce exact Work against inherited P163 source no-overlap with POSIX sh');
+ assert.equal(workflow.split('test -z "$(comm -12 /tmp/p164-sorted-work /tmp/p164-sorted-p164)"').length,3,
+  'both jobs enforce full Work against new P164 source no-overlap in POSIX sh');
  assert.match(workflow,/public\/closet-stylist-engine\.js\|public\/closet-stylist\.js/);
  assert.match(workflow,/tests\/closet-stylist\.test\.cjs/);
 });
