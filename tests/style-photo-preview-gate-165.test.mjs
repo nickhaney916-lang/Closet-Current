@@ -60,6 +60,8 @@ test('P165 source verified UI has accessible photo-only original output, never a
   'originalPhoto?.image||item.image','same(start,requireLive(getSession))',
   'saved-photo-unverified-original-2d','original-camera image provenance is not independently verified'])
   assert.ok(s.includes(marker),'signed original photo UI missing '+marker);
+ assert.ok(s.includes("btn.setAttribute('data-style-photo-preview-165','true')"),'real mounted action must match CSS cleanup selector');
+ assert.ok(s.includes("grid.querySelectorAll('button[data-style-photo-preview-165]')"),'session-lock cleanup must remove same actual DOM buttons');
  assert.equal(s.includes('innerHTML'),false,'never inject garment names or photo URLs as unsafe HTML');
  assert.equal(s.includes('new THREE.'),false,'never fabricate a generic 3D garment');
 });
