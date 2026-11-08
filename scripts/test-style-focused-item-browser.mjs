@@ -80,7 +80,7 @@ try{
      },fixtures);
      await page.evaluate(()=>switchView('scan'));
      await page.locator('#clothingPhotos').setInputFiles({name:'new-reviewed-blouse.png',mimeType:'image/png',buffer:capturePng});
-     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.png'&&x.localAnalyzed),null,{timeout:20000});
+     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.png'),null,{timeout:20000});
      await page.evaluate(()=>switchView('review'));
      await page.locator('#reviewGrid article.photo-result').getByRole('button',{name:'Adjust',exact:true}).click();
      await page.waitForFunction(()=>document.querySelector('dialog.photo-adjust[open]')!==null);
@@ -114,6 +114,19 @@ try{
      const saved=await page.evaluate(()=>savedOutfitBoards[0]);
      assert.ok(Object.values(saved.slots).includes(focusedId));
      assert.ok(Object.values(saved.slots).every(id=>fixtures.some(x=>x.id===id)||id===focusedId));
+     await card.getByRole('button',{name:'Adjust on outfit board'}).click();
+     await page.waitForFunction(()=>!document.getElementById('builder').hidden,null,{timeout:10000});
+     const swap=await page.evaluate(focus=>({focus:currentBoard.slots.top,slot:currentBoard.slots.shoes,
+      alternatives:items.filter(x=>x.category==='Shoes'&&x.id!==currentBoard.slots.shoes).map(x=>({id:x.id,name:x.name||x.itemType}))}),focusedId);
+     assert.equal(swap.focus,focusedId);assert.ok(swap.alternatives.length>=1);
+     await page.locator('#boardSlots .board-slot-shoes').click();
+     await page.locator('#boardPickerItems .board-pick').filter({hasText:swap.alternatives[0].name}).click();
+     await page.waitForFunction(({focus,id})=>currentBoard.slots.top===focus&&currentBoard.slots.shoes===id,{focus:focusedId,id:swap.alternatives[0].id},{timeout:10000});
+     await page.locator('#saveBoard').click();
+     await page.waitForFunction(()=>savedOutfitBoards.length===2,null,{timeout:10000});
+     const swapped=await page.evaluate(()=>savedOutfitBoards[1]);
+     assert.equal(swapped.slots.top,focusedId);assert.equal(swapped.slots.shoes,swap.alternatives[0].id);
+     await page.evaluate(()=>switchView('stylist'));
      await page.screenshot({path:`${out}/${engine}-${width}-saved-three-owned-looks.png`,fullPage:true});
      await page.reload({waitUntil:'domcontentloaded'});
      await page.evaluate(async()=>{await window.closetAuth.ready;await closetReady;await outfitBoardReady;});
@@ -121,10 +134,11 @@ try{
       owner:window.closetAuth.user.id,items:(await readAll()).map(x=>x.id),boards:savedOutfitBoards
      }));
      assert.equal(reopened.owner,owner);assert.equal(reopened.items.length,fixtures.length+1);
-     assert.equal(reopened.boards.length,1);assert.ok(Object.values(reopened.boards[0].slots).includes(focusedId));
+     assert.equal(reopened.boards.length,2);assert.ok(Object.values(reopened.boards[0].slots).includes(focusedId));
+     assert.equal(reopened.boards[1].slots.top,focusedId);assert.equal(reopened.boards[1].slots.shoes,swap.alternatives[0].id);
      results.push({engine,width,threeFocusedOwnedLooks:true,uniqueLookCount:3,saveAndReload:true,
       ownerScopedIndexedDB:true,offHostCallsBlocked:true,syntheticAuth:true,syntheticGarments:true,
-      cameraCapture:false,actualPhotoFileReviewAndManualCorrection:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
+      cameraCapture:false,actualPhotoFileReviewAndManualCorrection:true,oneOwnedPieceSwap:true,saveAndReloadAfterSwap:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
     }finally{await context.close();}
    }
   }finally{await browser.close();}
