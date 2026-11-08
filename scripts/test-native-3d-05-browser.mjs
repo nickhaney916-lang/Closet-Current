@@ -16,6 +16,7 @@ await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const ids=['commons-0053','commons-0064','commons-0067','commons-0080','commons-0003'];
+const photoDenim176=process.env.PHOTO_DENIM176==='1';
 const photos={};
 for(const id of ids){
  const locked=locks.find(x=>x.id===id),bytes=await readFile('benchmark/fixtures/'+id+'.jpg');
@@ -66,7 +67,6 @@ const photoFit171=process.env.PHOTO_FIT171==='1';
 const photoTorso173=process.env.PHOTO_TORSO173==='1';
 const photoSleeve174=process.env.PHOTO_SLEEVE174==='1';
 const photoDress175=process.env.PHOTO_DRESS175==='1';
-const photoDenim176=process.env.PHOTO_DENIM176==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
