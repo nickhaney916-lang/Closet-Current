@@ -9,6 +9,18 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 const donor=resolve(process.argv[2]||'.native05-donor-541');
 const shellPath=resolve(donor,'research/three-d-13/pants-shell.mjs');
+const dressPath=resolve(donor,'research/photo-dress-anatomical-drape-61/dress-drape.mjs');
+let dress=await readFile(dressPath,'utf8');
+for(const [from,to] of [
+ ['skirtOutwardMeters: 0.018','skirtOutwardMeters: 0.032'],
+ ['maxHemDropMeters: 0.006','maxHemDropMeters: 0.010'],
+ ['folds: 7','folds: 9'],
+ ['p.needsUpdate=true; g.computeBoundingBox(); g.computeBoundingSphere();','p.needsUpdate=true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();']
+]){
+ if(dress.split(from).length!==2)throw Error('P176 exact P61 dress drape anchor is missing or ambiguous: '+from);
+ dress=dress.replace(from,to);
+}
+await writeFile(dressPath,dress);
 const controllerPath=resolve(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
 const shell=await readFile(shellPath,'utf8');
 const shellAnchor="geometry.setAttribute('skinIndex',new T.Uint16BufferAttribute(indices,4));geometry.setAttribute('skinWeight',new T.Float32BufferAttribute(weights,4));geometry.computeVertexNormals();smoothSurfaceNormals(geometry,surfaceVertices);";
