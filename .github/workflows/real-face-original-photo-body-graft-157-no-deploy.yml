@@ -119,6 +119,13 @@ jobs:
            'originalHeadMaskActive157:overlay.licensedHead157?.oldFaceBodyMaterialMaskedWithoutGeometryChanges===true,'+
            'licensedHeadTopError157:overlay.licensedHead157?.actualHeadTopError??999,'+
            'licensedNeckSeam157:overlay.licensedHead157?.neckSeamSignedWorldY??999,');
+          const errAnchor="  page.on('pageerror',e=>errors.push({width,message:e.message}));";
+          assert.equal(s.split(errAnchor).length,2,'P157 actual browser console diagnostic anchor unavailable');
+          s=s.replace(errAnchor,"  page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('P157_REAL_PAGE_EXCEPTION',e.message);});"+
+           "\\n  page.on('console',m=>{if(m.type()==='error')console.error('P157_REAL_WEBGL_CONSOLE',m.text());});");
+          const gate="  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&";
+          assert.equal(s.split(gate).length,2,'P157 original 163-bone genuine WebGL gate changed');
+          s=s.replace(gate,"  console.log('P157_REAL_OUTFIT_PREVIEW_GATE',JSON.stringify(await page.evaluate(()=>({state:window.native3D05Bridge?.state?.(),status:document.getElementById('outfit3D01Status')?.textContent,model:document.getElementById('outfit3D01Canvas')?.dataset?.model}))));\\n"+gate);
           writeFileSync(f,s);
           NODE
           node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-541
@@ -159,7 +166,7 @@ jobs:
           test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
       - name: AFTER same original saved-owner dress with actual authenticated 163-bone humanoid and source MIT 80-bone face/hair graft on REAL Chromium mobile
         run: |
-          P150=1 node scripts/test-native-3d-05-p150-157.mjs
+          P150=1 P150_TIMEOUT=45000 node scripts/test-native-3d-05-p150-157.mjs
           mkdir -p benchmark/real-face-original-photo-body-graft-157/after
           cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/real-face-original-photo-body-graft-157/after/
           cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/real-face-original-photo-body-graft-157/after/
