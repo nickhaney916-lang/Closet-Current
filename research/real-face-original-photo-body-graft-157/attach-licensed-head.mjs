@@ -338,7 +338,7 @@ export function applyLicensedSourceHead157(root,figure){
  const seam=afterBox.min.y-mask.cutoff;
  if(!finite(seam)||seam<-.16||seam>.19){
   clearLicensedSourceHead157(root);
-  fail('licensed head neck seam outside measured original collar');
+  fail('licensed head neck seam outside measured original collar '+JSON.stringify({seam:+seam.toFixed(5),sourceTop:+source.top.toFixed(5),originalHeadHeight:+source.h.toFixed(5),maskCutoff:+mask.cutoff.toFixed(5),licensedHeadLow:+afterBox.min.y.toFixed(5),licensedHeadHigh:+afterBox.max.y.toFixed(5),scale:+scale.toFixed(5),actualHeadHeight:+afterSize.y.toFixed(5)}));
  }
  const result=Object.freeze({
   figure,
