@@ -238,11 +238,13 @@ export async function mountNative3D05({
   }
  }
  async function open(){
+  if(closed)throw Error('NATIVE05 private preview disposed');
+  requireNative3D05Visible102({doc});
+  // Existing NATIVE102 visibility-first lifecycle must remain untouched.
+  // P180 then blocks any asynchronous source admission during cloud restore.
   if(params?.get('cloud3D180')==='research'&&
      win.cloudToNative3D180Bridge?.pending?.())
    throw Error('P180 private cloud replacement pending; 3D must stay closed');
-  if(closed)throw Error('NATIVE05 private preview disposed');
-  requireNative3D05Visible102({doc});
   if(opened||opening)throw Error('NATIVE05 close the current 3D preview before reopening');
   const selectedIndex=consumer.selected,request=++attempt;
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
