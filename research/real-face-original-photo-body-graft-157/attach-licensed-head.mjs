@@ -235,11 +235,11 @@ function clipOldSourceHeadOnly(root,coords){
     shader.vertexShader='varying vec3 vGraftWorld157;\n'+
      shader.vertexShader.replace(vertexAnchor,vertexAnchor+
       '\nvGraftWorld157=(modelMatrix*vec4(transformed,1.0)).xyz;');
-    shader.fragmentShader='varying vec3 vGraftWorld157;\n'+
+    // Coordinate centers can be negative: GLSL `x--0.0` is a decrement\n   // syntax error. Explicit parentheses ensure x-(-0.0) is valid.\n   shader.fragmentShader='varying vec3 vGraftWorld157;\n'+
      shader.fragmentShader.replace(fragmentAnchor,fragmentAnchor+
       '\n if(vGraftWorld157.y>'+cutoff.toFixed(7)+
-      ' && abs(vGraftWorld157.x-'+coords.cx.toFixed(7)+
-      ')<'+half.toFixed(7)+') discard;'+marker);
+      ' && abs(vGraftWorld157.x-('+coords.cx.toFixed(7)+
+      '))<'+half.toFixed(7)+') discard;'+marker);
    };
    toRestore.push({mat,onBeforeCompile:old,customProgramCacheKey:oldKey});
    mat.onBeforeCompile=wrapper;
