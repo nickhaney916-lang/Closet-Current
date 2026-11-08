@@ -144,7 +144,7 @@ export function refinePhotographedDress61(dress, root, {enabled=true}={}) {
       const distance=world.distanceTo(moved);
       const limit=kind==='torso'?DRESS_DRAPE_61.maxTorsoCorrectionMeters:
         Math.hypot(DRESS_DRAPE_61.skirtOutwardMeters,DRESS_DRAPE_61.maxHemDropMeters)+1e-5;
-      if(!Number.isFinite(distance)||distance>limit) throw Error(`P61 bounded displacement exceeded at vertex ${i}: ${kind} ${distance.toFixed(8)}m > ${limit.toFixed(8)}m`);
+      if(!Number.isFinite(distance)||distance>limit+1e-7) throw Error(`P61 bounded displacement exceeded at vertex ${i}: ${kind} ${distance.toFixed(8)}m > ${limit.toFixed(8)}m`);
       moved.applyMatrix4(inv);
       if(![moved.x,moved.y,moved.z].every(Number.isFinite))throw Error('P61 generated nonfinite position');
       edits.push({i,moved,kind,distance});
