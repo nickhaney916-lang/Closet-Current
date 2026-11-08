@@ -265,6 +265,11 @@ try{
       }catch(error){
        const detail=await page.evaluate(()=>({
         nativeStatus:document.getElementById('native3D05Status')?.textContent,
+        donorRendererStatus:document.getElementById('outfit3D01Status')?.textContent,
+        donorFallbackNote:document.getElementById('outfit3D01Note')?.textContent,
+        actualCanvasPresent:!!document.getElementById('outfit3D01Canvas'),
+        donorImportMapPresent:!!document.querySelector('script[data-outfit3d-importmap]'),
+        photoCardCount:document.querySelectorAll('#outfit3D01Photos img').length,
         outfitStatus:document.getElementById('boardSaveStatus')?.textContent,
         selected:window.nativeLossless04Bridge?.status()?.selected,
         boardActive:window.nativeLossless04Bridge?.status()?.active,
