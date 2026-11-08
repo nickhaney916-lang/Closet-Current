@@ -276,8 +276,9 @@ try{
   }
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
   if(photoFit171){
+   const reason171=await page.evaluate(()=>document.getElementById('native3D05Status')?.textContent||'no status');
    assert.equal(state.photoSourceFit171,true,
-    'P171 exact saved original SHA must be attached to a photographed P60 source-skinned 163-bone garment');
+    'P171 exact saved original SHA must be attached to a photographed P60 source-skinned 163-bone garment: '+reason171+'; active='+state.active+'; viewerMode='+state.viewerMode+'; bones='+state.bones);
    assert.equal(state.ownerPhoto3DArbitraryFittingApproved,false);
    assert.equal(state.photorealismApproved,false);
    assert.equal(state.bones,163);
