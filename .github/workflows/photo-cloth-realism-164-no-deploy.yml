@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 8801)
-Total output lines: 432
-
 name: P164 PHOTOGRAPHED CLOTH PBR AND SIX VIEW REAL WEBGL NO DEPLOY
 on:
   push:
@@ -43,10 +40,11 @@ jobs:
           while IFS= read -r p; do
             case "$p" in
               research/photo-cloth-realism-164/REPORT.md|research/photo-cloth-realism-164/pbr-fabric.mjs|scripts/install-photo-cloth-realism-164.mjs|scripts/instrument-photo-cloth-realism-164.mjs|scripts/audit-photo-cloth-realism-164.mjs|tests/photo-cloth-realism-164.test.mjs|.github/workflows/photo-cloth-realism-164-no-deploy.yml) ;;
+              research/photo-garment-anatomical-fitting-60/fit-contract.mjs|tests/photo-garment-anatomical-fitting-60.test.mjs) ;;
               *) echo "P164 REFUSE P163/P541 source, parallel Work #719, original photos, app, staging or production: $p"; exit 1 ;;
             esac
           done </tmp/p163-files
-          test "$(wc -l </tmp/p163-files)" -eq 7
+          test "$(wc -l </tmp/p163-files)" -eq 9
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/licensed-head-six-angle-162 research/licensed-neck-axis-contact-161 research/neck-joint-registered-head-fit-160 research/anatomical-neck-seam-159 scripts/prepare-licensed-head-six-angle-162.mjs benchmark
       - name: Re-run inherited P163 verified photo, source and full app unit regressions
         run: |
@@ -74,7 +72,9 @@ jobs:
           node --check scripts/install-photo-cloth-realism-164.mjs
           node --check scripts/instrument-photo-cloth-realism-164.mjs
           node --check scripts/audit-photo-cloth-realism-164.mjs
+          node --check research/photo-garment-anatomical-fitting-60/fit-contract.mjs
           node --test tests/photo-cloth-realism-164.test.mjs
+          node --test tests/photo-garment-anatomical-fitting-60.test.mjs
           node --check research/photo-cloth-realism-164/pbr-fabric.mjs
           node --check scripts/install-photo-cloth-realism-164.mjs
           node --test tests/photo-cloth-realism-164.test.mjs
@@ -150,126 +150,7 @@ jobs:
            'skinHarmonyApplied158:overlay.licensedHead157?.skinHarmony158?.harmonyApplied===true,'+
            'skinHarmonySamples158:overlay.licensedHead157?.skinHarmony158?.sourceFaceAlbedoSamplePixels||0,'+
            'skinHarmonyMaterials158:overlay.licensedHead157?.skinHarmony158?.matchedExposedBodyPBRMaterials||0,'+
-           'skinHarmonyBodyDelta158:overlay.licensedHead157?.skinHarmony158?.actualBodySkinLinearChange||0,'+
-           'skinHarmonySourceSHA158:overlay.licensedHead157?.skinHarmony158?.sourceP156HeadSHA256||null,'+
-           'neckBridgeApplied159:overlay.licensedHead157?.neckTransition159?.bridgeSkinnedHeadAttached===true,'+
-           'neckSurfaceTriangles159:overlay.licensedHead157?.neckTransition159?.bridgeTriangles||0,'+
-           'neckUpperSamples159:overlay.licensedHead157?.neckTransition159?.upperSourceSkinnedVertices||0,'+
-           'neckLowerSamples159:overlay.licensedHead157?.neckTransition159?.lowerSourceSkinnedVertices||0,'+
-           'neckSpanMeters159:overlay.licensedHead157?.neckTransition159?.gapSpannedMeters||0,'+
-           'neckBodyRigBones159:overlay.licensedHead157?.neckTransition159?.originalBodyRigBones||0,'+
-           'neckLicensedRigBones159:overlay.licensedHead157?.neckTransition159?.sourceHeadRigBones||0,'+
-           'neckGarmentsUnchanged159:overlay.licensedHead157?.neckTransition159?.originalOwnerPhotographedGarmentMeshesBefore===overlay.licensedHead157?.neckTransition159?.originalOwnerPhotographedGarmentMeshesAfter,'+
-           'neckNoSurfaceNeeded159:overlay.licensedHead157?.neckTransition159?.noAdditionalGeometryRequired===true,'+
-           'neckActualSkinOverlap159:overlay.licensedHead157?.neckTransition159?.measuredOriginalNeckOverlapMeters||0,'+
-           'neckActualFaceVertices159:overlay.licensedHead157?.neckTransition159?.originalLicensedHeadFaceSkinnedVertices||0,'+
-           'jointFitApplied160:overlay.licensedHead157?.headJointFit160?.measuredTrueSourceJointAlignmentApplied===true,'+
-           'jointFitDistanceBefore160:overlay.licensedHead157?.headJointFit160?.actualNeckJointOffsetBeforeMeters||0,'+
-           'jointFitDistanceAfter160:overlay.licensedHead157?.headJointFit160?.actualNeckJointOffsetAfterMeters||0,'+
-           'jointFitImprovement160:overlay.licensedHead157?.headJointFit160?.originalNeckToLicensedNeckAlignmentImprovementMeters||0,'+
-           'jointFitDisplacement160:overlay.licensedHead157?.headJointFit160?.licensedHeadWorldDisplacementMeters||0,'+
-           'jointFitOriginalBoneCount160:overlay.licensedHead157?.headJointFit160?.sourceOriginal163BoneRig||0,'+
-           'jointFitMITBoneCount160:overlay.licensedHead157?.headJointFit160?.MITLicensedOriginalHeadRig||0,'+
-           'jointFitSourceNeckOverlap160:overlay.licensedHead157?.headJointFit160?.originalP159LicensedSkinOverlapMeters||0,'+
-           'jointFitGarmentsUnchanged160:overlay.licensedHead157?.headJointFit160?.originalOwnedPhotographedGarmentMeshesBefore===overlay.licensedHead157?.headJointFit160?.originalOwnedPhotographedGarmentMeshesAfter,'+
-           'headAxisPresent161:overlay.licensedHead157?.headAxis161?.priority===161,'+
-           'headAxisOriginalRig161:overlay.licensedHead157?.headAxis161?.originalSourceRigBones||0,'+
-           'headAxisLicensedRig161:overlay.licensedHead157?.headAxis161?.actualLicensedMITHeadRigBones||0,'+
-           'headAxisOriginalAngle161:overlay.licensedHead157?.headAxis161?.originalOriginalNeckToHeadAxisAngleDegrees??null,'+
-           'headAxisFinalAngle161:overlay.licensedHead157?.headAxis161?.measuredFinalNeckToHeadAxisAngleDegrees??null,'+
-           'headAxisCorrection161:overlay.licensedHead157?.headAxis161?.actualAxisCorrectionDegrees??null,'+
-           'headAxisNeckPivotShift161:overlay.licensedHead157?.headAxis161?.originalLicensedNeckJointMovementMeters??null,'+
-           'headAxisOriginalFaceSkinOverlap161:overlay.licensedHead157?.headAxis161?.originalLicensedNeckSkinOverlapMeters??null,'+
-           'headAxisOriginalAligned161:overlay.licensedHead157?.headAxis161?.originalSourceAxisAlreadyAligned===true,'+
-           'headAxisUnsafePrevented161:overlay.licensedHead157?.headAxis161?.unsafeOriginalAxisCorrectionAvoided===true,'+
-           'headAxisGarmentCountPreserved161:overlay.licensedHead157?.headAxis161?.originalPhotographedGarmentMeshesBefore===overlay.licensedHead157?.headAxis161?.originalPhotographedGarmentMeshesAfter,');
-          const p150Marker="r.face?.photorealismProven===false&&r.releaseAuthorized===false;";
-          assert.equal(s.split(p150Marker).length,2,'P157 saved outfit source marker changed');
-          s=s.replace(p150Marker,
-           "r.face?.photorealismProven===false&&r.releaseAuthorized===false&&"+
-           "(r.licensedHead157===undefined||r.licensedHead157.headAttachedToOriginal163Bone===true);");
-          const errAnchor="  page.on('pageerror',e=>errors.push({width,message:e.message}));";
-          assert.equal(s.split(errAnchor).length,2,'P157 actual browser console diagnostic anchor unavailable');
-          s=s.replace(errAnchor,"  page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('P157_REAL_PAGE_EXCEPTION',e.message);});"+
-           "\n  page.on('console',m=>{if(m.type()==='error'){const detail=m.text();console.error('P157_REAL_WEBGL_CONSOLE',detail);if(/THREE\\.WebGLProgram: Shader Error|WebGL: INVALID_OPERATION: useProgram|ERROR: 0:\\d+:|P157_RESEARCH_FACE_GRAFT_REFUSED (SKIN158|NECK159|JOINT160|AXIS161)|P157_EXACT_SOURCE_ASSET_REFUSED/i.test(detail))errors.push({width,message:'P157_WEBGL_SHADER_FAILURE: '+detail.slice(0,250)});}});"+
-           "\n  page.on('requestfailed',r=>console.error('P157_REAL_HTTP_REQUEST_FAILED',r.url(),r.failure()?.errorText));");
-          const gate="  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&";
-          assert.ok(s.includes(gate),'P157 original 163-bone genuine WebGL gate changed');
-          s=s.replaceAll(gate,"  console.log('P157_REAL_OUTFIT_PREVIEW_GATE',JSON.stringify(await page.evaluate(()=>({state:window.native3D05Bridge?.state?.(),status:document.getElementById('outfit3D01Status')?.textContent,nativeStatus:document.getElementById('native3D05Status')?.textContent,builderStatus:document.getElementById('outfit3D01Status')?.textContent,appMessage:document.getElementById('message')?.textContent,model:document.getElementById('outfit3D01Canvas')?.dataset?.model}))));\n"+gate);
-          writeFileSync(f,s);
-          NODE
-          node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-…801 tokens truncated… test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-      - name: Install actual P159 source-registered reversible neck bridge ONLY on detached 163-bone owner outfit figure
-        run: |
-          node scripts/install-anatomical-neck-seam-159.mjs .p150-donor-541
-          node --check .p150-donor-541/research/anatomical-neck-seam-159/source-neck-surface.mjs
-          node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
-          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-      - name: Register actual 80-bone original MIT neck joint to 163-bone owned-outfit anatomical neck only on disposable fixture
-        run: |
-          node scripts/install-neck-joint-registered-head-fit-160.mjs .p150-donor-541
-          node --check .p150-donor-541/research/neck-joint-registered-head-fit-160/rig-head-registration.mjs
-          node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
-          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-      - name: BEFORE P161 accepted original licensed head from P160 measured Neck joint on authenticated original 163-bone photographed outfit, 320/390/430px
-        run: |
-          P150=1 node scripts/test-native-3d-05-p150-157.mjs
-          mkdir -p benchmark/licensed-neck-axis-contact-161/before
-          cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/licensed-neck-axis-contact-161/before/
-          cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/licensed-neck-axis-contact-161/before/
-          cp benchmark/native-3d-05/results.json benchmark/licensed-neck-axis-contact-161/before/native-result.json
-          test "$(find benchmark/licensed-neck-axis-contact-161/before -name '*.png' | wc -l)" -eq 18
-      - name: Install bounded real licensed MIT neck-head axis correction, only on isolated P541 163-bone owner outfit fixture
-        run: |
-          node scripts/install-licensed-neck-axis-contact-161.mjs .p150-donor-541
-          node --check .p150-donor-541/research/licensed-neck-axis-contact-161/anatomical-head-axis.mjs
-          node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
-          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-      - name: AFTER P161 same original owner dress, P160 registered licensed head and optional authentic neck-head axis orientation 320/390/430 Chromium
-        run: |
-          P150=1 P150_TIMEOUT=45000 node scripts/test-native-3d-05-p150-157.mjs
-          mkdir -p benchmark/licensed-neck-axis-contact-161/after
-          cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/licensed-neck-axis-contact-161/after/
-          cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/licensed-neck-axis-contact-161/after/
-          cp benchmark/native-3d-05/results.json benchmark/licensed-neck-axis-contact-161/after/native-result.json
-          test "$(find benchmark/licensed-neck-axis-contact-161/after -name '*.png' | wc -l)" -eq 18
-      - name: Actual WebKit P161 genuine source Neck/Head axis orientation or safe no-op original owned dress, 320/390/430
-        run: |
-          P150=1 P150_BROWSER=webkit node scripts/test-native-3d-05-p150-157.mjs
-          cp benchmark/native-3d-05/results.json benchmark/licensed-neck-axis-contact-161/after/native-webkit-result.json
-      - name: Independently measure real licensed MIT Neck to Head alignment from 36 owner-photo source Chromium PNGs and unchanged original dress/WebKit
-        run: node scripts/audit-licensed-neck-axis-contact-161.mjs
-      - name: P161 actual original neck-axis correction or fail-closed no-op, independent head/garment WebGL evidence and release HOLD
-        run: |
-          node --input-type=module <<'NODE'
-          import assert from 'node:assert/strict';
-          import {readFileSync} from 'node:fs';
-          const r=JSON.parse(readFileSync('benchmark/licensed-neck-axis-contact-161/audit/acceptance.json','utf8'));
-          assert.equal(r.priority,161);
-          assert.equal(r.originalAuthenticated163AndMIT80HeadAxesMeasuredForBothFigures,true);
-          assert.equal(r.genuineOriginalSourceNeckHeadAngularAlignmentSafetyGate,true);
-          assert.equal(r.originalP160TrueNeckJointTranslationPreserved,true);
-          assert.equal(r.originalP159NoDuplicateCollarSafetyRetained,true);
-          assert.equal(r.originalOwnerGarmentAndJPEGProtected,true);
-          assert.equal(r.originalSourceHeadAndBodyGeometryUnmodified,true);
-          assert.equal(r.activeParallelWork716CameraOrbitUnchanged,true);
-          assert.equal(r.actualRealChromiumBeforeAfterPairs,18);
-          assert.equal(r.realOriginalPhotoSHA256Screenshots,36);
-          assert.equal(r.actualRealWebKit3MobileViewportCases,3);
-          assert.equal(r.originalLicensedSourceFiguresRotated+r.originalLicensedSourceFiguresPreservedWithoutFakeChanges,2);
-          assert.equal(r.full80To163BoneSkeletonRetargetingApproved,false);
-          assert.equal(r.humanFaceNeckPhotorealism10of10Accepted,false);
-          assert.equal(r.realPhysicalAndroidIphoneAcceptance,false);
-          assert.equal(r.familyAlpha,'HOLD');
-          assert.equal(r.releaseAuthorized,false);
-          console.log('P161 actual source bone-axis registration or safe original identity preserved, no owner original photo/parallel camera writes, Family Alpha HOLD');
-          NODE
-      - name: Read exact successful parallel #716 original P160 camera gesture source without cherry-pick merge or branch changes
-        run: |
-          set -eu
-          PARALLEL=fca5981c86a456ca172bd9810cb9c17e420cc30b
-          git cat-file -e "$PARALLEL^{commit}" || git fetch --no-tags origin "$PARALLEL"
-          test "$(git rev-parse "$PARALLEL^{commit}")" = "$PARALLEL"
+           'skinHarmonyBodyDelta158:overlay.licensedHead157?.skinHarmony158?.actualBodySkinLinearC…3044 tokens truncated…e "$PARALLEL^{commit}")" = "$PARALLEL"
           git show fca5981c86a456ca172bd9810cb9c17e420cc30b:scripts/prepare-outfit-view-360-160.mjs > /tmp/P716-original-verified-camera-preparer.mjs
           git show fca5981c86a456ca172bd9810cb9c17e420cc30b:scripts/audit-outfit-view-360-160.mjs > /tmp/P716-original-verified-six-camera-audit.mjs
           node --check /tmp/P716-original-verified-camera-preparer.mjs

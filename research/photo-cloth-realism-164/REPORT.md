@@ -1,5 +1,11 @@
 # Closet Current P164 — photographed cloth PBR surface integration
 
+## Priority #60 anatomical-fit integration checkpoint
+
+This isolated continuation adds `research/photo-garment-anatomical-fitting-60/fit-contract.mjs` and gates P164's existing material handoff in the detached P541 renderer. Before a verified photo material can be used, the gate checks the source SHA and attached original pixels, requires the garment mesh to share the loaded 163-bone body skeleton, and checks finite vertices, triangle indices, and normalized skin weights. The receipt is attached to renderer statistics without changing source geometry, UVs, material references, or saved owner data. Unknown and owner-private garment photographs remain on the original-photo 2D fallback.
+
+This is an integrity and compatibility gate for the already-developed shirt, dress, and photographed-denim meshes. It does not claim to improve the current mesh silhouette or simulate cloth. The new unit tests pass locally (5/5); exact-head browser acceptance is pending. The P60 workflow repeats source-photo Chromium/WebKit views and the P541 shirt/dress source-mesh browser suite on the isolated research donor. The CI artifact must be inspected before reporting any visual or performance result.
+
 **Status: research candidate; no merge, deployment, staging changes, or Family Alpha activation.** This work is stacked on verified P163 `d358e6e0ae1eaf65febf57a50a3654bf996b15a5`; full-application PR #719 was not edited.
 
 ## Implemented
