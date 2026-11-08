@@ -27,7 +27,34 @@ on:
 permissions:
   contents: read
 jobs:
+  legacy-delta-scope:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      run_legacy: ${{ steps.decide.outputs.run_legacy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Decide if current PR truly edits original isolated readiness benchmark
+        id: decide
+        env:
+          CI_EVENT: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          set -eu
+          if [ "$CI_EVENT" = pull_request ]; then git fetch --no-tags origin "$PR_BASE_SHA"; fi
+          node scripts/legacy-scope-applicability-176.mjs --ci readiness
   original-private-wardrobe-source-admission-and-no-fabricated-3d:
+    # P176: original immutable single-feature SHA check runs ONLY when the
+    # immediate PR actually changes that feature's own authored source.
+    # Modern shared 3D bridge changes are independently exercised in
+    # P176's full cross-stream E2E WebGL acceptance, not old PR559 diffs.
+    needs: legacy-delta-scope
+    if: ${{ needs.legacy-delta-scope.outputs.run_legacy == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 110
     container:
