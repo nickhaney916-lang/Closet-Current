@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - research/photo-cloth-realism-164
-      - research/photo-garment-anatomical-fitting-60-20261108-HOLD
   pull_request:
     branches:
       - research/source-garment-360-visual-integrity-163-main-20261107-HOLD
