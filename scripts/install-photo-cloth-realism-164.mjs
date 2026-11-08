@@ -36,7 +36,33 @@ if (!controller.includes('applyPhotoFabricPBR164(built[slot])')) controller = co
 ${buildAnchor}`);
 await writeFile(controllerPath, controller);
 
+const showroomPath = resolve(donor, 'research/three-d-15/showroom.mjs');
+let showroom = await readFile(showroomPath, 'utf8');
+const showroomSignature = 'photoDenimContactAudit77=false,photoDenimKneePose78=false,premiumTurntable67=false}={}){';
+const showroomPbrSignature = 'photoDenimContactAudit77=false,photoDenimKneePose78=false,photoFabricRealism164=true,premiumTurntable67=false}={}){';
+if (!showroom.includes(showroomPbrSignature)) {
+  assert.equal(showroom.split(showroomSignature).length, 2, 'pinned P541 showroom options anchor changed');
+  showroom = showroom.replace(showroomSignature, showroomPbrSignature);
+}
+const showroomCall = 'photoDenimContactAudit77,photoDenimKneePose78});outfit.setPose(pose);';
+if (!showroom.includes('photoDenimContactAudit77,photoDenimKneePose78,photoFabricRealism164')) {
+  assert.equal(showroom.split(showroomCall).length, 2, 'pinned P541 showroom controller call changed');
+  showroom = showroom.replace(showroomCall, 'photoDenimContactAudit77,photoDenimKneePose78,photoFabricRealism164});outfit.setPose(pose);');
+}
+await writeFile(showroomPath, showroom);
+
+const browserTestPath = resolve(donor, 'scripts/test-three-d-15-browser.mjs');
+let browserTest = await readFile(browserTestPath, 'utf8');
+const verifiedSourceAnchor = "assert.equal(attached.outfit[mode==='dress'?'dress':'shirt'].sourceSHA256,stock.find(r=>r.id===source).sourceSHA256);";
+if (!browserTest.includes("photoFabricPBR164,true")) {
+  assert.equal(browserTest.split(verifiedSourceAnchor).length, 2, 'pinned P541 actual garment browser test anchor changed');
+  browserTest = browserTest.replace(verifiedSourceAnchor, verifiedSourceAnchor +
+    "assert.equal(attached.outfit[mode==='dress'?'dress':'shirt'].photoFabricPBR164,true,'P164 source-verified PBR material must be on the actual skinned photo garment');" +
+    "assert.equal(attached.outfit[mode==='dress'?'dress':'shirt'].photoFabricProfile164,mode==='dress'?'dress-woven':'cotton-jersey');");
+}
+await writeFile(browserTestPath, browserTest);
+
 console.log(JSON.stringify({ priority: 164, donor, module: destModule,
-  integration: 'exact P541 research outfit controller, verified source garments only',
+  integration: 'exact P541 detached research showroom and source-verified browser assertions',
   defaultRendererUnchanged: true, productionAndStagingTouched: false,
   ownerWardrobeReadWrite: false, releaseAuthorized: false, familyAlpha: 'HOLD' }));

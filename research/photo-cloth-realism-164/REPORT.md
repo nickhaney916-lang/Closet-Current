@@ -12,7 +12,7 @@ The material conversion is disposed with its garment and restores the original m
 
 ## Verification gates
 
-The exact-head no-deploy workflow repeats P163's original-source gates, instruments the donor browser, and captures matched baseline and changed 36-frame views in Chromium and WebKit on the original female and male 163-bone bodies at 320/390/430 CSS px. P163's photo-area/torso/hem/limb audit runs again on the post-change Chromium frames. P164 verifies each before/after PNG against its SHA receipt, compares paired view pixel differences, and enforces a source-color change budget. It also records browser render-loop callback CPU time and WebGL draw-call submission CPU time before and after; it allows no more than 50% median overhead. These are main-thread submission measures, **not GPU completion time or mobile FPS**. CI screenshots and the audit JSON are uploaded as a no-deploy artifact.
+The exact-head no-deploy workflow repeats P163's original-source gates, instruments the donor browser, and captures matched baseline and changed 36-frame dress views in Chromium and WebKit on the original female and male 163-bone bodies at 320/390/430 CSS px. It also runs the pinned P541 browser suite on the source-verified shirt and dress at both body models, both source/relaxed poses, four viewing angles, and three mobile widths; the suite now asserts the exact material profile on each actual source-projected skinned garment. P163's photo-area/torso/hem/limb audit runs again on post-change Chromium dress frames. P164 verifies before/after PNG hashes, compares paired view pixel differences, and enforces a source-color change budget. It records browser render-loop callback CPU time and WebGL draw-call submission CPU time before and after, with a 50% median overhead ceiling. These are main-thread submission measures, **not GPU completion time or mobile FPS**. CI screenshots and audit JSON are uploaded as a no-deploy artifact.
 
 The checkout's previous P163 report records a successful baseline of 36/36 original-source garment views and an unverified inferred rear. It does not contain captured P164 output. The P164 visual and framebuffer gates remain **pending until the exact-head Actions run passes**; the audit is not treated as passed from Node tests alone.
 
@@ -21,7 +21,7 @@ The checkout's previous P163 report records a successful baseline of 36/36 origi
 | Criterion | Current status |
 |---|---|
 | SHA-locked photo source preserved | Implemented; unit-covered; actual CI still required |
-| Soft matte cloth lighting response | Implemented for verified shirt, dress, and denim fixtures |
+| Soft matte cloth lighting response | Implemented for verified shirt, dress, and denim fixtures; actual-browser source mapping acceptance covers shirt and dress, while denim's profile is unit-tested only |
 | Original texture color and UV mapping | Preserved by cloned map and shader callbacks; actual screenshots pending |
 | Female and male 163-bone display | Inherited P163 baseline; P164 exact-head rerun pending |
 | Six angles at 320/390/430 | Inherited P163 baseline; P164 exact-head rerun pending |

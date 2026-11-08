@@ -382,6 +382,11 @@ jobs:
           node --check .p150-donor-541/research/photo-cloth-realism-164/pbr-fabric.mjs
           node --check .p150-donor-541/research/three-d-15/outfit-controller.mjs
           test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          cd .p150-donor-541
+          node --check scripts/test-three-d-15-browser.mjs
+          node scripts/test-three-d-15-browser.mjs
+          node scripts/test-three-d-15-evidence.mjs
+          cd ..
           P150=1 P160=1 P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
           node /tmp/P716-original-six-camera-audit.mjs benchmark/outfit-view-360-160
           node scripts/audit-licensed-head-six-angle-162.mjs
@@ -414,6 +419,7 @@ jobs:
             research/licensed-head-six-angle-162/REPORT.md
             benchmark/source-garment-360-visual-integrity-163/audit/garment-silhouette-acceptance.json
             benchmark/photo-cloth-realism-164/
+            .p150-donor-541/benchmark/three-d-15/
             research/source-garment-360-visual-integrity-163/REPORT.md
             research/licensed-head-six-angle-162/INTEGRATION_MATRIX.md
           if-no-files-found: warn
