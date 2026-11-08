@@ -21,7 +21,7 @@ export const HEAD_JOINT_FIT_160=Object.freeze({
  ownerPhotographedGarmentGeometryModified:false,
  signedOwnerPhotosOrCutoutsModified:false,
  fullAnatomicalSkeletonRetargetComplete:false,
- 10of10VisualRealismApproved:false,physicalPhoneApproved:false,
+ visualRealism10of10Approved:false,physicalPhoneApproved:false,
  familyAlpha:'HOLD',releaseAuthorized:false
 });
 const prior=new WeakMap();
