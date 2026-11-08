@@ -1,6 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {createHash} from 'node:crypto';
+import {verifyOwnerSavedPhoto165} from '../public/style-photo-preview-gate-165.mjs';
 
 test('P166 scratch adapter uses native verified JPEG capture before real Work photo candidate',()=>{
  const s=readFileSync('scripts/prepare-canonical-camera-owned-style-166-browser.mjs','utf8');
@@ -24,7 +26,7 @@ test('P166 exact descendant of P165 only adds four research paths and reuses pin
  const s=readFileSync('.github/workflows/canonical-camera-owned-style-166-no-deploy.yml','utf8');
  for(const needle of [
   'BASE=2b6d891367fd67cc8f7d054b1250600e0e13c323',
-  'test "$(wc -l </tmp/p166-files)" -eq 4',
+  'test "$(wc -l </tmp/p166-files)" -eq 5',
   '0eaa99fe1e1a07b253a4ef2b1b5a0dc7192a2a00',
   'merge --no-commit --no-ff "$WORK"',
   'test -z "$(git ls-files -u)"',
@@ -49,4 +51,22 @@ test('P166 explicit limitations cannot be silently mistaken for release or live 
  for(const phrase of ['FAMILY ALPHA HOLD','synthetic camera','not a 3D fit',
   'full-app Work','SHA-256','human reviewed','Chromium','WebKit',
   'no production or existing staging'])assert.ok(s.toLowerCase().includes(phrase.toLowerCase()));
+});
+
+test('P166 canonical signed original preview refuses spoofed or revoked owner review before and after SHA digest',async()=>{
+ const bytes=Buffer.alloc(256,16),image='data:image/jpeg;base64,'+bytes.toString('base64');
+ const hash=createHash('sha256').update(bytes).digest('hex');
+ const ownerId='source-reviewed-owner-166',epoch='private-owner-epoch-166';
+ const getSession=()=>({authenticated:true,ownerId,epoch,privateDbName:'closet-current-user-'+ownerId});
+ const item={id:'saved-new-blouse',ownerId,sourceSHA256:hash,sourcePhotoOriginal:true,
+  sourceHashVerified:true,userAdjusted:true,ownerReviewed:true,
+  originalPhoto:{image,sha256:hash},image,category:'Tops',itemType:'Blouse'};
+ const verify=(row,latest=item)=>verifyOwnerSavedPhoto165({item:row,getSession,readOwnerItems:()=>[latest]});
+ const pass=await verify(item);
+ assert.equal(pass.presentationMode,'verified-original-photo-2d');
+ assert.equal(pass.garmentActuallyFittedIn3D,false);
+ await assert.rejects(verify({...item,ownerReviewed:false}),/owner review/);
+ await assert.rejects(verify({...item,userAdjusted:false}),/owner review/);
+ await assert.rejects(verify(item,{...item,ownerReviewed:false}),/changed during/);
+ await assert.rejects(verify(item,{...item,userAdjusted:false}),/changed during/);
 });
