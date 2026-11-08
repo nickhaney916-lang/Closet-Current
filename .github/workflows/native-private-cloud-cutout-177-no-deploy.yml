@@ -1,0 +1,174 @@
+name: P177 original reviewed cutout plus source native private cloud transport NO DEPLOY
+on:
+  push:
+    branches:
+      - research/native-private-cloud-cutout-source-177-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-owner-cutout-source-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact independently verified P176 parent and restrict P177 to four isolated research files
+        run: |
+          set -eu
+          BASE=cf1f3d8e46eeeb086ec9249260de10ca92b5eda3
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p177-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/native-private-cloud-cutout-177/cloud-transport.mjs|research/native-private-cloud-cutout-177/REPORT.md|tests/native-private-cloud-cutout-177.test.mjs|.github/workflows/native-private-cloud-cutout-177-no-deploy.yml) ;;
+              *) echo "P177 refuses any public production, Supabase, image or unrelated research mutation: $path"; exit 1 ;;
+            esac
+          done </tmp/p177-paths
+          test "$(wc -l </tmp/p177-paths)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public supabase migrations benchmark/fixtures research/two-owner-cloud-rls-recovery-128 research/restore-atomic-01 research/manual-reviewed-private-save-119 package.json package-lock.json
+          node --check research/native-private-cloud-cutout-177/cloud-transport.mjs
+          node --check tests/native-private-cloud-cutout-177.test.mjs
+      - name: Install locked-version isolated research dependencies without touching package lock
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 fake-indexeddb@6.2.4 playwright@1.56.1 pg@8.16.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Verify actual native cloud mapper original and cutout, owner lease, SHA and refusal before remote requests
+        run: node --test tests/native-private-cloud-cutout-177.test.mjs
+      - name: Build unchanged public app and complete inherited Node regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Ensure no fake hosted cloud, no auto-approved unknown 3D clothing, Family Alpha stays HOLD
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const s=readFileSync('research/native-private-cloud-cutout-177/cloud-transport.mjs','utf8');
+          for(const part of [
+            "import {validateRestore01}",
+            'assertOwnerCloudPaths128',
+            "k==='image'||k==='cutoutImage'",
+            'await validateRestore01({...input,ownerId}',
+            'await validateRestore01({...mapped,ownerId}',
+            "const input=clone(root);",
+            'assertOwnerCloudPaths128(input,ownerId)',
+            'currentOwner()!==ownerId',
+            'productionAuthorized:false',
+            "familyAlpha:'HOLD'"
+          ])assert.ok(s.includes(part),'Missing exact dual-source safe native transport: '+part);
+          NODE
+  original-postgres-two-owner-rls-cas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p177-disposable-research-only
+          POSTGRES_DB: p177_disposable
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p177_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p177-disposable-research-only@127.0.0.1:5432/p177_disposable
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p177-disposable-research-only
+      PGDATABASE: p177_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve exact public cloud RLS SQL, P128 source and application from approved P176
+        run: git diff --exit-code cf1f3d8e46eeeb086ec9249260de10ca92b5eda3 HEAD -- public supabase migrations research/two-owner-cloud-rls-recovery-128 benchmark/fixtures
+      - name: Install disposable real PostgreSQL CLI and Node driver
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Load actual unchanged closet private backup, storage and original SHA owner RLS policies
+        run: psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Verify actual local PostgreSQL owner A and B SELECT INSERT UPDATE DELETE and atomic revision CAS
+        run: node scripts/test-two-owner-postgres-rls-128.mjs
+  actual-chromium-and-webkit-private-cloud-photo-and-cutout-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin isolated actual-browser cloud photo owner source dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Existing original plus crop separate owner SHA cloud backup UI in real mobile Chromium and WebKit
+        run: node scripts/test-cloud-backup-browser-140.mjs
+      - name: Independently SHA verify 48 original browser PNGs, two-private-JPEG owner storage and safe consent
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const r=JSON.parse(readFileSync('benchmark/cloud-backup-browser-140/results.json','utf8'));
+          assert.equal(r.priority,'P140-CLOUD-BACKUP-BROWSER-OWNER-REVIEW');
+          assert.equal(r.cases.length,6);assert.equal(r.screenshots.length,48);
+          assert.deepEqual(r.cases.map(x=>[x.engine,x.width]),[
+           ['chromium',320],['chromium',390],['chromium',430],
+           ['webkit',320],['webkit',390],['webkit',430]]);
+          assert.equal(r.genuineOriginalLicensedAndSHAValidated,true);
+          assert.equal(r.genuineOriginalAndCutoutJPEGsVerified,true);
+          assert.equal(r.actualShippingCloudUIIntegrated,false);
+          assert.equal(r.signedTokensAndHostedA_BAcceptance,false);
+          assert.equal(r.realPhysicalAndroidOrIphone,false);
+          assert.equal(r.productionOrExistingStagingModified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.failed,[]);assert.deepEqual(r.pageErrors,[]);
+          assert.deepEqual(r.externalNetwork,[]);
+          assert.ok(r.crossOwnerDenied>=6);
+          assert.ok(r.cases.every(x=>x.originalAndCutoutSHAJPGStored&&
+           x.actualOwnerApprovedCloudReplacement&&x.ownerRevokeDuringConsentDenied&&
+           x.secondSyntheticOwnerStorageDenied&&x.privateOwnerDialogNoClothingData));
+          const seen=new Set();
+          for(const s of r.screenshots){
+           assert.ok(['chromium','webkit'].includes(s.engine));
+           assert.ok([320,390,430].includes(s.width));
+           const key=[s.engine,s.width,s.stage].join('|');
+           assert.ok(!seen.has(key));seen.add(key);
+           const raw=readFileSync('benchmark/cloud-backup-browser-140/'+s.name);
+           assert.equal(createHash('sha256').update(raw).digest('hex'),s.sha256);
+           assert.equal(raw.readUInt32BE(16),s.width);
+          }
+          assert.equal(seen.size,48);
+          console.log('P177_REAL_CHROMIUM_WEBKIT_ORIGINAL_AND_CUTOUT_CLOUD_48_SHA_SCREENSHOT_PASS_HOLD');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P177-genuine-original-and-cutout-private-cloud-48-mobile-browser-screens-HOLD
+          path: |
+            benchmark/cloud-backup-browser-140/
+          retention-days: 14
+          if-no-files-found: warn
