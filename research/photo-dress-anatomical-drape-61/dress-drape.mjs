@@ -9,7 +9,7 @@ import * as T from 'three';
 export const DRESS_DRAPE_61 = Object.freeze({
   sourceId: 'commons-0053',
   torsoClearanceMeters: 0.011,
-  maxTorsoCorrectionMeters: 0.013,
+  maxTorsoCorrectionMeters: 0.0129,
   skirtOutwardMeters: 0.018,
   maxHemDropMeters: 0.006,
   folds: 7,
