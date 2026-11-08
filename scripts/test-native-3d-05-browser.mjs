@@ -10,6 +10,7 @@ import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
 import {chromium} from 'playwright';
 import sharp from 'sharp';
+import {inspectSavedShirtDenim176} from '../research/native-owner-saved-shirt-denim-176/admission.mjs';
 const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
@@ -21,6 +22,13 @@ for(const id of ids){
  assert.ok(locked?.verified&&locked.sha256===digest(bytes)&&
   locked.attribution?.source?.startsWith('https://commons.wikimedia.org/wiki/File:'));
  photos[id]={image:'data:image/jpeg;base64,'+bytes.toString('base64'),sha256:locked.sha256};
+}
+if(photoDenim176){
+ const bytes=await readFile(donor+'/benchmark/three-d-31/original-jeans.jpg');
+ const sha=digest(bytes);
+ assert.equal(sha,'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c');
+ assert.equal(bytes.subarray(0,2).toString('hex'),'ffd8');
+ photos.denim={image:'data:image/jpeg;base64,'+bytes.toString('base64'),sha256:sha};
 }
 const types={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html',
  '.json':'application/json','.css':'text/css','.glb':'model/gltf-binary',
@@ -58,6 +66,7 @@ const photoFit171=process.env.PHOTO_FIT171==='1';
 const photoTorso173=process.env.PHOTO_TORSO173==='1';
 const photoSleeve174=process.env.PHOTO_SLEEVE174==='1';
 const photoDress175=process.env.PHOTO_DRESS175==='1';
+const photoDenim176=process.env.PHOTO_DENIM176==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -75,7 +84,7 @@ function fixture(owner){
    item('jacket','Outerwear','Jacket','commons-0064'),
    item('coat','Outerwear','Coat','commons-0067'),
    item('shoes','Shoes','Sneakers','commons-0080'),
-   item('shirt','Tops','T-shirt','commons-0003')],
+   item('shirt','Tops','T-shirt','commons-0003'),...(photoDenim176?[item('jeans','Bottoms','Jeans','denim')]:[])],
   state:{id:'outfit-board',current:{name:'Existing current',slots:{},future:{preserve:true}},
    saved:[
     {id:owner+'-dress-saved',outfit3dId:owner+'-verified-dress-3D',
@@ -89,7 +98,7 @@ function fixture(owner){
      futureSourceKeys:{ver:2}},
     {id:owner+'-shirt-saved',outfit3dId:owner+'-verified-shirt-3D',
      ownerId:owner,name:'Source-true original photographed shirt',
-     slots:{top:owner+'-shirt'},futureSourceKeys:{ver:3}}],
+     slots:{top:owner+'-shirt'},futureSourceKeys:{ver:3}},...(photoDenim176?[{id:owner+'-shirt-jeans-saved',outfit3dId:owner+'-source-shirt-jeans-3D',ownerId:owner,name:'Source-true photographed shirt and jeans',slots:{top:owner+'-shirt',bottom:owner+'-jeans'},futureSourceKeys:{ver:4}}]:[])],
    futureBoardVersion:'never-drop'}
  };
 }
@@ -165,7 +174,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDenim176?'&photoDenim176=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -577,6 +586,7 @@ try{
      realSignedCloudRLS:false,releaseAuthorized:false,familyAlpha:'HOLD'
     },null,2)+'\n');
   }
+  const denimEvidence176=[];
   if(photoTorso173){
    // THE ACTUAL saved owner shirt from the consumer board, not a donor-created
    // fake selection. P171 and P173 must be present on the loaded P541 model.
@@ -646,6 +656,47 @@ try{
    await page.locator('#savedBoards button').first().click();
    assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
   }
+  if(photoDenim176){
+   await page.evaluate(()=>window.native3D05Bridge.close());
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await page.locator('#savedBoards button').nth(3).click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),3);
+   const pairSources=await page.evaluate(()=>window.nativeLossless04Bridge.readOnlyGarmentSources91(
+    ['native05-A-shirt','native05-A-jeans']));
+   assert.equal(pairSources.ownerId,'native05-A');
+   assert.deepEqual(pairSources.sources.map(x=>x.sha256),[
+    'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64',
+    'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c']);
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+    window.native3D05Bridge.state().viewerMode==='shirt-pants'&&
+    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   const pairState=await page.evaluate(()=>window.native3D05Bridge.state());
+   const pairAdmission=inspectSavedShirtDenim176({selection:{ownerId:'native05-A',slots:{top:'native05-A-shirt',bottom:'native05-A-jeans'}},sources:pairSources,proofs:{p171:pairState.photoSourceFit171,p173:pairState.photoSourceTorso173,p174:pairState.photoSourceShoulder174},render:{privateVisible:pairState.active,viewerReady:pairState.modelReady,bones:pairState.bones,viewerMode:pairState.viewerMode,meshCount:pairState.meshCount,fallbackCount:pairState.fallbackCount,productionDeployed:false,releaseAuthorized:false}});
+   assert.equal(pairAdmission.admitted,true,pairAdmission.reason);
+   assert.equal(pairState.photoSourceFit171,true);assert.equal(pairState.photoSourceTorso173,true);
+   assert.equal(pairState.photoSourceShoulder174,true);assert.equal(pairState.viewerMode,'shirt-pants');
+   assert.equal(pairState.bones,163);assert.ok(pairState.meshCount>=2);assert.equal(pairState.fallbackCount,0);
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),2);
+   assert.equal(await page.locator('#outfit3D01Save').isDisabled(),true);
+   assert.equal(await page.locator('#outfit3D01Delete').isDisabled(),true);
+   const pairBefore=await readBoard(page),shots=[];
+   for(const [stage,button] of [['front','Front'],['side','Side'],['rear','Back']]){
+    await page.locator('#outfit3D01'+button).click();
+    await take(page,width,'owner-shirt-denim-'+stage);shots.push(screens.at(-1));
+   }
+   assert.deepEqual(await readBoard(page),pairBefore,'Read-only source 3D preserves saved IDs and JPEGs');
+   assert.deepEqual(pairBefore,ownerOriginal,'Opening two-piece WebGL may not write private board');
+   denimEvidence176.push({width,ownerSavedPair:true,viewerMode:pairState.viewerMode,bones:pairState.bones,
+    meshCount:pairState.meshCount,fallbackCount:pairState.fallbackCount,
+    sourceSHA256:pairSources.sources.map(x=>x.sha256),screens:shots,
+    originalPhotoIds:['commons-0003','commons-public-domain-jeans-2005'],
+    physicsSimulation:false,bodyIntersectionAudit:false,physicalPhoneVerified:false});
+   await page.evaluate(()=>window.native3D05Bridge.close());
+   await page.locator('#savedBoards button').first().click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+  }
   // Explicit scene close must NOT invalidate still-signed-in consumer editor.
   await page.evaluate(()=>window.native3D05Bridge.close());
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -685,7 +736,7 @@ try{
    authenticPhotoSourcedDress3D:true,
    ...(photoTorso173?{actualSignedOwnerSourceShirtPhysicallyContoured173:true}:{}),
    ...(photoSleeve174?{actualSignedOwnerBilateralShoulderSeamPhysicallyEased174:true}:{}),
-   ...(photoDress175?{actualSignedOwnerPhotographedDressPhysicallyReshaped175:true}:{}),
+   ...(photoDress175?{actualSignedOwnerPhotographedDressPhysicallyReshaped175:true}:{}),...(photoDenim176?{actualNativeOwnerSavedPhotoShirtAndDenimPair176:true}:{}),
    bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,
@@ -702,11 +753,11 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,photoTorso173?24:15);
+ assert.equal(cases.length,3);assert.equal(screens.length,(photoTorso173?24:15)+(photoDenim176?9:0));if(photoDenim176)assert.equal(denimEvidence176.length,3);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:'NATIVE-3D-05',cases:3,screenshots:photoTorso173?24:15,
+ const result={priority:'NATIVE-3D-05',cases:3,screenshots:(photoTorso173?24:15)+(photoDenim176?9:0),denim176:photoDenim176?denimEvidence176:[],
   browser:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
@@ -717,7 +768,7 @@ try{
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
-   real163BoneWebGL:true,realMobileScreenshots:15,familyAlpha:'HOLD'}));
+   real163BoneWebGL:true,realMobileScreenshots:screens.length,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,
