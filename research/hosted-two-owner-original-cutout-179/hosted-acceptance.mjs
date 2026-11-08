@@ -84,7 +84,8 @@ function reviewedBackup(owner,pair,nonce){
     saved:[{id:'p179-look-'+nonce,ownerId:owner,slots:{top:itemId}}]
   }}};
 }
-export async function prepareSource179(owner,nonce,pair=await sourcePair179()){
+export async function prepareSource179(owner,nonce,pair){
+ if(!pair)pair=await sourcePair179();
  if(!UUID.test(owner)||!UUID.test(nonce))die('owner and scenario identifiers must be UUIDs');
  const backup=reviewedBackup(owner,pair,nonce);
  const proof=await validateRestore01(backup,{ownerId:owner,mode:'file'});
