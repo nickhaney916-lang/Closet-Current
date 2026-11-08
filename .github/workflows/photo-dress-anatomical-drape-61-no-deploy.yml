@@ -1,0 +1,97 @@
+name: P61 photographed dress anatomical drape research HOLD
+on:
+  push:
+    branches:
+      - research/photo-dress-anatomical-drape-61-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact parent, dress-only change boundary, and no app or cloud edits
+        run: |
+          set -eu
+          BASE=76315c4c08274a510c55bade91e76f1db89a129a
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p61-files
+          while IFS= read -r p; do
+            case "$p" in
+              research/photo-dress-anatomical-drape-61/dress-drape.mjs|research/photo-dress-anatomical-drape-61/REPORT.md|research/photo-garment-anatomical-fitting-60/fit-contract.mjs|scripts/install-photo-dress-anatomical-drape-61.mjs|scripts/test-photo-dress-anatomical-drape-61-browser.mjs|tests/photo-dress-anatomical-drape-61.test.mjs|.github/workflows/photo-dress-anatomical-drape-61-no-deploy.yml) ;;
+              *) echo "P61 refuses app, shirt, owner data, cloud, staging, production, or parallel branch path: $p"; exit 1 ;;
+            esac
+          done </tmp/p61-files
+          test "$(wc -l </tmp/p61-files)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json scripts/build.mjs research/native-3d-05 research/native-photo-anatomical-fit-integration-171
+      - name: Run P61 geometry contracts and full inherited Node regression suite
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+          node --check research/photo-dress-anatomical-drape-61/dress-drape.mjs
+          node --check scripts/install-photo-dress-anatomical-drape-61.mjs
+          node --test tests/photo-dress-anatomical-drape-61.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  pinned-p541-webgl-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser and geometry dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Rebuild exact detached P541 and install P61 research changes only there
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git fetch --no-tags origin "$P541"
+          git worktree add --detach .p61-donor "$P541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p61-donor"
+          test "$(git -C .p61-donor rev-parse HEAD)" = "$P541"
+          ln -s ../node_modules .p61-donor/node_modules
+          cd .p61-donor
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          cd ..
+          node scripts/install-photo-dress-anatomical-drape-61.mjs .p61-donor
+          test "$(git -C .p61-donor rev-parse HEAD)" = "$P541"
+      - name: Render isolated P61 before and after on the real skinned P541 dress
+        run: |
+          cd .p61-donor
+          node ../scripts/test-photo-dress-anatomical-drape-61-browser.mjs
+          node --check research/photo-dress-anatomical-drape-61/dress-drape.mjs
+      - name: Upload original photo source, genuine WebGL screenshots and audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P61-photographed-dress-real-WebGL-evidence-HOLD
+          path: |
+            .p61-donor/benchmark/work47/manifest.json
+            .p61-donor/benchmark/work47/assets/commons-0053.jpg
+            .p61-donor/benchmark/work47/assets/commons-0053.png
+            .p61-donor/benchmark/photo-dress-drape-61/
+          if-no-files-found: warn
+          retention-days: 14
