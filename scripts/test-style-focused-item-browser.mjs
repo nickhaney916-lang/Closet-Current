@@ -80,7 +80,11 @@ try{
      },fixtures);
      await page.evaluate(()=>switchView('scan'));
      await page.locator('#clothingPhotos').setInputFiles({name:'new-reviewed-blouse.png',mimeType:'image/png',buffer:capturePng});
-     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.png'),null,{timeout:20000});
+     try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.png'),null,{timeout:20000});}
+     catch(error){const state=await page.evaluate(()=>({importResult:window.__lastPhotoImportResult,
+      message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
+      dbName:db?.name,batch:batch.map(x=>({id:x.id,name:x.name,status:x.localStatus,scanFailed:x.scanFailed})),
+      recognitionPhase:recognitionState.phase}));throw Error(String(error)+'; import diagnostics='+JSON.stringify(state));}
      await page.evaluate(()=>switchView('review'));
      await page.locator('#reviewGrid article.photo-result').getByRole('button',{name:'Adjust',exact:true}).click();
      await page.waitForFunction(()=>document.querySelector('dialog.photo-adjust[open]')!==null);
