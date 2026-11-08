@@ -18,6 +18,14 @@ patch(
  "+'/public/index.html?ownerReview145=research&captureProof01=after&index04=after&reviewedSave120=research'",
  'original JPEG human review flags');
 patch(
+ "if(!/^\/public\/[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('forbidden path');",
+ "if(!/^\/(?:public|research)\/[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('forbidden path');",
+ 'exact research-only P119 local modules HTTP serving');
+patch(
+ "if(!file.startsWith(root+'/public/'))throw Error('outside public app');",
+ "if(!file.startsWith(root+'/public/')&&!file.startsWith(root+'/research/'))throw Error('outside test research app');",
+ 'allow only same-origin checked in original research source modules');
+patch(
  "await page.evaluate(image=>{if(!candidate(image))throw Error('Synthetic camera frame was not accepted');batch.at(-1).importFilename='new-reviewed-blouse.jpg';finishScan();},cameraFrame);",
  "await page.evaluate(async image=>{const owner=window.closetAuth.user.id;const proof=await captureProofFromJPEG(image,{width:240,height:320,origin:'synthetic-CI-camera-frame'},owner);if(!candidate(image,{sourceProof:proof}))throw Error('Canonical synthetic camera frame refused');batch.at(-1).importFilename='new-reviewed-blouse.jpg';finishScan();},cameraFrame);",
  'actual proof source captured before draft');
