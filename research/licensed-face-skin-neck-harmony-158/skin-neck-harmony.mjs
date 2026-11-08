@@ -56,7 +56,7 @@ function colorFromVerifiedFace(candidate,figure){
   const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];
   // Conservative warm-skin chroma on ORIGINAL LICENSED face-map only.
   // Excludes transparent hair, near-black strands and white sclera.
-  if(a<235||r<85||r>244||g<52||g>223||b<33||b>212||
+  if(a<235||r<56||r>244||g<31||g>223||b<18||b>212||
      r<g*1.065||g<b*1.02||r-g>94||g-b>78)continue;
   candidates.push([r,g,b]);
  }
@@ -69,7 +69,7 @@ function colorFromVerifiedFace(candidate,figure){
  const tone=new THREE.Color().setRGB(srgb[0]/255,srgb[1]/255,
   srgb[2]/255,THREE.SRGBColorSpace);
  const original=[.66,.445,.36],weighted=[tone.r,tone.g,tone.b].map((v,i)=>
-  clamp(original[i]*.23+v*.77,[.34,.18,.12][i],[.81,.66,.58][i]));
+  clamp(original[i]*.15+v*.85,[.12,.055,.025][i],[.81,.66,.58][i]));
  if(!weighted.every(finite)||weighted[0]<=weighted[1]||
     weighted[1]<weighted[2]*.82)fail('source skin tone measurement implausible');
  const delta=Math.hypot(...weighted.map((v,i)=>v-original[i]));
