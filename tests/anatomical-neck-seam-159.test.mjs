@@ -59,3 +59,12 @@ test('P159 explicitly does not claim topology welding, full pose retarget, photo
  assert.match(source,/originalSourceBodyGeometryAltered:false/);
  assert.match(source,/originalHeadTextureAltered:false/);
 });
+
+test('P159 compares real posed MIT upper-neck and original 163-bone torso ring centers rather than unrelated nose/scalp bbox center',()=>{
+ assert.match(source,/ringCenterDistance=Math.hypot\(upper.x-lower.x,upper.z-lower.z\)/);
+ assert.match(source,/ringCenterDistance>\.125/);
+ assert.match(source,/Math.abs\(upper.x-lower.x\)>\.095/);
+ assert.match(source,/independently measured MIT neck and original torso rings do not meet/);
+ assert.match(source,/donorHeadZ/);
+ assert.match(source,/centerLimitZ/);
+});
