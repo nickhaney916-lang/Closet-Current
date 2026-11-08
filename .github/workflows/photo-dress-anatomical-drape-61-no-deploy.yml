@@ -81,7 +81,7 @@ jobs:
       - name: Render isolated P61 before and after on the real skinned P541 dress
         run: |
           cd .p61-donor
-          node scripts/test-photo-dress-anatomical-drape-61-browser.mjs
+          node ../scripts/test-photo-dress-anatomical-drape-61-browser.mjs
           node --check research/photo-dress-anatomical-drape-61/dress-drape.mjs
       - name: Upload original photo source, genuine WebGL screenshots and audit results
         if: always()
