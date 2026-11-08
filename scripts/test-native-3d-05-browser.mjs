@@ -668,10 +668,15 @@ try{
     'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64',
     'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c']);
    await page.locator('#native3D05Preview').click();
-   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
-    window.native3D05Bridge.state().viewerMode==='shirt-pants'&&
-    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady||
+    document.getElementById('native3D05Status')?.textContent.includes('3D not available'),
+    null,{timeout:60000});
    const pairState=await page.evaluate(()=>window.native3D05Bridge.state());
+   const pairDiagnostic=await page.evaluate(()=>({outer:document.getElementById('native3D05Status')?.textContent||'',
+    inner:document.getElementById('outfit3D01Status')?.textContent||'',
+    state:window.native3D05Bridge.state(),board:window.nativeLossless04Bridge.status()}));
+   console.log('P176_SAVED_DENIM_PAIR_DIAGNOSTIC',JSON.stringify(pairDiagnostic));
+   assert.equal(pairState.modelReady,true,'P176 donor viewer did not become ready: '+JSON.stringify(pairDiagnostic));
    const pairAdmission=inspectSavedShirtDenim176({selection:{ownerId:'native05-A',slots:{top:'native05-A-shirt',bottom:'native05-A-jeans'}},sources:pairSources,proofs:{p171:pairState.photoSourceFit171,p173:pairState.photoSourceTorso173,p174:pairState.photoSourceShoulder174},render:{privateVisible:pairState.active,viewerReady:pairState.modelReady,bones:pairState.bones,viewerMode:pairState.viewerMode,meshCount:pairState.meshCount,fallbackCount:pairState.fallbackCount,productionDeployed:false,releaseAuthorized:false}});
    assert.equal(pairAdmission.admitted,true,pairAdmission.reason);
    assert.equal(pairState.photoSourceFit171,true);assert.equal(pairState.photoSourceTorso173,true);
