@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -377,12 +377,34 @@ export async function mountNative3D05({
      verifiedPhotographicShoulder174=result;
     }
    }
+   // P175 physically fit the exact original licensed dress source from P61
+   // in native signed-owner 3D; a selected shirt never requires dress proof.
+   if(params?.get('photoDress175')==='research'){
+    const render=panel?.state?.();
+    if(render?.viewerMode==='dress'){
+     if(params?.get('photoFit171')!=='research'||!verifiedPhotographicFit171?.admitted)
+      throw Error('P175 original owner dress requires independently signed P171 source proof');
+     const verify=await import('../native-original-dress-drape-175/admission.mjs');
+     requireFresh();
+     const verdict=verify.inspectNativeDressDrape175({
+      selection:selected,sources:selectedSources91,
+      render:render?{...render,productionDeployed:false}:null,
+      proof171:verifiedPhotographicFit171
+     });
+     if(!verdict.admitted)
+      throw Error('P175 original photographed dress bodice/skirt 3D unavailable: '+verdict.reason);
+     await attestOriginalBytes92();
+     requireFresh();
+     verifiedPhotographicDress175=verdict;
+    }
+   }
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
     photoSourceFit171:verifiedPhotographicFit171?.admitted===true,
     photoSourceTorso173:verifiedPhotographicTorso173?.admitted===true,
     photoSourceShoulder174:verifiedPhotographicShoulder174?.admitted===true,
+    photoSourceDress175:verifiedPhotographicDress175?.admitted===true,
     photorealismApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'};
   }catch(e){
    cleanup('3D not available · original clothing photographs preserved. '+String(e.message||e));
@@ -409,6 +431,11 @@ export async function mountNative3D05({
    photoOnlyUnsupported:true,photoSourceFit171:active&&verifiedPhotographicFit171?.admitted===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
+   photoSourceDress175:active&&verifiedPhotographicDress175?.admitted===true,
+   physicalDressBodiceVertices175:active?verifiedPhotographicDress175?.bodiceMovedVertices||0:0,
+   physicalDressSkirtVertices175:active?verifiedPhotographicDress175?.skirtMovedVertices||0:0,
+   physicalDressMaxBodiceMeters175:active?verifiedPhotographicDress175?.maxBodiceMeters||0:0,
+   physicalDressMaxSkirtMeters175:active?verifiedPhotographicDress175?.maxSkirtMeters||0:0,
    shoulderMovedVertices174:active?verifiedPhotographicShoulder174?.movedVertices||0:0,
    shoulderMaxMeters174:active?verifiedPhotographicShoulder174?.maximumDisplacementMeters||0:0,
    physicalShirtVertices173:active?verifiedPhotographicTorso173?.physicalTorsoMovedVertices||0:0,
