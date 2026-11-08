@@ -122,7 +122,9 @@ const item=(ownerId)=>({
  id:'p146-reviewed-shirt',ownerId,
  image:uri(original),originalPhoto:{image:uri(original),sha256:originalSHA},
  sourceSHA256:originalSHA,sourceHashVerified:true,sourcePhotoOriginal:true,
- humanReviewedSource:true,singleGarmentVerified:true,
+ humanReviewedSource:true,// An original with an independently reviewed segment is NOT a single
+ // verified garment in the source photograph. P124/P126 require this false.
+ singleGarmentVerified:false,
  outfitSourceId:'p146-licensed-photo',cutoutSHA256:cutoutSHA,
  segmentHint:{verified:true,ownerReviewedInstance:true,clipped:false,originalSHA256:originalSHA,
   cutoutSHA256:cutoutSHA,cutoutImage:uri(cutout)},
