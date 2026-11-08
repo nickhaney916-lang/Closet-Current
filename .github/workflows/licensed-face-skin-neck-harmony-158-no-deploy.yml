@@ -135,7 +135,7 @@ jobs:
           const errAnchor="  page.on('pageerror',e=>errors.push({width,message:e.message}));";
           assert.equal(s.split(errAnchor).length,2,'P157 actual browser console diagnostic anchor unavailable');
           s=s.replace(errAnchor,"  page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('P157_REAL_PAGE_EXCEPTION',e.message);});"+
-           "\n  page.on('console',m=>{if(m.type()==='error'){const detail=m.text();console.error('P157_REAL_WEBGL_CONSOLE',detail);if(/THREE\\.WebGLProgram: Shader Error|WebGL: INVALID_OPERATION: useProgram|ERROR: 0:\\d+:/i.test(detail))errors.push({width,message:'P157_WEBGL_SHADER_FAILURE: '+detail.slice(0,250)});}});"+
+           "\n  page.on('console',m=>{if(m.type()==='error'){const detail=m.text();console.error('P157_REAL_WEBGL_CONSOLE',detail);if(/THREE\\.WebGLProgram: Shader Error|WebGL: INVALID_OPERATION: useProgram|ERROR: 0:\\d+:|P157_RESEARCH_FACE_GRAFT_REFUSED SKIN158|P157_EXACT_SOURCE_ASSET_REFUSED/i.test(detail))errors.push({width,message:'P157_WEBGL_SHADER_FAILURE: '+detail.slice(0,250)});}});"+
            "\n  page.on('requestfailed',r=>console.error('P157_REAL_HTTP_REQUEST_FAILED',r.url(),r.failure()?.errorText));");
           const gate="  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&";
           assert.ok(s.includes(gate),'P157 original 163-bone genuine WebGL gate changed');
