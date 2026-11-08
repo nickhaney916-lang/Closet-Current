@@ -248,6 +248,11 @@ try{
      'Actual restored source JPEG must be rehashed before native 3D opens');
     assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().savedCount),1);
     if(engine==='chromium'){
+      // An OPEN account menu covers the mobile builder touch target.
+      // Close its actual <details> summary as a real user does BEFORE
+      // selecting the recovered outfit and clicking 3D Preview.
+      const menu=page.locator('header .account-menu');
+      if(await menu.evaluate(x=>x.open))await menu.locator('summary').click();
       // Select the ACTUAL recovered owner-saved outfit, not donor-created
       // clothes. Real 163-bone source photo fitting and WebGL only.
       await page.evaluate(()=>switchView('builder'));
