@@ -15,7 +15,7 @@ assert.ok(original.includes("await card.getByRole('button',{name:'Save outfit'})
  original.includes("await page.waitForFunction(()=>savedOutfitBoards.length===2")&&
  original.includes("const owner='synthetic-style-owner-a'"),
  'P165 must retain entire Work #719 native owner-private camera/board/save flow');
-const inject=String.raw\`
+const inject=String.raw`
      // P165: actual additive owner-verified 2D original-photo fallback on
      // the REAL native Style My New Clothes three-outfit UI. No fake 3D blouse.
      await mkdir('benchmark/style-photo-preview-165',{recursive:true});
@@ -94,21 +94,21 @@ const inject=String.raw\`
      assert.equal(sourceEvidence.state.familyAlpha,'HOLD');
      assert.equal(sourceEvidence.overflow,false);
      assert.match(sourceEvidence.disclaimer,/3D fitting is not yet verified/);
-     await page.screenshot({path:\`benchmark/style-photo-preview-165/\${engine}-\${width}-verified-original-2d.png\`,fullPage:true});
+     await page.screenshot({path:'benchmark/style-photo-preview-165/'+engine+'-'+width+'-verified-original-2d.png',fullPage:true});
      await page.evaluate(()=>window.__P165.dispose());
      resultsP165.push({engine,width,originalSHA:mounted.originalSHA,sourceImageKind:mounted.sourceImageKind,
        wrongOwnerRejected:true,sourceTamperingRejected:true,
        unreviewedRejected:true,revokedSessionRejected:true,
        sameSavedOwner:true,actualVerifiedOriginalImageVisible:true,originalOwnerPhotoUnchanged:true,
        realNativeStylingWorkflow:true,notFake3D:true,familyAlpha:'HOLD'});
-\`;
+`;
 let content=original.replace(anchor,anchor+'\n'+inject);
 const resultsAnchor='const results=[],errors=[];';
 assert.equal(content.split(resultsAnchor).length,2);
 content=content.replace(resultsAnchor,resultsAnchor+"\nconst resultsP165=[];");
 const endAnchor=" await writeFile(out+'/results.json',JSON.stringify(report,null,2));";
 assert.equal(content.split(endAnchor).length,2,'real original Work #719 output changed');
-content=content.replace(endAnchor,endAnchor+String.raw\`
+content=content.replace(endAnchor,endAnchor+String.raw`
  await writeFile('benchmark/style-photo-preview-165/results.json',JSON.stringify({
   priority:165,verdict:'PASS',engine:['chromium','webkit'],cases:resultsP165,
   actualRealAppOwnerSavedNewItemToThreeOutfits:true,
@@ -118,7 +118,7 @@ content=content.replace(endAnchor,endAnchor+String.raw\`
   originalGarmentPreserved:true,syntheticCameraOnly:true,physicalPhoneTested:false,
   hostedCloudTwoOwnerTested:false,familyAlpha:'HOLD',releaseAuthorized:false
  },null,2));
-\`);
+`);
 assert.ok(content.includes('See original photo (2D)')&&content.includes('threeFocusedOwnedLooks:true')&&
  content.includes('P165')&&content.includes("window.__P165.dispose()"),
  'P165 scratch runner must genuinely preserve entire original Work user journey');
