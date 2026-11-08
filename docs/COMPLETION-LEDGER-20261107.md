@@ -4,7 +4,7 @@
 **Family Alpha:** HOLD — issue #255  
 **Release:** Not authorized; no merge, existing staging change, or production deployment  
 **Integration candidate:** `research/full-application-integration-20261107-HOLD`  
-**Latest verified integration HEAD:** `236ad471811e0ea10733fed2a263bfdaf4594608`  
+**Latest tested implementation HEAD:** `236ad471811e0ea10733fed2a263bfdaf4594608`  
 **Audited source:** P161 draft PR #717, exact source HEAD `9c20ed0208d1ba547707e2a8c6fcd542ba327068`  
 **Default branch at audit:** `main` HEAD `39deed987afe2e5668d64e145835ad43ad14c7be`
 
