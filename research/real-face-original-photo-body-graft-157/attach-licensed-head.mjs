@@ -259,7 +259,23 @@ export function applyLicensedSourceHead157(root,figure){
  if(!root?.traverse||!['female','male'].includes(figure))
   fail('only original male/female authenticated source outfit allowed');
  const candidate=cached.get(figure);
- if(!candidate)fail('source pinned SHA/mesh failed, keep original owner source viewer');
+ if(!candidate){
+  // Nonblocking fail-closed original 3D owner outfit first. An unavailable
+  // licensed-source head NEVER prevents 163-bone owned JPEG cloth rendering.
+  // The original async loader will re-shade the verified head after actual
+  // licensed same-origin SHA256 source verification finishes.
+  return Object.freeze({figure,originalSourceRigBones:163,
+   originalLicensedHeadRigBones:0,
+   headAttachedToOriginal163Bone:false,
+   originalSourceBodyGeometryIndicesChanged:false,
+   originalSavedOwnerPhotoOrCutoutBytesChanged:false,
+   originalGarmentMeshesBefore:0,
+   originalGarmentMeshesAfter:0,
+   oldFaceBodyMaterialMaskedWithoutGeometryChanges:false,
+   familyAlpha:'HOLD',releaseAuthorized:false,
+   originalSourceFallbackPreserved:true,
+   reason:'LICENSED_ASSET_ASYNC_VERIFICATION_PENDING'});
+ }
  if(root.getObjectByName(GROUP))fail('duplicate licensed head without cleanup');
  if(!root.getObjectByName('research-face-definition-131')||
     !root.getObjectByName('research-source-head-hair-153')||
