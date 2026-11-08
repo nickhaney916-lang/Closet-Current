@@ -7,6 +7,7 @@ on:
     branches:
       - research/signed-styled-photo-preview-fallback-165-main-20261107-HOLD
     paths:
+      - public/style-photo-preview-gate-165.mjs
       - scripts/prepare-canonical-camera-owned-style-166-browser.mjs
       - tests/canonical-camera-owned-style-166.test.mjs
       - research/canonical-camera-owned-style-166/**
@@ -27,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: P166 verified P165 exact parent and four additive isolated research-only files
+      - name: P166 verified P165 exact parent and five isolated source-gate plus research-only files
         run: |
           set -eu
           BASE=2b6d891367fd67cc8f7d054b1250600e0e13c323
@@ -38,12 +39,12 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/p166-files
           while IFS= read -r p; do
             case "$p" in
-              scripts/prepare-canonical-camera-owned-style-166-browser.mjs|tests/canonical-camera-owned-style-166.test.mjs|research/canonical-camera-owned-style-166/REPORT.md|.github/workflows/canonical-camera-owned-style-166-no-deploy.yml) ;;
+              public/style-photo-preview-gate-165.mjs|scripts/prepare-canonical-camera-owned-style-166-browser.mjs|tests/canonical-camera-owned-style-166.test.mjs|research/canonical-camera-owned-style-166/REPORT.md|.github/workflows/canonical-camera-owned-style-166-no-deploy.yml) ;;
               *) echo "P166 REFUSE any Work719, P165, original 3D, owner photo, production/staging or app source write: $p"; exit 1 ;;
             esac
           done </tmp/p166-files
-          test "$(wc -l </tmp/p166-files)" -eq 4
-          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json research/manual-reviewed-private-save-119 research/capture-proof-01
+          test "$(wc -l </tmp/p166-files)" -eq 5
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/index.html public/closet-stylist.js public/auth.js supabase/ package.json package-lock.json research/manual-reviewed-private-save-119 research/capture-proof-01
           node --check scripts/prepare-canonical-camera-owned-style-166-browser.mjs
           node --test tests/canonical-camera-owned-style-166.test.mjs
       - name: Compose exact signed source full-app Work PR719 into disposable P164 checkout ONLY, never GitHub merge deploy or branch write
