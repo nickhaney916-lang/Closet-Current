@@ -9,7 +9,9 @@ const captureProof01Active=nativeCanonical167Active||
  new URLSearchParams(location.search).get('captureProof01')==='after';
 const mobileCameraToCloset75Active=new URLSearchParams(location.search).get('cameraCloset75')==='after';
 // Research only: loaded dynamically from full repository host, outside production dist.
-const captureProof01Module=()=>import('../research/capture-proof-01/source-proof.mjs');
+const captureProof01Module=()=>nativeCanonical167Active
+ ?import('./native-canonical-photo-source-167.mjs')
+ :import('../research/capture-proof-01/source-proof.mjs');
 function captureProofOwner(){
  const owner=window.closetAuth?.user?.id;
  return typeof owner==='string'&&db?.name==='closet-current-user-'+owner?owner:null;
@@ -308,7 +310,9 @@ function adjustPhoto(item){
      dialog.isConnected&&dialog.open&&
      reviewConfirmed120.checked&&garmentConfirmed120.checked;
    };
-   const {commitHumanReviewedPhoto119}=await import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs');
+   const {commitHumanReviewedPhoto119}=await (nativeCanonical167Active
+    ?import('./native-reviewed-private-save-167.mjs')
+    :import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs'));
    const result=await queued(()=>commitHumanReviewedPhoto119({
     db,ownerId:owner,currentOwner:liveOwner,record:item,review,assertLease
    }));
