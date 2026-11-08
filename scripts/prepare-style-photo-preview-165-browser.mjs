@@ -66,7 +66,7 @@ const inject=String.raw`
      assert.equal(mounted.unreviewedRejected,true);
      assert.equal(mounted.revokedSessionRejected,true);
      await page.locator('#styledCollectionResults .styled-outfit').first()
-       .getByRole('button',{name:'See saved photo (2D)'}).click();
+       .locator('button[data-style-photo-preview-165]').click();
      await page.waitForFunction(()=>document.querySelectorAll(
        '#styledCollectionResults .style-original-photo-preview-165 img').length===1,null,{timeout:15000});
      const sourceEvidence=await page.evaluate(async()=>{
