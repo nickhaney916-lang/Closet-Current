@@ -49,6 +49,28 @@ function difference(a,b,width){
    if(b.rgba[p]>110&&b.rgba[p+1]>75&&b.rgba[p+2]>50)count.brightHead++;
   }else count.outside++;
  }
+ // The very first P157 passing screenshot run accidentally suppressed the
+ // original source arms and BOTH legs while the source dress and new head
+ // stayed visible. A head-region delta and unchanged mesh counts were NOT
+ // enough to detect that serious WebGL shader failure. Classify actual
+ // source-colored limb pixels strictly BELOW the head and require exposed
+ // arms/legs to survive both views. These same source region bounds have
+ // independent proof in the 320/390/430 original P154 3D captures.
+ const skinCount=(img,ya,yb)=>{
+  const n=img.info.channels,rgba=img.rgba;let total=0;
+  for(let y=ya;y<Math.min(yb,img.info.height);y++)
+   for(let x=Math.floor(width*.1);x<Math.ceil(width*.9);x++){
+    const p=(y*width+x)*n;
+    const r=rgba[p],g=rgba[p+1],bb=rgba[p+2];
+    if(r>76&&r<230&&g>44&&g<213&&bb>39&&bb<199&&
+      r-g>10&&g-bb>4)total++;
+   }
+  return total;
+ };
+ count.beforeExposedArmSkin=skinCount(a,210,270);
+ count.afterExposedArmSkin=skinCount(b,210,270);
+ count.beforeExposedLegSkin=skinCount(a,340,415);
+ count.afterExposedLegSkin=skinCount(b,340,415);
  return count;
 }
 const evidence=[];
@@ -82,6 +104,16 @@ for(const width of widths){
   if(measure.head<35)
    throw Error('P157 original 3D head never visibly changed: '+width+' '+figure+' '+view+
     ' changed '+measure.head);
+  // A licensed head is not accepted when the original photographed
+  // 163-bone mannequin has missing skin limbs. This fails the historical
+  // 'floating face over dress' real-WebGL screenshot regression.
+  if(measure.beforeExposedLegSkin<300||measure.beforeExposedArmSkin<300||
+     measure.afterExposedLegSkin<measure.beforeExposedLegSkin*.53||
+     measure.afterExposedArmSkin<measure.beforeExposedArmSkin*.45)
+   throw Error('P157 original source arms/legs vanished after head graft WebGL shader: '+
+    width+'/'+figure+'/'+view+' '+JSON.stringify({
+     armBefore:measure.beforeExposedArmSkin,armAfter:measure.afterExposedArmSkin,
+     legBefore:measure.beforeExposedLegSkin,legAfter:measure.afterExposedLegSkin}));
   const area=width*q.info.height;
   if(measure.outside>area*.18)
    throw Error('P157 changed too much outside source head and neck: '+width+' '+figure+' '+view+
