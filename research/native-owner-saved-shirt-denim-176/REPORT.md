@@ -1,0 +1,11 @@
+# P176 saved photographed shirt and jeans 3D integration
+
+P176 is a research-only extension of verified P175. It opens an existing owner-saved shirt+jeans row read-only, verifies the original shirt and CC0 jeans SHA-256 values, and attempts the native 163-bone WebGL garment path. Unknown or unverified owner photos stay in the source-preserving 2D fallback.
+
+The first real pair run correctly failed closed at P60 because the completed jeans mesh carried an out-of-range skin index. The disposable P541 worktree patch repairs only an out-of-range index whose paired skin weight is exactly zero. It checks the pants shell and repeats the check immediately before P60 because downstream garment modifiers can rebuild attributes. Any positive-weight invalid index remains rejected. Final weights are measured for finiteness, range, and normalization. Only floating-point overshoots within 1e-6 of 0 or 1 may be clamped and renormalized within that same vertex; larger deviations abort. The maximum adjustment is capped at 1e-6. No positions, source image bytes, dress skin weights, material, or upstream P541 commit are changed.
+
+P176 also makes a bounded physical dress correction in that same temporary renderer. It retains the P61 maximum 18 mm side/rear relief and 6 mm hem drop, deepens the skirt fold valleys by changing the pleat factor from 0.16 + 0.84·cosine^1.55 to 0.07 + 0.93·cosine^1.8, and recomputes vertex normals after the changed positions. It preserves the protected front-photo region, original source image, UVs, rest coordinates, skeleton weights, and material. Exact-head native WebGL before/after evidence and the P61 displacement receipt determine whether the change passes.
+
+The acceptance workflow runs the inherited repository suite, Chromium/WebKit 2D fallback cases at 320/390/430 CSS pixels, and real Chromium/SwiftShader WebGL renders. SwiftShader is not a physical phone; synthetic auth fixtures do not verify hosted RLS. WebGL pose coverage and body-collision certification remain incomplete until separately measured. Human photorealism approval and release are not claimed.
+
+Production and staging are untouched. No owner cloud data is accessed or modified. Family Alpha remains HOLD.
