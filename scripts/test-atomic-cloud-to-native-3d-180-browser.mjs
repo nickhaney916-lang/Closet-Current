@@ -271,8 +271,11 @@ try{
       await screenshot(page,engine,width,'08-original-photo-163bone-rear-inferred');
       // A live 3D scene must block cloud restore BEFORE modal or IDB mutation.
       const writesBeforeBlocked=events.writes;
-      await openMenu(page);
-      await page.locator('#owner146Restore').click();
+      // The native P541 viewer is correctly a modal; a human cannot
+      // click the account menu through it. Simulate a malicious background
+      // script invoking the EXISTING account Restore handler anyway. The
+      // P180 owner/3D lease must reject it before consent or IDB write.
+      await page.evaluate(()=>document.getElementById('owner146Restore').click());
       await waitStatus(page,'Operation stopped safely');
       assert.equal(await page.locator('#ownerReview146Modal').evaluate(x=>x.open),false);
       assert.equal(events.writes,writesBeforeBlocked);
