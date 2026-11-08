@@ -7,8 +7,8 @@ test('P158 pins only real public-licensed female and male P156 facial albedo; ne
  assert.match(mod,/dd3772a97d2459975b34f8b1ca7902cb7d7e47d20091766a342b53425c9202e4/);
  assert.match(mod,/a4aed621b347f5ed2c6564ca4bb66c8d18681d94e7d3fdc246fdd64adbcc1f72/);
  assert.match(mod,/candidate\.sha256!==expected/);
- assert.match(mod,/material\?\.map\?\.image/);
- assert.match(mod,/ctx\.getImageData/);
+ assert.match(mod,/VERIFIED_FACE_PALETTES/);
+ assert.match(mod,/original licensed source head color benchmark missing/);
  assert.match(mod,/sourceFaceAlbedoSamplePixels/);
  assert.doesNotMatch(mod,/indexedDB|localStorage|WebSocket|navigator\.mediaDevices|api\.openai\.com|supabase\.co/);
 });
@@ -68,4 +68,17 @@ test('P158 independent visual protection samples actual dark original garment an
  assert.match(mod,/const palettes=new Map\(\)/);
  assert.match(mod,/if\(palettes\.has\(paletteKey\)\)return palettes\.get\(paletteKey\)/);
  assert.match(mod,/candidate\.sha256!==expected/);
+});
+
+test('P158 both immutable original MIT head albedo PNGs have independently reproducible source color, not a phone readback or invented complexion',()=>{
+ const audit=readFileSync('scripts/audit-pinned-source-face-albedo-158.mjs','utf8');
+ assert.match(audit,/readFile\('benchmark\/rocketbox-wardrobe-separation-156\/heads\//);
+ assert.match(audit,/sharp\(png\)\.ensureAlpha\(\)\.raw\(\)/);
+ assert.match(audit,/assert\.equal\(sha\(png\),rec\.texture/);
+ assert.match(audit,/assert\.deepEqual\(measured,rec\.median/);
+ for(const hash of ['74c3eaf62ef3716ae9e5cf9522c414dc02394c1ea6eb74108c4168d9bdcf2c1d',
+  '3900466b7bc769c4c4cf0d384a043fcd16f92b98d1fce0ddfe8aa49b2aa3e72e']){
+  assert.ok(mod.includes(hash)&&audit.includes(hash));
+ }
+ assert.doesNotMatch(mod,/getImageData|drawImage|document\.createElement|readOwnerPortrait/);
 });
