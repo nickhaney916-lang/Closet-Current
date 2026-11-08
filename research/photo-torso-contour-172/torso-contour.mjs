@@ -36,12 +36,12 @@ export function contourSourceVerifiedShirt172(shirt,root,{enabled=true}={}){
     !Array.isArray(shirt?.meshes)||typeof root?.traverse!=='function')
   throw Error('P172 requires exact licensed verified source shirt, original rig and envelope');
  const meshes=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell');
- if(meshes.length!==1||!meshes[0].isSkinnedMesh||
-   meshes[0].skeleton?.bones?.length!==163)
+ if(meshes.length<1||meshes.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163))
   throw Error('P172 exact source 163-bone sewn shirt shell unavailable');
- let bodySkeleton=false;
- root.traverse(o=>{if(o?.isSkinnedMesh&&!o.userData?.work56Garment&&o.skeleton===meshes[0].skeleton)bodySkeleton=true;});
- if(!bodySkeleton)throw Error('P172 source garment skeleton not on actual body');
+ const sourceSkeletons=new Set(meshes.map(m=>m.skeleton)),bodySkeletons=new Set();
+ root.traverse(o=>{if(o?.isSkinnedMesh&&!o.userData?.work56Garment&&o.skeleton)bodySkeletons.add(o.skeleton);});
+ if([...sourceSkeletons].some(s=>!bodySkeletons.has(s)))
+  throw Error('P172 source garment skeleton not on actual body');
  const centerZ=shirt.stats.envelope.center;
  const pending=[];let moved=0,maxMove=0,frontMoved=0,protectedBack=0;
  for(const mesh of meshes){
@@ -79,8 +79,6 @@ export function contourSourceVerifiedShirt172(shirt,root,{enabled=true}={}){
    }
    maxMove=Math.max(maxMove,delta.move);
   }
-  if(moved<30||frontMoved<30||maxMove<.006||protectedBack<20)
-   throw Error('P172 cannot demonstrate measured front-only physical garment geometry change');
   for(const [name,before] of original){
    const current=geo.getAttribute(name).array;
    if(current.length!==before.length||!current.every((x,i)=>x===before[i]))
@@ -88,6 +86,8 @@ export function contourSourceVerifiedShirt172(shirt,root,{enabled=true}={}){
   }
   pending.push({mesh,p,geo,positions});
  }
+ if(moved<30||frontMoved<30||maxMove<.006||protectedBack<20)
+  throw Error('P172 cannot demonstrate measured front-only physical garment geometry change');
  for(const {p,geo,positions} of pending){
   p.array.set(positions);p.needsUpdate=true;
   geo.computeVertexNormals();geo.computeBoundingBox();geo.computeBoundingSphere();

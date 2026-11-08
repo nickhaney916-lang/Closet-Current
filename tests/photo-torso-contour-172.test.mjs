@@ -70,6 +70,15 @@ test('P172 exact public source physically changes real front vertices but not th
  assert.equal(fitted.stats.arbitraryOwnerPhoto3DApproved,false);
  assert.throws(()=>contourSourceVerifiedShirt172(fitted,x.root),/repeated/);
 });
+test('P172 accepts multiple independently sewn source shells only with matching actual body skeleton',()=>{
+ const x=build();const extra=build();
+ extra.shirt.meshes[0].skeleton=x.shirt.meshes[0].skeleton;
+ x.shirt.meshes.push(extra.shirt.meshes[0]);
+ const fit=contourSourceVerifiedShirt172(x.shirt,x.root);
+ assert.equal(fit.stats.sourcePhotoTorsoContour172,true);
+ assert.ok(fit.stats.physicalTorsoContourMovedVertices172>60);
+ assert.ok(extra.pos.getZ(300)>.11);
+});
 test('P172 front curvature is bounded, smooth, source-front-only and tapers to original garment seams',()=>{
  const center=torsoOffset172({x:0,y:1.4,z:.11,centerZ:0});
  const back=torsoOffset172({x:0,y:1.4,z:-.11,centerZ:0});

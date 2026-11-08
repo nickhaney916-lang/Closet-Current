@@ -16,7 +16,7 @@
 
 ## Acceptance and known gaps
 
-- Local five-tests suite checks actual mesh position changes; front only; bounded 3D shape; unchanged source photo and skin; unsupported SHA rejection before writes; invalid rig and triangle failures; explicit detached and non-repeatable donor installation. Local suite passing does NOT imply real browser/phone verification.
+- Local six-tests suite checks actual mesh position changes; front only; bounded 3D shape; unchanged source photo and skin; unsupported SHA rejection before writes; invalid rig and triangle failures; explicit detached and non-repeatable donor installation. Local suite passing does NOT imply real browser/phone verification.
 - CI has two independent **no-deploy** jobs: exact P170-parent / five-file scope / full inherited Node tests and pinned source photo donor Chromium 320/390/430 genuine 163-bone mesh rendering/real test screenshot evidence. **Do not claim completion until exact-head GitHub Actions passes**.
 - Original shirt's rectangular print boundaries can still be visible. A physical torso bulge does not reconstruct the front silhouette from arbitrary user photos or supply realistic sleeve flow, garment occlusions, wrinkle dynamics, authentic rear photographs or human 10/10 judgment. No collision proof for all poses, real phone, WebKit 3D or hosted two-owner cloud.
 - This independent geometry research uses the verified P170 base to avoid competing with still-active P171; a separately reviewed follow-up must integrate the result into P171's read-only native app 3D admission when P171 is verified. It is not yet an ordinary Closet Current consumer-app feature.
