@@ -1,0 +1,188 @@
+name: P171 Native photo skinned P60 source-to-3D integration and 2D fallback NO DEPLOY
+on:
+  push:
+    branches:
+      - research/native-photo-anatomical-fit-integration-171-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-native-photo-fit-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact P170 parent, seven research-only paths, untouched live styling and cloud
+        run: |
+          set -eu
+          BASE=76315c4c08274a510c55bade91e76f1db89a129a
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p171-files
+          while IFS= read -r path; do
+            case "$path" in
+              research/native-photo-anatomical-fit-integration-171/admission.mjs|research/native-photo-anatomical-fit-integration-171/REPORT.md|research/native-3d-05/native-preview-bridge.mjs|scripts/install-native-photo-anatomical-fit-171.mjs|scripts/test-native-3d-05-browser.mjs|tests/native-photo-anatomical-fit-integration-171.test.mjs|.github/workflows/native-photo-anatomical-fit-integration-171-no-deploy.yml) ;;
+              *) echo "P171 refused unknown path $path"; exit 1 ;;
+            esac
+          done </tmp/p171-files
+          test "$(wc -l </tmp/p171-files)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/hosted-two-owner-cloud-169
+          node --check research/native-photo-anatomical-fit-integration-171/admission.mjs
+          node --check research/native-3d-05/native-preview-bridge.mjs
+          node --check scripts/install-native-photo-anatomical-fit-171.mjs
+      - name: Install pinned isolated app test deps
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build real native P170 app unchanged and execute full inherited source validation
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.cjs tests/*.mjs
+      - name: Focused seven photo-to-3D independent source-rig/owner negative tests
+        run: node --test tests/native-photo-anatomical-fit-integration-171.test.mjs
+  actual-native-chromium-163-bone-source-photo-p60-donor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PHOTO_FIT171: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated real renderer and browser tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Fetch immutable exact P541 and verified Parallel 60 donor from SAME repository only
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          P60=6fe5e46b91533a96f3c0d86950ea077cb355c459
+          git fetch --no-tags origin "$P541" "$P60"
+          git worktree add --detach .native05-donor-541 "$P541"
+          git worktree add --detach .p171-parallel-60 "$P60"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p171-parallel-60"
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = "$P541"
+          test "$(git -C .p171-parallel-60 rev-parse HEAD)" = "$P60"
+          ln -s ../node_modules .native05-donor-541/node_modules
+          ln -s ../node_modules .p171-parallel-60/node_modules
+      - name: Build detached licensed source original, models and 163 bone WebGL donor
+        run: |
+          set -eu
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Reuse independently successful Parallel 60 PBR / original-geometry fitting integration without alteration
+        run: |
+          set -eu
+          cd .p171-parallel-60
+          node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541
+          cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
+          node --check .native05-donor-541/research/three-d-15/outfit-controller.mjs
+          node --check .native05-donor-541/research/outfit-3d-01/research-panel.mjs
+      - name: Original owner Outfit Builder -> exact source SHA -> P60 stamped PBR -> genuine 163-bone dress in native Chromium
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-3d-05.mjs
+      - name: Confirm actual signed-owner source-fit admission on original 3D test PNG artifact and receipt
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,readdirSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const folder='benchmark/native-3d-05';
+          const sources=readdirSync(folder).filter(x=>x.endsWith('.png'));
+          assert.ok(sources.length>=9,'P171 native genuine original 3D screenshots missing');
+          const checks=new Set();
+          for(const name of sources){
+            const png=readFileSync(folder+'/'+name);
+            assert.equal(png.subarray(1,4).toString(),'PNG');
+            assert.ok([320,390,430].includes(png.readUInt32BE(16)));
+            checks.add(createHash('sha256').update(png).digest('hex'));
+          }
+          assert.equal(checks.size,sources.length,'P171 genuine 3D screenshots must be unique');
+          console.log('P171_NATIVE_P60_SOURCE_TRUE_163_BONE_3D_MOBILE_SCREENSHOT_SHA_PASS '+JSON.stringify({screens:checks.size,originalRealUserPhotos:false,physicalPhones:false}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P171-native-saved-outfit-P60-real-photo-anatomical-skin-fitted-3D-HOLD
+          path: |
+            benchmark/native-3d-05/
+            .native05-donor-541/benchmark/work47/manifest.json
+            .native05-donor-541/benchmark/work47/assets/commons-0003.jpg
+            .native05-donor-541/benchmark/work47/assets/commons-0053.jpg
+          retention-days: 14
+          if-no-files-found: warn
+  verify-original-2d-and-three-owned-outfits-not-replaced:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned real browser original-source tests
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Native P167 photo original safe fallback and three true owned looks at 320 390 430 in Chromium WebKit
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-canonical-original-167-browser.mjs
+          test -s benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+      - name: Audit six original private owner previews and 12 independent screenshot SHAs
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const folder='benchmark/native-canonical-closet-style-167/';
+          const p=JSON.parse(readFileSync(folder+'canonical-original-acceptance.json','utf8'));
+          assert.equal(p.verdict,'PASS');assert.equal(p.cases.length,6);
+          assert.equal(p.sameOriginalSHAInAllSix,true);
+          const sha=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+           const one=p.cases.find(c=>c.engine===engine&&c.width===width);
+           assert.ok(one);assert.equal(one.mode,'verified-original-photo-2d');
+           for(const kind of ['native-verified-original-2d','saved-three-owned-looks']){
+            const png=readFileSync(folder+engine+'-'+width+'-'+kind+'.png');
+            assert.equal(png.subarray(1,4).toString(),'PNG');assert.equal(png.readUInt32BE(16),width);
+            sha.add(createHash('sha256').update(png).digest('hex'));
+           }
+          }
+          assert.equal(sha.size,12);
+          assert.equal(p.familyAlpha,'HOLD');assert.equal(p.releaseAuthorized,false);
+          console.log('P171_ORIGINAL_PHOTO_NO_FALSE_ARBITRARY_3D_6_BROWSERS_12_SHA_SCREENSHOTS_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P171-true-original-photo-fallback-2d-six-real-mobile-browser-sha-HOLD
+          path: |
+            benchmark/native-canonical-closet-style-167/*.png
+            benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+            benchmark/native-canonical-closet-style-167/failure.json
+          retention-days: 14
+          if-no-files-found: warn
