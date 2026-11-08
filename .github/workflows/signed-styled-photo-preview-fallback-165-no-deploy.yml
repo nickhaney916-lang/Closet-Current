@@ -163,6 +163,14 @@ jobs:
           echo 'P164_EXACT_P719_WORK_P163_SINGLE_DISPOSABLE_COMBINED_SOURCE_VERIFIED_NO_PERSISTENT_MERGE'
       - name: Source pinned real WebGL/GLTF/Sharp browser dependencies only
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Execute actual native Style My New Clothes 3 owned looks with signed SHA256 original saved 2D photo preview on all six real mobile Chromium WebKit cases
+        run: |
+          node scripts/build.mjs
+          node scripts/prepare-style-photo-preview-165-browser.mjs scripts/test-style-focused-item-browser.mjs scripts/test-style-focused-photo-preview-165.mjs
+          node --check scripts/test-style-focused-photo-preview-165.mjs
+          node scripts/test-style-focused-photo-preview-165.mjs
+          test -f benchmark/style-photo-preview-165/results.json
+          test -f benchmark/style-focused-item-01/results.json
       - name: Reconstruct exact P150 source and P152 body skin, P153 anatomically attached scalp, P154 real original face baseline into pinned detached P541
         run: |
           set -eu
@@ -429,14 +437,6 @@ jobs:
           assert.equal(r.familyAlpha,'HOLD');assert.equal(r.releaseAuthorized,false);
           console.log('P163 actual source photographed dress fabric coverage 36/36 phone views verified but rear inferred; do not claim realism or release');
           NODE
-      - name: Execute actual native Style My New Clothes 3 owned looks with signed SHA256 original saved 2D photo preview on all six real mobile Chromium WebKit cases
-        run: |
-          node scripts/build.mjs
-          node scripts/prepare-style-photo-preview-165-browser.mjs scripts/test-style-focused-item-browser.mjs scripts/test-style-focused-photo-preview-165.mjs
-          node --check scripts/test-style-focused-photo-preview-165.mjs
-          node scripts/test-style-focused-photo-preview-165.mjs
-          test -f benchmark/style-photo-preview-165/results.json
-          test -f benchmark/style-focused-item-01/results.json
       - name: Independently cross-audit 6 real styled owner workflows and 36 real originally photographed garment 3D viewpoints on SAME disposable source tree
         run: |
           node scripts/audit-styling-photo3d-compatibility-164.mjs
