@@ -24,7 +24,7 @@ const shell=await readFile(shellPath,'utf8');
 const shoulderImport="import {easeSourceShoulderSleeve174} from '../source-shoulder-seam-174/seam-ease.mjs';";
 const shoulderImportAnchor="import {prepareBodyPresentation,attachReviewedShirt,releaseBodyPresentation} from '../three-d-11/dress-in-source-pose.mjs';";
 if(controller.split(shoulderImportAnchor).length!==2)throw Error('P176 final P174 shoulder import anchor missing or ambiguous');
-controller=controller.replace(shoulderImportAnchor,shoulderImportAnchor+'\\n'+shoulderImport);
+controller=controller.replace(shoulderImportAnchor,shoulderImportAnchor+'\n'+shoulderImport);
 const shellAnchor="geometry.setAttribute('skinIndex',new T.Uint16BufferAttribute(indices,4));geometry.setAttribute('skinWeight',new T.Float32BufferAttribute(weights,4));geometry.computeVertexNormals();smoothSurfaceNormals(geometry,surfaceVertices);";
 if(shell.split(shellAnchor).length!==2)throw Error('P176 exact P541 pants-shell anchor is missing or ambiguous');
 const shellPatch=[
