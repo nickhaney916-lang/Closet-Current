@@ -37,9 +37,10 @@ test('a newly saved dress remains the anchor and never adds a pants layer',()=>{
  assert.ok(results.length>0);for(const result of results){assert.equal(result.board.slots.top,'new-dress');assert.equal(result.board.slots.bottom,undefined);}
 });
 test('new-item styling UI directs review and save first and clears focused choices on logout',()=>{
- const html=fs.readFileSync('public/index.html','utf8'),ui=fs.readFileSync('public/closet-stylist.js','utf8');
- assert.match(html,/id="stylistFocusItem"/);assert.match(html,/review and save it in My Closet/);
+ const html=fs.readFileSync('public/index.html','utf8'),ui=fs.readFileSync('public/closet-stylist.js','utf8'),app=fs.readFileSync('public/app.js','utf8');
+ assert.match(html,/id="stylistFocusItem"/);assert.match(html,/review and save it in My Closet/);assert.match(html,/Get three outfit ideas/);
  assert.match(ui,/closet:session-locked/);assert.match(ui,/closet:style-owned-inventory-committed/);
+ assert.match(app,/Get three outfit ideas/);assert.match(app,/closet-current-user-/);assert.match(app,/requestSubmit\(\)/);
 });
 test('known seasonal conflicts are excluded and unknown records remain explicitly uncertain',()=>{
  const c=setup(),r=c.styleOwnedCollection([piece('summer','Tops','T-shirt','Red',{seasons:['Summer']}),piece('winter','Tops','Sweater',''),closet[2],closet[4]],{request:'Casual',season:'Winter'})[0];assert.equal(r.board.slots.top,'winter');assert.ok(r.notices.some(x=>x.includes('colors are unknown')));assert.ok(r.notices.some(x=>x.includes('seasonal details are unknown')));

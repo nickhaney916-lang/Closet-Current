@@ -65,20 +65,23 @@ try{
      await page.evaluate(async rows=>{
       await writeAll(rows);items=(await readAll()).map(normalizeClothing);render();
       window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
-      switchView('stylist');
+      switchView('closet');
+      const search=document.getElementById('search');search.value='New reviewed blouse';search.dispatchEvent(new Event('input',{bubbles:true}));
      },fixtures);
-     await page.locator('#stylistFocusItem').selectOption('new-blouse');
-     await page.locator('#styleCollectionForm button[type="submit"]').click();
+     const closetOverflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
+     assert.equal(closetOverflow,false,engine+' closet card overflow at '+width);
+     await page.locator('#closetGrid .card').filter({hasText:'New reviewed blouse'}).getByRole('button',{name:'Get three outfit ideas'}).click();
      await page.waitForFunction(()=>document.querySelectorAll('#styledCollectionResults .styled-outfit').length===3,null,{timeout:15000});
      const generated=await page.evaluate(()=>({
       cards:[...document.querySelectorAll('#styledCollectionResults .styled-outfit')].map(card=>({
        focus:card.textContent.includes('New reviewed blouse'),
        figureCount:card.querySelectorAll('figure').length,
        labels:[...card.querySelectorAll('figcaption')].map(x=>x.textContent)
-      })),overflow:document.documentElement.scrollWidth>innerWidth+1,
+      })),selected:document.getElementById('stylistFocusItem').value,overflow:document.documentElement.scrollWidth>innerWidth+1,
       status:document.getElementById('stylistStatus').textContent
      }));
      assert.equal(generated.cards.length,3);assert.ok(generated.cards.every(x=>x.focus&&x.figureCount>=3));
+     assert.equal(generated.selected,'new-blouse');
      assert.equal(generated.overflow,false,engine+' horizontal overflow at '+width);
      const card=page.locator('#styledCollectionResults .styled-outfit').first();
      await card.getByRole('button',{name:'Save outfit'}).click();
