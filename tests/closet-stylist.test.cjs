@@ -21,6 +21,27 @@ test('current shared trend data changes the preferred own garment and preserves 
 test('a dress covers the bottom slot and does not add trousers',()=>{
  const c=setup(),r=c.styleOwnedCollection([piece('dress','Dresses','Casual dress'),piece('shoe','Shoes','Flats')],{request:'Casual date night',audience:'Women'})[0];assert.equal(r.board.slots.top,'dress');assert.equal(r.board.slots.bottom,undefined);assert.equal(r.missing.length,0);
 });
+test('styling around a newly saved item anchors three distinct owned combinations to that exact item',()=>{
+ const c=setup(),all=[...closet,piece('new-item','Tops','Blouse','Green')];
+ const results=c.styleOwnedCollection(all,{request:'Casual',season:'Fall',focusItemId:'new-item'});
+ assert.equal(results.length,3);assert.equal(new Set(results.map(x=>x.signature)).size,3);
+ for(const result of results){assert.equal(result.board.slots.top,'new-item');assert.equal(result.focusItemId,'new-item');assert.ok(Object.values(result.board.slots).every(id=>all.some(row=>row.id===id)));assert.ok(result.notices.some(x=>x.includes('selected from your saved closet')));}
+});
+test('styling focus must resolve to the current saved closet and unsupported rows never become suggestions',()=>{
+ const c=setup();assert.deepEqual(Array.from(c.styleOwnedCollection(closet,{focusItemId:'from-another-account'})),[]);
+ assert.deepEqual(Array.from(c.styleOwnedCollection([piece('unknown','Uncategorized','Unknown')],{focusItemId:'unknown'})),[]);
+});
+test('a newly saved dress remains the anchor and never adds a pants layer',()=>{
+ const c=setup(),all=[piece('new-dress','Dresses','Formal dress','Black'),piece('heels','Shoes','Heels','Black'),...closet.filter(x=>x.category==='Shoes')];
+ const results=c.styleOwnedCollection(all,{request:'Dressy dinner',focusItemId:'new-dress'});
+ assert.ok(results.length>0);for(const result of results){assert.equal(result.board.slots.top,'new-dress');assert.equal(result.board.slots.bottom,undefined);}
+});
+test('new-item styling UI directs review and save first and clears focused choices on logout',()=>{
+ const html=fs.readFileSync('public/index.html','utf8'),ui=fs.readFileSync('public/closet-stylist.js','utf8'),app=fs.readFileSync('public/app.js','utf8');
+ assert.match(html,/id="stylistFocusItem"/);assert.match(html,/review and save it in My Closet/);assert.match(html,/Get three outfit ideas/);
+ assert.match(ui,/closet:session-locked/);assert.match(ui,/closet:style-owned-inventory-committed/);
+ assert.match(app,/Get three outfit ideas/);assert.match(app,/closet-current-user-/);assert.match(app,/requestSubmit\(\)/);
+});
 test('known seasonal conflicts are excluded and unknown records remain explicitly uncertain',()=>{
  const c=setup(),r=c.styleOwnedCollection([piece('summer','Tops','T-shirt','Red',{seasons:['Summer']}),piece('winter','Tops','Sweater',''),closet[2],closet[4]],{request:'Casual',season:'Winter'})[0];assert.equal(r.board.slots.top,'winter');assert.ok(r.notices.some(x=>x.includes('colors are unknown')));assert.ok(r.notices.some(x=>x.includes('seasonal details are unknown')));
 });

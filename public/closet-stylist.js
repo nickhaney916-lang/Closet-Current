@@ -1,11 +1,29 @@
 'use strict';
 let styledCollectionResults=[];
+function refreshStylistFocusItems(){
+ const select=$('stylistFocusItem');if(!select)return;
+ const selected=select.value;select.replaceChildren(new Option('Use my whole closet',''));
+ const eligible=items.filter(item=>item&&typeof item.id==='string'&&
+  ['Tops','Dresses','Bottoms','Shoes','Outerwear'].includes(item.category));
+ for(const item of eligible){
+  const details=[item.name||item.itemType||item.category,item.color].filter(Boolean).join(' · ');
+  select.add(new Option(details.slice(0,140),item.id));
+ }
+ select.value=eligible.some(item=>item.id===selected)?selected:'';
+}
+closetReady.then(refreshStylistFocusItems).catch(()=>{});
+window.addEventListener('closet:style-owned-inventory-committed',refreshStylistFocusItems);
+window.addEventListener('closet:session-locked',()=>{
+ $('stylistFocusItem').replaceChildren(new Option('Use my whole closet',''));
+ styledCollectionResults=[];renderStyledCollection();
+});
 function renderStyledCollection(){
  const grid=$('styledCollectionResults');grid.replaceChildren();
  $('stylistFreshness').textContent=trendFreshnessText();
  for(const [index,result]of styledCollectionResults.entries()){
   const board=cleanOutfitBoard(result.board,items),changed=Object.keys(board.slots).length!==Object.keys(result.board.slots).length;
   const card=node('article',null,'styled-outfit');card.append(node('p','FROM YOUR COLLECTION','eyebrow'),node('h3',result.context.request+' · option '+(index+1)));
+  if(result.focusItemId){const focused=items.find(x=>x.id===result.focusItemId);if(!focused)continue;card.append(node('p','Includes '+(focused.name||focused.itemType)+' from your saved closet.','fine'));}
   const photos=node('div',null,'styled-outfit-photos');
   for(const slot of outfitSlots){const item=items.find(x=>x.id===board.slots[slot.id]);if(!item)continue;const piece=node('figure'),img=node('img');img.src=item.image;img.alt=item.name||item.itemType;piece.append(img,node('figcaption',item.name||item.itemType));photos.append(piece);}card.append(photos);
   const missing=boardGaps(board,items).filter(s=>!s.optional);
@@ -25,8 +43,8 @@ function renderStyledCollection(){
 }
 $('styleCollectionForm').onsubmit=async event=>{
  event.preventDefault();const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
- try{await closetReady;await refreshTrendLibrary(true);
-  styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value},activeTrendLibrary);
+ try{await closetReady;refreshStylistFocusItems();await refreshTrendLibrary(true);
+  styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,focusItemId:$('stylistFocusItem').value||undefined},activeTrendLibrary);
   renderStyledCollection();$('stylistStatus').textContent=styledCollectionResults.length?'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':'Add clothing photos to My closet first, then create an outfit.';
  }catch{$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{button.disabled=false;}
 };
