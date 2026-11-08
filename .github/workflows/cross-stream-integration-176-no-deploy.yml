@@ -85,6 +85,10 @@ jobs:
           set -eu
           case "$SUITE" in
             index)
+              # Independent CURRENT native 163 bone 3D smoke in addition to
+              # the original photo-to-index live refresh acceptance.
+              node scripts/test-native-3d-05-browser.mjs
+              node scripts/audit-native-3d-05.mjs
               node scripts/test-native-index-live-07-browser.mjs
               node scripts/audit-native-index-live-07.mjs
               ;;
