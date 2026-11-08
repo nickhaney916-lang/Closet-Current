@@ -12,7 +12,7 @@ The material conversion is disposed with its garment and restores the original m
 
 ## Verification gates
 
-The exact-head no-deploy workflow first repeats P163's original-source and real mobile Chromium/WebKit gates, then saves the genuine 36-frame baseline, installs the PBR pass into a detached P541 worktree, and reruns the same six actual camera angles on the original female and male 163-bone bodies at 320/390/430 CSS px. P163's photo-area/torso/hem/limb audit runs again on the post-change frames. P164 then verifies each before/after PNG against its SHA receipt, compares paired view pixel differences, and enforces the rendering-change budget. CI screenshots and the audit JSON are uploaded as a no-deploy artifact.
+The exact-head no-deploy workflow repeats P163's original-source gates, instruments the donor browser, and captures matched baseline and changed 36-frame views in Chromium and WebKit on the original female and male 163-bone bodies at 320/390/430 CSS px. P163's photo-area/torso/hem/limb audit runs again on the post-change Chromium frames. P164 verifies each before/after PNG against its SHA receipt, compares paired view pixel differences, and enforces a source-color change budget. It also records browser render-loop callback CPU time and WebGL draw-call submission CPU time before and after; it allows no more than 50% median overhead. These are main-thread submission measures, **not GPU completion time or mobile FPS**. CI screenshots and the audit JSON are uploaded as a no-deploy artifact.
 
 The checkout's previous P163 report records a successful baseline of 36/36 original-source garment views and an unverified inferred rear. It does not contain captured P164 output. The P164 visual and framebuffer gates remain **pending until the exact-head Actions run passes**; the audit is not treated as passed from Node tests alone.
 
@@ -32,7 +32,7 @@ The checkout's previous P163 report records a successful baseline of 36/36 origi
 | Shorts, skirts, jackets, and layered outfits | No new verified source/geometry support added in this priority |
 | Chromium/WebKit physical phone performance | CI browser can run; no physical Android/iPhone available in the workflow |
 | Independent human 10/10 realism acceptance | Not done and not claimed |
-| Performance delta | Not measured: the detached saved-outfit viewer contract does not expose synchronized GPU timing; no FPS claim is made |
+| Performance delta | Pending: Chromium/WebKit browser main-thread render-loop and WebGL submission CPU timings are measured; no GPU-time or FPS claim is made |
 | Production/full-app integration | Not done; PR #719 remains untouched |
 
 This is a bounded material improvement, not photorealistic reconstruction. Single front-facing photos cannot establish hidden cloth construction, true backside imagery, universal garment geometry, or physical fabric behavior. Family Alpha remains HOLD (#255).

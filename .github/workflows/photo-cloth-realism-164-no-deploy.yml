@@ -9,6 +9,7 @@ on:
     paths:
       - research/photo-cloth-realism-164/**
       - scripts/install-photo-cloth-realism-164.mjs
+      - scripts/instrument-photo-cloth-realism-164.mjs
       - scripts/audit-photo-cloth-realism-164.mjs
       - tests/photo-cloth-realism-164.test.mjs
       - .github/workflows/photo-cloth-realism-164-no-deploy.yml
@@ -38,11 +39,11 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/p163-files
           while IFS= read -r p; do
             case "$p" in
-              research/photo-cloth-realism-164/REPORT.md|research/photo-cloth-realism-164/pbr-fabric.mjs|scripts/install-photo-cloth-realism-164.mjs|scripts/audit-photo-cloth-realism-164.mjs|tests/photo-cloth-realism-164.test.mjs|.github/workflows/photo-cloth-realism-164-no-deploy.yml) ;;
+              research/photo-cloth-realism-164/REPORT.md|research/photo-cloth-realism-164/pbr-fabric.mjs|scripts/install-photo-cloth-realism-164.mjs|scripts/instrument-photo-cloth-realism-164.mjs|scripts/audit-photo-cloth-realism-164.mjs|tests/photo-cloth-realism-164.test.mjs|.github/workflows/photo-cloth-realism-164-no-deploy.yml) ;;
               *) echo "P164 REFUSE P163/P541 source, parallel Work #719, original photos, app, staging or production: $p"; exit 1 ;;
             esac
           done </tmp/p163-files
-          test "$(wc -l </tmp/p163-files)" -eq 6
+          test "$(wc -l </tmp/p163-files)" -eq 7
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/licensed-head-six-angle-162 research/licensed-neck-axis-contact-161 research/neck-joint-registered-head-fit-160 research/anatomical-neck-seam-159 scripts/prepare-licensed-head-six-angle-162.mjs benchmark
       - name: Re-run inherited P163 verified photo, source and full app unit regressions
         run: |
@@ -68,6 +69,7 @@ jobs:
           node --check scripts/audit-source-garment-360-163.mjs
           node --check research/photo-cloth-realism-164/pbr-fabric.mjs
           node --check scripts/install-photo-cloth-realism-164.mjs
+          node --check scripts/instrument-photo-cloth-realism-164.mjs
           node --check scripts/audit-photo-cloth-realism-164.mjs
           node --test tests/photo-cloth-realism-164.test.mjs
           node --check research/photo-cloth-realism-164/pbr-fabric.mjs
@@ -363,13 +365,19 @@ jobs:
           assert.equal(r.familyAlpha,'HOLD');assert.equal(r.releaseAuthorized,false);
           console.log('P163 actual source photographed dress fabric coverage 36/36 phone views verified but rear inferred; do not claim realism or release');
           NODE
-      - name: Save genuine P163 before frames, apply P164 to detached pinned source donor, rerun all six views on both bodies
+      - name: Instrument and compare exact P541 before/after PBR on Chromium and WebKit original six-angle real WebGL
         run: |
           set -eu
+          node scripts/instrument-photo-cloth-realism-164.mjs scripts/test-native-3d-05-p150-162.mjs
+          P150=1 P160=1 P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          node /tmp/P716-original-six-camera-audit.mjs benchmark/outfit-view-360-160
           mkdir -p benchmark/photo-cloth-realism-164/before
           cp benchmark/outfit-view-360-160/*.png benchmark/photo-cloth-realism-164/before/
           cp benchmark/outfit-view-360-160/views-*.json benchmark/photo-cloth-realism-164/before/
           test "$(find benchmark/photo-cloth-realism-164/before -name '*.png' | wc -l)" -eq 36
+          mkdir -p benchmark/photo-cloth-realism-164/webkit-before
+          P150=1 P160=1 P150_BROWSER=webkit P160_OUT_DIR=benchmark/photo-cloth-realism-164/webkit-before P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          node /tmp/P716-original-six-camera-audit.mjs benchmark/photo-cloth-realism-164/webkit-before
           node scripts/install-photo-cloth-realism-164.mjs .p150-donor-541
           node --check .p150-donor-541/research/photo-cloth-realism-164/pbr-fabric.mjs
           node --check .p150-donor-541/research/three-d-15/outfit-controller.mjs
@@ -381,6 +389,9 @@ jobs:
           mkdir -p benchmark/photo-cloth-realism-164/after
           cp benchmark/outfit-view-360-160/*.png benchmark/photo-cloth-realism-164/after/
           cp benchmark/outfit-view-360-160/views-*.json benchmark/photo-cloth-realism-164/after/
+          mkdir -p benchmark/photo-cloth-realism-164/webkit-after
+          P150=1 P160=1 P150_BROWSER=webkit P160_OUT_DIR=benchmark/photo-cloth-realism-164/webkit-after P150_TIMEOUT=60000 node scripts/test-native-3d-05-p150-162.mjs
+          node /tmp/P716-original-six-camera-audit.mjs benchmark/photo-cloth-realism-164/webkit-after
           node scripts/audit-photo-cloth-realism-164.mjs
       - uses: actions/upload-artifact@v4
         if: always()
