@@ -12,8 +12,8 @@ const shellPath=resolve(donor,'research/three-d-13/pants-shell.mjs');
 const dressPath=resolve(donor,'research/photo-dress-anatomical-drape-61/dress-drape.mjs');
 let dress=await readFile(dressPath,'utf8');
 for(const [from,to] of [
- ['skirtOutwardMeters: 0.018','skirtOutwardMeters: 0.032'],
- ['maxHemDropMeters: 0.006','maxHemDropMeters: 0.010'],
+ ['skirtOutwardMeters: 0.018','skirtOutwardMeters: 0.022'],
+ ['maxHemDropMeters: 0.006','maxHemDropMeters: 0.007'],
  ['folds: 7','folds: 9'],
  ['p.needsUpdate=true; g.computeBoundingBox(); g.computeBoundingSphere();','p.needsUpdate=true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();']
 ]){
@@ -60,7 +60,8 @@ const finalAudit=[
  "     }else activeInvalidSlots++;",
  "     p176SkinAudits.push({mesh:garmentMesh.name,bones:boneCount,repairedZeroWeightSlots,activeInvalidSlots,weightsChanged:false,positionsChanged:false});",
  "    }",
- "    if(p176SkinAudits.some(x=>x.repairedZeroWeightSlots||x.activeInvalidSlots)){",
+ "    globalThis.__P176SkinAudits176={slot,audits:p176SkinAudits};
+    if(p176SkinAudits.some(x=>x.repairedZeroWeightSlots||x.activeInvalidSlots)){",
  "     built[slot].stats={...built[slot].stats,p176FinalSkinAudit:p176SkinAudits};",
  "     console.log('P176_FINAL_SKIN_ATTRIBUTE_AUDIT',JSON.stringify({slot,audits:p176SkinAudits}));",
  "    }",

@@ -674,7 +674,7 @@ try{
    const pairState=await page.evaluate(()=>window.native3D05Bridge.state());
    const pairDiagnostic=await page.evaluate(()=>({outer:document.getElementById('native3D05Status')?.textContent||'',
     inner:document.getElementById('outfit3D01Status')?.textContent||'',
-    state:window.native3D05Bridge.state(),board:window.nativeLossless04Bridge.status()}));
+    state:window.native3D05Bridge.state(),skinAudit:window.__P176SkinAudits176||null,board:window.nativeLossless04Bridge.status()}));
    console.log('P176_SAVED_DENIM_PAIR_DIAGNOSTIC',JSON.stringify(pairDiagnostic));
    assert.equal(pairState.modelReady,true,'P176 donor viewer did not become ready: '+JSON.stringify(pairDiagnostic));
    const pairAdmission=inspectSavedShirtDenim176({selection:{ownerId:'native05-A',slots:{top:'native05-A-shirt',bottom:'native05-A-jeans'}},sources:pairSources,proofs:{p171:pairState.photoSourceFit171,p173:pairState.photoSourceTorso173,p174:pairState.photoSourceShoulder174},render:{privateVisible:pairState.active,viewerReady:pairState.modelReady,bones:pairState.bones,viewerMode:pairState.viewerMode,meshCount:pairState.meshCount,fallbackCount:pairState.fallbackCount,productionDeployed:false,releaseAuthorized:false}});
