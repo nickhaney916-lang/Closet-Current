@@ -119,6 +119,11 @@ jobs:
            'originalHeadMaskActive157:overlay.licensedHead157?.oldFaceBodyMaterialMaskedWithoutGeometryChanges===true,'+
            'licensedHeadTopError157:overlay.licensedHead157?.actualHeadTopError??999,'+
            'licensedNeckSeam157:overlay.licensedHead157?.neckSeamSignedWorldY??999,');
+          const p150Marker="r.face?.photorealismProven===false&&r.releaseAuthorized===false;";
+          assert.equal(s.split(p150Marker).length,2,'P157 saved outfit source marker changed');
+          s=s.replace(p150Marker,
+           "r.face?.photorealismProven===false&&r.releaseAuthorized===false&&"+
+           "(r.licensedHead157===undefined||r.licensedHead157.headAttachedToOriginal163Bone===true);");
           const errAnchor="  page.on('pageerror',e=>errors.push({width,message:e.message}));";
           assert.equal(s.split(errAnchor).length,2,'P157 actual browser console diagnostic anchor unavailable');
           s=s.replace(errAnchor,"  page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('P157_REAL_PAGE_EXCEPTION',e.message);});"+
