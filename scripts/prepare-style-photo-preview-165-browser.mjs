@@ -114,7 +114,7 @@ content=content.replace(endAnchor,endAnchor+String.raw`
   actualRealAppOwnerSavedNewItemToThreeOutfits:true,
   originalSourceJPEGIndependentSHA256Verified:true,
   privateOwnerRevalidationAndNegativeGatesVerified:true,
-  3DClothingFitClaimed:false,originalPhotoTwoDFallback:true,
+  original3DClothingFitClaimed:false,originalPhotoTwoDFallback:true,
   originalGarmentPreserved:true,syntheticCameraOnly:true,physicalPhoneTested:false,
   hostedCloudTwoOwnerTested:false,familyAlpha:'HOLD',releaseAuthorized:false
  },null,2));
