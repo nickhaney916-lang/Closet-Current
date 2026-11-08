@@ -294,6 +294,15 @@ export async function mountNative3D05({
    lockDonorEditing();
    opened=selected.id;
    await panel.open(); // genuine anatomical WebGL rig and source-verified loaders
+   // P180: fail closed if the original 163-bone donor never became ready.
+   // Its fallback reason is read *before* the saved-outfit change event
+   // overwrites its status with a generic "verifying" line.
+   if(params?.get('cloud3D180')==='research'&&
+      (panel.state()?.viewerReady!==true||panel.state()?.bones!==163)){
+    const message=String(doc.getElementById('outfit3D01Status')?.textContent||
+     'anatomical renderer unavailable').slice(0,240);
+    throw Error('P180 source-verified real 163-bone donor not ready: '+message);
+   }
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
    requireFresh(); // The WebGL model may take seconds; recheck source + owner.
