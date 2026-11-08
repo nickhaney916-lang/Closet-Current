@@ -23,7 +23,9 @@ assert.equal(p165.priority,165);
 assert.equal(p165.verdict,'PASS');
 assert.equal(p165.cases.length,6);
 assert.equal(p165.actualRealAppOwnerSavedNewItemToThreeOutfits,true);
-assert.equal(p165.originalSourceJPEGIndependentSHA256Verified,true);
+assert.equal(p165.savedImageBytesSHA256CheckedInBrowser,true);
+assert.equal(p165.originalSourceVerifiedOnlyWhereCanonicalProofPresent,true);
+assert.equal(p165.legacySavedPhotoAlwaysMarkedUnverifiedOriginal,true);
 assert.equal(p165.privateOwnerRevalidationAndNegativeGatesVerified,true);
 assert.equal(p165.original3DClothingFitClaimed,false);
 assert.equal(p165.originalPhotoTwoDFallback,true);
@@ -50,6 +52,8 @@ for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
  assert.equal(prior.manualCorrection,true);
  assert.equal(prior.uniqueLookCount,3);
  assert.match(c.originalSHA,/^[0-9a-f]{64}$/);
+ assert.ok(['verified-original-photo-2d','saved-photo-unverified-original-2d'].includes(c.actualVisibleMode));
+ assert.equal(c.originalSourceIndependentlyVerified,c.actualVisibleMode==='verified-original-photo-2d');
  const file=engine+'-'+width+'-verified-original-2d.png';
  assert.ok(files.includes(file));
  const bytes=await readFile(preview+'/'+file);
@@ -62,6 +66,8 @@ for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
  seen.add(sourceSHA);
  all.push({engine,width,sha256:sourceSHA,sourceJPEG_SHA256:c.originalSHA,
   sourceImageKind:c.sourceImageKind,sourceOwnerIsCurrent:true,
+  originalSourceIndependentlyVerified:c.originalSourceIndependentlyVerified,
+  explicitLegacyUnverifiedSourceLabel:c.actualVisibleMode==='saved-photo-unverified-original-2d',
   originalPhotographVisible:true,sourcePhotoUnmodified:true,
   originallyReviewedNewBlouseInThreeOwnedStyles:true,
   originalSelectedShoeSwappedAndSaved:true,
@@ -72,7 +78,9 @@ const report={priority:165,verdict:'PASS',
  verifiedMainP164ExactSHA:'ecaa0827f2ecb75a9b745e5d761d3a790544b0b7',
  verifiedWork719ExactSHA:'0eaa99fe1e1a07b253a4ef2b1b5a0dc7192a2a00',
  sameThrowawayGitSourceIncludesRealNativeStyleAndResearch3D:true,
- realOwnedNewItemOriginalJPEGVerifiedAndVisiblyRendered2D:true,
+ realOwnedNewItemSavedPhotoSHA256CheckedAndVisiblyRendered2D:true,
+ savedOriginalImageProvenanceOnlyClaimedWhenSourceIsCanonical:true,
+ legacySourceOriginalProvenanceExplicitlyUnverified:true,
  ownerSessionRevalidatedAfterAsynchronousSHA256:true,
  wrongOwnerTamperedPhotoUnreviewedAndRevokedSessionDenied:true,
  actualThreeSavedOwnedOutfitsRemainFunctional:true,
