@@ -129,7 +129,7 @@ content=content.replace(endAnchor,endAnchor+String.raw`
   hostedCloudTwoOwnerTested:false,familyAlpha:'HOLD',releaseAuthorized:false
  },null,2));
 `);
-assert.ok(content.includes('See saved photo (2D)')&&content.includes('threeFocusedOwnedLooks:true')&&
+assert.ok(content.includes("locator('button[data-style-photo-preview-165]')")&&content.includes('threeFocusedOwnedLooks:true')&&
  content.includes('P165')&&content.includes("window.__P165.dispose()"),
  'P165 scratch runner must genuinely preserve entire original Work user journey');
 await writeFile(output,content);
