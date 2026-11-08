@@ -1,0 +1,95 @@
+name: P60 photographed garment fit and WebGL acceptance HOLD
+on:
+  push:
+    branches:
+      - research/photo-garment-anatomical-fitting-60-20261108-HOLD
+  pull_request:
+    branches:
+      - research/photo-cloth-realism-164
+    paths:
+      - research/photo-garment-anatomical-fitting-60/**
+      - tests/photo-garment-anatomical-fitting-60.test.mjs
+      - scripts/install-photo-cloth-realism-164.mjs
+      - .github/workflows/photo-garment-anatomical-fitting-60-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned test dependencies without changing manifests
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Run P60, P164 and P163 source-photo contract suites
+        run: node --test tests/photo-garment-anatomical-fitting-60.test.mjs tests/photo-cloth-realism-164.test.mjs tests/source-garment-360-163.test.mjs
+      - name: Build unchanged app and run complete inherited test suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  chromium-webgl-fit-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned real-browser and image evidence dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Reconstruct exact detached P541 saved photographed outfit donor
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git fetch --no-tags origin "$P541"
+          git worktree add --detach .p150-donor-541 "$P541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p150-donor-541"
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = "$P541"
+          ln -s ../node_modules .p150-donor-541/node_modules
+          cd .p150-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          cd ..
+          node scripts/install-photo-cloth-realism-164.mjs .p150-donor-541
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = "$P541"
+      - name: Capture real 163-bone male/female source-garment WebGL views at 320, 390 and 430
+        run: |
+          cd .p150-donor-541
+          node --check scripts/test-three-d-15-browser.mjs
+          node scripts/test-three-d-15-browser.mjs
+          node scripts/test-three-d-15-evidence.mjs
+      - name: Upload source manifest, six-angle images, mobile results and comparison galleries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: P60-photographed-garment-fit-WebGL-evidence-HOLD
+          path: |
+            .p150-donor-541/benchmark/work47/manifest.json
+            .p150-donor-541/benchmark/work47/assets/commons-0003.jpg
+            .p150-donor-541/benchmark/work47/assets/commons-0003.png
+            .p150-donor-541/benchmark/work47/assets/commons-0053.jpg
+            .p150-donor-541/benchmark/work47/assets/commons-0053.png
+            .p150-donor-541/benchmark/three-d-15/
+            .p150-donor-541/research/three-d-15/evidence/
+          if-no-files-found: warn
+          retention-days: 14
