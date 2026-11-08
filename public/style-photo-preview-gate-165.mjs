@@ -164,7 +164,7 @@ export function createStyledOwnerPhotoPreview165({
    const result=all[i];
    if(!result?.focusItemId||!result.board)continue;
    const btn=el('button','See saved photo (2D)','secondary');
-   btn.type='button';btn.dataset.stylePhotoPreview165='true';
+   btn.type='button';btn.setAttribute('data-style-photo-preview-165','true');
    btn.setAttribute('aria-label','See your saved clothing photo in 2D; 3D fitting not verified');
    btn.onclick=async()=>{btn.disabled=true;try{await render(i,btn);}catch{ /* Safe visible warning already shown. */ }finally{btn.disabled=false;}};
    card.append(btn);
