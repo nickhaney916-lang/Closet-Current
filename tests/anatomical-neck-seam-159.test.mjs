@@ -68,3 +68,14 @@ test('P159 compares real posed MIT upper-neck and original 163-bone torso ring c
  assert.match(source,/donorHeadZ/);
  assert.match(source,/centerLimitZ/);
 });
+
+test('P159 original source neck ring excludes shoulder and back vertices by actual 163-bone neck/head skin weights and 10-90% contour midpoint',()=>{
+ assert.match(source,/o\.geometry\.attributes\.skinIndex/);
+ assert.match(source,/o\.geometry\.attributes\.skinWeight/);
+ assert.match(source,/if\(\/neck\|head\/i\.test\(b\.name\|\|''\)\)/);
+ assert.match(source,/if\(jointWeight<\.12\)continue/);
+ assert.match(source,/midZ=\(lowZ\+highZ\)\*\.5/);
+ assert.match(source,/midX=\(lowX\+highX\)\*\.5/);
+ assert.match(source,/P159_ORIGINAL_NECK_JOINT_WEIGHTED_RING_MEASURED/);
+ assert.match(source,/ringCenterDistance>\.125/);
+});
