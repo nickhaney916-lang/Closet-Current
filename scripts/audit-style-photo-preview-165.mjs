@@ -25,7 +25,7 @@ assert.equal(p165.cases.length,6);
 assert.equal(p165.actualRealAppOwnerSavedNewItemToThreeOutfits,true);
 assert.equal(p165.originalSourceJPEGIndependentSHA256Verified,true);
 assert.equal(p165.privateOwnerRevalidationAndNegativeGatesVerified,true);
-assert.equal(p165['3DClothingFitClaimed'],false);
+assert.equal(p165.original3DClothingFitClaimed,false);
 assert.equal(p165.originalPhotoTwoDFallback,true);
 assert.equal(p165.originalGarmentPreserved,true);
 assert.equal(p165.syntheticCameraOnly,true);
