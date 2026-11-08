@@ -258,9 +258,25 @@ try{
       await page.evaluate(()=>switchView('builder'));
       await page.locator('#savedBoards button').first().click();
       await page.locator('#native3D05Preview').click();
-      await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
-       window.native3D05Bridge.state().bones===163&&
-       window.native3D05Bridge.state().meshCount>=1,null,{timeout:150000});
+      try{
+       await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+        window.native3D05Bridge.state().bones===163&&
+        window.native3D05Bridge.state().meshCount>=1,null,{timeout:35000});
+      }catch(error){
+       const detail=await page.evaluate(()=>({
+        nativeStatus:document.getElementById('native3D05Status')?.textContent,
+        outfitStatus:document.getElementById('boardSaveStatus')?.textContent,
+        selected:window.nativeLossless04Bridge?.status()?.selected,
+        boardActive:window.nativeLossless04Bridge?.status()?.active,
+        viewer:window.native3D05Bridge?.state?.(),
+        dialog:document.getElementById('outfit3D01Dialog')?.open,
+        sources:(()=>{try{
+         return window.nativeLossless04Bridge?.readOnlyGarmentSources91(['p146-reviewed-shirt']);
+        }catch(e){return String(e.message)}})()
+       }));
+       await screenshot(page,engine,width,'05-3d-source-admission-diagnostic');
+       throw Error('P180 genuine WebGL not ready; SOURCE-REDACTED diagnostics '+JSON.stringify(detail));
+      }
       assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),'p180-photo-shirt-3d');
       assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().viewerMode),'shirt');
       await page.locator('#outfit3D01Front').click();
