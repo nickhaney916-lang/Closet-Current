@@ -8,3 +8,8 @@ The no-deploy workflow seeds an existing owner-saved board containing both items
 
 ## Limits
 This validates original photographed source identity and complete two-piece viewer wiring. The pinned denim renderer's physical drape path is exercised, but this acceptance does not independently measure its deformation vertices, collision, or body intersection. No fabric simulation, real phone, live Supabase RLS, private-owner photo reconstruction, human photorealism approval, production/staging deployment, merge, or Family Alpha release is claimed. Family Alpha remains HOLD.
+
+
+## P176 geometry admission defect repair
+
+The first saved-pair WebGL run correctly failed closed: P60 reported `garment-skinning-attribute-is-out-of-range` in the generated jeans shell. The body-to-shell builder copied all four skin-index slots from source vertices, including unused slots whose weight is exactly zero. P176 now applies a pinned, disposable-worktree-only correction to the P541-derived jeans shell: an out-of-range index is changed to bone 0 only when its corresponding weight is exactly zero. That leaves the effective skin weights, body rig, source images, and source texture unchanged. Any out-of-range index with nonzero weight aborts the integration. The original donor commit is never modified. The exact-pair run must still pass P60's full index, finiteness, triangle, 163-bone binding, and normalized-weight audit before P176 can admit it.

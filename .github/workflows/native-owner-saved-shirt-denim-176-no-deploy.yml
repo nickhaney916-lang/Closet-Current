@@ -28,14 +28,15 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/p176-paths
           while IFS= read -r path; do
             case "$path" in
-              research/native-owner-saved-shirt-denim-176/REPORT.md|research/native-owner-saved-shirt-denim-176/admission.mjs|tests/native-owner-saved-denim-176.test.mjs|scripts/audit-native-owner-saved-denim-176.mjs|scripts/test-native-3d-05-browser.mjs|.github/workflows/native-owner-saved-shirt-denim-176-no-deploy.yml) ;;
+              research/native-owner-saved-shirt-denim-176/REPORT.md|research/native-owner-saved-shirt-denim-176/admission.mjs|tests/native-owner-saved-denim-176.test.mjs|scripts/audit-native-owner-saved-denim-176.mjs|scripts/test-native-3d-05-browser.mjs|scripts/install-p176-denim-weight-guard.mjs|.github/workflows/native-owner-saved-shirt-denim-176-no-deploy.yml) ;;
               *) echo "P176 refused unrelated file: $path"; exit 1 ;;
             esac
           done </tmp/p176-paths
-          test "$(wc -l </tmp/p176-paths)" -eq 6
+          test "$(wc -l </tmp/p176-paths)" -eq 7
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json scripts/build.mjs research/native-photo-anatomical-fit-integration-171
           node --check research/native-owner-saved-shirt-denim-176/admission.mjs
           node --check scripts/test-native-3d-05-browser.mjs
+          node --check scripts/install-p176-denim-weight-guard.mjs
           node --check scripts/audit-native-owner-saved-denim-176.mjs
       - name: Install isolated pinned tests, no app package manifest edits
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
@@ -102,6 +103,9 @@ jobs:
           node scripts/install-native-photo-torso-173.mjs .native05-donor-541 .p173-p172
           node scripts/install-source-shoulder-seam-174.mjs .native05-donor-541
           node scripts/install-native-original-dress-drape-175.mjs .native05-donor-541
+          node scripts/install-p176-denim-weight-guard.mjs .native05-donor-541
+          node --check .native05-donor-541/research/three-d-13/pants-shell.mjs
+          node --check .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
           node --check .native05-donor-541/research/photo-dress-anatomical-drape-61/dress-drape.mjs
           node --check .native05-donor-541/research/source-shoulder-seam-174/seam-ease.mjs
           node --check .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
