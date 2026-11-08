@@ -91,18 +91,31 @@ async function getHeadAsset(figure){
  return Object.freeze({scene,size,skinned,maxBone,materials:[...mats].sort(),
   triangles,sha256:item.sha,figure,bytes:array.byteLength});
 }
-const loaded=await Promise.allSettled([getHeadAsset('female'),getHeadAsset('male')]);
-const cached=new Map();
-for(let i=0;i<2;i++){
- const g=['female','male'][i],entry=loaded[i];
- if(entry.status==='fulfilled'){
-  cached.set(g,entry.value);
-  console.info('P157_VERIFIED_REAL_SOURCE_ASSET',g,entry.value.sha256,
-   entry.value.materials.join(','),entry.value.maxBone);
- }else{
-  console.error('P157_EXACT_SOURCE_ASSET_REFUSED',g,String(entry.reason));
-  cached.set(g,null);
+// Never perform network or GLTF texture fetch as a top-level awaited ES
+// module dependency: the authenticated native app imports this module during
+// its own model-load transaction. Awaited imports would indefinitely block
+// the modelReady lifecycle. The existing async showroom.load(kind) explicitly
+// preloads its own exact SHA-verified head *after* the original 163-bone body
+// is available, and the synchronous P150 shade() applies the ready graft.
+const cached=new Map(),pending=new Map();
+export async function preloadLicensedSourceHead157(figure){
+ if(!Object.prototype.hasOwnProperty.call(assets,figure))
+  fail('unknown source male/female figure in verified preview');
+ if(cached.has(figure))return cached.get(figure);
+ if(!pending.has(figure)){
+  const promise=getHeadAsset(figure).then(candidate=>{
+   cached.set(figure,candidate);
+   console.info('P157_VERIFIED_REAL_SOURCE_ASSET',figure,candidate.sha256,
+    candidate.materials.join(','),candidate.maxBone);
+   return candidate;
+  }).catch(error=>{
+   console.error('P157_EXACT_SOURCE_ASSET_REFUSED',figure,String(error));
+   cached.set(figure,null);
+   return null;
+  });
+  pending.set(figure,promise);
  }
+ return pending.get(figure);
 }
 const skeletons=o=>{
  const list=[];o.traverse(m=>{
