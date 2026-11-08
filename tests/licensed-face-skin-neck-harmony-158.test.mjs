@@ -28,7 +28,7 @@ test('P158 enforces full source rig, original source plus actual P157 attached h
  assert.match(mod,/donorBones!==163/);
  assert.match(mod,/research-licensed-source-head-graft-157/);
  assert.match(mod,/changed\.has\(root\)/);
- assert.match(mod,/no synthetic complexion/);
+ assert.match(mod,/never accesses a saved owner photo/);
  assert.match(mod,/sourceFaceAlbedoSRGB/);
  assert.match(mod,/originalOwnerGarmentMeshesBefore/);
  assert.match(mod,/originalOwnerGarmentMeshesAfter/);
