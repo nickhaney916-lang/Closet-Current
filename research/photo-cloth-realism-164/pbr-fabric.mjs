@@ -55,13 +55,20 @@ export function applyPhotoFabricPBR164(garment) {
         // its source. Standard materials do not carry those fields, so provide
         // neutral defaults on an adapter without mutating the source object.
         const defaults = new THREE.MeshPhysicalMaterial();
-        const physicalSource = Object.assign(Object.create(original), {
-          clearcoatNormalScale: defaults.clearcoatNormalScale,
-          iridescenceThicknessRange: defaults.iridescenceThicknessRange,
-          sheenColor: defaults.sheenColor,
-          attenuationColor: defaults.attenuationColor,
-          specularColor: defaults.specularColor
-        });
+        const physicalFields = ['anisotropy','anisotropyRotation','anisotropyMap',
+          'clearcoat','clearcoatMap','clearcoatRoughness','clearcoatRoughnessMap',
+          'clearcoatNormalMap','clearcoatNormalScale','dispersion','ior','iridescence',
+          'iridescenceMap','iridescenceIOR','iridescenceThicknessRange',
+          'iridescenceThicknessMap','sheen','sheenColor','sheenColorMap','sheenRoughness',
+          'sheenRoughnessMap','transmission','transmissionMap','thickness','thicknessMap',
+          'attenuationDistance','attenuationColor','specularIntensity','specularIntensityMap',
+          'specularColor','specularColorMap'];
+        const physicalDefaults = Object.fromEntries(physicalFields
+          .filter(name => original[name] === undefined)
+          .map(name => [name, defaults[name]]));
+        if (physicalDefaults.iridescenceThicknessRange)
+          physicalDefaults.iridescenceThicknessRange = [...physicalDefaults.iridescenceThicknessRange];
+        const physicalSource = Object.assign(Object.create(original), physicalDefaults);
         const physical = new THREE.MeshPhysicalMaterial().copy(physicalSource);
         defaults.dispose();
         // Material.copy deliberately does not copy runtime shader callbacks.
@@ -77,6 +84,7 @@ export function applyPhotoFabricPBR164(garment) {
         physical.sheenColor.setRGB(.72, .72, .72, THREE.LinearSRGBColorSpace);
         physical.iridescence = 0;
         physical.anisotropy = 0;
+        physical.specularIntensity = Math.min(.5, physical.specularIntensity);
         physical.needsUpdate = true;
         if (physical.map !== original.map || physical.alphaMap !== original.alphaMap ||
             physical.onBeforeCompile !== original.onBeforeCompile ||

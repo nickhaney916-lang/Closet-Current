@@ -36,6 +36,9 @@ test('164 applies cotton/denim/dress roughness and cloth sheen only to exact rev
     assert.equal(physical.metalness,0);
     assert.equal(physical.clearcoat,0);
     assert.ok(physical.sheen>0&&physical.sheen<.25);
+    assert.equal(Number.isFinite(physical.specularIntensity),true);
+    assert.equal(physical.ior,1.5);
+    assert.equal(physical.anisotropy,0);
     assert.equal(physical.map,x.map);
     assert.equal(physical.onBeforeCompile,x.material.onBeforeCompile);
     assert.equal(physical.color.getHex(),x.material.color.getHex());
