@@ -95,8 +95,14 @@ const loaded=await Promise.allSettled([getHeadAsset('female'),getHeadAsset('male
 const cached=new Map();
 for(let i=0;i<2;i++){
  const g=['female','male'][i],entry=loaded[i];
- if(entry.status==='fulfilled')cached.set(g,entry.value);
- else cached.set(g,null);
+ if(entry.status==='fulfilled'){
+  cached.set(g,entry.value);
+  console.info('P157_VERIFIED_REAL_SOURCE_ASSET',g,entry.value.sha256,
+   entry.value.materials.join(','),entry.value.maxBone);
+ }else{
+  console.error('P157_EXACT_SOURCE_ASSET_REFUSED',g,String(entry.reason));
+  cached.set(g,null);
+ }
 }
 const skeletons=o=>{
  const list=[];o.traverse(m=>{
