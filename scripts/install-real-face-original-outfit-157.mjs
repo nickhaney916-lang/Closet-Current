@@ -51,6 +51,21 @@ one(" const faceContours154=applyOriginalFaceContours154(root,figure);",
 one("figure,sourceRigBones:163,skinHair,face,headHair153,faceContours154,",
  "figure,sourceRigBones:163,skinHair,face,headHair153,faceContours154,licensedHead157,");
 await writeFile(file,code);
+// The donor's ORIGINAL GLTF/owned-wardrobe load(kind) is already async.
+// Await the real licensed head only AFTER original 163-bone source and
+// verified source JPEG wardrobe controllers exist. Never await asset
+// loading at ES module import time (that can deadlock native app startup).
+const showroom=resolve(donor,'research/dress-mobile-01/dress-mobile-showroom.mjs');
+let panel=await readFile(showroom,'utf8');
+const panelImport="import {applyDualHumanoid150} from '../dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs';";
+assert.equal(panel.split(panelImport).length,2,'P157 original donor showroom P150 import shifted');
+panel=panel.replace(panelImport,panelImport+
+ "\\nimport {preloadLicensedSourceHead157} from '../real-face-original-photo-body-graft-157/attach-licensed-head.mjs';");
+const beforeShade="installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();";
+assert.equal(panel.split(beforeShade).length,2,'P157 donor async 163-bone load source clothing barrier changed');
+panel=panel.replace(beforeShade,
+ "installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();if(faceDefinition150)await preloadLicensedSourceHead157(kind);shade(lastColor);front();");
+await writeFile(showroom,panel);
 console.log('P157_EXACT_PINNED_LICENCED_SOURCE_HEAD_INSTALLED '+JSON.stringify({
  originalSourceSHA:commit,
  extractedHeadSources:sourceHeads.map(x=>({gender:x.gender,sha256:x.sha})),
