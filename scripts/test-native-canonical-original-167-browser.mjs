@@ -52,6 +52,9 @@ try{
     const context=await browser.newContext({viewport:{width,height:844},deviceScaleFactor:1,isMobile:true,hasTouch:true});
     await context.route('**/*',async route=>{
      const url=new URL(route.request().url());
+     // Native File/Blob image decoding stays browser-local; these are not
+     // external requests and must not be blocked by test-only HTTPS isolation.
+     if(url.protocol==='blob:'||url.protocol==='data:')return route.continue();
      if(url.hostname==='127.0.0.1'||url.hostname==='localhost')return route.continue();
      if(url.hostname==='hlkgymugtfbirlpunsra.supabase.co'&&url.pathname==='/auth/v1/token')
       return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_in:3600,user:{id:owner,email:'fixture@example.invalid',user_metadata:{username:'Fixture'}}})});
