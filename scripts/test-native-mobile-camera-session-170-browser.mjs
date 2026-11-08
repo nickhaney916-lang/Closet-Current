@@ -204,8 +204,8 @@ try{
      const beforeLate=await page.evaluate(()=>window.__camera170.trackStop);
      await page.evaluate(()=>switchView('closet'));
      await page.evaluate(()=>{window.__camera170.queued.splice(0).forEach(fn=>fn());});
-     await page.waitForFunction(()=>window.__camera170.trackStop>0&&
-       !cameraOpening&&stream===null);
+     await page.waitForFunction(previous=>window.__camera170.trackStop>previous&&
+       !cameraOpening&&stream===null,beforeLate,{timeout:20000});
      const final=await page.evaluate(async()=>({
       saved:(await readAll()).length,owner:window.closetAuth.user.id,
       stopped:window.__camera170.trackStop,queued:window.__camera170.queued.length,
