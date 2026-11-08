@@ -26,7 +26,7 @@ test('P166 exact descendant of P165 only adds four research paths and reuses pin
   'BASE=2b6d891367fd67cc8f7d054b1250600e0e13c323',
   'test "$(wc -l </tmp/p166-files)" -eq 4',
   '0eaa99fe1e1a07b253a4ef2b1b5a0dc7192a2a00',
-  'git merge --no-commit --no-ff "$WORK"',
+  'merge --no-commit --no-ff "$WORK"',
   'test -z "$(git ls-files -u)"',
   'scripts/prepare-style-photo-preview-165-browser.mjs',
   'scripts/prepare-canonical-camera-owned-style-166-browser.mjs',
