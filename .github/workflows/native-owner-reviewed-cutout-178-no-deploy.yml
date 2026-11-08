@@ -1,0 +1,243 @@
+name: P178 real native owner-reviewed cloud original plus cutout backup restore NO DEPLOY
+on:
+  push:
+    branches:
+      - research/owner-reviewed-native-cutout-178-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-source-private-security-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve independently verified P177 original SHA and six research-only change paths
+        run: |
+          set -eu
+          BASE=e67b75eeac918dd91a0edf142e0018f6a0743c60
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p178-changed-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/native-owner-reviewed-cutout-178/owner-transport.mjs|research/native-owner-reviewed-cutout-178/REPORT.md|research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs|scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs|tests/native-owner-reviewed-cutout-178.test.mjs|.github/workflows/native-owner-reviewed-cutout-178-no-deploy.yml) ;;
+              *) echo "P178 refusal: protected owner, image, application, Supabase or unrelated research path $path"; exit 1 ;;
+            esac
+          done </tmp/p178-changed-paths
+          test "$(wc -l </tmp/p178-changed-paths)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public supabase migrations benchmark/fixtures research/native-private-cloud-cutout-177 research/two-owner-cloud-rls-recovery-128 research/restore-atomic-01 research/local-remote-consent-fence-134 research/cloud-restore-owner-safety-137 research/signed-owner-cloud-integration-129 package.json package-lock.json
+          node --check research/native-owner-reviewed-cutout-178/owner-transport.mjs
+          node --check research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs
+          node --check scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+          node --check tests/native-owner-reviewed-cutout-178.test.mjs
+      - name: Install exact disposable source SHA and UI-test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 pg@8.16.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: P178 original-review cloud integration hostile owner/session tests
+        run: node --test tests/native-owner-reviewed-cutout-178.test.mjs
+      - name: Build existing public app without modifying it
+        run: node scripts/build.mjs
+      - name: All inherited original source photo cloud and humanoid Node tests
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+  real-original-review-native-account-menu-30-screens:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      ARTIFACT_DIR: benchmark/native-owner-reviewed-cutout-178
+      P178_NATIVE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install genuine Chromium WebKit browser fixtures; no live Supabase
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build real Closet Current consumer account menu and native source-photo engine unchanged
+        run: node scripts/build.mjs
+      - name: Exercise owner-review original plus cutout opt-in actual account UI cloud backup restore twice across phones
+        run: P178_NATIVE=1 node scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+      - name: Independent 30 mobile PNG SHA check original/cutout, private owner, no live token, manual consent, safe rollback
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const dir='benchmark/native-owner-reviewed-cutout-178/';
+          const r=JSON.parse(readFileSync(dir+'results.json','utf8'));
+          assert.equal(r.priority,178);
+          assert.equal(r.finalSource,'actual public/index.html with P146 native bridge');
+          assert.equal(r.p178NativeOriginalAndReviewedCutoutGuard,true);
+          assert.equal(r.genuineOwnerOriginalJpegAndCutoutPrivateBacked,true);
+          assert.equal(r.cases.length,6);assert.equal(r.screenshots.length,30);
+          assert.deepEqual(r.cases.map(x=>[x.engine,x.width]),[
+            ['chromium',320],['chromium',390],['chromium',430],
+            ['webkit',320],['webkit',390],['webkit',430]]);
+          assert.ok(r.cases.every(x=>x.p178NativeOriginalAndReviewedCutoutGuard&&
+            x.p178OwnerSHAAndAtomicCloudVerified&&x.actualAtomicRestore&&
+            x.createOnlyBackup&&x.cancelPreservesLocal&&
+            x.remoteConflictRejected&&x.syntheticOtherOwnerDenied&&
+            x.previewWithoutJPEGFetch&&x.familyAlpha==='HOLD'&&
+            x.signedJWTVerified===false&&x.physicalPhoneVerified===false));
+          assert.equal(r.syntheticLocalServerOnly,true);
+          assert.equal(r.realCloudTouched,false);
+          assert.equal(r.liveSignedJWTVerified,false);
+          assert.equal(r.physicalPhoneVerified,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          // P146 verifies server.errors===[] and browser pageErrors===[] inside
+          // the real test before publishing evidence. Its RESULT has no
+          // top-level errors field. External font/trend requests are BLOCKED
+          // rather than emitted as successful network traffic.
+          assert.ok(Array.isArray(r.server.blockedExternalHosts));
+          assert.ok(r.server.blockedExternalHosts.every(x=>
+           x==='fonts.googleapis.com'||x==='raw.githubusercontent.com'));
+          assert.equal(r.server.uploads,12);
+          assert.ok(r.server.storageReads>=12);
+          assert.ok(r.server.foreignDenied>=6);
+          const stages=new Set(),digests=new Set();
+          for(const shot of r.screenshots){
+            const identity=[shot.engine,shot.width,shot.stage].join('|');
+            assert.ok(!stages.has(identity));stages.add(identity);
+            const image=readFileSync(dir+shot.name);
+            const d=createHash('sha256').update(image).digest('hex');
+            assert.equal(d,shot.sha256);
+            assert.equal(image.readUInt32BE(16),shot.width);
+            digests.add(d);
+          }
+          assert.equal(stages.size,30);
+          assert.ok(digests.size>=24);
+          console.log('P178_REAL_NATIVE_OWNER_REVIEWED_ORIGINAL_AND_CUTOUT_30_SHA_CHROMIUM_WEBKIT_HOLD_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P178-real-native-account-original-cutout-cloud-30-phone-view-screens-HOLD
+          path: benchmark/native-owner-reviewed-cutout-178/
+          retention-days: 14
+          if-no-files-found: warn
+  inherited-original-owner-UI-and-P177-cloud-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      ARTIFACT_DIR: benchmark/native-owner-reviewed-cloud-ui-146-p178-off
+      P178_NATIVE: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original owner-review baseline browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build unmodified public consumer app
+        run: node scripts/build.mjs
+      - name: Original signed-mock owner-review cloud UI with P178 NOT enabled
+        run: node scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+      - name: Original P177 verified source/cutout cloud owner consent browser in Chromium and WebKit
+        run: node scripts/test-cloud-backup-browser-140.mjs
+      - name: Ensure no regression in either native owner consent or original/crop source integrity on all phone widths
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          for(const [path,p,flag,count] of [
+            ['benchmark/native-owner-reviewed-cloud-ui-146-p178-off/results.json',146,false,30],
+            ['benchmark/cloud-backup-browser-140/results.json','P140-CLOUD-BACKUP-BROWSER-OWNER-REVIEW',false,48]
+          ]){
+           const r=JSON.parse(readFileSync(path,'utf8'));
+           assert.equal(r.priority,p);
+           assert.equal(r.familyAlpha,'HOLD');
+           if(p===146){
+            assert.equal(r.p178NativeOriginalAndReviewedCutoutGuard,flag);
+            assert.equal(r.cases.length,6);
+            assert.equal(r.screenshots.length,count);
+            assert.ok(r.cases.every(x=>x.actualAtomicRestore&&x.remoteConflictRejected&&
+             !x.p178NativeOriginalAndReviewedCutoutGuard));
+            assert.equal(r.realCloudTouched,false);
+           }else{
+            assert.equal(r.screenshots.length,count);
+            assert.ok(r.cases.every(x=>x.originalAndCutoutSHAJPGStored));
+            assert.equal(r.signedTokensAndHostedA_BAcceptance,false);
+            assert.deepEqual(r.pageErrors,[]);
+           }
+           const dir=path.slice(0,path.lastIndexOf('/')+1);
+           for(const shot of r.screenshots){
+            const bytes=readFileSync(dir+shot.name);
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),shot.sha256);
+            assert.equal(bytes.readUInt32BE(16),shot.width);
+           }
+          }
+          console.log('P178_NATIVE_CLOUD_UI_OPT_OUT_30_AND_P177_ORIGINAL_CUTOUT_48_BROWSER_SHA_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P178-inherited-P146-native-and-P177-cloud-78-real-browser-screens-HOLD
+          path: |
+            benchmark/native-owner-reviewed-cloud-ui-146-p178-off/
+            benchmark/cloud-backup-browser-140/
+          retention-days: 14
+          if-no-files-found: warn
+  disposable-postgres-private-storage-two-owner-RLS:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p178-ephemeral-only
+          POSTGRES_DB: p178_disposable
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p178_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p178-ephemeral-only@127.0.0.1:5432/p178_disposable
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p178-ephemeral-only
+      PGDATABASE: p178_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve original cloud source and unchanged RLS SQL
+        run: git diff --exit-code e67b75eeac918dd91a0edf142e0018f6a0743c60 HEAD -- public supabase research/two-owner-cloud-rls-recovery-128 research/restore-atomic-01
+      - name: Install actual PostgreSQL CLI and JS driver only
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Install unchanged owner backup, private Storage and RLS in disposable PostgreSQL 17 service
+        run: psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Independently verify two private owners and backup revision compare-and-swap
+        run: node scripts/test-two-owner-postgres-rls-128.mjs
