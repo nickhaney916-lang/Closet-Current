@@ -40,22 +40,32 @@ d2=d2.replace(diagAnchor,diagAnchor+'window.work61ViewAt=degrees=>app.viewAt(deg
 await writeFile(demoPath,d2);
 const browserPath=resolve(donor,'scripts/test-three-d-15-browser.mjs');
 let b=await readFile(browserPath,'utf8');
+const boundsAnchor='const profiles=[],states=[],viewBounds=new Map();';
+assert.equal(b.split(boundsAnchor).length,2,'Pinned P541 resource baseline declaration changed');
+b=b.replace(boundsAnchor,'const profiles=[],states=[],viewBounds=new Map(),resourceCounts=new Map();');
 const urlAnchor="await page.goto(origin+'/research/three-d-15/index.html?version='+version);";
 assert.equal(b.split(urlAnchor).length,2,'Pinned P541 browser page navigation anchor changed');
 b=b.replace(urlAnchor,"await page.goto(origin+'/research/three-d-15/index.html?version=after'+(version==='after'?'&dressDrape61=true':''));");
 // Keep every builder, lighting, and camera option identical in both capture
 // sets; the only changed variable is the P61 dress geometry switch.
-b=b.replace("const expected=mode==='shirt-pants'?13:version==='after'?11:10;assert.equal(attached.geometries,expected);",
-  "const expected=mode==='shirt-pants'?13:11;assert.equal(attached.geometries,expected);");
-b=b.replace("assert.equal(attached.outfit.garmentMeshes,mode==='shirt-pants'?4:version==='after'?2:1);",
-  "assert.equal(attached.outfit.garmentMeshes,mode==='shirt-pants'?4:2);");
-b=b.replace("assert.equal((await state(page)).geometries,version==='after'?11:10);",
-  "assert.equal((await state(page)).geometries,11);");
-b=b.replace("dressGeometry:version==='after'?11:10","dressGeometry:11");
+const countAnchor="const expected=mode==='shirt-pants'?13:version==='after'?11:10;assert.equal(attached.geometries,expected);assert.equal(attached.textures,3);assert.equal(attached.outfit.garmentMeshes,mode==='shirt-pants'?4:version==='after'?2:1);";
+assert.equal(b.split(countAnchor).length,2,'Pinned P541 steady-state resource assertion changed');
+b=b.replace(countAnchor,"const resourceKey=[model,width,mode].join('/'),resource={geometries:attached.geometries,textures:attached.textures,garmentMeshes:attached.outfit.garmentMeshes};if(version==='before')resourceCounts.set(resourceKey,resource);else assert.deepEqual(resource,resourceCounts.get(resourceKey),'P61 must not grow steady-state GPU resources');const expected=attached.geometries;");
+b=b.replace("assert.equal((await state(page)).geometries,version==='after'?11:10);","assert.equal((await state(page)).geometries,expected);");
+b=b.replace("outfitGeometry:13,dressGeometry:version==='after'?11:10","outfitGeometry:attached.geometries,dressGeometry:attached.geometries");
 const angleLoop="for(const view of ['front','threequarter','side','back']){\n      await page.locator('#'+view).click();";
 assert.equal(b.split(angleLoop).length,2,'Pinned P541 four-view capture loop changed');
 b=b.replace(angleLoop,"for(const view of ['front','threequarter','side','side-left','side-right','back']){\n      if(view==='side-left')await page.evaluate(()=>window.work61ViewAt(-90));else if(view==='side-right')await page.evaluate(()=>window.work61ViewAt(90));else await page.locator('#'+view).click();");
 b=b.replace("assert.equal(new Set(images).size,4,'Four genuine viewing angles');","assert.equal(new Set(images).size,6,'Six genuine viewing angles including both sides');");
+const cyclesPattern=/for\(let i=0;i<2;i\+\+\)\{await review\(page,'shirt'\);assert\.equal\(\(await state\(page\)\)\.geometries,\d+\);await review\(page,'dress'\);assert\.equal\(\(await state\(page\)\)\.geometries,(?:version==='after'\?\d+:\d+|expected)\);await page\.locator\('#outfit'\)\.selectOption\('pants'\);const p=await state\(page\);assert\.equal\(p\.geometries,\d+\);assert\.equal\(p\.textures,\d+\);assert\.equal\(p\.outfit\.shirt,null\);assert\.equal\(p\.outfit\.dress,null\);\}/;
+assert.match(b,cyclesPattern,'Pinned P541 repeated resource-cycle assertion anchor changed');
+b=b.replace(cyclesPattern,"const cycles={};for(let i=0;i<2;i++){await review(page,'shirt');const shirtState=await state(page),shirtResource={geometries:shirtState.geometries,textures:shirtState.textures,garmentMeshes:shirtState.outfit.garmentMeshes};if(i)assert.deepEqual(shirtResource,cycles.shirt,'Repeated shirt cycle resource leak');else cycles.shirt=shirtResource;await review(page,'dress');const dressState=await state(page),dressResource={geometries:dressState.geometries,textures:dressState.textures,garmentMeshes:dressState.outfit.garmentMeshes};if(i)assert.deepEqual(dressResource,cycles.dress,'Repeated dress cycle resource leak');else cycles.dress=dressResource;await page.locator('#outfit').selectOption('pants');const p=await state(page);const pantsResource={geometries:p.geometries,textures:p.textures,garmentMeshes:p.outfit.garmentMeshes};if(i)assert.deepEqual(pantsResource,cycles.pants,'Repeated pants cycle resource leak');else cycles.pants=pantsResource;assert.equal(p.outfit.shirt,null);assert.equal(p.outfit.dress,null);}");
+b=b.replace("views:4,sourceHashes:true","views:6,sourceHashes:true");
+const failedSourceAnchor="await review(page,'shirt-pants');await page.route('**/benchmark/work47/assets/commons-0053.png'";
+assert.equal(b.split(failedSourceAnchor).length,2,'Pinned P541 failed-source rollback anchor changed');
+b=b.replace(failedSourceAnchor,"await review(page,'shirt-pants');const retained=await state(page);await page.route('**/benchmark/work47/assets/commons-0053.png'");
+b=b.replace("assert.equal((await state(page)).geometries,13);await page.locator('#closeReview').click();await context.close();",
+  "assert.equal((await state(page)).geometries,retained.geometries);assert.equal((await state(page)).textures,retained.textures);await page.locator('#closeReview').click();await context.close();");
 await writeFile(browserPath,b);
 const evidencePath=resolve(donor,'scripts/test-three-d-15-evidence.mjs');
 let ev=await readFile(evidencePath,'utf8');
