@@ -18,8 +18,8 @@ patch(
  "+'/public/index.html?ownerReview145=research&captureProof01=after&index04=after&reviewedSave120=research'",
  'original JPEG human review flags');
 patch(
- "if(!/^\/public\/[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('forbidden path');",
- "if(!/^\/(?:public|research)\/[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('forbidden path');",
+ "if(!/^\\/public\\/[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('forbidden path');",
+ "if(!/^\\/(?:public|research)\\/[a-zA-Z0-9_./-]+$/.test(path)||path.split('/').includes('..'))throw Error('forbidden path');",
  'exact research-only P119 local modules HTTP serving');
 patch(
  "if(!file.startsWith(root+'/public/'))throw Error('outside public app');",
