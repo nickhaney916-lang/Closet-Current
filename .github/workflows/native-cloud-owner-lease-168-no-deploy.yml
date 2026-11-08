@@ -1,0 +1,110 @@
+name: P168 Owner private cloud epoch lease no deploy
+on:
+  push:
+    branches:
+      - research/native-cloud-owner-lease-168-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-cloud-lease-and-full-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact P167 parent and six isolated no-deploy paths
+        run: |
+          set -eu
+          BASE=faac51857d57356fb5568f035566a171cadaa418
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git rev-parse "$(git rev-list --reverse "$BASE..HEAD" | head -n1)^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p168-files
+          while IFS= read -r p; do
+            case "$p" in
+              public/cloud-owner-lease-168.js|public/cloud-backup.js|public/index.html|tests/cloud-owner-lease-168.test.cjs|research/native-cloud-owner-lease-168/REPORT.md|.github/workflows/native-cloud-owner-lease-168-no-deploy.yml) ;;
+              *) echo "P168 refused unrelated source write: $p"; exit 1 ;;
+            esac
+          done </tmp/p168-files
+          test "$(wc -l </tmp/p168-files)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/auth.js public/closet-stylist.js public/style-photo-preview-gate-165.mjs supabase scripts package.json package-lock.json
+          node --check public/cloud-owner-lease-168.js
+          node --check public/cloud-backup.js
+      - name: Install pinned test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build actual native app with runtime owner lease
+        run: |
+          node scripts/build.mjs
+          test -s dist/cloud-owner-lease-168.js
+          test -s dist/cloud-backup.js
+          grep -Fq 'cloud-owner-lease-168.js' dist/index.html
+      - name: Two owner race and complete inherited Node regression suite
+        run: node --test tests/*.cjs tests/*.mjs
+  original-photo-native-style-mobile-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build and test real native owned original photo styling across Chromium WebKit phone sizes
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-canonical-original-167-browser.mjs
+          test -f benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+      - name: Audit source verified private JPEG original and 12 screenshots
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='benchmark/native-canonical-closet-style-167/';
+          const p=JSON.parse(readFileSync(root+'canonical-original-acceptance.json','utf8'));
+          assert.equal(p.priority,167);
+          assert.equal(p.verdict,'PASS');
+          assert.equal(p.cases.length,6);
+          assert.equal(p.sameOriginalSHAInAllSix,true);
+          const seen=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const c=p.cases.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(c);assert.equal(c.mode,'verified-original-photo-2d');
+            assert.equal(c.realNativeUpload,true);
+            for(const part of ['native-verified-original-2d','saved-three-owned-looks']){
+              const png=readFileSync(root+engine+'-'+width+'-'+part+'.png');
+              assert.equal(png.subarray(1,4).toString(),'PNG');
+              assert.equal(png.readUInt32BE(16),width);
+              seen.add(createHash('sha256').update(png).digest('hex'));
+            }
+          }
+          assert.equal(seen.size,12);
+          assert.equal(p.familyAlpha,'HOLD');
+          assert.equal(p.releaseAuthorized,false);
+          console.log('P168_SIX_OWNER_STYLE_MOBILE_CASES_AND_TWELVE_REAL_SOURCE_ORIGINAL_SCREENSHOTS_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P168-owner-session-lease-original-owned-style-12-real-phone-size-screens-HOLD
+          path: |
+            benchmark/native-canonical-closet-style-167/*.png
+            benchmark/native-canonical-closet-style-167/results.json
+            benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+            benchmark/native-canonical-closet-style-167/failure.json
+          retention-days: 14
+          if-no-files-found: warn
