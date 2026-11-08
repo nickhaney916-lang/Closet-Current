@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -308,10 +308,33 @@ export async function mountNative3D05({
    // always re-check before announcing success.
    revokeChangedSource89();
    if(!displayedSelection89)throw Error('NATIVE89 saved outfit changed as 3D became visible');
+   // P171 is explicitly opt-in on the pinned detached PR541+P60 donor only.
+   // It may inspect the actual 163-bone photographed mesh receipts; never
+   // substitute an owner JPEG into a generic donor mesh or claim photorealism.
+   if(params?.get('photoFit171')==='research'){
+    const fitModule=await import('../native-photo-anatomical-fit-integration-171/admission.mjs');
+    requireFresh();
+    let proof171=null;
+    for(let i=0;i<40;i++){
+     const render=panel?.state?.();
+     const verdict=fitModule.inspectNativePhotoFit171({
+      selection:selected,sources:selectedSources91,
+      render:render?{...render,productionDeployed:false}:null
+     });
+     if(verdict.admitted){proof171=verdict;break;}
+     if(i===39)throw Error('P171 source-bound anatomical 3D receipt not independently available: '+verdict.reason);
+     await new Promise(resolve=>win.setTimeout(resolve,100));
+     requireFresh();
+    }
+    await attestOriginalBytes92();
+    requireFresh();
+    verifiedPhotographicFit171=proof171;
+   }
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
-    releaseAuthorized:false,familyAlpha:'HOLD'};
+    photoSourceFit171:verifiedPhotographicFit171?.admitted===true,
+    photorealismApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'};
   }catch(e){
    cleanup('3D not available · original clothing photographs preserved. '+String(e.message||e));
    throw e;
@@ -334,7 +357,9 @@ export async function mountNative3D05({
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
-   photoOnlyUnsupported:true,donorWriteControlsDisabled:true,
+   photoOnlyUnsupported:true,photoSourceFit171:active&&verifiedPhotographicFit171?.admitted===true,
+   ownerPhoto3DArbitraryFittingApproved:false,photorealismApproved:false,
+   donorWriteControlsDisabled:true,
    actualConsumerSavePathUnchanged:true,productionEnabled:false,
    realSignedAccountsVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
  };

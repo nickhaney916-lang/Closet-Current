@@ -54,6 +54,7 @@ const native91=process.env.NATIVE91==='1';
 const native92=process.env.NATIVE92==='1';
 const native93=process.env.NATIVE93==='1';
 const native102=process.env.NATIVE102==='1';
+const photoFit171=process.env.PHOTO_FIT171==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -158,7 +159,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research',
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -267,7 +268,21 @@ try{
    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
+  if(photoFit171){
+   await page.waitForFunction(()=>
+    window.native3D05Bridge?.state().photoSourceFit171===true ||
+    document.getElementById('native3D05Status')?.textContent.includes('P171 source-bound'),
+    null,{timeout:30000});
+  }
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
+  if(photoFit171){
+   const reason171=await page.evaluate(()=>document.getElementById('native3D05Status')?.textContent||'no status');
+   assert.equal(state.photoSourceFit171,true,
+    'P171 exact saved original SHA must be attached to a photographed P60 source-skinned 163-bone garment: '+reason171+'; active='+state.active+'; viewerMode='+state.viewerMode+'; bones='+state.bones);
+   assert.equal(state.ownerPhoto3DArbitraryFittingApproved,false);
+   assert.equal(state.photorealismApproved,false);
+   assert.equal(state.bones,163);
+  }
   assert.equal(state.meshCount>=1,true);
   assert.ok(state.fallbackCount>=3,'Jacket coat shoes must remain photo-only');
   assert.equal(await page.locator('#outfit3D01Photos img').count(),4);
