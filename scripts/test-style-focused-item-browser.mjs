@@ -30,7 +30,7 @@ const host='http://127.0.0.1:'+server.address().port+'/public/index.html?ownerRe
 const jpg=await sharp({create:{width:24,height:32,channels:3,background:'#426f54'}}).jpeg().toBuffer();
 const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
-const capturePng=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).png().toBuffer();
+const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).jpeg({quality:90}).toBuffer();
 const owner='synthetic-style-owner-a';
 const fixtures=[
  ['tee','Tops','T-shirt','Blue'],['polo','Tops','Polo','White'],
@@ -79,8 +79,8 @@ try{
       window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
      },fixtures);
      await page.evaluate(()=>switchView('scan'));
-     await page.locator('#clothingPhotos').setInputFiles({name:'new-reviewed-blouse.png',mimeType:'image/png',buffer:capturePng});
-     try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.png'),null,{timeout:20000});}
+     await page.locator('#clothingPhotos').setInputFiles({name:'new-reviewed-blouse.jpg',mimeType:'image/jpeg',buffer:capturePhoto});
+     try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.jpg'),null,{timeout:20000});}
      catch(error){const state=await page.evaluate(()=>({importResult:window.__lastPhotoImportResult,
       message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
       dbName:db?.name,batch:batch.map(x=>({id:x.id,name:x.name,status:x.localStatus,scanFailed:x.scanFailed})),
