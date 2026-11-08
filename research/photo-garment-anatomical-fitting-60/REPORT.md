@@ -22,7 +22,13 @@ The installer adds a local-only donor browser assertion and permits only the loc
 - Full inherited test suite before the final browser-harness adjustment: 1,331/1,331 passed; application build succeeded.
 - Local Chromium/WebGL donor suite: 6/6 viewport-mode groups passed (before/after × 320/390/430 CSS px), both humanoids, photographed shirt and dress, source/relaxed poses, four camera views, outfit swaps, touch rotation/pinch, stable resources, SHA checks, and blocked external requests.
 - Evidence audit: 192 view screenshots, 12 mobile screenshots, 48 source-print checks, and 96 paired pixel comparisons passed. This used Chromium with SwiftShader; it is browser-rendered research evidence, not physical phone acceptance.
-- Exact-head GitHub Actions regression and WebGL run for the final commit: pending.
+- Exact-head GitHub Actions run `42499864769` passed on commit `41a75fd2df0ba2ed6de47e16ca03a489b0b2bad7` (2/2 jobs). It ran the full inherited Node suite and the detached Chromium/WebGL matrix. The run artifact `13625392187` contains the source manifest, 204 screenshots, results, and galleries (45,431,888 bytes; retention through 2026-11-22). A documentation-only update followed; the current branch re-runs the same checks.
+
+
+
+## Visual inspection
+
+Representative 430 px front and side renders were inspected. They verify source-pattern attachment and orientation, but they still visibly fail the requested photorealism target: the shirt front reads as a rectangular photo panel, sleeve and torso transitions look rigid, and the porcelain face/body remains mannequin-like. The dress armhole and waist transitions are hard, with no convincing cloth motion. This priority did not change those geometries, so the 10/10 target is not met.
 
 ## Supported and unsupported scope
 
