@@ -138,7 +138,10 @@ jobs:
            'neckSpanMeters159:overlay.licensedHead157?.neckTransition159?.gapSpannedMeters||0,'+
            'neckBodyRigBones159:overlay.licensedHead157?.neckTransition159?.originalBodyRigBones||0,'+
            'neckLicensedRigBones159:overlay.licensedHead157?.neckTransition159?.sourceHeadRigBones||0,'+
-           'neckGarmentsUnchanged159:overlay.licensedHead157?.neckTransition159?.originalOwnerPhotographedGarmentMeshesBefore===overlay.licensedHead157?.neckTransition159?.originalOwnerPhotographedGarmentMeshesAfter,');
+           'neckGarmentsUnchanged159:overlay.licensedHead157?.neckTransition159?.originalOwnerPhotographedGarmentMeshesBefore===overlay.licensedHead157?.neckTransition159?.originalOwnerPhotographedGarmentMeshesAfter,'+
+           'neckNoSurfaceNeeded159:overlay.licensedHead157?.neckTransition159?.noAdditionalGeometryRequired===true,'+
+           'neckActualSkinOverlap159:overlay.licensedHead157?.neckTransition159?.measuredOriginalNeckOverlapMeters||0,'+
+           'neckActualFaceVertices159:overlay.licensedHead157?.neckTransition159?.originalLicensedHeadFaceSkinnedVertices||0,');
           const p150Marker="r.face?.photorealismProven===false&&r.releaseAuthorized===false;";
           assert.equal(s.split(p150Marker).length,2,'P157 saved outfit source marker changed');
           s=s.replace(p150Marker,
@@ -216,16 +219,21 @@ jobs:
         run: |
           P150=1 P150_BROWSER=webkit node scripts/test-native-3d-05-p150-157.mjs
           cp benchmark/native-3d-05/results.json benchmark/anatomical-neck-seam-159/after/native-webkit-result.json
-      - name: Independently verify actual measured neck geometry visible, exact 36 PNG SHA, no lost body limbs, original garment and MIT head unchanged
+      - name: Independently verify original MIT head neck already overlaps body; 36 PNG SHA prove no duplicate choker, exact original garments and face unchanged
         run: node scripts/audit-anatomical-neck-seam-159.mjs
-      - name: Enforce P159 neck surface research-only outcome, preserved actual original wardrobe and strict release HOLD
+      - name: Enforce P159 original skin-depth no-duplicate-collar research outcome, preserve actual original wardrobe and strict release HOLD
         run: |
           node --input-type=module <<'NODE'
           import assert from 'node:assert/strict';
           import {readFileSync} from 'node:fs';
           const r=JSON.parse(readFileSync('benchmark/anatomical-neck-seam-159/audit/acceptance.json','utf8'));
           assert.equal(r.priority,159);
-          assert.equal(r.originalHeadAndSourceMeasuredNeckRegistered,true);
+          assert.equal(r.originalLicensedHeadFaceOnlySkinDepthMeasured,true);
+          assert.equal(r.originalLicensedNeckAlreadyOverlapsSourceBody,true);
+          assert.equal(r.preventedDuplicateArtificialNeckCollar,true);
+          assert.equal(r.noDuplicateNeckSurfaceGeometryInjected,true);
+          assert.equal(r.originalVerifiedP158VisualBaselinePreserved,true);
+          assert.equal(r.originalHeadAndSourceMeasuredNeckRegistered,false);
           assert.equal(r.realGenuineChromiumSameOutfitBeforeAfterCases,18);
           assert.equal(r.realSHA256Screenshots,36);
           assert.equal(r.actualRealWebKitCases,3);
@@ -238,7 +246,7 @@ jobs:
           assert.equal(r.realPhysicalAndroidIphoneTested,false);
           assert.equal(r.familyAlpha,'HOLD');
           assert.equal(r.releaseAuthorized,false);
-          console.log('P159 authentic measured source original-head/torso neck WebGL research accepted, 10/10 human/physical phone Family Alpha HOLD');
+          console.log('P159 original MIT licensed head already overlaps torso; invisible no-duplicate-collar safety gate verified on original saved dress, human realism still HOLD');
           NODE
       - uses: actions/upload-artifact@v4
         if: always()
