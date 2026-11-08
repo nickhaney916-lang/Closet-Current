@@ -13,7 +13,7 @@ test('P157 refuses vendor licensed head unless original P156 source SHA256 is ex
  assert.match(src,/src\.origin!==new URL\(import\.meta\.url\)\.origin/);
  assert.match(src,/credentials:'same-origin'/);
  assert.match(src,/new GLTFLoader\(\)\.parseAsync/);
- assert.match(src,/Promise\.allSettled/);
+ assert.match(src,/export async function preloadLicensedSourceHead157/);
  assert.doesNotMatch(src,/api\.openai\.com|supabase\.co|third.party\.com/);
 });
 test('P157 only original 163-bone owner source rig may wear genuine user-owned JPEG garments; vendor 80-bone head is NOT a replacement body',()=>{
@@ -74,5 +74,6 @@ test('P157 donor installer refuses any real app or parallel source, only copies 
  assert.match(install,/createHash\('sha256'\)/);
  assert.match(install,/faceContours154=applyOriginalFaceContours154/);
  assert.match(install,/licensedHead157=applyLicensedSourceHead157/);
+ assert.match(install,/await preloadLicensedSourceHead157\(kind\)/);
  assert.doesNotMatch(install,/resolve\(donor,'public|resolve\(donor,'supabase|outfit3D01Save/);
 });
