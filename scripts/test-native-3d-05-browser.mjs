@@ -563,6 +563,14 @@ try{
     document.getElementById('native3D05Status')?.textContent.includes('P173 original photographed shirt geometry unavailable'),
     null,{timeout:150000});
    if(photoSleeve174){
+    const diagnostic=await page.evaluate(()=>({
+     source:window.native3D05Bridge?.state(),
+     message:document.getElementById('native3D05Status')?.textContent||'',
+     donor:document.getElementById('outfit3D01Status')?.textContent||''
+    }));
+    console.log('P174_NATIVE_SOURCE_BOOT_DIAGNOSTIC',JSON.stringify(diagnostic));
+    assert.equal(diagnostic.source?.photoSourceTorso173,true,
+     'P174 upstream physical 163-bone source or panel failed before sleeve evidence: '+JSON.stringify(diagnostic));
     // P174 must be admitted by the ACTUAL saved owner source original
     // skinned P172+P173, NEVER a toy detached generic glTF garment.
     await page.waitForFunction(()=>
