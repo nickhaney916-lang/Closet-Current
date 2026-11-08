@@ -13,6 +13,7 @@ on:
       - public/native-*-167.mjs
       - scripts/test-native-canonical-original-167-browser.mjs
       - tests/native-canonical-original-167.test.mjs
+      - tests/reviewed-app-capture-closet-120.test.mjs
       - research/native-canonical-original-167/**
       - .github/workflows/native-canonical-original-167-no-deploy.yml
   workflow_dispatch:
@@ -36,7 +37,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Enforce exact Work719 parent and strict eleven-file P167 native security change allowlist
+      - name: Enforce exact Work719 parent and strict twelve-file P167 native security and legacy regression check allowlist
         run: |
           set -eu
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
@@ -47,11 +48,11 @@ jobs:
           git diff --name-only "$BASE" HEAD > /tmp/integration-files
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|public/closet-stylist.js|public/style-photo-preview-gate-165.mjs|public/native-canonical-photo-source-167.mjs|public/native-original-index-gate-167.mjs|public/native-owner-wardrobe-index-167.mjs|public/native-reviewed-private-save-167.mjs|scripts/test-native-canonical-original-167-browser.mjs|tests/native-canonical-original-167.test.mjs|research/native-canonical-original-167/REPORT.md|.github/workflows/native-canonical-original-167-no-deploy.yml) ;;
+              public/app.js|public/closet-stylist.js|public/style-photo-preview-gate-165.mjs|public/native-canonical-photo-source-167.mjs|public/native-original-index-gate-167.mjs|public/native-owner-wardrobe-index-167.mjs|public/native-reviewed-private-save-167.mjs|scripts/test-native-canonical-original-167-browser.mjs|tests/native-canonical-original-167.test.mjs|tests/reviewed-app-capture-closet-120.test.mjs|research/native-canonical-original-167/REPORT.md|.github/workflows/native-canonical-original-167-no-deploy.yml) ;;
               *) echo "Refusing unrelated, cloud, auth, source-photo, staging or production change: $path"; exit 1 ;;
             esac
           done < /tmp/integration-files
-          test "$(wc -l < /tmp/integration-files)" -eq 11
+          test "$(wc -l < /tmp/integration-files)" -eq 12
           git diff --exit-code "$BASE" HEAD -- supabase public/auth.js public/cloud-backup.js public/index.html public/closet-stylist-engine.js scripts/test-style-focused-item-browser.mjs
       - name: Install isolated pinned test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
