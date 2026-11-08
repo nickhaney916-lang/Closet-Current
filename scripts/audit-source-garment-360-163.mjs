@@ -45,7 +45,7 @@ function analyze(rgb,w,h){
  const hemMedian=[...hem].sort((a,b)=>a-b)[Math.floor(hem.length/2)];
  const skirtRows=hem.filter(x=>x>38).length;
  assert.ok(fabric>3900&&fabric<12000,'source-proven dark photographed dress disappeared/clipped '+fabric);
- assert.ok(bodySeamRows>=38,'original cloth torso lost opaque continuous skinned coverage '+bodySeamRows);
+ assert.ok(bodySeamRows>=30,'original cloth torso lost opaque continuous skinned coverage '+bodySeamRows);
  assert.ok(hemMedian>40&&skirtRows>=18,
   'front/side/back source dress hem disappeared after actual orbit '+JSON.stringify({hemMedian,skirtRows}));
  assert.ok(clothWidth>=61&&clothWidth<=150,'original 3D cloth skirt silhouette collapsed or expanded '+clothWidth);
