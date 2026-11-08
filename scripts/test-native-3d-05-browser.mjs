@@ -56,6 +56,7 @@ const native93=process.env.NATIVE93==='1';
 const native102=process.env.NATIVE102==='1';
 const photoFit171=process.env.PHOTO_FIT171==='1';
 const photoTorso173=process.env.PHOTO_TORSO173==='1';
+const photoSleeve174=process.env.PHOTO_SLEEVE174==='1';
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -163,7 +164,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -561,7 +562,26 @@ try{
     window.native3D05Bridge?.state().photoSourceTorso173===true ||
     document.getElementById('native3D05Status')?.textContent.includes('P173 original photographed shirt geometry unavailable'),
     null,{timeout:150000});
+   if(photoSleeve174){
+    // P174 must be admitted by the ACTUAL saved owner source original
+    // skinned P172+P173, NEVER a toy detached generic glTF garment.
+    await page.waitForFunction(()=>
+     window.native3D05Bridge?.state().photoSourceShoulder174===true||
+     document.getElementById('native3D05Status')?.textContent.includes('P174 exact original photographed shoulder seam fit unavailable'),
+     null,{timeout:30000});
+   }
    const shirtState=await page.evaluate(()=>window.native3D05Bridge.state());
+   if(photoSleeve174){
+    const status174=await page.evaluate(()=>
+     document.getElementById('native3D05Status')?.textContent||'no P174 source');
+    assert.equal(shirtState.photoSourceShoulder174,true,
+     'P174 requires real bilateral source shoulder/cap mesh deformation: '+status174);
+    assert.equal(shirtState.photoSourceTorso173,true);
+    assert.ok(shirtState.shoulderMovedVertices174>=40);
+    assert.ok(shirtState.shoulderMaxMeters174>=.0025&&
+     shirtState.shoulderMaxMeters174<=.00961);
+    assert.equal(shirtState.bones,163);
+   }
    const fitStatus=await page.evaluate(()=>
     document.getElementById('native3D05Status')?.textContent||'no source-fit status');
    assert.equal(shirtState.photoSourceTorso173,true,
@@ -629,6 +649,7 @@ try{
    ...(native88?{staleSelectionBlocked88:width===390?staleSelectionBlocked88:'not-tested-in-this-viewport'}:{}),
    authenticPhotoSourcedDress3D:true,
    ...(photoTorso173?{actualSignedOwnerSourceShirtPhysicallyContoured173:true}:{}),
+   ...(photoSleeve174?{actualSignedOwnerBilateralShoulderSeamPhysicallyEased174:true}:{}),
    bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,

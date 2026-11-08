@@ -1,0 +1,188 @@
+name: P174 real original 163-bone photographed shirt shoulder seam physical fit NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-source-sleeve-shoulder-integration-174-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  strict-parent-full-node-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently verified P173 parent and nine isolated research-only paths
+        run: |
+          set -eu
+          BASE=2bc6ea519044cb1c3be5fc2b5ce8da00fb48cc5a
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p174-paths
+          while IFS= read -r path; do
+            case "$path" in
+              research/source-shoulder-seam-174/seam-ease.mjs|research/source-shoulder-seam-174/admission.mjs|research/source-shoulder-seam-174/REPORT.md|research/native-3d-05/native-preview-bridge.mjs|scripts/install-source-shoulder-seam-174.mjs|scripts/test-native-3d-05-browser.mjs|scripts/audit-source-shoulder-174.mjs|tests/source-shoulder-seam-174.test.mjs|.github/workflows/source-shoulder-seam-174-no-deploy.yml) ;;
+              *) echo "P174 refused unrelated file: $path"; exit 1 ;;
+            esac
+          done </tmp/p174-paths
+          test "$(wc -l </tmp/p174-paths)" -eq 9
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json scripts/build.mjs research/native-photo-anatomical-fit-integration-171
+          node --check research/source-shoulder-seam-174/seam-ease.mjs
+          node --check research/source-shoulder-seam-174/admission.mjs
+          node --check research/native-3d-05/native-preview-bridge.mjs
+          node --check scripts/install-source-shoulder-seam-174.mjs
+          node --check scripts/test-native-3d-05-browser.mjs
+          node --check scripts/audit-source-shoulder-174.mjs
+      - name: Install isolated pinned tests, no app package manifest edits
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Run P174 physical bilateral original photo seam and owner admission adversarial tests
+        run: node --test tests/source-shoulder-seam-174.test.mjs
+      - name: Build consumer application unchanged and run entire inherited regression suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.cjs tests/*.mjs
+  pinned-original-owner-shirt-shoulder-before-after-163-bone-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PHOTO_FIT171: '1'
+      PHOTO_TORSO173: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned real WebGL and audited screenshot dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Load immutable exact P541, independently verified P60 and physically shaped P172 in disposable worktrees
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          P60=6fe5e46b91533a96f3c0d86950ea077cb355c459
+          P172=88d2fdb412f84b0498c86bfa17f4b391425e1958
+          git fetch --no-tags origin "$P541" "$P60" "$P172"
+          git worktree add --detach .native05-donor-541 "$P541"
+          git worktree add --detach .p173-p60 "$P60"
+          git worktree add --detach .p173-p172 "$P172"
+          for name in .native05-donor-541 .p173-p60 .p173-p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = "$P541"
+          test "$(git -C .p173-p60 rev-parse HEAD)" = "$P60"
+          test "$(git -C .p173-p172 rev-parse HEAD)" = "$P172"
+      - name: Build pinned authentic CC0 models and locked source garments
+        run: |
+          set -eu
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Integrate P174 original physical bilateral shoulder seam into actual native source P173 owner viewer
+        run: |
+          set -eu
+          cd .p173-p60
+          node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541
+          cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
+          node scripts/install-native-photo-torso-173.mjs .native05-donor-541 .p173-p172
+          node scripts/install-source-shoulder-seam-174.mjs .native05-donor-541
+          node --check .native05-donor-541/research/source-shoulder-seam-174/seam-ease.mjs
+          node --check .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          node --check .native05-donor-541/research/outfit-3d-01/research-panel.mjs
+          node --check .native05-donor-541/research/photo-torso-contour-172/torso-contour.mjs
+          grep -Fq 'contourSourceVerifiedShirt172(built.shirt,root)' .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          grep -Fq 'torsoContour173:' .native05-donor-541/research/outfit-3d-01/research-panel.mjs
+          grep -Fq 'armhole174:' .native05-donor-541/research/outfit-3d-01/research-panel.mjs
+          grep -Fq 'easeSourceShoulderSleeve174(built.shirt,root)' .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          test "$(git -C .p173-p172 rev-parse HEAD)" = 88d2fdb412f84b0498c86bfa17f4b391425e1958
+      - name: Original saved owner's P173 baseline versus P174 physical shoulder seam in genuine mobile WebGL 163-bone scenes
+        run: |
+          set -eu
+          PHOTO_SLEEVE174=0 node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-photo-torso-173.mjs
+          mkdir -p benchmark/source-shoulder-seam-174/baseline
+          cp benchmark/native-3d-05/*.png benchmark/source-shoulder-seam-174/baseline/
+          cp benchmark/native-3d-05/results.json benchmark/source-shoulder-seam-174/baseline/results.json
+          PHOTO_SLEEVE174=1 node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-native-photo-torso-173.mjs
+          node scripts/audit-source-shoulder-174.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P174-original-photo-bilateral-shoulder-163-bone-before-after-WebGL-HOLD
+          path: |
+            benchmark/native-3d-05/
+            benchmark/native-photo-torso-173/
+            benchmark/source-shoulder-seam-174/
+            .native05-donor-541/benchmark/work47/manifest.json
+          retention-days: 14
+          if-no-files-found: warn
+  existing-native-original-photo-2d-fallback-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test unchanged app camera JPEG to owner-private 2D and three actual owned outfit looks
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+          node scripts/build.mjs
+          node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Audit original-photo 2D never substituted with fake 3D for unknown owner image
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const dir='benchmark/native-canonical-closet-style-167/';
+          const r=JSON.parse(readFileSync(dir+'canonical-original-acceptance.json','utf8'));
+          assert.equal(r.verdict,'PASS');assert.equal(r.cases.length,6);
+          assert.equal(r.sameOriginalSHAInAllSix,true);
+          const sha=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const row=r.cases.find(c=>c.engine===engine&&c.width===width);
+            assert.ok(row);assert.equal(row.mode,'verified-original-photo-2d');
+            for(const kind of ['native-verified-original-2d','saved-three-owned-looks']){
+              const png=readFileSync(dir+engine+'-'+width+'-'+kind+'.png');
+              assert.equal(png.readUInt32BE(16),width);
+              sha.add(createHash('sha256').update(png).digest('hex'));
+            }
+          }
+          assert.equal(sha.size,12);
+          assert.equal(r.familyAlpha,'HOLD');assert.equal(r.releaseAuthorized,false);
+          console.log('P174_2D_UNKNOWN_USER_JPEG_SOURCE_INTEGRITY_6_BROWSERS_12_SHA_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P174-unknown-original-owner-photo-2D-preserved-12-screens-HOLD
+          path: |
+            benchmark/native-canonical-closet-style-167/
+          retention-days: 14
+          if-no-files-found: warn
