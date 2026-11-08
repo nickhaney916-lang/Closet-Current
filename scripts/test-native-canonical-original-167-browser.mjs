@@ -86,10 +86,23 @@ try{
        name:'new-reviewed-blouse.jpg',mimeType:'image/jpeg',buffer:capturePhoto
      });
      try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.jpg'),null,{timeout:20000});}
-     catch(error){const state=await page.evaluate(()=>({importResult:window.__lastPhotoImportResult,
+     catch(error){
+       const sourceDiagnostic=await page.evaluate(async original=>{
+         try{
+           const bytes=new Uint8Array(await(await fetch(original)).arrayBuffer());
+           const file=new File([bytes],'probe-new-reviewed-blouse.jpg',{type:'image/jpeg'});
+           const mod=await import('/public/native-canonical-photo-source-167.mjs');
+           const sniffed=mod.sniffPhotoMime(bytes);
+           const direct=await mod.importCanonicalPhoto(file);
+           return {directOriginalImported:true,sniffed,originalSHA:direct.sourceSHA256,
+             size:file.size,dimensions:[direct.originalPhoto.width,direct.originalPhoto.height]};
+         }catch(e){return {directOriginalImported:false,message:String(e?.message||e),
+           name:e?.name,stack:String(e?.stack||'').slice(0,1200)};}
+       },cameraFrame);
+       const state=await page.evaluate(()=>({importResult:window.__lastPhotoImportResult,
       message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
       dbName:db?.name,batch:batch.map(x=>({id:x.id,name:x.name,status:x.localStatus,scanFailed:x.scanFailed})),
-      recognitionPhase:recognitionState.phase}));throw Error(String(error)+'; import diagnostics='+JSON.stringify(state));}
+      recognitionPhase:recognitionState.phase}));throw Error(String(error)+'; independent original JPEG diagnostic='+JSON.stringify(sourceDiagnostic)+'; import diagnostics='+JSON.stringify(state));}
      await page.evaluate(()=>switchView('review'));
      await page.locator('#reviewGrid article.photo-result').getByRole('button',{name:'Adjust',exact:true}).click();
      await page.waitForFunction(()=>document.querySelector('dialog.photo-adjust[open]')!==null);
