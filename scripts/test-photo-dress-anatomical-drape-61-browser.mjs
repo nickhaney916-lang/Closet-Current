@@ -29,7 +29,7 @@ try{
   assert.ok(await page.evaluate(expected=>document.documentElement.scrollWidth<=expected,width),'No mobile horizontal overflow');
   const bounds=await page.evaluate(()=>['model','pose','outfit','remove','front','side','back','zoomIn','zoomOut'].every(id=>{const r=document.getElementById(id).getBoundingClientRect();return r.left>=0&&r.right<=visualViewport.width+.1&&r.top>=0&&r.bottom<=innerHeight;}));assert.ok(bounds,'Primary controls fit in mobile viewport');
   await page.locator('#outfit').selectOption('dress');await page.locator('#reviewDialog').waitFor({state:'visible'});assert.equal(await page.locator('#review').isChecked(),false);await page.locator('#review').check();await page.locator('#dress').click();
-  await page.waitForFunction(()=>work61Diagnostics()?.outfit?.mode==='dress');
+  try{await page.waitForFunction(()=>work61Diagnostics()?.outfit?.mode==='dress',null,{timeout:12000});}catch(error){throw new Error(`Dress review apply failed: ${await page.locator('#photoStatus').textContent()} | diagnostics=${JSON.stringify(await page.evaluate(()=>work61Diagnostics()))} | ${error.message}`);}
   const attached=await page.evaluate(()=>work61Diagnostics()),d=attached.outfit.dress;
   assert.equal(d.sourceSHA256,expected.sourceSHA256);assert.equal(d.photoAnatomicalFit60,true);assert.equal(d.photoAnatomicalFitReceipt60.common163BoneSkeletonChecked,true);assert.equal(d.photoAnatomicalFitReceipt60.originalSourceIdentityChecked,true);assert.equal(d.photoAnatomicalFitReceipt60.arbitraryOwnerPhoto3DApproved,false);
   if(version==='after'){
