@@ -1,0 +1,71 @@
+name: Closet Current focused owned-item styling integration — no deploy
+on:
+  push:
+    branches:
+      - research/full-application-integration-20261107-HOLD
+  pull_request:
+    branches:
+      - research/licensed-neck-axis-contact-161-main-20261107-HOLD
+    paths:
+      - docs/COMPLETION-LEDGER-20261107.md
+      - public/closet-stylist-engine.js
+      - public/closet-stylist.js
+      - public/index.html
+      - tests/closet-stylist.test.cjs
+      - scripts/test-style-focused-item-browser.mjs
+      - .github/workflows/full-application-integration-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-regression-and-real-app-mobile-browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact P161 parent and integration-only allowlist
+        run: |
+          set -eu
+          BASE=9c20ed0208d1ba547707e2a8c6fcd542ba327068
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/integration-files
+          while IFS= read -r path; do
+            case "$path" in
+              docs/COMPLETION-LEDGER-20261107.md|public/closet-stylist-engine.js|public/closet-stylist.js|public/index.html|tests/closet-stylist.test.cjs|scripts/test-style-focused-item-browser.mjs|.github/workflows/full-application-integration-no-deploy.yml) ;;
+              *) echo "Refusing unrelated, cloud, auth, source-photo, staging or production change: $path"; exit 1 ;;
+            esac
+          done < /tmp/integration-files
+          test "$(wc -l < /tmp/integration-files)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- supabase public/auth.js public/cloud-backup.js
+      - name: Install isolated pinned test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Run full functional and regression suite
+        run: node --test tests/*.cjs tests/*.mjs
+      - name: Build the application
+        run: node scripts/build.mjs
+      - name: Verify focused new-item styling in the real app at mobile widths in Chromium and WebKit
+        run: node scripts/test-style-focused-item-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: style-focused-item-01-chromium-webkit-mobile-evidence
+          path: |
+            benchmark/style-focused-item-01/results.json
+            benchmark/style-focused-item-01/failure.json
+            benchmark/style-focused-item-01/*.png
+          if-no-files-found: ignore
+          retention-days: 7

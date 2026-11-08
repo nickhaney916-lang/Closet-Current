@@ -50,7 +50,17 @@ function styleOwnedCollection(closet,request={},library=null){
  const intent=Object.hasOwn(stylistProfiles,request.request)?request.request:'Casual';
  const context={request:intent,occasion:stylistProfiles[intent].occasion,audience:['Women','Men','All'].includes(request.audience)?request.audience:'All',season:['Spring','Summer','Fall','Winter'].includes(request.season)?request.season:'Fall'};
  const unique=[...new Map(closet.filter(x=>x&&typeof x.id==='string').map(x=>[x.id,x])).values()];
- const ranked=slot=>unique.filter(item=>slotAllows(outfitSlots.find(s=>s.id===slot),item)).map(item=>({item,score:stylistItemScore(item,slot,context,library)})).filter(x=>x.score!==null).sort((a,b)=>b.score-a.score||a.item.id.localeCompare(b.item.id)).slice(0,8);
+ // A newly captured garment is first reviewed and saved into this owner's
+ // wardrobe. `focusItemId` then anchors every suggestion to that real owned
+ // item; it never accepts a caller-provided synthetic garment object.
+ const focus=typeof request.focusItemId==='string'?unique.find(item=>item.id===request.focusItemId):null;
+ const focusSlot=focus?outfitSlots.find(slot=>!slot.extra&&slotAllows(slot,focus)&&
+  ['top','bottom','layer','shoes'].includes(slot.id))?.id:null;
+ if(request.focusItemId&&!focusSlot)return [];
+ const ranked=slot=>unique.filter(item=>slotAllows(outfitSlots.find(s=>s.id===slot),item)&&
+  (slot===focusSlot?item.id===focus.id:!focus||item.id!==focus.id)).map(item=>({item,
+   score:item.id===focus?.id?Math.max(8,stylistItemScore(item,slot,context,library)||0):stylistItemScore(item,slot,context,library)}))
+  .filter(x=>x.score!==null).sort((a,b)=>b.score-a.score||a.item.id.localeCompare(b.item.id)).slice(0,8);
  const tops=ranked('top'),bottoms=ranked('bottom'),shoes=ranked('shoes'),candidates=[];
  // Keep partial outfits useful and label their missing required slots explicitly.
  for(const top of tops.length?tops:[null])for(const bottom of top?.item.category==='Dresses'?[null]:bottoms.length?bottoms:[null])for(const shoe of shoes.length?shoes:[null]){
@@ -62,6 +72,7 @@ function styleOwnedCollection(closet,request={},library=null){
    if(extra&&extra.score+extra.harmony>0){slots[slot]=extra.item.id;selected.push(extra);score+=extra.score+extra.harmony;}
   }
   const board=cleanOutfitBoard({name:intent,slots,occasion:context.occasion,audience:context.audience,season:context.season},unique);
+  if(focus&&!Object.values(board.slots).includes(focus.id))continue;
   const required=boardGaps(board,unique).filter(s=>!s.optional).map(s=>s.id);
   score-=required.length*30;
   const references=selected.flatMap(x=>stylistTrendMatches(x.item,outfitSlots.find(s=>board.slots[s.id]===x.item.id)?.id,context,library).map(d=>({itemId:x.item.id,label:d.label,reason:d.reason,source:library.sources.find(s=>s.id===d.sourceId)})));
@@ -72,7 +83,8 @@ function styleOwnedCollection(closet,request={},library=null){
   if(selected.some(x=>!x.item.seasons?.length))notices.push('Some seasonal details are unknown; check the weather and comfort.');
   if(intent==='School')notices.push('Check your school’s dress code before choosing this outfit.');
   if(intent==='Activewear')notices.push('Check that these garments and sneakers are suitable for your actual activity.');
-  if(selected.length)candidates.push({board,score,missing:required,references,notices,context,trendUpdatedAt:library?.updatedAt||null});
+  if(focus)notices.push('Every option includes the item you selected from your saved closet.');
+  if(selected.length)candidates.push({board,score,missing:required,references,notices,context,focusItemId:focus?.id||null,trendUpdatedAt:library?.updatedAt||null});
  }
  candidates.sort((a,b)=>a.missing.length-b.missing.length||b.score-a.score);
  const results=[];
