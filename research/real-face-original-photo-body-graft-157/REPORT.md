@@ -1,0 +1,24 @@
+# Closet Current — MAIN Priority #157 / Licensed Head-and-Hair onto Original Authenticated 163-Bone Photographed Outfit Viewer
+
+**RESEARCH ONLY · Family Alpha GitHub Issue #255 HOLD · No modification to production, existing staging, hosted Supabase, Delta Ebb, Drive Duel, any account's private photos, Parallel #57 or merge/deploy.**
+
+## Technical baseline and reason
+
+P156 [draft PR #711](https://github.com/nickhaney916-lang/Closet-Current/pull/711) final exact `334d7d44e800f666370d0c10896fd3d46fc35aba`; [successful Actions #42427465460](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42427465460) verified 1,272/1,272 inherited Node tests and 48 true Chromium/WebKit mobile WebGL screenshots of physically extracted textured **Microsoft Rocketbox MIT** adult male/female facial/hair source GLBs, with baked body/jacket/pants/shoe geometry *actually removed*. They retain original ~80-bone source skeleton/morph targets and verified face/hair textures.
+
+Current user's wardrobe cannot safely use the Rocketbox original 80-bone *full dressed body*. Original private worn outfit is still rendered by the authenticated owner-saved *163-bone source photographed garment viewer*. P157 is an isolated, source-authentic **licensed textured head graft** onto THAT original viewer, no other avatar replacement.
+
+## Engineering strategy
+
+1. Independently rebuild EXACT original P541 donor (163 bones) plus P118/P131/P150/P152/P153/P154 research appearance, matching source SHA used in all prior browser evidence. No edits to Parallel P150 branch or shipping paths. Before/after compare uses same signed fixture account, original public-license JPEG dress/jacket/coat/shoes, same camera pose, source SHA and preserved saved board. Real owner data never used.
+2. Build two exact-sourced MIT P156 head-only GLBs from pinned original publicly downloadable sources. Real source-material topology and binary hash checks, original head/hair geometry, original 80-bone skinning, original morph targets and original embedded texture images must survive.
+3. `attach-licensed-head.mjs` loads original P156 extracted GLBs **locally**, verifies exact male/female SHA-256 **using browser WebCrypto**, checks source head skin bones and only head/opacity materials. Original 163-bone skin vertices determine genuine posed scalp top, width, depth and center. Clone real source head skeleton with `SkeletonUtils.clone`; construct measured world transform relative to the donor original Head bone `boneWorldInverse × fittedWorldTransform`. This should keep new head and hair together during turntable and figure changes, with no static fake overlay.
+4. Hide ONLY research-old P131 face meshes, P153 donor scalp and P154 microfacial contours while new head is active. Use **reversible body-material render-time fragment shader** to suppress only the original mannequin forehead/face region near the original Head while keeping source body geometry, source clothing mesh and 163-bone skeleton unchanged. Do not change any source vertex/triangle, material bitmap or saved user JPEG. Restore all old visible layers and onBeforeCompile hooks on model change/close.
+5. Require real neck seam/top/skeleton/geometry measurements and refuse when new head cannot be fitted or when any original garment/source rig count changes; retain previous working research P154 viewer as the fail-closed fallback. Outerwear and footwear lacking validated 3D projection remain original-photo/2D fallback, never fabricated texture.
+6. Full inherited app build and Node tests; genuine **36 original 163-bone same-saved-outfit Chromium before/after actual screenshot PNGs** (female/male x 320,390,430 CSS px x front/side/rear), with before and after real P154 baseline/source skin and after original P156 head. Real original source SHA is checked on both sides, and 3 genuine WebKit 163-bone mobile model cases; independent binary PNG SHA audit requires visibly changed head, stable rest-of-scene, original garment count and owner A/B isolation.
+
+## Quality and release limits
+
+This does NOT claim a higher quality nude full-body foundation. The original 163-bone donor body with licensed source face/hair is a **hybrid**, with possible neck mismatch and skin-tone transition. Head scaling, neck attachment, hair overlap, garments around collar, expression pose, real phone performance, double rendering/skin shader regression all require screenshot inspection and physical phone verification. Automated image differences do NOT prove 10/10 natural human realism, arbitrary real owner photographs on the new body, or the independent readiness for Family Alpha. Real hosted Supabase two-account isolation still unverified. No production/staging release authority.
+
+**Initial file; final outcome subject to exact GitHub Actions and independent real screenshot examination. Family Alpha HOLD regardless.**

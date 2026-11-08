@@ -1,0 +1,221 @@
+name: P157 LICENSED REAL HEAD ORIGINAL 163-BONE PHOTO OUTFIT EXACT WEBGL NO DEPLOY
+on:
+  push:
+    branches:
+      - research/real-face-original-photo-body-graft-157-main-20261107-HOLD
+  pull_request:
+    branches:
+      - research/rocketbox-wardrobe-separation-156-main-20261107-HOLD
+    paths:
+      - research/real-face-original-photo-body-graft-157/**
+      - scripts/install-real-face-original-outfit-157.mjs
+      - scripts/audit-real-face-original-photo-body-graft-157.mjs
+      - tests/real-face-original-photo-body-graft-157.test.mjs
+      - .github/workflows/real-face-original-photo-body-graft-157-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-parent-source-photo-and-complete-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P156 and exactly six research-only source paths
+        run: |
+          set -eu
+          BASE=334d7d44e800f666370d0c10896fd3d46fc35aba
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p157-files
+          while IFS= read -r p; do
+            case "$p" in
+              research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs|research/real-face-original-photo-body-graft-157/REPORT.md|scripts/install-real-face-original-outfit-157.mjs|scripts/audit-real-face-original-photo-body-graft-157.mjs|tests/real-face-original-photo-body-graft-157.test.mjs|.github/workflows/real-face-original-photo-body-graft-157-no-deploy.yml) ;;
+              *) echo "P157 REFUSE shipping app/other branch/production/staging change: $p"; exit 1 ;;
+            esac
+          done </tmp/p157-files
+          test "$(wc -l </tmp/p157-files)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/rocketbox-wardrobe-separation-156 research/dual-human-foundation-candidate-155 research/dual-humanoid-facial-contours-154
+      - name: Isolated test deps and pinned P157 source syntax, no shipping app lockfile mutation
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+          node --check research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
+          node --check scripts/install-real-face-original-outfit-157.mjs
+          node --check scripts/audit-real-face-original-photo-body-graft-157.mjs
+          node --test tests/real-face-original-photo-body-graft-157.test.mjs
+      - name: Unchanged native app build and entire inherited test suite
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  actual-licensed-male-female-face-original-photo-outfit-mobile-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source pinned real WebGL/GLTF/Sharp browser dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Reconstruct exact P150 source and P152 body skin, P153 anatomically attached scalp, P154 real original face baseline into pinned detached P541
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P150=6e576da9d7ff6a0a439a7762cf333670d20f0131
+          P118=672247f7121e92bba32b81cec74efddb2b69c817
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git fetch --no-tags origin "$P150" "$P118" "$P541"
+          git worktree add --detach .p150-donor-541 "$P541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p150-donor-541"
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = "$P541"
+          ln -s ../node_modules .p150-donor-541/node_modules
+          cd .p150-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          mkdir -p research/dual-humanoid-photorealism-118
+          git -C .. show "$P118":scripts/install-dual-humanoid-realism-118.mjs > scripts/install-dual-humanoid-realism-118.mjs
+          cd ..
+          for path in research/dual-humanoid-photorealism-118/realism.mjs research/dual-humanoid-face-definition-131/face-definition.mjs research/dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs scripts/install-dual-humanoid-face-131.mjs scripts/install-dual-humanoid-photorealistic-integration-150.mjs; do
+            test ! -e "$path"
+            mkdir -p "$(dirname "$path")"
+            git show "$P150:$path" > "$path"
+          done
+          git show "$P150:scripts/test-native-3d-05-browser.mjs" > scripts/test-native-3d-05-p150-157.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          const f='scripts/test-native-3d-05-p150-157.mjs';
+          let s=readFileSync(f,'utf8');
+          const anchor='prunedHairStrands:overlay.skinHair.prunedHairStrands,';
+          assert.equal(s.split(anchor).length,2,'P157 exact pinned P150 native 3D evidence anchor changed');
+          s=s.replace(anchor,anchor+
+           'headHairMeshCount153:overlay.headHair153?.hairMeshes||0,'+
+           'faceContourMeshCount154:overlay.faceContours154?.contourMeshes||0,'+
+           'licensedHeadAttached157:overlay.licensedHead157?.headAttachedToOriginal163Bone===true,'+
+           'licensedHeadSourceRigBones157:overlay.licensedHead157?.originalLicensedHeadRigBones||0,'+
+           'licensedHeadSHA157:overlay.licensedHead157?.originalLicensedP156HeadSHA256||null,'+
+           'licensedOriginalBodyUnchanged157:overlay.licensedHead157?.originalSourceBodyGeometryIndicesChanged===false,'+
+           'licensedOriginalPhotoUnchanged157:overlay.licensedHead157?.originalSavedOwnerPhotoOrCutoutBytesChanged===false,'+
+           'licensedGarmentCountUnchanged157:overlay.licensedHead157?.originalGarmentMeshesBefore===overlay.licensedHead157?.originalGarmentMeshesAfter,'+
+           'originalHeadMaskActive157:overlay.licensedHead157?.oldFaceBodyMaterialMaskedWithoutGeometryChanges===true,'+
+           'licensedHeadTopError157:overlay.licensedHead157?.actualHeadTopError??999,'+
+           'licensedNeckSeam157:overlay.licensedHead157?.neckSeamSignedWorldY??999,');
+          const p150Marker="r.face?.photorealismProven===false&&r.releaseAuthorized===false;";
+          assert.equal(s.split(p150Marker).length,2,'P157 saved outfit source marker changed');
+          s=s.replace(p150Marker,
+           "r.face?.photorealismProven===false&&r.releaseAuthorized===false&&"+
+           "(r.licensedHead157===undefined||r.licensedHead157.headAttachedToOriginal163Bone===true);");
+          const errAnchor="  page.on('pageerror',e=>errors.push({width,message:e.message}));";
+          assert.equal(s.split(errAnchor).length,2,'P157 actual browser console diagnostic anchor unavailable');
+          s=s.replace(errAnchor,"  page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('P157_REAL_PAGE_EXCEPTION',e.message);});"+
+           "\n  page.on('console',m=>{if(m.type()==='error'){const detail=m.text();console.error('P157_REAL_WEBGL_CONSOLE',detail);if(/THREE\\.WebGLProgram: Shader Error|WebGL: INVALID_OPERATION: useProgram|ERROR: 0:\\d+:/i.test(detail))errors.push({width,message:'P157_WEBGL_SHADER_FAILURE: '+detail.slice(0,250)});}});"+
+           "\n  page.on('requestfailed',r=>console.error('P157_REAL_HTTP_REQUEST_FAILED',r.url(),r.failure()?.errorText));");
+          const gate="  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&";
+          assert.ok(s.includes(gate),'P157 original 163-bone genuine WebGL gate changed');
+          s=s.replaceAll(gate,"  console.log('P157_REAL_OUTFIT_PREVIEW_GATE',JSON.stringify(await page.evaluate(()=>({state:window.native3D05Bridge?.state?.(),status:document.getElementById('outfit3D01Status')?.textContent,nativeStatus:document.getElementById('native3D05Status')?.textContent,builderStatus:document.getElementById('outfit3D01Status')?.textContent,appMessage:document.getElementById('message')?.textContent,model:document.getElementById('outfit3D01Canvas')?.dataset?.model}))));\n"+gate);
+          writeFileSync(f,s);
+          NODE
+          node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-face-131.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-photorealistic-integration-150.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-visible-skin-152.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-head-hair-153.mjs .p150-donor-541
+          node scripts/install-dual-humanoid-facial-contours-154.mjs .p150-donor-541
+          node --check scripts/test-native-3d-05-p150-157.mjs
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = "$P541"
+          ln -s .p150-donor-541 .native05-donor-541
+      - name: BEFORE identical owner original photograph dress in genuine P154 Chromium 320/390/430 female/male front/side/back
+        run: |
+          P150=1 node scripts/test-native-3d-05-p150-157.mjs
+          mkdir -p benchmark/real-face-original-photo-body-graft-157/before
+          cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/real-face-original-photo-body-graft-157/before/
+          cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/real-face-original-photo-body-graft-157/before/
+          cp benchmark/native-3d-05/results.json benchmark/real-face-original-photo-body-graft-157/before/native-result.json
+          test "$(find benchmark/real-face-original-photo-body-graft-157/before -name '*.png' | wc -l)" -eq 18
+      - name: Download exact original MIT-licensed male/female GLBs into disposable CI and physically rebuild verified textured HEAD + HAIR with no source clothing
+        run: |
+          set -eu
+          SRC=https://raw.githubusercontent.com/927tanmay/react-ai-voice-avatar/fc1398c2f8ba600c3676a5277684ed4f3e2731d7/assets/avatars
+          mkdir -p benchmark/dual-human-foundation-candidate-155/assets
+          for f in ananya.glb aarav.glb; do
+            curl --fail --silent --show-error --location --retry 3 --max-time 180 "$SRC/$f" -o "benchmark/dual-human-foundation-candidate-155/assets/$f"
+          done
+          curl --fail --silent --show-error --location --retry 3 --max-time 50 "$SRC/LICENSE.md" -o benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          curl --fail --silent --show-error --location --retry 3 --max-time 50 https://raw.githubusercontent.com/microsoft/Microsoft-Rocketbox/master/LICENSE.md -o benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          grep -q "Male_Adult_04" benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          grep -q "Female_Adult_07" benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+          grep -q "MIT License" benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+          node research/rocketbox-wardrobe-separation-156/analyze-source-anatomy.mjs
+          node research/rocketbox-wardrobe-separation-156/extract-source-head.mjs
+          node scripts/install-real-face-original-outfit-157.mjs .p150-donor-541
+          node --check .p150-donor-541/research/real-face-original-photo-body-graft-157/attach-licensed-head.mjs
+          node --check .p150-donor-541/research/dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs
+          test "$(git -C .p150-donor-541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - name: AFTER same original saved-owner dress with actual authenticated 163-bone humanoid and source MIT 80-bone face/hair graft on REAL Chromium mobile
+        run: |
+          P150=1 P150_TIMEOUT=45000 node scripts/test-native-3d-05-p150-157.mjs
+          mkdir -p benchmark/real-face-original-photo-body-graft-157/after
+          cp benchmark/dual-humanoid-photorealistic-integration-150/*.png benchmark/real-face-original-photo-body-graft-157/after/
+          cp benchmark/dual-humanoid-photorealistic-integration-150/screens-*.json benchmark/real-face-original-photo-body-graft-157/after/
+          cp benchmark/native-3d-05/results.json benchmark/real-face-original-photo-body-graft-157/after/native-result.json
+          test "$(find benchmark/real-face-original-photo-body-graft-157/after -name '*.png' | wc -l)" -eq 18
+      - name: Actual WebKit original source photo owner-saved dress 163-bone WebGL at 320 390 and 430px with original licensed head and no double mannequin face
+        run: |
+          P150=1 P150_BROWSER=webkit node scripts/test-native-3d-05-p150-157.mjs
+          cp benchmark/native-3d-05/results.json benchmark/real-face-original-photo-body-graft-157/after/native-webkit-result.json
+      - name: Independent image SHA256 36 original same-source dress screenshots, 80→163 bone attachment, owner/garment isolation and three genuine WebKit phone cases
+        run: node scripts/audit-real-face-original-photo-body-graft-157.mjs
+      - name: Do not assert 10/10 real human photorealism, original body replacement, signed hosted RLS or physical phone without actual evidence
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/real-face-original-photo-body-graft-157/audit/acceptance.json','utf8'));
+          assert.equal(x.actualGenuineChromiumBeforeAfterViews,18);
+          assert.equal(x.independentlySHA256VerifiedOriginalScreenshots,36);
+          assert.equal(x.genuineWebKitOriginalSourceDressModelCases,3);
+          assert.equal(x.licensedMaleFemale80BoneHeadsAttachedToOriginal163BoneDressViewer,true);
+          assert.equal(x.original163BoneBodySourceGeometryUnchanged,true);
+          assert.equal(x.originalSourceJPEGAndCutoutBytesUnmodified,true);
+          assert.equal(x.originalSourceGarmentFittedOnNewBody,false);
+          assert.equal(x.independent10outof10HumanPhotorealismAccepted,false);
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          console.log('P157 exact source licensed head graft verified in original authenticated photo outfit; real human/physical device ACCEPTANCE HOLD');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P157-authenticated-original-photo-163bone-real-face-graft-36-mobile-WebGL-HOLD-NO-DEPLOY
+          path: |
+            benchmark/real-face-original-photo-body-graft-157/before/*.png
+            benchmark/real-face-original-photo-body-graft-157/after/*.png
+            benchmark/real-face-original-photo-body-graft-157/before/screens-*.json
+            benchmark/real-face-original-photo-body-graft-157/after/screens-*.json
+            benchmark/real-face-original-photo-body-graft-157/after/native-*.json
+            benchmark/real-face-original-photo-body-graft-157/audit/acceptance.json
+            benchmark/rocketbox-wardrobe-separation-156/audit/safe-head-extraction.json
+            benchmark/dual-human-foundation-candidate-155/assets/CONVERTED-PROVENANCE-LICENSE.md
+            benchmark/dual-human-foundation-candidate-155/assets/ORIGINAL-MICROSOFT-MIT.md
+            research/real-face-original-photo-body-graft-157/REPORT.md
+          if-no-files-found: warn
+          retention-days: 14
