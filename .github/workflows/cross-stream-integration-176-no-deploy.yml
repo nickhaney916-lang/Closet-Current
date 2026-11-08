@@ -152,16 +152,30 @@ jobs:
           assert.equal(a.releaseAuthorized,false);assert.equal(a.familyAlpha,'HOLD');
           assert.ok(r.evidence.every(x=>x.bones===163&&x.ownerACrossOwnerBRestoreBlocked&&
            x.authenticPhotoSourcedDress3D&&x.releaseAuthorized===false));
-          const sha=new Set();
+          const hashes=new Map(),stageKeys=new Set();
           for(const item of r.screens){
            assert.ok([320,390,430].includes(item.width));
+           const key=item.width+'|'+item.stage;
+           assert.ok(!stageKeys.has(key),'Duplicate screenshot stage '+key);
+           stageKeys.add(key);
            const bytes=readFileSync(prefix+item.name);
            const dig=createHash('sha256').update(bytes).digest('hex');
            assert.equal(dig,item.sha256);
-           assert.ok(!sha.has(dig));sha.add(dig);
            assert.equal(bytes.readUInt32BE(16),item.width);
+           if(hashes.has(dig)){
+            // Exactly 3 intentional duplicate ORIGINAL photo-only frames:
+            // foreign owner B sees the same safe missing-source fallback
+            // under both labels 06 and 08 at each CSS viewport.
+            assert.equal(mode,'readiness','Unexpected duplicate original screenshot SHA');
+            const prior=hashes.get(dig);
+            assert.equal(prior.width,item.width,'Cross-width screenshot reuse');
+            assert.deepEqual([prior.stage,item.stage].sort(),
+             ['06-B-private-missing-source-fallback',
+              '08-B-private-missing-source-readiness']);
+           }else hashes.set(dig,item);
           }
-          assert.equal(sha.size,s.count);
+          assert.equal(stageKeys.size,s.count);
+          assert.equal(hashes.size,mode==='readiness'?s.count-3:s.count);
           if(mode==='index'){
            assert.ok(r.evidence.every(x=>x.realOriginalJPEGImportedManuallyCorrectedAndIndexed&&
             x.previouslyStaleNewGarmentSavedToUnsavedOutfitWithoutReload&&
