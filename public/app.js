@@ -710,11 +710,18 @@ async function captureProofPhoto(){
  if(captureProofTaking||!stream||!cameraMode)return false;
  const owner=captureProofOwner(),request=cameraRequest;
  if(!owner){message('Sign in again before adding a photo.');return false;}
+ // P170: bind owner auth epoch and visibility across real original-JPEG digest.
+ const lease170=window.ClosetCameraLease170?.capture({
+  doc:document,auth:window.closetAuth,db,storage:localStorage
+ });
  captureProofTaking=true;
  try{
   const width=video.videoWidth,height=video.videoHeight,image=snap();
   const proof=await captureProofFromJPEG(image,{width,height,origin:'camera'},owner);
   if(request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
+  if(lease170&&!window.ClosetCameraLease170.current(lease170,{
+   doc:document,auth:window.closetAuth,db,storage:localStorage
+  }))return false;
   return candidate(proof.image,{sourceProof:proof});
  }finally{captureProofTaking=false;}
 }
@@ -733,6 +740,10 @@ async function startCamera(mode){
  $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
+  // P170: refuse hidden/foreign session before asking a device for camera permission.
+  const lease170=window.ClosetCameraLease170?.capture({
+   doc:document,auth:window.closetAuth,db,storage:localStorage
+  });
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const facing=typeof captureProof01Active!=='undefined'&&captureProof01Active?$('captureCameraFacing')?.value||'environment':'environment';
   let acquired;
@@ -745,15 +756,30 @@ async function startCamera(mode){
    // On unsupported devices relax preference only; permission denial never bypassed.
    acquired=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
   }
-  if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
+  const acquiredOwnerStillCurrent=!lease170||window.ClosetCameraLease170.current(lease170,{
+   doc:document,auth:window.closetAuth,db,storage:localStorage
+  });
+  if(request!==cameraRequest||!acquiredOwnerStillCurrent){
+   acquired.getTracks().forEach(track=>track.stop());
+   if(request===cameraRequest)throw Error('Camera session changed while opening. Sign in again or import a photo.');
+   return;
+  }
   stream=acquired;cameraMode=mode;
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active)
    for(const track of acquired.getTracks())track.addEventListener?.('ended',()=>{
     if(stream===acquired){stopCamera();message('Camera disconnected. Your existing photos are ready for review.');}
    },{once:true});
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
-  if(request!==cameraRequest)return;
+  await video.play();
+  // Permission can complete before video playback. A late play must not revive
+  // the old owner camera or reset its in-progress review after backgrounding.
+  if(request!==cameraRequest||lease170&&!window.ClosetCameraLease170.current(lease170,{
+   doc:document,auth:window.closetAuth,db,storage:localStorage
+  })){
+   if(request===cameraRequest)stopCamera();
+   return;
+  }
+  session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
@@ -806,7 +832,16 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   }
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
    throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
-window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
+window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{
+ if((document.hidden||window.ClosetCameraLease170&&!window.ClosetCameraLease170.isVisible(document))&&
+    (stream||cameraOpening)){
+  stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');
+ }
+});
+// P170: frozen mobile tabs can lack a timely document.hidden update.
+document.addEventListener('freeze',()=>{
+ if(stream||cameraOpening){stopCamera();message('Camera stopped while the browser was frozen. Your photos are ready to review.');}
+});
 const closetReady=(async()=>{await window.closetAuth.ready;try{window.closetAuth?.assertCurrent?.();const connection=await openDB();
  try{window.closetAuth?.assertCurrent?.();}catch(error){connection.close();return;}
  db=connection;items=(await readAll()).map(normalizeClothing);window.closetAuth?.assertCurrent?.();batch=(await readDraft()).map(normalizeClothing);window.closetAuth?.assertCurrent?.();for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
