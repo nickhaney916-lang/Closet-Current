@@ -238,6 +238,9 @@ export async function mountNative3D05({
   }
  }
  async function open(){
+  if(params?.get('cloud3D180')==='research'&&
+     win.cloudToNative3D180Bridge?.pending?.())
+   throw Error('P180 private cloud replacement pending; 3D must stay closed');
   if(closed)throw Error('NATIVE05 private preview disposed');
   requireNative3D05Visible102({doc});
   if(opened||opening)throw Error('NATIVE05 close the current 3D preview before reopening');
@@ -246,6 +249,9 @@ export async function mountNative3D05({
   const selectedSources91=captureNative3D05Sources91({consumer,admitted:selected});
   const selectedRevision93=requireNative3D05WardrobeRevision93({consumer,ownerId:selected.ownerId});
   const requireFresh=()=>{
+   if(params?.get('cloud3D180')==='research'&&
+      win.cloudToNative3D180Bridge?.pending?.())
+    throw Error('P180 private cloud wardrobe restore pending; cannot open stale 3D');
    if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
    requireNative3D05Visible102({doc});
    const current=requireCurrentNative3D05Selection88({
