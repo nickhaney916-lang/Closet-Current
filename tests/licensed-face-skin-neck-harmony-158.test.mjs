@@ -56,3 +56,16 @@ test('P158 never claims release or new anatomical garment fitting and stays Fami
  assert.match(mod,/sourceLicensedHeadRigBones:80/);
  assert.match(mod,/originalBodyGeometryModified:false/);
 });
+
+test('P158 independent visual protection samples actual dark original garment and licensed source face pixels, not a rectangular exposed-skin mix',()=>{
+ const audit=readFileSync('scripts/audit-licensed-face-skin-neck-harmony-158.mjs','utf8');
+ assert.match(audit,/function protectedSurface\(/);
+ assert.match(audit,/result\.photographedDarkDress=protectedSurface/);
+ assert.match(audit,/result\.originalLicensedDarkHead=protectedSurface/);
+ assert.match(audit,/result\.photographedDarkDress\.changedFraction>\.025/);
+ assert.match(audit,/result\.originalLicensedDarkHead\.changedFraction>\.08/);
+ assert.match(audit,/skinAfter<100/);
+ assert.match(mod,/const palettes=new Map\(\)/);
+ assert.match(mod,/if\(palettes\.has\(paletteKey\)\)return palettes\.get\(paletteKey\)/);
+ assert.match(mod,/candidate\.sha256!==expected/);
+});
