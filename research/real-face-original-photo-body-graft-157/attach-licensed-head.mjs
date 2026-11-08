@@ -289,9 +289,9 @@ export function applyLicensedSourceHead157(root,figure){
   dims=box.getSize(new THREE.Vector3());
  // Verified P156 license head-only mesh includes neck, scalp and hair; match
  // target donor face scale by measured width AND vertical height, avoiding
- // cartoon-size floating head or disproportionate neck.
+ // cartoon-size floating head or disproportionate neck. Do not add an\n // artificial 2.5% skull zoom: actual P157 Chromium measured a 5.29 mm\n // collar overhang from that factor, which must remain inside the strict\n // unchanged geometry-based seam rejection gate.
  const sw=source.w/dims.x,sh=source.h/dims.y,
-  scale=within(Math.sqrt(sw*sh)*1.025,.58,1.4);
+  scale=within(Math.sqrt(sw*sh),.58,1.4);
  const fittedY=source.top-box.max.y*scale+.004,
   fittedX=source.cx-center.x*scale,
   fittedZ=source.cz-center.z*scale+.008;
