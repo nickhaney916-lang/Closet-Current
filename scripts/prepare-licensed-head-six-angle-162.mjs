@@ -37,7 +37,7 @@ prep=prep.replace(key,key+String.raw`
    crossStream162:true,
    mainExactP161SHA:'9c20ed0208d1ba547707e2a8c6fcd542ba327068',
    parallelExactP716SHA:'fca5981c86a456ca172bd9810cb9c17e420cc30b',
-   licensedMITSourceSHA:inherited?.sha256,
+   licensedMITSourceSHA:inherited?.originalLicensedP156HeadSHA256,
    mainOriginal163BoneRig:inherited?.headJointFit160?.sourceOriginal163BoneRig,
    parallelOriginalMITHeadBones:inherited?.headJointFit160?.MITLicensedOriginalHeadRig,
    originalNeckJointDistanceImprovementMeters:inherited?.headJointFit160?.originalNeckToLicensedNeckAlignmentImprovementMeters,
