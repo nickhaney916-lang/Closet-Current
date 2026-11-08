@@ -643,7 +643,8 @@ function candidate(image,options={}){
  // The native P167 camera/import path must never silently downgrade an
  // original-capture attempt into an unverified saved photo. Other inherited
  // research multi-item/legacy calls still use the P119 save-time gate.
- if(nativeCanonical167Active&&!options.sourceProof&&!options.originalSourceProof&&
+ if(typeof nativeCanonical167Active!=='undefined'&&nativeCanonical167Active&&
+    !options.sourceProof&&!options.originalSourceProof&&
     !options.outfitSourceId){
    message('Original photograph verification was not available. Retake or import this photo.');
    return false;
