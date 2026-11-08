@@ -5,8 +5,9 @@
  * texture, source mesh vertex/index, head geometry, owned garment material,
  * wardrobe JPEG, owner storage, session or shipping code is ever modified.
  *
- * Original MIT face albedo is sampled at runtime from the SHA256-verified
- * P156 head-only GLB. The P118 skinned-body skin-only shader is nudged toward
+ * Original MIT face albedo was sampled from exact SHA256-verified P156
+ * head-only GLB PNG bytes in independent reproducible no-deploy source audit;
+ * the verified immutable palette is reused consistently in all browsers. The P118 skinned-body skin-only shader is nudged toward
  * the sampled source face (never edited or flattened). This is NOT a new
  * undressed source body, new wardrobe fit, physical skin contact, or 10/10
  * photorealism acceptance.
