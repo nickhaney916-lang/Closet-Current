@@ -12,9 +12,7 @@ const shellPath=resolve(donor,'research/three-d-13/pants-shell.mjs');
 const dressPath=resolve(donor,'research/photo-dress-anatomical-drape-61/dress-drape.mjs');
 let dress=await readFile(dressPath,'utf8');
 for(const [from,to] of [
- ['skirtOutwardMeters: 0.018','skirtOutwardMeters: 0.022'],
- ['maxHemDropMeters: 0.006','maxHemDropMeters: 0.007'],
- ['folds: 7','folds: 9'],
+ ['const pleat = .16 + .84*Math.pow(.5 + .5*Math.cos(phase), 1.55);','const pleat = .07 + .93*Math.pow(.5 + .5*Math.cos(phase), 1.8);'],
  ['p.needsUpdate=true; g.computeBoundingBox(); g.computeBoundingSphere();','p.needsUpdate=true; g.computeVertexNormals(); g.computeBoundingBox(); g.computeBoundingSphere();']
 ]){
  if(dress.split(from).length!==2)throw Error('P176 exact P61 dress drape anchor is missing or ambiguous: '+from);
