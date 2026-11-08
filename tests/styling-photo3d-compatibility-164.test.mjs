@@ -28,7 +28,7 @@ test('P164 actual combined mobile app tests exercise 3 distinct owned outfits, o
  assert.match(workflow,/node scripts\/build\.mjs/);
  for(const s of ['style.verdict','style.cases.length,6','c.uniqueLookCount,3',
   "'threeFocusedOwnedLooks'","'oneOwnedPieceSwap'","'saveAndReloadAfterSwap'",
-  'c.cameraCapture','c.ownerScopedIndexedDB','ownerScopedIndexedDB'])
+  'c.cameraCapture','ownerScopedIndexedDB','offHostCallsBlocked'])
   assert.ok(audit.includes(s),'actual application workflow mandatory: '+s);
  assert.match(audit,/assert\.equal\(meta.width,width\)/);
  assert.match(audit,/assert\.equal\(screens.length,6/);
