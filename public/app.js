@@ -1,7 +1,12 @@
 'use strict';
 const $=id=>document.getElementById(id), categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
 const recognitionAssetVersion=new URL(document.currentScript?.src||location.href).searchParams.get('v')||'';
-const captureProof01Active=new URLSearchParams(location.search).get('captureProof01')==='after';
+// P167 INTEGRATION BRANCH ONLY, unmerged and undeployed: exercise normal app
+// camera + gallery source fidelity with no query flags on this isolated build.
+// Release HOLD #255 remains absolute, no production or staging writes.
+const nativeCanonical167Active=true;
+const captureProof01Active=nativeCanonical167Active||
+ new URLSearchParams(location.search).get('captureProof01')==='after';
 const mobileCameraToCloset75Active=new URLSearchParams(location.search).get('cameraCloset75')==='after';
 // Research only: loaded dynamically from full repository host, outside production dist.
 const captureProof01Module=()=>import('../research/capture-proof-01/source-proof.mjs');
@@ -30,8 +35,9 @@ const index04ResearchActive=new URLSearchParams(location.search).get('index04')=
 // PHOTO120: deliberate, multi-flag opt-in, only on an isolated research host.
 // Original JPEG capture and the safety-first INDEX04 review gate are mandatory.
 // No change to the normal application's Adjust / save flow without ALL flags.
-const reviewedSave120Active=new URLSearchParams(location.search).get('reviewedSave120')==='research'&&
- captureProof01Active&&index04ResearchActive;
+const reviewedSave120Active=nativeCanonical167Active||
+ (new URLSearchParams(location.search).get('reviewedSave120')==='research'&&
+ captureProof01Active&&index04ResearchActive);
 // PHOTO122: newly human-confirmed camera originals → existing owner Style tab.
 // No new outfit generator, photo store, 3D claims, or non-research behavior.
 const reviewedStyle122Active=reviewedSave120Active&&
@@ -630,6 +636,14 @@ function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=typeof captureProof01Active!=='undefined'&&captureProof01Active?1:Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image,options={}){
+ // The native P167 camera/import path must never silently downgrade an
+ // original-capture attempt into an unverified saved photo. Other inherited
+ // research multi-item/legacy calls still use the P119 save-time gate.
+ if(nativeCanonical167Active&&!options.sourceProof&&!options.originalSourceProof&&
+    !options.outfitSourceId){
+   message('Original photograph verification was not available. Retake or import this photo.');
+   return false;
+ }
  if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
