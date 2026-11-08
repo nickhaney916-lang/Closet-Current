@@ -72,7 +72,7 @@ function originalLicensedSkinMinimum(graft,figure){
   if(!o.isSkinnedMesh)return;
   const materials=Array.isArray(o.material)?o.material:[o.material];
   if(!materials.some(m=>m?.name===face))return;
-  if(!o.skeleton||typeof o.applyBoneTransform!=='function||
+  if(!o.skeleton||typeof o.applyBoneTransform!=='function'||
    !o.geometry?.attributes?.position)
    fail('exact original MIT face-only skinned source missing');
   o.skeleton.update();o.updateWorldMatrix(true,false);
