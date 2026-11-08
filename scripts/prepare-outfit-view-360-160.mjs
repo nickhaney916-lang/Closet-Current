@@ -28,7 +28,7 @@ if(process.env.P160==='1'){
   await writeFile(outDir+'/'+file,png);
   const overlay=JSON.parse(await canvas.getAttribute('data-humanoid150'));
   const board=await readBoard(page);
-  assert.deepEqual(board,ownerOriginal,'P160 camera rotation must not mutate the owner's saved outfit');
+  assert.deepEqual(board,ownerOriginal,'P160 camera rotation must not mutate the owner saved outfit');
   p160Rows.push({figure,view,nominalDegrees:{front:0,'threequarter-front-right':45,right:90,'threequarter-rear-right':135,rear:180,left:270}[view],width,file,sha256:digest(png),cameraX:rotationX,sourceRigBones:overlay.sourceRigBones,sourceHeadAttached:overlay.licensedHead157?.headAttachedToOriginal163Bone===true,neckBridgeTriangles:overlay.licensedHead157?.neckTransition159?.bridgeTriangles??0,ownerSavedBoardUnchanged:true,renderer:'real-WebGL',physicalDeviceTested:false,familyAlpha:'HOLD'});
  };
  const dragFrom=async(start,deltaDegrees)=>{
