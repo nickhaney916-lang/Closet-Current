@@ -123,6 +123,13 @@ test('P174 actual detached donor receives bounded geometry BEFORE P60 source fit
   "new URLSearchParams(globalThis.location?.search||'').get('photoSleeve174')",
   'sourcePhotoShoulderSleeve174','shoulder174Sides'])
   assert.ok(installer.includes(needle),needle);
+ // Regression: opening a saved photo dress never requires the shirt-only
+ // P173 torso or P174 shoulder receipt; the dress retains existing P171 proof.
+ const dressOuter=bridge.indexOf("if(params?.get('photoSleeve174')==='research')");
+ const dressModeGate=bridge.indexOf("if(render?.viewerMode==='shirt'||render?.viewerMode==='shirt-pants')",dressOuter);
+ const shirtOnlyPrereq=bridge.indexOf("if(params?.get('photoTorso173')!=='research'",dressOuter);
+ assert.ok(dressModeGate>dressOuter&&shirtOnlyPrereq>dressModeGate,
+  'P174 must not gate P171 source-verified original dress on absent shirt-specific evidence');
  for(const needle of ["params?.get('photoSleeve174')==='research'",
   "import('../source-shoulder-seam-174/admission.mjs')",
   'verifiedPhotographicShoulder174=null',

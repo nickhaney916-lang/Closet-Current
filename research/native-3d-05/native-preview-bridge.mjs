@@ -355,12 +355,15 @@ export async function mountNative3D05({
    // Only physically modified original source shell AND both original
    // anatomically joined shoulder caps may report P174 source-fitted.
    if(params?.get('photoSleeve174')==='research'){
-    if(params?.get('photoTorso173')!=='research'||
-       !verifiedPhotographicTorso173?.admitted||
-       !verifiedPhotographicFit171?.admitted)
-     throw Error('P174 P171/P173 owner-signed original 3D shirt prerequisites unavailable');
     const render=panel?.state?.();
+    // P174 is a SHIRT-only independent source photo physical mesh. An
+    // originally verified dress must never be blocked for lacking a shirt
+    // torso, shoulder cap, or P173 shirt-specific source receipt.
     if(render?.viewerMode==='shirt'||render?.viewerMode==='shirt-pants'){
+     if(params?.get('photoTorso173')!=='research'||
+        !verifiedPhotographicTorso173?.admitted||
+        !verifiedPhotographicFit171?.admitted)
+      throw Error('P174 P171/P173 owner-signed original 3D shirt prerequisites unavailable');
      const module=await import('../source-shoulder-seam-174/admission.mjs');
      requireFresh();
      const result=module.inspectNativeShoulder174({
