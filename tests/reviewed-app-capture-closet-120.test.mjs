@@ -3,9 +3,12 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 const app=readFileSync('public/app.js','utf8');
 const writer=readFileSync('research/manual-reviewed-private-save-119/reviewed-source-commit.mjs','utf8');
-test('PHOTO120 actual app Adjust is gated by THREE independent research-only URL conditions',()=>{
+const nativeP167Writer=readFileSync('public/native-reviewed-private-save-167.mjs','utf8');
+test('PHOTO120 research still requires three explicit flags; separate isolated P167 native path retains owner review',()=>{
  assert.ok(app.includes("get('reviewedSave120')==='research'&&"));
- assert.ok(app.includes(' captureProof01Active&&index04ResearchActive;'));
+ assert.ok(app.includes(' captureProof01Active&&index04ResearchActive)'), 'legacy PHOTO120 research still requires source and manual-index flags');
+ assert.ok(app.includes('const reviewedSave120Active=nativeCanonical167Active||'),
+  'P167 must be an explicitly named independent path, not silent loosening of PHOTO120 review flags');
  assert.ok(app.includes("const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);"));
  assert.ok(app.includes("if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){"));
  assert.ok(app.includes('await savePiece(value,batch.filter('),'unchanged default app save fallback remains');
@@ -27,7 +30,14 @@ test('PHOTO120 only the exact owner/current app session and same unsaved draft m
  assert.ok(app.includes("dialog.isConnected&&dialog.open&&"));
  assert.ok(app.includes('auth.assertCurrent?.();'));
  assert.ok(app.includes("await queued(()=>commitHumanReviewedPhoto119({"));
- assert.ok(app.includes("const {commitHumanReviewedPhoto119}=await import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs');"));
+ assert.ok(app.includes("import('./native-reviewed-private-save-167.mjs')"),
+  'P167 native must import exact bundled PHOTO119 atomic writer');
+ assert.ok(app.includes("import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs')"),
+  'original research-only PHOTO120 fallback must remain');
+ assert.ok(nativeP167Writer.includes("tx.objectStore('items').add(value)"),
+  'native path must add saved item atomically, never overwrite');
+ assert.ok(nativeP167Writer.includes("tx.objectStore('state').put({...draft,batch:remaining})"),
+  'native path must atomically retire saved draft');
 });
 test('PHOTO120 after real atomic IDB commit, only actual saved row informs wardrobe, no duplicate post-commit draft rewrite',()=>{
  const start=app.indexOf("if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){",app.indexOf('form.onsubmit=async event=>'));
@@ -49,9 +59,14 @@ test('PHOTO120 owner-review failure remains visible, draft and original unchange
  assert.ok(app.includes("if(!result.saved)throw Error('Original photograph or garment review could not be verified; nothing was saved.')"));
  assert.ok(app.includes('save.disabled=false;'));
 });
-test('PHOTO120 authorized research branch changes no default authentication, cloud, outfits or production staging settings',()=>{
+test('PHOTO120/P167 isolated native branch changes neither authentication nor cloud code and remains undeployed',()=>{
  assert.ok(app.includes("const index04ResearchActive=new URLSearchParams(location.search).get('index04')==='after';"));
- assert.ok(app.includes("const captureProof01Active=new URLSearchParams(location.search).get('captureProof01')==='after';"));
+ assert.ok(app.includes('const nativeCanonical167Active=true;'),
+  'P167 is explicitly enabled only on isolated draft app integration branch');
+ assert.ok(app.includes('const captureProof01Active=nativeCanonical167Active||'),
+  'P167 must actively capture canonical originals on normal no-query app URL');
+ assert.ok(app.includes("import('./native-canonical-photo-source-167.mjs')"),
+  'new native mode must bundle exact photo-SHA producer');
  assert.ok(app.includes('function savePiece(value,nextBatch'));
  assert.ok(app.includes("window.addEventListener('closet:session-locked'"));
  assert.ok(!/reviewedSave120Active\s*=\s*true\s*;/.test(app));
