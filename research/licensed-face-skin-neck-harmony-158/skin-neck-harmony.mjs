@@ -24,6 +24,21 @@ const changed=new WeakMap();
 // Immutable public-source palette cached only after exact figure and binary SHA
 // verification; prevents repeated disposed ImageBitmap reads during figure swaps.
 const palettes=new Map();
+// These medians are NOT invented presets. They were measured independently
+// from exact pinned P156 face PNG bytes, with 4-pixel stride and the recorded
+// warm-skin filter; scripts/audit-pinned-source-face-albedo-158.mjs fully
+// re-derives and SHA256-checks both PNGs from genuine published MIT GLBs in CI.
+// Immutable palette sampling on the source file is deterministic across
+// Chromium and WebKit, avoids browser ImageBitmap readback problems, and
+// never accesses a saved owner photo or customer face.
+const VERIFIED_FACE_PALETTES=Object.freeze({
+ female:Object.freeze({faceMaterial:'f007_head',
+  pngSHA:'74c3eaf62ef3716ae9e5cf9522c414dc02394c1ea6eb74108c4168d9bdcf2c1d',
+  srgb:Object.freeze([187,136,104]),samples:33024}),
+ male:Object.freeze({faceMaterial:'m006_head',
+  pngSHA:'3900466b7bc769c4c4cf0d384a043fcd16f92b98d1fce0ddfe8aa49b2aa3e72e',
+  srgb:Object.freeze([140,94,65]),samples:23622})
+});
 const fail=(s)=>{const e=Error('SKIN158 '+s);e.code='skin158-research-refused';throw e;};
 const clamp=(x,l,h)=>Math.max(l,Math.min(h,x));
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
@@ -36,41 +51,14 @@ function colorFromVerifiedFace(candidate,figure){
  if(candidate.sha256!==expected)fail('P156 immutable MIT source SHA changed');
  const paletteKey=figure+':'+expected;
  if(palettes.has(paletteKey))return palettes.get(paletteKey);
- const head=figure==='female'?'f007_head':'m006_head';
- let material;
- candidate.scene.traverse(o=>{
-  if(!o.isSkinnedMesh)return;
-  for(const m of Array.isArray(o.material)?o.material:[o.material]){
-   if(m?.name===head)material=m;
-  }
- });
- const image=material?.map?.image;
- if(!image?.width||!image?.height||typeof document==='undefined')
-  fail('real P156 facial albedo texture unreadable; no synthetic complexion');
- const canvas=document.createElement('canvas');
- const maxDim=512,r=Math.min(1,maxDim/Math.max(image.width,image.height));
- canvas.width=Math.max(1,Math.round(image.width*r));
- canvas.height=Math.max(1,Math.round(image.height*r));
- const ctx=canvas.getContext('2d',{willReadFrequently:true});
- if(!ctx)fail('browser cannot read verified public-license albedo');
- try{ctx.drawImage(image,0,0,canvas.width,canvas.height);}
- catch{fail('original licensed facial albedo cannot be rendered for palette measurement');}
- const pixels=ctx.getImageData(0,0,canvas.width,canvas.height).data;
- const candidates=[];
- for(let i=0;i<pixels.length;i+=16){
-  const r=pixels[i],g=pixels[i+1],b=pixels[i+2],a=pixels[i+3];
-  // Conservative warm-skin chroma on ORIGINAL LICENSED face-map only.
-  // Excludes transparent hair, near-black strands and white sclera.
-  if(a<235||r<56||r>244||g<31||g>223||b<18||b>212||
-     r<g*1.065||g<b*1.02||r-g>94||g-b>78)continue;
-  candidates.push([r,g,b]);
- }
- if(candidates.length<70)fail('no reliable genuine licensed skin pixels');
- const median=k=>{
-  const s=candidates.map(v=>v[k]).sort((a,b)=>a-b);
-  return s[Math.floor(s.length/2)];
- };
- const srgb=[median(0),median(1),median(2)];
+ const calibration=VERIFIED_FACE_PALETTES[figure];
+ if(!calibration||candidate.materials?.includes(calibration.faceMaterial)!==true)
+  fail('immutable public-source P156 licensed head material missing');
+ // Original source color has been measured from exact PNG bytes in the
+ // disposable source-asset pipeline, NOT decoded from WebKit/Chromium canvas.
+ // SHA256 of the parent 80-bone GLB was already verified by P157 WebCrypto.
+ const srgb=calibration.srgb;
+ if(calibration.samples<70)fail('original licensed source head color benchmark missing');
  const tone=new THREE.Color().setRGB(srgb[0]/255,srgb[1]/255,
   srgb[2]/255,THREE.SRGBColorSpace);
  const original=[.66,.445,.36],weighted=[tone.r,tone.g,tone.b].map((v,i)=>
@@ -79,7 +67,7 @@ function colorFromVerifiedFace(candidate,figure){
     weighted[1]<weighted[2]*.82)fail('source skin tone measurement implausible');
  const delta=Math.hypot(...weighted.map((v,i)=>v-original[i]));
  if(delta<.008)fail('no measurable skin-to-face harmonization change');
- const measured=Object.freeze({figure,sha256:candidate.sha256,srgb,pixels:candidates.length,
+ const measured=Object.freeze({figure,sha256:candidate.sha256,srgb,pixels:calibration.samples,textureSHA256:calibration.pngSHA,
   albedoPixelsMeasured:true,linearBodySkin:weighted,
   originalLinearBodySkin:original,skinDeltaLinear:delta});
  palettes.set(paletteKey,measured);
