@@ -15,7 +15,7 @@ const PHOTO_SOURCES_171=Object.freeze({
 export {PHOTO_SOURCES_171};
 const fallback=(reason)=>Object.freeze({admitted:false,
  mode:'verified-original-photo-2d-fallback',reason,
- 3dRealismVerified:false,arbitraryOwnerPhoto3DApproved:false,
+ realism3DVerified:false,arbitraryOwnerPhoto3DApproved:false,
  releaseAuthorized:false,familyAlpha:'HOLD'});
 const HEX=/^[a-f0-9]{64}$/;
 const fields=Object.freeze({dress:'dress',shirt:'shirt',pants:'pants'});
@@ -77,7 +77,7 @@ export function inspectNativePhotoFit171({selection,sources,render}={}){
  return Object.freeze({admitted:true,mode:'verified-public-photo-skeleton-bound-research-3d',
   renderedItems:Object.freeze(bound.map(x=>Object.freeze(x))),
   independentlyVerifiedMeshes:true,sourceSHAAndOwnerBinding:true,
-  3dRealismVerified:false,arbitraryOwnerPhoto3DApproved:false,
+  realism3DVerified:false,arbitraryOwnerPhoto3DApproved:false,
   rearPhotoProvenance:'inferred-not-photographed',
   limitedLicensedResearchFixtures:true,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
