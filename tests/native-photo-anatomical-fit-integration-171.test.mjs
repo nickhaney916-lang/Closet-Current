@@ -36,7 +36,7 @@ test('P171 authentic public licensed dress with independently checked 163-bone P
  const d=inspectNativePhotoFit171(setup());
  assert.equal(d.admitted,true);assert.equal(d.mode,'verified-public-photo-skeleton-bound-research-3d');
  assert.equal(d.renderedItems.length,1);assert.equal(d.renderedItems[0].sha256,dresses.sha);
- assert.equal(d.3dRealismVerified,false);
+ assert.equal(d.realism3DVerified,false);
  assert.equal(d.arbitraryOwnerPhoto3DApproved,false);
  assert.equal(d.releaseAuthorized,false);assert.equal(d.familyAlpha,'HOLD');
 });
