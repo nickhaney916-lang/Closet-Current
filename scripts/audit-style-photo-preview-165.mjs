@@ -98,4 +98,4 @@ console.log('P165_REAL_OWNER_SHA_VERIFIED_NEW_PHOTO_2D_FALLBACK_AND_3D_SOURCE_HO
  ownerPrivateTwoDFallbackCases:6,sourcePhotoPreviewSHA256Screens:6,
  inheritedFullAppWorkAndReal3DViewerScreens:42,totalRealUIEvidence:48,
  incorrectOriginalOrOwnerDenied:true,real3DFittingForNewBlouseNotClaimed:true,
- 3DResearchStillIndependent:true,fullAppReleaseApproved:false,familyAlpha:'HOLD'}));
+ original3DResearchStillIndependent:true,fullAppReleaseApproved:false,familyAlpha:'HOLD'}));
