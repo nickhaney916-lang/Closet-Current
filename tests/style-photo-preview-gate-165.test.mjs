@@ -67,14 +67,14 @@ test('P165 source verified UI has accessible photo-only original output, never a
 });
 test('P165 scratch full-app Work source browser runner injects genuine owner photo preview in 6 mobile cases without overwriting original Work',()=>{
  const s=readFileSync('scripts/prepare-style-photo-preview-165-browser.mjs','utf8');
- assert.ok(s.includes("content.includes('See saved photo (2D)')"),
+ assert.ok(s.includes('data-style-photo-preview-165'),
   'generated scratch runner integrity check must match actual source-honest fallback button');
  assert.ok(!s.includes("content.includes('See original photo (2D)')"),
   'cannot accept obsolete assertion that prevents actual 2D owner photo browser acceptance');
  for(const marker of ['assert.equal(generated.selected,focusedId)',
   "await card.getByRole('button',{name:'Save outfit'}).click();",
   "await page.locator('#saveBoard').click();",
-  "See saved photo (2D)","mod.createStyledOwnerPhotoPreview165",
+  "data-style-photo-preview-165","mod.createStyledOwnerPhotoPreview165",
   'wrongOwnerRejected','sourceTamperingRejected','unreviewedRejected',
   'revokedSessionRejected','window.__P165.dispose()',
   'verified-original-2d.png','benchmark/style-photo-preview-165/results.json'])
