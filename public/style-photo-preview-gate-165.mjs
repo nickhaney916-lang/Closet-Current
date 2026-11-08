@@ -13,10 +13,12 @@ const ALLOWED=/^data:image\/(?:jpeg|png);base64,([a-zA-Z0-9+/]+={0,2})$/;
 const requireLive=(session)=>{
  const s=session?.();
  if(!s?.authenticated||typeof s.ownerId!=='string'||!s.ownerId||
-   typeof s.epoch!=='string'||!s.epoch)throw Error('Sign in to view your saved clothing');
- return {ownerId:s.ownerId,epoch:s.epoch};
+   typeof s.epoch!=='string'||!s.epoch||
+   s.privateDbName!=='closet-current-user-'+s.ownerId)
+  throw Error('Sign in to your current private wardrobe to view saved clothing');
+ return {ownerId:s.ownerId,epoch:s.epoch,privateDbName:s.privateDbName};
 };
-const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch;
+const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&a.privateDbName===b.privateDbName;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 const shaHex=async bytes=>{
  const hash=await crypto.subtle.digest('SHA-256',bytes);
@@ -60,6 +62,45 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
   originalPhotoStillPrivate:true,unseenBackPhotographed:false,
   familyAlpha:'HOLD',releaseAuthorized:false});
 }
+/**
+ * Legacy standard-app user-reviewed records do not always have a canonical
+ * original-source SHA. Their saved 2D photo can still be displayed from the
+ * currently signed owner-scoped IndexedDB; NEVER label it independently
+ * verified original JPEG, and NEVER use it to authorize a real 3D mesh.
+ */
+export async function verifyLegacySavedPhoto165({item,originalOwnerSession,getSession,readOwnerItems}={}){
+ const before=requireLive(getSession);
+ if(!item||typeof item.id!=='string'||!item.id||
+    item.ownerId&&item.ownerId!==before.ownerId||
+    item.sourceSHA256||item.sourceHashVerified===true||item.sourcePhotoOriginal===true||
+    item.userAdjusted!==true||item.category==='Uncategorized'||
+    typeof item.image!=='string'||item.image.length>18_000_000)
+  throw Error('Saved photo requires review and current owner wardrobe');
+ if(!ALLOWED.test(item.image))throw Error('Saved image must be a local JPEG or PNG');
+ let bytes;
+ try{bytes=new Uint8Array(await (await fetch(item.image)).arrayBuffer());}
+ catch{throw Error('Saved photo could not be verified in this browser');}
+ if(bytes.length<80||bytes.length>8_000_000)throw Error('Saved photo size is unsafe');
+ const digest=await shaHex(bytes);
+ const now=requireLive(getSession);
+ if(!same(before,now))throw Error('Account changed during saved photo check');
+ const wardrobe=readOwnerItems?.();
+ if(!Array.isArray(wardrobe))throw Error('Private closet not available');
+ const live=wardrobe.find(x=>x?.id===item.id);
+ if(!live||live.image!==item.image||live.userAdjusted!==true||
+   live.ownerId&&live.ownerId!==before.ownerId||live.sourceSHA256||
+   live.category==='Uncategorized')
+   throw Error('Saved photo or owner wardrobe changed while checking');
+ if(originalOwnerSession&&!same(before,originalOwnerSession))
+  throw Error('Private owner session changed');
+ return Object.freeze({itemId:item.id,ownerId:before.ownerId,epoch:before.epoch,
+  sourceSHA256:digest,photo:item.image,name:String(item.name||item.itemType||'Saved garment').slice(0,140),
+  presentationMode:'saved-photo-unverified-original-2d',
+  originalSourceIndependentlyVerified:false,garmentActuallyFittedIn3D:false,
+  privateOwnerDatabaseVerified:true,unseenBackPhotographed:false,
+  familyAlpha:'HOLD',releaseAuthorized:false});
+}
+
 export function createStyledOwnerPhotoPreview165({
  grid,readResults,readOwnerItems,getSession,events=window
 }={}){
@@ -81,20 +122,24 @@ export function createStyledOwnerPhotoPreview165({
    const card=clicked.closest('.styled-outfit');
    if(!card||!grid.contains(card))throw Error('Saved styled outfit card no longer current');
    const focus=readOwnerItems().find(x=>x?.id===result.focusItemId);
-   if(!focus||focus.ownerId!==start.ownerId||!Object.values(result.board.slots||{}).includes(focus.id))
+   if(!focus||(focus.ownerId&&focus.ownerId!==start.ownerId)||!Object.values(result.board.slots||{}).includes(focus.id))
     throw Error('The selected garment is not in your current owned outfit');
    // Verify SHA256 of actual saved full-original JPEG/PNG before ever displaying it.
-   const preview=await verifyOwnerSavedPhoto165({item:focus,getSession,readOwnerItems,originalOwnerSession:start});
+   const canonical=typeof focus.sourceSHA256==='string'&&focus.sourceSHA256.length>0;
+   const preview=await (canonical?verifyOwnerSavedPhoto165:verifyLegacySavedPhoto165)({
+     item:focus,getSession,readOwnerItems,originalOwnerSession:start});
    if(closed||serial!==op||!same(start,requireLive(getSession))||
       !grid.contains(card)||readResults()[index]!==result)throw Error('Style results or signed-in account changed');
    const container=el('section',null,'style-original-photo-preview-165');
-   container.dataset.garmentPreviewMode='verified-original-photo-2d';
-   container.setAttribute('aria-label','Your original saved clothing photo — 2D');
+   container.dataset.garmentPreviewMode=preview.presentationMode;
+   container.setAttribute('aria-label',canonical?'Your SHA-verified original saved clothing photo — 2D':'Your saved clothing photo, original source unverified — 2D');
    container.style.cssText='border:1px solid #c2c8c0;border-radius:12px;padding:12px;margin-top:12px;max-width:100%;box-sizing:border-box;overflow:hidden';
-   const heading=el('strong','Original saved clothing photo · 2D preview');
-   const img=el('img');img.src=preview.photo;img.alt=preview.name+' — your original saved clothing photo';
+   const heading=el('strong',canonical?'SHA-verified original clothing photo · 2D':'Saved clothing photo · 2D (original source unverified)');
+   const img=el('img');img.src=preview.photo;img.alt=preview.name+' — your saved clothing photo';
    img.style.cssText='display:block;width:min(100%,250px);height:auto;max-height:240px;object-fit:contain;margin:8px auto';
-   const explanation=el('p','3D fitting is not yet verified for this garment. No generic garment has been substituted.','fine');
+   const explanation=el('p',canonical?
+    '3D fitting is not yet verified for this garment. No generic garment has been substituted.':
+    'Saved photo only: original-camera image provenance is not independently verified. 3D fitting is not yet verified. No generic garment has been substituted.','fine');
    explanation.dataset.threeDFitted='false';
    container.append(heading,img,explanation);
    card.append(container);anchor=container;
@@ -118,9 +163,9 @@ export function createStyledOwnerPhotoPreview165({
   for(const [i,card]of cards.entries()){
    const result=all[i];
    if(!result?.focusItemId||!result.board)continue;
-   const btn=el('button','See original photo (2D)','secondary');
+   const btn=el('button','See saved photo (2D)','secondary');
    btn.type='button';btn.dataset.stylePhotoPreview165='true';
-   btn.setAttribute('aria-label','See your saved original clothing photo; 3D fitting not verified');
+   btn.setAttribute('aria-label','See your saved clothing photo in 2D; 3D fitting not verified');
    btn.onclick=async()=>{btn.disabled=true;try{await render(i,btn);}catch{ /* Safe visible warning already shown. */ }finally{btn.disabled=false;}};
    card.append(btn);
   }
