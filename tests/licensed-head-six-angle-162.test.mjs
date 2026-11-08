@@ -31,7 +31,7 @@ test('P162 enforces actual licensed P156 original female and male source SHA, or
  assert.match(audit,/row\.parallelOriginalMITHeadBones,80/);
 });
 test('P162 independently validates real 36 unique screenshot SHA, six actual camera states, genuine original P161 Chromium and WebKit',()=>{
- assert.match(audit,/const views=\['front','threequarter-front-right','right','threequarter-rear-right','rear','left'\]/);
+ assert.match(audit,/views=\['front','threequarter-front-right','right','threequarter-rear-right','rear','left'\]/);
  assert.match(audit,/assert\.equal\(all\.length,36\)/);
  assert.match(audit,/assert\.equal\(shaSeen\.size,36\)/);
  assert.match(audit,/assert\.equal\(sha\(png\),row\.sha256/);
