@@ -77,3 +77,14 @@ test('164 preserves the original mapped source texture, skin weights, source geo
   assert.equal(x.mesh.material.onBeforeCompile,x.material.onBeforeCompile);
   result.garment.dispose();
 });
+
+test('164 accepts the pinned shirt by exact photo hash and attached source projection when the donor omits sourceId',()=>{
+  const x=makeGarment({sourceId:'commons-0003',sourceSHA256:PHOTO_FABRIC_SOURCES_164['commons-0003'],photoApplied:false});
+  delete x.garment.stats.sourceId;
+  x.garment.stats.frontOriginalPixels=false;
+  const result=applyPhotoFabricPBR164(x.garment);
+  assert.equal(result.applied,true);
+  assert.equal(result.garment.stats.photoFabricSourceId164,'commons-0003');
+  assert.equal(result.garment.stats.photoFabricProfile164,'cotton-jersey');
+  result.garment.dispose();
+});

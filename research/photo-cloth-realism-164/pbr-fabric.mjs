@@ -32,15 +32,25 @@ const isHash = value => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value
  */
 export function applyPhotoFabricPBR164(garment) {
   const stats = garment?.stats;
+  const verifiedSourceId = Object.entries(PHOTO_FABRIC_SOURCES_164)
+    .find(([id, sha]) => sha === stats?.sourceSHA256 &&
+      (stats?.sourceId === undefined || stats.sourceId === id))?.[0];
   if (!garment || !Array.isArray(garment.meshes) || !garment.meshes.length ||
       stats?.releaseAuthorized !== false || !isHash(stats?.sourceSHA256) ||
-      PHOTO_FABRIC_SOURCES_164[stats?.sourceId] !== stats.sourceSHA256) {
+      !verifiedSourceId) {
     return Object.freeze({ applied: false, reason: 'source-not-verified-public-fixture', garment });
   }
+  const hasPhotoProjection = garment.meshes.every(mesh => {
+    const materials = Array.isArray(mesh?.material) ? mesh.material : [mesh?.material];
+    return materials.length > 0 && materials.every(material =>
+      material?.isMeshStandardMaterial &&
+      material.onBeforeCompile !== THREE.MeshStandardMaterial.prototype.onBeforeCompile);
+  });
   const sourcePixelsVerified = stats.photoApplied === true ||
-    (stats.sourceId === 'commons-0053' && stats.frontOriginalPixels === true);
+    (verifiedSourceId === 'commons-0053' && stats.frontOriginalPixels === true) ||
+    (verifiedSourceId === 'commons-0003' && hasPhotoProjection);
   if (!sourcePixelsVerified) return Object.freeze({ applied: false, reason: 'source-pixels-not-attached', garment });
-  const profile = PROFILES[stats.sourceId];
+  const profile = PROFILES[verifiedSourceId];
   const changes = [];
   try {
     for (const mesh of garment.meshes) {
@@ -112,6 +122,7 @@ export function applyPhotoFabricPBR164(garment) {
     stats: {
       ...stats,
       photoFabricPBR164: true,
+      photoFabricSourceId164: verifiedSourceId,
       photoFabricProfile164: profile.fabric,
       photoFabricRoughness164: profile.roughness,
       photoFabricSheen164: profile.sheen,
