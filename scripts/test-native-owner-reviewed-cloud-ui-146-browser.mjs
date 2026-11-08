@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 
 const root=resolve('.'),dir=resolve(process.env.ARTIFACT_DIR||'benchmark/native-owner-reviewed-cloud-ui-146');
+const enable178=process.env.P178_NATIVE==='1';
 await mkdir(dir,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const original=readFileSync('benchmark/fixtures/commons-0002.jpg');
@@ -73,7 +74,7 @@ const server=createServer(async(req,res)=>{
  }catch(e){events.errors.push(String(e));return send(res,404,{error:'local research fixture unavailable'});}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
-const origin='http://127.0.0.1:'+server.address().port,flag='?ownerReview145=research&ownerReview146=research';
+const origin='http://127.0.0.1:'+server.address().port,flag='?ownerReview145=research&ownerReview146=research'+(enable178?'&ownerCutout178=research':'');
 const screenshot=async(page,engine,width,stage)=>{
  const name=engine+'-'+width+'-'+stage+'.png',bytes=await page.screenshot({animations:'disabled',fullPage:false});
  const md=await sharp(bytes).metadata();assert.equal(md.width,width);
@@ -155,6 +156,15 @@ try{
     await page.goto(origin+'/'+flag,{waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.ownerReviewedCloud146?.state()?.mounted===true,null,{timeout:30000});
     assert.equal(await page.evaluate(()=>window.ownerReviewedCloud146.state().legacyPaused),true);
+    assert.equal(await page.evaluate(()=>window.ownerReviewedCloud146.state().nativeOriginalAndCutout178),enable178);
+    if(enable178){
+     const activated=await page.evaluate(()=>window.ownerReviewedCloud146.state().nativeSourceTransport178);
+     assert.equal(activated.actualNativeEngineGuard,true);
+     assert.equal(activated.realSignedJwtVerified,false);
+     assert.equal(activated.shippingReleaseAuthorized,false);
+     assert.equal(activated.localVerified,0);
+     assert.equal(activated.remoteVerified,0);
+    }
     await page.evaluate(({item,ownerId})=>new Promise((ok,bad)=>{
       const tx=db.transaction(['items','state'],'readwrite');
       tx.objectStore('items').put(item);
@@ -178,6 +188,12 @@ try{
     assert.deepEqual([...objects.keys()].filter(k=>k.startsWith(ownerId+'/')).map(k=>k.split('/')[1]).sort(),[originalSHA+'.jpg',cutoutSHA+'.jpg'].sort());
     assert.equal(sha(objects.get(ownerId+'/'+originalSHA+'.jpg')),originalSHA);
     assert.equal(sha(objects.get(ownerId+'/'+cutoutSHA+'.jpg')),cutoutSHA);
+    if(enable178){
+     const state178=await page.evaluate(()=>window.ownerReviewedCloud146.state().nativeSourceTransport178);
+     assert.equal(state178.localVerified,1);
+     assert.equal(state178.remoteVerified,1);
+     assert.equal(state178.actualNativeEngineGuard,true);
+    }
     await screenshot(page,engine,width,'02-native-double-jpeg-backup');
 
     await updateColor(page,'p146-reviewed-shirt','Red');
@@ -203,6 +219,12 @@ try{
     assert.equal(restored.sourceSHA256,originalSHA);
     assert.equal(restored.cutoutSHA256,cutoutSHA);
     assert.equal((await readRecord(page,'state','outfit-board')).saved[0].id,'p146-saved-look');
+    if(enable178){
+     const guard=await page.evaluate(()=>window.ownerReviewedCloud146.state().nativeSourceTransport178);
+     assert.equal(guard.localVerified,1);
+     assert.equal(guard.remoteVerified,3,
+      'P178 must attest private photo+cutout after backup and before BOTH restore attempts');
+    }
     await screenshot(page,engine,width,'04-native-atomic-restored');
 
     await updateColor(page,'p146-reviewed-shirt','Blue');
@@ -233,7 +255,9 @@ try{
     const entry={engine,width,nativeAccountMenu:true,sourceSHA:originalSHA,cutoutSHA,
      createOnlyBackup:true,previewWithoutJPEGFetch:true,cancelPreservesLocal:true,
      actualAtomicRestore:true,remoteConflictRejected:true,syntheticOtherOwnerDenied:true,
-     signedJWTVerified:false,physicalPhoneVerified:false,familyAlpha:'HOLD'};
+     signedJWTVerified:false,physicalPhoneVerified:false,familyAlpha:'HOLD',
+     p178NativeOriginalAndReviewedCutoutGuard:enable178,
+     p178OwnerSHAAndAtomicCloudVerified:enable178};
     results.push(entry);await context.close();
    }
   }finally{await browser.close();}
@@ -242,13 +266,15 @@ try{
  // Non-loopback app asset/trend attempts are blocked by the router above.
  assert.ok(events.external.every(x=>x.blocked===true),'no external request may escape the browser test');
  assert.equal(events.errors.length,0,'research fake server errors');
- const out={priority:146,finalSource:'actual public/index.html with P146 native bridge',
+ const out={priority:enable178?178:146,finalSource:'actual public/index.html with P146 native bridge',
+  p178NativeOriginalAndReviewedCutoutGuard:enable178,
+  genuineOwnerOriginalJpegAndCutoutPrivateBacked:true,
   liveSignedJWTVerified:false,physicalPhoneVerified:false,syntheticLocalServerOnly:true,
   realCloudTouched:false,familyAlpha:'HOLD',cases:results,server:{
    reads:events.reads,writes:events.writes,uploads:events.uploads,storageReads:events.storageReads,
    foreignDenied:events.foreignDenied,blockedExternalAttempts:events.external.length,blockedExternalHosts:[...new Set(events.external.map(x=>x.urlHost))]},screenshots:events.screenshots};
  await writeFile(resolve(dir,'results.json'),JSON.stringify(out,null,2));
- console.log(JSON.stringify({passed:results.length,server:out.server,screenshots:events.screenshots.length},null,2));
+ console.log('P178_NATIVE_OWNER_REVIEWED_SOURCE_CUTOUT_BROWSER',JSON.stringify({enabled:enable178,passed:results.length,server:out.server,screenshots:events.screenshots.length,familyAlpha:'HOLD'}));
 }finally{
  await new Promise(resolve=>server.close(resolve));
 }

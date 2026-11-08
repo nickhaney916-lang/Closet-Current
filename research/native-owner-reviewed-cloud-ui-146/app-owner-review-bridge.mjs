@@ -37,7 +37,7 @@ export async function mountOwnerReviewedCloud146({
  const menu=doc.querySelector('header .account-menu>div');
  if(!menu||doc.getElementById('ownerReview146Panel'))fail('account menu unavailable or owner research already mounted');
  const ownerAtMount=auth.user.id;
- let revoked=false,working=false,pending=null,backupService,restoreService;
+ let revoked=false,working=false,pending=null,backupService,restoreService,cutout178=null;
  function assertLocalOwner(){
   if(revoked||!ownerReviewedMode146(loc)||auth.user?.id!==ownerAtMount||
      db?.name!=='closet-current-user-'+ownerAtMount)
@@ -68,6 +68,18 @@ export async function mountOwnerReviewedCloud146({
    fail('unsigned local research bearer token required');
   return fetcher(target.href,{...options,redirect:'error',credentials:'omit'});
  };
+ // P178 explicit opt-in only on loopback with all three research flags.
+ // Legacy automatic writer remains paused by P145. The actual native
+ // ClosetBackupEngine now checks BOTH original and reviewed JPEG cutout.
+ if(new URLSearchParams(loc.search).get('ownerCutout178')==='research'){
+  const {createOwnerReviewedCloudTransport178,researchMode178}=
+   await import('../native-owner-reviewed-cutout-178/owner-transport.mjs');
+  if(!researchMode178(loc))fail('P178 original/cutout requires all three flags');
+  cutout178=createOwnerReviewedCloudTransport178({
+   auth:localAuth,db,engine:globalThis.window?.ClosetBackupEngine,
+   loc,fetcher:localFetch,subtle,legacy
+  });
+ }
  const panel=doc.createElement('section');panel.id='ownerReview146Panel';
  panel.setAttribute('aria-label','Research-only reviewed backup and restore');
  panel.innerHTML=`<p class="fine"><strong>Research-only cloud safety test</strong></p>
@@ -189,12 +201,31 @@ export async function mountOwnerReviewedCloud146({
   const v=await backupService.previewBoth();showCounts(v);return v;
  });
  by('owner146Backup').onclick=()=>run('backup',async()=>{
+  const preflight=cutout178?await cutout178.local():null;
   const r=await backupService.backupWithReviewedConsent();
-  if(r.saved)showCounts(await backupService.previewBoth());
+  if(r.saved){
+   if(cutout178){
+    // Verify independent P177 native mapper against actual P129 cloud CAS
+    // output, source bytes, reviewed crop, all owner-private Storage paths.
+    const proved=await cutout178.remote({
+     revision:r.revision,document:preflight.originalDocument
+    });
+    if(!proved.originalJPEGShaAndCutoutVerified)
+     fail('original and cutout cloud integrity was not established');
+   }
+   showCounts(await backupService.previewBoth());
+  }
   return r;
  });
  by('owner146Restore').onclick=()=>run('restore',async()=>{
   const v=await restoreService.previewRestore();showCounts(v,true);
+  if(cutout178){
+   // Remote source and crop are fully proven BEFORE owner destructive
+   // consent / P126 private IndexedDB atomic wardrobe replacement.
+   const proved=await cutout178.remote({revision:v.remoteRevision});
+   if(!proved.originalJPEGShaAndCutoutVerified)
+    fail('unverified original and crop photo refused');
+  }
   const r=await restoreService.restoreWithOwnerReview();
   if(r.restored)showCounts(await backupService.previewBoth());
   return r;
@@ -202,7 +233,7 @@ export async function mountOwnerReviewedCloud146({
  function revoke(){
   if(revoked)return;revoked=true;
   settle(false);
-  backupService?.revoke();restoreService?.revoke();
+  backupService?.revoke();restoreService?.revoke();cutout178?.revoke();
   for(const id of buttonIds){const b=by(id);if(b){b.disabled=true;b.onclick=null;}}
   panel.remove();if(dialog.open)dialog.close();dialog.remove();style.remove();
  }
@@ -214,6 +245,8 @@ export async function mountOwnerReviewedCloud146({
   revoke,
   state:()=>Object.freeze({mounted:!revoked,busy:working,pendingDecision:!!pending,
    legacyPaused:legacy?.ownerReviewHold145?.()===true,localSyntheticOnly:true,
-   signedJWTVerified:false,shippingReleaseAuthorized:false,familyAlpha:'HOLD'})
+   signedJWTVerified:false,shippingReleaseAuthorized:false,familyAlpha:'HOLD',
+   nativeOriginalAndCutout178:!revoked&&!!cutout178,
+   nativeSourceTransport178:!revoked?cutout178?.status()||null:null})
  });
 }
