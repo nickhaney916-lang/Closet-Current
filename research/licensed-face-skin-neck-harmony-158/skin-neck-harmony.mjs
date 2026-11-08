@@ -21,6 +21,9 @@ export const SKIN_NECK_158=Object.freeze({
  familyAlpha:'HOLD',releaseAuthorized:false
 });
 const changed=new WeakMap();
+// Immutable public-source palette cached only after exact figure and binary SHA
+// verification; prevents repeated disposed ImageBitmap reads during figure swaps.
+const palettes=new Map();
 const fail=(s)=>{const e=Error('SKIN158 '+s);e.code='skin158-research-refused';throw e;};
 const clamp=(x,l,h)=>Math.max(l,Math.min(h,x));
 const finite=x=>typeof x==='number'&&Number.isFinite(x);
@@ -31,6 +34,8 @@ function colorFromVerifiedFace(candidate,figure){
   ?'dd3772a97d2459975b34f8b1ca7902cb7d7e47d20091766a342b53425c9202e4'
   :'a4aed621b347f5ed2c6564ca4bb66c8d18681d94e7d3fdc246fdd64adbcc1f72';
  if(candidate.sha256!==expected)fail('P156 immutable MIT source SHA changed');
+ const paletteKey=figure+':'+expected;
+ if(palettes.has(paletteKey))return palettes.get(paletteKey);
  const head=figure==='female'?'f007_head':'m006_head';
  let material;
  candidate.scene.traverse(o=>{
@@ -74,9 +79,11 @@ function colorFromVerifiedFace(candidate,figure){
     weighted[1]<weighted[2]*.82)fail('source skin tone measurement implausible');
  const delta=Math.hypot(...weighted.map((v,i)=>v-original[i]));
  if(delta<.008)fail('no measurable skin-to-face harmonization change');
- return Object.freeze({figure,sha256:candidate.sha256,srgb,pixels:candidates.length,
+ const measured=Object.freeze({figure,sha256:candidate.sha256,srgb,pixels:candidates.length,
   albedoPixelsMeasured:true,linearBodySkin:weighted,
   originalLinearBodySkin:original,skinDeltaLinear:delta});
+ palettes.set(paletteKey,measured);
+ return measured;
 }
 function sourceMaterials(root){
  const owned=new Set(),source=new Set();
