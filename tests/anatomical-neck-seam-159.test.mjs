@@ -79,3 +79,22 @@ test('P159 original source neck ring excludes shoulder and back vertices by actu
  assert.match(source,/P159_ORIGINAL_NECK_JOINT_WEIGHTED_RING_MEASURED/);
  assert.match(source,/ringCenterDistance>\.125/);
 });
+
+test('P159 prevents real observed duplicate collar when SHA-verified original licensed face-only neck skin already overlaps P157 torso',()=>{
+ assert.match(source,/originalLicensedSkinNeckMinY\(graft,figure\)/);
+ assert.match(source,/hasLicensedFace\(o,figure\)/);
+ assert.match(source,/originalNeckOverlap=cutoff-originalHeadSkin\.lowestSkinWorldY/);
+ assert.match(source,/if\(originalNeckOverlap>\.020\)/);
+ assert.match(source,/P159_ORIGINAL_LICENSED_NECK_OVERLAP_NO_DUPLICATE_SURFACE/);
+ assert.match(source,/noAdditionalGeometryRequired:true,bridgeSkinnedHeadAttached:false/);
+ assert.match(source,/bridgeTriangles:0/);
+ assert.match(source,/ORIGINAL_LICENSED_NECK_OVERLAP_PREVENTS_DUPLICATE_COLLAR/);
+ const workflow=readFileSync('.github/workflows/anatomical-neck-seam-159-no-deploy.yml','utf8');
+ assert.match(workflow,/neckNoSurfaceNeeded159:/);
+ assert.match(workflow,/neckActualSkinOverlap159:/);
+ assert.match(workflow,/neckActualFaceVertices159:/);
+ const audit=readFileSync('scripts/audit-anatomical-neck-seam-159.mjs','utf8');
+ assert.match(audit,/assert\.equal\(q\.neckNoSurfaceNeeded159,true\)/);
+ assert.match(audit,/assert\.equal\(q\.neckSurfaceTriangles159,0\)/);
+ assert.match(audit,/preventedDuplicateArtificialNeckCollar:true/);
+});
