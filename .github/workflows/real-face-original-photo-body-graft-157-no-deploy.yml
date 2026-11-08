@@ -122,10 +122,11 @@ jobs:
           const errAnchor="  page.on('pageerror',e=>errors.push({width,message:e.message}));";
           assert.equal(s.split(errAnchor).length,2,'P157 actual browser console diagnostic anchor unavailable');
           s=s.replace(errAnchor,"  page.on('pageerror',e=>{errors.push({width,message:e.message});console.error('P157_REAL_PAGE_EXCEPTION',e.message);});"+
-           "\n  page.on('console',m=>{if(m.type()==='error')console.error('P157_REAL_WEBGL_CONSOLE',m.text());});");
+           "\n  page.on('console',m=>{if(m.type()==='error')console.error('P157_REAL_WEBGL_CONSOLE',m.text());});"+
+           "\n  page.on('requestfailed',r=>console.error('P157_REAL_HTTP_REQUEST_FAILED',r.url(),r.failure()?.errorText));");
           const gate="  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&";
           assert.ok(s.includes(gate),'P157 original 163-bone genuine WebGL gate changed');
-          s=s.replaceAll(gate,"  console.log('P157_REAL_OUTFIT_PREVIEW_GATE',JSON.stringify(await page.evaluate(()=>({state:window.native3D05Bridge?.state?.(),status:document.getElementById('outfit3D01Status')?.textContent,model:document.getElementById('outfit3D01Canvas')?.dataset?.model}))));\n"+gate);
+          s=s.replaceAll(gate,"  console.log('P157_REAL_OUTFIT_PREVIEW_GATE',JSON.stringify(await page.evaluate(()=>({state:window.native3D05Bridge?.state?.(),status:document.getElementById('outfit3D01Status')?.textContent,nativeStatus:document.getElementById('native3D05Status')?.textContent,builderStatus:document.getElementById('outfit3D01Status')?.textContent,appMessage:document.getElementById('message')?.textContent,model:document.getElementById('outfit3D01Canvas')?.dataset?.model}))));\n"+gate);
           writeFileSync(f,s);
           NODE
           node .p150-donor-541/scripts/install-dual-humanoid-realism-118.mjs .p150-donor-541
