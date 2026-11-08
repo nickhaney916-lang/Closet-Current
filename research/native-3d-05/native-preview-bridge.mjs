@@ -251,11 +251,13 @@ export async function mountNative3D05({
   const selectedSources91=captureNative3D05Sources91({consumer,admitted:selected});
   const selectedRevision93=requireNative3D05WardrobeRevision93({consumer,ownerId:selected.ownerId});
   const requireFresh=()=>{
+   if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
+   requireNative3D05Visible102({doc});
+   // Preserve NATIVE102 original source lifecycle, then reject new WebGL
+   // admission while a private cloud photo/outfit restore is pending.
    if(params?.get('cloud3D180')==='research'&&
       win.cloudToNative3D180Bridge?.pending?.())
     throw Error('P180 private cloud wardrobe restore pending; cannot open stale 3D');
-   if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
-   requireNative3D05Visible102({doc});
    const current=requireCurrentNative3D05Selection88({
     consumer,originalNativeAuth:nativeAuth,win,doc,admitted:selected,selectedIndex
    });
