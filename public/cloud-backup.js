@@ -2,6 +2,10 @@
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
  let db=null,user=null,enabled=false,syncing=false,timer=null,retryDelay=2000,callbacks={},generation=0;
+ // P168 exact owner + session epoch + database lease; RLS remains server authority.
+ const currentLease=()=>window.ClosetCloudOwnerLease168.capture({auth:window.closetAuth,database:db,storage:localStorage});
+ const assertLease=lease=>window.ClosetCloudOwnerLease168.assert(lease,{auth:window.closetAuth,database:db,storage:localStorage});
+ function pauseChangedOwner(){enabled=false;generation++;clearTimeout(timer);timer=null;status('Cloud backup paused after account change. Local photos remain on this device.');}
  // P145: research-host-only owner-reviewed mode. The ordinary legacy cloud
  // writer MUST NOT run next to the independent consent-bound P134/P137 flow.
  // This guard does not mount P134/P137 or authorize cloud mutation.
@@ -26,47 +30,50 @@
  async function marker(){let value;await transact(['state'],'readonly',tx=>{const r=tx.objectStore('state').get('cloud-sync');r.onsuccess=()=>value=r.result;});return value||markerDefault();}
  async function markDirty(){await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});}
  async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
- async function api(path,{body,method='GET',contentType='application/json'}={},again=false){
+ async function api(path,{body,method='GET',contentType='application/json'}={},again=false,originalLease=null){
   if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
+  const lease=originalLease||currentLease();assertLease(lease);
   if(window.closetAuth?.user?.id!==user)throw Error('Account changed');
-  const token=await window.closetAuth.getAccessToken({force:again});
+  const token=await window.closetAuth.getAccessToken({force:again});assertLease(lease);
   if(stopForReview145())throw Error('P145 owner-reviewed mode blocks legacy cloud transport');
   const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),20000);
   try{
    const response=await fetch(BASE+path,{method,signal:controller.signal,headers:{apikey:KEY,Authorization:'Bearer '+token,...(body===undefined?{}:{'Content-Type':contentType})},body:body===undefined?undefined:contentType==='application/json'?JSON.stringify(body):body,cache:'no-store'});
-   if(response.status===401&&!again)return await api(path,{body,method,contentType},true);
-   if(!response.ok){const error=Error('Cloud request failed');error.status=response.status;throw error;}return response;
+   assertLease(lease);if(response.status===401&&!again)return await api(path,{body,method,contentType},true,lease);
+   if(!response.ok){const error=Error('Cloud request failed');error.status=response.status;throw error;}assertLease(lease);return response;
   }finally{clearTimeout(timeout);}
  }
  const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
  function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
  function photoPath(value){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+user+'/[a-f0-9]{64}\\.jpg$').test(path))throw Error('Invalid private photo path');return path;}
  async function encode(value){const photos=new Map(),document=await E.mapImages(value,async image=>{const bytes=imageBytes(image),path=user+'/'+await hash(bytes)+'.jpg';photos.set(path,bytes);return 'closet-photo:'+path;});return {document:E.validateDocument(document),photos};}
- async function decode(document){E.validateDocument(document);const photos=new Map();return E.mapImages(document,async value=>{const path=photoPath(value);if(!photos.has(path))photos.set(path,(async()=>{const response=await api('/storage/v1/object/'+BUCKET+'/'+path),bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>8388608||await hash(bytes)!==path.split('/')[1].slice(0,-4))throw Error('Photo integrity check failed');let binary='';for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));return 'data:image/jpeg;base64,'+btoa(binary);})());return photos.get(path);});}
+ async function decode(document){const lease=currentLease();E.validateDocument(document);const photos=new Map();const result=await E.mapImages(document,async value=>{const path=photoPath(value);if(!photos.has(path))photos.set(path,(async()=>{const response=await api('/storage/v1/object/'+BUCKET+'/'+path),bytes=new Uint8Array(await response.arrayBuffer());if(bytes.length>8388608||await hash(bytes)!==path.split('/')[1].slice(0,-4))throw Error('Photo integrity check failed');let binary='';for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));return 'data:image/jpeg;base64,'+btoa(binary);})());return photos.get(path);});assertLease(lease);return result;}
  async function upload(photos){for(const [path,bytes]of photos){try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes});}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.
    const existing=await api('/storage/v1/object/'+BUCKET+'/'+path),stored=new Uint8Array(await existing.arrayBuffer());if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw Error('Stored photo differs');
   }}}
- async function getRemote(){const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user);const rows=await response.json();if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');E.validateDocument(r.document);return r;}
+ async function getRemote(){const lease=currentLease();const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user,{},false,lease);assertLease(lease);const rows=await response.json();assertLease(lease);if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');E.validateDocument(r.document);return r;}
  async function apply(document,revision,expectedRevision){
-  if(callbacks.canRestore&&!callbacks.canRestore())return false;
-  const local=await decode(document);
+  const lease=currentLease();if(callbacks.canRestore&&!callbacks.canRestore())return false;
+  const local=await decode(document);assertLease(lease);
   const restoreResearch=new URLSearchParams(location.search).get('restoreAtomic01')==='research';
   const guard=restoreResearch?window.restoreAtomic01Bridge:null;
   if(restoreResearch&&(!guard||
      !await guard.allowCloud({document:local,revision,expectedRevision})))return false;
-  if(callbacks.canRestore&&!callbacks.canRestore())return false;
+  assertLease(lease);if(callbacks.canRestore&&!callbacks.canRestore())return false;
   let applied=false;
-  await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
-  if(applied)await callbacks.restored?.();return applied;
+  await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{try{assertLease(lease);}catch{tx.abort();return;}const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
+  assertLease(lease);if(applied)await callbacks.restored?.();assertLease(lease);return applied;
  }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false}={}){
   if(stopForReview145())return;
   if(!enabled||syncing)return;syncing=true;const mine=generation;let dirtyAtStart=false;
   try{
-   let {local,m}=await callbacks.capture(snapshot);dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote();
-   if(mine!==generation)return;
+   const lease=currentLease();
+   let {local,m}=await callbacks.capture(snapshot);assertLease(lease);
+   dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote();
+   assertLease(lease);if(mine!==generation)return;
    if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty();({local,m}=await callbacks.capture(snapshot));dirtyAtStart=true;}
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision)){schedule();return;}}
@@ -80,21 +87,23 @@
      await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>store.put({...r.result,resolutionIds:[...ids]});});
     }else document=E.mergeDocuments(m.baseDocument,document,remote.document);
    }
-   await upload(encoded.photos);if(mine!==generation)return;
-   const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}}),revision=await response.json();
+   assertLease(lease);await upload(encoded.photos);assertLease(lease);if(mine!==generation)return;
+   assertLease(lease);const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,lease);assertLease(lease);const revision=await response.json();assertLease(lease);
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
    // If another local save happened during upload, keep its durable pending flag.
-   await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),dirty:current.localRevision!==m.localRevision});};});
+   await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertLease(lease);}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),dirty:current.localRevision!==m.localRevision});};});
    const current=await marker();if(current.dirty){status('Saved on this device · cloud backup pending');schedule();}
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
+   if(e?.code==='cloud-owner-session-changed'){pauseChangedOwner();return;}
    if(mine===generation){const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.hidden=e.code!=='conflict';status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
   }finally{syncing=false;}
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
   async start(database,settings){if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+   try{currentLease();}catch{pauseChangedOwner();return {paused:true,reason:'private-owner-session-unavailable'};}
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db)await markDirty();},
