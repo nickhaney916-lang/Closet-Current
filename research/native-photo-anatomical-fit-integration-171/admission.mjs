@@ -8,6 +8,7 @@
  */
 const PHOTO_SOURCES_171=Object.freeze({
  'commons-0003':Object.freeze({sha:'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64',garment:'shirt'}),
+ 'commons-0016':Object.freeze({sha:'e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24',garment:'shirt'}),
  'commons-0053':Object.freeze({sha:'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',garment:'dress'}),
  'commons-public-domain-jeans-2005':Object.freeze({sha:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',garment:'pants'}),
  'commons-cc-by-sa-denimjeans2-2008':Object.freeze({sha:'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a',garment:'pants'})
