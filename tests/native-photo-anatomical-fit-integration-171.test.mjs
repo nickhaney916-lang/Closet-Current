@@ -98,6 +98,10 @@ test('P171 actual pinned donor installer exposes ONLY read-only P60 mesh metadat
  assert.match(s,/photoAnatomicalFitReceipt60/);
  assert.match(s,/photoFabricPBR164/);
  assert.match(s,/scene\?\.getState\(\)\?\.outfit/);
+ assert.match(s,/dress-mobile-01\/dress-outfit-controller\.mjs/);
+ assert.match(s,/inspectPhotographedFit60\(built\[slot\],root\)/);
+ assert.match(s,/applyPhotoFabricPBR164\(built\[slot\]\)/);
+ assert.match(s,/attachPhotographedFitReceipt60\(pbr\.garment,root\)/);
  assert.doesNotMatch(s,/geometry\.setAttribute|texture\.image=|IndexedDB|localStorage\.setItem/);
 });
 test('P171 real native 3D bridge opt-in requires the real source SHA proof before reporting success',()=>{
