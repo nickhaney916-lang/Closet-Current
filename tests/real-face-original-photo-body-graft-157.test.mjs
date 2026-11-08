@@ -78,3 +78,13 @@ test('P157 donor installer refuses any real app or parallel source, only copies 
  assert.match(src,/originalSourceFallbackPreserved:true/);
  assert.doesNotMatch(install,/resolve\(donor,'public|resolve\(donor,'supabase|outfit3D01Save/);
 });
+
+test('P157 accepts signed negative head X in GLSL but treats every actual WebGL shader compile/program error as fatal to mobile acceptance',()=>{
+ const workflow=readFileSync('.github/workflows/real-face-original-photo-body-graft-157-no-deploy.yml','utf8');
+ assert.ok(src.includes('abs(vGraftWorld157.x-('),'negative center coordinates must be parenthesized in GLSL');
+ assert.ok(src.includes("'))<"),'source PBR shader must close subtract and abs parentheses');
+ assert.match(workflow,/P157_WEBGL_SHADER_FAILURE/);
+ assert.match(workflow,/THREE/);
+ assert.match(workflow,/INVALID_OPERATION/);
+ assert.match(workflow,/errors\.push/);
+});
