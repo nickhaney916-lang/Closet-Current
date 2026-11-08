@@ -60,7 +60,7 @@ let panel=await readFile(showroom,'utf8');
 const panelImport="import {applyDualHumanoid150} from '../dual-humanoid-photorealistic-integration-150/apply-humanoid.mjs';";
 assert.equal(panel.split(panelImport).length,2,'P157 original donor showroom P150 import shifted');
 panel=panel.replace(panelImport,panelImport+
- "\\nimport {preloadLicensedSourceHead157} from '../real-face-original-photo-body-graft-157/attach-licensed-head.mjs';");
+ "\nimport {preloadLicensedSourceHead157} from '../real-face-original-photo-body-graft-157/attach-licensed-head.mjs';");
 const beforeShade="installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();";
 assert.equal(panel.split(beforeShade).length,2,'P157 donor async 163-bone load source clothing barrier changed');
 panel=panel.replace(beforeShade,
