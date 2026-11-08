@@ -1,0 +1,330 @@
+/**
+ * Closet Current P159 — physically present, source-registered neck transition
+ * on authenticated ORIGINAL 163-bone owned-photo outfit figures.
+ *
+ * The measured P156 MIT head/neck and actual posed P541 original body provide
+ * two cross-sections. A small, reversible tapered surface bridges the true
+ * old-manikin head-mask plane. It inherits original P158 source-verified skin
+ * color rather than an invented plastic collar or a customer portrait.
+ *
+ * This is an *additional independently owned surface*, NOT a topological weld
+ * between the unrelated 80 and 163-bone rigs. It is not dynamic cloth fitting,
+ * an approved real person, production/staging, a genuine device trial or release.
+ * No source mesh, source texture, original JPEG, user garment, wardrobe or
+ * shared owner/face geometry is ever written to.
+ */
+import * as THREE from 'three';
+export const NECK159=Object.freeze({
+ priority:159,exactParentP158:'4b7815760104ca4201b59210466cf43d2fd9f8be',
+ originalSourceBodyRigBones:163,originalMITHeadRigBones:80,
+ originalUserPhotoBytesAltered:false,originalGarmentGeometryAltered:false,
+ originalHeadTextureAltered:false,originalSourceBodyGeometryAltered:false,
+ physicalNeckSkeletonWeldCompleted:false,unverifiedPoseRetargetAccepted:false,
+ photorealism10of10Accepted:false,physicalAndroidIphoneAccepted:false,
+ familyAlpha:'HOLD',releaseAuthorized:false
+});
+const NAME='research-measured-source-neck-transition-159';
+const fail=s=>{const e=Error('NECK159 '+s);e.code='neck159-research-refused';throw e;};
+const finite=n=>typeof n==='number'&&Number.isFinite(n);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+const quantile=(values,q)=>{
+ const v=values.slice().sort((a,b)=>a-b);
+ if(!v.length)fail('missing original head/torso source points');
+ return v[Math.floor((v.length-1)*q)];
+};
+const hasLicensedFace=(o,figure)=>{
+ const name=figure==='female'?'f007_head':'m006_head';
+ return (Array.isArray(o.material)?o.material:[o.material]).some(m=>m?.name===name);
+};
+function poseRing(root,source,targetY,figure,licensed){
+ if(!root?.traverse)fail('exact posed original source required');
+ root.updateMatrixWorld(true);
+ const points=[],tmp=new THREE.Vector3();
+ let meshes=0,skelBones=0;
+ const band=licensed?.047:.060;
+ root.traverse(o=>{
+  if(!o.isSkinnedMesh)return;
+  if(licensed?!hasLicensedFace(o,figure):
+     (o.userData?.work56Garment||o.userData?.head157OriginalLicensed))return;
+  if(!o.skeleton?.bones||typeof o.applyBoneTransform!=='function'||
+     !o.geometry?.attributes?.position)fail('original posed surface unavailable');
+  skelBones=Math.max(skelBones,o.skeleton.bones.length);
+  o.skeleton.update();o.updateWorldMatrix(true,false);meshes++;
+  const attr=o.geometry.attributes.position,
+   indices=o.geometry.attributes.skinIndex,
+   weights=o.geometry.attributes.skinWeight;
+  // Torso meshes include thousands of shoulder, chest and *back* vertices
+  // near the collar height, many distributed behind the actual neck joint.
+  // Those broad torso samples gave a spurious 16.2 cm depth mismatch in the
+  // first real Chromium P159 run. Restrict donor samples to vertices actually
+  // weighted to the ORIGINAL neck/head joints, not a bounding-box median of
+  // the entire chest or a guessed front-facing cylinder.
+  const neckJoints=new Set();
+  if(!licensed){
+   if(!indices||!weights)fail('original body skin weights missing');
+   o.skeleton.bones.forEach((b,i)=>{
+    if(/neck|head/i.test(b.name||''))neckJoints.add(i);
+   });
+   if(!neckJoints.size)fail('original 163-bone neck joint names unavailable');
+  }
+  for(let i=0;i<attr.count;i++){
+   if(!licensed){
+    let jointWeight=0;
+    for(let k=0;k<4;k++){
+     const bone=Math.round(indices.getComponent(i,k));
+     if(neckJoints.has(bone))jointWeight+=weights.getComponent(i,k);
+    }
+    if(jointWeight<.12)continue;
+   }
+   const v=o.applyBoneTransform(i,tmp.fromBufferAttribute(attr,i))
+    .applyMatrix4(o.matrixWorld);
+   if(![v.x,v.y,v.z].every(finite))fail('nonfinite original skinned vertex');
+   if(Math.abs(v.y-targetY)>band||
+      Math.abs(v.x-source.cx)>source.w*.65||
+      Math.abs(v.z-source.cz)>source.z*.72)continue;
+   points.push([v.x,v.y,v.z]);
+  }
+ });
+ if(meshes<1||skelBones!==(licensed?80:163))
+  fail('expected precise original '+(licensed?'MIT head80':'body163')+' surface not present');
+ if(points.length<6)fail('no measured original collar/neck ring at '+targetY.toFixed(5)+' ('+
+  (licensed?'MIT head':'original body')+' sampled='+points.length+')');
+ const xs=points.map(p=>p[0]),zs=points.map(p=>p[2]);
+ // The original neck cross-section is a closed skin surface. Using a
+ // vertex-frequency median biases depth toward denser back-side triangles;
+ // a bounded 10th/90th percentile *outline midpoint* is a stable geometric
+ // center of the physical ring rather than a topology-density histogram.
+ const lowX=quantile(xs,.09),highX=quantile(xs,.91),
+  lowZ=quantile(zs,.09),highZ=quantile(zs,.91);
+ const midX=(lowX+highX)*.5,midZ=(lowZ+highZ)*.5;
+ const xRadius=(highX-lowX)*.5,zRadius=(highZ-lowZ)*.5;
+ if(![midX,midZ,xRadius,zRadius].every(finite))
+  fail('original source collar radii not finite');
+ // The original sampled head bounding center includes the protruding nose,
+ // temples and back scalp. The anatomical collar ring is not required to
+ // have the same depth as that skull bounding center. The stronger safety
+ // rule is the actual licensed-neck vs donor-torso *ring-center* separation,
+ // enforced after both independently posed source surfaces are measured.
+ const centerLimitX=source.w*.65+.012,
+  centerLimitZ=source.z*.85+.026;
+ if(Math.abs(midX-source.cx)>centerLimitX||
+    Math.abs(midZ-source.cz)>centerLimitZ)
+  fail('real licensed head/original torso ring outside donor-head envelope '+
+   JSON.stringify({figure,licensed,targetY:+targetY.toFixed(5),
+    centerX:+midX.toFixed(5),centerZ:+midZ.toFixed(5),
+    donorHeadX:+source.cx.toFixed(5),donorHeadZ:+source.cz.toFixed(5),
+    centerLimitX:+centerLimitX.toFixed(5),
+    centerLimitZ:+centerLimitZ.toFixed(5),sampleCount:points.length}));
+ const width=clamp(xRadius,source.w*.135,source.w*.43),
+  depth=clamp(zRadius,source.z*.16,source.z*.45);
+ return Object.freeze({x:midX,z:midZ,rx:width,rz:depth,
+  sampledOriginalSkinnedVertices:points.length,originalRigBones:skelBones,
+  sourceY:targetY});
+}
+function originalLicensedSkinNeckMinY(graft,figure){
+ // P157 overall bounding box includes opacity hair primitives. To assert
+ // actual NECK overlap we must measure the real P156 MIT HEAD skin mesh,
+ // never long hair or vendor baked garments.
+ let lowest=Infinity,highest=-Infinity,faces=0,skinnedBones=0;
+ const v=new THREE.Vector3();
+ graft.updateMatrixWorld(true);
+ graft.traverse(o=>{
+  if(!o.isSkinnedMesh||!hasLicensedFace(o,figure))return;
+  if(!o.geometry?.attributes?.position||typeof o.applyBoneTransform!=='function')
+   fail('original licensed head skin source unavailable for neck overlap');
+  skinnedBones=Math.max(skinnedBones,o.skeleton?.bones?.length||0);
+  o.skeleton?.update();o.updateWorldMatrix(true,false);
+  const attr=o.geometry.attributes.position;
+  for(let i=0;i<attr.count;i++){
+   const p=o.applyBoneTransform(i,v.fromBufferAttribute(attr,i))
+    .applyMatrix4(o.matrixWorld);
+   if(![p.x,p.y,p.z].every(finite))fail('licensed face source nonfinite');
+   lowest=Math.min(lowest,p.y);highest=Math.max(highest,p.y);faces++;
+  }
+ });
+ if(skinnedBones!==80||faces<500||!finite(lowest)||!finite(highest))
+  fail('original licensed head face-only 80 bone surface not proven');
+ return Object.freeze({lowestSkinWorldY:lowest,highestSkinWorldY:highest,
+  originalFaceVertices:faces,sourceHeadRigBones:skinnedBones});
+}
+function sourceGarments(root){
+ let body=0,garments=0,bones=0;
+ root.traverse(o=>{
+  if(!o.isSkinnedMesh||o.userData?.head157OriginalLicensed)return;
+  if(o.userData?.work56Garment)garments++;
+  else{body++;bones=Math.max(bones,o.skeleton?.bones?.length||0);}
+ });
+ if(body<1||bones!==163||garments<1)
+  fail('signed saved outfit and original mannequin body required');
+ return {body,garments,bones};
+}
+export function clearSourceMeasuredNeck159(root){
+ if(!root?.getObjectByName)return false;
+ const mesh=root.getObjectByName(NAME);
+ if(!mesh)return false;
+ mesh.parent?.remove(mesh);
+ mesh.geometry?.dispose();
+ if(Array.isArray(mesh.material))mesh.material.forEach(m=>m?.dispose());
+ else mesh.material?.dispose();
+ return true;
+}
+export function applySourceMeasuredNeck159(root,figure,context){
+ const {source,mask,afterBox,candidate,skinHarmony158,graft}=context||{};
+ if(!root?.traverse||!['female','male'].includes(figure)||
+    !source?.headBone||source.maxBones!==163||!mask?.originalBodyOnlyRenderMask||
+    !graft||graft.name!=='research-licensed-source-head-graft-157'||
+    candidate?.figure!==figure||candidate.maxBone!==80||
+    !afterBox||afterBox.isEmpty()||!skinHarmony158?.harmonyApplied)
+  fail('P157 real licensed head + original P158 matched skin + measured body required');
+ if(root.getObjectByName(NAME))fail('duplicate neck transition must not accumulate');
+ if(skinHarmony158.sourceP156HeadSHA256!==candidate.sha256)
+  fail('unverified P156 real face palette in anatomy bridge');
+ const before=sourceGarments(root);
+ const cutoff=mask.cutoff;
+ const originalHeadSkin=originalLicensedSkinNeckMinY(graft,figure);
+ const originalNeckOverlap=cutoff-originalHeadSkin.lowestSkinWorldY;
+ if(originalNeckOverlap>.020){
+  // The first genuine P159 front/side images showed a double artificial
+  // choker/collar beneath the jaw. P156 already carries ORIGINAL skinned
+  // head/neck material well below P157's masked torso cutoff. DO NOT draw
+  // another neck over existing licensed source skin. This is a safe measured
+  // no-op, not evidence that a topological neck weld was achieved.
+  console.info('P159_ORIGINAL_LICENSED_NECK_OVERLAP_NO_DUPLICATE_SURFACE',
+   JSON.stringify({figure,measuredActualSkinOverlapMeters:originalNeckOverlap,
+    originalMITFaceVertices:originalHeadSkin.originalFaceVertices,
+    sourceBodyRigBones:before.bones,originalGarments:before.garments}));
+  return Object.freeze({
+   figure,sourceHeadRigBones:80,originalBodyRigBones:163,
+   originalMITHeadSHA256:candidate.sha256,
+   originalHeadSkinLowerWorldY:originalHeadSkin.lowestSkinWorldY,
+   originalHeadMaskWorldY:cutoff,
+   originalLicensedHeadFaceSkinnedVertices:originalHeadSkin.originalFaceVertices,
+   measuredOriginalNeckOverlapMeters:originalNeckOverlap,
+   noAdditionalGeometryRequired:true,bridgeSkinnedHeadAttached:false,
+   bridgeTriangles:0,upperSourceSkinnedVertices:0,lowerSourceSkinnedVertices:0,
+   gapSpannedMeters:0,
+   originalOwnerPhotographedGarmentMeshesBefore:before.garments,
+   originalOwnerPhotographedGarmentMeshesAfter:before.garments,
+   originalSourceSkinnedBodyMeshesBefore:before.body,
+   originalSourceSkinnedBodyMeshesAfter:before.body,
+   sourceMannequinMeshIndicesReplaced:false,
+   originalLicensedHeadMeshModified:false,
+   originalGarmentOrSourceJPEGPixelsModified:false,
+   physicalNeckTopologyWelded:false,physicalPhoneApproval:false,
+   familyAlpha:'HOLD',releaseAuthorized:false,
+   reason:'MEASURED_ORIGINAL_LICENSED_NECK_OVERLAP_PREVENTS_DUPLICATE_COLLAR'
+  });
+ }
+ // Only if a *genuine uncovered anatomical gap* exists may we sample the
+ // two real neck rings and investigate an independently-owned fitted bridge.
+ const topY=cutoff+Math.min(.038,source.h*.125),
+  bottomY=cutoff-Math.min(.034,source.h*.12);
+ if(![cutoff,topY,bottomY].every(finite)||topY-bottomY<.045||
+    topY-bottomY>.11||topY>=afterBox.max.y-.11||
+    bottomY<=afterBox.min.y-.04)
+  fail('real source head to collar junction height outside safe anatomical envelope');
+ const upper=poseRing(graft,source,topY,figure,true);
+ const lower=poseRing(root,source,bottomY,figure,false);
+ if(upper.originalRigBones!==80||lower.originalRigBones!==163)
+  fail('original cross-skeleton source dimensions changed');
+ // This compares the actual independently posed NECK rings, not two
+ // unrelated whole-head bounding-box centers. Large head/body misalignment
+ // must still be refused, never hidden with a guessed artificial collar.
+ const ringCenterDistance=Math.hypot(upper.x-lower.x,upper.z-lower.z);
+ console.info('P159_ORIGINAL_NECK_JOINT_WEIGHTED_RING_MEASURED',
+  JSON.stringify({figure,
+   upper:{x:upper.x,z:upper.z,rx:upper.rx,rz:upper.rz,samples:upper.sampledOriginalSkinnedVertices},
+   lower:{x:lower.x,z:lower.z,rx:lower.rx,rz:lower.rz,samples:lower.sampledOriginalSkinnedVertices},
+   actualNeckRingDistance: ringCenterDistance,worldCutoffY:cutoff}));
+ if(!finite(ringCenterDistance)||ringCenterDistance>.125||
+    Math.abs(upper.x-lower.x)>.095)
+  fail('independently measured MIT neck and original torso rings do not meet '+
+   JSON.stringify({figure,upper:{x:upper.x,z:upper.z,n:upper.sampledOriginalSkinnedVertices},
+    lower:{x:lower.x,z:lower.z,n:lower.sampledOriginalSkinnedVertices},
+    distance:ringCenterDistance,cutoff}));
+ // 9 cross-section rings; source-measured axes at either end, gently bowed
+ // at the center to preserve neck curvature instead of a hard tubular collar.
+ const radial=24,rings=9,pos=[],colors=[],idx=[];
+ const faceRGB=skinHarmony158.sourceFaceAlbedoSRGB;
+ const linear=skinHarmony158.measuredSourceFaceLinearBodyTone;
+ if(!Array.isArray(faceRGB)||!Array.isArray(linear)||faceRGB.length!==3||
+    linear.length!==3||![...faceRGB,...linear].every(finite))
+  fail('original MIT albedo / matched P158 exposed-skin color unavailable');
+ const upperTone=new THREE.Color().setRGB(faceRGB[0]/255,faceRGB[1]/255,
+  faceRGB[2]/255,THREE.SRGBColorSpace);
+ const lowerTone=new THREE.Color().setRGB(...linear,THREE.LinearSRGBColorSpace);
+ for(let row=0;row<rings;row++){
+  const t=row/(rings-1),s=t*t*(3-2*t);
+  const y=bottomY+(topY-bottomY)*t;
+  const cx=lower.x+(upper.x-lower.x)*s;
+  const cz=lower.z+(upper.z-lower.z)*s;
+  const rX=lower.rx+(upper.rx-lower.rx)*s+Math.sin(t*Math.PI)*.0018;
+  const rZ=lower.rz+(upper.rz-lower.rz)*s+Math.sin(t*Math.PI)*.0018;
+  // Parent sample surfaces overlap by ~2mm so the bridge has no floating edge.
+  const tone=lowerTone.clone().lerp(upperTone,s*.75);
+  for(let col=0;col<=radial;col++){
+   const angle=col/radial*Math.PI*2;
+   pos.push(cx+Math.cos(angle)*rX,y,cz+Math.sin(angle)*rZ);
+   colors.push(tone.r,tone.g,tone.b);
+  }
+ }
+ for(let row=0;row<rings-1;row++)for(let col=0;col<radial;col++){
+  const a=row*(radial+1)+col,b=a+radial+1;
+  idx.push(a,b,a+1,b,b+1,a+1);
+ }
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+ geometry.setAttribute('color',new THREE.Float32BufferAttribute(colors,3));
+ geometry.setIndex(idx);geometry.computeVertexNormals();
+ geometry.computeBoundingBox();
+ if(!geometry.boundingBox||geometry.boundingBox.isEmpty()||
+    geometry.boundingBox.max.y-geometry.boundingBox.min.y>.12){
+  geometry.dispose();fail('source bridge geometry outside collar');
+ }
+ const material=new THREE.MeshStandardMaterial({
+  vertexColors:true,roughness:.77,metalness:0,
+  side:THREE.DoubleSide,depthWrite:true,transparent:false
+ });
+ const mesh=new THREE.Mesh(geometry,material);
+ mesh.name=NAME;mesh.userData.neck159Owned=true;
+ mesh.castShadow=false;mesh.receiveShadow=true;
+ // Geometry is defined in real world units. attach() registers the bridge to
+ // the ORIGINAL head bone, maintaining world pose at installation. It follows
+ // head movement; this does NOT assert full two-rig dynamic neck skinning.
+ root.updateMatrixWorld(true);
+ source.headBone.updateWorldMatrix(true,false);
+ source.headBone.attach(mesh);
+ mesh.updateMatrixWorld(true);
+ const after=sourceGarments(root);
+ if(after.body!==before.body||after.garments!==before.garments||
+    after.bones!==163){
+  clearSourceMeasuredNeck159(root);
+  fail('original owner wardrobe or body source changed');
+ }
+ const result=Object.freeze({
+  figure,sourceHeadRigBones:80,originalBodyRigBones:163,
+  originalMITHeadSHA256:candidate.sha256,
+  sourceVerifiedAlbedoPNG_SHA256:skinHarmony158.sourceP156HeadSHA256,
+  upperSourceSkinnedVertices:upper.sampledOriginalSkinnedVertices,
+  lowerSourceSkinnedVertices:lower.sampledOriginalSkinnedVertices,
+  upperNeckRadiusX:upper.rx,lowerCollarRadiusX:lower.rx,
+  upperNeckRadiusZ:upper.rz,lowerCollarRadiusZ:lower.rz,
+  measuredUpperWorldY:topY,measuredLowerWorldY:bottomY,
+  originalHeadMaskWorldY:cutoff,
+  gapSpannedMeters:topY-bottomY,
+  bridgeSkinnedHeadAttached:true,bridgeSurfaceSegments:radial,
+  bridgeSurfaceRings:rings,bridgeTriangles:idx.length/3,
+  originalSourceSkinnedBodyMeshesBefore:before.body,
+  originalSourceSkinnedBodyMeshesAfter:after.body,
+  originalOwnerPhotographedGarmentMeshesBefore:before.garments,
+  originalOwnerPhotographedGarmentMeshesAfter:after.garments,
+  sourceMannequinMeshIndicesReplaced:false,
+  originalLicensedHeadMeshModified:false,
+  originalGarmentOrSourceJPEGPixelsModified:false,
+  physicalNeckTopologyWelded:false,
+  userDynamicClothRetargetApproved:false,
+  physicalPhoneApproval:false,releaseAuthorized:false,
+  familyAlpha:'HOLD'
+ });
+ return result;
+}
