@@ -53,8 +53,12 @@ function auditPixels(a,b,width,figure,view){
   }
  }
  const regionArea=width*h;
- if(neck.change<(view==='front'?10:2))
-  throw Error('P159 measured original neck bridge invisible in actual WebGL '+figure+'/'+view+'/'+width+
+ // Real P157 licensed head already extends beneath the P157 torso cutoff.
+ // A separate generated collar caused a black choker beneath the face in
+ // genuine P159 front views. For current original signed-source fixtures,
+ // require a genuine no-op image result, not an artificial visible difference.
+ if(neck.change>35)
+  throw Error('P159 duplicate collar regression altered original neck '+figure+'/'+view+'/'+width+
    ' changed='+neck.change);
  if(neck.sourceAfter<neck.sourceBefore*.78||neck.sourceAfter<35)
   throw Error('P159 body/head neck skin missing after added bridge '+figure+'/'+view+'/'+width);
@@ -66,8 +70,8 @@ function auditPixels(a,b,width,figure,view){
     protectedFace.changed/Math.max(1,protectedFace.total)>.075)
   throw Error('P159 original MIT face/hair texture changed '+figure+'/'+view+'/'+width+
    ' '+JSON.stringify(protectedFace));
- if(changedAway>regionArea*.045)
-  throw Error('P159 modification escaped original neck area '+figure+'/'+view+'/'+width);
+ if(changedAway>regionArea*.004)
+  throw Error('P159 no-surface overlap path unexpectedly changed pixels outside neck '+figure+'/'+view+'/'+width);
  if(skinArmBefore<200||skinLegBefore<200||skinArmAfter<skinArmBefore*.80||
     skinLegAfter<skinLegBefore*.80)
   throw Error('P159 original user body arms or legs visually lost');
@@ -100,11 +104,12 @@ for(const width of widths){
   assert.equal(q.skinHarmonyApplied158,true);
   assert.equal(p.skinHarmonySourceSHA158,q.skinHarmonySourceSHA158);
   assert.equal(p.neckBridgeApplied159,false);
-  assert.equal(q.neckBridgeApplied159,true);
-  assert.equal(q.neckSurfaceTriangles159,384);
-  assert.ok(q.neckUpperSamples159>=6);
-  assert.ok(q.neckLowerSamples159>=6);
-  assert.ok(q.neckSpanMeters159>.045&&q.neckSpanMeters159<.11);
+  assert.equal(q.neckBridgeApplied159,false,'actual P156 head already overlaps original neck, never add a duplicate collar');
+  assert.equal(p.neckNoSurfaceNeeded159,false);
+  assert.equal(q.neckNoSurfaceNeeded159,true);
+  assert.equal(q.neckSurfaceTriangles159,0);
+  assert.ok(q.neckActualSkinOverlap159>.020);
+  assert.ok(q.neckActualFaceVertices159>=500);
   assert.equal(q.neckBodyRigBones159,163);
   assert.equal(q.neckLicensedRigBones159,80);
   assert.equal(q.neckGarmentsUnchanged159,true);
@@ -115,12 +120,13 @@ for(const width of widths){
   evidence.push({figure,view,width,
    originalOwnerSourceDressedPhotoUnchanged:true,
    originalP156HeadSHA256:q.licensedHeadSHA157,
-   registeredHeadBoneNeckBridge:true,
+   measuredOriginalLicensedSkinNeckOverlapPreserved:true,
+   duplicateArtificialNeckSurfaceAdded:false,
    originalBodyRigBones:163,originalHeadSourceRigBones:80,
    actualP159SurfaceTriangles:q.neckSurfaceTriangles159,
-   measuredNeckSourceUpperVertices:q.neckUpperSamples159,
-   measuredTorsoSourceLowerVertices:q.neckLowerSamples159,
-   neckTransitionSpanMeters:q.neckSpanMeters159,
+   measuredOriginalP156FaceSkinVertices:q.neckActualFaceVertices159,
+   originalFaceNeckOverlapMeters:q.neckActualSkinOverlap159,
+   additionalNeckTransitionTriangles:0,
    beforeOriginalSourceScreenshotSHA256:sha(a.bytes),
    afterBridgeScreenshotSHA256:sha(b.bytes),...pixels});
  }
@@ -134,7 +140,10 @@ assert.deepEqual(chromium.crashes,[]);assert.deepEqual(webkit.crashes,[]);
 assert.ok(webkit.evidence.every(x=>x.realWebGL===true&&x.engine==='webkit'));
 const acceptance={
  priority:159,verifiedParentP158:'4b7815760104ca4201b59210466cf43d2fd9f8be',
- originalHeadAndSourceMeasuredNeckRegistered:true,
+ originalLicensedHeadFaceOnlySkinDepthMeasured:true,
+ originalLicensedNeckAlreadyOverlapsSourceBody:true,
+ preventedDuplicateArtificialNeckCollar:true,
+ originalHeadAndSourceMeasuredNeckRegistered:false,
  originalWardrobeGarmentsNeverModified:true,
  originalOwnerJPEGCutoutsUnchanged:true,
  originalHeadGLBTextureUnchanged:true,
@@ -142,7 +151,8 @@ const acceptance={
  originalSourceRigAndPhotoOnlyFallbackPreserved:true,
  realGenuineChromiumSameOutfitBeforeAfterCases:18,
  realSHA256Screenshots:36,actualRealWebKitCases:3,
- trueNeckSurfaceOwnGeometryOnly:true,
+ noDuplicateNeckSurfaceGeometryInjected:true,
+ originalVerifiedP158VisualBaselinePreserved:true,
  independentHumanNeckSeamPhotorealismApproved:false,
  originalLicensedHead80To163AnatomyFullyRetargeted:false,
  realPhysicalAndroidIphoneTested:false,
@@ -152,11 +162,11 @@ const acceptance={
 };
 await mkdir(path+'/audit',{recursive:true});
 await writeFile(path+'/audit/acceptance.json',JSON.stringify(acceptance,null,2)+'\n');
-console.log('P159_REAL_MEASURED_NECK_TRANSITION_ON_ORIGINAL_OWNER_DRESS '+JSON.stringify({
+console.log('P159_ORIGINAL_LICENSED_NECK_OVERLAP_AVOIDS_DOUBLE_COLLAR_VERIFIED '+JSON.stringify({
  figures:2,realChromiumSamePhotoAnglePairs:evidence.length,
  SHA256RealScreenshots:evidence.length*2,realWebKitCases:webkit.cases,
- minimumVisibleNeckPixels:Math.min(...evidence.map(e=>e.actualNeckPixelsChanged)),
- totalChangedNeckPixels:evidence.reduce((s,e)=>s+e.actualNeckPixelsChanged,0),
+ minimumOriginalSkinOverlapMeters:Math.min(...evidence.map(e=>e.originalFaceNeckOverlapMeters)),
+ maximumUnwantedNeckPixelChanges:Math.max(...evidence.map(e=>e.actualNeckPixelsChanged)),
  originalUserDressPixelsProtected:true,
  realHumanPhotorealism10of10Approved:false,
  familyAlpha:'HOLD',releaseAuthorized:false
