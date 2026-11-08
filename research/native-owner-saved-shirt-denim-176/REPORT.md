@@ -6,7 +6,7 @@ A first real WebGL run correctly failed closed at P60: the completed pants mesh 
 
 The WebGL pair is not accepted until P60 validates finite skinned geometry, triangle buffers, 163-bone binding, and normalized weights. P176 tests saved source identity, board immutability, account isolation, actual viewer opening/closing, and 320/390/430 CSS-pixel screenshots. WebGL on CI uses Chromium/SwiftShader, not physical phones. The 2D original-photo fallback regression covers Chromium and WebKit.
 
-P176 adds no new dress or denim shape corrections. It does not certify collision, independent human appearance, photorealism, physical-phone quality, or hosted signed RLS. Private/unverified garments remain 2D. Production and staging are untouched; Family Alpha remains HOLD.
+P176 keeps the original P61 dress algorithm and applies a bounded, disposable-worktree skirt tuning pass (32 mm maximum side/rear relief, 10 mm hem drop, 9-fold cadence, recomputed normals). Its before/after audit must show the effect in the real native WebGL viewer. It does not certify collision, independent human appearance, photorealism, physical-phone quality, or hosted signed RLS. Private/unverified garments remain 2D. Production and staging are untouched; Family Alpha remains HOLD.
 
 
 ## Visible skirt drape correction
