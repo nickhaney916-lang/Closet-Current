@@ -471,7 +471,9 @@ jobs:
           assert.equal(r.priority,165);
           assert.equal(r.verifiedMainP164ExactSHA,'ecaa0827f2ecb75a9b745e5d761d3a790544b0b7');
           assert.equal(r.verifiedWork719ExactSHA,'0eaa99fe1e1a07b253a4ef2b1b5a0dc7192a2a00');
-          assert.equal(r.realOwnedNewItemOriginalJPEGVerifiedAndVisiblyRendered2D,true);
+          assert.equal(r.realOwnedNewItemSavedPhotoSHA256CheckedAndVisiblyRendered2D,true);
+          assert.equal(r.savedOriginalImageProvenanceOnlyClaimedWhenSourceIsCanonical,true);
+          assert.equal(r.legacySourceOriginalProvenanceExplicitlyUnverified,true);
           assert.equal(r.ownerSessionRevalidatedAfterAsynchronousSHA256,true);
           assert.equal(r.wrongOwnerTamperedPhotoUnreviewedAndRevokedSessionDenied,true);
           assert.equal(r.actualThreeSavedOwnedOutfitsRemainFunctional,true);
