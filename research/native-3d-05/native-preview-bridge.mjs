@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -330,10 +330,32 @@ export async function mountNative3D05({
     requireFresh();
     verifiedPhotographicFit171=proof171;
    }
+   // P173: an explicitly selected owner shirt may claim a bounded 3D torso
+   // contour ONLY when the real donor physically moved the original mesh.
+   // Dress remains P171 source-only, not falsely labeled P173 shirt-fitted.
+   if(params?.get('photoTorso173')==='research'){
+    if(params?.get('photoFit171')!=='research'||!verifiedPhotographicFit171?.admitted)
+     throw Error('P173 requires existing independently signed P171 source-true 3D admission');
+    const render=panel?.state?.();
+    if(render?.viewerMode==='shirt'||render?.viewerMode==='shirt-pants'){
+     const module=await import('../native-photo-torso-173/admission.mjs');
+     requireFresh();
+     const verdict=module.inspectNativePhotoTorso173({
+      selection:selected,sources:selectedSources91,
+      render:render?{...render,productionDeployed:false}:null,
+      proof171:verifiedPhotographicFit171
+     });
+     if(!verdict.admitted)throw Error('P173 original photographed shirt geometry unavailable: '+verdict.reason);
+     await attestOriginalBytes92();
+     requireFresh();
+     verifiedPhotographicTorso173=verdict;
+    }
+   }
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
     photoSourceFit171:verifiedPhotographicFit171?.admitted===true,
+    photoSourceTorso173:verifiedPhotographicTorso173?.admitted===true,
     photorealismApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'};
   }catch(e){
    cleanup('3D not available · original clothing photographs preserved. '+String(e.message||e));
@@ -358,6 +380,9 @@ export async function mountNative3D05({
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
    photoOnlyUnsupported:true,photoSourceFit171:active&&verifiedPhotographicFit171?.admitted===true,
+   photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
+   physicalShirtVertices173:active?verifiedPhotographicTorso173?.physicalTorsoMovedVertices||0:0,
+   physicalShirtMaxMoveMeters173:active?verifiedPhotographicTorso173?.physicalTorsoMaxMoveMeters||0:0,
    ownerPhoto3DArbitraryFittingApproved:false,photorealismApproved:false,
    donorWriteControlsDisabled:true,
    actualConsumerSavePathUnchanged:true,productionEnabled:false,
