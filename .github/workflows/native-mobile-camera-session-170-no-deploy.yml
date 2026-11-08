@@ -1,0 +1,126 @@
+name: P170 native actual video-element camera session SHA and owner mobile NO DEPLOY
+on:
+  push:
+    branches:
+      - research/native-mobile-camera-session-170-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-camera-170-full-node-and-source-lease:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P169 verified parent and seven camera-only research paths
+        run: |
+          set -eu
+          BASE=eda23f639c8b37f8a2f858020efbb410adba969e
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git rev-parse "$(git rev-list --reverse "$BASE..HEAD" | head -n1)^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p170-changed
+          while IFS= read -r path; do
+            case "$path" in
+              public/native-mobile-camera-lease-170.js|public/app.js|public/index.html|tests/native-mobile-camera-session-170.test.cjs|scripts/test-native-mobile-camera-session-170-browser.mjs|research/native-mobile-camera-session-170/REPORT.md|.github/workflows/native-mobile-camera-session-170-no-deploy.yml) ;;
+              *) echo "REFUSED P170 unrelated or parallel/source/private change: $path"; exit 1 ;;
+            esac
+          done </tmp/p170-changed
+          test "$(wc -l </tmp/p170-changed)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-owner-lease-168.js public/closet-stylist.js supabase research/hosted-two-owner-cloud-169 package.json package-lock.json
+          node --check public/app.js
+          node --check public/native-mobile-camera-lease-170.js
+          node --check scripts/test-native-mobile-camera-session-170-browser.mjs
+      - name: Pinned isolated test dependencies no repo lockfile changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Real built app includes owner-camera lease on default URL
+        run: |
+          node scripts/build.mjs
+          test -s dist/native-mobile-camera-lease-170.js
+          grep -Fq 'native-mobile-camera-lease-170.js' dist/index.html
+          grep -Fq 'Camera stopped while the browser was frozen' dist/app.js
+      - name: Entire inherited 1332+ Node tests and new source lifecycle tests
+        run: node --test tests/*.cjs tests/*.mjs
+  native-170-six-real-video-element-browser-camera-scenarios:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Isolated pinned browser deps no secret keys or hosted cloud
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Six genuine browser video frames through native camera UI and original photo SHA
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-mobile-camera-session-170-browser.mjs
+      - name: Inherited original owner-photo gallery and three styles mobile matrix (6 cases)
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Audit exact camera frames, original private SHA, and 12+12 true PNG SHA screenshots
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const b='benchmark/native-mobile-camera-session-170/';
+          const c=JSON.parse(readFileSync(b+'camera-lifecycle-acceptance.json','utf8'));
+          assert.equal(c.priority,170);assert.equal(c.verdict,'PASS');
+          assert.equal(c.results.length,6);assert.equal(c.realVideoElements,true);
+          assert.equal(c.realCanvasMediaStreamTracks,true);
+          assert.equal(c.fakeCameraMediaSource,true);
+          assert.equal(c.actualPhysicalAndroidIPhone,false);
+          const v=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430]){
+            const r=c.results.find(x=>x.engine===engine&&x.width===width);
+            assert.ok(r);assert.equal(r.permissionDeniedRecovered,true);
+            assert.equal(r.freezeTrackStopped,true);
+            assert.equal(r.latePermissionTrackReleased,true);
+            assert.equal(r.originalOwnerPrivate,true);
+            for(const suffix of ['camera-active','verified-review']){
+              const x=readFileSync(b+engine+'-'+width+'-'+suffix+'.png');
+              assert.equal(x.subarray(1,4).toString(),'PNG');
+              assert.equal(x.readUInt32BE(16),width);
+              v.add(createHash('sha256').update(x).digest('hex'));
+            }
+          }
+          assert.equal(v.size,12);
+          const d='benchmark/native-canonical-closet-style-167/';
+          const a=JSON.parse(readFileSync(d+'canonical-original-acceptance.json','utf8'));
+          assert.equal(a.priority,167);assert.equal(a.verdict,'PASS');
+          assert.equal(a.cases.length,6);assert.equal(a.sameOriginalSHAInAllSix,true);
+          const seen=new Set();
+          for(const engine of ['chromium','webkit'])for(const width of [320,390,430])
+           for(const kind of ['native-verified-original-2d','saved-three-owned-looks']){
+            const x=readFileSync(d+engine+'-'+width+'-'+kind+'.png');
+            assert.equal(x.subarray(1,4).toString(),'PNG');
+            assert.equal(x.readUInt32BE(16),width);
+            seen.add(createHash('sha256').update(x).digest('hex'));
+           }
+          assert.equal(seen.size,12);
+          assert.equal(c.familyAlpha,'HOLD');assert.equal(c.releaseAuthorized,false);
+          console.log('P170_GENUINE_MEDIASTREAM_CAMERAS_6_REAL_BROWSER_CASES_AND_24_PNG_SHA_RECEIPTS_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P170-real-browser-canvas-video-frames-camera-recovery-and-three-styles-HOLD
+          path: |
+            benchmark/native-mobile-camera-session-170/
+            benchmark/native-canonical-closet-style-167/*.png
+            benchmark/native-canonical-closet-style-167/canonical-original-acceptance.json
+          retention-days: 14
+          if-no-files-found: warn
