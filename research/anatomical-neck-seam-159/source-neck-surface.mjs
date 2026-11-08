@@ -71,9 +71,21 @@ function poseRing(root,source,targetY,figure,licensed){
  const zRadius=(quantile(zs,.91)-quantile(zs,.09))*.5;
  if(![midX,midZ,xRadius,zRadius].every(finite))
   fail('original source collar radii not finite');
- if(Math.abs(midX-source.cx)>source.w*.43||
-    Math.abs(midZ-source.cz)>source.z*.53)
-  fail('real original head/torso neck-center alignment not anatomically plausible');
+ // The original sampled head bounding center includes the protruding nose,
+ // temples and back scalp. The anatomical collar ring is not required to
+ // have the same depth as that skull bounding center. The stronger safety
+ // rule is the actual licensed-neck vs donor-torso *ring-center* separation,
+ // enforced after both independently posed source surfaces are measured.
+ const centerLimitX=source.w*.65+.012,
+  centerLimitZ=source.z*.85+.026;
+ if(Math.abs(midX-source.cx)>centerLimitX||
+    Math.abs(midZ-source.cz)>centerLimitZ)
+  fail('real licensed head/original torso ring outside donor-head envelope '+
+   JSON.stringify({figure,licensed,targetY:+targetY.toFixed(5),
+    centerX:+midX.toFixed(5),centerZ:+midZ.toFixed(5),
+    donorHeadX:+source.cx.toFixed(5),donorHeadZ:+source.cz.toFixed(5),
+    centerLimitX:+centerLimitX.toFixed(5),
+    centerLimitZ:+centerLimitZ.toFixed(5),sampleCount:points.length}));
  const width=clamp(xRadius,source.w*.135,source.w*.43),
   depth=clamp(zRadius,source.z*.16,source.z*.45);
  return Object.freeze({x:midX,z:midZ,rx:width,rz:depth,
@@ -124,6 +136,16 @@ export function applySourceMeasuredNeck159(root,figure,context){
  const lower=poseRing(root,source,bottomY,figure,false);
  if(upper.originalRigBones!==80||lower.originalRigBones!==163)
   fail('original cross-skeleton source dimensions changed');
+ // This compares the actual independently posed NECK rings, not two
+ // unrelated whole-head bounding-box centers. Large head/body misalignment
+ // must still be refused, never hidden with a guessed artificial collar.
+ const ringCenterDistance=Math.hypot(upper.x-lower.x,upper.z-lower.z);
+ if(!finite(ringCenterDistance)||ringCenterDistance>.125||
+    Math.abs(upper.x-lower.x)>.095)
+  fail('independently measured MIT neck and original torso rings do not meet '+
+   JSON.stringify({figure,upper:{x:upper.x,z:upper.z,n:upper.sampledOriginalSkinnedVertices},
+    lower:{x:lower.x,z:lower.z,n:lower.sampledOriginalSkinnedVertices},
+    distance:ringCenterDistance,cutoff}));
  // 9 cross-section rings; source-measured axes at either end, gently bowed
  // at the center to preserve neck curvature instead of a hard tubular collar.
  const radial=24,rings=9,pos=[],colors=[],idx=[];
