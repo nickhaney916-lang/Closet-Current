@@ -95,6 +95,8 @@ jobs:
           cd ..
           node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
           node --check .native05-donor-541/research/three-d-15/outfit-controller.mjs
+          node --check .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          grep -Fq 'attachPhotographedFitReceipt60(pbr.garment,root)' .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
           node --check .native05-donor-541/research/outfit-3d-01/research-panel.mjs
       - name: Original owner Outfit Builder -> exact source SHA -> P60 stamped PBR -> genuine 163-bone dress in native Chromium
         run: |
