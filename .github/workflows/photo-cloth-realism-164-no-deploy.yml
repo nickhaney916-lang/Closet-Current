@@ -47,10 +47,11 @@ jobs:
           while IFS= read -r p; do
             case "$p" in
               research/photo-cloth-realism-164/REPORT.md|research/photo-cloth-realism-164/pbr-fabric.mjs|scripts/install-photo-cloth-realism-164.mjs|scripts/instrument-photo-cloth-realism-164.mjs|scripts/audit-photo-cloth-realism-164.mjs|tests/photo-cloth-realism-164.test.mjs|.github/workflows/photo-cloth-realism-164-no-deploy.yml) ;;
+              research/photo-garment-anatomical-fitting-60/fit-contract.mjs|tests/photo-garment-anatomical-fitting-60.test.mjs) ;;
               *) echo "P164 REFUSE P163/P541 source, parallel Work #719, original photos, app, staging or production: $p"; exit 1 ;;
             esac
           done </tmp/p163-files
-          test "$(wc -l </tmp/p163-files)" -eq 7
+          test "$(wc -l </tmp/p163-files)" -eq 9
           git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json research/licensed-head-six-angle-162 research/licensed-neck-axis-contact-161 research/neck-joint-registered-head-fit-160 research/anatomical-neck-seam-159 scripts/prepare-licensed-head-six-angle-162.mjs benchmark
       - name: Re-run inherited P163 verified photo, source and full app unit regressions
         run: |
@@ -78,7 +79,9 @@ jobs:
           node --check scripts/install-photo-cloth-realism-164.mjs
           node --check scripts/instrument-photo-cloth-realism-164.mjs
           node --check scripts/audit-photo-cloth-realism-164.mjs
+          node --check research/photo-garment-anatomical-fitting-60/fit-contract.mjs
           node --test tests/photo-cloth-realism-164.test.mjs
+          node --test tests/photo-garment-anatomical-fitting-60.test.mjs
           node --check research/photo-cloth-realism-164/pbr-fabric.mjs
           node --check scripts/install-photo-cloth-realism-164.mjs
           node --test tests/photo-cloth-realism-164.test.mjs
