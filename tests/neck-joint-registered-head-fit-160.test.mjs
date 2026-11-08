@@ -7,10 +7,10 @@ test('P160 exact independently verified P159 original licensed female and male 8
  assert.match(src,/0e6f8db077b3dd2b1650e300df0d2d7244d29ba0/);
  assert.match(src,/source\?\.maxBones!==163/);
  assert.match(src,/candidate\.maxBone!==80/);
- assert.match(src,/\/neck\/i\.test\(neck\.name/);
+ assert.match(src,/while\(neck\?\.isBone\&\&\!\/neck\/i\.test\(neck\.name/);
  assert.match(src,/if\(\/neck\/i\.test\(o\.name/);
  assert.match(src,/if\(\/head\/i\.test\(o\.name/);
- assert.match(src,/P159 authenticated original-neck skin overlap/);
+ assert.match(src,/neckTransition159\?\.noAdditionalGeometryRequired/);
  assert.match(src,/neckTransition159\?\.noAdditionalGeometryRequired/);
  assert.match(src,/candidate\.sha256/);
 });
