@@ -17,7 +17,7 @@ test('P162 pins independently verified main P161 and separate parallel P716 sour
 test('P162 retains original real P716 mouse-driven 360 outfit camera views and original outfit read-only board protection',()=>{
  for(const s of ["'threequarter-rear-right'","page.mouse.down()","ownerOriginal","sourceRigBones:overlay.sourceRigBones","threequarter-front-right"])
   assert.ok(prep.includes(s)||audit.includes(s),"original verified orbit anchor "+s);
- assert.match(prep,/source\.split\(anchor\)/);
+ assert.match(prep,/prep\.split\(anchor\)/);
  assert.match(prep,/const anchor="const overlay=JSON\.parse/);
  assert.match(prep,/originalPhotographedGarmentMeshesBefore/);
  assert.match(prep,/originalPhotographedGarmentMeshesAfter/);
