@@ -65,6 +65,7 @@ const finalAudit=[
  "      if(repairedWeightSlots)influence.needsUpdate=true;",
  "      for(let vertex=0;vertex<influence.count;vertex++){let sum=0;for(let component=0;component<4;component++)sum+=influence.getComponent(vertex,component);if(Number.isFinite(sum))maxWeightSumError=Math.max(maxWeightSumError,Math.abs(1-sum));}",
  "     }else activeInvalidSlots++;",
+ "     if(maxWeightCorrection>1e-6)throw Error('P176 refuses skin-weight correction above 1e-6');",
  "     p176SkinAudits.push({mesh:garmentMesh.name,bones:boneCount,repairedZeroWeightSlots,activeInvalidSlots,nonFiniteWeightComponents,outOfRangeWeightComponents,nonTolerableInvalidWeightComponents,repairedWeightSlots,maxWeightCorrection,maxWeightSumError,weightsChanged:repairedWeightSlots>0,positionsChanged:false});",
  "    }",
  "    globalThis.__P176SkinAuditHistory176=[...(globalThis.__P176SkinAuditHistory176||[]),{slot,audits:p176SkinAudits}];",
