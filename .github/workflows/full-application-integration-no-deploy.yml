@@ -54,10 +54,10 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- supabase public/auth.js public/cloud-backup.js
       - name: Install isolated pinned test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
-      - name: Run full functional and regression suite
-        run: node --test tests/*.cjs tests/*.mjs
       - name: Build the application
         run: node scripts/build.mjs
+      - name: Run full functional and regression suite
+        run: node --test tests/*.cjs tests/*.mjs
       - name: Verify focused new-item styling in the real app at mobile widths in Chromium and WebKit
         run: node scripts/test-style-focused-item-browser.mjs
       - uses: actions/upload-artifact@v4

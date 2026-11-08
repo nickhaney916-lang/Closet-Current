@@ -30,9 +30,10 @@ const host='http://127.0.0.1:'+server.address().port+'/public/index.html?ownerRe
 const jpg=await sharp({create:{width:24,height:32,channels:3,background:'#426f54'}}).jpeg().toBuffer();
 const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
+const capturePng=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).png().toBuffer();
 const owner='synthetic-style-owner-a';
 const fixtures=[
- ['new-blouse','Tops','Blouse','Green'],['tee','Tops','T-shirt','Blue'],['polo','Tops','Polo','White'],
+ ['tee','Tops','T-shirt','Blue'],['polo','Tops','Polo','White'],
  ['jeans','Bottoms','Jeans','Blue'],['trousers','Bottoms','Trousers','Black'],['shorts','Bottoms','Shorts','Tan'],
  ['sneakers','Shoes','Sneakers','White'],['loafers','Shoes','Loafers','Brown'],['flats','Shoes','Flats','Black']
 ].map(([id,category,itemType,color])=>({id,ownerId:owner,name:id==='new-blouse'?'New reviewed blouse':itemType,
@@ -57,6 +58,17 @@ try{
     await context.addInitScript(()=>localStorage.setItem('closet-current-auth-v1',JSON.stringify({
      epoch:'synthetic-epoch',access_token:'synthetic-access',refresh_token:'synthetic-refresh',expires_at:Math.floor(Date.now()/1000)+3600
     })));
+    await context.addInitScript(()=>{
+     class ReviewOnlyWorker{
+      constructor(){this.onmessage=null;this.terminated=false;}
+      postMessage(data){const reply=value=>setTimeout(()=>{if(!this.terminated)this.onmessage?.({data:{id:data.id,...value}});},0);
+       if(data.type==='load')reply({type:'ready'});
+       else if(data.type==='classify')reply({type:'result',strong:false,categoryConfirmed:false,choices:[],details:{}});
+      }
+      terminate(){this.terminated=true;}
+     }
+     Object.defineProperty(window,'Worker',{configurable:true,value:ReviewOnlyWorker});
+    });
     const page=await context.newPage();
     page.on('pageerror',error=>errors.push(String(error)));
     try{
@@ -65,9 +77,22 @@ try{
      await page.evaluate(async rows=>{
       await writeAll(rows);items=(await readAll()).map(normalizeClothing);render();
       window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
-      switchView('closet');
-      const search=document.getElementById('search');search.value='New reviewed blouse';search.dispatchEvent(new Event('input',{bubbles:true}));
      },fixtures);
+     await page.evaluate(()=>switchView('scan'));
+     await page.locator('#clothingPhotos').setInputFiles({name:'new-reviewed-blouse.png',mimeType:'image/png',buffer:capturePng});
+     await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.png'&&x.localAnalyzed),null,{timeout:20000});
+     await page.evaluate(()=>switchView('review'));
+     await page.locator('#reviewGrid article.photo-result').getByRole('button',{name:'Adjust',exact:true}).click();
+     await page.waitForFunction(()=>document.querySelector('dialog.photo-adjust[open]')!==null);
+     await page.locator('dialog.photo-adjust input[aria-label="Item name"]').fill('New reviewed blouse');
+     await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Tops');
+     await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('Blouse');
+     await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Green');
+     await page.locator('dialog.photo-adjust form').evaluate(form=>form.requestSubmit());
+     await page.waitForFunction(()=>items.some(x=>x.name==='New reviewed blouse'&&x.itemType==='Blouse')&&!document.querySelector('dialog.photo-adjust[open]'),null,{timeout:20000});
+     const focusedId=await page.evaluate(()=>items.find(x=>x.name==='New reviewed blouse'&&x.itemType==='Blouse')?.id);
+     assert.ok(focusedId);
+     await page.evaluate(()=>{switchView('closet');const search=document.getElementById('search');search.value='New reviewed blouse';search.dispatchEvent(new Event('input',{bubbles:true}));});
      const closetOverflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1);
      assert.equal(closetOverflow,false,engine+' closet card overflow at '+width);
      await page.locator('#closetGrid .card').filter({hasText:'New reviewed blouse'}).getByRole('button',{name:'Get three outfit ideas'}).click();
@@ -81,25 +106,25 @@ try{
       status:document.getElementById('stylistStatus').textContent
      }));
      assert.equal(generated.cards.length,3);assert.ok(generated.cards.every(x=>x.focus&&x.figureCount>=3));
-     assert.equal(generated.selected,'new-blouse');
+     assert.equal(generated.selected,focusedId);
      assert.equal(generated.overflow,false,engine+' horizontal overflow at '+width);
      const card=page.locator('#styledCollectionResults .styled-outfit').first();
      await card.getByRole('button',{name:'Save outfit'}).click();
      await page.waitForFunction(()=>savedOutfitBoards.length===1,null,{timeout:10000});
      const saved=await page.evaluate(()=>savedOutfitBoards[0]);
-     assert.ok(Object.values(saved.slots).includes('new-blouse'));
-     assert.ok(Object.values(saved.slots).every(id=>fixtures.some(x=>x.id===id)));
+     assert.ok(Object.values(saved.slots).includes(focusedId));
+     assert.ok(Object.values(saved.slots).every(id=>fixtures.some(x=>x.id===id)||id===focusedId));
      await page.screenshot({path:`${out}/${engine}-${width}-saved-three-owned-looks.png`,fullPage:true});
      await page.reload({waitUntil:'domcontentloaded'});
      await page.evaluate(async()=>{await window.closetAuth.ready;await closetReady;await outfitBoardReady;});
      const reopened=await page.evaluate(async()=>({
       owner:window.closetAuth.user.id,items:(await readAll()).map(x=>x.id),boards:savedOutfitBoards
      }));
-     assert.equal(reopened.owner,owner);assert.equal(reopened.items.length,fixtures.length);
-     assert.equal(reopened.boards.length,1);assert.ok(Object.values(reopened.boards[0].slots).includes('new-blouse'));
+     assert.equal(reopened.owner,owner);assert.equal(reopened.items.length,fixtures.length+1);
+     assert.equal(reopened.boards.length,1);assert.ok(Object.values(reopened.boards[0].slots).includes(focusedId));
      results.push({engine,width,threeFocusedOwnedLooks:true,uniqueLookCount:3,saveAndReload:true,
       ownerScopedIndexedDB:true,offHostCallsBlocked:true,syntheticAuth:true,syntheticGarments:true,
-      cameraCapture:false,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
+      cameraCapture:false,actualPhotoFileReviewAndManualCorrection:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
     }finally{await context.close();}
    }
   }finally{await browser.close();}
@@ -107,7 +132,8 @@ try{
  assert.equal(errors.length,0,errors.join('; '));
  const report={verdict:'PASS',feature:'Style around a newly reviewed and saved owned item',engines:engines.map(x=>x[0]),cases:results,
   screenshots:results.length,offHostCalls:0,syntheticAuth:true,syntheticGarments:true,
-  cameraCapture:false,physicalAndroid:false,physicalIPhone:false,cloudWrites:false,familyAlpha:'HOLD'};
+  cameraCapture:'synthetic imported PNG; camera device stream is not exercised',freshAIInference:false,
+  physicalAndroid:false,physicalIPhone:false,cloudWrites:false,familyAlpha:'HOLD'};
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
  console.log('STYLE-NEW-ITEM-01 browser acceptance PASS',JSON.stringify({engines:engines.map(x=>x[0]),cases:results.length,screenshots:results.length}));
 }catch(error){
