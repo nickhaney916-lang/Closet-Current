@@ -8,13 +8,16 @@ import {createServer} from 'node:http';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-3d-05';
+const photoSilhouette62=process.env.PHOTO_SILHOUETTE62==='1';
+const photoSilhouetteEngine62=process.env.PHOTO_SILHOUETTE62_BROWSER||'chromium';
+const root=resolve('.'),donor=resolve(photoSilhouette62?'.donor541':'.native05-donor-541');
+const dir=photoSilhouette62?'benchmark/user-photo-to-anatomical-3d-62/'+photoSilhouetteEngine62:'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
-const ids=['commons-0053','commons-0064','commons-0067','commons-0080','commons-0003'];
+const ids=['commons-0053','commons-0064','commons-0067','commons-0080','commons-0003','commons-0016'];
 const photos={};
 for(const id of ids){
  const locked=locks.find(x=>x.id===id),bytes=await readFile('benchmark/fixtures/'+id+'.jpg');
@@ -75,7 +78,8 @@ function fixture(owner){
    item('jacket','Outerwear','Jacket','commons-0064'),
    item('coat','Outerwear','Coat','commons-0067'),
    item('shoes','Shoes','Sneakers','commons-0080'),
-   item('shirt','Tops','T-shirt','commons-0003')],
+   item('shirt','Tops','T-shirt','commons-0003'),
+   item('blouse','Tops','Blouse','commons-0016')],
   state:{id:'outfit-board',current:{name:'Existing current',slots:{},future:{preserve:true}},
    saved:[
     {id:owner+'-dress-saved',outfit3dId:owner+'-verified-dress-3D',
@@ -89,7 +93,10 @@ function fixture(owner){
      futureSourceKeys:{ver:2}},
     {id:owner+'-shirt-saved',outfit3dId:owner+'-verified-shirt-3D',
      ownerId:owner,name:'Source-true original photographed shirt',
-     slots:{top:owner+'-shirt'},futureSourceKeys:{ver:3}}],
+     slots:{top:owner+'-shirt'},futureSourceKeys:{ver:3}},
+    {id:owner+'-blouse-saved',outfit3dId:owner+'-verified-blouse-3D',
+     ownerId:owner,name:'Reviewed original blouse photo',
+     slots:{top:owner+'-blouse'},futureSourceKeys:{ver:4}}],
    futureBoardVersion:'never-drop'}
  };
 }
@@ -145,8 +152,10 @@ try{
  for(const width of [320,390,430]){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
   // 163-bone canvas contexts, renderer memory and stale browser navigation.
-  browser=await chromium.launch({headless:true,args:[
-   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  const browserEngine=photoSilhouette62&&photoSilhouetteEngine62==='webkit'?webkit:chromium;
+  browser=await browserEngine.launch({headless:true,
+   ...(photoSilhouette62&&photoSilhouetteEngine62==='chromium'&&process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:{}),
+   ...(browserEngine===chromium?{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}: {})});
   const ctx=await browser.newContext({viewport:{width,height:920},deviceScaleFactor:1,
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await ctx.route('**/*',route=>{
@@ -165,7 +174,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -180,6 +189,48 @@ try{
   // A clicked original saved outfit rather than donor-created selection.
   await page.locator('#savedBoards button').first().click();
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+  if(photoSilhouette62){
+   await page.locator('#savedBoards button').nth(3).click();
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),3);
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+    window.native3D05Bridge.state().viewerMode==='shirt'&&
+    window.native3D05Bridge.state().photoSourceSilhouette62===true&&
+    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   const blouseState=await page.evaluate(()=>window.native3D05Bridge.state());
+   assert.equal(blouseState.opened,'native05-A-verified-blouse-3D');
+   assert.ok(blouseState.silhouetteVertices62>=20);
+   assert.ok(blouseState.silhouetteMaxMeters62>=.001&&blouseState.silhouetteMaxMeters62<=.0251);
+   assert.equal(blouseState.photoSourceFit171,true);
+   assert.equal(blouseState.ownerPhoto3DArbitraryFittingApproved,false);
+   assert.equal(blouseState.photorealismApproved,false);
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await page.locator('#outfit3D01Front').click(); await take(page,width,'01-female-front-reviewed-blouse');
+   await page.locator('#outfit3D01Side').click(); await take(page,width,'02-female-side-reviewed-blouse');
+   await page.locator('#outfit3D01Back').click(); await take(page,width,'03-female-inferred-rear-reviewed-blouse');
+   const model=page.locator('#outfit3D01Model');
+   if(await model.count()){
+    await model.selectOption('male');
+    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+     window.native3D05Bridge.state().figure==='male'&&
+     window.native3D05Bridge.state().photoSourceSilhouette62===true,null,{timeout:150000});
+    await take(page,width,'04-male-front-reviewed-blouse');
+    await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-reviewed-blouse');
+   }
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
+   cases.push({width,source:'commons-0016',sourceSHA256:photos['commons-0016'].sha256,
+    authenticOwnerSavedOutfit:true,actualOriginalPhotoNative163BoneWebGL:true,
+    femaleAndMaleRendered:true,physicalMaskDerivedDeformation:true,
+    physicalPhotoSilhouetteVertices62:blouseState.silhouetteVertices62,
+    physicalPhotoSilhouetteMaxMeters62:blouseState.silhouetteMaxMeters62,
+    originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
+    ownerApprovalForArbitraryPhotos:false,photorealismAccepted:false,
+    outfitUnmodified:true,physicalPhoneVerified:false,familyAlpha:'HOLD'});
+   await page.close();await ctx.close();await browser.close();browser=null;
+   continue;
+  }
   let tamperedOriginalBlocked92=false;
   if(native92&&width===390){
    // A genuine but WRONG licensed JPEG replaces the stored bytes under the
@@ -702,12 +753,12 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,photoTorso173?24:15);
+ assert.equal(cases.length,3);assert.equal(screens.length,photoSilhouette62?15:photoTorso173?24:15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:'NATIVE-3D-05',cases:3,screenshots:photoTorso173?24:15,
-  browser:'chromium',widths:[320,390,430],
+ const result={priority:photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,screenshots:photoSilhouette62?15:photoTorso173?24:15,
+  browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
   realSignedRLS:false,originalUserSavedStateUnmodified:true,
