@@ -268,6 +268,12 @@ try{
    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
+  if(photoFit171){
+   await page.waitForFunction(()=>
+    window.native3D05Bridge?.state().photoSourceFit171===true ||
+    document.getElementById('native3D05Status')?.textContent.includes('P171 source-bound'),
+    null,{timeout:30000});
+  }
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
   if(photoFit171){
    assert.equal(state.photoSourceFit171,true,
