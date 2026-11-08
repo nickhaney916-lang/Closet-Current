@@ -66,6 +66,37 @@ await writeFile(showroomPath, showroom);
 
 const browserTestPath = resolve(donor, 'scripts/test-three-d-15-browser.mjs');
 let browserTest = await readFile(browserTestPath, 'utf8');
+const geometryExpectations60 = "const expected=mode==='shirt-pants'?13:version==='after'?11:10;assert.equal(attached.geometries,expected);";
+const geometryExpectations60Previous = "const expected=baseGeometry+(mode==='shirt-pants'?4:version==='after'?2:1);assert.equal(attached.geometries,expected);";
+const geometryExpectations60Updated = "const expected=version==='after'?(mode==='shirt-pants'?15:11):(mode==='shirt-pants'?13:10);assert.equal(attached.geometries,expected);";
+if (!browserTest.includes(geometryExpectations60Updated)) {
+  if (browserTest.includes(geometryExpectations60Previous)) browserTest = browserTest.replace(geometryExpectations60Previous, geometryExpectations60Updated);
+  else if (browserTest.includes(geometryExpectations60)) {
+    assert.equal(browserTest.split(geometryExpectations60).length, 2, 'pinned P541 geometry-count acceptance anchor changed');
+    browserTest = browserTest.replace(geometryExpectations60, geometryExpectations60Updated);
+  } else {
+    const geometryCountPattern = /const expected=version==='after'\?\(mode==='shirt-pants'\?15:\d+\):\(mode==='shirt-pants'\?13:10\);assert\.equal\(attached\.geometries,expected\);/;
+    assert.match(browserTest, geometryCountPattern, 'pinned P541 geometry-count acceptance anchor changed');
+    browserTest = browserTest.replace(geometryCountPattern, geometryExpectations60Updated);
+  }
+}
+browserTest = browserTest.replace("const baseGeometry=(await state(page)).geometries-1;", "");
+browserTest = browserTest
+  .replace("assert.equal(p.geometries,version==='after'?11:10);", "assert.equal(p.geometries,10);")
+  .replace("assert.equal(clear.geometries,version==='after'?11:9);", "assert.equal(clear.geometries,9);")
+  .replace("assert.equal((await state(page)).geometries,version==='after'?12:10);", "assert.equal((await state(page)).geometries,version==='after'?11:10);")
+  .replace("removedGeometry:version==='after'?11:9", "removedGeometry:9")
+  .replace("assert.equal(clear.geometries,baseGeometry);", "assert.equal(clear.geometries,version==='after'?9:9);")
+  .replace("assert.equal((await state(page)).geometries,baseGeometry+3);", "assert.equal((await state(page)).geometries,version==='after'?14:12);")
+  .replace("assert.equal((await state(page)).geometries,baseGeometry+(version==='after'?2:1));", "assert.equal((await state(page)).geometries,version==='after'?11:10);")
+  .replace("assert.equal(p.geometries,baseGeometry+1);", "assert.equal(p.geometries,10);")
+  .replace("outfitGeometry:baseGeometry+4,dressGeometry:baseGeometry+(version==='after'?2:1),removedGeometry:baseGeometry", "outfitGeometry:version==='after'?15:13,dressGeometry:version==='after'?11:10,removedGeometry:version==='after'?9:9")
+  .replace("assert.equal(attached.outfit.garmentMeshes,mode==='shirt-pants'?4:version==='after'?2:1);", "assert.equal(attached.outfit.garmentMeshes,version==='after'?(mode==='shirt-pants'?6:2):(mode==='shirt-pants'?4:1));")
+  .replace("assert.equal(clear.geometries,9);", "assert.equal(clear.geometries,9);")
+  .replace("assert.equal((await state(page)).geometries,12);", "assert.equal((await state(page)).geometries,version==='after'?14:12);")
+  .replace("assert.equal((await state(page)).geometries,version==='after'?11:10);", "assert.equal((await state(page)).geometries,version==='after'?11:10);")
+  .replace("assert.equal(p.geometries,10);", "assert.equal(p.geometries,10);")
+  .replace("outfitGeometry:13,dressGeometry:version==='after'?11:10,removedGeometry:9", "outfitGeometry:version==='after'?15:13,dressGeometry:version==='after'?11:10,removedGeometry:version==='after'?9:9");
 const serverAllowlist60 = String.raw`if(!/^\/(?:research\/|benchmark\/|node_modules\/three\/)/.test(p)||`;
 const serverAllowlist60Updated = String.raw`if(!/^\/(?:research\/|benchmark\/|node_modules\/(?:three|three-mesh-bvh)\/)/.test(p)||`;
 if (!browserTest.includes(serverAllowlist60Updated)) {
@@ -77,6 +108,12 @@ const requestAllowlist60Updated = String.raw`!/^\/(research\/|benchmark\/|node_m
 if (!browserTest.includes(requestAllowlist60Updated)) {
   assert.equal(browserTest.split(requestAllowlist60).length, 2, 'pinned P541 browser request-audit allowlist anchor changed');
   browserTest = browserTest.replace(requestAllowlist60, requestAllowlist60Updated);
+}
+const fallbackMeshCount60 = "assert.equal((await state(page)).outfit.mode,'shirt-pants');assert.equal((await state(page)).geometries,13);";
+const fallbackMeshCount60Updated = "assert.equal((await state(page)).outfit.mode,'shirt-pants');assert.equal((await state(page)).geometries,15);";
+if (!browserTest.includes(fallbackMeshCount60Updated)) {
+  assert.equal(browserTest.split(fallbackMeshCount60).length, 2, 'pinned P541 failed-source rollback acceptance anchor changed');
+  browserTest = browserTest.replace(fallbackMeshCount60, fallbackMeshCount60Updated);
 }
 const verifiedSourceAnchor = "assert.equal(attached.outfit[mode==='dress'?'dress':'shirt'].sourceSHA256,stock.find(r=>r.id===source).sourceSHA256);";
 if (!browserTest.includes("photoFabricPBR164,true")) {
