@@ -4,6 +4,8 @@
  * research renderer cannot fit an arbitrary new photo and MUST NOT be shown
  * as though it is wearing that piece.
  *
+ * P166 correction: SHA integrity alone is not human reviewed ownership;
+ * require the current saved owner-reviewed flags before AND after async hash.
  * Strictly additive ESM integration interface. No owner data storage,
  * network, analytics, 3D mesh substitution, source photo mutation, unsafe
  * HTML interpolation or automatic publication. Family Alpha #255 HOLD.
@@ -29,6 +31,7 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
  if(!item||typeof item.id!=='string'||!item.id||
    item.ownerId!==previous.ownerId||!HEX64.test(item.sourceSHA256||'')||
    item.sourcePhotoOriginal!==true||item.sourceHashVerified!==true||
+   item.userAdjusted!==true||item.ownerReviewed!==true||
    typeof (item.originalPhoto?.image||item.image)!=='string'||
    (item.originalPhoto?.image||item.image).length>18_000_000)
   throw Error('Saved original photograph needs owner review before preview');
@@ -51,7 +54,8 @@ export async function verifyOwnerSavedPhoto165({item,originalOwnerSession,getSes
  const saved=latest.find(x=>x?.id===item.id);
  if(!saved||saved.ownerId!==previous.ownerId||saved.sourceSHA256!==actual||
   (saved.originalPhoto?.image||saved.image)!==original||
-  saved.sourcePhotoOriginal!==true||saved.sourceHashVerified!==true)
+  saved.sourcePhotoOriginal!==true||saved.sourceHashVerified!==true||
+  saved.userAdjusted!==true||saved.ownerReviewed!==true)
   throw Error('Saved garment changed during original photograph validation');
  if(originalOwnerSession&&!same(previous,originalOwnerSession))
   throw Error('Original owner session changed');
