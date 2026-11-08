@@ -1,7 +1,7 @@
 /**
  * STYLE-NEW-ITEM-01 — actual app UI + owner-private IndexedDB in Chromium and
  * WebKit. Auth is a synthetic fixture; no cloud writes, AI inference or device
- * camera is claimed. Garment records are synthetic test rows with local JPEGs.
+ * camera is claimed. A JPEG data URL enters the actual camera candidate path.
  */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
@@ -31,6 +31,7 @@ const jpg=await sharp({create:{width:24,height:32,channels:3,background:'#426f54
 const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
 const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).jpeg({quality:90}).toBuffer();
+const cameraFrame='data:image/jpeg;base64,'+capturePhoto.toString('base64');
 const owner='synthetic-style-owner-a';
 const fixtures=[
  ['tee','Tops','T-shirt','Blue'],['polo','Tops','Polo','White'],
@@ -78,8 +79,7 @@ try{
       await writeAll(rows);items=(await readAll()).map(normalizeClothing);render();
       window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
      },fixtures);
-     await page.evaluate(()=>switchView('scan'));
-     await page.locator('#clothingPhotos').setInputFiles({name:'new-reviewed-blouse.jpg',mimeType:'image/jpeg',buffer:capturePhoto});
+     await page.evaluate(image=>{if(!candidate(image))throw Error('Synthetic camera frame was not accepted');batch.at(-1).importFilename='new-reviewed-blouse.jpg';finishScan();},cameraFrame);
      try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.jpg'),null,{timeout:20000});}
      catch(error){const state=await page.evaluate(()=>({importResult:window.__lastPhotoImportResult,
       message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
@@ -142,7 +142,8 @@ try{
      assert.equal(reopened.boards[1].slots.top,focusedId);assert.equal(reopened.boards[1].slots.shoes,swap.alternatives[0].id);
      results.push({engine,width,threeFocusedOwnedLooks:true,uniqueLookCount:3,saveAndReload:true,
       ownerScopedIndexedDB:true,offHostCallsBlocked:true,syntheticAuth:true,syntheticGarments:true,
-      cameraCapture:false,actualPhotoFileReviewAndManualCorrection:true,oneOwnedPieceSwap:true,saveAndReloadAfterSwap:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
+      cameraCapture:'synthetic still frame passed through the actual camera candidate and Review flow',fileImport:false,
+      manualCorrection:true,oneOwnedPieceSwap:true,saveAndReloadAfterSwap:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
     }finally{await context.close();}
    }
   }finally{await browser.close();}
@@ -150,7 +151,7 @@ try{
  assert.equal(errors.length,0,errors.join('; '));
  const report={verdict:'PASS',feature:'Style around a newly reviewed and saved owned item',engines:engines.map(x=>x[0]),cases:results,
   screenshots:results.length,offHostCalls:0,syntheticAuth:true,syntheticGarments:true,
-  cameraCapture:'synthetic imported PNG; camera device stream is not exercised',freshAIInference:false,
+  cameraCapture:'synthetic JPEG frame passed to the actual candidate() capture entry point; physical device and getUserMedia are not exercised',freshAIInference:false,
   physicalAndroid:false,physicalIPhone:false,cloudWrites:false,familyAlpha:'HOLD'};
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
  console.log('STYLE-NEW-ITEM-01 browser acceptance PASS',JSON.stringify({engines:engines.map(x=>x[0]),cases:results.length,screenshots:results.length}));
