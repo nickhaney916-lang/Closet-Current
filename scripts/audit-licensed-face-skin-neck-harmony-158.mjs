@@ -62,10 +62,36 @@ function compare(before,after,width,view){
   throw Error('P158 original skinned arms or legs disappeared under body shader');
  if(armAndLeg<60)
   throw Error('P158 real exposed skin pixels do not change on actual phone model');
- if(result.cloth.changed>result.cloth.pixels*.10)
-  throw Error('P158 photographed garment texture region changed, refusing acceptance');
- if(result.face.changed>result.face.pixels*.15)
-  throw Error('P158 public licensed head texture region changed unexpectedly');
+ // A rectangular torso/head ROI contains EXPOSED source skin on shoulders,
+ // collar and side angles. Comparing all those pixels incorrectly penalizes
+ // real skin harmonization. Instead pin the ACTUAL dark, original photographed
+ // dress pixels and actual dark licensed-face/hair pixels from the unedited
+ // P157 image. Non-dark skin is checked separately for visible arm/leg changes.
+ function protectedSurface(y0,y1,xlo,xhi,rmax,gmax,bmax){
+  let original=0,modified=0;
+  for(let y=y0;y<Math.min(y1,before.info.height);y++)
+   for(let x=Math.floor(width*xlo);x<Math.ceil(width*xhi);x++){
+    const p=(y*width+x)*3,r=before.data[p],g=before.data[p+1],
+     b=before.data[p+2];
+    if(r>=rmax||g>=gmax||b>=bmax)continue;
+    original++;
+    const delta=Math.abs(r-after.data[p])+
+     Math.abs(g-after.data[p+1])+Math.abs(b-after.data[p+2]);
+    if(delta>36)modified++;
+   }
+  return {originalDarkSourcePixels:original,changedDarkSourcePixels:modified,
+   changedFraction:modified/Math.max(1,original)};
+ }
+ result.photographedDarkDress=protectedSurface(255,338,.35,.65,105,105,110);
+ result.originalLicensedDarkHead=protectedSurface(155,213,.36,.64,115,105,100);
+ if(result.photographedDarkDress.originalDarkSourcePixels<700||
+    result.photographedDarkDress.changedFraction>.025)
+  throw Error('P158 actual photographed dress source pixels changed: '+
+   width+' '+view+' '+JSON.stringify(result.photographedDarkDress));
+ if(result.originalLicensedDarkHead.originalDarkSourcePixels<250||
+    result.originalLicensedDarkHead.changedFraction>.08)
+  throw Error('P158 actual licensed head/hair original pixels changed: '+
+   width+' '+view+' '+JSON.stringify(result.originalLicensedDarkHead));
  const rgbDistance=(a,b)=>Math.hypot(...a.map((v,i)=>v-b[i]));
  if(view==='front'&&result.face.beforeMean&&result.arms.beforeMean&&
     result.face.afterMean&&result.arms.afterMean){
