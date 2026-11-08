@@ -22,17 +22,20 @@ jobs:
         run: |
           set -eu
           BASE=ed37811efd44c9920c5c67bc743e34911a57b578
-          test "$(git rev-parse HEAD^)" = "$BASE"
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
           git diff --name-only "$BASE" HEAD >/tmp/p176-paths
           while IFS= read -r p; do
             case "$p" in
-              scripts/legacy-scope-applicability-176.mjs|tests/cross-stream-applicability-176.test.mjs|research/cross-stream-ci-176/REPORT.md|.github/workflows/cross-stream-integration-176-no-deploy.yml|.github/workflows/native-index-live-07-no-deploy.yml|.github/workflows/native-restore-3d-06-no-deploy.yml|.github/workflows/native-photo-readiness-08-no-deploy.yml) ;;
+              scripts/legacy-scope-applicability-176.mjs|scripts/modern-original-photo-review-fixture-176.mjs|tests/cross-stream-applicability-176.test.mjs|research/cross-stream-ci-176/REPORT.md|.github/workflows/cross-stream-integration-176-no-deploy.yml|.github/workflows/native-index-live-07-no-deploy.yml|.github/workflows/native-restore-3d-06-no-deploy.yml|.github/workflows/native-photo-readiness-08-no-deploy.yml) ;;
               *) echo "P176 BLOCKED unrelated source or production file $p"; exit 1 ;;
             esac
           done </tmp/p176-paths
-          test "$(wc -l </tmp/p176-paths)" -eq 7
+          test "$(wc -l </tmp/p176-paths)" -eq 8
           git diff --exit-code "$BASE" HEAD -- public research/native-3d-05 research/photo-dress-anatomical-drape-61 research/native-original-dress-drape-175 research/source-shoulder-seam-174 research/photo-torso-contour-172 supabase migrations benchmark/fixtures package.json package-lock.json
           node --check scripts/legacy-scope-applicability-176.mjs
+          node --check scripts/modern-original-photo-review-fixture-176.mjs
           node --check tests/cross-stream-applicability-176.test.mjs
       - name: Install isolated Node and browser test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
@@ -83,6 +86,12 @@ jobs:
       - name: Run actual original photo indexing, private atomic V4 restore, or source readiness through signed-mock consumer browser and 163-bone WebGL
         run: |
           set -eu
+          # The CURRENT live UI requires two explicitly checked human-review
+          # confirmations for saved original JPEGs; old test browsers must
+          # simulate those real user actions, never bypass source guardrails.
+          if [ "$SUITE" != restore ]; then
+            node scripts/modern-original-photo-review-fixture-176.mjs
+          fi
           case "$SUITE" in
             index)
               # Independent CURRENT native 163 bone 3D smoke in addition to

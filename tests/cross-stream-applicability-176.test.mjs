@@ -74,6 +74,12 @@ test('P176 always retains old blocked file lists, original SHA pins, signed sour
 });
 test('P176 all actual consumer 3D index/restore/readiness scripts and SHA audit scripts remain unchanged from original P175',()=>{
  const workflow=readFileSync('.github/workflows/cross-stream-integration-176-no-deploy.yml','utf8');
+ const fixture=readFileSync('scripts/modern-original-photo-review-fixture-176.mjs','utf8');
+ assert.ok(fixture.includes("await reviewedDetails.check()"));
+ assert.ok(fixture.includes("await reviewedSource.check()"));
+ assert.ok(fixture.includes("actual owner category/type/color review")||fixture.includes('Current real app requires actual owner'));
+ assert.ok(workflow.includes('node scripts/modern-original-photo-review-fixture-176.mjs'));
+ assert.ok(workflow.includes('if [ "$SUITE" != restore ]; then'));
  for(const name of ['test-native-index-live-07-browser.mjs','audit-native-index-live-07.mjs',
   'test-native-restore-3d-06-browser.mjs','audit-native-restore-3d-06.mjs',
   'test-native-photo-readiness-08-browser.mjs','audit-native-photo-readiness-08.mjs',
