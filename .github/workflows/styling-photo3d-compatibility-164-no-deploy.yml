@@ -63,7 +63,8 @@ jobs:
           test "$(wc -l </tmp/p164-work719-source-changes)" -eq 8
           git diff --name-only "$COMMON" "$RESEARCH" > /tmp/p164-inherited-3d-research-files
           test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes) <(sort /tmp/p164-inherited-3d-research-files))"
-          test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes) <(sort /tmp/p164-files))" || test ! -e /tmp/p164-files
+          git diff --name-only "$RESEARCH" HEAD > /tmp/p164-current-exact-head-research-files
+          test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes) <(sort /tmp/p164-current-exact-head-research-files))"
           git -c user.name="Isolated P164 Research CI" -c user.email="isolated-p164@users.noreply.github.com" merge --no-commit --no-ff "$WORK"
           test "$(git rev-parse -q --verify MERGE_HEAD)" = "$WORK"
           test -z "$(git ls-files -u)"
@@ -138,7 +139,8 @@ jobs:
           test "$(wc -l </tmp/p164-work719-source-changes)" -eq 8
           git diff --name-only "$COMMON" "$RESEARCH" > /tmp/p164-inherited-3d-research-files
           test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes) <(sort /tmp/p164-inherited-3d-research-files))"
-          test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes) <(sort /tmp/p164-files))" || test ! -e /tmp/p164-files
+          git diff --name-only "$RESEARCH" HEAD > /tmp/p164-current-exact-head-research-files
+          test -z "$(comm -12 <(sort /tmp/p164-work719-source-changes) <(sort /tmp/p164-current-exact-head-research-files))"
           git -c user.name="Isolated P164 Research CI" -c user.email="isolated-p164@users.noreply.github.com" merge --no-commit --no-ff "$WORK"
           test "$(git rev-parse -q --verify MERGE_HEAD)" = "$WORK"
           test -z "$(git ls-files -u)"
