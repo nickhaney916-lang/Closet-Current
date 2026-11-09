@@ -229,6 +229,9 @@ try{
     const disclosure=await page.locator('#outfit3D01AnatomyCover185').textContent();
     assert.match(disclosure,/BOTTOMS: NONE SELECTED/);
     assert.match(disclosure,/not to your closet or this saved outfit/);
+    const coverRect=await page.locator('#outfit3D01AnatomyCover185').boundingBox();
+    assert.ok(coverRect&&coverRect.y>=0&&coverRect.y+coverRect.height<=920,
+     'P185 mannequin shorts disclaimer must be genuinely visible above fold in mobile WebGL preview');
     assert.equal(await page.locator('#outfit3D01Slot-bottom').inputValue(),'');
    }
    assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
