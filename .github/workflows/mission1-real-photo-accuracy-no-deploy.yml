@@ -17,7 +17,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   verify-source-scope-and-node:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
@@ -50,13 +50,13 @@ jobs:
           node --check tests/mission1-real-photo-evidence.test.mjs
           node --test tests/mission1-real-photo-evidence.test.mjs
           node --test tests/recognition*.test.mjs tests/phone-photo-benchmark.test.mjs
-      - name: Full current repository Node regressions and reproducible build
+      - name: Build before complete Node suite (PWA integration reads dist manifest)
         run: |
           set -euo pipefail
-          node --test tests/*.test.cjs tests/*.test.mjs
           node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
   real-chromium-inference-all-59:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 70
     steps:
       - uses: actions/checkout@v4
