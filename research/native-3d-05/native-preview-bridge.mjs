@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null,displayedReviewLease187=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;displayedReviewLease187=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -183,6 +183,9 @@ export async function mountNative3D05({
    requireNative3D05WardrobeRevision93({
     consumer,ownerId:displayedSelection89.admitted.ownerId,expected:displayedRevision93
    });
+   if(displayedReviewLease187&&
+      consumer.requireReviewedCutoutLease187(displayedReviewLease187)!==true)
+    throw Error('P187 reviewed private cutout lease no longer current');
    if(!epoch?.status().active)throw Error('Native owner lease ended');
    return false;
   }catch{
@@ -250,6 +253,7 @@ export async function mountNative3D05({
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
   const selectedSources91=captureNative3D05Sources91({consumer,admitted:selected});
   const selectedRevision93=requireNative3D05WardrobeRevision93({consumer,ownerId:selected.ownerId});
+  let preflightLease187=null;
   const requireFresh=()=>{
    if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
    requireNative3D05Visible102({doc});
@@ -285,6 +289,27 @@ export async function mountNative3D05({
     throw Error('NATIVE05 original account changed before viewer admission');
    requireFresh(); // A different saved board must not cross the donor import boundary.
    await attestOriginalBytes92(); // Cryptographic JPEG bytes, not metadata alone.
+   if(params?.get('photoOwnerCutout187')==='research'){
+    // Strict before-WebGL stage: no provisional blouse, borrowed mask or
+    // stale owner review may ever reach donor import or anatomical render.
+    if(params.get('photoOwnerCutout186')!=='research'||
+       params.get('photoShoulder185')!=='research'||
+       typeof consumer.attestReviewedCutoutLease187!=='function'||
+       typeof consumer.requireReviewedCutoutLease187!=='function')
+     throw Error('P187 requires exact owner double-JPEG preview lease research path');
+    try{
+     preflightLease187=await consumer.attestReviewedCutoutLease187(selected.slots.top);
+     requireFresh();
+     if(preflightLease187.ownerId!==selected.ownerId||
+        preflightLease187.garmentId!==selected.slots.top||
+        preflightLease187.originalSourceSHA256!==
+          selectedSources91.sources.find(x=>x.id===selected.slots.top)?.sha256||
+        consumer.requireReviewedCutoutLease187(preflightLease187)!==true)
+      throw Error('Selected original source and reviewed cutout lease mismatch');
+    }catch{
+     throw Error('P187 unreviewed or changed original/cutout JPEG blocked BEFORE 3D donor import');
+    }
+   }
    const donor=await importPinnedDonor();
    requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
@@ -405,8 +430,14 @@ export async function mountNative3D05({
       !verifiedPhotoSilhouette62?.admitted||
       typeof consumer.attestReviewedCutout186!=='function')
      throw Error('P186 owner-review research requires genuine P185 photo fit');
+    if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     const savedReview=await consumer.attestReviewedCutout186(selected.slots.top);
     requireFresh();
+    if(preflightLease187){
+     consumer.requireReviewedCutoutLease187(preflightLease187);
+     if(JSON.stringify(savedReview)!==JSON.stringify(preflightLease187))
+      throw Error('P187 owner review changed between WebCrypto preflight and 3D render');
+    }
     const module=await import('../owner-cutout-photo-fit-186/review-contract.mjs');
     const render=panel?.state?.();
     const verdict=module.inspectOwnerReviewedCutout186({
@@ -418,6 +449,10 @@ export async function mountNative3D05({
      throw Error('P186 owner original+cutout reviewed source unavailable: '+verdict.reason);
     await attestOriginalBytes92();requireFresh();
     verifiedOwnerCutout186=verdict;
+    if(preflightLease187){
+     consumer.requireReviewedCutoutLease187(preflightLease187);
+     displayedReviewLease187=preflightLease187;
+    }
    }
    // P173: an explicitly selected owner shirt may claim a bounded 3D torso
    // contour ONLY when the real donor physically moved the original mesh.
@@ -543,6 +578,8 @@ export async function mountNative3D05({
    mannequinBaseCoverDisclosure185:active&&
     !!doc.getElementById('outfit3D01AnatomyCover185')?.textContent?.includes('mannequin'),
    photoOwnerCutout186:active&&verifiedOwnerCutout186?.admitted===true,
+   photoOwnerCutout187:active&&!!displayedReviewLease187&&verifiedOwnerCutout186?.admitted===true,
+   reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
