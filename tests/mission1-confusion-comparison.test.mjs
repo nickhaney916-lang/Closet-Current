@@ -27,7 +27,7 @@ test('Mission1 valid block of a wrong automatic type is safely preserved for cat
  const f=fixture(),b=f.baseline.curated[0],a=f.candidate.curated[0];
  b.prediction.type='Sweatshirt';a.strong=false;a.categoryConfirmed=true;
  a.prediction.type='Unknown';
- a.diagnostics={mission1CrossFrame:{required:true,verified:false,sourceFramesCompared:2}};
+ a.diagnostics={mission1SubtypeSafety:{required:true,verified:false,sourceFramesCompared:2}};
  const x=f.run();
  assert.equal(x.summary.before.unsafeAutomatic,1);
  assert.equal(x.summary.after.unsafeAutomatic,0);
