@@ -95,12 +95,17 @@ test('P191 only passes SHA-grounded connected owner contour to real 163-bone P19
   'topologyProof191.sourceSHA256!==baseProfile190.sourceSHA256'])
   assert.ok(alpha.includes(term),term);
  for(const term of ['photoOwnerTopology191','ownerMaskTopologyRequested191:true',
-  'requireOwnerMaskTopology191===true','P191_EXPLICIT_PRIVATE_ALPHA_TOPOLOGY_REQUIRES_SOURCE_GEOMETRY_AND_OWNER_LEASE'])
+  'withReviewedCutoutForRenderer188=async(receipt,renderer)=>',
+  'withReviewedCutoutForRenderer191=async(receipt,renderer)=>',
+  'P191_PRIVATE_ALPHA_TOPOLOGY_REQUEST_NOT_AUTHORIZED_BY_CURRENT_OWNER',
+  'P191_EXPLICIT_PRIVATE_ALPHA_TOPOLOGY_REQUIRES_SOURCE_GEOMETRY_AND_OWNER_LEASE'])
   assert.ok(consumer.includes(term),term);
  for(const term of ['ownerMaskTopologyValidated191:','ownerMaskSourceOverlapIoU191:',
   'ownerMaskIndependentHumanReviewed191:false'])
   assert.ok(rig.includes(term),term);
- for(const term of ['photoOwnerTopology191','requireOwnerMaskTopology191:params?.get',
+ for(const term of ['photoOwnerTopology191',
+  'consumer.withReviewedCutoutForRenderer191(preflightLease187,asset=>',
+  'consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>',
   'sourceMaskTopologyValid191:active',
   'now?.ownerSourceMaskTopologyVerified191===true',
   'physical?.ownerAlphaMaskBasedPhysicalGeometry190===true',
