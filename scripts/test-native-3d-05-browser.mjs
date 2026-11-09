@@ -369,7 +369,7 @@ try{
     }:{}),
     originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
     ownerApprovalForArbitraryPhotos:false,photorealismAccepted:false,
-    provisionalCutoutNeedsHumanReview:!photoOwnerPositive188,
+    ...(photoOwnerPositive188?{provisionalCutoutNeedsHumanReview:false}:{provisionalCutoutNeedsHumanReview:true}),
     ...(photoOwnerPositive188?{syntheticPersistedOwnerReview188:true,
      originalAndOwnerCutoutJPEGIndependentlyWebCryptoVerified188:true,
      ownerCutoutPrivateJPEGTexelsOnTrueSkinnedMesh188:true,
