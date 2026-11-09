@@ -13,6 +13,8 @@ import sharp from 'sharp';
 const photoSilhouette62=process.env.PHOTO_SILHOUETTE62==='1';
 const photoShoulder185=process.env.PHOTO_SHOULDER185==='1';
 const photoOwnerCutout186=process.env.PHOTO_OWNER_CUTOUT186==='1';
+const photoPreflight187=process.env.PHOTO_CUTOUT_PREFLIGHT187==='1';
+if(photoPreflight187&&!photoOwnerCutout186)throw Error('P187 must retain the real P186 reviewed JPEG byte-proof admission');
 if(photoOwnerCutout186&&!photoShoulder185)throw Error('P186 requires genuine P185 physical source geometry');
 if(photoShoulder185&&!photoSilhouette62)throw Error('P185 requires actual P62 original photographic source checks');
 const photoSilhouetteEngine62=process.env.PHOTO_SILHOUETTE62_BROWSER||'chromium';
@@ -174,11 +176,15 @@ try{
    return route.abort();
   });
   const page=await ctx.newPage();
+  let donorRequests187=0;
+  if(photoPreflight187)page.on('request',r=>{
+   if(new URL(r.url()).pathname.startsWith('/donor/'))donorRequests187++;
+  });
   page.on('pageerror',e=>errors.push({width,message:e.message}));
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -209,6 +215,15 @@ try{
    if(photoOwnerCutout186){
     assert.equal(openProof.ok,false,
      'P186 unreviewed provisional cutout must NEVER be promoted to an owner-approved 3D preview');
+    if(photoPreflight187){
+     assert.match([openProof.error,openProof.nativeStatus].join(' '),/P187/,
+      'Pre-WebGL owner-cutout rejection must have a specific, sanitized denial');
+     assert.equal(donorRequests187,0,
+      'P187 must NOT even import the real donor before owner review SHA proof');
+     assert.equal(await page.locator('#outfit3D01Dialog').count(),0,
+      'P187 no unapproved garment 3D donor/dialog ever created');
+     assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
+    }
     assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),/P186/i,
      'Engine-independent proof must expose an explicit refused owner-cutout review');
     const unsafe=await page.evaluate(()=>window.native3D05Bridge.state());
@@ -216,8 +231,11 @@ try{
     assert.equal(unsafe.photoOwnerCutout186,false);
     assert.deepEqual(await readBoard(page),ownerOriginal,
      'P186 fallback must never erase, save, or rewrite owner outfit');
-    await take(page,width,'02-provisional-cutout-review-required-2d-fallback');
+    await take(page,width,photoPreflight187?'02-pre-webgl-unreviewed-owner-cutout-2d-fallback':'02-provisional-cutout-review-required-2d-fallback');
     cases.push({width,provisionalBlouseOwnerCutoutReviewRejected186:true,
+     ...(photoPreflight187?{actualDonorImports187:donorRequests187,
+      preWebGLReviewDenial187:true,unreviewed3DSceneNeverCreated187:true,
+      legacyP186FallbackStillProtected:true}:{}),
      originalPhotoFallbackPreserved:true,source3DVisibilityRevoked:true,
      ownerWardrobeUntouched:true,physicalPhoneApproved:false,
      arbitraryOwnerPhoto3DApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'});
@@ -843,7 +861,7 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
+ const result={priority:photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
