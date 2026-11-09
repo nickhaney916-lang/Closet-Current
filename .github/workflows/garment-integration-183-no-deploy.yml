@@ -1,0 +1,209 @@
+name: P183 photographed garment integration original source and mobile 3D NO DEPLOY
+on:
+  push:
+    branches:
+      - research/garment-photo-fitting-integration-183-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-and-full-node-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict verified P182 ancestry and NO shipping product edits
+        run: |
+          set -eu
+          BASE=c02c63381277988a72a201104f540b00a78e32ed
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git rev-parse "$(git rev-list --reverse "$BASE..HEAD" | head -n1)^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p183-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/native-3d-05/native-preview-bridge.mjs|research/native-photo-anatomical-fit-integration-171/admission.mjs|scripts/test-native-3d-05-browser.mjs|research/user-photo-to-anatomical-3d-62/REPORT.md|research/user-photo-to-anatomical-3d-62/admission.mjs|research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs|scripts/install-user-photo-to-anatomical-3d-62.mjs|tests/user-photo-to-anatomical-3d-62.test.mjs|tests/garment-integrity-183.test.mjs|research/garment-integration-183/REPORT.md|.github/workflows/garment-integration-183-no-deploy.yml) ;;
+              *) echo "P183 refused unrelated source $p"; exit 1 ;;
+            esac
+          done </tmp/p183-paths
+          test "$(wc -l </tmp/p183-paths)" -eq 11
+          git diff --exit-code "$BASE" HEAD -- public supabase migrations package.json package-lock.json research/cloud-to-native-3d-180 research/native-owner-reviewed-cloud-ui-146 research/native-consumer-board-04 research/native-3d-05/donor.js
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Verify P62 source admission and complete inherited Node suite
+        run: |
+          node --check research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs
+          node --check research/user-photo-to-anatomical-3d-62/admission.mjs
+          node --check scripts/install-user-photo-to-anatomical-3d-62.mjs
+          node --check scripts/test-native-3d-05-browser.mjs
+          node --check tests/garment-integrity-183.test.mjs
+          node --test tests/user-photo-to-anatomical-3d-62.test.mjs tests/garment-integrity-183.test.mjs
+          node scripts/build.mjs
+          node --test tests/*.cjs tests/*.mjs
+  native-owner-chromium-and-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Load pinned P541, P60, and P172 research into disposable worktrees
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git worktree add --detach .donor541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .p60 6fe5e46b91533a96f3c0d86950ea077cb355c459
+          git worktree add --detach .p172 88d2fdb412f84b0498c86bfa17f4b391425e1958
+          for name in .donor541 .p60 .p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+          cd .donor541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          cd ..
+          cd .p60 && node scripts/install-photo-cloth-realism-164.mjs ../.donor541 && cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .donor541
+          node scripts/install-native-photo-torso-173.mjs .donor541 .p172
+          node scripts/install-source-shoulder-seam-174.mjs .donor541
+          node scripts/install-native-original-dress-drape-175.mjs .donor541
+          node scripts/install-user-photo-to-anatomical-3d-62.mjs .donor541
+      - name: Exercise actual owner-saved provisional blouse at three mobile widths
+        env:
+          PHOTO_FIT171: '1'
+          PHOTO_SILHOUETTE62: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-3d-05-browser.mjs
+      - name: Independently verify every genuine female/male mobile WebGL screenshot and no photorealism overclaim
+        env:
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const r=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(r.priority,'USER-PHOTO-TO-ANATOMICAL-3D-62');
+          assert.equal(r.browser,engine);
+          assert.equal(r.cases,3);
+          assert.equal(r.screenshots,15);
+          assert.equal(r.realWebGL,true);
+          assert.equal(r.realSignedRLS,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.equal(r.evidence.length,3);
+          assert.equal(r.screens.length,15);
+          assert.ok(r.evidence.every(x=>x.actualOriginalPhotoNative163BoneWebGL&&
+            x.physicalMaskDerivedDeformation&&x.femaleAndMaleRendered&&
+            x.provisionalCutoutNeedsHumanReview&&x.photorealismAccepted===false&&
+            x.ownerApprovalForArbitraryPhotos===false));
+          const fingerprints=new Set();
+          for(const row of r.screens){
+            assert.equal(row.name.startsWith(engine+'-'),true);
+            const bytes=readFileSync(root+row.name);
+            assert.equal(bytes.readUInt32BE(16),row.width);
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),row.sha256);
+            fingerprints.add(row.sha256);
+          }
+          assert.ok(fingerprints.size>=10);
+          console.log('P183_'+engine.toUpperCase()+'_REAL_FEMALE_MALE_3D_BLOUSE_15_SHA_SCREENSHOTS_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P183-native-owner-${{ matrix.engine }}-provisional-blouse-15-real-screens-HOLD
+          path: benchmark/user-photo-to-anatomical-3d-62/
+          retention-days: 14
+          if-no-files-found: warn
+
+  p182-private-owner-cloud-to-native-garment-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      ARTIFACT_DIR: benchmark/atomic-cloud-to-native-3d-180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build current unchanged consumer and pinned actual 163-bone donor
+        run: |
+          set -eu
+          node scripts/build.mjs
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+      - name: Real Chromium/WebKit owner original+cutout atomic restore and 163-bone native viewer
+        run: node scripts/test-atomic-cloud-to-native-3d-180-browser.mjs
+      - name: Independently check 42 real SHA images and full six-case mobile record
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='benchmark/atomic-cloud-to-native-3d-180/';
+          const r=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(r.priority,180);
+          assert.equal(r.actualRestoredCloudOriginal163BoneWebGL,true);
+          assert.equal(r.realCloudTouched,false);
+          assert.equal(r.liveSignedJWTVerified,false);
+          assert.equal(r.cases.length,6);
+          assert.equal(r.screenshots.length,42);
+          assert.deepEqual(r.chromium3DWidths,[320,390,430]);
+          assert.ok(r.cases.every(x=>x.actualAtomicRestore&&x.p178OwnerSHAAndAtomicCloudVerified&&x.syntheticOtherOwnerDenied&&x.familyAlpha==='HOLD'));
+          for(const shot of r.screenshots){
+            const raw=readFileSync(root+shot.name);
+            assert.equal(createHash('sha256').update(raw).digest('hex'),shot.sha256);
+            assert.equal(raw.readUInt32BE(16),shot.width);
+          }
+          console.log('P182_COMMITTED_RESTORE_SOURCE_RECONCILIATION_42_ACTUAL_MOBILE_WEBGL_SCREENSHOTS_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P183-inherited-private-wardrobe-to-163bone-42-real-screens-HOLD
+          path: benchmark/atomic-cloud-to-native-3d-180/
+          retention-days: 14
+          if-no-files-found: warn
