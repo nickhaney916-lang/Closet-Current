@@ -1,5 +1,6 @@
 import {verifyLocalSourceContinuity192} from '../owner-local-mask-continuity-192/source-local-continuity.mjs';
 import {verifyHairlineSourceContinuity194} from '../owner-hairline-continuity-194/hairline-source-proof.mjs';
+import {verifyRegisteredBoundaries66} from '../real-garment-acceptance-66/boundary-evidence.mjs';
 /**
  * Closet Current MAIN P191 — actual decoded owner alpha topology vs pinned
  * licensed original garment PNG. Research-only; source geometry authenticity
@@ -110,7 +111,9 @@ export function verifyDecodedSourceContour191({
  const hairline194=verifyHairlineSourceContinuity194({
   sourcePixels:src.pixels,ownerPixels:own.pixels,width,height
  });
- return Object.freeze({...local192,...hairline194,sourceId:'commons-0016',
+ const boundary66=verifyRegisteredBoundaries66({sourcePixels:src.pixels,
+  ownerPixels:own.pixels,width,height});
+ return Object.freeze({...local192,...hairline194,boundaryIntegrity66:boundary66,sourceId:'commons-0016',
   sourceSHA256:SOURCE,ownerMaskSHA256,
   ownerSourceOverlapIoU191:pct(iou),
   ownerInsideSourceFraction191:pct(contained),
