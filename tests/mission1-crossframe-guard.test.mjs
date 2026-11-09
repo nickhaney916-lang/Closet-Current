@@ -81,7 +81,7 @@ test('Mission1 suspicious subtype cannot auto-index without two real source-view
 test('Mission1 malformed, weak and negative prompts never establish independent agreement',async()=>{
  const r=result('Outerwear','Blazer');
  const first=await check(r,{whole:[
-  {label:localCandidates.find(x=>x.category==='Uncategorized').label,score:.7},
+  {label:localCandidates.find(x=>x.category==='Uncategorized').label,score:.96},
   ...ranked('Blazer','Jacket','Outerwear')]});
  assert.equal(first.x.strong,false);
  const second=await check(r,{
