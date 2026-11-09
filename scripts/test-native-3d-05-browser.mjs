@@ -843,7 +843,7 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,screenshots:photoOwnerCutout186?6:photoSilhouette62?21:photoTorso173?24:15,
+ const result={priority:photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
