@@ -107,12 +107,14 @@ test('P191 only passes SHA-grounded connected owner contour to real 163-bone P19
   'consumer.withReviewedCutoutForRenderer191(preflightLease187,asset=>',
   'consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>',
   'sourceMaskTopologyValid191:active',
-  'now?.ownerSourceMaskTopologyVerified191===true',
+  'ownerSourceTopologyCallback191:proof=>',
+  'verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true',
   'physical?.ownerAlphaMaskBasedPhysicalGeometry190===true',
-  'physical.ownerAlphaMaskSHA256_190===now?.ownerSourceMaskSHA191',
+  'physical.ownerAlphaMaskSHA256_190===verifiedSourceTopology191?.maskSHA256',
   'independentHumanReviewCertified191:false'])
   assert.ok(bridge.includes(term),term);
  for(const term of ['ownerMaskTopologyValidated191:actualOutfit171[k]',
+  'ownerSourceTopologyCallback191','sources?.blouse?.ownerSourceMaskTopologyValidated191===true',
   'onlyDetachedResearchDonor:true'])
   assert.ok(install.includes(term),term);
  for(const term of ['PHOTO_OWNER_TOPOLOGY191','sourceMaskTopologyValid191,true',
