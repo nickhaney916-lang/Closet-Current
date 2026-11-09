@@ -224,15 +224,15 @@ try{
     await model.selectOption('male');
     // Distinguish actual male mesh rejection from slow loading. Never claim
     // two-humanoid acceptance simply because the select changed to 'male'.
-    await page.waitForFunction(()=>{
-     const st=window.native3D05Bridge?.state();
-     const message=document.getElementById('outfit3D01Status')?.textContent||'';
-     return st?.modelReady&&st.figure==='male'&&st.photoSourceSilhouette62===true||
-       message.startsWith('Action not saved:')||message.startsWith('Original photo/2D fallback:');
-    },null,{timeout:30000});
+    // Changing the anatomical model is an async donor UI action. Capture
+    // both states even if a model-switch exception gets swallowed by its UI
+    // task queue rather than writing an "Action not saved" message.
+    await page.waitForTimeout(7000);
     const maleProof=await page.evaluate(()=>({
      state:window.native3D05Bridge?.state(),
-     donorStatus:String(document.getElementById('outfit3D01Status')?.textContent||'').slice(0,280)
+     donorStatus:String(document.getElementById('outfit3D01Status')?.textContent||'').slice(0,360),
+     choice:document.getElementById('outfit3D01Model')?.value,
+     previewStatus:document.getElementById('native3D05Status')?.textContent?.slice(0,250)
     }));
     assert.equal(maleProof.state?.modelReady&&maleProof.state?.figure==='male'&&
      maleProof.state?.photoSourceSilhouette62===true,true,
