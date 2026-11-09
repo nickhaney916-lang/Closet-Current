@@ -314,6 +314,9 @@ export async function mountNative3D05({
    requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
     throw Error('NATIVE05 exact pinned 3D donor not available');
+   if(params?.get('photoOwnerAlpha189')==='research'&&
+      params?.get('photoOwnerPositive188')!=='research')
+    throw Error('P189 owner PNG alpha requires P188 private JPEG double-hash texture path');
    if(params?.get('photoOwnerPositive188')==='research'){
     if(!preflightLease187||
        params.get('photoOwnerCutout187')!=='research'||
@@ -461,6 +464,18 @@ export async function mountNative3D05({
     if(params?.get('photoOwnerPositive188')==='research'&&
        verdict.actualPrivateJPEGTexelsOnSkinnedMesh188!==true)
      throw Error('P188 current verified private owner pixels not rendered into real 163-bone garment');
+    if(params?.get('photoOwnerAlpha189')==='research'){
+     // A second, independently WebCrypto-hashed private PNG must actually
+     // mask the fitted source garment's photographed texture. This never
+     // claims garment geometry was generated from the private PNG.
+     const mask=panel?.state?.();
+     if(mask?.ownerMaskPixelsOnSkinnedGarment189!==true||
+        !/^[0-9a-f]{64}$/.test(mask?.reviewedPrivateOwnerMaskSHA189||'')||
+        mask.ownerMaskGeometryFromPrivatePNG189!==false||
+        mask.ownerMaskHumanReviewIndependentlyVerified189!==false)
+      throw Error('P189 owner-private SHA-bound mask not applied to current 163-bone fabric');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
     await attestOriginalBytes92();requireFresh();
     verifiedOwnerCutout186=verdict;
     if(preflightLease187){
@@ -598,6 +613,12 @@ export async function mountNative3D05({
     data.privateCutoutTexelsOnMesh188===true,
    ownerCutoutMaskFromUser188:false,
    ownerCutoutHumanReviewIndependentlyWitnessed188:false,
+   ownerAlphaMaskTextureApplied189:active&&
+    verifiedOwnerCutout186?.admitted===true&&
+    data.ownerMaskPixelsOnSkinnedGarment189===true,
+   ownerAlphaMaskSourceGeometryChanged189:false,
+   ownerAlphaMaskHumanReviewIndependentlyWitnessed189:false,
+   ownerAlphaMaskSegmentationAccuracyVerified189:false,
    reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
