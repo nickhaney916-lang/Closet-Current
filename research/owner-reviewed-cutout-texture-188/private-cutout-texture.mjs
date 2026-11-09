@@ -113,6 +113,15 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
   ownerAlphaMaskSHA256_189:reviewedAlpha189?.privateMaskSHA256||null,
   ownerMaskWasSourceGeometry189:false,
   ownerMaskGeometryProfile190:ownerGeometryProfile190,
+  // Independent P191 source-byte-backed topology proof, kept as scalars
+  // within the owner-private donor. The separate P190 current mesh still
+  // must prove 163 bones, same mask SHA and bilateral sewn shoulder caps.
+  ownerSourceMaskTopologyValidated191:topologyProof191?.actualDecodedAlphaConnected191===true,
+  ownerSourceMaskOverlapIoU191:topologyProof191?.ownerSourceOverlapIoU191||0,
+  ownerSourceMaskLargestConnected191:topologyProof191?.ownerLargestComponentRatio191||0,
+  ownerSourceMaskInsideSource191:topologyProof191?.ownerInsideSourceFraction191||0,
+  ownerSourceMaskSHA191:topologyProof191?.ownerMaskSHA256||null,
+  ownerSourceMaskReviewIndependentlyWitnessed191:false,
   ownerMaskHumanReviewedIndependently189:false,
   privateCutoutHumanApprovalIndependentlyVerified188:false,
   cutoutMaskFromOwnerPhoto188:false,
