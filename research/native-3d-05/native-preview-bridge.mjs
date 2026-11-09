@@ -464,6 +464,9 @@ export async function mountNative3D05({
     if(params?.get('photoOwnerPositive188')==='research'&&
        verdict.actualPrivateJPEGTexelsOnSkinnedMesh188!==true)
      throw Error('P188 current verified private owner pixels not rendered into real 163-bone garment');
+    if(params?.get('photoOwnerTopology191')==='research'&&
+       params?.get('photoOwnerGeometry190')!=='research')
+     throw Error('P191 original-source alpha topology requires actual P190 private-owner physical mesh');
     if(params?.get('photoOwnerGeometry190')==='research'&&
        params?.get('photoOwnerAlpha189')!=='research')
      throw Error('P190 owner physical blouse geometry requires current P189 separate alpha mask proof');
@@ -499,6 +502,21 @@ export async function mountNative3D05({
         fit190?.ownerMaskHumanReviewCertified190!==false||
         fit190?.generalizedUserPhotoTo3D190!==false)
       throw Error('P190 actual reviewed owner-mask derived bounded 163-bone geometry proof unavailable');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
+    if(params?.get('photoOwnerTopology191')==='research'){
+     const now=panel?.state?.(),topology=now?.fitReceipts171?.shirt?.silhouette62;
+     if(now?.viewerReady!==true||now?.bones!==163||
+       topology?.ownerMaskTopologyValidated191!==true||
+       topology?.ownerAlphaMaskSHA256_190!==now?.reviewedPrivateOwnerMaskSHA189||
+       !Number.isFinite(topology?.ownerMaskSourceOverlapIoU191)||
+       topology.ownerMaskSourceOverlapIoU191<.80||
+       !Number.isFinite(topology?.ownerMaskLargestConnected191)||
+       topology.ownerMaskLargestConnected191<.87||
+       !Number.isFinite(topology?.ownerMaskInsideSource191)||
+       topology.ownerMaskInsideSource191<.965||
+       topology?.ownerMaskIndependentHumanReviewed191!==false)
+      throw Error('P191 current private garment alpha fails true original-photo topology check');
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
     await attestOriginalBytes92();requireFresh();
@@ -658,6 +676,19 @@ export async function mountNative3D05({
     data.fitReceipts171?.shirt?.silhouette62?.ownerMaskBilateralCapJoins190||0:0,
    ownerAlphaGeneral3DApproved190:false,
    ownerAlphaRearActuallyPhotographed190:false,
+   sourceMaskTopologyValid191:active&&verifiedOwnerCutout186?.admitted===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskTopologyValidated191===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskSHA256_190===
+     data.reviewedPrivateOwnerMaskSHA189,
+   sourceMaskOverlapIoU191:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskSourceOverlapIoU191||0:0,
+   sourceMaskLargestConnected191:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskLargestConnected191||0:0,
+   sourceMaskInsideSource191:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskInsideSource191||0:0,
+   independentHumanReviewCertified191:false,
+   generalGarmentSegmentationAccepted191:false,
+   ownerPhotoBackPhotographed191:false,
    reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
