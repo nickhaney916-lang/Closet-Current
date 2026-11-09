@@ -94,12 +94,14 @@ test('P191 only passes SHA-grounded connected owner contour to real 163-bone P19
  for(const term of ['verifyOwnerSourceTopology191','ownerMaskTopologyVerified191',
   'topologyProof191.sourceSHA256!==baseProfile190.sourceSHA256'])
   assert.ok(alpha.includes(term),term);
- for(const term of ['photoOwnerTopology191','ownerMaskTopologyRequested191:true'])
+ for(const term of ['photoOwnerTopology191','ownerMaskTopologyRequested191:true',
+  'requireOwnerMaskTopology191===true','P191_EXPLICIT_PRIVATE_ALPHA_TOPOLOGY_REQUIRES_SOURCE_GEOMETRY_AND_OWNER_LEASE'])
   assert.ok(consumer.includes(term),term);
  for(const term of ['ownerMaskTopologyValidated191:','ownerMaskSourceOverlapIoU191:',
   'ownerMaskIndependentHumanReviewed191:false'])
   assert.ok(rig.includes(term),term);
- for(const term of ['photoOwnerTopology191','sourceMaskTopologyValid191:active',
+ for(const term of ['photoOwnerTopology191','requireOwnerMaskTopology191:params?.get',
+  'sourceMaskTopologyValid191:active',
   'now?.ownerSourceMaskTopologyVerified191===true',
   'physical?.ownerAlphaMaskBasedPhysicalGeometry190===true',
   'physical.ownerAlphaMaskSHA256_190===now?.ownerSourceMaskSHA191',
