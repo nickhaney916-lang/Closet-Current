@@ -250,6 +250,44 @@ export async function createNativeConsumerBoard04({
    generation:lease.generation,revision:wardrobeRevision93});
   return true;
  };
+ /**
+  * P188: one-shot owner-private texture handoff to the actual detached
+  * 163-bone donor. The reviewed JPEG string is never returned in status or
+  * from this method. Caller supplies a same-page, research-only renderer
+  * callback. Both private bytes are rehashed before and after this callback.
+  * Explicit review metadata is an owner assertion, not independent quality.
+  */
+ const withReviewedCutoutForRenderer188=async(receipt,renderer)=>{
+  const params=new URLSearchParams(win.location.search);
+  if(params.get('photoOwnerPositive188')!=='research'||
+     params.get('photoOwnerCutout187')!=='research'||
+     typeof renderer!=='function')
+   fail('P188_EXPLICIT_PRIVATE_RENDERER_AND_REVIEW_REQUIRED');
+  requireReviewedCutoutLease187(receipt);
+  const row=wardrobe.find(x=>x.id===receipt.garmentId);
+  if(!row||row.ownerId!==receipt.ownerId)
+   fail('P188_WRONG_OWNER_OR_SELECTED_GARMENT');
+  const before=await attestReviewedCutout186(row.id);
+  requireReviewedCutoutLease187(receipt);
+  if(JSON.stringify(before)!==JSON.stringify(receipt))
+   fail('P188_CUTOUT_RECEIPT_CHANGED_BEFORE_RENDERER');
+  const asset=Object.freeze({
+   sourceId:'commons-0016',originalSourceSHA256:receipt.originalSourceSHA256,
+   privateCutoutJPEGBytesSHA256:receipt.cutoutSHA256,
+   cutoutImage:row.segmentHint.cutoutImage,
+   ownerReviewed:true,originalJPEGVerified:true,cutoutJPEGVerified:true,
+   privateOriginalAndCutoutBytesVerified:true,releaseAuthorized:false,familyAlpha:'HOLD'
+  });
+  // Only the actual approved renderer callback gets these in-memory pixels.
+  // Do not expose image strings via bridge.state(), return values or CI logs.
+  const result=await renderer(asset);
+  requireReviewedCutoutLease187(receipt);
+  const after=await attestReviewedCutout186(row.id);
+  requireReviewedCutoutLease187(receipt);
+  if(JSON.stringify(after)!==JSON.stringify(before))
+   fail('P188_OWNER_REVIEW_CHANGED_DURING_PRIVATE_TEXTURE_RENDER');
+  return result;
+ };
  // NATIVE93: strictly read-only monotonic private wardrobe refresh epoch.
  // The epoch changes whenever a new wardrobe snapshot is adopted. It never
  // returns an original image and does not change saved outfit CAS records.
@@ -454,7 +492,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,attestReviewedCutoutLease187,requireReviewedCutoutLease187,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,attestReviewedCutoutLease187,requireReviewedCutoutLease187,withReviewedCutoutForRenderer188,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;

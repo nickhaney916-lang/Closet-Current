@@ -314,7 +314,15 @@ export async function mountNative3D05({
    requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
     throw Error('NATIVE05 exact pinned 3D donor not available');
-   panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
+   if(params?.get('photoOwnerPositive188')==='research'){
+    if(!preflightLease187||
+       params.get('photoOwnerCutout187')!=='research'||
+       typeof consumer.withReviewedCutoutForRenderer188!=='function')
+     throw Error('P188 owner-reviewed private texture requires current P187 lease');
+    panel=await consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>
+     donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+    consumer.requireReviewedCutoutLease187(preflightLease187);
+   }else panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
    requireFresh(); // Do not open a donor after the native outfit changed.
    lockDonorEditing();
    opened=selected.id;
@@ -431,6 +439,9 @@ export async function mountNative3D05({
       typeof consumer.attestReviewedCutout186!=='function')
      throw Error('P186 owner-review research requires genuine P185 photo fit');
     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    if(params?.get('photoOwnerPositive188')==='research'&&
+       panel?.state?.()?.privateCutoutTexelsOnMesh188!==true)
+     throw Error('P188 actual owner-private JPEG fabric texels not on source-fitted skinned mesh');
     const savedReview=await consumer.attestReviewedCutout186(selected.slots.top);
     requireFresh();
     if(preflightLease187){
@@ -447,6 +458,9 @@ export async function mountNative3D05({
     });
     if(!verdict.admitted)
      throw Error('P186 owner original+cutout reviewed source unavailable: '+verdict.reason);
+    if(params?.get('photoOwnerPositive188')==='research'&&
+       verdict.actualPrivateJPEGTexelsOnSkinnedMesh188!==true)
+     throw Error('P188 current verified private owner pixels not rendered into real 163-bone garment');
     await attestOriginalBytes92();requireFresh();
     verifiedOwnerCutout186=verdict;
     if(preflightLease187){
@@ -579,6 +593,11 @@ export async function mountNative3D05({
     !!doc.getElementById('outfit3D01AnatomyCover185')?.textContent?.includes('mannequin'),
    photoOwnerCutout186:active&&verifiedOwnerCutout186?.admitted===true,
    photoOwnerCutout187:active&&!!displayedReviewLease187&&verifiedOwnerCutout186?.admitted===true,
+   ownerReviewedCutoutTextureOnMesh188:active&&
+    verifiedOwnerCutout186?.actualPrivateJPEGTexelsOnSkinnedMesh188===true&&
+    data.privateCutoutTexelsOnMesh188===true,
+   ownerCutoutMaskFromUser188:false,
+   ownerCutoutHumanReviewIndependentlyWitnessed188:false,
    reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,

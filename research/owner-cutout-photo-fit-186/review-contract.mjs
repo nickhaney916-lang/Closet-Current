@@ -40,10 +40,22 @@ export function inspectOwnerReviewedCutout186({
   proof62.cutoutSHA256!==mesh.cutoutSHA256)
   return denied('actual-physical-source-and-cutout-mesh-proof-mismatch');
  const r=verifiedCutout;
+ // P188: the owner's actual reviewed cutout is a JPEG, whereas P62's
+ // source-fitted silhouette is a separate PNG. Requiring identical SHA
+ // values accidentally made all genuinely reviewed private JPEGs impossible.
+ // A DIFFERENT JPEG can be admitted ONLY if its own reverified texels
+ // were actually composited into the anatomical skinned front mesh.
+ const independentOwnerTexture188=render?.privateCutoutTexelsOnMesh188===true&&
+  render?.ownerCutoutMaskFromOwnerPhoto188===false&&
+  render?.reviewedPrivateCutoutJPEG_SHA188===r?.cutoutSHA256&&
+  render?.reviewedSourceMaskSHA188===mesh?.cutoutSHA256&&
+  SHA.test(r?.cutoutSHA256||'')&&r.cutoutSHA256!==mesh.cutoutSHA256&&
+  render?.privateCutoutHumanApprovalIndependentlyVerified188===false;
  if(r?.ownerId!==selection.ownerId||r?.garmentId!==selection.slots.top||
   r?.sourceId!=='commons-0016'||
   r?.originalSourceSHA256!==LICENSED_BLOUSE_SHA||
-  r?.cutoutSHA256!==mesh.cutoutSHA256||
+  (render?.privateCutoutTexelsOnMesh188===true||render?.reviewedPrivateCutoutJPEG_SHA188!=null)&&!independentOwnerTexture188||
+  r?.cutoutSHA256!==mesh.cutoutSHA256&&!independentOwnerTexture188||
   r?.ownerReviewed!==true||r?.humanReviewedSource!==true||
   r?.reviewProvenance!=='explicit-owner-claim-not-independent-review-evidence'||
   r?.originalJPEGBytesSHA256Verified!==true||
@@ -54,6 +66,10 @@ export function inspectOwnerReviewedCutout186({
   originalAndCutoutJPEGBytesIndependentlySHA256Verified:true,
   sourceAndSavedGarmentBound:true,ownerReviewMetadataMatched:true,
   mesh163BoneSourceEased185:true,inferredRearNotPhotographed:true,
+  actualPrivateJPEGTexelsOnSkinnedMesh188:independentOwnerTexture188,
+  ownerPrivateJPEGCutoutVsPinnedPNGMaskSeparated188:independentOwnerTexture188,
+  ownerSpecificAlphaSegmentationVerified188:false,
+  pinSourcePNGAlphaNotUserOwned188:independentOwnerTexture188,
   independentlyReviewedByHuman:false,ownerApprovalProves3DRealism:false,
   arbitraryPrivatePhotosSupported:false,collisionCertified:false,
   releaseAuthorized:false,familyAlpha:'HOLD'});
