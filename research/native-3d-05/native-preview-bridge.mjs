@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null,displayedReviewLease187=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null,displayedReviewLease187=null,verifiedSourceTopology191=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;displayedReviewLease187=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;displayedReviewLease187=null;verifiedSourceTopology191=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -317,13 +317,34 @@ export async function mountNative3D05({
    if(params?.get('photoOwnerAlpha189')==='research'&&
       params?.get('photoOwnerPositive188')!=='research')
     throw Error('P189 owner PNG alpha requires P188 private JPEG double-hash texture path');
+   verifiedSourceTopology191=null;
    if(params?.get('photoOwnerPositive188')==='research'){
     if(!preflightLease187||
        params.get('photoOwnerCutout187')!=='research'||
        typeof consumer.withReviewedCutoutForRenderer188!=='function')
      throw Error('P188 owner-reviewed private texture requires current P187 lease');
-    panel=await consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>
-     donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+    if(params?.get('photoOwnerTopology191')==='research'){
+     if(typeof consumer.withReviewedCutoutForRenderer191!=='function')
+      throw Error('P191 separate owner-reviewed private source topology renderer required');
+     panel=await consumer.withReviewedCutoutForRenderer191(preflightLease187,asset=>
+      donor.mountOutfit3D01Research({
+       doc,auth:epoch.auth,ownerReviewedCutout188:asset,
+       ownerSourceTopologyCallback191:proof=>{
+        if(proof?.actualDecodedOwnerSourceAlphaTopology191!==true||
+           proof?.maskSHA256!==asset.ownerAlphaSHA256189||
+           proof?.sourceSHA256!==asset.originalSourceSHA256||
+           proof?.independentlyReviewedByHuman!==false||
+           proof?.releaseAuthorized!==false)
+         throw Error('P191 private source topology proof must match current owner alpha and original');
+        verifiedSourceTopology191=Object.freeze({...proof});
+       }
+      }));
+    }else{
+     // Preserve the original P188 API and its separately verified source
+     // receipt; no other camera, native owner or cloud path is changed.
+     panel=await consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>
+      donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+    }
     consumer.requireReviewedCutoutLease187(preflightLease187);
    }else panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
    requireFresh(); // Do not open a donor after the native outfit changed.
@@ -464,6 +485,9 @@ export async function mountNative3D05({
     if(params?.get('photoOwnerPositive188')==='research'&&
        verdict.actualPrivateJPEGTexelsOnSkinnedMesh188!==true)
      throw Error('P188 current verified private owner pixels not rendered into real 163-bone garment');
+    if(params?.get('photoOwnerTopology191')==='research'&&
+       params?.get('photoOwnerGeometry190')!=='research')
+     throw Error('P191 original-source alpha topology requires actual P190 private-owner physical mesh');
     if(params?.get('photoOwnerGeometry190')==='research'&&
        params?.get('photoOwnerAlpha189')!=='research')
      throw Error('P190 owner physical blouse geometry requires current P189 separate alpha mask proof');
@@ -499,6 +523,44 @@ export async function mountNative3D05({
         fit190?.ownerMaskHumanReviewCertified190!==false||
         fit190?.generalizedUserPhotoTo3D190!==false)
       throw Error('P190 actual reviewed owner-mask derived bounded 163-bone geometry proof unavailable');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
+    if(params?.get('photoOwnerTopology191')==='research'){
+     // Independently require (1) original-licensed-vs-owner PNG alpha pixels
+     // were decoded and topology-validated before fitting, and (2) the
+     // actual current P190 163-bone shirt shell plus TWO shoulder cap joins
+     // bears precisely the same SHA. The source and mesh are separate
+     // receipts; one cannot synthesize the other's verification outcome.
+     const now=panel?.state?.(),physical=now?.fitReceipts171?.shirt?.silhouette62;
+     const source=verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true&&
+      verifiedSourceTopology191?.sourceSHA256===
+       selectedSources91.sources.find(x=>x.id===selected.slots.top)?.sha256&&
+      verifiedSourceTopology191.maskSHA256===now?.reviewedPrivateOwnerMaskSHA189&&
+      Number.isFinite(verifiedSourceTopology191.overlapIoU)&&
+      verifiedSourceTopology191.overlapIoU>=.80&&
+      Number.isFinite(verifiedSourceTopology191.largestConnected)&&
+      verifiedSourceTopology191.largestConnected>=.87&&
+      Number.isFinite(verifiedSourceTopology191.insideSource)&&
+      verifiedSourceTopology191.insideSource>=.965&&
+      verifiedSourceTopology191.independentlyReviewedByHuman===false&&
+      verifiedSourceTopology191.releaseAuthorized===false;
+     const fitted=physical?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
+      physical.ownerAlphaMaskSHA256_190===verifiedSourceTopology191?.maskSHA256&&
+      physical.ownerMaskBilateralCapJoins190===2&&
+      physical.ownerMaskOnlyUpperBlouse190===true&&
+      physical.inferredOwnerMaskRear190===true;
+     if(now?.viewerReady!==true||now?.bones!==163||
+       source!==true||fitted!==true)
+      throw Error('P191 current private garment alpha fails true original-photo topology check: '+JSON.stringify({
+       current163:now?.bones===163,
+       sourcePixelTopology:source===true,
+       loaderConfirmed:verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true,
+       sameOwnerMaskSHA:verifiedSourceTopology191?.maskSHA256===now?.reviewedPrivateOwnerMaskSHA189,
+       overlap:Number.isFinite(verifiedSourceTopology191?.overlapIoU)?verifiedSourceTopology191.overlapIoU:0,
+       connected:Number.isFinite(verifiedSourceTopology191?.largestConnected)?verifiedSourceTopology191.largestConnected:0,
+       inside:Number.isFinite(verifiedSourceTopology191?.insideSource)?verifiedSourceTopology191.insideSource:0,
+       currentPhysical163BoneMesh:fitted===true
+      }));
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
     await attestOriginalBytes92();requireFresh();
@@ -658,6 +720,18 @@ export async function mountNative3D05({
     data.fitReceipts171?.shirt?.silhouette62?.ownerMaskBilateralCapJoins190||0:0,
    ownerAlphaGeneral3DApproved190:false,
    ownerAlphaRearActuallyPhotographed190:false,
+   sourceMaskTopologyValid191:active&&verifiedOwnerCutout186?.admitted===true&&
+    verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true&&
+    verifiedSourceTopology191.maskSHA256===data.reviewedPrivateOwnerMaskSHA189&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskSHA256_190===
+     verifiedSourceTopology191.maskSHA256,
+   sourceMaskOverlapIoU191:active?verifiedSourceTopology191?.overlapIoU||0:0,
+   sourceMaskLargestConnected191:active?verifiedSourceTopology191?.largestConnected||0:0,
+   sourceMaskInsideSource191:active?verifiedSourceTopology191?.insideSource||0:0,
+   independentHumanReviewCertified191:false,
+   generalGarmentSegmentationAccepted191:false,
+   ownerPhotoBackPhotographed191:false,
    reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,

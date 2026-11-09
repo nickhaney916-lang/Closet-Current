@@ -17,6 +17,9 @@ const photoPreflight187=process.env.PHOTO_CUTOUT_PREFLIGHT187==='1';
 const photoOwnerPositive188=process.env.PHOTO_OWNER_POSITIVE188==='1';
 const photoOwnerAlpha189=process.env.PHOTO_OWNER_ALPHA189==='1';
 const photoOwnerGeometry190=process.env.PHOTO_OWNER_GEOMETRY190==='1';
+const photoOwnerTopology191=process.env.PHOTO_OWNER_TOPOLOGY191==='1';
+if(photoOwnerTopology191&&!photoOwnerGeometry190)
+ throw Error('P191 real owner-source alpha topology requires P190 current physical 163-bone garment');
 if(photoOwnerGeometry190&&!photoOwnerAlpha189)
  throw Error('P190 actual owner contour geometry requires P189 independently SHA-verified private PNG');
 if(photoOwnerAlpha189&&!photoOwnerPositive188)
@@ -249,7 +252,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -346,6 +349,16 @@ try{
       assert.equal(blouseState.ownerAlphaBilateralCapJoins190,2);
       assert.equal(blouseState.ownerAlphaGeneral3DApproved190,false);
       assert.equal(blouseState.ownerAlphaRearActuallyPhotographed190,false);
+      if(photoOwnerTopology191){
+       assert.equal(blouseState.sourceMaskTopologyValid191,true,
+        'P191 current genuine source PNG and SHA-verified private owner PNG must have connected registered alpha before 3D');
+       assert.ok(blouseState.sourceMaskOverlapIoU191>=.80);
+       assert.ok(blouseState.sourceMaskLargestConnected191>=.87);
+       assert.ok(blouseState.sourceMaskInsideSource191>=.965);
+       assert.equal(blouseState.independentHumanReviewCertified191,false);
+       assert.equal(blouseState.generalGarmentSegmentationAccepted191,false);
+       assert.equal(JSON.stringify(blouseState).includes('data:image'),false);
+      }
      }
      assert.equal(JSON.stringify(blouseState).includes('data:image'),false);
      assert.match(disclosure188,/OWNER-ASSERTED PNG alpha/);
@@ -406,6 +419,11 @@ try{
      assert.ok(maleProof.state?.ownerAlphaPhysicalVertices190>=20);
      assert.ok(maleProof.state?.ownerAlphaPhysicalMoveMeters190<=.00901);
      assert.equal(maleProof.state?.ownerAlphaBilateralCapJoins190,2);
+     if(photoOwnerTopology191){
+      assert.equal(maleProof.state?.sourceMaskTopologyValid191,true);
+      assert.ok(maleProof.state?.sourceMaskOverlapIoU191>=.80);
+      assert.ok(maleProof.state?.sourceMaskLargestConnected191>=.87);
+     }
     }
     if(photoShoulder185){
      assert.equal(maleProof.state?.photoSourceShoulder185,true,
@@ -442,6 +460,15 @@ try{
     originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
     ownerApprovalForArbitraryPhotos:false,photorealismAccepted:false,
     ...(photoOwnerPositive188?{provisionalCutoutNeedsHumanReview:false}:{provisionalCutoutNeedsHumanReview:true}),
+    ...(photoOwnerTopology191?{
+     realOriginalSourceAndOwnerAlphaTopology191:true,
+     actualOwnerContourOverlapIoU191:blouseState.sourceMaskOverlapIoU191,
+     actualOwnerContourConnected191:blouseState.sourceMaskLargestConnected191,
+     actualOwnerContourInsideSource191:blouseState.sourceMaskInsideSource191,
+     originalAndOwnerMaskSourceShaRetained191:true,
+     humanReviewIndependentlyWitnessed191:false,
+     arbitraryPhotoSegmentationCertified191:false
+    }:{}),
     ...(photoOwnerGeometry190?{
      sourceOwnerAlphaPhysicalMeshFitted190:true,
      ownerMaskMeasuredActuallyFromPrivateRaster190:true,
@@ -1088,7 +1115,7 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
+ const result={priority:photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',

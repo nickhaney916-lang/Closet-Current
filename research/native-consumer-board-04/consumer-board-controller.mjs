@@ -302,7 +302,9 @@ export async function createNativeConsumerBoard04({
     ownerAlphaSHA256189:alphaProof189.privatePNG_SHA256,
     ownerAlphaProof189:alphaProof189,
     ...(params.get('photoOwnerGeometry190')==='research'?
-     {ownerMaskGeometryRequested190:true}:{})
+     {ownerMaskGeometryRequested190:true}:{}),
+    ...(params.get('photoOwnerTopology191')==='research'?
+     {ownerMaskTopologyRequested191:true}:{})
    }:{}),
    ownerReviewed:true,originalJPEGVerified:true,cutoutJPEGVerified:true,
    privateOriginalAndCutoutBytesVerified:true,releaseAuthorized:false,familyAlpha:'HOLD'
@@ -530,7 +532,28 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,attestReviewedCutoutLease187,requireReviewedCutoutLease187,withReviewedCutoutForRenderer188,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ // P191 is an EXPLICIT additional trust boundary. Keep the original
+ // P188 two-argument owner-private renderer contract unchanged so all
+ // inherited P188 consumers/tests remain valid. Only this new wrapper may
+ // request mask-to-source topology, and both URL and owner review lease must
+ // still authorize the exact synthetic-only research donor.
+ const withReviewedCutoutForRenderer191=async(receipt,renderer)=>{
+  const requested=new URLSearchParams(win.location.search);
+  if(requested.get('photoOwnerTopology191')!=='research'||
+     requested.get('photoOwnerGeometry190')!=='research'||
+     requested.get('photoOwnerAlpha189')!=='research'||
+     typeof renderer!=='function')
+   fail('P191_EXPLICIT_PRIVATE_ALPHA_TOPOLOGY_REQUIRES_SOURCE_GEOMETRY_AND_OWNER_LEASE');
+  requireReviewedCutoutLease187(receipt);
+  return withReviewedCutoutForRenderer188(receipt,async asset=>{
+   if(asset?.ownerMaskTopologyRequested191!==true||
+      asset?.ownerAlphaProof189?.actualPNGBytesWebCryptoVerified!==true)
+    fail('P191_PRIVATE_ALPHA_TOPOLOGY_REQUEST_NOT_AUTHORIZED_BY_CURRENT_OWNER');
+   requireReviewedCutoutLease187(receipt);
+   return renderer(asset);
+  });
+ };
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,attestReviewedCutoutLease187,requireReviewedCutoutLease187,withReviewedCutoutForRenderer188,withReviewedCutoutForRenderer191,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
