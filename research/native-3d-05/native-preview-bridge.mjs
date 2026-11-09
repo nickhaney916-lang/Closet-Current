@@ -473,6 +473,9 @@ export async function mountNative3D05({
   const data=active?panel.state():{};
   return Object.freeze({active,opened:active?opened:null,
    modelReady:active&&data.viewerReady===true,
+   // P183: expose the ACTUAL loaded donor anatomical figure; never derive
+   // female/male from a select value before a 163-bone model finished loading.
+   figure:active&&data.viewerReady===true?data.figure||null:null,
    bones:active?data.bones||0:0,
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
