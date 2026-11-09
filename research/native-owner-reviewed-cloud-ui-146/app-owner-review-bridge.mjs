@@ -102,6 +102,7 @@ export async function mountOwnerReviewedCloud146({
  <button class="secondary" type="button" id="owner146Preview">Compare local and cloud counts</button>
  <button class="secondary" type="button" id="owner146Backup">Back up this wardrobe…</button>
  <button class="secondary" type="button" id="owner146Restore">Restore from cloud…</button>
+ <button class="secondary" type="button" id="owner146Recheck" hidden>Retry restored-photo verification (no cloud replacement)</button>
  <p class="fine" role="status" aria-live="polite" id="owner146Status">Local research controls ready. Automatic cloud sync paused.</p>
  <div id="owner146Counts" class="fine" aria-live="polite" hidden></div>`;
  menu.prepend(panel);
@@ -134,7 +135,17 @@ export async function mountOwnerReviewedCloud146({
  <button id="owner146Approve" class="primary" type="button">Confirm replacement</button></div>`;
  doc.body.append(dialog);
  const by=id=>doc.getElementById(id);
- const buttonIds=['owner146Preview','owner146Backup','owner146Restore'];
+ const buttonIds=['owner146Preview','owner146Backup','owner146Restore','owner146Recheck'];
+ const refreshVerificationControls=()=>{
+  const quarantined=!!cloud3D180?.state()?.postCommitUnverified;
+  const retry=by('owner146Recheck');
+  if(retry)retry.hidden=!quarantined;
+  // No second destructive cloud restore while post-commit JPEG proof is
+  // unresolved. Local-only recheck is the only path to unlock source 3D.
+  const restore=by('owner146Restore');
+  if(restore&&!working)restore.disabled=quarantined;
+ };
+ refreshVerificationControls();
  const status=(message)=>{if(!revoked)by('owner146Status').textContent=message;};
  const count=(id,value)=>{by(id).textContent=String(Number.isSafeInteger(value)?value:0);};
  function showCounts(info,fromRestore=false){
@@ -184,9 +195,14 @@ export async function mountOwnerReviewedCloud146({
    cloud3D180.consent(restoreLease180,()=>decide(info,'restore')):
    decide(info,'restore'),
   onRestored:async()=>{
-   assertLocalOwner();
-   if(cloud3D180)await cloud3D180.afterAtomicRestore(restoreLease180);
-   await onRestored();assertLocalOwner();
+   // Called by P129 only after the P126 private IndexedDB commit. A later
+   // failed SHA is NOT a rollback, so pin 3D quarantine before any awaits.
+   if(cloud3D180)cloud3D180.markAtomicCommitted(restoreLease180);
+   try{
+    assertLocalOwner();
+    await onRestored();assertLocalOwner();
+    if(cloud3D180)await cloud3D180.afterAtomicRestore(restoreLease180);
+   }catch(e){cloud3D180?.notePostCommitFailure(restoreLease180);throw e;}
   }
  });
  async function run(kind,operation){
@@ -200,14 +216,21 @@ export async function mountOwnerReviewedCloud146({
    // P129 restore receipts contain a numeric `saved` outfit count.
    // Never mistake that number for a boolean backup-success receipt.
    if(r?.cancelled===true)status('Cancelled. Your wardrobe and saved outfits were preserved.');
-   else if(r?.restored===true)status('Verified cloud wardrobe and saved outfits restored on this device.');
+   else if(r?.reconciled===true&&kind==='recheck')
+    status('Restored-photo verification repeated locally. No second cloud restore. '+
+     (r.photoFallbackOutfits?'Some items require original-photo review; unverified 3D stays blocked.':'Verified sources can now be viewed in 3D.'));
+   else if(r?.restored===true)status('Verified cloud wardrobe and saved outfits restored on this device.'+
+     (cloud3D180?.state()?.photoFallbackOutfits?' Some clothing remains in original-photo-only fallback.':''));
    else if(r?.saved===true)status('Reviewed cloud backup saved at revision '+r.revision+'.');
    else status('Private count-only preview checked. No photographs displayed.');
    return r;
   }catch(e){
    if(revoked)return;
    const code=e.code||'unknown';
-   const cause=(code==='local-changed')?'Your local wardrobe changed. Review again.':
+   const committed=!!cloud3D180?.state()?.postCommitUnverified;
+   const cause=committed?
+    'Your cloud wardrobe WAS restored to this device, but original-photo verification did not finish. 3D is blocked. Retry restored-photo verification; do not restore again.':
+    (code==='local-changed')?'Your local wardrobe changed. Review again.':
     (code==='remote-changed'||code==='conflict')?'The cloud backup changed. Review again.':
     (code==='owner-session-revoked')?'Owner session changed. Operation cancelled.':
     'Operation stopped safely. Check your account and try again.';
@@ -215,7 +238,8 @@ export async function mountOwnerReviewedCloud146({
    return {failed:true,code};
   }finally{
    working=false;
-   if(!revoked)for(const id of buttonIds)by(id).disabled=false;
+   if(!revoked){for(const id of buttonIds)by(id).disabled=false;
+    refreshVerificationControls();}
   }
  }
  by('owner146Preview').onclick=()=>run('preview',async()=>{
@@ -237,6 +261,11 @@ export async function mountOwnerReviewedCloud146({
    showCounts(await backupService.previewBoth());
   }
   return r;
+ });
+ by('owner146Recheck').onclick=()=>run('recheck',async()=>{
+  if(!cloud3D180?.state()?.postCommitUnverified)
+   fail('no restored photos are awaiting read-only verification');
+  return cloud3D180.retryVerification();
  });
  by('owner146Restore').onclick=()=>run('restore',async()=>{
   const lease=cloud3D180?.begin()||null;
@@ -277,6 +306,7 @@ export async function mountOwnerReviewedCloud146({
    nativeOriginalAndCutout178:!revoked&&!!cutout178,
    nativeSourceTransport178:!revoked?cutout178?.status()||null:null,
    nativeCloud3DRefresh180:!revoked&&!!cloud3D180,
-   cloud3D180:!revoked?cloud3D180?.state()||null:null})
+   cloud3D180:!revoked?cloud3D180?.state()||null:null,
+   postCommitUnverified:!revoked&&!!cloud3D180?.state()?.postCommitUnverified})
  });
 }
