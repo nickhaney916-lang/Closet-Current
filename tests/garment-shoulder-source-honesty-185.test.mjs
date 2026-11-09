@@ -54,9 +54,17 @@ test('P185 real donor installer applies only original garment to correct source 
   "originalPhotoSHAAndCutoutUnchanged:true",
   "ownerWardrobeWritten:false"
  ])assert.ok(install.includes(anchor),anchor);
+ const source=readFileSync('research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs','utf8');
+ for(const needle of [
+  "['L','R'].every(side=>targets.some(m=>m.userData?.work45IndependentShoulderCap===side))",
+  "mesh.position.clone().set(p.getX(i),p.getY(i),p.getZ(i))",
+  "worldPoint.x+=nx-x;worldPoint.y+=ny-y",
+  'independentShoulderCapSeamsRetained185:naturalShoulder185'
+ ])assert.ok(source.includes(needle),'P185 must move shell and BOTH real sewn shoulder caps together: '+needle);
  const native=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
  for(const token of ['photoShoulder185','sourceShoulderEased185',
   'photoSourceShoulder185:active','mannequinBaseCoverDisclosure185',
+  'shoulderCapSeamsRetained185:active','independentlyJoinedShoulderCapMeshes185<2',
   'await attestOriginalBytes92();requireFresh()'])
   assert.ok(native.includes(token),token);
 });
@@ -68,6 +76,7 @@ test('P185 actual-browser dual figure acceptance asserts real shoulder mesh and 
   "'#outfit3D01AnatomyCover185'",
   'BOTTOMS: NONE SELECTED',
   'noSelectedOrSavedBottomFabricated185:true',
+  'bilateralSewnShoulderCapsRetained185:true',
   'provisionalCutoutNeedsHumanReview:true',
   "'06-male-inferred-rear-provisional-blouse'",
   'assert.deepEqual(await readBoard(page),ownerOriginal)'])
