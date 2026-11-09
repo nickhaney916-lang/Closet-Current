@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -397,6 +397,28 @@ export async function mountNative3D05({
      throw Error('P185 actual shoulder-fall mesh fit and correct world-Y mapping not independently available');
     await attestOriginalBytes92();requireFresh();
    }
+   if(params?.get('photoOwnerCutout186')==='research'){
+    // A provisional licensed blouse is not an owner-reviewed cutout.
+    // The selected owner's real P119 saved source and separate cutout bytes
+    // must both independently hash-match before this 3D claim is permitted.
+    if(params.get('photoShoulder185')!=='research'||
+      !verifiedPhotoSilhouette62?.admitted||
+      typeof consumer.attestReviewedCutout186!=='function')
+     throw Error('P186 owner-review research requires genuine P185 photo fit');
+    const savedReview=await consumer.attestReviewedCutout186(selected.slots.top);
+    requireFresh();
+    const module=await import('../owner-cutout-photo-fit-186/review-contract.mjs');
+    const render=panel?.state?.();
+    const verdict=module.inspectOwnerReviewedCutout186({
+     selection:selected,sources:selectedSources91,
+     render:render?{...render,productionDeployed:false}:null,
+     proof62:verifiedPhotoSilhouette62,verifiedCutout:savedReview
+    });
+    if(!verdict.admitted)
+     throw Error('P186 owner original+cutout reviewed source unavailable: '+verdict.reason);
+    await attestOriginalBytes92();requireFresh();
+    verifiedOwnerCutout186=verdict;
+   }
    // P173: an explicitly selected owner shirt may claim a bounded 3D torso
    // contour ONLY when the real donor physically moved the original mesh.
    // Dress remains P171 source-only, not falsely labeled P173 shirt-fitted.
@@ -520,6 +542,8 @@ export async function mountNative3D05({
     data.fitReceipts171?.shirt?.silhouette62?.maxShoulderDisplacement185||0:0,
    mannequinBaseCoverDisclosure185:active&&
     !!doc.getElementById('outfit3D01AnatomyCover185')?.textContent?.includes('mannequin'),
+   photoOwnerCutout186:active&&verifiedOwnerCutout186?.admitted===true,
+   ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
    photoSourceDress175:active&&verifiedPhotographicDress175?.admitted===true,

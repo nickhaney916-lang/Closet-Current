@@ -11,6 +11,7 @@ import {createNativeAuthEpoch01} from './native-session-epoch-550-pinned.mjs';
 import {createExistingBoard02IO} from '../board-lossless-02/existing-idb-cas.mjs';
 import {boardFingerprint02,validateBoard02} from '../board-lossless-02/lossless-board.mjs';
 import {attestOriginalJPEGBytes92} from '../native-original-photo-integrity-92/original-jpeg-byte-attestation.mjs';
+import {attestOwnerReviewedCutoutBytes186} from '../owner-cutout-photo-fit-186/review-contract.mjs';
 
 export const NATIVE_CONSUMER_BOARD_04=Object.freeze({
  featureGate:'nativeLossless04=research',nativeConsumerControls:true,
@@ -176,6 +177,36 @@ export async function createNativeConsumerBoard04({
      verified.some((row,i)=>JSON.stringify(row)!==JSON.stringify(before.sources[i])))
    fail('NATIVE92_SOURCE_CHANGED_DURING_CRYPTO');
   return Object.freeze({ownerId:lease.ownerId,sources:Object.freeze(verified)});
+ };
+ /**
+  * P186: real private wardrobe owner+revision-bound, DOUBLE WebCrypto byte
+  * proof of the P119 original and explicitly owner-reviewed distinct cutout.
+  * Never synthesize a review receipt from a provisional public fixture.
+  */
+ const attestReviewedCutout186=async(garmentId)=>{
+  const p=new URLSearchParams(win.location.search);
+  if(p.get('native3D05')!=='research'||p.get('photoOwnerCutout186')!=='research')
+   fail('P186_EXPLICIT_PRIVATE_REVIEW_GATE_REQUIRED');
+  const lease=alive(),revision=wardrobeRevision93;
+  if(!validId(garmentId))fail('P186_INVALID_SAVED_GARMENT_ID');
+  const row=wardrobe.find(x=>x.id===garmentId);
+  if(!row||row.ownerId!==lease.ownerId)
+   fail('P186_MISSING_CURRENT_OWNER_GARMENT');
+  const originalBefore=readOnlyGarmentSources91([garmentId]);
+  const hint=row.segmentHint,cutoutBefore=hint?.cutoutImage;
+  const proof=await attestOwnerReviewedCutoutBytes186({
+   row,ownerId:lease.ownerId,cryptoImpl:win.crypto,
+   decodeBase64:win.atob.bind(win)
+  });
+  const current=alive();
+  if(current.ownerId!==lease.ownerId||current.generation!==lease.generation||
+    revision!==wardrobeRevision93||wardrobe.find(x=>x.id===garmentId)!==row||
+    row.segmentHint!==hint||hint?.cutoutImage!==cutoutBefore||
+    row.cutoutSHA256!==proof.cutoutSHA256||
+    row.ownerReviewed!==true||row.humanReviewedSource!==true||
+    JSON.stringify(originalBefore)!==JSON.stringify(readOnlyGarmentSources91([garmentId])))
+   fail('P186_OWNER_REVIEW_OR_CUTOUT_CHANGED_DURING_CRYPTO');
+  return proof;
  };
  // NATIVE93: strictly read-only monotonic private wardrobe refresh epoch.
  // The epoch changes whenever a new wardrobe snapshot is adopted. It never
@@ -381,7 +412,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
