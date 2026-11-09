@@ -476,6 +476,17 @@ export async function mountNative3D05({
       throw Error('P189 owner-private SHA-bound mask not applied to current 163-bone fabric');
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
+    if(params?.get('photoOwnerGeometry65')==='research'){
+     const geometry=panel?.state?.();
+     if(geometry?.ownerMaskGeometry65!==true||
+        !Number.isSafeInteger(geometry?.ownerMaskGeometryMovedVertices65)||
+        geometry.ownerMaskGeometryMovedVertices65<20||
+        !/^[0-9a-f]{64}$/.test(geometry?.ownerMaskGeometrySHA256_65||'')||
+        geometry.ownerMaskReviewAssertionOnly65!==true||
+        geometry.ownerMaskHumanReviewIndependentlyVerified65!==false)
+      throw Error('P65 owner-bound reviewed mask did not deform current 163-bone garment');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
     await attestOriginalBytes92();requireFresh();
     verifiedOwnerCutout186=verdict;
     if(preflightLease187){
@@ -619,6 +630,11 @@ export async function mountNative3D05({
    ownerAlphaMaskSourceGeometryChanged189:false,
    ownerAlphaMaskHumanReviewIndependentlyWitnessed189:false,
    ownerAlphaMaskSegmentationAccuracyVerified189:false,
+   ownerMaskGeometry65:active&&data.ownerMaskGeometry65===true,
+   ownerMaskGeometryMovedVertices65:active?data.ownerMaskGeometryMovedVertices65||0:0,
+   ownerMaskGeometrySHA256_65:active?data.ownerMaskGeometrySHA256_65||null:null,
+   ownerMaskReviewAssertionOnly65:active&&data.ownerMaskReviewAssertionOnly65===true,
+   ownerMaskHumanReviewIndependentlyVerified65:false,
    reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,

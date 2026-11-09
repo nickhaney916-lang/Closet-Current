@@ -43,11 +43,21 @@ const decode=async src=>{
 };
 export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
  const identity=inspectPrivateCutoutTextureInputs188({blouse,asset});
- let originalMask=blouse.cutout,reviewedAlpha189=null;
+ const pinnedMask=blouse.cutout;
+ let originalMask=pinnedMask,reviewedAlpha189=null,ownerMaskGeometry65=null;
  if(asset?.ownerAlphaPNG189||asset?.ownerAlphaProof189){
   const {decodeReviewedOwnerMask189}=await import('../owner-mask-fabric-189/mask-contract.mjs');
   reviewedAlpha189=await decodeReviewedOwnerMask189({asset,blouse});
   originalMask=reviewedAlpha189.mask;
+  const {createOwnerMaskGeometryProfile65}=await import('../real-owner-garment-to-3d-65/owner-mask-geometry.mjs');
+  const readRGBA=image=>{const canvas=document.createElement('canvas');canvas.width=image.naturalWidth||image.width;canvas.height=image.naturalHeight||image.height;
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});if(!ctx)fail('P65 mask contour pixel buffer unavailable');
+   ctx.drawImage(image,0,0);return ctx.getImageData(0,0,canvas.width,canvas.height).data;};
+  const ownerPixels=readRGBA(originalMask),pinnedPixels=readRGBA(pinnedMask);
+  ownerMaskGeometry65=createOwnerMaskGeometryProfile65({ownerId:asset.ownerId,garmentId:asset.garmentId,
+   sourceSHA256:blouse.sourceSHA256,ownerMaskSHA256:reviewedAlpha189.privateMaskSHA256,
+   ownerMaskData:ownerPixels,baselineMaskData:pinnedPixels,
+   width:originalMask.naturalWidth||originalMask.width,height:originalMask.naturalHeight||originalMask.height});
  }
  const mw=originalMask?.naturalWidth||originalMask?.width||0;
  const mh=originalMask?.naturalHeight||originalMask?.height||0;
@@ -75,6 +85,7 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
  // private review source remains the separately SHA-verified JPEG.
  const compositedImage=await decode(canvas.toDataURL('image/png'));
  return Object.freeze({...blouse,cutout:compositedImage,
+  ...(ownerMaskGeometry65?{ownerMaskGeometry65}:{}),
   privateCutoutTexelsComposited188:true,
   cutoutSourceMaskSHA256188:identity.sourceMaskSHA256,
   privateCutoutJPEG_SHA256188:identity.ownerPrivateCutoutJPEG_SHA256,
