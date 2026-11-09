@@ -19,9 +19,14 @@ const check=async (r,setup)=>{
   assert.ok(labels.some(x=>x.includes('room with no clothing')));
   return rows;
  };
+ const first=r.choices[0];
+ const alternative=first.category==='Outerwear'?'Jacket':
+  first.category==='Shoes'?'Sneakers':
+  first.itemType==='Sweatshirt'?'T-shirt':'Blouse';
+ const defaultScores=()=>ranked(first.itemType,alternative,first.category);
  const x=await corroborateAmbiguousType(r,{source:'JPEG original'},{
-  sourceWhole:model('whole',setup?.whole||ranked(r.choices[0].itemType,'T-shirt',r.choices[0].category)),
-  sourceCenter:model('center',setup?.center||ranked(r.choices[0].itemType,'T-shirt',r.choices[0].category))
+  sourceWhole:model('whole',setup?.whole||defaultScores()),
+  sourceCenter:model('center',setup?.center||defaultScores())
  });
  return {x,calls};
 };
