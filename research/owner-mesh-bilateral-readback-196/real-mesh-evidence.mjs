@@ -39,7 +39,7 @@ export function verifyPhysicalBilateralMesh196({
   const side=mesh?.userData?.work45IndependentShoulderCap;
   const role=mesh?.name==='Work56-independent-shirt-shell'?'torso':
    side==='L'?'cap-L':side==='R'?'cap-R':null;
-  if(!role||roles.has(role)||mesh?.isSkinnedMesh!==true||
+  if(!role||mesh?.isSkinnedMesh!==true||
      mesh?.skeleton?.bones?.length!==163||
      !p||!panel||!Number.isInteger(p.count)||p.count<100||
      panel.count!==p.count||
@@ -48,6 +48,8 @@ export function verifyPhysicalBilateralMesh196({
      planned.length!==p.count*3||staged.length!==p.count*3||
      p.array.length!==planned.length||panel.array.length!==staged.length)
    fail('real distinct torso and both 163-bone shoulder-cap vertex buffers required');
+  // The real source blouse can have more than one sewn panel per cap side.
+  // Count every real panel but require both cap roles and the actual torso.
   roles.add(role);
   for(let i=0;i<p.count;i++){
    const k=i*3,x=panel.array[k],dx=staged[k]-x;
