@@ -64,9 +64,19 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
    });
   }
   const {profileOwnerAlphaGeometry190}=await import('../owner-mask-geometry-190/owner-alpha-contour.mjs');
+  const bilateral195=new URLSearchParams(globalThis.location?.search||'')
+   .get('photoOwnerBilateral195')==='research';
+  // P195 requires the same real decoded SHA-verified P191-P194 owner
+  // alpha as the physical garment; never accept private scalar metadata.
+  if(bilateral195&&(asset.ownerMaskTopologyRequested191!==true||
+    topologyProof191?.actualDecodedAlphaConnected191!==true||
+    topologyProof191?.ownerSourceHairlineContinuous194!==true||
+    topologyProof191?.ownerSourceInteriorContinuous192!==true))
+   fail('P195 independent left/right contours require current decoded source topology');
   const baseProfile190=profileOwnerAlphaGeometry190({
    source:blouse.cutout,owner:reviewedAlpha189.mask,
-   maskSHA:reviewedAlpha189.privateMaskSHA256
+   maskSHA:reviewedAlpha189.privateMaskSHA256,
+   independentBilateral195:bilateral195
   });
   if(topologyProof191&&(topologyProof191.sourceSHA256!==baseProfile190.sourceSHA256||
     topologyProof191.ownerMaskSHA256!==baseProfile190.ownerMaskSHA256||

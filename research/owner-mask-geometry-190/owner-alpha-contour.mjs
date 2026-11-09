@@ -5,6 +5,7 @@
  * NOT 3D reconstruction from an arbitrary photograph, segmentation truth,
  * collision simulation, independent owner review or a photographed rear.
  */
+import {deriveOwnerBilateralContour195} from '../owner-bilateral-asymmetric-fit-195/side-profile.mjs';
 const SRC='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const HEX=/^[0-9a-f]{64}$/;
 const fail=x=>{throw Error('P190 '+x);};
@@ -27,7 +28,7 @@ function alphaRows(image){
  }
  return {w,h,rows};
 }
-export function profileOwnerAlphaGeometry190({source,owner,maskSHA}={}){
+export function profileOwnerAlphaGeometry190({source,owner,maskSHA,independentBilateral195=false}={}){
  if(!HEX.test(maskSHA||''))fail('separate current owner PNG SHA required');
  const a=alphaRows(source),b=alphaRows(owner);
  if(a.w!==b.w||a.h!==b.h)fail('owner mask must share original source coordinates');
@@ -53,17 +54,20 @@ export function profileOwnerAlphaGeometry190({source,owner,maskSHA}={}){
  }
  if(valid<height*.32||maxDiff<.009)
   fail('independent owner mask must have measurable, registered shape difference');
- return Object.freeze({ownerAlphaSourceShape190:true,sourceId:'commons-0016',sourceSHA256:SRC,
+ const independent195=independentBilateral195===true?
+  deriveOwnerBilateralContour195({sourceRows:a.rows,ownerRows:b.rows,
+   width,height,sourceSHA256:SRC,maskSHA256:maskSHA}):null;
+ return Object.freeze({...(independent195||{}),ownerAlphaSourceShape190:true,sourceId:'commons-0016',sourceSHA256:SRC,
   ownerMaskSHA256:maskSHA,ratioBands:Object.freeze(bands),maxRelativeDifference:maxDiff,
   widthEvidenceRows:valid,sourceBasedBlouseOnly:true,mirrorRearInferred:true,
   independentSegmentationWitness:false,independentReviewWitness:false,
   generalizedToOtherGarments:false,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
-function ratioAt190(profile,y){
+function ratioAt190(profile,y,bands=profile.ratioBands){
  // Top of photographed blouse is HIGH anatomical world Y, hem is LOW.
- const t=clamp((1.78-y)/.66,0,1)*(profile.ratioBands.length-1);
- const i=Math.floor(t),j=Math.min(i+1,profile.ratioBands.length-1);
- return profile.ratioBands[i]*(1-(t-i))+profile.ratioBands[j]*(t-i);
+ const t=clamp((1.78-y)/.66,0,1)*(bands.length-1);
+ const i=Math.floor(t),j=Math.min(i+1,bands.length-1);
+ return bands[i]*(1-(t-i))+bands[j]*(t-i);
 }
 export function boundedOwnerAlphaContour190({x,y,profile}={}){
  if(!Number.isFinite(x)||!Number.isFinite(y)||
@@ -72,7 +76,19 @@ export function boundedOwnerAlphaContour190({x,y,profile}={}){
     !Array.isArray(profile.ratioBands)||profile.ratioBands.length!==12||
     profile.ratioBands.some(r=>!Number.isFinite(r)||r<.86||r>1.02))
   fail('finite source-verified 12-band mask silhouette required');
- const maskRatio=ratioAt190(profile,y);
+ const side195=profile.ownerBilateralContourMeasured195===true;
+ if(side195&&(
+   profile.sourceSHA256!==SRC||
+   profile.maskSHA256!==profile.ownerMaskSHA256||
+   ![profile.leftRatioBands195,profile.rightRatioBands195].every(b=>
+     Array.isArray(b)&&b.length===12&&b.every(r=>
+      Number.isFinite(r)&&r>=.80&&r<=1.05))||
+   !Number.isFinite(profile.ownerBilateralAsymmetry195)||
+   profile.ownerBilateralAsymmetry195<.012))
+  fail('P195 must have real same-SHA registered independent left and right edge bands');
+ const maskRatio=side195?
+  ratioAt190(profile,y,x<0?profile.leftRatioBands195:profile.rightRatioBands195):
+  ratioAt190(profile,y);
  const mid=smooth(y,1.1,1.17)*(1-smooth(y,1.77,1.86));
  const shift=clamp(x*(maskRatio-1)*.6*mid,-.009,.009);
  return Object.freeze({x:x+shift,y,zChange:0,deltaX:shift,maskRatio,
@@ -97,6 +113,8 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
  if(targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||
    !skeletons.has(m.skeleton)))fail('only the original licensed skinned 163-bone shell can be moved');
  let moved=0,maxShift=0,activeCaps=new Set(),panels=[];
+ const side195=profile.ownerBilateralContourMeasured195===true;
+ let leftMoved195=0,rightMoved195=0;
  for(const mesh of targets){
   mesh.updateWorldMatrix(true,false);
   const p=mesh.geometry?.getAttribute('position'),panel=mesh.geometry?.getAttribute('panelPosition');
@@ -110,6 +128,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
    const delta=change.deltaX;
    if(Math.abs(delta)<.0001)continue;
    moved++;maxShift=Math.max(maxShift,Math.abs(delta));
+   if(side195){if(x<0)leftMoved195++;else if(x>0)rightMoved195++;}
    pan[i*3]=change.x;
    const world=mesh.position.clone().set(p.getX(i),p.getY(i),p.getZ(i))
     .applyMatrix4(mesh.matrixWorld);
@@ -122,6 +141,17 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
  }
  if(moved<20||maxShift<.0005||maxShift>.00901||activeCaps.size!==2)
   fail('real bilateral owner-mask-derived shell displacement not independently established');
+ const refL=side195?boundedOwnerAlphaContour190({x:-.35,y:1.45,profile}).deltaX:0;
+ const refR=side195?boundedOwnerAlphaContour190({x:.35,y:1.45,profile}).deltaX:0;
+ const asymPhysical195=Math.abs(refL+refR);
+ if(side195&&(
+   profile.ownerMaskTopologyVerified191!==true||
+   profile.ownerMaskTopologyIoU191<.80||
+   profile.maskSHA256!==profile.ownerMaskSHA256||
+   leftMoved195<20||rightMoved195<20||
+   !Number.isFinite(asymPhysical195)||
+   asymPhysical195<.0003||asymPhysical195>.009))
+  fail('P195 independently SHA-verified asymmetrical source contour requires both sides of current 163-bone blouse mesh');
  // Atomic in-memory validation: commit geometry ONLY after all meshes pass.
  for(const row of panels){
   row.p.array.set(row.positions);row.panel.array.set(row.pan);
@@ -132,6 +162,14 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
  return {...shirt,stats:{...shirt.stats,ownerAlphaMaskBasedPhysicalGeometry190:true,
   ownerAlphaMaskSHA256_190:profile.ownerMaskSHA256,
   ownerMaskAdjustedVertices190:moved,ownerMaskMaxMoveMeters190:maxShift,
+  ownerBilateralActualPhotoShape195:side195,
+  ownerBilateralMaskSHA195:side195?profile.ownerMaskSHA256:null,
+  ownerBilateralLeftVertices195:side195?leftMoved195:0,
+  ownerBilateralRightVertices195:side195?rightMoved195:0,
+  ownerBilateralPhysicalAsymmetryMeters195:side195?asymPhysical195:0,
+  ownerBilateralSourceSpecificOnly195:true,
+  ownerBilateralRearInferred195:true,
+  ownerBilateralHumanApprovalCertified195:false,
   ownerMaskBilateralCapJoins190:activeCaps.size,ownerMaskOnlyUpperBlouse190:true,
   inferredOwnerMaskRear190:true,ownerMaskHumanReviewCertified190:false,
   ownerMaskTopologyValidated191:profile.ownerMaskTopologyVerified191===true&&

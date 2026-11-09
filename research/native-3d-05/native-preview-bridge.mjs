@@ -563,6 +563,28 @@ export async function mountNative3D05({
       }));
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
+    if(params?.get('photoOwnerBilateral195')==='research'){
+     if(params?.get('photoOwnerTopology191')!=='research')
+      throw Error('P195 independent bilateral source contour requires P191-P194 current reviewed source gate');
+     const actual=panel?.state?.(),fit=actual?.fitReceipts171?.shirt?.silhouette62;
+     if(actual?.viewerReady!==true||actual?.bones!==163||
+        fit?.ownerBilateralActualPhotoShape195!==true||
+        fit?.ownerBilateralSourceSpecificOnly195!==true||
+        fit?.ownerBilateralRearInferred195!==true||
+        fit?.ownerBilateralHumanApprovalCertified195!==false||
+        fit?.ownerBilateralMaskSHA195!==actual.reviewedPrivateOwnerMaskSHA189||
+        fit.ownerBilateralMaskSHA195!==verifiedSourceTopology191?.maskSHA256||
+        fit?.ownerMaskBilateralCapJoins190!==2||
+        !Number.isInteger(fit?.ownerBilateralLeftVertices195)||
+        fit.ownerBilateralLeftVertices195<20||
+        !Number.isInteger(fit?.ownerBilateralRightVertices195)||
+        fit.ownerBilateralRightVertices195<20||
+        !Number.isFinite(fit?.ownerBilateralPhysicalAsymmetryMeters195)||
+        fit.ownerBilateralPhysicalAsymmetryMeters195<.0003||
+        fit.ownerBilateralPhysicalAsymmetryMeters195>.009)
+      throw Error('P195 separately measured owner left/right photo contour not fitted to 163-bone blouse');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
     await attestOriginalBytes92();requireFresh();
     verifiedOwnerCutout186=verdict;
     if(preflightLease187){
@@ -718,6 +740,18 @@ export async function mountNative3D05({
     data.fitReceipts171?.shirt?.silhouette62?.ownerMaskMaxMoveMeters190||0:0,
    ownerAlphaBilateralCapJoins190:active?
     data.fitReceipts171?.shirt?.silhouette62?.ownerMaskBilateralCapJoins190||0:0,
+   ownerBilateralActualPhotoShape195:active&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerBilateralActualPhotoShape195===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerBilateralMaskSHA195===
+     data.reviewedPrivateOwnerMaskSHA189,
+   ownerBilateralLeftVertices195:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerBilateralLeftVertices195||0:0,
+   ownerBilateralRightVertices195:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerBilateralRightVertices195||0:0,
+   ownerBilateralPhysicalAsymmetryMeters195:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerBilateralPhysicalAsymmetryMeters195||0:0,
+   ownerBilateralRearInferred195:true,
+   ownerBilateralHumanApprovalCertified195:false,
    ownerAlphaGeneral3DApproved190:false,
    ownerAlphaRearActuallyPhotographed190:false,
    sourceMaskTopologyValid191:active&&verifiedOwnerCutout186?.admitted===true&&
