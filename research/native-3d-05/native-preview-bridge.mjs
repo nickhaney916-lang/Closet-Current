@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null,displayedReviewLease187=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null,verifiedOwnerCutout186=null,displayedReviewLease187=null,verifiedSourceTopology191=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;displayedReviewLease187=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;verifiedOwnerCutout186=null;displayedReviewLease187=null;verifiedSourceTopology191=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -317,7 +317,7 @@ export async function mountNative3D05({
    if(params?.get('photoOwnerAlpha189')==='research'&&
       params?.get('photoOwnerPositive188')!=='research')
     throw Error('P189 owner PNG alpha requires P188 private JPEG double-hash texture path');
-   let verifiedSourceTopology191=null;
+   verifiedSourceTopology191=null;
    if(params?.get('photoOwnerPositive188')==='research'){
     if(!preflightLease187||
        params.get('photoOwnerCutout187')!=='research'||
