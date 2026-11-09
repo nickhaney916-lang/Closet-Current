@@ -110,16 +110,23 @@ if(photoOwnerPositive188){
    // A source-contained synthetic owner-asserted asymmetric left garment
    // edge. Real PNG bytes and their fresh SHA are generated AFTER edit.
    // No private family picture or witnessed human segmentation is claimed.
-   const trim=Math.max(3,Math.round(info.width*.013));
+   // Same threshold as P190's actual source/owner alphaRows readback:
+   // transparent anti-aliasing fringes (alpha 1..159) are NOT cloth edges.
+   // Old >0 selection trimmed fringe pixels and produced no real side shift.
+   const trim=Math.max(3,Math.round(info.width*.018));
+   let trimmedRows=0;
    for(let y=0;y<info.height;y++){
     let first=-1,last=-1;
-    for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>0){
+    for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>=160){
      if(first<0)first=x;last=x;
     }
-    if(first<0||last-first<Math.max(28,Math.round(info.width*.13)))continue;
+    if(first<0||last-first<Math.max(28,Math.round(info.width*.25)))continue;
     for(let x=first;x<=Math.min(last,first+trim-1);x++)
      data[(y*info.width+x)*4+3]=0;
+    trimmedRows++;
    }
+   assert.ok(trimmedRows>=Math.round(info.height*.3),
+    'P195 synthetic source-contained alpha must actually trim measurable original cloth rows');
   }
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
    .png({compressionLevel:9}).toBuffer();
