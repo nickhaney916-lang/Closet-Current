@@ -837,7 +837,8 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,photoOwnerCutout186?6:photoSilhouette62?21:photoTorso173?24:15);
+ assert.equal(cases.length,3);photoOwnerCutout186?assert.equal(screens.length,6):
+  assert.equal(screens.length,photoSilhouette62?21:photoTorso173?24:15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
