@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
 import * as catalog from '../public/local-catalog.mjs';
 import * as engine from '../public/recognition-engine.mjs';
+import * as confusionGuard from '../public/recognition-confusion-guard.mjs';
 import {scannerErrorCode} from '../public/scanner-errors.mjs';
 const source=fs.readFileSync('public/local-worker.mjs','utf8');
 function setup({width=500,decodeError=false,detailError=false}={}){
@@ -17,18 +18,18 @@ function setup({width=500,decodeError=false,detailError=false}={}){
   return scores(labels);
  };
  const runtime={CLIPVisionModelWithProjection:{from_pretrained:async()=>async()=>({})},AutoProcessor:{from_pretrained:async()=>async()=>({})},env:{backends:{onnx:{wasm:{}}}},RawImage:{read:async()=>{if(decodeError)throw Error('Image decode failed, private path');return {width,height:500};}}};
- const vectorsAPI={loadVectorAssets:async()=>({metadata:{model:'ff13/fashion-clip',revision:'0'.repeat(40)},vectors:null}),makeVectorScorer:()=>model},photoAPI={prepareRecognitionPhoto:async image=>image};
- const c={vectorsAPI,photoAPI,engine,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,URL};vm.createContext(c);
- const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replaceAll('new URL(import.meta.url).search',"''");
+ const vectorsAPI={loadVectorAssets:async()=>({metadata:{model:'ff13/fashion-clip',revision:'0'.repeat(40)},vectors:null}),makeVectorScorer:()=>model},photoAPI={prepareRecognitionPhoto:async image=>image,fitWholePhoto:async image=>image};
+ const c={vectorsAPI,photoAPI,engine,confusionGuard,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,URL};vm.createContext(c);
+ const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replace("await import('./recognition-confusion-guard.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(confusionGuard)').replaceAll('new URL(import.meta.url).search',"''");
  vm.runInContext(transformed,c);
  return {sent,calls,async scan(){c.self.onmessage({data:{id:'test',type:'classify',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);return sent.find(x=>x.type==='result');}};
 }
 test('worker keeps classification but drops disagreeing and uncertain details',async()=>{
  const h=setup(),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{pattern:'Solid',sleeveLength:'Sleeveless'});
- assert.equal(h.calls.length,9);assert.ok(h.calls.every(x=>x.image===h.calls[0].image));assert.ok(h.sent.some(x=>x.type==='identified'));
+ assert.equal(h.calls.length,11);assert.ok(h.calls.every(x=>x.image===h.calls[0].image));assert.ok(h.sent.some(x=>x.type==='identified'));
 });
 test('small photos still classify but cannot autosupply detailed attributes',async()=>{
- const h=setup({width:112}),result=await h.scan();assert.equal(result.strong,true);assert.deepEqual({...result.details},{});assert.equal(h.calls.length,4);
+ const h=setup({width:112}),result=await h.scan();assert.equal(result.strong,true);assert.deepEqual({...result.details},{});assert.equal(h.calls.length,6);
 });
 test('unreadable image returns a safe image error instead of categories',async()=>{
  const h=setup({decodeError:true});assert.equal(await h.scan(),undefined);assert.equal(h.calls.length,0);const error=h.sent.find(x=>x.type==='error');assert.equal(error.code,'image');assert.ok(!JSON.stringify(error).includes('private path'));
