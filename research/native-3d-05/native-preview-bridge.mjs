@@ -378,6 +378,22 @@ export async function mountNative3D05({
     if(!result.admitted)throw Error('P62 source-photo physical silhouette fit unavailable: '+result.reason);
     await attestOriginalBytes92();requireFresh();verifiedPhotoSilhouette62=result;
    }
+   if(params?.get('photoShoulder185')==='research'){
+    // The *actual skinned donor* must provide a new physical-shoulder receipt;
+    // a camera cutout, slider flag or model dropdown is insufficient.
+    if(params?.get('photoSilhouette62')!=='research'||!verifiedPhotoSilhouette62?.admitted)
+     throw Error('P185 requires P62 verified native owner original-photo 3D admission');
+    const candidate=panel?.state?.()?.fitReceipts171?.shirt?.silhouette62;
+    if(candidate?.sourceShoulderEased185!==true||
+      candidate?.shoulderHemWorldAxisCorrected185!==true||
+      !Number.isInteger(candidate?.shoulderEasedVertices185)||
+      candidate.shoulderEasedVertices185<20||
+      !Number.isFinite(candidate.maxShoulderDisplacement185)||
+      candidate.maxShoulderDisplacement185<.0001||
+      candidate.maxShoulderDisplacement185>.025)
+     throw Error('P185 actual shoulder-fall mesh fit and correct world-Y mapping not independently available');
+    await attestOriginalBytes92();requireFresh();
+   }
    // P173: an explicitly selected owner shirt may claim a bounded 3D torso
    // contour ONLY when the real donor physically moved the original mesh.
    // Dress remains P171 source-only, not falsely labeled P173 shirt-fitted.
@@ -484,6 +500,17 @@ export async function mountNative3D05({
    photoSourceSilhouette62:active&&verifiedPhotoSilhouette62?.admitted===true,
    silhouetteVertices62:active?verifiedPhotoSilhouette62?.movedVertices||0:0,
    silhouetteMaxMeters62:active?verifiedPhotoSilhouette62?.maxMovementMeters||0:0,
+   // P185 source-mesh proof must be recomputed from current donor state when
+   // switching anatomical gender, not from the prior female model receipt.
+   photoSourceShoulder185:active&&
+    data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.shoulderHemWorldAxisCorrected185===true,
+   physicalShoulderVertices185:active?
+    data.fitReceipts171?.shirt?.silhouette62?.shoulderEasedVertices185||0:0,
+   physicalShoulderMaxMeters185:active?
+    data.fitReceipts171?.shirt?.silhouette62?.maxShoulderDisplacement185||0:0,
+   mannequinBaseCoverDisclosure185:active&&
+    !!doc.getElementById('outfit3D01AnatomyCover185')?.textContent?.includes('mannequin'),
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
    photoSourceDress175:active&&verifiedPhotographicDress175?.admitted===true,
