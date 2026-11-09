@@ -430,7 +430,14 @@ try{
      // owner-mask revocation test than mutating through the active renderer.
      const modifier=await ctx.newPage();
      try{
-      await modifier.goto(origin+'/public/index.html',{waitUntil:'domcontentloaded'});
+      // Load an inert public benchmark document, NOT another full app.
+      // A second unauthenticated app instance broadcasts a session-change
+      // event and closes the signed-in owner's original viewer, which would
+      // falsely pass the owner-mask revocation test.
+      await modifier.goto(origin+'/public/benchmark.html',{waitUntil:'domcontentloaded'});
+      assert.match(await modifier.title(),/Photo Recognition Benchmark/);
+      assert.equal(await page.evaluate(()=>window.closetAuth?.user?.id),'native05-A',
+       'P189 private signed-in viewer must survive the independent data-writing tab');
       const revised=await modifier.evaluate(()=>new Promise((resolve,reject)=>{
        const req=indexedDB.open('closet-current-user-native05-A');
        req.onerror=()=>reject(req.error);
@@ -465,8 +472,11 @@ try{
       tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
      }));
     }
-    // Never infer success from page navigation; the original WebGL page
-    // must remain loaded, observe real changed IndexedDB data, and revoke.
+    // Never infer success from page navigation or a cleared owner session.
+    // The original WebGL page must remain signed in, observe real changed
+    // IndexedDB data and revoke only through its source-review guard.
+    assert.equal(await page.evaluate(()=>window.closetAuth?.user?.id),'native05-A',
+     'P189 mask-only change must not log out the verified owner');
     await page.evaluate(()=>window.nativeLossless04Bridge.refreshWardrobe());
     if(photoOwnerAlpha189){
      const persisted=await page.evaluate(()=>new Promise((resolve,reject)=>{
