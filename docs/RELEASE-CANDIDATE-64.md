@@ -2,6 +2,7 @@
 
 **Assessment date:** November 9, 2026
 **Candidate base:** Main Priority #188, `801cfd4d75a70dc127220ac76dc8d8c58cb5f17e`
+**Candidate PR:** Draft #752, exact-head CI run #42660226662 passed 3/3 jobs
 **Family Alpha:** HOLD — [Issue #255](https://github.com/nickhaney916-lang/Closet-Current/issues/255)
 **Disposition:** Integrated research candidate; **not release-ready and not deployed**
 
@@ -15,9 +16,9 @@ The inherited application integration is useful development evidence, not releas
 
 | Gate | Evidence | Status |
 |---|---|---|
-| Build and source package | Local `node scripts/build.mjs` passes; CI repeats it | Pass |
-| Automated regression | P188 exact-head CI: 1,461/1,461 Node tests pass | Pass on P188 head; candidate workflow reruns |
-| Browser rendering | P188 exact-head CI: Chromium + WebKit, 320/390/430, 98 SHA-audited PNGs; current app flow locally passed Chromium 3/3 widths after source-proof harness repair | Limited synthetic-fixture pass; exact-head Chromium/WebKit rerun pending |
+| Build and source package | Candidate exact-head CI run #42660226662 built the app and uploaded a 64-file static package with SHA-256 artifact digest `105467d4bee202b011547689a972684f1a2b9f463b491909f173e9d1678691a4` | Pass; artifact is not deployed |
+| Automated regression | Candidate exact-head CI run #42660226662: 1,461/1,461 Node tests pass | Pass |
+| Browser rendering | Candidate exact-head CI run #42660226662: six unique Chromium/WebKit × 320/390/430 cases passed; nine genuine screenshots uploaded. P188 also has 98 separate SHA-audited 3D screenshots. | Limited synthetic-fixture pass |
 | Real mobile devices | No physical Android/iPhone available | Blocked |
 | Recognition accuracy | Existing labeled benchmark is inadequate for required independent category/subtype/color/segmentation acceptance | Blocked |
 | Arbitrary owner garment 3D | P188 only supports a pinned blouse source and public silhouette alpha; unseen backs are inferred | Blocked; use original-photo 2D fallback |
@@ -30,7 +31,7 @@ The inherited application integration is useful development evidence, not releas
 
 ## CI status interpretation
 
-P188's dedicated exact-head no-deploy workflow is green. Some older branch-specific workflows fail at their exact-parent allowlist before dependency installation or tests because they expect earlier parent commits. These are stale workflow gates on later stacked commits, not evidence that the dedicated P188 tests failed. They should be consolidated into integration-level CI before release.
+P188's dedicated exact-head no-deploy workflow and P64's candidate exact-head workflow are green. Some older branch-specific workflows fail at their exact-parent allowlist before dependency installation or tests because they expect earlier parent commits. These are stale workflow gates on later stacked commits, not evidence that the dedicated P188 or P64 tests failed. They should be consolidated into integration-level CI before release.
 
 The candidate adds a separate no-deploy packaging workflow that builds and tests the full current tree and uploads a checksummed static artifact. It does not include a deployment job or environment secrets.
 
