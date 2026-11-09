@@ -64,7 +64,12 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
  ctx.globalCompositeOperation='source-over';
  // Canvas is a real HTMLImageSource consumed by the genuine THREE texture
  // and garment UV path. It remains in the disposable 3D donor only.
- return Object.freeze({...blouse,cutout:canvas,
+ // The original 3D07 source-photo admission explicitly requires a decoded
+ // HTMLImageElement (decode()), not a bare Canvas. Convert the private
+ // canvas composite to a new in-memory PNG image before attaching it; the
+ // private review source remains the separately SHA-verified JPEG.
+ const compositedImage=await decode(canvas.toDataURL('image/png'));
+ return Object.freeze({...blouse,cutout:compositedImage,
   privateCutoutTexelsComposited188:true,
   cutoutSourceMaskSHA256188:identity.sourceMaskSHA256,
   privateCutoutJPEG_SHA256188:identity.ownerPrivateCutoutJPEG_SHA256,
