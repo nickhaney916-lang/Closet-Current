@@ -11,6 +11,8 @@ import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 const photoSilhouette62=process.env.PHOTO_SILHOUETTE62==='1';
+const photoShoulder185=process.env.PHOTO_SHOULDER185==='1';
+if(photoShoulder185&&!photoSilhouette62)throw Error('P185 requires actual P62 original photographic source checks');
 const photoSilhouetteEngine62=process.env.PHOTO_SILHOUETTE62_BROWSER||'chromium';
 const root=resolve('.'),donor=resolve(photoSilhouette62?'.donor541':'.native05-donor-541');
 const dir=photoSilhouette62?'benchmark/user-photo-to-anatomical-3d-62/'+photoSilhouetteEngine62:'benchmark/native-3d-05';
@@ -174,7 +176,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -214,6 +216,18 @@ try{
    assert.equal(blouseState.photoSourceFit171,true);
    assert.equal(blouseState.ownerPhoto3DArbitraryFittingApproved,false);
    assert.equal(blouseState.photorealismApproved,false);
+   if(photoShoulder185){
+    assert.equal(blouseState.photoSourceShoulder185,true,
+     'P185 requires actual bounded rounded shoulder/hem world-axis mesh receipt');
+    assert.ok(blouseState.physicalShoulderVertices185>=20);
+    assert.ok(blouseState.physicalShoulderMaxMeters185>.0001&&
+     blouseState.physicalShoulderMaxMeters185<=.025);
+    assert.equal(blouseState.mannequinBaseCoverDisclosure185,true);
+    const disclosure=await page.locator('#outfit3D01AnatomyCover185').textContent();
+    assert.match(disclosure,/BOTTOMS: NONE SELECTED/);
+    assert.match(disclosure,/not to your closet or this saved outfit/);
+    assert.equal(await page.locator('#outfit3D01Slot-bottom').inputValue(),'');
+   }
    assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
    assert.deepEqual(await readBoard(page),ownerOriginal);
    await page.locator('#outfit3D01Front').click(); await take(page,width,'01-female-front-provisional-blouse');
@@ -237,6 +251,13 @@ try{
     assert.equal(maleProof.state?.modelReady&&maleProof.state?.figure==='male'&&
      maleProof.state?.photoSourceSilhouette62===true,true,
      'P183 actual male 163-bone photographed blouse failed after female PASS: '+JSON.stringify(maleProof));
+    if(photoShoulder185){
+     assert.equal(maleProof.state?.photoSourceShoulder185,true,
+      'P185 real switched male source shoulder fit must be independently verified');
+     assert.ok(maleProof.state?.physicalShoulderVertices185>=20);
+     assert.ok(maleProof.state?.physicalShoulderMaxMeters185<=.025);
+     assert.equal(maleProof.state?.mannequinBaseCoverDisclosure185,true);
+    }
     await take(page,width,'04-male-front-provisional-blouse');
     await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-provisional-blouse');
     await page.locator('#outfit3D01Back').click(); await take(page,width,'06-male-inferred-rear-provisional-blouse');
@@ -249,6 +270,15 @@ try{
     bothRearViewsInferredNotPhotographed:true,physicalMaskDerivedDeformation:true,
     physicalPhotoSilhouetteVertices62:blouseState.silhouetteVertices62,
     physicalPhotoSilhouetteMaxMeters62:blouseState.silhouetteMaxMeters62,
+    ...(photoShoulder185?{
+     anatomicalShoulderHemSourceAxis185:true,
+     physicalShoulderEasing185:true,
+     shoulderEasedVertices185:blouseState.physicalShoulderVertices185,
+     shoulderMaxMeters185:blouseState.physicalShoulderMaxMeters185,
+     maleShoulderEasing185:true,
+     mannequinBaseCoverDisclosure185:true,
+     noSelectedOrSavedBottomFabricated185:true
+    }:{}),
     originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
     ownerApprovalForArbitraryPhotos:false,photorealismAccepted:false,
     provisionalCutoutNeedsHumanReview:true,
