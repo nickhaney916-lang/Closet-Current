@@ -4,8 +4,8 @@ import * as engine from '../public/recognition-engine.mjs';
 import * as confusionGuard from '../public/recognition-confusion-guard.mjs';
 import {scannerErrorCode} from '../public/scanner-errors.mjs';
 const source=fs.readFileSync('public/local-worker.mjs','utf8');
-function setup({width=500,decodeError=false,detailError=false}={}){
- const sent=[],calls=[],choice=catalog.localCandidates[0],groups=catalog.garmentDetailGroups(choice);
+function setup({width=500,decodeError=false,detailError=false,itemType='T-shirt'}={}){
+ const sent=[],calls=[],choice=catalog.localCandidates.find(x=>x.itemType===itemType),groups=catalog.garmentDetailGroups(choice);
  const scores=options=>options.map((label,i)=>({label,score:i===0?.95:.001}));
  const model=async(image,labels)=>{
   calls.push({image,labels});
@@ -26,14 +26,28 @@ function setup({width=500,decodeError=false,detailError=false}={}){
 }
 test('worker keeps classification but drops disagreeing and uncertain details',async()=>{
  const h=setup(),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{pattern:'Solid',sleeveLength:'Sleeveless'});
- assert.equal(h.calls.length,11);assert.ok(h.calls.every(x=>x.image===h.calls[0].image));assert.ok(h.sent.some(x=>x.type==='identified'));
+ assert.equal(h.calls.length,9);assert.ok(h.calls.every(x=>x.image===h.calls[0].image));assert.ok(h.sent.some(x=>x.type==='identified'));
 });
 test('small photos still classify but cannot autosupply detailed attributes',async()=>{
- const h=setup({width:112}),result=await h.scan();assert.equal(result.strong,true);assert.deepEqual({...result.details},{});assert.equal(h.calls.length,6);
+ const h=setup({width:112}),result=await h.scan();assert.equal(result.strong,true);assert.deepEqual({...result.details},{});assert.equal(h.calls.length,4);
 });
 test('unreadable image returns a safe image error instead of categories',async()=>{
  const h=setup({decodeError:true});assert.equal(await h.scan(),undefined);assert.equal(h.calls.length,0);const error=h.sent.find(x=>x.type==='error');assert.equal(error.code,'image');assert.ok(!JSON.stringify(error).includes('private path'));
 });
 test('optional detail failure preserves confirmed garment identity without inventing attributes',async()=>{
  const h=setup({detailError:true}),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{});assert.equal(h.sent.some(x=>x.type==='error'),false);assert.ok(!JSON.stringify(h.sent).includes('private error text'));
+});
+
+test('high-confidence Tunic subtype is withheld from identified event until explicit owner review',async()=>{
+ const h=setup({itemType:'Tunic'}),out=await h.scan();
+ assert.equal(out.strong,false);
+ assert.equal(out.categoryConfirmed,true);
+ assert.equal(out.categoryOnly,true);
+ assert.equal(out.choices[0].category,'Tops');
+ assert.equal(out.choices[0].itemType,'Unknown');
+ assert.deepEqual({...out.details},{});
+ assert.equal(out.diagnostics.mission1SubtypeSafety.ownerSubtypeReviewRequired,true);
+ assert.equal(h.sent.some(x=>x.type==='identified'),false);
+ assert.equal(h.sent.some(x=>x.type==='error'),false);
+ assert.equal(h.calls.length,9);
 });
