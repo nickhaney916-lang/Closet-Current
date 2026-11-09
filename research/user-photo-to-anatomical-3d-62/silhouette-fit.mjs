@@ -14,6 +14,38 @@ const SOURCES=Object.freeze({
   })
 });
 const smooth=(v,a,b)=>{const t=Math.max(0,Math.min(1,(v-a)/(b-a)));return t*t*(3-2*t);};
+/**
+ * P185: reconstruct ONLY bounded source-photo 2D shoulder/hem mapping.
+ * Image top = shoulders = HIGH world Y. Image bottom = hem = LOW world Y.
+ * The older P62 interpolation swapped these endpoints. The lateral easing
+ * introduces a rounded ~5mm outer-shoulder fall without fabric simulation.
+ * This is NOT a person's measurements, garment rear or owner approval.
+ */
+export function shapeReviewedBlouseShoulder185({x,y,shoulderToTorso,hemToTorso}={}){
+ if(![x,y,shoulderToTorso,hemToTorso].every(Number.isFinite)||
+  shoulderToTorso<=0||hemToTorso<=0)
+  throw Error('P185 finite, positive normalized silhouette measurements required');
+ const high=smooth(y,1.19,1.61);
+ const shoulder=Math.max(.88,Math.min(1.12,shoulderToTorso));
+ const hem=Math.max(.88,Math.min(1.14,hemToTorso));
+ // Endpoints were reversed in P62: shoulder belongs at HIGH Y.
+ const width=Math.max(.95,Math.min(1.05,1+(shoulder-1)*high+(hem-1)*(1-high)));
+ const outer=smooth(Math.abs(x),.19,.38);
+ const shoulderBand=smooth(y,1.33,1.53)*(1-smooth(y,1.72,1.86));
+ const round=outer*shoulderBand;
+ let nextX=x*width-Math.sign(x)*.003*round;
+ let nextY=y-.004*round;
+ // Exact physical displacement is capped before any mesh attributes are
+ // touched. Large photographic widths cannot force a clipping 3D admission.
+ const distance=Math.hypot(nextX-x,nextY-y);
+ if(distance>.024){const k=.024/distance;
+  nextX=x+(nextX-x)*k;nextY=y+(nextY-y)*k;
+ }
+ return Object.freeze({x:nextX,y:nextY,zChange:0,
+  upperBodyPhotoBand:high,outerShoulderRounded:round>0.2,
+  displacementMeters:Math.hypot(nextX-x,nextY-y)});
+}
+
 
 export function measureUpperSilhouette62({data,width,height,sourceId,sourceSHA256,
  cutoutSHA256,reviewConfirmed=false}={}){
@@ -63,20 +95,27 @@ export function measureUpperSilhouette62({data,width,height,sourceId,sourceSHA25
 }
 
 /** Apply small silhouette-driven shaping to the actual source shell. */
-export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true}={}){
+export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,naturalShoulder185=false}={}){
  if(!enabled)return shirt;
  if(!profile?.accepted||profile.sourceSHA256!==shirt?.stats?.sourceSHA256||
     profile.itemType!=='Blouse'||
     profile.inferredBack!==true||profile.releaseAuthorized!==false||
     !Array.isArray(shirt?.meshes)||typeof root?.traverse!=='function')
   throw Error('P62 requires the exact reviewed source-photo silhouette and matching 3D shell');
- const targets=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell');
+ // The P45 separated left/right cap panels share exact seam positions
+ // with the body shell. Applying a shoulder correction to ONLY the shell
+ // tears both joins and fails the genuine bilateral sewn normal witness.
+ const targets=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
+  naturalShoulder185&&['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
+ if(naturalShoulder185&&
+  !['L','R'].every(side=>targets.some(m=>m.userData?.work45IndependentShoulderCap===side)))
+  throw Error('P185 requires actual left and right separately sewn shoulder cap meshes');
  const bodySkeletons=new Set();root.traverse(o=>{if(o?.isSkinnedMesh&&!o.userData?.work56Garment&&o.skeleton)bodySkeletons.add(o.skeleton);});
  if(!targets.length||targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||!bodySkeletons.has(m.skeleton)))
   throw Error('P62 requires the actual 163-bone fitted source garment shell');
  const shoulder=Math.max(.88,Math.min(1.12,profile.shoulderToTorso));
  const hem=Math.max(.88,Math.min(1.14,profile.hemToTorso));
- const pending=[];let moved=0,maxMove=0;
+ const pending=[];let moved=0,maxMove=0,shoulderAdjusted185=0,maxShoulderMove185=0;
  for(const mesh of targets){
   mesh.updateWorldMatrix(true,false);const g=mesh.geometry,p=g.getAttribute('position');
   const panel=g.getAttribute('panelPosition');
@@ -85,26 +124,51 @@ export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true}={}){
   for(let i=0;i<p.count;i++){
    const x=panel.getX(i),y=panel.getY(i),z=panel.getZ(i);
    if(![x,y,z].every(Number.isFinite))throw Error('P62 source shell contains invalid coordinates');
+   const fitted185=naturalShoulder185?
+    shapeReviewedBlouseShoulder185({x,y,shoulderToTorso:shoulder,hemToTorso:hem}):null;
    const t=smooth(y,1.19,1.61),targetWidth=1+(shoulder-1)*(1-t)+(hem-1)*t;
    const bounded=Math.max(.95,Math.min(1.05,targetWidth));
-   const nx=x*bounded,delta=Math.abs(nx-x);
+   const nx=fitted185?fitted185.x:x*bounded;
+   const ny=fitted185?fitted185.y:y;
+   const delta=Math.hypot(nx-x,ny-y);
    if(delta>.0001){
     moved++;maxMove=Math.max(maxMove,delta);
-    panelNext[i*3]=nx;
-    // Convert the world-space fitted delta to mesh-local coordinates without
-    // changing texture pixels, source bytes, skin indices, or bone weights.
-    const worldPoint=mesh.position.clone().set(nx,y,z).applyMatrix4(inv);
+    if(fitted185?.outerShoulderRounded){
+     shoulderAdjusted185++;maxShoulderMove185=Math.max(maxShoulderMove185,delta);
+    }
+    panelNext[i*3]=nx;panelNext[i*3+1]=ny;
+    // Convert the panel world-space fit to mesh-local coordinates without
+    // modifying JPEG pixels, UVs, weights or the shared 163-bone rig.
+    const worldPoint=naturalShoulder185?
+     mesh.position.clone().set(p.getX(i),p.getY(i),p.getZ(i))
+      .applyMatrix4(mesh.matrixWorld):
+     mesh.position.clone().set(nx,ny,z);
+    // P185 must preserve P45 cap retessellation and the pre-existing sewn
+    // midpoints. Apply the IDENTICAL source-panel delta to shell and caps,
+    // rather than replacing a cap midpoint with the unshaped original panel.
+    if(naturalShoulder185){worldPoint.x+=nx-x;worldPoint.y+=ny-y;}
+    worldPoint.applyMatrix4(inv);
     next[i*3]=worldPoint.x;next[i*3+1]=worldPoint.y;next[i*3+2]=worldPoint.z;
    }
   }
   pending.push({mesh,p,panel,next,panelNext});
  }
- if(moved<20||maxMove<.001||maxMove>.025)throw Error('P62 source silhouette geometry delta is outside its bounded acceptance range');
+ if(moved<20||maxMove<.001||maxMove>.025||
+  (naturalShoulder185&&(shoulderAdjusted185<20||maxShoulderMove185>.025)))
+  throw Error('P62/P185 source silhouette shoulder geometry is outside its bounded acceptance range');
  for(const row of pending){row.p.array.set(row.next);row.panel.array.set(row.panelNext);row.p.needsUpdate=true;row.panel.needsUpdate=true;row.mesh.geometry.computeVertexNormals();row.mesh.geometry.computeBoundingBox();row.mesh.geometry.computeBoundingSphere();}
  return {...shirt,stats:{...shirt.stats,sourcePhotoSilhouetteFit62:true,
   silhouetteFit62MovedVertices:moved,silhouetteFit62MaxMeters:maxMove,
   silhouetteSourceSHA256:profile.sourceSHA256,cutoutSHA256:profile.cutoutSHA256,
-  normalizedSilhouetteOnly:true,inferredRear62:true,collisionCertified:false,
+  normalizedSilhouetteOnly:true,inferredRear62:true,
+  sourceShoulderEased185:naturalShoulder185&&shoulderAdjusted185>=20,
+  shoulderEasedVertices185:naturalShoulder185?shoulderAdjusted185:0,
+  maxShoulderDisplacement185:naturalShoulder185?maxShoulderMove185:0,
+  shoulderHemWorldAxisCorrected185:naturalShoulder185,
+  independentShoulderCapSeamsRetained185:naturalShoulder185,
+  independentlyJoinedShoulderCapMeshes185:naturalShoulder185?
+    targets.filter(m=>m.userData?.work45IndependentShoulderCap).length:0,
+  collisionCertified:false,
   humanVisualApproval:false,releaseAuthorized:false}};
 }
 
