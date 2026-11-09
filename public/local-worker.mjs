@@ -68,13 +68,26 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   }
   if(request.type==='features'){const features=await model.whole.features(image);self.postMessage({type:'result',id:request.id,recognitionMemory:{version:1,modelKey:model.modelKey,features}});return;}
   const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
-  const result=await classify(model.whole,image,{
+  // Do not publish an identified garment until every independent source
+  // confirmation is complete. A provisional identity may require review.
+  let tentativelyIdentified=null;
+  let result=await classify(model.whole,image,{
    hint:request.hint,
    confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,coatNearFullModel:model.coatNearFull,
    recoveryModel:model.originalWhole,recoveryConfirmationModel:model.originalCenter,
    onStage:stage=>{scannerStage=stage;},
-   onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
+   onIdentified:choice=>{tentativelyIdentified=choice;}
   });
+  if(!request.hint&&result.strong){
+   const {corroborateAmbiguousType}=await import('./recognition-confusion-guard.mjs'+new URL(import.meta.url).search);
+   result=await corroborateAmbiguousType(result,image,{
+    sourceWhole:model.originalWhole,sourceCenter:model.originalCenter
+   });
+  }
+  if(result.strong&&tentativelyIdentified&&
+     result.choices?.[0]?.category===tentativelyIdentified.category&&
+     result.choices?.[0]?.itemType===tentativelyIdentified.itemType)
+   self.postMessage({type:'identified',id:request.id,choice:tentativelyIdentified});
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
   self.postMessage({type:'result',id:request.id,...result,recognitionMemory});
  }catch(error){
