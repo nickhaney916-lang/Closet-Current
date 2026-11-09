@@ -26,7 +26,7 @@ jobs:
           git diff --name-only "$BASE" HEAD > /tmp/p66-paths
           while IFS= read -r p; do
             case "$p" in
-              research/real-garment-acceptance-66/*|research/owner-source-mask-topology-191/source-contour-integrity.mjs|tests/real-garment-acceptance-66.test.mjs|.github/workflows/real-garment-acceptance-66-no-deploy.yml) ;;
+              research/real-garment-acceptance-66/*|research/owner-source-mask-topology-191/source-contour-integrity.mjs|tests/real-garment-acceptance-66.test.mjs|tests/source-cap-conservation-66.test.mjs|tests/fashionpedia-source-66.test.mjs|scripts/install-source-cap-conservation-66.mjs|scripts/fetch-fashionpedia-66.py|scripts/test-fashionpedia-66-browser.mjs|scripts/test-native-3d-05-browser.mjs|research/native-3d-05/native-preview-bridge.mjs|.github/workflows/real-garment-acceptance-66-no-deploy.yml) ;;
               *) echo "P66 rejects unrelated source $p"; exit 1 ;;
             esac
           done </tmp/p66-paths
@@ -34,7 +34,7 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: P66 boundary regressions, original JPEG provenance and complete inherited tests
         run: |
-          node --test tests/real-garment-acceptance-66.test.mjs
+          node --test tests/real-garment-acceptance-66.test.mjs tests/source-cap-conservation-66.test.mjs
           node scripts/audit-recognition-ground-truth-60.mjs
           node scripts/build-independent-instance-packets-94.mjs
           node --check research/owner-bilateral-asymmetric-fit-195/side-profile.mjs
@@ -405,8 +405,24 @@ jobs:
           mkdir -p benchmark/owner-bilateral-asymmetric-fit-195
           cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-bilateral-asymmetric-fit-195/p194-narrow-denial-${{ matrix.engine }}
           rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: P66 exact asymmetric before-repair reference on both humanoids
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_OWNER_POSITIVE188: '1'
+          PHOTO_OWNER_ALPHA189: '1'
+          PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
+          PHOTO_OWNER_BILATERAL195: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          mkdir -p benchmark/real-garment-acceptance-66
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/real-garment-acceptance-66/before-${{ matrix.engine }}
+          node scripts/install-source-cap-conservation-66.mjs .donor541
       - name: P195 actual separately measured owner left/right contour must fit female and male 163-bone blouse (3 mobile widths)
         env:
+          SOURCE_CAP66: '1'
           PHOTO_OWNER_CUTOUT186: '1'
           PHOTO_CUTOUT_PREFLIGHT187: '1'
           PHOTO_OWNER_POSITIVE188: '1'
@@ -453,6 +469,8 @@ jobs:
             assert.equal(c.photographedRearIndependently195,false);
             assert.equal(c.actualIndependentHumanSegmentation195,false);
             assert.equal(c.familyAlpha,'HOLD');
+            assert.equal(c.sourceCapPartitionConserved66,true);
+            assert.ok(c.sourceSmallCapFacesRetained66>=0);
           }
           const inventories=[
             {path:'benchmark/owner-reviewed-cutout-texture-188/p185-'+engine+'/',n:21},
@@ -460,6 +478,7 @@ jobs:
             {path:'benchmark/owner-alpha-webgl-denial-193/p192-positive-'+engine+'/',n:22},
             {path:'benchmark/owner-hairline-continuity-194/p193-broad-denial-'+engine+'/',n:6},
             {path:'benchmark/owner-bilateral-asymmetric-fit-195/p194-narrow-denial-'+engine+'/',n:6},
+            {path:'benchmark/real-garment-acceptance-66/before-'+engine+'/',n:22},
             {path:root,n:22}
           ];
           let count=0;
@@ -473,19 +492,54 @@ jobs:
               count++;
             }
           }
-          assert.equal(count,83);
+          assert.equal(count,105);
           assert.equal(new Set(r.screens.map(z=>z.sha256)).size,22);
-          console.log('P195_'+engine.toUpperCase()+'_83_GENUINE_SHA_PNG_INDEPENDENT_LEFT_RIGHT_FIT_PASS');
+          console.log('P195_'+engine.toUpperCase()+'_105_GENUINE_SHA_PNG_INDEPENDENT_LEFT_RIGHT_FIT_PASS');
           NODE
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: P66-${{ matrix.engine }}-independent-owner-left-right-fit-83-sha-screens-HOLD
+          name: P66-${{ matrix.engine }}-independent-owner-left-right-fit-105-sha-screens-HOLD
           path: |
             benchmark/owner-reviewed-cutout-texture-188/
             benchmark/owner-alpha-webgl-denial-193/
             benchmark/owner-hairline-continuity-194/
             benchmark/owner-bilateral-asymmetric-fit-195/
             benchmark/user-photo-to-anatomical-3d-62/
+            benchmark/real-garment-acceptance-66/
+          retention-days: 14
+          if-no-files-found: warn
+
+  externally-annotated-real-photo-masks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P66_ENGINE: ${{ matrix.engine }}
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Original public JPEG and external human annotation source hashes
+        run: python3 scripts/fetch-fashionpedia-66.py
+      - name: Actual integrated SegFormer pixel inference against external human polygons
+        run: node scripts/test-fashionpedia-66-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P66-Fashionpedia-${{ matrix.engine }}-six-real-photos-external-human-polygons-HOLD
+          path: benchmark/real-garment-acceptance-66/fashionpedia-${{ matrix.engine }}/
           retention-days: 14
           if-no-files-found: warn
