@@ -386,6 +386,9 @@ export async function mountNative3D05({
     const candidate=panel?.state?.()?.fitReceipts171?.shirt?.silhouette62;
     if(candidate?.sourceShoulderEased185!==true||
       candidate?.shoulderHemWorldAxisCorrected185!==true||
+      candidate?.independentShoulderCapSeamsRetained185!==true||
+      !Number.isInteger(candidate?.independentlyJoinedShoulderCapMeshes185)||
+      candidate.independentlyJoinedShoulderCapMeshes185<2||
       !Number.isInteger(candidate?.shoulderEasedVertices185)||
       candidate.shoulderEasedVertices185<20||
       !Number.isFinite(candidate.maxShoulderDisplacement185)||
@@ -504,7 +507,13 @@ export async function mountNative3D05({
    // switching anatomical gender, not from the prior female model receipt.
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&
-    data.fitReceipts171?.shirt?.silhouette62?.shoulderHemWorldAxisCorrected185===true,
+    data.fitReceipts171?.shirt?.silhouette62?.shoulderHemWorldAxisCorrected185===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.independentShoulderCapSeamsRetained185===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.independentlyJoinedShoulderCapMeshes185>=2,
+   shoulderCapSeamsRetained185:active&&
+    data.fitReceipts171?.shirt?.silhouette62?.independentShoulderCapSeamsRetained185===true,
+   sewnShoulderCaps185:active?
+    data.fitReceipts171?.shirt?.silhouette62?.independentlyJoinedShoulderCapMeshes185||0:0,
    physicalShoulderVertices185:active?
     data.fitReceipts171?.shirt?.silhouette62?.shoulderEasedVertices185||0:0,
    physicalShoulderMaxMeters185:active?
