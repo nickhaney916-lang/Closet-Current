@@ -323,7 +323,9 @@ export async function mountNative3D05({
        typeof consumer.withReviewedCutoutForRenderer188!=='function')
      throw Error('P188 owner-reviewed private texture requires current P187 lease');
     panel=await consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>
-     donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+     donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}),{
+       requireOwnerMaskTopology191:params?.get('photoOwnerTopology191')==='research'
+     });
     consumer.requireReviewedCutoutLease187(preflightLease187);
    }else panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
    requireFresh(); // Do not open a donor after the native outfit changed.
