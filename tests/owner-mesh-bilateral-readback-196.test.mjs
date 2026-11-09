@@ -85,6 +85,21 @@ test('P196 actual THREE.BufferAttribute left/right photo mesh data and two cap j
   assert.equal(skeleton.bones.length,163);
  }finally{restore();}
 });
+test('P196 accepts multiple authentic sewn panels per shoulder side and still verifies both real caps',()=>{
+ const restore=fakeCanvas();
+ try{
+  const {profile,shirt,root,skeleton}=createFit();
+  const leftSleevePanel=makeMesh('L',skeleton);
+  root.add(leftSleevePanel);
+  shirt.meshes.push(leftSleevePanel);
+  const fitted=fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile);
+  assert.equal(fitted.stats.ownerPhysicalBilateralReadbackVerified196,true);
+  assert.ok(fitted.stats.ownerLeftCapReadbackMovedVertices196>=2);
+  assert.ok(fitted.stats.ownerRightCapReadbackMovedVertices196>=1);
+  assert.ok(fitted.stats.ownerMeasuredBilateralRatioDifference196>=.001);
+  assert.equal(skeleton.bones.length,163);
+ }finally{restore();}
+});
 test('P196 cannot substitute intended panel shifts for unmoved skinned mesh vertices',()=>{
  const restore=fakeCanvas();
  try{
