@@ -516,7 +516,16 @@ export async function mountNative3D05({
        !Number.isFinite(topology?.ownerMaskInsideSource191)||
        topology.ownerMaskInsideSource191<.965||
        topology?.ownerMaskIndependentHumanReviewed191!==false)
-      throw Error('P191 current private garment alpha fails true original-photo topology check');
+      throw Error('P191 current private garment alpha fails true original-photo topology check: '+JSON.stringify({
+       present:!!topology,
+       current163:now?.bones===163,
+       sourceFit:topology?.ownerMaskTopologyValidated191===true,
+       shaSame:topology?.ownerAlphaMaskSHA256_190===now?.reviewedPrivateOwnerMaskSHA189,
+       overlap:Number.isFinite(topology?.ownerMaskSourceOverlapIoU191)?topology.ownerMaskSourceOverlapIoU191:0,
+       connected:Number.isFinite(topology?.ownerMaskLargestConnected191)?topology.ownerMaskLargestConnected191:0,
+       inside:Number.isFinite(topology?.ownerMaskInsideSource191)?topology.ownerMaskInsideSource191:0,
+       honestReview:topology?.ownerMaskIndependentHumanReviewed191===false
+      }));
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
     await attestOriginalBytes92();requireFresh();
