@@ -16,12 +16,12 @@ export function inspectPrivateCutoutTextureInputs188({blouse,asset}={}){
  if(blouse?.id!=='commons-0016'||blouse?.sourceSHA256!==SOURCE||
   blouse?.originalVerified!==true||blouse?.cutoutVerified!==true||
   blouse?.sourceAssetsVerified!==true||blouse?.silhouette62?.accepted!==true||
-  !SHA.test(blouse?.cutoutSHA256||'')||
+  !SHA.test(blouse?.silhouette62?.cutoutSHA256||'')||
   !asset||asset.sourceId!=='commons-0016'||
   asset.originalSourceSHA256!==SOURCE||
   !SHA.test(asset.privateCutoutJPEGBytesSHA256||'')||
   asset.privateCutoutJPEGBytesSHA256===SOURCE||
-  asset.privateCutoutJPEGBytesSHA256===blouse.cutoutSHA256||
+  asset.privateCutoutJPEGBytesSHA256===blouse.silhouette62.cutoutSHA256||
   typeof asset.cutoutImage!=='string'||
   !asset.cutoutImage.startsWith('data:image/jpeg;base64,')||
   asset.cutoutImage.length<250||asset.cutoutImage.length>14000000||
@@ -29,7 +29,7 @@ export function inspectPrivateCutoutTextureInputs188({blouse,asset}={}){
   asset.cutoutJPEGVerified!==true||asset.familyAlpha!=='HOLD'||
   asset.releaseAuthorized!==false)
   fail('verified owner-reviewed separate JPEG and pinned original/source-mask required');
- return Object.freeze({sourceMaskSHA256:blouse.cutoutSHA256,
+ return Object.freeze({sourceMaskSHA256:blouse.silhouette62.cutoutSHA256,
   ownerPrivateCutoutJPEG_SHA256:asset.privateCutoutJPEGBytesSHA256,
   maskIsOwnerGenerated:false,ownerReviewAssertedNotIndependentlyWitnessed:true,
   backViewOriginalPhotoVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
