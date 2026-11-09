@@ -41,6 +41,12 @@ await swap('research/outfit-3d-01/research-panel.mjs',
     reviewedSourceMaskSHA188:sources?.blouse?.privateCutoutTexelsComposited188===true?
      sources.blouse.cutoutSourceMaskSHA256188:null,
     ownerCutoutMaskFromOwnerPhoto188:false,privateCutoutHumanApprovalIndependentlyVerified188:false,
+    ownerMaskPixelsOnSkinnedGarment189:ready===true&&view.outfit?.mode==='shirt'&&
+     view.outfit?.garmentMeshes>0&&sources?.blouse?.privateOwnerAlphaPixelMask189===true,
+    reviewedPrivateOwnerMaskSHA189:sources?.blouse?.privateOwnerAlphaPixelMask189===true?
+     sources.blouse.ownerAlphaMaskSHA256_189:null,
+    ownerMaskGeometryFromPrivatePNG189:false,
+    ownerMaskHumanReviewIndependentlyVerified189:false,
     productionDeployed:false,familyAlpha:'HOLD',physicalPhonesApproved:false`);
 await swap('research/outfit-3d-01/research-panel.mjs',
  "status.after(mannequinCover185);",
@@ -48,7 +54,9 @@ await swap('research/outfit-3d-01/research-panel.mjs',
  if(ownerReviewedCutout188){
   const provenance188=el('p','outfit3D01OwnerTextureDisclosure188');
   provenance188.className='cc3d-note';provenance188.setAttribute('role','note');
-  provenance188.textContent='PRIVATE REVIEWED JPEG fabric pixels on 3D; PINNED LICENSED PNG supplies approximate alpha/shape. Mask is NOT user-derived, rear remains inferred. Owner review is an assertion, not independently witnessed.';
+  provenance188.textContent=ownerReviewedCutout188?.ownerAlphaPNG189?
+   'PRIVATE REVIEWED JPEG fabric + OWNER-ASSERTED PNG alpha are visible on the real 3D mesh. Mask SHA verified independently, but mask accuracy and owner human review are NOT independently witnessed. The 163-bone garment GEOMETRY still uses the licensed source silhouette; rear remains inferred.':
+   'PRIVATE REVIEWED JPEG fabric pixels on 3D; PINNED LICENSED PNG supplies approximate alpha/shape. Mask is NOT user-derived, rear remains inferred. Owner review is an assertion, not independently witnessed.';
   mannequinCover185.after(provenance188);
  }`);
 for(const path of ['research/outfit-3d-01/source-true-viewer.mjs','research/outfit-3d-01/research-panel.mjs'])

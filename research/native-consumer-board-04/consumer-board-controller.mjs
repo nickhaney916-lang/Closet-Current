@@ -13,6 +13,7 @@ import {boardFingerprint02,validateBoard02} from '../board-lossless-02/lossless-
 import {attestOriginalJPEGBytes92} from '../native-original-photo-integrity-92/original-jpeg-byte-attestation.mjs';
 import {attestOwnerReviewedCutoutBytes186} from '../owner-cutout-photo-fit-186/review-contract.mjs';
 import {captureReviewedCutoutLease187} from '../pre-webgl-owner-cutout-187/cutout-lease.mjs';
+import {attestOwnerMaskPNGBytes189} from '../owner-mask-fabric-189/mask-contract.mjs';
 
 export const NATIVE_CONSUMER_BOARD_04=Object.freeze({
  featureGate:'nativeLossless04=research',nativeConsumerControls:true,
@@ -108,7 +109,19 @@ export async function createNativeConsumerBoard04({
  // deliberately not rewritten. This is not a board reload or cloud write.
  const refreshWardrobe=async()=>{
   const lease=alive();
-  const snapshot=await io.read(lease);
+  let snapshot;
+  try{snapshot=await io.read(lease);}
+  catch(e){
+   // P189: a mobile browser may reject reading a large IndexedDB JPEG blob
+   // while native WebGL is active. NEVER leave the previous photo/source
+   // lease usable if new owner wardrobe bytes cannot be observed.
+   // NATIVE93 source revision invalidates the live 3D read-only admission;
+   // publish a view/status change, but do NOT overwrite any stored item,
+   // active outfit, unsaved draft or existing cloud recovery metadata.
+   wardrobeRevision93++;
+   emit('Private closet read unavailable · previous 3D source revoked; original photos remain stored');
+   throw e;
+  }
   alive();
   if(epoch.auth.getSessionGeneration()!==lease.generation||
      admitted.ownerId!==lease.ownerId||!Array.isArray(snapshot.items))
@@ -271,10 +284,24 @@ export async function createNativeConsumerBoard04({
   requireReviewedCutoutLease187(receipt);
   if(JSON.stringify(before)!==JSON.stringify(receipt))
    fail('P188_CUTOUT_RECEIPT_CHANGED_BEFORE_RENDERER');
+  const maskEnabled189=params.get('photoOwnerAlpha189')==='research';
+  let alphaProof189=null;
+  if(maskEnabled189){
+   alphaProof189=await attestOwnerMaskPNGBytes189({
+    row,ownerId:receipt.ownerId,review:before,cryptoImpl:win.crypto,
+    decodeBase64:win.atob.bind(win)
+   });
+   requireReviewedCutoutLease187(receipt);
+  }
   const asset=Object.freeze({
    sourceId:'commons-0016',originalSourceSHA256:receipt.originalSourceSHA256,
    privateCutoutJPEGBytesSHA256:receipt.cutoutSHA256,
    cutoutImage:row.segmentHint.cutoutImage,
+   ...(maskEnabled189?{
+    ownerAlphaPNG189:row.segmentHint.ownerAlphaPNG189,
+    ownerAlphaSHA256189:alphaProof189.privatePNG_SHA256,
+    ownerAlphaProof189:alphaProof189
+   }:{}),
    ownerReviewed:true,originalJPEGVerified:true,cutoutJPEGVerified:true,
    privateOriginalAndCutoutBytesVerified:true,releaseAuthorized:false,familyAlpha:'HOLD'
   });
@@ -286,6 +313,15 @@ export async function createNativeConsumerBoard04({
   requireReviewedCutoutLease187(receipt);
   if(JSON.stringify(after)!==JSON.stringify(before))
    fail('P188_OWNER_REVIEW_CHANGED_DURING_PRIVATE_TEXTURE_RENDER');
+  if(maskEnabled189){
+   const again=await attestOwnerMaskPNGBytes189({
+    row,ownerId:receipt.ownerId,review:after,cryptoImpl:win.crypto,
+    decodeBase64:win.atob.bind(win)
+   });
+   requireReviewedCutoutLease187(receipt);
+   if(JSON.stringify(again)!==JSON.stringify(alphaProof189))
+    fail('P189_OWNER_ALPHA_BYTES_CHANGED_DURING_3D_RENDER');
+  }
   return result;
  };
  // NATIVE93: strictly read-only monotonic private wardrobe refresh epoch.

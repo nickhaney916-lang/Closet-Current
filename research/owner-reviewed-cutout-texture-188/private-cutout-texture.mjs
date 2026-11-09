@@ -43,7 +43,12 @@ const decode=async src=>{
 };
 export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
  const identity=inspectPrivateCutoutTextureInputs188({blouse,asset});
- const originalMask=blouse.cutout;
+ let originalMask=blouse.cutout,reviewedAlpha189=null;
+ if(asset?.ownerAlphaPNG189||asset?.ownerAlphaProof189){
+  const {decodeReviewedOwnerMask189}=await import('../owner-mask-fabric-189/mask-contract.mjs');
+  reviewedAlpha189=await decodeReviewedOwnerMask189({asset,blouse});
+  originalMask=reviewedAlpha189.mask;
+ }
  const mw=originalMask?.naturalWidth||originalMask?.width||0;
  const mh=originalMask?.naturalHeight||originalMask?.height||0;
  if(!mw||!mh||mw*mh>8000000)fail('actual source alpha mask unavailable');
@@ -73,7 +78,11 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
   privateCutoutTexelsComposited188:true,
   cutoutSourceMaskSHA256188:identity.sourceMaskSHA256,
   privateCutoutJPEG_SHA256188:identity.ownerPrivateCutoutJPEG_SHA256,
-  privateCutoutRegisteredToPinnedMask188:true,
+  privateCutoutRegisteredToPinnedMask188:reviewedAlpha189===null,
+  privateOwnerAlphaPixelMask189:reviewedAlpha189!==null,
+  ownerAlphaMaskSHA256_189:reviewedAlpha189?.privateMaskSHA256||null,
+  ownerMaskWasSourceGeometry189:false,
+  ownerMaskHumanReviewedIndependently189:false,
   privateCutoutHumanApprovalIndependentlyVerified188:false,
   cutoutMaskFromOwnerPhoto188:false,
   releasedToProduction:false,releaseAuthorized:false});

@@ -16,7 +16,11 @@ function photoReviewIdentity187(row){
   row?.category,row?.itemType,row?.ownerReviewed,row?.humanReviewedSource,
   row?.reviewProvenance,row?.cutoutSHA256,
   p.sha256,p.image,
-  h.verified,h.ownerReviewedInstance,h.originalSHA256,h.cutoutSHA256,h.cutoutImage];
+  h.verified,h.ownerReviewedInstance,h.originalSHA256,h.cutoutSHA256,h.cutoutImage,
+  // P189: live photo 3D must revoke on in-place owner alpha bytes/approval
+  // changes even when both JPEG SHA strings and wardrobe revision are stale.
+  h.ownerAlphaPNG189,h.ownerAlphaSHA256189,h.ownerAlphaReviewState189,
+  h.ownerAlphaSourceId189,h.ownerAlphaOwnerId189];
 }
 export function captureReviewedCutoutLease187({
  row,receipt,ownerId,generation,revision
