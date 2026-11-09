@@ -176,6 +176,7 @@ jobs:
           PHOTO_OWNER_POSITIVE188: '1'
           PHOTO_OWNER_ALPHA189: '1'
           PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
           PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
         run: |
           node scripts/test-native-3d-05-browser.mjs
@@ -186,7 +187,7 @@ jobs:
           const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
           const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
           const data=JSON.parse(readFileSync(root+'results.json','utf8'));
-          assert.equal(data.priority,'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190');
+          assert.equal(data.priority,'OWNER-SOURCE-ALPHA-TOPOLOGY-191');
           assert.deepEqual(data.widths,[320,390,430]);
           assert.equal(data.cases,3);
           assert.equal(data.screenshots,22);
@@ -198,6 +199,13 @@ jobs:
            r.actualOwnerAlphaPNGAppliedToFabric189===true&&
            r.ownerMaskWebCryptoVerifiedBeforeAndAfterDonor189===true&&
            r.ownerMaskSourceGeometryStillPinned189===true&&
+           r.realOriginalSourceAndOwnerAlphaTopology191===true&&
+           r.actualOwnerContourOverlapIoU191>=.80&&
+           r.actualOwnerContourConnected191>=.87&&
+           r.actualOwnerContourInsideSource191>=.965&&
+           r.originalAndOwnerMaskSourceShaRetained191===true&&
+           r.humanReviewIndependentlyWitnessed191===false&&
+           r.arbitraryPhotoSegmentationCertified191===false&&
            r.sourceOwnerAlphaPhysicalMeshFitted190===true&&
            r.ownerMaskMeasuredActuallyFromPrivateRaster190===true&&
            r.sourceOwnerAlphaActualMovedVertices190>=20&&
