@@ -21,7 +21,12 @@ await swap('research/outfit-3d-01/research-panel.mjs',
  " hold.className='cc3d-note';right.append(hold);",
  ` hold.className='cc3d-note';right.append(hold);
  const mannequinCover185=el('p','outfit3D01AnatomyCover185');
- mannequinCover185.className='cc3d-note';right.append(mannequinCover185);`);
+ mannequinCover185.className='cc3d-note';
+ mannequinCover185.setAttribute('role','note');
+ // In a real 320px phone viewport the bottommost research notes are below
+ // the fold. Put "these shorts are NOT owned" beside the visible 3D status,
+ // before the figure selector, so no user can confuse mannequin coverage.
+ status.after(mannequinCover185);`);
 await swap('research/outfit-3d-01/research-panel.mjs',
  ' function showOriginals(plan){',
  ` function showOriginals(plan){
