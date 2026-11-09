@@ -239,12 +239,14 @@ try{
      'P183 actual male 163-bone photographed blouse failed after female PASS: '+JSON.stringify(maleProof));
     await take(page,width,'04-male-front-provisional-blouse');
     await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-provisional-blouse');
+    await page.locator('#outfit3D01Back').click(); await take(page,width,'06-male-inferred-rear-provisional-blouse');
    }
    assert.deepEqual(await readBoard(page),ownerOriginal);
    assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
    cases.push({width,source:'commons-0016',sourceSHA256:photos['commons-0016'].sha256,
     authenticOwnerSavedOutfit:true,actualOriginalPhotoNative163BoneWebGL:true,
-    femaleAndMaleRendered:true,physicalMaskDerivedDeformation:true,
+    femaleAndMaleRendered:true,bothHumanoidFrontSideRearCaptured:true,
+    bothRearViewsInferredNotPhotographed:true,physicalMaskDerivedDeformation:true,
     physicalPhotoSilhouetteVertices62:blouseState.silhouetteVertices62,
     physicalPhotoSilhouetteMaxMeters62:blouseState.silhouetteMaxMeters62,
     originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
@@ -776,11 +778,11 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,photoSilhouette62?15:photoTorso173?24:15);
+ assert.equal(cases.length,3);assert.equal(screens.length,photoSilhouette62?21:photoTorso173?24:15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,screenshots:photoSilhouette62?15:photoTorso173?24:15,
+ const result={priority:photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,screenshots:photoSilhouette62?21:photoTorso173?24:15,
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
@@ -791,7 +793,7 @@ try{
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
-   real163BoneWebGL:true,realMobileScreenshots:15,familyAlpha:'HOLD'}));
+   real163BoneWebGL:true,realMobileScreenshots:photoSilhouette62?21:15,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,
