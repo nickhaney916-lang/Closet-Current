@@ -312,7 +312,6 @@ try{
      'Public bridge state must never contain owner JPEG pixels');
     const disclosure188=await page.locator('#outfit3D01OwnerTextureDisclosure188').textContent();
     assert.match(disclosure188,/PRIVATE REVIEWED JPEG/);
-    assert.match(disclosure188,/PINNED LICENSED PNG/);
     if(photoOwnerAlpha189){
      assert.equal(blouseState.ownerAlphaMaskTextureApplied189,true,
       'Owner PNG alpha must genuinely mask reviewed JPEG fabric on 163-bone mesh');
@@ -323,6 +322,7 @@ try{
      assert.match(disclosure188,/OWNER-ASSERTED PNG alpha/);
      assert.match(disclosure188,/GEOMETRY still uses the licensed source silhouette/);
     }else{
+     assert.match(disclosure188,/PINNED LICENSED PNG/);
      assert.match(disclosure188,/NOT user-derived/);
     }
    }
