@@ -317,6 +317,7 @@ export async function mountNative3D05({
    if(params?.get('photoOwnerAlpha189')==='research'&&
       params?.get('photoOwnerPositive188')!=='research')
     throw Error('P189 owner PNG alpha requires P188 private JPEG double-hash texture path');
+   let verifiedSourceTopology191=null;
    if(params?.get('photoOwnerPositive188')==='research'){
     if(!preflightLease187||
        params.get('photoOwnerCutout187')!=='research'||
@@ -326,7 +327,18 @@ export async function mountNative3D05({
      if(typeof consumer.withReviewedCutoutForRenderer191!=='function')
       throw Error('P191 separate owner-reviewed private source topology renderer required');
      panel=await consumer.withReviewedCutoutForRenderer191(preflightLease187,asset=>
-      donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+      donor.mountOutfit3D01Research({
+       doc,auth:epoch.auth,ownerReviewedCutout188:asset,
+       ownerSourceTopologyCallback191:proof=>{
+        if(proof?.actualDecodedOwnerSourceAlphaTopology191!==true||
+           proof?.maskSHA256!==asset.ownerAlphaSHA256189||
+           proof?.sourceSHA256!==asset.originalSourceSHA256||
+           proof?.independentlyReviewedByHuman!==false||
+           proof?.releaseAuthorized!==false)
+         throw Error('P191 private source topology proof must match current owner alpha and original');
+        verifiedSourceTopology191=Object.freeze({...proof});
+       }
+      }));
     }else{
      // Preserve the original P188 API and its separately verified source
      // receipt; no other camera, native owner or cloud path is changed.
@@ -520,17 +532,20 @@ export async function mountNative3D05({
      // bears precisely the same SHA. The source and mesh are separate
      // receipts; one cannot synthesize the other's verification outcome.
      const now=panel?.state?.(),physical=now?.fitReceipts171?.shirt?.silhouette62;
-     const source=now?.ownerSourceMaskTopologyVerified191===true&&
-      now?.ownerSourceMaskSHA191===now?.reviewedPrivateOwnerMaskSHA189&&
-      Number.isFinite(now?.ownerSourceMaskOverlapIoU191)&&
-      now.ownerSourceMaskOverlapIoU191>=.80&&
-      Number.isFinite(now?.ownerSourceMaskLargestConnected191)&&
-      now.ownerSourceMaskLargestConnected191>=.87&&
-      Number.isFinite(now?.ownerSourceMaskInsideSource191)&&
-      now.ownerSourceMaskInsideSource191>=.965&&
-      now?.ownerSourceMaskHumanReviewIndependent191===false;
+     const source=verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true&&
+      verifiedSourceTopology191?.sourceSHA256===
+       selectedSources91.sources.find(x=>x.id===selected.slots.top)?.sha256&&
+      verifiedSourceTopology191.maskSHA256===now?.reviewedPrivateOwnerMaskSHA189&&
+      Number.isFinite(verifiedSourceTopology191.overlapIoU)&&
+      verifiedSourceTopology191.overlapIoU>=.80&&
+      Number.isFinite(verifiedSourceTopology191.largestConnected)&&
+      verifiedSourceTopology191.largestConnected>=.87&&
+      Number.isFinite(verifiedSourceTopology191.insideSource)&&
+      verifiedSourceTopology191.insideSource>=.965&&
+      verifiedSourceTopology191.independentlyReviewedByHuman===false&&
+      verifiedSourceTopology191.releaseAuthorized===false;
      const fitted=physical?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
-      physical.ownerAlphaMaskSHA256_190===now?.ownerSourceMaskSHA191&&
+      physical.ownerAlphaMaskSHA256_190===verifiedSourceTopology191?.maskSHA256&&
       physical.ownerMaskBilateralCapJoins190===2&&
       physical.ownerMaskOnlyUpperBlouse190===true&&
       physical.inferredOwnerMaskRear190===true;
@@ -539,13 +554,11 @@ export async function mountNative3D05({
       throw Error('P191 current private garment alpha fails true original-photo topology check: '+JSON.stringify({
        current163:now?.bones===163,
        sourcePixelTopology:source===true,
-       assetRequested:now?.ownerSourceMaskRequested191===true,
-       inCompositedSource:now?.ownerSourceMaskHeldByBlouse191===true,
-       inGeometryProfile:now?.ownerSourceMaskProfileSeen191===true,
-       sameOwnerMaskSHA:now?.ownerSourceMaskSHA191===now?.reviewedPrivateOwnerMaskSHA189,
-       overlap:Number.isFinite(now?.ownerSourceMaskOverlapIoU191)?now.ownerSourceMaskOverlapIoU191:0,
-       connected:Number.isFinite(now?.ownerSourceMaskLargestConnected191)?now.ownerSourceMaskLargestConnected191:0,
-       inside:Number.isFinite(now?.ownerSourceMaskInsideSource191)?now.ownerSourceMaskInsideSource191:0,
+       loaderConfirmed:verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true,
+       sameOwnerMaskSHA:verifiedSourceTopology191?.maskSHA256===now?.reviewedPrivateOwnerMaskSHA189,
+       overlap:Number.isFinite(verifiedSourceTopology191?.overlapIoU)?verifiedSourceTopology191.overlapIoU:0,
+       connected:Number.isFinite(verifiedSourceTopology191?.largestConnected)?verifiedSourceTopology191.largestConnected:0,
+       inside:Number.isFinite(verifiedSourceTopology191?.insideSource)?verifiedSourceTopology191.insideSource:0,
        currentPhysical163BoneMesh:fitted===true
       }));
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
@@ -708,14 +721,14 @@ export async function mountNative3D05({
    ownerAlphaGeneral3DApproved190:false,
    ownerAlphaRearActuallyPhotographed190:false,
    sourceMaskTopologyValid191:active&&verifiedOwnerCutout186?.admitted===true&&
-    data.ownerSourceMaskTopologyVerified191===true&&
-    data.ownerSourceMaskSHA191===data.reviewedPrivateOwnerMaskSHA189&&
+    verifiedSourceTopology191?.actualDecodedOwnerSourceAlphaTopology191===true&&
+    verifiedSourceTopology191.maskSHA256===data.reviewedPrivateOwnerMaskSHA189&&
     data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
     data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskSHA256_190===
-     data.reviewedPrivateOwnerMaskSHA189,
-   sourceMaskOverlapIoU191:active?data.ownerSourceMaskOverlapIoU191||0:0,
-   sourceMaskLargestConnected191:active?data.ownerSourceMaskLargestConnected191||0:0,
-   sourceMaskInsideSource191:active?data.ownerSourceMaskInsideSource191||0:0,
+     verifiedSourceTopology191.maskSHA256,
+   sourceMaskOverlapIoU191:active?verifiedSourceTopology191?.overlapIoU||0:0,
+   sourceMaskLargestConnected191:active?verifiedSourceTopology191?.largestConnected||0:0,
+   sourceMaskInsideSource191:active?verifiedSourceTopology191?.insideSource||0:0,
    independentHumanReviewCertified191:false,
    generalGarmentSegmentationAccepted191:false,
    ownerPhotoBackPhotographed191:false,
