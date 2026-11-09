@@ -50,6 +50,7 @@ test('P185 real donor installer applies only original garment to correct source 
   "'outfit3D01AnatomyCover185'",
   'BOTTOMS: NONE SELECTED',
   'not to your closet or this saved outfit',
+  'status.after(mannequinCover185)',
   'shoulderHemWorldAxisCorrected185',
   "originalPhotoSHAAndCutoutUnchanged:true",
   "ownerWardrobeWritten:false"
@@ -75,6 +76,7 @@ test('P185 actual-browser dual figure acceptance asserts real shoulder mesh and 
   "maleProof.state?.photoSourceShoulder185,true",
   "'#outfit3D01AnatomyCover185'",
   'BOTTOMS: NONE SELECTED',
+  'coverRect.y+coverRect.height<=920',
   'noSelectedOrSavedBottomFabricated185:true',
   'bilateralSewnShoulderCapsRetained185:true',
   'provisionalCutoutNeedsHumanReview:true',
