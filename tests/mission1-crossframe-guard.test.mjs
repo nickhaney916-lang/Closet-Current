@@ -1,96 +1,82 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {corroborateAmbiguousType} from '../public/recognition-confusion-guard.mjs';
-import {localCandidates} from '../public/local-catalog.mjs';
 
-const result=(category,itemType,extra={})=>({
- strong:true,choices:[{category,itemType,score:.95,sleeveLength:'Unknown'}],
- details:{color:'Blue'},...extra
-});
-const ranked=(a,b,category)=>[
- {label:localCandidates.find(x=>x.category===category&&x.itemType===a).label,score:.82},
- {label:localCandidates.find(x=>x.category===category&&x.itemType===b).label,score:.14},
- {label:localCandidates.find(x=>x.category==='Uncategorized').label,score:.04}
-];
-const check=async (r,setup)=>{
- const calls=[];
- const model=(name,rows)=>async(image,labels)=>{
-  calls.push({name,image,labels});
-  assert.ok(labels.some(x=>x.includes('room with no clothing')));
-  return rows;
- };
- const first=r.choices[0];
- const alternative=first.category==='Outerwear'?'Jacket':
-  first.category==='Shoes'?'Sneakers':
-  first.itemType==='Sweatshirt'?'T-shirt':'Blouse';
- const defaultScores=()=>ranked(first.itemType,alternative,first.category);
- const x=await corroborateAmbiguousType(r,{source:'JPEG original'},{
-  sourceWhole:model('whole',setup?.whole||defaultScores()),
-  sourceCenter:model('center',setup?.center||defaultScores())
- });
- return {x,calls};
-};
-test('Mission1 full original-source views must both agree before a risky subtype can auto-index',async()=>{
- const r=result('Tops','Sweatshirt'),{x,calls}=await check(r);
- assert.equal(x.strong,true);assert.equal(x.choices[0].itemType,'Sweatshirt');
- assert.equal(x.diagnostics.mission1CrossFrame.verified,true);
- assert.equal(x.diagnostics.mission1CrossFrame.independentHumanEvidence,false);
- assert.equal(calls.length,2);assert.strictEqual(calls[0].image,calls[1].image);
-});
-test('Mission1 full-source disagreement blocks risky auto save and strips guessed details',async()=>{
- const r=result('Tops','Sweatshirt'),{x,calls}=await check(r,{
-  whole:ranked('T-shirt','Sweatshirt','Tops')});
- assert.equal(x.strong,false);assert.equal(x.categoryConfirmed,true);
- assert.equal(x.choices[0].category,'Tops');assert.equal(x.choices[0].itemType,'Unknown');
- assert.deepEqual(x.details,{});
- assert.equal(x.diagnostics.mission1CrossFrame.reason,'original_source_disagreement');
- assert.equal(calls.length,1);
-});
-test('Mission1 second original-source frame disagreeing cannot approve subtype',async()=>{
- const r=result('Shoes','Ankle boots'),{x,calls}=await check(r,{
-  whole:ranked('Ankle boots','Sneakers','Shoes'),
-  center:ranked('Sneakers','Ankle boots','Shoes')});
- assert.equal(x.strong,false);assert.equal(x.categoryConfirmed,true);
- assert.equal(x.diagnostics.mission1CrossFrame.sourceFramesCompared,2);
- assert.equal(calls.length,2);
-});
-test('Mission1 source runtime failure is manual review instead of a stale accepted identity',async()=>{
- const r=result('Outerwear','Blazer');
- const x=await corroborateAmbiguousType(r,{},{
-  sourceWhole:async()=>{throw Error('test data/private credentials');},
-  sourceCenter:async()=>[]});
- assert.equal(x.strong,false);assert.equal(x.choices[0].itemType,'Unknown');
- assert.equal(x.diagnostics.mission1CrossFrame.reason,'verification_unavailable');
- assert.ok(!JSON.stringify(x).includes('private credentials'));
-});
-test('Mission1 unrelated category/type remains untouched and incurs no costly extra model pass',async()=>{
- let count=0;
- for(const item of [result('Bottoms','Jeans'),result('Dresses','Formal dress'),
-  result('Shoes','Tall boots'),{strong:false,choices:[]}]) {
-  const x=await corroborateAmbiguousType(item,{},{
-   sourceWhole:async()=>{count++;throw Error('no');},
-   sourceCenter:async()=>{count++;throw Error('no');}});
-  assert.strictEqual(x,item);
- }
- assert.equal(count,0);
-});
-test('Mission1 suspicious subtype cannot auto-index without two real source-view models',async()=>{
- const r=result('Tops','Tunic');
- for(const setup of [{},{sourceWhole:async()=>[]},{sourceCenter:async()=>[]}]){
-  const x=await corroborateAmbiguousType(r,{},setup);
-  assert.equal(x.strong,false);
+const result=(category,itemType)=>({strong:true,
+ choices:[{category,itemType,label:itemType,score:.96,sleeveLength:'Long sleeve'}],
+ details:{color:'Green',pattern:'Solid',fit:'Regular'},
+ diagnostics:{primary:{confidence:.99}}});
+const checked=async r=>corroborateAmbiguousType(r);
+test('Mission1 four empirically unsafe high-confidence subtype classes ALWAYS require owner review',async()=>{
+ for(const [category,type] of [
+  ['Tops','Sweatshirt'],['Tops','Tunic'],
+  ['Outerwear','Blazer'],['Shoes','Ankle boots']
+ ]){
+  const r=result(category,type),x=await checked(r);
+  assert.equal(x.strong,false,category+'/'+type);
   assert.equal(x.categoryConfirmed,true);
+  assert.equal(x.categoryOnly,true);
+  assert.equal(x.choices[0].category,category);
   assert.equal(x.choices[0].itemType,'Unknown');
+  assert.deepEqual(x.details,{});
+  assert.equal(x.reason,'type_uncertain');
+  assert.equal(x.diagnostics.mission1SubtypeSafety.ownerSubtypeReviewRequired,true);
+  assert.equal(x.diagnostics.mission1SubtypeSafety.independentHumanReviewCompleted,false);
  }
 });
-test('Mission1 malformed, weak and negative prompts never establish independent agreement',async()=>{
+test('Mission1 same-weight model view agreement cannot silently override failed real-source A/B result',async()=>{
+ let calls=0;
+ const r=result('Shoes','Ankle boots');
+ const out=await corroborateAmbiguousType(r,{secret:'owner JPEG'},{
+  sourceWhole:async()=>{calls++;return [{label:'ankle boots',score:.99}]},
+  sourceCenter:async()=>{calls++;return [{label:'ankle boots',score:.99}]}
+ });
+ assert.equal(calls,0);
+ assert.equal(out.strong,false);
+ assert.equal(out.choices[0].itemType,'Unknown');
+ assert.equal(out.diagnostics.mission1SubtypeSafety.sourceFramesCompared,0);
+ assert.ok(!JSON.stringify(out).includes('owner JPEG'));
+});
+test('Mission1 unrelated valid clothing remains exactly unchanged with no extra model computation',async()=>{
+ for(const [category,type] of [
+  ['Tops','T-shirt'],['Tops','Blouse'],
+  ['Outerwear','Jacket'],['Outerwear','Coat'],
+  ['Shoes','Sneakers'],['Shoes','Tall boots'],
+  ['Bottoms','Jeans'],['Bottoms','Skirt'],
+  ['Dresses','Casual dress'],['Accessories','Scarf']
+ ]){
+  const r=result(category,type);
+  assert.strictEqual(await checked(r),r,category+'/'+type);
+ }
+});
+test('Mission1 cannot fabricate approval for unresolved or category-only existing results',async()=>{
+ const r={strong:false,categoryConfirmed:true,choices:[{category:'Tops',itemType:'Unknown'}],details:{}};
+ assert.strictEqual(await checked(r),r);
+ const other={strong:false,choices:[]};assert.strictEqual(await checked(other),other);
+});
+test('Mission1 original private photo and saved wardrobe are not touched by subtype policy',async()=>{
  const r=result('Outerwear','Blazer');
- const first=await check(r,{whole:[
-  {label:localCandidates.find(x=>x.category==='Uncategorized').label,score:.96},
-  ...ranked('Blazer','Jacket','Outerwear')]});
- assert.equal(first.x.strong,false);
- const second=await check(r,{
-  whole:[{label:localCandidates.find(x=>x.itemType==='Blazer').label,score:.49},
-   {label:localCandidates.find(x=>x.itemType==='Jacket').label,score:.45}]});
- assert.equal(second.x.strong,false);
+ r.image='PRIVATE_IMAGE_DO_NOT_COPY';
+ r.owner='PRIVATE_ACCOUNT';
+ r.savedCloset={revision:48};
+ const before=JSON.stringify(r);
+ const x=await checked(r);
+ assert.equal(JSON.stringify(r),before);
+ assert.ok(!JSON.stringify(x).includes('PRIVATE'));
+ assert.equal(x.choices[0].category,'Outerwear');
+ assert.equal(x.details.color,undefined);
+});
+test('Mission1 missing or corrupted result never creates a new automatic identity',async()=>{
+ for(const x of [undefined,null,{}, {strong:true,choices:[]}]){
+  const result=await checked(x);
+  assert.strictEqual(result,x);
+ }
+});
+test('Mission1 source-independent risk rule never reads or invents a probability threshold for owner approval',async()=>{
+ const r=result('Tops','Tunic');
+ r.choices[0].score=1;
+ const x=await checked(r);
+ assert.equal(x.strong,false);
+ assert.equal(x.diagnostics.mission1SubtypeSafety.automaticallyCertified,false);
+ assert.equal(x.diagnostics.mission1SubtypeSafety.categoryPreserved,true);
 });
