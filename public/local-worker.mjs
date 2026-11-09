@@ -80,9 +80,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   });
   if(!request.hint&&result.strong){
    const {corroborateAmbiguousType}=await import('./recognition-confusion-guard.mjs'+new URL(import.meta.url).search);
-   result=await corroborateAmbiguousType(result,image,{
-    sourceWhole:model.originalWhole,sourceCenter:model.originalCenter
-   });
+   result=await corroborateAmbiguousType(result);
   }
   if(result.strong&&tentativelyIdentified&&
      result.choices?.[0]?.category===tentativelyIdentified.category&&
