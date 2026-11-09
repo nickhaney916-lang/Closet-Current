@@ -1,0 +1,566 @@
+name: P196 actual 163-bone torso and bilateral cap mesh readback NO DEPLOY
+on:
+  push:
+    branches:
+      - research/owner-mesh-bilateral-readback-196-main-20261109-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  reviewed-owner-proof-and-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently verified P195 parent and 8 scoped research-only paths, NO DEPLOY
+        run: |
+          set -eu
+          BASE=5d391992083024a74b4a7fa7d4893f8e937e90fc
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          test "$(git rev-parse "$(git rev-list --reverse "$BASE..HEAD" | head -n1)^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p196-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs|research/owner-mask-geometry-190/owner-alpha-contour.mjs|scripts/install-owner-alpha-geometry-190.mjs|research/native-3d-05/native-preview-bridge.mjs|scripts/test-native-3d-05-browser.mjs|tests/owner-mesh-bilateral-readback-196.test.mjs|research/owner-mesh-bilateral-readback-196/REPORT.md|.github/workflows/owner-mesh-bilateral-readback-196-no-deploy.yml) ;;
+              *) echo "P196 rejects unrelated source $p"; exit 1 ;;
+            esac
+          done </tmp/p196-paths
+          test "$(wc -l </tmp/p196-paths)" -eq 8
+          git diff --exit-code "$BASE" HEAD -- public supabase migrations package.json package-lock.json research/cloud-to-native-3d-180
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: P196 real 163-bone vertex proof and complete regression tests
+        run: |
+          node --check research/owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs
+          node --check tests/owner-mesh-bilateral-readback-196.test.mjs
+          node --check research/owner-bilateral-asymmetric-fit-195/side-profile.mjs
+          node --check tests/owner-bilateral-asymmetric-fit-195.test.mjs
+          node --check research/owner-hairline-continuity-194/hairline-source-proof.mjs
+          node --check tests/owner-hairline-continuity-194.test.mjs
+          node --check research/owner-local-mask-continuity-192/source-local-continuity.mjs
+          node --check tests/owner-local-mask-continuity-192.test.mjs
+          node --check research/owner-source-mask-topology-191/source-contour-integrity.mjs
+          node --check scripts/install-owner-source-topology-191.mjs
+          node --check tests/owner-source-mask-topology-191.test.mjs
+          node --check research/owner-mask-geometry-190/owner-alpha-contour.mjs
+          node --check scripts/install-owner-alpha-geometry-190.mjs
+          node --check tests/owner-mask-geometry-190.test.mjs
+          node --check research/owner-mask-fabric-189/mask-contract.mjs
+          node --check tests/owner-mask-fabric-189.test.mjs
+          node --check research/pre-webgl-owner-cutout-187/cutout-lease.mjs
+          node --check research/owner-reviewed-cutout-texture-188/private-cutout-texture.mjs
+          node --check scripts/install-owner-reviewed-cutout-texture-188.mjs
+          node --check research/owner-cutout-photo-fit-186/review-contract.mjs
+          node --check research/native-consumer-board-04/consumer-board-controller.mjs
+          node --check research/native-3d-05/native-preview-bridge.mjs
+          node --check scripts/test-native-3d-05-browser.mjs
+          node --test tests/owner-cutout-photo-fit-186.test.mjs tests/pre-webgl-owner-cutout-187.test.mjs tests/owner-reviewed-cutout-texture-188.test.mjs tests/owner-mask-fabric-189.test.mjs tests/owner-mask-geometry-190.test.mjs tests/owner-source-mask-topology-191.test.mjs tests/owner-local-mask-continuity-192.test.mjs tests/owner-hairline-continuity-194.test.mjs tests/owner-bilateral-asymmetric-fit-195.test.mjs tests/owner-mesh-bilateral-readback-196.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  mobile-owner-review-fail-closed-chromium-webkit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PHOTO_FIT171: '1'
+      PHOTO_SILHOUETTE62: '1'
+      PHOTO_SHOULDER185: '1'
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Install genuine P541/P60/P172 source photo rig into disposable donor only
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git worktree add --detach .donor541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .p60 6fe5e46b91533a96f3c0d86950ea077cb355c459
+          git worktree add --detach .p172 88d2fdb412f84b0498c86bfa17f4b391425e1958
+          for name in .donor541 .p60 .p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+          cd .donor541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          cd ..
+          cd .p60 && node scripts/install-photo-cloth-realism-164.mjs ../.donor541 && cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .donor541
+          node scripts/install-native-photo-torso-173.mjs .donor541 .p172
+          node scripts/install-source-shoulder-seam-174.mjs .donor541
+          node scripts/install-native-original-dress-drape-175.mjs .donor541
+          node scripts/install-user-photo-to-anatomical-3d-62.mjs .donor541
+          node scripts/install-photographed-garment-shoulder-185.mjs .donor541
+          node scripts/install-owner-reviewed-cutout-texture-188.mjs .donor541
+          node scripts/install-owner-alpha-geometry-190.mjs .donor541
+          node scripts/install-owner-source-topology-191.mjs .donor541
+      - name: Preserve genuine P185 provisional blouse female/male 163-bone acceptance
+        env:
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {verifyGarmentShoulderEvidence185} from './research/garment-shoulder-source-honesty-185/evidence.mjs';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const data=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(data.screens.length,21);
+          assert.equal(verifyGarmentShoulderEvidence185(data,{root,engine}).verified,true);
+          NODE
+          mkdir -p benchmark/owner-reviewed-cutout-texture-188
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-reviewed-cutout-texture-188/p185-${{ matrix.engine }}
+          rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: Prove unreviewed owner cutout never reaches 3D import in Chromium/WebKit 320/390/430
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const data=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(data.priority,'PRE-WEBGL-CUTOUT-187');
+          assert.deepEqual(data.widths,[320,390,430]);
+          assert.equal(data.cases,3);
+          assert.equal(data.screenshots,6);
+          assert.equal(data.screens.length,6);
+          assert.equal(data.errors.length,0);
+          assert.ok(data.evidence.every(row=>row.provisionalBlouseOwnerCutoutReviewRejected186===true&&
+           row.originalPhotoFallbackPreserved===true&&
+           row.preWebGLReviewDenial187===true&&row.actualDonorImports187===0&&
+           row.unreviewed3DSceneNeverCreated187===true&&
+           row.source3DVisibilityRevoked===true&&row.ownerWardrobeUntouched===true&&
+           row.releaseAuthorized===false&&row.familyAlpha==='HOLD'));
+          const hashes=new Set();
+          for(const frame of data.screens){
+           const raw=readFileSync(root+frame.name);
+           assert.equal(createHash('sha256').update(raw).digest('hex'),frame.sha256);
+           assert.equal(raw.readUInt32BE(16),frame.width);
+           hashes.add(frame.sha256);
+          }
+          assert.equal(hashes.size,6);
+          console.log('P187_'+engine.toUpperCase()+'_SIX_REAL_SHA_PRE_WEBGL_FALLBACK_IMAGES_PASS');
+          NODE
+      - name: Preserve P187 unreviewed JPEG fail-closed screenshots before P188 positive
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          mkdir -p benchmark/owner-reviewed-cutout-texture-188
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-reviewed-cutout-texture-188/p187-denial-${{ matrix.engine }}
+          rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: Actual private owner PNG contour to 163-bone source blouse shell + both caps, retain fallback
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_OWNER_POSITIVE188: '1'
+          PHOTO_OWNER_ALPHA189: '1'
+          PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const data=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(data.priority,'OWNER-SOURCE-ALPHA-TOPOLOGY-191');
+          assert.deepEqual(data.widths,[320,390,430]);
+          assert.equal(data.cases,3);
+          assert.equal(data.screenshots,22);
+          assert.equal(data.screens.length,22);
+          assert.equal(data.errors.length,0);
+          assert.ok(data.evidence.every(r=>r.syntheticPersistedOwnerReview188===true&&
+           r.originalAndOwnerCutoutJPEGIndependentlyWebCryptoVerified188===true&&
+           r.ownerCutoutPrivateJPEGTexelsOnTrueSkinnedMesh188===true&&
+           r.actualOwnerAlphaPNGAppliedToFabric189===true&&
+           r.ownerMaskWebCryptoVerifiedBeforeAndAfterDonor189===true&&
+           r.ownerMaskSourceGeometryStillPinned189===true&&
+           r.realOriginalSourceAndOwnerAlphaTopology191===true&&
+           r.actualOwnerContourOverlapIoU191>=.80&&
+           r.actualOwnerContourConnected191>=.87&&
+           r.actualOwnerContourInsideSource191>=.965&&
+           r.originalAndOwnerMaskSourceShaRetained191===true&&
+           r.humanReviewIndependentlyWitnessed191===false&&
+           r.arbitraryPhotoSegmentationCertified191===false&&
+           r.sourceOwnerAlphaPhysicalMeshFitted190===true&&
+           r.ownerMaskMeasuredActuallyFromPrivateRaster190===true&&
+           r.sourceOwnerAlphaActualMovedVertices190>=20&&
+           r.sourceOwnerAlphaMaxMovement190>=.0005&&
+           r.sourceOwnerAlphaMaxMovement190<=.00901&&
+           r.actualMaleAndFemaleSewnCapJoins190===true&&
+           r.sourceOwnerMaskGeometryOnlyLicensedBlouse190===true&&
+           r.ownerPhotoBackStillInferred190===true&&
+           r.independentlyWitnessedOwnerReview190===false&&
+           r.generalOwnerGarmentFitting190===false&&
+           r.syntheticOwnerMaskNotIndependentReview189===true&&
+           r.ownerMaskRealHumanApproved===false&&
+           r.ownerMaskSegmentationAccuracyMeasured===false&&
+           r.licensePinnedPNGMaskNotOwnerSegmentation188===false&&
+           r.femaleAndMaleRendered===true&&r.outfitUnmodified===true&&
+           r.independentHumanReviewWitnessed188===false&&
+           r.physicalPhoneAccepted188===false&&r.familyAlpha==='HOLD'));
+          assert.equal(data.evidence.find(r=>r.width===390).reviewRevocationClosesGenuineWebGL188,true);
+          assert.equal(data.evidence.find(r=>r.width===390).ownerAlphaMutationRevokedReal3D189,true);
+          const hashes=new Set();
+          for(const frame of data.screens){
+           const raw=readFileSync(root+frame.name);
+           assert.equal(createHash('sha256').update(raw).digest('hex'),frame.sha256);
+           assert.equal(raw.readUInt32BE(16),frame.width);
+           hashes.add(frame.sha256);
+          }
+          assert.equal(hashes.size,22);
+          console.log('P190_'+engine.toUpperCase()+'_REAL_OWNER_ALPHA_SHELL_PLUS_SEWN_CAPS_22_ACTUAL_PNG_PASS');
+          NODE
+      - name: Preserve positive P191/P192 owner-mask WebGL evidence before negative P193
+        run: |
+          set -eu
+          mkdir -p benchmark/owner-alpha-webgl-denial-193
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-alpha-webgl-denial-193/p192-positive-${{ matrix.engine }}
+          rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: P193 actual SHA-valid torn owner-mask refuses WebGL, keeps original saved outfit (3 real mobile widths)
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_OWNER_POSITIVE188: '1'
+          PHOTO_OWNER_ALPHA189: '1'
+          PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
+          PHOTO_OWNER_DAMAGED193: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          set -eu
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const report=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(report.priority,'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193');
+          assert.deepEqual(report.widths,[320,390,430]);
+          assert.equal(report.cases,3);
+          assert.equal(report.screenshots,6);
+          assert.equal(report.screens.length,6);
+          assert.deepEqual(report.errors,[]);
+          assert.equal(report.crashes.length,0);
+          for(const row of report.evidence){
+            assert.ok([320,390,430].includes(row.width));
+            for(const field of [
+              'shaValidOwnerMaskLocallyDamaged193',
+              'browserDecodedPrivatePNGRejectsTear192',
+              'actualDonorImportWitnessed193',
+              'noPrivate163BoneWebGLOnDamagedMask193',
+              'originalJPEGPreserved193',
+              'ownerSessionUnchanged193',
+              'ownerClosetAndSavedOutfitUnmodified193'
+            ]) assert.equal(row[field],true,field);
+            assert.equal(row.independentHumanReviewCertified,false);
+            assert.equal(row.releaseAuthorized,false);
+            assert.equal(row.familyAlpha,'HOLD');
+          }
+          const root2='benchmark/owner-reviewed-cutout-texture-188/';
+          const root3='benchmark/owner-alpha-webgl-denial-193/p192-positive-'+engine+'/';
+          const inventories=[
+            {path:root2+'p185-'+engine+'/',n:21},
+            {path:root2+'p187-denial-'+engine+'/',n:6},
+            {path:root3,n:22},
+            {path:root,n:6}
+          ];
+          let count=0;const hashes=new Set();
+          for(const inventory of inventories){
+            const evidence=JSON.parse(readFileSync(inventory.path+'results.json','utf8'));
+            assert.equal(evidence.screens.length,inventory.n);
+            for(const image of evidence.screens){
+              const raw=readFileSync(inventory.path+image.name);
+              assert.equal(createHash('sha256').update(raw).digest('hex'),image.sha256);
+              assert.equal(raw.readUInt32BE(16),image.width);
+              hashes.add(image.sha256);count++;
+            }
+          }
+          // Initial saved-builder frames intentionally repeat across P185,
+          // P187, valid P192 and refused P193 paths; SHA equality of those
+          // identical screenshot pixels is expected, not an evidence flaw.
+          // Count 55 separately materialized, SHA-verified files and require
+          // the six NEW refusal-stage captures themselves to be distinct.
+          assert.equal(count,55);
+          const damaged=report.screens.map(frame=>frame.sha256);
+          assert.equal(new Set(damaged).size,6);
+          assert.ok(hashes.size>=6);
+          console.log('P193_'+engine.toUpperCase()+'_55_REAL_SHA_PNG_POSITIVE_NEGATIVE_PASS');
+          NODE
+      - name: Preserve actual P193 torn-source refusal before narrow P194 hairline trial
+        run: |
+          set -eu
+          mkdir -p benchmark/owner-hairline-continuity-194
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-hairline-continuity-194/p193-broad-denial-${{ matrix.engine }}
+          rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: P194 genuine owner-source SHA-valid hairline MUST refuse 3D without changing owned original JPEG
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_OWNER_POSITIVE188: '1'
+          PHOTO_OWNER_ALPHA189: '1'
+          PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
+          PHOTO_OWNER_HAIRLINE194: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          set -eu
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const report=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(report.priority,'OWNER-HAIRLINE-ALPHA-REJECTED-194');
+          assert.deepEqual(report.widths,[320,390,430]);
+          assert.equal(report.cases,3);
+          assert.equal(report.screenshots,6);
+          assert.equal(report.screens.length,6);
+          assert.deepEqual(report.errors,[]);
+          assert.equal(report.crashes.length,0);
+          for(const row of report.evidence){
+           assert.ok([320,390,430].includes(row.width));
+           for(const flag of [
+             'shaValidOwnerMaskHairline194',
+             'browserDecodedOriginalOwnerAlphaRejectsHairline194',
+             'sourceDonorGenuinelyImported194',
+             'ownerSessionPreserved194',
+             'originalJPEGPreserved194',
+             'originalSavedBoardPreserved194',
+             'noPrivate3DOrOwnerPhotoLeak194',
+             'original2DFallbackVisible194'
+           ])assert.equal(row[flag],true,flag);
+           assert.equal(row.humanSegmentationValidated194,false);
+           assert.equal(row.releaseAuthorized,false);
+           assert.equal(row.familyAlpha,'HOLD');
+          }
+          const inventories=[
+           {root:'benchmark/owner-reviewed-cutout-texture-188/p185-'+engine+'/',count:21},
+           {root:'benchmark/owner-reviewed-cutout-texture-188/p187-denial-'+engine+'/',count:6},
+           {root:'benchmark/owner-alpha-webgl-denial-193/p192-positive-'+engine+'/',count:22},
+           {root:'benchmark/owner-hairline-continuity-194/p193-broad-denial-'+engine+'/',count:6},
+           {root,count:6}
+          ];
+          let audited=0,unique=new Set();
+          for(const entry of inventories){
+           const manifest=JSON.parse(readFileSync(entry.root+'results.json','utf8'));
+           assert.equal(manifest.screens.length,entry.count);
+           for(const img of manifest.screens){
+            const bytes=readFileSync(entry.root+img.name);
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),img.sha256);
+            assert.equal(bytes.readUInt32BE(16),img.width);
+            unique.add(img.sha256);audited++;
+           }
+          }
+          assert.equal(audited,61);
+          assert.equal(new Set(report.screens.map(s=>s.sha256)).size,6);
+          console.log('P194_'+engine.toUpperCase()+'_61_SHA_AUDITED_REAL_PNG_PASS');
+          NODE
+      - name: Preserve P194 real narrow-hairline 2D fallback before positive asymmetric owner 3D
+        run: |
+          set -eu
+          mkdir -p benchmark/owner-bilateral-asymmetric-fit-195
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-bilateral-asymmetric-fit-195/p194-narrow-denial-${{ matrix.engine }}
+          rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: P195 actual separately measured owner left/right contour must fit female and male 163-bone blouse (3 mobile widths)
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_OWNER_POSITIVE188: '1'
+          PHOTO_OWNER_ALPHA189: '1'
+          PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
+          PHOTO_OWNER_BILATERAL195: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          set -eu
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const r=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(r.priority,'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195');
+          assert.deepEqual(r.widths,[320,390,430]);
+          assert.equal(r.cases,3);
+          assert.equal(r.screenshots,22);
+          assert.equal(r.screens.length,22);
+          assert.deepEqual(r.errors,[]);
+          assert.equal(r.crashes.length,0);
+          for(const c of r.evidence){
+            assert.ok([320,390,430].includes(c.width));
+            for(const flag of [
+              'ownerSourceAsymmetricLeftRightPhotoEdgesFitted195',
+              'currentOwnerOriginalAndMaskSHA195',
+              'independentLeftPhotoContourPhysicalMesh195',
+              'independentRightPhotoContourPhysicalMesh195',
+              'actualMaleFemaleAsymmetricalOwnerBlouse195',
+              'originalPhotoUnmodified195',
+              'femaleAndMaleRendered',
+              'originalAndOwnerMaskSourceShaRetained191',
+              'sourceOwnerAlphaPhysicalMeshFitted190',
+              'outfitUnmodified'
+            ]) assert.equal(c[flag],true,flag);
+            assert.ok(c.currentOwnerLeftVertices195>=20);
+            assert.ok(c.currentOwnerRightVertices195>=20);
+            assert.ok(c.physicallyMeasuredSideBiasMeters195>=.0003&&
+                      c.physicallyMeasuredSideBiasMeters195<=.009);
+            assert.equal(c.photographedRearIndependently195,false);
+            assert.equal(c.actualIndependentHumanSegmentation195,false);
+            assert.equal(c.familyAlpha,'HOLD');
+          }
+          const inventories=[
+            {path:'benchmark/owner-reviewed-cutout-texture-188/p185-'+engine+'/',n:21},
+            {path:'benchmark/owner-reviewed-cutout-texture-188/p187-denial-'+engine+'/',n:6},
+            {path:'benchmark/owner-alpha-webgl-denial-193/p192-positive-'+engine+'/',n:22},
+            {path:'benchmark/owner-hairline-continuity-194/p193-broad-denial-'+engine+'/',n:6},
+            {path:'benchmark/owner-bilateral-asymmetric-fit-195/p194-narrow-denial-'+engine+'/',n:6},
+            {path:root,n:22}
+          ];
+          let count=0;
+          for(const v of inventories){
+            const manifest=JSON.parse(readFileSync(v.path+'results.json','utf8'));
+            assert.equal(manifest.screens.length,v.n);
+            for(const img of manifest.screens){
+              const raw=readFileSync(v.path+img.name);
+              assert.equal(createHash('sha256').update(raw).digest('hex'),img.sha256);
+              assert.equal(raw.readUInt32BE(16),img.width);
+              count++;
+            }
+          }
+          assert.equal(count,83);
+          assert.equal(new Set(r.screens.map(z=>z.sha256)).size,22);
+          console.log('P195_'+engine.toUpperCase()+'_83_GENUINE_SHA_PNG_INDEPENDENT_LEFT_RIGHT_FIT_PASS');
+          NODE
+      - name: Preserve independently passed P195 positive bilateral source-fit before real P196 buffer readback
+        run: |
+          set -eu
+          mkdir -p benchmark/owner-mesh-bilateral-readback-196
+          cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/owner-mesh-bilateral-readback-196/p195-positive-${{ matrix.engine }}
+          rm -rf benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }}
+      - name: P196 real current SHA actual skinned torso and TWO cap vertex readback both humanoids (320/390/430)
+        env:
+          PHOTO_OWNER_CUTOUT186: '1'
+          PHOTO_CUTOUT_PREFLIGHT187: '1'
+          PHOTO_OWNER_POSITIVE188: '1'
+          PHOTO_OWNER_ALPHA189: '1'
+          PHOTO_OWNER_GEOMETRY190: '1'
+          PHOTO_OWNER_TOPOLOGY191: '1'
+          PHOTO_OWNER_BILATERAL195: '1'
+          PHOTO_PHYSICAL_READBACK196: '1'
+          PHOTO_SILHOUETTE62_BROWSER: ${{ matrix.engine }}
+        run: |
+          set -eu
+          node scripts/test-native-3d-05-browser.mjs
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+          const root='benchmark/user-photo-to-anatomical-3d-62/'+engine+'/';
+          const result=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(result.priority,'OWNER-163BONE-PHYSICAL-READBACK-196');
+          assert.deepEqual(result.widths,[320,390,430]);
+          assert.equal(result.cases,3);
+          assert.equal(result.screenshots,22);
+          assert.equal(result.screens.length,22);
+          assert.deepEqual(result.errors,[]);
+          assert.equal(result.crashes.length,0);
+          for(const c of result.evidence){
+           assert.ok([320,390,430].includes(c.width));
+           for(const label of [
+            'actualStagedSkinnedVerticesWitnessed196',
+            'actualSourceBoundOldNewTorsoVertexDelta196',
+            'actualLeftRightShoulderCapVertexDelta196',
+            'actualMaleAndFemale163BoneBufferAccepted196',
+            'ownerOriginalPhotoStillSame196',
+            'sourceOwnerAlphaPhysicalMeshFitted190',
+            'originalAndOwnerMaskSourceShaRetained191',
+            'actualMaleFemaleAsymmetricalOwnerBlouse195',
+            'femaleAndMaleRendered',
+            'outfitUnmodified'
+           ])assert.equal(c[label],true,label);
+           for(const key of ['measuredLeftVertices196','measuredRightVertices196','measuredTorsoVertices196'])
+            assert.ok(c[key]>=20,key);
+           assert.ok(c.measuredLeftCapVertices196>=1);
+           assert.ok(c.measuredRightCapVertices196>=1);
+           assert.ok(c.measuredTrueMeshSideDifference196>=.001);
+           assert.equal(c.independentlyReviewedHumanMask196,false);
+           assert.equal(c.familyAlpha,'HOLD');
+          }
+          const inventories=[
+           {path:'benchmark/owner-reviewed-cutout-texture-188/p185-'+engine+'/',n:21},
+           {path:'benchmark/owner-reviewed-cutout-texture-188/p187-denial-'+engine+'/',n:6},
+           {path:'benchmark/owner-alpha-webgl-denial-193/p192-positive-'+engine+'/',n:22},
+           {path:'benchmark/owner-hairline-continuity-194/p193-broad-denial-'+engine+'/',n:6},
+           {path:'benchmark/owner-bilateral-asymmetric-fit-195/p194-narrow-denial-'+engine+'/',n:6},
+           {path:'benchmark/owner-mesh-bilateral-readback-196/p195-positive-'+engine+'/',n:22},
+           {path:root,n:22}
+          ];
+          let checked=0;
+          for(const evidence of inventories){
+           const manifest=JSON.parse(readFileSync(evidence.path+'results.json','utf8'));
+           assert.equal(manifest.screens.length,evidence.n);
+           for(const item of manifest.screens){
+            const bytes=readFileSync(evidence.path+item.name);
+            assert.equal(createHash('sha256').update(bytes).digest('hex'),item.sha256);
+            assert.equal(bytes.readUInt32BE(16),item.width);
+            checked++;
+           }
+          }
+          assert.equal(checked,105);
+          assert.equal(new Set(result.screens.map(x=>x.sha256)).size,22);
+          console.log('P196_'+engine.toUpperCase()+'_105_REAL_SHA_PNG_TORSO_CAP_MESH_READBACK_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P196-${{ matrix.engine }}-actual-torso-and-caps-105-sha-screens-HOLD
+          path: |
+            benchmark/owner-reviewed-cutout-texture-188/
+            benchmark/owner-alpha-webgl-denial-193/
+            benchmark/owner-hairline-continuity-194/
+            benchmark/owner-bilateral-asymmetric-fit-195/
+            benchmark/owner-mesh-bilateral-readback-196/
+            benchmark/user-photo-to-anatomical-3d-62/
+          retention-days: 14
+          if-no-files-found: warn

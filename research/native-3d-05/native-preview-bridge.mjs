@@ -585,6 +585,32 @@ export async function mountNative3D05({
       throw Error('P195 separately measured owner left/right photo contour not fitted to 163-bone blouse');
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
+    if(params?.get('photoPhysicalReadback196')==='research'){
+     if(params?.get('photoOwnerBilateral195')!=='research'|| 
+        params?.get('photoOwnerTopology191')!=='research')
+      throw Error('P196 real skinned mesh proof needs P195 owner profile and P191-P194 source-alpha checks');
+     const rendered=panel?.state?.(),fit=rendered?.fitReceipts171?.shirt?.silhouette62;
+     if(rendered?.viewerReady!==true||rendered?.bones!==163||
+        fit?.ownerPhysicalBilateralReadbackVerified196!==true||
+        fit?.ownerReadbackSourceSHA196!==verifiedSourceTopology191?.sourceSHA256||
+        fit?.ownerReadbackMaskSHA196!==rendered.reviewedPrivateOwnerMaskSHA189||
+        fit.ownerReadbackMaskSHA196!==verifiedSourceTopology191.maskSHA256||
+        !Number.isInteger(fit?.ownerTorsoReadbackMovedVertices196)||
+        fit.ownerTorsoReadbackMovedVertices196<20||
+        !Number.isInteger(fit?.ownerLeftReadbackMovedVertices196)||
+        fit.ownerLeftReadbackMovedVertices196<20||
+        !Number.isInteger(fit?.ownerRightReadbackMovedVertices196)||
+        fit.ownerRightReadbackMovedVertices196<20||
+        !Number.isInteger(fit?.ownerLeftCapReadbackMovedVertices196)||
+        fit.ownerLeftCapReadbackMovedVertices196<1||
+        !Number.isInteger(fit?.ownerRightCapReadbackMovedVertices196)||
+        fit.ownerRightCapReadbackMovedVertices196<1||
+        !Number.isFinite(fit?.ownerMeasuredBilateralRatioDifference196)||
+        fit.ownerMeasuredBilateralRatioDifference196<.001||
+        fit?.ownerReadbackHumanSegmentationVerified196!==false)
+      throw Error('P196 current 163-bone torso and two shoulder caps lack independently measured physical buffer proof');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
     await attestOriginalBytes92();requireFresh();
     verifiedOwnerCutout186=verdict;
     if(preflightLease187){
@@ -752,6 +778,23 @@ export async function mountNative3D05({
     data.fitReceipts171?.shirt?.silhouette62?.ownerBilateralPhysicalAsymmetryMeters195||0:0,
    ownerBilateralRearInferred195:true,
    ownerBilateralHumanApprovalCertified195:false,
+   ownerPhysicalBilateralReadbackVerified196:active&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerPhysicalBilateralReadbackVerified196===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerReadbackMaskSHA196===
+     data.reviewedPrivateOwnerMaskSHA189,
+   ownerTorsoReadbackMovedVertices196:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerTorsoReadbackMovedVertices196||0:0,
+   ownerLeftReadbackMovedVertices196:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerLeftReadbackMovedVertices196||0:0,
+   ownerRightReadbackMovedVertices196:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerRightReadbackMovedVertices196||0:0,
+   ownerLeftCapReadbackMovedVertices196:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerLeftCapReadbackMovedVertices196||0:0,
+   ownerRightCapReadbackMovedVertices196:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerRightCapReadbackMovedVertices196||0:0,
+   ownerMeasuredBilateralRatioDifference196:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMeasuredBilateralRatioDifference196||0:0,
+   ownerReadbackHumanSegmentationVerified196:false,
    ownerAlphaGeneral3DApproved190:false,
    ownerAlphaRearActuallyPhotographed190:false,
    sourceMaskTopologyValid191:active&&verifiedOwnerCutout186?.admitted===true&&

@@ -21,6 +21,9 @@ const photoOwnerTopology191=process.env.PHOTO_OWNER_TOPOLOGY191==='1';
 const photoOwnerDamaged193=process.env.PHOTO_OWNER_DAMAGED193==='1';
 const photoOwnerHairline194=process.env.PHOTO_OWNER_HAIRLINE194==='1';
 const photoOwnerBilateral195=process.env.PHOTO_OWNER_BILATERAL195==='1';
+const photoPhysicalReadback196=process.env.PHOTO_PHYSICAL_READBACK196==='1';
+if(photoPhysicalReadback196&&!photoOwnerBilateral195)
+ throw Error('P196 demands actual P195 owner-bound bilateral fitting');
 if(photoOwnerBilateral195&&(!photoOwnerTopology191||photoOwnerDamaged193||photoOwnerHairline194))
  throw Error('P195 needs one current owner PNG passing all P191-P194 topology integrity');
 if(photoOwnerHairline194&&(!photoOwnerTopology191||photoOwnerDamaged193))
@@ -289,7 +292,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -444,6 +447,17 @@ try{
         blouseState.ownerBilateralPhysicalAsymmetryMeters195<=.009);
        assert.equal(blouseState.ownerBilateralRearInferred195,true);
        assert.equal(blouseState.ownerBilateralHumanApprovalCertified195,false);
+       if(photoPhysicalReadback196){
+        assert.equal(blouseState.ownerPhysicalBilateralReadbackVerified196,true,
+         'P196 actual old vs staged 163-bone torso and two shoulder cap buffers required');
+        assert.ok(blouseState.ownerTorsoReadbackMovedVertices196>=20);
+        assert.ok(blouseState.ownerLeftReadbackMovedVertices196>=20);
+        assert.ok(blouseState.ownerRightReadbackMovedVertices196>=20);
+        assert.ok(blouseState.ownerLeftCapReadbackMovedVertices196>=1);
+        assert.ok(blouseState.ownerRightCapReadbackMovedVertices196>=1);
+        assert.ok(blouseState.ownerMeasuredBilateralRatioDifference196>=.001);
+        assert.equal(blouseState.ownerReadbackHumanSegmentationVerified196,false);
+       }
       }
       assert.equal(blouseState.ownerAlphaGeneral3DApproved190,false);
       assert.equal(blouseState.ownerAlphaRearActuallyPhotographed190,false);
@@ -523,6 +537,15 @@ try{
       assert.ok(maleProof.state?.ownerBilateralLeftVertices195>=20);
       assert.ok(maleProof.state?.ownerBilateralRightVertices195>=20);
       assert.ok(maleProof.state?.ownerBilateralPhysicalAsymmetryMeters195>=.0003);
+      if(photoPhysicalReadback196){
+       assert.equal(maleProof.state?.ownerPhysicalBilateralReadbackVerified196,true);
+       assert.ok(maleProof.state?.ownerTorsoReadbackMovedVertices196>=20);
+       assert.ok(maleProof.state?.ownerLeftReadbackMovedVertices196>=20);
+       assert.ok(maleProof.state?.ownerRightReadbackMovedVertices196>=20);
+       assert.ok(maleProof.state?.ownerLeftCapReadbackMovedVertices196>=1);
+       assert.ok(maleProof.state?.ownerRightCapReadbackMovedVertices196>=1);
+       assert.ok(maleProof.state?.ownerMeasuredBilateralRatioDifference196>=.001);
+      }
      }
      if(photoOwnerTopology191){
       assert.equal(maleProof.state?.sourceMaskTopologyValid191,true);
@@ -573,6 +596,20 @@ try{
      originalAndOwnerMaskSourceShaRetained191:true,
      humanReviewIndependentlyWitnessed191:false,
      arbitraryPhotoSegmentationCertified191:false
+    }:{}),
+    ...(photoPhysicalReadback196?{
+     actualStagedSkinnedVerticesWitnessed196:true,
+     actualSourceBoundOldNewTorsoVertexDelta196:true,
+     actualLeftRightShoulderCapVertexDelta196:true,
+     actualMaleAndFemale163BoneBufferAccepted196:true,
+     measuredLeftVertices196:blouseState.ownerLeftReadbackMovedVertices196,
+     measuredRightVertices196:blouseState.ownerRightReadbackMovedVertices196,
+     measuredTorsoVertices196:blouseState.ownerTorsoReadbackMovedVertices196,
+     measuredLeftCapVertices196:blouseState.ownerLeftCapReadbackMovedVertices196,
+     measuredRightCapVertices196:blouseState.ownerRightCapReadbackMovedVertices196,
+     measuredTrueMeshSideDifference196:blouseState.ownerMeasuredBilateralRatioDifference196,
+     ownerOriginalPhotoStillSame196:true,
+     independentlyReviewedHumanMask196:false
     }:{}),
     ...(photoOwnerBilateral195?{
      ownerSourceAsymmetricLeftRightPhotoEdgesFitted195:true,
@@ -1233,7 +1270,7 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
+ const result={priority:photoPhysicalReadback196?'OWNER-163BONE-PHYSICAL-READBACK-196':photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',

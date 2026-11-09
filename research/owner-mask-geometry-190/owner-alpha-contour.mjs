@@ -6,6 +6,7 @@
  * collision simulation, independent owner review or a photographed rear.
  */
 import {deriveOwnerBilateralContour195} from '../owner-bilateral-asymmetric-fit-195/side-profile.mjs';
+import {verifyPhysicalBilateralMesh196} from '../owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs';
 const SRC='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const HEX=/^[0-9a-f]{64}$/;
 const fail=x=>{throw Error('P190 '+x);};
@@ -152,6 +153,9 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
    !Number.isFinite(asymPhysical195)||
    asymPhysical195<.0003||asymPhysical195>.009))
   fail('P195 independently SHA-verified asymmetrical source contour requires both sides of current 163-bone blouse mesh');
+ const actualMesh196=side195?verifyPhysicalBilateralMesh196({
+  panels,profile,sourceSHA256:SRC,ownerMaskSHA256:profile.ownerMaskSHA256
+ }):null;
  // Atomic in-memory validation: commit geometry ONLY after all meshes pass.
  for(const row of panels){
   row.p.array.set(row.positions);row.panel.array.set(row.pan);
@@ -170,6 +174,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   ownerBilateralSourceSpecificOnly195:true,
   ownerBilateralRearInferred195:true,
   ownerBilateralHumanApprovalCertified195:false,
+  ...(actualMesh196||{}),
   ownerMaskBilateralCapJoins190:activeCaps.size,ownerMaskOnlyUpperBlouse190:true,
   inferredOwnerMaskRear190:true,ownerMaskHumanReviewCertified190:false,
   ownerMaskTopologyValidated191:profile.ownerMaskTopologyVerified191===true&&

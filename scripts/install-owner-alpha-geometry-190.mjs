@@ -22,6 +22,9 @@ await copyFile('research/owner-mask-geometry-190/owner-alpha-contour.mjs',target
 const p195=join(donor,'research/owner-bilateral-asymmetric-fit-195/side-profile.mjs');
 await mkdir(dirname(p195),{recursive:true});
 await copyFile('research/owner-bilateral-asymmetric-fit-195/side-profile.mjs',p195);
+const proof196=join(donor,'research/owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs');
+await mkdir(dirname(proof196),{recursive:true});
+await copyFile('research/owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs',proof196);
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
  "import {fitReviewedUpperPhoto62} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';",
  "import {fitReviewedUpperPhoto62} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';\nimport {fitOwnerAlphaToSkinnedBlouse190} from '../owner-mask-geometry-190/owner-alpha-contour.mjs';");
@@ -48,6 +51,18 @@ await patch('research/outfit-3d-01/research-panel.mjs',
         ownerBilateralSourceSpecificOnly195:true,
         ownerBilateralRearInferred195:true,
         ownerBilateralHumanApprovalCertified195:false,
+        ownerPhysicalBilateralReadbackVerified196:actualOutfit171[k].ownerPhysicalBilateralReadbackVerified196===true,
+        ownerTorsoReadbackMovedVertices196:actualOutfit171[k].ownerTorsoReadbackMovedVertices196||0,
+        ownerLeftReadbackMovedVertices196:actualOutfit171[k].ownerLeftReadbackMovedVertices196||0,
+        ownerRightReadbackMovedVertices196:actualOutfit171[k].ownerRightReadbackMovedVertices196||0,
+        ownerLeftCapReadbackMovedVertices196:actualOutfit171[k].ownerLeftCapReadbackMovedVertices196||0,
+        ownerRightCapReadbackMovedVertices196:actualOutfit171[k].ownerRightCapReadbackMovedVertices196||0,
+        ownerMeasuredBilateralRatioDifference196:actualOutfit171[k].ownerMeasuredBilateralRatioDifference196||0,
+        ownerLeftMeanRelativeContraction196:actualOutfit171[k].ownerLeftMeanRelativeContraction196||0,
+        ownerRightMeanRelativeContraction196:actualOutfit171[k].ownerRightMeanRelativeContraction196||0,
+        ownerReadbackSourceSHA196:actualOutfit171[k].ownerPhysicalBilateralReadbackVerified196===true?actualOutfit171[k].sourceSHA256:null,
+        ownerReadbackMaskSHA196:actualOutfit171[k].ownerPhysicalBilateralReadbackVerified196===true?actualOutfit171[k].ownerMaskSHA256:null,
+        ownerReadbackHumanSegmentationVerified196:false,
         ownerMaskOnlyUpperBlouse190:actualOutfit171[k].ownerMaskOnlyUpperBlouse190===true,
         inferredOwnerMaskRear190:actualOutfit171[k].inferredOwnerMaskRear190===true,
         ownerMaskHumanReviewCertified190:false,
@@ -55,7 +70,8 @@ await patch('research/outfit-3d-01/research-panel.mjs',
 for(const path of ['research/dress-mobile-01/dress-outfit-controller.mjs',
  'research/outfit-3d-01/research-panel.mjs',
  'research/owner-mask-geometry-190/owner-alpha-contour.mjs',
- 'research/owner-bilateral-asymmetric-fit-195/side-profile.mjs'])
+ 'research/owner-bilateral-asymmetric-fit-195/side-profile.mjs',
+ 'research/owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs'])
  execFileSync(process.execPath,['--check',join(donor,path)],{stdio:'inherit'});
 console.log(JSON.stringify({priority:190,isolatedDonorOnly:true,
  true163BoneOwnerContourPhysicalMesh:true,pinnedBlouseOnly:true,
