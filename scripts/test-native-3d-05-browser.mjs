@@ -415,7 +415,7 @@ try{
     ...(photoOwnerPositive188?{syntheticPersistedOwnerReview188:true,
      originalAndOwnerCutoutJPEGIndependentlyWebCryptoVerified188:true,
      ownerCutoutPrivateJPEGTexelsOnTrueSkinnedMesh188:true,
-     licensePinnedPNGMaskNotOwnerSegmentation188:true,
+     licensePinnedPNGMaskNotOwnerSegmentation188:!photoOwnerAlpha189,
      independentHumanReviewWitnessed188:false,
      physicalPhoneAccepted188:false}:{}),
     outfitUnmodified:true,physicalPhoneVerified:false,familyAlpha:'HOLD'});
