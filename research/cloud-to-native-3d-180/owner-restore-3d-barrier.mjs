@@ -50,6 +50,10 @@ export function createCloudToNative3D180({
    typeof win?.addEventListener!=='function')
    fail('existing native original-photo board and WebGL viewer required');
  let revoked=false,working=false,restores=0,sourceProofs=0,reloaded=0;
+ // P182: after P126 writes IndexedDB, failure of read-back/byte SHA is NOT
+ // rollback. Quarantine 3D until native owner source integrity is re-attested.
+ let postCommitUnverified=false,postCommitWrites=0,postCommitFailures=0,rechecks=0;
+ let lastPhotoFallbackOutfits=0;
  let token=null,generation=0,initialFingerprint=null;
  function requireOwner(){
   if(revoked)fail('owner restore bridge revoked');
@@ -72,7 +76,9 @@ export function createCloudToNative3D180({
    slots:structuredClone(x.slots||{})
   }));
  }
- function begin(){
+ function begin({recovery=false}={}){
+  if(postCommitUnverified&&!recovery)
+   fail('prior restore already wrote private storage; retry photo verification before a new restore');
   if(working)fail('concurrent destructive restore lease refused');
   const s=requireOwner();
   token=Object.freeze({owner,generation:++generation,selected:s.selected,
@@ -96,7 +102,22 @@ export function createCloudToNative3D180({
    fail('saved outfit or photo source changed while consent was pending');
   return true;
  }
- async function afterAtomicRestore(lease){
+ function markAtomicCommitted(lease){
+  if(!working||token!==lease)fail('invalid post-commit owner lease');
+  // P129 calls onRestored ONLY after P126 atomic IndexedDB commit. Mark
+  // before any additional async session read or SHA check can reject.
+  postCommitUnverified=true;
+  postCommitWrites++;
+  check(lease);
+ }
+ function notePostCommitFailure(lease){
+  if(token!==lease||!postCommitUnverified)return false;
+  postCommitFailures++;
+  return true;
+ }
+ async function afterAtomicRestore(lease,{recovery=false}={}){
+  if(!recovery)postCommitUnverified=true;
+  else if(!postCommitUnverified)fail('no incomplete post-commit verification to retry');
   check(lease);
   // P126 has already verified SHA/owner and completed its IndexedDB atomic
   // write; reload is a read-only reconciliation, never a second restore.
@@ -157,13 +178,25 @@ export function createCloudToNative3D180({
   }
   assertUnchanged181();
   sourceProofs+=attested;
-  restores++;
-  return Object.freeze({restored:true,adopted:true,ownerId:owner,
+  lastPhotoFallbackOutfits=photoFallbackOutfits;
+  if(recovery)rechecks++;else restores++;
+  postCommitUnverified=false;
+  return Object.freeze({restored:!recovery,reconciled:true,adopted:true,ownerId:owner,
    savedOutfits:saved.length,originalJPEGsAttested:attested,
    photoFallbackOutfits,stale3DClosed:true,
    privateSourceIntegrity:photoFallbackOutfits===0,
    verifiedSourceReceiptsOnly:true,ownerSessionUnchanged:true,
    hostedSignedJWTVerified:false,productionAuthorized:false,familyAlpha:'HOLD'});
+ }
+ async function retryVerification(){
+  if(!postCommitUnverified)fail('no pending committed restore verification');
+  const lease=begin({recovery:true});
+  try{
+   // Read and digest the owner's CURRENT private local wardrobe; this is
+   // NOT a remote cloud restore and NEVER writes or discards saved outfits.
+   return await afterAtomicRestore(lease,{recovery:true});
+  }catch(e){postCommitFailures++;throw e;}
+  finally{finish(lease);}
  }
  function finish(lease){
   if(token!==lease)return false;
@@ -175,11 +208,16 @@ export function createCloudToNative3D180({
  win.addEventListener('closet:session-locked',listener);
  win.addEventListener('pagehide',listener);
  return Object.freeze({
-  begin,check,consent,afterAtomicRestore,finish,revoke,
-  pending(){return !revoked&&working;},
-  state(){if(!revoked){auth.assertCurrent?.();if(auth.user?.id!==owner)revoke();}
+  begin,check,consent,markAtomicCommitted,notePostCommitFailure,
+  afterAtomicRestore,retryVerification,finish,revoke,
+  pending(){return !revoked&&(working||postCommitUnverified);},
+  state(){if(!revoked){try{auth.assertCurrent?.();}catch{revoke();}
+   if(auth.user?.id!==owner)revoke();}
    return Object.freeze({
-   active:!revoked,pending:working,restores,
+   active:!revoked,pending:working||postCommitUnverified,restores,
+   postCommitUnverified,postCommitWrites,postCommitFailures,
+   photoFallbackOutfits:lastPhotoFallbackOutfits,
+   localOnlyPhotoRechecks:rechecks,noSecondDestructiveRestore:true,
    nativeOwnerBoardReloaded:reloaded,originalJPEGsAttested:sourceProofs,
    staleAnatomical3DNotReused:true,realHostedJWT:false,
    productionAuthorized:false,familyAlpha:'HOLD'
