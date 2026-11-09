@@ -23,7 +23,7 @@ const server=createServer(async(req,res)=>{
  try{
   const p=new URL(req.url,'http://localhost').pathname;
   if(req.method!=='GET'||p.includes('..')||p.includes('\\'))throw Error('bad research route');
-  if(p==='/'){res.writeHead(200,{'content-type':'text/html'}).end('<html><meta name="viewport" content="width=device-width"><body style="font:14px sans-serif;margin:10px"><h2>Public photograph · model / human mask</h2><p id="status"></p><canvas id="photo"></canvas><p>Fashionpedia human polygons · Pexels photos. Research only. No owner approval or 3D reconstruction.</p></body></html>');return;}
+  if(p==='/'){res.writeHead(200,{'content-type':'text/html'}).end('<html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body style="font:14px sans-serif;margin:10px"><h2>Public photograph · model / human mask</h2><p id="status"></p><canvas id="photo"></canvas><p>Fashionpedia human polygons · Pexels photos. Research only. No owner approval or 3D reconstruction.</p></body></html>');return;}
   if(!/^\/(research|public)\/[\w/.-]+\.mjs$/.test(p))throw Error('bad file');
   res.writeHead(200,{'content-type':'text/javascript'}).end(await readFile(resolve('.'+p)));
  }catch{res.writeHead(404).end();}
