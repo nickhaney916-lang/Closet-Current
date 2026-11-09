@@ -209,7 +209,8 @@ try{
    if(photoOwnerCutout186){
     assert.equal(openProof.ok,false,
      'P186 unreviewed provisional cutout must NEVER be promoted to an owner-approved 3D preview');
-    assert.match(openProof.error||'',/P186/i);
+    assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),/P186/i,
+     'Engine-independent proof must expose an explicit refused owner-cutout review');
     const unsafe=await page.evaluate(()=>window.native3D05Bridge.state());
     assert.equal(unsafe.active,false,'P186 must destroy provisional private 3D scene');
     assert.equal(unsafe.photoOwnerCutout186,false);
