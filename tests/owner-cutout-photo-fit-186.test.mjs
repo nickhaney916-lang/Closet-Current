@@ -109,3 +109,20 @@ test('P186 is actually wired to the live private native controller and preview, 
   'provisionalBlouseOwnerCutoutReviewRejected186:true','screens.length,photoOwnerCutout186?6'])
   assert.ok(browser.includes(token),'actual browser fail-closed '+token);
 });
+
+test('P186 revokes review/byte metadata changed during either asynchronous WebCrypto digest',async()=>{
+ for(const index of [1,2]){
+  const row=sampleRow();let calls=0;
+  const cryptoImpl={subtle:{digest:async(...args)=>{
+   const bytes=await webcrypto.subtle.digest(...args);
+   if(++calls===index){
+    if(index===1)row.reviewProvenance='unreviewed-while-hashing';
+    else row.segmentHint.cutoutImage=jpg(original);
+   }
+   return bytes;
+  }}};
+  await assert.rejects(attestOwnerReviewedCutoutBytes186({
+   row,ownerId:'owner-A',cryptoImpl,decodeBase64:atob
+  }),/P186 owner review or cutout changed during JPEG SHA verification/);
+ }
+});
