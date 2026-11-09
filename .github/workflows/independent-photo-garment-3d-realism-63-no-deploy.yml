@@ -1,8 +1,15 @@
+Warning: truncated output (original token count: 2384)
+Total output lines: 172
+
 name: P63 independent source-verified 3D garment mobile acceptance NO DEPLOY
 on:
   push:
     branches:
       - research/independent-photo-garment-3d-realism-63-20261108-HOLD
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches:
+      - research/cloud-3d-source-receipt-integrity-181-main-20261108-HOLD
   workflow_dispatch:
 permissions:
   contents: read
@@ -70,31 +77,7 @@ jobs:
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61 6fe5e46b91533a96f3c0d86950ea077cb355c459 88d2fdb412f84b0498c86bfa17f4b391425e1958
           git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
-          git worktree add --detach .p173-p60 6fe5e46b91533a96f3c0d86950ea077cb355c459
-          git worktree add --detach .p173-p172 88d2fdb412f84b0498c86bfa17f4b391425e1958
-          for name in .native05-donor-541 .p173-p60 .p173-p172; do
-            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
-            ln -s ../node_modules "$name/node_modules"
-          done
-          cd .native05-donor-541
-          node scripts/build-three-d-31-jeans-proposal.mjs
-          node scripts/build-three-d-37-second-jeans.mjs
-          node scripts/build-work47-benchmark.mjs
-          node research/three-d-20/restore-approved-models.mjs
-          cd ..
-          cd .p173-p60 && node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541 && cd ..
-          node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
-          node scripts/install-native-photo-torso-173.mjs .native05-donor-541 .p173-p172
-          node scripts/install-source-shoulder-seam-174.mjs .native05-donor-541
-          node scripts/install-native-original-dress-drape-175.mjs .native05-donor-541
-      - name: Capture original P174 baseline and P175 fitted dress in real 163-bone Chromium WebGL
-        run: |
-          set -eu
-          PHOTO_FIT171=1 PHOTO_TORSO173=1 PHOTO_SLEEVE174=1 PHOTO_DRESS175=0 node scripts/test-native-3d-05-browser.mjs
-          node scripts/audit-native-photo-torso-173.mjs
-          mkdir -p benchmark/native-dress-drape-175/baseline
-          cp benchmark/native-3d-05/*.png benchmark/native-dress-drape-175/baseline/
-          cp benchmark/native-3d-05/results.json benchmark/native-dress-drape-175/baseline/results.json
+          git worktree add --detach .p173-p60 6fe5e46b91533a96f3c0…384 tokens truncated…ve-3d-05/results.json benchmark/native-dress-drape-175/baseline/results.json
           PHOTO_FIT171=1 PHOTO_TORSO173=1 PHOTO_SLEEVE174=1 PHOTO_DRESS175=1 node scripts/test-native-3d-05-browser.mjs
           node scripts/audit-native-photo-torso-173.mjs
           node scripts/audit-native-original-dress-drape-175.mjs
