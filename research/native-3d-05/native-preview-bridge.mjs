@@ -464,6 +464,9 @@ export async function mountNative3D05({
     if(params?.get('photoOwnerPositive188')==='research'&&
        verdict.actualPrivateJPEGTexelsOnSkinnedMesh188!==true)
      throw Error('P188 current verified private owner pixels not rendered into real 163-bone garment');
+    if(params?.get('photoOwnerGeometry190')==='research'&&
+       params?.get('photoOwnerAlpha189')!=='research')
+     throw Error('P190 owner physical blouse geometry requires current P189 separate alpha mask proof');
     if(params?.get('photoOwnerAlpha189')==='research'){
      // A second, independently WebCrypto-hashed private PNG must actually
      // mask the fitted source garment's photographed texture. This never
@@ -474,6 +477,28 @@ export async function mountNative3D05({
         mask.ownerMaskGeometryFromPrivatePNG189!==false||
         mask.ownerMaskHumanReviewIndependentlyVerified189!==false)
       throw Error('P189 owner-private SHA-bound mask not applied to current 163-bone fabric');
+     if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
+    }
+    if(params?.get('photoOwnerGeometry190')==='research'){
+     // ONLY the current actual 163-bone skinned garment, with original P185
+     // two-cap seams, can claim geometry physically derived from owner PNG.
+     const render190=panel?.state?.();
+     const fit190=render190?.fitReceipts171?.shirt?.silhouette62;
+     if(render190?.viewerReady!==true||render190?.bones!==163||
+        render190?.ownerMaskPixelsOnSkinnedGarment189!==true||
+        fit190?.ownerAlphaMaskBasedPhysicalGeometry190!==true||
+        fit190?.ownerAlphaMaskSHA256_190!==render190.reviewedPrivateOwnerMaskSHA189||
+        fit190?.ownerMaskBilateralCapJoins190!==2||
+        !Number.isInteger(fit190?.ownerMaskAdjustedVertices190)||
+        fit190.ownerMaskAdjustedVertices190<20||
+        !Number.isFinite(fit190.ownerMaskMaxMoveMeters190)||
+        fit190.ownerMaskMaxMoveMeters190<.0005||
+        fit190.ownerMaskMaxMoveMeters190>.00901||
+        fit190?.ownerMaskOnlyUpperBlouse190!==true||
+        fit190?.inferredOwnerMaskRear190!==true||
+        fit190?.ownerMaskHumanReviewCertified190!==false||
+        fit190?.generalizedUserPhotoTo3D190!==false)
+      throw Error('P190 actual reviewed owner-mask derived bounded 163-bone geometry proof unavailable');
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
     await attestOriginalBytes92();requireFresh();
@@ -619,6 +644,20 @@ export async function mountNative3D05({
    ownerAlphaMaskSourceGeometryChanged189:false,
    ownerAlphaMaskHumanReviewIndependentlyWitnessed189:false,
    ownerAlphaMaskSegmentationAccuracyVerified189:false,
+   ownerAlphaPhysicalMeshFit190:active&&
+    verifiedOwnerCutout186?.admitted===true&&
+    data.ownerMaskPixelsOnSkinnedGarment189===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskSHA256_190===
+     data.reviewedPrivateOwnerMaskSHA189,
+   ownerAlphaPhysicalVertices190:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskAdjustedVertices190||0:0,
+   ownerAlphaPhysicalMoveMeters190:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskMaxMoveMeters190||0:0,
+   ownerAlphaBilateralCapJoins190:active?
+    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskBilateralCapJoins190||0:0,
+   ownerAlphaGeneral3DApproved190:false,
+   ownerAlphaRearActuallyPhotographed190:false,
    reviewedCutoutLeaseLive187:active&&!!displayedReviewLease187,
    ownerCutoutSHA186:active&&verifiedOwnerCutout186?.originalAndCutoutJPEGBytesIndependentlySHA256Verified===true,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
