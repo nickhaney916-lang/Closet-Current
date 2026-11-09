@@ -95,7 +95,7 @@ function fixture(owner){
      ownerId:owner,name:'Source-true original photographed shirt',
      slots:{top:owner+'-shirt'},futureSourceKeys:{ver:3}},
     {id:owner+'-blouse-saved',outfit3dId:owner+'-verified-blouse-3D',
-     ownerId:owner,name:'Reviewed original blouse photo',
+     ownerId:owner,name:'Provisional original blouse photo · review pending',
      slots:{top:owner+'-blouse'},futureSourceKeys:{ver:4}}],
    futureBoardVersion:'never-drop'}
  };
@@ -125,7 +125,7 @@ async function take(page,width,stage){
  const meta=await sharp(png).metadata(),stat=await sharp(png).stats();
  assert.equal(meta.width,width);assert.ok(meta.height>=880&&png.length>4500);
  assert.ok(stat.channels.some(x=>x.stdev>7),'Actual mobile canvas/image blank');
- const name='chromium-'+width+'-'+stage+'.png';
+ const name=(photoSilhouette62?photoSilhouetteEngine62:'chromium')+'-'+width+'-'+stage+'.png';
  await writeFile(dir+'/'+name,png);
  screens.push({name,width,stage,sha256:digest(png)});
 }
@@ -206,17 +206,17 @@ try{
    assert.equal(blouseState.photorealismApproved,false);
    assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
    assert.deepEqual(await readBoard(page),ownerOriginal);
-   await page.locator('#outfit3D01Front').click(); await take(page,width,'01-female-front-reviewed-blouse');
-   await page.locator('#outfit3D01Side').click(); await take(page,width,'02-female-side-reviewed-blouse');
-   await page.locator('#outfit3D01Back').click(); await take(page,width,'03-female-inferred-rear-reviewed-blouse');
+   await page.locator('#outfit3D01Front').click(); await take(page,width,'01-female-front-provisional-blouse');
+   await page.locator('#outfit3D01Side').click(); await take(page,width,'02-female-side-provisional-blouse');
+   await page.locator('#outfit3D01Back').click(); await take(page,width,'03-female-inferred-rear-provisional-blouse');
    const model=page.locator('#outfit3D01Model');
    if(await model.count()){
     await model.selectOption('male');
     await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
      window.native3D05Bridge.state().figure==='male'&&
      window.native3D05Bridge.state().photoSourceSilhouette62===true,null,{timeout:150000});
-    await take(page,width,'04-male-front-reviewed-blouse');
-    await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-reviewed-blouse');
+    await take(page,width,'04-male-front-provisional-blouse');
+    await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-provisional-blouse');
    }
    assert.deepEqual(await readBoard(page),ownerOriginal);
    assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -227,6 +227,7 @@ try{
     physicalPhotoSilhouetteMaxMeters62:blouseState.silhouetteMaxMeters62,
     originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
     ownerApprovalForArbitraryPhotos:false,photorealismAccepted:false,
+    provisionalCutoutNeedsHumanReview:true,
     outfitUnmodified:true,physicalPhoneVerified:false,familyAlpha:'HOLD'});
    await page.close();await ctx.close();await browser.close();browser=null;
    continue;
