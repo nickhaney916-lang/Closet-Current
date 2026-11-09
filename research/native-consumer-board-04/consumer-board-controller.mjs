@@ -270,13 +270,20 @@ export async function createNativeConsumerBoard04({
   * callback. Both private bytes are rehashed before and after this callback.
   * Explicit review metadata is an owner assertion, not independent quality.
   */
- const withReviewedCutoutForRenderer188=async(receipt,renderer)=>{
+ const withReviewedCutoutForRenderer188=async(receipt,renderer,{
+  requireOwnerMaskTopology191=false
+ }={})=>{
   const params=new URLSearchParams(win.location.search);
   if(params.get('photoOwnerPositive188')!=='research'||
      params.get('photoOwnerCutout187')!=='research'||
      typeof renderer!=='function')
    fail('P188_EXPLICIT_PRIVATE_RENDERER_AND_REVIEW_REQUIRED');
   requireReviewedCutoutLease187(receipt);
+  if(requireOwnerMaskTopology191===true&&
+    (params.get('photoOwnerTopology191')!=='research'||
+     params.get('photoOwnerGeometry190')!=='research'||
+     params.get('photoOwnerAlpha189')!=='research'))
+   fail('P191_EXPLICIT_PRIVATE_ALPHA_TOPOLOGY_REQUIRES_SOURCE_GEOMETRY_AND_OWNER_LEASE');
   const row=wardrobe.find(x=>x.id===receipt.garmentId);
   if(!row||row.ownerId!==receipt.ownerId)
    fail('P188_WRONG_OWNER_OR_SELECTED_GARMENT');
@@ -303,7 +310,7 @@ export async function createNativeConsumerBoard04({
     ownerAlphaProof189:alphaProof189,
     ...(params.get('photoOwnerGeometry190')==='research'?
      {ownerMaskGeometryRequested190:true}:{}),
-    ...(params.get('photoOwnerTopology191')==='research'?
+    ...(requireOwnerMaskTopology191===true&&params.get('photoOwnerTopology191')==='research'?
      {ownerMaskTopologyRequested191:true}:{})
    }:{}),
    ownerReviewed:true,originalJPEGVerified:true,cutoutJPEGVerified:true,
