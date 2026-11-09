@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -303,6 +303,15 @@ export async function mountNative3D05({
      'anatomical renderer unavailable').slice(0,240);
     throw Error('P180 source-verified real 163-bone donor not ready: '+message);
    }
+   // P183: don't overwrite an original source load error with the generic
+   // "verifying" text from a saved-outfit event. Preserve the *actual* donor
+   // cause before the user source is selected, without leaking private data.
+   if(params?.get('photoSilhouette62')==='research'&&
+      (panel.state()?.viewerReady!==true||panel.state()?.bones!==163)){
+    const diagnostic=String(doc.getElementById('outfit3D01Status')?.textContent||
+     'unavailable').slice(0,280);
+    throw Error('P183 source-bound provisional blouse donor 163-bone load failed: '+diagnostic);
+   }
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
    requireFresh(); // The WebGL model may take seconds; recheck source + owner.
@@ -341,13 +350,33 @@ export async function mountNative3D05({
       render:render?{...render,productionDeployed:false}:null
      });
      if(verdict.admitted){proof171=verdict;break;}
-     if(i===39)throw Error('P171 source-bound anatomical 3D receipt not independently available: '+verdict.reason);
+     if(i===39){
+      // Research-only sanitized diagnostic: never print owner photos, saved
+      // garment IDs, tokens, original JPEG bytes or private source hashes.
+      const diag={ready:render?.viewerReady===true,visible:render?.privateVisible===true,
+       bones:render?.bones||0,mode:render?.viewerMode||'none',
+       receiptSlots:Object.keys(render?.fitReceipts171||{}),
+       status:String(doc.getElementById('outfit3D01Status')?.textContent||'').slice(0,170)};
+      throw Error('P171 source-bound anatomical 3D receipt not independently available: '+
+       verdict.reason+'; sanitized-render='+JSON.stringify(diag));
+     }
      await new Promise(resolve=>win.setTimeout(resolve,100));
      requireFresh();
     }
     await attestOriginalBytes92();
     requireFresh();
     verifiedPhotographicFit171=proof171;
+   }
+   if(params?.get('photoSilhouette62')==='research'){
+    if(params?.get('photoFit171')!=='research'||!verifiedPhotographicFit171?.admitted)
+     throw Error('P62 requires existing independently signed P171 source-true 3D admission');
+    const render=panel?.state?.();
+    const module=await import('../user-photo-to-anatomical-3d-62/admission.mjs');
+    requireFresh();
+    const result=module.inspectPhotoSilhouetteFit62({selection:selected,sources:selectedSources91,
+     render:render?{...render,productionDeployed:false}:null,proof171:verifiedPhotographicFit171});
+    if(!result.admitted)throw Error('P62 source-photo physical silhouette fit unavailable: '+result.reason);
+    await attestOriginalBytes92();requireFresh();verifiedPhotoSilhouette62=result;
    }
    // P173: an explicitly selected owner shirt may claim a bounded 3D torso
    // contour ONLY when the real donor physically moved the original mesh.
@@ -421,6 +450,7 @@ export async function mountNative3D05({
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
     photoSourceFit171:verifiedPhotographicFit171?.admitted===true,
+    photoSourceSilhouette62:verifiedPhotoSilhouette62?.admitted===true,
     photoSourceTorso173:verifiedPhotographicTorso173?.admitted===true,
     photoSourceShoulder174:verifiedPhotographicShoulder174?.admitted===true,
     photoSourceDress175:verifiedPhotographicDress175?.admitted===true,
@@ -443,11 +473,17 @@ export async function mountNative3D05({
   const data=active?panel.state():{};
   return Object.freeze({active,opened:active?opened:null,
    modelReady:active&&data.viewerReady===true,
+   // P183: expose the ACTUAL loaded donor anatomical figure; never derive
+   // female/male from a select value before a 163-bone model finished loading.
+   figure:active&&data.viewerReady===true?data.figure||null:null,
    bones:active?data.bones||0:0,
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
    photoOnlyUnsupported:true,photoSourceFit171:active&&verifiedPhotographicFit171?.admitted===true,
+   photoSourceSilhouette62:active&&verifiedPhotoSilhouette62?.admitted===true,
+   silhouetteVertices62:active?verifiedPhotoSilhouette62?.movedVertices||0:0,
+   silhouetteMaxMeters62:active?verifiedPhotoSilhouette62?.maxMovementMeters||0:0,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
    photoSourceDress175:active&&verifiedPhotographicDress175?.admitted===true,
