@@ -69,6 +69,7 @@ if(photoOwnerPositive188){
   // owner photo segmentation or witnessed manual review.
   const {data,info}=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   assert.equal(info.channels,4);
+  const sourceAlpha195=photoOwnerBilateral195?Buffer.from(data):null;
   if(photoOwnerGeometry190){
    // Synthetic owner-ASSERTED test contour: a conservative ~4% horizontal
    // resampling of the licensed actual PNG, preserving the narrow cuffs,
@@ -113,20 +114,32 @@ if(photoOwnerPositive188){
    // Same threshold as P190's actual source/owner alphaRows readback:
    // transparent anti-aliasing fringes (alpha 1..159) are NOT cloth edges.
    // Old >0 selection trimmed fringe pixels and produced no real side shift.
-   const trim=Math.max(3,Math.round(info.width*.018));
+   const requestedTrim=Math.max(2,Math.round(info.width*.008));
    let trimmedRows=0;
    for(let y=0;y<info.height;y++){
-    let first=-1,last=-1;
-    for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>=160){
-     if(first<0)first=x;last=x;
+    let first=-1,last=-1,sourceFirst=-1,sourceLast=-1;
+    for(let x=0;x<info.width;x++){
+     if(sourceAlpha195[(y*info.width+x)*4+3]>=160){
+      if(sourceFirst<0)sourceFirst=x;sourceLast=x;
+     }
+     if(data[(y*info.width+x)*4+3]>=160){
+      if(first<0)first=x;last=x;
+     }
     }
-    if(first<0||last-first<Math.max(28,Math.round(info.width*.25)))continue;
-    for(let x=first;x<=Math.min(last,first+trim-1);x++)
+    if(sourceFirst<0||first<0||
+       last-first<Math.max(28,Math.round(info.width*.25)))continue;
+    const sourceWidth=sourceLast-sourceFirst+1,ownerWidth=last-first+1;
+    // Fixture must exceed P190's minimum .86 source/owner row ratio;
+    // deliberately cap changes at a stricter .905 bound from real bytes.
+    const allowed=Math.max(0,Math.floor(ownerWidth-sourceWidth*.905));
+    const trim=Math.min(requestedTrim,allowed);
+    if(trim<2)continue;
+    for(let x=first;x<first+trim;x++)
      data[(y*info.width+x)*4+3]=0;
     trimmedRows++;
    }
-   assert.ok(trimmedRows>=Math.round(info.height*.3),
-    'P195 synthetic source-contained alpha must actually trim measurable original cloth rows');
+   assert.ok(trimmedRows>=Math.round(info.height*.2),
+    'P195 synthetic owner alpha must move enough real source-bound left garment rows safely');
   }
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
    .png({compressionLevel:9}).toBuffer();
