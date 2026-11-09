@@ -294,6 +294,7 @@ export async function createNativeConsumerBoard04({
    requireReviewedCutoutLease187(receipt);
   }
   const asset=Object.freeze({
+   ownerId:receipt.ownerId,garmentId:receipt.garmentId,
    sourceId:'commons-0016',originalSourceSHA256:receipt.originalSourceSHA256,
    privateCutoutJPEGBytesSHA256:receipt.cutoutSHA256,
    cutoutImage:row.segmentHint.cutoutImage,
