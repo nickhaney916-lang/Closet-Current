@@ -1,3 +1,4 @@
+import {verifyLocalSourceContinuity192} from '../owner-local-mask-continuity-192/source-local-continuity.mjs';
 /**
  * Closet Current MAIN P191 — actual decoded owner alpha topology vs pinned
  * licensed original garment PNG. Research-only; source geometry authenticity
@@ -99,7 +100,10 @@ export function verifyDecodedSourceContour191({
  }
  if(rows<height*.28||centerSum/rows>.022||maxCenter>.072)
   fail('unregistered or laterally shifted owner alpha contour');
- return Object.freeze({sourceId:'commons-0016',
+ const local192=verifyLocalSourceContinuity192({
+  sourcePixels:src.pixels,ownerPixels:own.pixels,width,height
+ });
+ return Object.freeze({...local192,sourceId:'commons-0016',
   sourceSHA256:SOURCE,ownerMaskSHA256,
   ownerSourceOverlapIoU191:pct(iou),
   ownerInsideSourceFraction191:pct(contained),
