@@ -31,7 +31,10 @@ s=s.replace(maskSourceAnchor,`${maskSourceAnchor}
     ownerSourceMaskLargestConnected191:sources?.blouse?.ownerSourceMaskLargestConnected191||0,
     ownerSourceMaskInsideSource191:sources?.blouse?.ownerSourceMaskInsideSource191||0,
     ownerSourceMaskSHA191:sources?.blouse?.ownerSourceMaskSHA191||null,
-    ownerSourceMaskHumanReviewIndependent191:false,`);
+    ownerSourceMaskHumanReviewIndependent191:false,
+    ownerSourceMaskRequested191:ownerReviewedCutout188?.ownerMaskTopologyRequested191===true,
+    ownerSourceMaskHeldByBlouse191:sources?.blouse?.ownerSourceMaskTopologyValidated191===true,
+    ownerSourceMaskProfileSeen191:sources?.blouse?.ownerMaskGeometryProfile190?.ownerMaskTopologyVerified191===true,`);
 await writeFile(target,s);
 execFileSync(process.execPath,['--check',target],{stdio:'inherit'});
 console.log(JSON.stringify({priority:191,onlyDetachedResearchDonor:true,
