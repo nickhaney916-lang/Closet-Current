@@ -109,7 +109,19 @@ export async function createNativeConsumerBoard04({
  // deliberately not rewritten. This is not a board reload or cloud write.
  const refreshWardrobe=async()=>{
   const lease=alive();
-  const snapshot=await io.read(lease);
+  let snapshot;
+  try{snapshot=await io.read(lease);}
+  catch(e){
+   // P189: a mobile browser may reject reading a large IndexedDB JPEG blob
+   // while native WebGL is active. NEVER leave the previous photo/source
+   // lease usable if new owner wardrobe bytes cannot be observed.
+   // NATIVE93 source revision invalidates the live 3D read-only admission;
+   // publish a view/status change, but do NOT overwrite any stored item,
+   // active outfit, unsaved draft or existing cloud recovery metadata.
+   wardrobeRevision93++;
+   emit('Private closet read unavailable · previous 3D source revoked; original photos remain stored');
+   throw e;
+  }
   alive();
   if(epoch.auth.getSessionGeneration()!==lease.generation||
      admitted.ownerId!==lease.ownerId||!Array.isArray(snapshot.items))
