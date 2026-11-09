@@ -26,7 +26,11 @@ const events={reads:0,writes:0,uploads:0,storageReads:0,foreignDenied:0,errors:[
 const types={'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.webmanifest':'application/manifest+json','.jpg':'image/jpeg','.png':'image/png','.svg':'image/svg+xml','.glb':'model/gltf-binary','.bin':'application/octet-stream','.woff2':'font/woff2'};
 function send(res,status,value,type='application/json'){
  res.writeHead(status,{'content-type':type,'cache-control':'no-store','x-content-type-options':'nosniff'});
- res.end(type==='application/json'?JSON.stringify(value):value);
+ // API JSON objects require encoding. The real licensed Work47 manifest
+ // is already a Buffer of original JSON bytes: do not corrupt it into
+ // {"type":"Buffer","data":[...]} (which falsely rejects valid cutouts).
+ res.end(type==='application/json'&&!Buffer.isBuffer(value)?
+  JSON.stringify(value):value);
 }
 async function body(req){const chunks=[];let n=0;for await(const c of req){n+=c.length;if(n>20_000_000)throw Error('request too large');chunks.push(c);}return Buffer.concat(chunks);}
 function owner(req){for(const [id,token] of tokens)if(req.headers.authorization==='Bearer '+token)return id;return null;}
