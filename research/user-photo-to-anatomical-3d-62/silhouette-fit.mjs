@@ -33,8 +33,14 @@ export function shapeReviewedBlouseShoulder185({x,y,shoulderToTorso,hemToTorso}=
  const outer=smooth(Math.abs(x),.19,.38);
  const shoulderBand=smooth(y,1.33,1.53)*(1-smooth(y,1.72,1.86));
  const round=outer*shoulderBand;
- const nextX=x*width-Math.sign(x)*.004*round;
- const nextY=y-.005*round;
+ let nextX=x*width-Math.sign(x)*.003*round;
+ let nextY=y-.004*round;
+ // Exact physical displacement is capped before any mesh attributes are
+ // touched. Large photographic widths cannot force a clipping 3D admission.
+ const distance=Math.hypot(nextX-x,nextY-y);
+ if(distance>.024){const k=.024/distance;
+  nextX=x+(nextX-x)*k;nextY=y+(nextY-y)*k;
+ }
  return Object.freeze({x:nextX,y:nextY,zChange:0,
   upperBodyPhotoBand:high,outerShoulderRounded:round>0.2,
   displacementMeters:Math.hypot(nextX-x,nextY-y)});
