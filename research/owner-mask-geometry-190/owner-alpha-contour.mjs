@@ -134,6 +134,16 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   ownerMaskAdjustedVertices190:moved,ownerMaskMaxMoveMeters190:maxShift,
   ownerMaskBilateralCapJoins190:activeCaps.size,ownerMaskOnlyUpperBlouse190:true,
   inferredOwnerMaskRear190:true,ownerMaskHumanReviewCertified190:false,
+  ownerMaskTopologyValidated191:profile.ownerMaskTopologyVerified191===true&&
+    profile.ownerMaskSHA256_190===undefined&&
+    Number.isFinite(profile.ownerMaskTopologyIoU191)&&
+    profile.ownerMaskTopologyIoU191>=.80&&
+    Number.isFinite(profile.ownerMaskTopologyConnected191)&&
+    profile.ownerMaskTopologyConnected191>=.87,
+  ownerMaskSourceOverlapIoU191:profile.ownerMaskTopologyIoU191||0,
+  ownerMaskLargestConnected191:profile.ownerMaskTopologyConnected191||0,
+  ownerMaskInsideSource191:profile.ownerMaskTopologyInsideSource191||0,
+  ownerMaskIndependentHumanReviewed191:false,
   generalizedUserPhotoTo3D190:false,collisionCertified:false,
   humanVisualApproval:false,releaseAuthorized:false}};
 }
