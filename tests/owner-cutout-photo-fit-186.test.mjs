@@ -106,7 +106,7 @@ test('P186 is actually wired to the live private native controller and preview, 
   'verifiedOwnerCutout186=verdict','photoOwnerCutout186:active&&'])
   assert.ok(native.includes(token),'NATIVE owner preview proof '+token);
  for(const token of ["PHOTO_OWNER_CUTOUT186","02-provisional-cutout-review-required-2d-fallback",
-  'provisionalBlouseOwnerCutoutReviewRejected186:true','screens.length,photoOwnerCutout186?6'])
+  'provisionalBlouseOwnerCutoutReviewRejected186:true','photoOwnerCutout186?assert.equal(screens.length,6)'])
   assert.ok(browser.includes(token),'actual browser fail-closed '+token);
 });
 
