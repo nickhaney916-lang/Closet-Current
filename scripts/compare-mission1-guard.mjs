@@ -58,7 +58,7 @@ export function compareMission1Guard(manifests,baseline,candidate){
     if(oldWrong){summary.before.unsafeAutomatic++;scores.beforeUnsafe++;}}
    if(n.strong){summary.after.automatic++;if(newRight)summary.after.acceptedAutomatic++;
     if(newWrong){summary.after.unsafeAutomatic++;scores.afterUnsafe++;}}
-   const guarded=!!n.diagnostics?.mission1CrossFrame?.required;
+   const guarded=!!n.diagnostics?.mission1SubtypeSafety?.required;
    if(n.strong&&!p.strong)fail('guard must never invent automatic recognition '+m.id);
    if(n.strong&&(n.prediction.category!==p.prediction.category||
      n.prediction.type!==p.prediction.type))
@@ -87,9 +87,9 @@ export function compareMission1Guard(manifests,baseline,candidate){
     ultimatelyCorrectAutomatic:newRight,
     initialWrongAutomatic:oldWrong,
     finalWrongAutomatic:newWrong,
-    extraSourceViews:n.diagnostics?.mission1CrossFrame?.sourceFramesCompared??0,
+    extraSourceViews:n.diagnostics?.mission1SubtypeSafety?.sourceFramesCompared??0,
     gated:guarded,
-    verifiedSourceFraming:n.diagnostics?.mission1CrossFrame?.verified===true});
+    verifiedSourceFraming:n.diagnostics?.mission1SubtypeSafety?.verified===true});
   }
   summary.totalPhotos+=manifest.length;
   breakdown[group]=scores;
