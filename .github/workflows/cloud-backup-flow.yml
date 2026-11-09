@@ -1,7 +1,7 @@
 name: Private closet backup and multi-device recovery
 on:
   push:
-    branches: [main, 'cloud/private-backup']
+    branches: [main, 'cloud/private-backup', 'automation/recognition-learning-20261109']
     paths:
       - 'public/**'
       - 'tests/cloud-backup.test.cjs'

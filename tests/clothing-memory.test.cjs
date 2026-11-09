@@ -38,3 +38,40 @@ test('two revisions of the same confirmed item cannot count as two supporting ex
  assert.equal(M.suggest(target(),[example('one'),example('one',{image:'new-photo-of-same-item'})]),null);
  assert.ok(M.suggest(target(),[example('one'),example('two')]));
 });
+
+test('a suggestion cannot fill attributes after a manual subtype correction',()=>{
+ const q=target(),s=M.suggest(q,[example('one'),example('two')]);
+ q.itemType='T-shirt';const applied=M.apply(q,s);
+ assert.equal(applied.itemType,'T-shirt');assert.equal(applied.pattern,'Unknown');
+});
+test('a suggestion cannot fill fields after its category changes',()=>{
+ const q=target(),s=M.suggest(q,[example('one'),example('two')]);
+ q.category='Dresses';const applied=M.apply(q,s);
+ assert.equal(applied.category,'Dresses');assert.equal(applied.itemType,'Unknown');
+});
+test('a suggestion is invalidated when its unmasked recognition photo changes',()=>{
+ const q=target({recognitionPhoto:{image:'original-source'}}),s=M.suggest(q,[example('one'),example('two')]);
+ q.recognitionPhoto={image:'replacement-source'};
+ assert.equal(M.apply(q,s).itemType,'Unknown');
+});
+test('a suggestion cannot bypass a newly clipped garment mask',()=>{
+ const q=target({segmentHint:{categories:['Tops'],types:[],clipped:false}}),s=M.suggest(q,[example('one'),example('two')]);
+ q.segmentHint.clipped=true;assert.equal(M.apply(q,s).itemType,'Unknown');
+});
+test('a suggestion is bound to its query object and cannot be replayed on another item',()=>{
+ const q=target(),s=M.suggest(q,[example('one'),example('two')]),other=structuredClone(q);
+ assert.equal(M.apply(other,s).itemType,'Unknown');
+ assert.equal(M.apply(q,s).itemType,'Polo');
+});
+test('a serialized or constructed suggestion must be regenerated before use',()=>{
+ const q=target(),s=M.suggest(q,[example('one'),example('two')]);
+ assert.equal(M.apply(q,JSON.parse(JSON.stringify(s))).itemType,'Unknown');
+});
+test('weekly suggestions respect the current known subtype',()=>{
+ const q=target({itemType:'T-shirt',weeklySuggestion:{fields:{itemType:'Polo',pattern:'Striped'},requiresConfirmation:true}});
+ assert.equal(M.weekly(q),null);
+});
+test('replacing recognition memory invalidates an outstanding suggestion',()=>{
+ const q=target(),s=M.suggest(q,[example('one'),example('two')]);
+ q.recognitionMemory=memory('replacement-model');assert.equal(M.apply(q,s).itemType,'Unknown');
+});
