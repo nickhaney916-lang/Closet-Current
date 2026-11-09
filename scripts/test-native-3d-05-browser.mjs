@@ -220,6 +220,9 @@ try{
     assert.equal(blouseState.photoSourceShoulder185,true,
      'P185 requires actual bounded rounded shoulder/hem world-axis mesh receipt');
     assert.ok(blouseState.physicalShoulderVertices185>=20);
+    assert.equal(blouseState.shoulderCapSeamsRetained185,true,
+     'P185 cannot break original bilateral sewn shoulder cap normals');
+    assert.ok(blouseState.sewnShoulderCaps185>=2);
     assert.ok(blouseState.physicalShoulderMaxMeters185>.0001&&
      blouseState.physicalShoulderMaxMeters185<=.025);
     assert.equal(blouseState.mannequinBaseCoverDisclosure185,true);
@@ -255,6 +258,8 @@ try{
      assert.equal(maleProof.state?.photoSourceShoulder185,true,
       'P185 real switched male source shoulder fit must be independently verified');
      assert.ok(maleProof.state?.physicalShoulderVertices185>=20);
+     assert.equal(maleProof.state?.shoulderCapSeamsRetained185,true);
+     assert.ok(maleProof.state?.sewnShoulderCaps185>=2);
      assert.ok(maleProof.state?.physicalShoulderMaxMeters185<=.025);
      assert.equal(maleProof.state?.mannequinBaseCoverDisclosure185,true);
     }
@@ -274,6 +279,8 @@ try{
      anatomicalShoulderHemSourceAxis185:true,
      physicalShoulderEasing185:true,
      shoulderEasedVertices185:blouseState.physicalShoulderVertices185,
+     bilateralSewnShoulderCapsRetained185:true,
+     actualSkinnedShoulderCapMeshes185:blouseState.sewnShoulderCaps185,
      shoulderMaxMeters185:blouseState.physicalShoulderMaxMeters185,
      maleShoulderEasing185:true,
      mannequinBaseCoverDisclosure185:true,
