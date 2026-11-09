@@ -423,16 +423,60 @@ try{
     // Genuine IndexedDB source revision after visible 3D must revoke the
     // previous reviewed JPEG and close the skinned renderer, not silently
     // maintain a cached canvas. No saved outfit CAS is touched.
-    await page.evaluate(()=>new Promise((resolve,reject)=>{
-     const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
-     const get=store.get('native05-A-blouse');
-     get.onsuccess=()=>{const row=get.result;
-      if(photoOwnerAlpha189)row.segmentHint.ownerAlphaSHA256189='f'.repeat(64);
-      else row.ownerReviewed=false;
-      store.put(row);};
-     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
-    }));
+    if(photoOwnerAlpha189){
+     // A distinct same-origin research browser tab changes only the live
+     // owner's reviewed mask SHA. This avoids destroying the WebGL tab's
+     // page.evaluate context mid-transaction and is a stronger cross-tab
+     // owner-mask revocation test than mutating through the active renderer.
+     const modifier=await ctx.newPage();
+     try{
+      await modifier.goto(origin+'/public/index.html',{waitUntil:'domcontentloaded'});
+      const revised=await modifier.evaluate(()=>new Promise((resolve,reject)=>{
+       const req=indexedDB.open('closet-current-user-native05-A');
+       req.onerror=()=>reject(req.error);
+       req.onsuccess=()=>{
+        const idb=req.result;
+        if(!idb.objectStoreNames.contains('items')){
+         idb.close();reject(Error('P189 source items store missing'));return;
+        }
+        const tx=idb.transaction('items','readwrite');
+        const store=tx.objectStore('items'),get=store.get('native05-A-blouse');
+        let changed=false;
+        get.onerror=()=>reject(get.error);
+        get.onsuccess=()=>{
+         const row=get.result;
+         if(row?.ownerId!=='native05-A'||!row.segmentHint?.ownerAlphaSHA256189){
+          reject(Error('P189 only the current owner photo mask may be revised'));return;
+         }
+         row.segmentHint.ownerAlphaSHA256189='f'.repeat(64);
+         changed=true;store.put(row);
+        };
+        tx.onerror=()=>{idb.close();reject(tx.error);};
+        tx.oncomplete=()=>{idb.close();resolve(changed);};
+       };
+      }));
+      assert.equal(revised,true,'P189 independent browser tab must persist a changed owner mask SHA');
+     }finally{await modifier.close();}
+    }else{
+     await page.evaluate(()=>new Promise((resolve,reject)=>{
+      const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
+      const get=store.get('native05-A-blouse');
+      get.onsuccess=()=>{const row=get.result;row.ownerReviewed=false;store.put(row);};
+      tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+     }));
+    }
+    // Never infer success from page navigation; the original WebGL page
+    // must remain loaded, observe real changed IndexedDB data, and revoke.
     await page.evaluate(()=>window.nativeLossless04Bridge.refreshWardrobe());
+    if(photoOwnerAlpha189){
+     const persisted=await page.evaluate(()=>new Promise((resolve,reject)=>{
+      const req=db.transaction('items','readonly').objectStore('items').get('native05-A-blouse');
+      req.onsuccess=()=>resolve(req.result?.segmentHint?.ownerAlphaSHA256189);
+      req.onerror=()=>reject(req.error);
+     }));
+     assert.equal(persisted,'f'.repeat(64),
+      'P189 mask-only SHA change must actually persist before WebGL revocation is credited');
+    }
     const revoked=await page.evaluate(()=>window.native3D05Bridge.state());
     assert.equal(revoked.active,false);
     assert.equal(revoked.ownerReviewedCutoutTextureOnMesh188,false);
