@@ -81,14 +81,29 @@ export async function attestOwnerReviewedCutoutBytes186({
   typeof hint.cutoutImage!=='string'||
   !hint.cutoutImage.startsWith('data:image/jpeg;base64,'))
   throw Error('P186 real P119 owner-reviewed source and separated JPEG cutout required');
+ // Preserve the full review + image identity across both asynchronous SHA
+ // operations. An attacker must not flip approved/review flags, provenance,
+ // cutout hash or image bytes between the two digests without detection.
+ const identity=()=>[row.id,row.ownerId,row.sourceId,row.sourceSHA256,
+  row.sourceHash,row.sourceHashVerified,row.category,row.itemType,
+  row.ownerReviewed,row.humanReviewedSource,row.reviewProvenance,
+  row.cutoutSHA256,row.originalPhoto?.image,row.originalPhoto?.sha256,
+  row.segmentHint?.verified,row.segmentHint?.ownerReviewedInstance,
+  row.segmentHint?.originalSHA256,row.segmentHint?.cutoutSHA256,
+  row.segmentHint?.cutoutImage];
+ const originalIdentity=identity();
+ const ensureSame=()=>{if(identity().some((value,i)=>value!==originalIdentity[i]))
+  throw Error('P186 owner review or cutout changed during JPEG SHA verification');};
  const original=await attestOriginalJPEGBytes92({
   row,ownerId,cryptoImpl,decodeBase64
  });
+ ensureSame();
  const cropped=await attestOriginalJPEGBytes92({
   row:{id:row.id,ownerId:row.ownerId,sourceSHA256:row.cutoutSHA256,
    originalPhoto:{sha256:row.cutoutSHA256,image:hint.cutoutImage}},
   ownerId,cryptoImpl,decodeBase64
  });
+ ensureSame();
  return Object.freeze({ownerId,garmentId:row.id,sourceId:'commons-0016',
   originalSourceSHA256:original.sha256,cutoutSHA256:cropped.sha256,
   ownerReviewed:true,humanReviewedSource:true,reviewedInstance:true,
