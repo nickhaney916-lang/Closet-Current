@@ -303,6 +303,15 @@ export async function mountNative3D05({
      'anatomical renderer unavailable').slice(0,240);
     throw Error('P180 source-verified real 163-bone donor not ready: '+message);
    }
+   // P183: don't overwrite an original source load error with the generic
+   // "verifying" text from a saved-outfit event. Preserve the *actual* donor
+   // cause before the user source is selected, without leaking private data.
+   if(params?.get('photoSilhouette62')==='research'&&
+      (panel.state()?.viewerReady!==true||panel.state()?.bones!==163)){
+    const diagnostic=String(doc.getElementById('outfit3D01Status')?.textContent||
+     'unavailable').slice(0,280);
+    throw Error('P183 source-bound provisional blouse donor 163-bone load failed: '+diagnostic);
+   }
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
    requireFresh(); // The WebGL model may take seconds; recheck source + owner.
