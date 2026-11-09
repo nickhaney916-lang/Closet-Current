@@ -694,6 +694,8 @@ export async function mountNative3D05({
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
+   sourceCapPartitionConserved66:active&&data.sourceCapPartitionConserved66===true,
+   sourceSmallCapFacesRetained66:active?data.sourceSmallCapFacesRetained66||0:0,
    photoOnlyUnsupported:true,photoSourceFit171:active&&verifiedPhotographicFit171?.admitted===true,
    photoSourceSilhouette62:active&&verifiedPhotoSilhouette62?.admitted===true,
    silhouetteVertices62:active?verifiedPhotoSilhouette62?.movedVertices||0:0,

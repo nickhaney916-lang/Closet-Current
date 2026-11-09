@@ -436,6 +436,10 @@ try{
        blouseState.ownerAlphaPhysicalMoveMeters190<=.00901);
       assert.equal(blouseState.ownerAlphaBilateralCapJoins190,2);
       if(photoOwnerBilateral195){
+       if(process.env.SOURCE_CAP66==='1'){
+        assert.equal(blouseState.sourceCapPartitionConserved66,true);
+        assert.ok(blouseState.sourceSmallCapFacesRetained66>=0,JSON.stringify(blouseState));
+       }
        assert.equal(blouseState.ownerBilateralActualPhotoShape195,true,
         'P195 real private decoded left/right alpha must physically shape 163-bone garment');
        assert.ok(blouseState.ownerBilateralLeftVertices195>=20);
@@ -518,6 +522,10 @@ try{
      assert.ok(maleProof.state?.ownerAlphaPhysicalMoveMeters190<=.00901);
      assert.equal(maleProof.state?.ownerAlphaBilateralCapJoins190,2);
      if(photoOwnerBilateral195){
+      if(process.env.SOURCE_CAP66==='1'){
+       assert.equal(maleProof.state?.sourceCapPartitionConserved66,true);
+       assert.ok(maleProof.state?.sourceSmallCapFacesRetained66>=0,JSON.stringify(maleProof.state));
+      }
       assert.equal(maleProof.state?.ownerBilateralActualPhotoShape195,true,
        'P195 male requires genuinely fitted independently measured left/right photo edges');
       assert.ok(maleProof.state?.ownerBilateralLeftVertices195>=20);
@@ -575,6 +583,8 @@ try{
      arbitraryPhotoSegmentationCertified191:false
     }:{}),
     ...(photoOwnerBilateral195?{
+     sourceCapPartitionConserved66:blouseState.sourceCapPartitionConserved66===true,
+     sourceSmallCapFacesRetained66:blouseState.sourceSmallCapFacesRetained66||0,
      ownerSourceAsymmetricLeftRightPhotoEdgesFitted195:true,
      currentOwnerOriginalAndMaskSHA195:true,
      independentLeftPhotoContourPhysicalMesh195:true,
