@@ -147,12 +147,12 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
- let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null;
+ let displayedSelection89=null,displayedSources91=null,displayedRevision93=null,verifiedPhotographicFit171=null,verifiedPhotographicTorso173=null,verifiedPhotographicShoulder174=null,verifiedPhotographicDress175=null,verifiedPhotoSilhouette62=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
-  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;
+  const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;verifiedPhotographicFit171=null;verifiedPhotographicTorso173=null;verifiedPhotographicShoulder174=null;verifiedPhotographicDress175=null;verifiedPhotoSilhouette62=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
   try{try{oldPanel?.destroy();}catch{}try{oldEpoch?.dispose();}catch{}}
@@ -349,6 +349,19 @@ export async function mountNative3D05({
     requireFresh();
     verifiedPhotographicFit171=proof171;
    }
+   if(params?.get('photoSilhouette62')==='research'){
+    if(params?.get('photoFit171')!=='research'||!verifiedPhotographicFit171?.admitted)
+     throw Error('P62 requires existing independently signed P171 source-true 3D admission');
+    const render=panel?.state?.();
+    const module=await import('../user-photo-to-anatomical-3d-62/admission.mjs');
+    requireFresh();
+    const cutoutReviewReceipt=selectedSources91?.sources?.find(x=>x?.id===selected?.slots?.top)?.cutoutReviewReceipt||null;
+    const result=module.inspectPhotoSilhouetteFit62({selection:selected,sources:selectedSources91,
+     render:render?{...render,productionDeployed:false}:null,proof171:verifiedPhotographicFit171,
+     cutoutReviewReceipt});
+    if(!result.admitted)throw Error('P62 source-photo physical silhouette fit unavailable: '+result.reason);
+    await attestOriginalBytes92();requireFresh();verifiedPhotoSilhouette62=result;
+   }
    // P173: an explicitly selected owner shirt may claim a bounded 3D torso
    // contour ONLY when the real donor physically moved the original mesh.
    // Dress remains P171 source-only, not falsely labeled P173 shirt-fitted.
@@ -421,6 +434,7 @@ export async function mountNative3D05({
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
     photoSourceFit171:verifiedPhotographicFit171?.admitted===true,
+    photoSourceSilhouette62:verifiedPhotoSilhouette62?.admitted===true,
     photoSourceTorso173:verifiedPhotographicTorso173?.admitted===true,
     photoSourceShoulder174:verifiedPhotographicShoulder174?.admitted===true,
     photoSourceDress175:verifiedPhotographicDress175?.admitted===true,
@@ -448,6 +462,9 @@ export async function mountNative3D05({
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
    photoOnlyUnsupported:true,photoSourceFit171:active&&verifiedPhotographicFit171?.admitted===true,
+   photoSourceSilhouette62:active&&verifiedPhotoSilhouette62?.admitted===true,
+   silhouetteVertices62:active?verifiedPhotoSilhouette62?.movedVertices||0:0,
+   silhouetteMaxMeters62:active?verifiedPhotoSilhouette62?.maxMovementMeters||0:0,
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
    photoSourceDress175:active&&verifiedPhotographicDress175?.admitted===true,
