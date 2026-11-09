@@ -102,7 +102,14 @@ export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,natural
     profile.inferredBack!==true||profile.releaseAuthorized!==false||
     !Array.isArray(shirt?.meshes)||typeof root?.traverse!=='function')
   throw Error('P62 requires the exact reviewed source-photo silhouette and matching 3D shell');
- const targets=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell');
+ // The P45 separated left/right cap panels share exact seam positions
+ // with the body shell. Applying a shoulder correction to ONLY the shell
+ // tears both joins and fails the genuine bilateral sewn normal witness.
+ const targets=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
+  naturalShoulder185&&['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
+ if(naturalShoulder185&&
+  !['L','R'].every(side=>targets.some(m=>m.userData?.work45IndependentShoulderCap===side)))
+  throw Error('P185 requires actual left and right separately sewn shoulder cap meshes');
  const bodySkeletons=new Set();root.traverse(o=>{if(o?.isSkinnedMesh&&!o.userData?.work56Garment&&o.skeleton)bodySkeletons.add(o.skeleton);});
  if(!targets.length||targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||!bodySkeletons.has(m.skeleton)))
   throw Error('P62 requires the actual 163-bone fitted source garment shell');
@@ -132,7 +139,15 @@ export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,natural
     panelNext[i*3]=nx;panelNext[i*3+1]=ny;
     // Convert the panel world-space fit to mesh-local coordinates without
     // modifying JPEG pixels, UVs, weights or the shared 163-bone rig.
-    const worldPoint=mesh.position.clone().set(nx,ny,z).applyMatrix4(inv);
+    const worldPoint=naturalShoulder185?
+     mesh.position.clone().set(p.getX(i),p.getY(i),p.getZ(i))
+      .applyMatrix4(mesh.matrixWorld):
+     mesh.position.clone().set(nx,ny,z);
+    // P185 must preserve P45 cap retessellation and the pre-existing sewn
+    // midpoints. Apply the IDENTICAL source-panel delta to shell and caps,
+    // rather than replacing a cap midpoint with the unshaped original panel.
+    if(naturalShoulder185){worldPoint.x+=nx-x;worldPoint.y+=ny-y;}
+    worldPoint.applyMatrix4(inv);
     next[i*3]=worldPoint.x;next[i*3+1]=worldPoint.y;next[i*3+2]=worldPoint.z;
    }
   }
@@ -150,6 +165,9 @@ export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,natural
   shoulderEasedVertices185:naturalShoulder185?shoulderAdjusted185:0,
   maxShoulderDisplacement185:naturalShoulder185?maxShoulderMove185:0,
   shoulderHemWorldAxisCorrected185:naturalShoulder185,
+  independentShoulderCapSeamsRetained185:naturalShoulder185,
+  independentlyJoinedShoulderCapMeshes185:naturalShoulder185?
+    targets.filter(m=>m.userData?.work45IndependentShoulderCap).length:0,
   collisionCertified:false,
   humanVisualApproval:false,releaseAuthorized:false}};
 }
