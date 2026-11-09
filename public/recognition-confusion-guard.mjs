@@ -50,7 +50,7 @@ export async function corroborateAmbiguousType(result,image,{sourceWhole,sourceC
   return requireReview(result,'verification_unavailable',0);
  const labels=localCandidates.filter(x=>
   (x.category===family.category&&family.types.includes(x.itemType))||
-  x.category==='Uncategorized').map(x=>x.label);
+  (x.category==='Uncategorized'&&negativeLabels.slice(0,2).includes(x.label))).map(x=>x.label);
  // Both views operate on full SOURCE pixels. Never substitute thumbnail,
  // label-only metadata, or a cached classification from a different photo.
  if(labels.length<2||labels.length>10||!labels.some(x=>negativeLabels.includes(x)))
