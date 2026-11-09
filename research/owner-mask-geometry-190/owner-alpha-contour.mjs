@@ -38,7 +38,10 @@ export function profileOwnerAlphaGeometry190({source,owner,maskSHA}={}){
   let total=0,n=0;
   for(let y=start;y<end;y++){
    const aa=a.rows[y],bb=b.rows[y];
-   if(aa.width<width*.10||bb.width<width*.10)continue;
+   // Exclude sparsely sampled edge/strap rows from width inference: a
+   // one-pixel difference at the neckline must never become a large 3D
+   // torso/cap deformation, even with a genuine SHA-verified mask.
+   if(aa.width<Math.max(24,width*.12)||bb.width<Math.max(24,width*.12))continue;
    if(bb.first<aa.first-width*.01||bb.last>aa.last+width*.01)
     fail('owner PNG grows outside licensed frontal silhouette');
    const ratio=bb.width/aa.width;
