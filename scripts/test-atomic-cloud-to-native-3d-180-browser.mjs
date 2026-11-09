@@ -77,6 +77,19 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port,flag='?ownerReview145=research&ownerReview146=research&ownerCutout178=research&nativeLossless04=research&native3D05=research&cloud3D180=research';
+// Independently require the immutable P541 licensed dress source manifest.
+const donorManifest=JSON.parse(readFileSync(resolve(donor,'benchmark/work47/manifest.json'),'utf8'));
+const sourceDress=donorManifest.rows.find(x=>x.id==='commons-0053');
+const dressManifestAcceptable=!!(sourceDress?.hasCutout===true&&
+ sourceDress?.ownerApproved===false&&sourceDress?.attribution?.license&&
+ /^[a-f0-9]{64}$/.test(sourceDress.cutoutSHA256||''));
+assert.ok(dressManifestAcceptable,'P180 immutable P541 original licensed cutout manifest incomplete');
+console.log('P180_PINNED_DONOR_MANIFEST_SOURCE',JSON.stringify({
+ dressPresent:!!sourceDress,hasCutout:sourceDress?.hasCutout,
+ ownerApproved:sourceDress?.ownerApproved,
+ originalSHA:sourceDress?.sourceSHA256,
+ sourceCutoutSHA:sourceDress?.cutoutSHA256,safeOriginalSourceOnly:true
+}));
 const screenshot=async(page,engine,width,stage)=>{
  const name=engine+'-'+width+'-'+stage+'.png',bytes=await page.screenshot({animations:'disabled',fullPage:false});
  const md=await sharp(bytes).metadata();assert.equal(md.width,width);
@@ -248,6 +261,22 @@ try{
      'Actual restored source JPEG must be rehashed before native 3D opens');
     assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().savedCount),1);
     if(engine==='chromium'){
+      const browserSource=await page.evaluate(async()=>{
+       const response=await fetch('/benchmark/work47/manifest.json',{cache:'no-store'});
+       if(!response.ok)return {status:response.status};
+       const manifest=await response.json();
+       const row=manifest?.rows?.find(x=>x.id==='commons-0053');
+       return {status:response.status,hasCutout:row?.hasCutout,
+        ownerApproved:row?.ownerApproved,sourceSHA:row?.sourceSHA256,
+        cutoutSHA:row?.cutoutSHA256,license:!!row?.attribution?.license};
+      });
+      assert.equal(browserSource.status,200);
+      assert.equal(browserSource.hasCutout,true,
+       'P180 browser received wrong original photo donor manifest');
+      assert.equal(browserSource.ownerApproved,false);
+      assert.equal(browserSource.license,true);
+      assert.equal(browserSource.cutoutSHA,sourceDress.cutoutSHA256,
+       'P180 browser asset manifest differs from exact P541 donor');
       // An OPEN account menu covers the mobile builder touch target.
       // Close its actual <details> summary as a real user does BEFORE
       // selecting the recovered outfit and clicking 3D Preview.
