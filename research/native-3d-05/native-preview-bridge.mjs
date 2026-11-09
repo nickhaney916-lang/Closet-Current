@@ -240,6 +240,11 @@ export async function mountNative3D05({
  async function open(){
   if(closed)throw Error('NATIVE05 private preview disposed');
   requireNative3D05Visible102({doc});
+  // Existing NATIVE102 visibility-first lifecycle must remain untouched.
+  // P180 then blocks any asynchronous source admission during cloud restore.
+  if(params?.get('cloud3D180')==='research'&&
+     win.cloudToNative3D180Bridge?.pending?.())
+   throw Error('P180 private cloud replacement pending; 3D must stay closed');
   if(opened||opening)throw Error('NATIVE05 close the current 3D preview before reopening');
   const selectedIndex=consumer.selected,request=++attempt;
   const selected=validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
@@ -248,6 +253,11 @@ export async function mountNative3D05({
   const requireFresh=()=>{
    if(closed||request!==attempt)throw Error('NATIVE88 stale or canceled 3D request');
    requireNative3D05Visible102({doc});
+   // Preserve NATIVE102 original source lifecycle, then reject new WebGL
+   // admission while a private cloud photo/outfit restore is pending.
+   if(params?.get('cloud3D180')==='research'&&
+      win.cloudToNative3D180Bridge?.pending?.())
+    throw Error('P180 private cloud wardrobe restore pending; cannot open stale 3D');
    const current=requireCurrentNative3D05Selection88({
     consumer,originalNativeAuth:nativeAuth,win,doc,admitted:selected,selectedIndex
    });
@@ -284,6 +294,15 @@ export async function mountNative3D05({
    lockDonorEditing();
    opened=selected.id;
    await panel.open(); // genuine anatomical WebGL rig and source-verified loaders
+   // P180: fail closed if the original 163-bone donor never became ready.
+   // Its fallback reason is read *before* the saved-outfit change event
+   // overwrites its status with a generic "verifying" line.
+   if(params?.get('cloud3D180')==='research'&&
+      (panel.state()?.viewerReady!==true||panel.state()?.bones!==163)){
+    const message=String(doc.getElementById('outfit3D01Status')?.textContent||
+     'anatomical renderer unavailable').slice(0,240);
+    throw Error('P180 source-verified real 163-bone donor not ready: '+message);
+   }
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
    requireFresh(); // The WebGL model may take seconds; recheck source + owner.

@@ -1,0 +1,242 @@
+name: P180 private cloud atomic original/cutout -> actual saved 163 bone 3D NO DEPLOY
+on:
+  push:
+    branches:
+      - research/atomic-cloud-to-native-3d-refresh-180-main-20261108-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  immutable-parent-scope-full-node:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently verified P179 ancestor, seven isolated P180 research paths, no public edits
+        run: |
+          set -eu
+          BASE=1b362c0f9a07345cf112ed8745011a9d89695081
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          FIRST="$(git rev-list --reverse "$BASE..HEAD" | head -n1)"
+          test "$(git rev-parse "$FIRST^")" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p180-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/cloud-to-native-3d-180/owner-restore-3d-barrier.mjs|research/cloud-to-native-3d-180/REPORT.md|research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs|research/native-3d-05/native-preview-bridge.mjs|scripts/test-atomic-cloud-to-native-3d-180-browser.mjs|tests/atomic-cloud-to-native-3d-180.test.mjs|.github/workflows/atomic-cloud-to-native-3d-180-no-deploy.yml) ;;
+              *) echo "P180 refused unrelated owner, cloud, staging, public, photo or 3D production source $p"; exit 1 ;;
+            esac
+          done </tmp/p180-paths
+          test "$(wc -l </tmp/p180-paths)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public supabase migrations benchmark/fixtures research/native-private-cloud-cutout-177 research/native-owner-reviewed-cutout-178 research/hosted-two-owner-original-cutout-179 research/photo-dress-anatomical-drape-61 package.json package-lock.json
+          node --check research/cloud-to-native-3d-180/owner-restore-3d-barrier.mjs
+          node --check research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs
+          node --check research/native-3d-05/native-preview-bridge.mjs
+          node --check scripts/test-atomic-cloud-to-native-3d-180-browser.mjs
+          node --check tests/atomic-cloud-to-native-3d-180.test.mjs
+      - name: Install pinned isolated Node regression dependencies without lockfile mutation
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: P180 hostile owner, unsaved draft, active WebGL, race, photo SHA, restore lease unit testing
+        run: node --test tests/atomic-cloud-to-native-3d-180.test.mjs
+      - name: Existing public consumer untouched and COMPLETE inherited Node regressions
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.cjs tests/*.mjs
+  actual-cloud-original-cutout-restored-to-163bone-native-3d:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      ARTIFACT_DIR: benchmark/atomic-cloud-to-native-3d-180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Isolated actual browser and original source JPEG WebGL dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Build unchanged current Closet Current app and exact pinned original 163-bone P541 donor separately
+        run: |
+          set -eu
+          node scripts/build.mjs
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native05-donor-541"
+          ln -s ../node_modules .native05-donor-541/node_modules
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+          test -f benchmark/work47/manifest.json
+      - name: Genuine original JPEG plus cutout owner cloud restore into SAME native saved outfit and 163 bone WebGL at mobile widths
+        run: node scripts/test-atomic-cloud-to-native-3d-180-browser.mjs
+      - name: Strict genuine photo SHA all actual browser screenshots, 3 genuine WebGL bones, 3 active-scene restoration denials
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='benchmark/atomic-cloud-to-native-3d-180/';
+          const r=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(r.priority,180);
+          assert.equal(r.finalSource,'actual public/index.html with P146 native bridge');
+          assert.equal(r.sourcePinnedDonorSHA,'df6885d6011cb33fb22dceb81a08f35a0ac4dd61');
+          assert.equal(r.recoveredOriginalJPEG,'commons-0003');
+          assert.deepEqual(r.chromium3DWidths,[320,390,430]);
+          assert.equal(r.actualRestoredCloudOriginal163BoneWebGL,true);
+          assert.equal(r.cases.length,6);
+          assert.equal(r.screenshots.length,42);
+          assert.equal(r.realCloudTouched,false);
+          assert.equal(r.liveSignedJWTVerified,false);
+          assert.equal(r.syntheticLocalServerOnly,true);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.deepEqual(r.cases.map(x=>[x.engine,x.width]),[
+           ['chromium',320],['chromium',390],['chromium',430],
+           ['webkit',320],['webkit',390],['webkit',430]]);
+          assert.ok(r.cases.every(x=>x.actualAtomicRestore&&
+           x.p178NativeOriginalAndReviewedCutoutGuard&&
+           x.p178OwnerSHAAndAtomicCloudVerified&&
+           x.remoteConflictRejected&&x.syntheticOtherOwnerDenied&&
+           x.familyAlpha==='HOLD'));
+          assert.equal(r.server.uploads,12);
+          assert.ok(r.server.storageReads>=24);
+          assert.ok(r.server.foreignDenied>=6);
+          const screenshotIds=new Set(),genuineHashes=new Set();
+          for(const row of r.screenshots){
+           const id=[row.engine,row.width,row.stage].join('|');
+           assert.ok(!screenshotIds.has(id),'duplicate mobile screenshot stage');
+           screenshotIds.add(id);
+           const raw=readFileSync(root+row.name);
+           assert.equal(createHash('sha256').update(raw).digest('hex'),row.sha256);
+           assert.equal(raw.readUInt32BE(16),row.width);
+           genuineHashes.add(row.sha256);
+          }
+          assert.equal(screenshotIds.size,42);
+          assert.ok(genuineHashes.size>=34);
+          for(const width of [320,390,430]){
+           for(const stage of [
+            '06-original-photo-163bone-front-after-cloud',
+            '07-original-photo-163bone-side-after-cloud',
+            '08-original-photo-163bone-rear-inferred',
+            '09-active-3d-cloud-replacement-refused'
+           ])assert.ok(screenshotIds.has(['chromium',width,stage].join('|')));
+          }
+          console.log('P180_GENUINE_OWNER_PRIVATE_CLOUD_ATOMIC_RESTORE_TO_163_BONE_WEBGL_42_SHA_MOBILE_SCREENSHOTS_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P180-original-plus-cutout-atomic-cloud-to-owner-163bone-WebGL-42-screens-HOLD
+          path: |
+            benchmark/atomic-cloud-to-native-3d-180/
+            .native05-donor-541/benchmark/work47/manifest.json
+          retention-days: 14
+          if-no-files-found: warn
+  inherited-private-owner-cloud-and-3d-standalone-browsers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      ARTIFACT_DIR: benchmark/native-owner-reviewed-cloud-ui-146-P180-off
+      P178_NATIVE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original standalone browser and source provenance dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Original REAL P178 owner-reviewed source+crop backup and restore without P180 opt-in
+        run: |
+          node scripts/build.mjs
+          node scripts/test-native-owner-reviewed-cloud-ui-146-browser.mjs
+      - name: Independently verify 30 current original double-JPEG backup and private owner photos unchanged
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='benchmark/native-owner-reviewed-cloud-ui-146-P180-off/';
+          const r=JSON.parse(readFileSync(root+'results.json','utf8'));
+          assert.equal(r.priority,178);
+          assert.equal(r.cases.length,6);assert.equal(r.screenshots.length,30);
+          assert.equal(r.realCloudTouched,false);
+          assert.ok(r.cases.every(x=>x.actualAtomicRestore&&
+           x.p178OwnerSHAAndAtomicCloudVerified&&x.remoteConflictRejected));
+          for(const item of r.screenshots){
+           const bytes=readFileSync(root+item.name);
+           assert.equal(createHash('sha256').update(bytes).digest('hex'),item.sha256);
+          }
+          console.log('P180_ORIGINAL_OWNER_DOUBLE_JPEG_CLOUD_30_SHA_BROWSER_REGRESSION_PASS');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P180-unmodified-P178-cloud-original-cutout-30-screens-HOLD
+          path: benchmark/native-owner-reviewed-cloud-ui-146-P180-off/
+          retention-days: 14
+          if-no-files-found: warn
+  genuine-disposable-postgres-two-owner-private-RLS:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: p180-disposable-only
+          POSTGRES_DB: p180_disposable
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d p180_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      P128_POSTGRES_URL: postgresql://postgres:p180-disposable-only@127.0.0.1:5432/p180_disposable
+      P147_POSTGRES_URL: postgresql://postgres:p180-disposable-only@127.0.0.1:5432/p180_disposable
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: p180-disposable-only
+      PGDATABASE: p180_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install disposable PostgreSQL 17 client and signed local JWT verification libraries
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund pg@8.16.3
+      - name: Preserve exact Cloud P179 source, private RLS SQL and no production writes
+        run: git diff --exit-code 1b362c0f9a07345cf112ed8745011a9d89695081 HEAD -- public supabase migrations research/hosted-two-owner-original-cutout-179
+      - name: Install actual unchanged private backup, Storage and security-invoker CAS on disposable database
+        run: psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+      - name: Independently prove cryptographically signed local JWT owner RLS and original private Storage
+        run: |
+          node scripts/test-signed-jwt-postgres-147.mjs
+          node scripts/test-two-owner-postgres-rls-128.mjs

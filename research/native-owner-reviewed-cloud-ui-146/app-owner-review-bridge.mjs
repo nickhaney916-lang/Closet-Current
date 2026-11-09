@@ -37,7 +37,7 @@ export async function mountOwnerReviewedCloud146({
  const menu=doc.querySelector('header .account-menu>div');
  if(!menu||doc.getElementById('ownerReview146Panel'))fail('account menu unavailable or owner research already mounted');
  const ownerAtMount=auth.user.id;
- let revoked=false,working=false,pending=null,backupService,restoreService,cutout178=null;
+ let revoked=false,working=false,pending=null,backupService,restoreService,cutout178=null,cloud3D180=null,restoreLease180=null;
  function assertLocalOwner(){
   if(revoked||!ownerReviewedMode146(loc)||auth.user?.id!==ownerAtMount||
      db?.name!=='closet-current-user-'+ownerAtMount)
@@ -79,6 +79,21 @@ export async function mountOwnerReviewedCloud146({
    auth:localAuth,db,engine:globalThis.window?.ClosetBackupEngine,
    loc,fetcher:localFetch,subtle,legacy
   });
+ }
+ // P180: the native consumer P550 and P541 163-bone scene must reconcile
+ // AFTER P126 has atomically restored private owner images and outfit IDs.
+ // Only explicit same-origin, synthetic research mode; never production.
+ if(new URLSearchParams(loc.search).get('cloud3D180')==='research'){
+  const {createCloudToNative3D180,researchMode180}=
+   await import('../cloud-to-native-3d-180/owner-restore-3d-barrier.mjs');
+  if(!researchMode180(loc)||!cutout178)
+   fail('P180 native Cloud-to-3D demands all source-verification prerequisites');
+  cloud3D180=createCloudToNative3D180({
+   auth:localAuth,db,loc,
+   board:globalThis.window?.nativeLossless04Bridge,
+   viewer:globalThis.window?.native3D05Bridge
+  });
+  globalThis.window.cloudToNative3D180Bridge=cloud3D180;
  }
  const panel=doc.createElement('section');panel.id='ownerReview146Panel';
  panel.setAttribute('aria-label','Research-only reviewed backup and restore');
@@ -165,8 +180,14 @@ export async function mountOwnerReviewedCloud146({
  });
  restoreService=createCloudRestoreGuard137({
   auth:localAuth,db,baseURL:loc.origin,anonKey:'p146-synthetic-local-only',
-  fetcher:mountFetch,subtle,confirmReplaceLocal:info=>decide(info,'restore'),
-  onRestored:async()=>{assertLocalOwner();await onRestored();assertLocalOwner();}
+  fetcher:mountFetch,subtle,confirmReplaceLocal:info=>cloud3D180?
+   cloud3D180.consent(restoreLease180,()=>decide(info,'restore')):
+   decide(info,'restore'),
+  onRestored:async()=>{
+   assertLocalOwner();
+   if(cloud3D180)await cloud3D180.afterAtomicRestore(restoreLease180);
+   await onRestored();assertLocalOwner();
+  }
  });
  async function run(kind,operation){
   if(working||revoked)return;
@@ -218,22 +239,29 @@ export async function mountOwnerReviewedCloud146({
   return r;
  });
  by('owner146Restore').onclick=()=>run('restore',async()=>{
-  const v=await restoreService.previewRestore();showCounts(v,true);
-  if(cutout178){
-   // Remote source and crop are fully proven BEFORE owner destructive
-   // consent / P126 private IndexedDB atomic wardrobe replacement.
-   const proved=await cutout178.remote({revision:v.remoteRevision});
-   if(!proved.originalJPEGShaAndCutoutVerified)
-    fail('unverified original and crop photo refused');
+  const lease=cloud3D180?.begin()||null;
+  restoreLease180=lease;
+  try{
+   const v=await restoreService.previewRestore();showCounts(v,true);
+   if(cutout178){
+    // Both SHA JPEGs must be verified *before* destructive owner consent.
+    const proved=await cutout178.remote({revision:v.remoteRevision});
+    if(!proved.originalJPEGShaAndCutoutVerified)
+     fail('unverified original and crop photo refused');
+   }
+   if(cloud3D180)cloud3D180.check(lease);
+   const r=await restoreService.restoreWithOwnerReview();
+   if(r.restored)showCounts(await backupService.previewBoth());
+   return r;
+  }finally{
+   cloud3D180?.finish(lease);restoreLease180=null;
   }
-  const r=await restoreService.restoreWithOwnerReview();
-  if(r.restored)showCounts(await backupService.previewBoth());
-  return r;
  });
  function revoke(){
   if(revoked)return;revoked=true;
   settle(false);
-  backupService?.revoke();restoreService?.revoke();cutout178?.revoke();
+  backupService?.revoke();restoreService?.revoke();cutout178?.revoke();cloud3D180?.dispose();
+  if(globalThis.window?.cloudToNative3D180Bridge===cloud3D180)delete globalThis.window.cloudToNative3D180Bridge;
   for(const id of buttonIds){const b=by(id);if(b){b.disabled=true;b.onclick=null;}}
   panel.remove();if(dialog.open)dialog.close();dialog.remove();style.remove();
  }
@@ -247,6 +275,8 @@ export async function mountOwnerReviewedCloud146({
    legacyPaused:legacy?.ownerReviewHold145?.()===true,localSyntheticOnly:true,
    signedJWTVerified:false,shippingReleaseAuthorized:false,familyAlpha:'HOLD',
    nativeOriginalAndCutout178:!revoked&&!!cutout178,
-   nativeSourceTransport178:!revoked?cutout178?.status()||null:null})
+   nativeSourceTransport178:!revoked?cutout178?.status()||null:null,
+   nativeCloud3DRefresh180:!revoked&&!!cloud3D180,
+   cloud3D180:!revoked?cloud3D180?.state()||null:null})
  });
 }
