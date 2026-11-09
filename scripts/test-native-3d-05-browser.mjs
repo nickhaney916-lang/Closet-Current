@@ -64,13 +64,17 @@ if(photoOwnerPositive188){
     for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>=160){
      left=Math.min(left,x);right=Math.max(right,x);
     }
-    if(right-left<info.width*.10)continue;
-    const trim=Math.max(2,Math.round((right-left)*(.025+.012*Math.sin(Math.PI*y/info.height))));
+    // Do NOT nibble thin neckline, strap or cuff edge runs. Those pixels
+    // lack enough width for 2-pixel side trimming and would manufacture an
+    // unsafe 20%+ reduction from a perfectly valid source silhouette.
+    if(right-left<Math.max(30,info.width*.12))continue;
+    const trim=Math.max(1,Math.floor((right-left)*(.022+.006*Math.sin(Math.PI*y/info.height))));
     for(let x=left;x<left+trim;x++)data[(y*info.width+x)*4+3]=0;
     for(let x=right-trim+1;x<=right;x++)data[(y*info.width+x)*4+3]=0;
    }
   }
-  for(let i=3;i<data.length;i+=4)if(data[i]>0)data[i]=Math.round(data[i]*.91);
+  for(let i=3;i<data.length;i+=4)if(data[i]>0)
+   data[i]=Math.round(data[i]*(photoOwnerGeometry190?.98:.91));
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
    .png({compressionLevel:9}).toBuffer();
   ownerAlpha189={image:'data:image/png;base64,'+maskBytes.toString('base64'),
