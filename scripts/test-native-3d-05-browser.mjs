@@ -19,6 +19,9 @@ const photoOwnerAlpha189=process.env.PHOTO_OWNER_ALPHA189==='1';
 const photoOwnerGeometry190=process.env.PHOTO_OWNER_GEOMETRY190==='1';
 const photoOwnerTopology191=process.env.PHOTO_OWNER_TOPOLOGY191==='1';
 const photoOwnerDamaged193=process.env.PHOTO_OWNER_DAMAGED193==='1';
+const photoOwnerHairline194=process.env.PHOTO_OWNER_HAIRLINE194==='1';
+if(photoOwnerHairline194&&(!photoOwnerTopology191||photoOwnerDamaged193))
+ throw Error('P194 must use one current owner PNG under P191/P192 topology and no P193 wide tear');
 if(photoOwnerDamaged193&&!photoOwnerTopology191)
  throw Error('P193 requires full P191 proven source and P192 continuity');
 if(photoOwnerTopology191&&!photoOwnerGeometry190)
@@ -87,6 +90,17 @@ if(photoOwnerPositive188){
    const x0=Math.floor(info.width*.445),x1=Math.ceil(info.width*.555);
    const y0=Math.floor(info.height*.59),y1=Math.ceil(info.height*.611);
    for(let y=y0;y<y1;y++)for(let x=x0;x<x1;x++)
+    data[(y*info.width+x)*4+3]=0;
+  }
+  if(photoOwnerHairline194){
+   // Distinct real PNG whose byte SHA is computed AFTER the hairline edit.
+   // This fine 2.5%-image-width strand opens into the original background
+   // at the top and remains joined below. It is below P192's per-row 10%
+   // threshold, despite destroying fabric over ~66% of the photo height.
+   // The mask is synthetic; no real family's image is accessed.
+   const x0=Math.floor(info.width*.4875),x1=Math.ceil(info.width*.5125);
+   const y1=Math.ceil(info.height*.66);
+   for(let y=0;y<y1;y++)for(let x=x0;x<x1;x++)
     data[(y*info.width+x)*4+3]=0;
   }
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
@@ -322,12 +336,14 @@ try{
     await page.close();await ctx.close();await browser.close();browser=null;
     continue;
    }
-   if(photoOwnerDamaged193){
+   if(photoOwnerDamaged193||photoOwnerHairline194){
     assert.equal(openProof.ok,false,
-     'P193 SHA-valid but locally torn owner alpha must NEVER open source-fitted 3D');
-    assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),/P192.*localized missing-fabric slit/i,
-     'P193 must witness the actual owner PNG local-continuity denial');
-    assert.ok(donorRequests187>0,'P193 must exercise decoded-alpha donor not just review preflight');
+     'Neither a broad nor a hairline SHA-valid torn mask may open 163-bone 3D');
+    const expected=photoOwnerHairline194?/P194.*persistent narrow missing-fabric hairline/i:
+     /P192.*localized missing-fabric slit/i;
+    assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),expected,
+     'Must witness the actual decoded private PNG source-continuity denial, not generic WebGL failure');
+    assert.ok(donorRequests187>0,'Fail-closed after genuine donor source decoder and P187 owner preflight');
     assert.equal(await page.evaluate(()=>window.closetAuth?.user?.id),'native05-A');
     const refused=await page.evaluate(()=>window.native3D05Bridge.state());
     assert.equal(refused.active,false);
@@ -338,7 +354,7 @@ try{
     assert.equal(JSON.stringify(refused).includes('data:image'),false);
     assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
     assert.deepEqual(await readBoard(page),ownerOriginal,
-     'P193 torn alpha must not alter original owner saved outfit or JPEG');
+     'No source mask failure can modify original owner saved outfit or JPEG');
     const persisted=await page.evaluate(()=>new Promise((resolve,reject)=>{
      const req=db.transaction('items','readonly').objectStore('items').get('native05-A-blouse');
      req.onsuccess=()=>resolve({ownerId:req.result?.ownerId,
@@ -348,14 +364,26 @@ try{
     }));
     assert.equal(persisted.ownerId,'native05-A');
     assert.equal(persisted.maskSHA,ownerAlpha189.sha256,
-     'P193 malformed shape has current byte-verified SHA not tampered metadata');
+     'Malformed silhouette must carry its current actual byte-verified PNG SHA');
     assert.equal(persisted.originalSHA,photos['commons-0016'].sha256);
-    await take(page,width,'02-sha-valid-private-mask-tear-original-photo-fallback');
-    cases.push({width,shaValidOwnerMaskLocallyDamaged193:true,
+    await take(page,width,photoOwnerHairline194?
+     '02-hairline-sha-valid-owner-png-refused-original-2d':
+     '02-sha-valid-private-mask-tear-original-photo-fallback');
+    cases.push(photoOwnerHairline194?{
+     width,shaValidOwnerMaskHairline194:true,
+     browserDecodedOriginalOwnerAlphaRejectsHairline194:true,
+     sourceDonorGenuinelyImported194:true,
+     ownerSessionPreserved194:true,originalJPEGPreserved194:true,
+     originalSavedBoardPreserved194:true,noPrivate3DOrOwnerPhotoLeak194:true,
+     original2DFallbackVisible194:true,
+     humanSegmentationValidated194:false,releaseAuthorized:false,familyAlpha:'HOLD'
+    }:{
+     width,shaValidOwnerMaskLocallyDamaged193:true,
      browserDecodedPrivatePNGRejectsTear192:true,actualDonorImportWitnessed193:true,
      noPrivate163BoneWebGLOnDamagedMask193:true,originalJPEGPreserved193:true,
      ownerSessionUnchanged193:true,ownerClosetAndSavedOutfitUnmodified193:true,
-     independentHumanReviewCertified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+     independentHumanReviewCertified:false,releaseAuthorized:false,familyAlpha:'HOLD'
+    });
     await page.close();await ctx.close();await browser.close();browser=null;
     continue;
    }
@@ -1159,12 +1187,12 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);photoOwnerDamaged193?assert.equal(screens.length,6):photoOwnerPositive188?assert.equal(screens.length,22):photoOwnerCutout186?assert.equal(screens.length,6):
+ assert.equal(cases.length,3);(photoOwnerDamaged193||photoOwnerHairline194)?assert.equal(screens.length,6):photoOwnerPositive188?assert.equal(screens.length,22):photoOwnerCutout186?assert.equal(screens.length,6):
   assert.equal(screens.length,photoSilhouette62?21:photoTorso173?24:15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerDamaged193?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
+ const result={priority:photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
