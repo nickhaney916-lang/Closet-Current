@@ -53,6 +53,7 @@ export function createCloudToNative3D180({
  // P182: after P126 writes IndexedDB, failure of read-back/byte SHA is NOT
  // rollback. Quarantine 3D until native owner source integrity is re-attested.
  let postCommitUnverified=false,postCommitWrites=0,postCommitFailures=0,rechecks=0;
+ let lastPhotoFallbackOutfits=0;
  let token=null,generation=0,initialFingerprint=null;
  function requireOwner(){
   if(revoked)fail('owner restore bridge revoked');
@@ -177,6 +178,7 @@ export function createCloudToNative3D180({
   }
   assertUnchanged181();
   sourceProofs+=attested;
+  lastPhotoFallbackOutfits=photoFallbackOutfits;
   if(recovery)rechecks++;else restores++;
   postCommitUnverified=false;
   return Object.freeze({restored:!recovery,reconciled:true,adopted:true,ownerId:owner,
@@ -209,10 +211,12 @@ export function createCloudToNative3D180({
   begin,check,consent,markAtomicCommitted,notePostCommitFailure,
   afterAtomicRestore,retryVerification,finish,revoke,
   pending(){return !revoked&&(working||postCommitUnverified);},
-  state(){if(!revoked){auth.assertCurrent?.();if(auth.user?.id!==owner)revoke();}
+  state(){if(!revoked){try{auth.assertCurrent?.();}catch{revoke();}
+   if(auth.user?.id!==owner)revoke();}
    return Object.freeze({
    active:!revoked,pending:working||postCommitUnverified,restores,
    postCommitUnverified,postCommitWrites,postCommitFailures,
+   photoFallbackOutfits:lastPhotoFallbackOutfits,
    localOnlyPhotoRechecks:rechecks,noSecondDestructiveRestore:true,
    nativeOwnerBoardReloaded:reloaded,originalJPEGsAttested:sourceProofs,
    staleAnatomical3DNotReused:true,realHostedJWT:false,
