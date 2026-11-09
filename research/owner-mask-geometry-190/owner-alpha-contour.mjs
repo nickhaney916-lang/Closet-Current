@@ -135,7 +135,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   ownerMaskBilateralCapJoins190:activeCaps.size,ownerMaskOnlyUpperBlouse190:true,
   inferredOwnerMaskRear190:true,ownerMaskHumanReviewCertified190:false,
   ownerMaskTopologyValidated191:profile.ownerMaskTopologyVerified191===true&&
-    profile.ownerMaskSHA256_190===undefined&&
+    profile.sourceSHA256===SRC&&HEX.test(profile.ownerMaskSHA256||'')&&
     Number.isFinite(profile.ownerMaskTopologyIoU191)&&
     profile.ownerMaskTopologyIoU191>=.80&&
     Number.isFinite(profile.ownerMaskTopologyConnected191)&&
