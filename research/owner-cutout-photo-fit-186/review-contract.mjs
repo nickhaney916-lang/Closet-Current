@@ -54,6 +54,7 @@ export function inspectOwnerReviewedCutout186({
  if(r?.ownerId!==selection.ownerId||r?.garmentId!==selection.slots.top||
   r?.sourceId!=='commons-0016'||
   r?.originalSourceSHA256!==LICENSED_BLOUSE_SHA||
+  (render?.privateCutoutTexelsOnMesh188===true||render?.reviewedPrivateCutoutJPEG_SHA188!=null)&&!independentOwnerTexture188||
   r?.cutoutSHA256!==mesh.cutoutSHA256&&!independentOwnerTexture188||
   r?.ownerReviewed!==true||r?.humanReviewedSource!==true||
   r?.reviewProvenance!=='explicit-owner-claim-not-independent-review-evidence'||
