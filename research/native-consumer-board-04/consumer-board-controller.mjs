@@ -12,6 +12,7 @@ import {createExistingBoard02IO} from '../board-lossless-02/existing-idb-cas.mjs
 import {boardFingerprint02,validateBoard02} from '../board-lossless-02/lossless-board.mjs';
 import {attestOriginalJPEGBytes92} from '../native-original-photo-integrity-92/original-jpeg-byte-attestation.mjs';
 import {attestOwnerReviewedCutoutBytes186} from '../owner-cutout-photo-fit-186/review-contract.mjs';
+import {captureReviewedCutoutLease187} from '../pre-webgl-owner-cutout-187/cutout-lease.mjs';
 
 export const NATIVE_CONSUMER_BOARD_04=Object.freeze({
  featureGate:'nativeLossless04=research',nativeConsumerControls:true,
@@ -183,6 +184,7 @@ export async function createNativeConsumerBoard04({
   * proof of the P119 original and explicitly owner-reviewed distinct cutout.
   * Never synthesize a review receipt from a provisional public fixture.
   */
+ const cutoutLeases187=new WeakMap();
  const attestReviewedCutout186=async(garmentId)=>{
   const p=new URLSearchParams(win.location.search);
   if(p.get('native3D05')!=='research'||p.get('photoOwnerCutout186')!=='research')
@@ -207,6 +209,46 @@ export async function createNativeConsumerBoard04({
     JSON.stringify(originalBefore)!==JSON.stringify(readOnlyGarmentSources91([garmentId])))
    fail('P186_OWNER_REVIEW_OR_CUTOUT_CHANGED_DURING_CRYPTO');
   return proof;
+ };
+ /**
+  * P187 front-load P186 actual byte proof before the donor is imported.
+  * The preview gets a frozen metadata-only receipt; image bytes remain
+  * entirely inside the owner-private closure. A WeakMap protects its
+  * nonserializable lease and is never exposed or exported.
+  */
+ const attestReviewedCutoutLease187=async garmentId=>{
+  const params=new URLSearchParams(win.location.search);
+  if(params.get('photoOwnerCutout187')!=='research'||
+     params.get('photoOwnerCutout186')!=='research')
+   fail('P187_EXPLICIT_PRE_WEBGL_RESEARCH_GATE_REQUIRED');
+  const initial=alive(),revision=wardrobeRevision93;
+  const row=wardrobe.find(item=>item?.id===garmentId);
+  if(!row||row.ownerId!==initial.ownerId)
+   fail('P187_SELECTED_OWNER_GARMENT_MISSING');
+  const proof=await attestReviewedCutout186(garmentId);
+  const lease=alive();
+  if(lease.ownerId!==initial.ownerId||
+     lease.generation!==initial.generation||
+     revision!==wardrobeRevision93||
+     wardrobe.find(item=>item?.id===garmentId)!==row)
+   fail('P187_OWNER_WARDROBE_CHANGED_DURING_REVIEW');
+  const guard=captureReviewedCutoutLease187({
+   row,receipt:proof,ownerId:lease.ownerId,
+   generation:lease.generation,revision
+  });
+  guard.assertCurrent({row,ownerId:lease.ownerId,
+   generation:lease.generation,revision:wardrobeRevision93});
+  cutoutLeases187.set(guard.receipt,guard);
+  return guard.receipt;
+ };
+ const requireReviewedCutoutLease187=receipt=>{
+  const guard=receipt&&cutoutLeases187.get(receipt);
+  if(!guard)fail('P187_MISSING_CURRENT_DOUBLE_JPEG_REVIEW_LEASE');
+  const lease=alive();
+  const row=wardrobe.find(item=>item?.id===receipt.garmentId);
+  guard.assertCurrent({row,ownerId:lease.ownerId,
+   generation:lease.generation,revision:wardrobeRevision93});
+  return true;
  };
  // NATIVE93: strictly read-only monotonic private wardrobe refresh epoch.
  // The epoch changes whenever a new wardrobe snapshot is adopted. It never
@@ -412,7 +454,7 @@ export async function createNativeConsumerBoard04({
  try{await load();}
  catch(e){win.removeEventListener('closet:alpha-session-changed',invalidation);
   win.removeEventListener('pagehide',invalidation);epoch.dispose();throw e;}
- return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
+ return Object.freeze({load,refreshWardrobe,readOnlyGarmentSources91,readOnlyWardrobe,attestOriginalPhotoBytes92,sessionLease,readOnlyWardrobeRevision93,applyOwnedSlots,attestReviewedCutout186,attestReviewedCutoutLease187,requireReviewedCutoutLease187,selectSaved,setSlot,setField,setIdea,startNew,cancel,persist,
   remove,list,readOnlySnapshot,status,view:()=>{alive();return published();},
   get selected(){alive();return opened;},get dirty(){alive();return dirty;},
   dispose(){if(closed)return;closed=true;
