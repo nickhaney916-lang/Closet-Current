@@ -10,6 +10,9 @@ export function verifyGarmentShoulderEvidence185(record,{root,engine}={}){
    'Real shirt must apply shoulder measurement at HIGH world Y');
   assert.equal(row.physicalShoulderEasing185,true);
   assert.equal(row.maleShoulderEasing185,true);
+  assert.equal(row.bilateralSewnShoulderCapsRetained185,true);
+  assert.ok(Number.isInteger(row.actualSkinnedShoulderCapMeshes185)&&
+   row.actualSkinnedShoulderCapMeshes185>=2);
   assert.equal(row.mannequinBaseCoverDisclosure185,true,
    'Mannequin anatomical shorts are NOT an owned saved bottom');
   assert.equal(row.noSelectedOrSavedBottomFabricated185,true);
