@@ -98,10 +98,15 @@ let bridge=await read('research/three-d-69/index-to-real-garment-viewer.mjs');
 bridge=insertOnce(bridge," if(!isVettedOriginalGarmentCandidate(candidate))throw Error('Independently SHA-tested photographed shirt source capability required');",
  " const p62=candidate?.id==='commons-0016'&&candidate?.silhouette62?.accepted===true&&candidate?.originalVerified===true&&candidate?.cutoutVerified===true;\n if(!p62&&!isVettedOriginalGarmentCandidate(candidate))throw Error('Independently SHA-tested photographed shirt source capability required');",'shirt candidate trust');
 bridge=insertOnce(bridge," if(piece.category!=='Tops'||piece.itemType!=='T-shirt'||piece.anatomicalSlot!=='shirt-or-dress'||\n    !sameString(candidate?.id,'commons-0003')||\n    !sameString(piece.sourceSHA256,candidate.sourceSHA256)||\n    candidate.sourceSHA256!==VERIFIED_PUBLIC_SHIRT_SHA256)",
- " const p62=candidate?.id==='commons-0016'&&candidate?.silhouette62?.accepted===true&&candidate?.originalVerified===true&&candidate?.cutoutVerified===true;\n if(piece.category!=='Tops'||!(piece.itemType==='T-shirt'&&candidate?.id==='commons-0003'||piece.itemType==='Blouse'&&p62)||piece.anatomicalSlot!=='shirt-or-dress'||\n    !sameString(candidate?.id,p62?'commons-0016':'commons-0003')||\n    !sameString(piece.sourceSHA256,candidate.sourceSHA256)||\n    candidate.sourceSHA256!==(p62?'e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24':VERIFIED_PUBLIC_SHIRT_SHA256))",'blouse source type/hash');
+ " if(piece.category!=='Tops'||!(piece.itemType==='T-shirt'&&candidate?.id==='commons-0003'||piece.itemType==='Blouse'&&p62)||piece.anatomicalSlot!=='shirt-or-dress'||\n    !sameString(candidate?.id,p62?'commons-0016':'commons-0003')||\n    !sameString(piece.sourceSHA256,candidate.sourceSHA256)||\n    candidate.sourceSHA256!==(p62?'e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24':VERIFIED_PUBLIC_SHIRT_SHA256))",'blouse source type/hash');
 bridge=insertOnce(bridge," if(shirt){if(!isVettedOriginalGarmentCandidate(shirt))throw Error('Original authenticated photographed shirt source not current');requireAnatomicalShirtPreview(shirt,{acknowledged:true});}",
  " if(shirt){const p62=shirt?.id==='commons-0016'&&shirt?.silhouette62?.accepted===true&&shirt?.originalVerified===true&&shirt?.cutoutVerified===true;if(!p62&&!isVettedOriginalGarmentCandidate(shirt))throw Error('Original authenticated photographed shirt source not current');requireAnatomicalShirtPreview(shirt,{acknowledged:true});}",'blouse current source verification');
 await write('research/three-d-69/index-to-real-garment-viewer.mjs',bridge);
+// P183: the donor's decoded ES module must parse BEFORE any real browser
+// attempts to admit a private saved garment. This catches repeated const
+// declarations in staged exact-string source inserts without weakening SHA.
+await import('node:child_process').then(({execFileSync})=>
+ execFileSync(process.execPath,['--check',join(donor,'research/three-d-69/index-to-real-garment-viewer.mjs')],{stdio:'inherit'}));
 
 console.log(JSON.stringify({priority:62,donor:'P541 detached disposable only',newSource:'commons-0016',
  sourceSHA256:'e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24',
