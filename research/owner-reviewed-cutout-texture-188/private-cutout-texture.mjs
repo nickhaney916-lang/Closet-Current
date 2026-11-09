@@ -49,15 +49,35 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
   reviewedAlpha189=await decodeReviewedOwnerMask189({asset,blouse});
   originalMask=reviewedAlpha189.mask;
  }
- let ownerGeometryProfile190=null;
+ let ownerGeometryProfile190=null,topologyProof191=null;
+ if(asset?.ownerMaskTopologyRequested191===true&&asset?.ownerMaskGeometryRequested190!==true)
+  fail('P191 requires verified P190 owner source-contour geometry admission');
  if(asset?.ownerMaskGeometryRequested190===true){
   if(reviewedAlpha189?.actualOwnerMaskPNGWebCryptoAndPixelValidated!==true)
    fail('P190 requires separately SHA-attested and pixel-validated reviewed owner alpha');
+  if(asset.ownerMaskTopologyRequested191===true){
+   const {verifyOwnerSourceTopology191}=await import('../owner-source-mask-topology-191/source-contour-integrity.mjs');
+   topologyProof191=verifyOwnerSourceTopology191({
+    source:blouse.cutout,owner:reviewedAlpha189.mask,
+    sourceSHA256:blouse.sourceSHA256,
+    ownerMaskSHA256:reviewedAlpha189.privateMaskSHA256
+   });
+  }
   const {profileOwnerAlphaGeometry190}=await import('../owner-mask-geometry-190/owner-alpha-contour.mjs');
-  ownerGeometryProfile190=profileOwnerAlphaGeometry190({
+  const baseProfile190=profileOwnerAlphaGeometry190({
    source:blouse.cutout,owner:reviewedAlpha189.mask,
    maskSHA:reviewedAlpha189.privateMaskSHA256
   });
+  if(topologyProof191&&(topologyProof191.sourceSHA256!==baseProfile190.sourceSHA256||
+    topologyProof191.ownerMaskSHA256!==baseProfile190.ownerMaskSHA256||
+    topologyProof191.actualDecodedAlphaConnected191!==true||
+    topologyProof191.independentHumanReviewVerified!==false))
+   fail('P191 owner geometry topology proof not bound to the same exact current mask');
+  ownerGeometryProfile190=Object.freeze({...baseProfile190,
+   ownerMaskTopologyVerified191:topologyProof191!==null,
+   ownerMaskTopologyIoU191:topologyProof191?.ownerSourceOverlapIoU191||0,
+   ownerMaskTopologyConnected191:topologyProof191?.ownerLargestComponentRatio191||0,
+   ownerMaskTopologyInsideSource191:topologyProof191?.ownerInsideSourceFraction191||0});
  }
  const mw=originalMask?.naturalWidth||originalMask?.width||0;
  const mh=originalMask?.naturalHeight||originalMask?.height||0;
