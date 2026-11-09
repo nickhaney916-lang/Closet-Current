@@ -44,6 +44,8 @@ export function createCloudToNative3D180({
    typeof board?.status!=='function'||typeof board?.load!=='function'||
    typeof board?.readOnlySnapshot!=='function'||
    typeof board?.attestOriginalPhotoBytes92!=='function'||
+   typeof board?.readOnlyGarmentSources91!=='function'||
+   typeof board?.readOnlyWardrobeRevision93!=='function'||
    typeof viewer?.state!=='function'||typeof viewer?.close!=='function'||
    typeof win?.addEventListener!=='function')
    fail('existing native original-photo board and WebGL viewer required');
@@ -103,27 +105,64 @@ export function createCloudToNative3D180({
   reloaded++;
   check(lease);
   const saved=board.readOnlySnapshot().saved||[];
-  let attested=0;
-  for(const outfit of saved){
-   const ids=Object.values(outfit.slots||{}).filter(x=>typeof x==='string'&&x);
-   if(!ids.length||new Set(ids).size!==ids.length)continue;
-   // Missing legacy garment IDs MUST remain honest source/photo fallback;
-   // do not fabricate a source to force these outfits into 3D.
-   const actual=ids.filter(id=>{
-    try{board.readOnlyGarmentSources91([id]);return true;}catch{return false;}
-   });
-   if(actual.length){
-    await board.attestOriginalPhotoBytes92(actual);
-    attested+=actual.length;
-   }
+  if(!Array.isArray(saved)||saved.length>50)
+   fail('restored private saved outfit collection invalid');
+  // P181: an asynchronous original-JPEG digest must not span a second
+  // wardrobe refresh, owner change, or saved-slot edit. Only the REAL NATIVE91
+  // source receipt, not a method's mere non-throwing result, grants proof.
+  const revision=board.readOnlyWardrobeRevision93();
+  if(revision?.ownerId!==owner||!Number.isSafeInteger(revision.revision)||
+     !Number.isSafeInteger(revision.generation))
+   fail('restored private wardrobe revision unavailable');
+  const savedFingerprint=JSON.stringify(saved);
+  function assertUnchanged181(){
    check(lease);
+   if(JSON.stringify(board.readOnlyWardrobeRevision93())!==JSON.stringify(revision)||
+      JSON.stringify(board.readOnlySnapshot().saved)!==savedFingerprint)
+    fail('restored saved outfit or JPEG wardrobe changed during source attestation');
   }
+  let attested=0,photoFallbackOutfits=0;
+  for(const outfit of saved){
+   assertUnchanged181();
+   const values=Object.values(outfit?.slots||{});
+   const ids=values.filter(x=>typeof x==='string'&&x);
+   if(!ids.length||ids.length!==values.length||ids.length>9||
+      new Set(ids).size!==ids.length){
+    photoFallbackOutfits++;continue;
+   }
+   let expected;
+   try{
+    expected=board.readOnlyGarmentSources91(ids);
+   }catch(e){
+    // Missing original legacy photos retain 2D fallback, never a synthetic
+    // fitted 3D image. Other failures (owner, stale epoch, invalid selection)
+    // must NOT be silently swallowed.
+    if(!String(e?.message||e).includes('NATIVE91_MISSING_OR_CHANGED_ORIGINAL_SOURCE'))
+     throw e;
+    photoFallbackOutfits++;continue;
+   }
+   if(expected?.ownerId!==owner||!Array.isArray(expected.sources)||
+      expected.sources.length!==ids.length||expected.sources.some((r,i)=>
+       r?.id!==ids[i]||!/^[a-f0-9]{64}$/.test(r.sha256||'')))
+    fail('NATIVE91 owner/source receipt does not match restored saved outfit');
+   // NATIVE92 returns exactly the same {ownerId,sources} as NATIVE91,
+   // after re-hashing real owner-private ORIGINAL JPEG bytes. A void/false,
+   // wrong-owner, mismatched SHA or stale source return is not success.
+   const verified=await board.attestOriginalPhotoBytes92(ids);
+   assertUnchanged181();
+   if(JSON.stringify(verified)!==JSON.stringify(expected)||
+      JSON.stringify(board.readOnlyGarmentSources91(ids))!==JSON.stringify(expected))
+    fail('NATIVE92 original JPEG byte receipt differs from owner source');
+   attested+=ids.length;
+  }
+  assertUnchanged181();
   sourceProofs+=attested;
   restores++;
   return Object.freeze({restored:true,adopted:true,ownerId:owner,
    savedOutfits:saved.length,originalJPEGsAttested:attested,
-   stale3DClosed:true,privateSourceIntegrity:true,
-   ownerSessionUnchanged:true,
+   photoFallbackOutfits,stale3DClosed:true,
+   privateSourceIntegrity:photoFallbackOutfits===0,
+   verifiedSourceReceiptsOnly:true,ownerSessionUnchanged:true,
    hostedSignedJWTVerified:false,productionAuthorized:false,familyAlpha:'HOLD'});
  }
  function finish(lease){
