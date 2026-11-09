@@ -69,16 +69,20 @@ if(photoOwnerPositive188){
   // owner photo segmentation or witnessed manual review.
   const {data,info}=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   assert.equal(info.channels,4);
-  const sourceAlpha195=photoOwnerBilateral195?Buffer.from(data):null;
   if(photoOwnerGeometry190){
    // Synthetic owner-ASSERTED test contour: a conservative ~4% horizontal
    // resampling of the licensed actual PNG, preserving the narrow cuffs,
    // collar and any holes. Per-row pixel clipping was rejected by the real
    // source safety gates because thin fabric edges became implausible.
    // No claim of real-user photo segmentation or independent human review.
-   const base=Buffer.from(data),scale=.96,center=(info.width-1)/2;
+   const base=Buffer.from(data),center=(info.width-1)/2;
+   // P195 retains original silhouette continuity by smoothly resampling
+   // the licensed image on each side, NEVER clipping individual cuff/hem
+   // rows. P190's existing source-based fit envelope stays unchanged.
+   const leftScale=photoOwnerBilateral195?.94:.96;
+   const rightScale=photoOwnerBilateral195?.98:.96;
    for(let y=0;y<info.height;y++)for(let x=0;x<info.width;x++){
-    const sx=Math.round(center+(x-center)/scale);
+    const sx=Math.round(center+(x-center)/(x<center?leftScale:rightScale));
     const dst=(y*info.width+x)*4;
     if(sx<0||sx>=info.width){data[dst+3]=0;continue;}
     const src=(y*info.width+sx)*4;
@@ -107,40 +111,9 @@ if(photoOwnerPositive188){
    for(let y=0;y<y1;y++)for(let x=x0;x<x1;x++)
     data[(y*info.width+x)*4+3]=0;
   }
-  if(photoOwnerBilateral195){
-   // A source-contained synthetic owner-asserted asymmetric left garment
-   // edge. Real PNG bytes and their fresh SHA are generated AFTER edit.
-   // No private family picture or witnessed human segmentation is claimed.
-   // Same threshold as P190's actual source/owner alphaRows readback:
-   // transparent anti-aliasing fringes (alpha 1..159) are NOT cloth edges.
-   // Old >0 selection trimmed fringe pixels and produced no real side shift.
-   const requestedTrim=Math.max(2,Math.round(info.width*.008));
-   let trimmedRows=0;
-   for(let y=0;y<info.height;y++){
-    let first=-1,last=-1,sourceFirst=-1,sourceLast=-1;
-    for(let x=0;x<info.width;x++){
-     if(sourceAlpha195[(y*info.width+x)*4+3]>=160){
-      if(sourceFirst<0)sourceFirst=x;sourceLast=x;
-     }
-     if(data[(y*info.width+x)*4+3]>=160){
-      if(first<0)first=x;last=x;
-     }
-    }
-    if(sourceFirst<0||first<0||
-       last-first<Math.max(28,Math.round(info.width*.25)))continue;
-    const sourceWidth=sourceLast-sourceFirst+1,ownerWidth=last-first+1;
-    // Fixture must exceed P190's minimum .86 source/owner row ratio;
-    // deliberately cap changes at a stricter .905 bound from real bytes.
-    const allowed=Math.max(0,Math.floor(ownerWidth-sourceWidth*.905));
-    const trim=Math.min(requestedTrim,allowed);
-    if(trim<2)continue;
-    for(let x=first;x<first+trim;x++)
-     data[(y*info.width+x)*4+3]=0;
-    trimmedRows++;
-   }
-   assert.ok(trimmedRows>=Math.round(info.height*.2),
-    'P195 synthetic owner alpha must move enough real source-bound left garment rows safely');
-  }
+  // P195 genuinely different alpha silhouette is now produced by
+  // source-sampled left=.94/right=.98 widths upstream. No extra per-row
+  // pixel clipping: thin cuffs, sleeves and collar keep original continuity.
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
    .png({compressionLevel:9}).toBuffer();
   ownerAlpha189={image:'data:image/png;base64,'+maskBytes.toString('base64'),
