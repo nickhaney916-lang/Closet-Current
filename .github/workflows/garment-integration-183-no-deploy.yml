@@ -43,7 +43,10 @@ jobs:
           node --check tests/garment-integrity-183.test.mjs
           node --test tests/user-photo-to-anatomical-3d-62.test.mjs tests/garment-integrity-183.test.mjs
           node scripts/build.mjs
-          node --test tests/*.cjs tests/*.mjs
+          # Inherited PHOTO116 races when separate test files concurrently
+          # patch the test-only global WebCrypto mock; serialize files for
+          # deterministic owner-cutout SHA safety acceptance, not test skipping.
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
   native-owner-chromium-and-webkit:
     runs-on: ubuntu-latest
     timeout-minutes: 100
