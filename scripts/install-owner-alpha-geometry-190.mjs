@@ -19,6 +19,9 @@ const patch=async(path,anchor,replacement)=>{
 const target=join(donor,'research/owner-mask-geometry-190/owner-alpha-contour.mjs');
 await mkdir(dirname(target),{recursive:true});
 await copyFile('research/owner-mask-geometry-190/owner-alpha-contour.mjs',target);
+const p195=join(donor,'research/owner-bilateral-asymmetric-fit-195/side-profile.mjs');
+await mkdir(dirname(p195),{recursive:true});
+await copyFile('research/owner-bilateral-asymmetric-fit-195/side-profile.mjs',p195);
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
  "import {fitReviewedUpperPhoto62} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';",
  "import {fitReviewedUpperPhoto62} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';\nimport {fitOwnerAlphaToSkinnedBlouse190} from '../owner-mask-geometry-190/owner-alpha-contour.mjs';");
@@ -37,13 +40,22 @@ await patch('research/outfit-3d-01/research-panel.mjs',
         ownerMaskAdjustedVertices190:actualOutfit171[k].ownerMaskAdjustedVertices190,
         ownerMaskMaxMoveMeters190:actualOutfit171[k].ownerMaskMaxMoveMeters190,
         ownerMaskBilateralCapJoins190:actualOutfit171[k].ownerMaskBilateralCapJoins190,
+        ownerBilateralActualPhotoShape195:actualOutfit171[k].ownerBilateralActualPhotoShape195===true,
+        ownerBilateralMaskSHA195:actualOutfit171[k].ownerBilateralMaskSHA195||null,
+        ownerBilateralLeftVertices195:actualOutfit171[k].ownerBilateralLeftVertices195||0,
+        ownerBilateralRightVertices195:actualOutfit171[k].ownerBilateralRightVertices195||0,
+        ownerBilateralPhysicalAsymmetryMeters195:actualOutfit171[k].ownerBilateralPhysicalAsymmetryMeters195||0,
+        ownerBilateralSourceSpecificOnly195:true,
+        ownerBilateralRearInferred195:true,
+        ownerBilateralHumanApprovalCertified195:false,
         ownerMaskOnlyUpperBlouse190:actualOutfit171[k].ownerMaskOnlyUpperBlouse190===true,
         inferredOwnerMaskRear190:actualOutfit171[k].inferredOwnerMaskRear190===true,
         ownerMaskHumanReviewCertified190:false,
         generalizedUserPhotoTo3D190:false,`);
 for(const path of ['research/dress-mobile-01/dress-outfit-controller.mjs',
  'research/outfit-3d-01/research-panel.mjs',
- 'research/owner-mask-geometry-190/owner-alpha-contour.mjs'])
+ 'research/owner-mask-geometry-190/owner-alpha-contour.mjs',
+ 'research/owner-bilateral-asymmetric-fit-195/side-profile.mjs'])
  execFileSync(process.execPath,['--check',join(donor,path)],{stdio:'inherit'});
 console.log(JSON.stringify({priority:190,isolatedDonorOnly:true,
  true163BoneOwnerContourPhysicalMesh:true,pinnedBlouseOnly:true,
