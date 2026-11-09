@@ -539,6 +539,9 @@ export async function mountNative3D05({
       throw Error('P191 current private garment alpha fails true original-photo topology check: '+JSON.stringify({
        current163:now?.bones===163,
        sourcePixelTopology:source===true,
+       assetRequested:now?.ownerSourceMaskRequested191===true,
+       inCompositedSource:now?.ownerSourceMaskHeldByBlouse191===true,
+       inGeometryProfile:now?.ownerSourceMaskProfileSeen191===true,
        sameOwnerMaskSHA:now?.ownerSourceMaskSHA191===now?.reviewedPrivateOwnerMaskSHA189,
        overlap:Number.isFinite(now?.ownerSourceMaskOverlapIoU191)?now.ownerSourceMaskOverlapIoU191:0,
        connected:Number.isFinite(now?.ownerSourceMaskLargestConnected191)?now.ownerSourceMaskLargestConnected191:0,
