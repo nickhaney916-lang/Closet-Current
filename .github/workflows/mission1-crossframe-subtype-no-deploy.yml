@@ -9,6 +9,7 @@ on:
       - scripts/compare-mission1-guard.mjs
       - tests/mission1-crossframe-guard.test.mjs
       - tests/mission1-confusion-comparison.test.mjs
+      - tests/recognition-worker.test.mjs
       - research/mission1-crossframe-review/REPORT.md
       - .github/workflows/mission1-crossframe-subtype-no-deploy.yml
   workflow_dispatch:
@@ -27,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exactly pinned verified P764 parent and 7 scoped research changes ONLY
+      - name: Exactly pinned verified P764 parent and 8 scoped research changes ONLY
         run: |
           set -euo pipefail
           BASE=b6679364edbe89cef37d51c01d9b0931fb0602e9
@@ -35,15 +36,15 @@ jobs:
           test "$(git rev-parse "$BASE")" = "$BASE"
           git diff --name-only "$BASE" "$GITHUB_SHA" > /tmp/mission1-safety-scoped
           cat /tmp/mission1-safety-scoped
-          test "$(wc -l </tmp/mission1-safety-scoped)" -eq 7
+          test "$(wc -l </tmp/mission1-safety-scoped)" -eq 8
           while read -r p; do
             case "$p" in
-              public/recognition-confusion-guard.mjs|public/local-worker.mjs|scripts/compare-mission1-guard.mjs|tests/mission1-crossframe-guard.test.mjs|tests/mission1-confusion-comparison.test.mjs|research/mission1-crossframe-review/REPORT.md|.github/workflows/mission1-crossframe-subtype-no-deploy.yml) ;;
+              public/recognition-confusion-guard.mjs|public/local-worker.mjs|scripts/compare-mission1-guard.mjs|tests/mission1-crossframe-guard.test.mjs|tests/mission1-confusion-comparison.test.mjs|tests/recognition-worker.test.mjs|research/mission1-crossframe-review/REPORT.md|.github/workflows/mission1-crossframe-subtype-no-deploy.yml) ;;
               *) echo "Research isolation refuses unexpected edit: $p"; exit 1 ;;
             esac
           done </tmp/mission1-safety-scoped
           test -z "$(git diff --name-only "$BASE" "$GITHUB_SHA" -- supabase)"
-          echo MISSION1_7_SAFETY_RESEARCH_PATHS_ONLY_NO_DEPLOY
+          echo MISSION1_8_SAFETY_RESEARCH_PATHS_ONLY_NO_DEPLOY
       - name: Install existing test libraries (ephemeral runner only)
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: Build and exact source proof before PWA tests
@@ -79,6 +80,7 @@ jobs:
           node scripts/build.mjs
           mkdir -p benchmark/mission1-crossframe/before benchmark/mission1-crossframe/after
           cp dist/local-worker.mjs /tmp/mission1-guarded-worker.mjs
+          git fetch --depth=1 origin b6679364edbe89cef37d51c01d9b0931fb0602e9
           git show b6679364edbe89cef37d51c01d9b0931fb0602e9:public/local-worker.mjs > dist/local-worker.mjs
           sha256sum dist/local-worker.mjs /tmp/mission1-guarded-worker.mjs | tee benchmark/mission1-crossframe/worker-identity.txt
       - name: Baseline genuine FashionCLIP model on 32 curated photos
