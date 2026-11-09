@@ -341,7 +341,16 @@ export async function mountNative3D05({
       render:render?{...render,productionDeployed:false}:null
      });
      if(verdict.admitted){proof171=verdict;break;}
-     if(i===39)throw Error('P171 source-bound anatomical 3D receipt not independently available: '+verdict.reason);
+     if(i===39){
+      // Research-only sanitized diagnostic: never print owner photos, saved
+      // garment IDs, tokens, original JPEG bytes or private source hashes.
+      const diag={ready:render?.viewerReady===true,visible:render?.privateVisible===true,
+       bones:render?.bones||0,mode:render?.viewerMode||'none',
+       receiptSlots:Object.keys(render?.fitReceipts171||{}),
+       status:String(doc.getElementById('outfit3D01Status')?.textContent||'').slice(0,170)};
+      throw Error('P171 source-bound anatomical 3D receipt not independently available: '+
+       verdict.reason+'; sanitized-render='+JSON.stringify(diag));
+     }
      await new Promise(resolve=>win.setTimeout(resolve,100));
      requireFresh();
     }
