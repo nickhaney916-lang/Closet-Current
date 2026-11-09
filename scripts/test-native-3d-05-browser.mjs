@@ -192,11 +192,21 @@ try{
   if(photoSilhouette62){
    await page.locator('#savedBoards button').nth(3).click();
    assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),3);
-   await page.locator('#native3D05Preview').click();
+   // Do not swallow the user's actual button error then wait 150 seconds
+   // for a 3D that never opened. Invoke the SAME existing native open method,
+   // capture its real cause and fail this evidence gate immediately.
+   const openProof=await page.evaluate(async()=>{
+    try{return {ok:true,result:await window.native3D05Bridge.open()};}
+    catch(e){return {ok:false,error:String(e?.stack||e),
+     nativeStatus:document.getElementById('native3D05Status')?.textContent,
+     viewerStatus:document.getElementById('outfit3D01Status')?.textContent,
+     state:window.native3D05Bridge?.state()};}
+   });
+   assert.equal(openProof.ok,true,'P183 actual owner saved photo 3D open rejected: '+JSON.stringify(openProof));
    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
     window.native3D05Bridge.state().viewerMode==='shirt'&&
     window.native3D05Bridge.state().photoSourceSilhouette62===true&&
-    window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+    window.native3D05Bridge.state().bones===163,null,{timeout:15000});
    const blouseState=await page.evaluate(()=>window.native3D05Bridge.state());
    assert.equal(blouseState.opened,'native05-A-verified-blouse-3D');
    assert.ok(blouseState.silhouetteVertices62>=20);
