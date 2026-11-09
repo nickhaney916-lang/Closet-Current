@@ -32,6 +32,7 @@ const dataURL='data:image/jpeg;base64,'+jpg.toString('base64');
 const sha=()=>createHash('sha256').update(jpg).digest('hex');
 const capturePhoto=await sharp(Buffer.from('<svg width="240" height="320" xmlns="http://www.w3.org/2000/svg"><rect width="240" height="320" fill="#f1eee7"/><path d="M74 38 42 58 18 126l37 14 15-34v174h100V106l15 34 37-14-24-68-32-20-26 18H100z" fill="#287346"/><path d="M115 55h10v224h-10z" fill="#e7eadf"/></svg>')).jpeg({quality:90}).toBuffer();
 const cameraFrame='data:image/jpeg;base64,'+capturePhoto.toString('base64');
+const cameraFrameSHA=createHash('sha256').update(capturePhoto).digest('hex');
 const owner='synthetic-style-owner-a';
 const fixtures=[
  ['tee','Tops','T-shirt','Blue'],['polo','Tops','Polo','White'],
@@ -79,7 +80,14 @@ try{
       await writeAll(rows);items=(await readAll()).map(normalizeClothing);render();
       window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
      },fixtures);
-     await page.evaluate(image=>{if(!candidate(image))throw Error('Synthetic camera frame was not accepted');batch.at(-1).importFilename='new-reviewed-blouse.jpg';finishScan();},cameraFrame);
+     await page.evaluate(async image=>{
+      // Current P167+ app intentionally refuses the old bare candidate(image)
+      // shortcut. Exercise the same original-JPEG attestation as the real
+      // camera/import entry point before passing the still into review.
+      const proof=await captureProofFromJPEG(image,{width:240,height:320,origin:'camera'},captureProofOwner());
+      if(!candidate(proof.image,{sourceProof:proof}))throw Error('Verified synthetic camera frame was not accepted');
+      batch.at(-1).importFilename='new-reviewed-blouse.jpg';finishScan();
+     },cameraFrame);
      try{await page.waitForFunction(()=>batch.some(x=>x.importFilename==='new-reviewed-blouse.jpg'),null,{timeout:20000});}
      catch(error){const state=await page.evaluate(()=>({importResult:window.__lastPhotoImportResult,
       message:document.getElementById('message')?.textContent,authOwner:window.closetAuth?.user?.id,
@@ -92,6 +100,8 @@ try{
      await page.locator('dialog.photo-adjust select[aria-label="Main category"]').selectOption('Tops');
      await page.locator('dialog.photo-adjust select[aria-label="Item type"]').selectOption('Blouse');
      await page.locator('dialog.photo-adjust input[aria-label="Color"]').fill('Green');
+     await page.getByRole('checkbox',{name:'I verified the category, clothing type and color'}).check();
+     await page.getByRole('checkbox',{name:'I confirmed this photo shows one garment'}).check();
      await page.locator('dialog.photo-adjust form').evaluate(form=>form.requestSubmit());
      await page.waitForFunction(()=>items.some(x=>x.name==='New reviewed blouse'&&x.itemType==='Blouse')&&!document.querySelector('dialog.photo-adjust[open]'),null,{timeout:20000});
      const focusedId=await page.evaluate(()=>items.find(x=>x.name==='New reviewed blouse'&&x.itemType==='Blouse')?.id);
@@ -135,14 +145,17 @@ try{
      await page.reload({waitUntil:'domcontentloaded'});
      await page.evaluate(async()=>{await window.closetAuth.ready;await closetReady;await outfitBoardReady;});
      const reopened=await page.evaluate(async()=>({
-      owner:window.closetAuth.user.id,items:(await readAll()).map(x=>x.id),boards:savedOutfitBoards
+      owner:window.closetAuth.user.id,items:await readAll(),boards:savedOutfitBoards
      }));
      assert.equal(reopened.owner,owner);assert.equal(reopened.items.length,fixtures.length+1);
+     const savedPhoto=reopened.items.find(x=>x.id===focusedId);
+     assert.equal(savedPhoto?.sourceSHA256,cameraFrameSHA,'saved reviewed item retains original camera-frame SHA');
+     assert.equal(savedPhoto?.originalPhoto?.sha256,cameraFrameSHA,'saved reviewed item retains the SHA-attested original JPEG');
      assert.equal(reopened.boards.length,2);assert.ok(Object.values(reopened.boards[0].slots).includes(focusedId));
      assert.equal(reopened.boards[1].slots.top,focusedId);assert.equal(reopened.boards[1].slots.shoes,swap.alternatives[0].id);
      results.push({engine,width,threeFocusedOwnedLooks:true,uniqueLookCount:3,saveAndReload:true,
       ownerScopedIndexedDB:true,offHostCallsBlocked:true,syntheticAuth:true,syntheticGarments:true,
-      cameraCapture:'synthetic still frame passed through the actual camera candidate and Review flow',fileImport:false,
+      cameraCapture:'synthetic still frame passed through the app JPEG attestation, camera candidate and Review flow',fileImport:false,
       manualCorrection:true,oneOwnedPieceSwap:true,saveAndReloadAfterSwap:true,physicalPhone:false,overflow:generated.overflow,labels:generated.cards.map(x=>x.labels)});
     }finally{await context.close();}
    }
@@ -151,7 +164,7 @@ try{
  assert.equal(errors.length,0,errors.join('; '));
  const report={verdict:'PASS',feature:'Style around a newly reviewed and saved owned item',engines:engines.map(x=>x[0]),cases:results,
   screenshots:results.length,offHostCalls:0,syntheticAuth:true,syntheticGarments:true,
-  cameraCapture:'synthetic JPEG frame passed to the actual candidate() capture entry point; physical device and getUserMedia are not exercised',freshAIInference:false,
+  cameraCapture:'synthetic JPEG frame passed through captureProofFromJPEG and the actual candidate() entry point; physical device and getUserMedia are not exercised',freshAIInference:false,
   physicalAndroid:false,physicalIPhone:false,cloudWrites:false,familyAlpha:'HOLD'};
  await writeFile(out+'/results.json',JSON.stringify(report,null,2));
  console.log('STYLE-NEW-ITEM-01 browser acceptance PASS',JSON.stringify({engines:engines.map(x=>x[0]),cases:results.length,screenshots:results.length}));
