@@ -1,10 +1,11 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';
 import * as catalog from '../public/local-catalog.mjs';
 import * as engine from '../public/recognition-engine.mjs';
+import * as confusionGuard from '../public/recognition-confusion-guard.mjs';
 import {scannerErrorCode} from '../public/scanner-errors.mjs';
 const source=fs.readFileSync('public/local-worker.mjs','utf8');
-function setup({width=500,decodeError=false,detailError=false}={}){
- const sent=[],calls=[],choice=catalog.localCandidates[0],groups=catalog.garmentDetailGroups(choice);
+function setup({width=500,decodeError=false,detailError=false,itemType='T-shirt'}={}){
+ const sent=[],calls=[],choice=catalog.localCandidates.find(x=>x.itemType===itemType),groups=catalog.garmentDetailGroups(choice);
  const scores=options=>options.map((label,i)=>({label,score:i===0?.95:.001}));
  const model=async(image,labels)=>{
   calls.push({image,labels});
@@ -17,9 +18,9 @@ function setup({width=500,decodeError=false,detailError=false}={}){
   return scores(labels);
  };
  const runtime={CLIPVisionModelWithProjection:{from_pretrained:async()=>async()=>({})},AutoProcessor:{from_pretrained:async()=>async()=>({})},env:{backends:{onnx:{wasm:{}}}},RawImage:{read:async()=>{if(decodeError)throw Error('Image decode failed, private path');return {width,height:500};}}};
- const vectorsAPI={loadVectorAssets:async()=>({metadata:{model:'ff13/fashion-clip',revision:'0'.repeat(40)},vectors:null}),makeVectorScorer:()=>model},photoAPI={prepareRecognitionPhoto:async image=>image};
- const c={vectorsAPI,photoAPI,engine,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,URL};vm.createContext(c);
- const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replaceAll('new URL(import.meta.url).search',"''");
+ const vectorsAPI={loadVectorAssets:async()=>({metadata:{model:'ff13/fashion-clip',revision:'0'.repeat(40)},vectors:null}),makeVectorScorer:()=>model},photoAPI={prepareRecognitionPhoto:async image=>image,fitWholePhoto:async image=>image};
+ const c={vectorsAPI,photoAPI,engine,confusionGuard,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,URL};vm.createContext(c);
+ const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replace("await import('./recognition-confusion-guard.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(confusionGuard)').replaceAll('new URL(import.meta.url).search',"''");
  vm.runInContext(transformed,c);
  return {sent,calls,async scan(){c.self.onmessage({data:{id:'test',type:'classify',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);return sent.find(x=>x.type==='result');}};
 }
@@ -35,4 +36,18 @@ test('unreadable image returns a safe image error instead of categories',async()
 });
 test('optional detail failure preserves confirmed garment identity without inventing attributes',async()=>{
  const h=setup({detailError:true}),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{});assert.equal(h.sent.some(x=>x.type==='error'),false);assert.ok(!JSON.stringify(h.sent).includes('private error text'));
+});
+
+test('high-confidence Tunic subtype is withheld from identified event until explicit owner review',async()=>{
+ const h=setup({itemType:'Tunic'}),out=await h.scan();
+ assert.equal(out.strong,false);
+ assert.equal(out.categoryConfirmed,true);
+ assert.equal(out.categoryOnly,true);
+ assert.equal(out.choices[0].category,'Tops');
+ assert.equal(out.choices[0].itemType,'Unknown');
+ assert.deepEqual({...out.details},{});
+ assert.equal(out.diagnostics.mission1SubtypeSafety.ownerSubtypeReviewRequired,true);
+ assert.equal(h.sent.some(x=>x.type==='identified'),false);
+ assert.equal(h.sent.some(x=>x.type==='error'),false);
+ assert.equal(h.calls.length,9);
 });
