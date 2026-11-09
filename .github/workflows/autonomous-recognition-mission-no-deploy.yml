@@ -22,6 +22,11 @@ jobs:
       - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - run: node scripts/audit-recognition-ground-truth-60.mjs
       - run: node scripts/audit-source97-human-review-99.mjs --empty
+      - name: Reproduce quarantined public annotation intake from pinned official bytes
+        run: |
+          curl --fail --location --retry 2 --max-time 60 https://s3.amazonaws.com/ifashionist-dataset/annotations/instances_attributes_val2020.json -o /tmp/fashionpedia-val.json
+          node scripts/intake-fashionpedia-recognition-candidates.mjs /tmp/fashionpedia-val.json /tmp/fashionpedia-candidates.json
+          cmp /tmp/fashionpedia-candidates.json research/autonomous-recognition-mission/fashionpedia-candidates.json
       - run: node scripts/build.mjs
       - uses: actions/upload-artifact@v4
         with:
