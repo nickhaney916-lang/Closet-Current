@@ -322,10 +322,17 @@ export async function mountNative3D05({
        params.get('photoOwnerCutout187')!=='research'||
        typeof consumer.withReviewedCutoutForRenderer188!=='function')
      throw Error('P188 owner-reviewed private texture requires current P187 lease');
-    panel=await consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>
-     donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}),{
-       requireOwnerMaskTopology191:params?.get('photoOwnerTopology191')==='research'
-     });
+    if(params?.get('photoOwnerTopology191')==='research'){
+     if(typeof consumer.withReviewedCutoutForRenderer191!=='function')
+      throw Error('P191 separate owner-reviewed private source topology renderer required');
+     panel=await consumer.withReviewedCutoutForRenderer191(preflightLease187,asset=>
+      donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+    }else{
+     // Preserve the original P188 API and its separately verified source
+     // receipt; no other camera, native owner or cloud path is changed.
+     panel=await consumer.withReviewedCutoutForRenderer188(preflightLease187,asset=>
+      donor.mountOutfit3D01Research({doc,auth:epoch.auth,ownerReviewedCutout188:asset}));
+    }
     consumer.requireReviewedCutoutLease187(preflightLease187);
    }else panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
    requireFresh(); // Do not open a donor after the native outfit changed.
