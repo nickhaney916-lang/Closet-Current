@@ -1,28 +1,41 @@
-# Closet Current — Mission 1: independent source framing for subtype safety
+# Closet Current — Mission 1: prevent high-confidence subtype auto-index mistakes
 
-**Research only. FAMILY ALPHA HOLD #255. Draft PR, no merge or deployment.**
+**Research only — FAMILY ALPHA HOLD #255. DRAFT/UNMERGED/UNDEPLOYED.**
 
-## Motivation
+## Real source evidence: a falsified hypothesis was rejected
 
-Actual live model inference on 59 licensed public photos, PR #764, verified 4 unsafe subtype auto-index events in 47 accepted garments, including known confusion pairs (T-shirt/Sweatshirt, Blouse/Tunic, Jacket/Blazer, Sneakers/Ankle boots). Category accuracy (91.07% measured against the existing curated labels) is substantially higher than accepted subtype accuracy (76.79%). The 16-image holdout is now exposed; this is *diagnostic development data*, **not new unseen independent validation**.
+On November 9, prior Mission1 source audit PR #764 ran actual FashionCLIP/WASM against all 59 distinct SHA-locked and licensed real garment JPEGs (32 curated, 16 holdout with 3 negatives, 11 fresh), with 4 wrong automatic subtypes of 47 auto-indexed.
 
-## Source-agnostic bounded policy — opt-in research integration
+Our first proposal was extra original-photo framing agreement for confusable garment vocabulary. **The real A/B experiment disproved its usefulness**: baseline **43/47 correct auto, 4 unsafe**, extra-framing **42/46 correct auto, 4 unsafe**. It blocked exactly one correctly identified boot and **zero** incorrect automatic subtypes. Evidence: failed experiment [Actions #42721016934](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42721016934), artifact #13721136213. The acceptance check correctly FAILED, and the same-weight extra model-vote proposal has been **removed** from the proposed algorithm. Do not call the original-source views independent machine models or claim improvements from that failed experiment.
 
-- Before posting an `identified` result, the actual local recognition worker now **buffers** its provisional identification.
-- Only four historically confusable **type families**, not individual photo IDs or labels, get a new confirmation pass:
-  - T-shirt ↔ Sweatshirt
-  - Blouse ↔ Tunic
-  - Jacket ↔ Blazer
-  - Sneakers ↔ Ankle boots
-- The recheck runs on **two independently prepared views of the genuine ORIGINAL JPEG** through the existing local FashionCLIP/WASM model and source-locked vector index, with two non-garment negative prompts. Both must retain the same subtype and a score/margin; scores are **not calibrated probabilities**.
-- If either fails or the model cannot load, emit only the confidently known broad category with `Unknown` subtype for owner review; do not emit a provisional automatic `identified` event or silently save a wrong subtype. Original JPEG, saved closet, multi-garment mask/source, separate-auth ownership, and 2D fallback remain untouched.
-- Categories or subtypes not in the four high-risk groups retain prior behavior and do not incur extra model inference. This is a precision-vs-review tradeoff, not an attempt to improve raw category accuracy or prove human truth.
-- New seven unit tests for source agreement, negative prompt, first/second-frame conflict, runtime failure, and valid non-risk no-change. Four additional tests ensure the real-photo before/after evaluator rejects forged automatic indexing, result rewriting, negative false positives and invalid review replacements.
+## Safer research policy
 
-## Acceptance and caveats
+The current research branch preserves existing source photographic bytes, category taxonomy, inferred details and owner controls. Once the existing worker's source model makes a strong identification, **it does not emit the provisional `identified` event until a subtype-safety decision has completed**.
 
-The dedicated **no-deploy CI** must run the exact verified P764 SHA-parent research diff guard, current Node/build tests, and genuine Chromium before/after worker evaluation on all 59 identical SHA-locked licensed source photographs (32 curated, 16 held-out, 11 fresh). The initial baseline uses the exact prior `public/local-worker.mjs` without the new guard, then the full research worker. Both runs use the identical real photograph bytes and recognition model. All 59 results, runtime errors, scores and category review changes are retained, along with a per-source tradeoff report. A wrong automatically indexed garment must not be replaced with a different automatic subtype; a decline must become category-only human review. The CI explicitly fails if unsafe automatic entries increase.
+Four **predicted subtype** classes that were demonstrably unsafe in the exposed source audit now always require **explicit owner subtype confirmation**, regardless of the original CLIP confidence:
+- Tops / Sweatshirt (observed T-shirt confusion)
+- Tops / Tunic (observed blouse confusion)
+- Outerwear / Blazer (observed jacket confusion)
+- Shoes / Ankle boots (observed sneaker confusion)
 
-**Even if research CI passes and the existing 59 incorrect autosaves are blocked, this DOES NOT certify independent recognition accuracy.** The results are from previously exposed historically curated photo labels and the additional views use the same model weights. A new untouched independent human-annotated multi-category image benchmark is essential to measure generalization, real color accuracy, instance segmentation IoU, boundary F1, and release quality. The parallel Mission 1 and #66 ground-truth work is ongoing and must be integrated only after review.
+The general rule is based on type/category, NEVER individual photo IDs, filenames or user information. Instead of inventing or auto-saving a subtype, the native research worker reports the recognized broad category with `Unknown` subtype, no guessed color/pattern/fit, and a category-only adjustment/review request. The original JPEG stays intact and does not get published via model diagnostics. The unchanged successful classifications outside these four classes do not incur additional inference or extra owner interaction.
 
-**Never merge, deploy, alter production or staging, hosted Supabase, family photography or Family Alpha HOLD #255.**
+This policy **trades coverage for precision**, and is not a model-accuracy gain or proof these categories should always be manual on future unseen data. The 59 exposed photos are diagnostic only. An unexposed independently human-adjudicated dataset could support a better, less conservative rule later. The user can correct a subtype manually; false automatic saves must take priority over speculative convenience.
+
+## Validation
+
+The dedicated no-deploy workflow runs original and research workers over exactly the same 59 licensed SHA-matched JPEGs in genuine Chromium, preserves all baseline and candidate predictions, audits both with the source-locked Mission1 evaluator, and calculates:
+- Wrong automatic subtypes prevented
+- Previously correct automatic subtypes moved to review
+- Remaining automatic subtype precision and population coverage
+- Three real non-clothing controls preserved
+- Unexpected changes outside the configured classes
+- Regressions across the full application unit tests
+
+Final hosted CI must pass exact-parent source isolation and all tests. None of this constitutes independent human ground truth, real original garment color/pixel masks, garment-instance segmentation, real-phone testing, 3D realism, or authorization to enter Mission 2.
+
+## Limitations
+
+This branch stacks only on the verified research-only PR #764, not on real production or Work parallel #763. Strong but wrong **categories** outside these four subtype families are not eliminated. The guard is deliberately transparent, conservative and owner-review-dependent. It does not improve the underlying FashionCLIP model. A larger independently annotated unseen dataset and objective product acceptance remain required for Mission 1 completion.
+
+**Family Alpha HOLD #255 remains. Never merge/deploy without owner authorization.**
