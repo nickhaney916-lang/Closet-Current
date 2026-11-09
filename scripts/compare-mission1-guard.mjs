@@ -105,7 +105,7 @@ export function compareMission1Guard(manifests,baseline,candidate){
   researchOnly:true,familyAlpha:'HOLD'};
 }
 if(import.meta.url===pathToFileURL(process.argv[1]).href){
- const [,a,b,c,d,e,f,g,h,i]=process.argv;
+ const [,,a,b,c,d,e,f,g,h,i]=process.argv;
  if(!i){console.error('Usage: node scripts/compare-mission1-guard.mjs CURATED_MANIFEST HOLDOUT_MANIFEST FRESH_MANIFEST BASE_CURATED BASE_HOLDOUT BASE_FRESH NEW_CURATED NEW_HOLDOUT NEW_FRESH');process.exit(2);}
  const read=p=>JSON.parse(readFileSync(p,'utf8'));
  const report=compareMission1Guard(
