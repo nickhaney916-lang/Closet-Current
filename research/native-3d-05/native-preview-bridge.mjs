@@ -505,26 +505,36 @@ export async function mountNative3D05({
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
     if(params?.get('photoOwnerTopology191')==='research'){
-     const now=panel?.state?.(),topology=now?.fitReceipts171?.shirt?.silhouette62;
+     // Independently require (1) original-licensed-vs-owner PNG alpha pixels
+     // were decoded and topology-validated before fitting, and (2) the
+     // actual current P190 163-bone shirt shell plus TWO shoulder cap joins
+     // bears precisely the same SHA. The source and mesh are separate
+     // receipts; one cannot synthesize the other's verification outcome.
+     const now=panel?.state?.(),physical=now?.fitReceipts171?.shirt?.silhouette62;
+     const source=now?.ownerSourceMaskTopologyVerified191===true&&
+      now?.ownerSourceMaskSHA191===now?.reviewedPrivateOwnerMaskSHA189&&
+      Number.isFinite(now?.ownerSourceMaskOverlapIoU191)&&
+      now.ownerSourceMaskOverlapIoU191>=.80&&
+      Number.isFinite(now?.ownerSourceMaskLargestConnected191)&&
+      now.ownerSourceMaskLargestConnected191>=.87&&
+      Number.isFinite(now?.ownerSourceMaskInsideSource191)&&
+      now.ownerSourceMaskInsideSource191>=.965&&
+      now?.ownerSourceMaskHumanReviewIndependent191===false;
+     const fitted=physical?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
+      physical.ownerAlphaMaskSHA256_190===now?.ownerSourceMaskSHA191&&
+      physical.ownerMaskBilateralCapJoins190===2&&
+      physical.ownerMaskOnlyUpperBlouse190===true&&
+      physical.inferredOwnerMaskRear190===true;
      if(now?.viewerReady!==true||now?.bones!==163||
-       topology?.ownerMaskTopologyValidated191!==true||
-       topology?.ownerAlphaMaskSHA256_190!==now?.reviewedPrivateOwnerMaskSHA189||
-       !Number.isFinite(topology?.ownerMaskSourceOverlapIoU191)||
-       topology.ownerMaskSourceOverlapIoU191<.80||
-       !Number.isFinite(topology?.ownerMaskLargestConnected191)||
-       topology.ownerMaskLargestConnected191<.87||
-       !Number.isFinite(topology?.ownerMaskInsideSource191)||
-       topology.ownerMaskInsideSource191<.965||
-       topology?.ownerMaskIndependentHumanReviewed191!==false)
+       source!==true||fitted!==true)
       throw Error('P191 current private garment alpha fails true original-photo topology check: '+JSON.stringify({
-       present:!!topology,
        current163:now?.bones===163,
-       sourceFit:topology?.ownerMaskTopologyValidated191===true,
-       shaSame:topology?.ownerAlphaMaskSHA256_190===now?.reviewedPrivateOwnerMaskSHA189,
-       overlap:Number.isFinite(topology?.ownerMaskSourceOverlapIoU191)?topology.ownerMaskSourceOverlapIoU191:0,
-       connected:Number.isFinite(topology?.ownerMaskLargestConnected191)?topology.ownerMaskLargestConnected191:0,
-       inside:Number.isFinite(topology?.ownerMaskInsideSource191)?topology.ownerMaskInsideSource191:0,
-       honestReview:topology?.ownerMaskIndependentHumanReviewed191===false
+       sourcePixelTopology:source===true,
+       sameOwnerMaskSHA:now?.ownerSourceMaskSHA191===now?.reviewedPrivateOwnerMaskSHA189,
+       overlap:Number.isFinite(now?.ownerSourceMaskOverlapIoU191)?now.ownerSourceMaskOverlapIoU191:0,
+       connected:Number.isFinite(now?.ownerSourceMaskLargestConnected191)?now.ownerSourceMaskLargestConnected191:0,
+       inside:Number.isFinite(now?.ownerSourceMaskInsideSource191)?now.ownerSourceMaskInsideSource191:0,
+       currentPhysical163BoneMesh:fitted===true
       }));
      if(preflightLease187)consumer.requireReviewedCutoutLease187(preflightLease187);
     }
@@ -686,15 +696,14 @@ export async function mountNative3D05({
    ownerAlphaGeneral3DApproved190:false,
    ownerAlphaRearActuallyPhotographed190:false,
    sourceMaskTopologyValid191:active&&verifiedOwnerCutout186?.admitted===true&&
-    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskTopologyValidated191===true&&
+    data.ownerSourceMaskTopologyVerified191===true&&
+    data.ownerSourceMaskSHA191===data.reviewedPrivateOwnerMaskSHA189&&
+    data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskBasedPhysicalGeometry190===true&&
     data.fitReceipts171?.shirt?.silhouette62?.ownerAlphaMaskSHA256_190===
      data.reviewedPrivateOwnerMaskSHA189,
-   sourceMaskOverlapIoU191:active?
-    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskSourceOverlapIoU191||0:0,
-   sourceMaskLargestConnected191:active?
-    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskLargestConnected191||0:0,
-   sourceMaskInsideSource191:active?
-    data.fitReceipts171?.shirt?.silhouette62?.ownerMaskInsideSource191||0:0,
+   sourceMaskOverlapIoU191:active?data.ownerSourceMaskOverlapIoU191||0:0,
+   sourceMaskLargestConnected191:active?data.ownerSourceMaskLargestConnected191||0:0,
+   sourceMaskInsideSource191:active?data.ownerSourceMaskInsideSource191||0:0,
    independentHumanReviewCertified191:false,
    generalGarmentSegmentationAccepted191:false,
    ownerPhotoBackPhotographed191:false,
