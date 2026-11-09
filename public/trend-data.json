@@ -1,334 +1,294 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-10-26T15:30:00.000Z",
-  "next_refresh_at": "2026-11-02T16:30:00.000Z",
+  "updated_at": "2026-11-09T16:15:00.000Z",
+  "next_refresh_at": "2026-11-16T16:15:00.000Z",
   "sources": [
     {
-      "id": "gq-uk-autumn-2026",
-      "title": "Autumn/winter 2026 menswear directions",
-      "publication": "British GQ",
-      "url": "https://www.gq-magazine.co.uk/article/autumn-winter-2026-menswear-trends",
-      "published_at": "2026-10-06",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "id": "vogue-uk-aw26-directions",
+      "title": "The autumn/winter 2026 fashion trends to know",
+      "publication": "British Vogue",
+      "url": "https://www.vogue.co.uk/article/autumn-winter-2026-fashion-trends",
+      "published_at": "2026-11-04",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "id": "glamour-black-loafers-2026",
-      "title": "Black loafers for fall 2026",
-      "publication": "Glamour",
-      "url": "https://www.glamour.com/story/black-loafers-are-the-chicest-alternative-to-heels-for-fall-2026",
-      "published_at": "2026-10-25",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "id": "elle-statement-scarves-2026",
+      "title": "Statement scarves are fall’s defining accessory",
+      "publication": "ELLE",
+      "url": "https://www.elle.com/fashion/trend-reports/a74321251/best-statement-scarves-trend/",
+      "published_at": "2026-11-04",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "id": "bazaar-fall-2026",
-      "title": "Fall 2026 trends that subvert expectations",
-      "publication": "Harper’s Bazaar",
-      "url": "https://www.harpersbazaar.com/fashion/trends/a74170659/fall-trends-2026/",
-      "published_at": "2026-10-20",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "id": "elle-grandmacore-bags-2026",
+      "title": "Grandmacore bags bring tapestry and embroidery forward",
+      "publication": "ELLE",
+      "url": "https://www.elle.com/fashion/trend-reports/a74322366/grandmacore-needlepoint-evening-bags-trend/",
+      "published_at": "2026-11-06",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "id": "vogue-coats-2026",
-      "title": "Eight fall 2026 coat directions",
+      "id": "zoe-brocade-jacquard-2026",
+      "title": "Brocade and jacquard return for fall",
+      "publication": "The Zoe Report",
+      "url": "https://www.thezoereport.com/fashion/brocade-and-jacquard-trend",
+      "published_at": "2026-11-04",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "id": "wallpaper-mens-winter-2026",
+      "title": "Men’s autumn/winter 2026 styling ideas",
+      "publication": "Wallpaper*",
+      "url": "https://www.wallpaper.com/fashion-beauty/mens-aw-2026-winter-fashion-inspiration",
+      "published_at": "2026-11-02",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "id": "w-weather-sportswear-2026",
+      "title": "Weather-ready sportswear for fall 2026",
+      "publication": "W Magazine",
+      "url": "https://www.wmagazine.com/fashion/fall-2026-forecast-sportswear-trend-editorial-photos",
+      "published_at": "2026-10-27",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "id": "insidehook-mens-fall-2026",
+      "title": "Fall essentials for a current men’s wardrobe",
+      "publication": "InsideHook",
+      "url": "https://www.insidehook.com/style/fall-style-essentials-men",
+      "published_at": "2026-10-26",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "id": "glamour-uk-aw26-directions",
+      "title": "Autumn/winter 2026 fashion trends to know",
+      "publication": "Glamour UK",
+      "url": "https://www.glamourmagazine.co.uk/article/autumn-winter-2026-fashion-trends-to-know",
+      "published_at": "2026-11-02",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "id": "vogue-fall-shoes-2026",
+      "title": "The fall/winter 2026 shoe trends",
       "publication": "Vogue",
-      "url": "https://www.vogue.com/article/fall-2026-coat-trends",
-      "published_at": "2026-10-20",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "url": "https://www.vogue.com/article/fall-2026-shoe-trends",
+      "published_at": "2026-11-05",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "id": "esquire-shoes-2026",
-      "title": "Five foundational men’s shoe styles",
-      "publication": "Esquire",
-      "url": "https://www.esquire.com/style/mens-fashion/a74207556/best-types-of-shoes-for-men-guide/",
-      "published_at": "2026-10-21",
-      "checked_at": "2026-10-26T15:30:00.000Z"
-    },
-    {
-      "id": "people-fall-layers-2026",
-      "title": "Fall textures, proportions and sleek layers",
-      "publication": "People",
-      "url": "https://people.com/rachel-zoe-fashion-beauty-picks-october-2026-12145054",
-      "published_at": "2026-10-25",
-      "checked_at": "2026-10-26T15:30:00.000Z"
-    },
-    {
-      "id": "womanhome-autumn-2026",
-      "title": "Autumn knits, tailoring and accessories",
-      "publication": "Woman & Home",
-      "url": "https://www.womanandhome.com/fashion/fashion-news/massimo-dutti-new-in-autumn-2026/",
-      "published_at": "2026-10-21",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "id": "vogue-uk-bags-2026",
+      "title": "The key autumn/winter 2026 bag trends",
+      "publication": "British Vogue",
+      "url": "https://www.vogue.co.uk/article/autumn-winter-2026-bag-trends",
+      "published_at": "2026-11-05",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     }
   ],
   "products": [
     {
-      "type": "Polo",
+      "type": "Blouse",
+      "audience": "Women",
+      "name": "Zara Embroidered Ruffle Blouse",
+      "url": "https://www.zara.com/us/en/embroidered-ruffle-blouse-p07969235.html",
+      "price_at_check": 59.9,
+      "retailer": "Zara",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Blouse",
+      "audience": "Women",
+      "name": "Mango Ruffled Lyocell Blouse",
+      "url": "https://shop.mango.com/us/en/p/women/shirts---blouses/blouses/ruffled-lyocell-blouse/37015857/81/00",
+      "price_at_check": 69.99,
+      "retailer": "Mango",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Button-down shirt",
       "audience": "Men",
-      "name": "J.Crew Factory 100% Cotton Striped Rugby Shirt",
-      "url": "https://factory.jcrew.com/p/mens/categories/clothing/polos/rugby-polos/100-cotton-striped-rugby-shirt/CV913",
-      "price_at_check": null,
-      "retailer": "J.Crew Factory",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "name": "Polo Ralph Lauren Classic Fit Patchwork Plaid Oxford Shirt",
+      "url": "https://www.ralphlauren.com/men-clothing-button-down-shirts/classic-fit-patchwork-plaid-oxford-shirt/100101539.html",
+      "price_at_check": 198,
+      "retailer": "Ralph Lauren",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Sweater",
+      "audience": "Men",
+      "name": "Todd Snyder Donegal Crewneck Sweater in Espresso Bean",
+      "url": "https://www.toddsnyder.com/products/tapered-donegal-crewespresso-bean",
+      "price_at_check": 198,
+      "retailer": "Todd Snyder",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
       "type": "Trousers",
       "audience": "Women",
-      "name": "Gap Mid Rise Corduroy Relaxed Flare Pants",
-      "url": "https://www.gap.com/browse/product.do?pid=1182791022",
-      "price_at_check": 89.95,
-      "retailer": "Gap",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "name": "COS Cummerbund-Waist Barrel-Leg Pants",
+      "url": "https://www.cos.com/en-us/women/womenswear/suitsandtailoring/tailoredtrousers/product/cummerbund-waist-barrel-leg-trousers-black-1350855002",
+      "price_at_check": 127.2,
+      "retailer": "COS",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "type": "Sweater",
-      "audience": "Women",
-      "name": "Boden Kat Brushed Cashmere Sweater",
-      "url": "https://us.boden.com/products/women-kat-brushed-cashmere-sweater-burnt-orange-k1190brn",
-      "price_at_check": 240,
-      "retailer": "Boden",
-      "checked_at": "2026-10-26T15:30:00.000Z"
-    },
-    {
-      "type": "Coat",
-      "audience": "Women",
-      "name": "Favorite Daughter The Easy Trench",
-      "url": "https://shopfavoritedaughter.com/products/the-easy-trench-light-khaki",
-      "price_at_check": 258,
-      "retailer": "Favorite Daughter",
-      "checked_at": "2026-10-26T15:30:00.000Z"
-    },
-    {
-      "type": "Coat",
+      "type": "Trousers",
       "audience": "Men",
-      "name": "UNIQLO Duffle Coat",
-      "url": "https://www.uniqlo.com/us/en/products/E452294-000/00",
-      "price_at_check": 159.9,
+      "name": "UNIQLO Pleated Relaxed Wide Pants",
+      "url": "https://www.uniqlo.com/us/en/products/E487220-000/00",
+      "price_at_check": 59.9,
       "retailer": "UNIQLO",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Jacket",
+      "audience": "Women",
+      "name": "Zara ZW Collection Jacquard Jacket",
+      "url": "https://www.zara.com/us/en/zw-collection-jacquard-jacket-p06895259.html",
+      "price_at_check": null,
+      "retailer": "Zara",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Jacket",
+      "audience": "Women",
+      "name": "UNIQLO Cotton Blend Utility Parka",
+      "url": "https://www.uniqlo.com/us/en/products/E487396-000/00?colorDisplayCode=57&sizeDisplayCode=003",
+      "price_at_check": 69.9,
+      "retailer": "UNIQLO",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Raincoat",
+      "audience": "All",
+      "name": "Rains Fishtail Parka",
+      "url": "https://us.rains.com/collections/new-arrivals/products/fishtail-parka-male?variant=50305866825968",
+      "price_at_check": 165,
+      "retailer": "Rains",
+      "checked_at": "2026-11-09T16:15:00.000Z"
+    },
+    {
+      "type": "Ankle boots",
+      "audience": "Women",
+      "name": "M&S Leather Biker Buckle Block Heel Round Toe Boot",
+      "url": "https://www.marksandspencer.com/leather-biker-buckle-block-heel-round-toe-boot/p/clp61267125",
+      "price_at_check": null,
+      "retailer": "Marks & Spencer",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
       "type": "Loafers",
-      "audience": "Women",
-      "name": "Rothy’s The Penny Loafer in Black",
-      "url": "https://rothys.com/products/womens-penny-loafer-black",
-      "price_at_check": 185,
-      "retailer": "Rothy’s",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "audience": "Men",
+      "name": "J.Crew Camden Leather Loafers with Rubber Soles",
+      "url": "https://www.jcrew.com/plp/mens/categories/shoes/loafers-and-slip-ons/",
+      "price_at_check": 168,
+      "retailer": "J.Crew",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "type": "Other",
-      "audience": "Men",
-      "name": "Dr. Martens 1461 Smooth Leather Oxford Shoes",
-      "url": "https://www.drmartens.com/us/en/1461-smooth-leather-oxford-shoes-black/p/11838002",
-      "price_at_check": 160,
-      "retailer": "Dr. Martens",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "type": "Bag",
+      "audience": "All",
+      "name": "By Anthropologie Hatton Leather Large Shoulder Bag",
+      "url": "https://www.anthropologie.com/shop/by-anthropologie-hatton-leather-large-shoulder-bag?color=001",
+      "price_at_check": 298,
+      "retailer": "Anthropologie",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
       "type": "Bag",
       "audience": "Women",
-      "name": "Coach Teri Shoulder Bag in Haircalf with Leopard Print",
-      "url": "https://www.coach.com/products/teri-shoulder-bag-in-haircalf-with-leopard-print/CFO73.html",
-      "price_at_check": 239,
-      "retailer": "Coach",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "name": "Maeve East-West Beaded Shoulder Bag",
+      "url": "https://www.anthropologie.com/shop/maeve-east-west-beaded-shoulder-bag2?color=010",
+      "price_at_check": 89.95,
+      "retailer": "Anthropologie",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "type": "Belt",
-      "audience": "Women",
-      "name": "Mango 100% Bovine Leather Belt in Red",
-      "url": "https://shop.mango.com/us/en/p/women/belts/leather/100-bovine-leather-belt/37062906/70/00",
-      "price_at_check": 45.99,
-      "retailer": "Mango",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "type": "Scarf",
+      "audience": "All",
+      "name": "Banana Republic Cashmere Hooded Scarf",
+      "url": "https://bananarepublic.gap.com/browse/product.do?pid=9065140220000",
+      "price_at_check": 148,
+      "retailer": "Banana Republic",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     },
     {
-      "type": "Belt",
-      "audience": "Men",
-      "name": "Trafalgar Sutton Solid Color Silk Cummerbund",
-      "url": "https://www.trafalgarstore.com/collections/the-sutton-collection/products/sutton-solid-color-silk-cummerbund",
-      "price_at_check": 90,
-      "retailer": "Trafalgar",
-      "checked_at": "2026-10-26T15:30:00.000Z"
-    },
-    {
-      "type": "Sneakers",
-      "audience": "Men",
-      "name": "adidas BW Army Shoes",
-      "url": "https://www.adidas.com/us/bw-army-shoes/JH7835.html",
-      "price_at_check": 120,
-      "retailer": "adidas",
-      "checked_at": "2026-10-26T15:30:00.000Z"
+      "type": "Hat",
+      "audience": "All",
+      "name": "Rains Bucket Hat",
+      "url": "https://us.rains.com/products/bucket-hat?variant=43107430531095",
+      "price_at_check": 40,
+      "retailer": "Rains",
+      "checked_at": "2026-11-09T16:15:00.000Z"
     }
   ],
   "directions": [
     {
-      "id": "rugby-cotton",
+      "id": "romantic-ruffle-blouse",
       "slot": "top",
-      "type": "Polo",
-      "label": "Striped rugby shirt",
-      "source_id": "gq-uk-autumn-2026",
-      "reason": "Let broad rugby stripes lead, then use solid trousers and a quiet outer layer.",
-      "audiences": [
-        "Men"
-      ],
-      "occasions": [
-        "Casual"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "argyle-knit",
-      "slot": "top",
-      "type": "Sweater",
-      "label": "Argyle knit",
-      "source_id": "womanhome-autumn-2026",
-      "reason": "Pair a brown-and-cream argyle knit with uncomplicated denim or tailored trousers.",
+      "type": "Blouse",
+      "label": "Romantic ruffle blouse",
+      "source_id": "glamour-uk-aw26-directions",
+      "reason": "Use one ruffled blouse with plain trousers or denim so the volume reads clearly without feeling costume-like.",
       "audiences": [
         "Women"
       ],
       "occasions": [
-        "Casual",
-        "Work"
+        "Work",
+        "Dinner"
       ],
       "seasons": [
         "Fall",
         "Winter"
       ],
-      "color": "brown or cream"
+      "color": "white, black or muted floral"
     },
     {
-      "id": "tuxedo-day-shirt",
+      "id": "patchwork-oxford",
       "slot": "top",
       "type": "Button-down shirt",
-      "label": "Daytime tuxedo shirt",
-      "source_id": "bazaar-fall-2026",
-      "reason": "Wear a crisp tuxedo-style shirt with jeans or plain trousers to soften its formality.",
+      "label": "Patchwork or checked Oxford shirt",
+      "source_id": "insidehook-mens-fall-2026",
+      "reason": "Ground a checked cotton shirt with solid trousers and a short work jacket for an easy men’s fall formula.",
       "audiences": [
-        "Women"
+        "Men"
       ],
       "occasions": [
-        "Work",
-        "Dinner"
+        "Casual",
+        "Work"
       ],
       "seasons": [
         "Fall",
         "Winter"
       ],
-      "color": "white or neutral"
+      "color": "blue, green or warm plaid"
     },
     {
-      "id": "evening-knit",
+      "id": "burnished-texture-knit",
       "slot": "top",
       "type": "Sweater",
-      "label": "Evening knit",
-      "source_id": "bazaar-fall-2026",
-      "reason": "Set a substantial knit against satin or polished trousers for an easy dinner look.",
+      "label": "Burnished textured crewneck",
+      "source_id": "insidehook-mens-fall-2026",
+      "reason": "A marled or Donegal knit adds depth while staying simple enough to repeat with cords, jeans or tailored trousers.",
       "audiences": [
-        "Women"
+        "Men"
       ],
       "occasions": [
-        "Dinner"
+        "Casual",
+        "Work"
       ],
       "seasons": [
         "Fall",
         "Winter"
       ],
-      "color": "neutral"
+      "color": "rust, moss, brown or burgundy"
     },
     {
-      "id": "corduroy-flare",
+      "id": "cummerbund-barrel-trouser",
       "slot": "bottom",
       "type": "Trousers",
-      "label": "Relaxed corduroy flare",
-      "source_id": "glamour-black-loafers-2026",
-      "reason": "Use brown corduroy with a refined blouse and black loafers for an office-ready mix.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "brown"
-    },
-    {
-      "id": "barrel-pleat",
-      "slot": "bottom",
-      "type": "Trousers",
-      "label": "Pleated barrel trousers",
-      "source_id": "womanhome-autumn-2026",
-      "reason": "Keep the top neat so the curved, pleated trouser shape remains intentional.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "toggle-coat",
-      "slot": "layer",
-      "type": "Coat",
-      "label": "Toggle coat",
-      "source_id": "vogue-coats-2026",
-      "reason": "Use an updated toggle coat over simple separates and let its closures carry the detail.",
-      "audiences": [
-        "Men",
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "easy-trench-layer",
-      "slot": "layer",
-      "type": "Coat",
-      "label": "Sleek relaxed trench",
-      "source_id": "people-fall-layers-2026",
-      "reason": "Layer a clean trench over mixed textures while keeping the color story controlled.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "khaki or neutral"
-    },
-    {
-      "id": "robe-coat",
-      "slot": "layer",
-      "type": "Coat",
-      "label": "Soft robe coat",
-      "source_id": "vogue-coats-2026",
-      "reason": "Use a softly draped robe coat to relax a tailored or evening outfit.",
+      "label": "Cummerbund-waist barrel trousers",
+      "source_id": "vogue-uk-aw26-directions",
+      "reason": "Balance the curved leg and defined waist with a close, clean top or a shirt tucked only at the front.",
       "audiences": [
         "Women"
       ],
@@ -340,17 +300,139 @@
         "Fall",
         "Winter"
       ],
-      "color": "neutral"
+      "color": "black or deep neutral"
     },
     {
-      "id": "black-loafer",
+      "id": "wide-pleated-mens-trouser",
+      "slot": "bottom",
+      "type": "Trousers",
+      "label": "Relaxed pleated trouser",
+      "source_id": "wallpaper-mens-winter-2026",
+      "reason": "Keep the trouser relaxed through the leg, then sharpen it with a fitted knit, Oxford shirt or compact jacket.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "charcoal, dark brown or black"
+    },
+    {
+      "id": "wide-wale-cord",
+      "slot": "bottom",
+      "type": "Trousers",
+      "label": "Wide-cut corduroy trousers",
+      "source_id": "insidehook-mens-fall-2026",
+      "reason": "Use wider wale corduroy as the texture anchor and keep the shirt and footwear polished but uncomplicated.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual",
+        "Work"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "brown, olive or tobacco"
+    },
+    {
+      "id": "jacquard-short-jacket",
+      "slot": "layer",
+      "type": "Jacket",
+      "label": "Brocade or jacquard jacket",
+      "source_id": "zoe-brocade-jacquard-2026",
+      "reason": "Treat ornate fabric as the single statement layer over denim, black trousers or a simple dress.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Dinner",
+        "Work"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "jewel tone, metallic or black"
+    },
+    {
+      "id": "weather-ready-parka",
+      "slot": "layer",
+      "type": "Raincoat",
+      "label": "Weather-ready parka or reworked trench",
+      "source_id": "w-weather-sportswear-2026",
+      "reason": "A practical hooded layer can finish everyday clothes cleanly; repeat one color from the outfit underneath.",
+      "audiences": [
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Active"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter",
+        "Spring"
+      ],
+      "color": "navy, olive or stone"
+    },
+    {
+      "id": "boxy-work-jacket",
+      "slot": "layer",
+      "type": "Jacket",
+      "label": "Boxy work jacket",
+      "source_id": "insidehook-mens-fall-2026",
+      "reason": "Choose a waist-length work jacket with useful pockets and let its compact shape define looser trousers.",
+      "audiences": [
+        "Men"
+      ],
+      "occasions": [
+        "Casual",
+        "Work"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "olive, navy or brown"
+    },
+    {
+      "id": "biker-boot",
+      "slot": "shoes",
+      "type": "Ankle boots",
+      "label": "Buckle biker boot",
+      "source_id": "vogue-fall-shoes-2026",
+      "reason": "Use a rugged buckle boot to steady romantic skirts, dresses or wide trousers without adding another loud detail.",
+      "audiences": [
+        "Women"
+      ],
+      "occasions": [
+        "Casual",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "black or oxblood"
+    },
+    {
+      "id": "soft-slipper-loafer",
       "slot": "shoes",
       "type": "Loafers",
-      "label": "Polished black loafers",
-      "source_id": "glamour-black-loafers-2026",
-      "reason": "Use black loafers with skirts, corduroy or jeans when the outfit needs polish without a heel.",
+      "label": "Soft slipper loafer",
+      "source_id": "vogue-fall-shoes-2026",
+      "reason": "A low, soft loafer keeps wide jeans and skirts polished while staying lighter than a structured dress shoe.",
       "audiences": [
-        "Women"
+        "All"
       ],
       "occasions": [
         "Casual",
@@ -359,17 +441,18 @@
       ],
       "seasons": [
         "Fall",
-        "Winter"
+        "Winter",
+        "Spring"
       ],
-      "color": "black"
+      "color": "black, burgundy or velvet"
     },
     {
-      "id": "versatile-derby",
+      "id": "sturdy-leather-derby",
       "slot": "shoes",
       "type": "Other",
-      "label": "Round-toe derby shoes",
-      "source_id": "esquire-shoes-2026",
-      "reason": "A simple round-toe derby bridges denim, corduroy and tailoring without looking overly formal.",
+      "label": "Sturdy leather derby",
+      "source_id": "insidehook-mens-fall-2026",
+      "reason": "A substantial derby bridges casual shirts and tailored separates and improves as the leather gains character.",
       "audiences": [
         "Men"
       ],
@@ -380,99 +463,39 @@
       ],
       "seasons": [
         "Fall",
-        "Winter"
+        "Winter",
+        "Spring"
       ],
-      "color": "black or brown"
+      "color": "dark brown or black"
     },
     {
-      "id": "german-army-trainer",
-      "slot": "shoes",
-      "type": "Sneakers",
-      "label": "Low-profile army trainers",
-      "source_id": "gq-uk-autumn-2026",
-      "reason": "Use slim leather-and-suede trainers under cords or jeans in place of a bulky sneaker.",
-      "audiences": [
-        "Men"
-      ],
-      "occasions": [
-        "Casual"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "neutral"
-    },
-    {
-      "id": "animal-print-bag",
+      "id": "tapestry-evening-bag",
       "slot": "bag",
       "type": "Bag",
-      "label": "Animal-print shoulder bag",
-      "source_id": "glamour-black-loafers-2026",
-      "reason": "Keep the outfit mostly solid and let one compact animal-print bag supply the pattern.",
+      "label": "Tapestry or beaded evening bag",
+      "source_id": "elle-grandmacore-bags-2026",
+      "reason": "Let embroidery, needlepoint or beads provide the texture while the rest of the outfit stays mostly solid.",
       "audiences": [
         "Women"
       ],
       "occasions": [
-        "Casual",
         "Dinner"
       ],
       "seasons": [
         "Fall",
         "Winter"
       ],
-      "color": "brown and black"
+      "color": "floral, wine or jewel tone"
     },
     {
-      "id": "red-belt-accent",
-      "slot": "accessory",
-      "type": "Belt",
-      "label": "Red waist accent",
-      "source_id": "bazaar-fall-2026",
-      "reason": "Add one red belt to denim or a black jacket and repeat no more than one small red detail.",
+      "id": "super-shoulder-bag",
+      "slot": "bag",
+      "type": "Bag",
+      "label": "Supersized shoulder bag",
+      "source_id": "vogue-uk-bags-2026",
+      "reason": "Choose a softly structured large shoulder bag in an earthy shade to add utility without looking overly formal.",
       "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Casual",
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "red"
-    },
-    {
-      "id": "bow-brooch",
-      "slot": "accessory",
-      "type": "Jewelry",
-      "label": "Bow brooch",
-      "source_id": "womanhome-autumn-2026",
-      "reason": "Pin one brooch at a shirt collar or coat lapel and leave the remaining jewelry restrained.",
-      "audiences": [
-        "Women"
-      ],
-      "occasions": [
-        "Work",
-        "Dinner"
-      ],
-      "seasons": [
-        "Fall",
-        "Winter"
-      ],
-      "color": "metallic"
-    },
-    {
-      "id": "western-buckle",
-      "slot": "finish",
-      "type": "Belt",
-      "label": "Western-buckle belt",
-      "source_id": "gq-uk-autumn-2026",
-      "reason": "Use an ornate buckle as the only Western detail against straightforward trousers and a shirt.",
-      "audiences": [
-        "Men"
+        "All"
       ],
       "occasions": [
         "Casual",
@@ -482,98 +505,142 @@
         "Fall",
         "Winter"
       ],
-      "color": "brown or black"
+      "color": "toffee, burgundy or forest green"
+    },
+    {
+      "id": "sculptural-statement-scarf",
+      "slot": "accessory",
+      "type": "Scarf",
+      "label": "Sculptural statement scarf",
+      "source_id": "elle-statement-scarves-2026",
+      "reason": "Keep the coat simple and use one padded, twisted or hooded scarf as the outfit’s main shape or color.",
+      "audiences": [
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Work",
+        "Dinner"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter"
+      ],
+      "color": "tonal neutral or bright primary"
+    },
+    {
+      "id": "rainy-day-bucket-hat",
+      "slot": "finish",
+      "type": "Hat",
+      "label": "Rainy-day bucket hat",
+      "source_id": "w-weather-sportswear-2026",
+      "reason": "A clean water-resistant bucket hat completes a practical layered outfit and repeats the weather-ready theme.",
+      "audiences": [
+        "All"
+      ],
+      "occasions": [
+        "Casual",
+        "Active"
+      ],
+      "seasons": [
+        "Fall",
+        "Winter",
+        "Spring"
+      ],
+      "color": "black, navy or olive"
     }
   ],
   "retailers": [
     {
-      "name": "J.Crew Factory",
-      "url": "https://factory.jcrew.com/p/mens/categories/clothing/polos/rugby-polos/100-cotton-striped-rugby-shirt/CV913",
-      "audience": "Men",
+      "name": "Zara",
+      "url": "https://www.zara.com/us/en/embroidered-ruffle-blouse-p07969235.html",
+      "audience": "Women",
       "types": [
-        "Polo"
+        "Blouse",
+        "Jacket"
       ]
     },
     {
-      "name": "Gap",
-      "url": "https://www.gap.com/browse/product.do?pid=1182791022",
+      "name": "Mango",
+      "url": "https://shop.mango.com/us/en/p/women/shirts---blouses/blouses/ruffled-lyocell-blouse/37015857/81/00",
+      "audience": "Women",
+      "types": [
+        "Blouse"
+      ]
+    },
+    {
+      "name": "Ralph Lauren",
+      "url": "https://www.ralphlauren.com/men-clothing-button-down-shirts/classic-fit-patchwork-plaid-oxford-shirt/100101539.html",
+      "audience": "Men",
+      "types": [
+        "Button-down shirt"
+      ]
+    },
+    {
+      "name": "Todd Snyder",
+      "url": "https://www.toddsnyder.com/products/tapered-donegal-crewespresso-bean",
+      "audience": "Men",
+      "types": [
+        "Sweater"
+      ]
+    },
+    {
+      "name": "COS",
+      "url": "https://www.cos.com/en-us/women/womenswear/suitsandtailoring/tailoredtrousers/product/cummerbund-waist-barrel-leg-trousers-black-1350855002",
       "audience": "Women",
       "types": [
         "Trousers"
       ]
     },
     {
-      "name": "Boden",
-      "url": "https://us.boden.com/products/women-kat-brushed-cashmere-sweater-burnt-orange-k1190brn",
-      "audience": "Women",
-      "types": [
-        "Sweater"
-      ]
-    },
-    {
-      "name": "Favorite Daughter",
-      "url": "https://shopfavoritedaughter.com/products/the-easy-trench-light-khaki",
-      "audience": "Women",
-      "types": [
-        "Coat"
-      ]
-    },
-    {
       "name": "UNIQLO",
-      "url": "https://www.uniqlo.com/us/en/products/E452294-000/00",
-      "audience": "Men",
+      "url": "https://www.uniqlo.com/us/en/products/E487220-000/00",
+      "audience": "All",
       "types": [
-        "Coat"
+        "Trousers",
+        "Jacket"
       ]
     },
     {
-      "name": "Rothy’s",
-      "url": "https://rothys.com/products/womens-penny-loafer-black",
+      "name": "Rains",
+      "url": "https://us.rains.com/collections/new-arrivals/products/fishtail-parka-male?variant=50305866825968",
+      "audience": "All",
+      "types": [
+        "Raincoat",
+        "Hat"
+      ]
+    },
+    {
+      "name": "Marks & Spencer",
+      "url": "https://www.marksandspencer.com/leather-biker-buckle-block-heel-round-toe-boot/p/clp61267125",
       "audience": "Women",
+      "types": [
+        "Ankle boots"
+      ]
+    },
+    {
+      "name": "J.Crew",
+      "url": "https://www.jcrew.com/plp/mens/categories/shoes/loafers-and-slip-ons/",
+      "audience": "Men",
       "types": [
         "Loafers"
       ]
     },
     {
-      "name": "Dr. Martens",
-      "url": "https://www.drmartens.com/us/en/1461-smooth-leather-oxford-shoes-black/p/11838002",
-      "audience": "Men",
-      "types": [
-        "Other"
-      ]
-    },
-    {
-      "name": "Coach",
-      "url": "https://www.coach.com/products/teri-shoulder-bag-in-haircalf-with-leopard-print/CFO73.html",
-      "audience": "Women",
+      "name": "Anthropologie",
+      "url": "https://www.anthropologie.com/shop/by-anthropologie-hatton-leather-large-shoulder-bag?color=001",
+      "audience": "All",
       "types": [
         "Bag"
       ]
     },
     {
-      "name": "Mango",
-      "url": "https://shop.mango.com/us/en/p/women/belts/leather/100-bovine-leather-belt/37062906/70/00",
-      "audience": "Women",
+      "name": "Banana Republic",
+      "url": "https://bananarepublic.gap.com/browse/product.do?pid=9065140220000",
+      "audience": "All",
       "types": [
-        "Belt"
-      ]
-    },
-    {
-      "name": "Trafalgar",
-      "url": "https://www.trafalgarstore.com/collections/the-sutton-collection/products/sutton-solid-color-silk-cummerbund",
-      "audience": "Men",
-      "types": [
-        "Belt"
-      ]
-    },
-    {
-      "name": "adidas",
-      "url": "https://www.adidas.com/us/bw-army-shoes/JH7835.html",
-      "audience": "Men",
-      "types": [
-        "Sneakers"
+        "Scarf"
       ]
     }
   ]
 }
-
