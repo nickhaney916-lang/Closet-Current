@@ -58,19 +58,18 @@ if(photoOwnerPositive188){
   const {data,info}=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   assert.equal(info.channels,4);
   if(photoOwnerGeometry190){
-   // Synthetic owner assertion: trim licensed mask edges 3-5%, not family photography.
-   for(let y=0;y<info.height;y++){
-    let left=info.width,right=-1;
-    for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>=160){
-     left=Math.min(left,x);right=Math.max(right,x);
-    }
-    // Do NOT nibble thin neckline, strap or cuff edge runs. Those pixels
-    // lack enough width for 2-pixel side trimming and would manufacture an
-    // unsafe 20%+ reduction from a perfectly valid source silhouette.
-    if(right-left<Math.max(30,info.width*.12))continue;
-    const trim=Math.max(1,Math.floor((right-left)*(.022+.006*Math.sin(Math.PI*y/info.height))));
-    for(let x=left;x<left+trim;x++)data[(y*info.width+x)*4+3]=0;
-    for(let x=right-trim+1;x<=right;x++)data[(y*info.width+x)*4+3]=0;
+   // Synthetic owner-ASSERTED test contour: a conservative ~4% horizontal
+   // resampling of the licensed actual PNG, preserving the narrow cuffs,
+   // collar and any holes. Per-row pixel clipping was rejected by the real
+   // source safety gates because thin fabric edges became implausible.
+   // No claim of real-user photo segmentation or independent human review.
+   const base=Buffer.from(data),scale=.96,center=(info.width-1)/2;
+   for(let y=0;y<info.height;y++)for(let x=0;x<info.width;x++){
+    const sx=Math.round(center+(x-center)/scale);
+    const dst=(y*info.width+x)*4;
+    if(sx<0||sx>=info.width){data[dst+3]=0;continue;}
+    const src=(y*info.width+sx)*4;
+    for(let k=0;k<4;k++)data[dst+k]=base[src+k];
    }
   }
   for(let i=3;i<data.length;i+=4)if(data[i]>0)
