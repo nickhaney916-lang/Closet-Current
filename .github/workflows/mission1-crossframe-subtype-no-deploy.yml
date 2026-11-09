@@ -1,4 +1,4 @@
-name: Mission1 real-photo original-source cross-frame subtype safety NO DEPLOY
+name: Mission1 high-confidence subtype owner-review safety A-B NO DEPLOY
 on:
   push:
     branches:
@@ -17,7 +17,7 @@ permissions:
   contents: read
   actions: read
 concurrency:
-  group: mission1-crossframe-research-HOLD-${{ github.ref }}
+  group: mission1-subtype-review-research-HOLD-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   exact-source-and-full-node:
@@ -93,18 +93,18 @@ jobs:
         run: |
           cp /tmp/mission1-guarded-worker.mjs dist/local-worker.mjs
           sha256sum dist/local-worker.mjs
-      - name: Guarded real model on the EXACT SAME 32 curated JPEGs
+      - name: Owner-reviewed subtype gate real model on the EXACT SAME 32 curated JPEGs
         run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/mission1-crossframe/after/curated
-      - name: Guarded real model on the EXACT SAME 16 heldout JPEGs
+      - name: Owner-reviewed subtype gate real model on the EXACT SAME 16 heldout JPEGs
         run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-holdout-16.json benchmark/mission1-crossframe/after/holdout
-      - name: Guarded real model on the EXACT SAME 11 fresh JPEGs
+      - name: Owner-reviewed subtype gate real model on the EXACT SAME 11 fresh JPEGs
         run: node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/mission1-crossframe/after/fresh
       - name: Independent byte-SHA photo scoring of BOTH real inference runs
         run: |
           set -euo pipefail
           node scripts/audit-mission1-real-photos.mjs live-browser-ci benchmark/mission1-crossframe/before/curated/results.json benchmark/mission1-crossframe/before/holdout/results.json benchmark/mission1-crossframe/before/fresh/results.json > benchmark/mission1-crossframe/before/evidence.json
           node scripts/audit-mission1-real-photos.mjs live-browser-ci benchmark/mission1-crossframe/after/curated/results.json benchmark/mission1-crossframe/after/holdout/results.json benchmark/mission1-crossframe/after/fresh/results.json > benchmark/mission1-crossframe/after/evidence.json
-      - name: Prove wrong automatic indexing decreases without changing other garment types
+      - name: Prove no unsafe automatic subtype remains on exposed real-photo diagnostic set
         run: |
           set -euo pipefail
           node scripts/compare-mission1-guard.mjs benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json benchmark/manifest-fresh-11.json benchmark/mission1-crossframe/before/curated/results.json benchmark/mission1-crossframe/before/holdout/results.json benchmark/mission1-crossframe/before/fresh/results.json benchmark/mission1-crossframe/after/curated/results.json benchmark/mission1-crossframe/after/holdout/results.json benchmark/mission1-crossframe/after/fresh/results.json > benchmark/mission1-crossframe/comparison.json
@@ -118,10 +118,14 @@ jobs:
           assert.equal(c.summary.garmentPhotos,56);
           assert.equal(c.summary.negativesRejected,3);
           assert.ok(c.summary.after.unsafeAutomatic<c.summary.before.unsafeAutomatic);
+          assert.equal(c.summary.after.unsafeAutomatic,0);
+          assert.equal(c.summary.blockedUnsafeAutomatic,4);
+          assert.ok(c.summary.blockedCorrectAutomatic<=6);
+          assert.ok(c.summary.after.automatic>=37);
           assert.equal(c.independentlyUnseenHoldout,false);
           assert.equal(c.humanGroundTruthIndependentlyAdjudicated,false);
           assert.equal(c.familyAlpha,'HOLD');
-          console.log('MISSION1_59_GENUINE_CHROMIUM_DIAGNOSTIC_SAFETY_IMPROVED_NOT_RELEASE_PASS');
+          console.log('MISSION1_59_GENUINE_CHROMIUM_OWNER_SUBTYPE_REVIEW_DIAGNOSTIC_NO_UNSAFE_AUTO_NOT_RELEASE_PASS');
           NODE
       - uses: actions/upload-artifact@v4
         if: always()
