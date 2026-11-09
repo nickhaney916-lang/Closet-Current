@@ -20,6 +20,9 @@ const photoOwnerGeometry190=process.env.PHOTO_OWNER_GEOMETRY190==='1';
 const photoOwnerTopology191=process.env.PHOTO_OWNER_TOPOLOGY191==='1';
 const photoOwnerDamaged193=process.env.PHOTO_OWNER_DAMAGED193==='1';
 const photoOwnerHairline194=process.env.PHOTO_OWNER_HAIRLINE194==='1';
+const photoOwnerBilateral195=process.env.PHOTO_OWNER_BILATERAL195==='1';
+if(photoOwnerBilateral195&&(!photoOwnerTopology191||photoOwnerDamaged193||photoOwnerHairline194))
+ throw Error('P195 needs one current owner PNG passing all P191-P194 topology integrity');
 if(photoOwnerHairline194&&(!photoOwnerTopology191||photoOwnerDamaged193))
  throw Error('P194 must use one current owner PNG under P191/P192 topology and no P193 wide tear');
 if(photoOwnerDamaged193&&!photoOwnerTopology191)
@@ -102,6 +105,21 @@ if(photoOwnerPositive188){
    const y1=Math.ceil(info.height*.66);
    for(let y=0;y<y1;y++)for(let x=x0;x<x1;x++)
     data[(y*info.width+x)*4+3]=0;
+  }
+  if(photoOwnerBilateral195){
+   // A source-contained synthetic owner-asserted asymmetric left garment
+   // edge. Real PNG bytes and their fresh SHA are generated AFTER edit.
+   // No private family picture or witnessed human segmentation is claimed.
+   const trim=Math.max(3,Math.round(info.width*.013));
+   for(let y=0;y<info.height;y++){
+    let first=-1,last=-1;
+    for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>0){
+     if(first<0)first=x;last=x;
+    }
+    if(first<0||last-first<Math.max(28,Math.round(info.width*.13)))continue;
+    for(let x=first;x<=Math.min(last,first+trim-1);x++)
+     data[(y*info.width+x)*4+3]=0;
+   }
   }
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
    .png({compressionLevel:9}).toBuffer();
@@ -278,7 +296,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -424,6 +442,16 @@ try{
       assert.ok(blouseState.ownerAlphaPhysicalMoveMeters190>=.0005&&
        blouseState.ownerAlphaPhysicalMoveMeters190<=.00901);
       assert.equal(blouseState.ownerAlphaBilateralCapJoins190,2);
+      if(photoOwnerBilateral195){
+       assert.equal(blouseState.ownerBilateralActualPhotoShape195,true,
+        'P195 real private decoded left/right alpha must physically shape 163-bone garment');
+       assert.ok(blouseState.ownerBilateralLeftVertices195>=20);
+       assert.ok(blouseState.ownerBilateralRightVertices195>=20);
+       assert.ok(blouseState.ownerBilateralPhysicalAsymmetryMeters195>=.0003&&
+        blouseState.ownerBilateralPhysicalAsymmetryMeters195<=.009);
+       assert.equal(blouseState.ownerBilateralRearInferred195,true);
+       assert.equal(blouseState.ownerBilateralHumanApprovalCertified195,false);
+      }
       assert.equal(blouseState.ownerAlphaGeneral3DApproved190,false);
       assert.equal(blouseState.ownerAlphaRearActuallyPhotographed190,false);
       if(photoOwnerTopology191){
@@ -496,6 +524,13 @@ try{
      assert.ok(maleProof.state?.ownerAlphaPhysicalVertices190>=20);
      assert.ok(maleProof.state?.ownerAlphaPhysicalMoveMeters190<=.00901);
      assert.equal(maleProof.state?.ownerAlphaBilateralCapJoins190,2);
+     if(photoOwnerBilateral195){
+      assert.equal(maleProof.state?.ownerBilateralActualPhotoShape195,true,
+       'P195 male requires genuinely fitted independently measured left/right photo edges');
+      assert.ok(maleProof.state?.ownerBilateralLeftVertices195>=20);
+      assert.ok(maleProof.state?.ownerBilateralRightVertices195>=20);
+      assert.ok(maleProof.state?.ownerBilateralPhysicalAsymmetryMeters195>=.0003);
+     }
      if(photoOwnerTopology191){
       assert.equal(maleProof.state?.sourceMaskTopologyValid191,true);
       assert.ok(maleProof.state?.sourceMaskOverlapIoU191>=.80);
@@ -545,6 +580,19 @@ try{
      originalAndOwnerMaskSourceShaRetained191:true,
      humanReviewIndependentlyWitnessed191:false,
      arbitraryPhotoSegmentationCertified191:false
+    }:{}),
+    ...(photoOwnerBilateral195?{
+     ownerSourceAsymmetricLeftRightPhotoEdgesFitted195:true,
+     currentOwnerOriginalAndMaskSHA195:true,
+     independentLeftPhotoContourPhysicalMesh195:true,
+     independentRightPhotoContourPhysicalMesh195:true,
+     physicallyMeasuredSideBiasMeters195:blouseState.ownerBilateralPhysicalAsymmetryMeters195,
+     currentOwnerLeftVertices195:blouseState.ownerBilateralLeftVertices195,
+     currentOwnerRightVertices195:blouseState.ownerBilateralRightVertices195,
+     actualMaleFemaleAsymmetricalOwnerBlouse195:true,
+     originalPhotoUnmodified195:true,
+     photographedRearIndependently195:false,
+     actualIndependentHumanSegmentation195:false
     }:{}),
     ...(photoOwnerGeometry190?{
      sourceOwnerAlphaPhysicalMeshFitted190:true,
@@ -1192,7 +1240,7 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
+ const result={priority:photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
