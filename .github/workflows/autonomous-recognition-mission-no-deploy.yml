@@ -20,6 +20,7 @@ jobs:
         with:
           node-version: '22'
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: node scripts/build.mjs
       - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - run: node scripts/audit-recognition-ground-truth-60.mjs
       - run: node scripts/audit-source97-human-review-99.mjs --empty
@@ -28,7 +29,6 @@ jobs:
           curl --fail --location --retry 2 --max-time 60 https://s3.amazonaws.com/ifashionist-dataset/annotations/instances_attributes_val2020.json -o /tmp/fashionpedia-val.json
           node scripts/intake-fashionpedia-recognition-candidates.mjs /tmp/fashionpedia-val.json /tmp/fashionpedia-candidates.json
           cmp /tmp/fashionpedia-candidates.json research/autonomous-recognition-mission/fashionpedia-candidates.json
-      - run: node scripts/build.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: recognition-evidence-gap-report
