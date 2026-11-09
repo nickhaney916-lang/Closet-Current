@@ -22,7 +22,7 @@ const asset=()=>({sourceId:'commons-0016',originalSourceSHA256:SOURCE,
  familyAlpha:'HOLD',releaseAuthorized:false});
 const blouse=()=>({id:'commons-0016',sourceSHA256:SOURCE,
  originalVerified:true,cutoutVerified:true,sourceAssetsVerified:true,
- silhouette62:{accepted:true},cutoutSHA256:MASK});
+ silhouette62:{accepted:true,cutoutSHA256:MASK}});
 
 function row(){
  return {id:'blouse',ownerId:'owner-A',sourceId:'commons-0016',
