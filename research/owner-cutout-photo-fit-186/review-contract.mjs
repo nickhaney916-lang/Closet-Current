@@ -1,3 +1,4 @@
+import {attestOriginalJPEGBytes92} from '../native-original-photo-integrity-92/original-jpeg-byte-attestation.mjs';
 /**
  * MAIN P186: real owner-private wardrobe review and cutout SHA admission.
  * A source-verified 163-bone mesh is NOT evidence that its cropped JPEG
@@ -56,4 +57,42 @@ export function inspectOwnerReviewedCutout186({
   independentlyReviewedByHuman:false,ownerApprovalProves3DRealism:false,
   arbitraryPrivatePhotosSupported:false,collisionCertified:false,
   releaseAuthorized:false,familyAlpha:'HOLD'});
+}
+
+/**
+ * Hash BOTH real bytes inside BOARD04's owner-private closure.
+ * P119's saved review fields are owner assertions, not independent reviews.
+ * This never creates review data, returns image pixels, or mutates the wardrobe.
+ */
+export async function attestOwnerReviewedCutoutBytes186({
+ row,ownerId,cryptoImpl,decodeBase64
+}={}){
+ const hint=row?.segmentHint;
+ if(!row||row.ownerId!==ownerId||row.sourceId!=='commons-0016'||
+  row.category!=='Tops'||row.itemType!=='Blouse'||
+  row.sourceSHA256!==LICENSED_BLOUSE_SHA||row.sourceHashVerified!==true||
+  row.ownerReviewed!==true||row.humanReviewedSource!==true||
+  row.reviewProvenance!=='explicit-owner-claim-not-independent-review-evidence'||
+  hint?.verified!==true||hint?.ownerReviewedInstance!==true||
+  hint?.originalSHA256!==LICENSED_BLOUSE_SHA||
+  !SHA.test(row.cutoutSHA256||'')||
+  hint.cutoutSHA256!==row.cutoutSHA256||
+  row.cutoutSHA256===LICENSED_BLOUSE_SHA||
+  typeof hint.cutoutImage!=='string'||
+  !hint.cutoutImage.startsWith('data:image/jpeg;base64,'))
+  throw Error('P186 real P119 owner-reviewed source and separated JPEG cutout required');
+ const original=await attestOriginalJPEGBytes92({
+  row,ownerId,cryptoImpl,decodeBase64
+ });
+ const cropped=await attestOriginalJPEGBytes92({
+  row:{id:row.id,ownerId:row.ownerId,sourceSHA256:row.cutoutSHA256,
+   originalPhoto:{sha256:row.cutoutSHA256,image:hint.cutoutImage}},
+  ownerId,cryptoImpl,decodeBase64
+ });
+ return Object.freeze({ownerId,garmentId:row.id,sourceId:'commons-0016',
+  originalSourceSHA256:original.sha256,cutoutSHA256:cropped.sha256,
+  ownerReviewed:true,humanReviewedSource:true,reviewedInstance:true,
+  reviewProvenance:row.reviewProvenance,verifiedCutoutSeparatedFromOriginal:true,
+  originalJPEGBytesSHA256Verified:true,cutoutJPEGBytesSHA256Verified:true,
+  independentHumanReviewerVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
