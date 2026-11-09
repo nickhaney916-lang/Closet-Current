@@ -35,7 +35,9 @@ await swap('research/outfit-3d-01/research-panel.mjs',
         sourceShoulderEased185:actualOutfit171[k].sourceShoulderEased185===true,
         shoulderEasedVertices185:actualOutfit171[k].shoulderEasedVertices185,
         maxShoulderDisplacement185:actualOutfit171[k].maxShoulderDisplacement185,
-        shoulderHemWorldAxisCorrected185:actualOutfit171[k].shoulderHemWorldAxisCorrected185===true,`);
+        shoulderHemWorldAxisCorrected185:actualOutfit171[k].shoulderHemWorldAxisCorrected185===true,
+        independentShoulderCapSeamsRetained185:actualOutfit171[k].independentShoulderCapSeamsRetained185===true,
+        independentlyJoinedShoulderCapMeshes185:actualOutfit171[k].independentlyJoinedShoulderCapMeshes185,`);
 for(const path of ['research/dress-mobile-01/dress-outfit-controller.mjs',
  'research/outfit-3d-01/research-panel.mjs',
  'research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs']){
