@@ -36,6 +36,44 @@ s=s.replace(maskSourceAnchor,`${maskSourceAnchor}
     ownerSourceMaskHeldByBlouse191:sources?.blouse?.ownerSourceMaskTopologyValidated191===true,
     ownerSourceMaskProfileSeen191:sources?.blouse?.ownerMaskGeometryProfile190?.ownerMaskTopologyVerified191===true,`);
 await writeFile(target,s);
+// P191 source loading finishes BEFORE the 163-bone scene is constructed.
+// The renderer's generic state may omit source-only receipts. Add an explicit
+// one-shot private callback bound to the same in-memory, mask-SHA-reviewed
+// blouse that was actually decoded; never send its PNG/JPEG pixels.
+const panelSignature='export async function mountOutfit3D01Research({doc=document,auth=window.closetAuth,ownerReviewedCutout188=null}={}){';
+assert.equal(s.split(panelSignature).length,2,
+ 'P191 expects the exact independently verified P188 private donor source signature');
+s=s.replace(panelSignature,
+ 'export async function mountOutfit3D01Research({doc=document,auth=window.closetAuth,ownerReviewedCutout188=null,ownerSourceTopologyCallback191=null}={}){');
+const sourceLoaded='sources=await loadVettedOutfit3D01Sources({ownerReviewedCutout188});still();';
+assert.equal(s.split(sourceLoaded).length,2,
+ 'P191 requires one exact original asset source decode before model activation');
+s=s.replace(sourceLoaded,`sources=await loadVettedOutfit3D01Sources({ownerReviewedCutout188});still();
+   if(ownerSourceTopologyCallback191){
+    // Verified source alpha comes from the actual decoded PRIVATE owner PNG
+    // and registered original licensed PNG. Do not trust caller assertions.
+    if(ownerReviewedCutout188?.ownerMaskTopologyRequested191!==true||
+       sources?.blouse?.ownerSourceMaskTopologyValidated191!==true||
+       sources.blouse.ownerSourceMaskSHA191!==ownerReviewedCutout188.ownerAlphaSHA256189||
+       sources.blouse.ownerSourceMaskReviewIndependentlyWitnessed191!==false||
+       !Number.isFinite(sources.blouse.ownerSourceMaskOverlapIoU191)||
+       sources.blouse.ownerSourceMaskOverlapIoU191<.80||
+       !Number.isFinite(sources.blouse.ownerSourceMaskLargestConnected191)||
+       sources.blouse.ownerSourceMaskLargestConnected191<.87||
+       !Number.isFinite(sources.blouse.ownerSourceMaskInsideSource191)||
+       sources.blouse.ownerSourceMaskInsideSource191<.965)
+     throw Error('P191 private owner-decoded alpha topology was not witnessed by garment loader');
+    ownerSourceTopologyCallback191(Object.freeze({
+     actualDecodedOwnerSourceAlphaTopology191:true,
+     sourceSHA256:sources.blouse.sourceSHA256,
+     maskSHA256:sources.blouse.ownerSourceMaskSHA191,
+     overlapIoU:sources.blouse.ownerSourceMaskOverlapIoU191,
+     largestConnected:sources.blouse.ownerSourceMaskLargestConnected191,
+     insideSource:sources.blouse.ownerSourceMaskInsideSource191,
+     independentlyReviewedByHuman:false,releaseAuthorized:false
+    }));
+   }`);
+await writeFile(target,s);
 execFileSync(process.execPath,['--check',target],{stdio:'inherit'});
 console.log(JSON.stringify({priority:191,onlyDetachedResearchDonor:true,
  currentSourceMaskOverlapMeasured:true,true163BoneGarmentRequired:true,
