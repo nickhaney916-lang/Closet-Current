@@ -16,6 +16,9 @@ const photoOwnerCutout186=process.env.PHOTO_OWNER_CUTOUT186==='1';
 const photoPreflight187=process.env.PHOTO_CUTOUT_PREFLIGHT187==='1';
 const photoOwnerPositive188=process.env.PHOTO_OWNER_POSITIVE188==='1';
 const photoOwnerAlpha189=process.env.PHOTO_OWNER_ALPHA189==='1';
+const photoOwnerGeometry190=process.env.PHOTO_OWNER_GEOMETRY190==='1';
+if(photoOwnerGeometry190&&!photoOwnerAlpha189)
+ throw Error('P190 actual owner contour geometry requires P189 independently SHA-verified private PNG');
 if(photoOwnerAlpha189&&!photoOwnerPositive188)
  throw Error('P189 requires P188 owner private JPEG, P187 double-hash preflight and P186 review');
 if(photoOwnerPositive188&&(!photoPreflight187||!photoOwnerCutout186))
@@ -54,6 +57,19 @@ if(photoOwnerPositive188){
   // owner photo segmentation or witnessed manual review.
   const {data,info}=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
   assert.equal(info.channels,4);
+  if(photoOwnerGeometry190){
+   // Synthetic owner assertion: trim licensed mask edges 3-5%, not family photography.
+   for(let y=0;y<info.height;y++){
+    let left=info.width,right=-1;
+    for(let x=0;x<info.width;x++)if(data[(y*info.width+x)*4+3]>=160){
+     left=Math.min(left,x);right=Math.max(right,x);
+    }
+    if(right-left<info.width*.10)continue;
+    const trim=Math.max(2,Math.round((right-left)*(.025+.012*Math.sin(Math.PI*y/info.height))));
+    for(let x=left;x<left+trim;x++)data[(y*info.width+x)*4+3]=0;
+    for(let x=right-trim+1;x<=right;x++)data[(y*info.width+x)*4+3]=0;
+   }
+  }
   for(let i=3;i<data.length;i+=4)if(data[i]>0)data[i]=Math.round(data[i]*.91);
   const maskBytes=await sharp(data,{raw:{width:info.width,height:info.height,channels:4}})
    .png({compressionLevel:9}).toBuffer();
@@ -230,7 +246,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -318,6 +334,16 @@ try{
      assert.equal(blouseState.ownerAlphaMaskSourceGeometryChanged189,false);
      assert.equal(blouseState.ownerAlphaMaskHumanReviewIndependentlyWitnessed189,false);
      assert.equal(blouseState.ownerAlphaMaskSegmentationAccuracyVerified189,false);
+     if(photoOwnerGeometry190){
+      assert.equal(blouseState.ownerAlphaPhysicalMeshFit190,true,
+       'P190 actual owner-contour bounded 163-bone source shell missing');
+      assert.ok(blouseState.ownerAlphaPhysicalVertices190>=20);
+      assert.ok(blouseState.ownerAlphaPhysicalMoveMeters190>=.0005&&
+       blouseState.ownerAlphaPhysicalMoveMeters190<=.00901);
+      assert.equal(blouseState.ownerAlphaBilateralCapJoins190,2);
+      assert.equal(blouseState.ownerAlphaGeneral3DApproved190,false);
+      assert.equal(blouseState.ownerAlphaRearActuallyPhotographed190,false);
+     }
      assert.equal(JSON.stringify(blouseState).includes('data:image'),false);
      assert.match(disclosure188,/OWNER-ASSERTED PNG alpha/);
      assert.match(disclosure188,/GEOMETRY still uses the licensed source silhouette/);
@@ -371,6 +397,13 @@ try{
      'P188 actual male 163-bone garment must retain decoded owner private JPEG texture');
     if(photoOwnerAlpha189)assert.equal(maleProof.state?.ownerAlphaMaskTextureApplied189,true,
      'P189 actual male 163-bone private owner alpha must remain on texture');
+    if(photoOwnerGeometry190){
+     assert.equal(maleProof.state?.ownerAlphaPhysicalMeshFit190,true,
+      'P190 physical mask contour must fit the male 163-bone skinned garment');
+     assert.ok(maleProof.state?.ownerAlphaPhysicalVertices190>=20);
+     assert.ok(maleProof.state?.ownerAlphaPhysicalMoveMeters190<=.00901);
+     assert.equal(maleProof.state?.ownerAlphaBilateralCapJoins190,2);
+    }
     if(photoShoulder185){
      assert.equal(maleProof.state?.photoSourceShoulder185,true,
       'P185 real switched male source shoulder fit must be independently verified');
@@ -406,6 +439,17 @@ try{
     originalPhotoFallbackRetained:true,inferredRearDisclosed:true,
     ownerApprovalForArbitraryPhotos:false,photorealismAccepted:false,
     ...(photoOwnerPositive188?{provisionalCutoutNeedsHumanReview:false}:{provisionalCutoutNeedsHumanReview:true}),
+    ...(photoOwnerGeometry190?{
+     sourceOwnerAlphaPhysicalMeshFitted190:true,
+     ownerMaskMeasuredActuallyFromPrivateRaster190:true,
+     sourceOwnerAlphaActualMovedVertices190:blouseState.ownerAlphaPhysicalVertices190,
+     sourceOwnerAlphaMaxMovement190:blouseState.ownerAlphaPhysicalMoveMeters190,
+     actualMaleAndFemaleSewnCapJoins190:true,
+     sourceOwnerMaskGeometryOnlyLicensedBlouse190:true,
+     ownerPhotoBackStillInferred190:true,
+     independentlyWitnessedOwnerReview190:false,
+     generalOwnerGarmentFitting190:false
+    }:{}),
     ...(photoOwnerAlpha189?{actualOwnerAlphaPNGAppliedToFabric189:true,
      syntheticOwnerMaskNotIndependentReview189:true,
      ownerMaskSourceGeometryStillPinned189:true,
@@ -1041,7 +1085,7 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
+ const result={priority:photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...(photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',

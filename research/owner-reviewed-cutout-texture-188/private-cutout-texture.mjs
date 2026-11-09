@@ -49,6 +49,16 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
   reviewedAlpha189=await decodeReviewedOwnerMask189({asset,blouse});
   originalMask=reviewedAlpha189.mask;
  }
+ let ownerGeometryProfile190=null;
+ if(asset?.ownerMaskGeometryRequested190===true){
+  if(reviewedAlpha189?.actualOwnerMaskPNGWebCryptoAndPixelValidated!==true)
+   fail('P190 requires separately SHA-attested and pixel-validated reviewed owner alpha');
+  const {profileOwnerAlphaGeometry190}=await import('../owner-mask-geometry-190/owner-alpha-contour.mjs');
+  ownerGeometryProfile190=profileOwnerAlphaGeometry190({
+   source:blouse.cutout,owner:reviewedAlpha189.mask,
+   maskSHA:reviewedAlpha189.privateMaskSHA256
+  });
+ }
  const mw=originalMask?.naturalWidth||originalMask?.width||0;
  const mh=originalMask?.naturalHeight||originalMask?.height||0;
  if(!mw||!mh||mw*mh>8000000)fail('actual source alpha mask unavailable');
@@ -82,6 +92,7 @@ export async function compositeOwnerReviewedCutout188({blouse,asset}={}){
   privateOwnerAlphaPixelMask189:reviewedAlpha189!==null,
   ownerAlphaMaskSHA256_189:reviewedAlpha189?.privateMaskSHA256||null,
   ownerMaskWasSourceGeometry189:false,
+  ownerMaskGeometryProfile190:ownerGeometryProfile190,
   ownerMaskHumanReviewedIndependently189:false,
   privateCutoutHumanApprovalIndependentlyVerified188:false,
   cutoutMaskFromOwnerPhoto188:false,

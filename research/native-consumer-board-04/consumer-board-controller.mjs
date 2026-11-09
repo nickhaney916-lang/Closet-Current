@@ -300,7 +300,9 @@ export async function createNativeConsumerBoard04({
    ...(maskEnabled189?{
     ownerAlphaPNG189:row.segmentHint.ownerAlphaPNG189,
     ownerAlphaSHA256189:alphaProof189.privatePNG_SHA256,
-    ownerAlphaProof189:alphaProof189
+    ownerAlphaProof189:alphaProof189,
+    ...(params.get('photoOwnerGeometry190')==='research'?
+     {ownerMaskGeometryRequested190:true}:{})
    }:{}),
    ownerReviewed:true,originalJPEGVerified:true,cutoutJPEGVerified:true,
    privateOriginalAndCutoutBytesVerified:true,releaseAuthorized:false,familyAlpha:'HOLD'
