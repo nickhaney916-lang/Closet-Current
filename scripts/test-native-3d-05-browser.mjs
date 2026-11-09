@@ -222,9 +222,21 @@ try{
    const model=page.locator('#outfit3D01Model');
    if(await model.count()){
     await model.selectOption('male');
-    await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
-     window.native3D05Bridge.state().figure==='male'&&
-     window.native3D05Bridge.state().photoSourceSilhouette62===true,null,{timeout:150000});
+    // Distinguish actual male mesh rejection from slow loading. Never claim
+    // two-humanoid acceptance simply because the select changed to 'male'.
+    await page.waitForFunction(()=>{
+     const st=window.native3D05Bridge?.state();
+     const message=document.getElementById('outfit3D01Status')?.textContent||'';
+     return st?.modelReady&&st.figure==='male'&&st.photoSourceSilhouette62===true||
+       message.startsWith('Action not saved:')||message.startsWith('Original photo/2D fallback:');
+    },null,{timeout:30000});
+    const maleProof=await page.evaluate(()=>({
+     state:window.native3D05Bridge?.state(),
+     donorStatus:String(document.getElementById('outfit3D01Status')?.textContent||'').slice(0,280)
+    }));
+    assert.equal(maleProof.state?.modelReady&&maleProof.state?.figure==='male'&&
+     maleProof.state?.photoSourceSilhouette62===true,true,
+     'P183 actual male 163-bone photographed blouse failed after female PASS: '+JSON.stringify(maleProof));
     await take(page,width,'04-male-front-provisional-blouse');
     await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-provisional-blouse');
    }
