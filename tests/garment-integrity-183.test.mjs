@@ -77,6 +77,9 @@ test('P183 preserves P182 committed-cloud quarantine and NATIVE91/92/93 source c
  const cloud=readFileSync('research/cloud-to-native-3d-180/owner-restore-3d-barrier.mjs','utf8');
  assert.ok(cloud.includes('postCommitUnverified'));
  assert.ok(cloud.includes('retryVerification'));
+ // A new male donor must be independently READY; the selected UI option
+ // alone cannot prove that the anatomical model successfully switched.
+ assert.ok(native.includes('figure:active&&data.viewerReady===true?data.figure||null:null'));
 });
 test('P183 native browser harness records both genders and both engines without claiming human realism',()=>{
  const script=readFileSync('scripts/test-native-3d-05-browser.mjs','utf8');
