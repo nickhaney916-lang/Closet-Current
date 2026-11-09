@@ -224,7 +224,7 @@ try{
       'P187 no unapproved garment 3D donor/dialog ever created');
      assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
     }
-    assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),/P186/i,
+    assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),photoPreflight187?/P187/i:/P186/i,
      'Engine-independent proof must expose an explicit refused owner-cutout review');
     const unsafe=await page.evaluate(()=>window.native3D05Bridge.state());
     assert.equal(unsafe.active,false,'P186 must destroy provisional private 3D scene');
