@@ -17,7 +17,8 @@ function setup(){
   status:()=>({active,dirty,savedCount:saved.length,selected:0}),
   readOnlySnapshot:()=>({saved:structuredClone(saved)}),
   readOnlyGarmentSources91:ids=>({ownerId:owner,sources:ids.map(id=>({id,sha256:'f'.repeat(64)}))}),
-  async attestOriginalPhotoBytes92(ids){attested+=ids.length;return {ownerId:owner,sources:ids.map(id=>({id}))};},
+  readOnlyWardrobeRevision93:()=>({ownerId:owner,generation:1,revision:1}),
+  async attestOriginalPhotoBytes92(ids){attested+=ids.length;return {ownerId:owner,sources:ids.map(id=>({id,sha256:'f'.repeat(64)}))};},
   async load({discard}={}){
    assert.equal(discard,false,'P180 must never silently discard unsaved outfit edits');
    loaded++;return {loaded:true};
