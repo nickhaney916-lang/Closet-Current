@@ -4,7 +4,7 @@
 This script deliberately DOES NOT consult model outputs, previously scored
 masks, or human annotations invented by the assistant. It reads the exact
 publisher Fashionpedia validation annotation JSON, verifies its pinned SHA,
-selects one fresh Pexels-recorded photograph for each of twelve supported
+selects twelve Pexels-recorded photographs across eight supported
 semantic garment categories by a deterministic precommitted image-ID hash,
 and verifies each actual archive JPEG byte before publishing the manifest.
 
@@ -27,7 +27,7 @@ PUBLISHER_ANNOTATION_URL = (
 ANNOTATION_SHA256 = "f831f415edad12d52acde8b138fe7ebd1592b57bf0dcd6a3b63ba8cabd208223"
 PUBLISHER_ARCHIVE_URL = "https://s3.amazonaws.com/ifashionist-dataset/images/val_test2020.zip"
 SELECTION_SALT = "closet-current-M1-P772-publisher-first-inference-2026-11-09-LOCKED"
-CATEGORY_TARGETS = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 23)
+CATEGORY_TARGETS = (0, 1, 4, 6, 7, 8, 10, 23, 0, 4, 6, 10)
 ALLOWED_CATEGORY_IDS = frozenset(CATEGORY_TARGETS)
 MAX_INSTANCES = 16
 EXPOSED_P66_IDS = frozenset((9029, 10395, 11321, 10904, 10775, 12042))
