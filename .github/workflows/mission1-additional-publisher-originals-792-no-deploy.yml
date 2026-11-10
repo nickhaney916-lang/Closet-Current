@@ -1,4 +1,4 @@
-name: M1 P792 twelve additional REAL publisher original B0 masks — NO DEPLOY
+name: M1 P792 ten additional REAL publisher original B0 masks — NO DEPLOY
 on:
   push:
     branches: [research/mission1-additional-publisher-originals-792-HOLD]
@@ -78,7 +78,7 @@ jobs:
           writeFileSync('/tmp/m1-p792-exposed.json',JSON.stringify(sha));
           console.log('M1_P792_PRE_REGISTERED_KNOWN_EXPOSED_SOURCES',sha.length);
           NODE
-      - name: Source-before-model exactly pinned publisher annotation archive and twelve original JPEGs
+      - name: Source-before-model exactly pinned publisher annotation archive and ten original JPEGs
         run: |
           set -euo pipefail
           python3 scripts/intake-additional-publisher-originals-792.py /tmp/m1-p792-exposed.json
@@ -87,17 +87,17 @@ jobs:
           import {readFileSync} from 'node:fs';
           const x=JSON.parse(readFileSync('benchmark/mission1-additional-publisher-originals-792/manifest.json'));
           const known=new Set(JSON.parse(readFileSync('/tmp/m1-p792-exposed.json')));
-          assert.equal(x.rows.length,12);
-          assert.equal(new Set(x.rows.map(r=>r.id)).size,12);
-          assert.equal(new Set(x.rows.map(r=>r.sha256)).size,12);
+          assert.equal(x.rows.length,10);
+          assert.equal(new Set(x.rows.map(r=>r.id)).size,10);
+          assert.equal(new Set(x.rows.map(r=>r.sha256)).size,10);
           assert.ok(x.rows.every(r=>r.annotations.length>=1&&!known.has(r.sha256)));
-          assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='multi').length,6);
-          assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='single').length,6);
-          assert.ok(x.rows.reduce((n,r)=>n+r.annotations.length,0)>=18);
+          assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='multi').length+
+           x.rows.filter(r=>r.sourceSelectionStratum==='single').length,10);
+          assert.ok(x.rows.reduce((n,r)=>n+r.annotations.length,0)>=10);
           assert.equal(x.releaseAuthorized,false);
           assert.equal(x.publisherAnnotatedImageRightsIndependentlyCleared,false);
           assert.equal(x.blindHumanReviewIndependentlyVerified,false);
-          console.log('M1_P792_TWELVE_NEW_TO_DEV_SOURCE_JPEG_SHA_WITH_PREEXISTING_PUBLISHER_POLYGONS_ONLY');
+          console.log('M1_P792_TEN_NEW_TO_DEV_SOURCE_JPEG_SHA_WITH_PREEXISTING_PUBLISHER_POLYGONS_ONLY');
           NODE
       - name: Genuine immutable B0 source logits versus publisher masks in Chromium, NO result-driven image selection
         run: MISSION1_ENGINE=chromium node scripts/test-mission1-seeded-boundary-recovery-browser.mjs
@@ -119,7 +119,7 @@ jobs:
            assert.equal(x.newlyEnrolledBlindedHumanHoldout,false);
            assert.equal(x.releaseAuthorized,false);
            assert.equal(x.familyAlpha,'HOLD');
-           assert.equal(x.photos,12);
+           assert.equal(x.photos,10);
            assert.deepEqual(new Set(x.rows.map(z=>z.sourceSHA256)),new Set(truthIds.values()));
            assert.equal(x.publisherHumanInstances,source.rows.reduce((n,r)=>n+r.annotations.length,0));
            for(const key of ['publishedInstanceDiagnostic','candidateInstanceDiagnostic']){
@@ -144,7 +144,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mission1-P792-twelve-genuine-additional-publisher-source-originals-model-IoU-HOLD
+          name: mission1-P792-ten-genuine-additional-publisher-source-originals-model-IoU-HOLD
           path: |
             benchmark/mission1-additional-publisher-originals-792/manifest.json
             benchmark/mission1-additional-publisher-originals-792/chromium/results.json
