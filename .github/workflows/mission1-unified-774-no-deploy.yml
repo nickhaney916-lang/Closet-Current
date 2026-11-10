@@ -285,3 +285,78 @@ jobs:
           path: benchmark/mission1-unseeded-region-773/
           retention-days: 14
           if-no-files-found: warn
+
+  p777-larger-pinned-clothing-segmentation-real-photo-comparator:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+      MISSION1_MODEL_VARIANT: b2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Ephemeral model/browser dependencies; no shipping or Cloud changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Select exactly the same eight original already exposed publisher-annotated development photos
+        run: |
+          set -euo pipefail
+          cp research/real-garment-acceptance-66/fashionpedia-sample.json research/real-garment-acceptance-66/pinned-published-exposed.json
+          python scripts/select-publisher-mask-holdout-772.py research/real-garment-acceptance-66/fashionpedia-sample.json benchmark/real-garment-acceptance-66/fashionpedia
+      - name: Independent original publisher polygons vs pinned B2 quantized model in actual Chromium
+        run: MISSION1_ENGINE=chromium node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: Repeat actual unfaked photographed-garment source inference in WebKit
+        run: MISSION1_ENGINE=webkit node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: Publish honest real-image comparison and NEVER mark model rights or independent human truth accepted
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          for(const engine of ['chromium','webkit']){
+            const r=JSON.parse(readFileSync('benchmark/mission1-b2-777/'+engine+'/results.json','utf8'));
+            assert.equal(r.photos,8);
+            assert.equal(r.publisherHumanInstances,20);
+            assert.equal(r.modelComparisonVariant,'b2');
+            assert.equal(r.modelPromotionAuthorized,false);
+            assert.equal(r.licenseIndependentlyCleared,false);
+            assert.equal(r.releaseAuthorized,false);
+            assert.equal(r.familyAlpha,'HOLD');
+            assert.equal(r.summary.comparisonVariant,'b2');
+            assert.equal(r.summary.modelLicenseAndTrainingExposureIndependentlyClearedForCommercialUse,false);
+            assert.ok(r.rows.every(x=>x.model==='Xenova/segformer_b2_clothes'&&
+              x.revision==='cb6ac44e641faa309f29561c1afe08d87ef52631'));
+            console.log(JSON.stringify({engine,model:'Xenova/segformer_b2_clothes',
+              revision:'cb6ac44e641faa309f29561c1afe08d87ef52631',
+              publisherTruthGarmentInstances:20,
+              rawMeanSemanticIoU:r.summary.meanSemanticIoU,
+              rawMissedRegions:r.summary.missedSemanticRegions,
+              originalInstanceDiagnostic:r.summary.publishedInstanceDiagnostic,
+              seededReviewOnly:r.summary.candidateInstanceDiagnostic,
+              sourceColorAndExactSubtypeNotVerified:true,
+              pretrainingExposureAndLicenseNotIndependentlyCleared:true,
+              automaticAdoptionOrReleaseAuthorized:false}));
+          }
+          NODE
+      - name: Destroy all temporarily downloaded publisher-original JPEG bytes
+        if: always()
+        run: |
+          rm -rf benchmark/real-garment-acceptance-66/fashionpedia
+          rm -rf benchmark/real-garment-acceptance-66/previous-six
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P777-PINNED-B2-EXPOSED-PUBLISHER-GARMENT-COMPARATOR-HOLD
+          path: benchmark/mission1-b2-777/
+          retention-days: 14
+          if-no-files-found: warn

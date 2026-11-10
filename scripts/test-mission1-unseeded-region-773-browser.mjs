@@ -13,8 +13,27 @@ import {measureRegisteredBoundaries66} from '../research/real-garment-acceptance
 import {scoreInstances} from '../research/mission1-external-human-evidence/instance-metrics.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const manifest=JSON.parse(await readFile('research/real-garment-acceptance-66/fashionpedia-sample.json','utf8'));
-const engine=process.env.MISSION1_ENGINE||'chromium',out='benchmark/mission1-unseeded-region-773/'+engine;
-const workerSource=await readFile('research/real-mask-evidence-31/worker.mjs','utf8');
+const engine=process.env.MISSION1_ENGINE||'chromium';
+const variant=process.env.MISSION1_MODEL_VARIANT||'b0';
+assert.ok(['b0','b2'].includes(variant),'only pinned original or pinned research comparator allowed');
+const out='benchmark/'+(variant==='b2'?'mission1-b2-777':'mission1-unseeded-region-773')+'/'+engine;
+const unmodifiedWorker=await readFile('research/real-mask-evidence-31/worker.mjs','utf8');
+const B0_COMMIT='a2489ea8e7ec1ee912190546bad31a4906ccca76';
+const B2_COMMIT='cb6ac44e641faa309f29561c1afe08d87ef52631';
+let workerSource=unmodifiedWorker;
+if(variant==='b2'){
+ const original="const name='Xenova/segformer_b0_clothes',revision='"+B0_COMMIT+"';";
+ assert.equal(workerSource.split(original).length,2,'frozen SegFormer source model anchor');
+ workerSource=workerSource.replace(original,
+  "const name='Xenova/segformer_b2_clothes',revision='"+B2_COMMIT+"';");
+ workerSource=workerSource.replace("revision,device:'wasm',dtype:'fp32'",
+  "revision,device:'wasm',dtype:'q8'");
+ workerSource=workerSource.replace("modelRevision:'"+B0_COMMIT+"'",
+  "modelRevision:'"+B2_COMMIT+"'");
+ workerSource=workerSource.replace("model:'Xenova/segformer_b0_clothes'",
+  "model:'Xenova/segformer_b2_clothes'");
+ assert.ok(workerSource.includes("model:'Xenova/segformer_b2_clothes'"));
+}
 const anchor='selectedMaskSHA256:await sha(g.selected),';
 assert.equal(workerSource.split(anchor).length,2);
 let instrumentedWorker=workerSource.replace(anchor,anchor+"selectedMaskBase64:btoa(Array.from(g.selected,x=>String.fromCharCode(x)).join('')),");
@@ -45,7 +64,9 @@ try{
  await context.route('**/*',async route=>{
   if(!['GET','HEAD'].includes(route.request().method()))return route.abort();
   const url=route.request().url();if(url.startsWith(origin+'/'))return route.continue();
-  if(isPinnedModelAsset(url))return routePinnedModelAsset(route,cache);
+  const b2url=variant==='b2'&&url.startsWith(
+   'https://huggingface.co/Xenova/segformer_b2_clothes/resolve/'+B2_COMMIT+'/');
+  if(isPinnedModelAsset(url)||b2url)return routePinnedModelAsset(route,cache);
   return route.abort();
  });
  const page=await context.newPage();await page.goto(origin+'/');
@@ -206,10 +227,12 @@ try{
   rows.flatMap(r=>r.withUnseededGroupedIoU).length;
  summary.unseededReviewFalsePositiveIncrease=summary.unseededReviewArm.falsePositives-summary.candidateInstanceDiagnostic.falsePositives;
  summary.unseededReviewNoAutomaticAcceptance=true;
+ summary.comparisonVariant=variant;
+ summary.modelLicenseAndTrainingExposureIndependentlyClearedForCommercialUse=false;
  summary.unseededReviewDiagnosticVerdict=summary.unseededReviewArm.truePositives>summary.candidateInstanceDiagnostic.truePositives&&
   summary.unseededReviewArm.falsePositives<=summary.candidateInstanceDiagnostic.falsePositives?
   'ADDITIONAL_HUMAN_MASK_MATCHES_WITHOUT_EXTRA_FP_ON_EXPOSED_SET':
   'MIXED_OR_NO_SOURCE_GAIN_REVIEW_ONLY_NO_RELEASE';
  summary.developmentVerdict=summary.noBaselineInstanceLoss&&summary.noNewInstanceFalsePositives&&summary.candidateInstanceDiagnostic.truePositives>summary.publishedInstanceDiagnostic.truePositives&&summary.candidateGroupedSemanticIoU>=summary.baselineGroupedSemanticIoU?'OBSERVED_GAIN_ON_EXPOSED_DEVELOPMENT_COHORT_ONLY':'MIXED_OR_NO_GAIN_RESEARCH_ONLY';
- await writeFile(out+'/results.json',JSON.stringify({engine,summary,photos:rows.length,publisherHumanInstances:rows.reduce((n,r)=>n+r.publisherHumanInstances,0),rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:'Baseline model and grouping unchanged; actual original logits separately produce prior P767 bounded seeded growth plus P773 unseeded review-only proposals; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
+ await writeFile(out+'/results.json',JSON.stringify({engine,modelComparisonVariant:variant,licenseIndependentlyCleared:false,modelPromotionAuthorized:false,summary,photos:rows.length,publisherHumanInstances:rows.reduce((n,r)=>n+r.publisherHumanInstances,0),rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:'Baseline model and grouping unchanged; actual original logits separately produce prior P767 bounded seeded growth plus P773 unseeded review-only proposals; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
