@@ -22,6 +22,8 @@ const photoOwnerDamaged193=process.env.PHOTO_OWNER_DAMAGED193==='1';
 const photoOwnerHairline194=process.env.PHOTO_OWNER_HAIRLINE194==='1';
 const photoOwnerBilateral195=process.env.PHOTO_OWNER_BILATERAL195==='1';
 const photoPhysicalReadback196=process.env.PHOTO_PHYSICAL_READBACK196==='1';
+const mission2Performance=process.env.MISSION2_PERFORMANCE==='1';
+const performanceSamples=[];
 if(photoPhysicalReadback196&&!photoOwnerBilateral195)
  throw Error('P196 demands actual P195 owner-bound bilateral fitting');
 if(photoOwnerBilateral195&&(!photoOwnerTopology191||photoOwnerDamaged193||photoOwnerHairline194))
@@ -235,6 +237,36 @@ async function seed(page,owner){
  }),fixture(owner));
 }
 async function take(page,width,stage){
+ if(mission2Performance&&/^(01-female|04-male)-front/.test(stage)){
+  // Browser animation scheduling under CI software WebGL, NOT GPU frame
+  // completion, physical-phone FPS, or performance acceptance.
+  const sample=await page.evaluate(async()=>{
+   const state=window.native3D05Bridge?.state();
+   if(!state?.modelReady||state.bones!==163)throw Error('Performance requires real loaded 163-bone scene');
+   const intervals=await new Promise((resolve,reject)=>{
+    const rows=[];let previous=null;
+    const timeout=setTimeout(()=>reject(Error('Animation sampling exceeded 30 seconds')),30000);
+    function frame(now){
+     if(previous!==null)rows.push(now-previous);previous=now;
+     if(rows.length===60){clearTimeout(timeout);resolve(rows);}else requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+   });
+   return {figure:state.figure,bones:state.bones,intervals,
+    visibility:document.visibilityState,
+    jsHeapBytes:performance.memory?.usedJSHeapSize??null};
+  });
+  assert.equal(sample.visibility,'visible');
+  assert.equal(sample.intervals.length,60);
+  assert.ok(sample.intervals.every(x=>Number.isFinite(x)&&x>0));
+  const sorted=[...sample.intervals].sort((a,b)=>a-b);
+  performanceSamples.push({width,stage,figure:sample.figure,bones:sample.bones,
+   sampleCount:60,medianAnimationIntervalMs:sorted[29],p95AnimationIntervalMs:sorted[56],
+   maxAnimationIntervalMs:sorted[59],jsHeapBytes:sample.jsHeapBytes,
+   metric:'requestAnimationFrame scheduling interval, not completed GPU frames',
+   environment:'headless CI software WebGL; no physical-phone acceptance'});
+ }
+
  const png=await page.screenshot({fullPage:false,animations:'disabled'});
  const meta=await sharp(png).metadata(),stat=await sharp(png).stats();
  assert.equal(meta.width,width);assert.ok(meta.height>=880&&png.length>4500);
@@ -1270,6 +1302,8 @@ try{
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
+ if(mission2Performance){assert.equal(performanceSamples.length,6);
+  for(const width of [320,390,430])assert.deepEqual(performanceSamples.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);}
  const result={priority:photoPhysicalReadback196?'OWNER-163BONE-PHYSICAL-READBACK-196':photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
   browser:photoSilhouette62?photoSilhouetteEngine62:'chromium',widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
@@ -1278,6 +1312,7 @@ try{
   actual3DWithHonestUnsupportedPhotoFallback:true,
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
+  ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,

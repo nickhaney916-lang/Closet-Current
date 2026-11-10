@@ -23,7 +23,7 @@ fit displacement stays bounded on world X without introducing Y/Z drift.
 
 Six new regressions exercise actual THREE objects and assert that a rejected
 last panel leaves ALL panel and position arrays untouched. Focused local suite:
-16/16 passing. Full local suite and exact-head CI results must be read separately.
+16/16 passing. Full local suite: 1,502/1,502 PASS with zero skips/failures. Exact-head CI results must be read separately.
 
 ## Genuine visual verification protocol
 
@@ -48,3 +48,15 @@ Next substantial work requires diverse rights-cleared source/mask garment inputs
 category-specific mesh construction, genuine body/layer collision measurements,
 and new rendered visual comparisons. Source-derived fitting must preserve
 uncertainty about occluded construction instead of claiming reconstructed backs.
+
+## Performance evidence added after baseline audit
+
+The inherited harness did not record timing. An opt-in MISSION2_PERFORMANCE
+probe now samples 60 genuine requestAnimationFrame scheduling intervals with
+the actual loaded 163-bone female and male scene at each mobile width. It records
+median/p95/max interval and Chromium JS heap where available (WebKit null).
+The six-sample inventory is asserted in the dedicated final browser stage.
+Sampling times out after 30 seconds rather than hanging indefinitely. These
+are headless software-WebGL scheduling diagnostics, NOT completed GPU-frame
+measurements, physical-phone FPS or a performance acceptance pass. Raw private
+photo bytes and owner identifiers never enter telemetry.
