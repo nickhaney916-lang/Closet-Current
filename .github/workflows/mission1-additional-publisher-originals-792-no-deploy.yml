@@ -90,7 +90,10 @@ jobs:
           assert.equal(x.rows.length,12);
           assert.equal(new Set(x.rows.map(r=>r.id)).size,12);
           assert.equal(new Set(x.rows.map(r=>r.sha256)).size,12);
-          assert.ok(x.rows.every(r=>r.annotations.length>=2&&!known.has(r.sha256)));
+          assert.ok(x.rows.every(r=>r.annotations.length>=1&&!known.has(r.sha256)));
+          assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='multi').length,6);
+          assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='single').length,6);
+          assert.ok(x.rows.reduce((n,r)=>n+r.annotations.length,0)>=18);
           assert.equal(x.releaseAuthorized,false);
           assert.equal(x.publisherAnnotatedImageRightsIndependentlyCleared,false);
           assert.equal(x.blindHumanReviewIndependentlyVerified,false);
