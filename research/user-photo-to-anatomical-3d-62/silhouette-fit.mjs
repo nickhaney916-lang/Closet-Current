@@ -94,6 +94,31 @@ export function measureUpperSilhouette62({data,width,height,sourceId,sourceSHA25
   inferredBack:true,releaseAuthorized:false});
 }
 
+/** Reject malformed source garment buffers before either fitting stage mutates them. */
+export function validatePhotoGarmentTargets(targets,reject){
+ if(new Set(targets).size!==targets.length)reject('duplicate garment mesh reference');
+ // Validate EVERY target before staging changes. Singular world transforms
+ // invert to a zero matrix in THREE and would silently collapse the garment.
+ const storage=[];
+ for(const mesh of targets){
+  mesh.updateWorldMatrix(true,false);
+  const matrix=mesh.matrixWorld,det=matrix?.determinant();
+  if(!matrix?.elements?.every(Number.isFinite)||!Number.isFinite(det)||Math.abs(det)<1e-10)
+   reject('finite invertible garment world transform required');
+  for(const name of ['position','panelPosition']){
+   const a=mesh.geometry?.getAttribute(name);
+   if(!a?.isBufferAttribute||a.isInterleavedBufferAttribute||a.itemSize!==3||a.normalized||
+      !(a.array instanceof Float32Array||a.array instanceof Float64Array)||
+      !Number.isInteger(a.count)||a.array.length!==a.count*3||
+      !a.array.every(Number.isFinite))reject('finite independent packed XYZ garment attributes required');
+   const start=a.array.byteOffset,end=start+a.array.byteLength;
+   if(storage.some(b=>b.buffer===a.array.buffer&&start<b.end&&end>b.start))
+    reject('garment panel and position storage must not alias');
+   storage.push({buffer:a.array.buffer,start,end});
+  }
+ }
+}
+
 /** Apply small silhouette-driven shaping to the actual source shell. */
 export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,naturalShoulder185=false}={}){
  if(!enabled)return shirt;
@@ -113,6 +138,7 @@ export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,natural
  const bodySkeletons=new Set();root.traverse(o=>{if(o?.isSkinnedMesh&&!o.userData?.work56Garment&&o.skeleton)bodySkeletons.add(o.skeleton);});
  if(!targets.length||targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||!bodySkeletons.has(m.skeleton)))
   throw Error('P62 requires the actual 163-bone fitted source garment shell');
+ validatePhotoGarmentTargets(targets,message=>{throw Error("P62 "+message);});
  const shoulder=Math.max(.88,Math.min(1.12,profile.shoulderToTorso));
  const hem=Math.max(.88,Math.min(1.14,profile.hemToTorso));
  const pending=[];let moved=0,maxMove=0,shoulderAdjusted185=0,maxShoulderMove185=0;
@@ -151,6 +177,7 @@ export function fitReviewedUpperPhoto62(shirt,root,profile,{enabled=true,natural
     next[i*3]=worldPoint.x;next[i*3+1]=worldPoint.y;next[i*3+2]=worldPoint.z;
    }
   }
+  if(!next.every(Number.isFinite)||!panelNext.every(Number.isFinite))throw Error("P62 nonfinite staged garment geometry");
   pending.push({mesh,p,panel,next,panelNext});
  }
  if(moved<20||maxMove<.001||maxMove>.025||

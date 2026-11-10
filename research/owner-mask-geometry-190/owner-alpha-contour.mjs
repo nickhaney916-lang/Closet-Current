@@ -5,6 +5,7 @@
  * NOT 3D reconstruction from an arbitrary photograph, segmentation truth,
  * collision simulation, independent owner review or a photographed rear.
  */
+import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 import {deriveOwnerBilateralContour195} from '../owner-bilateral-asymmetric-fit-195/side-profile.mjs';
 import {verifyPhysicalBilateralMesh196} from '../owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs';
 const SRC='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -106,6 +107,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   fail('requires already source-fitted 163-bone shirt with two sewn cap joins');
  const targets=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
   ['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
+ if(new Set(targets).size!==targets.length)fail('duplicate garment mesh reference');
  if(targets.length<3||!['L','R'].every(side=>
     targets.some(m=>m.userData?.work45IndependentShoulderCap===side)))
   fail('both actual shoulder caps plus torso shell are required');
@@ -113,6 +115,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   !o.userData?.work56Garment&&o.skeleton)skeletons.add(o.skeleton);});
  if(targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||
    !skeletons.has(m.skeleton)))fail('only the original licensed skinned 163-bone shell can be moved');
+ validatePhotoGarmentTargets(targets,fail);
  let moved=0,maxShift=0,activeCaps=new Set(),panels=[];
  const side195=profile.ownerBilateralContourMeasured195===true;
  let leftMoved195=0,rightMoved195=0;
@@ -138,6 +141,8 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
    if(['L','R'].includes(mesh.userData?.work45IndependentShoulderCap))
     activeCaps.add(mesh.userData.work45IndependentShoulderCap);
   }
+  if(!positions.every(Number.isFinite)||!pan.every(Number.isFinite))
+   fail('staged garment coordinates must remain finite');
   panels.push({mesh,p,panel,positions,pan});
  }
  if(moved<20||maxShift<.0005||maxShift>.00901||activeCaps.size!==2)
