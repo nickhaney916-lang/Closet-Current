@@ -8,6 +8,8 @@ const baseline=process.env.EXPECT_BASELINE==='1';
 const one=source.slice(source.indexOf('function stopCamera(){'),source.indexOf('function controls(disabled)'));
 const two=source.slice(source.indexOf('async function startCamera(mode){'),source.indexOf("$('start').onclick"));
 const three=source.slice(source.indexOf('function captureTick(now=Date.now()){'),source.indexOf('async function captureProofPhoto(){'));
+const pauseStart=source.indexOf('function pauseCameraOnInterruption(){');
+const pause=pauseStart<0?'':source.slice(pauseStart,source.indexOf('function saveMemoryReview(value)',pauseStart));
 const deferred=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {resolve,promise};};
 function media(){let stops=0;const track={stop(){stops++;},addEventListener(){}};return {getTracks(){return [track];},get stops(){return stops;}};}
 function harness(grants=[]){
@@ -32,7 +34,7 @@ function harness(grants=[]){
   crypto:{},Date,Number,Math,Error,clearInterval,setInterval};
  function $(id){return get(id);}
  vm.createContext(context);
- vm.runInContext(one+two+three,context);
+ vm.runInContext(one+two+three+pause,context);
  return {context,document,window,video,elements,listeners,messages,controls,
   get played(){return played;},
   trigger(type,target='document'){listeners[target].get(type)?.();}
