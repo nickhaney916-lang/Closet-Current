@@ -37,10 +37,11 @@ function requireSourceLength(state,width){
  assert.ok(state.sourceLengthNewHemY>=.55);
  assert.equal(state.sourceLengthCollisionCertified,false);
  assert.ok(state.sourceLengthTestedPairs>=3);
+ assert.ok(Number.isFinite(state.sourceLengthConstructionMs)&&state.sourceLengthConstructionMs>0);
  assert.ok(state.sourceLengthIntersectionPairsAfter<=state.sourceLengthIntersectionPairsBefore);
  sourceLengthEvidence.push({width,figure:state.figure,oldHemY:state.sourceLengthOldHemY,newHemY:state.sourceLengthNewHemY,
   movedVertices:state.sourceLengthMovedVertices,extension:state.sourceLengthExtension,flare:state.sourceLengthFlare,
-  sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,collisionCertified:false});
+  sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,constructionMs:state.sourceLengthConstructionMs,collisionCertified:false});
 }
 if(photoPhysicalReadback196&&!photoOwnerBilateral195)
  throw Error('P196 demands actual P195 owner-bound bilateral fitting');

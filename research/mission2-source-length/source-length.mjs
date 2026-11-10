@@ -24,6 +24,7 @@ export function deriveSourceLength({profile,minY,maxY,spanX}={}){
   boundedTargetLength:targetLength,absoluteSizeMeasured:false});
 }
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
+ const started=performance.now();
  if(shirt?.stats?.sourceSHA256!==SOURCE||shirt.stats.ownerAlphaMaskBasedPhysicalGeometry190!==true||
     shirt.stats.ownerPhysicalBilateralReadbackVerified196!==true||shirt.stats.cutoutSHA256!==profile?.cutoutSHA256||
     !Array.isArray(shirt.meshes)||typeof root?.traverse!=='function')fail('verified source and existing private owner fitting required');
@@ -76,6 +77,6 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
   sourceLengthExtension:shape.extension,sourceLengthFlare:shape.flare,
   sourceLengthOriginalUVPreserved:true,sourceLengthRearInferred:true,
   sourceLengthPhysicalSizeMeasured:false,sourceLengthCollisionCertified:false,
-  sourceLengthRestPoseOnly:true,sourceLengthIntersectionPairsBefore:before.intersectingPairs,
+  sourceLengthRestPoseOnly:true,sourceLengthConstructionMs:performance.now()-started,sourceLengthIntersectionPairsBefore:before.intersectingPairs,
   sourceLengthIntersectionPairsAfter:after.intersectingPairs,sourceLengthTestedPairs:after.testedPairs,releaseAuthorized:false}};
 }

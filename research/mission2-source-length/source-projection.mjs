@@ -14,13 +14,14 @@ export function patchSourceProjectionShader(shader,projection){
  shader.fragmentShader=shader.fragmentShader.replace('void main() {','varying vec3 vSourceProjectionPosition; uniform vec4 uM2SourceProjection;\nvoid main() {')
   .replace(UV,'vec2 panel=vec2(.5+(vSourceProjectionPosition.x-uM2SourceProjection.x)/uM2SourceProjection.y,(vSourceProjectionPosition.y-uM2SourceProjection.w)/uM2SourceProjection.z);')
   .replace(CHEST,'float chest=1.; // Original source alpha/front guards still apply to photographed sleeves.')
+  .replace('front*(1.-smoothstep(.115,.195,abs(vPanel.x)))*necklineInterior','front*chest*necklineInterior')
   .replace('photo.a*smoothstep(.95,1.,interiorAlpha)','photo.a*smoothstep(.95,.975,interiorAlpha)');
 }
 export function prepareSourceProjection(shirt,staged,projection){
  const materials=new Set(),attributes=[],overrides=new Map(staged.map(r=>[r.mesh,r.next]));
  for(const mesh of shirt.meshes){
   const list=Array.isArray(mesh.material)?mesh.material:[mesh.material];
-  for(const material of list)if(material?.onBeforeCompile?.toString().includes(UV))materials.add(material);
+  for(const material of list)if(material?.isMeshStandardMaterial&&typeof material.onBeforeCompile==='function'&&material.onBeforeCompile!==THREE.MeshStandardMaterial.prototype.onBeforeCompile)materials.add(material);
   const p=mesh.geometry.getAttribute('position'),array=overrides.get(mesh)||p.array;
   if(p.itemSize!==3||array.length!==p.count*3)fail('registered source vertices required');
   const coords=new Float32Array(array.length),v=new THREE.Vector3();
@@ -29,6 +30,15 @@ export function prepareSourceProjection(shirt,staged,projection){
   attributes.push({mesh,coords});
  }
  if(!materials.size)fail('actual existing original-photo shader required');
+ // Existing source shaders are wrapped by source-seam/detail callbacks.
+ // Inspect their EFFECT on the real standard shader, not Function.toString.
+ for(const material of materials){
+  const probe={uniforms:THREE.UniformsUtils.clone(THREE.ShaderLib.standard.uniforms),
+   vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader};
+  material.onBeforeCompile.call(material,probe);
+  if(!probe.uniforms.uPhoto?.value?.isTexture)fail('original source photo sampler missing');
+  patchSourceProjectionShader(probe,projection);
+ }
  const compiled=new Set(),runtime={compiledMaterialCount:0};
  return {materialCount:materials.size,runtime,commit(){
   for(const {mesh,coords} of attributes)mesh.geometry.setAttribute('sourceProjectionPosition',new THREE.BufferAttribute(coords,3));

@@ -740,6 +740,7 @@ export async function mountNative3D05({
    sourceLengthIntersectionPairsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntersectionPairsBefore:null,
    sourceLengthIntersectionPairsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntersectionPairsAfter:null,
    sourceLengthTestedPairs:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTestedPairs:0,
+   sourceLengthConstructionMs:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthConstructionMs:0,
    sourceLengthCollisionCertified:false,
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&

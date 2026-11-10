@@ -14,7 +14,7 @@ function fixture(){
   for(let i=0;i<count;i++)sw[i*4]=1;
   g.setAttribute('skinIndex',new THREE.BufferAttribute(si,4));g.setAttribute('skinWeight',new THREE.BufferAttribute(sw,4));
   g.setAttribute('panelPosition',g.getAttribute('position').clone());
-  const m=new THREE.SkinnedMesh(g,new THREE.MeshBasicMaterial());m.bind(skeleton);
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());m.bind(skeleton);
   if(role==='body')m.name='body';else{m.userData.work56Garment=true;
    if(role==='torso')m.name='Work56-independent-shirt-shell';else m.userData.work45IndependentShoulderCap=role;}
   root.add(m);return m;
@@ -81,7 +81,7 @@ test('a new staged lower-body intersection rejects before modifying any original
  for(let i=0;i<count;i++)weights[i*4]=1;
  g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(new Uint16Array(count*4),4));
  g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
- const obstacle=new THREE.SkinnedMesh(g,new THREE.MeshBasicMaterial());obstacle.bind(shirt.meshes[0].skeleton);root.add(obstacle);
+ const obstacle=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());obstacle.bind(shirt.meshes[0].skeleton);root.add(obstacle);
  const before=shirt.meshes.map(m=>m.geometry.getAttribute('position').array.slice());
  assert.throws(()=>fitSourceLength(shirt,root,profile),/new posed body intersection/);
  shirt.meshes.forEach((m,i)=>assert.deepEqual(m.geometry.getAttribute('position').array,before[i]));
@@ -106,7 +106,8 @@ test('registered front shader uses actual extended geometry while retaining orig
 });
 test('projection preparation has no precommit mutation and actual shader callbacks produce bounded numeric compilation receipts',()=>{
  const {shirt}=fixture(),material=shirt.meshes[0].material;
- material.onBeforeCompile=function(shader){shader.fragmentShader+='vec2 panel=vec2(.5+vPanel.x/uPhotoSpan.x,(vPanel.y-1.11)/uPhotoSpan.y);';};
+ material.onBeforeCompile=function(shader){shader.fragmentShader=sourceShader().fragmentShader;shader.uniforms.uPhoto={value:new THREE.Texture()};};
+ assert.equal(material.onBeforeCompile.toString().includes('vec2 panel=vec2('),false);
  const before=material.onBeforeCompile;
  const plan=prepareSourceProjection(shirt,[],[0,.98,.95,.7]);
  assert.equal(material.onBeforeCompile,before);assert.equal(plan.runtime.compiledMaterialCount,0);

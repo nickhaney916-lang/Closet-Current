@@ -71,3 +71,14 @@ The second browser run passed baseline but caught an empty-viewer initialization
 bug in the new installer: the optional stage tried reading a candidate before a
 shirt existed. The stage is now restricted to an actual source-bound shirt and
 registered contour. No unsuccessful run is counted as new rendered evidence.
+
+The third actual browser trial exposed an incorrect shader-detection assumption:
+the original projection callback is wrapped by the existing 3D22 seam stage, so
+Function.toString does not contain the underlying UV expression. Preparation
+now invokes the actual chained callback on THREE's real standard shader and
+requires its original uPhoto Texture plus the expected final GLSL anchors.
+This validation occurs before any geometry mutation. The inherited narrow
+chest-only seam multiplier is removed only for registered front projection;
+source-alpha/domain/normal/depth/neckline safety and inferred neutral rear stay.
+Actual source-length construction duration is now recorded separately from
+idle requestAnimationFrame diagnostics, with no physical-phone timing claim.
