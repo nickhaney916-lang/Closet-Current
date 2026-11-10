@@ -1,0 +1,77 @@
+name: M1 P786 six real originals genuine instance MASK accuracy — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-independent-instance-model-786-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  frozen-original-instance-model-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify exact P785 verified ancestor and research-only five-path no-deploy scope
+        run: |
+          set -euo pipefail
+          BASE=4e817f1613cc648b6077f61637c42295a6993b22
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p786-paths
+          test "$(wc -l < /tmp/p786-paths)" -eq 5
+          while read -r path; do
+            case "$path" in
+              scripts/probe-independent-instance-786.py|scripts/score_independent_instance_masks_786.py|tests/test_mission1_instance_source_786.py|research/mission1-independent-instance-model-786/REPORT.md|.github/workflows/mission1-independent-instance-model-786-no-deploy.yml) ;;
+              *) echo "UNEXPECTED MODEL/APP/RELEASE CHANGE: $path"; exit 1 ;;
+            esac
+          done < /tmp/p786-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase)"
+      - name: Install ephemeral Python-only inference dependencies, no app modifications
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir numpy==2.2.6 Pillow==11.3.0 onnxruntime==1.22.1
+      - name: Fetch and SHA verify six actual publisher originals, no owner images
+        run: |
+          cp research/real-garment-acceptance-66/fashionpedia-sample.json research/real-garment-acceptance-66/pinned-published-exposed.json
+          python scripts/fetch-fashionpedia-66.py
+      - name: Execute genuine source-locked external ONNX and retain tensor evidence
+        run: |
+          python -m py_compile scripts/probe-independent-instance-786.py scripts/score_independent_instance_masks_786.py
+          python -m unittest discover -s tests -p "test_mission1_instance_source_786.py" -v
+          python scripts/probe-independent-instance-786.py
+          python - <<'PY'
+          import json,pathlib
+          x=json.loads(pathlib.Path('benchmark/mission1-instance-model-786/research-only-inference.json').read_text())
+          assert x['publisherSourcePhotos']==6 and len(x['observations'])==6
+          assert len({r['sourceSHA256'] for r in x['observations']})==6
+          assert all(r['trueModelInferenceExecuted'] for r in x['observations'])
+          assert all(r['modelRawOutput'] and all(o['shape'] for o in r['modelRawOutput']) for r in x['observations'])
+          assert x['scoredModelInstanceMasks'] is True
+          assert x['sourceInstanceMaskIoUThreshold']==0.5
+          scores=x['sourceInstanceScore']
+          assert scores['truePositives']+scores['falseNegatives']==16
+          assert scores['falsePositives']>=0 and scores['truePositives']>=0
+          assert all(len(r['modelDetections'])==r['modelMaskDecodedCount'] for r in x['observations'])
+          assert all(r['realOriginalSourceMaskScore']['truePositives']+r['realOriginalSourceMaskScore']['falseNegatives']==r['truePublisherGarments'] for r in x['observations'])
+          assert x['modelCommercialRightsCleared'] is False
+          assert x['releaseAuthorized'] is False and x['familyAlpha']=='HOLD'
+          assert not pathlib.Path('benchmark/mission1-instance-model-786/temporary-licensed-unverified-model.onnx').exists()
+          print('M1_P786_GENUINE_MASK_IOU50_SIX_EXPOSED_SOURCE_PHOTOS_16_PUBLISHER_INSTANCES_NOT_RELEASE')
+          PY
+      - name: Erase all original publisher photo bytes and any external weight cache
+        if: always()
+        run: |
+          rm -rf benchmark/real-garment-acceptance-66/fashionpedia
+          rm -rf benchmark/real-garment-acceptance-66/previous-six
+          rm -f benchmark/mission1-instance-model-786/temporary-licensed-unverified-model.onnx
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-p786-six-real-originals-ONNX-mask-IoU50-NO-RELEASE
+          path: benchmark/mission1-instance-model-786/research-only-inference.json
+          retention-days: 14
+          if-no-files-found: warn
