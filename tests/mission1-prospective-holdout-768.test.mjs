@@ -238,3 +238,159 @@ test('Mission1 duplicate nearly identical human masks with different reviewer ID
  f.receipts[0]=f.receipt(f.photos[0],'reviewerA',label);
  assert.throws(()=>f.run(),/duplicate same-category human instance mask/);
 });
+
+function mixedSourceFixture(){
+ const f=fixture();
+ const blouse={instanceId:'my-left-top',category:'Tops',subtype:'Blouse',
+  primaryColor:'Blue',rle:[100,100,824]};
+ const jeans={instanceId:'my-right-bottom',category:'Bottoms',subtype:'Jeans',
+  primaryColor:'Brown',rle:[400,100,524]};
+ const label={category:'Multiple',subtype:'Multiple',primaryColor:'Multicolor',
+  instances:[blouse,jeans]};
+ const independentlyNamed={...label,instances:[
+  {...jeans,instanceId:'external-person-two-pants'},
+  {...blouse,instanceId:'external-person-two-blouse'}]};
+ f.receipts[0]=f.receipt(f.photos[0],'reviewerA',label);
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',independentlyNamed);
+ f.predictions[0].strong=false;
+ f.predictions[0].categoryConfirmed=false;
+ f.predictions[0].prediction={category:null,type:null,primaryColor:null};
+ f.predictions[0].instances=[
+  {category:'Bottoms',type:'Jeans',primaryColor:'Brown',rle:[400,100,524]},
+  {category:'Tops',type:'Blouse',primaryColor:'Blue',rle:[100,100,824]}
+ ];
+ return {...f,mixedLabel:label,independentLabel:independentlyNamed};
+}
+test('P771 signed blind mixed outfit: two independently ID-named, oppositely enumerated garments with own category/subtype/color and masks',()=>{
+ const f=mixedSourceFixture(),r=f.run();
+ assert.equal(r.counts.photos,2);
+ assert.equal(r.counts.garments,1);
+ assert.equal(r.counts.garmentInstances,2);
+ assert.equal(r.counts.mixedPhotos,1);
+ assert.equal(r.counts.mixedTruthGarments,2);
+ assert.equal(r.counts.mixedProposedGarments,2);
+ assert.equal(r.counts.mixedCategoryCorrect,2);
+ assert.equal(r.counts.mixedSubtypeCorrect,2);
+ assert.equal(r.counts.mixedColorCorrect,2);
+ assert.equal(r.counts.mixedCategoryAccuracyPercent,100);
+ assert.equal(r.counts.mixedSubtypeAccuracyPercent,100);
+ assert.equal(r.counts.mixedColorAccuracyPercent,100);
+ assert.equal(r.counts.instanceRecallPercent,100);
+ assert.equal(r.counts.adjudicatedItems,0);
+ assert.equal(r.records[0].humanAgreement,true);
+ assert.equal(r.generalizableHoldoutAccuracyCertified,false);
+ assert.equal(r.missionOneCompleted,false);
+ assert.equal(r.familyAlpha,'HOLD');
+});
+test('P771 missed photographed pants must count as a genuinely missed garment with 50 percent instance recall and subtype accuracy',()=>{
+ const f=mixedSourceFixture();
+ f.predictions[0].instances=[f.predictions[0].instances[1]];
+ const r=f.run();
+ assert.equal(r.counts.mixedTruthGarments,2);
+ assert.equal(r.counts.mixedProposedGarments,1);
+ assert.equal(r.counts.mixedCategoryCorrect,1);
+ assert.equal(r.counts.mixedSubtypeCorrect,1);
+ assert.equal(r.counts.mixedCategoryAccuracyPercent,50);
+ assert.equal(r.counts.mixedSubtypeAccuracyPercent,50);
+ assert.equal(r.counts.maskTruth,2);
+ assert.equal(r.counts.maskMatched,1);
+ assert.equal(r.counts.instanceRecallPercent,50);
+ assert.equal(r.counts.mixedColorAccuracyPercent,null);
+});
+test('P771 same source mask with wrong predicted category is NOT a correct garment instance or subtype',()=>{
+ const f=mixedSourceFixture();
+ f.predictions[0].instances[0].category='Tops';
+ const r=f.run();
+ assert.equal(r.counts.mixedSpatialMatches,2);
+ assert.equal(r.counts.mixedCategoryCorrect,1);
+ assert.equal(r.counts.mixedSubtypeCorrect,1);
+ assert.equal(r.counts.maskMatched,1);
+ assert.equal(r.counts.instanceRecallPercent,50);
+ assert.equal(r.counts.mixedColorAccuracyPercent,50);
+});
+test('P771 absent model color remains null even with correct image instance shape and subtype',()=>{
+ const f=mixedSourceFixture();
+ delete f.predictions[0].instances[0].primaryColor;
+ const r=f.run();
+ assert.equal(r.counts.mixedCategoryAccuracyPercent,100);
+ assert.equal(r.counts.mixedSubtypeAccuracyPercent,100);
+ assert.equal(r.counts.mixedColorObserved,1);
+ assert.equal(r.counts.mixedColorAccuracyPercent,null);
+ assert.equal(r.counts.colorAccuracyPercent,null);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('P771 model omitted all mixed garment masks cannot produce a fabricated 0 or 100 percent segmentation result',()=>{
+ const f=mixedSourceFixture();
+ delete f.predictions[0].instances;
+ const r=f.run();
+ assert.equal(r.counts.mixedPhotos,1);
+ assert.equal(r.counts.mixedTruthGarments,2);
+ assert.equal(r.counts.mixedMaskMeasuredPhotos,0);
+ assert.equal(r.counts.mixedSubtypeAccuracyPercent,null);
+ assert.equal(r.counts.mixedCategoryAccuracyPercent,null);
+ assert.equal(r.counts.instanceRecallPercent,null);
+ assert.equal(r.counts.mixedColorAccuracyPercent,null);
+});
+test('P771 two signed human reviews that disagree on per-garment primary color require an independent third signed adjudicator',()=>{
+ const f=mixedSourceFixture(),different=structuredClone(f.independentLabel);
+ different.instances[0].primaryColor='Black';
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',different);
+ assert.throws(()=>f.run(),/third adjudicator/);
+ f.receipts.splice(2,0,f.receipt(f.photos[0],'adjudicator',f.mixedLabel,{
+  adjudication:true,adjudicationRationale:'Blinded garment instance color discrepancy'
+ }));
+ const r=f.run();
+ assert.equal(r.counts.adjudicatedItems,1);
+ assert.equal(r.records[0].humanAgreement,false);
+});
+test('P771 rejects omitted independent human subtype, omitted original color, and duplicates in source masks',()=>{
+ const a=mixedSourceFixture(),noSubtype=structuredClone(a.mixedLabel);
+ delete noSubtype.instances[0].subtype;
+ a.receipts[0]=a.receipt(a.photos[0],'reviewerA',noSubtype);
+ assert.throws(()=>a.run(),/per-instance human category\/subtype\/color required/);
+ const b=mixedSourceFixture(),noColor=structuredClone(b.mixedLabel);
+ noColor.instances[1].primaryColor='Unknown';
+ b.receipts[0]=b.receipt(b.photos[0],'reviewerA',noColor);
+ assert.throws(()=>b.run(),/per-instance human category\/subtype\/color required/);
+ const c=mixedSourceFixture(),duplicate=structuredClone(c.mixedLabel);
+ duplicate.instances[1]={...duplicate.instances[0],instanceId:'same-pixels-new-name'};
+ c.receipts[0]=c.receipt(c.photos[0],'reviewerA',duplicate);
+ assert.throws(()=>c.run(),/duplicate nearly identical same-category human masks/);
+});
+test('P771 wrong category, unknown source-wide aggregate, or only one mixed human instance cannot bypass source label contract',()=>{
+ const a=mixedSourceFixture(),bad=structuredClone(a.mixedLabel);
+ bad.category='Tops';
+ a.receipts[0]=a.receipt(a.photos[0],'reviewerA',bad);
+ assert.throws(()=>a.run(),/third adjudicator|categorical\/subtype\/color\/instance/);
+ const b=mixedSourceFixture(),one=structuredClone(b.mixedLabel);
+ one.instances.pop();
+ b.receipts[0]=b.receipt(b.photos[0],'reviewerA',one);
+ assert.throws(()=>b.run(),/mixed source requires 2/);
+ const c=mixedSourceFixture();
+ c.predictions[0].strong=true;
+ assert.throws(()=>c.run(),/multi-garment photo cannot be auto-indexed as one/);
+});
+test('P771 extra hallucinated auto-indexed garment is counted unsafe even if two source masks are correct',()=>{
+ const f=mixedSourceFixture();
+ f.predictions[0].instances.push({
+  category:'Shoes',type:'Sneakers',primaryColor:'White',
+  rle:[700,100,224],autoIndexed:true
+ });
+ const r=f.run();
+ assert.equal(r.counts.mixedTruthGarments,2);
+ assert.equal(r.counts.mixedProposedGarments,3);
+ assert.equal(r.counts.maskMatched,2);
+ assert.equal(r.counts.mixedAutoIndexed,1);
+ assert.equal(r.counts.mixedUnsafeAutomatic,1);
+ assert.equal(r.counts.autoIncorrect,1);
+ assert.equal(r.counts.instancePrecisionPercent,66.67);
+});
+test('P771 all-zero, out-of-bounds and malformed source masks cannot enter independent signed human truth or real model scores',()=>{
+ const a=mixedSourceFixture();
+ a.predictions[0].instances[0].rle=[1024];
+ assert.throws(()=>a.run(),/nonempty complete real pixel mask/);
+ const b=mixedSourceFixture(),wrong=structuredClone(b.mixedLabel);
+ wrong.instances[0].rle=[900,200];
+ b.receipts[0]=b.receipt(b.photos[0],'reviewerA',wrong);
+ assert.throws(()=>b.run(),/out of range mask RLE/);
+});

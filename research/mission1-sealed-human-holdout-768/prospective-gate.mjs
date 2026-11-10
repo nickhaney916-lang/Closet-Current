@@ -8,6 +8,10 @@
  * with model training. Those require external independent audit.
  */
 import {createHash,createPublicKey,verify as cryptoVerify} from 'node:crypto';
+import {
+ MULTI_PHOTO_MARKER,normalizeMixedHumanLabel,compareMixedHumanReviews,
+ scoreMixedOutfitAgainstHuman
+} from '../mission1-mixed-outfit-771/garment-instance-contract.mjs';
 
 export const SCHEMA='closet-current-prospective-holdout/v1';
 export const P66_EXPOSED_DIGESTS=Object.freeze([
@@ -137,6 +141,10 @@ function iou(a,b){
  return union?intersection/union:0;
 }
 function labelsVerified(label,item){
+ if(label?.category===MULTI_PHOTO_MARKER){
+  const source=normalizeMixedHumanLabel(label,decodeMask,item.width*item.height);
+  return new Map(source.map(ins=>[ins.instanceId,ins.mask]));
+ }
  const negative=label?.category==='Uncategorized';
  if(!CATEGORIES.has(label?.category)||!valid(label.subtype)||!COLORS.has(label.primaryColor)||
     !Array.isArray(label.instances)||label.instances.length>(negative?0:20)||
@@ -173,6 +181,12 @@ function receiptValidated(row,item,registry,keys){
  return labelsVerified(row.label,item);
 }
 function compareLabels(a,b,item){
+ if(a.label.category===MULTI_PHOTO_MARKER||b.label.category===MULTI_PHOTO_MARKER){
+  if(a.label.category!==b.label.category)return false;
+  // All mixed masks were authenticated against their original JPEG/receipt.
+  // Compare independent reviewer-local IDs using source pixel geometry only.
+  return compareMixedHumanReviews(a.label,b.label,decodeMask,item.width*item.height);
+ }
  if(a.label.category!==b.label.category||
     a.label.subtype!==b.label.subtype||
     a.label.primaryColor!==b.label.primaryColor||
@@ -244,7 +258,13 @@ export function evaluateProspectiveHoldout({
   colorCorrect:0,categoryEvaluated:0,subtypeEvaluated:0,colorEvaluated:0,
   autoIndexed:0,autoIncorrect:0,abstentions:0,runtimeErrors:0,
   negativeRejected:0,maskMatched:0,maskPredicted:0,maskTruth:0,
-  masksMeasured:0,adjudicatedItems:0};
+  masksMeasured:0,adjudicatedItems:0,
+  garmentInstances:0,mixedPhotos:0,mixedTruthGarments:0,
+  mixedProposedGarments:0,mixedSpatialMatches:0,
+  mixedCategoryCorrect:0,mixedSubtypeCorrect:0,
+  mixedColorObserved:0,mixedColorCorrect:0,
+  mixedAutoIndexed:0,mixedUnsafeAutomatic:0,
+  mixedMaskMeasuredPhotos:0};
  const records=[],categories={};
  for(const item of seal.photos){
   const reviews=allReviews.get(item.id)||[];
@@ -272,7 +292,8 @@ export function evaluateProspectiveHoldout({
      (p.strong&&p.categoryConfirmed))
    err('inference model/photo provenance or human review status invalid: '+item.id);
   if(p.error!=null&&typeof p.error!=='string')err('invalid error field');
-  const negative=trusted.label.category==='Uncategorized',runtime=!!p.error;
+  const negative=trusted.label.category==='Uncategorized';
+  const mixed=trusted.label.category===MULTI_PHOTO_MARKER,runtime=!!p.error;
   const predicted=runtime?null:p.prediction||null;
   if(!runtime&&(predicted===null||predicted===undefined))err('must explicitly record abstained prediction');
   if(!runtime&&predicted?.category!=null&&!CATEGORIES.has(predicted.category))err('unexpected model category');
@@ -283,13 +304,46 @@ export function evaluateProspectiveHoldout({
   if(runtime)totals.runtimeErrors++;
   if(!runtime&&!predicted?.category)totals.abstentions++;
   if(p.strong){totals.autoIndexed++;if(!correctType)totals.autoIncorrect++;}
-  if(negative){
+  if(mixed){
+   if(p.strong||p.categoryConfirmed)err('multi-garment photo cannot be auto-indexed as one unreviewed garment');
+   const instanceTruth=normalizeMixedHumanLabel(trusted.label,decodeMask,item.width*item.height);
+   totals.mixedPhotos++;
+   totals.garments++;
+   totals.garmentInstances+=instanceTruth.length;
+   totals.mixedTruthGarments+=instanceTruth.length;
+   totals.categoryEvaluated+=instanceTruth.length;
+   totals.subtypeEvaluated+=instanceTruth.length;
+   if(!runtime&&p.instances!==undefined){
+    const result=scoreMixedOutfitAgainstHuman(
+     trusted.label,p.instances,decodeMask,item.width*item.height);
+    totals.mixedProposedGarments+=result.proposedGarments;
+    totals.mixedSpatialMatches+=result.spatiallyMatched;
+    totals.mixedCategoryCorrect+=result.correctCategory;
+    totals.mixedSubtypeCorrect+=result.correctSubtype;
+    totals.mixedColorObserved+=result.colorObserved;
+    totals.mixedColorCorrect+=result.colorCorrect;
+    totals.mixedAutoIndexed+=result.autoIndexed;
+    totals.mixedUnsafeAutomatic+=result.unsafeAutomatic;
+    totals.autoIndexed+=result.autoIndexed;
+    totals.autoIncorrect+=result.unsafeAutomatic;
+    totals.categoryCorrect+=result.correctCategory;
+    totals.subtypeCorrect+=result.correctSubtype;
+    totals.colorEvaluated+=result.colorObserved;
+    totals.colorCorrect+=result.colorCorrect;
+    totals.masksMeasured++;
+    totals.mixedMaskMeasuredPhotos++;
+    totals.maskTruth+=result.truthGarments;
+    totals.maskPredicted+=result.proposedGarments;
+    totals.maskMatched+=result.sourceMaskTruePositives;
+   }
+  }else if(negative){
    totals.negatives++;
    if(!runtime&&!p.strong&&!p.categoryConfirmed&&
       (!predicted?.category||predicted.category==='Uncategorized'))
     totals.negativeRejected++;
   }else{
    totals.garments++;
+   totals.garmentInstances++;
    totals.categoryEvaluated++;totals.subtypeEvaluated++;
    if(correctCategory)totals.categoryCorrect++;
    if(correctType)totals.subtypeCorrect++;
@@ -321,8 +375,17 @@ export function evaluateProspectiveHoldout({
   modelSHA256:seal.modelSHA256,modelIndexSHA256:seal.modelIndexSHA256,
   counts:{...totals,categoryAccuracyPercent:percent(totals.categoryCorrect,totals.categoryEvaluated),
    subtypeAccuracyPercent:percent(totals.subtypeCorrect,totals.subtypeEvaluated),
-   colorAccuracyPercent:totals.colorEvaluated===totals.garments?
+   colorAccuracyPercent:totals.colorEvaluated===totals.categoryEvaluated?
     percent(totals.colorCorrect,totals.colorEvaluated):null,
+   mixedCategoryAccuracyPercent:totals.mixedTruthGarments&&
+    totals.mixedMaskMeasuredPhotos===totals.mixedPhotos?
+    percent(totals.mixedCategoryCorrect,totals.mixedTruthGarments):null,
+   mixedSubtypeAccuracyPercent:totals.mixedTruthGarments&&
+    totals.mixedMaskMeasuredPhotos===totals.mixedPhotos?
+    percent(totals.mixedSubtypeCorrect,totals.mixedTruthGarments):null,
+   mixedColorAccuracyPercent:totals.mixedTruthGarments&&
+    totals.mixedColorObserved===totals.mixedTruthGarments?
+    percent(totals.mixedColorCorrect,totals.mixedTruthGarments):null,
    instancePrecisionPercent:totals.masksMeasured===totals.garments?
     percent(totals.maskMatched,totals.maskPredicted):null,
    instanceRecallPercent:totals.masksMeasured===totals.garments?
