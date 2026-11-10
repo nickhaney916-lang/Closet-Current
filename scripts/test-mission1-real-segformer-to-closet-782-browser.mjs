@@ -17,6 +17,7 @@ import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import {routePinnedModelAsset,isPinnedModelAsset} from '../research/real-mask-evidence-31/model-assets.mjs';
 import {createHash} from 'node:crypto';
+import {reconcileRealSourceRegions785} from '../research/mission1-real-source-review-785/reconcile-regions.mjs';
 
 const original=readFileSync('benchmark/fixtures/commons-0053.jpg');
 const sourceRecord=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))
@@ -136,10 +137,8 @@ async function genuinelyInferSourceSegformer782(context,name){
   return actual;
  }finally{await probe.close();}
 }
-const categoryBySemantic={4:'Tops',5:'Bottoms',6:'Bottoms',7:'Dresses',9:'Shoes'};
-const fallbackTypeByCategory={
- Tops:'T-shirt',Bottoms:'Jeans',Dresses:'Casual dress',Shoes:'Sneakers'
-};
+// Broad model REGION 4 is Tops OR Outerwear, not verified Tops.
+const categoryBySemantic={4:'Tops or Outerwear',5:'Bottoms',6:'Bottoms',7:'Dresses',9:'Shoes'};
 
 const results=[],errors=[],outbound=[];
 let browser;
@@ -158,21 +157,26 @@ try{
      'model must genuinely detect a visible clothing region on this verified photo');
     const actualRegion=realSegmentation.detectedRegions[0]||null;
     const actualCategory=categoryBySemantic[actualRegion?.semanticRegionId]||null;
-    const researchType=fallbackTypeByCategory[actualCategory]||'Other';
+    const regionReview=reconcileRealSourceRegions785({sourceSHA256,modelEvidence:realSegmentation});
+    assert.ok(regionReview.possibleCategories.includes('Dresses'),
+     'actual frozen model must retain its visible Dress region');
+    assert.ok(regionReview.possibleCategories.includes('Tops')&&regionReview.possibleCategories.includes('Outerwear'),
+     'upper garment is broad, never a confirmed top');
+    assert.equal(regionReview.automaticCategory,null);
+    assert.equal(regionReview.autoSaveAllowed,false);
     // This bridge is intentionally LOW-CONFIDENCE. The actual pinned B0
     // semantic class never supplies subtype or primary color ground truth.
     console.log('M1_P782_ACTUAL_SEMANTIC_PROPOSAL_VS_DOCUMENTED_SOURCE',JSON.stringify({
      browser:name,sourceCatalogTitle:sourceRecord.attribution.title,
      modelTopSemanticCategory:actualCategory,sourceDocumentedCategory:'Dresses',
+     allModelCategoryPossibilities:regionReview.possibleCategories,
      modelSemanticCategoryNotGarmentIdentity:true,
      modelRegions:realSegmentation.detectedRegions.map(x=>({semanticRegionId:x.semanticRegionId,selectedCount:x.selectedCount})),
      noAutomaticSavingOrValidatedSubtype:true}));
     const sourceModelResult={strong:false,categoryConfirmed:false,
-     choices:actualCategory?[{
-      category:actualCategory,itemType:researchType,
-      label:'B0 semantic-only category: owner must review',score:.01
-     }]:[],
-     details:{color:null}};
+     choices:[],details:{},sourceCategoryReview:realSegmentation};
+    assert.deepEqual(sourceModelResult.choices,[],
+     'actual model never supplies a fabricated fallback subtype');
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push(name+'/'+width+': '+e.message));
     await page.addInitScript(weakWorker);
@@ -192,7 +196,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -210,6 +214,18 @@ try{
      batch[0].sourceHashVerified===true&&!!batch[0].originalPhoto?.sha256,
       null,{timeout:30000});
     await page.waitForFunction(()=>!localPending.has(batch[0].id),null,{timeout:20000});
+    const nativeEvidence=await page.evaluate(()=>({
+     proof:batch[0].recognitionDiagnostics?.sourceCategoryReview785,
+     category:batch[0].category,itemType:batch[0].itemType,
+     saved:items.some(x=>x.id===batch[0].id),status:batch[0].localStatus
+    }));
+    assert.deepEqual(nativeEvidence.proof?.possibleCategories,regionReview.possibleCategories);
+    assert.equal(nativeEvidence.proof?.sourceSHA256,sourceSHA256);
+    assert.equal(nativeEvidence.proof?.autoSaveAllowed,false);
+    assert.equal(nativeEvidence.saved,false);
+    assert.equal(nativeEvidence.category,'Uncategorized');
+    assert.equal(nativeEvidence.itemType,'Unknown');
+    assert.match(nativeEvidence.status,/possible Tops, Outerwear, Dresses/);
     const before=await page.evaluate(async()=>{
      await writes;
      const it=batch[0],saved=await readAll(),draft=await readDraft();
@@ -230,6 +246,8 @@ try{
      .getByRole('button',{name:'Adjust',exact:true}).click();
     const dialog=page.locator('dialog.photo-adjust[open]');
     await dialog.waitFor({state:'visible'});
+    await assert.equal(await dialog.getByText(/Source model regions:.*Dress/).count(),1,
+     'manual Adjust displays all genuine source semantic classes, not just largest region');
     await dialog.locator('select[aria-label="Main category"]').selectOption('Dresses');
     // Native reviewed source accepts only explicit catalog types; do not offer Other.
     assert.equal(await dialog.locator('select[aria-label="Item type"] option[value="Other"]').count(),0);
@@ -308,7 +326,10 @@ try{
      exactSourceModelMapSHA256:realSegmentation.labelMapSHA256,
      sourceSemanticCount:realSegmentation.detectedRegions.length,
      actualModelTopSemanticRegion:actualRegion?.semanticRegionId??null,
-     modelCategorySuppliedWithoutSubtypeOrColor:actualCategory,
+     actualModelTopBroadRegionOnly:actualCategory,
+     allSemanticCategoriesSurfacedWithoutTopOnlyPromotion:true,
+     observedDressRegionPreserved:true,
+     modelTopSemanticDidNotSetItemType:true,
      sourceCatalogDocumentsDress:true,simulatedManualChoiceUsesDocumentedDressCategory:true,
      nativeReviewedOtherOptionNotOffered:true,
      simulatedManualUnknownSubtypeRefusedBeforeSave:true,
