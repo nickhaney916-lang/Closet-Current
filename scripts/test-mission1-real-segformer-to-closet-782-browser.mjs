@@ -214,7 +214,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -364,6 +364,42 @@ try{
      assert.equal(noMaskOrSave[key],true,'P800 real source owner rectangle no save '+key);
     assert.equal(noMaskOrSave.savedCount,0);
     await page.screenshot({path:out+'/'+name+'-'+width+'-01c-original-photo-garment-rectangle-review.png',fullPage:true});
+    // P802: actual fixture original JPEG pixels and real browser canvas.
+    // The actor is Playwright, NOT an independent owner/human; algorithm is a
+    // simple COLOR-CONNECTED local baseline, NOT SAM2 learned segmentation.
+    assert.equal(await tapReview.getAttribute('data-mission1-owner-mask802'),'ephemeral-local-color-preview');
+    const localRegionButton=tapReview.getByRole('button',{name:'Preview local source-pixel color region'});
+    assert.equal(await localRegionButton.isDisabled(),true,'P802 box alone cannot produce a mask without owner seed');
+    await drawOnOriginal.click();
+    await page.waitForFunction(()=>document.querySelector('[data-mission1-owner-point-marker798="selected"]')!==null,
+     null,{timeout:20000});
+    assert.equal(await localRegionButton.isEnabled(),true);
+    await localRegionButton.click();
+    await page.waitForFunction(()=>/Local original-pixel COLOR region:/.test(
+     document.querySelector('[data-mission1-local-mask-status802="review-only"]')?.textContent||''
+    ),null,{timeout:20000});
+    assert.equal(await tapReview.locator('[data-mission1-local-mask-overlay802="unverified-local-color-region"]').count(),1);
+    const previewSafeguards=await page.evaluate(async()=>{
+     await writes;
+     const draftRecords=await readDraft(),savedRecords=await readAll();
+     const preview=document.querySelector('[data-mission1-local-mask-status802="review-only"]');
+     return {
+      warnsHeuristicNotSam2:/NOT SAM2/.test(preview?.textContent||''),
+      warnsNotSaved:/NOT saved/.test(preview?.textContent||''),
+      sourceSHAUnchanged:batch[0]?.originalPhoto?.sha256===batch[0]?.sourceSHA256,
+      noAutomaticConfirmation:batch[0]?.ownerReviewed!==true,
+      checkedManually:false===document.querySelector(
+       'input[aria-label="I verified the category, clothing type and color"]')?.checked,
+      noDraftMaskReceipt:draftRecords.every(x=>!('ownerLocalMask802' in x)&&!('sourcePixelMask802' in x)),
+      noMemoryMaskReceipt:!('ownerLocalMask802' in batch[0])&&!('sourcePixelMask802' in batch[0]),
+      noSavedItems:savedRecords.length===0
+     };
+    });
+    for(const [key,val] of Object.entries(previewSafeguards))
+     assert.equal(val,true,'P802 local-only no-approval '+name+'/'+width+' '+key);
+    await page.screenshot({path:out+'/'+name+'-'+width+'-01e-original-owner-seeded-local-color-mask-UNVERIFIED.png',fullPage:true});
+    await tapReview.getByRole('button',{name:'Discard local mask preview'}).click();
+    assert.equal(await tapReview.locator('[data-mission1-local-mask-overlay802="none"]').count(),1);
     await tapReview.getByRole('button',{name:'Clear garment rectangle'}).click();
     assert.equal(await tapReview.locator('[data-mission1-owner-box-outline-800="none"]').count(),1);
     assert.match(await tapReview.locator('[data-mission1-owner-box-status800="review-only"]').innerText(),/No rectangle selected/);
@@ -480,6 +516,8 @@ try{
      actualOriginalSourceOwnerBox800KeyboardEntered:true,
      actualOriginalSourceOwnerBox800NotPersisted:true,
      actualOriginalSourceOwnerBox800NoMaskOrApproval:true,
+     actualOriginalSourceOwnerMask802ActualLocalColorPixels:true,
+     actualOriginalSourceOwnerMask802ExplicitlyUnverifiedAndNotPersisted:true,
      simulatedPlaywrightBoxEventsNotIndependentHumans:true,
      actualOriginalSourceOwnerPoint798NoMaskOrApproval:true,
      originalSourceOwnerPointBrowserGesturesSimulated:true,
