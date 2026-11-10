@@ -11,6 +11,7 @@ import {chromium,webkit} from 'playwright';
 import {routePinnedModelAsset,isPinnedModelAsset} from '../research/real-mask-evidence-31/model-assets.mjs';
 import {measureRegisteredBoundaries66} from '../research/real-garment-acceptance-66/boundary-evidence.mjs';
 import {scoreInstances} from '../research/mission1-external-human-evidence/instance-metrics.mjs';
+import {packModelMasks779} from '../research/mission1-two-model-consensus-779/mask-consensus.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const manifest=JSON.parse(await readFile('research/real-garment-acceptance-66/fashionpedia-sample.json','utf8'));
 const engine=process.env.MISSION1_ENGINE||'chromium';
@@ -198,7 +199,15 @@ try{
    }
    assert.deepEqual(Array.from(union),original.mask,'real source pixels must be conserved exactly');
   }
-  rows.push({componentDiagnostic,componentSplitAdditionalReviewProposals:result.componentInstances.length-result.growthInstances.length,
+  // Exact SHA-pinned binary RLE receipts carry NO original JPEG and are
+  // generated only from real browser inference / publisher human contours.
+  // The blinded model-to-model gate runs after both predictions are frozen.
+  const maskEvidence=sourceCohort==='prior6'?{
+   width:result.width,height:result.height,sourceCohort,
+   publisherTruth:packModelMasks779(result.truthInstances,result.width,result.height),
+   seededReviewProposals:packModelMasks779(result.growthInstances,result.width,result.height)
+  }:null;
+  rows.push({maskEvidence,componentDiagnostic,componentSplitAdditionalReviewProposals:result.componentInstances.length-result.growthInstances.length,
    componentReceipts:result.componentInstances.map(({id,region,maskSHA256,sourceGroupId,sourceComponentCount,componentOrdinal,accepted,autoIndex})=>({id,region,maskSHA256,sourceGroupId,sourceComponentCount,componentOrdinal,accepted,autoIndex})),
    lostBaselineMatchIds,gainedMatchIds,unseededMatches,
    withUnseededInstances,withUnseededGroupedIoU,

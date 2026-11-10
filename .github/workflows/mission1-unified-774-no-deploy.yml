@@ -12,6 +12,7 @@ on:
       - scripts/sign-manual-human-review-774.mjs
       - scripts/test-mission1-offline-reviewer-774-browser.mjs
       - scripts/test-mission1-unseeded-region-773-browser.mjs
+      - scripts/score-mission1-two-model-consensus-779.mjs
       - tests/mission1-*.test.mjs
       - tests/test_publisher_mask_selection_772.py
       - .github/workflows/mission1-unified-774-no-deploy.yml
@@ -45,15 +46,15 @@ jobs:
           test "$(git rev-parse "$BASE")" = "$BASE"
           git diff --name-only "$BASE" "$GITHUB_SHA" > /tmp/mission1-774-changed-paths
           cat /tmp/mission1-774-changed-paths
-          test "$(wc -l < /tmp/mission1-774-changed-paths)" -eq 31
+          test "$(wc -l < /tmp/mission1-774-changed-paths)" -eq 34
           while read -r file; do
             case "$file" in
-              research/mission1-*/*|scripts/mission1-73-source-review-774.mjs|scripts/prospective-holdout-768.mjs|scripts/scan-visual-source-overlap-769.mjs|scripts/select-publisher-mask-holdout-772.py|scripts/sign-manual-human-review-774.mjs|scripts/test-mission1-offline-reviewer-774-browser.mjs|scripts/test-mission1-unseeded-region-773-browser.mjs|tests/mission1-*.test.mjs|tests/test_publisher_mask_selection_772.py|.github/workflows/mission1-unified-774-no-deploy.yml) ;;
+              research/mission1-*/*|scripts/mission1-73-source-review-774.mjs|scripts/prospective-holdout-768.mjs|scripts/scan-visual-source-overlap-769.mjs|scripts/select-publisher-mask-holdout-772.py|scripts/sign-manual-human-review-774.mjs|scripts/test-mission1-offline-reviewer-774-browser.mjs|scripts/test-mission1-unseeded-region-773-browser.mjs|scripts/score-mission1-two-model-consensus-779.mjs|tests/mission1-*.test.mjs|tests/test_publisher_mask_selection_772.py|.github/workflows/mission1-unified-774-no-deploy.yml) ;;
               *) echo "P774 REJECTS UNAPPROVED APP/RELEASE/PRIVATE PATH: $file"; exit 1 ;;
             esac
           done < /tmp/mission1-774-changed-paths
           test -z "$(git diff --name-only "$BASE" "$GITHUB_SHA" -- public supabase)"
-          echo MISSION1_P774_EXACT_ADVANCED_PARENT_31_RESEARCH_ONLY_FILES_HOLD
+          echo MISSION1_P774_EXACT_ADVANCED_PARENT_34_RESEARCH_ONLY_FILES_HOLD
       - name: Install full original advanced 3D/camera/review/recognition test dependencies ephemeral only
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: Exact source reviewer CLI/mixed garment/73 visual registry syntax checks
@@ -425,6 +426,10 @@ jobs:
               releaseAuthorized:false}));
           }
           NODE
+      - name: Cross-model blinded-to-truth mask consensus adversarial unit tests
+        run: node --test tests/mission1-two-model-consensus-779.test.mjs
+      - name: Score frozen B0 and B2 source-mask evidence without consulting publisher truth for admission
+        run: node scripts/score-mission1-two-model-consensus-779.mjs
       - name: Erase all original publisher-photo pixels and temporary model photos after research
         if: always()
         run: rm -rf benchmark/real-garment-acceptance-66/fashionpedia
@@ -435,5 +440,6 @@ jobs:
           path: |
             benchmark/mission1-b0-prior6-778/
             benchmark/mission1-b2-prior6-778/
+            benchmark/mission1-779/
           retention-days: 14
           if-no-files-found: warn
