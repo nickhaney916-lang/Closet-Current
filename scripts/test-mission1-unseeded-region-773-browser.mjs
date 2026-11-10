@@ -202,11 +202,11 @@ try{
   // Exact SHA-pinned binary RLE receipts carry NO original JPEG and are
   // generated only from real browser inference / publisher human contours.
   // The blinded model-to-model gate runs after both predictions are frozen.
-  const maskEvidence=sourceCohort==='prior6'?{
+  const maskEvidence={
    width:result.width,height:result.height,sourceCohort,
    publisherTruth:packModelMasks779(result.truthInstances,result.width,result.height),
    seededReviewProposals:packModelMasks779(result.growthInstances,result.width,result.height)
-  }:null;
+  };
   rows.push({maskEvidence,componentDiagnostic,componentSplitAdditionalReviewProposals:result.componentInstances.length-result.growthInstances.length,
    componentReceipts:result.componentInstances.map(({id,region,maskSHA256,sourceGroupId,sourceComponentCount,componentOrdinal,accepted,autoIndex})=>({id,region,maskSHA256,sourceGroupId,sourceComponentCount,componentOrdinal,accepted,autoIndex})),
    lostBaselineMatchIds,gainedMatchIds,unseededMatches,

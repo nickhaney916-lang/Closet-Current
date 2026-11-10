@@ -443,3 +443,63 @@ jobs:
             benchmark/mission1-779/
           retention-days: 14
           if-no-files-found: warn
+
+  p779-eight-photo-fixed-prediction-consensus-evidence:
+    needs:
+      - p776-real-photo-source-component-browser
+      - p777-larger-pinned-clothing-segmentation-real-photo-comparator
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download only SHA-pinned published B0 mask receipts from genuine eight-photo browser inference
+        uses: actions/download-artifact@v4
+        with:
+          name: mission1-P776-exposed-real-source-component-Chromium-WebKit-RESEARCH-HOLD
+          path: benchmark/mission1-unseeded-region-773/
+      - name: Download only SHA-pinned published B2 mask receipts from genuine eight-photo browser inference
+        uses: actions/download-artifact@v4
+        with:
+          name: mission1-P777-PINNED-B2-EXPOSED-PUBLISHER-GARMENT-COMPARATOR-HOLD
+          path: benchmark/mission1-b2-777/
+      - name: Verify original model fingerprints and publisher-blind fixed mask pairing before scoring second exposed cohort
+        env:
+          MISSION1_COMPARE_COHORT: p772
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-two-model-consensus-779.test.mjs
+          node scripts/score-mission1-two-model-consensus-779.mjs
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const r=JSON.parse(readFileSync('benchmark/mission1-779/p772-consensus.json','utf8'));
+          assert.equal(r.sourceExclusionCohort,'p772');
+          assert.equal(r.fixedThresholdBeforeEvaluation,.25);
+          assert.equal(r.independentHoldout,false);
+          assert.equal(r.modelPromoted,false);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          for(const browser of ['chromium','webkit']){
+            const x=r.engines[browser];
+            assert.equal(x.photos,8);
+            assert.equal(x.originalPublisherHumanInstances,20);
+            assert.equal(x.modelPromotionAuthorized,false);
+            assert.equal(x.humanIndependentBlindReviewVerified,false);
+            assert.equal(x.newUnseenHoldout,false);
+            assert.equal(x.missionOneCompleted,false);
+            assert.ok(x.photoEvidence.every(a=>a.autoAccepted===0&&a.ownerReviewed===0));
+            console.log(JSON.stringify({browser,sourcePhotoCount:8,modelCorroboration:x.twoModelCorroboratedOnly,
+              B0:x.rawB0SeededReview,B2:x.rawB2SeededReview,
+              sourceEvidenceOnly:true,notAnIndependentAcceptance:true}));
+          }
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P779-EIGHT-EXPOSED-ORIGINALS-fixed-B0-B2-consensus-NO-RELEASE
+          path: benchmark/mission1-779/
+          retention-days: 14
+          if-no-files-found: warn
