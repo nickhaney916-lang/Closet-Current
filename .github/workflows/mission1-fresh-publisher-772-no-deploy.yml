@@ -57,8 +57,12 @@ jobs:
   real-publisher-human-polygons-chromium-webkit:
     runs-on: ubuntu-24.04
     timeout-minutes: 110
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
     env:
       MULTI16_RELAY_MODEL: '1'
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -71,7 +75,8 @@ jobs:
         run: |
           set -euo pipefail
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
-          npx playwright install --with-deps chromium webkit
+          test -d /ms-playwright
+          echo P772_PINNED_VERIFIED_PREINSTALLED_CHROMIUM_WEBKIT_BROWSER_CONTAINER
       - name: Copy only pinned verified P66 real SegFormer worker, boundary evaluator and existing publisher archive reference to temporary runner
         run: |
           set -euo pipefail
