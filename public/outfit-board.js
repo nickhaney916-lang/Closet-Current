@@ -2,6 +2,7 @@
 const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('nativeLossless04')==='research';
 let nativeLossless04=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
+let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
 function nativeLossless04Notify(error){
  const value=typeof error==='string'?error:String(error?.message||error);
  $('boardSaveStatus').textContent='Research safety: '+value;
@@ -26,6 +27,32 @@ function boardBackup(){
  }
  return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};
 }
+function boardHasUnsavedDraft(){
+ return !nativeLossless04Active&&boardInitialized&&Boolean(db)&&
+  (boardDraftTimer!==null||boardPendingWrites>0||boardCommittedDraft!==JSON.stringify(currentBoard));
+}
+function boardDraftStatus(text,retry=false){
+ $('boardSaveStatus').textContent=text;$('retryBoardDraft').hidden=!retry;
+}
+function cancelBoardDraftTimer(){clearTimeout(boardDraftTimer);boardDraftTimer=null;}
+function scheduleBoardDraftSave(){
+ cancelBoardDraftTimer();++boardStatusSerial;
+ boardDraftStatus('Unsaved changes · saving shortly…');
+ const scheduledDB=db,scheduledAuth=window.closetAuth,scheduledOwner=scheduledAuth?.user?.id;
+ boardDraftTimer=setTimeout(()=>{
+  boardDraftTimer=null;
+  if(db!==scheduledDB||window.closetAuth!==scheduledAuth||scheduledAuth?.user?.id!==scheduledOwner){
+   boardDraftStatus('Your account changed. Reopen your closet before saving changes.');return;
+  }
+  void storeBoard();
+ },250);
+}
+window.addEventListener('beforeunload',event=>{
+ if(boardHasUnsavedDraft()){event.preventDefault();event.returnValue='';}
+});
+window.addEventListener('closet:session-locked',()=>{
+ cancelBoardDraftTimer();++boardStatusSerial;$('retryBoardDraft').hidden=true;
+});
 async function persistBoardState({appendSaved=null,replaceSaved=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
@@ -38,7 +65,8 @@ async function persistBoardState({appendSaved=null,replaceSaved=null}={}){
  assertOwner();
  const current=structuredClone(currentBoard),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
- await queued(()=>new Promise((resolve,reject)=>{
+ ++boardPendingWrites;
+ try{await queued(()=>new Promise((resolve,reject)=>{
   assertOwner();const tx=ownerDB.transaction('state','readwrite'),store=tx.objectStore('state');
   let failure,saved;const request=store.get('outfit-board');
   request.onsuccess=()=>{try{
@@ -50,16 +78,28 @@ async function persistBoardState({appendSaved=null,replaceSaved=null}={}){
    if(candidate){if(saved.length>=50)throw Error('You can save up to 50 outfits.');saved.push(candidate);}
    store.put({id:'outfit-board',current,saved});
   }catch(error){failure=error;tx.abort();}};
-  tx.oncomplete=()=>{try{assertOwner();savedOutfitBoards=structuredClone(saved);resolve();}catch(error){reject(error);}};
+  tx.oncomplete=()=>{try{assertOwner();savedOutfitBoards=structuredClone(saved);boardCommittedDraft=JSON.stringify(current);resolve();}catch(error){reject(error);}};
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Could not save this outfit.'));
- }));
+ }));}finally{--boardPendingWrites;}
 }
 async function saveOwnedOutfit(board){
  const saved=cleanOutfitBoard(structuredClone(board),items);
  if(!Object.keys(saved.slots).length)throw Error('Choose at least one piece from your own closet first.');
  await persistBoardState({appendSaved:saved});
 }
-async function storeBoard(){$('boardSaveStatus').textContent='Saving outfit changes…';try{await persistBoardState();renderSavedOutfitBoards();$('boardSaveStatus').textContent='Outfit changes saved on this device.';return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
+async function storeBoard(){
+ cancelBoardDraftTimer();const serial=++boardStatusSerial;
+ boardDraftStatus('Saving outfit changes…');
+ try{
+  await persistBoardState();renderSavedOutfitBoards();
+  if(serial===boardStatusSerial)boardDraftStatus(boardHasUnsavedDraft()?
+   'Newer changes are waiting to save.':'Outfit changes saved on this device.');
+  return true;
+ }catch{
+  if(serial===boardStatusSerial)boardDraftStatus('This outfit could not be saved. Your changes are still here. Retry saving changes before leaving.',true);
+  return false;
+ }
+}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
 function selectBoardPiece(slotId,itemId){
  if(nativeLossless04Active){
@@ -146,10 +186,18 @@ async function importBoardBackup(value){
  currentBoard=cleanOutfitBoard(value.current,items);savedOutfitBoards=value.saved.map(board=>cleanOutfitBoard(board,items));syncBoardInputs();await persistBoardState({replaceSaved:savedOutfitBoards});renderOutfitBoard();
 }
 for(const slot of outfitSlots){const option=node('option',slot.label);option.value=slot.id;$('boardTarget').append(option);}$('boardTarget').value='shoes';$('boardTarget').onchange=renderBoardSuggestions;
-for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).onchange=()=>{
- if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.setField(key,$(id).value));
- currentBoard[key]=$(id).value;currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();storeBoard();
-};
+for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'})){
+ const updateDraft=()=>{currentBoard[key]=$(id).value;currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();};
+ $(id).onchange=()=>{
+  if(nativeLossless04Active)return nativeLossless04Edit(()=>nativeLossless04.setField(key,$(id).value));
+  updateDraft();void storeBoard();
+ };
+ if($(id).tagName==='INPUT')$(id).oninput=()=>{
+  if(nativeLossless04Active)return;
+  updateDraft();scheduleBoardDraftSave();
+ };
+}
+$('retryBoardDraft').onclick=async()=>{if(await storeBoard())$('boardName').focus({preventScroll:true});};
 $('closeBoardPicker').onclick=()=>$('boardPicker').close();
 $('emptyBoardSlot').onclick=()=>{selectBoardPiece(choosingSlot,'');$('boardPicker').close();};
 $('shopBoardSlot').onclick=()=>{$('boardTarget').value=choosingSlot;$('boardPicker').close();renderBoardSuggestions();$('boardGapStatus').scrollIntoView({behavior:'smooth',block:'start'});};
@@ -166,6 +214,7 @@ $('saveBoard').onclick=async()=>{
   finally{$('saveBoard').disabled=false;}
   return;
  }
+ cancelBoardDraftTimer();++boardStatusSerial;$('retryBoardDraft').hidden=true;
  if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{await saveOwnedOutfit(currentBoard);$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
@@ -261,7 +310,7 @@ const outfitBoardReady=(async()=>{
     savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}
   }catch{$('boardSaveStatus').textContent='Saved outfits could not be loaded.';}
  }
- boardInitialized=true;syncBoardInputs();renderOutfitBoard();
+ boardCommittedDraft=JSON.stringify(currentBoard);boardInitialized=true;syncBoardInputs();renderOutfitBoard();
 })();
 
 const TREND_DATA_URL='https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json';
@@ -304,5 +353,6 @@ async function reloadCloudBoard(){
  });
  currentBoard=cleanOutfitBoard(state?.current||{},items);
  savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));
+ boardCommittedDraft=JSON.stringify(currentBoard);
  syncBoardInputs();renderOutfitBoard();
 }

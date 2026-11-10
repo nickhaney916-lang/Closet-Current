@@ -8,7 +8,7 @@ const read=db=>new Promise(resolve=>{const r=db.transaction('state').objectStore
 const board=name=>({name,slots:{top:'shirt'},ideas:{}});
 function context(db,owner){
  let queue=Promise.resolve();
- const c={db,currentBoard:board('Draft'),savedOutfitBoards:[],items:[{id:'shirt',category:'Tops',itemType:'T-shirt'}],nativeLossless04Active:false,structuredClone,$:()=>({textContent:''}),window:{closetAuth:{user:{id:owner},assertCurrent(){}}}};
+ const c={boardPendingWrites:0,boardCommittedDraft:null,db,currentBoard:board('Draft'),savedOutfitBoards:[],items:[{id:'shirt',category:'Tops',itemType:'T-shirt'}],nativeLossless04Active:false,structuredClone,$:()=>({textContent:''}),window:{closetAuth:{user:{id:owner},assertCurrent(){}}}};
  c.queued=work=>{const result=queue.then(async()=>{await c.beforeWrite?.();return work();});queue=result.catch(()=>{});return result;};
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/outfit-board-engine.js','utf8'),c);vm.runInContext(code,c);return c;
 }
