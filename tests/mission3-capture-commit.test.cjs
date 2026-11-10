@@ -31,6 +31,7 @@ async function harness(){
  const window={closetAuth:{user:{id:owner},assertCurrent(){if(!this.user?.id)throw Error('locked');}}};
  const c={window,db,items:[],batch:[],sessionCapturedIds:new Set(),session:0,
   crypto:{randomUUID},structuredClone,window,console,
+  nativeCanonical167Active:true,captureProof01Active:true,
   recordDeviceEvent(){},queueAutomatic:item=>recognized.push(item.id),
   message:text=>messages.push(text),$:()=>({textContent:'',hidden:false,src:''}),
   queued(work){const x=queue.then(async()=>{
@@ -45,7 +46,7 @@ async function harness(){
  const proof=()=>({sourceHashVerified:true,sourceSHA256:'a'.repeat(64),
   originalPhoto:{image:'data:image/jpeg;base64,/9j/',sha256:'a'.repeat(64)}});
  return {owner,other,db,foreign,c,proof,messages,recognized,read:()=>read(db),
-  setHold(p){hold=p;},setFail(v){fail=v;},
+  setHold(p){hold=p;},setFail(v){fail=v;},drain:()=>queue,
   close(){db.close();foreign.close();}
  };
 }
@@ -65,7 +66,7 @@ test('camera original is not acknowledged before its owner-private review transa
   }
   release();
   assert.equal(await result,true);
-  const stored=await f.read();
+  await f.drain();const stored=await f.read();
   assert.equal(stored.batch.length,1);
   assert.equal(stored.batch[0].originalPhoto.sha256,'a'.repeat(64));
   assert.equal(f.recognized.length,1);
@@ -83,7 +84,7 @@ test('quota failure never reports a successful private camera capture or loses i
    assert.equal(f.recognized.length,0);
   }
   assert.equal(f.c.batch.length,1,'keep unsaved source visible for user recovery');
-  assert.equal(await f.read(),null,'failed commit must leave no durable state row');
+  await f.drain();assert.equal(await f.read(),null,'failed commit must leave no durable state row');
  }finally{f.close();}
 });
 
@@ -96,7 +97,10 @@ test('pending camera commit refuses switched owner/database before new account w
   release();
   if(baseline)assert.equal(result,true);
   else await assert.rejects(result,e=>e.code==='CAPTURE_STORAGE_FAILED');
-  assert.equal(await read(f.foreign),null,'no cross-owner draft insertion');
+  await f.drain();
+  if(baseline)assert.equal((await read(f.foreign))?.batch.length,1,
+   'exact parent must demonstrate old-owner draft written into the new owner DB');
+  else assert.equal(await read(f.foreign),null,'no cross-owner draft insertion');
  }finally{f.close();}
 });
 
@@ -104,7 +108,7 @@ test('legacy synchronous callers keep Boolean candidate result without requiring
  const f=await harness();
  try{
   const accepted=f.c.candidate('photo-old',{sourceProof:f.proof()});
-  assert.equal(accepted,true);
+  assert.equal(accepted,true);await f.drain();
  }finally{f.close();}
 });
 
