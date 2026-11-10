@@ -99,15 +99,19 @@ test('P792 all ten SHA-pinned genuine B0-tested publisher originals can never be
   },()=>f.image),/previously exposed source image/);
  }
 });
-test('P792 human signing cannot relabel any of the ten measured publisher JPEG source hashes as blinded independent annotations',()=>{
+test('P792 human signer refuses every model-exposed original SHA despite an otherwise correctly registered reviewer key set',()=>{
  const f=fixture();
  for(const digest of P792_EXPOSED_DIGESTS_792){
-  const photo={...f.photo,sha256:digest};
-  const sealed={photos:[photo],sealSHA256:'1'.repeat(64),reviewerRegistrySHA256:'2'.repeat(64)};
+  const sealed=f.enroll(shaList);
+  // Attempt transplant of previously model-exposed SHA into a pre-existing
+  // signature-compatible seal. No real source-original is relabeled human.
+  sealed.photos[0].sha256=digest;
   assert.throws(()=>signActualReviewerAnnotation774({
-   seal:sealed,reviewerPublicKeys:f.keys,reviewerId:'reviewerA',photoId:photo.id,
-   photoJPEG:f.image,annotations:{sourceId:photo.id,sourceSHA256:photo.sha256},
-   reviewerDeclaration:{directHumanTracing:true,notShownModelPredictions:true,notModelGenerated:true,annotationPreparedIndependently:true}
-  }),/missing immutable|registered new holdout|already exposed/);
+   seal:sealed,reviewerPublicKeys:f.keys,reviewerId:'reviewerA',
+   photoId:f.photo.id,photoJPEG:f.image,
+   annotations:{sourceId:f.photo.id,sourceSHA256:digest,regions:[]},
+   reviewerDeclaration:{directHumanTracing:true,notShownModelPredictions:true,
+    notModelGenerated:true,annotationPreparedIndependently:true}
+  }),/no registered new holdout JPEG source/);
  }
 });
