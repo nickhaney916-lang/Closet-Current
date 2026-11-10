@@ -214,7 +214,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research&mission1OwnerMaskCorrection803=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -398,6 +398,63 @@ try{
     for(const [key,val] of Object.entries(previewSafeguards))
      assert.equal(val,true,'P802 local-only no-approval '+name+'/'+width+' '+key);
     await page.screenshot({path:out+'/'+name+'-'+width+'-01e-original-owner-seeded-local-color-mask-UNVERIFIED.png',fullPage:true});
+    // P803: manual brush on ACTUAL local image-derived preview pixels, never
+    // SAM2, never a new owner approval. Playwright is a simulated actor.
+    assert.equal(await tapReview.getAttribute('data-mission1-owner-mask-correction803'),'manual-unverified-no-save');
+    const editCanvas=tapReview.locator('[data-mission1-local-mask-overlay802="unverified-local-color-region"]');
+    const centerAlpha=()=>editCanvas.evaluate(canvas=>{
+     const ctx=canvas.getContext('2d'),x=Math.floor(canvas.width/2),y=Math.floor(canvas.height/2);
+     return ctx.getImageData(x,y,1,1).data[3];
+    });
+    assert.equal(await centerAlpha(),112,'P803 actual photo owner seed pixel initially covered');
+    const eraseButton=tapReview.getByRole('button',{name:'Erase pixels from local preview'});
+    const addButton=tapReview.getByRole('button',{name:'Add pixels to local preview'});
+    await eraseButton.click();
+    await imgOriginal.click();
+    await page.waitForFunction(()=>/Manual erase correction 1:/.test(
+     document.querySelector('[data-mission1-mask-correction-status803="unverified"]')?.textContent||''
+    ),null,{timeout:20000});
+    assert.equal(await centerAlpha(),0,'P803 pointer erase removed original owner-seeded pixel');
+    await addButton.click();
+    await imgOriginal.click();
+    await page.waitForFunction(()=>/Manual add correction 2:/.test(
+     document.querySelector('[data-mission1-mask-correction-status803="unverified"]')?.textContent||''
+    ),null,{timeout:20000});
+    assert.equal(await centerAlpha(),112,'P803 pointer add restored original owner-seeded pixel');
+    // Accessible focus and keyboard Enter perform the same bounded edit.
+    await eraseButton.click();
+    const correctionSurface=tapReview.locator('button[aria-label="Refine local source-pixel region"]');
+    await correctionSurface.focus();await correctionSurface.press('Enter');
+    await page.waitForFunction(()=>/Manual erase correction 3:/.test(
+     document.querySelector('[data-mission1-mask-correction-status803="unverified"]')?.textContent||''
+    ),null,{timeout:20000});
+    assert.equal(await centerAlpha(),0,'P803 keyboard erase uses original-owner active mask');
+    await addButton.click();
+    await correctionSurface.press('Enter');
+    await page.waitForFunction(()=>/Manual add correction 4:/.test(
+     document.querySelector('[data-mission1-mask-correction-status803="unverified"]')?.textContent||''
+    ),null,{timeout:20000});
+    assert.equal(await centerAlpha(),112,'P803 keyboard add restores temporary source-pixel preview');
+    await tapReview.getByRole('button',{name:'Finish local preview correction'}).click();
+    assert.match(await tapReview.locator('[data-mission1-mask-correction-status803="unverified"]').innerText(),/No verified mask or private cutout saved/);
+    const manualOnly=await page.evaluate(async()=>{
+     await writes;
+     const draft=await readDraft(),saved=await readAll();
+     const item=batch[0];
+     return {
+      originalJPEGUnchanged:item?.originalPhoto?.sha256===item?.sourceSHA256,
+      typeStillUnknown:item?.itemType==='Unknown',
+      categoryStillUncategorized:item?.category==='Uncategorized',
+      noOwnerApproval:item?.ownerReviewed!==true,
+      manualLabelsUnchecked:!document.querySelector('input[aria-label="I verified the category, clothing type and color"]')?.checked,
+      previewNotInDraft:draft.every(x=>!('maskCorrection803' in x)&&!('sourcePixelMask802' in x)),
+      previewNotInMemory:!('maskCorrection803' in item)&&!('sourcePixelMask802' in item),
+      noSave:saved.length===0
+     };
+    });
+    for(const [k,v] of Object.entries(manualOnly))
+     assert.equal(v,true,'P803 local edit no-save '+name+'/'+width+' '+k);
+    await page.screenshot({path:out+'/'+name+'-'+width+'-01f-local-owner-mask-add-erase-pointer-keyboard-UNVERIFIED.png',fullPage:true});
     await tapReview.getByRole('button',{name:'Discard local mask preview'}).click();
     assert.equal(await tapReview.locator('[data-mission1-local-mask-overlay802="none"]').count(),1);
     await tapReview.getByRole('button',{name:'Clear garment rectangle'}).click();
@@ -518,6 +575,8 @@ try{
      actualOriginalSourceOwnerBox800NoMaskOrApproval:true,
      actualOriginalSourceOwnerMask802ActualLocalColorPixels:true,
      actualOriginalSourceOwnerMask802ExplicitlyUnverifiedAndNotPersisted:true,
+     actualOriginalSourceOwnerMask803ManualCorrectionPointerAndKeyboard:true,
+     actualOriginalSourceOwnerMask803NoApprovalOrPrivatePersistence:true,
      simulatedPlaywrightBoxEventsNotIndependentHumans:true,
      actualOriginalSourceOwnerPoint798NoMaskOrApproval:true,
      originalSourceOwnerPointBrowserGesturesSimulated:true,
