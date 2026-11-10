@@ -121,7 +121,7 @@ export async function verifyOriginalTap798({
  * persist a receipt or auto-confirm a saved clothing item.
  */
 export function mountOriginalTapReview798({
- host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false
+ host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false,enableOwnerMaskCorrection803=false
 }={}){
  if(!host||typeof host.prepend!=='function'||!item||
     typeof currentOwner!=='function'||typeof isActive!=='function'||
@@ -329,11 +329,14 @@ export function mountOriginalTapReview798({
    maskCanvas.setAttribute('aria-hidden','true');
    interactive.append(maskCanvas);
    let maskBusy=false,maskEpoch=0;
+   let currentMask803=null,brushMode803=null;
+   let updateCorrection803=()=>{},resetCorrection803=()=>{};
    refreshMask802=()=>{
     previewButton.disabled=maskBusy||!selected||!selectedBox800||!live();
    };
    resetMask802=()=>{
     maskEpoch++;
+    resetCorrection803();currentMask803=null;
     maskCanvas.style.display='none';maskCanvas.dataset.mission1LocalMaskOverlay802='none';
     maskCanvas.width=0;maskCanvas.height=0;
     dismissPreview.disabled=true;
@@ -342,6 +345,7 @@ export function mountOriginalTapReview798({
    dismissPreview.onclick=()=>{resetMask802();refreshMask802();};
    previewButton.onclick=async()=>{
     if(maskBusy||!live()||!selectedBox800||!selected)return;
+    resetMask802();
     maskBusy=true;refreshMask802();
     const boxInput=selectedBox800,pointInput=selected,epoch=++maskEpoch;
     try{
@@ -384,6 +388,7 @@ export function mountOriginalTapReview798({
      maskContext.putImageData(overlayImage,0,0);
      maskCanvas.style.display='block';
      maskCanvas.dataset.mission1LocalMaskOverlay802='unverified-local-color-region';
+     currentMask803=result;updateCorrection803();
      dismissPreview.disabled=false;
      previewStatus.textContent='Local original-pixel COLOR region: '+result.maskPixels+
       ' thumbnail pixels ('+Math.round(result.fractionOfBox*100)+'% of selected box). '+
@@ -396,6 +401,104 @@ export function mountOriginalTapReview798({
     }finally{maskBusy=false;refreshMask802();}
    };
    root.append(previewButton,dismissPreview,previewStatus);
+   // P803: manual ADD/ERASE brushing of ONLY the ephemeral P802 color
+   // preview, never of original JPEG, private garment or an approved cutout.
+   if(enableOwnerMaskCorrection803===true){
+    root.dataset.mission1OwnerMaskCorrection803='manual-unverified-no-save';
+    const makeBrushButton=(label,aria)=>{
+     const b=document.createElement('button');b.type='button';b.className='secondary';
+     b.textContent=label;b.setAttribute('aria-label',aria);b.disabled=true;
+     return b;
+    };
+    const addBrush=makeBrushButton('Add pixels','Add pixels to local preview');
+    const eraseBrush=makeBrushButton('Erase pixels','Erase pixels from local preview');
+    const finishBrush=makeBrushButton('Finish correction','Finish local preview correction');
+    const correctionStatus=document.createElement('p');
+    correctionStatus.className='fine';correctionStatus.setAttribute('role','status');
+    correctionStatus.setAttribute('aria-live','polite');
+    correctionStatus.dataset.mission1MaskCorrectionStatus803='unverified';
+    correctionStatus.textContent='No manual mask correction. This preview is not a verified garment cutout.';
+    let paintBusy=false;
+    const restorePhotoAction=()=>{
+     interactive.setAttribute('aria-label','Tap original photograph to select garment point');
+     if(selected){
+      marker.style.left=(selected.normalizedX*100)+'%';
+      marker.style.top=(selected.normalizedY*100)+'%';
+      marker.style.display='block';
+     }
+    };
+    resetCorrection803=()=>{
+     brushMode803=null;paintBusy=false;
+     addBrush.disabled=true;eraseBrush.disabled=true;finishBrush.disabled=true;
+     correctionStatus.textContent='Manual local correction not retained; original photo is unchanged.';
+     if(!boxMode)restorePhotoAction();
+    };
+    updateCorrection803=()=>{
+     const ready=!!currentMask803&&live()&&!maskBusy;
+     addBrush.disabled=!ready;eraseBrush.disabled=!ready;
+     if(!ready)finishBrush.disabled=true;
+    };
+    const setBrush=mode=>{
+     if(!live()||!currentMask803||maskBusy)return;
+     brushMode803=mode;finishBrush.disabled=false;
+     interactive.setAttribute('aria-label','Refine local source-pixel region');
+     correctionStatus.textContent='Local '+mode+' brush active. Tap photo or use arrows then Enter. Only the temporary preview changes; nothing is approved or saved.';
+    };
+    addBrush.onclick=()=>setBrush('add');
+    eraseBrush.onclick=()=>setBrush('erase');
+    finishBrush.onclick=()=>{
+     brushMode803=null;finishBrush.disabled=true;restorePhotoAction();
+     correctionStatus.textContent='Local pixel corrections remain preview-only. No verified mask or private cutout saved.';
+    };
+    async function paint803(u,v){
+     if(paintBusy||!live()||!brushMode803||!currentMask803||!selected||!selectedBox800)return;
+     paintBusy=true;
+     const current=currentMask803,mode=brushMode803,box=selectedBox800,point=selected,epoch=maskEpoch;
+     try{
+      const {correctOwnerLocalMask803}=await import('./mission1-local-mask-correction-803.mjs');
+      if(!live()||epoch!==maskEpoch||current!==currentMask803||
+         box!==selectedBox800||point!==selected||brushMode803!==mode)return;
+      const x=Math.min(current.width-1,Math.max(0,Math.floor(u*current.width)));
+      const y=Math.min(current.height-1,Math.max(0,Math.floor(v*current.height)));
+      const changed=correctOwnerLocalMask803({preview:current,box,point,x,y,mode});
+      if(!live()||epoch!==maskEpoch||box!==selectedBox800||point!==selected)return;
+      const maskContext=maskCanvas.getContext('2d');
+      if(!maskContext)throw Error('Mask preview canvas unavailable');
+      const output=maskContext.createImageData(changed.width,changed.height);
+      output.data.set(changed.overlay);
+      maskContext.putImageData(output,0,0);
+      currentMask803=changed;
+      correctionStatus.textContent='Manual '+mode+' correction '+changed.manualEditCount+
+       ': '+changed.manualEditPixelsChanged+' thumbnail pixels changed. UNVERIFIED, NOT SAM2, NOT saved.';
+     }catch{
+      if(live()&&epoch===maskEpoch)
+       correctionStatus.textContent='Pixel correction rejected or did not change the local mask. Original JPEG unchanged.';
+     }finally{paintBusy=false;}
+    }
+    interactive.addEventListener('click',event=>{
+     if(!brushMode803)return;
+     event.preventDefault();event.stopImmediatePropagation();
+     if(!live())return;
+     const r=photo.getBoundingClientRect();
+     const u=(event.clientX-r.left)/r.width,v=(event.clientY-r.top)/r.height;
+     if(u>=0&&v>=0&&u<=1&&v<=1)void paint803(u,v);
+    },true);
+    interactive.addEventListener('keydown',event=>{
+     if(!brushMode803||!live())return;
+     const steps={ArrowLeft:[-.02,0],ArrowRight:[.02,0],ArrowUp:[0,-.02],ArrowDown:[0,.02]};
+     const d=steps[event.key];
+     if(d){
+      event.preventDefault();event.stopImmediatePropagation();
+      keyboardCursorX800=Math.max(.01,Math.min(.99,keyboardCursorX800+d[0]));
+      keyboardCursorY800=Math.max(.01,Math.min(.99,keyboardCursorY800+d[1]));
+      cursor();
+     }else if(event.key==='Enter'||event.key===' '){
+      event.preventDefault();event.stopImmediatePropagation();
+      void paint803(keyboardCursorX800,keyboardCursorY800);
+     }
+    },true);
+    root.append(addBrush,eraseBrush,finishBrush,correctionStatus);
+   }
   }
  }
  host.prepend(root);
