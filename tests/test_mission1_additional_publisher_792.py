@@ -61,7 +61,7 @@ class PublisherSelection792(unittest.TestCase):
   source,z=self.fixture(11)
   source["images"][0]["license"]=5
   source["annotations"]=[a for a in source["annotations"] if a["image_id"]!=source["images"][1]["id"]]
-  with self.assertRaisesRegex(RuntimeError,"cannot find 12"):
+  with self.assertRaisesRegex(RuntimeError,"cannot find 10"):
    self.run_selection(source,z)
  def test_source_selection_does_not_require_real_model_or_synthesize_human_truth(self):
   source,z=self.fixture()
