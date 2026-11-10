@@ -996,7 +996,7 @@ async function recognizeItem(item){
   // bodice OR outerwear; never promote the largest region to an item identity.
   // Invalid/stale model receipts fail closed to manual owner review without
   // an automatic category, saved garment, or original photo replacement.
-  if(reviewedSave120Active&&
+  if(typeof reviewedSave120Active!=='undefined'&&reviewedSave120Active&&
      new URLSearchParams(location.search).get('mission1SourceReview785')==='research'&&
      result.sourceCategoryReview){
    try{
