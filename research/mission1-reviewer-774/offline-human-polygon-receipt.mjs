@@ -9,7 +9,7 @@
 import {createHash,createPrivateKey,createPublicKey,sign as ed25519Sign} from 'node:crypto';
 import {signedMessage,sha256,P66_EXPOSED_DIGESTS} from '../mission1-sealed-human-holdout-768/prospective-gate.mjs';
 import {P772_EXPOSED_DIGESTS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
-import {COMMIT43_TYPES} from '../multi-garment-capture-01/atomic-group.mjs';
+import {supportedHumanGarment791} from '../mission1-human-truth-taxonomy-integrity-791/canonical-human-truth.mjs';
 import {sourcePixelDimensions780,MAX_MISSION1_ORIGINAL_PIXELS_780} from './original-photo-bounds-780.mjs';
 
 const COLORS=new Set(['Black','White','Gray','Beige','Brown','Blue','Green',
@@ -94,8 +94,7 @@ export function authorManualSourceLabel774({photo,regions,explicitNoGarments=fal
  const ids=new Set();
  const instances=regions.map((r,i)=>{
   if(!r||typeof r!=='object'||Array.isArray(r)||!boundedString(r.instanceId,80)||
-     ids.has(r.instanceId)||!Object.hasOwn(COMMIT43_TYPES,r.category)||
-     !COMMIT43_TYPES[r.category].includes(r.subtype)||!COLORS.has(r.primaryColor))
+     ids.has(r.instanceId)||!supportedHumanGarment791(r.category,r.subtype)||!COLORS.has(r.primaryColor))
    fail('invalid/duplicate manually outlined instance category, subtype or color');
   ids.add(r.instanceId);
   const mask=drawHumanSourcePixels774({
