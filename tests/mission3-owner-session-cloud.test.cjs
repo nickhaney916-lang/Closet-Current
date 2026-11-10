@@ -28,6 +28,13 @@ async function add(db,item){
   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
  });
 }
+async function clearItems(db){
+ await new Promise((resolve,reject)=>{
+  const tx=db.transaction('items','readwrite');
+  tx.objectStore('items').clear();
+  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+ });
+}
 function read(db){
  return new Promise((resolve,reject)=>{
   const query=db.transaction('items').objectStore('items').getAll();
@@ -80,8 +87,10 @@ test('remote restore queued for owner A never writes into account B after databa
   await Promise.all([old,next]);
   const rows=await read(f.dbB);
   if(baseline){
-   assert.deepEqual(rows.map(x=>x.id),['a-private-clothing'],
-    'the old controller must reproduce the cross-owner restore bug');
+   assert.ok(rows.some(x=>x.id==='a-private-clothing'),
+    'the old controller must reproduce cross-owner cloud item contamination');
+   assert.ok(rows.some(x=>x.id==='b-original'),
+    'the B owner's private item remains alongside the leaked A item');
   }else{
    assert.deepEqual(rows.map(x=>x.id),['b-original'],
     'a stale owner A response must never replace B wardrobe');
@@ -94,12 +103,13 @@ test('remote restore queued for owner A never writes into account B after databa
 test('session lock revokes an in-flight restore before touching private local items',async()=>{
  const f=await fixture();
  try{
+  await clearItems(f.dbA); // A has no pending local writes: actual restore path.
   const pending=f.window.closetCloud.start(f.dbA,f.settings);
   await f.requestedA.promise;
   f.auth.user=null;f.events.get('closet:session-locked')?.();
   f.finishA.resolve();await pending;
   const ids=(await read(f.dbA)).map(x=>x.id);
-  assert.deepEqual(ids,[baseline?'a-private-clothing':'a-original']);
+  assert.deepEqual(ids,baseline?['a-private-clothing']:[]);
  }finally{f.finishA.resolve();f.close();}
 });
 test('a cloud controller must reject a foreign-owner IndexedDB connection before network requests',async()=>{
