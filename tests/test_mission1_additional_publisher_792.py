@@ -19,12 +19,11 @@ class PublisherSelection792(unittest.TestCase):
     file_name=f"{i:032x}.jpg";image_id=100000+i
     images.append({"id":image_id,"file_name":file_name,
        "width":682,"height":1024,"license":8})
-    annotations.extend([
-      {"image_id":image_id,"id":i*2,"category_id":0,
-       "segmentation":[[1,1,20,1,20,30,1,30]]},
-      {"image_id":image_id,"id":i*2+1,"category_id":6,
-       "segmentation":[[50,50,60,50,60,70,50,70]]}
-    ])
+    annotations.append({"image_id":image_id,"id":i*2,"category_id":0,
+       "segmentation":[[1,1,20,1,20,30,1,30]]})
+    if i<(n+1)//2:
+     annotations.append({"image_id":image_id,"id":i*2+1,"category_id":6,
+       "segmentation":[[50,50,60,50,60,70,50,70]]})
     archive.writestr("test/"+file_name,b"\xff\xd8"+bytes([i+1])*700+b"\xff\xd9")
   # Synthetic fixture has no source rights, real decoded JPEG or human author.
   return {"images":images,"annotations":annotations},mem.getvalue()
@@ -48,7 +47,9 @@ class PublisherSelection792(unittest.TestCase):
   self.assertEqual([x["id"] for x in a],[x["id"] for x in b])
   self.assertEqual(len(a),12)
   self.assertEqual(len({x["sha256"] for x in a}),12)
-  self.assertEqual(sum(len(x["annotations"]) for x in a),24)
+  self.assertEqual(sum(len(x["annotations"]) for x in a),18)
+  self.assertEqual(sum(x["sourceSelectionStratum"]=="multi" for x in a),6)
+  self.assertEqual(sum(x["sourceSelectionStratum"]=="single" for x in a),6)
  def test_source_hash_exposure_quarantine_is_applied_before_model(self):
   source,z=self.fixture()
   a=self.run_selection(source,z)
