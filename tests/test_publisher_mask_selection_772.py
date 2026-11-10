@@ -29,12 +29,12 @@ def dataset():
 
 
 class SelectionTests(unittest.TestCase):
-    def test_exactly_twelve_fixed_category_buckets_without_duplicate_photo(self):
+    def test_exactly_eight_fixed_category_buckets_without_duplicate_photo(self):
         rows = MODULE.choose_published_photos(dataset(), set())
-        self.assertEqual(len(rows), 12)
+        self.assertEqual(len(rows), 8)
         self.assertEqual({x["selectionTargetCategoryID"] for x in rows},
                          set(MODULE.CATEGORY_TARGETS))
-        self.assertEqual(len({x["id"] for x in rows}), 12)
+        self.assertEqual(len({x["id"] for x in rows}), 8)
         self.assertTrue(all(x["archiveMember"].startswith("test/") for x in rows))
 
     def test_predeclared_salt_and_hash_independent_of_publisher_annotation_order(self):
@@ -52,7 +52,7 @@ class SelectionTests(unittest.TestCase):
         banned = {first[0]["id"]}
         later = MODULE.choose_published_photos(dataset(), banned)
         self.assertNotIn(first[0]["id"], [x["id"] for x in later])
-        self.assertEqual(len(later), 12)
+        self.assertEqual(len(later), 8)
 
     def test_license_missing_polygon_or_required_category_cannot_be_silently_replaced(self):
         d = dataset()
@@ -75,7 +75,7 @@ class SelectionTests(unittest.TestCase):
 
     def test_historical_photo_list_excludes_previous_exploratory_six(self):
         self.assertEqual(len(MODULE.EXPOSED_P66_IDS), 6)
-        self.assertEqual(len(MODULE.CATEGORY_TARGETS), 12)
+        self.assertEqual(len(MODULE.CATEGORY_TARGETS), 8)
         self.assertFalse(set(MODULE.EXPOSED_P66_IDS) & {r["id"] for r in
                          MODULE.choose_published_photos(dataset(), set())})
 
