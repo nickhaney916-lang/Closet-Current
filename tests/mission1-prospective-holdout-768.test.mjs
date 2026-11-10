@@ -6,6 +6,7 @@ import {
  P66_EXPOSED_DIGESTS,sha256,signedMessage,sealProspectiveHoldout,
  evaluateProspectiveHoldout,maximumCardinalityMaskMatches
 } from '../research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
+import {P772_EXPOSED_DIGESTS_774} from '../research/mission1-exposure-774/pinned-exposed-source-history.mjs';
 
 function pseudoJpeg(width=32,height=32,n=5){
  const bytes=Buffer.alloc(256,n);
@@ -15,7 +16,7 @@ function pseudoJpeg(width=32,height=32,n=5){
 }
 function fixture(){
  const exposed=[...JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8')).map(x=>x.sha256),
-  ...P66_EXPOSED_DIGESTS];
+  ...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774];
  const keys={},privateKeys={};
  for(const id of ['coordinator','reviewerA','reviewerB','adjudicator']){
   const pair=generateKeyPairSync('ed25519');
@@ -84,7 +85,7 @@ test('Mission1 verified signed sources and two blind reviewer receipts report di
 });
 test('Mission1 cannot repackage any previously exposed 59 or external six real photo SHA as new holdout',()=>{
  const f=fixture();
- for(const exposed of [f.exposed[0],P66_EXPOSED_DIGESTS[0]]){
+ for(const exposed of [f.exposed[0],P66_EXPOSED_DIGESTS[0],P772_EXPOSED_DIGESTS_774[0]]){
   const photos=structuredClone(f.photos);photos[0].sha256=exposed;
   assert.throws(()=>sealProspectiveHoldout({
    registrationId:'m1-cohort-synthetic-fixture',photos,modelSHA256:'8'.repeat(64),
