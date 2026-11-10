@@ -1,0 +1,142 @@
+name: M1 P796 all ten genuine photos twenty-three SAM2.1 prompts — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-sam2-full-publisher-instance-796-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p796-sam2-all23-sources-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-app-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P795 ancestor and four research/test/CI only paths
+        run: |
+          set -euo pipefail
+          BASE=0f3d49a7d6008ab12fa643eebe41c30222635b6e
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p796-diff
+          test "$(wc -l </tmp/p796-diff)" -eq 4
+          while read -r path; do
+            case "$path" in
+              scripts/test-mission1-sam2-all-original-instances-796.py|tests/test_mission1_sam2_all_instances_796.py|research/mission1-sam2-full-publisher-instance-796/REPORT.md|.github/workflows/mission1-sam2-all-source-instances-796-no-deploy.yml) ;;
+              *) echo "UNAPPROVED APP/MODEL/PRIVATE/DEPLOY CHANGE: $path"; exit 1 ;;
+            esac
+          done </tmp/p796-diff
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark/locked-photo-sources.json)"
+          echo M1_P796_PINNED_P795_PARENT_FOUR_SOURCE_MASK_ONLY_PATHS_NO_DEPLOY
+      - name: Ephemeral build and full Node regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Native build, complete closet recognizer cloud and humanoid Node regression
+        run: |
+          set -euo pipefail
+          python3 -m py_compile scripts/test-mission1-sam2-all-original-instances-796.py tests/test_mission1_sam2_all_instances_796.py
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-SAM2-original-source-CPU-onnx:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install CPU-only ONNX runtime and image-original processing
+        run: |
+          python -m pip install --disable-pip-version-check --no-cache-dir numpy==2.1.3 pillow==11.1.0 onnxruntime==1.23.2
+      - name: Test publisher original source and oracle mask scoring arithmetic
+        run: |
+          python -m unittest discover -s tests -p 'test_mission1_sam2_prompt_795.py' -v
+      - name: Register 73 earlier source SHA BEFORE reloading all ten already P792-exposed real photos
+        run: |
+          node --input-type=module <<'NODE'
+          import {writeFileSync,readFileSync} from 'node:fs';
+          import {P66_EXPOSED_DIGESTS} from './research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
+          import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,P792_EXPOSED_DIGESTS_792} from './research/mission1-exposure-774/pinned-exposed-source-history.mjs';
+          const locked=JSON.parse(readFileSync('benchmark/locked-photo-sources.json'));
+          const old=[...new Set([...P59_EXPOSED_DIGESTS_774,...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774])];
+          assertSet: {
+           if(old.length!==73||P792_EXPOSED_DIGESTS_792.some(x=>old.includes(x)))
+            throw Error('P796 immutable old 73 versus P792 ten source SHA cohort invalid');
+          }
+          writeFileSync('/tmp/p795-prior-exposed-sha.json',JSON.stringify(old));
+          NODE
+      - name: Download exact frozen publisher annotation manifest and ten original public JPEG sources
+        run: |
+          set -euo pipefail
+          python scripts/intake-additional-publisher-originals-792.py /tmp/p795-prior-exposed-sha.json
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {P792_EXPOSED_DIGESTS_792} from './research/mission1-exposure-774/pinned-exposed-source-history.mjs';
+          const x=JSON.parse(readFileSync('benchmark/mission1-additional-publisher-originals-792/manifest.json'));
+          assert.equal(x.rows.length,10);
+          assert.deepEqual(new Set(x.rows.map(x=>x.sha256)),new Set(P792_EXPOSED_DIGESTS_792));
+          assert.equal(x.blindHumanReviewIndependentlyVerified,false);
+          assert.equal(x.releaseAuthorized,false);
+          console.log('M1_P796_FIXED_REAL_ORIGINAL_10_SHA_23_ANNOTATIONS_EXPOSED_DEV_ONLY');
+          NODE
+      - name: ACTUAL SHA-pinned ONNX SAM2 on all 10 original photos and all 23 publisher garment oracle prompts
+        run: |
+          python scripts/test-mission1-sam2-all-original-instances-796.py
+      - name: Verify all 10 original sources and 23 instance masks, all false pixels and no genuine owner approval
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          x=json.loads(Path('benchmark/mission1-sam2-all-instances-796/all-publisher-instance-results.json').read_text())
+          assert x['schema']=='m1-p796-actual-sam2-all-source-original-23-oracle-instances/v1'
+          assert x['selectedPhotoIds']==[15201,20490,13428,12197,15461,18553,19659,13585,17509,17401]
+          assert x['publisherPhotoCount']==10
+          assert x['realPublisherPolygonInstanceCount']==23
+          assert len(x['rows'])==23
+          assert len(set(r['publisherImageId'] for r in x['rows']))==10
+          assert len(set((r['publisherImageId'],r['publisherInstanceId']) for r in x['rows']))==23
+          assert x['sourceOriginalsSHA256Verified'] is True
+          assert x['independentHumanAnnotatorCount']==0
+          assert x['realUserClickCount']==0
+          assert x['oracleClickDerivedFromPublisherPolygon'] is True
+          assert x['automaticGarmentDetectionMeasured'] is False
+          assert x['ownerMaskAcceptedCount']==0
+          assert x['releaseAuthorized'] is False and x['familyAlpha']=='HOLD'
+          for row in x['rows']:
+            assert row['clickWasActualIndependentHuman'] is False
+            assert row['sourceMaskWasActualPublisherPolygon'] is True
+            assert row['autoSaveAllowed'] is False
+            assert row['ownerSourceCutoutConfirmed'] is False
+            for name in ('single','modelSelectedMultimask'):
+              a=row[name]
+              assert a['truePositives']+a['falseNegatives']==a['publisherSourcePixelCount']
+              assert a['truePositives']+a['falsePositives']==a['predictedSourcePixelCount']
+              assert 0<=a['sourcePixelMaskIoU']<=1
+          assert x['singleMaskIoU50Count']==sum(r['single']['sourcePixelMaskIoU']>=.5 for r in x['rows'])
+          assert x['modelSelectedMaskIoU50Count']==sum(r['modelSelectedMultimask']['sourcePixelMaskIoU']>=.5 for r in x['rows'])
+          print('M1_P796_SAM2_ALL_TEN_ORIGINALS_TWENTY_THREE_REAL_PUBLISHER_GARMENTS_ORACLE_ONLY_NO_RELEASE')
+          PY
+      - name: Erase model weights and ALL original photographic bytes before evidence artifact upload
+        if: always()
+        run: |
+          rm -rf /tmp/m1-sam2-796-weights benchmark/mission1-additional-publisher-originals-792/originals
+          rm -rf benchmark/mission1-additional-publisher-originals-792/chromium benchmark/mission1-additional-publisher-originals-792/webkit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P796-all-ten-originals-23-SAM2-oracle-prompt-source-masks-NO-RELEASE
+          path: benchmark/mission1-sam2-all-instances-796/all-publisher-instance-results.json
+          if-no-files-found: warn
+          retention-days: 14
