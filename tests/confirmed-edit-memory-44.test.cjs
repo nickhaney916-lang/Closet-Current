@@ -11,8 +11,8 @@ const taxonomy=fs.readFileSync('public/taxonomy.js','utf8');
 const context={};vm.createContext(context);
 vm.runInContext(taxonomy+';globalThis.normalized44=normalizeClothing',context);
 const normalize=x=>context.normalized44(x);
-const start=app.indexOf('f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;');
-const stop=app.indexOf('if(nativeCorrection10Active()){',start);
+const start=app.indexOf('f.onsubmit=async e=>{e.preventDefault();if(saving)return;');
+const stop=app.indexOf('/* Saved editor actions */',start);
 assert.ok(start>0&&stop>start,'must execute real My Closet saved editor submit, not a duplicated algorithm');
 const submitCode=app.slice(start,stop);
 const base=()=>({
@@ -46,9 +46,9 @@ async function runSavedEdit(before,formData,{cas=false,stale=false}={}){
  let closed=false,rendered=0,refreshes=0,attempted=0,errors=[];
  const readCurrent=()=>readOne(db,original.id);
  const sandbox={
-  f:{},ok:{disabled:false},item:clone(original),draft:clone(edited),
+  f:{},saving:false,cancel:{disabled:false},editStatus:{textContent:''},ok:{disabled:false},item:clone(original),draft:clone(edited),
   collect:()=>normalize(clone(edited)),expectedSavedRow:cas?clone(original):null,
-  ClothingMemory,queued:work=>work(),
+  ClothingMemory,nativeCorrection10Active:()=>cas,saveEditedGarment:async next=>{attempted++;await putOne(db,next);},queued:work=>work(),
   async commitOwnerCorrection10(next,expected){
    attempted++;
    const current=await readCurrent();

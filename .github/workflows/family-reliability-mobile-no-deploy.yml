@@ -1,0 +1,55 @@
+name: Family reliability and mobile accessibility — NO DEPLOY
+on:
+  push:
+    branches: [research/family-reliability-mobile-side-mission-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression-and-mobile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce isolated verified parent and no hosted changes
+        run: |
+          BASE=faac51857d57356fb5568f035566a171cadaa418
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js supabase public/local-worker.mjs public/recognition-engine.mjs
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/app.js|public/app-theme.css|public/index.html|public/outfit-board.js|tests/family-reliability-edit.test.cjs|tests/confirmed-edit-memory-44.test.cjs|tests/review-color-provenance-23.test.cjs|scripts/test-family-reliability-mobile.mjs|scripts/test-family-reliability-baseline.mjs|research/family-reliability-mobile/REPORT.md|.github/workflows/family-reliability-mobile-no-deploy.yml) ;;
+              *) echo "Unexpected path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned test tools and browser engines
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+          npx playwright install --with-deps chromium webkit
+      - name: Build and full regression
+        run: |
+          node scripts/build.mjs
+          node --test tests/*.cjs tests/*.mjs
+      - name: Reproduce parent defect in Chromium and WebKit
+        run: |
+          git worktree add --detach /tmp/closet-side-baseline faac51857d57356fb5568f035566a171cadaa418
+          BASELINE_ROOT=/tmp/closet-side-baseline node scripts/test-family-reliability-baseline.mjs
+      - name: Verify reliability, recovery and mobile accessibility
+        run: node scripts/test-family-reliability-mobile.mjs
+      - name: Retain native canonical original-photo regression
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: family-reliability-mobile-evidence-HOLD
+          path: |
+            benchmark/family-reliability-mobile/
+            benchmark/family-reliability-baseline/
+            benchmark/native-canonical-closet-style-167/
+          retention-days: 14

@@ -13,8 +13,8 @@ const adjustCode=(()=>{
  return app.slice(start,end);
 })();
 const savedCode=(()=>{
- const start=app.indexOf('f.onsubmit=async e=>{e.preventDefault();ok.disabled=true;');
- const end=app.indexOf('if(nativeCorrection10Active()){',start);
+ const start=app.indexOf('f.onsubmit=async e=>{e.preventDefault();if(saving)return;');
+ const end=app.indexOf('/* Saved editor actions */',start);
  assert.ok(start>0&&end>start,'actual saved closet edit handler must be located');
  return app.slice(start,end);
 })();
@@ -39,9 +39,9 @@ async function newPhotoSubmit(source){
 async function savedClosetSubmit(source,{cas=false}={}){
  let persisted,closed=false,calls=0;
  const item=clone(source),sandbox={
-  f:{},ok:{disabled:false},item,draft:clone(source),collect:()=>N(clone(source)),
+  f:{},saving:false,cancel:{disabled:false},editStatus:{textContent:''},ok:{disabled:false},item,draft:clone(source),collect:()=>N(clone(source)),
   expectedSavedRow:cas?clone(source):null,
-  ClothingMemory:M,
+  ClothingMemory:M,nativeCorrection10Active:()=>cas,saveEditedGarment:async val=>{persisted=clone(val);calls++;},
   queued:async work=>work(),
   commitOwnerCorrection10:async val=>{persisted=clone(val);calls++;},
   nativeIndex07Refresh:async()=>{},

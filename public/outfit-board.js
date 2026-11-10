@@ -32,7 +32,7 @@ async function persistBoardState(){
  const snapshot=boardBackup();
  await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'outfit-board',...snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
 }
-async function storeBoard(){try{await persistBoardState();return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
+async function storeBoard(){$('boardSaveStatus').textContent='Saving outfit changes…';try{await persistBoardState();$('boardSaveStatus').textContent='Outfit changes saved on this device.';return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
 function selectBoardPiece(slotId,itemId){
  if(nativeLossless04Active){
