@@ -147,7 +147,33 @@ function saveEditedGarment(updated,expected){
  })).then(nativeIndex07Refresh);
 }
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);})).then(async value=>{await nativeIndex07Refresh();return value;});}
-function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
+function persistDraft({required=false}={}){
+ const owner=window.closetAuth?.user?.id,ownerDB=db;
+ if(!ownerDB){
+  if(required)return Promise.reject(Object.assign(Error('Capture storage is unavailable'),{code:'CAPTURE_STORAGE_FAILED'}));
+  return;
+ }
+ const snapshot=structuredClone(batch);
+ const checkOwner=()=>{
+  window.closetAuth?.assertCurrent?.();
+  if(db!==ownerDB||!owner||window.closetAuth?.user?.id!==owner||
+     ownerDB.name!=='closet-current-user-'+owner)
+   throw Error('Capture draft account or database changed');
+ };
+ return queued(()=>new Promise((resolve,reject)=>{
+  try{checkOwner();}catch(error){reject(error);return;}
+  const tx=ownerDB.transaction('state','readwrite');
+  tx.objectStore('state').put({id:'draft',batch:snapshot});
+  tx.oncomplete=()=>{try{checkOwner();resolve();}catch(error){reject(error);}};
+  tx.onerror=()=>reject(tx.error);
+  tx.onabort=()=>reject(tx.error||Error('Capture draft write aborted'));
+ })).catch(error=>{
+  message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');
+  if(required)throw Object.assign(Error('Capture photo is in review but not saved on this device'),{
+   code:'CAPTURE_STORAGE_FAILED',cause:error
+  });
+ });
+}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 async function captureProofVerifyBeforeSave(value){
  if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active))return;
@@ -706,8 +732,19 @@ function candidate(image,options={}){
   }
  }
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalSourceProof?.originalPhoto||options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
- batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
- queueAutomatic(item);return true;
+ if(options.importFilename)item.importFilename=String(options.importFilename).slice(0,120);
+ batch.push(item);sessionCapturedIds.add(item.id);
+ const requireCommit=options.requireDraftCommit===true;
+ const committed=persistDraft({required:requireCommit});
+ session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
+ if(!requireCommit){queueAutomatic(item);return true;}
+ // Quota failure keeps the source visible for review, but never reports it
+ // as durably saved or begins automatic recognition.
+ return Promise.resolve(committed).then(()=>{
+  if(!batch.some(row=>row.id===item.id)||captureProofOwner()!==item.ownerId)
+   throw Object.assign(Error('Capture session ended before durable review'),{code:'CAPTURE_STORAGE_FAILED'});
+  queueAutomatic(item);return true;
+ });
 }
 function queueAutomatic(item){
  if(localPending.has(item.id)||!batch.some(x=>x.id===item.id))return;
@@ -745,7 +782,7 @@ function captureTick(now=Date.now()){
   else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
- try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){captureProofPhoto().then(accepted=>{if(accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(()=>message('Could not verify this frame. Take the photo again.'));return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
+ try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){captureProofPhoto().then(accepted=>{if(accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(reportCaptureCommitFailure);return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
@@ -758,14 +795,21 @@ async function captureProofPhoto(){
   const width=video.videoWidth,height=video.videoHeight,image=snap();
   const proof=await captureProofFromJPEG(image,{width,height,origin:'camera'},owner);
   if(request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
-  return candidate(proof.image,{sourceProof:proof});
+  const durable=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true});
+  return durable&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
  }finally{captureProofTaking=false;}
+}
+function reportCaptureCommitFailure(error){
+ if(error?.code==='CAPTURE_STORAGE_FAILED'){
+  $('captureState').textContent='Photo in review · device storage not confirmed';
+  message('Your photo remains visible in this review, but it was not saved on this device. Free space or export it before leaving this page.');
+ }else message('This photo could not be verified. Try taking it again.');
 }
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
   captureProofPhoto().then(accepted=>{if(accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
-  .catch(()=>message('This photo could not be verified. Try taking it again.'));return;
+  .catch(reportCaptureCommitFailure);return;
  }
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
