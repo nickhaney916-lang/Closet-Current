@@ -1,4 +1,4 @@
-name: M1 P786 genuine alternate instance-ONNX six-real-original probe — NO DEPLOY
+name: M1 P786 six real originals genuine instance MASK accuracy — NO DEPLOY
 on:
   push:
     branches: [research/mission1-independent-instance-model-786-HOLD]
@@ -71,7 +71,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: mission1-p786-six-real-originals-onnx-probe-no-scores-no-private-bytes-HOLD
+          name: mission1-p786-six-real-originals-ONNX-mask-IoU50-NO-RELEASE
           path: benchmark/mission1-instance-model-786/research-only-inference.json
           retention-days: 14
           if-no-files-found: warn
