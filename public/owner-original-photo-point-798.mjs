@@ -1,3 +1,47 @@
+ 
+/**
+ * Verify a two-corner garment rectangle from TWO independent source-byte
+ * and owner-lease-verified P798 points. This is an ORIGINAL-pixel rectangle
+ * proposal, NOT a real segmentation mask, owner approval or saved wardrobe.
+ */
+export function sourceRectFromVerifiedPoints800(first,second,{minimumFraction=.02}={}){
+ if(!first||!second||first.schema!=='closet-current-m1-owner-original-point-798/review-only/v1'||
+    second.schema!==first.schema||first.ownerId!==second.ownerId||
+    first.sourceId!==second.sourceId||first.sourceSHA256!==second.sourceSHA256||
+    !sha.test(first.sourceSHA256||'')||!first.sourceBytesSHA256Verified||
+    !second.sourceBytesSHA256Verified||!first.capturedFromOriginalJPEG||
+    !second.capturedFromOriginalJPEG||first.sourceWidth!==second.sourceWidth||
+    first.sourceHeight!==second.sourceHeight||!isPositiveInteger(first.sourceWidth)||
+    !isPositiveInteger(first.sourceHeight)||!Number.isFinite(minimumFraction)||
+    minimumFraction<.01||minimumFraction>.2)
+  fail('two verified source-matched owner corners required');
+ const w=first.sourceWidth,h=first.sourceHeight;
+ for(const v of [first,second]){
+  if(!Number.isInteger(v.pointX)||!Number.isInteger(v.pointY)||
+     v.pointX<0||v.pointX>=w||v.pointY<0||v.pointY>=h)
+   fail('source rectangle corner outside original JPEG');
+ }
+ const x0=Math.min(first.pointX,second.pointX),y0=Math.min(first.pointY,second.pointY);
+ const x1=Math.max(first.pointX,second.pointX)+1,y1=Math.max(first.pointY,second.pointY)+1;
+ if(x1-x0<Math.max(2,Math.ceil(w*minimumFraction))||
+    y1-y0<Math.max(2,Math.ceil(h*minimumFraction)))
+  fail('rectangle too small: choose opposite garment corners');
+ return Object.freeze({
+  schema:'closet-current-m1-owner-original-rectangle-800/review-only/v1',
+  ownerId:first.ownerId,sourceId:first.sourceId,sourceSHA256:first.sourceSHA256,
+  sourceWidth:w,sourceHeight:h,x0,y0,x1,y1,
+  normalizedX0:x0/w,normalizedY0:y0/h,
+  normalizedX1:x1/w,normalizedY1:y1/h,
+  twoVerifiedOriginalJPEGCornerTaps:true,
+  userDrawnRectangleInteractionObserved:true,
+  independentHumanIdentityVerified:false,
+  sourceBoundingBoxOnly:true,actualGarmentMaskGenerated:false,
+  sam2ModelRun:false,maskVerified:false,ownerApprovedGarment:false,
+  categoryConfirmed:false,subtypeConfirmed:false,colorConfirmed:false,
+  autoSaveAllowed:false,privatePersisted:false
+ });
+}
+
 /**
  * M1 P798 — source-bound, transient ORIGINAL JPEG tap for native Adjust.
  *
@@ -77,7 +121,7 @@ export async function verifyOriginalTap798({
  * persist a receipt or auto-confirm a saved clothing item.
  */
 export function mountOriginalTapReview798({
- host,item,ownerId,currentOwner,isActive
+ host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false
 }={}){
  if(!host||typeof host.prepend!=='function'||!item||
     typeof currentOwner!=='function'||typeof isActive!=='function'||
@@ -111,7 +155,9 @@ export function mountOriginalTapReview798({
  const clear=document.createElement('button');clear.type='button';
  clear.textContent='Clear garment point';clear.className='secondary';clear.disabled=true;
  root.append(clear);
- let selected=null,busy=false;
+ let selected=null,busy=false,boxMode=false,boxBusy=false;
+ let firstVerifiedCorner800=null,selectedBox800=null;
+ let keyboardCursorX800=.5,keyboardCursorY800=.5;
  const live=()=>root.isConnected&&isActive()&&currentOwner()===ownerId&&
   item.sourceSHA256===source.sha256&&item.originalPhoto?.image===source.image;
  const reset=()=>{
@@ -121,6 +167,9 @@ export function mountOriginalTapReview798({
  };
  clear.addEventListener('click',reset);
  interactive.addEventListener('click',async event=>{
+  // P800 rectangle mode uses the same ORIGINAL JPEG; do not silently turn
+  // rectangle-corner taps into independent point review/approval.
+  if(boxMode)return;
   if(busy)return;
   busy=true;
   try{
@@ -154,11 +203,113 @@ export function mountOriginalTapReview798({
    }
   }finally{busy=false;}
  });
+ // P800: deliberately gated, local-only ORIGINAL JPEG two-corner rectangle.
+ // Reuse the exact P798 verified photo, not a second decoded copy.
+ // Do not import SAM2 or persist a crop; P799 oracle box quality was research.
+ let resetBox800=()=>{};
+ if(enableOwnerBox800===true){
+  root.setAttribute('data-mission1-owner-box-800','review-only');
+  root.setAttribute('data-owner-box-saved','false');
+  const boxStart=document.createElement('button');
+  boxStart.type='button';boxStart.className='secondary';
+  boxStart.textContent='Draw a rectangle around the garment';
+  boxStart.setAttribute('aria-label','Start source garment rectangle selection');
+  const boxClear=document.createElement('button');
+  boxClear.type='button';boxClear.className='secondary';
+  boxClear.textContent='Clear garment rectangle';boxClear.disabled=true;
+  const boxStatus=document.createElement('p');
+  boxStatus.className='fine';boxStatus.setAttribute('role','status');
+  boxStatus.setAttribute('aria-live','polite');
+  boxStatus.dataset.mission1OwnerBoxStatus800='review-only';
+  boxStatus.textContent='No rectangle selected. Select opposite corners on the original photograph.';
+  const overlay=document.createElement('span');
+  overlay.style.cssText='display:none;position:absolute;border:2px solid #f5cc37;background:rgba(245,204,55,.15);pointer-events:none;box-sizing:border-box';
+  overlay.setAttribute('data-mission1-owner-box-outline-800','none');
+  interactive.append(overlay);
+  const cursor=()=>{
+   marker.style.display='block';
+   marker.style.left=(keyboardCursorX800*100)+'%';
+   marker.style.top=(keyboardCursorY800*100)+'%';
+  };
+  resetBox800=()=>{
+   boxMode=false;boxBusy=false;firstVerifiedCorner800=null;selectedBox800=null;
+   keyboardCursorX800=.5;keyboardCursorY800=.5;
+   overlay.style.display='none';overlay.setAttribute('data-mission1-owner-box-outline-800','none');
+   interactive.setAttribute('aria-label','Tap original photograph to select garment point');
+   boxClear.disabled=true;
+   boxStatus.textContent='No rectangle selected. Your original photograph is unchanged.';
+   marker.style.display='none';
+  };
+  boxStart.onclick=()=>{
+   if(!live())return;
+   reset();resetBox800();boxMode=true;
+   interactive.setAttribute('aria-label','Select first and opposite original garment rectangle corners');
+   boxStatus.textContent='Tap the first corner, then the opposite corner. Keyboard: arrow keys move crosshair; Enter selects each corner.';
+   cursor();
+  };
+  boxClear.onclick=resetBox800;
+  interactive.addEventListener('keydown',event=>{
+   if(!boxMode||!live())return;
+   const steps={ArrowLeft:[-.04,0],ArrowRight:[.04,0],ArrowUp:[0,-.04],ArrowDown:[0,.04]};
+   const delta=steps[event.key];
+   if(delta){
+    event.preventDefault();
+    keyboardCursorX800=Math.min(.98,Math.max(.02,keyboardCursorX800+delta[0]));
+    keyboardCursorY800=Math.min(.98,Math.max(.02,keyboardCursorY800+delta[1]));
+    cursor();
+   }
+  });
+  interactive.addEventListener('click',async event=>{
+   if(!boxMode||boxBusy||!live())return;
+   boxBusy=true;
+   try{
+    if(!photo.complete||!photo.naturalWidth||!photo.naturalHeight)
+     throw Error('Original photograph has not loaded');
+    const rect=photo.getBoundingClientRect();
+    const keyboard=event.detail===0;
+    const px=keyboard?rect.left+keyboardCursorX800*rect.width:event.clientX;
+    const py=keyboard?rect.top+keyboardCursorY800*rect.height:event.clientY;
+    const verified=await verifyOriginalTap798({
+     originalPhoto:source,sourceSHA256:item.sourceSHA256,
+     sourceHashVerified:item.sourceHashVerified,ownerId,sourceId:item.id,
+     currentOwner,sourceStillCurrent:live,rect,clientX:px,clientY:py,
+     imageNaturalWidth:photo.naturalWidth,imageNaturalHeight:photo.naturalHeight
+    });
+    if(!live())return;
+    if(!firstVerifiedCorner800){
+     firstVerifiedCorner800=verified;
+     boxStatus.textContent='First corner verified at original pixel '+verified.pointX+', '+verified.pointY+
+      '. Tap or keyboard-select the opposite garment corner.';
+    }else{
+     const completed=sourceRectFromVerifiedPoints800(firstVerifiedCorner800,verified);
+     selectedBox800=completed;boxMode=false;firstVerifiedCorner800=null;
+     overlay.style.display='block';
+     overlay.style.left=(completed.normalizedX0*100)+'%';
+     overlay.style.top=(completed.normalizedY0*100)+'%';
+     overlay.style.width=((completed.normalizedX1-completed.normalizedX0)*100)+'%';
+     overlay.style.height=((completed.normalizedY1-completed.normalizedY0)*100)+'%';
+     overlay.setAttribute('data-mission1-owner-box-outline-800','selected');
+     interactive.setAttribute('aria-label','Tap original photograph to select garment point');
+     marker.style.display='none';
+     boxClear.disabled=false;
+     boxStatus.textContent='Source rectangle pixels '+completed.x0+', '+completed.y0+' to '+
+      completed.x1+', '+completed.y1+
+      '. This is only a box, not a separated garment mask. No item is saved.';
+    }
+   }catch{
+    resetBox800();
+    if(live())boxStatus.textContent='Rectangle not accepted. Select two valid corners on the same original owner photo.';
+   }finally{boxBusy=false;}
+  });
+  root.append(boxStart,boxClear,boxStatus);
+ }
  host.prepend(root);
  return Object.freeze({
   root,
   getPoint:()=>live()?selected:null,
+  getBox:()=>live()?selectedBox800:null,
   clear:reset,
-  dispose:()=>{reset();root.remove();}
+  clearBox:()=>resetBox800(),
+  dispose:()=>{reset();resetBox800();root.remove();}
  });
 }

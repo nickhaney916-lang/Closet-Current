@@ -214,7 +214,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -316,10 +316,78 @@ try{
      assert.equal(pointState[key],true,'P798 actual Adjust '+name+' '+key);
     await tapReview.getByRole('button',{name:'Clear garment point'}).click();
     assert.equal(await tapReview.locator('[data-mission1-owner-point-marker798="none"]').count(),1);
-    assert.match(await tapReview.getByRole('status').innerText(),/No point selected/);
+    assert.match(await tapReview.getByRole('status').first().innerText(),/No point selected/);
     await pointButton.click();
     assert.equal(await tapReview.locator('[data-mission1-owner-point-marker798="selected"]').count(),1);
     await page.screenshot({path:out+'/'+name+'-'+width+'-01b-original-photo-temporary-owner-point.png',fullPage:true});
+    // P800: real source original displayed in the ACTUAL native Adjust.
+    // Draw a two-corner rectangle via genuine browser mouse events, then
+    // verify owner/source safety, no automatic mask, no approval or persistence.
+    // This is PLAYWRIGHT simulated gesture testing, not real human proof.
+    assert.equal(await tapReview.getAttribute('data-mission1-owner-box-800'),'review-only');
+    assert.equal(await tapReview.getAttribute('data-owner-box-saved'),'false');
+    const beginRectangle=tapReview.getByRole('button',{name:'Start source garment rectangle selection'});
+    const drawOnOriginal=tapReview.getByRole('button',{name:'Tap original photograph to select garment point'});
+    const imgOriginal=tapReview.locator('img');
+    await imgOriginal.scrollIntoViewIfNeeded();
+    const imageRect=await imgOriginal.boundingBox();
+    assert.ok(imageRect&&imageRect.width>=60&&imageRect.height>=60,'actual native original JPEG displayed');
+    await beginRectangle.click();
+    const firstBox=await imgOriginal.boundingBox();
+    await page.mouse.click(firstBox.x+firstBox.width*.19,firstBox.y+firstBox.height*.15);
+    await page.waitForFunction(()=>/First corner verified/.test(
+     document.querySelector('[data-mission1-owner-box-status800="review-only"]')?.textContent||''
+    ),null,{timeout:20000});
+    const secondBox=await imgOriginal.boundingBox();
+    await page.mouse.click(secondBox.x+secondBox.width*.83,secondBox.y+secondBox.height*.88);
+    await page.waitForFunction(()=>document.querySelector(
+     '[data-mission1-owner-box-outline-800="selected"]')!==null,null,{timeout:20000});
+    const noMaskOrSave=await page.evaluate(async()=>{
+     await writes;
+     const draftSaved=await readDraft();
+     const container=document.querySelector('[data-mission1-owner-box-800="review-only"]');
+     return {boxVisible:!!container?.querySelector('[data-mission1-owner-box-outline-800="selected"]'),
+      sourceOriginalSHAEquals:batch[0]?.originalPhoto?.sha256===batch[0]?.sourceSHA256,
+      originalSourceImageUnchanged:batch[0]?.image===batch[0]?.originalPhoto?.image,
+      noAutomaticSave:!container?.querySelector('[data-owner-box-saved="true"]'),
+      unclassified:batch[0]?.category==='Uncategorized'&&batch[0]?.itemType==='Unknown',
+      noOwnerApproval:batch[0]?.ownerReviewed!==true,
+      ownerConfirmationUnchecked:!document.querySelector(
+       'input[aria-label="I verified the category, clothing type and color"]')?.checked,
+      draftNoBoxReceipt:draftSaved.every(x=>!('ownerOriginalBox800' in x)&&!('sourceBox800' in x)),
+      memoryDraftNoBoxReceipt:!('ownerOriginalBox800' in batch[0])&&!('sourceBox800' in batch[0]),
+      savedCount:(await readAll()).length};
+    });
+    for(const key of ['boxVisible','sourceOriginalSHAEquals','originalSourceImageUnchanged',
+     'noAutomaticSave','unclassified','noOwnerApproval','ownerConfirmationUnchecked',
+     'draftNoBoxReceipt','memoryDraftNoBoxReceipt'])
+     assert.equal(noMaskOrSave[key],true,'P800 real source owner rectangle no save '+key);
+    assert.equal(noMaskOrSave.savedCount,0);
+    await page.screenshot({path:out+'/'+name+'-'+width+'-01c-original-photo-garment-rectangle-review.png',fullPage:true});
+    await tapReview.getByRole('button',{name:'Clear garment rectangle'}).click();
+    assert.equal(await tapReview.locator('[data-mission1-owner-box-outline-800="none"]').count(),1);
+    assert.match(await tapReview.locator('[data-mission1-owner-box-status800="review-only"]').innerText(),/No rectangle selected/);
+    // Keyboard owner input uses arrows to choose two corners and Enter to
+    // confirm them. Actual browser keyboard events, simulated test actor.
+    await beginRectangle.click();
+    const keyboardTarget=tapReview.locator('button[aria-label="Select first and opposite original garment rectangle corners"]');
+    await keyboardTarget.focus();
+    await keyboardTarget.press('ArrowLeft');await keyboardTarget.press('ArrowUp');
+    await keyboardTarget.press('Enter');
+    await page.waitForFunction(()=>/First corner verified/.test(
+     document.querySelector('[data-mission1-owner-box-status800="review-only"]')?.textContent||''
+    ),null,{timeout:20000});
+    await keyboardTarget.press('ArrowRight');
+    await keyboardTarget.press('ArrowRight');
+    await keyboardTarget.press('ArrowRight');
+    await keyboardTarget.press('ArrowDown');
+    await keyboardTarget.press('ArrowDown');
+    await keyboardTarget.press('ArrowDown');
+    await keyboardTarget.press('Enter');
+    await page.waitForFunction(()=>document.querySelector('[data-mission1-owner-box-outline-800="selected"]')!==null,
+     null,{timeout:20000});
+    assert.equal(await tapReview.getAttribute('data-owner-box-saved'),'false');
+    await page.screenshot({path:out+'/'+name+'-'+width+'-01d-original-photo-keyboard-rectangle-review.png',fullPage:true});
     const p790=dialog.locator('[data-mission1-color-hint-790="review-only"]');
     assert.equal(await p790.count(),1,'real source mask color hint is visible only as read-only owner guidance');
     assert.match(await p790.textContent(),/Check the original photograph and manually enter the color/i);
@@ -371,6 +439,7 @@ try{
       manualColorProvenance:item?.colorSource==='user',
       sourceVerified:item?.sourceHashVerified===true,
       pointNotPersisted:!('ownerOriginalPoint798' in (item||{}))&&!('ownerPoint798' in (item||{})),
+      originalBoxNotPersisted:!('ownerOriginalBox800' in (item||{}))&&!('sourceBox800' in (item||{})),
       remainingDraftItems:draft.length,ownerIndexTotal:window.closetIndex02.state().total,
       dialogClosed:!document.querySelector('dialog.photo-adjust[open]'),
       status:document.getElementById('message').textContent
@@ -379,7 +448,7 @@ try{
     for(const [key,value] of Object.entries({
      actualSavedRows:1,category:'Dresses',itemType:'Casual dress',color:'Black',
      sourceSHAUnchanged:true,originalJPEGUnchanged:true,ownerBinding:true,
-     humanReviewed:true,manualColorProvenance:true,sourceVerified:true,pointNotPersisted:true,
+     humanReviewed:true,manualColorProvenance:true,sourceVerified:true,pointNotPersisted:true,originalBoxNotPersisted:true,
      remainingDraftItems:0,ownerIndexTotal:1,dialogClosed:true
     }))assert.equal(after[key],value,name+'/'+width+' saved '+key);
     assert.match(after.status,/saved to your private closet/);
@@ -407,6 +476,11 @@ try{
      actualModelSourcePixelColorReviewedInAdjust:true,
      actualOriginalSourceOwnerPoint798ReviewedInNativeAdjust:true,
      actualOriginalSourceOwnerPoint798NotPersisted:true,
+     actualOriginalSourceOwnerBox800BrowserDrawn:true,
+     actualOriginalSourceOwnerBox800KeyboardEntered:true,
+     actualOriginalSourceOwnerBox800NotPersisted:true,
+     actualOriginalSourceOwnerBox800NoMaskOrApproval:true,
+     simulatedPlaywrightBoxEventsNotIndependentHumans:true,
      actualOriginalSourceOwnerPoint798NoMaskOrApproval:true,
      originalSourceOwnerPointBrowserGesturesSimulated:true,
      actualModelSourceMaskColorOriginalSHA256:realSegmentation.sourceColorReview790.sourceSHA256,

@@ -268,7 +268,10 @@ function adjustPhoto(item){
      if(!stillCurrent798())return;
      ownerPointPanel798=mountOriginalTapReview798({
       host:form,item,ownerId:sourceOwner798,currentOwner:captureProofOwner,
-      isActive:stillCurrent798
+      isActive:stillCurrent798,
+      // P800 is a separately enabled temporary ORIGINAL-source rectangle,
+      // not a model-created mask and never a human approval or save trigger.
+      enableOwnerBox800:new URLSearchParams(location.search).get('mission1OwnerBox800')==='research'
      });
     }).catch(()=>{
      if(stillCurrent798())message('Original garment point review is unavailable. Your photo is unchanged.');
