@@ -20,7 +20,7 @@ No owner/customer photos, signed cloud users, real humans, biometric inference, 
 
 ## Engineering verification
 
-A dedicated no-deploy CI tests strict five research/test/workflow paths from the exact P794 ancestor, full native 3D/cloud/recognition Node suite, Python oracle mask/FP integrity unit tests, genuine independently downloaded and cryptographically pinned SAM2 encoder+decoder and true original source image inference. A PASS only proves the model executed and reported truthful measurements; the observed IoU may be poor and must remain visible. CPU time and huge 130MB model size must be measured before contemplating any mobile implementation.
+A dedicated no-deploy CI tests strict four research/test/workflow paths from the exact P794 ancestor, full native 3D/cloud/recognition Node suite, Python oracle mask/FP integrity unit tests, genuine independently downloaded and cryptographically pinned SAM2 encoder+decoder and true original source image inference. A PASS only proves the model executed and reported truthful measurements; the observed IoU may be poor and must remain visible. CPU time and huge 130MB model size must be measured before contemplating any mobile implementation.
 
 **Remaining entire Mission 1 blockers**: genuinely unseen model-training-disjoint legally usable source-original photographs, two real independent blinded human polygon/category/subtype/color reviewers, practical and accepted full real-photo accuracy and multi-object separation, physical signed Android/iPhone two-account private-cloud tests, and explicit owner acceptance; none can be supplied by this oracle experiment. Family Alpha HOLD #255 persists.
 
