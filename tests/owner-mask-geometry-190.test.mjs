@@ -1,3 +1,4 @@
+import {fitReviewedUpperPhoto62} from '../research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
@@ -177,5 +178,21 @@ test('Mission2 transformed garment preserves bounded world-space contour displac
    const after=new THREE.Vector3().fromBufferAttribute(targets[j].geometry.getAttribute('position'),i).applyMatrix4(targets[j].matrixWorld);
    const delta=after.sub(before[j][i]);assert.ok(Math.abs(delta.x)<=.009001);assert.ok(Math.abs(delta.y)<1e-6);assert.ok(Math.abs(delta.z)<1e-6);
   }
+ }finally{f.restore();}
+});
+
+for(const stage of ['source','owner'])test('Mission2 '+stage+' preflights corrupt last cap before any source fitting mutation',()=>{
+ const f=fixtures();
+ try{
+  const {root,targets,shirt}=transactionFixture();
+  targets[2].scale.y=0;
+  const before=targets.map(m=>m.geometry.getAttribute('position').array.slice());
+  const run=stage==='source'?()=>fitReviewedUpperPhoto62(shirt,root,{
+   accepted:true,sourceSHA256:sourceSHA,itemType:'Blouse',inferredBack:true,
+   releaseAuthorized:false,shoulderToTorso:1.1,hemToTorso:1.05
+  },{naturalShoulder185:true}):()=>fitOwnerAlphaToSkinnedBlouse190(shirt,root,
+   profileOwnerAlphaGeometry190({source:f.source,owner:f.owner,maskSHA}));
+  assert.throws(run,/finite invertible/);
+  targets.forEach((m,i)=>assert.deepEqual(m.geometry.getAttribute('position').array,before[i]));
  }finally{f.restore();}
 });

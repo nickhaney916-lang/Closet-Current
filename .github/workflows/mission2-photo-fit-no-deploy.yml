@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exact P196 parent and isolated Mission2 five-file boundary
+      - name: Exact P196 parent and isolated Mission2 six-file boundary
         run: |
           set -eu
           BASE=a19aae78026c8ec9e1b4b34028142abc7df8c8c8
@@ -26,11 +26,11 @@ jobs:
           git diff --name-only "$BASE" HEAD > /tmp/mission2-paths
           while IFS= read -r p; do
             case "$p" in
-              research/owner-mask-geometry-190/owner-alpha-contour.mjs|tests/owner-mask-geometry-190.test.mjs|scripts/test-native-3d-05-browser.mjs|research/mission2-photo-fit/REPORT.md|.github/workflows/mission2-photo-fit-no-deploy.yml) ;;
+              research/owner-mask-geometry-190/owner-alpha-contour.mjs|tests/owner-mask-geometry-190.test.mjs|research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs|scripts/test-native-3d-05-browser.mjs|research/mission2-photo-fit/REPORT.md|.github/workflows/mission2-photo-fit-no-deploy.yml) ;;
               *) echo "Unexpected Mission2 path $p"; exit 1 ;;
             esac
           done < /tmp/mission2-paths
-          test "$(wc -l < /tmp/mission2-paths)" -eq 5
+          test "$(wc -l < /tmp/mission2-paths)" -eq 6
           git diff --exit-code "$BASE" HEAD -- public supabase
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: P196 real 163-bone vertex proof and complete regression tests

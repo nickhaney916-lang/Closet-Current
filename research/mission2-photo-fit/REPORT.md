@@ -60,3 +60,13 @@ Sampling times out after 30 seconds rather than hanging indefinitely. These
 are headless software-WebGL scheduling diagnostics, NOT completed GPU-frame
 measurements, physical-phone FPS or a performance acceptance pass. Raw private
 photo bytes and owner identifiers never enter telemetry.
+
+## Upstream fitting integration
+
+Tracing the entire source-to-owner call path showed that the earlier P62/P185
+source silhouette stage could mutate geometry before the later owner stage
+preflight. Both stages now call the same exported geometry validator, deployed
+by the existing source donor installer. Additional tests corrupt the last
+shoulder transform in each real stage and verify that earlier panels remain
+unchanged. This closes the earlier path instead of relying only on a downstream
+owner check. No photographic geometry scope or collision claim is expanded.

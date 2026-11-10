@@ -5,6 +5,7 @@
  * NOT 3D reconstruction from an arbitrary photograph, segmentation truth,
  * collision simulation, independent owner review or a photographed rear.
  */
+import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 import {deriveOwnerBilateralContour195} from '../owner-bilateral-asymmetric-fit-195/side-profile.mjs';
 import {verifyPhysicalBilateralMesh196} from '../owner-mesh-bilateral-readback-196/real-mesh-evidence.mjs';
 const SRC='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -114,26 +115,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   !o.userData?.work56Garment&&o.skeleton)skeletons.add(o.skeleton);});
  if(targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||
    !skeletons.has(m.skeleton)))fail('only the original licensed skinned 163-bone shell can be moved');
- // Validate EVERY target before staging changes. Singular world transforms
- // invert to a zero matrix in THREE and would silently collapse the garment.
- const storage=[];
- for(const mesh of targets){
-  mesh.updateWorldMatrix(true,false);
-  const matrix=mesh.matrixWorld,det=matrix?.determinant();
-  if(!matrix?.elements?.every(Number.isFinite)||!Number.isFinite(det)||Math.abs(det)<1e-10)
-   fail('finite invertible garment world transform required');
-  for(const name of ['position','panelPosition']){
-   const a=mesh.geometry?.getAttribute(name);
-   if(!a?.isBufferAttribute||a.isInterleavedBufferAttribute||a.itemSize!==3||a.normalized||
-      !(a.array instanceof Float32Array||a.array instanceof Float64Array)||
-      !Number.isInteger(a.count)||a.array.length!==a.count*3||
-      !a.array.every(Number.isFinite))fail('finite independent packed XYZ garment attributes required');
-   const start=a.array.byteOffset,end=start+a.array.byteLength;
-   if(storage.some(b=>b.buffer===a.array.buffer&&start<b.end&&end>b.start))
-    fail('garment panel and position storage must not alias');
-   storage.push({buffer:a.array.buffer,start,end});
-  }
- }
+ validatePhotoGarmentTargets(targets,fail);
  let moved=0,maxShift=0,activeCaps=new Set(),panels=[];
  const side195=profile.ownerBilateralContourMeasured195===true;
  let leftMoved195=0,rightMoved195=0;
