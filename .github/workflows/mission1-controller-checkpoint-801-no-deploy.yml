@@ -1,0 +1,45 @@
+name: Mission 1 P801 compact current conversation checkpoint — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-controller-checkpoint-801-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: closet-m1-p801-document-only-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-document-handoff:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact independently green P800 source ancestor and ONLY checkpoint markdown + this workflow
+        run: |
+          set -euo pipefail
+          BASE=54c919e40fc7d0671aedbca77a069f4718acbb73
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-controller-doc-only-paths
+          test "$(wc -l </tmp/m1-controller-doc-only-paths)" -eq 2
+          while read -r path; do
+            case "$path" in
+              research/mission1-controller/CURRENT.md|.github/workflows/mission1-controller-checkpoint-801-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED APP/AUTH/CLOUD/MODEL/PROD CHANGE $path"; exit 1 ;;
+            esac
+          done </tmp/m1-controller-doc-only-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase scripts tests benchmark)"
+          echo M1_P801_EXACT_GREEN_P800_CODE_PARENT_DOCUMENT_ONLY_NO_DEPLOY
+      - name: Validate compact one-conversation current M1 blocker and actual green-research source pointers
+        run: |
+          set -euo pipefail
+          DOC=research/mission1-controller/CURRENT.md
+          for keyword in             "FAMILY ALPHA HOLD #255"             "54c919e40fc7d0671aedbca77a069f4718acbb73"             "3b16be6f58f6def8f821ae603ef3054d6b1a1299"             "42922233664" "42920646785"             "1,649/1,649" "22/23" "15/23"             "NOT 100%" "UNMERGED" "UNDEPLOYED"             "No automatic engineering between turns"; do
+            grep -Fq "$keyword" "$DOC" || { echo "MISSING VERIFIED HANDOFF $keyword"; exit 1; }
+          done
+          if grep -Eiq 'MISSION 1 (IS|HAS BEEN) 100% COMPLETE|FAMILY ALPHA (IS )?RELEASED|PHYSICAL PHONES PASSED|REAL HUMAN DOUBLE BLIND VERIFIED' "$DOC"; then
+            echo "UNAUTHORIZED CLAIM OF RELEASE OR HUMAN EVIDENCE"; exit 1
+          fi
+          echo "M1_P801_CONTROLLER_RESUMABLE_SHA_PINNED_HANDOFF_VERIFIED_RELEASE_HOLD"
