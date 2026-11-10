@@ -121,7 +121,7 @@ export async function verifyOriginalTap798({
  * persist a receipt or auto-confirm a saved clothing item.
  */
 export function mountOriginalTapReview798({
- host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false
+ host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false
 }={}){
  if(!host||typeof host.prepend!=='function'||!item||
     typeof currentOwner!=='function'||typeof isActive!=='function'||
@@ -156,14 +156,16 @@ export function mountOriginalTapReview798({
  clear.textContent='Clear garment point';clear.className='secondary';clear.disabled=true;
  root.append(clear);
  let selected=null,busy=false,boxMode=false,boxBusy=false;
+ let resetMask802=()=>{},refreshMask802=()=>{};
  let firstVerifiedCorner800=null,selectedBox800=null;
  let keyboardCursorX800=.5,keyboardCursorY800=.5;
  const live=()=>root.isConnected&&isActive()&&currentOwner()===ownerId&&
   item.sourceSHA256===source.sha256&&item.originalPhoto?.image===source.image;
  const reset=()=>{
+  resetMask802();
   selected=null;marker.style.display='none';marker.dataset.mission1OwnerPointMarker798='none';
   status.textContent='No point selected. Your original photograph is unchanged.';
-  clear.disabled=true;
+  clear.disabled=true;refreshMask802();
  };
  clear.addEventListener('click',reset);
  interactive.addEventListener('click',async event=>{
@@ -196,7 +198,7 @@ export function mountOriginalTapReview798({
    marker.dataset.mission1OwnerPointMarker798='selected';
    status.textContent='Review point at original pixel '+point.pointX+', '+point.pointY+
     '. No AI mask was generated; clothing category, type and color remain unconfirmed.';
-   clear.disabled=false;
+   clear.disabled=false;resetMask802();refreshMask802();
   }catch{
    if(live()){
     reset();status.textContent='Point not accepted. Check the original photo and signed-in account, then try again.';
@@ -232,11 +234,12 @@ export function mountOriginalTapReview798({
    marker.style.top=(keyboardCursorY800*100)+'%';
   };
   resetBox800=()=>{
+   resetMask802();
    boxMode=false;boxBusy=false;firstVerifiedCorner800=null;selectedBox800=null;
    keyboardCursorX800=.5;keyboardCursorY800=.5;
    overlay.style.display='none';overlay.setAttribute('data-mission1-owner-box-outline-800','none');
    interactive.setAttribute('aria-label','Tap original photograph to select garment point');
-   boxClear.disabled=true;
+   boxClear.disabled=true;refreshMask802();
    boxStatus.textContent='No rectangle selected. Your original photograph is unchanged.';
    marker.style.display='none';
   };
@@ -291,7 +294,7 @@ export function mountOriginalTapReview798({
      overlay.setAttribute('data-mission1-owner-box-outline-800','selected');
      interactive.setAttribute('aria-label','Tap original photograph to select garment point');
      marker.style.display='none';
-     boxClear.disabled=false;
+     boxClear.disabled=false;refreshMask802();
      boxStatus.textContent='Source rectangle pixels '+completed.x0+', '+completed.y0+' to '+
       completed.x1+', '+completed.y1+
       '. This is only a box, not a separated garment mask. No item is saved.';
@@ -302,6 +305,98 @@ export function mountOriginalTapReview798({
    }finally{boxBusy=false;}
   });
   root.append(boxStart,boxClear,boxStatus);
+  // P802: an opt-in, on-device, resource-bounded COLOR-CONNECTED preview.
+  // This is emphatically NOT SAM2 or a trustworthy independent mask.
+  // Requires BOTH the P800 SHA-verified box and a separate P798 owner seed tap.
+  if(enableOwnerMask802===true){
+   root.dataset.mission1OwnerMask802='ephemeral-local-color-preview';
+   const previewButton=document.createElement('button');
+   previewButton.type='button';previewButton.className='secondary';
+   previewButton.textContent='Preview locally from box and garment point';
+   previewButton.setAttribute('aria-label','Preview local source-pixel color region');
+   previewButton.disabled=true;
+   const dismissPreview=document.createElement('button');
+   dismissPreview.type='button';dismissPreview.className='secondary';
+   dismissPreview.textContent='Discard local mask preview';dismissPreview.disabled=true;
+   const previewStatus=document.createElement('p');
+   previewStatus.className='fine';previewStatus.setAttribute('role','status');
+   previewStatus.setAttribute('aria-live','polite');
+   previewStatus.dataset.mission1LocalMaskStatus802='review-only';
+   previewStatus.textContent='Choose an original garment rectangle, then tap a garment pixel inside it. This experimental color preview is not SAM2.';
+   const maskCanvas=document.createElement('canvas');
+   maskCanvas.style.cssText='display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+   maskCanvas.dataset.mission1LocalMaskOverlay802='none';
+   maskCanvas.setAttribute('aria-hidden','true');
+   interactive.append(maskCanvas);
+   let maskBusy=false,maskEpoch=0;
+   refreshMask802=()=>{
+    previewButton.disabled=maskBusy||!selected||!selectedBox800||!live();
+   };
+   resetMask802=()=>{
+    maskEpoch++;
+    maskCanvas.style.display='none';maskCanvas.dataset.mission1LocalMaskOverlay802='none';
+    maskCanvas.width=0;maskCanvas.height=0;
+    dismissPreview.disabled=true;
+    previewStatus.textContent='No mask preview retained. Only your original photo is authoritative.';
+   };
+   dismissPreview.onclick=()=>{resetMask802();refreshMask802();};
+   previewButton.onclick=async()=>{
+    if(maskBusy||!live()||!selectedBox800||!selected)return;
+    maskBusy=true;refreshMask802();
+    const boxInput=selectedBox800,pointInput=selected,epoch=++maskEpoch;
+    try{
+     if(!photo.complete||!photo.naturalWidth||!photo.naturalHeight)
+      throw Error('Original JPEG not decoded');
+     const imageRect=photo.getBoundingClientRect();
+     // Recompute SHA-256 over ORIGINAL JPEG bytes with an active owner lease.
+     const verifiedSeed=await verifyOriginalTap798({
+      originalPhoto:source,sourceSHA256:item.sourceSHA256,
+      sourceHashVerified:item.sourceHashVerified,ownerId,sourceId:item.id,
+      currentOwner,sourceStillCurrent:live,rect:imageRect,
+      clientX:imageRect.left+pointInput.normalizedX*imageRect.width,
+      clientY:imageRect.top+pointInput.normalizedY*imageRect.height,
+      imageNaturalWidth:photo.naturalWidth,imageNaturalHeight:photo.naturalHeight
+     });
+     if(!live()||maskEpoch!==epoch||boxInput!==selectedBox800||
+        pointInput!==selected||verifiedSeed.pointX!==pointInput.pointX||
+        verifiedSeed.pointY!==pointInput.pointY)return;
+     // Source-private module code only. No image bytes sent to remote model.
+     const {makeOwnerSeededLocalPreview802}=
+      await import('./mission1-local-mask-preview-802.mjs');
+     if(!live()||maskEpoch!==epoch||boxInput!==selectedBox800||pointInput!==selected)return;
+     const scale=Math.min(1,512/Math.max(photo.naturalWidth,photo.naturalHeight));
+     const w=Math.max(1,Math.round(photo.naturalWidth*scale));
+     const h=Math.max(1,Math.round(photo.naturalHeight*scale));
+     const sourceCanvas=document.createElement('canvas');sourceCanvas.width=w;sourceCanvas.height=h;
+     const ctx=sourceCanvas.getContext('2d',{willReadFrequently:true});
+     if(!ctx)throw Error('Local pixel processing unavailable');
+     ctx.drawImage(photo,0,0,w,h);
+     const bitmap=ctx.getImageData(0,0,w,h);
+     const result=makeOwnerSeededLocalPreview802({
+      box:boxInput,point:verifiedSeed,pixels:bitmap.data,width:w,height:h
+     });
+     if(!live()||maskEpoch!==epoch||boxInput!==selectedBox800||pointInput!==selected)return;
+     maskCanvas.width=w;maskCanvas.height=h;
+     const maskContext=maskCanvas.getContext('2d');
+     if(!maskContext)throw Error('Local preview canvas unavailable');
+     const overlayImage=maskContext.createImageData(w,h);
+     overlayImage.data.set(result.overlay);
+     maskContext.putImageData(overlayImage,0,0);
+     maskCanvas.style.display='block';
+     maskCanvas.dataset.mission1LocalMaskOverlay802='unverified-local-color-region';
+     dismissPreview.disabled=false;
+     previewStatus.textContent='Local original-pixel COLOR region: '+result.maskPixels+
+      ' thumbnail pixels ('+Math.round(result.fractionOfBox*100)+'% of selected box). '+
+      'NOT SAM2, not a verified garment cutout, NOT saved. Manually review clothing category, type and color.';
+    }catch{
+     if(live()&&epoch===maskEpoch){
+      resetMask802();
+      previewStatus.textContent='Local color preview unavailable or inconclusive. Original photo unchanged; use ordinary manual review.';
+     }
+    }finally{maskBusy=false;refreshMask802();}
+   };
+   root.append(previewButton,dismissPreview,previewStatus);
+  }
  }
  host.prepend(root);
  return Object.freeze({
