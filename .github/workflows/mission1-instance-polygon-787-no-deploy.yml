@@ -1,0 +1,82 @@
+name: M1 P787 actual original-photo ONNX instance masks vs publisher polygons — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-instance-polygon-scoring-787-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  genuine-original-mask-to-publisher-polygon:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Exact P786 parent and only four research paths, NEVER public or cloud writes
+        run: |
+          set -euo pipefail
+          BASE=ef7a9498b023b52b2dbe4fbb1c92c181f0d79687
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p787-files
+          test "$(wc -l < /tmp/p787-files)" -eq 4
+          while read -r p; do
+            case "$p" in
+              scripts/score-independent-instance-787.py|tests/test_mission1_instance_mask_787.py|research/mission1-instance-polygon-scoring-787/REPORT.md|.github/workflows/mission1-instance-polygon-787-no-deploy.yml) ;;
+              *) echo "P787 BLOCKED unapproved path: $p"; exit 1 ;;
+            esac
+          done < /tmp/p787-files
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase)"
+          echo P787_FAMILY_ALPHA_HOLD_255_NONPRODUCT_DIFF_VERIFIED
+      - name: Ephemeral pinned Python and inference dependencies
+        run: python -m pip install --disable-pip-version-check --no-cache-dir numpy==2.2.6 Pillow==11.3.0 onnxruntime==1.22.1
+      - name: Geometry, true source pixel coordinate and one-to-one publisher polygon tests
+        run: |
+          python -m py_compile scripts/score-independent-instance-787.py
+          python -m unittest discover -s tests -p 'test_mission1_instance_mask_787.py' -v
+      - name: Independently obtain all six SHA-verified original public publisher JPEGs
+        run: |
+          cp research/real-garment-acceptance-66/fashionpedia-sample.json research/real-garment-acceptance-66/pinned-published-exposed.json
+          python scripts/fetch-fashionpedia-66.py
+          test "$(find benchmark/real-garment-acceptance-66/fashionpedia -maxdepth 1 -name '*.jpg' | wc -l)" -eq 6
+      - name: REAL ONNX 32-basis source instance mask decodes and actual publisher polygon IoU scoring
+        run: |
+          python scripts/score-independent-instance-787.py
+          python - <<'PY'
+          import json,pathlib
+          p=pathlib.Path('benchmark/mission1-instance-model-786/p787-scored-real-publisher-polygons.json')
+          r=json.loads(p.read_text())
+          assert r['schema']=='m1-p787-actual-onnx-original-mask-polygon-evaluation/v1'
+          assert r['pinnedModelWeightSHA256']=='485bc106721febbd82fe24297e12a9fb49a435a552afff1e6b76308716555f76'
+          assert r['pixelMaskIsRealOnnxPrototype'] is True
+          assert len(r['rows'])==6 and len({row['sourceSHA256'] for row in r['rows']})==6
+          assert r['summary']['publisherSupportedInstances']>0
+          for row in r['rows']:
+           assert row['truePositives']+row['falseNegatives']==row['publisherSupportedInstances']
+           assert row['truePositives']+row['falsePositives']==row['decodedModelCandidates']
+           assert all(0.5<=m['maskIoU']<=1 for m in row['matches'])
+          assert r['commercialModelRightsIndependentlyCleared'] is False
+          assert r['independentBlindedHumanTruthAvailable'] is False
+          assert r['newHeldoutPhotos']==0 and r['modelAutomaticallyPromoted'] is False
+          assert r['releaseAuthorized'] is False and r['familyAlpha']=='HOLD'
+          assert not pathlib.Path('benchmark/mission1-instance-model-786/temporary-licensed-unverified-model.onnx').exists()
+          print('P787_ACTUAL_ONNX_MASK_DECODE_AND_PUBLISHER_IOU_REPORTED',r['summary'])
+          print('P787_RECOGNITION_MISSION1_NOT_CERTIFIED_MODEL_RIGHTS_NOT_CLEARED')
+          PY
+      - name: Destroy all actual original photos, external model and temporary downloaded data
+        if: always()
+        run: |
+          rm -rf benchmark/real-garment-acceptance-66/fashionpedia
+          rm -rf benchmark/real-garment-acceptance-66/previous-six
+          rm -f benchmark/mission1-instance-model-786/temporary-licensed-unverified-model.onnx
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-p787-GENUINE-original-instance-mask-IoU-research-HOLD-NO-PRIVATE-IMAGES
+          path: benchmark/mission1-instance-model-786/p787-scored-real-publisher-polygons.json
+          retention-days: 14
+          if-no-files-found: warn
