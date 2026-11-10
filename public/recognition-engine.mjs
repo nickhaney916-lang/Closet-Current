@@ -70,6 +70,35 @@ export async function recognizeGarment(model,image,{onStage=()=>{},onIdentified=
  return {strong:true,choices:[{...first,sleeveLength:details.sleeveLength||first.sleeveLength},...branch.slice(1)],details};
 }
 
+// A narrow candidate list can force even two image views to agree on an
+// incorrect class. Recovery may suggest a candidate from a narrow list, but
+// only TWO independent full-catalog views can promote it to a strong result.
+// Model probabilities are prompt-set-relative; narrow and complete scores
+// must never be compared as if calibrated to the same vocabulary.
+async function verifyFullVocabularyRecovery788(image,model,confirmationModel,choice,
+ {minTypeScore=.45,minTypeMargin=.18,minCategoryTotal=.65,minCategoryMargin=.28}={}){
+ const labels=localCandidates.map(x=>x.label);
+ const [first,second]=await Promise.all([
+  model(image,labels,options),confirmationModel(image,labels,options)
+ ]);
+ const check=raw=>{
+  const ranked=clothingChoices(raw),totals=garmentCategoryTotals(raw);
+  const valid=Array.isArray(raw)&&raw.length===labels.length&&
+   new Set(raw.map(x=>x.label)).size===labels.length&&
+   raw.every(x=>labels.includes(x.label)&&Number.isFinite(x.score)&&x.score>=0&&x.score<=1)&&
+   Math.abs(raw.reduce((n,x)=>n+x.score,0)-1)<.002;
+  return {accepted:valid&&ranked[0]?.category===choice.category&&
+    ranked[0]?.itemType===choice.itemType&&ranked[0].score>=minTypeScore&&
+    ranked[0].score-(ranked[1]?.score||0)>=minTypeMargin&&
+    totals[0]?.category===choice.category&&totals[0].score>=minCategoryTotal&&
+    totals[0].score-(totals[1]?.score||0)>=minCategoryMargin,
+   top:ranked.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
+   totals:totals.slice(0,2),completeVocabulary:valid};
+ };
+ const a=check(first),b=check(second);
+ return {accepted:!!(a.accepted&&b.accepted),first:a,confirmation:b};
+}
+
 // Retry only an uncertain top type. Category, type, complete-vocabulary and
 // independent-view gates must all pass again; contradictions are not retried.
 export async function recognizeWithRecovery(model,image,settings={}){
@@ -95,8 +124,14 @@ export async function recognizeWithRecovery(model,image,settings={}){
    const safe=v=>v[0]?.category==='Bottoms'&&v[0].score>=.7&&
     v[0].score-(v[1]?.score||0)>=.25;
    if(a[0]?.category==='Bottoms'&&b[0]?.category==='Bottoms'&&a[0].itemType===b[0].itemType&&safe(b)&&a[0].score>=.45&&a[0].score-(a[1]?.score||0)>=.07){
-    settings.onIdentified?.(a[0]);
-    return {strong:true,choices:[a[0]],details:{},reason:'bottoms_independent_agreement',preprocessingRecovery:true};
+    const full=await verifyFullVocabularyRecovery788(image,settings.recoveryModel,
+     settings.recoveryConfirmationModel,a[0],{minTypeScore:.45,minTypeMargin:.2,
+      minCategoryTotal:.7,minCategoryMargin:.35});
+    if(full.accepted){
+     settings.onIdentified?.(a[0]);
+     return {strong:true,choices:[a[0]],details:{},reason:'bottoms_full_catalog_independent_agreement',preprocessingRecovery:true};
+    }
+    result.diagnostics={...result.diagnostics,bottomsFullCatalogVeto:full};
    }
    result.diagnostics={...result.diagnostics,bottomsRecovery:{
     first:a.slice(0,2).map(x=>({category:x.category,type:x.itemType,score:x.score})),
@@ -123,8 +158,14 @@ export async function recognizeWithRecovery(model,image,settings={}){
    const strong=v=>v[0]?.category!=='Uncategorized'&&v[0]?.score>=.55&&
     v[0].score-(v[1]?.score||0)>=.2;
    if(same&&strong(a)&&strong(b)){
-    settings.onIdentified?.(a[0]);
-    return {strong:true,choices:[a[0]],details:{},reason:'skirt_dress_independent_agreement',preprocessingRecovery:true};
+    const full=await verifyFullVocabularyRecovery788(image,settings.recoveryModel,
+     settings.recoveryConfirmationModel,a[0],{minTypeScore:.55,minTypeMargin:.2,
+      minCategoryTotal:.7,minCategoryMargin:.4});
+    if(full.accepted){
+     settings.onIdentified?.(a[0]);
+     return {strong:true,choices:[a[0]],details:{},reason:'skirt_dress_full_catalog_independent_agreement',preprocessingRecovery:true};
+    }
+    result.diagnostics={...result.diagnostics,skirtDressFullCatalogVeto:full};
    }
    // Record the two-category conflict explicitly for future photo-quality
    // benchmarking; never auto-save when the independent views disagree.
