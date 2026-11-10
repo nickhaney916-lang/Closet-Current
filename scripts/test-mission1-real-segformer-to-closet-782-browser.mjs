@@ -23,6 +23,7 @@ const sourceRecord=JSON.parse(readFileSync('benchmark/locked-photo-sources.json'
  .find(x=>x.id==='commons-0053');
 const sourceSHA256=createHash('sha256').update(original).digest('hex');
 assert.ok(sourceRecord?.verified && sourceRecord?.attribution?.license==='CC BY 4.0');
+assert.match(sourceRecord.attribution.title,/Dress/i,'the source catalog must document a real dress');
 assert.equal(sourceSHA256,sourceRecord.sha256,'real original public licensed photo bytes required');
 const base=resolve('.');
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
@@ -153,11 +154,19 @@ try{
     deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
    try{
     const realSegmentation=await genuinelyInferSourceSegformer782(context,name);
+    assert.ok(realSegmentation.detectedRegions.length>0,
+     'model must genuinely detect a visible clothing region on this verified photo');
     const actualRegion=realSegmentation.detectedRegions[0]||null;
     const actualCategory=categoryBySemantic[actualRegion?.semanticRegionId]||null;
     const researchType=fallbackTypeByCategory[actualCategory]||'Other';
     // This bridge is intentionally LOW-CONFIDENCE. The actual pinned B0
     // semantic class never supplies subtype or primary color ground truth.
+    console.log('M1_P782_ACTUAL_SEMANTIC_PROPOSAL_VS_DOCUMENTED_SOURCE',JSON.stringify({
+     browser:name,sourceCatalogTitle:sourceRecord.attribution.title,
+     modelTopSemanticCategory:actualCategory,sourceDocumentedCategory:'Dresses',
+     modelSemanticCategoryNotGarmentIdentity:true,
+     modelRegions:realSegmentation.detectedRegions.map(x=>({semanticRegionId:x.semanticRegionId,selectedCount:x.selectedCount})),
+     noAutomaticSavingOrValidatedSubtype:true}));
     const sourceModelResult={strong:false,categoryConfirmed:false,
      choices:actualCategory?[{
       category:actualCategory,itemType:researchType,
@@ -221,9 +230,9 @@ try{
      .getByRole('button',{name:'Adjust',exact:true}).click();
     const dialog=page.locator('dialog.photo-adjust[open]');
     await dialog.waitFor({state:'visible'});
-    await dialog.locator('select[aria-label="Main category"]').selectOption('Bottoms');
-    await dialog.locator('select[aria-label="Item type"]').selectOption('Skirt');
-    await dialog.locator('input[aria-label="Color"]').fill('Cream');
+    await dialog.locator('select[aria-label="Main category"]').selectOption('Dresses');
+    await dialog.locator('select[aria-label="Item type"]').selectOption('Other');
+    await dialog.locator('input[aria-label="Color"]').fill('Black');
     assert.equal(await dialog.locator('input[aria-label="I verified the category, clothing type and color"]').isChecked(),false);
     assert.equal(await dialog.locator('input[aria-label="I confirmed this photo shows one garment"]').isChecked(),false);
     // Native required checkboxes block Save until deliberately confirmed.
@@ -254,18 +263,18 @@ try{
      };
     });
     for(const [key,value] of Object.entries({
-     actualSavedRows:1,category:'Bottoms',itemType:'Skirt',color:'Cream',
+     actualSavedRows:1,category:'Dresses',itemType:'Other',color:'Black',
      sourceSHAUnchanged:true,originalJPEGUnchanged:true,ownerBinding:true,
      humanReviewed:true,manualColorProvenance:true,sourceVerified:true,
      remainingDraftItems:0,ownerIndexTotal:1,dialogClosed:true
     }))assert.equal(after[key],value,name+'/'+width+' saved '+key);
     assert.match(after.status,/saved to your private closet/);
     await page.evaluate(()=>{window.closetBrowseAll=true;switchView('closet');});
-    await page.locator('#index02Category').selectOption('Bottoms');
+    await page.locator('#index02Category').selectOption('Dresses');
     await page.waitForFunction(()=>window.closetIndex02.state().matched===1);
     assert.equal(await page.locator('#closetGrid article.card').count(),1);
-    assert.match(await page.locator('#closetGrid article.card').innerText(),/Cream/);
-    await page.screenshot({path:out+'/'+name+'-'+width+'-03-real-my-closet-skirt.png',fullPage:true});
+    assert.match(await page.locator('#closetGrid article.card').innerText(),/Black/);
+    await page.screenshot({path:out+'/'+name+'-'+width+'-03-real-my-closet-dress.png',fullPage:true});
     await page.evaluate(()=>switchView('scan'));
     await page.locator('#clothingPhotos').setInputFiles({
      name:'exact-original-repeat.jpg',mimeType:'image/jpeg',buffer:original
@@ -283,6 +292,9 @@ try{
      sourceSemanticCount:realSegmentation.detectedRegions.length,
      actualModelTopSemanticRegion:actualRegion?.semanticRegionId??null,
      modelCategorySuppliedWithoutSubtypeOrColor:actualCategory,
+     sourceCatalogDocumentsDress:true,simulatedManualChoiceUsesDocumentedDressCategory:true,
+     simulatedManualSubtypeExplicitlyUnspecified:true,
+     modelCategoryAloneDidNotDetermineSavedGarment:true,
      ownerReviewStillSimulated:true,actualHumanGroundTruthIndependentlyVerified:false,
      originalSourceIndependentHash:true,actualUserCorrectionForm:true,
      actualOwnerBoundIndexedDB:true,actualMyClosetSaved:true,

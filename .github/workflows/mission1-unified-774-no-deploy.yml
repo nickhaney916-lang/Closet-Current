@@ -562,6 +562,11 @@ jobs:
             assert.equal(row.width,390);
             assert.equal(row.actualUnmodifiedPinnedSegformerWorkerExecuted,true);
             assert.equal(row.actualAIModelExecution,true);
+            assert.ok(row.sourceSemanticCount>=1,'actual B0 must propose at least one garment region on this source');
+            assert.equal(row.sourceCatalogDocumentsDress,true);
+            assert.equal(row.simulatedManualChoiceUsesDocumentedDressCategory,true);
+            assert.equal(row.simulatedManualSubtypeExplicitlyUnspecified,true);
+            assert.equal(row.modelCategoryAloneDidNotDetermineSavedGarment,true);
             assert.equal(row.realModelOriginalSHA256,sha);
             assert.equal(row.actualModelRevision,'a2489ea8e7ec1ee912190546bad31a4906ccca76');
             assert.match(row.exactSourceModelMapSHA256,/^[a-f0-9]{64}$/);
