@@ -519,7 +519,7 @@ function render(){
  {
   // Mobile saved-item editors can otherwise extend past the viewport and
   // their Save/Cancel buttons become covered by scrolling clothing fields.
-  // Scope safe scrolling to research mode; preserve default consumer UI.
+  // Keep these bounds active on the normal saved-clothing editor.
   dialog.style.boxSizing='border-box';
   dialog.style.width='calc(100vw - 24px)';
   dialog.style.maxWidth='min(440px,calc(100vw - 24px))';
@@ -531,7 +531,8 @@ function render(){
   dialog.style.overscrollBehavior='contain';
   dialog.style.scrollPaddingBottom='12px';
  }const title=node('h2','Adjust clothing details');title.id='savedClothingEditorTitle';dialog.setAttribute('aria-labelledby',title.id);dialog.append(title);
- const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft),
+ let dirty=false,saving=false;
+ const f=node('form');const draft=structuredClone(item),collect=clothingFields(f,draft,()=>{dirty=true;}),
   expectedSavedRow=structuredClone(item),
   ok=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary');
  f.className='card';f.style.padding='15px';
@@ -539,7 +540,7 @@ function render(){
   f.style.boxSizing='border-box';f.style.width='100%';
   f.style.maxWidth='100%';f.style.minWidth='0';
  }const editStatus=node('p',null,'fine');editStatus.setAttribute('role','status');editStatus.setAttribute('aria-live','polite');editStatus.style.cssText='grid-column:1 / -1;margin:0;white-space:normal;overflow-wrap:anywhere';
- let dirty=false,saving=false;const protectUnsaved=event=>{if(dirty||saving){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',protectUnsaved);f.addEventListener('input',()=>dirty=true);f.addEventListener('change',()=>dirty=true);
+ const protectUnsaved=event=>{if(dirty||saving){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',protectUnsaved);f.addEventListener('input',()=>dirty=true);f.addEventListener('change',()=>dirty=true);
  const closeEditor=()=>{if(saving)return;if(!dirty||confirm('Discard your unsaved clothing changes?'))dialog.close();};
  dialog.addEventListener('cancel',event=>{event.preventDefault();closeEditor();});
  cancel.type='button';cancel.onclick=closeEditor;f.onsubmit=async e=>{e.preventDefault();if(saving)return;saving=true;ok.disabled=cancel.disabled=true;editStatus.textContent='Saving changes…';try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};
