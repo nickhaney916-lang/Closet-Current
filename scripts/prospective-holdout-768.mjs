@@ -13,11 +13,12 @@ import {execFileSync} from 'node:child_process';
 import {
  P66_EXPOSED_DIGESTS,sha256,sealProspectiveHoldout,evaluateProspectiveHoldout
 } from '../research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
+import {P772_EXPOSED_DIGESTS_774} from '../research/mission1-exposure-774/pinned-exposed-source-history.mjs';
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const fail=x=>{throw Error('Mission1 holdout CLI: '+x);};
 const historical=()=>[
  ...read('benchmark/locked-photo-sources.json').map(x=>x.sha256),
- ...P66_EXPOSED_DIGESTS
+ ...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774
 ];
 const cwdPhotoReader=directory=>name=>readFileSync(join(resolve(directory),name));
 const commitExists=id=>{
