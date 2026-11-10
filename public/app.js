@@ -257,7 +257,10 @@ function adjustPhoto(item){
   if(sourceOwner798&&item.ownerId===sourceOwner798){
    const sourceImage798=item.originalPhoto.image,sourceDigest798=item.sourceSHA256;
    const stillCurrent798=()=>dialog.isConnected&&dialog.open&&
-    batch.includes(item)&&captureProofOwner()===sourceOwner798&&
+    batch.some(x=>x.id===item.id&&x.ownerId===sourceOwner798&&
+     x.sourceHashVerified===true&&x.sourceSHA256===sourceDigest798&&
+     x.originalPhoto?.image===sourceImage798)&&
+    captureProofOwner()===sourceOwner798&&
     item.sourceSHA256===sourceDigest798&&item.originalPhoto?.image===sourceImage798&&
     !items.some(x=>x.id===item.id);
    void import('./owner-original-photo-point-798.mjs')
