@@ -11,6 +11,14 @@
  *
  * This is source exclusion metadata, NOT genuine new two-human ground truth.
  */
+import {readFileSync} from 'node:fs';
+const HISTORIC_59=JSON.parse(readFileSync(new URL('../../benchmark/locked-photo-sources.json',import.meta.url),'utf8'));
+if(!Array.isArray(HISTORIC_59)||HISTORIC_59.length!==59||
+  new Set(HISTORIC_59.map(x=>x.sha256)).size!==59||
+  HISTORIC_59.some(x=>!/^[a-f0-9]{64}$/.test(x.sha256||'')))
+ throw Error('MISSION1_EXPOSURE_774: canonical 59 original source identities unavailable');
+export const P59_EXPOSED_DIGESTS_774=Object.freeze(HISTORIC_59.map(x=>x.sha256));
+
 export const MISSION1_P772_PUBLISHED_DEVELOPMENT_SOURCES_774=Object.freeze([
  Object.freeze({id:17971,sha256:'4bbcc7740056454ba02db56c37b386d526d9b7a1fe5d397dfea7225befbf4583',targetPublisherCategory:0,visualSimilarityQuarantined:false}),
  Object.freeze({id:18204,sha256:'fcbf6213998dba4aabd876a1b14b78626a13d5bd07537ddc1bd0fe50cb28bb6d',targetPublisherCategory:1,visualSimilarityQuarantined:false}),
