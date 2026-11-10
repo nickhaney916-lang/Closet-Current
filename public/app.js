@@ -727,15 +727,6 @@ function stopCamera(){
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
  controls(false);$('captureState').textContent='Camera stopped · your photos are ready to review';
 }
-function pauseCameraOnInterruption(){
- if(!cameraOpening&&!stream)return false;
- stopCamera();
- $('captureState').textContent='Camera paused while the app was in the background · captured photos remain available to review';
- message('Camera paused while the app was in the background. Your captured photos remain available. Tap Start camera to continue.');
- return true;
-}
-document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCameraOnInterruption();});
-window.addEventListener('pagehide',pauseCameraOnInterruption);
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','singleCameraCapture','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
  const wasManual=cameraMode==='manual';
@@ -746,7 +737,7 @@ function finishScan(){
  else{message(wasManual?'No photos taken yet. Take photos and tap the shutter when a garment is ready.':'No camera frames were received. Try Take photos or choose a saved closet video.');$('captureState').textContent='No photos captured · choose a camera option to try again';}
 }
 function captureTick(now=Date.now()){
- if(document.hidden||!stream||cameraMode!=='auto')return;
+ if((typeof document!=='undefined'&&document.hidden)||!stream||cameraMode!=='auto')return;
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&captureProofTaking)return;
  const ready=video.readyState>=2&&video.videoWidth>0;
  if(!cadence.due(now,ready)){
@@ -797,9 +788,9 @@ async function startCamera(mode){
    // On unsupported devices relax preference only; permission denial never bypassed.
    acquired=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
   }
-  if(request!==cameraRequest||document.hidden){
+  if(request!==cameraRequest||(typeof document!=='undefined'&&document.hidden)){
    acquired.getTracks().forEach(track=>track.stop());
-   if(document.hidden&&request===cameraRequest){stopCamera();message('Camera access finished after the app was backgrounded. Your captured photos are safe; start the camera again when ready.');}
+   if(typeof document!=='undefined'&&document.hidden&&request===cameraRequest){stopCamera();message('Camera access finished after the app was backgrounded. Your captured photos are safe; start the camera again when ready.');}
    return;
   }
   stream=acquired;cameraMode=mode;
@@ -1131,6 +1122,16 @@ async function reviewRecognitionMemory(){
 }
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
+function pauseCameraOnInterruption(){
+ if(!cameraOpening&&!stream)return false;
+ stopCamera();
+ $('captureState').textContent='Camera paused while the app was in the background · captured photos remain available to review';
+ message('Camera paused while the app was in the background. Your captured photos remain available. Tap Start camera to continue.');
+ return true;
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCameraOnInterruption();});
+window.addEventListener('pagehide',pauseCameraOnInterruption);
+
 
 function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
  let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
