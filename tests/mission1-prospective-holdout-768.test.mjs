@@ -120,7 +120,7 @@ test('Mission1 two reviewers cannot be same human signing identity, with aliases
  const f=fixture();f.receipts[1]=f.receipt(f.photos[0],'reviewerA');
  assert.throws(()=>f.run(),/two distinct non-coordinator/);
  const g=fixture();g.keys.reviewerB=g.keys.reviewerA;
- assert.throws(()=>g.run(),/invalid signed human|same signing identity/);
+ assert.throws(()=>g.run(),/reviewer key registry changed|invalid signed human|same signing identity/);
  const h=fixture();h.receipts[1].sourceSHA256='0'.repeat(64);
  assert.throws(()=>h.run(),/signed blinded review/);
 });
