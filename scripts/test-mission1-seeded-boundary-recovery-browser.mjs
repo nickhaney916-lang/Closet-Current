@@ -12,8 +12,20 @@ import {routePinnedModelAsset,isPinnedModelAsset} from '../research/real-mask-ev
 import {measureRegisteredBoundaries66} from '../research/real-garment-acceptance-66/boundary-evidence.mjs';
 import {scoreInstances} from '../research/mission1-external-human-evidence/instance-metrics.mjs';
 const hash=b=>createHash('sha256').update(b).digest('hex');
-const manifest=JSON.parse(await readFile('research/real-garment-acceptance-66/fashionpedia-sample.json','utf8'));
-const engine=process.env.MISSION1_ENGINE||'chromium',out='benchmark/mission1-seeded-boundary-recovery/'+engine;
+const additionalP792=process.env.MISSION1_NEW_PUBLISHER_COHORT_792==='research';
+const manifest=JSON.parse(await readFile(additionalP792?
+ 'benchmark/mission1-additional-publisher-originals-792/manifest.json':
+ 'research/real-garment-acceptance-66/fashionpedia-sample.json','utf8'));
+const engine=process.env.MISSION1_ENGINE||'chromium',
+ out=(additionalP792?'benchmark/mission1-additional-publisher-originals-792/':
+ 'benchmark/mission1-seeded-boundary-recovery/')+engine;
+if(additionalP792&&(
+ manifest.schema!=='m1-p792-additional-publisher-originals-research-not-holdout/v1'||
+ manifest.rows?.length!==10||
+ manifest.releaseAuthorized!==false||
+ manifest.trainingCorpusOverlapIndependentlyExcluded!==false||
+ manifest.publisherAnnotatedImageRightsIndependentlyCleared!==false))
+ throw Error('P792 must use all 10 strictly research-only genuine newly development-exposed source images');
 const workerSource=await readFile('research/real-mask-evidence-31/worker.mjs','utf8');
 const anchor='selectedMaskSHA256:await sha(g.selected),';
 assert.equal(workerSource.split(anchor).length,2);
@@ -25,7 +37,9 @@ instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourc
 instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),allClassGrowth:await Promise.all(allClass.map(describe)),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
 const source=[];
 for(const row of manifest.rows){
- const bytes=await readFile('benchmark/real-garment-acceptance-66/fashionpedia/'+row.file_name);
+ const bytes=await readFile((additionalP792?
+ 'benchmark/mission1-additional-publisher-originals-792/originals/':
+ 'benchmark/real-garment-acceptance-66/fashionpedia/')+row.file_name);
  assert.equal(hash(bytes),row.sha256);source.push({row,data:'data:image/jpeg;base64,'+bytes.toString('base64')});
 }
 const server=createServer(async(req,res)=>{
@@ -130,7 +144,13 @@ try{
   regionsAtIoU50:regions.filter(m=>m.iou>=.5).length,missedSemanticRegions:regions.filter(m=>m.missed).length,
   meanExteriorBoundaryF1IncludingMisses:regions.reduce((n,m)=>n+(m.boundary?.boundaryF1||0),0)/regions.length,
   noBaselineInstanceLoss:rows.every(r=>r.lostBaselineMatchIds.length===0),noNewInstanceFalsePositives:rows.every(r=>r.candidateInstances.falsePositives<=r.instances.falsePositives),humanTruthSource:'publisher-provided Fashionpedia polygons; not agent annotations or owner review',
-  officialFashionpediaAP:false,renderingFailures:0};
+  officialFashionpediaAP:false,renderingFailures:0,
+  additionalPublisherSourcesNotIndependentlyHumanBlinded:additionalP792,
+  modelTrainingOverlapNotExcluded:additionalP792};
  summary.developmentVerdict=summary.noBaselineInstanceLoss&&summary.noNewInstanceFalsePositives&&summary.candidateInstanceDiagnostic.truePositives>summary.publishedInstanceDiagnostic.truePositives&&summary.candidateGroupedSemanticIoU>=summary.baselineGroupedSemanticIoU?'OBSERVED_GAIN_ON_EXPOSED_DEVELOPMENT_COHORT_ONLY':'MIXED_OR_NO_GAIN_RESEARCH_ONLY';
- await writeFile(out+'/results.json',JSON.stringify({engine,summary,photos:rows.length,publisherHumanInstances:rows.reduce((n,r)=>n+r.publisherHumanInstances,0),rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:'Baseline model and grouping unchanged; original logits also produce capped seeded boundary review candidates; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
+ await writeFile(out+'/results.json',JSON.stringify({engine,summary,photos:rows.length,publisherHumanInstances:rows.reduce((n,r)=>n+r.publisherHumanInstances,0),
+  additionalPublisherSourceCohortP792:additionalP792,
+  rawPublisherRightsMetadataNotVerifiedForCommerce:additionalP792,
+  newlyEnrolledBlindedHumanHoldout:false,
+  rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:'Baseline model and grouping unchanged; original logits also produce capped seeded boundary review candidates; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

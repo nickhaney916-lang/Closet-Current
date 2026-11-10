@@ -1,0 +1,156 @@
+name: M1 P792 ten additional REAL publisher original B0 masks — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-additional-publisher-originals-792-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p792-additional-source-evidence-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-and-complete-app-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact green P791 parent and only twelve research/test/exposure quarantine paths
+        run: |
+          set -euo pipefail
+          BASE=bea6162f9e8d18c9806b57b39b66e9c7c815d134
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p792-paths
+          test "$(wc -l </tmp/m1-p792-paths)" -eq 12
+          while read -r path; do
+            case "$path" in
+              scripts/intake-additional-publisher-originals-792.py|scripts/test-mission1-seeded-boundary-recovery-browser.mjs|tests/test_mission1_additional_publisher_792.py|research/mission1-additional-publisher-originals-792/REPORT.md|.github/workflows/mission1-additional-publisher-originals-792-no-deploy.yml|research/mission1-exposure-774/pinned-exposed-source-history.mjs|research/mission1-sealed-human-holdout-768/prospective-gate.mjs|scripts/prospective-holdout-768.mjs|research/mission1-reviewer-774/offline-human-polygon-receipt.mjs|tests/mission1-prospective-holdout-768.test.mjs|tests/mission1-offline-human-polygon-774.test.mjs|tests/mission1-source-exposure-73-774.test.mjs) ;;
+              *) echo "UNAPPROVED APP/PRIVATE/MODEL/RELEASE CHANGE: $path";exit 1;;
+            esac
+          done </tmp/m1-p792-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark/locked-photo-sources.json)"
+          echo M1_P792_TWELVE_RESEARCH_QUARANTINE_PATHS_EXACT_PARENT_NO_DEPLOY
+      - name: Ephemeral complete Node test suite tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Python immutable source selection test, native bundle and full app regressions
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_mission1_additional_publisher_792.py' -v
+          node --check scripts/test-mission1-seeded-boundary-recovery-browser.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-publisher-originals-B0-two-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+      MISSION1_NEW_PUBLISHER_COHORT_792: research
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pinned real model plus only ephemeral image-scoring dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Materialize source exposure quarantine from exact historic 59 + 6 + 8 original SHA
+        run: |
+          node --input-type=module <<'NODE'
+          import {writeFileSync,readFileSync} from 'node:fs';
+          import {P66_EXPOSED_DIGESTS} from './research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
+          import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774} from './research/mission1-exposure-774/pinned-exposed-source-history.mjs';
+          const locked=JSON.parse(readFileSync('benchmark/locked-photo-sources.json'));
+          const sha=[...new Set([...locked.map(r=>r.sha256),...P59_EXPOSED_DIGESTS_774,...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774])];
+          if(sha.length<73)throw Error('Cannot use fewer than 73 historically exposed sources');
+          writeFileSync('/tmp/m1-p792-exposed.json',JSON.stringify(sha));
+          console.log('M1_P792_PRE_REGISTERED_KNOWN_EXPOSED_SOURCES',sha.length);
+          NODE
+      - name: Source-before-model exactly pinned publisher annotation archive and ten original JPEGs
+        run: |
+          set -euo pipefail
+          python3 scripts/intake-additional-publisher-originals-792.py /tmp/m1-p792-exposed.json
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/mission1-additional-publisher-originals-792/manifest.json'));
+          const known=new Set(JSON.parse(readFileSync('/tmp/m1-p792-exposed.json')));
+          const {P792_EXPOSED_DIGESTS_792}=await import('./research/mission1-exposure-774/pinned-exposed-source-history.mjs');
+          assert.equal(x.rows.length,10);
+          assert.equal(new Set(x.rows.map(r=>r.id)).size,10);
+          assert.equal(new Set(x.rows.map(r=>r.sha256)).size,10);
+          assert.deepEqual(new Set(x.rows.map(r=>r.sha256)),new Set(P792_EXPOSED_DIGESTS_792),
+            'newly model-exposed original SHA set must already be in immutable human holdout exclusion ledger');
+          assert.ok(x.rows.every(r=>r.annotations.length>=1&&!known.has(r.sha256)));
+          assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='multi').length+
+           x.rows.filter(r=>r.sourceSelectionStratum==='single').length,10);
+          assert.ok(x.rows.reduce((n,r)=>n+r.annotations.length,0)>=10);
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.publisherAnnotatedImageRightsIndependentlyCleared,false);
+          assert.equal(x.blindHumanReviewIndependentlyVerified,false);
+          console.log('M1_P792_TEN_NEW_TO_DEV_SOURCE_JPEG_SHA_WITH_PREEXISTING_PUBLISHER_POLYGONS_ONLY');
+          NODE
+      - name: Genuine immutable B0 source logits versus publisher masks in Chromium, NO result-driven image selection
+        run: MISSION1_ENGINE=chromium node scripts/test-mission1-seeded-boundary-recovery-browser.mjs
+      - name: Genuine same immutable B0 source logits versus exact same publisher masks in WebKit
+        run: MISSION1_ENGINE=webkit node scripts/test-mission1-seeded-boundary-recovery-browser.mjs
+      - name: Require full real human publisher instances scored without omitting difficult predictions
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const root='benchmark/mission1-additional-publisher-originals-792';
+          const source=JSON.parse(readFileSync(root+'/manifest.json'));
+          const truthIds=new Map(source.rows.map(x=>[x.id,x.sha256]));
+          const results={};
+          for(const browser of ['chromium','webkit']){
+           const x=JSON.parse(readFileSync(root+'/'+browser+'/results.json'));
+           assert.equal(x.engine,browser);
+           assert.equal(x.additionalPublisherSourceCohortP792,true);
+           assert.equal(x.newlyEnrolledBlindedHumanHoldout,false);
+           assert.equal(x.releaseAuthorized,false);
+           assert.equal(x.familyAlpha,'HOLD');
+           assert.equal(x.photos,10);
+           assert.deepEqual(new Set(x.rows.map(z=>z.sourceSHA256)),new Set(truthIds.values()));
+           assert.equal(x.publisherHumanInstances,source.rows.reduce((n,r)=>n+r.annotations.length,0));
+           for(const key of ['publishedInstanceDiagnostic','candidateInstanceDiagnostic']){
+             const m=x.summary[key];
+             assert.equal(m.truePositives+m.falseNegatives,x.publisherHumanInstances);
+             assert.ok(m.falsePositives>=0);
+           }
+           results[browser]={publisherHumanInstances:x.publisherHumanInstances,
+             unchangedBaseline:x.summary.publishedInstanceDiagnostic,
+             boundedSourceGrowth:x.summary.candidateInstanceDiagnostic,
+             developmentVerdict:x.summary.developmentVerdict};
+          }
+          console.log('M1_P792_TRUE_FROZEN_REAL_SOURCE_PUBLISHER_MASK_EVIDENCE',JSON.stringify(results));
+          console.log('M1_P792_NO_BLIND_HUMAN_NO_LICENSE_NO_PRODUCTION_MODEL_PROMOTION');
+          NODE
+      - name: Erase original publisher photographic bytes and screenshot files from CI artifacts
+        if: always()
+        run: |
+          rm -rf benchmark/mission1-additional-publisher-originals-792/originals
+          find benchmark/mission1-additional-publisher-originals-792 -name '*.png' -type f -delete
+          rm -rf benchmark/mission1-seeded-boundary-recovery
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P792-ten-genuine-additional-publisher-source-originals-model-IoU-HOLD
+          path: |
+            benchmark/mission1-additional-publisher-originals-792/manifest.json
+            benchmark/mission1-additional-publisher-originals-792/chromium/results.json
+            benchmark/mission1-additional-publisher-originals-792/webkit/results.json
+          retention-days: 14
+          if-no-files-found: warn

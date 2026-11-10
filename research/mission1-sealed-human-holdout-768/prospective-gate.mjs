@@ -1,7 +1,7 @@
 /**
  * Closet Current MISSION 1 — prospective, cryptographically witnessed
  * blindness/evaluation firewall. Research-only; NO human labels are invented.
- * The 59 historical and six Fashionpedia development images are ineligible.
+ * The 59 historic, 6 P66, 8 P772, and 10 P792 development originals are ineligible.
  *
  * Signatures prove a key signed a specific record, not that the signer is
  * a distinct person, truly blinded, legally owns an image or was unfamiliar
@@ -12,7 +12,7 @@ import {
  MULTI_PHOTO_MARKER,normalizeMixedHumanLabel,compareMixedHumanReviews,
  scoreMixedOutfitAgainstHuman
 } from '../mission1-mixed-outfit-771/garment-instance-contract.mjs';
-import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
+import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,P792_EXPOSED_DIGESTS_792,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
 import {sourcePixelDimensions780} from '../mission1-reviewer-774/original-photo-bounds-780.mjs';
 import {verifySingleHumanTruth791} from '../mission1-human-truth-taxonomy-integrity-791/canonical-human-truth.mjs';
 
@@ -96,6 +96,7 @@ export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,expo
     !P59_EXPOSED_DIGESTS_774.every(x=>exposedSHA256.includes(x))||
     !P66_EXPOSED_DIGESTS.every(x=>exposedSHA256.includes(x))||
     !P772_EXPOSED_DIGESTS_774.every(x=>exposedSHA256.includes(x))||
+    !P792_EXPOSED_DIGESTS_792.every(x=>exposedSHA256.includes(x))||
     !reviewerPublicKeys||typeof reviewerPublicKeys!=='object'||
     !['coordinator','reviewerA','reviewerB','adjudicator'].every(x=>valid(reviewerPublicKeys[x])))
   err('exact model, both historic exposed cohorts and registered reviewer public keys required');
@@ -252,6 +253,7 @@ export function evaluateProspectiveHoldout({
  if(!P59_EXPOSED_DIGESTS_774.every(x=>knownExposedSHA256.includes(x))||
     !P66_EXPOSED_DIGESTS.every(x=>knownExposedSHA256.includes(x))||
     !P772_EXPOSED_DIGESTS_774.every(x=>knownExposedSHA256.includes(x))||
+    !P792_EXPOSED_DIGESTS_792.every(x=>knownExposedSHA256.includes(x))||
     sha256(canonical([...knownExposedSHA256].sort()))!==seal.exposedSHA256)
   err('historically exposed source hash quarantine ledger altered');
  assertImages(seal.photos,readPhoto,new Set(knownExposedSHA256));

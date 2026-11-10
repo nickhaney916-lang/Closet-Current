@@ -32,4 +32,32 @@ export const MISSION1_P772_PUBLISHED_DEVELOPMENT_SOURCES_774=Object.freeze([
 export const P772_EXPOSED_DIGESTS_774=Object.freeze(
  MISSION1_P772_PUBLISHED_DEVELOPMENT_SOURCES_774.map(x=>x.sha256)
 );
-export const MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774=73; // 59+6+8
+/** P792: exact genuine publisher image ID / original JPEG SHA pairs from the
+ * recorded full ten eligible source-original census, before any owner review.
+ * Actual unchanged SegFormer B0 inference in Chromium and WebKit:
+ * https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42892864865
+ * These are now DEVELOPMENT-EXPOSED, even if CI reruns or research PR is
+ * never merged/deployed; none can qualify as unseen future human ground truth.
+ * No source JPEG bytes, inferred subtypes, human color labels or rights proof.
+ */
+export const MISSION1_P792_PUBLISHED_DEVELOPMENT_SOURCES_792=Object.freeze([
+ Object.freeze({id:15201,sha256:'db0195cb030ef7a61eba9d16f5dbfae51c5b4db3f348b1f0664558dfdbba05d4'}),
+ Object.freeze({id:20490,sha256:'7ebcb018dc941dd971e735a3cbf81a5b9d0ceb8276edd1b963743f64f0a4868b'}),
+ Object.freeze({id:13428,sha256:'edcaa83c6fe3e63cb463429fa57816681c3e26200b371bc2ea40e87734bd0ccc'}),
+ Object.freeze({id:12197,sha256:'230ede7d7dec62c5a3dedeb7e8af3ae4c4c2431d405b0201b2d39144c13bb86f'}),
+ Object.freeze({id:15461,sha256:'e3b4442e4cd79b87d594d561302b3aabbf4897933496e0f336c410f390e65606'}),
+ Object.freeze({id:18553,sha256:'dd85da5fd765eeeb1a1c889afd420280e4b057aaff825fb1ee1537f05595033e'}),
+ Object.freeze({id:19659,sha256:'8ade64d6f4ce8d6a2ed09aaef9f7bd106878f98b0d6101beab28f657bacc0f67'}),
+ Object.freeze({id:13585,sha256:'edf63e454175295870f8725af1c2e361fc1bc4abb5892c2fe639605b60eb05c5'}),
+ Object.freeze({id:17509,sha256:'0f8f7c88e76d1452158fea6e87ad9045060ad95168f20e2e74fedd5479738f31'}),
+ Object.freeze({id:17401,sha256:'bd0fc1f811d55b00376526858239a142f5047948eb6712d6524c50961df48de7'})
+]);
+export const P792_EXPOSED_DIGESTS_792=Object.freeze(
+ MISSION1_P792_PUBLISHED_DEVELOPMENT_SOURCES_792.map(x=>x.sha256)
+);
+if(MISSION1_P792_PUBLISHED_DEVELOPMENT_SOURCES_792.length!==10||
+   new Set(P792_EXPOSED_DIGESTS_792).size!==10||
+   P792_EXPOSED_DIGESTS_792.some(x=>!/^[a-f0-9]{64}$/.test(x)))
+ throw Error('MISSION1_P792_EXPOSURE: ten genuine original source identities missing');
+export const MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774=83; // 59+6+8+10
+
