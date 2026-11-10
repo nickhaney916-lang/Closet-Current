@@ -137,8 +137,8 @@ async function genuinelyInferSourceSegformer782(context,name){
   return actual;
  }finally{await probe.close();}
 }
-// Never pick a specific category from the largest semantic region; a dress
-// bodice may be Upper garment, and class 4 is Tops OR Outerwear.
+// Broad model REGION 4 is Tops OR Outerwear, not verified Tops.
+const categoryBySemantic={4:'Tops or Outerwear',5:'Bottoms',6:'Bottoms',7:'Dresses',9:'Shoes'};
 
 const results=[],errors=[],outbound=[];
 let browser;
