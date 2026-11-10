@@ -21,11 +21,11 @@ const engine=process.env.MISSION1_ENGINE||'chromium',
  'benchmark/mission1-seeded-boundary-recovery/')+engine;
 if(additionalP792&&(
  manifest.schema!=='m1-p792-additional-publisher-originals-research-not-holdout/v1'||
- manifest.rows?.length!==12||
+ manifest.rows?.length!==10||
  manifest.releaseAuthorized!==false||
  manifest.trainingCorpusOverlapIndependentlyExcluded!==false||
  manifest.publisherAnnotatedImageRightsIndependentlyCleared!==false))
- throw Error('P792 must use all 12 strictly research-only genuine independently unexposed source images');
+ throw Error('P792 must use all 10 strictly research-only genuine newly development-exposed source images');
 const workerSource=await readFile('research/real-mask-evidence-31/worker.mjs','utf8');
 const anchor='selectedMaskSHA256:await sha(g.selected),';
 assert.equal(workerSource.split(anchor).length,2);
