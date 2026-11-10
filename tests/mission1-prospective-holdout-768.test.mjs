@@ -189,7 +189,7 @@ test('Mission1 independently named same garment polygon IDs are accepted by geom
  assert.equal(out.counts.instancePrecisionPercent,100);
  assert.equal(out.missionOneCompleted,false);
 });
-test('Mission1 independent reviewers may enumerate two distinct garment polygons in opposite order and with unique IDs',()=>{
+test('P791 a single-photo label cannot conceal TWO same-category garments as one correct subtype',()=>{
  const f=fixture(),a={category:'Tops',subtype:'Blouse',primaryColor:'Blue',
   instances:[
    {instanceId:'only-reviewed-A-left',category:'Tops',rle:[100,100,824]},
@@ -201,15 +201,9 @@ test('Mission1 independent reviewers may enumerate two distinct garment polygons
  ]};
  f.receipts[0]=f.receipt(f.photos[0],'reviewerA',a);
  f.receipts[1]=f.receipt(f.photos[0],'reviewerB',b);
- const result=f.run();
- assert.equal(result.records[0].humanAgreement,true);
- assert.equal(result.counts.adjudicatedItems,0);
- assert.equal(result.counts.maskTruth,2);
- // The unchanged actual mock model proposed one polygon, matching one of
- // two independent human masks; the second remains a genuine false negative.
- assert.equal(result.counts.maskMatched,1);
- assert.equal(result.counts.instanceRecallPercent,50);
- assert.equal(result.missionOneCompleted,false);
+ assert.throws(()=>f.run(),/single photo truth must contain EXACTLY one/);
+ // Two photographed blouses are TWO garments. Only the P771 "Multiple"
+ // format with per-garment subtype/color can represent both in the truth.
 });
 test('Mission1 independent reviewers with genuinely different shape contours must undergo signed third adjudication',()=>{
  const f=fixture(),altered={category:'Tops',subtype:'Blouse',primaryColor:'Blue',
@@ -394,4 +388,35 @@ test('P771 all-zero, out-of-bounds and malformed source masks cannot enter indep
  wrong.instances[0].rle=[900,200];
  b.receipts[0]=b.receipt(b.photos[0],'reviewerA',wrong);
  assert.throws(()=>b.run(),/out of range mask RLE/);
+});
+
+test('P791 cryptographically signed category contradiction cannot become trusted single-garment truth',()=>{
+ const f=fixture(),forged={
+  category:'Tops',subtype:'Blouse',primaryColor:'Blue',
+  instances:[{instanceId:'different-object-category',category:'Shoes',rle:[100,200,724]}]
+ };
+ f.receipts[0]=f.receipt(f.photos[0],'reviewerA',forged);
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',forged);
+ assert.throws(()=>f.run(),/single photo truth must contain EXACTLY one same-category instance/);
+});
+test('P791 signed but unsupported native subtype is not valid blind ground truth',()=>{
+ const f=fixture(),bad={
+  category:'Tops',subtype:'Intergalactic blouse',primaryColor:'Blue',
+  instances:[{instanceId:'one',category:'Tops',rle:[100,200,724]}]
+ };
+ f.receipts[0]=f.receipt(f.photos[0],'reviewerA',bad);
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',bad);
+ assert.throws(()=>f.run(),/single photo truth must contain EXACTLY one/);
+});
+test('P791 mixed photos reject independently signed arbitrary per-instance clothing type',()=>{
+ const f=fixture(),mixed={
+  category:'Multiple',subtype:'Multiple',primaryColor:'Multicolor',
+  instances:[
+   {instanceId:'one',category:'Tops',subtype:'Intergalactic blouse',primaryColor:'Blue',rle:[100,100,824]},
+   {instanceId:'two',category:'Bottoms',subtype:'Jeans',primaryColor:'Brown',rle:[400,100,524]}
+  ]
+ };
+ f.receipts[0]=f.receipt(f.photos[0],'reviewerA',mixed);
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',mixed);
+ assert.throws(()=>f.run(),/M1_MIXED_HUMAN_771.*source-bound per-instance/);
 });
