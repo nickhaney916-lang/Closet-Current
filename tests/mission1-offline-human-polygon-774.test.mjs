@@ -45,8 +45,8 @@ function cohort(){
   subtype:'Blouse',primaryColor:'Blue',polygons:[square(2,2,10,12)]};
  const jeans={instanceId:'reviewerA-right-bottom',category:'Bottoms',
   subtype:'Jeans',primaryColor:'Brown',polygons:[square(15,11,25,26)]};
- const first={regions:[blouse,jeans]};
- const second={regions:[
+ const first={sourceId:photo.id,sourceSHA256:photo.sha256,regions:[blouse,jeans]};
+ const second={sourceId:photo.id,sourceSHA256:photo.sha256,regions:[
   {...jeans,instanceId:'different-person-item-2'},
   {...blouse,instanceId:'different-person-item-1'}
  ]};
@@ -184,7 +184,7 @@ test('P774 malformed reviewer taxonomy, unknown colors, duplicate IDs and fabric
  assert.deepEqual(Object.keys(singleton.instances[0]).sort(),['category','instanceId','rle']);
 });
 test('P774 human reviewer color disagreement requires separately signed third adjudicator with rationale; fake adjudication is refused',()=>{
- const f=cohort(),wrong={regions:[
+ const f=cohort(),wrong={sourceId:f.photo.id,sourceSHA256:f.photo.sha256,regions:[
   {...f.jeans,primaryColor:'Black',instanceId:'other-human-jeans'},
   {...f.blouse,instanceId:'other-human-blouse'}]};
  const b=f.sign('reviewerB',wrong);
@@ -204,4 +204,21 @@ test('P774 alternate crop/modified source cannot be signed under the old source 
  assert.equal(f.a.reviewMethod,'human-traced-source-pixel-polygons');
  assert.ok(/^[0-9a-f]{64}$/.test(f.a.manualPixelAnnotationSHA256));
  assert.ok(typeof f.a.signature==='string'&&f.a.signature.length>50);
+});
+
+test('P774 signed manual polygons cannot be transplanted from another original JPEG or omit source binding',()=>{
+ const f=cohort();
+ for(const candidate of [
+  {...f.first,sourceId:'another-original-photo'},
+  {...f.first,sourceSHA256:'f'.repeat(64)},
+  {regions:f.first.regions},
+  {...f.first,sourceId:null}
+ ]){
+  assert.throws(()=>f.sign('reviewerA',candidate),
+   /manual polygon export source ID\/SHA does not match the sealed original/);
+ }
+ // Valid, identical manually annotated pixels remain signable in CI fixture.
+ const signed=f.sign('reviewerA',f.first);
+ assert.equal(signed.sourceSHA256,f.photo.sha256);
+ assert.equal(signed.missionOneCompleted,undefined);
 });

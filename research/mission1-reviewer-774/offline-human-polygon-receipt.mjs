@@ -131,6 +131,13 @@ export function signActualReviewerAnnotation774({
     photoJPEG[0]!==255||photoJPEG[1]!==216||
     photoJPEG.at(-2)!==255||photoJPEG.at(-1)!==217)
   fail('original registered JPEG source bytes do not match SHA');
+ // The separately exported manual annotation MUST name this exact sealed
+ // original. Matching a JPEG alone is insufficient: otherwise a reviewer
+ // could accidentally sign a different photo's polygons under this source.
+ // The unsigned browser export always includes both fields.
+ if(!annotations||typeof annotations!=='object'||Array.isArray(annotations)||
+    annotations.sourceId!==photo.id||annotations.sourceSHA256!==photo.sha256)
+  fail('manual polygon export source ID/SHA does not match the sealed original');
  if(reviewerDeclaration?.directHumanTracing!==true||
     reviewerDeclaration?.notShownModelPredictions!==true||
     reviewerDeclaration?.notModelGenerated!==true||
