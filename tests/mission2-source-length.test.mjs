@@ -75,3 +75,14 @@ test('posed triangle diagnostic detects crossing surface and actually applies bo
   assert.equal(crossing.continuousCollisionVerified,false);
  }finally{audit.dispose();}
 });
+test('a new staged lower-body intersection rejects before modifying any original garment positions',()=>{
+ const {root,shirt}=fixture(),g=new THREE.BoxGeometry(.6,.18,.3);g.translate(0,.82,0);
+ const count=g.getAttribute('position').count,weights=new Float32Array(count*4);
+ for(let i=0;i<count;i++)weights[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(new Uint16Array(count*4),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const obstacle=new THREE.SkinnedMesh(g,new THREE.MeshBasicMaterial());obstacle.bind(shirt.meshes[0].skeleton);root.add(obstacle);
+ const before=shirt.meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ assert.throws(()=>fitSourceLength(shirt,root,profile),/new posed body intersection/);
+ shirt.meshes.forEach((m,i)=>assert.deepEqual(m.geometry.getAttribute('position').array,before[i]));
+});

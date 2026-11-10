@@ -1,6 +1,6 @@
 /** Real posed triangle intersection diagnostic. Does not prove signed clearance or swept collision. */
 import * as THREE from 'three';
-import {MeshBVH} from 'three-mesh-bvh';
+import {MeshBVH} from '../../node_modules/three-mesh-bvh/build/index.module.js';
 function posedGeometry(mesh,override){
  const p=mesh.geometry?.getAttribute('position');
  if(!p||p.count<3||!mesh.geometry.index&&p.count%3)throw Error('M2 indexed posed triangle surface required');

@@ -24,7 +24,7 @@ continuous pose coverage, cloth simulation or physical-phone acceptance.
 
 ## Verification
 
-Four focused real THREE/BVH tests exercise proportion sensitivity, real mesh
+Five focused real THREE/BVH tests exercise proportion sensitivity, real mesh
 extension with exact original panel/skin attributes, source/corrupt-last-cap
 atomic refusal, crossing surface detection and actual bone-transformed vertices.
 A dedicated NO DEPLOY workflow requires all repository Node regressions plus
@@ -41,3 +41,11 @@ photographed rear, natural physical cloth, body/layer swept collision, arbitrary
 photos, real signed hosted owners and actual Android/iPhone acceptance remain
 unverified. Original private wardrobe/2D fallback remains the source of truth.
 The longer geometry must be visually inspected before any improvement claim.
+
+The first genuine browser run exposed a module-resolution defect: the native
+import map has no bare three-mesh-bvh mapping, so even baseline imports failed.
+The research module now imports the pinned installed ESM build by an explicit
+relative path (the same source works in Node and in the disposable donor).
+That failed run is not visual or geometry evidence. Initial full CI Node suite
+passed 1508/1508; expanded staged-intersection refusal test raises the final
+suite to 1509, to be independently rerun on final code.
