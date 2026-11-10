@@ -13,7 +13,7 @@
  *   node scripts/mission1-73-source-review-774.mjs screen \
  *     LEDGER.json NEW_PHOTO_MANIFEST.json NEW_JPEG_DIR PRIVATE_REPORT.json
  */
-import {readFileSync,writeFileSync,statSync} from 'node:fs';
+import {readFileSync,writeFileSync,statSync,existsSync} from 'node:fs';
 import {resolve,join,basename} from 'node:path';
 import {P66_EXPOSED_DIGESTS} from '../research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
 import {
@@ -50,7 +50,9 @@ if(cmd==='build'){
  const old=historical.map(x=>({image:x.image,sha256:x.sha256,origin:'historical'}));
  // Existing parallel P66 manifest is the original immutable six-source receipt
  // with publishers' source JPEG names, not any model-generated masks.
- const p66Index=read('research/real-garment-acceptance-66/fashionpedia-sample.json');
+ const frozenP66='research/real-garment-acceptance-66/pinned-published-exposed.json';
+ const p66Index=read(existsSync(frozenP66)?frozenP66:
+  'research/real-garment-acceptance-66/fashionpedia-sample.json');
  if(p66Index.rows?.length!==6||
     !pinnedSix.every(x=>p66Index.rows.some(row=>row.sha256===x)))
   fail('prior six original publisher JPEG metadata do not match source SHA archive');
