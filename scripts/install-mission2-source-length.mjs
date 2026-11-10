@@ -5,16 +5,21 @@ const donor=resolve(process.argv[2]||'.');
 if(donor===resolve('.')||donor==='/'||donor.startsWith(resolve('public'))||donor.startsWith(resolve('supabase')))throw Error('Explicit disposable donor required');
 const patch=async(path,anchor,replacement)=>{const file=join(donor,path),s=await readFile(file,'utf8');assert.equal(s.split(anchor).length,2,path);await writeFile(file,s.replace(anchor,replacement));};
 await mkdir(join(donor,'research/mission2-source-length'),{recursive:true});
-for(const name of ['source-length.mjs','posed-intersections.mjs'])await copyFile('research/mission2-source-length/'+name,join(donor,'research/mission2-source-length/'+name));
+for(const name of ['source-length.mjs','posed-intersections.mjs','source-projection.mjs'])await copyFile('research/mission2-source-length/'+name,join(donor,'research/mission2-source-length/'+name));
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',"import {fitOwnerAlphaToSkinnedBlouse190}","import {fitSourceLength} from '../mission2-source-length/source-length.mjs';\nimport {fitOwnerAlphaToSkinnedBlouse190}");
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
  'built.shirt=fitOwnerAlphaToSkinnedBlouse190(built.shirt,root,candidate.ownerMaskGeometryProfile190);',
  `built.shirt=fitOwnerAlphaToSkinnedBlouse190(built.shirt,root,candidate.ownerMaskGeometryProfile190);
-   if(new URLSearchParams(globalThis.location?.search||'').get('photoSourceLength')==='research')
-    built.shirt=fitSourceLength(built.shirt,root,candidate.silhouette62);`);
+   if(built.shirt?.stats?.sourceSHA256==='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24'&&candidate?.silhouette62&&
+      new URLSearchParams(globalThis.location?.search||'').get('photoSourceLength')==='research')
+    built.shirt=fitSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research'});`);
 await patch('research/outfit-3d-01/research-panel.mjs',
  'ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,',
- `sourceLengthFit:actualOutfit171[k].sourceLengthFit===true,
+ `sourceProjectionRGB:actualOutfit171[k].sourceProjectionRGB===true,
+        sourceProjectionMaterialCount:actualOutfit171[k].sourceProjectionMaterialCount,
+        sourceProjectionCompiledMaterialCount:actualOutfit171[k].sourceProjectionRuntime?.compiledMaterialCount||0,
+        sourceProjectionRearPhotographed:false,
+        sourceLengthFit:actualOutfit171[k].sourceLengthFit===true,
         sourceLengthSHA256:actualOutfit171[k].sourceLengthSHA256,
         sourceLengthMovedVertices:actualOutfit171[k].sourceLengthMovedVertices,
         sourceLengthOldHemY:actualOutfit171[k].sourceLengthOldHemY,

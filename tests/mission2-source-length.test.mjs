@@ -86,3 +86,33 @@ test('a new staged lower-body intersection rejects before modifying any original
  assert.throws(()=>fitSourceLength(shirt,root,profile),/new posed body intersection/);
  shirt.meshes.forEach((m,i)=>assert.deepEqual(m.geometry.getAttribute('position').array,before[i]));
 });
+import {patchSourceProjectionShader,prepareSourceProjection} from '../research/mission2-source-length/source-projection.mjs';
+function sourceShader(){return {uniforms:{},vertexShader:'void main() {\n#include <worldpos_vertex>\n}',fragmentShader:`void main() {
+ vec2 panel=vec2(.5+vPanel.x/uPhotoSpan.x,(vPanel.y-1.11)/uPhotoSpan.y);
+ float front=frontNormal; float necklineInterior=neckline; vec3 rear=uFabric;
+ float chest=1.-smoothstep(.22,.29,abs(vPanel.x));
+ diffuseColor.rgb=mix(uFabric,photo.rgb,photo.a*smoothstep(.95,1.,interiorAlpha)*front*chest*necklineInterior);
+}`};}
+test('registered front shader uses actual extended geometry while retaining original alpha/front/rear guards',()=>{
+ const shader=sourceShader();patchSourceProjectionShader(shader,[0,.98,.95,.7]);
+ assert.ok(shader.vertexShader.includes('vSourceProjectionPosition=sourceProjectionPosition'));
+ assert.ok(shader.fragmentShader.includes('uM2SourceProjection'));
+ assert.ok(shader.fragmentShader.includes('front*chest*necklineInterior'));
+ assert.ok(shader.fragmentShader.includes('vec3 rear=uFabric'));
+ assert.ok(shader.fragmentShader.includes('smoothstep(.95,.975,interiorAlpha)'));
+ assert.deepEqual(shader.uniforms.uM2SourceProjection.value.toArray(),[0,.98,.95,.7]);
+ assert.throws(()=>patchSourceProjectionShader(sourceShader(),[0,100,.95,.7]),/M2 source projection/);
+ assert.throws(()=>patchSourceProjectionShader({...sourceShader(),fragmentShader:'unrelated'},[0,.98,.95,.7]),/M2 source projection/);
+});
+test('projection preparation has no precommit mutation and actual shader callbacks produce bounded numeric compilation receipts',()=>{
+ const {shirt}=fixture(),material=shirt.meshes[0].material;
+ material.onBeforeCompile=function(shader){shader.fragmentShader+='vec2 panel=vec2(.5+vPanel.x/uPhotoSpan.x,(vPanel.y-1.11)/uPhotoSpan.y);';};
+ const before=material.onBeforeCompile;
+ const plan=prepareSourceProjection(shirt,[],[0,.98,.95,.7]);
+ assert.equal(material.onBeforeCompile,before);assert.equal(plan.runtime.compiledMaterialCount,0);
+ assert.equal(shirt.meshes[0].geometry.hasAttribute('sourceProjectionPosition'),false);
+ plan.commit();assert.equal(shirt.meshes[0].geometry.hasAttribute('sourceProjectionPosition'),true);
+ material.onBeforeCompile(sourceShader());assert.equal(plan.runtime.compiledMaterialCount,1);
+ material.onBeforeCompile(sourceShader());assert.equal(plan.runtime.compiledMaterialCount,1);
+ assert.ok(material.customProgramCacheKey().includes('REGISTERED_FRONT_SOURCE_PROJECTION'));
+});

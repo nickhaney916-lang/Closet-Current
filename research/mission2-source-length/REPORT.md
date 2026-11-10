@@ -24,7 +24,7 @@ continuous pose coverage, cloth simulation or physical-phone acceptance.
 
 ## Verification
 
-Five focused real THREE/BVH tests exercise proportion sensitivity, real mesh
+Seven focused real THREE/BVH tests exercise proportion sensitivity, real mesh
 extension with exact original panel/skin attributes, source/corrupt-last-cap
 atomic refusal, crossing surface detection and actual bone-transformed vertices.
 A dedicated NO DEPLOY workflow requires all repository Node regressions plus
@@ -49,3 +49,25 @@ relative path (the same source works in Node and in the disposable donor).
 That failed run is not visual or geometry evidence. Initial full CI Node suite
 passed 1508/1508; expanded staged-intersection refusal test raises the final
 suite to 1509, to be independently rerun on final code.
+
+## Source pixel registration and sleeve fabric
+
+The old planar photo span was sized for a short torso and explicitly removed
+photographed sleeve RGB. An additional opt-in front projection uses a NEW
+sourceProjectionPosition attribute registered to the actual extended garment
+bounds. Original panel/photo attributes, original JPEG and alpha remain intact.
+The existing source alpha, front normal/depth and neckline guards remain; rear
+still uses neutral inferred fabric. A valid near-opaque owner alpha now reaches
+full interior support instead of being faded twice by the legacy opacity ramp.
+No new print, color, seam or hidden texture is generated. This is a planar front
+projection, not recovered sewing UVs or an independently human-accepted fit.
+
+The browser requires an actually executed original-photo shader compilation
+callback, captures WebGL shader errors, and checks both humanoids after the
+switch. Seven focused tests include shader registration/guard preservation and
+precommit immutability. Final full suite target: 1511 tests, pending exact CI.
+
+The second browser run passed baseline but caught an empty-viewer initialization
+bug in the new installer: the optional stage tried reading a candidate before a
+shirt existed. The stage is now restricted to an actual source-bound shirt and
+registered contour. No unsuccessful run is counted as new rendered evidence.

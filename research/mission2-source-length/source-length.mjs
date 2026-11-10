@@ -1,4 +1,5 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
+import {prepareSourceProjection} from './source-projection.mjs';
 import {createPosedBodyIntersectionAudit} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -22,7 +23,7 @@ export function deriveSourceLength({profile,minY,maxY,spanX}={}){
   observedPhotoAspect:profile.silhouetteAspect,sourceProportionLength:observedLength,
   boundedTargetLength:targetLength,absoluteSizeMeasured:false});
 }
-export function fitSourceLength(shirt,root,profile){
+export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
  if(shirt?.stats?.sourceSHA256!==SOURCE||shirt.stats.ownerAlphaMaskBasedPhysicalGeometry190!==true||
     shirt.stats.ownerPhysicalBilateralReadbackVerified196!==true||shirt.stats.cutoutSHA256!==profile?.cutoutSHA256||
     !Array.isArray(shirt.meshes)||typeof root?.traverse!=='function')fail('verified source and existing private owner fitting required');
@@ -60,13 +61,17 @@ export function fitSourceLength(shirt,root,profile){
   staged.push({mesh,p,next});
  }
  if(moved<100||maximum>.42||lowest>minY-.07||lowest<.55)fail('bounded actual lower garment extension not established');
+ const sourceProjection=projectSourceRGB?prepareSourceProjection(shirt,staged,
+  [(minX+maxX)/2,maxX-minX,maxY-lowest,lowest]):null;
  const audit=createPosedBodyIntersectionAudit(root);let before,after;
  try{before=audit.measure(targets);after=audit.measure(targets,new Map(staged.map(r=>[r.mesh,r.next])));}
  finally{audit.dispose();}
  if(after.intersectingPairs>before.intersectingPairs)fail('new posed body intersection pairs '+before.intersectingPairs+' -> '+after.intersectingPairs);
  for(const {mesh,p,next} of staged){p.array.set(next);p.needsUpdate=true;
   mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();}
- return {...shirt,stats:{...shirt.stats,sourceLengthFit:true,sourceLengthSHA256:SOURCE,
+ sourceProjection?.commit();
+ return {...shirt,stats:{...shirt.stats,sourceProjectionRGB:sourceProjection!==null,
+  sourceProjectionMaterialCount:sourceProjection?.materialCount||0,sourceProjectionRuntime:sourceProjection?.runtime||null,sourceProjectionRearPhotographed:false,sourceLengthFit:true,sourceLengthSHA256:SOURCE,
   sourceLengthMovedVertices:moved,sourceLengthOldHemY:minY,sourceLengthNewHemY:lowest,
   sourceLengthExtension:shape.extension,sourceLengthFlare:shape.flare,
   sourceLengthOriginalUVPreserved:true,sourceLengthRearInferred:true,
