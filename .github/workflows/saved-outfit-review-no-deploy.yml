@@ -30,7 +30,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js supabase public/local-worker.mjs public/recognition-engine.mjs
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/outfit-board.js|public/closet-stylist.js|public/index.html|public/app-theme.css|tests/saved-outfit-review.test.cjs|scripts/test-saved-outfit-review-browser.mjs|research/saved-outfit-review/REPORT.md|.github/workflows/saved-outfit-review-no-deploy.yml) ;;
+              public/outfit-board.js|public/closet-stylist.js|public/index.html|public/app-theme.css|tests/outfit-draft-conflicts.test.cjs|tests/saved-outfit-review.test.cjs|scripts/test-saved-outfit-review-browser.mjs|research/saved-outfit-review/REPORT.md|.github/workflows/saved-outfit-review-no-deploy.yml) ;;
               *) echo "Unexpected path: $p"; exit 1 ;;
             esac
           done
