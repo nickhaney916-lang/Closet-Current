@@ -83,6 +83,7 @@ async function genuinelyInferSourceSegformer782(context,name){
    blocked.push(url);return route.abort();
   });
   await probe.goto(host+'/mission1-model-probe');
+  await probe.addScriptTag({url:host+'/public/photo-color.js'});
   const actual=await probe.evaluate(async ({originalBase64,sourceSHA256})=>{
    const data='data:image/jpeg;base64,'+originalBase64;
    const im=new Image();im.src=data;await im.decode();
@@ -116,8 +117,24 @@ async function genuinelyInferSourceSegformer782(context,name){
     throw Error('genuine pinned SegFormer immutable revision/output receipt missing');
    const regions=result.after.filter(x=>[4,5,6,7,9].includes(x.regionId)&&x.selectedCount>0)
     .sort((a,b)=>b.selectedCount-a.selectedCount);
+   const [cw,ch]=result.modelMask;
+   const colorCanvas=document.createElement('canvas');
+   colorCanvas.width=cw;colorCanvas.height=ch;
+   const colorCx=colorCanvas.getContext('2d',{willReadFrequently:true});
+   colorCx.drawImage(im,0,0,cw,ch);
+   const originalPhotoRGBA=colorCx.getImageData(0,0,cw,ch).data;
+   const realModelLabels=Uint8Array.from(atob(labelMapBase64),x=>x.charCodeAt(0));
+   const {modelMaskedColorReview789}=await import('/research/mission1-original-mask-color-789/source-color-evidence.mjs');
+   const sourceColorReview790=await modelMaskedColorReview789({
+    sourceSHA256,sourceLabelMapSHA256:result.sourceMapLabelsSHA256,
+    rgba:originalPhotoRGBA,labelMap:realModelLabels,width:cw,height:ch,
+    categoryFamily:'Dresses',maskedPalette:window.PhotoColor.maskedPalette
+   });
+   if(sourceColorReview790.autoSaveAllowed!==false||sourceColorReview790.independentHumanColorVerified!==false)
+    throw Error('actual source color remains review-only');
    return {
     sourceId:result.sourceId,sourceSHA256,
+    sourceColorReview790,
     model:result.model,modelRevision:result.modelRevision,
     labelMapSHA256:result.sourceMapLabelsSHA256,
     modelMask:result.modelMask,detectedRegions:regions.map(x=>({
@@ -174,7 +191,8 @@ try{
      modelRegions:realSegmentation.detectedRegions.map(x=>({semanticRegionId:x.semanticRegionId,selectedCount:x.selectedCount})),
      noAutomaticSavingOrValidatedSubtype:true}));
     const sourceModelResult={strong:false,categoryConfirmed:false,
-     choices:[],details:{},sourceCategoryReview:realSegmentation};
+     choices:[],details:{},sourceCategoryReview:realSegmentation,
+     sourceColorReview790:realSegmentation.sourceColorReview790};
     assert.deepEqual(sourceModelResult.choices,[],
      'actual model never supplies a fabricated fallback subtype');
     const page=await context.newPage();
@@ -196,7 +214,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -216,12 +234,18 @@ try{
     await page.waitForFunction(()=>!localPending.has(batch[0].id),null,{timeout:20000});
     const nativeEvidence=await page.evaluate(()=>({
      proof:batch[0].recognitionDiagnostics?.sourceCategoryReview785,
+     colorHint:batch[0].recognitionDiagnostics?.sourceColorHint790,
      category:batch[0].category,itemType:batch[0].itemType,
      saved:items.some(x=>x.id===batch[0].id),status:batch[0].localStatus
     }));
     assert.deepEqual(nativeEvidence.proof?.possibleCategories,regionReview.possibleCategories);
     assert.equal(nativeEvidence.proof?.sourceSHA256,sourceSHA256);
     assert.equal(nativeEvidence.proof?.autoSaveAllowed,false);
+    assert.equal(nativeEvidence.colorHint?.sourceSHA256,sourceSHA256);
+    assert.equal(nativeEvidence.colorHint?.modelLabelMapSHA256,realSegmentation.labelMapSHA256);
+    assert.equal(nativeEvidence.colorHint?.autoPopulateColor,false);
+    assert.equal(nativeEvidence.colorHint?.autoSaveAllowed,false);
+    assert.equal(nativeEvidence.colorHint?.independentHumanColorVerified,false);
     assert.equal(nativeEvidence.saved,false);
     assert.equal(nativeEvidence.category,'Uncategorized');
     assert.equal(nativeEvidence.itemType,'Unknown');
@@ -246,6 +270,10 @@ try{
      .getByRole('button',{name:'Adjust',exact:true}).click();
     const dialog=page.locator('dialog.photo-adjust[open]');
     await dialog.waitFor({state:'visible'});
+    const p790=dialog.locator('[data-mission1-color-hint-790="review-only"]');
+    assert.equal(await p790.count(),1,'real source mask color hint is visible only as read-only owner guidance');
+    assert.match(await p790.textContent(),/Check the original photograph and manually enter the color/i);
+    assert.equal(await dialog.locator('input[aria-label="I verified the category, clothing type and color"]').isChecked(),false);
     await assert.equal(await dialog.getByText(/Source model regions:.*Dress/).count(),1,
      'manual Adjust displays all genuine source semantic classes, not just largest region');
     await dialog.locator('select[aria-label="Main category"]').selectOption('Dresses');
@@ -325,6 +353,10 @@ try{
      actualModelRevision:realSegmentation.modelRevision,
      exactSourceModelMapSHA256:realSegmentation.labelMapSHA256,
      sourceSemanticCount:realSegmentation.detectedRegions.length,
+     actualModelSourcePixelColorReviewedInAdjust:true,
+     actualModelSourceMaskColorOriginalSHA256:realSegmentation.sourceColorReview790.sourceSHA256,
+     actualModelSourceMaskColorLabelMapSHA256:realSegmentation.sourceColorReview790.modelLabelMapSHA256,
+     actualModelColorNeverAutofilledOrHumanConfirmed:true,
      actualModelTopSemanticRegion:actualRegion?.semanticRegionId??null,
      actualModelTopBroadRegionOnly:actualCategory,
      allSemanticCategoriesSurfacedWithoutTopOnlyPromotion:true,

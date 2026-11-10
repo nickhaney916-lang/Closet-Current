@@ -1,0 +1,103 @@
+name: M1 P790 genuine B0 source color into native manual Adjust — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-source-color-owner-review-790-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p790-real-source-manual-review-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-complete-node-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P789 verified source, six scoped research/native paths, no deploy
+        run: |
+          set -euo pipefail
+          BASE=c1862b8988671f4778ffd54398ad30ec2fcb00ba
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/m1-p790-paths
+          test "$(wc -l < /tmp/m1-p790-paths)" -eq 6
+          while read -r path; do
+            case "$path" in
+              public/app.js|scripts/test-mission1-real-segformer-to-closet-782-browser.mjs|research/mission1-source-color-owner-review-790/source-color-hint-gate.mjs|research/mission1-source-color-owner-review-790/REPORT.md|tests/mission1-owner-color-review-790.test.mjs|.github/workflows/mission1-owner-color-review-790-no-deploy.yml) ;;
+              *) echo "UNAPPROVED MODEL/AUTH/SAVED-CLOSET/RELEASE PATH: $path"; exit 1 ;;
+            esac
+          done < /tmp/m1-p790-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/auth.js public/cloud-backup.js public/photo-color.js public/local-catalog.mjs public/native-reviewed-private-save-167.mjs public/outfit-segmentation.mjs supabase)"
+          echo M1_P790_PINNED_PARENT_SIX_PATHS_ONLY_NO_DEPLOY
+      - name: Install ephemeral complete-app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Fail closed source-color human review contract, build, all Node tests
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+          node --test tests/mission1-owner-color-review-790.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-original-to-native-two-engines:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral real frozen model browser runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Real CC BY original through B0 binary mask into original color hint and native owner Adjust
+        run: node scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+      - name: Reject fabricated color permission and require genuine two-engine native manual flow
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/mission1-real-model-native-closet-782/browser-results.json'));
+          assert.equal(x.researchOnly,true);
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');
+          assert.equal(x.realAuthenticatedCloudUsers,false);
+          assert.equal(x.actualModelSubtypeOrColorVerified,false);
+          assert.deepEqual(new Set(x.scenarios.map(r=>r.browser)),new Set(['chromium','webkit']));
+          for(const row of x.scenarios){
+            assert.equal(row.actualModelSourcePixelColorReviewedInAdjust,true);
+            assert.equal(row.actualModelSourceMaskColorOriginalSHA256,row.realModelOriginalSHA256);
+            assert.equal(row.actualModelSourceMaskColorLabelMapSHA256,row.exactSourceModelMapSHA256);
+            assert.equal(row.actualModelColorNeverAutofilledOrHumanConfirmed,true);
+            assert.equal(row.allSemanticCategoriesSurfacedWithoutTopOnlyPromotion,true);
+            assert.equal(row.actualMyClosetSaved,true);
+            assert.equal(row.nativeReviewedOtherOptionNotOffered,true);
+            assert.equal(row.simulatedManualUnknownSubtypeRefusedBeforeSave,true);
+            assert.equal(row.actualHumanGroundTruthIndependentlyVerified,false);
+            assert.equal(row.familyAlpha,'HOLD');
+          }
+          console.log('M1_P790_GENUINE_SOURCE_SHA_B0_LABEL_MAP_SHA_MASK_COLOR_REVIEW_ONLY_CHROMIUM_WEBKIT_NO_RELEASE');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P790-genuine-original-B0-source-mask-color-owner-manual-review-NO-RELEASE
+          path: benchmark/mission1-real-model-native-closet-782/
+          retention-days: 14
+          if-no-files-found: warn
