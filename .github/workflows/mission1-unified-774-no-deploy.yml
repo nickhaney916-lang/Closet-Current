@@ -45,7 +45,7 @@ jobs:
           test "$(git rev-parse "$BASE")" = "$BASE"
           git diff --name-only "$BASE" "$GITHUB_SHA" > /tmp/mission1-774-changed-paths
           cat /tmp/mission1-774-changed-paths
-          test "$(wc -l < /tmp/mission1-774-changed-paths)" -eq 28
+          test "$(wc -l < /tmp/mission1-774-changed-paths)" -eq 31
           while read -r file; do
             case "$file" in
               research/mission1-*/*|scripts/mission1-73-source-review-774.mjs|scripts/prospective-holdout-768.mjs|scripts/scan-visual-source-overlap-769.mjs|scripts/select-publisher-mask-holdout-772.py|scripts/sign-manual-human-review-774.mjs|scripts/test-mission1-offline-reviewer-774-browser.mjs|scripts/test-mission1-unseeded-region-773-browser.mjs|tests/mission1-*.test.mjs|tests/test_publisher_mask_selection_772.py|.github/workflows/mission1-unified-774-no-deploy.yml) ;;
@@ -53,7 +53,7 @@ jobs:
             esac
           done < /tmp/mission1-774-changed-paths
           test -z "$(git diff --name-only "$BASE" "$GITHUB_SHA" -- public supabase)"
-          echo MISSION1_P774_EXACT_ADVANCED_PARENT_28_RESEARCH_ONLY_FILES_HOLD
+          echo MISSION1_P774_EXACT_ADVANCED_PARENT_31_RESEARCH_ONLY_FILES_HOLD
       - name: Install full original advanced 3D/camera/review/recognition test dependencies ephemeral only
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: Exact source reviewer CLI/mixed garment/73 visual registry syntax checks
@@ -215,5 +215,73 @@ jobs:
           path: |
             benchmark/m1-p774/73-original-sources-actual-byte-verified-ledger.json
             benchmark/m1-p774/altered-p772-source-refused.json
+          retention-days: 14
+          if-no-files-found: warn
+
+  p776-real-photo-source-component-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Ephemeral Playwright and original JPEG decoder only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Verify complete original-pixel preservation, no invented class, and no automatic acceptance
+        run: node --test tests/mission1-component-review-776.test.mjs
+      - name: Retrieve SHA-pinned original eight publisher photos with real human polygon annotations
+        run: |
+          set -euo pipefail
+          cp research/real-garment-acceptance-66/fashionpedia-sample.json research/real-garment-acceptance-66/pinned-published-exposed.json
+          python scripts/select-publisher-mask-holdout-772.py research/real-garment-acceptance-66/fashionpedia-sample.json benchmark/real-garment-acceptance-66/fashionpedia
+      - name: Real model evidence in Chromium; no fake masks or owner review
+        run: MISSION1_ENGINE=chromium node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: Repeat all real model tests against original publisher polygons in WebKit
+        run: MISSION1_ENGINE=webkit node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: Require 8 source photos, 20 original human annotations, unaltered model and no release
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          for(const engine of ['chromium','webkit']){
+            const r=JSON.parse(readFileSync('benchmark/mission1-unseeded-region-773/'+engine+'/results.json','utf8'));
+            assert.equal(r.photos,8);
+            assert.equal(r.publisherHumanInstances,20);
+            assert.equal(r.summary.componentReviewNoAutomaticAcceptance,true);
+            assert.equal(r.releaseAuthorized,false);
+            assert.equal(r.familyAlpha,'HOLD');
+            assert.ok(Number.isInteger(r.summary.componentNewReviewProposals));
+            assert.ok(r.rows.every(row=>row.componentReceipts.every(x=>x.accepted===false&&x.autoIndex===false)));
+            console.log(JSON.stringify({engine,publisherInstances:20,
+              baseline:r.summary.candidateInstanceDiagnostic,
+              disconnectedReview:r.summary.componentReviewArm,
+              additionalUnapprovedProposals:r.summary.componentNewReviewProposals,
+              verdict:r.summary.componentResearchVerdict,
+              independentHumanAcceptance:false,releaseAuthorized:false}));
+          }
+          NODE
+      - name: Delete all source originals from CI workspace before uploading receipts
+        if: always()
+        run: |
+          rm -rf benchmark/real-garment-acceptance-66/fashionpedia
+          rm -rf benchmark/real-garment-acceptance-66/previous-six
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P776-exposed-real-source-component-Chromium-WebKit-RESEARCH-HOLD
+          path: benchmark/mission1-unseeded-region-773/
           retention-days: 14
           if-no-files-found: warn

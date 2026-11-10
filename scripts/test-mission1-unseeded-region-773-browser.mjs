@@ -21,8 +21,8 @@ let instrumentedWorker=workerSource.replace(anchor,anchor+"selectedMaskBase64:bt
 await mkdir(out,{recursive:true});
 assert.equal(workerSource.split('const results={sourceId:req.sourceId,').length,2);
 assert.equal(workerSource.split('after:await Promise.all(after.map(describe)),').length,2);
-instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourceId,',"const {seededBoundaryReview}=await import('../mission1-seeded-boundary-recovery/review-growth.mjs');const grown=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after});const allClass=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after,recoverFootwear:true});const {unseededGarmentReview773}=await import('../mission1-unseeded-region-773/original-logit-review.mjs');const unseeded=unseededGarmentReview773({data:logits.logits.data,dims:logits.logits.dims,map,existingGroups:grown});const results={sourceId:req.sourceId,");
-instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),allClassGrowth:await Promise.all(allClass.map(describe)),unseededReview:await Promise.all(unseeded.map(describe)),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
+instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourceId,',"const {seededBoundaryReview}=await import('../mission1-seeded-boundary-recovery/review-growth.mjs');const grown=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after});const allClass=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after,recoverFootwear:true});const {unseededGarmentReview773}=await import('../mission1-unseeded-region-773/original-logit-review.mjs');const unseeded=unseededGarmentReview773({data:logits.logits.data,dims:logits.logits.dims,map,existingGroups:grown});const {sourceComponentReview776}=await import('../mission1-component-review-776/source-component-review.mjs');const components=sourceComponentReview776({data:logits.logits.data,dims:logits.logits.dims,map,groups:grown});const results={sourceId:req.sourceId,");
+instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),allClassGrowth:await Promise.all(allClass.map(describe)),unseededReview:await Promise.all(unseeded.map(describe)),componentReview:await Promise.all(components.map(async g=>({...await describe(g),sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,componentOrdinal:g.componentOrdinal,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex}))),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
 const source=[];
 for(const row of manifest.rows){
  const bytes=await readFile('benchmark/real-garment-acceptance-66/fashionpedia/'+row.file_name);
@@ -94,6 +94,7 @@ try{
     maskSHA256:g.selectedMaskSHA256,
     needsReview:true,accepted:false,autoIndex:false
    }));
+   const componentInstances=r.componentReview.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256,sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,componentOrdinal:g.componentOrdinal,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex}));
    const predictionInstances=r.after.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256}));
    const c=document.querySelector('#photo');c.width=350;c.height=Math.round(350*row.height/row.width);const ctx=c.getContext('2d');ctx.drawImage(image,0,0,c.width,c.height);
    const layer=document.createElement('canvas');layer.width=w;layer.height=h;const lc=layer.getContext('2d'),px=lc.createImageData(w,h);
@@ -126,16 +127,28 @@ try{
      i?rc.lineTo(x,y):rc.moveTo(x,y);
     }rc.closePath();rc.stroke();
    }
-   return {width:w,height:h,masks,truthInstances,predictionInstances,growthInstances,unseededInstances,allClassInstances,modelMaskSHA256:r.sourceMapLabelsSHA256,model:r.model,revision:r.modelRevision};
+   // P776 cyan component review overlay on this exact SHA-verified source.
+   // Green human polygon contours are not shared with model inference.
+   const cc=document.createElement('canvas');cc.width=c.width;cc.height=c.height;
+   document.body.appendChild(document.createElement('p')).textContent='P776 component review proposals: cyan; human publisher contours: green; NOT owner accepted';
+   document.body.appendChild(cc);const cx=cc.getContext('2d');cx.drawImage(image,0,0,cc.width,cc.height);
+   const cv=document.createElement('canvas');cv.width=w;cv.height=h;
+   const ct=cv.getContext('2d'),cp=ct.createImageData(w,h);
+   for(const g of componentInstances)for(let i=0;i<g.mask.length;i++)if(g.mask[i])cp.data.set([30,200,235,120],i*4);
+   ct.putImageData(cp,0,0);cx.drawImage(cv,0,0,cc.width,cc.height);
+   cx.strokeStyle='#00ff30';cx.lineWidth=1.5;
+   for(const a of row.annotations)for(const polygon of a.segmentation){cx.beginPath();for(let i=0;i<polygon.length;i+=2){const x=polygon[i]/row.width*cc.width,y=polygon[i+1]/row.height*cc.height;i?cx.lineTo(x,y):cx.moveTo(x,y);}cx.closePath();cx.stroke();}
+   return {width:w,height:h,masks,truthInstances,predictionInstances,growthInstances,unseededInstances,componentInstances,allClassInstances,modelMaskSHA256:r.sourceMapLabelsSHA256,model:r.model,revision:r.modelRevision};
   },{row,data});
   const measured=result.masks.map(m=>{
    let boundary=null;if(m.truthPixels&&m.predictedPixels)boundary=measureRegisteredBoundaries66({sourcePixels:Uint8Array.from(m.truth),ownerPixels:Uint8Array.from(m.prediction),width:result.width,height:result.height});
    return {semanticRegion:m.region,intersection:m.intersection,union:m.union,truthPixels:m.truthPixels,predictedPixels:m.predictedPixels,iou:m.union?m.intersection/m.union:null,boundary,missed:m.predictedPixels===0};
   });
-  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
+  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.componentInstances,...result.allClassInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
   const allClassInstances=scoreInstances({truth:result.truthInstances,predictions:result.allClassInstances,width:result.width,height:result.height});
   const candidateInstances=scoreInstances({truth:result.truthInstances,predictions:result.growthInstances,width:result.width,height:result.height});
   const candidateNonFootwear=scoreInstances({truth:result.truthInstances.filter(x=>x.region!==9),predictions:result.growthInstances.filter(x=>x.region!==9),width:result.width,height:result.height});
+  const componentDiagnostic=scoreInstances({truth:result.truthInstances,predictions:result.componentInstances,width:result.width,height:result.height});
   const combined=[...result.growthInstances,...result.unseededInstances];
   const withUnseededInstances=scoreInstances({truth:result.truthInstances,predictions:combined,width:result.width,height:result.height});
   const groupedIoU=predictions=>{const regions=new Set([...result.truthInstances.map(x=>x.region),...predictions.map(x=>x.region)]);const scores=[];for(const region of regions){let intersection=0,union=0;const t=result.truthInstances.filter(x=>x.region===region),p=predictions.filter(x=>x.region===region);for(let i=0;i<result.width*result.height;i++){const a=t.some(x=>x.mask[i]),b=p.some(x=>x.mask[i]);intersection+=Number(a&&b);union+=Number(a||b);}scores.push({region,intersection,union,iou:union?intersection/union:null});}return scores;};
@@ -151,7 +164,19 @@ try{
    for(const accepted of result.growthInstances)for(let i=0;i<proposal.mask.length;i++)
     if(proposal.mask[i])assert.equal(accepted.mask[i],0,'unseeded proposal cannot overwrite an existing source garment');
   }
-  rows.push({lostBaselineMatchIds,gainedMatchIds,unseededMatches,
+  for(const original of result.growthInstances){
+   const parts=result.componentInstances.filter(x=>x.sourceGroupId===original.id);
+   assert.ok(parts.length>=1,'never drop an original source proposal');
+   const union=new Uint8Array(original.mask.length);
+   for(const p of parts){
+    assert.equal(p.accepted,false);assert.equal(p.autoIndex,false);assert.equal(p.needsReview,true);
+    for(let i=0;i<p.mask.length;i++)if(p.mask[i]){assert.equal(union[i],0,'no duplicate membership');union[i]=1;}
+   }
+   assert.deepEqual(Array.from(union),original.mask,'real source pixels must be conserved exactly');
+  }
+  rows.push({componentDiagnostic,componentSplitAdditionalReviewProposals:result.componentInstances.length-result.growthInstances.length,
+   componentReceipts:result.componentInstances.map(({id,region,maskSHA256,sourceGroupId,sourceComponentCount,componentOrdinal,accepted,autoIndex})=>({id,region,maskSHA256,sourceGroupId,sourceComponentCount,componentOrdinal,accepted,autoIndex})),
+   lostBaselineMatchIds,gainedMatchIds,unseededMatches,
    withUnseededInstances,withUnseededGroupedIoU,
    unseededReceipts:result.unseededInstances.map(({id,region,maskSHA256,accepted,needsReview,autoIndex})=>
     ({id,region,maskSHA256,accepted,needsReview,autoIndex})),
@@ -167,6 +192,13 @@ try{
   meanExteriorBoundaryF1IncludingMisses:regions.reduce((n,m)=>n+(m.boundary?.boundaryF1||0),0)/regions.length,
   noBaselineInstanceLoss:rows.every(r=>r.lostBaselineMatchIds.length===0),noNewInstanceFalsePositives:rows.every(r=>r.candidateInstances.falsePositives<=r.instances.falsePositives),humanTruthSource:'publisher-provided Fashionpedia polygons; not agent annotations or owner review',
   officialFashionpediaAP:false,renderingFailures:0};
+ summary.componentReviewArm=aggregate('componentDiagnostic');
+ summary.componentNewReviewProposals=rows.reduce((n,r)=>n+r.componentSplitAdditionalReviewProposals,0);
+ summary.componentHumanPolygonMatchDeltaAgainstSeeded=summary.componentReviewArm.truePositives-summary.candidateInstanceDiagnostic.truePositives;
+ summary.componentFalsePositiveDeltaAgainstSeeded=summary.componentReviewArm.falsePositives-summary.candidateInstanceDiagnostic.falsePositives;
+ summary.componentReviewNoAutomaticAcceptance=true;
+ summary.componentResearchVerdict=summary.componentHumanPolygonMatchDeltaAgainstSeeded>0&&summary.componentFalsePositiveDeltaAgainstSeeded<=0?
+  'EXPOSED_COMPONENT_GAIN_ONLY_NOT_RELEASE':'NO_INDEPENDENT_COMPONENT_GAIN_REVIEW_ONLY_NOT_RELEASE';
  summary.unseededReviewArm=aggregate('withUnseededInstances');
  summary.unseededReviewCount=rows.reduce((n,r)=>n+r.unseededReceipts.length,0);
  summary.newHumanPolygonMatchesFromUnseededReview=rows.reduce((n,r)=>n+r.unseededMatches.length,0);
