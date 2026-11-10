@@ -26,13 +26,40 @@ function boardBackup(){
  }
  return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};
 }
-async function persistBoardState(){
+async function persistBoardState({appendSaved=null,replaceSaved=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
- const snapshot=boardBackup();
- await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'outfit-board',...snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
+ const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
+ const assertOwner=()=>{
+  auth?.assertCurrent?.();
+  if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||db!==ownerDB||ownerDB.name!=='closet-current-user-'+owner)
+   throw Error('Your account changed. Reopen your closet before saving this outfit.');
+ };
+ assertOwner();
+ const current=structuredClone(currentBoard),candidate=appendSaved?structuredClone(appendSaved):null,
+  replacement=replaceSaved===null?null:structuredClone(replaceSaved);
+ await queued(()=>new Promise((resolve,reject)=>{
+  assertOwner();const tx=ownerDB.transaction('state','readwrite'),store=tx.objectStore('state');
+  let failure,saved;const request=store.get('outfit-board');
+  request.onsuccess=()=>{try{
+   assertOwner();
+   // Read the committed roster INSIDE this transaction. Other tabs and queued
+   // autosaves cannot persist speculative saves or erase successful appends.
+   saved=structuredClone(replacement===null?(request.result?.saved||[]):replacement);
+   if(!Array.isArray(saved)||saved.length>50)throw Error('Saved outfit storage needs review. Reload your closet.');
+   if(candidate){if(saved.length>=50)throw Error('You can save up to 50 outfits.');saved.push(candidate);}
+   store.put({id:'outfit-board',current,saved});
+  }catch(error){failure=error;tx.abort();}};
+  tx.oncomplete=()=>{try{assertOwner();savedOutfitBoards=structuredClone(saved);resolve();}catch(error){reject(error);}};
+  tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Could not save this outfit.'));
+ }));
 }
-async function storeBoard(){$('boardSaveStatus').textContent='Saving outfit changes…';try{await persistBoardState();$('boardSaveStatus').textContent='Outfit changes saved on this device.';return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
+async function saveOwnedOutfit(board){
+ const saved=cleanOutfitBoard(structuredClone(board),items);
+ if(!Object.keys(saved.slots).length)throw Error('Choose at least one piece from your own closet first.');
+ await persistBoardState({appendSaved:saved});
+}
+async function storeBoard(){$('boardSaveStatus').textContent='Saving outfit changes…';try{await persistBoardState();renderSavedOutfitBoards();$('boardSaveStatus').textContent='Outfit changes saved on this device.';return true;}catch{$('boardSaveStatus').textContent='This outfit could not be saved. Please try again.';return false;}}
 function syncBoardInputs(){for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).value=currentBoard[key]||'';}
 function selectBoardPiece(slotId,itemId){
  if(nativeLossless04Active){
@@ -116,7 +143,7 @@ async function importBoardBackup(value){
   throw Error('Native backup import blocked in lossless research mode; atomic items/outfit restore is not yet accepted');
  if(!boardInitialized)await outfitBoardReady;
  if(!value||!Array.isArray(value.saved)||value.saved.length>50)throw Error('Invalid outfit board backup.');
- currentBoard=cleanOutfitBoard(value.current,items);savedOutfitBoards=value.saved.map(board=>cleanOutfitBoard(board,items));syncBoardInputs();await persistBoardState();renderOutfitBoard();
+ currentBoard=cleanOutfitBoard(value.current,items);savedOutfitBoards=value.saved.map(board=>cleanOutfitBoard(board,items));syncBoardInputs();await persistBoardState({replaceSaved:savedOutfitBoards});renderOutfitBoard();
 }
 for(const slot of outfitSlots){const option=node('option',slot.label);option.value=slot.id;$('boardTarget').append(option);}$('boardTarget').value='shoes';$('boardTarget').onchange=renderBoardSuggestions;
 for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))$(id).onchange=()=>{
@@ -139,7 +166,7 @@ $('saveBoard').onclick=async()=>{
   finally{$('saveBoard').disabled=false;}
   return;
  }
- if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{savedOutfitBoards.push(structuredClone(currentBoard));await persistBoardState();$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{savedOutfitBoards.pop();$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
+ if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{await saveOwnedOutfit(currentBoard);$('boardSaveStatus').textContent='Outfit saved with references to your clothing photos.';renderSavedOutfitBoards();}catch{$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
