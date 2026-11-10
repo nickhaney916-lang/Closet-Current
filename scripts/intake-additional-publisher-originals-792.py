@@ -16,8 +16,8 @@ import zipfile
 
 BASE = pathlib.Path("research/real-garment-acceptance-66/fashionpedia-sample.json")
 OUTPUT = pathlib.Path("benchmark/mission1-additional-publisher-originals-792")
-LIMIT = 12
-GROUP = "closet-current-M1-P792-source-IDs-multisix-singlesix-v2"
+LIMIT = 10
+GROUP = "closet-current-M1-P792-full-source-eligible-census-v3"
 ALLOWED = {0,1,2,3,4,5,6,7,8,9,10,23}
 VALID_NAME = re.compile(r"^[a-f0-9]{32}\.jpg$")
 SHA = lambda content: hashlib.sha256(content).hexdigest()
@@ -54,44 +54,37 @@ def prepare(publisher,archive,exposed):
          if id in images and id not in excluded_ids and eligible(images[id],a)),
         key=lambda z:(deterministic_rank(z[0]["id"]),z[0]["id"])
     )
-    # Publisher metadata supports only seven previously unused two-garment
-    # images. Pre-register a fixed source-only STRATIFIED design: six
-    # multi-garment images plus six single-garment images. The selection
-    # remains independent of ALL model outputs, thresholds or mask IoU.
-    multis=[c for c in candidates if len(c[1])>=2]
-    singles=[c for c in candidates if len(c[1])==1]
+    # This publisher release offers exactly TEN additional SHA-distinct
+    # sources under the strict original source-license/polygon criteria after
+    # the 73-image research exposure registry. Evaluate the entire available
+    # pool: no model-adaptive sampling and no favorable-source cherry picking.
     members=set(archive.namelist())
     rows=[]
-    # Select exactly six source-distinct, exposure-quarantined originals in
-    # EACH pre-registered stratum. Do not replace a failed one with a result
-    # from the other stratum, or make any choice after real model inference.
-    for stratum,selection in [("multi",multis),("single",singles)]:
-        accepted=0
-        for photo,anns in selection:
-            member="test/"+photo["file_name"]
-            if member not in members:
-                continue
-            raw=archive.read(member)
-            digest=SHA(raw)
-            if digest in exposed or digest in {r["sha256"] for r in rows}:
-                continue
-            if len(raw)<512 or len(raw)>10_000_000 or not raw.startswith(b"\xff\xd8"):
-                continue
-            row={
-                "id":photo["id"],"width":photo["width"],"height":photo["height"],
-                "file_name":photo["file_name"],"license":photo["license"],
-                "time_captured":photo.get("time_captured"),
-                "original_url":photo.get("original_url"),"isstatic":photo.get("isstatic"),
-                "kaggle_id":photo.get("kaggle_id"),
-                "sha256":digest,"bytes":len(raw),"archiveMember":member,
-                "annotations":anns,"sourceSelectionStratum":stratum,
-                "groundTruthProvenance":"Pre-existing Fashionpedia publisher human polygons only, no independent blinded review",
-                "primaryColor":None,"exactAppSubtype":None
-            }
-            rows.append(row)
-            (OUTPUT/"originals"/photo["file_name"]).write_bytes(raw)
-            accepted+=1
-            if accepted==6:break
+    for photo,anns in candidates:
+        member="test/"+photo["file_name"]
+        if member not in members:
+            continue
+        raw=archive.read(member)
+        digest=SHA(raw)
+        if digest in exposed or digest in {r["sha256"] for r in rows}:
+            continue
+        if len(raw)<512 or len(raw)>10_000_000 or not raw.startswith(b"\xff\xd8"):
+            continue
+        row={
+            "id":photo["id"],"width":photo["width"],"height":photo["height"],
+            "file_name":photo["file_name"],"license":photo["license"],
+            "time_captured":photo.get("time_captured"),
+            "original_url":photo.get("original_url"),"isstatic":photo.get("isstatic"),
+            "kaggle_id":photo.get("kaggle_id"),
+            "sha256":digest,"bytes":len(raw),"archiveMember":member,
+            "annotations":anns,
+            "sourceSelectionStratum":"multi" if len(anns)>=2 else "single",
+            "groundTruthProvenance":"Pre-existing Fashionpedia publisher human polygons only, no independent blinded review",
+            "primaryColor":None,"exactAppSubtype":None
+        }
+        rows.append(row)
+        (OUTPUT/"originals"/photo["file_name"]).write_bytes(raw)
+        if len(rows)==LIMIT:break
     if len(rows)!=LIMIT:
         archive_entries=archive.namelist()
         matching_test=sum(("test/"+photo["file_name"]) in archive_entries for photo,_ in candidates)
@@ -107,7 +100,7 @@ def prepare(publisher,archive,exposed):
              for im,_ in candidates[:8]],
             "actuallyDistinctUnexposedRows":len(rows),
         },sort_keys=True))
-        raise RuntimeError("P792 cannot find 12 distinct previously unexposed publisher originals")
+        raise RuntimeError("P792 cannot find 10 distinct previously unexposed publisher originals")
     return rows
 
 def run():
@@ -142,8 +135,7 @@ def run():
         "publisherAnnotatedImageRightsIndependentlyCleared":False,
         "blindHumanReviewIndependentlyVerified":False,
         "newToEarlierExposedSourceHashRegistry":True,
-        "publisherSelectionMultiSourceTarget":6,
-        "publisherSelectionSingleSourceTarget":6,
+        "selectionCensusNotModelChosen":True,
         "trainingCorpusOverlapIndependentlyExcluded":False,
         "exactAppSubtypeHumanTruthAvailable":False,
         "humanPrimaryColorTruthAvailable":False,
