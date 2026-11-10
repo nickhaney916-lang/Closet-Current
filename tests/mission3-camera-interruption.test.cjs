@@ -39,20 +39,15 @@ function harness(grants=[]){
  };
 }
 test('background interruption stops an active video stream without dropping reviewed or draft pieces',async()=>{
- const f=harness([deferred()]),stream=media();
- // Both historical and repaired versions can open a camera while visible.
- const request=f.context.startCamera('manual');
- const pending=f.context.navigator.mediaDevices; // grant the promise via queued object below
- // The first source controls the grant from test-local fixture; test separately
- // checks actual camera on visibility below.
- assert.equal(typeof f.context.startCamera,'function');
- assert.ok(pending);
- // A pending prompt must not prevent the subsequent explicit stop path.
- f.context.stopCamera();assert.deepEqual(f.context.batch.map(x=>x.id),['private-draft']);
- assert.deepEqual(f.context.items.map(x=>x.id),['private-saved']);
- // Release the asynchronous permission request through the next test fixture.
- f.trigger('pagehide','window');
+ const grant=deferred(),f=harness([grant]),stream=media();
+ const pending=f.context.startCamera('manual');
+ assert.equal(f.context.cameraOpening,true);
+ f.context.stopCamera();
+ grant.resolve(stream);await pending;
+ assert.equal(stream.stops,1);
  assert.equal(f.context.stream,null);
+ assert.deepEqual(f.context.batch.map(x=>x.id),['private-draft']);
+ assert.deepEqual(f.context.items.map(x=>x.id),['private-saved']);
 });
 test('hidden visibility revokes active track, releases controls, and preserves private items',async()=>{
  const grant=deferred(),f=harness([grant]),stream=media();
