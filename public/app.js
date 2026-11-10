@@ -1123,12 +1123,12 @@ async function importClothingPhotos(files){
   const owner=proofMode?captureProofOwner():null;
   if(proofMode&&!owner)throw Error('Please sign in before importing photos.');
   const decode=proofMode?file=>captureProofFromFile(file,owner):photoToJPEG;
-  const result=await readPhotoBatch(files,decode,(decoded,file)=>{
+  const result=await readPhotoBatch(files,decode,async(decoded,file)=>{
    if(proofMode&&captureProofOwner()!==owner)return false;
    const proof=proofMode?decoded:null;
-   const accepted=candidate(proof?proof.image:decoded,proof?{sourceProof:proof}:{});
-   if(accepted){const item=batch.at(-1);if(item)item.importFilename=file.name;}
-   return accepted;
+   const accepted=await candidate(proof?proof.image:decoded,
+     proof?{sourceProof:proof,requireDraftCommit:true,importFilename:file.name}:{importFilename:file.name});
+    return accepted;
   });
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
