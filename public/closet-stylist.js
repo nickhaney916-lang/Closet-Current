@@ -86,7 +86,7 @@ function renderStyledCollection(){
   else card.append(node('p','No matching trend direction in the current library for these pieces. This combination uses general styling rules.','fine'));
   const actions=node('div',null,'actions'),edit=node('button','Adjust on outfit board','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
-  edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
+  edit.onclick=async()=>{await outfitBoardReady;$('savedOutfitReview').hidden=true;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
   const status=node('p',null,'fine styled-save-status');status.setAttribute('role','status');
   const refresh=node('button','Refresh my closet','secondary refresh-outfit-wardrobe');refresh.type='button';
   const applySaveState=()=>{
