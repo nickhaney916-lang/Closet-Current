@@ -1,0 +1,146 @@
+name: Mission1 65 genuine original-photo visual near-duplicate quarantine NO DEPLOY
+on:
+  push:
+    branches:
+      - research/mission1-perceptual-exposure-ledger-769-HOLD
+    paths:
+      - research/mission1-visual-source-overlap-769/original-perceptual-ledger.mjs
+      - research/mission1-visual-source-overlap-769/REPORT.md
+      - scripts/scan-visual-source-overlap-769.mjs
+      - tests/mission1-perceptual-ledger-769.test.mjs
+      - .github/workflows/mission1-visual-source-overlap-769-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mission1-visual-769-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-scope-full-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independent P768 verified parent and only five source-audit research files
+        run: |
+          set -euo pipefail
+          BASE=7b5751d0e0e22e4e987b84d3e02e0c86bc4f498d
+          git fetch --depth=1 origin "$BASE"
+          test "$(git rev-parse "$BASE")" = "$BASE"
+          git diff --name-only "$BASE" "$GITHUB_SHA" > /tmp/p769-paths
+          cat /tmp/p769-paths
+          test "$(wc -l </tmp/p769-paths)" -eq 5
+          while read -r path; do
+            case "$path" in
+              research/mission1-visual-source-overlap-769/original-perceptual-ledger.mjs|research/mission1-visual-source-overlap-769/REPORT.md|scripts/scan-visual-source-overlap-769.mjs|tests/mission1-perceptual-ledger-769.test.mjs|.github/workflows/mission1-visual-source-overlap-769-no-deploy.yml) ;;
+              *) echo "M1 P769 refuses unrelated app/cloud/production write $path"; exit 1 ;;
+            esac
+          done </tmp/p769-paths
+          test -z "$(git diff --name-only "$BASE" "$GITHUB_SHA" -- public supabase)"
+          echo P769_EXACT_PARENT_FIVE_RESEARCH_PATHS_NO_DEPLOY
+      - name: Install ephemeral existing test/Sharp libraries only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Syntax and real pixel manipulation adversarial fingerprints
+        run: |
+          set -euo pipefail
+          node --check scripts/scan-visual-source-overlap-769.mjs
+          node --check research/mission1-visual-source-overlap-769/original-perceptual-ledger.mjs
+          node --test tests/mission1-perceptual-ledger-769.test.mjs
+      - name: Full unchanged application and research regression suite
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node --test tests/*.test.cjs tests/*.test.mjs
+  real-65-published-original-byte-sha-source-overlap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral image decoder only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Obtain the 59 already licensed public originals with SHA checks, do not invent photos
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json
+          test "$(find benchmark/photos -maxdepth 1 -name '*.jpg' | wc -l)" -eq 59
+      - name: Fetch exact existing P66 six-source publisher manifest and original archive verification script
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin 7a933a6ccd461fc722bf3de18ef977c0233023d3
+          mkdir -p research/real-garment-acceptance-66
+          git show 7a933a6ccd461fc722bf3de18ef977c0233023d3:research/real-garment-acceptance-66/fashionpedia-sample.json > research/real-garment-acceptance-66/fashionpedia-sample.json
+          git show 7a933a6ccd461fc722bf3de18ef977c0233023d3:scripts/fetch-fashionpedia-66.py > /tmp/m1-source-fetch-769.py
+          sha256sum research/real-garment-acceptance-66/fashionpedia-sample.json
+      - name: Independently download six published original photos and publisher annotations by pinned byte SHA
+        run: |
+          set -euo pipefail
+          python /tmp/m1-source-fetch-769.py
+          test "$(find benchmark/real-garment-acceptance-66/fashionpedia -maxdepth 1 -name '*.jpg' | wc -l)" -eq 6
+      - name: Decode and fingerprint ALL 65 authentic source JPEGs with actual 65 hashes
+        run: |
+          set -euo pipefail
+          mkdir -p benchmark/mission1-visual-769
+          node scripts/scan-visual-source-overlap-769.mjs build benchmark/photos benchmark/real-garment-acceptance-66/fashionpedia benchmark/mission1-visual-769/65-real-exposed-originals.json
+      - name: Real JPEG byte altered reencoding and original central crop detected as already examined
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+          import sharp from 'sharp';
+          import {createHash} from 'node:crypto';
+          const sha=x=>createHash('sha256').update(x).digest('hex');
+          const original=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))[4];
+          const input=readFileSync('benchmark/photos/'+original.image);
+          const reencoded=await sharp(input).jpeg({quality:61}).toBuffer();
+          const width=(await sharp(input).metadata()).width,height=(await sharp(input).metadata()).height;
+          const cropped=await sharp(input).extract({
+           left:Math.round(.14*width),top:Math.round(.14*height),
+           width:Math.round(.72*width),height:Math.round(.72*height)
+          }).jpeg({quality:83}).toBuffer();
+          mkdirSync('benchmark/mission1-visual-769/inputs',{recursive:true});
+          writeFileSync('benchmark/mission1-visual-769/inputs/recompressed.jpg',reencoded);
+          writeFileSync('benchmark/mission1-visual-769/inputs/centre-cropped.jpg',cropped);
+          writeFileSync('benchmark/mission1-visual-769/candidates.json',JSON.stringify([
+           {image:'recompressed.jpg',sha256:sha(reencoded)},
+           {image:'centre-cropped.jpg',sha256:sha(cropped)}
+          ],null,2));
+          if(sha(input)===sha(reencoded)||sha(input)===sha(cropped))throw Error('need actual different JPEG original byte SHA to prove visual-only contamination');
+          NODE
+          node scripts/scan-visual-source-overlap-769.mjs screen benchmark/mission1-visual-769/65-real-exposed-originals.json benchmark/mission1-visual-769/candidates.json benchmark/mission1-visual-769/inputs benchmark/mission1-visual-769/real-byte-different-crop-trials.json
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const l=JSON.parse(readFileSync('benchmark/mission1-visual-769/65-real-exposed-originals.json','utf8'));
+          const result=JSON.parse(readFileSync('benchmark/mission1-visual-769/real-byte-different-crop-trials.json','utf8'));
+          assert.equal(l.realSourcePhotos,65);
+          assert.equal(l.allActualOriginalsShaVerified,true);
+          assert.equal(l.fingerprints.length,65);
+          assert.ok(l.fingerprints.every(row=>row.views.length===7));
+          assert.equal(result.verifiedExposedSources,65);
+          assert.equal(result.candidateOriginals,2);
+          assert.equal(result.nearDuplicateFlagCount,2);
+          assert.equal(result.candidatesApprovedAsUnseen,0);
+          assert.equal(result.familyAlpha,'HOLD');
+          console.log('P769_REAL_65_SHA_VERIFIED_JPEG_SOURCES_7_VIEW_EACH_TWO_BYTE_DIFFERENT_CROPS_QUARANTINED_PASS');
+          console.log('REAL_SRC_HAMMING_BITS',result.outcomes.map(x=>x.minimumHammingDistance).join(','));
+          NODE
+      - name: Remove actual published photo bytes before artifact, publish only non-private fingerprints and source counts
+        if: always()
+        run: |
+          rm -rf benchmark/mission1-visual-769/inputs
+          rm -f benchmark/mission1-visual-769/candidates.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-65-real-exposed-source-originals-visual-overlap-HOLD
+          path: |
+            benchmark/mission1-visual-769/65-real-exposed-originals.json
+            benchmark/mission1-visual-769/real-byte-different-crop-trials.json
+          retention-days: 14
+          if-no-files-found: warn
