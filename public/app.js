@@ -271,7 +271,11 @@ function adjustPhoto(item){
       isActive:stillCurrent798,
       // P800 is a separately enabled temporary ORIGINAL-source rectangle,
       // not a model-created mask and never a human approval or save trigger.
-      enableOwnerBox800:new URLSearchParams(location.search).get('mission1OwnerBox800')==='research'
+      enableOwnerBox800:new URLSearchParams(location.search).get('mission1OwnerBox800')==='research',
+      // P802 optional local-only source-pixel color preview; NO SAM2/model
+      // claim, no mask approval, no source/wardrobe/cloud mutation.
+      enableOwnerMask802:new URLSearchParams(location.search).get('mission1OwnerMask802')==='research'&&
+       new URLSearchParams(location.search).get('mission1OwnerBox800')==='research'
      });
     }).catch(()=>{
      if(stillCurrent798())message('Original garment point review is unavailable. Your photo is unchanged.');
