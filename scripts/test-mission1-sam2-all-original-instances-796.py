@@ -10,8 +10,12 @@ import hashlib
 import io
 import json
 import os
+import gc
+import sys
 from pathlib import Path
 import time
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]/"research"/"mission1-bounded-sam2-797"))
+from bounded_source_io import load_model_checkpoint,open_source_once,linux_process_memory_mib,CHUNK,CAP_BYTES
 from urllib.request import Request,urlopen
 
 import numpy as np
@@ -31,39 +35,16 @@ MODEL_PATH=Path("/tmp/m1-sam2-796-weights")
 sha=lambda b:hashlib.sha256(b).hexdigest()
 
 def download_pinned(file):
-    expected=MODEL_FILES[file]
-    location=MODEL_PATH/file
-    if location.exists() and sha(location.read_bytes())==expected:
-        return location
-    url=f"https://huggingface.co/{MODEL_REPO}/resolve/{REVISION}/{file}?download=true"
-    with urlopen(Request(url,headers={"User-Agent":"ClosetCurrentResearch-795/1.0"}),timeout=180) as response:
-        if response.status!=200:
-            raise RuntimeError(f"SAM2 immutable model retrieval HTTP {response.status}")
-        from urllib.parse import urlsplit
-        target=urlsplit(response.url)
-        host=target.hostname or ""
-        if target.scheme!="https" or not (
-            host=="huggingface.co" or host.endswith(".xethub.hf.co") or
-            host.endswith(".hf.co")
-        ):
-            # Never log presigned URLs/tokens; only the external host.
-            raise RuntimeError("Unapproved SAM2 model host redirect: "+host)
-        raw=response.read()
-    if sha(raw)!=expected:
-        raise RuntimeError("SAM2 external converted ONNX MODEL SHA mismatch: refuse")
-    MODEL_PATH.mkdir(parents=True,exist_ok=True)
-    location.write_bytes(raw)
-    return location
+    return load_model_checkpoint(file,MODEL_PATH)
 
-def source_truth(row,annotation=None):
-    image_path=BASE/"originals"/row["file_name"]
-    raw=image_path.read_bytes()
-    if sha(raw)!=row["sha256"]:
-        raise RuntimeError("Real publisher original JPEG bytes or source SHA mismatch")
-    photo=Image.open(io.BytesIO(raw)).convert("RGB")
+def source_truth(row,annotation=None,verified_photo=None):
+    # For production research, the verified original JPEG is hash-scanned and
+    # decoded once before the encoder pass. Reuse the same image for every
+    # publisher polygon; standalone source_truth still verifies its input.
+    photo=verified_photo if verified_photo is not None else open_source_once(row,BASE/"originals")
     w,h=photo.size
-    if (w,h)!=(row["width"],row["height"]) or w>3072 or h>3072:
-        raise RuntimeError("Actual publisher image dimensions invalid")
+    if (w,h)!=(row["width"],row["height"]):
+        raise RuntimeError("Verified original source photo dimensions mismatch")
     # First polygon annotation by frozen publisher ID (not selected by IoU).
     annotated=sorted(row["annotations"],key=lambda x:int(x["id"]))
     if not annotated or not annotated[0].get("segmentation"):
@@ -122,6 +103,8 @@ def run():
     opts.intra_op_num_threads=2
     opts.inter_op_num_threads=1
     opts.graph_optimization_level=ort.GraphOptimizationLevel.ORT_ENABLE_ALL
+    opts.enable_mem_pattern=False
+    opts.enable_cpu_mem_arena=False
     enc=ort.InferenceSession(str(download_pinned("encoder.onnx")),opts,
         providers=["CPUExecutionProvider"])
     dec=ort.InferenceSession(str(download_pinned("decoder.onnx")),opts,
@@ -132,12 +115,13 @@ def run():
         raise RuntimeError("Actual SAM2 image encoder/decoder IO contract changed")
     rows=[]
     all_source_sha=set()
+    per_photo_memory=[]
     for id in SOURCE_IDS:
         row=catalog[id]
         ann=sorted(row["annotations"],key=lambda x:int(x["id"]))
         if not ann or len(ann)>8:
             raise RuntimeError("All 1–8 frozen original publisher instances required")
-        first_photo,_,_,_,_=source_truth(row,ann[0])
+        first_photo=open_source_once(row,BASE/'originals')
         w,h=first_photo.size
         all_source_sha.add(row["sha256"])
         tic=time.perf_counter()
@@ -155,7 +139,7 @@ def run():
             # Model encoder is run ONCE for the real photo; each original
             # publisher garment gets one independent annotation-derived oracle
             # point. No difficult annotations or failures are dropped.
-            photo,truth,pt,aid,cat=source_truth(row,ground_truth)
+            photo,truth,pt,aid,cat=source_truth(row,ground_truth,verified_photo=first_photo)
             if photo.size!=(w,h):
                 raise RuntimeError("Different source image was substituted")
             prompt=np.asarray([[[pt[0]*1024/w,pt[1]*1024/h]]],np.float32)
@@ -204,6 +188,12 @@ def run():
              "modelMultimaskSourceIoU":multimask["sourcePixelMaskIoU"],
              "actualMaskSelectionFromModelOnly":True,"autoSaveAllowed":False
             },sort_keys=True),flush=True)
+            del photo,truth,masks,predicts,output,got
+        del first_photo,features,prepared
+        gc.collect()
+        memory={"publisherImageId":id,**linux_process_memory_mib()}
+        per_photo_memory.append(memory)
+        print("M1_P797_SAM2_PROCESS_MEMORY_AFTER_SOURCE",json.dumps(memory,sort_keys=True),flush=True)
     if len(rows)!=23 or len(all_source_sha)!=10 or len(set((r["publisherImageId"],r["publisherInstanceId"]) for r in rows))!=23:
         raise RuntimeError("P796 no missing, duplicated or cherry-picked photo/polygon instance")
     by_category={}
@@ -226,6 +216,15 @@ def run():
      "realUserClickCount":0,
      "modelLicense":"Meta upstream SAM2 Apache-2.0; third party converted checkpoint claims Apache-2.0; separate legal review required",
      "modelWeightsSHA256":MODEL_FILES,
+     "boundedModelDownload":True,
+     "modelDownloadChunkBytes":CHUNK,
+     "modelAssetByteCaps":CAP_BYTES,
+     "verifiedOriginalJPEGDecodedOncePerPhoto":True,
+     "ORTCpuMemoryArenaEnabled":False,
+     "ORTMemoryPatternEnabled":False,
+     "processMemoryAfterEachSourceMiB":per_photo_memory,
+     "measuredPeakProcessRSSMiB":per_photo_memory[-1]["VmHWMMiB"],
+     "modelSessionResidentDuringTenImages":True,
      "ownerPhotosUploaded":False,
      "nativeMobilePerformanceVerified":False,
      "automaticGarmentDetectionMeasured":False,
@@ -247,6 +246,8 @@ def run():
      "modelPredictedSelectionIoU50":data["modelSelectedMaskIoU50Count"],
      "meanSelectedSourcePixelIoU":data["modelSelectedMeanOriginalPixelIoU"],
      "perPublisherCategory":by_category,"humanOwnerClicks":0,
-     "automaticDetectionClaim":False,"releaseAuthorized":False
+     "automaticDetectionClaim":False,
+     "measuredPeakProcessRSSMiB":per_photo_memory[-1]["VmHWMMiB"],
+     "releaseAuthorized":False
     },sort_keys=True),flush=True)
 if __name__=="__main__":run()
