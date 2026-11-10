@@ -37,7 +37,10 @@ jobs:
         run: |
           set -euo pipefail
           BASE=0d9534130cc1e72e9e9e0dd7827267babdc5a911
-          git fetch --depth=1 origin "$BASE"
+          # Hosted checkout is shallow; fetch the actual stacked head ancestry
+          # rather than incorrectly treating missing ancestors as a defect.
+          git fetch --deepen=80 origin "$GITHUB_SHA"
+          git fetch origin "$BASE"
           git merge-base --is-ancestor "$BASE" "$GITHUB_SHA"
           test "$(git rev-parse "$BASE")" = "$BASE"
           git diff --name-only "$BASE" "$GITHUB_SHA" > /tmp/mission1-774-changed-paths
@@ -141,6 +144,11 @@ jobs:
           cp research/real-garment-acceptance-66/fashionpedia-sample.json research/real-garment-acceptance-66/pinned-published-exposed.json
           python scripts/fetch-fashionpedia-66.py
           test "$(find benchmark/real-garment-acceptance-66/fashionpedia -maxdepth 1 -name '*.jpg' | wc -l)" -eq 6
+          # The next P772 selector fetches the six pinned references separately
+          # and writes eight NEW originals into this same temporary folder.
+          # Remove old copies so 6+8 file accumulation is not mistaken as
+          # a selected or failed cohort; immutable six-source receipt remains.
+          rm -rf benchmark/real-garment-acceptance-66/fashionpedia
       - name: Reproduce original P772 deterministic publisher source metadata and all eight actual SHA pinned original JPEGs
         run: |
           set -euo pipefail
