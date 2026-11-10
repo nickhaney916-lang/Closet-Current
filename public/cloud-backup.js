@@ -45,7 +45,29 @@
  function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
  function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw Error('Invalid private photo path');return path;}
  async function encode(value,assertActive=()=>{}){const photos=new Map(),document=await E.mapImages(value,async image=>{assertActive();const bytes=imageBytes(image),owner=user,sha=await hash(bytes);assertActive();const path=owner+'/'+sha+'.jpg';photos.set(path,bytes);return 'closet-photo:'+path;});return {document:E.validateDocument(document),photos};}
- async function decode(document,assertActive=()=>{}){assertActive();E.validateDocument(document);const photos=new Map();return E.mapImages(document,async value=>{assertActive();const path=photoPath(value,user);if(!photos.has(path))photos.set(path,(async()=>{const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=new Uint8Array(await response.arrayBuffer());assertActive();if(bytes.length>8388608||await hash(bytes)!==path.split('/')[1].slice(0,-4))throw Error('Photo integrity check failed');let binary='';for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));return 'data:image/jpeg;base64,'+btoa(binary);})());return photos.get(path);});}
+ async function decode(document,assertActive=()=>{}){assertActive();E.validateDocument(document);const photos=new Map();return E.mapImages(document,async(value,key,parent)=>{
+   assertActive();
+   // Historical backups placed owner-reviewed cutoutImage JPEGs directly in
+   // private JSON. Accept only an exact SHA-attested legacy cutout, so it can
+   // be converted to a private Storage reference at the next backup.
+   if(key==='cutoutImage'&&value.startsWith('data:image/jpeg;base64,')){
+    const bytes=imageBytes(value),actual=await hash(bytes);assertActive();
+    if(parent?.cutoutSHA256!==actual)throw Error('Legacy reviewed cutout integrity check failed');
+    return value;
+   }
+   const path=photoPath(value,user),sha=path.split('/')[1].slice(0,-4);
+   if(key==='cutoutImage'&&parent?.cutoutSHA256!==sha)
+    throw Error('Reviewed cutout receipt does not match cloud object SHA');
+   if(!photos.has(path))photos.set(path,(async()=>{
+    const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=new Uint8Array(await response.arrayBuffer());
+    assertActive();
+    if(bytes.length>8388608||await hash(bytes)!==sha)throw Error('Photo integrity check failed');
+    assertActive();let binary='';
+    for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));
+    return 'data:image/jpeg;base64,'+btoa(binary);
+   })());
+   return photos.get(path);
+  });}
  async function upload(photos,assertActive=()=>{}){for(const [path,bytes]of photos){assertActive();try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.
    const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=new Uint8Array(await existing.arrayBuffer());assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw Error('Stored photo differs');
