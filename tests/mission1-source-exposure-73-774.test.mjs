@@ -74,7 +74,7 @@ test('Mission1 pre-existing 65-only visual candidate ledger must not be misrepre
   candidates:[{image:'anything.jpg',sha256:'f'.repeat(64)}],
   readCandidate:async()=>new Uint8Array([255,216,255,217]),
   requireComplete73:true
- }),/complete original-decoded source registry/);
+ }),/complete original-decoded 83-source registry/);
 });
 test('Mission1 actual previously examined P772 source bytes cannot be rebranded as unseen human annotation by falsifying reviewer enrollment',()=>{
  const f=fixture();

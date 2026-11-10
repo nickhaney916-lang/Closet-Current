@@ -1,0 +1,155 @@
+name: M1 P793 actual 83-original full visual-source quarantine — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-full-83-original-visual-gate-793-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p793-actual-83-source-dhash-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-build-all-node-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove exact green P792 source, scoped eight files, protected private paths, NO DEPLOY
+        run: |
+          set -euo pipefail
+          BASE=0f9158d2d333a17b7e989c73457cbafa3f46860d
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p793-allowed
+          test "$(wc -l </tmp/p793-allowed)" -eq 8
+          while read -r p; do
+            case "$p" in
+              research/mission1-visual-source-overlap-769/original-perceptual-ledger.mjs|scripts/scan-visual-source-overlap-769.mjs|scripts/extract-publisher-originals-793.py|tests/mission1-full-83-visual-quarantine-793.test.mjs|tests/mission1-perceptual-ledger-769.test.mjs|tests/mission1-source-exposure-73-774.test.mjs|research/mission1-full-83-visual-gate-793/REPORT.md|.github/workflows/mission1-full-83-visual-gate-793-no-deploy.yml) ;;
+              *) echo "UNAPPROVED APP/PRIVATE/CLOUD/MODEL/DEPLOY CHANGE $p"; exit 1 ;;
+            esac
+          done < /tmp/p793-allowed
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark/locked-photo-sources.json)"
+          echo M1_P793_ONLY_EIGHT_QUARANTINE_RESEARCH_PATHS_NO_DEPLOY
+      - name: Install ephemeral complete regression testing dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 fake-indexeddb@6.2.4 playwright@1.56.1 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Test 83-source visual fail-closed gate then entire Node app recognition/3D/cloud regressions
+        run: |
+          set -euo pipefail
+          node --check scripts/scan-visual-source-overlap-769.mjs
+          node --check research/mission1-visual-source-overlap-769/original-perceptual-ledger.mjs
+          node --test tests/mission1-full-83-visual-quarantine-793.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-83-original-jpeg-visual-overlap:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral SHA decoder only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Materialize exactly pinned 24 source identities and public annotation archive
+        run: |
+          mkdir -p /tmp/m1-p793
+          node --input-type=module <<'NODE'
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          import {
+            MISSION1_P772_PUBLISHED_DEVELOPMENT_SOURCES_774,
+            MISSION1_P792_PUBLISHED_DEVELOPMENT_SOURCES_792,
+            P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,P792_EXPOSED_DIGESTS_792
+          } from './research/mission1-exposure-774/pinned-exposed-source-history.mjs';
+          import {P66_EXPOSED_DIGESTS} from './research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
+          const sample=JSON.parse(readFileSync('research/real-garment-acceptance-66/fashionpedia-sample.json'));
+          const s6=sample.rows.map(r=>({group:'p66',id:String(r.id),sha256:r.sha256,file_name:r.file_name}));
+          const s8=MISSION1_P772_PUBLISHED_DEVELOPMENT_SOURCES_774.map(r=>({group:'p772',id:String(r.id),sha256:r.sha256,file_name:r.image}));
+          const s10=MISSION1_P792_PUBLISHED_DEVELOPMENT_SOURCES_792.map(r=>({group:'p792',id:String(r.id),sha256:r.sha256}));
+          assert.deepEqual(new Set(s6.map(x=>x.sha256)),new Set(P66_EXPOSED_DIGESTS));
+          assert.deepEqual(new Set(s8.map(x=>x.sha256)),new Set(P772_EXPOSED_DIGESTS_774));
+          assert.deepEqual(new Set(s10.map(x=>x.sha256)),new Set(P792_EXPOSED_DIGESTS_792));
+          assert.equal(new Set([...P59_EXPOSED_DIGESTS_774,...s6.map(x=>x.sha256),...s8.map(x=>x.sha256),...s10.map(x=>x.sha256)]).size,83);
+          const record={schema:'m1-p793-original-24-publisher-source-SHA/v1',
+            annotationURL:sample.annotationURL,annotationSHA256:sample.annotationSHA256,
+            archiveURL:sample.archiveURL,rows:[...s6,...s8,...s10]};
+          writeFileSync('/tmp/m1-p793/publisher-source-index.json',JSON.stringify(record));
+          console.log('M1_P793_SOURCE_PRE_REGISTERED_ALL_EIGHTY_THREE_JPEGS_59_6_8_10');
+          NODE
+      - name: Download SHA-pinned 59 original public Wikimedia photographs, no owner photos
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json /tmp/m1-p793/historic59
+      - name: Download exact actual 24 publisher originals from immutable annotation and JPEG archive
+        run: python3 scripts/extract-publisher-originals-793.py /tmp/m1-p793/publisher-source-index.json /tmp/m1-p793
+      - name: Decode all 83 actual original JPEGs, produce 581 SHA-bound crop fingerprints
+        run: |
+          set -euo pipefail
+          node scripts/scan-visual-source-overlap-769.mjs build-83 /tmp/m1-p793/historic59 /tmp/m1-p793/p66 /tmp/m1-p793/p772-p792 /tmp/m1-p793/ledger.json
+      - name: Test genuine P792 source and recompressed version against true 83-original visual ledger
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync,writeFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          import sharp from 'sharp';
+          import {screenProspectiveImages} from './research/mission1-visual-source-overlap-769/original-perceptual-ledger.mjs';
+          import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,P792_EXPOSED_DIGESTS_792} from './research/mission1-exposure-774/pinned-exposed-source-history.mjs';
+          import {P66_EXPOSED_DIGESTS} from './research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
+          const sha=x=>createHash('sha256').update(x).digest('hex');
+          const ledger=JSON.parse(readFileSync('/tmp/m1-p793/ledger.json'));
+          const hashes=[...P59_EXPOSED_DIGESTS_774,...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774,...P792_EXPOSED_DIGESTS_792];
+          assert.equal(ledger.realSourcePhotos,83);
+          assert.equal(ledger.fingerprints.length,83);
+          assert.equal(ledger.fingerprints.reduce((a,x)=>a+x.views.length,0),581);
+          assert.equal(ledger.completeProspectiveVisualQuarantine,true);
+          assert.deepEqual(new Set(ledger.fingerprints.map(x=>x.sourceSHA256)),new Set(hashes));
+          const original=readFileSync('/tmp/m1-p793/p772-p792/15201.jpg');
+          assert.equal(sha(original),P792_EXPOSED_DIGESTS_792[0]);
+          const reencoded=await sharp(original).jpeg({quality:67}).toBuffer();
+          assert.notEqual(sha(reencoded),sha(original));
+          const pairs=[{image:'renamed-exposed.jpg',sha256:sha(original)},
+                       {image:'recompressed-exposed.jpg',sha256:sha(reencoded)}];
+          const blobs=new Map([[pairs[0].image,original],[pairs[1].image,reencoded]]);
+          const report=await screenProspectiveImages({ledger,knownExposedSHA256:hashes,
+            candidates:pairs,readCandidate:async row=>blobs.get(row.image),
+            requireComplete83:true});
+          assert.equal(report.verifiedExposedSources,83);
+          assert.equal(report.prospectiveScreeningReady,true);
+          assert.equal(report.candidatesApprovedAsUnseen,0);
+          assert.equal(report.releaseAuthorized,false);
+          assert.equal(report.outcomes[0].minimumHammingDistance,0);
+          assert.equal(report.outcomes[0].status,'QUARANTINE_SOURCE_OVERLAP');
+          assert.ok(report.outcomes[1].minimumHammingDistance<=8,'real source recompression must be visually quarantined, not accepted');
+          assert.equal(report.outcomes[1].status,'QUARANTINE_SOURCE_OVERLAP');
+          const proof={schema:'m1-p793-true-83-original-visual-source-no-release/v1',
+           sourceRealOriginalCount:83,totalRealCropHashes:581,
+           sourceIdentitySetSHA256:ledger.exactSourceSetSHA256,
+           originalSourceSHA256:P792_EXPOSED_DIGESTS_792[0],
+           originalMatchDistance:report.outcomes[0].minimumHammingDistance,
+           realReencodedMatchDistance:report.outcomes[1].minimumHammingDistance,
+           all83GenuineSourceVisualQuarantine:true,modelOrHumanAccuracyVerified:false,
+           registeredRealHumanTruth:0,
+           noPrivateOwnerPhotos:true,releaseAuthorized:false,familyAlpha:'HOLD'};
+          writeFileSync('/tmp/m1-p793/visual-results.json',JSON.stringify(proof,null,2)+'\n',{mode:0o600});
+          console.log('M1_P793_ACTUAL_EIGHTY_THREE_SOURCE_ORIGINAL_JPEGS_VISUAL_RECOMPRESS_QUARANTINED',JSON.stringify(proof));
+          NODE
+      - name: Erase all photographic JPEG bytes before research artifact upload
+        if: always()
+        run: |
+          rm -rf /tmp/m1-p793/historic59 /tmp/m1-p793/p66 /tmp/m1-p793/p772-p792
+          find /tmp/m1-p793 -type f \( -iname '*.jpg' -o -iname '*.jpeg' \) -delete
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P793-83-source-sha-original-multicrop-visual-evidence-no-release
+          path: |
+            /tmp/m1-p793/ledger.json
+            /tmp/m1-p793/visual-results.json
+          retention-days: 14
+          if-no-files-found: warn
