@@ -1,5 +1,5 @@
 // Bounded saved-outfit migration/backup regression from run-cloud-backup-flow.mjs.
-import {chromium} from 'playwright';import {createServer} from 'node:http';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {resolve,extname} from 'node:path';import assert from 'node:assert/strict';
+import sharp from 'sharp';import {createHash} from 'node:crypto';import {chromium} from 'playwright';import {createServer} from 'node:http';import {readFile,writeFile,mkdir} from 'node:fs/promises';import {resolve,extname} from 'node:path';import assert from 'node:assert/strict';
 const root=resolve('dist'),output=resolve(process.argv[2]||'benchmark/outfit-backup-compatibility'),owners=['a1111111-1111-4111-8111-111111111111','b2222222-2222-4222-8222-222222222222'];
 const records=new Map(),photos=new Map(),errors=[],types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.json':'application/json'};let offline=false,blockSave=false,releaseSave=null,loseSaveResponse=false,loseSaveResponseApplied=null;
 const server=createServer(async(req,res)=>{try{const p=new URL(req.url,'http://localhost').pathname,file=resolve(root,'.'+decodeURIComponent(p==='/'?'/index.html':p));if(!file.startsWith(root+'/'))throw Error('Invalid path');const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
@@ -26,9 +26,22 @@ try{
    return json({},404);
   });
   const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
-  if(seedLegacy){await page.addInitScript(({owner,image})=>{
-   window.closetLegacyReady=new Promise((resolve,reject)=>{const request=indexedDB.open('closet-current-user-'+owner,2);request.onupgradeneeded=()=>{request.result.createObjectStore('items',{keyPath:'id'});request.result.createObjectStore('state',{keyPath:'id'});};request.onsuccess=()=>{const database=request.result,tx=database.transaction('items','readwrite');for(let i=0;i<9;i++)tx.objectStore('items').put({id:'legacy-'+i,name:'Saved garment '+(i+1),category:'Tops',itemType:'T-shirt',image,seasons:['Fall'],userAdjusted:true});tx.oncomplete=()=>{database.close();resolve();};tx.onerror=()=>reject(tx.error);};});
-  },{owner,image:'data:image/jpeg;base64,'+(await readFile('benchmark/photos/commons-0002.jpg')).toString('base64')});
+  if(seedLegacy){
+   const originalBytes=await readFile('benchmark/photos/commons-0002.jpg');
+   const cutoutBytes=await sharp(originalBytes).resize({width:120,withoutEnlargement:true}).jpeg({quality:82}).toBuffer();
+   const originalSHA=createHash('sha256').update(originalBytes).digest('hex');
+   const cutoutSHA=createHash('sha256').update(cutoutBytes).digest('hex');
+   await page.addInitScript(({owner,image,cutoutImage,originalSHA,cutoutSHA})=>{
+   window.closetLegacyReady=new Promise((resolve,reject)=>{const request=indexedDB.open('closet-current-user-'+owner,2);request.onupgradeneeded=()=>{request.result.createObjectStore('items',{keyPath:'id'});request.result.createObjectStore('state',{keyPath:'id'});};request.onsuccess=()=>{const database=request.result,tx=database.transaction('items','readwrite');for(let i=0;i<9;i++){
+    const row={id:'legacy-'+i,name:'Saved garment '+(i+1),category:'Tops',itemType:'T-shirt',image,seasons:['Fall'],userAdjusted:true};
+    if(i===0)Object.assign(row,{ownerId:owner,sourceSHA256:originalSHA,
+     originalPhoto:{image,sha256:originalSHA},cutoutSHA256:cutoutSHA,
+     segmentHint:{cutoutImage,cutoutSHA256:cutoutSHA,originalSHA256:originalSHA,verified:true}});
+    tx.objectStore('items').put(row);
+   }tx.oncomplete=()=>{database.close();resolve();};tx.onerror=()=>reject(tx.error);};});
+  },{owner,image:'data:image/jpeg;base64,'+originalBytes.toString('base64'),
+     cutoutImage:'data:image/jpeg;base64,'+cutoutBytes.toString('base64'),
+     originalSHA,cutoutSHA});
    await page.goto('http://127.0.0.1:'+server.address().port+'/phone-photo-check.html');await page.evaluate(()=>window.closetLegacyReady);
    await page.close();
   }
@@ -36,8 +49,20 @@ try{
   await app.goto('http://127.0.0.1:'+server.address().port+'/');await app.evaluate(()=>closetReady);await app.waitForFunction(()=>!document.getElementById('syncCloset').hidden);return {page:app,context};
  }
  const one=await device(owners[0],true);await one.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');assert.equal(records.get(owners[0]).document.items.length,9);assert.equal(await one.page.evaluate(()=>items.length),9);
- assert.ok(!JSON.stringify(records.get(owners[0])).includes('data:image'),'Cloud JSON must store photo references, not base64');
+ assert.ok(!JSON.stringify(records.get(owners[0])).includes('data:image'),'Cloud JSON must store photo references, including reviewed cutouts, not base64');
+ const savedCutout=records.get(owners[0]).document.items[0].segmentHint.cutoutImage;
+ assert.ok(savedCutout.startsWith('closet-photo:'+owners[0]+'/')&&savedCutout.endsWith('.jpg'));
+ assert.equal(photos.size,2,'one de-duplicated original and one distinct reviewed cutout in owner-private storage');
  const two=await device(owners[0]);await two.page.waitForFunction(()=>items.length===9);assert.equal(await two.page.evaluate(()=>items[0].image.startsWith('data:image/jpeg;base64,')),true);
+ const restoredCutout=await two.page.evaluate(async()=>{
+  const photo=items[0].segmentHint?.cutoutImage;
+  if(!photo?.startsWith('data:image/jpeg;base64,'))return null;
+  const bytes=Uint8Array.from(atob(photo.split(',')[1]),c=>c.charCodeAt(0));
+  return [...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+    .map(b=>b.toString(16).padStart(2,'0')).join('');
+ });
+ assert.equal(restoredCutout,records.get(owners[0]).document.items[0].segmentHint.cutoutSHA256,
+  'real browser must restore reviewed cutout with its original SHA receipt');
  const other=await device(owners[1]);assert.equal(await other.page.evaluate(()=>items.length),0);
  await two.page.evaluate(async()=>{currentBoard=cleanOutfitBoard({name:'Recovered outfit',slots:{top:items[0].id}},items);savedOutfitBoards=[structuredClone(currentBoard)];await persistBoardState({replaceSaved:savedOutfitBoards});inspirationLooks=[validLook({id:'look-test',title:'Test look',pieces:[],image:items[0].image})];await storeLooks(inspirationLooks);batch=[{...items[0],id:'draft-test',name:'Unfinished photo',category:'Uncategorized',itemType:'Unknown',localAnalyzed:true}];await persistDraft();await closetCloud.sync();});
  await two.page.waitForFunction(()=>document.getElementById('cloudStatus').textContent==='Cloud backup up to date');await one.page.evaluate(()=>closetCloud.sync());await one.page.waitForFunction(()=>savedOutfitBoards.length===1&&inspirationLooks.length===1&&batch.length===1);
@@ -45,7 +70,7 @@ try{
  assert.equal(await two.page.evaluate(()=>savedOutfitBoards[0].name),'Recovered outfit');
  assert.equal(await one.page.evaluate(()=>savedOutfitBoards[0].name),'Recovered outfit');
  assert.deepEqual(errors,[]);
- const result={legacyMigration:9,sameOwnerTwoBrowsersRestore:true,savedOutfitRestored:true,unrelatedOwnerEmpty:true,photosStoredByReference:true,syntheticBackend:true,hostedSupabase:false,physicalPhone:false,familyAlpha:'HOLD'};
+ const result={legacyMigration:9,sameOwnerTwoBrowsersRestore:true,savedOutfitRestored:true,unrelatedOwnerEmpty:true,photosStoredByReference:true,reviewedCutoutStoredByReference:true,reviewedCutoutSHA256Verified:true,syntheticBackend:true,hostedSupabase:false,physicalPhone:false,familyAlpha:'HOLD'};
  await writeFile(output+'/results.json',JSON.stringify(result,null,2));console.log(JSON.stringify(result));
  await two.page.screenshot({path:output+'/restored-outfit.png',fullPage:true});
  for(const context of browser.contexts())await context.close();
