@@ -17,7 +17,7 @@ import zipfile
 BASE = pathlib.Path("research/real-garment-acceptance-66/fashionpedia-sample.json")
 OUTPUT = pathlib.Path("benchmark/mission1-additional-publisher-originals-792")
 LIMIT = 12
-GROUP = "closet-current-M1-P792-source-IDs-v1"
+GROUP = "closet-current-M1-P792-source-IDs-multisix-singlesix-v2"
 ALLOWED = {0,1,2,3,4,5,6,7,8,9,10,23}
 VALID_NAME = re.compile(r"^[a-f0-9]{32}\.jpg$")
 SHA = lambda content: hashlib.sha256(content).hexdigest()
@@ -30,7 +30,7 @@ def eligible(image, anns):
         return False
     if not VALID_NAME.fullmatch(str(image.get("file_name",""))):
         return False
-    if not 2<=len(anns)<=8:return False
+    if not 1<=len(anns)<=8:return False
     for a in anns:
         if not isinstance(a.get("segmentation"),list) or not a["segmentation"]:
             return False
@@ -54,8 +54,15 @@ def prepare(publisher,archive,exposed):
          if id in images and id not in excluded_ids and eligible(images[id],a)),
         key=lambda z:(deterministic_rank(z[0]["id"]),z[0]["id"])
     )
+    # Publisher metadata supports only seven previously unused two-garment
+    # images. Pre-register a fixed source-only STRATIFIED design: six
+    # multi-garment images plus six single-garment images. The selection
+    # remains independent of ALL model outputs, thresholds or mask IoU.
+    multis=[c for c in candidates if len(c[1])>=2]
+    singles=[c for c in candidates if len(c[1])==1]
+    ordered=multis[:6]+singles[:6]+multis[6:]+singles[6:]
     rows=[]
-    for photo,anns in candidates:
+    for photo,anns in ordered:
         member="test/"+photo["file_name"]
         if member not in archive.namelist():
             continue
@@ -73,6 +80,7 @@ def prepare(publisher,archive,exposed):
             "kaggle_id":photo.get("kaggle_id"),
             "sha256":digest,"bytes":len(raw),"archiveMember":member,
             "annotations":anns,
+            "sourceSelectionStratum":"multi" if len(anns)>=2 else "single",
             "groundTruthProvenance":"Pre-existing Fashionpedia publisher human polygons only, no independent blinded review",
             "primaryColor":None,"exactAppSubtype":None
         }
@@ -129,6 +137,8 @@ def run():
         "publisherAnnotatedImageRightsIndependentlyCleared":False,
         "blindHumanReviewIndependentlyVerified":False,
         "newToEarlierExposedSourceHashRegistry":True,
+        "publisherSelectionMultiSourceTarget":6,
+        "publisherSelectionSingleSourceTarget":6,
         "trainingCorpusOverlapIndependentlyExcluded":False,
         "exactAppSubtypeHumanTruthAvailable":False,
         "humanPrimaryColorTruthAvailable":False,
@@ -140,6 +150,8 @@ def run():
         "sourcePhotos":len(rows),
         "publisherPolygonInstances":sum(len(x["annotations"]) for x in rows),
         "distinctSourceSHA256":len({x["sha256"] for x in rows}),
+        "multiGarmentSourcePhotos":sum(r["sourceSelectionStratum"]=="multi" for r in rows),
+        "singleGarmentSourcePhotos":sum(r["sourceSelectionStratum"]=="single" for r in rows),
         "imageIds":[x["id"] for x in rows],
         "exposureSHA256":[x["sha256"] for x in rows],
         "unsupportedOwnerHumanTruth":True,
