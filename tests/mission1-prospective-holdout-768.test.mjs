@@ -223,15 +223,16 @@ test('Mission1 same pixel geometry but incompatible reviewed category cannot be 
  f.receipts[1]=f.receipt(f.photos[0],'reviewerB',{
   ...other,instances:other.instances.map(x=>({...x,category:'Outerwear',instanceId:'different-external-category'}))
  });
- assert.throws(()=>f.run(),/third adjudicator/);
+ assert.throws(()=>f.run(),/single photo truth must contain EXACTLY one same-category instance/);
 });
-test('Mission1 duplicate nearly identical human masks with different reviewer IDs are refused at source adjudication',()=>{
- const f=fixture(),label={...f.receipts[0].label,instances:[
-  {instanceId:'a-garment',category:'Tops',rle:[100,200,724]},
-  {instanceId:'a-duplicate',category:'Tops',rle:[100,200,724]}
- ]};
+test('Mission1 duplicate same-category mixed outfit masks cannot inflate source truth',()=>{
+ const f=fixture(),label={category:'Multiple',subtype:'Multiple',primaryColor:'Multicolor',
+  instances:[
+   {instanceId:'a-garment',category:'Tops',subtype:'Blouse',primaryColor:'Blue',rle:[100,200,724]},
+   {instanceId:'a-duplicate',category:'Tops',subtype:'Blouse',primaryColor:'Blue',rle:[100,200,724]}
+  ]};
  f.receipts[0]=f.receipt(f.photos[0],'reviewerA',label);
- assert.throws(()=>f.run(),/duplicate same-category human instance mask/);
+ assert.throws(()=>f.run(),/duplicate nearly identical same-category human masks/);
 });
 
 function mixedSourceFixture(){
@@ -356,7 +357,7 @@ test('P771 wrong category, unknown source-wide aggregate, or only one mixed huma
  const a=mixedSourceFixture(),bad=structuredClone(a.mixedLabel);
  bad.category='Tops';
  a.receipts[0]=a.receipt(a.photos[0],'reviewerA',bad);
- assert.throws(()=>a.run(),/third adjudicator|categorical\/subtype\/color\/instance/);
+ assert.throws(()=>a.run(),/third adjudicator|categorical\/subtype\/color\/instance|single photo truth must contain EXACTLY one/);
  const b=mixedSourceFixture(),one=structuredClone(b.mixedLabel);
  one.instances.pop();
  b.receipts[0]=b.receipt(b.photos[0],'reviewerA',one);
