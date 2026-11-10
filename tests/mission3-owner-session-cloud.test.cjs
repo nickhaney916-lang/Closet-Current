@@ -105,14 +105,15 @@ test('session lock revokes an in-flight restore before touching private local it
 test('a cloud controller must reject a foreign-owner IndexedDB connection before network requests',async()=>{
  const f=await fixture();
  try{
-  const result=await f.window.closetCloud.start(f.dbB,f.settings);
+  const pending=f.window.closetCloud.start(f.dbB,f.settings);
   if(baseline){
-   // The historical writer accepted the foreign local database and began
-   // remote calls. The pending owner A remote read is then released.
-   assert.equal(result,undefined);
-   f.finishA.resolve();
-   assert.ok(f.requests.length>0);
+   // Before the repair the foreign database was read and its private
+   // contents were offered for upload to the incorrect cloud owner.
+   await f.requestedA.promise;
+   f.finishA.resolve();await pending;
+   assert.ok(f.requests.some(x=>x.url.includes('owner_id=eq.'+f.ownerA)));
   }else{
+   await pending;
    assert.equal(f.requests.length,0);
    assert.deepEqual((await read(f.dbB)).map(x=>x.id),['b-original']);
   }
