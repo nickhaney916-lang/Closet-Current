@@ -135,3 +135,6 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 
 @media(max-height:500px){.clothing-editor .clothing-reference{position:static}.clothing-editor .clothing-reference img{height:64px}}
+/* Keep explicit draft-conflict choices readable on narrow phones. */
+#boardDraftConflictActions{display:grid;grid-column:1 / -1;grid-template-columns:minmax(0,1fr);gap:8px;width:100%}
+#boardDraftConflictActions button{width:100%;min-height:48px;margin:0;white-space:normal}

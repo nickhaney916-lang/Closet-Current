@@ -104,7 +104,7 @@ try{
       else{
        assert.equal(storedName,'Newer draft from first tab');assert.equal(await other.locator('#boardName').inputValue(),'Stale second-tab draft');
        await other.getByRole('button',{name:'Load latest draft',exact:true}).waitFor();await other.getByRole('button',{name:'Save my draft instead',exact:true}).waitFor();
-       for(const name of ['Load latest draft','Save my draft instead']){const box=await other.getByRole('button',{name,exact:true}).boundingBox();assert.ok(box.width>=44&&box.height>=44,'conflict resolution touch target');}
+       for(const name of ['Load latest draft','Save my draft instead']){const box=await other.getByRole('button',{name,exact:true}).boundingBox();assert.ok(box.width>=180&&box.height>=44,'conflict resolution target must stay readable on phones');}
        await other.evaluate(()=>reloadCloudBoard());assert.equal(await other.locator('#boardName').inputValue(),'Stale second-tab draft','automatic refresh must retain local input');
        assert.equal(await other.evaluate(()=>{const e=new Event('beforeunload',{cancelable:true});window.dispatchEvent(e);return e.defaultPrevented;}),true);
        await audit(other,engine+'-'+width+'-conflict');await layout(other);await other.screenshot({path:out+'/'+engine+'-'+width+'-conflict.png',fullPage:true});
