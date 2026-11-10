@@ -60,33 +60,38 @@ def prepare(publisher,archive,exposed):
     # remains independent of ALL model outputs, thresholds or mask IoU.
     multis=[c for c in candidates if len(c[1])>=2]
     singles=[c for c in candidates if len(c[1])==1]
-    ordered=multis[:6]+singles[:6]+multis[6:]+singles[6:]
+    members=set(archive.namelist())
     rows=[]
-    for photo,anns in ordered:
-        member="test/"+photo["file_name"]
-        if member not in archive.namelist():
-            continue
-        raw=archive.read(member)
-        digest=SHA(raw)
-        if digest in exposed or digest in {r["sha256"] for r in rows}:
-            continue
-        if len(raw)<512 or len(raw)>10_000_000 or not raw.startswith(b"\xff\xd8"):
-            continue
-        row={
-            "id":photo["id"],"width":photo["width"],"height":photo["height"],
-            "file_name":photo["file_name"],"license":photo["license"],
-            "time_captured":photo.get("time_captured"),
-            "original_url":photo.get("original_url"),"isstatic":photo.get("isstatic"),
-            "kaggle_id":photo.get("kaggle_id"),
-            "sha256":digest,"bytes":len(raw),"archiveMember":member,
-            "annotations":anns,
-            "sourceSelectionStratum":"multi" if len(anns)>=2 else "single",
-            "groundTruthProvenance":"Pre-existing Fashionpedia publisher human polygons only, no independent blinded review",
-            "primaryColor":None,"exactAppSubtype":None
-        }
-        rows.append(row)
-        (OUTPUT/"originals"/photo["file_name"]).write_bytes(raw)
-        if len(rows)==LIMIT:break
+    # Select exactly six source-distinct, exposure-quarantined originals in
+    # EACH pre-registered stratum. Do not replace a failed one with a result
+    # from the other stratum, or make any choice after real model inference.
+    for stratum,selection in [("multi",multis),("single",singles)]:
+        accepted=0
+        for photo,anns in selection:
+            member="test/"+photo["file_name"]
+            if member not in members:
+                continue
+            raw=archive.read(member)
+            digest=SHA(raw)
+            if digest in exposed or digest in {r["sha256"] for r in rows}:
+                continue
+            if len(raw)<512 or len(raw)>10_000_000 or not raw.startswith(b"\xff\xd8"):
+                continue
+            row={
+                "id":photo["id"],"width":photo["width"],"height":photo["height"],
+                "file_name":photo["file_name"],"license":photo["license"],
+                "time_captured":photo.get("time_captured"),
+                "original_url":photo.get("original_url"),"isstatic":photo.get("isstatic"),
+                "kaggle_id":photo.get("kaggle_id"),
+                "sha256":digest,"bytes":len(raw),"archiveMember":member,
+                "annotations":anns,"sourceSelectionStratum":stratum,
+                "groundTruthProvenance":"Pre-existing Fashionpedia publisher human polygons only, no independent blinded review",
+                "primaryColor":None,"exactAppSubtype":None
+            }
+            rows.append(row)
+            (OUTPUT/"originals"/photo["file_name"]).write_bytes(raw)
+            accepted+=1
+            if accepted==6:break
     if len(rows)!=LIMIT:
         archive_entries=archive.namelist()
         matching_test=sum(("test/"+photo["file_name"]) in archive_entries for photo,_ in candidates)
