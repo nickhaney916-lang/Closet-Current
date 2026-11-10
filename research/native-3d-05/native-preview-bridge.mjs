@@ -726,6 +726,22 @@ export async function mountNative3D05({
    silhouetteMaxMeters62:active?verifiedPhotoSilhouette62?.maxMovementMeters||0:0,
    // P185 source-mesh proof must be recomputed from current donor state when
    // switching anatomical gender, not from the prior female model receipt.
+   sourceProjectionRGB:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceProjectionRGB===true,
+   sourceProjectionMaterialCount:active?data.fitReceipts171?.shirt?.silhouette62?.sourceProjectionMaterialCount:0,
+   sourceProjectionCompiledMaterialCount:active?data.fitReceipts171?.shirt?.silhouette62?.sourceProjectionCompiledMaterialCount:0,
+   sourceProjectionRearPhotographed:false,
+   sourceLengthFit:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthFit===true,
+   sourceLengthSHA256:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthSHA256:null,
+   sourceLengthMovedVertices:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthMovedVertices:0,
+   sourceLengthOldHemY:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthOldHemY:null,
+   sourceLengthNewHemY:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewHemY:null,
+   sourceLengthExtension:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthExtension:0,
+   sourceLengthFlare:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthFlare:1,
+   sourceLengthIntersectionPairsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntersectionPairsBefore:null,
+   sourceLengthIntersectionPairsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntersectionPairsAfter:null,
+   sourceLengthTestedPairs:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTestedPairs:0,
+   sourceLengthConstructionMs:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthConstructionMs:0,
+   sourceLengthCollisionCertified:false,
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&
     data.fitReceipts171?.shirt?.silhouette62?.shoulderHemWorldAxisCorrected185===true&&
