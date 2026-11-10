@@ -66,3 +66,22 @@ test('P776 duplicate groups, overlapping pixels and inconsistent source pixel co
  assert.deepEqual(s.data,snapshot);
  assert.equal(result.some(x=>x.accepted||x.autoIndex),false);
 });
+
+test('P776 soft-source pixels must have the real original semantic winner, probability and margin, and split receipts carry local not global budgets',()=>{
+ const s=source(),weak=2*W+6;
+ s.data[4*N+weak]=8.8; // source family winner with confidence >=.5 but <.7
+ s.map=clothingLabelMap(s.data,s.dims);
+ assert.equal(s.map.labels[weak],0,'this is an uncertain source pixel');
+ s.g.selected[weak]=1;s.g.count++;s.g.addedPixelCount=1;
+ const out=sourceComponentReview776(s);
+ assert.equal(out.length,2);
+ const grown=out.find(x=>x.addedPixelCount===1);
+ assert.ok(grown);assert.equal(grown.seedPixelCount,16);
+ assert.equal(grown.maximumAddedPixels,8);
+ assert.equal(grown.sourceGroupSeedPixelCount,32);
+ assert.equal(grown.sourceGroupAddedPixelCount,1);
+ assert.equal(out.reduce((n,x)=>n+x.count,0),33);
+ const forged=source(),background=2*W+6;
+ forged.g.selected[background]=1;forged.g.count++;forged.g.addedPixelCount=1;
+ assert.throws(()=>sourceComponentReview776(forged),/weak source pixel lacks original SegFormer/);
+});
