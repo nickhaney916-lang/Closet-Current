@@ -124,3 +124,14 @@ header{padding-top:22px;padding-bottom:18px}.brand-mark{background:#7043ba;color
 @media(max-width:760px){.main-nav>.tab{color:#453652}.main-nav>.tab.active{background:#4d2c72;color:#fff}}
 @media(max-width:760px){.main-nav .tab .nav-label{background:none;padding:0;margin:0;color:inherit}}
 @media(max-width:760px){.main-nav>.tab{transition:none}}
+
+/* Saved-item editing remains usable with a phone keyboard and large text. */
+.clothing-editor{box-sizing:border-box;width:calc(100vw - 24px);max-width:min(440px,calc(100vw - 24px));min-width:0;overscroll-behavior:contain}
+.clothing-editor form,.clothing-editor label,.clothing-editor fieldset{min-width:0;max-width:100%;box-sizing:border-box}
+.clothing-editor input:not([type=checkbox]),.clothing-editor select,.clothing-editor textarea{box-sizing:border-box;width:100%;min-width:0;font-size:16px}
+.clothing-editor .native-correction10-actions button{min-height:48px}
+.clothing-editor h2{font-size:1.3rem;overflow-wrap:anywhere}
+.missing-photo{display:flex;align-items:center;justify-content:center;min-height:64px;padding:12px;box-sizing:border-box;white-space:normal;overflow-wrap:anywhere;background:#f6f2fa;color:#453652;font-size:14px}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+@media(max-height:500px){.clothing-editor .clothing-reference{position:static}.clothing-editor .clothing-reference img{height:64px}}
