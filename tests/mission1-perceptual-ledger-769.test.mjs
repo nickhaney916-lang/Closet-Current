@@ -109,9 +109,9 @@ test('Mission1 refuses incomplete reference cohort, altered known65 receipt or d
   candidates:[{image:'foo.jpg',sha256:sha(img)}],readCandidate:async()=>img
  };
  await assert.rejects(screenProspectiveImages({...base,
-  known65:a.rows.slice(0,64).map(x=>x.sha256)}),/all 59 historical plus six/);
+  known65:a.rows.slice(0,64).map(x=>x.sha256)}),/all 65 original sources or all 73 source-history exposures required/);
  await assert.rejects(screenProspectiveImages({...base,
-  known65:[...base.known65.slice(0,64),'0'.repeat(64)]}),/65-source SHA set|all 65 distinct external previously exposed originals/);
+  known65:[...base.known65.slice(0,64),'0'.repeat(64)]}),/all exact previously exposed originals must be present/);
  await assert.rejects(screenProspectiveImages({...base,
   candidates:[base.candidates[0],{...base.candidates[0]}]}),/duplicate or unverified/);
 });
@@ -127,7 +127,7 @@ test('Mission1 refuses forged image content and corrupted incomplete exposure le
   ledger:fake,known65:a.rows.map(x=>x.sha256),
   candidates:[{image:'foo.jpg',sha256:sha(img)}],
   readCandidate:async()=>img
- }),/all 65 distinct/);
+ }),/all exact previously exposed originals must be present/);
 });
 test('Mission1 distinct reproduced JPEG sources must be decoded, not claimed as human masks or full training exclusion',async()=>{
  const a=await originals(),b=await buildExposureLedger({
