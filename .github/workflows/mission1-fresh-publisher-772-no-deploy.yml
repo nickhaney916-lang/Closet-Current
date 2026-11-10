@@ -91,6 +91,7 @@ jobs:
             research/real-mask-evidence-31/model-assets.mjs \
             research/real-mask-evidence-31/legacy-visible-groups.mjs \
             research/multi-garment-capture-01/visible-groups.mjs \
+            research/multi-garment-capture-01/shoe-pair-geometry-30.mjs \
             research/real-garment-acceptance-66/boundary-evidence.mjs \
             research/real-garment-acceptance-66/fashionpedia-sample.json \
             scripts/test-fashionpedia-66-browser.mjs; do
