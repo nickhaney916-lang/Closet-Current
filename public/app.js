@@ -275,6 +275,11 @@ function adjustPhoto(item){
       // P802 optional local-only source-pixel color preview; NO SAM2/model
       // claim, no mask approval, no source/wardrobe/cloud mutation.
       enableOwnerMask802:new URLSearchParams(location.search).get('mission1OwnerMask802')==='research'&&
+       new URLSearchParams(location.search).get('mission1OwnerBox800')==='research',
+      // P803: opt-in in-memory add/erase correction only; never writes a
+      // mask or approves a garment for private save.
+      enableOwnerMaskCorrection803:new URLSearchParams(location.search).get('mission1OwnerMaskCorrection803')==='research'&&
+       new URLSearchParams(location.search).get('mission1OwnerMask802')==='research'&&
        new URLSearchParams(location.search).get('mission1OwnerBox800')==='research'
      });
     }).catch(()=>{
