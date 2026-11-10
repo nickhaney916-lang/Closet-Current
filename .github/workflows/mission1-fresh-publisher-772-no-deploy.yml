@@ -12,7 +12,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: mission1-new-publisher-772-HOLD-${{ github.ref }}
+  group: mission1-publisher-eight-final-HOLD-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   selected-before-inference-source-and-full-node:
