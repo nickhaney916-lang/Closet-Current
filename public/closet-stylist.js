@@ -1,5 +1,6 @@
 'use strict';
 let styledCollectionResults=[];
+const styledCollectionSaveStates=new WeakMap();
 function refreshStylistFocusItems(){
  const select=$('stylistFocusItem');if(!select)return;
  const selected=select.value;select.replaceChildren(new Option('Use my whole closet',''));
@@ -86,8 +87,28 @@ function renderStyledCollection(){
   const actions=node('div',null,'actions'),edit=node('button','Adjust on outfit board','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
   edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
-  save.onclick=async()=>{save.disabled=true;let status=card.querySelector('.styled-save-status');if(!status){status=node('p',null,'fine styled-save-status');status.setAttribute('role','status');card.append(status);}status.textContent='Saving outfit…';try{await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');const saved=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);await saveOwnedOutfit(saved);status.textContent='Saved. Find it in Outfit builder → Saved outfits.';save.textContent='Saved';renderSavedOutfitBoards();}catch(error){status.textContent=error.message||'Could not save this outfit.';save.disabled=false;}};
-  actions.append(edit,save);card.append(actions);grid.append(card);
+  const status=node('p',null,'fine styled-save-status');status.setAttribute('role','status');
+  const refresh=node('button','Refresh my closet','secondary refresh-outfit-wardrobe');refresh.type='button';
+  const applySaveState=()=>{
+   const state=styledCollectionSaveStates.get(result);
+   status.textContent=state?.message||'';
+   save.textContent=state?.phase==='saved'?'Saved':'Save outfit';
+   save.disabled=changed||['saving','saved','wardrobe-changed'].includes(state?.phase);
+   edit.disabled=changed||state?.phase==='wardrobe-changed';
+   refresh.hidden=state?.phase!=='wardrobe-changed';
+  };
+  const updateSaveState=(phase,message)=>{styledCollectionSaveStates.set(result,{phase,message});if(card.isConnected)applySaveState();else renderStyledCollection();};
+  refresh.onclick=async()=>{refresh.disabled=true;try{await refreshSavedWardrobeForOutfits();$('createCollectionOutfits').focus({preventScroll:true});}catch(error){updateSaveState('wardrobe-changed',error.message);refresh.disabled=false;}};
+  save.onclick=async()=>{
+   if(['saving','saved','wardrobe-changed'].includes(styledCollectionSaveStates.get(result)?.phase))return;
+   updateSaveState('saving','Saving outfit…');
+   try{
+    await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');
+    const saved={...board,name:result.context.request+' · option '+(index+1)};
+    await saveOwnedOutfit(saved);updateSaveState('saved','Saved. Find it in Outfit builder → Saved outfits.');renderSavedOutfitBoards();
+   }catch(error){updateSaveState(error?.code==='OUTFIT_WARDROBE_CHANGED'?'wardrobe-changed':'error',error.message||'Could not save this outfit.');}
+  };
+  actions.append(edit,save,refresh);card.append(actions,status);applySaveState();grid.append(card);
  }
  void mountOriginalPhotoPreview167();
 }
