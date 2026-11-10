@@ -1,0 +1,101 @@
+name: Mission 1 P785 REAL B0 original category-review abstention — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-real-source-category-reconciliation-785-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p785-source-review-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  full-native-and-source-guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P784 verified ancestor, only scoped research/native evidence paths
+        run: |
+          set -euo pipefail
+          BASE=7f14728868bf3c17869917fb2c6744d8f507cb36
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/m1-p785-paths
+          test "$(wc -l < /tmp/m1-p785-paths)" -eq 6
+          while read -r path; do
+            case "$path" in
+              public/app.js|scripts/test-mission1-real-segformer-to-closet-782-browser.mjs|tests/mission1-source-category-reconcile-785.test.mjs|research/mission1-real-source-review-785/reconcile-regions.mjs|research/mission1-real-source-review-785/REPORT.md|.github/workflows/mission1-real-source-review-785-no-deploy.yml) ;;
+              *) echo "UNAPPROVED CHANGE: $path"; exit 1 ;;
+            esac
+          done < /tmp/m1-p785-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/local-worker.mjs public/recognition-engine.mjs public/native-reviewed-private-save-167.mjs public/outfit-segmentation.mjs supabase)"
+          echo M1_P785_PINNED_PARENT_AND_PROTECTED_CODE_UNCHANGED
+      - name: Pin ephemeral full Node regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Genuine model mask source trust, ambiguous review, all native/3D/cloud tests
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+          node --test tests/mission1-source-category-reconcile-785.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-source-to-real-native-mobile-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ephemeral pinned real original model, local browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Unmodified real B0 original JPEG, source conflict and native original-photo review
+        run: node scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+      - name: Require two genuine engines, no guessed type or human truth, no release
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/mission1-real-model-native-closet-782/browser-results.json'));
+          assert.equal(r.researchOnly,true);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.realAuthenticatedCloudUsers,false);
+          assert.equal(r.actualModelSubtypeOrColorVerified,false);
+          assert.deepEqual(new Set(r.scenarios.map(x=>x.browser)),new Set(['chromium','webkit']));
+          for(const row of r.scenarios){
+            assert.equal(row.allSemanticCategoriesSurfacedWithoutTopOnlyPromotion,true);
+            assert.equal(row.observedDressRegionPreserved,true);
+            assert.equal(row.modelTopSemanticDidNotSetItemType,true);
+            assert.equal(row.actualMyClosetSaved,true);
+            assert.equal(row.actualHumanGroundTruthIndependentlyVerified,false);
+            assert.equal(row.nativeReviewedOtherOptionNotOffered,true);
+            assert.equal(row.simulatedManualUnknownSubtypeRefusedBeforeSave,true);
+            assert.equal(row.familyAlpha,'HOLD');
+          }
+          console.log('M1_P785_REAL_B0_DRESS_AND_TOP_SEMANTIC_SOURCE_CONFLICT_SAFELY_ABORTS_CATEGORY_PROMOTION');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P785-real-CCBY-B0-review-multiclass-Chromium-WebKit-HOLD
+          path: benchmark/mission1-real-model-native-closet-782/
+          retention-days: 14
+          if-no-files-found: warn
