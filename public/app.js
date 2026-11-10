@@ -285,7 +285,7 @@ function adjustPhoto(item){
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   // COLOR41: Save does not prove an AI-estimated color was changed by the user.
   // clothingFields itself marks colorSource='user' on explicit color input.
-  if(reviewedCapture120){
+  if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){
    const {localCandidates}=await import('./local-catalog.mjs');
    if(!localCandidates.some(candidate=>candidate.category===value.category&&candidate.itemType===value.itemType))
     throw Error('Choose a specific supported clothing type. Unknown and Other are not valid for a private reviewed save.');
