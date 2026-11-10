@@ -106,6 +106,7 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   fail('requires already source-fitted 163-bone shirt with two sewn cap joins');
  const targets=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
   ['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
+ if(new Set(targets).size!==targets.length)fail('duplicate garment mesh reference');
  if(targets.length<3||!['L','R'].every(side=>
     targets.some(m=>m.userData?.work45IndependentShoulderCap===side)))
   fail('both actual shoulder caps plus torso shell are required');
@@ -113,6 +114,26 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
   !o.userData?.work56Garment&&o.skeleton)skeletons.add(o.skeleton);});
  if(targets.some(m=>!m.isSkinnedMesh||m.skeleton?.bones?.length!==163||
    !skeletons.has(m.skeleton)))fail('only the original licensed skinned 163-bone shell can be moved');
+ // Validate EVERY target before staging changes. Singular world transforms
+ // invert to a zero matrix in THREE and would silently collapse the garment.
+ const storage=[];
+ for(const mesh of targets){
+  mesh.updateWorldMatrix(true,false);
+  const matrix=mesh.matrixWorld,det=matrix?.determinant();
+  if(!matrix?.elements?.every(Number.isFinite)||!Number.isFinite(det)||Math.abs(det)<1e-10)
+   fail('finite invertible garment world transform required');
+  for(const name of ['position','panelPosition']){
+   const a=mesh.geometry?.getAttribute(name);
+   if(!a?.isBufferAttribute||a.isInterleavedBufferAttribute||a.itemSize!==3||a.normalized||
+      !(a.array instanceof Float32Array||a.array instanceof Float64Array)||
+      !Number.isInteger(a.count)||a.array.length!==a.count*3||
+      !a.array.every(Number.isFinite))fail('finite independent packed XYZ garment attributes required');
+   const start=a.array.byteOffset,end=start+a.array.byteLength;
+   if(storage.some(b=>b.buffer===a.array.buffer&&start<b.end&&end>b.start))
+    fail('garment panel and position storage must not alias');
+   storage.push({buffer:a.array.buffer,start,end});
+  }
+ }
  let moved=0,maxShift=0,activeCaps=new Set(),panels=[];
  const side195=profile.ownerBilateralContourMeasured195===true;
  let leftMoved195=0,rightMoved195=0;
@@ -138,6 +159,8 @@ export function fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile){
    if(['L','R'].includes(mesh.userData?.work45IndependentShoulderCap))
     activeCaps.add(mesh.userData.work45IndependentShoulderCap);
   }
+  if(!positions.every(Number.isFinite)||!pan.every(Number.isFinite))
+   fail('staged garment coordinates must remain finite');
   panels.push({mesh,p,panel,positions,pan});
  }
  if(moved<20||maxShift<.0005||maxShift>.00901||activeCaps.size!==2)

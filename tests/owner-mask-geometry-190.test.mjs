@@ -133,3 +133,49 @@ test('P190 installer and native gate require owner-specific geometry and never r
  assert.ok(c.includes('profileOwnerAlphaGeometry190'));
  assert.equal(i.includes('public/index.html'),false);
 });
+
+function transactionFixture(){
+ const root=new THREE.Group(),skeleton=new THREE.Skeleton(Array.from({length:163},()=>new THREE.Bone()));
+ const targets=[shell190('Work56-independent-shirt-shell',null,skeleton),shell190('left','L',skeleton),shell190('right','R',skeleton)];
+ root.add(shell190('body',null,skeleton,true),...targets);
+ return {root,targets,shirt:{meshes:targets,stats:{sourceSHA256:sourceSHA,sourceShoulderEased185:true,independentShoulderCapSeamsRetained185:true}}};
+}
+for(const corruption of ['singular','nan-position','interleaved','aliased-panels','duplicate-mesh'])
+ test('Mission2 refuses '+corruption+' without mutating any garment panel',()=>{
+  const f=fixtures();
+  try{
+   const profile=profileOwnerAlphaGeometry190({source:f.source,owner:f.owner,maskSHA});
+   const {root,targets,shirt}=transactionFixture();
+   const last=targets[2],g=last.geometry;
+   if(corruption==='singular')last.scale.x=0;
+   if(corruption==='nan-position')g.getAttribute('position').array[0]=NaN;
+   if(corruption==='interleaved'){
+    const data=new THREE.InterleavedBuffer(new Float32Array(1200),4);
+    g.setAttribute('position',new THREE.InterleavedBufferAttribute(data,3,0));
+   }
+   if(corruption==='aliased-panels')g.setAttribute('panelPosition',g.getAttribute('position'));
+   if(corruption==='duplicate-mesh')shirt.meshes.push(last);
+   const originals=targets.map(m=>['position','panelPosition'].map(n=>{
+    const a=m.geometry.getAttribute(n);return Array.from(a.array||a.data.array);
+   }));
+   assert.throws(()=>fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile),/P190/);
+   targets.forEach((m,i)=>['position','panelPosition'].forEach((n,j)=>{
+    const a=m.geometry.getAttribute(n);assert.deepEqual(Array.from(a.array||a.data.array),originals[i][j]);
+   }));
+  }finally{f.restore();}
+ });
+test('Mission2 transformed garment preserves bounded world-space contour displacement',()=>{
+ const f=fixtures();
+ try{
+  const profile=profileOwnerAlphaGeometry190({source:f.source,owner:f.owner,maskSHA});
+  const {root,targets,shirt}=transactionFixture();
+  root.rotation.set(.12,.3,-.2);root.scale.set(1.2,.9,1.1);root.position.set(.1,.2,-.3);
+  root.updateMatrixWorld(true);
+  const before=targets.map(m=>Array.from({length:300},(_,i)=>new THREE.Vector3().fromBufferAttribute(m.geometry.getAttribute('position'),i).applyMatrix4(m.matrixWorld)));
+  fitOwnerAlphaToSkinnedBlouse190(shirt,root,profile);
+  for(let j=0;j<targets.length;j++)for(let i=0;i<300;i++){
+   const after=new THREE.Vector3().fromBufferAttribute(targets[j].geometry.getAttribute('position'),i).applyMatrix4(targets[j].matrixWorld);
+   const delta=after.sub(before[j][i]);assert.ok(Math.abs(delta.x)<=.009001);assert.ok(Math.abs(delta.y)<1e-6);assert.ok(Math.abs(delta.z)<1e-6);
+  }
+ }finally{f.restore();}
+});
