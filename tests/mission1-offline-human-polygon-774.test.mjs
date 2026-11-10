@@ -154,7 +154,7 @@ test('P774 counterfeit photographer source SHA, reviewer signing key, coordinato
   reviewerId:'reviewerA',photoId:f.photo.id,photoJPEG:f.jpeg,
   annotations:f.first,reviewerDeclaration:humanDeclaration,
   privateKeyPEM:f.privateKeys.reviewerA
- }),/registry/);
+ }),/registry|missing immutable pre-inference source and reviewer enrollment/);
 });
 test('P774 local source boundaries cannot exceed dimensions or silently rasterize empty/invalid human polygons',()=>{
  const f=cohort();
