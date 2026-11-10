@@ -154,7 +154,7 @@ jobs:
           const m=read('research/real-garment-acceptance-66/fashionpedia-sample.json');
           const scan=read('benchmark/m1-p772/65-source-visual-preflight.json');
           assert.equal(m.rows.length,12);
-          assert.deepEqual(m.rows.map(x=>x.selectionTargetCategoryID),[0,1,2,3,4,5,6,7,8,9,10,23]);
+          assert.deepEqual(m.rows.map(x=>x.selectionTargetCategoryID),[0,1,4,6,7,8,10,23,0,4,6,10]);
           const source=new Map(m.rows.map(x=>[x.id,x.sha256]));
           assert.equal(source.size,12);
           const summaries={manifestSchema:m.schema,selectionFixedBeforeInference:true,
