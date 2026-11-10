@@ -274,7 +274,23 @@ try{
     // owner-bound Adjust dialog. These are browser-AUTOMATED gesture tests,
     // NOT independent actual human users, owner-approved masks or phone taps.
     const tapReview=dialog.locator('[data-mission1-owner-point-798="review-only"]');
-    await tapReview.waitFor({state:'visible',timeout:20000});
+    try{await tapReview.waitFor({state:'visible',timeout:8000});}
+    catch(error){
+     const diagnostic=await page.evaluate(async()=>({
+      enabled:new URLSearchParams(location.search).get('mission1OwnerPoint798'),
+      reviewed:reviewedSave120Active,
+      capturedOwner:captureProofOwner(),currentOwner:window.closetAuth?.user?.id,
+      draftOwner:batch[0]?.ownerId,draftInBatch:batch.length===1,
+      sourceHashVerified:batch[0]?.sourceHashVerified,
+      originalHashEqualsSource:batch[0]?.originalPhoto?.sha256===batch[0]?.sourceSHA256,
+      sourceIsLocalJPEG:batch[0]?.originalPhoto?.image?.startsWith('data:image/jpeg;base64,'),
+      dialogOpen:document.querySelector('dialog.photo-adjust')?.open,
+      notice:document.getElementById('message')?.textContent,
+      module:await import('/public/owner-original-photo-point-798.mjs')
+       .then(x=>Object.keys(x)).catch(e=>String(e))
+     }));
+     throw Error('P798 original source control failed native mount '+JSON.stringify(diagnostic)+' '+String(error));
+    }
     assert.equal(await tapReview.getAttribute('data-mask-generated'),'false');
     assert.equal(await tapReview.getAttribute('data-automatic-save'),'false');
     assert.equal(await tapReview.locator('img').evaluate(img=>img.src),await page.evaluate(()=>batch[0].originalPhoto.image));
