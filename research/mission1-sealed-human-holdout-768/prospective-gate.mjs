@@ -12,6 +12,7 @@ import {
  MULTI_PHOTO_MARKER,normalizeMixedHumanLabel,compareMixedHumanReviews,
  scoreMixedOutfitAgainstHuman
 } from '../mission1-mixed-outfit-771/garment-instance-contract.mjs';
+import {P772_EXPOSED_DIGESTS_774,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
 
 export const SCHEMA='closet-current-prospective-holdout/v1';
 export const P66_EXPOSED_DIGESTS=Object.freeze([
@@ -89,9 +90,10 @@ function assertImages(photos,readPhoto,exposed){
 export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,exposedSHA256,registrationId,reviewerPublicKeys},readPhoto){
  if(!HEX.test(modelSHA256||'')||!HEX.test(modelIndexSHA256||'')||
     !valid(registrationId)||!/^m1-cohort-[a-z0-9-]{6,70}$/.test(registrationId)||
-    !Array.isArray(exposedSHA256)||exposedSHA256.length<59||
+    !Array.isArray(exposedSHA256)||exposedSHA256.length<MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774||
     !exposedSHA256.every(x=>HEX.test(x))||
     !P66_EXPOSED_DIGESTS.every(x=>exposedSHA256.includes(x))||
+    !P772_EXPOSED_DIGESTS_774.every(x=>exposedSHA256.includes(x))||
     !reviewerPublicKeys||typeof reviewerPublicKeys!=='object'||
     !['coordinator','reviewerA','reviewerB','adjudicator'].every(x=>valid(reviewerPublicKeys[x])))
   err('exact model, both historic exposed cohorts and registered reviewer public keys required');
@@ -239,6 +241,7 @@ export function evaluateProspectiveHoldout({
     externalChronology?.predictionBatchCommittedAfterRegistration!==true)
   err('externally witnessed immutable enrollment-before-inference git chronology required');
  if(!P66_EXPOSED_DIGESTS.every(x=>knownExposedSHA256.includes(x))||
+    !P772_EXPOSED_DIGESTS_774.every(x=>knownExposedSHA256.includes(x))||
     sha256(canonical([...knownExposedSHA256].sort()))!==seal.exposedSHA256)
   err('historically exposed source hash quarantine ledger altered');
  assertImages(seal.photos,readPhoto,new Set(knownExposedSHA256));
