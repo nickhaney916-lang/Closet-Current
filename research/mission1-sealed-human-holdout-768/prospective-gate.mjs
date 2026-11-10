@@ -95,7 +95,7 @@ export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,expo
  if(exposure.size!==exposedSHA256.length)err('duplicated source in known-exposure quarantine list');
  assertImages(photos,readPhoto,exposure);
  const publicKeys=Object.entries(reviewerPublicKeys).sort((a,b)=>a[0].localeCompare(b[0]));
- if(!unique(publicKeys.map(([id,key])=>sha256(createPublicKey(key).export({type:'der',format:'spki'})))))
+ if(!unique(publicKeys.map(([id,key])=>sha256(createPublicKey(key).export({type:'spki',format:'der'})))))
   err('duplicate signer public keys at registration');
  const sealedBody={schema:SCHEMA,registrationId,modelSHA256,modelIndexSHA256,
   reviewerRegistrySHA256:sha256(canonical(Object.fromEntries(publicKeys))),
