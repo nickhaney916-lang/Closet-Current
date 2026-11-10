@@ -10,7 +10,7 @@ import {
  sha256,signedMessage,sealProspectiveHoldout,evaluateProspectiveHoldout,
  P66_EXPOSED_DIGESTS
 } from '../research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
-import {P772_EXPOSED_DIGESTS_774} from '../research/mission1-exposure-774/pinned-exposed-source-history.mjs';
+import {P772_EXPOSED_DIGESTS_774,P792_EXPOSED_DIGESTS_792} from '../research/mission1-exposure-774/pinned-exposed-source-history.mjs';
 const square=(x1,y1,x2,y2)=>[[x1,y1],[x2,y1],[x2,y2],[x1,y2]];
 const humanDeclaration={
  directHumanTracing:true,notShownModelPredictions:true,
@@ -32,7 +32,7 @@ function cohort(){
   sourceLicenseURL:'https://example.invalid/no-real-license',
   creatorCredit:'CI synthetic source, NOT genuine human/photographic evidence',
   rightsClaim:'source-reviewed',width:32,height:32};
- const known=[...JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8')).map(x=>x.sha256),...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774];
+ const known=[...JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8')).map(x=>x.sha256),...P66_EXPOSED_DIGESTS,...P772_EXPOSED_DIGESTS_774,...P792_EXPOSED_DIGESTS_792];
  const modelSHA256='8'.repeat(64),modelIndexSHA256='9'.repeat(64);
  const seal=sealProspectiveHoldout({
   photos:[photo],reviewerPublicKeys:keys,exposedSHA256:known,
