@@ -398,7 +398,7 @@ export function mountOriginalTapReview798({
       resetMask802();
       previewStatus.textContent='Local color preview unavailable or inconclusive. Original photo unchanged; use ordinary manual review.';
      }
-    }finally{maskBusy=false;refreshMask802();}
+    }finally{maskBusy=false;refreshMask802();updateCorrection803();}
    };
    root.append(previewButton,dismissPreview,previewStatus);
    // P803: manual ADD/ERASE brushing of ONLY the ephemeral P802 color
