@@ -14,6 +14,7 @@ import {
 } from '../mission1-mixed-outfit-771/garment-instance-contract.mjs';
 import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
 import {sourcePixelDimensions780} from '../mission1-reviewer-774/original-photo-bounds-780.mjs';
+import {verifySingleHumanTruth791} from '../mission1-human-truth-taxonomy-integrity-791/canonical-human-truth.mjs';
 
 export const SCHEMA='closet-current-prospective-holdout/v1';
 export const P66_EXPOSED_DIGESTS=Object.freeze([
@@ -154,6 +155,13 @@ function labelsVerified(label,item){
     (negative&&(label.subtype!=='Unknown'||label.primaryColor!=='Unknown'||label.instances.length!==0))||
     (!negative&&(label.subtype==='Unknown'||label.primaryColor==='Unknown'||!label.instances.length)))
   err('categorical/subtype/color/instance human annotation incomplete for '+item.id);
+ // The older gate accepted one signed top-level garment label with TWO+
+ // per-instance regions or a contradictory instance category, then credited
+ // one photo-level correct subtype and multiple instance masks. That can
+ // overstate human-truth recognition accuracy. Genuine multi-garment photo
+ // truth must use the P771 "Multiple" per-garment category/subtype/color.
+ // Reject arbitrary unsupported subtypes even with valid signer keys.
+ if(!negative)verifySingleHumanTruth791(label);
  const masks=new Map();
  for(const ins of label.instances){
   if(!valid(ins?.instanceId)||masks.has(ins.instanceId)||
