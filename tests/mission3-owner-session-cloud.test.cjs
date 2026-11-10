@@ -90,7 +90,7 @@ test('remote restore queued for owner A never writes into account B after databa
    assert.ok(rows.some(x=>x.id==='a-private-clothing'),
     'the old controller must reproduce cross-owner cloud item contamination');
    assert.ok(rows.some(x=>x.id==='b-original'),
-    'the B owner's private item remains alongside the leaked A item');
+    "the B owner's private item remains alongside the leaked A item");
   }else{
    assert.deepEqual(rows.map(x=>x.id),['b-original'],
     'a stale owner A response must never replace B wardrobe');
