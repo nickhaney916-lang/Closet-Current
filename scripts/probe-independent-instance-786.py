@@ -10,6 +10,7 @@ from score_independent_instance_masks_786 import choose_detections, reconstruct,
 
 MODEL_URL=("https://huggingface.co/HasanKabir23/Yolov26s-DeepFashion2/"
            "resolve/670bd8b/best.onnx")
+PINNED_ONNX_SHA256="485bc106721febbd82fe24297e12a9fb49a435a552afff1e6b76308716555f76"
 ROOT=pathlib.Path("benchmark")
 OUT=ROOT/"mission1-instance-model-786"
 OLD=ROOT/"real-garment-acceptance-66"/"fashionpedia"
@@ -25,6 +26,8 @@ def download():
     if len(value)<100_000 or len(value)>25_000_000:
         raise RuntimeError("Unexpected ONNX model weight byte size")
     digest=hashlib.sha256(value).hexdigest()
+    if digest!=PINNED_ONNX_SHA256:
+        raise RuntimeError("External model ONNX source SHA changed; reject unknown weights")
     OUT.mkdir(parents=True,exist_ok=True)
     model=OUT/"temporary-licensed-unverified-model.onnx"
     model.write_bytes(value)
@@ -132,7 +135,7 @@ def main():
           'recall':tp/(tp+fn) if tp+fn else None,
           'f1':2*tp/(2*tp+fp+fn) if 2*tp+fp+fn else None}
         print('M1_P786_REAL_ORIGINAL_SOURCE_PUBLISHER_MASK_IOU50',json.dumps(aggregate,sort_keys=True))
-        report={"schema":"m1-p786-independent-instance-model-onnx-probe/v1",
+        report={"schema":"m1-p786-real-original-instance-mask-IoU50/v2",
          "provider":"HasanKabir23/Yolov26s-DeepFashion2",
          "modelUrl":MODEL_URL,"modelWeightsSHA256":digest,
          "modelTaskClaim":"13-category clothing instance segmentation",
@@ -148,6 +151,9 @@ def main():
          'scoredModelInstanceMasks':True,
          "trainingSourceOverlapIndependentlyExcluded":False,
          "savedNativeClosetGarments":0,"releaseAuthorized":False,
+         "modelPromotionRecommended":False,
+         "independentRealHumanReviewRequired":True,
+         "realSourceMaskIoU50AcceptancePass":False,
          "familyAlpha":"HOLD","inputShape":info.shape,
          "modelOutputContract":[{"name":o.name,"shape":o.shape} for o in outs],
          "possibleClasses":list(LABELS),"observations":rows}
