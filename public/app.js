@@ -226,6 +226,12 @@ function adjustPhoto(item){
  const form=node('form'),draft=structuredClone(item);
  if(reviewedCapture120&&draft.itemType==='Other')draft.itemType='Unknown';
  const collect=clothingFields(form,draft,()=>{},reviewedCapture120);
+ const sourceSemantic785=reviewedCapture120&&new URLSearchParams(location.search).get('mission1SourceReview785')==='research'?item.recognitionDiagnostics?.sourceCategoryReview785:null;
+ if(sourceSemantic785?.needsReview&&sourceSemantic785.autoSaveAllowed===false){
+  const visual=node('div',null,'recognition-review-suggestion');
+  visual.append(node('p','Source model regions: '+sourceSemantic785.semanticLabels.join(' · ')+'. These may be parts of the same garment or different pieces. The model has NOT confirmed a category, subtype, color or single garment. Compare the original photo and make your own selection before saving.','fine'));
+  form.prepend(visual);
+ }
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -986,6 +992,24 @@ async function recognizeItem(item){
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
   if(result.diagnostics)item.recognitionDiagnostics={reason:result.reason||null,...result.diagnostics};
+  // Research-only genuine B0 semantic evidence: a top region can be a dress
+  // bodice OR outerwear; never promote the largest region to an item identity.
+  // Invalid/stale model receipts fail closed to manual owner review without
+  // an automatic category, saved garment, or original photo replacement.
+  if(reviewedSave120Active&&
+     new URLSearchParams(location.search).get('mission1SourceReview785')==='research'&&
+     result.sourceCategoryReview){
+   try{
+    const {reconcileRealSourceRegions785}=await import('../research/mission1-real-source-review-785/reconcile-regions.mjs');
+    const review=reconcileRealSourceRegions785({sourceSHA256:item.sourceSHA256,modelEvidence:result.sourceCategoryReview});
+    item.recognitionDiagnostics={...item.recognitionDiagnostics,sourceCategoryReview785:review};
+    item.recognitionReviewReasons=['real_model_semantic_regions_only','owner_category_type_color_required'];
+    item.localStatus='Model found possible '+review.possibleCategories.join(', ')+'. These can be parts of the same garment; no item identity is confirmed. Check the original photo and select the category, type and color in Adjust.';
+   }catch{
+    item.localStatus='Model evidence did not match this original photo. Confirm the garment against the original photo in Adjust; nothing was saved.';
+   }
+   return true;
+  }
   // INDEX-04 opt-in: before any model label is applied or automatically saved,
   // independently prove original input bytes, owner, reviewed type and duplicate.
   // Missing evidence sends the existing unsaved item to Adjust, not the DB.
