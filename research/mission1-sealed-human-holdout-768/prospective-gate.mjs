@@ -13,6 +13,7 @@ import {
  scoreMixedOutfitAgainstHuman
 } from '../mission1-mixed-outfit-771/garment-instance-contract.mjs';
 import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
+import {sourcePixelDimensions780} from '../mission1-reviewer-774/original-photo-bounds-780.mjs';
 
 export const SCHEMA='closet-current-prospective-holdout/v1';
 export const P66_EXPOSED_DIGESTS=Object.freeze([
@@ -73,8 +74,7 @@ function assertImages(photos,readPhoto,exposed){
      !valid(item.originalSourceURL)||!/^https:\/\//.test(item.originalSourceURL)||
      !valid(item.sourceLicenseURL)||!/^https:\/\//.test(item.sourceLicenseURL)||
      !valid(item.creatorCredit)||
-     !Number.isInteger(item.width)||!Number.isInteger(item.height)||
-     item.width<32||item.height<32||item.width*item.height>2_000_000||
+     !sourcePixelDimensions780(item.width,item.height)||
      !['commons-licensed','owner-explicit-consent','source-reviewed'].includes(item.rightsClaim))
    err('invalid source identity, rights metadata or original dimensions: '+item?.id);
   if(exposed.has(item.sha256))err('previously exposed source image cannot be a new holdout: '+item.id);

@@ -10,6 +10,7 @@ import {createHash,createPrivateKey,createPublicKey,sign as ed25519Sign} from 'n
 import {signedMessage,sha256,P66_EXPOSED_DIGESTS} from '../mission1-sealed-human-holdout-768/prospective-gate.mjs';
 import {P772_EXPOSED_DIGESTS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
 import {COMMIT43_TYPES} from '../multi-garment-capture-01/atomic-group.mjs';
+import {sourcePixelDimensions780,MAX_MISSION1_ORIGINAL_PIXELS_780} from './original-photo-bounds-780.mjs';
 
 const COLORS=new Set(['Black','White','Gray','Beige','Brown','Blue','Green',
  'Red','Pink','Purple','Yellow','Orange','Multicolor']);
@@ -21,17 +22,38 @@ const pointsOK=(poly,w,h)=>Array.isArray(poly)&&poly.length>=3&&poly.length<=204
  poly.every(p=>Array.isArray(p)&&p.length===2&&
   Number.isFinite(p[0])&&Number.isFinite(p[1])&&
   p[0]>=0&&p[1]>=0&&p[0]<=w&&p[1]<=h);
-function pointInside(x,y,poly){
- let inside=false;
- for(let a=0,b=poly.length-1;a<poly.length;b=a++){
-  const [ax,ay]=poly[a],[bx,by]=poly[b];
-  if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)
-   inside=!inside;
+/**
+ * Exact scanline parity rasterization of the prior center-sampled ray rule:
+ * at y+0.5, interior x satisfy x+0.5 >= left crossing and
+ * x+0.5 < right crossing. No image shrinking, interpolation, GPU or JPEG
+ * manipulation. Fill the UNION of outlines; then erase the UNION of holes.
+ *
+ * Runtime: O(height * polygonEdges + selected source pixels) rather than
+ * O(width * height * polygonEdges). All mask positions remain ORIGINAL JPEG
+ * pixel coordinates, preserving the sealed image's raw source geometry.
+ */
+function rasterPolygon780(mask,width,height,poly,paint){
+ const ys=poly.map(p=>p[1]);
+ const y0=Math.max(0,Math.ceil(Math.min(...ys)-.5));
+ const y1=Math.min(height,Math.ceil(Math.max(...ys)-.5));
+ for(let y=y0;y<y1;y++){
+  const center=y+.5,crossings=[];
+  for(let a=0,b=poly.length-1;a<poly.length;b=a++){
+   const [ax,ay]=poly[a],[bx,by]=poly[b];
+   if((ay>center)!==(by>center)){
+    crossings.push(ax+(bx-ax)*(center-ay)/(by-ay));
+   }
+  }
+  crossings.sort((a,b)=>a-b);
+  for(let i=0;i+1<crossings.length;i+=2){
+   const l=Math.max(0,Math.ceil(crossings[i]-.5));
+   const r=Math.min(width,Math.ceil(crossings[i+1]-.5));
+   if(r>l)mask.fill(paint,y*width+l,y*width+r);
+  }
  }
- return inside;
 }
 export function encodeBinaryRLE774(mask){
- if(!(mask instanceof Uint8Array)||!mask.length||mask.length>2_000_000||
+ if(!(mask instanceof Uint8Array)||!mask.length||mask.length>MAX_MISSION1_ORIGINAL_PIXELS_780||
     mask.some(v=>v!==0&&v!==1))fail('bounded exact source binary raster required');
  const runs=[];let state=0,len=0,positive=0;
  for(const v of mask){
@@ -44,19 +66,13 @@ export function encodeBinaryRLE774(mask){
  return runs;
 }
 export function drawHumanSourcePixels774({width,height,polygons,holes=[]}={}){
- if(!Number.isInteger(width)||!Number.isInteger(height)||width<32||height<32||
-    width*height>2_000_000||!Array.isArray(polygons)||
+ if(!sourcePixelDimensions780(width,height)||!Array.isArray(polygons)||
     polygons.length<1||polygons.length>32||!Array.isArray(holes)||holes.length>32||
     [...polygons,...holes].some(p=>!pointsOK(p,width,height)))
   fail('manual original-pixel polygons missing, malformed or too many');
  const mask=new Uint8Array(width*height);
- // Every pixel is evaluated on the original sealed JPEG raster. The
- // polygon inclusion rule is deterministic and independent of browser zoom.
- for(let y=0;y<height;y++)for(let x=0;x<width;x++){
-  const px=x+.5,py=y+.5;
-  if(polygons.some(poly=>pointInside(px,py,poly))&&
-     !holes.some(poly=>pointInside(px,py,poly)))mask[y*width+x]=1;
- }
+ for(const poly of polygons)rasterPolygon780(mask,width,height,poly,1);
+ for(const poly of holes)rasterPolygon780(mask,width,height,poly,0);
  if(!mask.some(Boolean))fail('manual outlined clothing contains no source pixel');
  return mask;
 }
@@ -66,8 +82,7 @@ const normal=regions=>{
  return regions;
 };
 export function authorManualSourceLabel774({photo,regions,explicitNoGarments=false}={}){
- if(!photo||!Number.isInteger(photo.width)||!Number.isInteger(photo.height)||
-    photo.width<32||photo.height<32||photo.width*photo.height>2_000_000||
+ if(!photo||!sourcePixelDimensions780(photo.width,photo.height)||
     !HEX.test(photo.sha256||''))
   fail('actual registered original JPEG dimensions and SHA required');
  normal(regions);

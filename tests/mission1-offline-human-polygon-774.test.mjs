@@ -222,3 +222,69 @@ test('P774 signed manual polygons cannot be transplanted from another original J
  assert.equal(signed.sourceSHA256,f.photo.sha256);
  assert.equal(signed.missionOneCompleted,undefined);
 });
+
+test('P780 scanline source-center parity agrees pixel-for-pixel with the previous independent ray-crossing rule on fractional concave polygons and union-minus-hole geometry',()=>{
+ const polygons=[
+  [[1.2,1.1],[30.4,1.2],[29.8,10.5],[21.5,10.5],[21.5,27.2],[7.2,27.2],[6.5,15.8],[1.2,15.8]],
+  [[15.5,2.5],[29.5,18.5],[18.5,26.5],[12.5,14.5]]
+ ];
+ const holes=[
+  [[9.5,8.5],[17.5,8.5],[17.5,19.5],[9.5,19.5]],
+  [[24.5,19.5],[31,21.5],[24.5,24.5]]
+ ];
+ const oracle=(x,y,poly)=>{
+  let inside=false;
+  for(let a=0,b=poly.length-1;a<poly.length;b=a++){
+   const [ax,ay]=poly[a],[bx,by]=poly[b];
+   if((ay>y)!==(by>y)&&x<(bx-ax)*(y-ay)/(by-ay)+ax)inside=!inside;
+  }
+  return inside;
+ };
+ const actual=drawHumanSourcePixels774({width:32,height:32,polygons,holes});
+ for(let y=0;y<32;y++)for(let x=0;x<32;x++){
+  const cx=x+.5,cy=y+.5;
+  const expected=+(polygons.some(p=>oracle(cx,cy,p))&&!holes.some(p=>oracle(cx,cy,p)));
+  assert.equal(actual[y*32+x],expected,'source center parity mismatch at '+x+','+y);
+ }
+});
+test('P780 a genuine 4032x3024 pixel JPEG can be registered and its manually drawn garment signed at full source resolution without any crop or surrogate JPEG', {timeout:60000},async()=>{
+ const sharp=(await import('sharp')).default;
+ const width=4032,height=3024;
+ const original=await sharp({create:{width,height,channels:3,background:{r:30,g:90,b:140}}})
+  .jpeg({quality:80}).toBuffer();
+ const f=cohort(),photo={...f.photo,id:'hold-fullsize-unit-only',
+  image:'fullsize-synthetic-ci.jpg',width,height,sha256:sha256(original),
+  creatorCredit:'SYNTHETIC SHARP-GENERATED TEST NOT A HUMAN PHOTO'};
+ const seal=sealProspectiveHoldout({
+  photos:[photo],reviewerPublicKeys:f.keys,exposedSHA256:f.known,
+  modelSHA256:'8'.repeat(64),modelIndexSHA256:'9'.repeat(64),
+  registrationId:'m1-cohort-fullsize-unit-only'
+ },()=>original);
+ assert.equal(seal.photos[0].width,width);
+ assert.equal(seal.photos[0].height,height);
+ const regions=[{
+  instanceId:'synthetic-shape-only',
+  category:'Tops',subtype:'Blouse',primaryColor:'Blue',
+  polygons:[square(512,340,3512,2600)],
+  holes:[square(1000,1000,1400,1500)]
+ }];
+ const annotation={sourceId:photo.id,sourceSHA256:photo.sha256,regions};
+ const signed=signActualReviewerAnnotation774({
+  seal,reviewerPublicKeys:f.keys,reviewerId:'reviewerA',
+  photoId:photo.id,photoJPEG:original,annotations:annotation,
+  reviewerDeclaration:humanDeclaration,privateKeyPEM:f.privateKeys.reviewerA
+ });
+ assert.equal(signed.sourceSHA256,sha256(original));
+ const rle=signed.label.instances[0].rle;
+ assert.equal(rle.reduce((n,v)=>n+v,0),width*height);
+ assert.equal(rle.filter((_,i)=>i%2===1).reduce((n,v)=>n+v,0),
+   (3512-512)*(2600-340)-(1400-1000)*(1500-1000));
+ assert.equal(signed.independentHumanStatus,'self-attested-requires-external-identity-and-blindness-audit');
+ assert.equal(signed.missionOneCompleted,undefined);
+ assert.throws(()=>drawHumanSourcePixels774({
+  width:5000,height:4000,polygons:[square(2,2,20,20)]
+ }),/manual original-pixel polygons/,'larger than 16 megapixels must fail before allocating masks');
+ assert.throws(()=>authorManualSourceLabel774({
+  photo:{...photo,width:5000,height:4000},regions
+ }),/actual registered original JPEG dimensions/);
+});
