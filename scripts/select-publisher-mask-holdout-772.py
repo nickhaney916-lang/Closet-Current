@@ -123,6 +123,15 @@ def main():
     original_archive = publisher_bytes(PUBLISHER_ARCHIVE_URL)
     archive = zipfile.ZipFile(io.BytesIO(original_archive))
     out_dir.mkdir(parents=True, exist_ok=True)
+    # Recreate, but never modify, the earlier six source-byte identities for
+    # independent P769 similarity screening of the newly selected 12 sources.
+    exposed_originals = out_dir.parent / "previous-six"
+    exposed_originals.mkdir(parents=True, exist_ok=True)
+    for old in previous["rows"]:
+        photo = archive.read(old["archiveMember"])
+        if len(photo) != old["bytes"] or sha256(photo) != old["sha256"]:
+            fail("previous previously exposed Fashionpedia original bytes changed")
+        exposed_originals.joinpath(old["file_name"]).write_bytes(photo)
     seen_sha = set()
     for row in rows:
         photo = archive.read(row["archiveMember"])
