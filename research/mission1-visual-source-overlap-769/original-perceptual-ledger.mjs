@@ -123,7 +123,7 @@ export async function screenProspectiveImages({ledger,known65,candidates,readCan
  if(expectedSetHash!==ledger.exactSourceSetSHA256)
   fail('visual-ledger 65-source SHA set does not match heldout exclusion reference');
  if(!Array.isArray(candidates)||!candidates.length||candidates.length>300||
-    typeof readCandidate!=='function||
+    typeof readCandidate!=='function'||
     !Number.isInteger(threshold)||threshold<2||threshold>10)
   fail('bounded actual-source candidate visual scan required');
  const accepted=new Set(),outcomes=[];
