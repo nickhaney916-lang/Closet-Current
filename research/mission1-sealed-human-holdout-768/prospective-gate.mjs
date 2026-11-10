@@ -180,6 +180,30 @@ function compareLabels(a,b,item){
  }
  return true;
 }
+/** Maximum-cardinality source-mask assignment avoids greedy lost garment matches. */
+export function maximumCardinalityMaskMatches(truth,predicted,minimumIoU=.5){
+ if(!Array.isArray(truth)||!Array.isArray(predicted)||
+    !Number.isFinite(minimumIoU)||minimumIoU<=0||minimumIoU>1)
+  err('invalid one-to-one instance mask matching input');
+ const edges=truth.map(a=>predicted.map((b,j)=>({
+  j,score:a.category===b.category?iou(a.mask,b.mask):0
+ })).filter(x=>x.score>=minimumIoU).sort((a,b)=>b.score-a.score||a.j-b.j));
+ const ownerOfPred=new Map();
+ function augment(i,seen){
+  for(const edge of edges[i]){
+   if(seen.has(edge.j))continue;
+   seen.add(edge.j);
+   const previous=ownerOfPred.get(edge.j);
+   if(previous===undefined||augment(previous,seen)){
+    ownerOfPred.set(edge.j,i);
+    return true;
+   }
+  }
+  return false;
+ }
+ for(let i=0;i<truth.length;i++)augment(i,new Set());
+ return ownerOfPred.size;
+}
 const percent=(n,d)=>d?+(100*n/d).toFixed(2):null;
 export function evaluateProspectiveHoldout({
  seal,registrationWitness,reviewers,predictions,readPhoto,knownExposedSHA256,externalChronology,
@@ -275,18 +299,9 @@ export function evaluateProspectiveHoldout({
    }
    if(p.instances){
     totals.masksMeasured++;totals.maskPredicted+=output.length;totals.maskTruth+=truth.length;
-    const candidates=[];
-    for(let i=0;i<truth.length;i++)for(let j=0;j<output.length;j++){
-     if(truth[i].category!==output[j].category)continue;
-     const v=iou(truth[i].mask,decodeMask(output[j].rle,item.width*item.height));
-     if(v>=.5)candidates.push({i,j,iou:v});
-    }
-    const usedTruth=new Set(),usedPred=new Set();
-    candidates.sort((x,y)=>y.iou-x.iou);
-    for(const x of candidates){
-     if(usedTruth.has(x.i)||usedPred.has(x.j))continue;
-     usedTruth.add(x.i);usedPred.add(x.j);totals.maskMatched++;
-    }
+    totals.maskMatched+=maximumCardinalityMaskMatches(truth,output.map(x=>({
+     category:x.category,mask:decodeMask(x.rle,item.width*item.height)
+    })));
    }
   }
   totals.photos++;
