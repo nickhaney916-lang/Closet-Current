@@ -20,21 +20,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exact green P791 parent and only five research/test/workflow paths
+      - name: Exact green P791 parent and only twelve research/test/exposure quarantine paths
         run: |
           set -euo pipefail
           BASE=bea6162f9e8d18c9806b57b39b66e9c7c815d134
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD >/tmp/m1-p792-paths
-          test "$(wc -l </tmp/m1-p792-paths)" -eq 5
+          test "$(wc -l </tmp/m1-p792-paths)" -eq 12
           while read -r path; do
             case "$path" in
-              scripts/intake-additional-publisher-originals-792.py|scripts/test-mission1-seeded-boundary-recovery-browser.mjs|tests/test_mission1_additional_publisher_792.py|research/mission1-additional-publisher-originals-792/REPORT.md|.github/workflows/mission1-additional-publisher-originals-792-no-deploy.yml) ;;
+              scripts/intake-additional-publisher-originals-792.py|scripts/test-mission1-seeded-boundary-recovery-browser.mjs|tests/test_mission1_additional_publisher_792.py|research/mission1-additional-publisher-originals-792/REPORT.md|.github/workflows/mission1-additional-publisher-originals-792-no-deploy.yml|research/mission1-exposure-774/pinned-exposed-source-history.mjs|research/mission1-sealed-human-holdout-768/prospective-gate.mjs|scripts/prospective-holdout-768.mjs|research/mission1-reviewer-774/offline-human-polygon-receipt.mjs|tests/mission1-prospective-holdout-768.test.mjs|tests/mission1-offline-human-polygon-774.test.mjs|tests/mission1-source-exposure-73-774.test.mjs) ;;
               *) echo "UNAPPROVED APP/PRIVATE/MODEL/RELEASE CHANGE: $path";exit 1;;
             esac
           done </tmp/m1-p792-paths
-          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark/locked-photo-sources.json research/mission1-sealed-human-holdout-768)"
-          echo M1_P792_FIVE_APPROVED_RESEARCH_PATHS_EXACT_PARENT_NO_DEPLOY
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark/locked-photo-sources.json)"
+          echo M1_P792_TWELVE_RESEARCH_QUARANTINE_PATHS_EXACT_PARENT_NO_DEPLOY
       - name: Ephemeral complete Node test suite tools
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: Python immutable source selection test, native bundle and full app regressions
@@ -87,9 +87,12 @@ jobs:
           import {readFileSync} from 'node:fs';
           const x=JSON.parse(readFileSync('benchmark/mission1-additional-publisher-originals-792/manifest.json'));
           const known=new Set(JSON.parse(readFileSync('/tmp/m1-p792-exposed.json')));
+          const {P792_EXPOSED_DIGESTS_792}=await import('./research/mission1-exposure-774/pinned-exposed-source-history.mjs');
           assert.equal(x.rows.length,10);
           assert.equal(new Set(x.rows.map(r=>r.id)).size,10);
           assert.equal(new Set(x.rows.map(r=>r.sha256)).size,10);
+          assert.deepEqual(new Set(x.rows.map(r=>r.sha256)),new Set(P792_EXPOSED_DIGESTS_792),
+            'newly model-exposed original SHA set must already be in immutable human holdout exclusion ledger');
           assert.ok(x.rows.every(r=>r.annotations.length>=1&&!known.has(r.sha256)));
           assert.equal(x.rows.filter(r=>r.sourceSelectionStratum==='multi').length+
            x.rows.filter(r=>r.sourceSelectionStratum==='single').length,10);
