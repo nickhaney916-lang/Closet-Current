@@ -1,0 +1,107 @@
+name: M1 P803 owner LOCAL source-mask manual correction — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-owner-local-mask-correction-803-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p803-manual-local-source-mask-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  full-node-allowlisted:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently green P802 source parent and seven safe research changes ONLY
+        run: |
+          set -euo pipefail
+          BASE=8a92e7878e0e8aabb658ceed653781f6e02db8f1
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p803-paths
+          test "$(wc -l </tmp/m1-p803-paths)" -eq 7
+          while read -r path; do
+            case "$path" in
+              public/mission1-local-mask-correction-803.mjs|public/owner-original-photo-point-798.mjs|public/app.js|tests/mission1-local-mask-correction-803.test.mjs|scripts/test-mission1-real-segformer-to-closet-782-browser.mjs|research/mission1-owner-local-mask-correction-803/REPORT.md|.github/workflows/mission1-owner-local-mask-correction-803-no-deploy.yml) ;;
+              *) echo "UNAPPROVED AUTH/CLOUD/MODEL/RELEASE PATH: $path"; exit 1 ;;
+            esac
+          done </tmp/m1-p803-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase public/local-worker.mjs public/auth.js public/cloud-backup.js public/native-reviewed-private-save-167.mjs public/local-catalog.mjs public/photo-color.js benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-owner-local-mask-correction-803/REPORT.md
+          echo M1_P803_EXACT_GREEN_P802_PARENT_SEVEN_PATHS_ONLY_NO_DEPLOY
+      - name: Install ephemeral full repo test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: SHA-owner-bound reversible local brush, build, complete Node tests
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/owner-original-photo-point-798.mjs
+          node --check public/mission1-local-mask-preview-802.mjs
+          node --check public/mission1-local-mask-correction-803.mjs
+          node --check scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+          node --test tests/mission1-local-mask-correction-803.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-original-owner-brush-two-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual Chromium WebKit original-source model/browser runner
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Actual original JPEG to native Adjust mask, mouse and keyboard manual brush, fixture private save
+        run: node scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+      - name: Require owner source privacy, human-UNVERIFIED local brush and no deployment
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('benchmark/mission1-real-model-native-closet-782/browser-results.json'));
+          assert.equal(x.researchOnly,true);assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.familyAlpha,'HOLD');assert.equal(x.realAuthenticatedCloudUsers,false);
+          assert.deepEqual(new Set(x.scenarios.map(v=>v.browser)),new Set(['chromium','webkit']));
+          for(const v of x.scenarios){
+           for(const k of ['actualOriginalSourceOwnerPoint798ReviewedInNativeAdjust',
+            'actualOriginalSourceOwnerBox800BrowserDrawn',
+            'actualOriginalSourceOwnerBox800KeyboardEntered',
+            'actualOriginalSourceOwnerMask802ActualLocalColorPixels',
+            'actualOriginalSourceOwnerMask803ManualCorrectionPointerAndKeyboard',
+            'actualOriginalSourceOwnerMask803NoApprovalOrPrivatePersistence',
+            'actualOriginalSourceOwnerBox800NotPersisted','actualMyClosetSaved',
+            'simulatedManualUnknownSubtypeRefusedBeforeSave'])
+            assert.equal(v[k],true,k);
+           assert.equal(v.actualHumanGroundTruthIndependentlyVerified,false);
+           assert.equal(v.physicalPhoneTested,false);
+           assert.equal(v.actualSignedCloudRLS,false);
+           assert.equal(v.familyAlpha,'HOLD');
+          }
+          console.log('M1_P803_ACTUAL_SOURCE_PRIVATE_MASK_BRUSH_CHROMIUM_WEBKIT_POINTER_KEYBOARD_NO_APPROVAL_NO_DEPLOY');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P803-actual-original-owner-local-mask-MANUAL-BRUSH-pointer-keyboard-UNVERIFIED-HOLD
+          path: benchmark/mission1-real-model-native-closet-782/
+          retention-days: 14
+          if-no-files-found: warn
