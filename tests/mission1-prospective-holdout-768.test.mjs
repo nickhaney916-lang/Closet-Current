@@ -204,7 +204,10 @@ test('Mission1 independent reviewers may enumerate two distinct garment polygons
  assert.equal(result.records[0].humanAgreement,true);
  assert.equal(result.counts.adjudicatedItems,0);
  assert.equal(result.counts.maskTruth,2);
- assert.equal(result.counts.maskMatched,0);
+ // The unchanged actual mock model proposed one polygon, matching one of
+ // two independent human masks; the second remains a genuine false negative.
+ assert.equal(result.counts.maskMatched,1);
+ assert.equal(result.counts.instanceRecallPercent,50);
  assert.equal(result.missionOneCompleted,false);
 });
 test('Mission1 independent reviewers with genuinely different shape contours must undergo signed third adjudication',()=>{
