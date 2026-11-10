@@ -526,6 +526,7 @@ jobs:
         shell: bash
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
