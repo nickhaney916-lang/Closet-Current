@@ -27,9 +27,41 @@
   if(state.draft?.batch)state.draft={...state.draft,batch:state.draft.batch.filter(x=>!items.some(y=>y.id===x.id))};
   return validateDocument({schemaVersion:1,items,state});
  }
+ // Limit real photo transforms globally, including originalPhoto.image and
+ // segmentHint.cutoutImage. Array concurrency alone would multiply across
+ // nested garments and overwhelm mobile memory/network fetch slots.
  async function mapImages(value,map){
-  if(Array.isArray(value))return Promise.all(value.map(x=>mapImages(x,map)));
-  if(value&&typeof value==='object'){const out={};for(const [key,v]of Object.entries(value)){if(['__proto__','constructor','prototype'].includes(key))throw Error('Invalid cloud key');out[key]=key==='image'&&typeof v==='string'&&v?await map(v):await mapImages(v,map);}return out;}return value;
+  const maxPhotoJobs=4,queue=[];let active=0;
+  function pump(){
+   while(active<maxPhotoJobs&&queue.length){
+    const job=queue.shift();active++;
+    Promise.resolve().then(()=>map(job.value,job.key,job.parent))
+     .then(job.resolve,job.reject).finally(()=>{active--;pump();});
+   }
+  }
+  function photo(value,key,parent){
+   return new Promise((resolve,reject)=>{queue.push({value,key,parent,resolve,reject});pump();});
+  }
+  async function walk(x){
+   if(Array.isArray(x)){
+    const result=new Array(x.length),workers=Math.min(4,x.length);let next=0;
+    await Promise.all(Array.from({length:workers},async()=>{
+     while(next<x.length){const index=next++;result[index]=await walk(x[index]);}
+    }));
+    return result;
+   }
+   if(x&&typeof x==='object'){
+    const out={};
+    for(const [key,v]of Object.entries(x)){
+     if(['__proto__','constructor','prototype'].includes(key))throw Error('Invalid cloud key');
+     out[key]=(key==='image'||key==='cutoutImage')&&typeof v==='string'&&v
+      ?await photo(v,key,x):await walk(v);
+    }
+    return out;
+   }
+   return x;
+  }
+  return walk(value);
  }
  function keepBothDocuments(base,local,remote,makeId){
   validateDocument(local);validateDocument(remote);if(base)validateDocument(base);base=base||{items:[],state:{}};
