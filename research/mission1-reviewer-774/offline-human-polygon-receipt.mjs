@@ -8,7 +8,7 @@
  */
 import {createHash,createPrivateKey,createPublicKey,sign as ed25519Sign} from 'node:crypto';
 import {signedMessage,sha256,P66_EXPOSED_DIGESTS} from '../mission1-sealed-human-holdout-768/prospective-gate.mjs';
-import {P772_EXPOSED_DIGESTS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
+import {P772_EXPOSED_DIGESTS_774,P792_EXPOSED_DIGESTS_792} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
 import {supportedHumanGarment791} from '../mission1-human-truth-taxonomy-integrity-791/canonical-human-truth.mjs';
 import {sourcePixelDimensions780,MAX_MISSION1_ORIGINAL_PIXELS_780} from './original-photo-bounds-780.mjs';
 
@@ -139,7 +139,7 @@ export function signActualReviewerAnnotation774({
   fail('reviewer not enrolled as independent A, B or C');
  const photo=seal.photos.find(x=>x.id===photoId);
  if(!photo||!HEX.test(photo.sha256||'')||
-    (P66_EXPOSED_DIGESTS.includes(photo.sha256)||P772_EXPOSED_DIGESTS_774.includes(photo.sha256)))
+    (P66_EXPOSED_DIGESTS.includes(photo.sha256)||P772_EXPOSED_DIGESTS_774.includes(photo.sha256)||P792_EXPOSED_DIGESTS_792.includes(photo.sha256)))
   fail('no registered new holdout JPEG source under that photo ID');
  if(!(photoJPEG instanceof Uint8Array)||sha256(photoJPEG)!==photo.sha256||
     photoJPEG[0]!==255||photoJPEG[1]!==216||
