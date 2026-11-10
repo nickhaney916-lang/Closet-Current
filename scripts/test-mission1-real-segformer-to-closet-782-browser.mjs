@@ -242,6 +242,20 @@ try{
     await dialog.locator('input[aria-label="I verified the category, clothing type and color"]').check();
     await dialog.locator('input[aria-label="I confirmed this photo shows one garment"]').check();
     await page.screenshot({path:out+'/'+name+'-'+width+'-02-real-adjust-confirm.png',fullPage:true});
+    // P783: the editor offers "Other", but native reviewed-source writer
+    // intentionally refuses this unsupported generic subtype. Neither
+    // confirmation nor a successful file hash can substitute for a valid type.
+    await dialog.getByRole('button',{name:'Save changes'}).click();
+    await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('Reviewed garment was not saved.'),
+     null,{timeout:20000});
+    assert.equal(await page.evaluate(async()=>(await readAll()).length),0);
+    assert.equal(await page.evaluate(()=>batch.length),1);
+    assert.equal(await dialog.isVisible(),true);
+    assert.equal(await dialog.locator('select[aria-label="Item type"]').inputValue(),'Other');
+    // Simulated reviewer chooses a supported subtype. This is deliberately
+    // NOT an independently human-verified subtype accuracy claim.
+    await dialog.locator('select[aria-label="Item type"]').selectOption('Casual dress');
+    await page.screenshot({path:out+'/'+name+'-'+width+'-02b-catalog-supported-dress-subtype.png',fullPage:true});
     await dialog.getByRole('button',{name:'Save changes'}).click();
     await page.waitForFunction(()=>items.length===1&&batch.length===0,
      null,{timeout:30000});
@@ -263,7 +277,7 @@ try{
      };
     });
     for(const [key,value] of Object.entries({
-     actualSavedRows:1,category:'Dresses',itemType:'Other',color:'Black',
+     actualSavedRows:1,category:'Dresses',itemType:'Casual dress',color:'Black',
      sourceSHAUnchanged:true,originalJPEGUnchanged:true,ownerBinding:true,
      humanReviewed:true,manualColorProvenance:true,sourceVerified:true,
      remainingDraftItems:0,ownerIndexTotal:1,dialogClosed:true
@@ -293,7 +307,8 @@ try{
      actualModelTopSemanticRegion:actualRegion?.semanticRegionId??null,
      modelCategorySuppliedWithoutSubtypeOrColor:actualCategory,
      sourceCatalogDocumentsDress:true,simulatedManualChoiceUsesDocumentedDressCategory:true,
-     simulatedManualSubtypeExplicitlyUnspecified:true,
+     simulatedManualOtherSubtypeRefusedBeforeSave:true,
+     simulatedManualSubtypeSelectedFromNativeCatalog:true,
      modelCategoryAloneDidNotDetermineSavedGarment:true,
      ownerReviewStillSimulated:true,actualHumanGroundTruthIndependentlyVerified:false,
      originalSourceIndependentHash:true,actualUserCorrectionForm:true,
