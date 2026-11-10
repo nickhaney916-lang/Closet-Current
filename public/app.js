@@ -232,6 +232,19 @@ function adjustPhoto(item){
   visual.append(node('p','Source model regions: '+sourceSemantic785.semanticLabels.join(' · ')+'. These may be parts of the same garment or different pieces. The model has NOT confirmed a category, subtype, color or single garment. Compare the original photo and make your own selection before saving.','fine'));
   form.prepend(visual);
  }
+ // P790 research-only B0 source-masked COLOR hypothesis is descriptive ONLY.
+ // Never prefill a field, mark it user-confirmed, or enable private saving.
+ const sourceColorHint790=sourceSemantic785&&
+  new URLSearchParams(location.search).get('mission1SourceColor790')==='research'?
+  item.recognitionDiagnostics?.sourceColorHint790:null;
+ if(sourceColorHint790?.ownerReviewRequired&&sourceColorHint790.autoPopulateColor===false&&
+    sourceColorHint790.autoSaveAllowed===false&&
+    sourceColorHint790.sourceSHA256===item.sourceSHA256){
+  const hint=node('div',null,'recognition-review-suggestion');
+  hint.setAttribute('data-mission1-color-hint-790','review-only');
+  hint.append(node('p',sourceColorHint790.displayHint,'fine'));
+  form.prepend(hint);
+ }
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -1003,6 +1016,22 @@ async function recognizeItem(item){
     const {reconcileRealSourceRegions785}=await import('../research/mission1-real-source-review-785/reconcile-regions.mjs');
     const review=reconcileRealSourceRegions785({sourceSHA256:item.sourceSHA256,modelEvidence:result.sourceCategoryReview});
     item.recognitionDiagnostics={...item.recognitionDiagnostics,sourceCategoryReview785:review};
+    // Only an explicit research flag and the SAME original/label-map receipt
+    // may display a source-color possibility. Never assign item.color.
+    if(new URLSearchParams(location.search).get('mission1SourceColor790')==='research'){
+     delete item.recognitionDiagnostics.sourceColorHint790;
+     if(result.sourceColorReview790){
+      try{
+       const {admitSourceColorHint790}=await import('../research/mission1-source-color-owner-review-790/source-color-hint-gate.mjs');
+       item.recognitionDiagnostics.sourceColorHint790=admitSourceColorHint790({
+        originalSHA256:item.sourceSHA256,sourceCategoryReview:review,
+        colorReceipt:result.sourceColorReview790
+       });
+      }catch{
+       item.recognitionDiagnostics.sourceColorHint790Rejected=true;
+      }
+     }
+    }
     item.recognitionReviewReasons=['real_model_semantic_regions_only','owner_category_type_color_required'];
     item.localStatus='Model found possible '+review.possibleCategories.join(', ')+'. These can be parts of the same garment; no item identity is confirmed. Check the original photo and select the category, type and color in Adjust.';
    }catch{
