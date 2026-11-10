@@ -25,7 +25,7 @@ class PublisherSelection792(unittest.TestCase):
       {"image_id":image_id,"id":i*2+1,"category_id":6,
        "segmentation":[[50,50,60,50,60,70,50,70]]}
     ])
-    archive.writestr("test/"+file_name,b"\\xff\\xd8"+bytes([i+1])*700+b"\\xff\\xd9")
+    archive.writestr("test/"+file_name,b"\xff\xd8"+bytes([i+1])*700+b"\xff\xd9")
   # Synthetic fixture has no source rights, real decoded JPEG or human author.
   return {"images":images,"annotations":annotations},mem.getvalue()
  def run_selection(self,source,zip_blob,excluded=set()):
