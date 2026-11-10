@@ -102,7 +102,10 @@ for(const engine of names){
      buffer:Buffer.concat([photo.subarray(0,20),Buffer.from([9]),photo.subarray(21)])
     });
     await page.locator('#verify').click();
-    assert.match(await page.locator('#status').innerText(),/differs from the immutable registered source SHA/);
+    // SHA-256 uses asynchronous WebCrypto; wait for the actual computed
+    // refusal rather than reading the preceding successful export status.
+    await page.waitForFunction(()=>
+     document.getElementById('status')?.textContent?.includes('differs from the immutable registered source SHA'));
     assert.equal(await page.locator('#export').isDisabled(),true);
     console.log('P774_HUMAN_DRAWN_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
      screenshot,sha(rendered));
