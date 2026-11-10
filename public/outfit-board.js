@@ -116,7 +116,7 @@ async function loadLatestBoardDraft(){
  const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id,local=JSON.stringify(currentBoard);
  const assertOwner=()=>{auth?.assertCurrent?.();if(!owner||db!==ownerDB||window.closetAuth!==auth||auth.user?.id!==owner||ownerDB?.name!=='closet-current-user-'+owner)throw Error('Your account changed. Reopen your closet.');};
  assertOwner();
- const state=await new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ const state=await queued(()=>{assertOwner();return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});});
  assertOwner();
  if(serial!==boardStatusSerial||local!==JSON.stringify(currentBoard))throw Error('Your draft changed while loading. Try Load latest again.');
  currentBoard=cleanOutfitBoard(state?.current||{},items);savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));

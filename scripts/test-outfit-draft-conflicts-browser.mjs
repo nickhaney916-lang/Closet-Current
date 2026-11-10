@@ -126,7 +126,21 @@ try{
        await other.reload();await other.evaluate(async()=>{await closetReady;await outfitBoardReady;switchView('builder');});
        assert.equal(await other.locator('#boardName').inputValue(),'Local version to keep');assert.equal(await other.evaluate(()=>savedOutfitBoards.length),1);
        await audit(other,engine+'-'+width+'-resolved');await other.screenshot({path:out+'/'+engine+'-'+width+'-resolved.png',fullPage:true});
-       results.push({engine,width,baseline:false,staleDraftRefused:true,localInputRetained:true,appendPreservesRemoteDraft:true,loadLatest:true,automaticRefreshPreserved:true,unseenVersionOverrideRefused:true,explicitOverrideReload:true,savedOutfitsRetained:true});
+       // A queued local save cannot undo an explicit Load latest choice.
+       await page.evaluate(()=>loadLatestBoardDraft());
+       await page.locator('#boardName').fill('Remote after resolution');await page.locator('#boardName').press('Tab');await page.evaluate(()=>writes);
+       await other.locator('#boardName').fill('Local conflict before pause');await other.locator('#boardName').press('Tab');await other.evaluate(()=>writes);
+       await other.evaluate(()=>{window.savedCloud=window.closetCloud;window.conflictWriteCalls=0;window.closetCloud={beforeWrite:async()=>{if(++window.conflictWriteCalls===1)await new Promise(resolve=>window.releaseQueuedConflict=resolve);}};});
+       await other.locator('#boardName').fill('Queued draft to discard');await other.locator('#boardName').press('Tab');await other.waitForFunction(()=>Boolean(window.releaseQueuedConflict));
+       await other.getByRole('button',{name:'Load latest draft',exact:true}).click();
+       await other.evaluate(()=>window.releaseQueuedConflict());
+       await other.waitForFunction(()=>document.getElementById('boardName').value==='Remote after resolution');
+       await other.evaluate(()=>writes);
+       assert.equal(await other.evaluate(()=>new Promise(resolve=>{const r=db.transaction('state').objectStore('state').get('outfit-board');r.onsuccess=()=>resolve(r.result.current.name);})), 'Remote after resolution');
+       assert.equal(await other.evaluate(()=>savedOutfitBoards.length),1);
+       await other.evaluate(()=>window.closetCloud=window.savedCloud);
+
+       results.push({engine,width,baseline:false,staleDraftRefused:true,localInputRetained:true,appendPreservesRemoteDraft:true,loadLatest:true,automaticRefreshPreserved:true,queuedLoadLatest:true,unseenVersionOverrideRefused:true,explicitOverrideReload:true,savedOutfitsRetained:true});
       }
      }finally{await other.close();}
     }catch(error){await page.screenshot({path:out+'/'+engine+'-'+width+'-FAIL.png',fullPage:true});throw error;}
