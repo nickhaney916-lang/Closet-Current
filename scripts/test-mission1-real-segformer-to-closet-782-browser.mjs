@@ -214,7 +214,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -270,6 +270,40 @@ try{
      .getByRole('button',{name:'Adjust',exact:true}).click();
     const dialog=page.locator('dialog.photo-adjust[open]');
     await dialog.waitFor({state:'visible'});
+    // P798: genuine original JPEG is rendered inside the ACTUAL native
+    // owner-bound Adjust dialog. These are browser-AUTOMATED gesture tests,
+    // NOT independent actual human users, owner-approved masks or phone taps.
+    const tapReview=dialog.locator('[data-mission1-owner-point-798="review-only"]');
+    await tapReview.waitFor({state:'visible',timeout:20000});
+    assert.equal(await tapReview.getAttribute('data-mask-generated'),'false');
+    assert.equal(await tapReview.getAttribute('data-automatic-save'),'false');
+    assert.equal(await tapReview.locator('img').evaluate(img=>img.src),await page.evaluate(()=>batch[0].originalPhoto.image));
+    const pointButton=tapReview.getByRole('button',{name:'Tap original photograph to select garment point'});
+    await pointButton.click();
+    await page.waitForFunction(()=>document.querySelector('[data-mission1-owner-point-marker798="selected"]')!==null,
+     null,{timeout:20000});
+    const pointState=await page.evaluate(async()=>{
+     await writes;
+     const persistedDraft=await readDraft();
+     const pointStatus=document.querySelector('[data-mission1-owner-point-798="review-only"] [role="status"]')?.textContent;
+     return {pointStatus,stillUncategorized:batch[0].category==='Uncategorized',
+      stillUnknownSubtype:batch[0].itemType==='Unknown',
+      stillNoOwnerTypeColorConfirmation:!document.querySelector('[aria-label="I verified the category, clothing type and color"]')?.checked,
+      noSignedApprovalFromPoint:batch[0].ownerReviewed!==true,
+      draftWithoutTapReceipt:persistedDraft.every(x=>!('ownerOriginalPoint798' in x)&&!('ownerPoint798' in x)),
+      inMemoryDraftWithoutTapReceipt:!('ownerOriginalPoint798' in batch[0])&&!('ownerPoint798' in batch[0]),
+      noSavedGarment:(await readAll()).length===0};
+    });
+    assert.match(pointState.pointStatus,/Review point at original pixel/);
+    for(const key of ['stillUncategorized','stillUnknownSubtype','stillNoOwnerTypeColorConfirmation',
+     'noSignedApprovalFromPoint','draftWithoutTapReceipt','inMemoryDraftWithoutTapReceipt','noSavedGarment'])
+     assert.equal(pointState[key],true,'P798 actual Adjust '+name+' '+key);
+    await tapReview.getByRole('button',{name:'Clear garment point'}).click();
+    assert.equal(await tapReview.locator('[data-mission1-owner-point-marker798="none"]').count(),1);
+    assert.match(await tapReview.getByRole('status').innerText(),/No point selected/);
+    await pointButton.click();
+    assert.equal(await tapReview.locator('[data-mission1-owner-point-marker798="selected"]').count(),1);
+    await page.screenshot({path:out+'/'+name+'-'+width+'-01b-original-photo-temporary-owner-point.png',fullPage:true});
     const p790=dialog.locator('[data-mission1-color-hint-790="review-only"]');
     assert.equal(await p790.count(),1,'real source mask color hint is visible only as read-only owner guidance');
     assert.match(await p790.textContent(),/Check the original photograph and manually enter the color/i);
@@ -320,6 +354,7 @@ try{
       humanReviewed:item?.userAdjusted===true&&item?.ownerReviewed===true,
       manualColorProvenance:item?.colorSource==='user',
       sourceVerified:item?.sourceHashVerified===true,
+      pointNotPersisted:!('ownerOriginalPoint798' in (item||{}))&&!('ownerPoint798' in (item||{})),
       remainingDraftItems:draft.length,ownerIndexTotal:window.closetIndex02.state().total,
       dialogClosed:!document.querySelector('dialog.photo-adjust[open]'),
       status:document.getElementById('message').textContent
@@ -328,7 +363,7 @@ try{
     for(const [key,value] of Object.entries({
      actualSavedRows:1,category:'Dresses',itemType:'Casual dress',color:'Black',
      sourceSHAUnchanged:true,originalJPEGUnchanged:true,ownerBinding:true,
-     humanReviewed:true,manualColorProvenance:true,sourceVerified:true,
+     humanReviewed:true,manualColorProvenance:true,sourceVerified:true,pointNotPersisted:true,
      remainingDraftItems:0,ownerIndexTotal:1,dialogClosed:true
     }))assert.equal(after[key],value,name+'/'+width+' saved '+key);
     assert.match(after.status,/saved to your private closet/);
@@ -354,6 +389,10 @@ try{
      exactSourceModelMapSHA256:realSegmentation.labelMapSHA256,
      sourceSemanticCount:realSegmentation.detectedRegions.length,
      actualModelSourcePixelColorReviewedInAdjust:true,
+     actualOriginalSourceOwnerPoint798ReviewedInNativeAdjust:true,
+     actualOriginalSourceOwnerPoint798NotPersisted:true,
+     actualOriginalSourceOwnerPoint798NoMaskOrApproval:true,
+     originalSourceOwnerPointBrowserGesturesSimulated:true,
      actualModelSourceMaskColorOriginalSHA256:realSegmentation.sourceColorReview790.sourceSHA256,
      actualModelSourceMaskColorLabelMapSHA256:realSegmentation.sourceColorReview790.modelLabelMapSHA256,
      actualModelColorNeverAutofilledOrHumanConfirmed:true,
