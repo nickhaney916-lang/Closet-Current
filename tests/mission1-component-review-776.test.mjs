@@ -47,7 +47,7 @@ test('P776 paired footwear is never split solely from disconnection',()=>{
  assert.equal(out[0].autoIndex,false);
 });
 test('P776 altered original logits, source map, overgrowth, imaginary seeds and owner acceptance fail closed',()=>{
- const s=source(),poisoned=Float32Array.from(s.data);poisoned[0]=99;
+ const s=source(),poisoned=Float32Array.from(s.data);const garmentPixel=2*W+2;poisoned[garmentPixel]=99;poisoned[4*N+garmentPixel]=-99;
  for(const bad of [
   {...s,data:poisoned},
   {...s,map:{...s.map,labels:new Uint8Array(N)}},
