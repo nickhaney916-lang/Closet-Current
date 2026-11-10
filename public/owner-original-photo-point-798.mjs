@@ -88,7 +88,7 @@ export function mountOriginalTapReview798({
   fail('native owner Adjust may not open an unverified original source');
  const source=item.originalPhoto;
  const root=document.createElement('section');
- root.dataset.mission1OwnerPoint798='review-only';
+ root.setAttribute('data-mission1-owner-point-798','review-only');
  root.dataset.maskGenerated='false';root.dataset.automaticSave='false';
  root.style.cssText='border:1px solid #a7b5ce;border-radius:10px;padding:12px;margin:12px 0;min-width:0';
  const heading=document.createElement('p');
