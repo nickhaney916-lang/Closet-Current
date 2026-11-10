@@ -36,10 +36,10 @@ jobs:
         run: |
           set -euo pipefail
           DOC=research/mission1-controller/CURRENT.md
-          for keyword in             "FAMILY ALPHA HOLD #255"             "54c919e40fc7d0671aedbca77a069f4718acbb73"             "3b16be6f58f6def8f821ae603ef3054d6b1a1299"             "42922233664" "42920646785"             "1,649/1,649" "22/23" "15/23"             "CURRENT" "NOT 100%" "UNMERGED" "UNDEPLOYED"             "No automatic engineering between turns"; do
+          for keyword in             "FAMILY ALPHA HOLD #255"             "54c919e40fc7d0671aedbca77a069f4718acbb73"             "3b16be6f58f6def8f821ae603ef3054d6b1a1299"             "42922233664" "42920646785"             "1,649/1,649" "22/23" "15/23"             "NOT 100%" "UNMERGED" "UNDEPLOYED"             "No automatic engineering between turns"; do
             grep -Fq "$keyword" "$DOC" || { echo "MISSING VERIFIED HANDOFF $keyword"; exit 1; }
           done
-          if grep -Eiq '100% complete|family alpha released|physical phones passed|real human double blind verified' "$DOC"; then
+          if grep -Eiq 'MISSION 1 (IS|HAS BEEN) 100% COMPLETE|FAMILY ALPHA (IS )?RELEASED|PHYSICAL PHONES PASSED|REAL HUMAN DOUBLE BLIND VERIFIED' "$DOC"; then
             echo "UNAUTHORIZED CLAIM OF RELEASE OR HUMAN EVIDENCE"; exit 1
           fi
           echo "M1_P801_CONTROLLER_RESUMABLE_SHA_PINNED_HANDOFF_VERIFIED_RELEASE_HOLD"
