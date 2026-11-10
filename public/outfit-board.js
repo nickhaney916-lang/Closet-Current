@@ -56,7 +56,7 @@ window.addEventListener('closet:session-locked',()=>{
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
 });
-async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null}={}){
+async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
  const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
@@ -71,8 +71,17 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
  ++boardPendingWrites;
  try{await queued(()=>new Promise((resolve,reject)=>{
-  assertOwner();const tx=ownerDB.transaction('state','readwrite'),store=tx.objectStore('state');
-  let failure,saved,keepStoredDraft=false;const request=store.get('outfit-board');
+  assertOwner();const tx=ownerDB.transaction(candidate?['state','items']:'state','readwrite'),store=tx.objectStore('state');
+  let failure,saved,keepStoredDraft=false;
+  if(candidate)for(const [slotId,id]of Object.entries(candidate.slots)){
+   const selected=tx.objectStore('items').get(id);
+   selected.onsuccess=()=>{try{
+    assertOwner();const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
+    if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||(row.ownerId&&row.ownerId!==owner)||!expected||!actual||expected.length!==actual.length||!expected.every((v,i)=>v===actual[i]))
+     throw outfitWardrobeChanged();
+   }catch(error){failure=error;tx.abort();}};
+  }
+  const request=store.get('outfit-board');
   request.onsuccess=()=>{try{
    assertOwner();
    const observed=JSON.stringify(request.result?.current??null),expected=replaceDraft?replaceDraft.stored:boardExpectedStoredDraft;
@@ -92,10 +101,38 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Could not save this outfit.'));
  }));}finally{--boardPendingWrites;}
 }
+function outfitSavedItemFacts(item){
+ const row=normalizeClothing(item);
+ // Flat immutable values retain image string references without hashing or
+ // copying full-resolution JPEGs just to compare a selected saved garment.
+ return [row.id,row.ownerId||null,row.category,row.itemType,row.color,row.colorSource,
+  row.pattern,row.sleeveLength,row.fit,row.material,row.occasion,
+  [...row.seasons].sort().join('|'),row.image,row.sourceSHA256,
+  row.sourcePieceKey,row.originalPhoto?.image,row.originalPhoto?.sha256];
+}
+function outfitWardrobeChanged(){
+ const error=Error('Selected clothing changed in another tab. Refresh your closet and create this outfit again.');
+ error.code='OUTFIT_WARDROBE_CHANGED';return error;
+}
 async function saveOwnedOutfit(board){
  const saved=cleanOutfitBoard(structuredClone(board),items);
+ if(Object.entries(board?.slots||{}).some(([slot,id])=>id&&saved.slots[slot]!==id))throw outfitWardrobeChanged();
  if(!Object.keys(saved.slots).length)throw Error('Choose at least one piece from your own closet first.');
- await persistBoardState({appendSaved:saved});
+ const expectedClothing=Object.fromEntries(Object.values(saved.slots).map(id=>[id,outfitSavedItemFacts(items.find(row=>row.id===id))]));
+ await persistBoardState({appendSaved:saved,expectedClothing});
+}
+async function refreshSavedWardrobeForOutfits(){
+ if(nativeLossless04Active)throw Error('Use the private research wardrobe refresh in this mode.');
+ const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
+ const assertOwner=()=>{auth?.assertCurrent?.();if(!owner||db!==ownerDB||window.closetAuth!==auth||auth.user?.id!==owner||ownerDB?.name!=='closet-current-user-'+owner)throw Error('Your account changed. Reopen your closet.');};
+ assertOwner();await writes;assertOwner();
+ const rows=await new Promise((resolve,reject)=>{const r=ownerDB.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+ assertOwner();items=rows.map(normalizeClothing);
+ if(typeof styledCollectionResults!=='undefined')styledCollectionResults=[];
+ $('refreshOutfitWardrobe').hidden=true;
+ if(typeof refreshStylistFocusItems==='function')refreshStylistFocusItems();
+ render();$('stylistStatus').textContent='Closet refreshed. Create outfits again using your current clothing.';
+ boardDraftStatus('Closet refreshed. Review your selected pieces before saving.');
 }
 async function storeBoard({replaceDraft=null}={}){
  cancelBoardDraftTimer();const serial=++boardStatusSerial;
@@ -220,6 +257,7 @@ for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',b
   updateDraft();scheduleBoardDraftSave();
  };
 }
+$('refreshOutfitWardrobe').onclick=async()=>{try{await refreshSavedWardrobeForOutfits();$('boardName').focus({preventScroll:true});}catch(error){boardDraftStatus(error.message);}};
 $('retryBoardDraft').onclick=async()=>{if(await storeBoard())$('boardName').focus({preventScroll:true});};
 $('loadLatestBoardDraft').onclick=async()=>{try{await loadLatestBoardDraft();$('boardName').focus({preventScroll:true});}catch(error){boardDraftStatus(error.message);}};
 $('keepLocalBoardDraft').onclick=async()=>{if(boardConflictDraft&&await storeBoard({replaceDraft:boardConflictDraft}))$('boardName').focus({preventScroll:true});};
@@ -240,7 +278,7 @@ $('saveBoard').onclick=async()=>{
   return;
  }
  cancelBoardDraftTimer();++boardStatusSerial;$('retryBoardDraft').hidden=true;
- if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{await saveOwnedOutfit(currentBoard);boardDraftStatus('Outfit saved with references to your clothing photos.'+(boardConflictDraft?' Another tab changed the working draft; choose how to resolve it below.':''));renderSavedOutfitBoards();}catch{$('boardSaveStatus').textContent='Could not save this outfit. Please try again.';}finally{$('saveBoard').disabled=false;}};
+ if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{await saveOwnedOutfit(currentBoard);boardDraftStatus('Outfit saved with references to your clothing photos.'+(boardConflictDraft?' Another tab changed the working draft; choose how to resolve it below.':''));renderSavedOutfitBoards();}catch(error){$('boardSaveStatus').textContent=error?.code==='OUTFIT_WARDROBE_CHANGED'?'Could not save this outfit. '+error.message:'Could not save this outfit. Please try again.';$('refreshOutfitWardrobe').hidden=error?.code!=='OUTFIT_WARDROBE_CHANGED';}finally{$('saveBoard').disabled=false;}};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
