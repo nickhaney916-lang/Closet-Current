@@ -127,6 +127,7 @@ def run():
         "publisherPolygonInstances":sum(len(x["annotations"]) for x in rows),
         "distinctSourceSHA256":len({x["sha256"] for x in rows}),
         "imageIds":[x["id"] for x in rows],
+        "exposureSHA256":[x["sha256"] for x in rows],
         "unsupportedOwnerHumanTruth":True,
         "releaseAuthorized":False,"familyAlpha":"HOLD"
     },sort_keys=True))
