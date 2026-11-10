@@ -4,7 +4,7 @@ import {generateKeyPairSync,sign} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import {
  P66_EXPOSED_DIGESTS,sha256,signedMessage,sealProspectiveHoldout,
- evaluateProspectiveHoldout
+ evaluateProspectiveHoldout,maximumCardinalityMaskMatches
 } from '../research/mission1-sealed-human-holdout-768/prospective-gate.mjs';
 
 function pseudoJpeg(width=32,height=32,n=5){
@@ -160,4 +160,19 @@ test('Mission1 no externally witnessed prospective registration chronology means
  }}),/externally witnessed immutable enrollment/);
  const g=fixture(),bad=[...g.exposed];bad.pop();
  assert.throws(()=>g.run({knownExposedSHA256:bad}),/historically exposed source hash quarantine/);
+});
+
+test('Mission1 optimum instance matching avoids greedy false-negative on overlapping garment masks',()=>{
+ const truth=[
+  {category:'Tops',mask:Uint8Array.from([1,1,1,1,0,0,0,0])},
+  {category:'Tops',mask:Uint8Array.from([1,1,0,0,1,1,0,0])}
+ ];
+ const guesses=[
+  {category:'Tops',mask:Uint8Array.from([1,1,1,1,1,1,0,0])},
+  {category:'Tops',mask:Uint8Array.from([0,0,1,1,0,0,0,0])}
+ ];
+ assert.equal(maximumCardinalityMaskMatches(truth,guesses),2);
+ assert.equal(maximumCardinalityMaskMatches(truth,[{...guesses[0],category:'Shoes'},guesses[1]]),1);
+ assert.equal(maximumCardinalityMaskMatches(truth,[]),0);
+ assert.throws(()=>maximumCardinalityMaskMatches(truth,guesses,1.1),/invalid one-to-one/);
 });
