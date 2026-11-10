@@ -96,6 +96,8 @@ try{
      await dialog.getByRole('button',{name:'Save changes',exact:true}).click();await dialog.waitFor({state:'detached'});
      assert.equal(await page.evaluate(async()=>(await readAll()).find(x=>x.id==='tee').name),'My favorite blue shirt');
      await page.waitForFunction(()=>document.activeElement?.textContent==='Adjust details');
+     await page.evaluate(()=>render());
+     assert.equal(await page.evaluate(()=>document.activeElement?.dataset.action),'edit-clothing','closet refresh must retain keyboard focus');
      // Close retains unsaved data only after an explicit discard decision.
      dialog=await editor();await dialog.getByLabel('Item name',{exact:true}).fill('Discard me');
      assert.equal(await page.evaluate(()=>{const event=new Event('beforeunload',{cancelable:true});window.dispatchEvent(event);return event.defaultPrevented;}),true,'unsaved reload protected');

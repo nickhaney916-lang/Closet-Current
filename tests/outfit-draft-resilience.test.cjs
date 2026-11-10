@@ -5,7 +5,7 @@ const helpers=source.slice(source.indexOf('function boardHasUnsavedDraft('),sour
 const store=source.slice(source.indexOf('async function storeBoard('),source.indexOf('function syncBoardInputs('));
 function fixture(){
  const elements={boardSaveStatus:{textContent:''},retryBoardDraft:{hidden:true}},events={},timers=new Map();let next=0;
- const c={nativeLossless04Active:false,boardInitialized:true,db:{name:'owner-db'},currentBoard:{name:'Saved'},boardCommittedDraft:JSON.stringify({name:'Saved'}),boardPendingWrites:0,boardDraftTimer:null,boardStatusSerial:0,
+ const c={boardConflictDraft:null,nativeLossless04Active:false,boardInitialized:true,db:{name:'owner-db'},currentBoard:{name:'Saved'},boardCommittedDraft:JSON.stringify({name:'Saved'}),boardPendingWrites:0,boardDraftTimer:null,boardStatusSerial:0,
   window:{closetAuth:{user:{id:'owner'}},addEventListener:(name,fn)=>events[name]=fn},$:id=>elements[id],
   setTimeout:fn=>{timers.set(++next,fn);return next;},clearTimeout:id=>timers.delete(id),renderSavedOutfitBoards(){},persistBoardState:async()=>{}
  };

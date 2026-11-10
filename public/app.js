@@ -501,6 +501,8 @@ function renderPhotoResults(grid,results){
  }
 }
 function render(){
+ const previousFocus=document.activeElement,focusedCard=previousFocus?.closest?.('#closetGrid .card'),
+  focusedItemId=focusedCard?.dataset.itemId,focusedAction=previousFocus?.dataset?.action;
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
  renderRecognitionNotice();
  const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
@@ -596,7 +598,10 @@ function render(){
   }
   actionRow.append(editStatus,ok,cancel);f.append(actionRow);
  }
- dialog.append(f);document.body.append(dialog);dialog.onclose=()=>{window.removeEventListener('beforeunload',protectUnsaved);dialog.remove();const card=[...document.querySelectorAll('#closetGrid .card')].find(card=>card.dataset.itemId===item.id);(card?.querySelector('[data-action=edit-clothing]')||$('search')).focus({preventScroll:true});};dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+ dialog.append(f);document.body.append(dialog);dialog.onclose=()=>{window.removeEventListener('beforeunload',protectUnsaved);dialog.remove();
+ const restoreFocus=()=>{if($('closet').hidden||$('appShell').hidden||document.querySelector('dialog[open]'))return;const card=[...document.querySelectorAll('#closetGrid .card')].find(card=>card.dataset.itemId===item.id);(card?.querySelector('[data-action=edit-clothing]')||$('search')).focus({preventScroll:true});};
+ restoreFocus();requestAnimationFrame(()=>{if(document.activeElement===document.body)restoreFocus();});
+ };dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
  const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
   reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
   item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
@@ -663,6 +668,12 @@ function render(){
  }
  if(typeof renderClosetBrowser==='function')renderClosetBrowser();
  if(typeof renderTrendMatches==='function')renderTrendMatches();if(typeof renderOutfitBoard==='function')renderOutfitBoard();if(typeof renderStyledCollection==='function')renderStyledCollection();if(typeof renderHomePieces==='function')renderHomePieces();if(typeof renderOutfitCapture==='function')renderOutfitCapture();
+ // Rebuilding a garment card must not drop keyboard focus onto the page body.
+ if(focusedItemId&&focusedAction==='edit-clothing'&&previousFocus.isConnected===false&&document.activeElement===document.body&&
+    !$('closet').hidden&&$('appShell').hidden===false&&!document.querySelector('dialog[open]')){
+  const replacement=[...cg.querySelectorAll('.card')].find(card=>card.dataset.itemId===focusedItemId);
+  replacement?.querySelector('[data-action=edit-clothing]')?.focus({preventScroll:true});
+ }
 }
 for(const c of categories){const o=node('option',c);$('filter').append(o);}$('search').oninput=render;$('filter').onchange=render;
 function pixels(){const ctx=tiny.getContext('2d',{willReadFrequently:true});ctx.drawImage(video,0,0,32,32);return ctx.getImageData(0,0,32,32).data.slice();}
