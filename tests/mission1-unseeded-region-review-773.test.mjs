@@ -31,7 +31,7 @@ test('P773 genuine original-logit-supported dress region with no strong seed is 
  assert.equal(result[0].subtype,'Unknown');
  assert.equal(result[0].primaryColor,'Unknown');
  assert.deepEqual(input.map.labels,before);
- assert.deepEqual(f.data,raw);
+ assert.deepEqual(input.data,raw);
 });
 test('P773 shoe class 10 remaps to semantic footwear 9 without inventing a source subtype or owner approval',()=>{
  const f=make();f.area(2,2,7,6,10,.62);
