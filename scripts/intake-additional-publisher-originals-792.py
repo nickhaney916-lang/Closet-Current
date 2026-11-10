@@ -80,6 +80,20 @@ def prepare(publisher,archive,exposed):
         (OUTPUT/"originals"/photo["file_name"]).write_bytes(raw)
         if len(rows)==LIMIT:break
     if len(rows)!=LIMIT:
+        archive_entries=archive.namelist()
+        matching_test=sum(("test/"+photo["file_name"]) in archive_entries for photo,_ in candidates)
+        print("M1_P792_PUBLISHER_INTAKE_DIAGNOSTIC",json.dumps({
+            "publisherImages":len(images),
+            "publisherPolygonCandidateImages":len(by_image),
+            "rightsAndGeometryEligible":len(candidates),
+            "testPathCandidates":matching_test,
+            "archiveEntries":len(archive_entries),
+            "archiveExamples":archive_entries[:5],
+            "firstCandidates":[{"id":im["id"],"file_name":im["file_name"],
+              "knownTestMember":("test/"+im["file_name"]) in archive_entries}
+             for im,_ in candidates[:8]],
+            "actuallyDistinctUnexposedRows":len(rows),
+        },sort_keys=True))
         raise RuntimeError("P792 cannot find 12 distinct previously unexposed publisher originals")
     return rows
 
