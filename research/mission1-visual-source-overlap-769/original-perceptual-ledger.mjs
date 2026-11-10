@@ -11,6 +11,8 @@
  */
 import sharp from 'sharp';
 import {createHash} from 'node:crypto';
+import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
+import {P66_EXPOSED_DIGESTS} from '../mission1-sealed-human-holdout-768/prospective-gate.mjs';
 
 const fail=why=>{throw Error('M1_VISUAL_LEDGER_769: '+why)};
 const sha=x=>createHash('sha256').update(x).digest('hex');
@@ -82,18 +84,28 @@ async function fingerprint(bytes,expectedSHA){
 }
 const unique=xs=>new Set(xs).size===xs.length;
 const pairs=rows=>rows.map(x=>x.sourceSHA256);
-function verifyRegistry(expected,actual){
- if(!Array.isArray(expected)||expected.length!==65||!expected.every(x=>HEX.test(x))||!unique(expected))
-  fail('all 59 historical plus six external human-polygon source SHA digests required');
- if(actual.length!==65||!unique(pairs(actual))||
+function verifyRegistry(expected,actual,{strict73=false}={}){
+ const n=expected?.length;
+ if(!Array.isArray(expected)||![65,73].includes(n)||!expected.every(x=>HEX.test(x))||!unique(expected))
+  fail('all 65 original sources or all 73 source-history exposures required');
+ if(strict73&&(n!==73||
+    !P59_EXPOSED_DIGESTS_774.every(x=>expected.includes(x))||
+    !P66_EXPOSED_DIGESTS.every(x=>expected.includes(x))||
+    !P772_EXPOSED_DIGESTS_774.every(x=>expected.includes(x))))
+  fail('strict 73-source visual review requires exact 59 plus six plus eight pinned originals');
+ if(actual.length!==n||!unique(pairs(actual))||
     !actual.every(x=>expected.includes(x.sourceSHA256)))
-  fail('all 65 distinct external previously exposed originals must be present');
+  fail('all exact previously exposed originals must be present');
 }
-export async function buildExposureLedger({historical59,published6,readOriginal}={}){
+export async function buildExposureLedger({historical59,published6,additionalExposed8=[],readOriginal}={}){
  if(!Array.isArray(historical59)||historical59.length!==59||
-    !Array.isArray(published6)||published6.length!==6||typeof readOriginal!=='function')
-  fail('need all 59 historical plus six real publisher-annotated sources');
- const rows=[...historical59,...published6];
+    !Array.isArray(published6)||published6.length!==6||
+    !Array.isArray(additionalExposed8)||![0,8].includes(additionalExposed8.length)||
+    typeof readOriginal!=='function')
+  fail('need original 59 plus six, optionally all eight newest exposed publisher sources');
+ const rows=[...historical59,...published6,...additionalExposed8];
+ if(additionalExposed8.length===8)verifyRegistry(rows.map(x=>x.sha256),
+  rows.map(x=>({sourceSHA256:x.sha256})),{strict73:true});
  if(rows.some(x=>!x||!HEX.test(x.sha256||'')||typeof x.image!=='string'||!x.image||x.image.includes('..'))||
    !unique(rows.map(x=>x.sha256)))
   fail('invalid/duplicate original source metadata');
@@ -102,10 +114,11 @@ export async function buildExposureLedger({historical59,published6,readOriginal}
   const bytes=await readOriginal(row);
   data.push(await fingerprint(bytes,row.sha256));
  }
- verifyRegistry(rows.map(x=>x.sha256),data);
+ verifyRegistry(rows.map(x=>x.sha256),data,{strict73:additionalExposed8.length===8});
  return {
   schema:'closet-current-exposed-photo-visual-ledger-769/v1',
-  realSourcePhotos:65,historicalSourcePhotos:59,publishedHumanMaskSourcePhotos:6,
+  realSourcePhotos:rows.length,historicalSourcePhotos:59,publishedHumanMaskSourcePhotos:6,
+  newerPublisherDevelopmentSources:additionalExposed8.length,
   allActualOriginalsShaVerified:true,
   exactSourceSetSHA256:sha([...rows.map(x=>x.sha256)].sort().join('\n')),
   fingerprints:data,
@@ -113,15 +126,18 @@ export async function buildExposureLedger({historical59,published6,readOriginal}
   familyAlpha:'HOLD'
  };
 }
-export async function screenProspectiveImages({ledger,known65,candidates,readCandidate,
- threshold=8}={}){
+export async function screenProspectiveImages({ledger,known65,knownExposedSHA256,candidates,readCandidate,
+ threshold=8,requireComplete73=false}={}){
+ const expected=knownExposedSHA256??known65;
  if(ledger?.schema!=='closet-current-exposed-photo-visual-ledger-769/v1'||
-    ledger.realSourcePhotos!==65||ledger.allActualOriginalsShaVerified!==true)
-  fail('65-source real-decoded reference visual ledger required');
- verifyRegistry(known65,ledger.fingerprints);
- const expectedSetHash=sha([...known65].sort().join('\n'));
+    ![65,73].includes(ledger.realSourcePhotos)||
+    ledger.allActualOriginalsShaVerified!==true||
+    (requireComplete73&&ledger.realSourcePhotos!==73))
+  fail('complete original-decoded source registry (73 for prospective admission) required');
+ verifyRegistry(expected,ledger.fingerprints,{strict73:requireComplete73||ledger.realSourcePhotos===73});
+ const expectedSetHash=sha([...expected].sort().join('\n'));
  if(expectedSetHash!==ledger.exactSourceSetSHA256)
-  fail('visual-ledger 65-source SHA set does not match heldout exclusion reference');
+  fail('visual ledger exact source SHA set changed since fingerprint enrollment');
  if(!Array.isArray(candidates)||!candidates.length||candidates.length>300||
     typeof readCandidate!=='function'||
     !Number.isInteger(threshold)||threshold<2||threshold>10)
@@ -160,7 +176,7 @@ export async function screenProspectiveImages({ledger,known65,candidates,readCan
  }
  return {
   schema:'closet-current-visual-contamination-screen-769/v1',
-  verifiedExposedSources:65,candidateOriginals:outcomes.length,
+  verifiedExposedSources:ledger.realSourcePhotos,candidateOriginals:outcomes.length,
   nearDuplicateFlagCount:outcomes.filter(x=>x.requiresIndependentVisualReview).length,
   candidatesApprovedAsUnseen:0,
   candidatesNotFlaggedButNotCertified:outcomes.filter(x=>!x.requiresIndependentVisualReview).length,
