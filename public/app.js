@@ -245,6 +245,33 @@ function adjustPhoto(item){
   hint.append(node('p',sourceColorHint790.displayHint,'fine'));
   form.prepend(hint);
  }
+ // P798 explicit isolated research-only owner tap on the ORIGINAL JPEG.
+ // This is a transient visual review point, NOT a SAM2 mask, classification,
+ // signed human ground truth, or permission to save. No model or remote call.
+ // The original and user-editable type/color form remain unchanged.
+ let ownerPointPanel798=null;
+ if(reviewedCapture120&&
+    new URLSearchParams(location.search).get('mission1OwnerPoint798')==='research'&&
+    item.sourceHashVerified===true&&item.originalPhoto?.sha256===item.sourceSHA256){
+  const sourceOwner798=captureProofOwner();
+  if(sourceOwner798&&item.ownerId===sourceOwner798){
+   const sourceImage798=item.originalPhoto.image,sourceDigest798=item.sourceSHA256;
+   const stillCurrent798=()=>dialog.isConnected&&dialog.open&&
+    batch.includes(item)&&captureProofOwner()===sourceOwner798&&
+    item.sourceSHA256===sourceDigest798&&item.originalPhoto?.image===sourceImage798&&
+    !items.some(x=>x.id===item.id);
+   void import('./owner-original-photo-point-798.mjs')
+    .then(({mountOriginalTapReview798})=>{
+     if(!stillCurrent798())return;
+     ownerPointPanel798=mountOriginalTapReview798({
+      host:form,item,ownerId:sourceOwner798,currentOwner:captureProofOwner,
+      isActive:stillCurrent798
+     });
+    }).catch(()=>{
+     if(stillCurrent798())message('Original garment point review is unavailable. Your photo is unchanged.');
+    });
+  }
+ }
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -370,7 +397,7 @@ function adjustPhoto(item){
    '. Reopen Adjust to review the latest clothing details.':
    'Could not save changes. Try again.');
  }};
- dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
+ dialog.onclose=()=>{ownerPointPanel798?.dispose();if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
 function renderRecognitionNotice(){
