@@ -6,6 +6,7 @@ This deliberately does NOT promote model rights or claim segmentation accuracy.
 import hashlib, json, pathlib, urllib.request, numpy as np
 import onnxruntime as ort
 from PIL import Image, ImageOps
+from score_independent_instance_masks_786 import choose_detections, reconstruct, source_truth, match_instances
 
 MODEL_URL=("https://huggingface.co/HasanKabir23/Yolov26s-DeepFashion2/"
            "resolve/670bd8b/best.onnx")
@@ -39,7 +40,9 @@ def prepare(file,side):
     padded=Image.new("RGB",(side,side),(114,114,114))
     padded.paste(resized,((side-nw)//2,(side-nh)//2))
     a=np.asarray(padded,dtype=np.float32)/np.float32(255.0)
-    return a.transpose(2,0,1)[None,...].copy(),(w,h)
+    return a.transpose(2,0,1)[None,...].copy(),{'width':w,'height':h,
+      'side':side,'newWidth':nw,'newHeight':nh,'padX':(side-nw)//2,
+      'padY':(side-nh)//2,'scale':ratio}
 
 def main():
     model,digest=download()
@@ -62,8 +65,19 @@ def main():
             actual=hashlib.sha256(data).hexdigest()
             if actual!=original["sha256"]:
                 raise RuntimeError("Real source photo SHA does not match published P66")
-            pixels,(w,h)=prepare(path,side)
+            pixels,meta=prepare(path,side)
+            w,h=meta['width'],meta['height']
             values=session.run(None,{info.name:pixels})
+            if len(values)!=2 or np.asarray(values[0]).shape!=(1,300,38) or \
+               np.asarray(values[1]).shape!=(1,32,side//4,side//4):
+                raise RuntimeError('Unrecognized actual ONNX instance segmentation contract')
+            selected,raw_candidates=choose_detections(np.asarray(values[0]),side)
+            predictions=reconstruct(selected,np.asarray(values[1]),meta)
+            truth=source_truth(original,w,h)
+            instance=match_instances(truth,predictions)
+            if instance['truePositives']+instance['falseNegatives']!=len(truth) or \
+               instance['truePositives']+instance['falsePositives']!=len(predictions):
+                raise RuntimeError('Actual source instance scores do not conserve all labels')
             descriptions=[]
             for name,output in zip((x.name for x in outs),values):
                 array=np.asarray(output)
@@ -81,7 +95,20 @@ def main():
             if detection.ndim==3 and detection.shape[2]==38:
                 for rec in detection[0,:8]:
                     preview.append([round(float(x),5) for x in rec[:8]])
-            rows.append({"outputPreviewFirstEight":preview,
+            rows.append({
+             'realOriginalSourceMaskScore':instance,
+             'truePublisherGarments':len(truth),
+             'publisherGarmentsByBroadFamily':[t['category'] for t in truth],
+             'retainedDetectionCountBeforeNMS':raw_candidates,
+             'modelMaskDecodedCount':len(predictions),
+             'modelDetections':[{'detectorRow':p['row'],'classId':p['classId'],
+                  'family':p['category'],'confidence':round(p['confidence'],6),
+                  'originalSourceBounds':p['originalSourceBounds'],
+                  'maskSHA256':p['maskSHA256'],'sourcePixelCount':p['area']}
+                   for p in predictions],
+             'maskDecodeRule':'prototype 32 basis coefficients sigmoid, bilinear 416, source letterbox removed, original source threshold .5',
+             'iouMatching':'same-family original-source-mask IoU >=.50; cardinality-max one-to-one',
+             'outputPreviewFirstEight':preview,
              "rawDetectionShape":list(detection.shape),
              "rawClassColumnCandidates":({
               "col4":[round(float(x),4) for x in detection[0,:12,4]],
@@ -95,6 +122,16 @@ def main():
              "modelPredictionAccuracyVerified":False})
         if len(rows)!=6:
             raise RuntimeError("Six exact known P66 original photo benchmarks required")
+        tp=sum(r['realOriginalSourceMaskScore']['truePositives'] for r in rows)
+        fp=sum(r['realOriginalSourceMaskScore']['falsePositives'] for r in rows)
+        fn=sum(r['realOriginalSourceMaskScore']['falseNegatives'] for r in rows)
+        if tp+fn!=16:
+            raise RuntimeError('Must retain all 16 genuine publisher human polygon instances including shoes')
+        aggregate={'truePositives':tp,'falsePositives':fp,'falseNegatives':fn,
+          'precision':tp/(tp+fp) if tp+fp else None,
+          'recall':tp/(tp+fn) if tp+fn else None,
+          'f1':2*tp/(2*tp+fp+fn) if 2*tp+fp+fn else None}
+        print('M1_P786_REAL_ORIGINAL_SOURCE_PUBLISHER_MASK_IOU50',json.dumps(aggregate,sort_keys=True))
         report={"schema":"m1-p786-independent-instance-model-onnx-probe/v1",
          "provider":"HasanKabir23/Yolov26s-DeepFashion2",
          "modelUrl":MODEL_URL,"modelWeightsSHA256":digest,
@@ -104,8 +141,11 @@ def main():
          "publisherSourcePhotos":6,"alreadyExposedDevelopmentPhotos":True,
          "independentHumanLabelsVerified":False,"modelCommercialRightsCleared":False,
          "sourceImageRepublicationAuthorized":False,
-         "humanSourceInstanceIoU":None,"humanSourceSubtypeAccuracy":None,
-         "scoredModelInstanceMasks":False,
+         'humanSourceInstanceIoU':0.5,'humanSourceSubtypeAccuracy':None,
+         'sourceInstanceMaskIoUThreshold':0.5,
+         'sourceInstanceScore':aggregate,
+         'rawDetectionMinimumConfidence':0.25,'classAwareBoxNMSThreshold':0.6,
+         'scoredModelInstanceMasks':True,
          "trainingSourceOverlapIndependentlyExcluded":False,
          "savedNativeClosetGarments":0,"releaseAuthorized":False,
          "familyAlpha":"HOLD","inputShape":info.shape,
@@ -114,7 +154,8 @@ def main():
         (OUT/"research-only-inference.json").write_text(json.dumps(report,indent=2))
         print("M1_P786_GENUINE_SHA_PINNED_FASHIONPEDIA_SIX_ONNX_INFERENCES_EXECUTED")
         print("M1_P786_OUTPUT_CONTRACT",json.dumps(report["modelOutputContract"]))
-        print("M1_P786_NO_HUMAN_MASK_SCORE_OR_MODEL_LICENSE_PROMOTION_OR_RELEASE")
+        print('M1_P786_REAL_PUBLISHER_MASK_SCORE_EXPOSED_DEVELOPMENT_ONLY')
+        print('M1_P786_NO_MODEL_LICENSE_PROMOTION_OR_RELEASE')
     finally:
         model.unlink(missing_ok=True)
 
