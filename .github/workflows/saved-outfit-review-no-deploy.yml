@@ -1,0 +1,80 @@
+name: Saved outfit history review — NO DEPLOY
+on:
+  push:
+    branches: [research/saved-outfit-review-side-mission-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  regression-and-mobile:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce isolated verified parent and no hosted changes
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=fbce0b66d7acf5b1ea0dffcb20f793abda06b793
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js supabase public/local-worker.mjs public/recognition-engine.mjs
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/outfit-board.js|public/closet-stylist.js|public/index.html|public/app-theme.css|tests/outfit-draft-conflicts.test.cjs|tests/saved-outfit-review.test.cjs|scripts/test-saved-outfit-review-browser.mjs|research/saved-outfit-review/REPORT.md|.github/workflows/saved-outfit-review-no-deploy.yml) ;;
+              *) echo "Unexpected path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned test tools and browser engines
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build and full regression
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Reproduce parent defect in Chromium and WebKit
+        run: |
+          git worktree add --detach /tmp/closet-history-baseline fbce0b66d7acf5b1ea0dffcb20f793abda06b793
+          APP_SOURCE_ROOT=/tmp/closet-history-baseline EXPECT_BASELINE=1 HISTORY_OUT=benchmark/saved-outfit-history-baseline node scripts/test-saved-outfit-review-browser.mjs
+      - name: Verify preserved history, missing and recategorized pieces and new copies
+        run: node scripts/test-saved-outfit-review-browser.mjs
+      - name: Verify selected garment deletion and queued recategorization refusal with stable recovery
+        run: node scripts/test-outfit-wardrobe-consistency-browser.mjs
+      - name: Verify stale drafts, explicit resolution and automatic refresh preservation
+        run: node scripts/test-outfit-draft-conflicts-browser.mjs
+      - name: Verify typing autosave, failed draft retry and honest save status
+        run: node scripts/test-outfit-draft-resilience-browser.mjs
+      - name: Verify overlapping saves, two real tabs, synthetic owner-switch refusal and retry
+        run: node scripts/test-outfit-save-recovery-browser.mjs
+      - name: Verify reliability, recovery and mobile accessibility
+        run: node scripts/test-family-reliability-mobile.mjs
+      - name: Retain native canonical original-photo regression
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Retain backend-simulated original backup regression
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          node scripts/test-outfit-backup-compatibility-browser.mjs benchmark/outfit-save-mock-cloud-regression
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: saved-outfit-review-evidence-HOLD
+          path: |
+            benchmark/family-reliability-mobile/
+            benchmark/saved-outfit-history-baseline/
+            benchmark/saved-outfit-review/
+            benchmark/outfit-wardrobe-consistency/
+            benchmark/outfit-draft-conflicts/
+            benchmark/outfit-draft-resilience/
+            benchmark/outfit-save-recovery/
+            benchmark/outfit-save-mock-cloud-regression/
+            benchmark/native-canonical-closet-style-167/
+          retention-days: 14
