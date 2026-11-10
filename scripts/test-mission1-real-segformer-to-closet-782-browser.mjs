@@ -316,7 +316,7 @@ try{
      assert.equal(pointState[key],true,'P798 actual Adjust '+name+' '+key);
     await tapReview.getByRole('button',{name:'Clear garment point'}).click();
     assert.equal(await tapReview.locator('[data-mission1-owner-point-marker798="none"]').count(),1);
-    assert.match(await tapReview.getByRole('status').innerText(),/No point selected/);
+    assert.match(await tapReview.getByRole('status').first().innerText(),/No point selected/);
     await pointButton.click();
     assert.equal(await tapReview.locator('[data-mission1-owner-point-marker798="selected"]').count(),1);
     await page.screenshot({path:out+'/'+name+'-'+width+'-01b-original-photo-temporary-owner-point.png',fullPage:true});
