@@ -111,7 +111,7 @@ test('Mission1 refuses incomplete reference cohort, altered known65 receipt or d
  await assert.rejects(screenProspectiveImages({...base,
   known65:a.rows.slice(0,64).map(x=>x.sha256)}),/all 59 historical plus six/);
  await assert.rejects(screenProspectiveImages({...base,
-  known65:[...base.known65.slice(0,64),'0'.repeat(64)]}),/65-source SHA set/);
+  known65:[...base.known65.slice(0,64),'0'.repeat(64)]}),/65-source SHA set|all 65 distinct external previously exposed originals/);
  await assert.rejects(screenProspectiveImages({...base,
   candidates:[base.candidates[0],{...base.candidates[0]}]}),/duplicate or unverified/);
 });
