@@ -19,7 +19,7 @@ function make(w=20,h=20){
 }
 test('P773 genuine original-logit-supported dress region with no strong seed is ONLY a review candidate',()=>{
  const f=make();f.area(2,2,6,7,7,.6);
- const input=f.inputs(),before=Uint8Array.from(input.map.labels),raw=Float32Array.from(f.data);
+ const input=f.inputs(),before=Uint8Array.from(input.map.labels),raw=Float32Array.from(input.data);
  const result=unseededGarmentReview773(input);
  assert.equal(result.length,1);
  assert.equal(result[0].id,7);
