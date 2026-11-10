@@ -39,8 +39,15 @@ def download_pinned(file):
     with urlopen(Request(url,headers={"User-Agent":"ClosetCurrentResearch-795/1.0"}),timeout=180) as response:
         if response.status!=200:
             raise RuntimeError(f"SAM2 immutable model retrieval HTTP {response.status}")
-        if response.url.split("/")[2] not in ("huggingface.co","cas-bridge.xethub.hf.co","cdn-lfs.hf.co"):
-            raise RuntimeError("Unapproved SAM2 model host redirect")
+        from urllib.parse import urlsplit
+        target=urlsplit(response.url)
+        host=target.hostname or ""
+        if target.scheme!="https" or not (
+            host=="huggingface.co" or host.endswith(".xethub.hf.co") or
+            host.endswith(".hf.co")
+        ):
+            # Never log presigned URLs/tokens; only the external host.
+            raise RuntimeError("Unapproved SAM2 model host redirect: "+host)
         raw=response.read()
     if sha(raw)!=expected:
         raise RuntimeError("SAM2 external converted ONNX MODEL SHA mismatch: refuse")
