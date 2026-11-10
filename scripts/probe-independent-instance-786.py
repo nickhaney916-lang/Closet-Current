@@ -73,7 +73,21 @@ def main():
                   "dtype":str(array.dtype),"minimum":float(array.min()),
                   "maximum":float(array.max()),
                   "mean":float(array.mean())})
-            rows.append({"originalImageId":original["id"],"sourceSHA256":actual,
+            # Examine actual model output cells before choosing a decoder.
+            # 300 detections x 38 columns is likely 6 attributes + 32 mask
+            # coefficients, but model card information alone cannot verify it.
+            detection=np.asarray(values[0])
+            preview=[]
+            if detection.ndim==3 and detection.shape[2]==38:
+                for rec in detection[0,:8]:
+                    preview.append([round(float(x),5) for x in rec[:8]])
+            rows.append({"outputPreviewFirstEight":preview,
+             "rawDetectionShape":list(detection.shape),
+             "rawClassColumnCandidates":({
+              "col4":[round(float(x),4) for x in detection[0,:12,4]],
+              "col5":[round(float(x),4) for x in detection[0,:12,5]]
+             } if detection.ndim==3 and detection.shape[2]==38 else {}),
+             "originalImageId":original["id"],"sourceSHA256":actual,
              "originalDimensions":[w,h],"publisherGarmentAnnotationCount":len(original["annotations"]),
              "publisherCategoryIds":sorted(set(a["category_id"] for a in original["annotations"])),
              "trueModelInferenceExecuted":True,"modelRawOutput":descriptions,
