@@ -35,7 +35,7 @@ function fixture(){
  const modelSHA256='8'.repeat(64),modelIndexSHA256='9'.repeat(64);
  const readPhoto=name=>images[name];
  const seal=sealProspectiveHoldout({registrationId:'m1-cohort-synthetic-fixture',
-  photos,modelSHA256,modelIndexSHA256,exposedSHA256:exposed},readPhoto);
+  photos,modelSHA256,modelIndexSHA256,exposedSHA256:exposed,reviewerPublicKeys:keys},readPhoto);
  const makeSignature=(payload,id)=>sign(null,signedMessage(payload),privateKeys[id]).toString('base64');
  const registrationWitness={signerId:'coordinator',signature:makeSignature({
   purpose:'register-before-inference',sealSHA256:seal.sealSHA256
@@ -88,7 +88,7 @@ test('Mission1 cannot repackage any previously exposed 59 or external six real p
   const photos=structuredClone(f.photos);photos[0].sha256=exposed;
   assert.throws(()=>sealProspectiveHoldout({
    registrationId:'m1-cohort-synthetic-fixture',photos,modelSHA256:'8'.repeat(64),
-   modelIndexSHA256:'9'.repeat(64),exposedSHA256:f.exposed
+   modelIndexSHA256:'9'.repeat(64),exposedSHA256:f.exposed,reviewerPublicKeys:f.keys
   },f.readPhoto),/previously exposed/);
  }
 });
@@ -103,7 +103,7 @@ test('Mission1 source JPEG byte, real dimensions and immutable seal must be exac
  assert.throws(()=>sealProspectiveHoldout({
   registrationId:'m1-cohort-synthetic-fixture',photos:bad,
   modelSHA256:'8'.repeat(64),modelIndexSHA256:'9'.repeat(64),
-  exposedSHA256:h.exposed
+  exposedSHA256:h.exposed,reviewerPublicKeys:h.keys
  },h.readPhoto),/dimensions mismatch/);
 });
 test('Mission1 enrollment witness and blind label signatures cannot be forged or rebound to another source',()=>{
