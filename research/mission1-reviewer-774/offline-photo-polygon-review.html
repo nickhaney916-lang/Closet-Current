@@ -18,7 +18,7 @@ button{padding:10px 13px;border:none;border-radius:7px;background:#16558a;color:
 button:disabled{opacity:.45}button.subtle{background:#e6eef4;color:#183c5d}
 .buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-canvas{display:block;width:100%;height:auto;max-height:550px;object-fit:contain;border:1px solid #91a4b2;background:#e8edf0;touch-action:none}
+canvas{display:block;width:100%;height:auto;max-height:550px;object-fit:contain;object-position:center center;border:1px solid #91a4b2;background:#e8edf0;touch-action:none}
 .held{background:#fff2de;border:1px solid #d6a94f;border-radius:8px;padding:10px;font-size:.9rem}
 p.small{color:#4d6171;font-size:.9rem}
 #status{min-height:24px;font-weight:650}
@@ -181,12 +181,37 @@ This tool uses only local files. It never shows model predictions, another revie
    status('Draw your own source outline. No model suggestions are available.');draw();
   }catch(e){reset();status(e.message,true);}
  };
+ /**
+  * P781: full original-JPEG source pixels, including a CSS object-fit:contain
+  * letterbox when an extreme portrait exceeds max-height:550px. Using the
+  * entire canvas border-box to scale pointer coordinates subtly corrupts
+  * human "ground truth" and can sign pixels outside the actual image.
+  * Refuse pointer events in blank gutters; never clip them onto fabric.
+  */
+ function sourcePointFromPointer781(e){
+  const canvas=$('drawing'),rect=canvas.getBoundingClientRect();
+  const style=getComputedStyle(canvas);
+  const left=Number.parseFloat(style.borderLeftWidth)||0;
+  const top=Number.parseFloat(style.borderTopWidth)||0;
+  const right=Number.parseFloat(style.borderRightWidth)||0;
+  const bottom=Number.parseFloat(style.borderBottomWidth)||0;
+  const contentW=rect.width-left-right,contentH=rect.height-top-bottom;
+  if(contentW<=0||contentH<=0||canvas.width<=0||canvas.height<=0)return null;
+  const scale=Math.min(contentW/canvas.width,contentH/canvas.height);
+  const renderedW=canvas.width*scale,renderedH=canvas.height*scale;
+  const imageLeft=rect.left+left+(contentW-renderedW)/2;
+  const imageTop=rect.top+top+(contentH-renderedH)/2;
+  const px=(e.clientX-imageLeft)/scale,py=(e.clientY-imageTop)/scale;
+  // A click in a CSS letterbox must never become a fabricated garment point.
+  if(!Number.isFinite(px)||!Number.isFinite(py)||
+     px<0||py<0||px>canvas.width||py>canvas.height)return null;
+  return [Math.round(px*10)/10,Math.round(py*10)/10];
+ }
  $('drawing').onpointerup=e=>{
   if(!state.verified||state.negative)return;
-  const r=$('drawing').getBoundingClientRect();
-  const x=Math.max(0,Math.min(state.photo.width,Math.round((e.clientX-r.left)*state.photo.width/r.width*10)/10));
-  const y=Math.max(0,Math.min(state.photo.height,Math.round((e.clientY-r.top)*state.photo.height/r.height*10)/10));
-  state.vertices.push([x,y]);draw();
+  const point=sourcePointFromPointer781(e);
+  if(!point){status('Touch the visible photo, not its blank outer border.',true);return;}
+  state.vertices.push(point);draw();
  };
  $('undo').onclick=()=>{state.vertices.pop();draw();};
  $('finish').onclick=()=>{
