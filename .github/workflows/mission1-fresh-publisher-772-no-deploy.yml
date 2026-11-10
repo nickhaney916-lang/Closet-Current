@@ -83,6 +83,7 @@ jobs:
       - name: Copy only pinned verified P66 real SegFormer worker, boundary evaluator and existing publisher archive reference to temporary runner
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           DONOR=7a933a6ccd461fc722bf3de18ef977c0233023d3
           git fetch --depth=1 origin "$DONOR"
           for file in \
