@@ -176,3 +176,65 @@ test('Mission1 optimum instance matching avoids greedy false-negative on overlap
  assert.equal(maximumCardinalityMaskMatches(truth,[]),0);
  assert.throws(()=>maximumCardinalityMaskMatches(truth,guesses,1.1),/invalid one-to-one/);
 });
+
+test('Mission1 independently named same garment polygon IDs are accepted by geometry without fake human conflict',()=>{
+ const f=fixture(),original=f.receipts[1].label;
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',{
+  ...original,instances:original.instances.map(ins=>({...ins,instanceId:'b-independent-only-name'}))
+ });
+ const out=f.run();
+ assert.equal(out.counts.adjudicatedItems,0);
+ assert.equal(out.records[0].humanAgreement,true);
+ assert.equal(out.counts.instancePrecisionPercent,100);
+ assert.equal(out.missionOneCompleted,false);
+});
+test('Mission1 independent reviewers may enumerate two distinct garment polygons in opposite order and with unique IDs',()=>{
+ const f=fixture(),a={category:'Tops',subtype:'Blouse',primaryColor:'Blue',
+  instances:[
+   {instanceId:'only-reviewed-A-left',category:'Tops',rle:[100,100,824]},
+   {instanceId:'only-reviewed-A-right',category:'Tops',rle:[400,100,524]}
+  ]};
+ const b={...a,instances:[
+  {instanceId:'reviewer-B-second',category:'Tops',rle:[400,100,524]},
+  {instanceId:'reviewer-B-first',category:'Tops',rle:[100,100,824]}
+ ]};
+ f.receipts[0]=f.receipt(f.photos[0],'reviewerA',a);
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',b);
+ const result=f.run();
+ assert.equal(result.records[0].humanAgreement,true);
+ assert.equal(result.counts.adjudicatedItems,0);
+ assert.equal(result.counts.maskTruth,2);
+ // The unchanged actual mock model proposed one polygon, matching one of
+ // two independent human masks; the second remains a genuine false negative.
+ assert.equal(result.counts.maskMatched,1);
+ assert.equal(result.counts.instanceRecallPercent,50);
+ assert.equal(result.missionOneCompleted,false);
+});
+test('Mission1 independent reviewers with genuinely different shape contours must undergo signed third adjudication',()=>{
+ const f=fixture(),altered={category:'Tops',subtype:'Blouse',primaryColor:'Blue',
+  instances:[{instanceId:'new-geometry',category:'Tops',rle:[100,30,894]}]};
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',altered);
+ assert.throws(()=>f.run(),/third adjudicator/);
+ const agreed=f.receipts[0].label;
+ f.receipts.splice(2,0,f.receipt(f.photos[0],'adjudicator',agreed,{
+  adjudication:true,adjudicationRationale:'Different independently drawn true garment boundary needs human review'
+ }));
+ const result=f.run();
+ assert.equal(result.counts.adjudicatedItems,1);
+ assert.equal(result.records[0].humanAgreement,false);
+});
+test('Mission1 same pixel geometry but incompatible reviewed category cannot be called consensus',()=>{
+ const f=fixture(),other=f.receipts[1].label;
+ f.receipts[1]=f.receipt(f.photos[0],'reviewerB',{
+  ...other,instances:other.instances.map(x=>({...x,category:'Outerwear',instanceId:'different-external-category'}))
+ });
+ assert.throws(()=>f.run(),/third adjudicator/);
+});
+test('Mission1 duplicate nearly identical human masks with different reviewer IDs are refused at source adjudication',()=>{
+ const f=fixture(),label={...f.receipts[0].label,instances:[
+  {instanceId:'a-garment',category:'Tops',rle:[100,200,724]},
+  {instanceId:'a-duplicate',category:'Tops',rle:[100,200,724]}
+ ]};
+ f.receipts[0]=f.receipt(f.photos[0],'reviewerA',label);
+ assert.throws(()=>f.run(),/duplicate same-category human instance mask/);
+});

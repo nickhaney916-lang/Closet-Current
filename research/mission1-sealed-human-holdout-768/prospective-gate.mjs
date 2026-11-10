@@ -148,7 +148,13 @@ function labelsVerified(label,item){
   if(!valid(ins?.instanceId)||masks.has(ins.instanceId)||
     !CATEGORIES.has(ins.category)||ins.category==='Uncategorized')
    err('duplicate/unlabeled instance');
-  masks.set(ins.instanceId,decodeMask(ins.rle,item.width*item.height));
+  const mask=decodeMask(ins.rle,item.width*item.height);
+  for(const prev of masks.values()){
+   // Never count one same-category human region twice under different names.
+   if(prev.category===ins.category&&iou(prev.mask,mask)>=.99)
+    err('duplicate same-category human instance mask under multiple IDs');
+  }
+  masks.set(ins.instanceId,{category:ins.category,mask});
  }
  return masks;
 }
@@ -171,14 +177,14 @@ function compareLabels(a,b,item){
     a.label.subtype!==b.label.subtype||
     a.label.primaryColor!==b.label.primaryColor||
     a.label.instances.length!==b.label.instances.length)return false;
- const byId=new Map(b.label.instances.map(x=>[x.instanceId,x]));
- for(const ins of a.label.instances){
-  const other=byId.get(ins.instanceId);
-  if(!other||other.category!==ins.category)return false;
-  if(iou(decodeMask(ins.rle,item.width*item.height),
-         decodeMask(other.rle,item.width*item.height))<.85)return false;
- }
- return true;
+ // Two blind reviewers are not instructed to share invented instance IDs.
+ // Compare source geometry by maximum-cardinality one-to-one overlap instead
+ // of requiring identical IDs/order or silently suppressing a second garment.
+ const normalized=review=>review.label.instances.map(ins=>({
+  category:ins.category,mask:decodeMask(ins.rle,item.width*item.height)
+ }));
+ return maximumCardinalityMaskMatches(normalized(a),normalized(b),.85)===
+  a.label.instances.length;
 }
 /** Maximum-cardinality source-mask assignment avoids greedy lost garment matches. */
 export function maximumCardinalityMaskMatches(truth,predicted,minimumIoU=.5){
