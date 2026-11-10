@@ -360,3 +360,80 @@ jobs:
           path: benchmark/mission1-b2-777/
           retention-days: 14
           if-no-files-found: warn
+
+  p778-cross-publisher-six-real-photos-two-models-two-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+      MISSION1_SOURCE_COHORT: prior6
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install local-only frozen research model and original-image browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Verify original six source JPEGs and sixteen publisher hand-drawn garment polygons
+        run: python scripts/fetch-fashionpedia-66.py
+      - name: B0 frozen original model on the same six exact JPEGs in real Chromium
+        run: MISSION1_MODEL_VARIANT=b0 MISSION1_ENGINE=chromium node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: B2 pinned quantized research candidate on the same six JPEGs in real Chromium
+        run: MISSION1_MODEL_VARIANT=b2 MISSION1_ENGINE=chromium node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: B0 frozen original model on the same six JPEGs in WebKit
+        run: MISSION1_MODEL_VARIANT=b0 MISSION1_ENGINE=webkit node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: B2 pinned quantized research candidate on the same six JPEGs in WebKit
+        run: MISSION1_MODEL_VARIANT=b2 MISSION1_ENGINE=webkit node scripts/test-mission1-unseeded-region-773-browser.mjs
+      - name: Require both models plus both browser engines and reject fake validation/release claims
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          for(const engine of ['chromium','webkit']){
+            const models={};
+            for(const variant of ['b0','b2']){
+              const r=JSON.parse(readFileSync('benchmark/mission1-'+variant+'-prior6-778/'+engine+'/results.json'));
+              assert.equal(r.sourceCohort,'prior6');
+              assert.equal(r.modelComparisonVariant,variant);
+              assert.equal(r.photos,6);
+              assert.equal(r.publisherHumanInstances,16);
+              assert.equal(r.releaseAuthorized,false);
+              assert.equal(r.familyAlpha,'HOLD');
+              assert.equal(r.modelPromotionAuthorized,false);
+              assert.equal(r.licenseIndependentlyCleared,false);
+              assert.equal(r.summary.modelLicenseAndTrainingExposureIndependentlyClearedForCommercialUse,false);
+              models[variant]={model:r.rows[0].model,modelSHA:r.rows[0].revision,
+                semanticIoU:r.summary.meanSemanticIoU,
+                missedPublisherSemanticRegions:r.summary.missedSemanticRegions,
+                sourceInstanceCounts:r.summary.publishedInstanceDiagnostic,
+                seededReviewCounts:r.summary.candidateInstanceDiagnostic};
+            }
+            console.log(JSON.stringify({engine,previouslyExposedDevelopmentOriginals:6,
+              publisherHumanMasks:16,models,
+              missingIndependentNewSourceHumanAnnotation:true,
+              sourceLicenseAndModelRightsIndependentlyVerified:false,
+              releaseAuthorized:false}));
+          }
+          NODE
+      - name: Erase all original publisher-photo pixels and temporary model photos after research
+        if: always()
+        run: rm -rf benchmark/real-garment-acceptance-66/fashionpedia
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P778-SIX-EXPOSED-JPEG-originals-B0-B2-two-engines-HOLD
+          path: |
+            benchmark/mission1-b0-prior6-778/
+            benchmark/mission1-b2-prior6-778/
+          retention-days: 14
+          if-no-files-found: warn
