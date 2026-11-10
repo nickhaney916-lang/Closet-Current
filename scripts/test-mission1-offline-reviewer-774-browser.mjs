@@ -54,10 +54,16 @@ for(const engine of names){
     await page.getByText(/Exact original JPEG SHA-256 and dimensions VERIFIED/).waitFor();
     assert.equal(await page.locator('#export').isDisabled(),true);
     const draw=async pts=>{
-     for(const [x,y] of pts){
-      const rect=await page.locator('#drawing').boundingBox();
+     const canvas=page.locator('#drawing');
+     await canvas.scrollIntoViewIfNeeded();
+     for(const [i,point] of pts.entries()){
+      const [x,y]=point,rect=await canvas.boundingBox();
       assert.ok(rect);
-      await page.mouse.click(rect.x+rect.width*x/64,rect.y+rect.height*y/64);
+      // Locator click scrolls to the canvas even when a 320px phone has the
+      // entire fieldset below the viewport; raw page.mouse.click does not.
+      await canvas.click({position:{x:rect.width*x/64,y:rect.height*y/64}});
+      assert.match(await page.locator('#points').textContent(),
+       new RegExp('^'+(i+1)+' unfinished points'));
      }
      await page.locator('#finish').click();
     };
