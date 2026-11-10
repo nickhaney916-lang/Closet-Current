@@ -304,6 +304,7 @@ export function mountOriginalTapReview798({
     if(live())boxStatus.textContent='Rectangle not accepted. Select two valid corners on the same original owner photo.';
    }finally{boxBusy=false;}
   });
+  root.append(boxStart,boxClear,boxStatus);
   // P802: an opt-in, on-device, resource-bounded COLOR-CONNECTED preview.
   // This is emphatically NOT SAM2 or a trustworthy independent mask.
   // Requires BOTH the P800 SHA-verified box and a separate P798 owner seed tap.
@@ -396,7 +397,6 @@ export function mountOriginalTapReview798({
    };
    root.append(previewButton,dismissPreview,previewStatus);
   }
-  root.append(boxStart,boxClear,boxStatus);
  }
  host.prepend(root);
  return Object.freeze({
