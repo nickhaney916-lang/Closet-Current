@@ -9,6 +9,11 @@ jobs:
   regression-and-mobile:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,6 +24,7 @@ jobs:
           node-version: '22'
       - name: Enforce isolated verified parent and no hosted changes
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=faac51857d57356fb5568f035566a171cadaa418
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js supabase public/local-worker.mjs public/recognition-engine.mjs
@@ -31,7 +37,6 @@ jobs:
       - name: Install pinned test tools and browser engines
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
-          npx playwright install --with-deps chromium webkit
       - name: Build and full regression
         run: |
           node scripts/build.mjs
