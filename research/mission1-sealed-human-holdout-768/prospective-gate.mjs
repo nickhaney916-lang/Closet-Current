@@ -12,7 +12,7 @@ import {
  MULTI_PHOTO_MARKER,normalizeMixedHumanLabel,compareMixedHumanReviews,
  scoreMixedOutfitAgainstHuman
 } from '../mission1-mixed-outfit-771/garment-instance-contract.mjs';
-import {P772_EXPOSED_DIGESTS_774,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
+import {P59_EXPOSED_DIGESTS_774,P772_EXPOSED_DIGESTS_774,MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774} from '../mission1-exposure-774/pinned-exposed-source-history.mjs';
 
 export const SCHEMA='closet-current-prospective-holdout/v1';
 export const P66_EXPOSED_DIGESTS=Object.freeze([
@@ -92,6 +92,7 @@ export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,expo
     !valid(registrationId)||!/^m1-cohort-[a-z0-9-]{6,70}$/.test(registrationId)||
     !Array.isArray(exposedSHA256)||exposedSHA256.length<MISSION1_MINIMUM_KNOWN_EXPOSED_ORIGINALS_774||
     !exposedSHA256.every(x=>HEX.test(x))||
+    !P59_EXPOSED_DIGESTS_774.every(x=>exposedSHA256.includes(x))||
     !P66_EXPOSED_DIGESTS.every(x=>exposedSHA256.includes(x))||
     !P772_EXPOSED_DIGESTS_774.every(x=>exposedSHA256.includes(x))||
     !reviewerPublicKeys||typeof reviewerPublicKeys!=='object'||
@@ -240,7 +241,8 @@ export function evaluateProspectiveHoldout({
     externalChronology?.registrationCommittedBeforeInference!==true||
     externalChronology?.predictionBatchCommittedAfterRegistration!==true)
   err('externally witnessed immutable enrollment-before-inference git chronology required');
- if(!P66_EXPOSED_DIGESTS.every(x=>knownExposedSHA256.includes(x))||
+ if(!P59_EXPOSED_DIGESTS_774.every(x=>knownExposedSHA256.includes(x))||
+    !P66_EXPOSED_DIGESTS.every(x=>knownExposedSHA256.includes(x))||
     !P772_EXPOSED_DIGESTS_774.every(x=>knownExposedSHA256.includes(x))||
     sha256(canonical([...knownExposedSHA256].sort()))!==seal.exposedSHA256)
   err('historically exposed source hash quarantine ledger altered');
