@@ -177,17 +177,19 @@ function node(tag,text,className){const n=document.createElement(tag);if(text)n.
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
 function choice(body,title,value,options){const label=node('label',title),select=node('select');select.setAttribute('aria-label',title);for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];label.append(select);body.append(label);return select;}
-function clothingFields(body,item,onChange=()=>{}){
+function clothingFields(body,item,onChange=()=>{},requireNativeCatalogType=false){
+ const reviewedTypeOptions=category=>['Unknown',...(clothingSchema.types[category]||[]).filter(type=>!requireNativeCatalogType||type!=='Other')];
  Object.assign(item,normalizeClothing(item));
  if(item.image){const reference=node('figure',null,'clothing-reference'),photo=node('img'),caption=node('figcaption',item.name||'Garment photo');photo.src=item.image;photo.alt=item.name||'Garment being edited';caption.title=item.name||'Garment photo';reference.append(photo,caption);body.append(reference);}
  const completion=node('p',null,'fine'),fillPhoto=node('button','Fill missing details from photo','secondary');fillPhoto.type='button';
  const refreshCompletion=()=>{const missing=ClothingDetails.missing(item);completion.textContent=(item.colorSource==='photo-estimate'?'Color estimated from photo · confirm '+item.color+'. ':'')+(missing.length?'Details to confirm: '+missing.join(', ')+'.':'Core details complete. Brand, size and fabric can be added from the label.');};refreshCompletion();body.append(completion);
  if(item.image){body.append(fillPhoto,node('p','Confirm seasons for how you wear it. Enter brand, size and fabric from the label.','fine'));}
- if(typeof ClothingMemory!=='undefined'){const suggestion=ClothingMemory.suggest(item,items)||ClothingMemory.weekly(item);if(suggestion){const memory=node('details',null,'clothing-details');memory.append(node('summary',suggestion.sourceIds?.length?'Suggestions from your confirmed clothes':'Recognition review suggestions'),node('p',(suggestion.sourceIds?.length?'Similar pieces suggest: ':'A fresh recognition check suggests: ')+Object.entries(suggestion.fields).map(([k,v])=>v).join(' · ')+'. Compare with this photo before using them.','fine'));const use=node('button','Use suggested details','secondary');use.type='button';use.onclick=()=>{Object.assign(item,ClothingMemory.apply(item,suggestion));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();use.disabled=true;};memory.append(use);body.append(memory);}}
+ if(typeof ClothingMemory!=='undefined'){const suggestion=ClothingMemory.suggest(item,items)||ClothingMemory.weekly(item);if(suggestion){const memory=node('details',null,'clothing-details');memory.append(node('summary',suggestion.sourceIds?.length?'Suggestions from your confirmed clothes':'Recognition review suggestions'),node('p',(suggestion.sourceIds?.length?'Similar pieces suggest: ':'A fresh recognition check suggests: ')+Object.entries(suggestion.fields).map(([k,v])=>v).join(' · ')+'. Compare with this photo before using them.','fine'));const use=node('button','Use suggested details','secondary');use.type='button';use.onclick=()=>{Object.assign(item,ClothingMemory.apply(item,suggestion));fields.category.value=item.category;fields.itemType.replaceChildren(...reviewedTypeOptions(item.category).map(x=>node('option',x)));if(requireNativeCatalogType&&item.itemType==='Other')item.itemType='Unknown';for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();use.disabled=true;};memory.append(use);body.append(memory);}}
  const fields={name:field(body,'Item name',item.name),category:field(body,'Main category',item.category,'select')};
  const details=node('details',null,'clothing-details');details.open=true;details.append(node('summary','Clothing details'));body.append(details);
  fields.color=field(details,'Color',item.color);
- fields.itemType=choice(details,'Item type',item.itemType,['Unknown',...(clothingSchema.types[item.category]||[])]);
+ fields.itemType=choice(details,'Item type',item.itemType,reviewedTypeOptions(item.category));
+ if(requireNativeCatalogType)details.append(node('p','Choose a specific clothing type. Unknown and Other cannot be saved as a privately reviewed garment.','fine'));
  fields.sleeveLength=choice(details,'Sleeve length',item.sleeveLength,clothingSchema.sleeve);
  fields.pattern=choice(details,'Pattern',item.pattern,clothingSchema.pattern);
  fields.fit=choice(details,'Fit',item.fit,clothingSchema.fit);
@@ -196,8 +198,8 @@ function clothingFields(body,item,onChange=()=>{}){
  const extra=node('details',null,'optional-details');extra.append(node('summary','Brand, size & other details'));details.append(extra);
  for(const [key,title]of [['brand','Brand'],['size','Size'],['material','Material'],['occasion','Occasion']])fields[key]=field(extra,title,item[key]);
  fields.notes=field(extra,'Notes',item.notes,'textarea');
- for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='color')item.colorSource='user';if(key==='category'){const types=['Unknown',...(clothingSchema.types[item.category]||[])];fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}refreshCompletion();onChange();};
- fillPhoto.onclick=async()=>{fillPhoto.disabled=true;completion.textContent='Checking color, then garment identity…';try{const quality=await checkPhoto(item.image);if(!fillPhoto.isConnected)return;Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));fields.color.value=item.color||'';refreshCompletion();if(!localReady)await enableLocal();const result=await localRequest('classify',item.recognitionPhoto?.image||item.image,null,item.segmentHint),choice=result.choices?.[0];if(!fillPhoto.isConnected)return;if((!result.strong&&!result.categoryConfirmed)||!choice||!segmentationAllows(item,choice)){completion.textContent=(item.color?'Color kept. ':'')+'Garment identity needs confirmation. Optional details can stay blank.';return;}if(item.category!=='Uncategorized'&&item.category!==choice.category){completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';return;}applyLocalChoice(item,choice);Object.assign(item,ClothingDetails.fill(item,choice,result.details));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();}catch{if(fillPhoto.isConnected)completion.textContent=(item.color?'Color kept. ':'')+'Garment recognition is unavailable. Your details are kept; optional fields can stay blank.';}finally{fillPhoto.disabled=false;}};
+ for(const [key,el]of Object.entries(fields))el.oninput=()=>{item[key]=el.value;if(key==='color')item.colorSource='user';if(key==='category'){const types=reviewedTypeOptions(item.category);fields.itemType.replaceChildren(...types.map(x=>node('option',x)));item.itemType='Unknown';fields.itemType.value='Unknown';if(['Shoes','Accessories','Bottoms'].includes(item.category)){item.sleeveLength='Not applicable';fields.sleeveLength.value='Not applicable';}else if(item.sleeveLength==='Not applicable'){item.sleeveLength='Unknown';fields.sleeveLength.value='Unknown';}}refreshCompletion();onChange();};
+ fillPhoto.onclick=async()=>{fillPhoto.disabled=true;completion.textContent='Checking color, then garment identity…';try{const quality=await checkPhoto(item.image);if(!fillPhoto.isConnected)return;Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));fields.color.value=item.color||'';refreshCompletion();if(!localReady)await enableLocal();const result=await localRequest('classify',item.recognitionPhoto?.image||item.image,null,item.segmentHint),choice=result.choices?.[0];if(!fillPhoto.isConnected)return;if((!result.strong&&!result.categoryConfirmed)||!choice||!segmentationAllows(item,choice)){completion.textContent=(item.color?'Color kept. ':'')+'Garment identity needs confirmation. Optional details can stay blank.';return;}if(item.category!=='Uncategorized'&&item.category!==choice.category){completion.textContent='Photo suggests '+choice.category+' · '+choice.itemType+'. Use Crop photo to review and change the category.';return;}applyLocalChoice(item,choice);Object.assign(item,ClothingDetails.fill(item,choice,result.details));fields.category.value=item.category;fields.itemType.replaceChildren(...reviewedTypeOptions(item.category).map(x=>node('option',x)));if(requireNativeCatalogType&&item.itemType==='Other')item.itemType='Unknown';for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();onChange();}catch{if(fillPhoto.isConnected)completion.textContent=(item.color?'Color kept. ':'')+'Garment recognition is unavailable. Your details are kept; optional fields can stay blank.';}finally{fillPhoto.disabled=false;}};
  if(item.image&&(!item.color||item.color==='Unknown'))checkPhoto(item.image).then(quality=>{if(!fields.color.isConnected||item.colorSource==='user')return;const updated=ClothingDetails.fillColor(item,quality.colorEstimate);if(updated!==item){Object.assign(item,updated);fields.color.value=item.color||'';if(!fillPhoto.disabled)refreshCompletion();onChange();}}).catch(()=>{});
  return ()=>normalizeClothing(item);
 }
@@ -220,7 +222,10 @@ function cropButton(item){const button=node('button','Crop photo','secondary');b
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
- const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
+ const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);
+ const form=node('form'),draft=structuredClone(item);
+ if(reviewedCapture120&&draft.itemType==='Other')draft.itemType='Unknown';
+ const collect=clothingFields(form,draft,()=>{},reviewedCapture120);
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -242,7 +247,6 @@ function adjustPhoto(item){
  // PHOTO120 only for actual *unsaved* camera captures, not a saved-piece edit.
  // Owner must explicitly confirm category/type/color and garment source before
  // the separately SHA-proven atomic research commit. Never auto-check them.
- const reviewedCapture120=reviewedSave120Active&&!items.some(x=>x.id===item.id);
  let reviewConfirmed120=null,garmentConfirmed120=null;
  if(reviewedCapture120){
   const confirmBox=node('div',null,'reviewed-save120-confirmation');
@@ -282,6 +286,9 @@ function adjustPhoto(item){
   // COLOR41: Save does not prove an AI-estimated color was changed by the user.
   // clothingFields itself marks colorSource='user' on explicit color input.
   if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){
+   const {localCandidates}=await import('./local-catalog.mjs');
+   if(!localCandidates.some(candidate=>candidate.category===value.category&&candidate.itemType===value.itemType))
+    throw Error('Choose a specific supported clothing type. Unknown and Other are not valid for a private reviewed save.');
    if(!reviewConfirmed120?.checked||!garmentConfirmed120?.checked)
     throw Error('Confirm the photographed garment and its category, type and color.');
    const owner=window.closetAuth?.user?.id,auth=window.closetAuth;

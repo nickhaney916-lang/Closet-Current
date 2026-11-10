@@ -231,7 +231,9 @@ try{
     const dialog=page.locator('dialog.photo-adjust[open]');
     await dialog.waitFor({state:'visible'});
     await dialog.locator('select[aria-label="Main category"]').selectOption('Dresses');
-    await dialog.locator('select[aria-label="Item type"]').selectOption('Other');
+    // Native reviewed source accepts only explicit catalog types; do not offer Other.
+    assert.equal(await dialog.locator('select[aria-label="Item type"] option[value="Other"]').count(),0);
+    await dialog.locator('select[aria-label="Item type"]').selectOption('Unknown');
     await dialog.locator('input[aria-label="Color"]').fill('Black');
     assert.equal(await dialog.locator('input[aria-label="I verified the category, clothing type and color"]').isChecked(),false);
     assert.equal(await dialog.locator('input[aria-label="I confirmed this photo shows one garment"]').isChecked(),false);
@@ -242,16 +244,17 @@ try{
     await dialog.locator('input[aria-label="I verified the category, clothing type and color"]').check();
     await dialog.locator('input[aria-label="I confirmed this photo shows one garment"]').check();
     await page.screenshot({path:out+'/'+name+'-'+width+'-02-real-adjust-confirm.png',fullPage:true});
-    // P783: the editor offers "Other", but native reviewed-source writer
-    // intentionally refuses this unsupported generic subtype. Neither
-    // confirmation nor a successful file hash can substitute for a valid type.
+    // P784: Unknown is a visible placeholder, never an accepted specific
+    // subtype. Reject it before attempting original-photo private persistence.
+    // No attestation or valid photo hash can turn a placeholder into identity.
     await dialog.getByRole('button',{name:'Save changes'}).click();
     await page.waitForFunction(()=>document.getElementById('message')?.textContent?.includes('Reviewed garment was not saved.'),
      null,{timeout:20000});
     assert.equal(await page.evaluate(async()=>(await readAll()).length),0);
     assert.equal(await page.evaluate(()=>batch.length),1);
     assert.equal(await dialog.isVisible(),true);
-    assert.equal(await dialog.locator('select[aria-label="Item type"]').inputValue(),'Other');
+    assert.equal(await dialog.locator('select[aria-label="Item type"]').inputValue(),'Unknown');
+    assert.match(await page.locator('#message').textContent(),/specific supported clothing type/);
     // Simulated reviewer chooses a supported subtype. This is deliberately
     // NOT an independently human-verified subtype accuracy claim.
     await dialog.locator('select[aria-label="Item type"]').selectOption('Casual dress');
@@ -307,7 +310,8 @@ try{
      actualModelTopSemanticRegion:actualRegion?.semanticRegionId??null,
      modelCategorySuppliedWithoutSubtypeOrColor:actualCategory,
      sourceCatalogDocumentsDress:true,simulatedManualChoiceUsesDocumentedDressCategory:true,
-     simulatedManualOtherSubtypeRefusedBeforeSave:true,
+     nativeReviewedOtherOptionNotOffered:true,
+     simulatedManualUnknownSubtypeRefusedBeforeSave:true,
      simulatedManualSubtypeSelectedFromNativeCatalog:true,
      modelCategoryAloneDidNotDetermineSavedGarment:true,
      ownerReviewStillSimulated:true,actualHumanGroundTruthIndependentlyVerified:false,
