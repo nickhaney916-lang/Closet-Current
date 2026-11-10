@@ -82,17 +82,23 @@ function assertImages(photos,readPhoto,exposed){
  }
  if(!unique(ids)||!unique(digests))err('source identity duplicates or re-encoded duplicates within registration');
 }
-export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,exposedSHA256,registrationId},readPhoto){
+export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,exposedSHA256,registrationId,reviewerPublicKeys},readPhoto){
  if(!HEX.test(modelSHA256||'')||!HEX.test(modelIndexSHA256||'')||
     !valid(registrationId)||!/^m1-cohort-[a-z0-9-]{6,70}$/.test(registrationId)||
     !Array.isArray(exposedSHA256)||exposedSHA256.length<59||
     !exposedSHA256.every(x=>HEX.test(x))||
-    !P66_EXPOSED_DIGESTS.every(x=>exposedSHA256.includes(x)))
-  err('exact model, original corpus of 59 and all six externally exposed P66 hashes required');
+    !P66_EXPOSED_DIGESTS.every(x=>exposedSHA256.includes(x))||
+    !reviewerPublicKeys||typeof reviewerPublicKeys!=='object'||
+    !['coordinator','reviewerA','reviewerB','adjudicator'].every(x=>valid(reviewerPublicKeys[x])))
+  err('exact model, both historic exposed cohorts and registered reviewer public keys required');
  const exposure=new Set(exposedSHA256);
  if(exposure.size!==exposedSHA256.length)err('duplicated source in known-exposure quarantine list');
  assertImages(photos,readPhoto,exposure);
+ const publicKeys=Object.entries(reviewerPublicKeys).sort((a,b)=>a[0].localeCompare(b[0]));
+ if(!unique(publicKeys.map(([id,key])=>sha256(createPublicKey(key).export({type:'der',format:'spki'})))))
+  err('duplicate signer public keys at registration');
  const sealedBody={schema:SCHEMA,registrationId,modelSHA256,modelIndexSHA256,
+  reviewerRegistrySHA256:sha256(canonical(Object.fromEntries(publicKeys))),
   exposedSHA256:sha256(canonical([...exposure].sort())),
   photos:photos.map(p=>({...p}))};
  return {...sealedBody,sealSHA256:sha256(canonical(sealedBody))};
@@ -100,11 +106,14 @@ export function sealProspectiveHoldout({photos,modelSHA256,modelIndexSHA256,expo
 function verifySeal(seal,registry,registrationWitness){
  if(seal?.schema!==SCHEMA||!HEX.test(seal.modelSHA256||'')||
     !HEX.test(seal.modelIndexSHA256||'')||!HEX.test(seal.exposedSHA256||'')||
-    !HEX.test(seal.sealSHA256||'')||!Array.isArray(seal.photos)||!valid(seal.registrationId))
+    !HEX.test(seal.sealSHA256||'')||!HEX.test(seal.reviewerRegistrySHA256||'')||
+    !Array.isArray(seal.photos)||!valid(seal.registrationId))
   err('missing prospective registration');
  const {sealSHA256,...body}=seal;
  if(sha256(canonical(body))!==sealSHA256)
   err('sealed cohort changed after registration');
+ if(sha256(canonical(registry))!==seal.reviewerRegistrySHA256)
+  err('reviewer key registry changed after cohort enrollment');
  if(!registrationWitness||registrationWitness.signerId!=='coordinator'||
     !verifiedSignature({purpose:'register-before-inference',sealSHA256},registrationWitness.signature,registry?.coordinator))
   err('external registration witness signature required');
