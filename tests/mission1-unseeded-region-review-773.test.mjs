@@ -69,8 +69,10 @@ test('P773 malformed source logits, spoofed original map, overlapping seed and d
  assert.throws(()=>unseededGarmentReview773({...x,data:x.data.slice(1)}),/mismatched actual logits/);
  const badMap={...x.map,labels:Uint8Array.from(x.map.labels)};badMap.labels[0]=4;
  assert.throws(()=>unseededGarmentReview773({...x,map:badMap}),/source label SHA-inconsistent/);
- const s=Uint8Array.from({length:400},(_,i)=>i===0?1:0);
- assert.throws(()=>unseededGarmentReview773({...x,existingGroups:[{id:7,selected:s,instanceKey:'forged'}]}),/overwrote other class/);
+ const protectedSource=make();protectedSource.area(1,1,5,5,4,.95);
+ const y0=protectedSource.inputs();
+ const s=Uint8Array.from({length:400},(_,i)=>i===21?1:0);
+ assert.throws(()=>unseededGarmentReview773({...y0,existingGroups:[{id:7,selected:s,instanceKey:'forged'}]}),/overwrote other class/);
  const f2=make();f2.area(1,1,5,5,4,.9);
  const y=f2.inputs(),mask=Uint8Array.from(y.map.labels,c=>c===4?1:0),g={id:4,selected:mask,instanceKey:'same'};
  assert.throws(()=>unseededGarmentReview773({...y,existingGroups:[g,g]}),/duplicated source group|duplicated pixels/);
