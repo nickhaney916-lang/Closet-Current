@@ -288,3 +288,20 @@ test('P780 a genuine 4032x3024 pixel JPEG can be registered and its manually dra
   photo:{...photo,width:5000,height:4000},regions
  }),/actual registered original JPEG dimensions/);
 });
+
+test('P791 native owner-saveable Accessories can be manually signed without fictional subtype',()=>{
+ const f=cohort(),hat={sourceId:f.photo.id,sourceSHA256:f.photo.sha256,
+  regions:[{instanceId:'person-a-hat',category:'Accessories',subtype:'Hat',
+   primaryColor:'Blue',polygons:[square(2,2,10,12)]}]};
+ const r=f.sign('reviewerA',hat);
+ assert.equal(r.label.category,'Accessories');
+ assert.equal(r.label.subtype,'Hat');
+ assert.equal(r.label.instances.length,1);
+});
+test('P791 manual reviewer cannot sign Other or Unknown as exact accepted clothing subtypes',()=>{
+ const f=cohort();
+ for(const subtype of ['Other','Unknown','Unlisted made-up type']){
+  const bad={...f.first,regions:[{...f.blouse,subtype}]};
+  assert.throws(()=>f.sign('reviewerA',bad),/invalid\/duplicate manually outlined instance category/);
+ }
+});

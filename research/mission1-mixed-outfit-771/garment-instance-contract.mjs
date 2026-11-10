@@ -9,6 +9,7 @@
  * identity, signed receipt, model hash and original JPEG comes from P768/P770.
  * Synthetic CI fixtures are NEVER real independently human-labeled photos.
  */
+import {supportedHumanGarment791} from '../mission1-human-truth-taxonomy-integrity-791/canonical-human-truth.mjs';
 const GARMENT_CATEGORIES=new Set([
  'Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'
 ]);
@@ -24,7 +25,7 @@ export const MULTI_PHOTO_MARKER='Multiple';
 
 function normalizeLabel(ins,decodeMask,pixelCount,allowUnknown=false){
  if(!ins||!validString(ins.instanceId)||!GARMENT_CATEGORIES.has(ins.category)||
-    !validString(ins.subtype)||(ins.subtype==='Unknown'&&!allowUnknown)||
+    !supportedHumanGarment791(ins.category,ins.subtype)||
     !GARMENT_COLORS.has(ins.primaryColor))
   error('source-bound per-instance human category/subtype/color required');
  if(!Array.isArray(ins.rle)||typeof decodeMask!=='function')

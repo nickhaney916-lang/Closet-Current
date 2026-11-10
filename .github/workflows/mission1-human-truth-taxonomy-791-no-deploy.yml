@@ -1,0 +1,99 @@
+name: M1 P791 source-signed true garment type and instance integrity — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-human-truth-taxonomy-integrity-791-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p791-human-taxonomy-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-complete-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: P790 verified ancestor, nine-path human-truth research only, preserve release hold
+        run: |
+          set -euo pipefail
+          BASE=b4634800663f88591da0033f4162049c3cbaf381
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/m1-p791-paths
+          test "$(wc -l < /tmp/m1-p791-paths)" -eq 9
+          while read -r path; do
+            case "$path" in
+              research/mission1-human-truth-taxonomy-integrity-791/canonical-human-truth.mjs|research/mission1-human-truth-taxonomy-integrity-791/REPORT.md|research/mission1-sealed-human-holdout-768/prospective-gate.mjs|research/mission1-mixed-outfit-771/garment-instance-contract.mjs|research/mission1-reviewer-774/offline-human-polygon-receipt.mjs|tests/mission1-prospective-holdout-768.test.mjs|tests/mission1-offline-human-polygon-774.test.mjs|tests/mission1-human-truth-taxonomy-791.test.mjs|.github/workflows/mission1-human-truth-taxonomy-791-no-deploy.yml) ;;
+              *) echo "UNAPPROVED MODEL/APP/DEPLOY/PRIVATE IMAGE CHANGE: $path"; exit 1 ;;
+            esac
+          done < /tmp/m1-p791-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark/locked-photo-sources.json)"
+          echo M1_P791_NINE_PATHS_NO_DEPLOY_PINNED_REAL_NATIVE_APP_INTACT
+      - name: Ephemeral exact native regression environment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Native build and full Node suite including adversarial Ed25519 signed human source masks
+        run: |
+          set -euo pipefail
+          node --check research/mission1-sealed-human-holdout-768/prospective-gate.mjs
+          node --check research/mission1-reviewer-774/offline-human-polygon-receipt.mjs
+          node --test tests/mission1-human-truth-taxonomy-791.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-ccby-dress-to-unmodified-native-closet:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install ephemeral genuine model browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+      - name: Genuine frozen B0 original photographed dress, mask color owner manual Adjust, private source save
+        run: node scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+      - name: Verify exact two mobile browsers and no human or release misrepresentation
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/mission1-real-model-native-closet-782/browser-results.json','utf8'));
+          assert.equal(r.researchOnly,true);
+          assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');
+          assert.equal(r.realAuthenticatedCloudUsers,false);
+          assert.equal(r.actualModelSubtypeOrColorVerified,false);
+          assert.deepEqual(new Set(r.scenarios.map(x=>x.browser)),new Set(['chromium','webkit']));
+          for(const row of r.scenarios){
+            assert.equal(row.actualModelSourcePixelColorReviewedInAdjust,true);
+            assert.equal(row.actualModelColorNeverAutofilledOrHumanConfirmed,true);
+            assert.equal(row.actualMyClosetSaved,true);
+            assert.equal(row.actualHumanGroundTruthIndependentlyVerified,false);
+            assert.equal(row.nativeReviewedOtherOptionNotOffered,true);
+            assert.equal(row.simulatedManualUnknownSubtypeRefusedBeforeSave,true);
+          }
+          console.log('M1_P791_REAL_B0_ORIGINAL_CHROMIUM_WEBKIT_NATIVE_COLOR_REVIEW_OWNER_LOCAL_ONLY_NOT_HUMAN_ACCEPTANCE');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P791-real-original-B0-native-regression-SIMULATED-owner-HOLD
+          path: benchmark/mission1-real-model-native-closet-782/
+          retention-days: 14
+          if-no-files-found: warn
