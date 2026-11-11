@@ -162,7 +162,7 @@ async function run(engine,browserType,width){
    assert.equal(createHash('sha256').update(bytes).digest('hex'),sha);
   }
   return {engine,width,rollbackPreservedOriginal:true,oldOutfitPreserved:true,
-   manualRetryRestored:true,blockedReloadMadeZeroCloudRequests:true,originalSHA:sha,corruptObjectObserved:true,
+   manualRetryRestored:true,blockedReloadMadeZeroCloudRequests:true,originalSHA:sha,oversizedPrivateJSONRejected:true,noPhotoDownloadBeforeJSONRepair:true,
    screenshot,sha256:createHash('sha256').update(png).digest('hex'),
    axeViolations:access.violations.length,syntheticOwner:true,physicalDevice:false};
  }finally{await context.close();await browser.close();}
