@@ -443,7 +443,7 @@ try{
      if(sourceDepthExperiment){
       assert.equal(decisionState.sourceLengthExperimentalDepthTrial,true);
       assert.equal(decisionState.sourceLengthOriginalXYPhotographedSilhouetteRetained,true);
-      assert.equal(decisionState.sourceLengthDepthClearance,safeDiagnostic?.selectedDepthClearance);
+      assert.equal(decisionState.sourceLengthDepthClearance,safeBodyLocality[0]?.selectedDepthClearance);
      }
      assert.ok(Number.isSafeInteger(decisionState?.sourceLengthIntrapanelCandidateTests));
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
