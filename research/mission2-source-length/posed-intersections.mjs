@@ -218,9 +218,14 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
      if(vertex(one,j)===vertex(two,k))return true;
     return false;
    };
-   g.boundsTree=new MeshBVH(g,{indirect:true});
-   g.boundsTree.bvhcast(g.boundsTree,identity,{
-    intersectsTriangles:(a,c,aId,cId)=>{
+   // three-mesh-bvh rejects some indexed recursive self-casts; build
+   // two independent immutable geometry/BVH views with identical face IDs.
+   const other=g.clone();
+   try{
+    g.boundsTree=new MeshBVH(g,{indirect:true});
+    other.boundsTree=new MeshBVH(other,{indirect:true});
+    g.boundsTree.bvhcast(other.boundsTree,identity,{
+     intersectsTriangles:(a,c,aId,cId)=>{
      if(aId===cId||adjacent(aId,cId))return false;
      candidateTests++;
      if(candidateTests>maxCandidateTests)
@@ -230,9 +235,10 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
      contactKeys.add(meshIndex+':'+min+':'+max);
      if(contactKeys.size>=maxContacts)
       throw Error('M2 self-contact exceeds bounded contact budget; cannot certify');
-     return false;
-    }
-   });
+      return false;
+     }
+    });
+   }finally{other.dispose();}
   }finally{g.dispose();}
  }
  return Object.freeze({
