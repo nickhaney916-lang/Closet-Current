@@ -44,5 +44,11 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});
- }catch{self.postMessage({type:'error',id:request.id,text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});}
+ }catch(error){
+  if(error?.code==='MULTI24_REVIEW_OVERFLOW'){
+   self.postMessage({type:'error',id:request.id,
+    text:'This photo contains more clothing regions than can be reviewed safely in one group. No regions were imported. Try photographing fewer garments together.'});
+  }else self.postMessage({type:'error',id:request.id,
+   text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});
+ }
  }).catch(()=>self.postMessage({type:'error',id:request.id,text:'Outfit separation stopped. Try the photo again.'}));};

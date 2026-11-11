@@ -14,6 +14,10 @@ const pixelNeighbors=(i,w,h)=>{const x=i%w,y=Math.floor(i/w),out=[];
  if(y)out.push(i-w);if(y+1<h)out.push(i+w);return out;
 };
 export function visibleGarmentGroups24(map,{limit=12}={}){
+ // A cap is a processing safety limit, NOT permission to omit user garments.
+ // Never silently slice a partially enumerated original photo.
+ if(!Number.isSafeInteger(limit)||limit<1||limit>24)
+  throw Error('MULTI24 invalid reviewed garment limit');
  const {labels,confidence,width:w,height:h}=map||{};
  if(!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w*h>512*512||
     labels?.length!==w*h||confidence?.length!==w*h)throw Error('MULTI24 invalid label map');
@@ -46,8 +50,18 @@ export function visibleGarmentGroups24(map,{limit=12}={}){
  }
  for(const part of parts)if(!paired.has(part))result.push(part);
  result.sort((a,b)=>a.bounds.top-b.bounds.top||a.bounds.left-b.bounds.left||a.id-b.id);
+ if(result.length>limit){
+  // Hard stop before emitting a single crop. The caller must ask for a
+  // smaller photograph/group, not present a truncated batch as complete.
+  const error=new RangeError('MULTI24_REVIEW_OVERFLOW: '+result.length+
+   ' distinct visible region proposals exceed reviewed limit '+limit);
+  error.code='MULTI24_REVIEW_OVERFLOW';
+  error.visibleProposalCount=result.length;
+  error.reviewLimit=limit;
+  throw error;
+ }
  const counts=new Map();
- return result.slice(0,Math.max(1,Math.min(24,limit))).map(part=>{
+ return result.map(part=>{
   const selected=new Uint8Array(w*h);for(const i of part.component)selected[i]=1;
   const region=clothingRegions.find(x=>x.id===part.id),n=(counts.get(part.id)||0)+1;counts.set(part.id,n);
   return {id:part.id,label:region.label,categories:region.categories,types:region.types||[],
