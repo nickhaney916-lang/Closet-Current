@@ -280,6 +280,10 @@ function adjustPhoto(item){
       // mask or approves a garment for private save.
       enableOwnerMaskCorrection803:new URLSearchParams(location.search).get('mission1OwnerMaskCorrection803')==='research'&&
        new URLSearchParams(location.search).get('mission1OwnerMask802')==='research'&&
+       new URLSearchParams(location.search).get('mission1OwnerBox800')==='research',
+      // P804: isolated test-only transient numeric pixel coordinates; no owner
+      // identity, photo bytes, mask or persistent receipt in the app.
+      enableResearchBoxReceipt804:new URLSearchParams(location.search).get('mission1BrowserBoxSam804')==='research'&&
        new URLSearchParams(location.search).get('mission1OwnerBox800')==='research'
      });
     }).catch(()=>{
