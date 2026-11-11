@@ -47,6 +47,8 @@ jobs:
 
         node --test --test-concurrency=1 tests/*.cjs tests/*.mjs'
   source-length-real-mobile-browser:
+    outputs:
+      locality390: ${{ steps.locality_probe.outputs.report }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
@@ -193,6 +195,29 @@ jobs:
          }))
         }))));
         NODE
+    - name: Expose bounded no-photo contact counts at 390px for follow-on geometry repair
+      id: locality_probe
+      run: |
+        node --input-type=module <<'NODE'
+        import assert from 'node:assert/strict';
+        import {readFileSync,appendFileSync} from 'node:fs';
+        const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+        const r=JSON.parse(readFileSync('benchmark/mission2-source-adaptive/'+engine+'/results.json','utf8'));
+        const e=r.evidence.find(x=>x.width===390);
+        assert.equal(e?.safeBodyLocality?.noPhotoOrOwnerFields,true);
+        assert.equal(e?.safeBodyLocality?.attempts?.length,4);
+        const a=e.safeBodyLocality.attempts;
+        const counts=a.map(x=>Number.isSafeInteger(x.newBodyContacts)?x.newBodyContacts:'x').join(',');
+        const last=a[3].bodyRegions;
+        const m=last?.byGarmentMesh?.join(',')||'none';
+        const h=last?.byHeightQuartile?.join(',')||'none';
+        assert.match(m,/^(none|[0-9,]+)$/);
+        assert.match(h,/^(none|[0-9,]+)$/);
+        const report=engine+'-new['+counts+']-mesh['+m+']-height['+h+']';
+        assert.ok(report.length<192);
+        appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
+        console.log('M2_LOCALITY_AGGREGATE_ONLY',report);
+        NODE
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -204,3 +229,12 @@ jobs:
           benchmark/user-photo-to-anatomical-3d-62/'
         retention-days: 14
         if-no-files-found: warn
+
+  show-signed-locality-without-artifact:
+    needs: source-length-real-mobile-browser
+    if: ${{ always() && needs.source-length-real-mobile-browser.outputs.locality390 != '' }}
+    name: "M2 source region ${{ needs.source-length-real-mobile-browser.outputs.locality390 }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - run: echo "Verified aggregate locality is visible in the job name; never include images or owner identifiers"
