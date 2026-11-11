@@ -72,7 +72,11 @@
     key==='image'?parent?.sha256:undefined;
    if(receipt!==undefined&&(!shaReceipt.test(receipt)||receipt!==sha))
     throw Error('Original or reviewed photograph SHA receipt mismatch');
-   const path=owner+'/'+sha+'.jpg';photos.set(path,bytes);
+   // Keep a reference to the already-owned source string, not a second
+   // decoded JPEG byte array for every item in a large wardrobe. Bytes are
+   // materialized only for the current sequential upload after all source
+   // receipts have been validated. No photo is uploaded during encoding.
+   const path=owner+'/'+sha+'.jpg';photos.set(path,image);
    return 'closet-photo:'+path;
   });
   assertActive();
@@ -104,7 +108,15 @@
    });
 
   });}
- async function upload(photos,assertActive=()=>{}){for(const [path,bytes]of photos){assertActive();try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
+ async function upload(photos,assertActive=()=>{}){for(const [path,image]of photos){
+   assertActive();
+   // Re-decode one JPEG at a time. The upload manifest contains only
+   // references to immutable data-URL strings already in the local snapshot.
+   const bytes=imageBytes(image);
+   if(await hash(bytes)!==path.split('/')[1].slice(0,-4))
+    throw Error('Private upload manifest SHA mismatch');
+   assertActive();
+   try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.
    const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=new Uint8Array(await existing.arrayBuffer());assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw Error('Stored photo differs');
   }}}
