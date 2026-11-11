@@ -2,9 +2,15 @@ import test from 'node:test';import assert from 'node:assert/strict';import vm f
 import * as segmentation from '../public/outfit-segmentation.mjs';
 import {visibleGarmentGroups24} from '../research/multi-garment-capture-01/visible-groups.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
-function setup({failLoad=false,failSecondCrop=false,noPerson=false,manyRegions=false,multi24=false,oversizeCrop=false}={}){
+function setup({failLoad=false,failSecondCrop=false,noPerson=false,manyRegions=false,multi24=false,oversizeCrop=false,disconnectedUpper=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
  for(const [id,left,top,w,h]of [[4,5,4,8,5],[6,6,10,6,5],[9,6,16,3,3],[10,10,16,3,3],[11,7,1,4,3]])for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;data[i]=-10;data[id*400+i]=10;}
+ if(disconnectedUpper){
+  // A second separate substantial high-confidence upper-clothing island.
+  for(let y=2;y<6;y++)for(let x=15;x<19;x++){
+   const i=y*20+x;data[i]=-10;data[4*400+i]=10;
+  }
+ }
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>oversizeCrop?new Uint8Array(6000010).buffer:new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  if(manyRegions){
@@ -66,4 +72,19 @@ test('P814: overlarge generated review JPEG fails before any candidate or done m
  assert.equal(errors.length,1);
  assert.match(errors[0].text,/too much clothing image data|fewer garments/);
  assert.ok(!JSON.stringify(errors).includes('OUTFIT_SOURCE_BATCH_MEMORY_CAP'));
+});
+
+test('P818 normal multi-outfit B0 worker returns one ambiguous union for manual source review, not auto color',async()=>{
+ const h=setup({disconnectedUpper:true,multi24:false});await h.run();
+ const pieces=h.sent.filter(e=>e.type==='piece');
+ assert.equal(pieces.length,3,'existing top/pants/shoes groups preserved');
+ const upper=pieces.find(e=>e.piece.label==='Upper garment')?.piece;
+ assert.ok(upper,'upper union still visible for correction');
+ assert.equal(upper.hint.sourceDisconnectedReviewRequired,true);
+ assert.equal(upper.hint.sourceIslandCount,2);
+ assert.equal(upper.colorEstimate,null,'do not assign a mixed garment palette to a presumed single shirt');
+ assert.ok(upper.recognitionPhoto?.image?.startsWith('data:image/jpeg;base64,'));
+ assert.ok(pieces.filter(e=>e.piece.hint.sourceDisconnectedReviewRequired).length===1);
+ assert.ok(pieces.every(e=>e.piece.hint.categories.length>0));
+ assert.equal(h.sent.find(e=>e.type==='done').count,3);
 });
