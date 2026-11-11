@@ -1,0 +1,67 @@
+name: Mission 3 cloud 413 507 quota pause and deliberate owner retry — NO DEPLOY
+on:
+  push:
+    branches: [research/mission3-cloud-capacity-retry-safety-20261110-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cloud-capacity-recovery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact verified Mission 3 upload parent and no-deploy scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=5bf5b4c153215313c2dc78aa727be8f3daef0c95
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/cloud-backup.js|tests/mission3-cloud-capacity-pause.test.cjs|tests/mission3-bounded-restore-photo-cache.test.cjs|research/mission3-cloud-capacity/REPORT.md|.github/workflows/mission3-cloud-capacity-no-deploy.yml) ;;
+              *) echo "Unexpected mission 3 cloud capacity path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned Node testing and real mobile browser engines
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Reproduce parent endless retry after permanent cloud quota denial
+        run: |
+          git worktree add --detach /tmp/closet-mission3-quota-parent 5bf5b4c153215313c2dc78aa727be8f3daef0c95
+          CLOUD_SOURCE_ROOT=/tmp/closet-mission3-quota-parent EXPECT_BASELINE=1 node --test tests/mission3-cloud-capacity-pause.test.cjs
+      - name: Verify capacity pause, existing local photo safety and explicit retry
+        run: node --test tests/mission3-cloud-capacity-pause.test.cjs
+      - name: Build application and run full serial regression
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Real Chromium synthetic-owner source and cutout backup/restore
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          node scripts/test-outfit-backup-compatibility-browser.mjs benchmark/mission3-capacity-private-cloud
+      - name: Real Chromium/WebKit mobile 320 390 430 native camera review and styling
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Real Chromium/WebKit interrupted wardrobe save and accessibility
+        run: node scripts/test-family-reliability-mobile.mjs
+      - name: Keep synthetic-only screenshots and receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-cloud-capacity-evidence-HOLD
+          path: |
+            benchmark/mission3-capacity-private-cloud/
+            benchmark/native-canonical-closet-style-167/
+            benchmark/family-reliability-mobile/
+          retention-days: 14
