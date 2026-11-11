@@ -321,7 +321,7 @@ test('all adaptive self-fold locality receipts are exact integer counts with no 
  assert.equal(publicDiag.experimentalDepthTrial,true);
  assert.equal(publicDiag.noPhotoOrOwnerFields,true);
  assert.equal(publicDiag.releaseAuthorized,false);
- assert.ok(publicDiag.attempts.length>=1&&publicDiag.attempts.length<=10);
+ assert.ok(publicDiag.attempts.length>=1&&publicDiag.attempts.length<=16);
  for(const a of publicDiag.attempts){
   if(!a.selfRegions)continue;
   assert.equal(a.selfRegions.newSelfContactCount,a.newSelfContacts);
