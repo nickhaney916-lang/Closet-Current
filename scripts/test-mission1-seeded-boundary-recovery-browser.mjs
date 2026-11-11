@@ -37,8 +37,14 @@ let instrumentedWorker=workerSource.replace(anchor,anchor+"selectedMaskBase64:bt
 await mkdir(out,{recursive:true});
 assert.equal(workerSource.split('const results={sourceId:req.sourceId,').length,2);
 assert.equal(workerSource.split('after:await Promise.all(after.map(describe)),').length,2);
-const thresholdCode821=thresholdP821?"const {THRESHOLD_PROFILES_821,clothingLabelMapThreshold821}=await import('../mission1-real-source-threshold-profiles-821/profile-map.mjs');const {clothingMaskGroups}=await import('../../public/outfit-segmentation.mjs');const thresholdMaps821=THRESHOLD_PROFILES_821.map(profile=>{const trial=clothingLabelMapThreshold821(logits.logits.data,logits.logits.dims,profile);return {name:profile.name,map:trial,groups:trial.personDetected?clothingMaskGroups(trial).filter(g=>[4,5,6,7,9].includes(g.id)):[]};});if(!map.labels.every((x,i)=>x===thresholdMaps821[0].map.labels[i])||!map.confidence.every((x,i)=>x===thresholdMaps821[0].map.confidence[i])||map.personDetected!==thresholdMaps821[0].map.personDetected)throw Error('P821 unchanged native B0 label map mismatch');":'';
+const thresholdCode821=thresholdP821?"self.postMessage({id,type:'progress',phase:'p827-fused-softmax-start'});const {THRESHOLD_PROFILES_821,clothingLabelMapsFused827}=await import('../mission1-real-source-threshold-profiles-821/profile-map.mjs');const {clothingMaskGroups}=await import('../../public/outfit-segmentation.mjs');const thresholdMaps821=clothingLabelMapsFused827(logits.logits.data,logits.logits.dims).map(({name,map:trial})=>({name,map:trial,groups:trial.personDetected?clothingMaskGroups(trial).filter(g=>[4,5,6,7,9].includes(g.id)):[]}));self.postMessage({id,type:'progress',phase:'p827-fused-softmax-complete'});if(thresholdMaps821.length!==THRESHOLD_PROFILES_821.length||!map.labels.every((x,i)=>x===thresholdMaps821[0].map.labels[i])||!map.confidence.every((x,i)=>x===thresholdMaps821[0].map.confidence[i])||map.personDetected!==thresholdMaps821[0].map.personDetected)throw Error('P827 unchanged native B0 label map mismatch');":'';
 const sourceComponentCode817=componentP817?"const {sourceComponentReview776}=await import('../mission1-component-review-776/source-component-review.mjs');const split817=sourceComponentReview776({data:logits.logits.data,dims:logits.logits.dims,map,groups:grown});const {clothingMaskGroups}=await import('../../public/outfit-segmentation.mjs');const nativeNormal817=clothingMaskGroups(map);":'';
+if(thresholdP821){
+ const modelResultLine='const logits=await model(await processor(input));';
+ assert.equal(instrumentedWorker.split(modelResultLine).length,2);
+ instrumentedWorker=instrumentedWorker.replace(modelResultLine,
+  modelResultLine+"self.postMessage({id,type:'progress',phase:'p827-onnx-inference-complete'});");
+}
 instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourceId,',"const {seededBoundaryReview}=await import('../mission1-seeded-boundary-recovery/review-growth.mjs');const {unseededGarmentReview773}=await import('../mission1-unseeded-region-773/original-logit-review.mjs');const grown=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after});const unseeded=unseededGarmentReview773({data:logits.logits.data,dims:logits.logits.dims,map,existingGroups:grown});const allClass=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after,recoverFootwear:true});"+sourceComponentCode817+thresholdCode821+"const results={sourceId:req.sourceId,");
 const thresholdReceipts821=thresholdP821?"thresholdProfiles821:await Promise.all(thresholdMaps821.map(async profile=>({name:profile.name,personDetected:profile.map.personDetected,sourceLabelSHA256:await sha(profile.map.labels),groups:await Promise.all(profile.groups.map((g,i)=>describe({...g,instanceKey:'P821-'+profile.name+'-'+g.id+'-'+i}))}))),":'';
 const sourceComponentReceipts817=componentP817?"sourceComponentReview817:await Promise.all(split817.map(async g=>({...await describe(g),sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor}))),nativeNormalB0Source817:await Promise.all(nativeNormal817.map((g,i)=>describe({...g,instanceKey:'native-normal-'+g.id+'-'+i}))),":'';
@@ -70,7 +76,12 @@ try{
   if(isPinnedModelAsset(url))return routePinnedModelAsset(route,cache);
   return route.abort();
  });
- const page=await context.newPage();await page.goto(origin+'/');
+ const page=await context.newPage();
+ if(thresholdP821)page.on('console',m=>{
+  const msg=m.text();
+  if(msg.startsWith('M1_P827_'))console.log(msg);
+ });
+ await page.goto(origin+'/');
  for(const {row,data} of source){
   const result=await page.evaluate(async({row,data,componentP817,thresholdP821})=>{
    const image=new Image();image.src=data;await image.decode();
@@ -80,8 +91,18 @@ try{
    window.worker66??=new Worker('/research/real-mask-evidence-31/worker.mjs',{type:'module'});
    const id=row.id,worker=window.worker66;
    const r=await new Promise((done,reject)=>{
-    const timeout=setTimeout(()=>reject(Error('actual model timeout')),390000);
-    worker.onmessage=e=>{if(e.data.id!==id)return;if(e.data.type==='done'){clearTimeout(timeout);done(e.data.result);}if(e.data.type==='error'){clearTimeout(timeout);reject(Error(JSON.stringify(e.data)));}};
+    let lastStage='no-worker-progress';
+    const timeout=setTimeout(()=>reject(Error('actual model timeout; last stage='+lastStage)),390000);
+    worker.onmessage=e=>{
+     if(e.data.id!==id)return;
+     if(e.data.type==='progress'&&thresholdP821){
+      lastStage=String(e.data.phase||'unknown');
+      console.log('M1_P827_WORKER_STAGE',JSON.stringify({id,phase:lastStage,
+       percent:Number.isFinite(e.data.percent)?e.data.percent:null}));
+     }
+     if(e.data.type==='done'){clearTimeout(timeout);done(e.data.result);}
+     if(e.data.type==='error'){clearTimeout(timeout);reject(Error(JSON.stringify(e.data)));}
+    };
     worker.postMessage({id,sourceId:'fashionpedia-'+id,analysisImage:data,originalWidth:row.width,originalHeight:row.height,analysisRGBA:rgba,analysisWidth:row.width,analysisHeight:row.height},[rgba.buffer]);
    });
    const [w,h]=r.modelMask;if(w>192||h>192)throw Error('unexpected model raster dimensions');
