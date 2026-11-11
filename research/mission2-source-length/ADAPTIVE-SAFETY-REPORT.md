@@ -83,3 +83,18 @@ This does not commit any unsafe 3D fit or automatically solve original body cont
 **Acceptance:** exact-head no-deploy full Node suite and genuine Chromium+WebKit 320/390/430 source views, contact distribution count reconciliation and original JPEG/owner/outfit fallback. Historical PR #854 was verified, but **no P2-C5 passing evidence exists until its own final commit is checked**.
 
 **Still open for full Mission 2:** preexisting contact clearance (signed/nonpenetrating), realistic drape and sewing, multi-source independent masks, fitted fabrics on both bodies in multiple poses, photo-rear uncertainty, physical iPhone/Android and full owner authorization. Family Alpha HOLD #255 remains OPEN.
+
+
+## P2-C6 — unique triangle-pair budget and precise audit exhaustion
+
+**Grounded cause from P2-C5**: The [exact-head 3/3 success, 1,527 Node, 100 SHA browser screenshots](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43043561737) showed all six original-photo fallback attempts were rejected for **`contact-audit-budget`**. That was an incomplete **resource-limited computation**, not independently demonstrated newly intersecting garment geometry. Prior texts that called those six real-browser candidates physically collision-unsafe overstated what was proven.
+
+The independent intrapanel BVH caster compares one immutable staged/skinned garment mesh against two independent BVHs of the same sampled pose. That enumeration visits the same unordered source-triangle pair in both directions. P2-C6 adds a **bounded numerical source-face pair key**, resolves both indirect BVH IDs to original face indices, and skips duplicate candidate pairs *before* the expensive triangle intersection test and before counting the comparison budget. It never skips the first occurrence of a candidate pair. Exact positive crossing tests must still detect the contact and count one unique candidate; the audit still fails closed when it cannot complete.
+
+The one-letter `contact-audit-budget` category was too broad to choose a physical geometry remedy. Research diagnostics now distinguish `body-contact-budget`, `panel-contact-budget`, `self-comparison-budget` and `self-contact-budget`. Each tag is a fixed source/owner-private-safe enum, never raw error stacks or wardrobe data, and must pass actual Chromium/WebKit saved-outfit admission/fallback verification. Body/part absolute surface contact count and existing owner/private source restrictions are preserved.
+
+**Nonclaims:** Better enumeration efficiency does not establish natural cloth physics or collision clearance, and may still fail the measured budget. This is sampled-pose research on one license-pinned photographic garment, not a generic garment-construction model. Any positive 3D candidate remains unapproved until genuine independent visual, human and physical-device tests. All work DRAFT, UNMERGED, UNDEPLOYED. Family Alpha #255 remains HOLD.
+
+### P2-C6 verification
+
+Pending exact final-head dedicated no-deploy Node/full regression and both native Chromium/WebKit jobs; no pass claim until verified.
