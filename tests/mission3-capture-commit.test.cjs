@@ -29,7 +29,7 @@ async function harness(){
  const owner=randomUUID(),other=randomUUID(),db=await open(owner),foreign=await open(other),messages=[],recognized=[];
  let hold=null,fail=false,queue=Promise.resolve();
  const window={closetAuth:{user:{id:owner},assertCurrent(){if(!this.user?.id)throw Error('locked');}}};
- const c={window,db,items:[],batch:[],sessionCapturedIds:new Set(),session:0,
+ const c={window,db,items:[],batch:[],sessionCapturedIds:new Set(),failedDraftCaptures:new Set(),session:0,
   crypto:{randomUUID},structuredClone,window,console,
   nativeCanonical167Active:true,captureProof01Active:true,
   recordDeviceEvent(){},queueAutomatic:item=>recognized.push(item.id),
