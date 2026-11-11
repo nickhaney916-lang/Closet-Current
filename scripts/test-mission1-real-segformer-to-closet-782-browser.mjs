@@ -199,6 +199,18 @@ try{
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push(name+'/'+width+': '+e.message));
     await page.addInitScript(weakWorker);
+    // Set P806 public-only fixture provider before native Adjust mounts.
+    // Neither the function nor the genuine public PNG is persisted to closet.
+    if(publicSAM2Dir806){
+     const originalPNG=readFileSync(resolve(publicSAM2Dir806,'mask-'+name+'-pointBox-UNVERIFIED.png'));
+     const fixed={'chromium':'f8c50688b5932ae8c879b24ea638ade7994b3c1563b501c93d576c7236cb1bf9',
+      'webkit':'d76ab0fb867270eafc8d76f5a6dc5fa693d342cca049fc226aa8dc661cad7f7e'};
+     assert.equal(createHash('sha256').update(originalPNG).digest('hex'),fixed[name],
+      'P806 public source P804 model binary mask is SHA-pinned');
+     await page.addInitScript(mask=>{
+      globalThis.__closetP804ImmutablePublicSAM2Evidence806=async()=>mask;
+     },{actorBrowser:name,pngBase64:originalPNG.toString('base64')});
+    }
     const ownerId='p120-'+name+'-'+width+'-fixture';
     await page.route('**/*',route=>{
      const url=route.request().url();
@@ -494,9 +506,6 @@ try{
      const fixed={'chromium':'f8c50688b5932ae8c879b24ea638ade7994b3c1563b501c93d576c7236cb1bf9',
       'webkit':'d76ab0fb867270eafc8d76f5a6dc5fa693d342cca049fc226aa8dc661cad7f7e'};
      assert.equal(originalPNG_SHA,fixed[name],'unaltered verified P804 mask bytes');
-     await page.evaluate(mask=>{
-      globalThis.__closetP804ImmutablePublicSAM2Evidence806=async()=>mask;
-     },{actorBrowser:name,pngBase64:originalPNG.toString('base64')});
      const sam2Button=tapReview.getByRole('button',{name:'Show archived real SAM2 research mask'});
      assert.equal(await sam2Button.isEnabled(),true);
      await sam2Button.click();
