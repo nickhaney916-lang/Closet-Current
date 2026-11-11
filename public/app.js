@@ -281,7 +281,8 @@ function cropClothingPhoto(item){
    Object.assign(item,value);
    for(const key of ['visualSignature','visualAspect','localChoices','indexedAt',
     'recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails',
-    'learningReviewedWeek','weeklySuggestion'])
+    'learningReviewedWeek','weeklySuggestion','colorSource',
+    'sourceAmbiguityAcknowledged820','sourceAmbiguityReviewProvenance820'])
     if(!(key in value))delete item[key];
    render();
   }
