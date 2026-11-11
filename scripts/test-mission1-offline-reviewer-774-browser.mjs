@@ -74,7 +74,12 @@ for(const engine of names){
      name:'synthetic-public-key-registry.json',mimeType:'application/json',
      buffer:Buffer.from(JSON.stringify(reviewerRegistry))
     });
-    const flipped=registrationWitness.signature.slice(0,-4)+'AAAA';
+    // Preserve exactly 64 Ed25519 signature bytes so failure is due to
+    // actual cryptographic verification, not malformed base64 or length.
+    const forgedBytes=Buffer.from(registrationWitness.signature,'base64');
+    assert.equal(forgedBytes.length,64);
+    forgedBytes[17]^=1;
+    const flipped=forgedBytes.toString('base64');
     await page.locator('#registrationWitness812').setInputFiles({
      name:'invalid-synthetic-coordinator-witness.json',mimeType:'application/json',
      buffer:Buffer.from(JSON.stringify({...registrationWitness,signature:flipped}))
