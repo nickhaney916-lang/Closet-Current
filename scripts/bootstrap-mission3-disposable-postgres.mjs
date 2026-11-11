@@ -35,7 +35,8 @@ assert.equal(actualPolicies.includes('create policy closet_backup_owner'), true)
 assert.equal(actualPolicies.includes('create policy closet_photos_insert'), true);
 const sql = bootstrap
   .replace(/^\\set ON_ERROR_STOP on\r?\n/m, '')
-  .replace(/^\\i supabase\/cloud-backup\.sql\r?$/m, actualPolicies);
+  .replace(/^\\i supabase\/cloud-backup\.sql\r?$/m, () => actualPolicies);
+assert.ok(sql.includes(actualPolicies), 'SQL replacement must preserve original $ dollar-quoted function bodies');
 assert.equal(sql.includes('\\i '), false, 'Unexpanded SQL include');
 
 const db = new Client({connectionString: urlText, ssl: false,
