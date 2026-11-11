@@ -121,7 +121,7 @@ export async function verifyOriginalTap798({
  * persist a receipt or auto-confirm a saved clothing item.
  */
 export function mountOriginalTapReview798({
- host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false,enableOwnerMaskCorrection803=false,enableResearchBoxReceipt804=false,enableSAM2PublicEvidence806=false,sam2PublicEvidenceProvider806=null
+ host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false,enableOwnerMaskCorrection803=false,enableResearchBoxReceipt804=false,enableSAM2PublicEvidence806=false,sam2PublicEvidenceProvider806=null,enableSAM2PublicCorrection808=false
 }={}){
  if(!host||typeof host.prepend!=='function'||!item||
     typeof currentOwner!=='function'||typeof isActive!=='function'||
@@ -332,7 +332,10 @@ export function mountOriginalTapReview798({
    canvas.style.cssText='display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
    interactive.append(canvas);
    let epoch=0,busy=false;
+   let currentSAM2808=null,brushMode808=null;
+   let refreshSAM2808=()=>{},resetBrush808=()=>{};
    resetSAM2806=()=>{
+    resetBrush808();currentSAM2808=null;
     epoch++;canvas.style.display='none';canvas.width=0;canvas.height=0;
     canvas.dataset.mission1Sam2Overlay806='none';discard.disabled=true;
     note.textContent='Archived SAM2 preview discarded. Original private wardrobe unchanged.';
@@ -389,6 +392,11 @@ export function mountOriginalTapReview798({
      if(selectedPixels<3||selectedPixels>=w*h)throw Error('Archive mask unsuitable for visual review');
      if(!live()||epoch!==run||boxInput!==selectedBox800||pointInput!==selected)return;
      ctx.putImageData(picture,0,0);
+     if(enableSAM2PublicCorrection808===true){
+      currentSAM2808={schema:'closet-current-m1-public-original-sam2-manual-808/transient/v1',
+       evidence:result,width:w,height:h,overlay:new Uint8ClampedArray(picture.data),
+       selectedPixels,manualEditCount:0};
+     }
      canvas.dataset.mission1Sam2Overlay806='real-p804-prediction-unverified';
      canvas.style.display='block';discard.disabled=false;
      note.textContent='REAL P804 SAM2 ONNX binary mask REPLAYED from public photo. '+
@@ -399,9 +407,102 @@ export function mountOriginalTapReview798({
       resetSAM2806();
       note.textContent='Archived SAM2 public-photo preview unavailable or invalid. No clothing saved or changed.';
      }
-    }finally{busy=false;refreshSAM2806();}
+    }finally{busy=false;refreshSAM2806();refreshSAM2808();}
    };
    root.append(show,discard,note);
+   // P808 optional source-private manual corrections of actual archived SAM2
+   // pixels. No model confidence promotion, owner mask approval or saving.
+   if(enableSAM2PublicCorrection808===true){
+    root.dataset.mission1Sam2ManualCorrection808='unverified-archived-mask-brush-no-save';
+    const make=(label,aria)=>{
+     const b=document.createElement('button');b.type='button';b.className='secondary';
+     b.textContent=label;b.setAttribute('aria-label',aria);b.disabled=true;return b;
+    };
+    const addButton=make('Add model mask pixels','Add pixels to archived SAM2 mask');
+    const eraseButton=make('Erase model mask pixels','Erase pixels from archived SAM2 mask');
+    const finish=make('Finish model correction','Finish archived SAM2 mask correction');
+    const text=document.createElement('p');text.className='fine';
+    text.dataset.mission1Sam2CorrectionStatus808='unverified';
+    text.setAttribute('role','status');text.setAttribute('aria-live','polite');
+    text.textContent='No real model mask corrections; public research only.';
+    let editBusy=false;
+    const restorePhoto=()=>{
+     interactive.setAttribute('aria-label','Tap original photograph to select garment point');
+     if(selected){
+      marker.style.left=(selected.normalizedX*100)+'%';
+      marker.style.top=(selected.normalizedY*100)+'%';
+      marker.style.display='block';
+     }
+    };
+    resetBrush808=()=>{
+     brushMode808=null;editBusy=false;
+     addButton.disabled=true;eraseButton.disabled=true;finish.disabled=true;
+     text.textContent='No corrected SAM2 mask retained or approved. Original JPEG unchanged.';
+     if(!boxMode)restorePhoto();
+    };
+    refreshSAM2808=()=>{
+     const active=!!currentSAM2808&&!busy&&live();
+     addButton.disabled=!active;eraseButton.disabled=!active;
+     if(!active)finish.disabled=true;
+    };
+    const choose=mode=>{
+     if(!live()||!currentSAM2808||busy)return;
+     brushMode808=mode;finish.disabled=false;
+     interactive.setAttribute('aria-label','Refine archived SAM2 original mask');
+     text.textContent='Manual '+mode+' brush on real archived model pixels. NOT a verified or saved cutout.';
+    };
+    addButton.onclick=()=>choose('add');
+    eraseButton.onclick=()=>choose('erase');
+    finish.onclick=()=>{
+     brushMode808=null;finish.disabled=true;restorePhoto();
+     text.textContent='Corrected real model preview remains UNVERIFIED and NOT saved.';
+    };
+    async function paint808(u,v){
+     if(editBusy||!brushMode808||!live()||!currentSAM2808||!selectedBox800||!selected)return;
+     editBusy=true;
+     const present=currentSAM2808,run=epoch,boxInput=selectedBox800,pointInput=selected,mode=brushMode808;
+     try{
+      const {correctPublicSAM2Overlay808}=await import('./mission1-public-sam2-mask-brush-808.mjs');
+      if(!live()||run!==epoch||present!==currentSAM2808||
+         boxInput!==selectedBox800||pointInput!==selected||brushMode808!==mode)return;
+      const x=Math.min(present.width-1,Math.max(0,Math.floor(u*present.width)));
+      const y=Math.min(present.height-1,Math.max(0,Math.floor(v*present.height)));
+      const next=correctPublicSAM2Overlay808({state:present,box:boxInput,point:pointInput,x,y,mode});
+      if(!live()||run!==epoch||boxInput!==selectedBox800||pointInput!==selected)return;
+      const cx=canvas.getContext('2d');if(!cx)throw Error('SAM2 preview canvas unavailable');
+      const out=cx.createImageData(next.width,next.height);out.data.set(next.overlay);
+      cx.putImageData(out,0,0);
+      currentSAM2808=next;
+      text.textContent='Manual '+mode+' on real SAM2 source prediction '+next.manualEditCount+
+       ': '+next.lastEditChangedPixels+' thumbnail pixels changed. NOT human-verified, NOT saved.';
+     }catch{
+      if(live()&&run===epoch)text.textContent='SAM2 mask brush rejected or no change. Original photograph unchanged.';
+     }finally{editBusy=false;}
+    }
+    interactive.addEventListener('click',event=>{
+     if(!brushMode808)return;
+     event.preventDefault();event.stopImmediatePropagation();
+     if(!live())return;
+     const r=photo.getBoundingClientRect();
+     const u=(event.clientX-r.left)/r.width,v=(event.clientY-r.top)/r.height;
+     if(u>=0&&v>=0&&u<=1&&v<=1)void paint808(u,v);
+    },true);
+    interactive.addEventListener('keydown',event=>{
+     if(!brushMode808||!live())return;
+     const movement={ArrowLeft:[-.02,0],ArrowRight:[.02,0],ArrowUp:[0,-.02],ArrowDown:[0,.02]};
+     const d=movement[event.key];
+     if(d){
+      event.preventDefault();event.stopImmediatePropagation();
+      keyboardCursorX800=Math.max(.01,Math.min(.99,keyboardCursorX800+d[0]));
+      keyboardCursorY800=Math.max(.01,Math.min(.99,keyboardCursorY800+d[1]));
+      cursor();
+     }else if(event.key==='Enter'||event.key===' '){
+      event.preventDefault();event.stopImmediatePropagation();
+      void paint808(keyboardCursorX800,keyboardCursorY800);
+     }
+    },true);
+    root.append(addButton,eraseButton,finish,text);
+   }
   }
   // P802: an opt-in, on-device, resource-bounded COLOR-CONNECTED preview.
   // This is emphatically NOT SAM2 or a trustworthy independent mask.
