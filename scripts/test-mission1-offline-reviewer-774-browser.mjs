@@ -195,6 +195,19 @@ for(const engine of names){
     hashes.push({engine,width:screenWidth,sha256:sha(await readFile(tamperedPath)),
      syntheticOnly:true,kind:'tampered-seal-rejected'});
     console.log('P811_TAMPERED_SEAL_SHA_REJECTED_BEFORE_OFFLINE_REVIEW',engine,screenWidth);
+    // Even a re-computed valid checksum cannot authorize an image that
+    // violates the signer adapter's minimum 32x32 source-pixel bounds.
+    const undersizedBody={...sealBody,photos:[{...seal.photos[0],width:31}]};
+    const undersizedSeal={...undersizedBody,sealSHA256:sha(Buffer.from(canonical(undersizedBody)))};
+    await page.locator('#cohort').setInputFiles({
+     name:'undersized-original-seal.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify(undersizedSeal))
+    });
+    await page.waitForFunction(()=>document.getElementById('status')?.textContent?.
+     includes('Invalid or duplicated registered original JPEG identity'));
+    assert.equal(await page.locator('#original').isDisabled(),true);
+    assert.equal(await page.locator('#export').isDisabled(),true);
+    console.log('P811_VALID_CHECKSUM_BUT_INVALID_SIGNER_SOURCE_DIMENSIONS_REJECTED',engine,screenWidth);
     console.log('P809_HUMAN_OUTER_MINUS_HOLE_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
      screenshot,sha(rendered));
    }finally{await context.close();}
