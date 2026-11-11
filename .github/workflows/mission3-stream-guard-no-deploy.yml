@@ -178,22 +178,53 @@ jobs:
           node -e "const x=require('./benchmark/mission3-native-signed-postgres-browser/results.json');if(x.cases.length!==6||x.errors.length||!x.claims.realPostgresRLS||x.claims.supabaseHostedAuth||x.claims.supabaseHostedStorage||x.cases.some(c=>!c.realPostgresStorageRLS||!c.realSQLBackupAndRestore||c.hostedProject||c.axeViolations))process.exit(1)"
           echo "PASS: actual native app + local signed RSA + unchanged PostgreSQL RLS; hosted Supabase Auth and Storage NOT certified."
           echo "FAMILY ALPHA HOLD #255: NO DEPLOY."
-      - name: Upload synthetic-only owner snapshot race, SQL and mobile evidence
+      - name: Assert synthetic browser evidence exists for all 12 unchanged suites
+        if: always()
+        run: |
+          set -eu
+          for folder in \
+            mission3-stale-413-capacity-browser \
+            mission3-stale-integrity-revision-browser \
+            mission3-malformed-cloud-success-browser \
+            mission3-bounded-private-json-browser \
+            mission3-final-local-photo-validation \
+            mission3-final-high-res-memory \
+            mission3-final-bounded-jpeg \
+            mission3-stale-upload-revision-browser \
+            mission3-stale-upload-remote-repair \
+            mission3-stale-upload-owner-photo-refs \
+            native-canonical-closet-style-167 \
+            mission3-native-signed-postgres-browser; do
+            test -s "benchmark/$folder/results.json"
+          done
+          echo 'PASS: all 12 nonempty synthetic browser result receipts exist.'
+      - name: Upload synthetic snapshot and cloud-recovery browser evidence A
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: mission3-native-stream-guard-owner-rls-evidence-HOLD
+          name: mission3-stream-guard-cloud-recovery-A-HOLD
           path: |
             benchmark/mission3-stale-413-capacity-browser/
             benchmark/mission3-stale-integrity-revision-browser/
             benchmark/mission3-malformed-cloud-success-browser/
             benchmark/mission3-bounded-private-json-browser/
+            benchmark/mission3-stale-upload-revision-browser/
+            benchmark/mission3-stale-upload-remote-repair/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
+      - name: Upload synthetic mobile-memory and private-RLS browser evidence B
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-stream-guard-mobile-rls-B-HOLD
+          path: |
             benchmark/mission3-final-local-photo-validation/
             benchmark/mission3-final-high-res-memory/
             benchmark/mission3-final-bounded-jpeg/
-            benchmark/mission3-stale-upload-revision-browser/
-            benchmark/mission3-stale-upload-remote-repair/
             benchmark/mission3-stale-upload-owner-photo-refs/
             benchmark/native-canonical-closet-style-167/
             benchmark/mission3-native-signed-postgres-browser/
+          if-no-files-found: error
+          compression-level: 0
           retention-days: 14
