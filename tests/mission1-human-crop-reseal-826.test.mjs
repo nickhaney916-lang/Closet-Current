@@ -7,6 +7,7 @@ import sharp from 'sharp';
 import 'fake-indexeddb/auto';
 import * as captureProof from '../public/native-canonical-photo-source-167.mjs';
 import {commitHumanReviewedPhoto119} from '../public/native-reviewed-private-save-167.mjs';
+import {commitHumanReviewedPhoto119 as researchWriter} from '../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs';
 
 const app=readFileSync('public/app.js','utf8');
 const a=app.indexOf('function cropClothingPhoto(item){'),b=app.indexOf('function cropButton(item)',a);
@@ -72,7 +73,8 @@ async function ownerCaptureHarness(){
  assert.ok(editor?.save&&editor?.requireOwnerSingleGarment826);
  return {db,record,c,ownerId,editor,counts:()=>({qualityCalls,renders})};
 }
-test('P826 actual native owner-crop rehashes a real source JPEG crop and PHOTO119 atomically saves only after a second manual review',async()=>{
+for(const [writerName,write] of [['native',commitHumanReviewedPhoto119],['research',researchWriter]]){
+test('P826 '+writerName+' real owner JPEG crop flows to PHOTO119 only after a separate reviewed label',async()=>{
  const h=await ownerCaptureHarness();
  try{
   const meta=await sharp(bytes).metadata();
@@ -99,6 +101,7 @@ test('P826 actual native owner-crop rehashes a real source JPEG crop and PHOTO11
   assert.equal(current.batch[0].originalPhoto.image,original);
   assert.equal(current.batch[0].category,'Uncategorized');
   assert.equal(current.batch[0].itemType,'Unknown');
+  assert.equal(current.batch[0].requiresOwnershipConfirmation,true,'private draft still requires final owner confirmation');
   assert.equal(current.batch[0].color,'');
   assert.equal(current.batch[0].sourceAmbiguityAcknowledged820,undefined);
   assert.equal(h.counts().qualityCalls,1);
@@ -106,7 +109,7 @@ test('P826 actual native owner-crop rehashes a real source JPEG crop and PHOTO11
    category:'Bottoms',itemType:'Jeans',color:'Navy',
    singleGarmentConfirmed:false,instanceConfirmed:true,
    cutoutSHA256:h.record.segmentHint.cutoutSHA256};
-  const result=await commitHumanReviewedPhoto119({
+  const result=await write({
    db:h.db,ownerId:h.ownerId,currentOwner:()=>h.ownerId,
    record:h.record,review:reviewed,cryptoProvider:webcrypto,
    assertLease:()=>true
@@ -121,10 +124,11 @@ test('P826 actual native owner-crop rehashes a real source JPEG crop and PHOTO11
   assert.equal(saved.itemType,'Jeans');
   assert.equal(saved.color,'Navy');
   assert.equal(saved.reviewProvenance,'explicit-owner-claim-not-independent-review-evidence');
+  assert.equal(saved.requiresOwnershipConfirmation,false,'only PHOTO119 completed review clears the temporary draft gate');
   assert.equal((await get(h.db,'state','draft')).batch.length,0,
    'atomic reviewed writer retires only reviewed source draft');
  }finally{h.db.close();}
-});
+});}
 test('P826 revoked original SHA or unchecked one-garment claim never saves new crop draft',async()=>{
  const h=await ownerCaptureHarness();
  try{
