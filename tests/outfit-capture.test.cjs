@@ -6,10 +6,20 @@ function setup({workerFails=false,saveFails=false}={}){
  vm.createContext(c);vm.runInContext(source,c);return {c,el,timers,advance:n=>now+=n,emit:data=>c.worker.onmessage({data:{id:c.worker.request.id,...data}})};
 }
 test('automatically cropped pieces enter indexing separately with original photos retained',async()=>{
- const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint,recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},colorEstimate:{color:'Blue'}}});h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',hint}});h.emit({type:'done',count:2});assert.equal(h.c.batch.length,2);assert.equal(h.c.busy,false);assert.equal(h.c.worker.stopped,true);assert.ok(h.c.batch.every(x=>!x.requiresOwnershipConfirmation));assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');assert.match(h.el('outfitSaveStatus').textContent,/save automatically/);
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');const hint={categories:['Tops'],types:[],clipped:false};h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint,recognitionPhoto:{image:'data:image/jpeg;base64,ABCD'},colorEstimate:{color:'Blue'}}});h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AACC',hint}});assert.equal(h.c.batch.length,0,'no visible source piece until count-complete done');h.emit({type:'done',count:2});assert.equal(h.c.batch.length,2);assert.equal(h.c.busy,false);assert.equal(h.c.worker.stopped,true);assert.ok(h.c.batch.every(x=>!x.requiresOwnershipConfirmation));assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,AAAA');assert.equal(h.c.batch[0].recognitionPhoto.image,'data:image/jpeg;base64,ABCD');assert.match(h.el('outfitSaveStatus').textContent,/save automatically/);
 });
-test('partial failure keeps emitted photos, offers retry and does not invent owned clothing',()=>{
- const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint:{categories:['Bottoms'],types:[],clipped:false}}});h.emit({type:'error'});assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.c.busy,false);assert.equal(h.timers.size,0);
+test('P815: worker failure after receiving valid first piece never queues a partial outfit',()=>{
+ const h=setup();h.c.items.push({id:'saved-owner-piece',outfitSourceId:'older-source',category:'Tops'});
+ h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',
+  hint:{categories:['Bottoms'],types:[],clipped:false}}});
+ assert.equal(h.c.batch.length,0);
+ h.emit({type:'error'});
+ assert.equal(h.c.batch.length,0,'no incomplete current photo is accepted');
+ assert.equal(h.c.items.length,1,'already saved private garment not removed');
+ assert.equal(h.el('outfitRetry').hidden,false);
+ assert.equal(h.c.busy,false);assert.equal(h.timers.size,0);
+ assert.match(h.el('outfitSplitStatus').textContent,/No new pieces from this photo/);
 });
 test('worker constructor failure restores controls rather than trapping capture',()=>{
  const h=setup({workerFails:true});h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');assert.equal(h.c.busy,false);assert.equal(h.c.controlsDisabled,false);assert.equal(h.el('outfitRetry').hidden,false);assert.equal(h.timers.size,0);
@@ -40,4 +50,35 @@ test('100 simulated full-outfit camera captures keep cutouts distinct and queue 
  }
  assert.equal(total,250);
  assert.equal(new Set(h.c.batch.map(x=>x.image)).size,250);
+});
+
+test('P815: count mismatch rejects a superficially successful but incomplete worker batch',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ const good={image:'data:image/jpeg;base64,AABB',hint:{categories:['Tops'],types:[]}};
+ h.emit({type:'piece',piece:good});
+ h.emit({type:'done',count:2});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.busy,false);
+ assert.equal(h.el('outfitRetry').hidden,false);
+ assert.match(h.el('outfitSplitStatus').textContent,/incomplete group/);
+});
+test('P815: malformed second crop rejects entire batch, even when first source image was valid',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ const hint={categories:['Bottoms'],types:[]};
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',hint}});
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,@@@@',hint}});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.busy,false);
+ assert.equal(h.el('outfitRetry').hidden,false);
+});
+test('P815: an interrupted photo run does not enqueue its uncommitted earlier region',()=>{
+ const h=setup();h.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,AABB',
+  hint:{categories:['Tops'],types:[]}}});
+ assert.equal(h.c.batch.length,0);
+ [...h.timers.values()][0].fn();
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.busy,false);
 });
