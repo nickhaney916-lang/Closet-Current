@@ -1,0 +1,88 @@
+name: Mission 1 P829 private single-item recognition readout — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-single-garment-blind-trial-readout-829-HOLD]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p829-private-trial-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-main-native-full-suite-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact main checkpoint and seven approved research-only paths
+        run: |
+          set -euo pipefail
+          BASE=8c3355350303399e9edc2e98beaf9de15d601282
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p829-paths
+          cat /tmp/p829-paths
+          test "$(wc -l < /tmp/p829-paths)" -eq 7
+          while IFS= read -r p; do
+            case "$p" in
+              public/phone-photo-check.html|public/phone-photo-check.mjs|public/phone-photo-benchmark.mjs|tests/phone-photo-benchmark.test.mjs|scripts/run-phone-photo-check.mjs|research/mission1-single-garment-blind-trial-readout-829/REPORT.md|.github/workflows/mission1-single-garment-blind-trial-829-no-deploy.yml) ;;
+              *) echo "UNAPPROVED DEPLOY / CLOUD / MODEL CHANGE: $p"; exit 1 ;;
+            esac
+          done < /tmp/p829-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/local-worker.mjs public/recognition-engine.mjs)"
+          grep -Fq 'Family Alpha HOLD #255' research/mission1-single-garment-blind-trial-readout-829/REPORT.md
+          echo M1_P829_FROZEN_MAIN_LIMITED_TRIAL_READOUT_NO_DEPLOY
+      - name: Install isolated Node test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Native build, adversarial verdicts, all Node regressions
+        run: |
+          set -euo pipefail
+          node --check public/phone-photo-check.mjs
+          node --check public/phone-photo-benchmark.mjs
+          node --test tests/phone-photo-benchmark.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  genuine-worker-phone-readout-no-save:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned isolated browser and reproducible SHA-locked real publisher photos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
+      - name: Run REAL local recognition worker, blind labels and honest verdicts on touch viewport
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/run-phone-photo-check.mjs benchmark/phone-photo-flow-${{ matrix.browser }} ${{ matrix.browser }}
+      - name: Upload only sanitized JSON results — never the publisher photo files or screenshots
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mission1-P829-private-trial-${{ matrix.browser }}-NUMERIC-ONLY-NO-RELEASE
+          path: |
+            benchmark/phone-photo-flow-${{ matrix.browser }}/results.json
+            benchmark/phone-photo-flow-${{ matrix.browser }}/summary.json
+          retention-days: 14
+          if-no-files-found: error
