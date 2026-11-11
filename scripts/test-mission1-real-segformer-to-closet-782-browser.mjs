@@ -214,7 +214,7 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research&mission1OwnerMaskCorrection803=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research&mission1OwnerMaskCorrection803=research&mission1BrowserBoxSam804=research',
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -342,6 +342,18 @@ try{
     await page.mouse.click(secondBox.x+secondBox.width*.83,secondBox.y+secondBox.height*.88);
     await page.waitForFunction(()=>document.querySelector(
      '[data-mission1-owner-box-outline-800="selected"]')!==null,null,{timeout:20000});
+    // P804: capture the actual P800 browser gesture source rectangle, NOT a
+    // box mathematically derived from a publisher polygon/ground-truth mask.
+    const actualGestureBox804=(await tapReview.getAttribute('data-mission1-source-rect804'))?.split(',').map(Number);
+    assert.equal(actualGestureBox804?.length,4,'P804 native original-source box receipt emitted only with test opt-in');
+    assert.ok(actualGestureBox804.every(Number.isInteger));
+    const actualOriginalDims804=await imgOriginal.evaluate(img=>[img.naturalWidth,img.naturalHeight]);
+    const liveOriginalDims804=await page.evaluate(()=>[batch[0].originalPhoto.width,batch[0].originalPhoto.height]);
+    assert.deepEqual(actualOriginalDims804,liveOriginalDims804,'P804 actual decoded ORIGINAL JPEG dimensions, not a fabricated test fixture');
+    assert.ok(actualOriginalDims804.every(v=>Number.isInteger(v)&&v>=8&&v<=3072));
+    assert.ok(actualGestureBox804[0]>=0&&actualGestureBox804[1]>=0&&
+      actualGestureBox804[2]<=actualOriginalDims804[0]&&
+      actualGestureBox804[3]<=actualOriginalDims804[1]);
     const noMaskOrSave=await page.evaluate(async()=>{
      await writes;
      const draftSaved=await readDraft();
@@ -374,6 +386,20 @@ try{
     await page.waitForFunction(()=>document.querySelector('[data-mission1-owner-point-marker798="selected"]')!==null,
      null,{timeout:20000});
     assert.equal(await localRegionButton.isEnabled(),true);
+    const actualGesturePoint804=(await tapReview.getAttribute('data-mission1-source-point804'))?.split(',').map(Number);
+    assert.equal(actualGesturePoint804?.length,2,'P804 actual source seed came from the native original JPEG point');
+    assert.ok(actualGesturePoint804.every(Number.isInteger));
+    assert.ok(actualGesturePoint804[0]>=actualGestureBox804[0]&&actualGesturePoint804[0]<actualGestureBox804[2]);
+    assert.ok(actualGesturePoint804[1]>=actualGestureBox804[1]&&actualGesturePoint804[1]<actualGestureBox804[3]);
+    const actualNativePrompt804={
+      schema:'closet-current-m1-original-native-gesture-sam2-research-804/v1',
+      sourceId:'commons-0053',sourceSHA256,
+      originalWidth:actualOriginalDims804[0],originalHeight:actualOriginalDims804[1],
+      originalPixelBox:actualGestureBox804,originalPixelPositivePoint:actualGesturePoint804,
+      actualOriginalGestureInNativeAdjust:true,automatedPlaywrightFixture:true,
+      publisherPolygonNotUsedToConstructPrompt:true,independentHumanDrawnBox:false,
+      ownerApprovedMask:false,privateOwnerPhoto:false,autoSaveAllowed:false
+    };
     await localRegionButton.click();
     await page.waitForFunction(()=>/Local original-pixel COLOR region:/.test(
      document.querySelector('[data-mission1-local-mask-status802="review-only"]')?.textContent||''
@@ -560,7 +586,8 @@ try{
     assert.equal(await page.evaluate(()=>batch.length),0);
     const noOverflow=await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
     assert.equal(noOverflow,true);
-    results.push({browser:name,width,realAppPage:true,actualPhotoUploadInput:true,
+    results.push({browser:name,width,sourcePromptForActualSAM2804:actualNativePrompt804,
+     realAppPage:true,actualPhotoUploadInput:true,
      actualUnmodifiedPinnedSegformerWorkerExecuted:true,
      realModelOriginalSHA256:realSegmentation.sourceSHA256,
      actualModelRevision:realSegmentation.modelRevision,
