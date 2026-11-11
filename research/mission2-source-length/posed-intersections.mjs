@@ -265,3 +265,43 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
   collisionCertified:false,fullSelfLayerCollision:false
  });
 }
+
+
+/**
+ * P2-C5: privacy-safe *counts* from exact source-face body/garment contacts.
+ * No owner IDs, garment photos, body vertex coordinates, source RGB or masks.
+ * Body mesh order is only diagnostic within the same sampled donor scene.
+ * A contact means surface triangles intersect/touch, NOT signed penetration.
+ */
+export function summarizePosedBodyContactDistribution(evidence,garmentMeshCount){
+ if(!Number.isSafeInteger(garmentMeshCount)||garmentMeshCount<1||garmentMeshCount>128||
+   !Array.isArray(evidence?.triangleContactKeys)||
+   !Number.isSafeInteger(evidence?.triangleContactCount)||
+   evidence.triangleContactCount<0||
+   evidence.triangleContactKeys.length!==evidence.triangleContactCount||
+   new Set(evidence.triangleContactKeys).size!==evidence.triangleContactCount)
+  throw Error('M2 attribution complete bounded original-face evidence required');
+ const garmentCounts=Array(garmentMeshCount).fill(0),bodyCounts=new Map();
+ for(const key of evidence.triangleContactKeys){
+  if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+   throw Error('M2 attribution canonical original-face contact keys required');
+  const [g,b,garmentFace,bodyFace]=key.split(':').map(Number);
+  if(![g,b,garmentFace,bodyFace].every(Number.isSafeInteger)||g>=garmentMeshCount||
+     b>4095||garmentFace>10000000||bodyFace>10000000)
+   throw Error('M2 attribution bounded source-face indices required');
+  garmentCounts[g]++;
+  bodyCounts.set(b,(bodyCounts.get(b)||0)+1);
+ }
+ if(garmentCounts.reduce((a,v)=>a+v,0)!==evidence.triangleContactCount)
+  throw Error('M2 attribution incomplete contact tally');
+ const byBodyMesh=[...bodyCounts].sort((a,b)=>b[1]-a[1]||a[0]-b[0])
+  .map(([meshIndex,contacts])=>Object.freeze({meshIndex,contacts}));
+ return Object.freeze({
+  total:evidence.triangleContactCount,
+  byGarmentMesh:Object.freeze(garmentCounts),
+  byBodyMesh:Object.freeze(byBodyMesh),
+  sourceFaceIdentity:true,originalPhotoUnchanged:true,
+  sampledPoseOnly:true,signedPenetrationVerified:false,
+  collisionCertified:false,releaseAuthorized:false
+ });
+}

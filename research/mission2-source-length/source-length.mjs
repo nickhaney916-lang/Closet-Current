@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,summarizePosedBodyContactDistribution} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -23,6 +23,39 @@ export function deriveSourceLength({profile,minY,maxY,spanX}={}){
   observedPhotoAspect:profile.silhouetteAspect,sourceProportionLength:observedLength,
   boundedTargetLength:targetLength,absoluteSizeMeasured:false});
 }
+
+/** P2-C5: expose only fixed safety-reason tags, never photos or private IDs. */
+export function classifySourceLengthContactAttempt(v){
+ const required=[
+  'sourceLengthNewTriangleContacts','sourceLengthTriangleContactBefore','sourceLengthTriangleContactAfter',
+  'sourceLengthNewGarmentPartContacts','sourceLengthGarmentPartContactsBefore','sourceLengthGarmentPartContactsAfter',
+  'sourceLengthNewIntrapanelContacts','sourceLengthIntrapanelContactsBefore','sourceLengthIntrapanelContactsAfter',
+  'sourceLengthOldHemY','sourceLengthNewHemY'
+ ];
+ if(!v||required.some(k=>!Number.isFinite(v[k]))||
+    required.slice(0,9).some(k=>!Number.isSafeInteger(v[k])||v[k]<0))
+  return Object.freeze({accepted:false,reason:'missing-contact-evidence',reasons:Object.freeze(['missing-contact-evidence'])});
+ const problems=[];
+ if(v.sourceLengthNewTriangleContacts>0)problems.push('new-body-contacts');
+ if(v.sourceLengthTriangleContactAfter>v.sourceLengthTriangleContactBefore)problems.push('body-contact-count-regression');
+ if(v.sourceLengthNewGarmentPartContacts>0)problems.push('new-panel-contacts');
+ if(v.sourceLengthGarmentPartContactsAfter>v.sourceLengthGarmentPartContactsBefore)problems.push('panel-contact-count-regression');
+ if(v.sourceLengthNewIntrapanelContacts>0)problems.push('new-intrapanel-contacts');
+ if(v.sourceLengthIntrapanelContactsAfter>v.sourceLengthIntrapanelContactsBefore)problems.push('intrapanel-count-regression');
+ if(!(v.sourceLengthNewHemY<v.sourceLengthOldHemY-.07))problems.push('hem-extension-under-minimum');
+ return Object.freeze({accepted:problems.length===0,reason:problems[0]||'eligible',
+  reasons:Object.freeze(problems)});
+}
+const classifyCandidateException=e=>{
+ const message=String(e?.message||'');
+ if(message.includes('new posed body intersection pairs'))return 'coarse-body-pair-regression';
+ if(message.includes('bounded contact budget')||message.includes('triangle comparison budget'))return 'contact-audit-budget';
+ if(message.includes('new posed body triangle contacts'))return 'new-body-contacts';
+ if(message.includes('new posed garment part triangle contacts'))return 'new-panel-contacts';
+ if(message.includes('new posed intrapanel self-intersections'))return 'new-intrapanel-contacts';
+ return 'candidate-preflight-unavailable';
+};
+
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
  strictTriangleContacts=false,traceGarmentPartContacts=false,strictGarmentPartContacts=false,traceSelfContacts=false,strictSelfContacts=false,extensionScale=1,previewOnly=false}={}){
  if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
@@ -74,9 +107,10 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
  try{before=audit.measure(targets);after=audit.measure(targets,new Map(staged.map(r=>[r.mesh,r.next])));}
  finally{audit.dispose();}
  if(after.intersectingPairs>before.intersectingPairs)fail('new posed body intersection pairs '+before.intersectingPairs+' -> '+after.intersectingPairs);
- let triangleEvidence=null;
+ let triangleEvidence=null,bodyContactDistribution=null;
  if(traceTriangleContacts){
   const baseline=measurePosedTriangleContacts(root,targets);
+  bodyContactDistribution=summarizePosedBodyContactDistribution(baseline,targets.length);
   const proposed=measurePosedTriangleContacts(root,targets,new Map(staged.map(r=>[r.mesh,r.next])));
   triangleEvidence=comparePosedTriangleContacts(baseline,proposed);
   if(strictTriangleContacts&&!triangleEvidence.nonregression)
@@ -114,6 +148,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   sourceLengthRestPoseOnly:true,sourceLengthTriangleContactAudit:triangleEvidence!==null,sourceLengthTriangleContactStrictlyAccepted:triangleEvidence!==null&&strictTriangleContacts&&triangleEvidence.nonregression,
   sourceLengthTriangleContactBefore:triangleEvidence?.before??null,sourceLengthTriangleContactAfter:triangleEvidence?.after??null,
   sourceLengthNewTriangleContacts:triangleEvidence?.newlyIntersecting??null,
+  sourceLengthBodyContactDistribution:bodyContactDistribution,
   sourceLengthGarmentPartContactAudit:garmentPartEvidence!==null,
   sourceLengthGarmentPartContactStrictlyAccepted:garmentPartEvidence!==null&&strictGarmentPartContacts&&garmentPartEvidence.nonregression,
   sourceLengthGarmentPartContactsBefore:garmentPartEvidence?.before??null,
@@ -144,14 +179,10 @@ export function planNoNewContactSourceLength(shirt,root,profile){
    const result=fitSourceLength(shirt,root,profile,{
     traceTriangleContacts:true,traceGarmentPartContacts:true,traceSelfContacts:true,extensionScale:scale,previewOnly:true});
    const v=result.stats;
-   const accepted=v.sourceLengthNewTriangleContacts===0&&
-    v.sourceLengthTriangleContactAfter<=v.sourceLengthTriangleContactBefore&&
-    v.sourceLengthNewGarmentPartContacts===0&&
-    v.sourceLengthGarmentPartContactsAfter<=v.sourceLengthGarmentPartContactsBefore&&
-    v.sourceLengthNewIntrapanelContacts===0&&
-    v.sourceLengthIntrapanelContactsAfter<=v.sourceLengthIntrapanelContactsBefore&&
-    v.sourceLengthNewHemY<v.sourceLengthOldHemY-.07;
-   attempts.push(Object.freeze({scale,accepted,
+   const classification=classifySourceLengthContactAttempt(v);
+   const accepted=classification.accepted;
+   attempts.push(Object.freeze({scale,accepted,reason:classification.reason,
+    reasons:classification.reasons,
     newlyIntersecting:v.sourceLengthNewTriangleContacts,
     newlyIntersectingGarmentParts:v.sourceLengthNewGarmentPartContacts,
     newlyIntersectingIntrapanel:v.sourceLengthNewIntrapanelContacts,
@@ -162,19 +193,20 @@ export function planNoNewContactSourceLength(shirt,root,profile){
     sourceSHA256:v.sourceLengthSHA256}));
    if(accepted)break;
   }catch(e){
-   attempts.push(Object.freeze({scale,accepted:false,error:String(e.message||e)}));
+   attempts.push(Object.freeze({scale,accepted:false,reason:classifyCandidateException(e)}));
   }
  }
  const winner=attempts.find(a=>a.accepted);
  return Object.freeze({accepted:!!winner,selectedScale:winner?.scale??null,
-  attempts:Object.freeze(attempts),noNewContactAtOnePose:!!winner,
+  attempts:Object.freeze(attempts),refusalReason:winner?null:(attempts.at(-1)?.reason||'candidate-preflight-unavailable'),
+  noNewContactAtOnePose:!!winner,
   existingIntersectionsUnresolved:true,
   originalPhotographOnly:!winner,releaseAuthorized:false});
 }
 export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
  const decision=planNoNewContactSourceLength(shirt,root,profile);
  if(!decision.accepted)
-  fail('new-body-triangle-contacts: original-photo/2D fallback required; no garment geometry committed (body, garment part or intrapanel)');
+  fail('adaptive-geometry-refused['+decision.refusalReason+']: original-photo/2D fallback required; no garment geometry committed (body, garment part or intrapanel)');
  const result=fitSourceLength(shirt,root,profile,{
   projectSourceRGB,traceTriangleContacts:true,strictTriangleContacts:true,
   traceGarmentPartContacts:true,strictGarmentPartContacts:true,

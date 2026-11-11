@@ -8,6 +8,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-contact-constrained-source-20261110-HOLD
     - research/mission2-garment-part-contact-20261110-HOLD
     - research/mission2-self-contact-20261110-HOLD
+    - research/mission2-adaptive-attribution-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -111,8 +112,8 @@ jobs:
         \ b=readFileSync(prefix+s.name);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);assert.equal(b.readUInt32BE(16),s.width);count++;}\n\
         \ if(stage==='after'){\n  assert.equal(r.sourceLengthMode,true);assert.equal(r.sourceProjectionMode,true);assert.equal(r.sourceLengthEvidence.length,6);assert.equal(r.performanceSamples.length,6);\n\
         \  for(const width of [320,390,430])assert.deepEqual(r.sourceLengthEvidence.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);\n\
-        \  for(const e of r.sourceLengthEvidence){assert.ok(e.movedVertices>=100);assert.ok(e.newHemY<e.oldHemY-.07);assert.ok(e.newHemY>=.55);assert.ok(e.intersectionPairsAfter<=e.intersectionPairsBefore);assert.ok(e.testedPairs>=3);assert.equal(e.collisionCertified,false);assert.equal(e.triangleAudit,true);assert.ok(Number.isInteger(e.triangleContactsBefore)&&e.triangleContactsBefore>0);assert.ok(Number.isInteger(e.triangleContactsAfter)&&e.triangleContactsAfter>=0);assert.ok(Number.isInteger(e.newTriangleContacts)&&e.newTriangleContacts>=0);assert.equal(e.sourceProjectionRGB,true);assert.ok(e.sourceProjectionCompiledMaterialCount>=1);}\n\
-        \ }\n}\nassert.equal(count,44);console.log('M2_SOURCE_LENGTH_'+engine+'_44_REAL_SHA_SCREENSHOTS_POSED_BODY_NONREGRESSION');console.log('M2_TRIANGLE_CONTACTS_'+engine+':'+JSON.stringify(JSON.parse(readFileSync(root+'after-'+engine+'/results.json','utf8')).sourceLengthEvidence.map(x=>({width:x.width,figure:x.figure,before:x.triangleContactsBefore,after:x.triangleContactsAfter,new:x.newTriangleContacts}))));\nNODE"
+        \  for(const e of r.sourceLengthEvidence){assert.ok(e.movedVertices>=100);assert.ok(e.newHemY<e.oldHemY-.07);assert.ok(e.newHemY>=.55);assert.ok(e.intersectionPairsAfter<=e.intersectionPairsBefore);assert.ok(e.testedPairs>=3);assert.equal(e.collisionCertified,false);assert.equal(e.triangleAudit,true);assert.ok(Number.isInteger(e.triangleContactsBefore)&&e.triangleContactsBefore>0);assert.ok(Number.isInteger(e.triangleContactsAfter)&&e.triangleContactsAfter>=0);assert.ok(Number.isInteger(e.newTriangleContacts)&&e.newTriangleContacts>=0);assert.equal(e.sourceProjectionRGB,true);assert.ok(e.sourceProjectionCompiledMaterialCount>=1);assert.equal(e.bodyContactDistribution?.total,e.triangleContactsBefore);assert.equal(e.bodyContactDistribution?.sourceFaceIdentity,true);assert.equal(e.bodyContactDistribution?.releaseAuthorized,false);assert.ok(Number.isInteger(e.bodyContactDistribution?.byGarmentMesh?.length)&&e.bodyContactDistribution.byGarmentMesh.length>=3&&e.bodyContactDistribution.byGarmentMesh.length<=8);assert.equal(e.bodyContactDistribution.byGarmentMesh.reduce((a,n)=>a+n,0),e.bodyContactDistribution.total);assert.equal(e.bodyContactDistribution.byBodyMesh.reduce((a,n)=>a+n.contacts,0),e.bodyContactDistribution.total);}\n\
+        \ }\n}\nassert.equal(count,44);console.log('M2_SOURCE_LENGTH_'+engine+'_44_REAL_SHA_SCREENSHOTS_POSED_BODY_NONREGRESSION');console.log('M2_TRIANGLE_CONTACTS_'+engine+':'+JSON.stringify(JSON.parse(readFileSync(root+'after-'+engine+'/results.json','utf8')).sourceLengthEvidence.map(x=>({width:x.width,figure:x.figure,before:x.triangleContactsBefore,after:x.triangleContactsAfter,new:x.newTriangleContacts}))));\nconsole.log('M2_CONTACT_ATTRIBUTION_'+engine+':'+JSON.stringify(JSON.parse(readFileSync(root+'after-'+engine+'/results.json','utf8')).sourceLengthEvidence.map(x=>({width:x.width,figure:x.figure,byGarment:x.bodyContactDistribution.byGarmentMesh,topBody:x.bodyContactDistribution.byBodyMesh.slice(0,6)}))));\nNODE"
     - name: Require genuine before/after pixels and independently distinct male/female anatomical scenes
       run: node scripts/check-mission2-visual-delta.mjs ${{ matrix.engine }}
     - name: Genuine signed-fixture owner original-photo fallback if source geometry adds triangle contacts
@@ -140,6 +141,7 @@ jobs:
         assert.equal(r.crashes.length,0);
         assert.equal(r.evidence.length,3);
         let rejected=0,accepted=0;
+        const reasonCounts={};
         for(const e of r.evidence){
          assert.equal(e.originalJPEGRetained,true);
          assert.equal(e.originalPrivateOwnerRetained,true);
@@ -148,10 +150,13 @@ jobs:
          assert.equal(e.noNewGarmentPartTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          assert.equal(e.noNewIntrapanelTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          if(e.sampledPoseAdmitted){
+          assert.equal(e.refusalReason,null);
           assert.equal(e.noNewBodyTriangleContactsIfAccepted,true);
           accepted++;
          }else{
           assert.equal(e.unsafe3DRefused,true);
+          assert.match(e.refusalReason,/^[a-z-]+$/);
+          reasonCounts[e.refusalReason]=(reasonCounts[e.refusalReason]||0)+1;
           rejected++;
          }
         }
@@ -161,7 +166,7 @@ jobs:
          assert.equal(b.readUInt32BE(16),s.width);
         }
         assert.equal(rejected+accepted,3);
-        console.log('M2_ADAPTIVE_'+engine+'_REAL_BROWSER_SAFE_OR_2D_FALLBACK',JSON.stringify({rejected,accepted,screens:6}));
+        console.log('M2_ADAPTIVE_'+engine+'_REAL_BROWSER_SAFE_OR_2D_FALLBACK',JSON.stringify({rejected,accepted,screens:6,reasons:reasonCounts}));
         NODE
     - uses: actions/upload-artifact@v4
       if: always()

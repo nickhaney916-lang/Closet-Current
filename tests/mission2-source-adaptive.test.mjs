@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength}
+import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength,classifySourceLengthContactAttempt}
  from '../research/mission2-source-length/source-length.mjs';
 
 const SHA='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -64,6 +64,9 @@ test('dry-run sampled extension scales are truly immutable before contact gate',
   assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
   assert.equal(result.stats.sourceLengthNewGarmentPartContacts,0);
   assert.equal(result.stats.sourceLengthNewIntrapanelContacts,0);
+  assert.equal(result.stats.sourceLengthBodyContactDistribution.total,result.stats.sourceLengthTriangleContactBefore);
+  assert.equal(result.stats.sourceLengthBodyContactDistribution.byGarmentMesh.reduce((a,n)=>a+n,0),result.stats.sourceLengthTriangleContactBefore);
+  assert.equal(result.stats.sourceLengthBodyContactDistribution.releaseAuthorized,false);
   assert.ok(result.stats.sourceLengthNewHemY<result.stats.sourceLengthOldHemY-.07);
   fx.assertOriginal();
  }
@@ -80,12 +83,14 @@ test('adaptive 163-bone real triangles select a reduced length, then atomically 
  assert.ok(decision.selectedScale<1,'Full extension crosses added body geometry');
  assert.ok(decision.selectedScale>=.25);
  assert.ok(decision.attempts.length>=2);
- assert.ok(decision.attempts.some(x=>x.newlyIntersecting>0||/new posed body intersection pairs/.test(x.error||'')),
+ assert.ok(decision.attempts.some(x=>x.newlyIntersecting>0||x.reason==='coarse-body-pair-regression'),
   'Reproduce a full extension rejected by either the original body-pair gate or exact triangle gate');
  assert.equal(decision.attempts.at(-1).newlyIntersecting,0);
  assert.equal(decision.attempts.at(-1).newlyIntersectingGarmentParts,0);
  assert.equal(decision.attempts.at(-1).newlyIntersectingIntrapanel,0);
  assert.equal(decision.noNewContactAtOnePose,true);
+ assert.equal(decision.refusalReason,null);
+ assert.equal(decision.attempts.at(-1).reason,'eligible');
  assert.equal(decision.existingIntersectionsUnresolved,true);
  fx.assertOriginal();
  const fitted=applyNoNewContactSourceLength(fx.shirt,fx.root,profile);
@@ -116,10 +121,13 @@ test('no acceptable extension fails closed before ANY user-photo mesh or panel m
  assert.equal(decision.originalPhotographOnly,true);
  assert.equal(decision.selectedScale,null);
  assert.equal(decision.attempts.length,4);
- assert.ok(decision.attempts.every(x=>x.accepted===false));
+ assert.ok(decision.attempts.every(x=>x.accepted===false&&typeof x.reason==='string'));
+ assert.equal(typeof decision.refusalReason,'string');
+ assert.match(decision.refusalReason,/^[a-z-]+$/);
+ assert.equal(JSON.stringify(decision).includes('native05-A'),false);
  fx.assertOriginal();
  assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile),
-  /new-body-triangle-contacts: original-photo\/2D fallback required/);
+  /adaptive-geometry-refused\[[a-z-]+\]: original-photo\/2D fallback required/);
  fx.assertOriginal();
 });
 
@@ -137,4 +145,31 @@ test('BVH source-ID remapping prevents thousands of false new self-contacts in c
  assert.equal(accepted.stats.sourceLengthCollisionCertified,false);
  assert.equal(accepted.stats.sourceLengthSelfLayerCollisionCertified,false);
  assert.equal(accepted.stats.releaseAuthorized,false);
+});
+
+
+test('adaptive refusal taxonomy rejects fake/missing contacts and separates body, panel and self causes',()=>{
+ const fx=fixture();
+ const stats=fitSourceLength(fx.shirt,fx.root,profile,{traceTriangleContacts:true,
+  traceGarmentPartContacts:true,traceSelfContacts:true,previewOnly:true}).stats;
+ const classify=changes=>classifySourceLengthContactAttempt({...stats,...changes});
+ assert.deepEqual(classify({}).reasons,[]);
+ assert.equal(classify({}).reason,'eligible');
+ assert.equal(classify({sourceLengthNewTriangleContacts:1}).reason,'new-body-contacts');
+ assert.equal(classify({sourceLengthTriangleContactAfter:stats.sourceLengthTriangleContactBefore+1}).reason,
+  'body-contact-count-regression');
+ assert.equal(classify({sourceLengthNewGarmentPartContacts:1}).reason,'new-panel-contacts');
+ assert.equal(classify({sourceLengthGarmentPartContactsAfter:stats.sourceLengthGarmentPartContactsBefore+1}).reason,
+  'panel-contact-count-regression');
+ assert.equal(classify({sourceLengthNewIntrapanelContacts:1}).reason,'new-intrapanel-contacts');
+ assert.equal(classify({sourceLengthIntrapanelContactsAfter:stats.sourceLengthIntrapanelContactsBefore+1}).reason,
+  'intrapanel-count-regression');
+ assert.equal(classify({sourceLengthNewHemY:stats.sourceLengthOldHemY}).reason,
+  'hem-extension-under-minimum');
+ for(const invalid of [null,-1,NaN,Infinity,'0']){
+  assert.equal(classify({sourceLengthNewTriangleContacts:invalid}).reason,'missing-contact-evidence');
+ }
+ assert.deepEqual(classify({sourceLengthNewTriangleContacts:3,sourceLengthNewIntrapanelContacts:2}).reasons,
+  ['new-body-contacts','new-intrapanel-contacts']);
+ fx.assertOriginal();
 });
