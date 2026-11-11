@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength,classifySourceLengthContactAttempt}
+import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength,classifySourceLengthContactAttempt,classifySourceLengthCandidateException}
  from '../research/mission2-source-length/source-length.mjs';
 
 const SHA='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -171,5 +171,27 @@ test('adaptive refusal taxonomy rejects fake/missing contacts and separates body
  }
  assert.deepEqual(classify({sourceLengthNewTriangleContacts:3,sourceLengthNewIntrapanelContacts:2}).reasons,
   ['new-body-contacts','new-intrapanel-contacts']);
+ fx.assertOriginal();
+});
+
+
+test('fail-closed enum diagnoses exact resource budget without fabricating cloth collision',()=>{
+ for(const [message,tag] of [
+  ['M2 triangle audit exceeds bounded contact budget; cannot certify','body-contact-budget'],
+  ['M2 garment part audit exceeds bounded contact budget; cannot certify','panel-contact-budget'],
+  ['M2 self-contact exceeds bounded triangle comparison budget; cannot certify','self-comparison-budget'],
+  ['M2 self-contact exceeds bounded contact budget; cannot certify','self-contact-budget'],
+  ['M2 source length new posed body intersection pairs 2 -> 3','coarse-body-pair-regression'],
+  ['M2 source length new posed garment part triangle contacts 4','new-panel-contacts'],
+  ['M2 source length new posed intrapanel self-intersections 2','new-intrapanel-contacts']
+ ]){
+  assert.equal(classifySourceLengthCandidateException(new Error(message)),tag);
+ }
+ assert.equal(classifySourceLengthCandidateException(new Error('private source had unknown error')),
+  'candidate-preflight-unavailable');
+ const fx=fixture(null,{torsoMode:'cylinder'});
+ const decision=planNoNewContactSourceLength(fx.shirt,fx.root,profile);
+ assert.equal(decision.accepted,true);
+ assert.equal(decision.refusalReason,null);
  fx.assertOriginal();
 });
