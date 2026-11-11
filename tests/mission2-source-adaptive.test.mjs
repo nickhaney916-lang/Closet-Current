@@ -269,7 +269,7 @@ test('inferred 8–24mm depth-only trial preserves photographic projected silhou
    {extensionScale:.5,depthClearance:invalid,previewOnly:true}),/bounded inferred outward garment depth clearance/);
 });
 
-test('opt-in ten-stage depth search never bypasses genuine body/panel/self contact veto or rewrites source',()=>{
+test('opt-in bounded depth and hem-taper search never bypasses body/panel/self contact veto or rewrites source',()=>{
  const f=fixture(.98);
  const standard=planNoNewContactSourceLength(f.shirt,f.root,profile);
  assert.equal(standard.accepted,false,'Established four-stage search remains unmodified');
@@ -277,10 +277,13 @@ test('opt-in ten-stage depth search never bypasses genuine body/panel/self conta
  assert.equal(standard.experimentalDepthTrial,false);
  const trial=planNoNewContactSourceLength(f.shirt,f.root,profile,{experimentalDepthTrial:true});
  assert.equal(trial.experimentalDepthTrial,true);
- assert.ok(trial.attempts.length>=5&&trial.attempts.length<=10);
+ assert.ok(trial.attempts.length>=5&&trial.attempts.length<=16);
  assert.ok(trial.attempts.slice(4).every(a=>a.depthClearance>0&&a.depthClearance<=.024));
  assert.ok(trial.attempts.every(a=>[1,.75,.5,.25].includes(a.scale)));
  assert.ok(trial.attempts.every(a=>[0,.008,.016,.024].includes(a.depthClearance)));
+ assert.ok(trial.attempts.every(a=>[1,2,3,4].includes(a.depthEasingExponent)));
+ assert.ok(trial.attempts.slice(0,10).every(a=>a.depthEasingExponent===1));
+ assert.ok(trial.attempts.slice(10).every(a=>a.depthEasingExponent>=2&&a.depthEasingExponent<=4));
  const safe=safeAdaptiveBodyContactDiagnostic(trial);
  assert.equal(safe.experimentalDepthTrial,true);
  assert.equal(safe.accepted,trial.accepted);
@@ -292,6 +295,7 @@ test('opt-in ten-stage depth search never bypasses genuine body/panel/self conta
   assert.ok(trial.selectedDepthClearance>0);
   const result=applyNoNewContactSourceLength(f.shirt,f.root,profile,{experimentalDepthTrial:true});
   assert.equal(result.stats.sourceLengthDepthClearance,trial.selectedDepthClearance);
+  assert.equal(result.stats.sourceLengthDepthEasingExponent,trial.selectedDepthEasingExponent);
   assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
   assert.equal(result.stats.sourceLengthNewGarmentPartContacts,0);
   assert.equal(result.stats.sourceLengthNewIntrapanelContacts,0);
@@ -337,4 +341,36 @@ test('all adaptive self-fold locality receipts are exact integer counts with no 
  for(let i=0;i<f.shirt.meshes.length;i++)
   assert.deepEqual(f.shirt.meshes[i].geometry.getAttribute('position').array,before[i]);
  f.assertOriginal();
+});
+
+
+test('hem-weighted 8mm Z taper preserves original projected photographed XY, skin weights and owner mask',()=>{
+ const normal=fixture(),eased=fixture();
+ const a=fitSourceLength(normal.shirt,normal.root,profile,{extensionScale:.5,depthClearance:.008});
+ const c=fitSourceLength(eased.shirt,eased.root,profile,{extensionScale:.5,depthClearance:.008,depthEasingExponent:3});
+ assert.equal(a.stats.sourceLengthDepthEasingExponent,1);
+ assert.equal(c.stats.sourceLengthDepthEasingExponent,3);
+ assert.equal(c.stats.sourceLengthHemWeightedDepthTaper,true);
+ assert.equal(c.stats.sourceLengthDepthFromPhotographVerified,false);
+ assert.equal(c.stats.sourceLengthDepthCorrectionDoesNotChangeProjectedXY,true);
+ assert.equal(c.stats.releaseAuthorized,false);
+ let xyDifference=0,zDifference=0;
+ for(let i=0;i<normal.shirt.meshes.length;i++){
+  const ap=normal.shirt.meshes[i].geometry.getAttribute('position').array;
+  const cp=eased.shirt.meshes[i].geometry.getAttribute('position').array;
+  assert.equal(ap.length,cp.length);
+  for(let j=0;j<ap.length;j++){
+   const diff=Math.abs(ap[j]-cp[j]);
+   if(j%3===2)zDifference=Math.max(zDifference,diff);
+   else xyDifference=Math.max(xyDifference,diff);
+  }
+  assert.deepEqual(eased.shirt.meshes[i].geometry.getAttribute('panelPosition').array,eased.panels[i]);
+  assert.deepEqual(eased.shirt.meshes[i].geometry.getAttribute('skinWeight').array,eased.weights[i]);
+ }
+ assert.ok(zDifference>.00001,'Taper must actually vary Z for intermediate fabric vertices');
+ assert.ok(xyDifference<1e-6,'Photographed projected XY outline must remain identical');
+ for(const bad of [0,-1,.5,4.1,Infinity,NaN,'2'])
+  assert.throws(()=>fitSourceLength(eased.shirt,eased.root,profile,{
+   extensionScale:.5,depthClearance:.008,depthEasingExponent:bad,previewOnly:true
+  }),/bounded photographic hem depth taper exponent/);
 });
