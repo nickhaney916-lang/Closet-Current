@@ -24,7 +24,7 @@ test('P821 standard 70%/15% source thresholds reproduce native output exactly on
  assert.equal(candidate.personDetected,native.personDetected);
  assert.equal(candidate.width,native.width);
  assert.equal(candidate.height,native.height);
- assert.equal(candidate.labels.filter(v=>v===9).length,28);
+ assert.equal(candidate.labels.filter(v=>v===9).length,32,'both original SegFormer shoe classes 9 and 10 retain all 16+16 true model pixels');
  assert.ok(candidate.labels.some(v=>v===4));
  assert.ok(candidate.labels.some(v=>v===6));
 });
