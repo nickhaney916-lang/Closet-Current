@@ -60,3 +60,52 @@ export function scorePhonePhotos(labels,results,{release,indexHash}={}){
   recognitionIndex:/^[a-f0-9]{64}$/.test(indexHash||'')?indexHash:null,
   summary,photos};
 }
+
+
+/**
+ * P829 — accessible per-photo pilot feedback from the already privacy-sanitized
+ * and independently labeled score receipt. Never use the raw uploaded file,
+ * private filename or worker diagnostics to build a display string.
+ *
+ * A conservative abstention is not a wrong automatic category; a matching
+ * broad category does not imply its subtype was recognized.
+ */
+export function phonePhotoTrialReadout(scored){
+ if(!scored||!safeId(scored.id)||!categoryValid(scored.expectedCategory)||
+    (scored.expectedType&&!photoTypes(scored.expectedCategory).includes(scored.expectedType)))
+  throw Error('Invalid private-trial scored photo row.');
+ if(scored.error)return {
+  state:'error',title:'Could not check this photo',
+  detail:'No clothing was saved. Start over to try again.'};
+ const category=scored.prediction?.category;
+ if(category&&!categoryValid(category))throw Error('Invalid private-trial prediction.');
+ if(scored.expectedCategory==='Uncategorized'){
+  if(scored.categoryMatch===true)return {
+   state:'pass',title:'Non-clothing correctly rejected',
+   detail:'No clothing category was accepted.'};
+  if(scored.strong||scored.categoryConfirmed)return {
+   state:'fail',title:'Incorrect clothing detection',
+   detail:'The model accepted '+(category||'an unknown clothing category')+' for a non-clothing photo.'};
+  return {state:'review',title:'Non-clothing needs review',
+   detail:'The model did not confidently accept or reject this item.'};
+ }
+ if(!scored.strong&&!scored.categoryConfirmed)return {
+  state:'review',title:'Needs manual review',
+  detail:'No clothing category was confidently accepted. This is not an automatic match.'};
+ if(scored.categoryMatch!==true)return {
+  state:scored.strong?'fail':'review',
+  title:scored.strong?'Wrong automatic category':'Category needs correction',
+  detail:'Expected '+scored.expectedCategory+'; model proposed '+(category||'Unknown')+'.'};
+ if(scored.expectedType&&scored.typeMatch!==true)return {
+  state:scored.strong?'fail':'review',
+  title:'Category matched; clothing type did not',
+  detail:'Expected '+scored.expectedType+'; model proposed '+(scored.prediction?.type||'Unknown')+'.'};
+ if(scored.expectedType&&scored.typeMatch===true)return {
+  state:scored.strong?'pass':'review',
+  title:scored.strong?'Category and type matched':'Category and type matched with review',
+  detail:'Recognized '+category+' / '+scored.prediction?.type+'.'};
+ return {
+  state:scored.strong?'pass':'review',
+  title:scored.strong?'Category matched':'Category matched with review',
+  detail:'Recognized '+category+'. Clothing type was not checked.'};
+}
