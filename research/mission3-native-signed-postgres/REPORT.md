@@ -1,0 +1,31 @@
+# Closet Current — Mission 3 native app + real disposable PostgreSQL RLS signed two-owner integration
+
+**FAMILY ALPHA HOLD #255. Isolated DRAFT ONLY. No source modifications, no deployments, no production or existing staging writes, no hosted Supabase project/API key, and no real owner photographs.**
+
+## Exact verified native cloud baseline
+
+Mission 3 [draft PR #830](https://github.com/nickhaney916-lang/Closet-Current/pull/830) at exact HEAD `e9d45020a057697eea8b3a00579518b4654d9a15`, [NO DEPLOY Actions #42959382240](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42959382240) **SUCCESS**: 1,450/1,450 serial Node, actual Chromium/WebKit 320/390/430 broken/missing source owner-safe cloud recovery, previous local 413/507, SHA source, owner-Storage and 1,000-item revision-first cloud regressions. Exact artifact #13828393268 independently decoded 79/79 PNG, checked 42/42 screenshot hashes, and verified 36/36 axe JSON files without violations.
+
+## Why this larger integration milestone matters
+
+Prior P147 research independently verified local ephemeral **RS256-signed JWT** owner claims and real PostgreSQL 17 owner RLS with the unchanged `supabase/cloud-backup.sql`, using its own research account UI and transport. The newer Mission 3 original `public/cloud-backup.js` was tested in actual Chromium/WebKit against an **in-memory mocked REST/Storage** backend. Neither evidence stream alone proves the latest native cloud controller can perform real signed two-owner photo backup and cross-browser restore under real database owner policies. This mission closes that integration gap without touching any hosted project.
+
+## Implementation (research-only; actual app source untouched)
+
+- A dedicated ephemeral GitHub Actions PostgreSQL 17 service is initialized using the unchanged `research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql`, which sources the repository's exact `supabase/cloud-backup.sql`. The service exists only during the CI job; URL is restricted to `postgres`, `localhost` or `127.0.0.1`. No Supabase key, hosted URL, deployment, or client secret is passed to PostgreSQL.
+- Reuse `createEphemeralSignedIdentity147` to issue and verify *cryptographically signed* temporary RSA-2048/RS256 JWTs for **two independent random owner UUIDs**. Deliberately poison owner A's **user-editable metadata** with owner B's ID and a fake service role; authorization always binds to the verified JWT `sub`, not mutable metadata.
+- The **built native Closet Current app** (original `public/app.js` and `public/cloud-backup.js`) runs in actual **Chromium and WebKit** browser engines at **320, 390, and 430 CSS pixels**. Browser's fixed Supabase URL requests are strictly intercepted and handled in the **same disposable test process**, which validates the ephemeral JWT signature and runs every table/storage operation inside a real PostgreSQL `SET LOCAL ROLE authenticated` transaction with `request.jwt.claim.sub` set only from verified `sub`. No external network is permitted.
+- REST row selects deliberately use the **client-provided** owner filter without a JavaScript equality check, proving real PostgreSQL `public.closet_backups` RLS is responsible for returning no foreign rows. The actual `security invoker` `public.save_closet_backup` CAS RPC publishes the owner-private document. Storage uploads insert the SHA-identified object row into **real PostgreSQL `storage.objects` with unchanged owner RLS** before retaining its synthetic JPEG bytes in an ephemeral in-process map; reads also require an actual RLS row SELECT.
+- Both owners upload different independently SHA-identified synthetic JPEG garments from private local IndexedDB. A second **clean** browser context for owner A successfully performs a true native private cloud restore of A's own photo and retains original JPEG bytes/receipt. A browser-authenticated request to read B's backup row and B's private Storage object is denied **by actual SQL RLS**, not a mock owner equality branch.
+- A forged JWT is refused before any PostgreSQL role binding, and an authenticated user's previously valid signed token is refused after revocation. Original local owner photos are unchanged after revocation. Screenshots, exact source byte SHA receipts and axe accessibility evidence are retained.
+- This is an independent native end-to-end test driver only; **no source, migrations, runtime configuration, package lock, Auth, RLS policies, production/staging or Missions 1/2 files change**.
+
+## Verification and limits
+
+`scripts/test-mission3-native-signed-postgres-browser.mjs` requires a disposable local PostgreSQL URL (fail-closed on other hosts), reads the actual tested SQL policies, and performs **six native Chromium/WebKit 320/390/430** signed owner A/B backup+restore+cross-account SQL checks and screenshots. Strict `.github/workflows/mission3-native-signed-postgres-no-deploy.yml` checks the exact PR #830 parent and permits only **three research paths**, sets up temporary PostgreSQL, re-runs the existing P147 independent real signed-JWT RLS suite, runs the entire Mission 3 serial Node regression, and executes the new native integration test. **Final exact-head CI and artifact must be inspected before declaring a pass.**
+
+**This is real PostgreSQL server/RLS and cryptographically signed ephemeral tokens, but it is NOT a real Supabase Auth issuer or hosted Supabase Storage service.** JWT issuance and key verification are handled by the local research process, Storage bytes are held in a memory map subject to PostgreSQL object-row RLS, and this test does not claim hosted sidecar/API behavior. Real approved disposable hosted signed A/B authorization/Storage and physical phones remain external release blockers.
+
+## FAMILY ALPHA HOLD #255 remains open
+
+Production and existing staging must never be mutated or deployed. Real hosted Supabase two-account Auth/JWT/RLS/Storage and owner consent, full-resolution distinct 1,000-garment physical Android/iPhone camera/memory/quota/OS-kill tests, independent owner-labeled real-photo recognition, and high-realism male/female photographed clothing 3D integration/human acceptance remain outstanding. This research test cannot authorize release.
