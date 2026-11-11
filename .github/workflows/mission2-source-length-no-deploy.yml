@@ -12,6 +12,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-unique-triangle-budget-20261111-HOLD
     - research/mission2-changed-face-self-delta-20261111-HOLD
     - research/mission2-body-contact-locality-20261111-HOLD
+    - research/mission2-depth-clearance-experiment-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read

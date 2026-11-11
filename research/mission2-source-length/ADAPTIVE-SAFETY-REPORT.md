@@ -130,3 +130,18 @@ Still not certified: full signed clearance, removal of old body contacts, deform
 ### P2-C8 verification
 
 Pending exact final-head dedicated no-deploy build, full Node suite and Chromium/WebKit native browser photo/source privacy checks. **Never claim geometry success based only on an aggregate contact count.**
+
+
+## P2-C9 — Opt-in 24 mm depth-only research candidates (NOT photo-truth)
+
+Following PR #863's **actual new body-contact refusal** and PR #867's source-face-locality measurements, this research branch adds an explicit, **non-shipping optional** depth-clearance trial without assuming photographs encode unobserved depth.
+
+- The original fitted length trial still tests four source-proportional length scales `1, .75, .5, .25` at **zero extra clearance**, exactly as before. Production, staging, normal native research preview, and original private saved wardrobe remain unchanged.
+- Only an independent explicit `experimentalDepthTrial:true` research call can examine up to six additional stages: scales `.25` or `.5` × inferred outward *depth-only* offsets `8, 16, 24 mm`. All XY projected source-proportion coordinates are identical to the matching zero-clearance stage, while Z is displaced smoothly to the front or rear according to signed depth from the verified anatomical center.
+- The signed depth correction uses `Math.tanh((z-center)/.035)`, smoothly vanishing near the midplane. No vertical hem dimension, original JPEG, owner/source SHA, source panel, UV evidence or 163-bone skin weight is changed by the optional clearance itself. It is **not** a physical garment measurement or evidence of a photographed back surface.
+- Every trial is an *immutable* source-geometry candidate and must pass the exact existing 163-bone coarse body mesh-pair check, original stable-face body triangle comparison, distinct garment-panel contact comparison, changed-source-face self-contact delta, minimum source-length extension and source owner gates. Candidates can be refused with the unchanged original-photo/2D fallback. A trial is **never an override to accept unsafe 3D**.
+- The opt-in diagnostic contains fixed reason strings and aggregate mesh/height counts only, plus the bounded depth parameter. It never emits original JPEG bytes, owner ID, source hash or private geometry coordinates.
+
+**Current engineering status:** The branch contains code and synthetic actual THREE/skinned regression tests proving projected XY invariance and fail-closed gating. It is **not currently enabled for the native signed-outfit workflow**, because exact PR #867 location receipts and physical device/human visual QA are pending. Do not interpret the optional depth experiment as repaired body clearance or complete Mission 2.
+
+**Release:** FAMILY ALPHA HOLD #255, DRAFT/UNMERGED/UNDEPLOYED. Never merge or deploy without independent owner authorization.
