@@ -437,7 +437,10 @@ export async function mountNative3D05({
        physical.sourceLengthGarmentPartContactStrictlyAccepted!==true||
        physical.sourceLengthNewGarmentPartContacts!==0||
        physical.sourceLengthIntrapanelStrictlyAccepted!==true||
-       physical.sourceLengthNewIntrapanelContacts!==0)
+       physical.sourceLengthNewIntrapanelContacts!==0||
+       physical.sourceLengthIntrapanelAffectedPairOnly!==true||
+       !Number.isSafeInteger(physical.sourceLengthIntrapanelChangedFaces)||
+       physical.sourceLengthIntrapanelChangedFaces<1)
      throw Error('M2 sampled body, garment-part or intrapanel triangle proof missing; original-photo/2D fallback required');
    }
    if(params?.get('photoSilhouette62')==='research'){
@@ -769,6 +772,10 @@ export async function mountNative3D05({
    sourceLengthNewGarmentPartContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewGarmentPartContacts:null,
    sourceLengthSelfLayerCollisionCertified:false,
    sourceLengthIntrapanelStrictlyAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelStrictlyAccepted===true,
+   sourceLengthIntrapanelAffectedPairOnly:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelAffectedPairOnly===true,
+   sourceLengthIntrapanelFullBaselineEnumerated:false,
+   sourceLengthIntrapanelChangedFaces:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelChangedFaces:null,
+   sourceLengthIntrapanelCandidateTests:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelCandidateTests:null,
    sourceLengthIntrapanelContactsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelContactsBefore:null,
    sourceLengthIntrapanelContactsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelContactsAfter:null,
    sourceLengthNewIntrapanelContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewIntrapanelContacts:null,
