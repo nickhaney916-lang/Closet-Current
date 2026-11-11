@@ -347,7 +347,13 @@ try{
     const actualGestureBox804=(await tapReview.getAttribute('data-mission1-source-rect804'))?.split(',').map(Number);
     assert.equal(actualGestureBox804?.length,4,'P804 native original-source box receipt emitted only with test opt-in');
     assert.ok(actualGestureBox804.every(Number.isInteger));
-    assert.ok(actualGestureBox804[0]>=0&&actualGestureBox804[1]>=0&&actualGestureBox804[2]<=320&&actualGestureBox804[3]<=480);
+    const actualOriginalDims804=await imgOriginal.evaluate(img=>[img.naturalWidth,img.naturalHeight]);
+    const liveOriginalDims804=await page.evaluate(()=>[batch[0].originalPhoto.width,batch[0].originalPhoto.height]);
+    assert.deepEqual(actualOriginalDims804,liveOriginalDims804,'P804 actual decoded ORIGINAL JPEG dimensions, not a fabricated test fixture');
+    assert.ok(actualOriginalDims804.every(v=>Number.isInteger(v)&&v>=8&&v<=3072));
+    assert.ok(actualGestureBox804[0]>=0&&actualGestureBox804[1]>=0&&
+      actualGestureBox804[2]<=actualOriginalDims804[0]&&
+      actualGestureBox804[3]<=actualOriginalDims804[1]);
     const noMaskOrSave=await page.evaluate(async()=>{
      await writes;
      const draftSaved=await readDraft();
@@ -388,7 +394,7 @@ try{
     const actualNativePrompt804={
       schema:'closet-current-m1-original-native-gesture-sam2-research-804/v1',
       sourceId:'commons-0053',sourceSHA256,
-      originalWidth:320,originalHeight:480,
+      originalWidth:actualOriginalDims804[0],originalHeight:actualOriginalDims804[1],
       originalPixelBox:actualGestureBox804,originalPixelPositivePoint:actualGesturePoint804,
       actualOriginalGestureInNativeAdjust:true,automatedPlaywrightFixture:true,
       publisherPolygonNotUsedToConstructPrompt:true,independentHumanDrawnBox:false,
