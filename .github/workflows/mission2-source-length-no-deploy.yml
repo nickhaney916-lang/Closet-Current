@@ -14,6 +14,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-body-contact-locality-20261111-HOLD
     - research/mission2-depth-clearance-experiment-20261111-HOLD
     - research/mission2-native-depth-trial-20261111-HOLD
+    - research/mission2-intrapanel-fold-locality-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -262,6 +263,13 @@ jobs:
          for(const a of d.attempts){
           assert.ok([1,.75,.5,.25].includes(a.scale));
           assert.ok([0,.008,.016,.024].includes(a.depthClearance));
+          if(a.selfRegions){
+           assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
+           assert.equal(a.selfRegions.newSelfContactCount,a.newSelfContacts);
+           assert.equal(a.selfRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newSelfContacts);
+           assert.equal(a.selfRegions.byHeightBandPair.reduce((t,n)=>t+n,0),a.newSelfContacts);
+           assert.equal(a.selfRegions.byHeightSeparation.reduce((t,n)=>t+n,0),a.newSelfContacts);
+          }
           if(a.bodyRegions){
            assert.equal(a.bodyRegions.newContactCount,a.newBodyContacts);
            assert.equal(a.bodyRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newBodyContacts);
@@ -291,9 +299,11 @@ jobs:
         assert.ok(selected);
         const d=selected.safeBodyLocality;
         const opt=d.attempts.slice(4);
-        const trialCounts=opt.map(a=>Number.isSafeInteger(a.newBodyContacts)?a.newBodyContacts:'x').join(',');
+        const bodyCounts=opt.map(a=>Number.isSafeInteger(a.newBodyContacts)?a.newBodyContacts:'x').join(',');
+        const selfCounts=opt.map(a=>Number.isSafeInteger(a.newSelfContacts)?a.newSelfContacts:'x').join(',');
+        const lastSelfBand=opt.at(-1)?.selfRegions?.byHeightBandPair?.join(',')||'none';
         const acceptedDepth=selected.inferredDepthAcceptedIfAny===null?'none':Math.round(selected.inferredDepthAcceptedIfAny*1000)+'mm';
-        const report=engine+'-admitted['+admitted+']-trial['+trialCounts+']-depth['+acceptedDepth+']';
+        const report=engine+'-admitted['+admitted+']-body['+bodyCounts+']-self['+selfCounts+']-lastBand['+lastSelfBand+']-depth['+acceptedDepth+']';
         assert.ok(report.length<192);
         appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
         console.log('M2_NATIVE_DEPTH_TRIAL_AGGREGATE_ONLY',report);

@@ -482,7 +482,20 @@ try{
     const sanitizedJSON=JSON.stringify(safeDiagnostic);
     assert.equal(sanitizedJSON.includes('native05-A'),false);
     assert.equal(sanitizedJSON.includes(source.originalSHA),false);
+    assert.equal(sanitizedJSON.includes('newlyIntersectingSourceKeys'),false);
+    assert.equal(sanitizedJSON.includes('sourceSHA256'),false);
     for(const a of safeDiagnostic.attempts){
+     if(a.selfRegions){
+      assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
+      assert.equal(a.selfRegions.noPhotoOrOwnerFields,true);
+      assert.equal(a.selfRegions.releaseAuthorized,false);
+      assert.equal(a.selfRegions.newSelfContactCount,a.newSelfContacts);
+      assert.equal(a.selfRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newSelfContacts);
+      assert.equal(a.selfRegions.byHeightBandPair.length,10);
+      assert.equal(a.selfRegions.byHeightBandPair.reduce((t,n)=>t+n,0),a.newSelfContacts);
+      assert.equal(a.selfRegions.byHeightSeparation.length,4);
+      assert.equal(a.selfRegions.byHeightSeparation.reduce((t,n)=>t+n,0),a.newSelfContacts);
+     }
      if(!a.bodyRegions)continue;
      assert.equal(a.bodyRegions.originalFaceIdentity,true);
      assert.equal(a.bodyRegions.noPhotoOrOwnerFields,true);

@@ -145,3 +145,18 @@ Following PR #863's **actual new body-contact refusal** and PR #867's source-fac
 **Current engineering status:** The branch contains code and synthetic actual THREE/skinned regression tests proving projected XY invariance and fail-closed gating. It is **not currently enabled for the native signed-outfit workflow**, because exact PR #867 location receipts and physical device/human visual QA are pending. Do not interpret the optional depth experiment as repaired body clearance or complete Mission 2.
 
 **Release:** FAMILY ALPHA HOLD #255, DRAFT/UNMERGED/UNDEPLOYED. Never merge or deploy without independent owner authorization.
+
+
+## P2-C11 — Exact original-face garment self-fold locality (no geometry weakening)
+
+**Measured P2-C10 starting point:** [NO DEPLOY Actions #43101427189](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43101427189), exact PR #870 HEAD `8dc5cf498914d69fc6fe317a79e9ad308a36f94c`, passed 5/5 jobs; Chromium and WebKit screenshot artifacts recovered and their signed private-outfit receipts inspected. At 320/390/430 CSS px, the zero-depth 0.25-scale extension made **108 NEW body contacts** in the main garment bottom quartile, while all six opt-in 8/16/24mm depth trials at scales 0.25 and 0.5 had **zero NEW body contacts but still failed the NEW INTRAPANEL garment self-contact gate**. No fit admitted.
+
+**P2-C11 implementation:** Add a bounded research-only aggregation of the exact original garment source-face pair keys returned by the completed **changed-face self-collision delta**. For each *newly intersecting* pair in a genuine staged 163-bone pose, take each source triangle's posed Y centroid, place it in one of four height bands from the garment's bottom to top, and increment an unordered **band-pair** counter. Ten bins correspond to `00,01,02,03,11,12,13,22,23,33`. Also count by garment mesh index and by vertical band distance (0–3). All sums reconcile exactly to the independent self-delta evidence. Validate canonical and in-bounds face IDs, uniqueness, skinned source, finite staged coordinates, complete evidence and 40,000 max new source-pair budget. The report explicitly states it does not establish signed physical penetration, layer simulation, accurate mask or cloth drape.
+
+**No sensitive evidence exported:** Public research diagnostic contains only integer counts, fixed safety reason tags, non-sensitive scale/depth trial settings and `heightPairOrder`; never source face IDs, coordinate data, wearer images, JPEGs, source SHA or owner/session identity. Original signed outfit/photo 2D fallback remains fail-closed. The **existing collision gate is unchanged and mandatory**. Regression and genuine mobile-browser tests verify all integer sums and prevent unsafe 3D promotion; 390px no-artifact CI job names include aggregated new self-fold counts and ten final trial height-pair bins for inspection when GitHub screenshot upload is unavailable.
+
+**Unresolved:** This stage *localizes* rather than corrects the self-fold problem. A later source-anatomy and seam/fabric correction must be bounded and reverified against the entire body, panel, self and owner gates. Family Alpha HOLD #255; draft, unmerged, undeployed. No physical iPhone/Android acceptance or 10/10 photographic realism.
+
+### P2-C11 exact final-head CI
+
+Pending dedicated NO DEPLOY 3D-source-length regression, actual Chromium/WebKit native signed outfit and screenshot checks. Never equate a zero body-contact count with physically valid fabric.

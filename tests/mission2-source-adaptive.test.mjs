@@ -307,3 +307,34 @@ test('opt-in ten-stage depth search never bypasses genuine body/panel/self conta
  assert.throws(()=>planNoNewContactSourceLength(f.shirt,f.root,profile,
   {experimentalDepthTrial:'research'}),/bounded depth experiment opt-in/);
 });
+
+
+test('all adaptive self-fold locality receipts are exact integer counts with no owner/source geometry',()=>{
+ const f=fixture(null,{torsoMode:'cylinder'});
+ const before=f.shirt.meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ const decision=planNoNewContactSourceLength(f.shirt,f.root,profile,{experimentalDepthTrial:true});
+ const publicDiag=safeAdaptiveBodyContactDiagnostic(decision);
+ assert.equal(publicDiag.experimentalDepthTrial,true);
+ assert.equal(publicDiag.noPhotoOrOwnerFields,true);
+ assert.equal(publicDiag.releaseAuthorized,false);
+ assert.ok(publicDiag.attempts.length>=1&&publicDiag.attempts.length<=10);
+ for(const a of publicDiag.attempts){
+  if(!a.selfRegions)continue;
+  assert.equal(a.selfRegions.newSelfContactCount,a.newSelfContacts);
+  assert.equal(a.selfRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newSelfContacts);
+  assert.equal(a.selfRegions.byHeightBandPair.length,10);
+  assert.equal(a.selfRegions.byHeightBandPair.reduce((t,n)=>t+n,0),a.newSelfContacts);
+  assert.equal(a.selfRegions.byHeightSeparation.length,4);
+  assert.equal(a.selfRegions.byHeightSeparation.reduce((t,n)=>t+n,0),a.newSelfContacts);
+  assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
+  assert.equal(a.selfRegions.noPhotoOrOwnerFields,true);
+  assert.equal(a.selfRegions.releaseAuthorized,false);
+ }
+ const text=JSON.stringify(publicDiag);
+ assert.equal(text.includes(profile.sourceSHA256),false);
+ assert.equal(text.includes('ownerId'),false);
+ assert.equal(text.includes('newlyIntersectingSourceKeys'),false);
+ for(let i=0;i<f.shirt.meshes.length;i++)
+  assert.deepEqual(f.shirt.meshes[i].geometry.getAttribute('position').array,before[i]);
+ f.assertOriginal();
+});
