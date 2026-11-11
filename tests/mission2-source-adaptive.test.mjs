@@ -54,11 +54,12 @@ test('dry-run sampled extension scales are truly immutable before contact gate',
  const fx=fixture();
  for(const scale of [1,.75,.5,.25]){
   const result=fitSourceLength(fx.shirt,fx.root,profile,
-   {extensionScale:scale,traceTriangleContacts:true,previewOnly:true});
+   {extensionScale:scale,traceTriangleContacts:true,traceGarmentPartContacts:true,previewOnly:true});
   assert.equal(result.stats.sourceLengthFit,false);
   assert.equal(result.stats.sourceLengthDryRun,true);
   assert.equal(result.stats.sourceLengthExtensionScale,scale);
   assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
+  assert.equal(result.stats.sourceLengthNewGarmentPartContacts,0);
   assert.ok(result.stats.sourceLengthNewHemY<result.stats.sourceLengthOldHemY-.07);
   fx.assertOriginal();
  }
@@ -78,12 +79,17 @@ test('adaptive 163-bone real triangles select a reduced length, then atomically 
  assert.ok(decision.attempts.some(x=>x.newlyIntersecting>0||/new posed body intersection pairs/.test(x.error||'')),
   'Reproduce a full extension rejected by either the original body-pair gate or exact triangle gate');
  assert.equal(decision.attempts.at(-1).newlyIntersecting,0);
+ assert.equal(decision.attempts.at(-1).newlyIntersectingGarmentParts,0);
  assert.equal(decision.noNewContactAtOnePose,true);
  assert.equal(decision.existingIntersectionsUnresolved,true);
  fx.assertOriginal();
  const fitted=applyNoNewContactSourceLength(fx.shirt,fx.root,profile);
  assert.equal(fitted.stats.sourceLengthAdaptiveOnePoseNonregression,true);
  assert.equal(fitted.stats.sourceLengthTriangleContactStrictlyAccepted,true);
+ assert.equal(fitted.stats.sourceLengthGarmentPartContactStrictlyAccepted,true);
+ assert.equal(fitted.stats.sourceLengthAdaptiveGarmentPartNonregression,true);
+ assert.equal(fitted.stats.sourceLengthNewGarmentPartContacts,0);
+ assert.equal(fitted.stats.sourceLengthSelfLayerCollisionCertified,false);
  assert.equal(fitted.stats.sourceLengthNewTriangleContacts,0);
  assert.equal(fitted.stats.sourceLengthExtensionScale,decision.selectedScale);
  assert.equal(fitted.stats.sourceLengthCollisionCertified,false);

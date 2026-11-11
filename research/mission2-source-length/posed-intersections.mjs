@@ -117,3 +117,59 @@ export function comparePosedTriangleContacts(before,after){
   newlyIntersecting,removedIntersections,nonregression:newlyIntersecting===0,
   sampledPoseOnly:true,releaseAuthorized:false});
 }
+
+
+/**
+ * M2-C3 research: actual posed triangle intersections BETWEEN distinct
+ * skinned parts of the photographed garment (e.g. shoulder caps and torso).
+ * Counts identity-stable contacts before/after staging; old sewn/seam contacts
+ * are NOT proof of safety. Excludes within-one-mesh self-intersections, outer
+ * clothing layers, interior containment, or swept poses.
+ */
+export function measurePosedGarmentPartContacts(root,meshes,overrides=new Map(),{maxContacts=40000}={}){
+ if(!Number.isInteger(maxContacts)||maxContacts<1||maxContacts>100000||
+    !Array.isArray(meshes)||meshes.length<1||new Set(meshes).size!==meshes.length||
+    !(overrides instanceof Map)||typeof root?.updateMatrixWorld!=='function'||
+    [...overrides.keys()].some(m=>!meshes.includes(m)))
+  throw Error('M2 garment part audit bounded valid pose inputs required');
+ root.updateMatrixWorld(true);
+ const geometries=[],contactKeys=new Set(),identity=new THREE.Matrix4();
+ let testedMeshPairs=0,intersectingMeshPairs=0;
+ try{
+  for(const mesh of meshes){
+   if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+    throw Error('M2 garment part audit 163-bone source mesh required');
+   const original=mesh.geometry?.getAttribute('position'),override=overrides.get(mesh);
+   if(override&&(!(override instanceof Float32Array||override instanceof Float64Array)||
+       override.length!==original?.count*3||!override.every(Number.isFinite)))
+    throw Error('M2 garment part audit finite staged vertex buffer required');
+   const g=posedGeometry(mesh,override);
+   g.boundsTree=new MeshBVH(g,{indirect:true});
+   geometries.push(g);
+  }
+  for(let left=0;left<geometries.length;left++)
+   for(let right=left+1;right<geometries.length;right++){
+    const a=geometries[left],c=geometries[right];
+    testedMeshPairs++;
+    if(!a.boundingBox.intersectsBox(c.boundingBox))continue;
+    let hit=false,overflow=false;
+    a.boundsTree.bvhcast(c.boundsTree,identity,{
+     intersectsTriangles:(leftTri,rightTri,leftId,rightId)=>{
+      if(!leftTri.intersectsTriangle(rightTri))return false;
+      hit=true;
+      contactKeys.add(left+':'+right+':'+leftId+':'+rightId);
+      if(contactKeys.size>=maxContacts){overflow=true;return true;}
+      return false;
+     }
+    });
+    if(hit)intersectingMeshPairs++;
+    if(overflow)throw Error('M2 garment part audit exceeds bounded contact budget; cannot certify');
+   }
+  return Object.freeze({
+   triangleContactKeys:Object.freeze([...contactKeys].sort()),
+   triangleContactCount:contactKeys.size,testedMeshPairs,intersectingMeshPairs,
+   currentPoseOnly:true,bodyRebuiltAtMeasurement:false,contactBudget:maxContacts,
+   distinctGarmentPartsOnly:true,collisionCertified:false,fullSelfLayerCollision:false
+  });
+ }finally{for(const geometry of geometries)geometry.dispose();}
+}
