@@ -141,14 +141,17 @@ test('1,000 original/cutout wardrobes preserve every source and upload each SHA 
   assert.equal(f.maxPending,1,'only one decoded JPEG upload is in flight');
   assert.equal((await f.read()).length,1000);
   const saved=f.stored.document.items;
+  // IndexedDB getAll() is ordered by string key, not numeric capture
+  // position: compare source identities by immutable garment ID.
   for(const index of [0,47,500,999]){
-   assert.equal(saved[index].id,'private-clothing-'+index);
-   assert.equal(saved[index].sourceSHA256,f.rows[index].sourceSHA256);
-   assert.equal(saved[index].originalPhoto.sha256,f.rows[index].originalPhoto.sha256);
-   assert.equal(saved[index].segmentHint.cutoutSHA256,f.rows[index].cutoutSHA256);
-   assert.ok(saved[index].image.startsWith('closet-photo:'+f.owner+'/'));
-   assert.ok(saved[index].segmentHint.cutoutImage.startsWith('closet-photo:'+f.owner+'/'));
-   assert.ok(saved[index].originalPhoto.image.startsWith('closet-photo:'+f.owner+'/'));
+   const row=saved.find(x=>x.id==='private-clothing-'+index);
+   assert.ok(row,'photo identity must survive export');
+   assert.equal(row.sourceSHA256,f.rows[index].sourceSHA256);
+   assert.equal(row.originalPhoto.sha256,f.rows[index].originalPhoto.sha256);
+   assert.equal(row.segmentHint.cutoutSHA256,f.rows[index].cutoutSHA256);
+   assert.ok(row.image.startsWith('closet-photo:'+f.owner+'/'));
+   assert.ok(row.segmentHint.cutoutImage.startsWith('closet-photo:'+f.owner+'/'));
+   assert.ok(row.originalPhoto.image.startsWith('closet-photo:'+f.owner+'/'));
   }
   assert.equal(JSON.stringify(f.stored).includes('data:image'),false,
    'cloud JSON must not include original or reviewed cutout JPEG base64');
