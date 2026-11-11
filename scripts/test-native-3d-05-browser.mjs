@@ -494,8 +494,30 @@ try{
     assert.equal(sanitizedJSON.includes('native05-A'),false);
     assert.equal(sanitizedJSON.includes(source.originalSHA),false);
     assert.equal(sanitizedJSON.includes('newlyIntersectingSourceKeys'),false);
+    assert.equal(sanitizedJSON.includes('sourceFace'),false);
+    assert.equal(sanitizedJSON.includes('ownerId'),false);
     assert.equal(sanitizedJSON.includes('sourceSHA256'),false);
     for(const a of safeDiagnostic.attempts){
+     if(a.selfContactTypes){
+      const t=a.selfContactTypes;
+      assert.equal(t.newSelfContactCount,a.newSelfContacts);
+      assert.equal(t.noContactWaived,true,'No photographic seam/tangency exemptions allowed');
+      assert.equal(t.topologyGapIsNotASafetyExemption,true);
+      assert.equal(t.noPhotoOrOwnerFields,true);
+      assert.equal(t.releaseAuthorized,false);
+      const g=t.byContactGeometry;
+      assert.deepEqual(Object.keys(g).sort(),[
+       'boundaryOrNearPlaneContact','degenerate','nearCoplanarOverlap',
+       'twoSidedPlaneStraddle'].sort());
+      assert.equal(Object.values(g).reduce((n,v)=>n+v,0),a.newSelfContacts);
+      assert.equal(t.byOriginalCoincidentCorners.length,4);
+      assert.equal(t.byStagedCoincidentCorners.length,4);
+      assert.equal(t.byOriginalCoincidentCorners.reduce((n,v)=>n+v,0),a.newSelfContacts);
+      assert.equal(t.byStagedCoincidentCorners.reduce((n,v)=>n+v,0),a.newSelfContacts);
+      assert.equal(t.byGarmentMesh.reduce((n,v)=>n+v,0),a.newSelfContacts);
+      if(a.newSelfContacts>0)assert.equal(a.accepted,false,
+       'No source seam classification may waive any new self contact');
+     }
      if(a.selfRegions){
       assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
       assert.equal(a.selfRegions.noPhotoOrOwnerFields,true);
