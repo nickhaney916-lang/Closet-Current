@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
- let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0;
+ let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null;
  // P145: research-host-only owner-reviewed mode. The ordinary legacy cloud
  // writer MUST NOT run next to the independent consent-bound P134/P137 flow.
  // This guard does not mount P134/P137 or authorize cloud mutation.
@@ -134,10 +134,15 @@
   await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
   assertActive();if(applied)await callbacks.restored?.();assertActive();return applied;
  }
+ const capacityText=code=>code===413?
+   'Cloud rejected a photograph as too large. Original photos remain on this device. Check photo size, then use Sync to retry.':
+   'Cloud storage capacity is full. Original photos remain on this device. Free cloud space, then use Sync to retry.';
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
- async function sync({keepBoth=false}={}){
+ async function sync({keepBoth=false,retryPaused=false}={}){
   if(stopForReview145())return;
+  if(pausedCapacity&&!retryPaused)return;
   if(!enabled||syncingEpoch===generation)return;
+  if(retryPaused)pausedCapacity=null;
   const mine=generation,ownerAtStart=user,dbAtStart=db;
   const assertActive=()=>{
    if(!enabled||mine!==generation||ownerAtStart!==user||dbAtStart!==db||
@@ -190,16 +195,31 @@
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision,assertActive))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
   }catch(e){
-   if(mine===generation){const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.hidden=e.code!=='conflict';status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':'Cloud connection unavailable. Local items are kept; retrying.');if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}}
+   if(mine===generation){
+    const resolveButton=document.getElementById('resolveCloudConflict');
+    if(resolveButton)resolveButton.hidden=e.code!=='conflict';
+    // Cloud quota/file limit failures do not recover from connectivity.
+    // Keep local originals untouched, stop background retries, and require
+    // an explicit owner-initiated Sync after the capacity issue is fixed.
+    if(dirtyAtStart&&(e.status===413||e.status===507)){
+     pausedCapacity=e.status;clearTimeout(timer);timer=null;
+     status(capacityText(e.status));
+    }else{
+     status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':
+      dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':
+      'Cloud connection unavailable. Local items are kept; retrying.');
+     if(e.code!=='conflict'){schedule(retryDelay);retryDelay=Math.min(retryDelay*2,60000);}
+    }
+   }
   }finally{if(syncingEpoch===mine)syncingEpoch=null;}
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
-  async start(database,settings){generation++;enabled=false;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
-   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync();}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true});await sync();
+  async start(database,settings){generation++;enabled=false;pausedCapacity=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db){if(window.closetAuth?.user?.id!==user)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();const ownerAtWrite=user,dbAtWrite=db;await markDirty(()=>{if(!enabled||ownerAtWrite!==user||dbAtWrite!==db||window.closetAuth?.user?.id!==ownerAtWrite)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();});}},
-  changed(){if(stopForReview145())return;if(enabled){status('Saved on this device · cloud backup pending');schedule();}},sync
+  changed(){if(stopForReview145())return;if(enabled){if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
  };
  window.addEventListener('pageshow',event=>{if(stopForReview145())return;if(event.persisted&&db&&window.closetAuth?.user?.id===user){enabled=true;sync();}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
