@@ -21,9 +21,9 @@ function garment(owner,refs=false){
   color:'Blue',image:ref(cutout,cutoutSHA),
   sourceSHA256:originalSHA,sourceHashVerified:true,
   originalPhoto:{image:ref(original,originalSHA),sha256:originalSHA},
-  cutoutSHA256,
+  cutoutSHA256:cutoutSHA,
   segmentHint:{verified:true,ownerReviewedInstance:true,
-   originalSHA256:originalSHA,cutoutSHA256,
+   originalSHA256:originalSHA,cutoutSHA256:cutoutSHA,
    cutoutImage:ref(cutout,cutoutSHA)}
  };
 }
