@@ -68,7 +68,7 @@ try{
  });
  const page=await context.newPage();await page.goto(origin+'/');
  for(const {row,data} of source){
-  const result=await page.evaluate(async({row,data})=>{
+  const result=await page.evaluate(async({row,data,componentP817})=>{
    const image=new Image();image.src=data;await image.decode();
    if(image.naturalWidth!==row.width||image.naturalHeight!==row.height)throw Error('original dimensions mismatch');
    const decoded=document.createElement('canvas');decoded.width=row.width;decoded.height=row.height;
@@ -128,7 +128,31 @@ try{
    let boundary=null;if(m.truthPixels&&m.predictedPixels)boundary=measureRegisteredBoundaries66({sourcePixels:Uint8Array.from(m.truth),ownerPixels:Uint8Array.from(m.prediction),width:result.width,height:result.height});
    return {semanticRegion:m.region,intersection:m.intersection,union:m.union,truthPixels:m.truthPixels,predictedPixels:m.predictedPixels,iou:m.union?m.intersection/m.union:null,boundary,missed:m.predictedPixels===0};
   });
-  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
+  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances,...result.componentInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
+  if(componentP817){
+   const keys=new Set(),count=result.width*result.height;
+   for(const old of result.growthInstances){
+    const parts=result.componentInstances.filter(g=>g.sourceGroupId===old.id);
+    assert.ok(parts.length>=1&&parts.length<=6);
+    const union=new Uint8Array(count);
+    for(const part of parts){
+     assert.equal(part.region,old.region);
+     assert.equal(part.sourcePixelPartitionExact,true);
+     assert.equal(part.accepted,false);
+     assert.equal(part.needsReview,true);
+     assert.equal(part.autoIndex,false);
+     assert.equal(part.subtype,'Unknown');
+     assert.equal(part.primaryColor,'Unknown');
+     assert.ok(!keys.has(part.id));keys.add(part.id);
+     for(let i=0;i<count;i++)if(part.mask[i]){
+      assert.equal(union[i],0,'overlapping model source pixels');
+      union[i]=1;
+     }
+    }
+    assert.deepEqual(union,Uint8Array.from(old.mask),'unchanged original model pixel membership');
+   }
+   assert.equal(keys.size,result.componentInstances.length);
+  }
   assert.ok(result.unseededInstances.length<=8,'source proposals must retain the pre-existing P773 eight-item bound');
   for(const u of result.unseededInstances){
    assert.equal(u.accepted,false);assert.equal(u.needsReview,true);assert.equal(u.autoIndex,false);
@@ -143,6 +167,7 @@ try{
   const candidateNonFootwear=scoreInstances({truth:result.truthInstances.filter(x=>x.region!==9),predictions:result.growthInstances.filter(x=>x.region!==9),width:result.width,height:result.height});
   const unseededOnly=scoreInstances({truth:result.truthInstances,predictions:result.unseededInstances,width:result.width,height:result.height});
   const combinedSourceReview=scoreInstances({truth:result.truthInstances,predictions:[...result.growthInstances,...result.unseededInstances],width:result.width,height:result.height});
+  const componentInstanceDiagnostic=componentP817?scoreInstances({truth:result.truthInstances,predictions:result.componentInstances,width:result.width,height:result.height}):null;
   const groupedIoU=predictions=>{const regions=new Set([...result.truthInstances.map(x=>x.region),...predictions.map(x=>x.region)]);const scores=[];for(const region of regions){let intersection=0,union=0;const t=result.truthInstances.filter(x=>x.region===region),p=predictions.filter(x=>x.region===region);for(let i=0;i<result.width*result.height;i++){const a=t.some(x=>x.mask[i]),b=p.some(x=>x.mask[i]);intersection+=Number(a&&b);union+=Number(a||b);}scores.push({region,intersection,union,iou:union?intersection/union:null});}return scores;};
   const beforeGroupedIoU=groupedIoU(result.predictionInstances),candidateGroupedIoU=groupedIoU(result.growthInstances);
   for(let g=0;g<result.growthInstances.length;g++){const grown=result.growthInstances[g],seed=result.predictionInstances[g];assert.equal(grown.id,seed.id);assert.equal(grown.region,seed.region);assert.equal(grown.accepted,false);assert.equal(grown.needsReview,true);assert.ok(grown.addedPixelCount<=grown.maximumAddedPixels);for(let i=0;i<seed.mask.length;i++)if(seed.mask[i])assert.equal(grown.mask[i],1);}
@@ -151,7 +176,12 @@ try{
   const lostBaselineMatchIds=instances.matches.filter(m=>!candidateInstances.matches.some(a=>a.truthId===m.truthId)).map(m=>m.truthId);
   const gainedMatchIds=candidateInstances.matches.filter(m=>!instances.matches.some(a=>a.truthId===m.truthId)).map(m=>m.truthId);
   rows.push({lostBaselineMatchIds,gainedMatchIds,instances,nonFootwear,candidateInstances,candidateNonFootwear,
-   unseededOnly,combinedSourceReview,unseededProposalCount:result.unseededInstances.length,
+   unseededOnly,combinedSourceReview,componentInstanceDiagnostic,
+   componentProposalCount:componentP817?result.componentInstances.length:null,
+   componentGainedFromGrowth:componentP817?componentInstanceDiagnostic.matches.filter(m=>!candidateInstances.matches.some(b=>b.truthId===m.truthId)).map(m=>m.truthId):[],
+   componentLostFromGrowth:componentP817?candidateInstances.matches.filter(m=>!componentInstanceDiagnostic.matches.some(b=>b.truthId===m.truthId)).map(m=>m.truthId):[],
+   sourceComponentReceipts817:componentP817?result.componentInstances.map(g=>({id:g.id,sourceGroupId:g.sourceGroupId,region:g.region,sourceComponentCount:g.sourceComponentCount,maskSHA256:g.maskSHA256,needsReview:true,accepted:false,autoIndex:false})):[],
+   unseededProposalCount:result.unseededInstances.length,
    combinedGainedOriginalIDs:combinedSourceReview.matches.filter(m=>!instances.matches.some(p=>p.truthId===m.truthId)).map(m=>m.truthId),
    combinedLostOriginalIDs:instances.matches.filter(m=>!combinedSourceReview.matches.some(p=>p.truthId===m.truthId)).map(m=>m.truthId),
    unseededReceipts:result.unseededInstances.map(({id,region,maskSHA256,sourcePixelCount})=>({id,region,maskSHA256,sourcePixelCount,source:'actual-frozen-B0-original-logits-unseeded-review',ownerConfirmed:false,accepted:false,autoSaveAllowed:false})),
@@ -164,6 +194,10 @@ try{
  const aggregate=key=>{const values=rows.map(r=>r[key]);const tp=values.reduce((n,r)=>n+r.truePositives,0),fp=values.reduce((n,r)=>n+r.falsePositives,0),fn=values.reduce((n,r)=>n+r.falseNegatives,0);return {truePositives:tp,falsePositives:fp,falseNegatives:fn,precision:tp+fp?tp/(tp+fp):null,recall:tp+fn?tp/(tp+fn):null,f1:2*tp+fp+fn?2*tp/(2*tp+fp+fn):null};};
  const summary={allClassExploratoryArm:aggregate('allClassInstances'),
   unseededOnlyDiagnostic:aggregate('unseededOnly'),
+  ...(componentP817?{componentInstanceDiagnostic:aggregate('componentInstanceDiagnostic'),
+   totalComponentReviewCandidates:rows.reduce((n,r)=>n+r.componentProposalCount,0),
+   componentLostGrowthMatches:rows.reduce((n,r)=>n+r.componentLostFromGrowth.length,0),
+   componentGainedGrowthMatches:rows.reduce((n,r)=>n+r.componentGainedFromGrowth.length,0)}:{}),
   grownPlusUnseededReviewDiagnostic:aggregate('combinedSourceReview'),
   totalUnseededReviewCandidates:rows.reduce((n,row)=>n+row.unseededProposalCount,0),
   sourcePhotosWithUnseededReview:rows.filter(row=>row.unseededProposalCount>0).length,
@@ -176,6 +210,15 @@ try{
   officialFashionpediaAP:false,renderingFailures:0,
   additionalPublisherSourcesNotIndependentlyHumanBlinded:additionalP792,
   modelTrainingOverlapNotExcluded:additionalP792};
+ if(componentP817){
+  summary.componentReviewVerdict=summary.componentLostGrowthMatches===0&&
+   rows.every(r=>r.componentInstanceDiagnostic.falsePositives<=r.candidateInstances.falsePositives)&&
+   summary.componentInstanceDiagnostic.truePositives>summary.candidateInstanceDiagnostic.truePositives?
+   'SOURCE_COMPONENT_GAIN_EXPOSED_DEV_REVIEW_ONLY':
+   'SOURCE_COMPONENT_NOT_SUITABLE_FOR_AUTOMATIC_ACCEPTANCE';
+  summary.componentAutoSaveAuthorized=false;
+  summary.actualIndependentHumanComponentReviewers=0;
+ }
  summary.unseededReviewVerdict=summary.unseededReviewLostBaselineMatches===0&&
    rows.every(row=>row.combinedSourceReview.falsePositives<=row.instances.falsePositives)&&
    summary.grownPlusUnseededReviewDiagnostic.truePositives>summary.publishedInstanceDiagnostic.truePositives?
@@ -184,9 +227,10 @@ try{
  await writeFile(out+'/results.json',JSON.stringify({engine,summary,photos:rows.length,publisherHumanInstances:rows.reduce((n,r)=>n+r.publisherHumanInstances,0),
   additionalPublisherSourceCohortP792:additionalP792,
   sourceUnseededModelProposalArm794:true,
+  sourceComponentActualModelReviewArm817:componentP817,
   sourceUnseededInstancesAutoSaved:0,
   sourceUnseededHumanReviewActuallyPerformed:false,
   rawPublisherRightsMetadataNotVerifiedForCommerce:additionalP792,
   newlyEnrolledBlindedHumanHoldout:false,
-  rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:'Baseline model and grouping unchanged; original logits also produce capped seeded boundary review candidates; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
+  rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:componentP817?'Actual original SegFormer logits; same frozen baseline/growth versus source-pixel exact P776 review-only components, no app changes':'Baseline model and grouping unchanged; original logits also produce capped seeded boundary review candidates; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
