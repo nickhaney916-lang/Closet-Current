@@ -293,7 +293,7 @@ function adjustPhoto(item){
       sam2PublicEvidenceProvider806:globalThis.__closetP804ImmutablePublicSAM2Evidence806,
       enableSAM2PublicCorrection808:new URLSearchParams(location.search).get('mission1Sam2PublicBrush808')==='research'&&
        new URLSearchParams(location.search).get('mission1Sam2PublicPreview806')==='research'&&
-       item.sourceSHA256==='e7a617cd23a159864f619e8397d48b684e47dddc4ad6b46b14481042019'
+       item.sourceSHA256==='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019'
      });
     }).catch(()=>{
      if(stillCurrent798())message('Original garment point review is unavailable. Your photo is unchanged.');
