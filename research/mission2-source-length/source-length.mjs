@@ -249,10 +249,10 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
  * geometry into browser console, saved outfits, or build artifacts.
  */
 export function safeAdaptiveBodyContactDiagnostic(decision){
- if(!decision||!Array.isArray(decision.attempts)||decision.attempts.length>4)
+ if(!decision||!Array.isArray(decision.attempts)||decision.attempts.length<1||decision.attempts.length>10)
   fail('bounded adaptive source diagnostic required');
  const attempts=decision.attempts.map(a=>Object.freeze({
-  scale:a.scale,accepted:a.accepted===true,reason:a.reason||'candidate-preflight-unavailable',
+  scale:a.scale,depthClearance:a.depthClearance,accepted:a.accepted===true,reason:a.reason||'candidate-preflight-unavailable',
   newBodyContacts:Number.isSafeInteger(a.newlyIntersecting)?a.newlyIntersecting:null,
   bodyRegions:a.bodyContactRegions?Object.freeze({
    newContactCount:a.bodyContactRegions.newContactCount,
@@ -264,6 +264,8 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   }):null
  }));
  return Object.freeze({accepted:decision.accepted===true,selectedScale:decision.selectedScale,
+  selectedDepthClearance:decision.selectedDepthClearance,
+  experimentalDepthTrial:decision.experimentalDepthTrial===true,
   refusalReason:decision.refusalReason,
   attempts:Object.freeze(attempts),sourcePoseOnly:true,
   noPhotoOrOwnerFields:true,releaseAuthorized:false});
