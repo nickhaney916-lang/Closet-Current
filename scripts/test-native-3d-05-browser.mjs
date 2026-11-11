@@ -356,6 +356,14 @@ try{
    return route.abort();
   });
   const page=await ctx.newPage();
+  const safeBodyLocality=[];
+  if(sourceAdaptiveMode)page.on('console',msg=>{
+   const prefix='M2_BODY_CONTACT_LOCALITY:';
+   if(msg.type()==='info'&&msg.text().startsWith(prefix)){
+    const data=JSON.parse(msg.text().slice(prefix.length));
+    safeBodyLocality.push(data);
+   }
+  });
   let donorRequests187=0;
   if(photoPreflight187)page.on('request',r=>{
    if(new URL(r.url()).pathname.startsWith('/donor/'))donorRequests187++;
@@ -444,6 +452,32 @@ try{
      assert.equal(await page.locator('#builder').isVisible(),true,
       'Signed in original-photo outfit board must remain available after refused 3D');
     }
+    assert.equal(safeBodyLocality.length,1,'Exactly one private-safe 3D fit diagnosis from the disposable donor');
+    const safeDiagnostic=safeBodyLocality[0];
+    assert.equal(safeDiagnostic.noPhotoOrOwnerFields,true);
+    assert.equal(safeDiagnostic.releaseAuthorized,false);
+    assert.equal(safeDiagnostic.accepted,accepted);
+    assert.equal(safeDiagnostic.refusalReason,refusalReason);
+    assert.ok(safeDiagnostic.attempts?.length>=1&&safeDiagnostic.attempts.length<=4);
+    assert.ok(safeDiagnostic.attempts.every(a=>[1,.75,.5,.25].includes(a.scale)&&typeof a.reason==='string'));
+    if(!accepted)assert.equal(safeDiagnostic.attempts.length,4,
+     'All four immutable fitted-length scales must be exhausted before original-photo fallback');
+    const sanitizedJSON=JSON.stringify(safeDiagnostic);
+    assert.equal(sanitizedJSON.includes('native05-A'),false);
+    assert.equal(sanitizedJSON.includes(source.originalSHA),false);
+    for(const a of safeDiagnostic.attempts){
+     if(!a.bodyRegions)continue;
+     assert.equal(a.bodyRegions.originalFaceIdentity,true);
+     assert.equal(a.bodyRegions.noPhotoOrOwnerFields,true);
+     assert.equal(a.bodyRegions.releaseAuthorized,false);
+     assert.equal(a.newBodyContacts,a.bodyRegions.newContactCount);
+     assert.equal(a.bodyRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newBodyContacts);
+     assert.equal(a.bodyRegions.byHeightQuartile.length,4);
+     assert.equal(a.bodyRegions.byHeightQuartile.reduce((t,n)=>t+n,0),a.newBodyContacts);
+     assert.equal(a.bodyRegions.byGarmentAndHeight.length,a.bodyRegions.byGarmentMesh.length);
+     for(let i=0;i<a.bodyRegions.byGarmentMesh.length;i++)
+      assert.equal(a.bodyRegions.byGarmentAndHeight[i].reduce((t,n)=>t+n,0),a.bodyRegions.byGarmentMesh[i]);
+    }
     assert.equal(await page.evaluate(()=>window.closetAuth?.user?.id),'native05-A');
     assert.deepEqual(await readBoard(page),ownerOriginal);
     await take(page,width,accepted?'02-contact-accepted-sampled-3d':'02-unsafe-contact-original-photo-fallback');
@@ -454,6 +488,7 @@ try{
      noNewIntrapanelTriangleContactsIfAccepted:accepted,
      changedFaceDeltaVerifiedIfAccepted:accepted,
      refusalReason,
+     safeBodyLocality:safeDiagnostic,
      neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
      originalPrivateOwnerRetained:true,releaseAuthorized:false,familyAlpha:'HOLD'});
     await page.close();await ctx.close();await browser.close();browser=null;

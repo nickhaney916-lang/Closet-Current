@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength,classifySourceLengthContactAttempt,classifySourceLengthCandidateException}
+import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength,classifySourceLengthContactAttempt,classifySourceLengthCandidateException,safeAdaptiveBodyContactDiagnostic}
  from '../research/mission2-source-length/source-length.mjs';
 
 const SHA='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -62,6 +62,8 @@ test('dry-run sampled extension scales are truly immutable before contact gate',
   assert.equal(result.stats.sourceLengthDryRun,true);
   assert.equal(result.stats.sourceLengthExtensionScale,scale);
   assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
+  assert.equal(result.stats.sourceLengthNewBodyContactRegions.newContactCount,0);
+  assert.equal(result.stats.sourceLengthNewBodyContactRegions.byHeightQuartile.reduce((a,n)=>a+n,0),0);
   assert.equal(result.stats.sourceLengthNewGarmentPartContacts,0);
   assert.equal(result.stats.sourceLengthNewIntrapanelContacts,0);
   assert.equal(result.stats.sourceLengthIntrapanelAffectedPairOnly,true);
@@ -93,6 +95,11 @@ test('adaptive 163-bone real triangles select a reduced length, then atomically 
  assert.equal(decision.attempts.at(-1).newlyIntersectingGarmentParts,0);
  assert.equal(decision.attempts.at(-1).newlyIntersectingIntrapanel,0);
  assert.equal(decision.noNewContactAtOnePose,true);
+ const safe=safeAdaptiveBodyContactDiagnostic(decision);
+ assert.equal(safe.accepted,true);
+ assert.equal(safe.noPhotoOrOwnerFields,true);
+ assert.equal(safe.attempts.at(-1).bodyRegions.newContactCount,0);
+ assert.equal(JSON.stringify(safe).includes(profile.sourceSHA256),false);
  assert.equal(decision.refusalReason,null);
  assert.equal(decision.attempts.at(-1).reason,'eligible');
  assert.equal(decision.existingIntersectionsUnresolved,true);
@@ -126,6 +133,12 @@ test('no acceptable extension fails closed before ANY user-photo mesh or panel m
  const decision=planNoNewContactSourceLength(fx.shirt,fx.root,profile);
  assert.equal(decision.accepted,false,JSON.stringify(decision));
  assert.equal(decision.originalPhotographOnly,true);
+ const safe=safeAdaptiveBodyContactDiagnostic(decision);
+ assert.equal(safe.accepted,false);
+ assert.equal(safe.attempts.length,4);
+ assert.equal(safe.noPhotoOrOwnerFields,true);
+ assert.equal(JSON.stringify(safe).includes(profile.sourceSHA256),false);
+ assert.equal(JSON.stringify(safe).includes('ownerId'),false);
  assert.equal(decision.selectedScale,null);
  assert.equal(decision.attempts.length,4);
  assert.ok(decision.attempts.every(x=>x.accepted===false&&typeof x.reason==='string'));
@@ -203,5 +216,23 @@ test('fail-closed enum diagnoses exact resource budget without fabricating cloth
  const decision=planNoNewContactSourceLength(fx.shirt,fx.root,profile);
  assert.equal(decision.accepted,true);
  assert.equal(decision.refusalReason,null);
+ fx.assertOriginal();
+});
+
+
+test('research-only diagnostic callback runs once before 3D refusal without mutating original garment',()=>{
+ const fx=fixture(.98);
+ const events=[];
+ assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile,
+  {onResearchDiagnostic:d=>events.push(d)}),/original-photo\/2D fallback required/);
+ assert.equal(events.length,1);
+ assert.equal(events[0].accepted,false);
+ assert.equal(events[0].attempts.length,4);
+ assert.equal(events[0].refusalReason,events[0].attempts.at(-1).reason);
+ assert.equal(events[0].noPhotoOrOwnerFields,true);
+ assert.ok(events[0].attempts.some(a=>a.bodyRegions?.newContactCount>0||a.reason==='coarse-body-pair-regression'));
+ fx.assertOriginal();
+ assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile,
+  {onResearchDiagnostic:'malformed'}),/bounded research diagnostic callback/);
  fx.assertOriginal();
 });

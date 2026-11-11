@@ -11,6 +11,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-adaptive-attribution-20261111-HOLD
     - research/mission2-unique-triangle-budget-20261111-HOLD
     - research/mission2-changed-face-self-delta-20261111-HOLD
+    - research/mission2-body-contact-locality-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -46,6 +47,8 @@ jobs:
 
         node --test --test-concurrency=1 tests/*.cjs tests/*.mjs'
   source-length-real-mobile-browser:
+    outputs:
+      locality390: ${{ steps.locality_probe.outputs.report }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
@@ -152,6 +155,20 @@ jobs:
          assert.equal(e.noNewGarmentPartTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          assert.equal(e.noNewIntrapanelTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          assert.equal(e.changedFaceDeltaVerifiedIfAccepted,e.sampledPoseAdmitted);
+         const d=e.safeBodyLocality;
+         assert.equal(d?.accepted,e.sampledPoseAdmitted);
+         assert.equal(d?.noPhotoOrOwnerFields,true);
+         assert.equal(d?.releaseAuthorized,false);
+         assert.ok(d.attempts.length>=1&&d.attempts.length<=4);
+         if(!e.sampledPoseAdmitted)assert.equal(d.attempts.length,4);
+         for(const a of d.attempts){
+          if(a.bodyRegions){
+           assert.equal(a.bodyRegions.originalFaceIdentity,true);
+           assert.equal(a.bodyRegions.newContactCount,a.newBodyContacts);
+           assert.equal(a.bodyRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newBodyContacts);
+           assert.equal(a.bodyRegions.byHeightQuartile.reduce((t,n)=>t+n,0),a.newBodyContacts);
+          }
+         }
          if(e.sampledPoseAdmitted){
           assert.equal(e.refusalReason,null);
           assert.equal(e.noNewBodyTriangleContactsIfAccepted,true);
@@ -170,6 +187,36 @@ jobs:
         }
         assert.equal(rejected+accepted,3);
         console.log('M2_ADAPTIVE_'+engine+'_REAL_BROWSER_SAFE_OR_2D_FALLBACK',JSON.stringify({rejected,accepted,screens:6,reasons:reasonCounts}));
+        console.log('M2_ADAPTIVE_BODY_LOCALITY_'+engine+':'+JSON.stringify(r.evidence.filter(e=>e.width===390).map(e=>({
+         width:e.width,reason:e.refusalReason,attempts:e.safeBodyLocality.attempts.map(a=>({
+          scale:a.scale,reason:a.reason,newBodyContacts:a.newBodyContacts,
+          byGarmentMesh:a.bodyRegions?.byGarmentMesh||null,
+          byHeightQuartile:a.bodyRegions?.byHeightQuartile||null
+         }))
+        }))));
+        NODE
+    - name: Expose bounded no-photo contact counts at 390px for follow-on geometry repair
+      id: locality_probe
+      run: |
+        node --input-type=module <<'NODE'
+        import assert from 'node:assert/strict';
+        import {readFileSync,appendFileSync} from 'node:fs';
+        const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+        const r=JSON.parse(readFileSync('benchmark/mission2-source-adaptive/'+engine+'/results.json','utf8'));
+        const e=r.evidence.find(x=>x.width===390);
+        assert.equal(e?.safeBodyLocality?.noPhotoOrOwnerFields,true);
+        assert.equal(e?.safeBodyLocality?.attempts?.length,4);
+        const a=e.safeBodyLocality.attempts;
+        const counts=a.map(x=>Number.isSafeInteger(x.newBodyContacts)?x.newBodyContacts:'x').join(',');
+        const last=a[3].bodyRegions;
+        const m=last?.byGarmentMesh?.join(',')||'none';
+        const h=last?.byHeightQuartile?.join(',')||'none';
+        assert.match(m,/^(none|[0-9,]+)$/);
+        assert.match(h,/^(none|[0-9,]+)$/);
+        const report=engine+'-new['+counts+']-mesh['+m+']-height['+h+']';
+        assert.ok(report.length<192);
+        appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
+        console.log('M2_LOCALITY_AGGREGATE_ONLY',report);
         NODE
     - uses: actions/upload-artifact@v4
       if: always()
@@ -182,3 +229,12 @@ jobs:
           benchmark/user-photo-to-anatomical-3d-62/'
         retention-days: 14
         if-no-files-found: warn
+
+  show-signed-locality-without-artifact:
+    needs: source-length-real-mobile-browser
+    if: ${{ always() && needs.source-length-real-mobile-browser.outputs.locality390 != '' }}
+    name: "M2 source region ${{ needs.source-length-real-mobile-browser.outputs.locality390 }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - run: echo "Verified aggregate locality is visible in the job name; never include images or owner identifiers"

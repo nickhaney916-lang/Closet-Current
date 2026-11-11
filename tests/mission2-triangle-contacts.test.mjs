@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizePosedBodyContactDistribution
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -344,4 +344,39 @@ test('changed-face detector reuses correct baseline SAT cache for retained and g
  assert.equal(proof.retainedExistingContacts,1,
   'Original overlapping face remains a retained, not newly introduced, intersection');
  assert.deepEqual(mesh.geometry.getAttribute('position').array,source);
+});
+
+
+test('original-face newly intersecting body contacts are allocated by garment mesh and height without identifying wearers',()=>{
+ const {root,garment,proposed}=simplePose();
+ const original=garment.geometry.getAttribute('position').array.slice();
+ const baseline=measurePosedTriangleContacts(root,[garment]);
+ const staged=measurePosedTriangleContacts(root,[garment],new Map([[garment,proposed]]));
+ const novelty=summarizeNewPosedBodyContactRegions(root,[garment],baseline,staged);
+ const delta=comparePosedTriangleContacts(baseline,staged);
+ assert.equal(novelty.newContactCount,delta.newlyIntersecting);
+ assert.deepEqual(novelty.byGarmentMesh,[delta.newlyIntersecting]);
+ assert.equal(novelty.byHeightQuartile.length,4);
+ assert.equal(novelty.byHeightQuartile.reduce((a,n)=>a+n,0),delta.newlyIntersecting);
+ assert.equal(novelty.byGarmentAndHeight[0].reduce((a,n)=>a+n,0),delta.newlyIntersecting);
+ assert.equal(novelty.byBodyMesh.reduce((a,v)=>a+v.contacts,0),delta.newlyIntersecting);
+ assert.equal(novelty.originalFaceIdentity,true);
+ assert.equal(novelty.noPhotoOrOwnerFields,true);
+ assert.equal(novelty.signedDepthVerified,false);
+ assert.equal(novelty.releaseAuthorized,false);
+ assert.equal(JSON.stringify(novelty).includes('sourceSHA256'),false);
+ const zero=summarizeNewPosedBodyContactRegions(root,[garment],baseline,baseline);
+ assert.equal(zero.newContactCount,0);
+ assert.deepEqual(zero.byHeightQuartile,[0,0,0,0]);
+ assert.deepEqual(garment.geometry.getAttribute('position').array,original);
+ assert.throws(()=>summarizeNewPosedBodyContactRegions(root,[garment],baseline,{
+  triangleContactKeys:[...baseline.triangleContactKeys,'0:0:999999:0'],
+  triangleContactCount:baseline.triangleContactCount+1
+ }),/outside original posed garment/);
+ assert.throws(()=>summarizeNewPosedBodyContactRegions(root,[garment],baseline,{
+  triangleContactKeys:['garment-name'],
+  triangleContactCount:1
+ }),/canonical original source face/);
+ assert.throws(()=>summarizeNewPosedBodyContactRegions(root,[garment,garment],baseline,staged),
+  /complete original-face contact witnesses/);
 });
