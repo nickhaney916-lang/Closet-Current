@@ -4,6 +4,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     branches:
     - research/mission2-source-length-20261110-HOLD
     - research/mission2-visible-dual-humanoid-delta-20261110-HOLD
+    - research/mission2-surface-contact-20261110-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -23,13 +24,15 @@ jobs:
         node-version: '22'
     - name: Exact verified parent and nine research-only paths
       run: "set -eu\nBASE=349322687edb7035c321e11b54a9ed5c52476c5f\ntest \"$(git merge-base \"$BASE\" HEAD)\" = \"$BASE\"\ngit diff --name-only\
-        \ \"$BASE\" HEAD > /tmp/mission2-length-paths\nwhile IFS= read -r p; do\n case \"$p\" in\n  scripts/check-mission2-visual-delta.mjs|tests/mission2-visible-acceptance.test.mjs|research/mission2-source-length/source-length.mjs|research/mission2-source-length/source-projection.mjs|research/mission2-source-length/posed-intersections.mjs|research/mission2-source-length/REPORT.md|scripts/install-mission2-source-length.mjs|scripts/test-native-3d-05-browser.mjs|research/native-3d-05/native-preview-bridge.mjs|tests/mission2-source-length.test.mjs|.github/workflows/mission2-source-length-no-deploy.yml)\
+        \ \"$BASE\" HEAD > /tmp/mission2-length-paths\nwhile IFS= read -r p; do\n case \"$p\" in\n  tests/mission2-triangle-contacts.test.mjs|research/mission2-source-length/TRIANGLE-CONTACT-AUDIT.md|scripts/check-mission2-visual-delta.mjs|tests/mission2-visible-acceptance.test.mjs|research/mission2-source-length/source-length.mjs|research/mission2-source-length/source-projection.mjs|research/mission2-source-length/posed-intersections.mjs|research/mission2-source-length/REPORT.md|scripts/install-mission2-source-length.mjs|scripts/test-native-3d-05-browser.mjs|research/native-3d-05/native-preview-bridge.mjs|tests/mission2-source-length.test.mjs|.github/workflows/mission2-source-length-no-deploy.yml)\
         \ ;;\n  *) echo \"Unexpected source-length path $p\"; exit 1 ;;\n esac\ndone < /tmp/mission2-length-paths\ntest \"$(wc -l < /tmp/mission2-length-paths)\"\
-        \ -eq 11\ngit diff --exit-code \"$BASE\" HEAD -- public supabase\n"
+        \ -eq 13\ngit diff --exit-code \"$BASE\" HEAD -- public supabase\n"
     - &id003
       run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
         axe-core@4.10.3
     - run: 'node --test tests/mission2-source-length.test.mjs
+
+        node --test tests/mission2-triangle-contacts.test.mjs
 
         node scripts/build.mjs
 
@@ -90,6 +93,7 @@ jobs:
       env:
         PHOTO_SOURCE_LENGTH: '1'
         PHOTO_SOURCE_PROJECTION: '1'
+        PHOTO_TRIANGLE_CONTACTS: '1'
         MISSION2_PERFORMANCE: '1'
       run: 'node scripts/test-native-3d-05-browser.mjs
 
@@ -102,8 +106,8 @@ jobs:
         \ b=readFileSync(prefix+s.name);assert.equal(createHash('sha256').update(b).digest('hex'),s.sha256);assert.equal(b.readUInt32BE(16),s.width);count++;}\n\
         \ if(stage==='after'){\n  assert.equal(r.sourceLengthMode,true);assert.equal(r.sourceProjectionMode,true);assert.equal(r.sourceLengthEvidence.length,6);assert.equal(r.performanceSamples.length,6);\n\
         \  for(const width of [320,390,430])assert.deepEqual(r.sourceLengthEvidence.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);\n\
-        \  for(const e of r.sourceLengthEvidence){assert.ok(e.movedVertices>=100);assert.ok(e.newHemY<e.oldHemY-.07);assert.ok(e.newHemY>=.55);assert.ok(e.intersectionPairsAfter<=e.intersectionPairsBefore);assert.ok(e.testedPairs>=3);assert.equal(e.collisionCertified,false);assert.equal(e.sourceProjectionRGB,true);assert.ok(e.sourceProjectionCompiledMaterialCount>=1);}\n\
-        \ }\n}\nassert.equal(count,44);console.log('M2_SOURCE_LENGTH_'+engine+'_44_REAL_SHA_SCREENSHOTS_POSED_BODY_NONREGRESSION');\nNODE"
+        \  for(const e of r.sourceLengthEvidence){assert.ok(e.movedVertices>=100);assert.ok(e.newHemY<e.oldHemY-.07);assert.ok(e.newHemY>=.55);assert.ok(e.intersectionPairsAfter<=e.intersectionPairsBefore);assert.ok(e.testedPairs>=3);assert.equal(e.collisionCertified,false);assert.equal(e.triangleAudit,true);assert.ok(Number.isInteger(e.triangleContactsBefore)&&e.triangleContactsBefore>0);assert.ok(Number.isInteger(e.triangleContactsAfter)&&e.triangleContactsAfter>=0);assert.ok(Number.isInteger(e.newTriangleContacts)&&e.newTriangleContacts>=0);assert.equal(e.sourceProjectionRGB,true);assert.ok(e.sourceProjectionCompiledMaterialCount>=1);}\n\
+        \ }\n}\nassert.equal(count,44);console.log('M2_SOURCE_LENGTH_'+engine+'_44_REAL_SHA_SCREENSHOTS_POSED_BODY_NONREGRESSION');console.log('M2_TRIANGLE_CONTACTS_'+engine+':'+JSON.stringify(JSON.parse(readFileSync(root+'after-'+engine+'/results.json','utf8')).sourceLengthEvidence.map(x=>({width:x.width,figure:x.figure,before:x.triangleContactsBefore,after:x.triangleContactsAfter,new:x.newTriangleContacts}))));\nNODE"
     - name: Require genuine before/after pixels and independently distinct male/female anatomical scenes
       run: node scripts/check-mission2-visual-delta.mjs ${{ matrix.engine }}
     - uses: actions/upload-artifact@v4
