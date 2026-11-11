@@ -144,7 +144,7 @@ This tool uses only local files. It never shows model predictions, another revie
       typeof p.image!=='string'||!/^[-a-z0-9_]+\.jpe?g$/.test(p.image)||
       !/^[a-f0-9]{64}$/.test(p.sha256||'')||
       !Number.isSafeInteger(p.width)||!Number.isSafeInteger(p.height)||
-      p.width<2||p.height<2||p.width*p.height>16000000||
+      p.width<32||p.height<32||p.width*p.height>16000000||
       ids.has(p.id)||digests.has(p.sha256))
     throw Error('Invalid or duplicated registered original JPEG identity');
    ids.add(p.id);digests.add(p.sha256);
