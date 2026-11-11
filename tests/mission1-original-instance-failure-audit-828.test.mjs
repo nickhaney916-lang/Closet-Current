@@ -106,7 +106,7 @@ test('P828 block fabricated extra TP, duplicate predictions, wrong family and om
  for(const mutation of [
   x=>x.rows[0].thresholdMetrics821[P828_PROFILES[0]].truePositives++,
   x=>x.rows[0].thresholdMetrics821[P828_PROFILES[0]].falsePositives++,
-  x=>x.rows[0].thresholdMetrics821[P828_PROFILES[0]].missedTruthIds=[],
+  x=>x.rows[4].thresholdMetrics821[P828_PROFILES[0]].missedTruthIds=[],
   x=>x.rows[0].thresholdMetrics821[P828_PROFILES[0]].matches.push({
    truthId:'annotation-99999',predictionId:'forged',region:4,iou:.9}),
   x=>x.rows[0].sourceSHA256='f'.repeat(64),
