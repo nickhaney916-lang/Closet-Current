@@ -1,0 +1,70 @@
+name: Mission 1 P822 source-ambiguous crop remains manual owner review — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-ambiguous-photo-crop-admission-822-HOLD]
+  pull_request:
+    branches: [research/mission1-ambiguous-owner-edit-gate-820-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p822-owner-crop-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-and-all-app-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact green P820 and only 4 approved no-deploy source, test, report, workflow paths
+        run: |
+          set -euo pipefail
+          BASE=3f1d13cd2916ffd67d6ed8102675963a513125aa
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p822-paths
+          cat /tmp/m1-p822-paths
+          test "$(wc -l </tmp/m1-p822-paths)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              public/app.js|tests/mission1-ambiguous-photo-crop-822.test.mjs|research/mission1-ambiguous-photo-crop-822/REPORT.md|.github/workflows/mission1-ambiguous-photo-crop-822-no-deploy.yml) ;;
+              *) echo "UNAPPROVED MODEL/CLOUD/PRIVATE PHOTO/STAGING/PRODUCTION CHANGE: $p";exit 1;;
+            esac
+          done </tmp/m1-p822-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/outfit-segmentation.mjs public/segmentation-worker.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-ambiguous-photo-crop-822/REPORT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-ambiguous-photo-crop-822/REPORT.md
+          echo M1_P822_FOUR_APPROVED_PATHS_EXACT_VERIFIED_P820_PARENT_NO_DEPLOY
+      - name: Ephemeral complete app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Native crop and owner-source safety tests plus full app build and full Node suite
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check tests/mission1-ambiguous-photo-crop-822.test.mjs
+          node --test tests/mission1-ambiguous-photo-crop-822.test.mjs tests/mission1-ambiguous-owner-edit-820.test.mjs tests/mission1-native-disconnected-review-818.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  independent-crop-identity-and-metadata-admission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Actual native app.js handler adversarial safety and pre-existing original review
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-ambiguous-photo-crop-822.test.mjs tests/mission1-ambiguous-owner-edit-820.test.mjs
+          grep -Fq "sourceNeedsManualReview822" public/app.js
+          grep -Fq "delete value.sourceAmbiguityAcknowledged820" public/app.js
+          grep -Fq "value.sourceSHA256=item.sourceSHA256" public/app.js
+          echo M1_P822_FLAGGED_CROP_NO_MODEL_COLOR_NO_STALE_OWNER_CONFIRMATION_NO_DEPLOY
