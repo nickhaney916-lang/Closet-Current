@@ -60,7 +60,7 @@ test('P818 single upper region, tiny background specks, and disconnected shoes d
  const upper=groups.find(g=>g.id===4),shoes=groups.find(g=>g.id===9);
  assert.equal(upper.sourceDisconnectedReviewRequired,false,'tiny component ignored');
  assert.equal(upper.largeSourceIslandCount,1);
- assert.equal(upper.count,80);
+ assert.equal(upper.count,84,'retain the existing four-pixel model speck but do not treat it as a second significant garment');
  assert.equal(shoes.count,50,'both shoe regions remain one existing pair review proposal');
  assert.equal(shoes.sourceDisconnectedReviewRequired,false,'shoe pair is not two upper garments');
 });
