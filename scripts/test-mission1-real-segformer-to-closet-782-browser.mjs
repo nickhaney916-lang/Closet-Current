@@ -24,6 +24,8 @@ const sourceRecord=JSON.parse(readFileSync('benchmark/locked-photo-sources.json'
  .find(x=>x.id==='commons-0053');
 const sourceSHA256=createHash('sha256').update(original).digest('hex');
 const publicSAM2Dir806=process.env.M1_P806_PUBLIC_SAM2_ARTIFACT_DIR||null;
+const publicSAM2Brush808=process.env.M1_P808_REAL_SAM2_BRUSH==='1';
+assert.ok(!publicSAM2Brush808||publicSAM2Dir806,'Real source SAM2 brush requires genuine P804 PNG artifact');
 assert.ok(sourceRecord?.verified && sourceRecord?.attribution?.license==='CC BY 4.0');
 assert.match(sourceRecord.attribution.title,/Dress/i,'the source catalog must document a real dress');
 assert.equal(sourceSHA256,sourceRecord.sha256,'real original public licensed photo bytes required');
@@ -228,7 +230,8 @@ try{
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
     await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research&mission1OwnerMaskCorrection803=research&mission1BrowserBoxSam804=research'+
-     (publicSAM2Dir806?'&mission1Sam2PublicPreview806=research':''),
+     (publicSAM2Dir806?'&mission1Sam2PublicPreview806=research':'')+
+     (publicSAM2Brush808?'&mission1Sam2PublicBrush808=research':''),
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -534,6 +537,62 @@ try{
       assert.equal(val,true,'P806 public licensed original SAM2 preview only '+name+'/'+width+' '+key);
      // P806 visual QA must capture the ACTUAL original photo + real model
      // alpha overlay (not only the scroll position showing explanatory text).
+     if(publicSAM2Brush808){
+      assert.equal(await tapReview.getAttribute('data-mission1-sam2-manual-correction808'),
+       'unverified-archived-mask-brush-no-save');
+      const realLayer=tapReview.locator('[data-mission1-sam2-overlay806="real-p804-prediction-unverified"]');
+      const centerAlpha808=()=>realLayer.evaluate(layer=>{
+       const x=Math.floor(layer.width/2),y=Math.floor(layer.height/2);
+       return layer.getContext('2d').getImageData(x,y,1,1).data[3];
+      });
+      assert.equal(await centerAlpha808(),122,'P808 actual previously verified SAM2 garment center initially selected');
+      const erase808=tapReview.getByRole('button',{name:'Erase pixels from archived SAM2 mask'});
+      const add808=tapReview.getByRole('button',{name:'Add pixels to archived SAM2 mask'});
+      assert.equal(await erase808.isEnabled(),true);
+      await erase808.click();
+      await imgOriginal.click();
+      await page.waitForFunction(()=>/Manual erase on real SAM2 source prediction 1:/.test(
+       document.querySelector('[data-mission1-sam2-correction-status808="unverified"]')?.textContent||''
+      ),null,{timeout:20000});
+      assert.equal(await centerAlpha808(),0,'P808 POINTER erases genuine SAM2 original source center');
+      await tapReview.locator('button[aria-label="Refine archived SAM2 original mask"]')
+       .screenshot({path:out+'/'+name+'-'+width+'-01g3-P804-REAL-SAM2-mask-POINTER-ERASED-UNVERIFIED.png'});
+      await add808.click();
+      await imgOriginal.click();
+      await page.waitForFunction(()=>/Manual add on real SAM2 source prediction 2:/.test(
+       document.querySelector('[data-mission1-sam2-correction-status808="unverified"]')?.textContent||''
+      ),null,{timeout:20000});
+      assert.equal(await centerAlpha808(),122,'P808 POINTER restores genuine SAM2 source center');
+      await erase808.click();
+      const brushTarget=tapReview.locator('button[aria-label="Refine archived SAM2 original mask"]');
+      await brushTarget.focus();await brushTarget.press('Enter');
+      await page.waitForFunction(()=>/Manual erase on real SAM2 source prediction 3:/.test(
+       document.querySelector('[data-mission1-sam2-correction-status808="unverified"]')?.textContent||''
+      ),null,{timeout:20000});
+      assert.equal(await centerAlpha808(),0,'P808 KEYBOARD erases actual SAM2 pixels');
+      await add808.click();await brushTarget.press('Enter');
+      await page.waitForFunction(()=>/Manual add on real SAM2 source prediction 4:/.test(
+       document.querySelector('[data-mission1-sam2-correction-status808="unverified"]')?.textContent||''
+      ),null,{timeout:20000});
+      assert.equal(await centerAlpha808(),122,'P808 KEYBOARD restores actual SAM2 pixels');
+      await tapReview.getByRole('button',{name:'Finish archived SAM2 mask correction'}).click();
+      const integrity808=await page.evaluate(async()=>{
+       await writes;
+       const draft=await readDraft(),saved=await readAll();
+       return {
+        originalJPEGSourceSHAUnchanged:batch[0]?.originalPhoto?.sha256===batch[0]?.sourceSHA256,
+        categoryStillUncategorized:batch[0]?.category==='Uncategorized',
+        clothingTypeStillUnknown:batch[0]?.itemType==='Unknown',
+        noOwnerApproval:batch[0]?.ownerReviewed!==true,
+        noSourceMaskPersistence:draft.every(item=>!('sam2Mask808' in item)&&!('sam2Correction808' in item)),
+        noPrivateSavedMask:saved.length===0,
+        explicitUnverifiedNotice:/UNVERIFIED and NOT saved/.test(
+         document.querySelector('[data-mission1-sam2-correction-status808="unverified"]')?.textContent||'')
+       };
+      });
+      for(const [key,value] of Object.entries(integrity808))
+       assert.equal(value,true,'P808 real-source SAM2 manual brush no-save '+name+'/'+width+' '+key);
+     }
      const originalModelSurface=tapReview.locator('button[aria-label="Tap original photograph to select garment point"]');
      assert.equal(await originalModelSurface.count(),1);
      await originalModelSurface.screenshot({path:out+'/'+name+'-'+width+'-01g2-actual-original-P804-SAM2-photo-overlay.png'});
@@ -671,6 +730,8 @@ try{
      actualOriginalSourceOwnerMask803NoApprovalOrPrivatePersistence:true,
      P806ActualP804LinuxSAM2PublicArtifactRenderedNativeUnverified:!!publicSAM2Dir806,
      P806OriginalJPEGSHAAndMaskPNGVerifiedBeforeOverlay:!!publicSAM2Dir806,
+     P808RealSAM2MaskPointerAndKeyboardCorrectionsVerified:publicSAM2Brush808,
+     P808RealSAM2SourceOriginalNeverSavedOrApproved:publicSAM2Brush808,
      simulatedPlaywrightBoxEventsNotIndependentHumans:true,
      actualOriginalSourceOwnerPoint798NoMaskOrApproval:true,
      originalSourceOwnerPointBrowserGesturesSimulated:true,
