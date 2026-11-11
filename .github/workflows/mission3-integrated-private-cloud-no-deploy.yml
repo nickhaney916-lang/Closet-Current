@@ -30,7 +30,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/cloud-backup.js|tests/mission3-device-quota-atomic-restore.test.cjs|tests/mission3-cloud-integrity-retry-pause.test.cjs|scripts/test-mission3-persistent-device-quota-browser.mjs|scripts/test-mission3-cloud-integrity-pause-browser.mjs|research/mission3-persistent-device-quota/REPORT.md|research/mission3-cloud-integrity-pause/REPORT.md|research/mission3-integrated-private-cloud/REPORT.md|.github/workflows/mission3-integrated-private-cloud-no-deploy.yml) ;;
+              public/cloud-backup.js|tests/mission3-device-quota-atomic-restore.test.cjs|tests/mission3-cloud-integrity-retry-pause.test.cjs|tests/mission3-revision-first-cloud.test.cjs|scripts/test-mission3-persistent-device-quota-browser.mjs|scripts/test-mission3-cloud-integrity-pause-browser.mjs|research/mission3-persistent-device-quota/REPORT.md|research/mission3-cloud-integrity-pause/REPORT.md|research/mission3-integrated-private-cloud/REPORT.md|.github/workflows/mission3-integrated-private-cloud-no-deploy.yml) ;;
               *) echo "Unexpected Mission 3 integrated private cloud path: $p"; exit 1 ;;
             esac
           done
