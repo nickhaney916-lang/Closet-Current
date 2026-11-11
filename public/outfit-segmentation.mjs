@@ -34,7 +34,7 @@ export function clothingMaskGroups(map){
  const {labels,confidence,width,height}=map;if(labels.length!==width*height||confidence.length!==labels.length)throw Error('Invalid outfit mask.');
  const output=[];
  for(const region of clothingRegions){
-  const selected=new Uint8Array(labels.length),seen=new Uint8Array(labels.length),minimum=Math.max(4,Math.ceil(labels.length*.0007));let count=0,sum=0,minX=width,minY=height,maxX=-1,maxY=-1;
+  const selected=new Uint8Array(labels.length),seen=new Uint8Array(labels.length),minimum=Math.max(4,Math.ceil(labels.length*.0007));let count=0,sum=0,minX=width,minY=height,maxX=-1,maxY=-1,sourceIslands=[];
   for(let start=0;start<labels.length;start++){
    if(seen[start]||labels[start]!==region.id)continue;
    const queue=[start],component=[];seen[start]=1;
@@ -43,10 +43,23 @@ export function clothingMaskGroups(map){
     for(const n of [x>0?i-1:-1,x+1<width?i+1:-1,y>0?i-width:-1,y+1<height?i+width:-1])if(n>=0&&!seen[n]&&labels[n]===region.id){seen[n]=1;queue.push(n);}
    }
    if(component.length<minimum)continue;
+   sourceIslands.push(component.length);
    for(const i of component){selected[i]=1;count++;sum+=confidence[i];minX=Math.min(minX,i%width);maxX=Math.max(maxX,i%width);minY=Math.min(minY,Math.floor(i/width));maxY=Math.max(maxY,Math.floor(i/width));}
   }
   if(count<Math.max(12,Math.ceil(labels.length*.001))||sum/count<.8)continue;
-  output.push({...region,selected,count,confidence:sum/count,bounds:{left:minX,top:minY,right:maxX+1,bottom:maxY+1},clipped:minX===0||minY===0||maxX===width-1||maxY===height-1});
+  // P818: a model's single semantic family is NOT evidence of one garment.
+  // Preserve the original union mask (P817 showed auto-split had worse FP/FN),
+  // but require manual review if two substantial disconnected upper-clothes
+  // regions would otherwise be silently auto-classified as a single item.
+  const substantial=Math.max(12,Math.ceil(labels.length*.001),Math.ceil(count*.08));
+  const largeSourceIslandCount=sourceIslands.filter(n=>n>=substantial).length;
+  const sourceDisconnectedReviewRequired=region.id===4&&largeSourceIslandCount>=2;
+  output.push({...region,selected,count,confidence:sum/count,
+   bounds:{left:minX,top:minY,right:maxX+1,bottom:maxY+1},
+   clipped:minX===0||minY===0||maxX===width-1||maxY===height-1,
+   // These are ORIGINAL MODEL raster islands, NEVER physical garment counts.
+   largeSourceIslandCount,sourceDisconnectedReviewRequired,
+   autoVerifiedSingleGarment:false});
  }
  return output;
 }
