@@ -221,6 +221,7 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
    // three-mesh-bvh rejects some indexed recursive self-casts; build
    // two independent immutable geometry/BVH views with identical face IDs.
    const other=g.clone();
+   let overflowReason=null;
    try{
     g.boundsTree=new MeshBVH(g,{indirect:true});
     other.boundsTree=new MeshBVH(other,{indirect:true});
@@ -228,16 +229,18 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
      intersectsTriangles:(a,c,aId,cId)=>{
      if(aId===cId||adjacent(aId,cId))return false;
      candidateTests++;
-     if(candidateTests>maxCandidateTests)
-      throw Error('M2 self-contact exceeds bounded triangle comparison budget; cannot certify');
+     if(candidateTests>maxCandidateTests){overflowReason='triangle comparison';return true;}
      if(!a.intersectsTriangle(c))return false;
      const min=Math.min(aId,cId),max=Math.max(aId,cId);
      contactKeys.add(meshIndex+':'+min+':'+max);
-     if(contactKeys.size>=maxContacts)
-      throw Error('M2 self-contact exceeds bounded contact budget; cannot certify');
+     if(contactKeys.size>=maxContacts){overflowReason='contact';return true;}
       return false;
      }
     });
+    // Never throw INSIDE bvhcast: v0.9.2 does not reset its global
+    // active-traversal guard when callbacks throw. Return true to stop,
+    // then fail closed only after the library has released its guard.
+    if(overflowReason)throw Error('M2 self-contact exceeds bounded '+overflowReason+' budget; cannot certify');
    }finally{other.dispose();}
   }finally{g.dispose();}
  }
