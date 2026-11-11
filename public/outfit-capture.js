@@ -10,7 +10,11 @@ function renderOutfitCapture(){
 function finishOutfitSplit(job,text,failed=false){
  if(job!==outfitSplitJob)return;
  if(typeof recordDeviceEvent==='function')recordDeviceEvent(failed?'outfit_split_failed':'outfit_split_ready',{durationMs:Date.now()-job.started});
- clearTimeout(job.timer);job.worker?.terminate();outfitSplitJob=null;busy=false;controls(false);
+ clearTimeout(job.timer);job.worker?.terminate();
+ // Abandon any uncommitted candidate messages after a worker crash/timeout,
+ // owner change or invalid batch. Earlier reviewed closet rows stay intact.
+ if(job.pendingPieces)job.pendingPieces.length=0;
+ outfitSplitJob=null;busy=false;controls(false);
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
  if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Recognized pieces save automatically. Unclear or duplicate pieces remain here for review.';}
 }
@@ -50,7 +54,8 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
  }
  stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;if(guarded)lastOutfitSourceProof=proof;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
- const job={id:crypto.randomUUID(),sourceId,owner,proof,started:Date.now(),phase:'loading',worker:null,timer:null,added:0};outfitSplitJob=job;
+ const job={id:crypto.randomUUID(),sourceId,owner,proof,started:Date.now(),phase:'loading',
+  worker:null,timer:null,added:0,pendingPieces:[],pendingChars:0};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();
  $('outfitSplitStatus').textContent='Preparing…';
@@ -65,13 +70,40 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID(),proof=null){
     $('outfitSplitStatus').textContent=data.phase==='separating'?'Separating clothes…':Number.isFinite(data.percent)?'Downloading · '+data.percent+'%':'Preparing…';return;
    }
    if(data.type==='piece'){
-    const p=data.piece;
-    if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
-    if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
-    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},originalSourceProof:guarded?job.proof:null,cropBounds:p.cropBounds,colorEstimate:p.colorEstimate}))job.added++;renderOutfitCapture();return;
+    const p=data.piece,validJPEG=value=>typeof value==='string'&&
+     value.length<=8000000&&/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(value);
+    const validCrop=b=>b===undefined||(b&&
+     ['x','y','width','height'].every(k=>Number.isFinite(b[k])&&b[k]>=0&&b[k]<=1)&&
+     b.width>0&&b.height>0&&b.x+b.width<=1.000001&&b.y+b.height<=1.000001);
+    const valid=p&&validJPEG(p.image)&&
+     (!p.recognitionPhoto||validJPEG(p.recognitionPhoto.image))&&
+     validCrop(p.cropBounds)&&Array.isArray(p.hint?.categories)&&
+     p.hint.categories.every(x=>categories.includes(x))&&
+     Array.isArray(p.hint?.types)&&p.hint.types.length<=8;
+    const size=valid?(p.image.length+(p.recognitionPhoto?.image?.length||0)):0;
+    if(!valid||job.pendingPieces.length>=24||job.pendingChars+size>24000000){
+     finishOutfitSplit(job,'One of the clothing regions could not be verified. No new pieces from this photo were queued. Try the photo again or capture fewer garments.',true);
+     return;
+    }
+    // P815: stage only; the user-visible candidate queue may be changed
+    // ONLY after a complete and count-matched "done" from the same worker.
+    job.pendingPieces.push(p);job.pendingChars+=size;return;
    }
-   if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Categories are being checked.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
-   else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
+   if(data.type==='done'){
+    if(!Number.isSafeInteger(data.count)||data.count!==job.pendingPieces.length){
+     finishOutfitSplit(job,'Outfit separation returned an incomplete group. No pieces from this photo were queued. Try again.',true);return;
+    }
+    const prepared=job.pendingPieces;
+    job.pendingPieces=[];
+    for(const p of prepared)if(candidate(p.image,{outfitSourceId:sourceId,
+     segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},
+     originalSourceProof:guarded?job.proof:null,cropBounds:p.cropBounds,
+     colorEstimate:p.colorEstimate}))job.added++;
+    renderOutfitCapture();
+    finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Categories are being checked.':
+     'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
+   }else if(data.type==='error')finishOutfitSplit(job,
+    'Outfit separation did not finish. No new pieces from this photo were queued. Your existing clothing is kept.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
   // Legacy photo conversion is already <=3072 px. Keep its long-standing
