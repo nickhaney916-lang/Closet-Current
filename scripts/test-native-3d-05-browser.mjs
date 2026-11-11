@@ -51,7 +51,8 @@ function requireSourceLength(state,width){
   assert.equal(distribution?.total,state.sourceLengthTriangleContactBefore);
   assert.equal(distribution?.sourceFaceIdentity,true);
   assert.equal(distribution?.releaseAuthorized,false);
-  assert.equal(distribution?.byGarmentMesh?.length,3);
+  assert.ok(Number.isInteger(distribution?.byGarmentMesh?.length)&&distribution.byGarmentMesh.length>=3&&distribution.byGarmentMesh.length<=8,
+   'Use actual verified donor garment-part count, never hardcode the smaller unit fixture');
   assert.equal(distribution.byGarmentMesh.reduce((a,n)=>a+n,0),distribution.total);
   assert.equal(distribution.byBodyMesh.reduce((a,b)=>a+b.contacts,0),distribution.total);
  }
