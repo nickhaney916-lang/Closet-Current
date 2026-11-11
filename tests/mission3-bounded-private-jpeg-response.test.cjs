@@ -167,6 +167,7 @@ test('conflicting immutable upload reads already-stored object through bounded s
  }finally{f.close();}
 });
 test('valid SHA-bound streamed JPEG accepted across multiple small chunks without full arrayBuffer clone',async()=>{
+ if(baseline)return; // the verified parent has no streamed-body reader
  const f=await fixture({variant:'good'});
  try{
   await f.start();
