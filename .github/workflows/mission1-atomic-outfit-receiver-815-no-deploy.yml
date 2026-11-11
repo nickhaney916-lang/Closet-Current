@@ -1,0 +1,65 @@
+name: Mission 1 P815 atomic outfit review receiver before owner queue — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-atomic-outfit-receiver-815-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mission1-P815-atomic-receiver-HOLD
+  cancel-in-progress: true
+jobs:
+  full-source-native-app-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact green P814 parent and four source/test/report/CI files only
+        run: |
+          set -euo pipefail
+          BASE=7bff50e6ee759f5c3b621eb1755e19ea4d671f87
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-P815-files
+          test "$(wc -l </tmp/m1-P815-files)" -eq 4
+          while read -r p; do
+            case "$p" in
+              public/outfit-capture.js|tests/outfit-capture.test.cjs|research/mission1-atomic-outfit-receiver-815/REPORT.md|.github/workflows/mission1-atomic-outfit-receiver-815-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED CLOUD MODEL PHOTO PRODUCTION OR DEPLOY CHANGE: $p"; exit 1 ;;
+            esac
+          done </tmp/m1-P815-files
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-atomic-outfit-receiver-815/REPORT.md
+          echo M1_P815_EXACT_GREEN_P814_ONLY_FOUR_PATHS_NO_DEPLOY
+      - name: Install ephemeral native test and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Source receiver, bounded JPEG worker, native build and all app regression
+        run: |
+          set -euo pipefail
+          node --check public/outfit-capture.js
+          node --test tests/outfit-capture.test.cjs tests/outfit-worker.test.mjs tests/multi-garment-capture-01.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  independent-consumer-batch-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Source-matched UI receiver VM tests and synthetic 100 captures
+        run: |
+          set -euo pipefail
+          node --test tests/outfit-capture.test.cjs
+          node --check public/outfit-capture.js
+          grep -Fq 'data.count!==job.pendingPieces.length' public/outfit-capture.js
+          grep -Fq 'job.pendingPieces.push(p)' public/outfit-capture.js
+          echo M1_P815_OWNER_REVIEW_QUEUE_NO_PARTIAL_MESSAGES_NO_DEPLOY
