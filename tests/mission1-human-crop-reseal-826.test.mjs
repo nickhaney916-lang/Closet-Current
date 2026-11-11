@@ -146,3 +146,66 @@ test('P826 revoked original SHA or unchecked one-garment claim never saves new c
   assert.equal((await get(h.db,'state','draft')).batch[0].image,original);
  }finally{h.db.close();}
 });
+
+test('P826 actual crop editor Save button requires fresh one-garment checkbox and closes after valid saved crop rotates its old lease',async()=>{
+ const editorSource=readFileSync('public/photo-crop-editor.js','utf8');
+ const made=[],mounted=[],paintCalls=[];
+ const newElement=(tag)=>{
+  const el={tag,children:[],attributes:{},style:{},hidden:false,
+   disabled:false,checked:false,isConnected:true,open:false,
+   append(...nodes){this.children.push(...nodes);},
+   setAttribute(key,value){this.attributes[key]=String(value);},
+   addEventListener(){},
+   querySelectorAll(){return [];},
+   showModal(){this.open=true;},
+   close(){this.open=false;this.onclose?.();},
+   remove(){this.isConnected=false;},
+   getContext(){return {drawImage(){paintCalls.push(tag);}};},
+   toDataURL(){return 'data:image/jpeg;base64,AABB';}
+  };made.push(el);return el;
+ };
+ const E={
+  bounds:()=>({x:0,y:0,width:1,height:1}),
+  pixels:()=>({x:0,y:0,width:600,height:600,outputWidth:600,outputHeight:600})
+ };
+ const context={
+  window:{PhotoCropEngine:E},
+  document:{createElement:newElement,createTextNode:text=>({tag:'text',textContent:text}),
+   body:{append:el=>mounted.push(el)}},
+  Image:class{
+   naturalWidth=600;naturalHeight=600;
+   set src(v){this.image=v;}
+   async decode(){}
+  }
+ };
+ vm.createContext(context);
+ vm.runInContext(editorSource,context);
+ let active=true,saveCount=0,received=null;
+ const item={originalPhoto:{image:'data:image/jpeg;base64,AAEE'}};
+ await context.window.openPhotoCrop(item,{
+  analyze:async()=>null,requireOwnerSingleGarment826:true,
+  isActive:()=>active,
+  save:async photo=>{saveCount++;received=photo;active=false;}
+ });
+ const dialog=made.find(x=>x.tag==='dialog');
+ const commit=made.find(x=>x.tag==='button'&&x.textContent==='Save crop');
+ const reset=made.find(x=>x.tag==='button'&&x.textContent==='Whole photo');
+ const owner=made.find(x=>x.tag==='input'&&
+  x.attributes['aria-label']==='I reviewed the original and this crop shows only one garment');
+ const status=made.find(x=>x.attributes.role==='status');
+ assert.ok(dialog?.open&&commit?.onclick&&reset?.onclick&&owner);
+ assert.equal(owner.checked,false,'original photo declaration is never prechecked');
+ await commit.onclick();
+ assert.equal(saveCount,0,'unchecked owner claim cannot reach save callback');
+ assert.match(status.textContent,/confirm this crop shows one garment/);
+ owner.checked=true;reset.onclick();
+ assert.equal(owner.checked,false,'changing crop bounds invalidates previous one-garment claim');
+ owner.checked=true;
+ await commit.onclick();
+ assert.equal(saveCount,1);
+ assert.equal(received.ownerSingleGarmentConfirmed826,true);
+ assert.equal(dialog.open,false,'a successfully saved crop closes, even though its old source lease rotates');
+ assert.equal(dialog.isConnected,false);
+ assert.equal(mounted.length,1);
+ assert.ok(paintCalls.length>0);
+});
