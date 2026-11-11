@@ -67,7 +67,7 @@ async function fixture({size=1,unique=1,failAt=0,digestDrift=false,interruptAt=0
  const crypto=digestDrift?{randomUUID,subtle:{
   async digest(type,bytes){
    digests++;
-   if(digests===2)return new Uint8Array(32).buffer;
+   if(digests===4)return new Uint8Array(32).buffer; // after all three encode hashes, at first upload
    return webcrypto.subtle.digest(type,bytes);
   }
  }}:webcrypto;
