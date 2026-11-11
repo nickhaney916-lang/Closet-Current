@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -23,7 +23,8 @@ export function deriveSourceLength({profile,minY,maxY,spanX}={}){
   observedPhotoAspect:profile.silhouetteAspect,sourceProportionLength:observedLength,
   boundedTargetLength:targetLength,absoluteSizeMeasured:false});
 }
-export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
+export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,strictTriangleContacts=false}={}){
+ if(strictTriangleContacts&&!traceTriangleContacts)fail('strict triangle gate requires actual triangle measurements');
  const started=performance.now();
  if(shirt?.stats?.sourceSHA256!==SOURCE||shirt.stats.ownerAlphaMaskBasedPhysicalGeometry190!==true||
     shirt.stats.ownerPhysicalBilateralReadbackVerified196!==true||shirt.stats.cutoutSHA256!==profile?.cutoutSHA256||
@@ -68,6 +69,14 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
  try{before=audit.measure(targets);after=audit.measure(targets,new Map(staged.map(r=>[r.mesh,r.next])));}
  finally{audit.dispose();}
  if(after.intersectingPairs>before.intersectingPairs)fail('new posed body intersection pairs '+before.intersectingPairs+' -> '+after.intersectingPairs);
+ let triangleEvidence=null;
+ if(traceTriangleContacts){
+  const baseline=measurePosedTriangleContacts(root,targets);
+  const proposed=measurePosedTriangleContacts(root,targets,new Map(staged.map(r=>[r.mesh,r.next])));
+  triangleEvidence=comparePosedTriangleContacts(baseline,proposed);
+  if(strictTriangleContacts&&!triangleEvidence.nonregression)
+   fail('new posed body triangle contacts '+triangleEvidence.newlyIntersecting+' (mesh pairs alone would miss)');
+ }
  for(const {mesh,p,next} of staged){p.array.set(next);p.needsUpdate=true;
   mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();}
  sourceProjection?.commit();
@@ -77,6 +86,9 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
   sourceLengthExtension:shape.extension,sourceLengthFlare:shape.flare,
   sourceLengthOriginalUVPreserved:true,sourceLengthRearInferred:true,
   sourceLengthPhysicalSizeMeasured:false,sourceLengthCollisionCertified:false,
-  sourceLengthRestPoseOnly:true,sourceLengthConstructionMs:performance.now()-started,sourceLengthIntersectionPairsBefore:before.intersectingPairs,
+  sourceLengthRestPoseOnly:true,sourceLengthTriangleContactAudit:triangleEvidence!==null,sourceLengthTriangleContactStrictlyAccepted:triangleEvidence!==null&&strictTriangleContacts&&triangleEvidence.nonregression,
+  sourceLengthTriangleContactBefore:triangleEvidence?.before??null,sourceLengthTriangleContactAfter:triangleEvidence?.after??null,
+  sourceLengthNewTriangleContacts:triangleEvidence?.newlyIntersecting??null,
+  sourceLengthConstructionMs:performance.now()-started,sourceLengthIntersectionPairsBefore:before.intersectingPairs,
   sourceLengthIntersectionPairsAfter:after.intersectingPairs,sourceLengthTestedPairs:after.testedPairs,releaseAuthorized:false}};
 }
