@@ -46,10 +46,13 @@ export function classifySourceLengthContactAttempt(v){
  return Object.freeze({accepted:problems.length===0,reason:problems[0]||'eligible',
   reasons:Object.freeze(problems)});
 }
-const classifyCandidateException=e=>{
+export const classifySourceLengthCandidateException=e=>{
  const message=String(e?.message||'');
  if(message.includes('new posed body intersection pairs'))return 'coarse-body-pair-regression';
- if(message.includes('bounded contact budget')||message.includes('triangle comparison budget'))return 'contact-audit-budget';
+ if(message.includes('M2 triangle audit exceeds bounded contact budget'))return 'body-contact-budget';
+ if(message.includes('M2 garment part audit exceeds bounded contact budget'))return 'panel-contact-budget';
+ if(message.includes('M2 self-contact exceeds bounded triangle comparison budget'))return 'self-comparison-budget';
+ if(message.includes('M2 self-contact exceeds bounded contact budget'))return 'self-contact-budget';
  if(message.includes('new posed body triangle contacts'))return 'new-body-contacts';
  if(message.includes('new posed garment part triangle contacts'))return 'new-panel-contacts';
  if(message.includes('new posed intrapanel self-intersections'))return 'new-intrapanel-contacts';
@@ -193,7 +196,7 @@ export function planNoNewContactSourceLength(shirt,root,profile){
     sourceSHA256:v.sourceLengthSHA256}));
    if(accepted)break;
   }catch(e){
-   attempts.push(Object.freeze({scale,accepted:false,reason:classifyCandidateException(e)}));
+   attempts.push(Object.freeze({scale,accepted:false,reason:classifySourceLengthCandidateException(e)}));
   }
  }
  const winner=attempts.find(a=>a.accepted);
