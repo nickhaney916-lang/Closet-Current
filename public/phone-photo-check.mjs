@@ -1,4 +1,4 @@
-import {photoCategories,photoTypes,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from './phone-photo-benchmark.mjs';
+import {photoCategories,photoTypes,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos,phonePhotoTrialReadout} from './phone-photo-benchmark.mjs';
 import {photoTestSession} from './photo-test-session.mjs';
 const $=id=>document.getElementById(id);let rows=[],report=null,session=null,generation=0,locked=false;
 function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
@@ -42,7 +42,16 @@ $('run').onclick=async()=>{
    row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
   }
   report=scorePhonePhotos(labels,results,{release:document.querySelector('meta[name="closet-release"]').content,indexHash:document.querySelector('meta[name="recognition-index"]').content});
-  const s=report.summary;$('summary').textContent=s.categoryMatches+' of '+s.garments+' garment categories matched. '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.errors+' photos could not finish.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');$('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Download the results, or start over with different photos.';
+  // Show a verdict only after ALL original pre-inference human labels are locked
+  // and scored. Never mistake an abstention for an automatic recognition match.
+  for(const [i,scored] of report.photos.entries()){
+   const verdict=phonePhotoTrialReadout(scored);
+   rows[i].result.textContent=verdict.title+'\n'+verdict.detail;
+   rows[i].result.closest('.photo').dataset.resultState=verdict.state;
+  }
+  const s=report.summary;
+  $('summary').textContent=s.categoryMatches+' of '+s.garments+' labeled garment categories matched (including results that require review). '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.incorrectAutomaticCategories+' wrong automatic category results. '+s.uncertain+' uncertain results. '+s.errors+' photos could not finish.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');
+  $('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Review each photo below and download the photo-free result report, or start over.';
  }catch(e){if(mine===generation){$('status').textContent='Recognition could not start. Try again, or start over with different photos.';$('run').textContent='Try again';$('run').disabled=false;}}
  finally{if(mine===generation){session?.close();session=null;}}
 };

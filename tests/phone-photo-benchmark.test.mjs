@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos} from '../public/phone-photo-benchmark.mjs';
+import {lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos,phonePhotoTrialReadout} from '../public/phone-photo-benchmark.mjs';
 import {photoTestSession} from '../public/photo-test-session.mjs';
 
 test('phone labels are independently supplied, category-consistent and copied before inference',()=>{
@@ -45,4 +45,54 @@ test('photo test ignores stale replies, respects bounded model/classification ti
 test('reset cancels in-flight calls and worker errors never export their raw messages',async()=>{
  const {session,worker}=sessionFixture();const p=session.call({type:'load'}),rejected=assert.rejects(p,e=>e.code==='cancelled');session.close();await rejected;assert.equal(worker.stopped,true);
  const b=sessionFixture(),q=b.session.call({type:'load'}),failure=assert.rejects(q,e=>e.code==='runtime'&&!e.message.includes('PRIVATE_SECRET'));b.worker.onerror({message:'PRIVATE_SECRET'});await failure;
+});
+
+test('P829 blind single-garment tester says correct only for accepted category and verified subtype',()=>{
+ const labels=lockPhotoLabels([
+  {category:'Tops',type:'T-shirt'},
+  {category:'Shoes',type:'Sneakers'},
+  {category:'Dresses',type:'Casual dress'},
+  {category:'Tops'},
+  {category:'Uncategorized'},
+  {category:'Uncategorized'},
+  {category:'Tops'}
+ ]);
+ const results=[
+  phonePhotoResult('photo-001',{strong:true,choices:[{category:'Tops',itemType:'T-shirt'}]},1),
+  phonePhotoResult('photo-002',{strong:true,choices:[{category:'Shoes',itemType:'Ankle boots'}]},2),
+  phonePhotoResult('photo-003',{strong:true,choices:[{category:'Tops',itemType:'T-shirt'}]},3),
+  phonePhotoResult('photo-004',{strong:false,categoryConfirmed:false,choices:[{category:'Tops',itemType:'T-shirt'}]},4),
+  phonePhotoResult('photo-005',{strong:false,choices:[]},5),
+  phonePhotoResult('photo-006',{strong:true,choices:[{category:'Tops',itemType:'T-shirt'}]},6),
+  photoFailure('photo-007','network')
+ ];
+ const scored=scorePhonePhotos(labels,results);
+ const feedback=scored.photos.map(phonePhotoTrialReadout);
+ assert.deepEqual(feedback.map(x=>x.state),['pass','fail','fail','review','pass','fail','error']);
+ assert.match(feedback[0].title,/Category and type matched/);
+ assert.match(feedback[1].title,/clothing type did not/);
+ assert.match(feedback[1].detail,/Expected Sneakers; model proposed Ankle boots/);
+ assert.match(feedback[2].title,/Wrong automatic category/);
+ assert.match(feedback[3].title,/Needs manual review/);
+ assert.doesNotMatch(feedback[3].title,/matched/i);
+ assert.match(feedback[4].title,/Non-clothing correctly rejected/);
+ assert.match(feedback[5].title,/Incorrect clothing detection/);
+ assert.match(feedback[6].title,/Could not check/);
+ assert.equal(scored.summary.incorrectAutomaticCategories,2);
+ assert.equal(scored.summary.incorrectAutomaticTypes,2);
+ assert.equal(scored.summary.categoryMatches,2);
+ assert.ok(!JSON.stringify(feedback).includes('network'));
+});
+test('P829 readout excludes arbitrary private source details and does not claim subtype checks when none were labeled',()=>{
+ const labels=lockPhotoLabels([{category:'Dresses'}]);
+ const classified=phonePhotoResult('photo-001',{strong:true,choices:[{
+  category:'Dresses',itemType:'Casual dress',filename:'PRIVATE_PHONE_FILENAME.jpeg'}],
+  diagnostics:{private:'PRIVATE_SECRET'}},7);
+ const report=scorePhonePhotos(labels,[classified]);
+ const verdict=phonePhotoTrialReadout({...report.photos[0],filename:'PRIVATE_PHONE_FILENAME.jpeg',notes:'PRIVATE_SECRET'});
+ assert.equal(verdict.state,'pass');
+ assert.match(verdict.title,/Category matched/);
+ assert.match(verdict.detail,/Clothing type was not checked/);
+ assert.ok(!JSON.stringify(verdict).includes('PRIVATE'));
+ assert.throws(()=>phonePhotoTrialReadout({...report.photos[0],expectedCategory:'SECRET_PERSON'}),/private-trial/);
 });
