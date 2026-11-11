@@ -13,7 +13,8 @@ await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
    if(built.shirt?.stats?.sourceSHA256==='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24'&&candidate?.silhouette62&&
       new URLSearchParams(globalThis.location?.search||'').get('photoSourceLength')==='research')
     built.shirt=(new URLSearchParams(globalThis.location?.search||'').get('photoSourceTrianglePolicy')==='adaptive'
-      ?applyNoNewContactSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',onResearchDiagnostic:diagnostic=>console.info('M2_BODY_CONTACT_LOCALITY:'+JSON.stringify(diagnostic))})
+      ?applyNoNewContactSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',onResearchDiagnostic:diagnostic=>console.info('M2_BODY_CONTACT_LOCALITY:'+JSON.stringify(diagnostic)),
+       experimentalDepthTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceDepthTrial')==='research'})
       :fitSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',traceTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleAudit')==='research',strictTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleStrict')==='research'}));`);
 await patch('research/outfit-3d-01/research-panel.mjs',
  'ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,',
@@ -28,6 +29,10 @@ await patch('research/outfit-3d-01/research-panel.mjs',
         sourceLengthNewHemY:actualOutfit171[k].sourceLengthNewHemY,
         sourceLengthExtension:actualOutfit171[k].sourceLengthExtension,
         sourceLengthFlare:actualOutfit171[k].sourceLengthFlare,
+        sourceLengthDepthClearance:actualOutfit171[k].sourceLengthDepthClearance,
+        sourceLengthExperimentalDepthTrial:actualOutfit171[k].sourceLengthExperimentalDepthTrial===true,
+        sourceLengthDepthFromPhotographVerified:false,
+        sourceLengthOriginalXYPhotographedSilhouetteRetained:actualOutfit171[k].sourceLengthOriginalXYPhotographedSilhouetteRetained===true,
         sourceLengthIntersectionPairsBefore:actualOutfit171[k].sourceLengthIntersectionPairsBefore,
         sourceLengthIntersectionPairsAfter:actualOutfit171[k].sourceLengthIntersectionPairsAfter,
         sourceLengthTestedPairs:actualOutfit171[k].sourceLengthTestedPairs,
