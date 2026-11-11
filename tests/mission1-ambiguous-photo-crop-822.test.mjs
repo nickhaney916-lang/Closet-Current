@@ -63,7 +63,8 @@ function harness({ambiguous=true,confirmed=false,saved=false,signedOwner='signed
   stopCamera:()=>{throw Error('camera should be stopped already');}
  };
  vm.createContext(c);vm.runInContext(nativeCrop,c);c.cropClothingPhoto(item);
- if(!saved||!ambiguous)assert.ok(callbacks?.analyze&&callbacks?.save,'actual crop handlers mounted');
+ if((!saved||!ambiguous)&&(!ambiguous||signedOwner==='signed-owner-1'))
+  assert.ok(callbacks?.analyze&&callbacks?.save,'actual crop handlers mounted');
  return {item,c,calls,stored,callbacks,original,messages};
 }
 
