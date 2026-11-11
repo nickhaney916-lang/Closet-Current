@@ -98,6 +98,21 @@ class BrowserBoxReceiptContract(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"BOTH"):
             self.run_prompt_check()
 
+    def test_actual_decoder_output_name_tensor_tuple_contract_and_model_selected_mask(self):
+        # Pure synthetic unit tensor, not an accuracy or model-run claim.
+        import numpy as np
+        w,h=self.size
+        logits=np.full((1,4,256,256),-2.0,dtype=np.float32)
+        logits[0,2,40:100,50:120]=2.0
+        quality=np.array([[.2,.3,.91,.4]],dtype=np.float32)
+        index,mask,scores=mod.model_outputs(
+            [("mask_logits",logits),("iou",quality)],w,h)
+        self.assertEqual(index,2)
+        self.assertEqual(mask.shape,(h,w))
+        self.assertTrue(bool(mask.any()))
+        self.assertFalse(bool(mask.all()))
+        self.assertAlmostEqual(float(scores[2]),.91,places=4)
+
     def test_photo_rights_and_original_bytes_not_ignored(self):
         src=ROOT/"benchmark/locked-photo-sources.json"
         catalog=json.loads(src.read_text())
