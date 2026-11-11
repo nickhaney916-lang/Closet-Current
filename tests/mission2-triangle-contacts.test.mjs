@@ -180,3 +180,33 @@ test('actual indexed shared-edge garment triangles do not invent self-crossings 
  assert.equal(proof.excludedOriginalSharedVertexPairs,true);
  assert.equal(proof.triangleSurfaces,2);
 });
+
+
+test('indirect BVH rebuild cannot invent new triangle identities when distant source triangles reorder',()=>{
+ const {root,garment}=simplePose();
+ const positions=[-.5,-.45,0,.5,-.45,0,0,.48,0];
+ for(let i=1;i<80;i++){
+  const x=(i%2?1:-1)*(2+i*.09);
+  positions.push(x,-.3,-.25,x+.2,-.3,.25,x+.1,.35,0);
+ }
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ const n=g.getAttribute('position').count;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+ const weights=new Float32Array(n*4);
+ for(let i=0;i<n;i++)weights[i*4]=1;
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const before=measurePosedTriangleContacts(root,[mesh]);
+ assert.ok(before.triangleContactCount>0);
+ assert.ok(before.triangleContactKeys.every(key=>key.split(':')[2]==='0'),
+  'Only original source face zero intersects body');
+ const original=g.getAttribute('position').array.slice(),staged=original.slice();
+ for(let i=3;i<n;i++)staged[i*3]=-staged[i*3];
+ const after=measurePosedTriangleContacts(root,[mesh],new Map([[mesh,staged]]));
+ assert.deepEqual(after.triangleContactKeys,before.triangleContactKeys,
+  'BVH rebuilt with reordered distant triangles must retain original source face IDs');
+ assert.equal(comparePosedTriangleContacts(before,after).newlyIntersecting,0);
+ assert.deepEqual(g.getAttribute('position').array,original);
+});
