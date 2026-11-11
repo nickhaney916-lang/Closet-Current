@@ -97,6 +97,11 @@ test('P822 changed crop invalidates old original-one-garment confirmation and re
  assert.equal(saved.segmentHint.sourceDisconnectedReviewRequired,true);
  assert.equal(saved.sourceAmbiguityAcknowledged820,undefined);
  assert.equal(saved.sourceAmbiguityReviewProvenance820,undefined);
+ assert.equal(h.item.sourceAmbiguityAcknowledged820,undefined,
+  'live editor must not retain stale approval after persisted crop');
+ assert.equal(h.item.sourceAmbiguityReviewProvenance820,undefined);
+ assert.equal(h.item.colorSource,undefined,
+  'in-memory crop may not resurrect stale photo-estimate color');
  assert.equal(saved.category,'Uncategorized');
  assert.equal(saved.itemType,'Unknown');
  assert.equal(saved.color,'');
