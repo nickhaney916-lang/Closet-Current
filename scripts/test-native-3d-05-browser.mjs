@@ -25,6 +25,8 @@ const photoPhysicalReadback196=process.env.PHOTO_PHYSICAL_READBACK196==='1';
 const mission2Performance=process.env.MISSION2_PERFORMANCE==='1';
 const performanceSamples=[];
 const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
+const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
+if(sourceTriangleMode&&!sourceLengthMode)throw Error('Triangle contacts need actual source-length 3D');
 const sourceProjectionMode=process.env.PHOTO_SOURCE_PROJECTION==='1';
 if(sourceProjectionMode&&!sourceLengthMode)throw Error('Source projection requires source length shape');
 const sourceLengthEvidence=[];
@@ -37,11 +39,19 @@ function requireSourceLength(state,width){
  assert.ok(state.sourceLengthNewHemY>=.55);
  assert.equal(state.sourceLengthCollisionCertified,false);
  assert.ok(state.sourceLengthTestedPairs>=3);
+ if(sourceTriangleMode){
+  assert.equal(state.sourceLengthTriangleContactAudit,true,'Must measure actual body/garment triangle contacts');
+  assert.equal(state.sourceLengthTriangleContactStrictlyAccepted,false,'Research-only diagnostic is not a collision certificate');
+  assert.ok(Number.isInteger(state.sourceLengthTriangleContactBefore)&&state.sourceLengthTriangleContactBefore>=0);
+  assert.ok(Number.isInteger(state.sourceLengthTriangleContactAfter)&&state.sourceLengthTriangleContactAfter>=0);
+  assert.ok(Number.isInteger(state.sourceLengthNewTriangleContacts)&&state.sourceLengthNewTriangleContacts>=0);
+ }
  assert.ok(Number.isFinite(state.sourceLengthConstructionMs)&&state.sourceLengthConstructionMs>0);
  assert.ok(state.sourceLengthIntersectionPairsAfter<=state.sourceLengthIntersectionPairsBefore);
  sourceLengthEvidence.push({width,figure:state.figure,oldHemY:state.sourceLengthOldHemY,newHemY:state.sourceLengthNewHemY,
   movedVertices:state.sourceLengthMovedVertices,extension:state.sourceLengthExtension,flare:state.sourceLengthFlare,
-  sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,constructionMs:state.sourceLengthConstructionMs,collisionCertified:false});
+  sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,constructionMs:state.sourceLengthConstructionMs,
+  triangleAudit:state.sourceLengthTriangleContactAudit,triangleContactsBefore:state.sourceLengthTriangleContactBefore,triangleContactsAfter:state.sourceLengthTriangleContactAfter,newTriangleContacts:state.sourceLengthNewTriangleContacts,collisionCertified:false});
 }
 if(photoPhysicalReadback196&&!photoOwnerBilateral195)
  throw Error('P196 demands actual P195 owner-bound bilateral fitting');
@@ -344,7 +354,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -1338,7 +1348,7 @@ try{
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
-  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceLengthEvidence}:{}),
+  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceLengthEvidence}:{}),
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,

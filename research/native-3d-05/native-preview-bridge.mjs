@@ -741,6 +741,11 @@ export async function mountNative3D05({
    sourceLengthIntersectionPairsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntersectionPairsAfter:null,
    sourceLengthTestedPairs:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTestedPairs:0,
    sourceLengthConstructionMs:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthConstructionMs:0,
+   sourceLengthTriangleContactAudit:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAudit===true,
+   sourceLengthTriangleContactStrictlyAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactStrictlyAccepted===true,
+   sourceLengthTriangleContactBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactBefore:null,
+   sourceLengthTriangleContactAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAfter:null,
+   sourceLengthNewTriangleContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewTriangleContacts:null,
    sourceLengthCollisionCertified:false,
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&
