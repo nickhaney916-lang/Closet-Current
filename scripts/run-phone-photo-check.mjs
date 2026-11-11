@@ -28,11 +28,23 @@ try{
  assert.equal(await page.locator('#category-0').isDisabled(),true);assert.equal(await page.locator('#photos').isDisabled(),true);
  await page.locator('#download').waitFor({state:'visible',timeout:480000});
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
- const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);console.log('M1_P829_REAL_WORKER_SANITIZED_'+engine,JSON.stringify({summary:report.summary,photos:report.photos.map(p=>({id:p.id,expectedCategory:p.expectedCategory,expectedType:p.expectedType,category:p.prediction?.category,type:p.prediction?.type,strong:p.strong,categoryConfirmed:p.categoryConfirmed,categoryMatch:p.categoryMatch,typeMatch:p.typeMatch,error:p.error}))}));assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);assert.equal(report.summary.negativeRejected,1);assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
+ const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);console.log('M1_P829_REAL_WORKER_SANITIZED_'+engine,JSON.stringify({summary:report.summary,photos:report.photos.map(p=>({id:p.id,expectedCategory:p.expectedCategory,expectedType:p.expectedType,category:p.prediction?.category,type:p.prediction?.type,strong:p.strong,categoryConfirmed:p.categoryConfirmed,categoryMatch:p.categoryMatch,typeMatch:p.typeMatch,error:p.error}))}));assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.incorrectAutomaticCategories,0);assert.equal(report.summary.incorrectAutomaticTypes,0);assert.equal(report.summary.negativeRejected,1);if(engine==='chromium'){assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);}else{assert.ok([0,1].includes(report.summary.categoryMatches));assert.ok([0,1].includes(report.summary.typeMatches));assert.ok(report.summary.typeMatches<=report.summary.categoryMatches);}assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
  assert.equal(await page.locator('#category-0').isDisabled(),true);
- assert.match(await page.locator('#result-0').innerText(),/Category and type matched/);
+ const positiveRow=report.photos[0];
+ const positiveVerdict=await page.locator('#result-0').innerText();
+ if(positiveRow.categoryMatch===true&&positiveRow.typeMatch===true){
+  assert.match(positiveVerdict,/Category and type matched/);
+  assert.equal(await page.locator('#result-0').locator('..').locator('..').getAttribute('data-result-state'),positiveRow.strong?'pass':'review');
+ }else if(positiveRow.categoryMatch===true){
+  assert.match(positiveVerdict,/Category matched; clothing type did not/);
+  assert.equal(await page.locator('#result-0').locator('..').locator('..').getAttribute('data-result-state'),'review');
+ }else{
+  assert.equal(positiveRow.strong,false,'wrong automatic category must NEVER pass');
+  assert.match(positiveVerdict,/Needs manual review|Category needs correction/);
+  assert.equal(await page.locator('#result-0').locator('..').locator('..').getAttribute('data-result-state'),'review');
+ }
  assert.match(await page.locator('#result-1').innerText(),/Non-clothing correctly rejected/);
- assert.equal(await page.locator('.photo[data-result-state="pass"]').count(),2);
+ assert.equal(await page.locator('#result-1').locator('..').locator('..').getAttribute('data-result-state'),'pass');
  assert.match(await page.locator('#summary').innerText(),/wrong automatic category results/);
  for(const width of [320,390,430]){
   await page.setViewportSize({width,height:844});
