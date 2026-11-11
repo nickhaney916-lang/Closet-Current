@@ -1,0 +1,129 @@
+name: Mission 3 private cloud bounded JSON, signed SQL and end-to-end QA — NO DEPLOY
+on:
+  push:
+    branches: [research/mission3-bounded-private-json-20261110-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-signed-two-owner-postgres:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mission3-temporary-only
+          POSTGRES_DB: mission3_disposable
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mission3_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PGHOST: postgres
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: mission3-temporary-only
+      PGDATABASE: mission3_disposable
+      M3_EPHEMERAL_POSTGRES_URL: postgresql://postgres:mission3-temporary-only@postgres:5432/mission3_disposable
+      P147_POSTGRES_URL: postgresql://postgres:mission3-temporary-only@postgres:5432/mission3_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard exact verified Mission 3 parent, no hosted/staging changes and three research paths
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=96473768938bccfc60eb014c03908e8b2f789dcc
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/cloud-backup.js|tests/mission3-bounded-cloud-json.test.cjs|scripts/test-mission3-bounded-cloud-json-browser.mjs|research/mission3-bounded-private-json/REPORT.md|.github/workflows/mission3-bounded-private-json-no-deploy.yml) ;;
+              *) echo "Mission 3 refused unapproved changed path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned Node browser and real PostgreSQL test dependencies
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq postgresql-client
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Apply unchanged actual owner RLS and private Storage SQL to temporary PostgreSQL 17 only
+        run: |
+          test "$PGHOST" = postgres
+          test "$PGDATABASE" = mission3_disposable
+          psql -v ON_ERROR_STOP=1 -f research/two-owner-cloud-rls-recovery-128/local-postgres-bootstrap.sql
+          psql -v ON_ERROR_STOP=1 -Atc "select (select count(*) from pg_policies where schemaname='public' and tablename='closet_backups')::text||':'||(select count(*) from pg_policies where schemaname='storage' and tablename='objects')::text" | grep -q '^1:4$'
+      - name: Independent existing signed-JWT PostgreSQL RLS and private Storage baseline
+        run: node scripts/test-signed-jwt-postgres-147.mjs
+      - name: Reproduce exact verified parent publishes deleted owner garment during blocked private JPEG upload
+        run: |
+          git worktree add --detach /tmp/closet-mission3-stale-upload-parent 57a1cea57c103c7d99514d003d3737dea3063124
+          CLOUD_SOURCE_ROOT=/tmp/closet-mission3-stale-upload-parent EXPECT_BASELINE=1 node --test tests/mission3-dirty-revision-upload-fence.test.cjs
+      - name: Verify revised owner delete/edit never publishes stale CAS after blocked remote GET or JPEG POST
+        run: node --test tests/mission3-dirty-revision-upload-fence.test.cjs
+      - name: Reverify local invalid/oversized photo and remote 404/corrupt durable recovery
+        run: |
+          node --test tests/mission3-durable-local-photo-validation.test.cjs
+          node --test tests/mission3-remote-photo-integrity-pause.test.cjs
+          node --test tests/mission3-cloud-integrity-retry-pause.test.cjs
+          node --test tests/mission3-cold-login-metadata-probe.test.cjs
+      - name: Reproduce exact baseline unbounded owner-private REST and CAS JSON reads
+        run: |
+          git worktree add --detach /tmp/closet-mission3-json-baseline 96473768938bccfc60eb014c03908e8b2f789dcc
+          CLOUD_SOURCE_ROOT=/tmp/closet-mission3-json-baseline EXPECT_BASELINE=1 node --test tests/mission3-bounded-cloud-json.test.cjs
+      - name: Verify private full backup, revision and CAS JSON response limits and atomic owner recovery
+        run: node --test tests/mission3-bounded-cloud-json.test.cjs
+      - name: Build current actual Closet Current application (no deployment)
+        run: node scripts/build.mjs
+      - name: Exact current full serial Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Actual Chromium/WebKit 320 390 430 owner-private 32 MiB cloud JSON refusal and owner manual recovery
+        run: node scripts/test-mission3-bounded-cloud-json-browser.mjs benchmark/mission3-bounded-private-json-browser
+      - name: Actual Chromium/WebKit 320 390 430 stale deletion or edit during blocked private JPEG upload
+        run: node scripts/test-mission3-stale-upload-revision-browser.mjs benchmark/mission3-stale-upload-revision-browser
+      - name: Actual Chromium/WebKit 320 390 430 invalid/oversized owner-local photo and owner repair
+        run: node scripts/test-mission3-local-photo-validation-browser.mjs benchmark/mission3-final-local-photo-validation
+      - name: Actual Chromium/WebKit 320 390 430 1000 distinct high-res source JPEG cold-login memory
+        run: node scripts/test-mission3-cold-login-jpeg-memory-browser.mjs benchmark/mission3-final-high-res-memory
+      - name: Actual Chromium/WebKit 320 390 430 bounded 8 MiB private JPEG stream
+        run: node scripts/test-mission3-bounded-private-jpeg-browser.mjs benchmark/mission3-final-bounded-jpeg
+      - name: Actual Chromium/WebKit 320 390 430 missing or corrupt cloud JPEG recovery
+        run: node scripts/test-mission3-remote-photo-repair-browser.mjs benchmark/mission3-stale-upload-remote-repair
+      - name: Actual Chromium/WebKit 320 390 430 owner-private photo Storage reference guards
+        run: node scripts/test-mission3-owner-photo-ref-browser.mjs benchmark/mission3-stale-upload-owner-photo-refs
+      - name: Actual Chromium/WebKit 320 390 430 native photo to private wardrobe and styling
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Genuine Chromium and WebKit 320 390 430 current app real owner RLS and signed JWT
+        run: node scripts/test-mission3-native-signed-postgres-browser.mjs benchmark/mission3-native-signed-postgres-browser
+      - name: Refuse all external/hosted project access and record local only
+        run: |
+          node -e "const x=require('./benchmark/mission3-native-signed-postgres-browser/results.json');if(x.cases.length!==6||x.errors.length||!x.claims.realPostgresRLS||x.claims.supabaseHostedAuth||x.claims.supabaseHostedStorage||x.cases.some(c=>!c.realPostgresStorageRLS||!c.realSQLBackupAndRestore||c.hostedProject||c.axeViolations))process.exit(1)"
+          echo "PASS: actual native app + local signed RSA + unchanged PostgreSQL RLS; hosted Supabase Auth and Storage NOT certified."
+          echo "FAMILY ALPHA HOLD #255: NO DEPLOY."
+      - name: Upload synthetic-only owner snapshot race, SQL and mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-private-bounded-json-real-rls-evidence-HOLD
+          path: |
+            benchmark/mission3-bounded-private-json-browser/
+            benchmark/mission3-final-local-photo-validation/
+            benchmark/mission3-final-high-res-memory/
+            benchmark/mission3-final-bounded-jpeg/
+            benchmark/mission3-stale-upload-revision-browser/
+            benchmark/mission3-stale-upload-remote-repair/
+            benchmark/mission3-stale-upload-owner-photo-refs/
+            benchmark/native-canonical-closet-style-167/
+            benchmark/mission3-native-signed-postgres-browser/
+          retention-days: 14
