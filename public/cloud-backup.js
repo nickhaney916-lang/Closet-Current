@@ -48,6 +48,12 @@
  function assertSourceReceipts(value){
   E.validateDocument(value);
   for(const row of [...value.items,...(value.state.draft?.batch||[])]){
+   // Signed camera/photo owners are carried in garment metadata as well as
+   // the authenticated owner-specific database and Storage object path.
+   // Never publish/merge/restore a record explicitly tagged for another
+   // account. Legacy garments with no ownerId remain valid and unverified.
+   if(row.ownerId&&row.ownerId!==user)
+    throw Error('Garment owner does not match authenticated cloud account');
    if(row.sourceHashVerified===true&&
       (!shaReceipt.test(row.sourceSHA256||'')||
        row.originalPhoto?.sha256!==row.sourceSHA256))
@@ -132,7 +138,7 @@
   if(!rows.length)return null;
   const row=rows[0];
   if(!Number.isSafeInteger(row.revision)||row.revision<1)throw Error('Invalid cloud revision');
-  if(!revisionOnly)E.validateDocument(row.document);
+  if(!revisionOnly)assertSourceReceipts(row.document);
   return revisionOnly?{revision:row.revision}:row;
  }
  async function apply(document,revision,expectedRevision,assertActive){
