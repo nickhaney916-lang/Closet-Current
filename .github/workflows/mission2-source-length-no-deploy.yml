@@ -11,6 +11,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-adaptive-attribution-20261111-HOLD
     - research/mission2-unique-triangle-budget-20261111-HOLD
     - research/mission2-changed-face-self-delta-20261111-HOLD
+    - research/mission2-body-contact-locality-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -152,6 +153,20 @@ jobs:
          assert.equal(e.noNewGarmentPartTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          assert.equal(e.noNewIntrapanelTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          assert.equal(e.changedFaceDeltaVerifiedIfAccepted,e.sampledPoseAdmitted);
+         const d=e.safeBodyLocality;
+         assert.equal(d?.accepted,e.sampledPoseAdmitted);
+         assert.equal(d?.noPhotoOrOwnerFields,true);
+         assert.equal(d?.releaseAuthorized,false);
+         assert.ok(d.attempts.length>=1&&d.attempts.length<=4);
+         if(!e.sampledPoseAdmitted)assert.equal(d.attempts.length,4);
+         for(const a of d.attempts){
+          if(a.bodyRegions){
+           assert.equal(a.bodyRegions.originalFaceIdentity,true);
+           assert.equal(a.bodyRegions.newContactCount,a.newBodyContacts);
+           assert.equal(a.bodyRegions.byGarmentMesh.reduce((t,n)=>t+n,0),a.newBodyContacts);
+           assert.equal(a.bodyRegions.byHeightQuartile.reduce((t,n)=>t+n,0),a.newBodyContacts);
+          }
+         }
          if(e.sampledPoseAdmitted){
           assert.equal(e.refusalReason,null);
           assert.equal(e.noNewBodyTriangleContactsIfAccepted,true);
@@ -170,6 +185,13 @@ jobs:
         }
         assert.equal(rejected+accepted,3);
         console.log('M2_ADAPTIVE_'+engine+'_REAL_BROWSER_SAFE_OR_2D_FALLBACK',JSON.stringify({rejected,accepted,screens:6,reasons:reasonCounts}));
+        console.log('M2_ADAPTIVE_BODY_LOCALITY_'+engine+':'+JSON.stringify(r.evidence.filter(e=>e.width===390).map(e=>({
+         width:e.width,reason:e.refusalReason,attempts:e.safeBodyLocality.attempts.map(a=>({
+          scale:a.scale,reason:a.reason,newBodyContacts:a.newBodyContacts,
+          byGarmentMesh:a.bodyRegions?.byGarmentMesh||null,
+          byHeightQuartile:a.bodyRegions?.byHeightQuartile||null
+         }))
+        }))));
         NODE
     - uses: actions/upload-artifact@v4
       if: always()
