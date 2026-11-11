@@ -151,9 +151,16 @@ async function run(engine,engineFactory,width){
     const r=indexedDB.open('closet-current-user-'+closetAuth.user.id,2);
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
    });
-   await closetCloud.beforeWrite(db);
-   const tx=db.transaction('items','readwrite');
+   // The app's beforeWrite lease intentionally rejects a second IndexedDB
+   // connection. Simulate a committed owner edit using the same atomic local
+   // state marker mutation that the real app's write controller performs.
+   const tx=db.transaction(['items','state'],'readwrite');
    tx.objectStore('items').put({id:'local-new-piece',category:'Tops',color:'Teal'});
+   const state=tx.objectStore('state'),request=state.get('cloud-sync');
+   request.onsuccess=()=>{
+    const marker=request.result;
+    state.put({...marker,dirty:true,localRevision:marker.localRevision+1});
+   };
    await new Promise((resolve,reject)=>{
     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
    });db.close();
