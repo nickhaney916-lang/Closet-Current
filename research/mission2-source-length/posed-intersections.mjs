@@ -313,3 +313,133 @@ export function summarizePosedBodyContactDistribution(evidence,garmentMeshCount)
   collisionCertified:false,releaseAuthorized:false
  });
 }
+
+
+/**
+ * P2-C7: complete *NEW* self-contact check scoped to SOURCE FACES whose
+ * rest-position vertices actually changed. Every candidate including at least
+ * one moved source face is checked against the full posed final mesh; pairs of
+ * unchanged source faces cannot acquire a new contact in the identical pose.
+ *
+ * For every intersecting final pair, retest those SAME original face IDs in
+ * the baseline posed mesh. Only a contact that did not exist before is new.
+ * Thus very large preexisting/unchanged garment self-contact sets are never
+ * enumerated or misrepresented as complete zero-contact clearance.
+ *
+ * A bounded failure means no safe-fit approval. No source mesh is mutated.
+ * Not a swept-pose, volumetric containment, fabric or signed-penetration test.
+ */
+export function measureChangedFaceSelfContactDelta(root,meshes,overrides=new Map(),
+ {maxCandidateTests=300000,maxNewContacts=40000,maxMovedFaces=80000}={}){
+ if(typeof root?.updateMatrixWorld!=='function'||!Array.isArray(meshes)||meshes.length<1||
+    new Set(meshes).size!==meshes.length||!(overrides instanceof Map)||
+    [...overrides.keys()].some(mesh=>!meshes.includes(mesh))||
+    !Number.isInteger(maxCandidateTests)||maxCandidateTests<1||maxCandidateTests>2000000||
+    !Number.isInteger(maxNewContacts)||maxNewContacts<1||maxNewContacts>100000||
+    !Number.isInteger(maxMovedFaces)||maxMovedFaces<1||maxMovedFaces>200000)
+  throw Error('M2 changed-face bounded valid pose inputs required');
+ root.updateMatrixWorld(true);
+ const identity=new THREE.Matrix4(),newContacts=new Set();
+ let candidateTests=0,changedFaces=0,sourceFaces=0,retainedExistingContacts=0;
+ let duplicateCandidatesSkipped=0,unchangedMeshesSkipped=0;
+ for(let meshIndex=0;meshIndex<meshes.length;meshIndex++){
+  const mesh=meshes[meshIndex];
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+   throw Error('M2 changed-face genuine 163-bone source mesh required');
+  const position=mesh.geometry?.getAttribute('position'),override=overrides.get(mesh);
+  if(!position?.count||!mesh.geometry?.getAttribute('skinIndex')||
+     !mesh.geometry?.getAttribute('skinWeight'))
+   throw Error('M2 changed-face skinned triangle positions required');
+  if(override&&(!(override instanceof Float32Array||override instanceof Float64Array)||
+      override.length!==position.count*3||!override.every(Number.isFinite)))
+   throw Error('M2 changed-face finite complete staged vertex buffer required');
+  const index=mesh.geometry.index?.array,faceCount=index?index.length/3:position.count/3;
+  if(!Number.isSafeInteger(faceCount)||faceCount<1||faceCount>3000000)
+   throw Error('M2 changed-face bounded triangular surface required');
+  sourceFaces+=faceCount;
+  if(!override){unchangedMeshesSkipped++;continue;}
+  const vertex=(face,corner)=>index?index[face*3+corner]:face*3+corner;
+  const original=position.array,changedVertices=new Uint8Array(position.count);
+  let anyChange=false;
+  for(let i=0;i<original.length;i++)if(original[i]!==override[i]){
+   changedVertices[Math.floor(i/3)]=1;anyChange=true;
+  }
+  if(!anyChange){unchangedMeshesSkipped++;continue;}
+  const moved=[];
+  for(let face=0;face<faceCount;face++){
+   if(changedVertices[vertex(face,0)]||changedVertices[vertex(face,1)]||
+      changedVertices[vertex(face,2)]){
+    moved.push(face);
+    if(moved.length>maxMovedFaces)
+     throw Error('M2 changed-face exceeds bounded moved-face budget; cannot certify');
+   }
+  }
+  changedFaces+=moved.length;
+  const before=posedGeometry(mesh),after=posedGeometry(mesh,override);
+  let subset=null;
+  try{
+   const afterPositions=after.getAttribute('position').array;
+   const sourcePositions=before.getAttribute('position').array;
+   const coords=new Float32Array(moved.length*9);
+   for(let j=0;j<moved.length;j++){
+    const sourceFace=moved[j];
+    for(let k=0;k<3;k++){
+     const i=vertex(sourceFace,k)*3;
+     coords.set(afterPositions.subarray(i,i+3),j*9+k*3);
+    }
+   }
+   subset=new THREE.BufferGeometry();
+   subset.setAttribute('position',new THREE.BufferAttribute(coords,3));
+   subset.computeBoundingBox();
+   subset.boundsTree=new MeshBVH(subset,{indirect:true});
+   after.boundsTree=new MeshBVH(after,{indirect:true});
+   const seen=new Set(),originalA=new THREE.Triangle(),originalB=new THREE.Triangle();
+   const loadOriginal=(face,t)=>{
+    for(const [k,v] of [t.a,t.b,t.c].entries()){
+     const off=vertex(face,k)*3;
+     v.set(sourcePositions[off],sourcePositions[off+1],sourcePositions[off+2]);
+    }
+   };
+   const adjacent=(a,c)=>{
+    for(let k=0;k<3;k++)for(let j=0;j<3;j++)
+     if(vertex(a,k)===vertex(c,j))return true;
+    return false;
+   };
+   let overflowReason=null;
+   subset.boundsTree.bvhcast(after.boundsTree,identity,{
+    intersectsTriangles:(changedTri,fullTri,leftId,rightId)=>{
+     const changedIndex=subset.boundsTree.resolveTriangleIndex(leftId);
+     const a=moved[changedIndex],c=after.boundsTree.resolveTriangleIndex(rightId);
+     if(a===c||adjacent(a,c))return false;
+     const min=Math.min(a,c),max=Math.max(a,c);
+     const pairKey=min*faceCount+max;
+     if(seen.has(pairKey)){duplicateCandidatesSkipped++;return false;}
+     seen.add(pairKey);
+     candidateTests++;
+     if(candidateTests>maxCandidateTests){overflowReason='comparison';return true;}
+     if(!changedTri.intersectsTriangle(fullTri))return false;
+     loadOriginal(a,originalA);loadOriginal(c,originalB);
+     if(originalA.intersectsTriangle(originalB)){retainedExistingContacts++;return false;}
+     newContacts.add(meshIndex+':'+min+':'+max);
+     if(newContacts.size>=maxNewContacts){overflowReason='new-contact';return true;}
+     return false;
+    }
+   });
+   // Never throw from inside three-mesh-bvh callbacks; its traversal guard
+   // would otherwise remain engaged and corrupt subsequent independent audits.
+   if(overflowReason)throw Error('M2 changed-face exceeds bounded '+overflowReason+' budget; cannot certify');
+  }finally{before.dispose();after.dispose();subset?.dispose();}
+ }
+ return Object.freeze({
+  newlyIntersecting:newContacts.size,
+  newlyIntersectingSourceKeys:Object.freeze([...newContacts].sort()),
+  candidateTests,changedFaces,sourceFaces,retainedExistingContacts,
+  duplicateCandidatesSkipped,unchangedMeshesSkipped,
+  completedUniqueAffectedPairComparison:true,
+  fullPreexistingContactEnumeration:false,
+  originalSourceFaceIdentity:true,
+  noNewSelfContacts:newContacts.size===0,
+  sampledPoseOnly:true,signedClearanceVerified:false,
+  collisionCertified:false,releaseAuthorized:false
+ });
+}
