@@ -449,3 +449,77 @@ export function measureChangedFaceSelfContactDelta(root,meshes,overrides=new Map
   collisionCertified:false,releaseAuthorized:false
  });
 }
+
+
+/**
+ * P2-C8: count ONLY newly crossing original garment/body source-face pairs,
+ * grouped by original garment mesh and coarse posed-height quartile.
+ * Counts contain no photographic pixels, geometry coordinates, owner IDs,
+ * texture hashes, URLs, or identities. Not a penetration depth measurement.
+ */
+export function summarizeNewPosedBodyContactRegions(root,meshes,before,after){
+ if(typeof root?.updateMatrixWorld!=='function'||!Array.isArray(meshes)||
+    meshes.length<1||meshes.length>128||new Set(meshes).size!==meshes.length||
+    !Array.isArray(before?.triangleContactKeys)||!Array.isArray(after?.triangleContactKeys)||
+    !Number.isSafeInteger(before.triangleContactCount)||!Number.isSafeInteger(after.triangleContactCount)||
+    before.triangleContactCount<0||after.triangleContactCount<0||
+    before.triangleContactKeys.length!==before.triangleContactCount||
+    after.triangleContactKeys.length!==after.triangleContactCount||
+    new Set(before.triangleContactKeys).size!==before.triangleContactCount||
+    new Set(after.triangleContactKeys).size!==after.triangleContactCount)
+  throw Error('M2 body locality complete original-face contact witnesses required');
+ root.updateMatrixWorld(true);
+ const geometry=[];
+ try{
+  let minY=Infinity,maxY=-Infinity;
+  for(const mesh of meshes){
+   if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+    throw Error('M2 body locality original 163-bone source garment required');
+   const g=posedGeometry(mesh);
+   geometry.push(g);
+   const a=g.getAttribute('position').array;
+   for(let i=1;i<a.length;i+=3){minY=Math.min(minY,a[i]);maxY=Math.max(maxY,a[i]);}
+  }
+  if(!Number.isFinite(minY)||!Number.isFinite(maxY)||maxY-minY<1e-5)
+   throw Error('M2 body locality complete posed garment height required');
+  const baseline=new Set(before.triangleContactKeys),byGarmentMesh=meshes.map(()=>0);
+  const byHeightQuartile=[0,0,0,0],byGarmentAndHeight=meshes.map(()=>[0,0,0,0]);
+  const bodyCounts=new Map();
+  let total=0;
+  for(const key of after.triangleContactKeys){
+   if(baseline.has(key))continue;
+   if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+    throw Error('M2 body locality canonical original source face required');
+   const [g,b,sourceFace,bodyFace]=key.split(':').map(Number);
+   if(![g,b,sourceFace,bodyFace].every(Number.isSafeInteger)||g>=geometry.length||
+      b>4095||bodyFace>10000000)
+    throw Error('M2 body locality bounded original source face required');
+   const posed=geometry[g],index=posed.index?.array,a=posed.getAttribute('position').array;
+   const faceCount=index?index.length/3:a.length/9;
+   if(sourceFace>=faceCount)throw Error('M2 body locality source face outside original posed garment');
+   const vertex=k=>index?index[sourceFace*3+k]:sourceFace*3+k;
+   const centroidY=(a[vertex(0)*3+1]+a[vertex(1)*3+1]+a[vertex(2)*3+1])/3;
+   const band=Math.min(3,Math.max(0,Math.floor(4*(centroidY-minY)/(maxY-minY))));
+   byGarmentMesh[g]++;byHeightQuartile[band]++;byGarmentAndHeight[g][band]++;
+   bodyCounts.set(b,(bodyCounts.get(b)||0)+1);total++;
+  }
+  const byBodyMesh=[...bodyCounts].sort((a,b)=>b[1]-a[1]||a[0]-b[0])
+   .map(([meshIndex,contacts])=>Object.freeze({meshIndex,contacts}));
+  if(total!==after.triangleContactCount-
+      after.triangleContactKeys.filter(k=>baseline.has(k)).length||
+     byHeightQuartile.reduce((a,n)=>a+n,0)!==total||
+     byGarmentMesh.reduce((a,n)=>a+n,0)!==total||
+     byBodyMesh.reduce((a,n)=>a+n.contacts,0)!==total)
+   throw Error('M2 body locality incoherent new contact totals');
+  return Object.freeze({
+   newContactCount:total,
+   byGarmentMesh:Object.freeze(byGarmentMesh),
+   byHeightQuartile:Object.freeze(byHeightQuartile),
+   byGarmentAndHeight:Object.freeze(byGarmentAndHeight.map(a=>Object.freeze(a))),
+   byBodyMesh:Object.freeze(byBodyMesh),
+   bandsFromBottom:true,originalFaceIdentity:true,
+   sourcePoseOnly:true,noPhotoOrOwnerFields:true,
+   signedDepthVerified:false,collisionCertified:false,releaseAuthorized:false
+  });
+ }finally{geometry.forEach(g=>g.dispose());}
+}
