@@ -396,17 +396,23 @@
  // The marker is already isolated in the authenticated owner's IndexedDB.
  // This local-only code never enters cloud JSON (stateIds deliberately excludes
  // 'cloud-sync'); do not clear a capacity block merely because a tab reloads.
- async function writeCapacityPause(code,assertActive){
-  assertActive();
+ // A private upload's HTTP 413 is specific to source bytes in that local
+ // revision. A newer owner edit/delete must not inherit the old source stop.
+ // Cloud HTTP 507, however, is a capacity fault independent of item revision:
+ // retain its durable pause across local edits.
+ async function writeCapacityPause(code,assertActive,expectedRevision=null){
+  assertActive();let outcome='stale';
   await transact(['state'],'readwrite',tx=>{
    const store=tx.objectStore('state'),request=store.get('cloud-sync');
-   request.onsuccess=()=>{
-    try{assertActive();}catch{tx.abort();return;}
-    const prior=request.result||markerDefault();
+   request.onsuccess=()=>{try{
+    assertActive();const prior=request.result||markerDefault();
+    if(code===413&&expectedRevision!==null&&
+       prior.localRevision!==expectedRevision)return;
     store.put({...prior,capacityPause:isCapacityError(code)?code:null});
-   };
+    outcome='saved';
+   }catch{try{tx.abort();}catch{}}};
   });
-  assertActive();
+  assertActive();return outcome;
  }
  // Reject a stale in-flight cloud integrity fault when the owner edited
  // another garment after the failing REST/RPC request began. Otherwise the
@@ -653,11 +659,18 @@
      }
     }else if(dirtyAtStart&&(e.status===413||e.status===507)){
      pausedCapacity=e.status;clearTimeout(timer);timer=null;
-     let durable=true;
-     try{await callbacks.capture(()=>writeCapacityPause(e.status,assertActive));}
-     catch{durable=false;}
-     if(mine===generation)
-      status(capacityText(e.status)+(durable?'':' Keep the app open if possible; this pause could not be saved on this device.'));
+     let outcome='error';
+     try{outcome=await callbacks.capture(()=>
+      writeCapacityPause(e.status,assertActive,photoRevisionAtStart));}
+     catch{}
+     if(mine===generation){
+      if(outcome==='stale'){
+       // The old oversize photo was replaced or deleted in another edit.
+       // Resume syncing the newest owner local revision, not the old bytes.
+       pausedCapacity=null;staleSnapshotPending();
+      }else status(capacityText(e.status)+(outcome==='saved'?'':
+       ' Keep the app open if possible; this pause could not be saved on this device.'));
+     }
     }else{
      status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':
       dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':
