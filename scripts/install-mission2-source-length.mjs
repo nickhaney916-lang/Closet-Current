@@ -12,7 +12,7 @@ await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
  `built.shirt=fitOwnerAlphaToSkinnedBlouse190(built.shirt,root,candidate.ownerMaskGeometryProfile190);
    if(built.shirt?.stats?.sourceSHA256==='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24'&&candidate?.silhouette62&&
       new URLSearchParams(globalThis.location?.search||'').get('photoSourceLength')==='research')
-    built.shirt=fitSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research'});`);
+    built.shirt=fitSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',traceTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleAudit')==='research',strictTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleStrict')==='research'});`);
 await patch('research/outfit-3d-01/research-panel.mjs',
  'ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,',
  `sourceProjectionRGB:actualOutfit171[k].sourceProjectionRGB===true,
@@ -30,6 +30,11 @@ await patch('research/outfit-3d-01/research-panel.mjs',
         sourceLengthIntersectionPairsAfter:actualOutfit171[k].sourceLengthIntersectionPairsAfter,
         sourceLengthTestedPairs:actualOutfit171[k].sourceLengthTestedPairs,
         sourceLengthConstructionMs:actualOutfit171[k].sourceLengthConstructionMs,
+        sourceLengthTriangleContactAudit:actualOutfit171[k].sourceLengthTriangleContactAudit===true,
+        sourceLengthTriangleContactStrictlyAccepted:actualOutfit171[k].sourceLengthTriangleContactStrictlyAccepted===true,
+        sourceLengthTriangleContactBefore:actualOutfit171[k].sourceLengthTriangleContactBefore,
+        sourceLengthTriangleContactAfter:actualOutfit171[k].sourceLengthTriangleContactAfter,
+        sourceLengthNewTriangleContacts:actualOutfit171[k].sourceLengthNewTriangleContacts,
         sourceLengthCollisionCertified:false,
         ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,`);
 console.log('Installed opt-in source-proportion lower garment extension; no release or physical fit certification');
