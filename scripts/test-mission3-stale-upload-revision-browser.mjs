@@ -143,9 +143,22 @@ async function run(engine,type,width){
   const changed=await before();
   assert.equal(changed.marker.localRevision,2);
   assert.equal(changed.marker.dirty,true);
+  // changed() already showed "pending" while the upload was held, so
+  // waiting for a matching string alone would be an invalid race test.
+  // Wait for the NEXT actual DOM status mutation from the completed in-flight
+  // sync after releasing its Storage POST, before inspecting cloud RPCs.
+  const finished=page.evaluate(()=>new Promise(resolve=>{
+   const status=document.getElementById('cloudStatus');
+   const observer=new MutationObserver(()=>{
+    if(status.textContent.includes('backup pending')){
+     observer.disconnect();resolve(true);
+    }
+   });
+   observer.observe(status,{subtree:true,childList:true,characterData:true});
+  }));
   release();
-  await page.waitForFunction(()=>document.getElementById('cloudStatus')
-   ?.textContent.includes('backup pending'));
+  assert.equal(await Promise.race([finished,new Promise((_,reject)=>
+   setTimeout(()=>reject(Error('In-flight cloud snapshot did not finish')),15000))]),true);
   assert.equal(published.length,0,
    'deleted/revised garment must not be published from stale in-flight snapshot');
   await page.locator('.account-menu > summary').click();
