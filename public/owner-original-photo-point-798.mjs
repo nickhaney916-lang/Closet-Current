@@ -318,23 +318,23 @@ export function mountOriginalTapReview798({
   if(enableSAM2PublicEvidence806===true&&
      typeof sam2PublicEvidenceProvider806==='function'&&
      item.sourceSHA256==='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019'){
-   root.dataset.mission1SAM2PublicArtifact806='p804-real-model-output-preview-only';
+   root.dataset.mission1Sam2PublicArtifact806='p804-real-model-output-preview-only';
    const show=document.createElement('button');show.type='button';show.className='secondary';
    show.textContent='Show verified P804 SAM2 public-photo mask';
    show.setAttribute('aria-label','Show archived real SAM2 research mask');show.disabled=true;
    const discard=document.createElement('button');discard.type='button';discard.className='secondary';
    discard.textContent='Discard archived SAM2 preview';discard.disabled=true;
    const note=document.createElement('p');note.className='fine';note.setAttribute('role','status');
-   note.setAttribute('aria-live','polite');note.dataset.mission1SAM2Status806='research-only';
+   note.setAttribute('aria-live','polite');note.dataset.mission1Sam2Status806='research-only';
    note.textContent='Public-fixture research only. SAM2 was run previously on Linux; it does not run here.';
    const canvas=document.createElement('canvas');canvas.setAttribute('aria-hidden','true');
-   canvas.dataset.mission1SAM2Overlay806='none';
+   canvas.dataset.mission1Sam2Overlay806='none';
    canvas.style.cssText='display:none;position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
    interactive.append(canvas);
    let epoch=0,busy=false;
    resetSAM2806=()=>{
     epoch++;canvas.style.display='none';canvas.width=0;canvas.height=0;
-    canvas.dataset.mission1SAM2Overlay806='none';discard.disabled=true;
+    canvas.dataset.mission1Sam2Overlay806='none';discard.disabled=true;
     note.textContent='Archived SAM2 preview discarded. Original private wardrobe unchanged.';
    };
    refreshSAM2806=()=>{show.disabled=busy||!live()||!selected||!selectedBox800;};
@@ -389,7 +389,7 @@ export function mountOriginalTapReview798({
      if(selectedPixels<3||selectedPixels>=w*h)throw Error('Archive mask unsuitable for visual review');
      if(!live()||epoch!==run||boxInput!==selectedBox800||pointInput!==selected)return;
      ctx.putImageData(picture,0,0);
-     canvas.dataset.mission1SAM2Overlay806='real-p804-prediction-unverified';
+     canvas.dataset.mission1Sam2Overlay806='real-p804-prediction-unverified';
      canvas.style.display='block';discard.disabled=false;
      note.textContent='REAL P804 SAM2 ONNX binary mask REPLAYED from public photo. '+
       'Approx '+Math.round(100*selectedPixels/(w*h))+'% of this thumbnail selected. '+
