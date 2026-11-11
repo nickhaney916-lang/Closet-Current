@@ -1,0 +1,88 @@
+name: Mission 1 P830 reviewed primary-color phone receipts — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-single-garment-color-receipts-830-HOLD]
+  pull_request:
+    branches: [research/mission1-single-garment-blind-trial-readout-829-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p830-honest-color-receipts-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verified-P829-parent-full-app-node-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently green parent and ONLY seven color-trial research paths
+        run: |
+          set -euo pipefail
+          BASE=0435cd55cd1708a2b375a9ef7dd1cb9182df5eac
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p830-paths
+          cat /tmp/m1-p830-paths
+          test "$(wc -l </tmp/m1-p830-paths)" -eq 7
+          while IFS= read -r file; do
+            case "$file" in
+              public/phone-photo-check.html|public/phone-photo-check.mjs|public/phone-photo-benchmark.mjs|scripts/run-phone-photo-check.mjs|tests/phone-photo-benchmark.test.mjs|research/mission1-single-garment-color-receipts-830/REPORT.md|.github/workflows/mission1-single-garment-color-receipts-830-no-deploy.yml) ;;
+              *) echo "UNKNOWN PHOTO/RECOGNITION/CLOUD/RELEASE FILE: $file"; exit 1 ;;
+            esac
+          done </tmp/m1-p830-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/local-worker.mjs public/recognition-engine.mjs public/local-catalog.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-single-garment-color-receipts-830/REPORT.md
+          echo M1_P830_EXACT_P829_PARENT_SEVEN_NO_DEPLOY_PATHS
+      - name: Install only ephemeral full-suite test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Node reviewed-color adversarial, production build and ALL native regressions
+        run: |
+          set -euo pipefail
+          node --check public/phone-photo-benchmark.mjs
+          node --check public/phone-photo-check.mjs
+          node --test tests/phone-photo-benchmark.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  pinned-real-original-phone-color-readout-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install exact browser and retrieve already reviewed SHA-locked public originals
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
+      - name: Real production FashionCLIP worker + owner pre-inference optional color control
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/run-phone-photo-check.mjs benchmark/phone-photo-flow-${{ matrix.browser }} ${{ matrix.browser }}
+      - name: Upload ONLY sanitized original-worker numeric receipts, no photos
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mission1-P830-${{ matrix.browser }}-optional-color-NUMERIC-ONLY-HOLD
+          path: |
+            benchmark/phone-photo-flow-${{ matrix.browser }}/results.json
+            benchmark/phone-photo-flow-${{ matrix.browser }}/summary.json
+          retention-days: 14
+          if-no-files-found: error
