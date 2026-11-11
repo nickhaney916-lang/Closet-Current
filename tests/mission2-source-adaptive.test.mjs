@@ -124,13 +124,17 @@ test('no acceptable extension fails closed before ANY user-photo mesh or panel m
 });
 
 
-test('unsewn synthetic cylinder folds into new intrapanel contacts and cannot be promoted as safe 3D',()=>{
+test('BVH source-ID remapping prevents thousands of false new self-contacts in cylindrical skinned source',()=>{
  const fx=fixture(null,{torsoMode:'cylinder'});
  const decision=planNoNewContactSourceLength(fx.shirt,fx.root,profile);
- assert.equal(decision.accepted,false);
- assert.equal(decision.originalPhotographOnly,true);
- assert.ok(decision.attempts.some(a=>Number.isInteger(a.newlyIntersectingIntrapanel)&&a.newlyIntersectingIntrapanel>0));
+ assert.equal(decision.accepted,true,JSON.stringify(decision));
+ assert.equal(decision.noNewContactAtOnePose,true);
+ assert.ok(decision.attempts.some(a=>a.accepted&&a.newlyIntersectingIntrapanel===0));
  fx.assertOriginal();
- assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile),/original-photo\/2D fallback required/);
- fx.assertOriginal();
+ const accepted=applyNoNewContactSourceLength(fx.shirt,fx.root,profile);
+ assert.equal(accepted.stats.sourceLengthIntrapanelStrictlyAccepted,true);
+ assert.equal(accepted.stats.sourceLengthNewIntrapanelContacts,0);
+ assert.equal(accepted.stats.sourceLengthCollisionCertified,false);
+ assert.equal(accepted.stats.sourceLengthSelfLayerCollisionCertified,false);
+ assert.equal(accepted.stats.releaseAuthorized,false);
 });
