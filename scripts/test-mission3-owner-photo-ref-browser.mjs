@@ -134,13 +134,14 @@ async function caseRun(engine,browserType,width){
   await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
   await page.evaluate(()=>closetReady);
   await page.waitForFunction(()=>document.getElementById('cloudStatus')
-   ?.textContent.includes('backup pending'));
+   ?.textContent.includes('Cloud photograph integrity check failed'));
   assert.equal(published,0,'foreign reference must be rejected before save RPC');
   const before=await read();
   assert.deepEqual(before.items.map(x=>x.id),['original-local-A']);
   assert.equal(before.items[0].image,dataURL);
   assert.equal(before.marker.baseVersion,4);
   assert.equal(before.marker.dirty,true);
+  assert.equal(before.marker.integrityPause,true);
   assert.ok(requests.some(x=>x.select==='revision,document'));
   assert.equal(requests.filter(x=>x.path.startsWith('/storage/')).length,0);
   await page.locator('.account-menu > summary').click();
@@ -156,7 +157,9 @@ async function caseRun(engine,browserType,width){
   // using a real SHA-checking private Storage download and a genuine RPC.
   remote={schemaVersion:1,items:[{id:'valid-owner-A-photo',ownerId:ownerA,
    category:'Tops',originalPhoto:{image:correct,sha256:sha}}],state:{}};
-  await page.evaluate(()=>closetCloud.sync());
+  // Owner explicitly repairs the remote object and retries the durable
+  // integrity quarantine using the visible account Sync action.
+  await page.locator('#syncCloset').click();
   await page.waitForFunction(()=>document.getElementById('cloudStatus')
    ?.textContent==='Cloud backup up to date');
   assert.equal(published,1);
@@ -165,6 +168,7 @@ async function caseRun(engine,browserType,width){
    ['original-local-A','valid-owner-A-photo']);
   assert.equal(done.marker.baseVersion,6);
   assert.equal(done.marker.dirty,false);
+  assert.equal(done.marker.integrityPause,false);
   const original=done.items.find(x=>x.id==='original-local-A');
   const restored=done.items.find(x=>x.id==='valid-owner-A-photo');
   assert.equal(original.image,dataURL);
@@ -178,7 +182,7 @@ async function caseRun(engine,browserType,width){
   }],state:{}};
   await page.evaluate(()=>closetCloud.sync());
   await page.waitForFunction(()=>document.getElementById('cloudStatus')
-   ?.textContent.includes('Local items are kept'));
+   ?.textContent.includes('Cloud photograph integrity check failed'));
   const refused=await read();
   assert.deepEqual(refused.items.map(x=>x.id).sort(),
    ['original-local-A','valid-owner-A-photo']);
