@@ -30,7 +30,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/cloud-backup.js|tests/mission3-cloud-capacity-pause.test.cjs|research/mission3-cloud-capacity/REPORT.md|.github/workflows/mission3-cloud-capacity-no-deploy.yml) ;;
+              public/cloud-backup.js|tests/mission3-cloud-capacity-pause.test.cjs|tests/mission3-bounded-restore-photo-cache.test.cjs|research/mission3-cloud-capacity/REPORT.md|.github/workflows/mission3-cloud-capacity-no-deploy.yml) ;;
               *) echo "Unexpected mission 3 cloud capacity path: $p"; exit 1 ;;
             esac
           done
