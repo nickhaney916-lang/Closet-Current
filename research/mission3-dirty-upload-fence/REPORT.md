@@ -1,0 +1,31 @@
+# Closet Current — Mission 3 refuse stale cloud publication after owner edits/deletes during upload
+
+**FAMILY ALPHA HOLD #255. Isolated DRAFT only, UNMERGED, UNDEPLOYED. No production/existing staging, hosted Supabase project, real owner photos, Mission 1 recognition or Mission 2 photo-to-3D changes.**
+
+## Exact fully verified parent
+
+Mission 3 native signed owner two-account ephemeral real PostgreSQL RLS integration, [draft PR #832](https://github.com/nickhaney916-lang/Closet-Current/pull/832), HEAD `4a71c5e3e49e4df550b30cdc02d5e43b5d732c56`, [NO DEPLOY CI #42960625191](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42960625191) **SUCCESS**: 1,450/1,450 Node; P147 independent signed JWT PostgreSQL owner RLS 7/7; actual native Chromium/WebKit 6/6 at 320/390/430, with authenticated owner A/B distinct original JPEG cloud save and new context restore using unchanged `supabase/cloud-backup.sql`. Artifact #13829276065 independently audited six valid PNGs, six matching SHA receipts, zero axe violations. All service users, keys, data and storage bytes were ephemeral local.
+
+## Concrete privacy/reliability race
+
+A dirty owner's `sync()` read a full local snapshot, then made network calls and decoded/up-loaded original JPEGs **without rechecking `cloud-sync.localRevision`** before publishing that snapshot via `save_closet_backup`. If the user removed a garment (or corrected color) while the prior photograph POST was delayed, the older cloud revision could still **publish the deleted garment/old photo reference** before the later sync eventually caught up. Another device restoring between these versions could resurrect intentionally deleted clothing. The previous post-RPC code preserved the newer dirty flag but could not retract the outdated remote publication already visible.
+
+## Scoped implementation
+
+- Read the authenticated owner's small `cloud-sync` revision marker after the initial remote revision GET, after local photo source SHA encoding, immediately before immutable Storage uploads, and **again after uploads directly before the cloud revision RPC**. Compare original snapshot's `localRevision`, `baseVersion`, `needsRestore`, and dirty flag under the existing user/DB/generation lease.
+- If any newer user edit/deletion was durably marked by `closetCloud.beforeWrite()`, **skip publication of the stale document**, leave newer local clothing/identity untouched, preserve the original dirty marker and show an accurate `Saved on this device · cloud backup pending` status. Schedule the next full snapshot and only that latest owner-local revision may publish.
+- Check also before `keepBoth` copy-ID persistence and before potentially expensive local photo encoding to avoid unnecessary old-original private Storage uploads.
+- A blob already in flight may finish its immutable owner-scoped Storage upload before the second marker check, and a vanishingly narrow race can still occur after the last marker read but before the outgoing network request is dispatched; this is not a distributed transaction across browser IndexedDB and PostgreSQL. **No claim of instant cloud-object deletion or universal atomic cancellation**. The key verified improvement is preventing reproducible stale cloud **document** publication when a local save occurs during the remote request or JPEG POST.
+- Existing owner-specific SHA-256 source receipts, owner/draft Storage references, 413/507, local/remote photo integrity pauses, atomic restore, conflict handling, unrelated owners, and eventual backup continue unchanged. Only `public/cloud-backup.js` app source changes.
+
+## Independent exact parent and actual mobile acceptance
+
+`tests/mission3-dirty-revision-upload-fence.test.cjs` runs *both* the exact PR #832 parent and repaired implementation in deterministic owner-private fake IndexedDB. A synthetic network gate suspends the first cloud revision GET or **private original JPEG POST**; a legitimate owner `beforeWrite(db)` increments local revision, then commits a **deletion or color edit** before releasing the request. The exact parent demonstrably publishes the old garment/color first; the repaired implementation must record **zero stale cloud RPCs**, keep local revision pending, then publish **only the latest saved wardrobe** on the next sync. Positive control confirms unchanged normal original JPEG backup is unaffected.
+
+`scripts/test-mission3-stale-upload-revision-browser.mjs` runs the actual native app in real Chromium/WebKit at **320/390/430 CSS pixels**, with a blocked synthetic private Storage POST, an actual owner-signed `beforeWrite(db)` call and committed IndexedDB edit/delete while that POST remains in flight, then a DOM mutation acknowledging completion. The test asserts **no stale cloud document published**, exact SHA original preservation for color edits and no deleted item resurrection, then uses the real **Sync closet** button and verifies only the final revision is published. Screenshots and axe receipts are retained.
+
+The exact-parent NO DEPLOY workflow also starts **disposable PostgreSQL 17** with unchanged actual Supabase RLS/storage SQL, reuses existing RS256-signed owner P147 test, builds and runs the **entire serial Node regression** and the previous genuine Chromium/WebKit remote-integrity, owner-storage/garment identity and camera/private-closet/style flows. It also reruns six actual native signed two-owner/PostgreSQL cases from PR #832. Only five paths may change: `public/cloud-backup.js`, Node test, browser script, this report and strict workflow. **Do not claim verified until final HEAD CI and evidence are independently checked.**
+
+## External release acceptance and Family Alpha restrictions
+
+Approved disposable hosted *real* Supabase Auth signed two-account JWT/RLS/Storage, actual iPhone Safari and Android Chrome camera/background/OS kill/network/quota and genuine distinct high-res 1,000-image memory, independent human-reviewed photo recognition, photorealistic male/female photo-to-3D and overall app integration/human alpha remain outstanding. Actual local signed PostgreSQL RLS and mocked mobile browser acceptance are not live-hosted or physical-phone certification. **FAMILY ALPHA HOLD #255 remains OPEN.**
