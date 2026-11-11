@@ -28,7 +28,7 @@ const descend=(n,fn)=>{
  return null;
 };
 function ownerAdjustHarness({ambiguous=true,original=true,reviewedSave=false}={}){
- const item={id:'private-review-piece',image:'data:image/jpeg;base64,AABB',
+ const item={id:'private-review-piece',name:'',image:'data:image/jpeg;base64,AABB',
   originalPhoto:original?{image:'data:image/jpeg;base64,AAEE'}:undefined,
   sourceSHA256:'synthetic-hash-not-cryptographic-proof',
   category:'Uncategorized',itemType:'Unknown',color:'',
