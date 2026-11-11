@@ -144,6 +144,7 @@ jobs:
          assert.equal(e.originalPrivateOwnerRetained,true);
          assert.equal(e.realSignedInSavedBoardRetained,true);
          assert.equal(e.releaseAuthorized,false);
+         assert.equal(e.noNewGarmentPartTriangleContactsIfAccepted,e.sampledPoseAdmitted);
          if(e.sampledPoseAdmitted){
           assert.equal(e.noNewBodyTriangleContactsIfAccepted,true);
           accepted++;
