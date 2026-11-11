@@ -1,0 +1,98 @@
+name: Mission 1 P809 blind human outer-minus-hole research acceptance — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-blind-human-hole-annotation-809-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-P809-hole-research-HOLD
+  cancel-in-progress: true
+jobs:
+  full-node-and-path-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact successful P808 parent; only isolated human reviewer tooling may change
+        run: |
+          set -euo pipefail
+          BASE=d008c651d35c083ebf4ed52f235a91676ceafc01
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/mission1-809-changes
+          test "$(wc -l </tmp/mission1-809-changes)" -eq 4
+          while read -r p; do
+            case "$p" in
+              research/mission1-reviewer-774/offline-photo-polygon-review.html|scripts/test-mission1-offline-reviewer-774-browser.mjs|research/mission1-human-hole-annotation-809/REPORT.md|.github/workflows/mission1-independent-human-holes-809-no-deploy.yml) ;;
+              *) echo "INVALID CHANGE TO OWNER MODEL PRIVATE DATA OR RELEASE: $p"; exit 1 ;;
+            esac
+          done </tmp/mission1-809-changes
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-human-hole-annotation-809/REPORT.md
+          echo M1_P809_EXACT_GREEN_P808_BASE_FOUR_PATHS_ONLY_NO_DEPLOY
+      - name: Install ephemeral full regression packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Existing source-pixel polygon/raster verifier, native build, full app regression
+        run: |
+          set -euo pipefail
+          node --check scripts/test-mission1-offline-reviewer-774-browser.mjs
+          node --test tests/mission1-offline-human-polygon-774.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-browser-offline-synthetic-human-holes:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute real Chromium and WebKit manual outer and inner hole synthetic gesture tests
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+          node scripts/test-mission1-offline-reviewer-774-browser.mjs
+      - name: Verify four unique screenshot hashes; prohibit human or release certification
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          import {createHash} from 'node:crypto';
+          const root='benchmark/m1-human-reviewer-ui-774/';
+          const p=JSON.parse(readFileSync(root+'synthetic-only-screenshot-receipts.json','utf8'));
+          assert.deepEqual(new Set(p.testedBrowserEngines),new Set(['chromium','webkit']));
+          assert.deepEqual(p.widths,[320,390]);assert.equal(p.screenshotReceipts.length,4);
+          assert.equal(p.actualIndependentHumanReviewers,0);
+          assert.equal(p.realPhotoOwnerPermissionVerified,false);
+          assert.equal(p.releaseAuthorized,false);assert.equal(p.familyAlpha,'HOLD');
+          assert.equal(new Set(p.screenshotReceipts.map(x=>x.sha256)).size,4);
+          for(const x of p.screenshotReceipts){
+            assert.equal(x.syntheticOnly,true);
+            const raw=readFileSync(root+x.engine+'-'+x.width+'-synthetic-human-annotation-ui.png');
+            assert.equal(createHash('sha256').update(raw).digest('hex'),x.sha256);
+          }
+          console.log('M1_P809_4_REAL_BROWSER_SYNTHETIC_HOLE_IMAGES_SHA_VERIFIED_NO_HUMAN_ACCEPTANCE');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P809-outer-minus-hole-synthetic-browser-evidence-NO-HUMAN-HOLD
+          path: benchmark/m1-human-reviewer-ui-774/
+          retention-days: 14
+          if-no-files-found: warn
