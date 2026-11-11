@@ -141,7 +141,7 @@ This tool uses only local files. It never shows model predictions, another revie
   const ids=new Set(),digests=new Set();
   for(const p of seal.photos){
    if(typeof p?.id!=='string'||!/^hold-[a-z0-9-]{4,60}$/.test(p.id)||
-      typeof p.image!=='string'||!/^[-a-z0-9_]+\\.jpe?g$/.test(p.image)||
+      typeof p.image!=='string'||!/^[-a-z0-9_]+\.jpe?g$/.test(p.image)||
       !/^[a-f0-9]{64}$/.test(p.sha256||'')||
       !Number.isSafeInteger(p.width)||!Number.isSafeInteger(p.height)||
       p.width<2||p.height<2||p.width*p.height>16000000||
