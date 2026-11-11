@@ -619,3 +619,134 @@ export function summarizeChangedFaceSelfContactRegions(root,meshes,overrides,sel
   });
  }finally{for(const item of geometry)item.g.dispose();}
 }
+
+
+/**
+ * P2-C13 — classify, but NEVER waive, complete NEW self-contact evidence.
+ *
+ * A source-pair that intersects after fitting may be a genuine triangle-plane
+ * crossing, a nearly coplanar overlap or a boundary touch. Some disconnected
+ * photo/UV panels have geometrically coincident source edges, even though
+ * their vertex indices differ. That coincidence does NOT prove a safe seam.
+ *
+ * Compare the original and proposed posed 163-bone triangles by unchanged
+ * canonical ORIGINAL face keys. Only non-sensitive aggregate counts are
+ * returned. Neither class nor geometric seam evidence changes admission:
+ * EVERY new triangle intersection is still rejected by the source fitter.
+ */
+export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
+ {maxPairs=4096}={}){
+ if(!root||typeof root.updateMatrixWorld!=='function'||
+    !Array.isArray(meshes)||meshes.length<1||meshes.length>128||
+    new Set(meshes).size!==meshes.length||
+    !(overrides instanceof Map)||[...overrides.keys()].some(m=>!meshes.includes(m))||
+    !Number.isSafeInteger(maxPairs)||maxPairs<1||maxPairs>40000||
+    selfDelta?.completedUniqueAffectedPairComparison!==true||
+    selfDelta?.originalSourceFaceIdentity!==true||
+    selfDelta?.sampledPoseOnly!==true||
+    !Number.isSafeInteger(selfDelta?.newlyIntersecting)||
+    selfDelta.newlyIntersecting<0||
+    !Array.isArray(selfDelta.newlyIntersectingSourceKeys)||
+    selfDelta.newlyIntersectingSourceKeys.length!==selfDelta.newlyIntersecting||
+    new Set(selfDelta.newlyIntersectingSourceKeys).size!==selfDelta.newlyIntersecting)
+  throw Error('M2 seam typing complete bounded original-source self delta required');
+ if(selfDelta.newlyIntersecting>maxPairs)
+  throw Error('M2 seam typing exceeds bounded original-face pair budget; cannot certify');
+ root.updateMatrixWorld(true);
+ const epsilon=0.00001,areaEpsilon=1e-10;
+ const originals=[],staged=[];
+ const byContactGeometry={twoSidedPlaneStraddle:0,nearCoplanarOverlap:0,
+  boundaryOrNearPlaneContact:0,degenerate:0};
+ // 0=no matching corners, 1=one matching corner, 2=matched edge,
+ // 3=all three corners coincident. All comparisons use one fixed metric.
+ const byOriginalCoincidentCorners=[0,0,0,0],byStagedCoincidentCorners=[0,0,0,0];
+ const byGarmentMesh=meshes.map(()=>0);
+ const t=new THREE.Vector3(),u=new THREE.Vector3(),v=new THREE.Vector3();
+ const getFace=(g,face)=>{
+  const a=g.getAttribute('position').array,idx=g.index?.array;
+  return Array.from({length:3},(_,k)=>{
+   const vertex=idx?idx[face*3+k]:face*3+k,offset=vertex*3;
+   return new THREE.Vector3(a[offset],a[offset+1],a[offset+2]);
+  });
+ };
+ const matchedCorners=(a,b)=>{
+  const used=new Set();let matches=0;
+  for(const v of a){
+   for(let i=0;i<3;i++){
+    if(used.has(i)||v.distanceToSquared(b[i])>epsilon*epsilon)continue;
+    used.add(i);matches++;break;
+   }
+  }
+  return matches;
+ };
+ const normal=(f)=>{
+  t.subVectors(f[1],f[0]);u.subVectors(f[2],f[0]);
+  return new THREE.Vector3().crossVectors(t,u);
+ };
+ const planeDist=(f,n,opposite)=>opposite.map(p=>n.dot(v.subVectors(p,f[0])));
+ const mode=(a,b)=>{
+  const na=normal(a),nb=normal(b);
+  if(na.lengthSq()<areaEpsilon||nb.lengthSq()<areaEpsilon)return 'degenerate';
+  na.normalize();nb.normalize();
+  const ab=planeDist(a,na,b),ba=planeDist(b,nb,a);
+  const straddle=dist=>Math.min(...dist)<-epsilon&&Math.max(...dist)>epsilon;
+  if(straddle(ab)&&straddle(ba))return 'twoSidedPlaneStraddle';
+  const close=dist=>dist.every(d=>Math.abs(d)<=epsilon);
+  if(close(ab)&&close(ba))return 'nearCoplanarOverlap';
+  return 'boundaryOrNearPlaneContact';
+ };
+ try{
+  for(const mesh of meshes){
+   const p=mesh?.geometry?.getAttribute('position'),override=overrides.get(mesh);
+   if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||!p?.count||
+      override&&(!(override instanceof Float32Array||override instanceof Float64Array)||
+       override.length!==p.count*3||!override.every(Number.isFinite)))
+    throw Error('M2 seam typing actual finite 163-bone staged garment required');
+   originals.push(posedGeometry(mesh));
+   staged.push(posedGeometry(mesh,override));
+  }
+  for(const key of selfDelta.newlyIntersectingSourceKeys){
+   if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+    throw Error('M2 seam typing canonical source face pair required');
+   const [m,first,second]=key.split(':').map(Number);
+   if(![m,first,second].every(Number.isSafeInteger)||m>=meshes.length||first>=second)
+    throw Error('M2 seam typing source mesh and face bounds required');
+   const g=staged[m],faceCount=g.index?g.index.count/3:g.getAttribute('position').count/3;
+   if(!Number.isSafeInteger(faceCount)||faceCount<1||second>=faceCount)
+    throw Error('M2 seam typing source triangle outside complete posed garment');
+   const beforeA=getFace(originals[m],first),beforeB=getFace(originals[m],second);
+   const afterA=getFace(g,first),afterB=getFace(g,second);
+   const c=mode(afterA,afterB);
+   byContactGeometry[c]++;
+   byOriginalCoincidentCorners[matchedCorners(beforeA,beforeB)]++;
+   byStagedCoincidentCorners[matchedCorners(afterA,afterB)]++;
+   byGarmentMesh[m]++;
+  }
+  const count=selfDelta.newlyIntersecting;
+  for(const total of [Object.values(byContactGeometry).reduce((a,b)=>a+b,0),
+   byOriginalCoincidentCorners.reduce((a,b)=>a+b,0),
+   byStagedCoincidentCorners.reduce((a,b)=>a+b,0),
+   byGarmentMesh.reduce((a,b)=>a+b,0)])
+   if(total!==count)throw Error('M2 seam typing source pair tally mismatch');
+  return Object.freeze({
+   newSelfContactCount:count,
+   byContactGeometry:Object.freeze({...byContactGeometry}),
+   byOriginalCoincidentCorners:Object.freeze(byOriginalCoincidentCorners),
+   byStagedCoincidentCorners:Object.freeze(byStagedCoincidentCorners),
+   byGarmentMesh:Object.freeze(byGarmentMesh),
+   cornerOrder:'none,one,edge,all-three',
+   originalSourceFaceIdentity:true,
+   topologyGapIsNotASafetyExemption:true,
+   completeChangedFaceComparison:true,
+   noContactWaived:true,
+   sourcePoseOnly:true,
+   geometryClassificationToleranceMeters:epsilon,
+   noPhotoOrOwnerFields:true,
+   signedPenetrationDepthVerified:false,
+   releaseAuthorized:false
+  });
+ }finally{
+  for(const g of originals)g.dispose();
+  for(const g of staged)g.dispose();
+ }
+}
