@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos,phonePhotoTrialReadout} from '../public/phone-photo-benchmark.mjs';
+import {lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos,phonePhotoTrialReadout,phonePhotoColorTrialReadout,photoColors} from '../public/phone-photo-benchmark.mjs';
 import {photoTestSession} from '../public/photo-test-session.mjs';
 
 test('phone labels are independently supplied, category-consistent and copied before inference',()=>{
@@ -95,4 +95,82 @@ test('P829 readout excludes arbitrary private source details and does not claim 
  assert.match(verdict.detail,/Clothing type was not checked/);
  assert.ok(!JSON.stringify(verdict).includes('PRIVATE'));
  assert.throws(()=>phonePhotoTrialReadout({...report.photos[0],expectedCategory:'SECRET_PERSON'}),/private-trial/);
+});
+
+test('P830 prior-labeled single-garment color is scored only from verified confident worker details',()=>{
+ const input=[
+  {category:'Tops',type:'T-shirt',color:'Blue',filename:'PRIVATE_BLUE_SHIRT.jpeg'},
+  {category:'Bottoms',type:'Jeans',color:'Black'},
+  {category:'Dresses',type:'Casual dress',color:'Red'},
+  {category:'Outerwear',type:'Jacket',color:'Pink'},
+  {category:'Uncategorized'},
+  {category:'Tops',color:'Green'},
+  {category:'Tops',color:'White'}
+ ];
+ const labels=lockPhotoLabels(input);
+ assert.equal(labels[0].expectedColor,'Blue');
+ input[0].color='Red';
+ assert.equal(labels[0].expectedColor,'Blue','labels are frozen independently before model inference');
+ const res=[
+  phonePhotoResult('photo-001',{strong:true,choices:[{category:'Tops',itemType:'T-shirt'}],details:{color:'Blue',image:'data:image/jpeg;PRIVATE_SECRET'}},5),
+  phonePhotoResult('photo-002',{strong:true,choices:[{category:'Bottoms',itemType:'Jeans'}],details:{color:'Gray'}},5),
+  phonePhotoResult('photo-003',{strong:true,choices:[{category:'Dresses',itemType:'Casual dress'}],details:{}},5),
+  phonePhotoResult('photo-004',{strong:false,categoryConfirmed:true,choices:[{category:'Outerwear',itemType:'Unknown'}],details:{color:'Pink'}},5),
+  phonePhotoResult('photo-005',{strong:false,choices:[],details:{color:'Red'}},5),
+  phonePhotoResult('photo-006',{strong:true,choices:[{category:'Tops',itemType:'Blouse'}],details:{color:'PRIVATE_EMAIL_AND_TOKEN'}},5),
+  photoFailure('photo-007','runtime')
+ ];
+ const report=scorePhonePhotos(labels,res);
+ assert.equal(report.summary.colorsChecked,6);
+ assert.equal(report.summary.colorMatches,1);
+ assert.equal(report.summary.colorPredicted,2);
+ assert.equal(report.summary.incorrectAutomaticColors,1);
+ assert.equal(report.summary.colorUnreported,4);
+ assert.equal(report.photos[0].colorMatch,true);
+ assert.equal(report.photos[1].colorMatch,false);
+ assert.equal(report.photos[3].prediction.color,null,'category-only review cannot assert a primary color');
+ assert.equal(report.photos[5].prediction.color,null,'unrecognized model color is not exported');
+ assert.equal(report.photos[6].colorMatch,false);
+ assert.ok(!JSON.stringify(report).includes('PRIVATE_'));
+ const verdicts=report.photos.map(phonePhotoColorTrialReadout);
+ assert.match(verdicts[0].detail,/Verified primary color Blue matched/);
+ assert.equal(verdicts[1].state,'fail');
+ assert.match(verdicts[1].detail,/expected Black, model reported Gray/);
+ assert.equal(verdicts[2].state,'review','missing color cannot be labeled complete');
+ assert.match(verdicts[2].detail,/Primary color not verified/);
+ assert.equal(verdicts[3].state,'review');
+ assert.match(verdicts[3].detail,/expected Pink/);
+ assert.equal(verdicts[4].state,'pass','nonclothing does not require a color');
+ assert.equal(verdicts[5].state,'review');
+ assert.equal(verdicts[6].state,'error');
+ assert.ok(!JSON.stringify(verdicts).includes('PRIVATE_'));
+});
+test('P830 reject invalid or nonclothing color labels, wrong palette, and forged unverified outputs',()=>{
+ assert.equal(photoColors.length,13);
+ assert.equal(new Set(photoColors).size,photoColors.length);
+ for(const row of [
+  {category:'Tops',color:'PRIVATE_TOKEN'},
+  {category:'Uncategorized',color:'Blue'},
+  {category:'Dresses',color:'transparent'},
+  {category:'Bottoms',color:'red'},
+ ]){
+  assert.throws(()=>lockPhotoLabels([row]),/matching primary color/);
+ }
+ const [label]=lockPhotoLabels([{category:'Tops',type:'T-shirt',color:'Blue'}]);
+ const raw=phonePhotoResult(label.id,{strong:false,categoryConfirmed:true,
+  choices:[{category:'Tops',itemType:'Unknown'}],details:{color:'Blue'}},1);
+ assert.equal(raw.prediction.color,null);
+ const scored=scorePhonePhotos([label],[raw]).photos[0];
+ assert.equal(scored.colorMatch,false);
+ assert.equal(phonePhotoColorTrialReadout(scored).state,'review');
+ assert.throws(()=>phonePhotoColorTrialReadout({...scored,expectedColor:'PRIVATE_TOKEN'}),/primary color/);
+ assert.throws(()=>phonePhotoColorTrialReadout({...scored,prediction:{color:'PRIVATE_TOKEN'}}),/verified color/);
+ const wrong=phonePhotoResult(label.id,{strong:true,
+  choices:[{category:'Tops',itemType:'T-shirt'}],details:{color:'Red'}},1);
+ const verdict=phonePhotoColorTrialReadout(scorePhonePhotos([label],[wrong]).photos[0]);
+ assert.equal(verdict.state,'fail');
+ assert.equal(verdict.title,'Incorrect automatic primary color');
+ const fake=phonePhotoResult(label.id,{strong:true,
+  choices:[{category:'Tops',itemType:'T-shirt'}],details:{color:33}},1);
+ assert.equal(fake.prediction.color,null);
 });
