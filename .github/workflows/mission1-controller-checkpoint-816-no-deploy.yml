@@ -1,0 +1,37 @@
+name: Mission 1 primary controller exact verified P815 checkpoint — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-main-controller-checkpoint-816-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mission1-P816-controller-HOLD
+  cancel-in-progress: true
+jobs:
+  docs-only-verified-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Assert exact green P815 base and only the controller and verification workflow changed
+        run: |
+          set -euo pipefail
+          BASE=9f85bb10ca90079f37a51aad1ceeb375dfdf9fcb
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/m1-controller-only
+          test "$(wc -l </tmp/m1-controller-only)" -eq 2
+          grep -Fx 'research/mission1-controller/CURRENT.md' /tmp/m1-controller-only
+          grep -Fx '.github/workflows/mission1-controller-checkpoint-816-no-deploy.yml' /tmp/m1-controller-only
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-controller/CURRENT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-controller/CURRENT.md
+          grep -Fq '1,676 PASS' research/mission1-controller/CURRENT.md
+          grep -Fq '15 FN' research/mission1-controller/CURRENT.md
+          echo M1_P816_DOCS_ONLY_HOLD_EXACT_GREEN_P815_DO_NOT_DEPLOY
