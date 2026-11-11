@@ -120,8 +120,10 @@ async function withQuota(throwFor,exercise){
 }
 test('verified parent lacks explicit quota abort and device-storage pause; repair installs both',()=>{
  if(baseline){
-  assert.doesNotMatch(source,/restoreError=null/);
-  assert.doesNotMatch(source,/pausedDeviceStorage/);
+  // PR #817 already fixed atomic restore and per-page device quota pause.
+  // This new baseline must reproduce only the missing cross-reload stop.
+  assert.match(source,/restoreError=null/);
+  assert.match(source,/pausedDeviceStorage/);
  }else{
   assert.match(source,/restoreError=null/);
   assert.match(source,/pausedDeviceStorage=true/);
