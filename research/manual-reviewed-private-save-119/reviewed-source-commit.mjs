@@ -195,6 +195,13 @@ export async function commitHumanReviewedPhoto119({
  const mode=validateReview(review,record,sourceSHA);
  if(!mode)return verdict('review-required','human-review-incomplete');
  if(mode.multi){
+  // P823: a saved separately displayed crop must be the EXACT cutout whose
+  // JPEG bytes and SHA-256 we verify below. A stale earlier cutout receipt
+  // cannot authorize a newer visible crop of the same original photograph.
+  // A full-original display is intentionally allowed to show a separate
+  // verified cutout preview, preserving the prior PHOTO119 contract.
+  if(record.image!==original&&record.image!==record.segmentHint.cutoutImage)
+   return verdict('review-required','cutout-source-unverified');
   if(record.segmentHint.cutoutImage===original||
      record.segmentHint.cutoutImage===record.image&&record.image===original)
    return verdict('review-required','cutout-source-unverified');
