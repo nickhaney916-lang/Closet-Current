@@ -220,15 +220,70 @@ function clothingFields(body,item,onChange=()=>{},requireNativeCatalogType=false
 function cropClothingPhoto(item){
  if(localPending.has(item.id)||busy)return;
  if(stream||cameraOpening)stopCamera();
+ // P822: one detected semantic family is not proof of one physical garment.
+ // Cropping an ambiguous source may only prepare it for explicit owner review.
+ const sourceNeedsManualReview822=item.segmentHint?.sourceDisconnectedReviewRequired===true;
  openPhotoCrop(item,{
-  async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;},
+  async analyze(image){
+   if(sourceNeedsManualReview822)return null;
+   if(!localReady)await enableLocal();
+   const result=await localRequest('classify',image,null);
+   return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?
+    {...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;
+  },
   async save(photo,choice){
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   delete value.recognitionMemory;delete value.confirmedDetails;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}const quality=await checkPhoto(photo.image);Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';delete value.maskedColorEstimate;delete value.maskApplied;value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
-   if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
-   value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
-   if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
-   Object.assign(item,value);for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];render();
+   if(sourceNeedsManualReview822){
+    // The crop must never replace the original JPEG, owner/source SHA or
+    // original segmentation uncertainty with a fresh, unverified identity.
+    value.ownerId=item.ownerId;
+    value.originalPhoto=structuredClone(item.originalPhoto);
+    value.sourceSHA256=item.sourceSHA256;
+    value.sourceHashVerified=item.sourceHashVerified;
+    value.outfitSourceId=item.outfitSourceId;
+    value.segmentHint=structuredClone(item.segmentHint);
+    value.requiresOwnershipConfirmation=true;
+    // Any prior one-garment confirmation is for a different crop, not this one.
+    delete value.sourceAmbiguityAcknowledged820;
+    delete value.sourceAmbiguityReviewProvenance820;
+    value.category='Uncategorized';value.itemType='Unknown';
+    value.color='';delete value.colorSource;
+   }
+   delete value.recognitionMemory;delete value.confirmedDetails;
+   delete value.learningReviewedWeek;delete value.weeklySuggestion;
+   delete value.recognitionPhoto;delete value.colorMethod;
+   if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
+   const quality=await checkPhoto(photo.image);
+   if(!sourceNeedsManualReview822){
+    Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+    if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')
+     value.colorMethod='garment-mask';
+   }
+   delete value.maskedColorEstimate;delete value.maskApplied;
+   value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
+   delete value.localChoices;delete value.indexedAt;
+   if(choice&&!sourceNeedsManualReview822){
+    applyLocalChoice(value,choice,true);
+    Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));
+    value.indexedAt=new Date().toISOString();
+   }
+   value.localStatus=sourceNeedsManualReview822?
+    'Crop saved for original-photo review. Confirm one garment and enter its category, type and color in Adjust before private save.':
+    choice?'Crop checked. Suggested details applied.':
+    'Crop saved. Check recognition or adjust the clothing details.';
+   if(items.some(x=>x.id===item.id))await writeAll([value]);
+   else await queued(()=>new Promise((resolve,reject)=>{
+    const tx=db.transaction('state','readwrite');
+    tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});
+    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   }));
+   Object.assign(item,value);
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt',
+    'recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails',
+    'learningReviewedWeek','weeklySuggestion','colorSource',
+    'sourceAmbiguityAcknowledged820','sourceAmbiguityReviewProvenance820'])
+    if(!(key in value))delete item[key];
+   render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
