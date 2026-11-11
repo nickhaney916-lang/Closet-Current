@@ -151,7 +151,7 @@ test('P826 actual crop editor Save button requires fresh one-garment checkbox an
  const editorSource=readFileSync('public/photo-crop-editor.js','utf8');
  const made=[],mounted=[],paintCalls=[];
  const newElement=(tag)=>{
-  const el={tag,children:[],attributes:{},style:{},hidden:false,
+  const el={tag,children:[],attributes:{},dataset:{},style:{},hidden:false,
    disabled:false,checked:false,isConnected:true,open:false,
    append(...nodes){this.children.push(...nodes);},
    setAttribute(key,value){this.attributes[key]=String(value);},
