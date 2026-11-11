@@ -275,3 +275,31 @@ test('when both storage APIs are unavailable, warn about reload and preserve ato
   });
  }finally{f.close();}
 });
+
+
+test('stale previous-owner Sync cannot clear quota pause after auth account switch or revoked lease',async()=>{
+ if(baseline)return;
+ const f=await fixture();
+ try{
+  await withQuota((store,row)=>store==='items'&&row?.id==='remote-one',async guard=>{
+   await f.start();assert.equal(guard.injected,1);
+   const key='closet-current:device-quota-pause:v1:'+f.owner;
+   const before=f.requests.length;
+   assert.equal(f.localValues.get(key),'1');
+   f.window.closetAuth.user={id:randomUUID()};
+   await f.manual();
+   assert.equal(f.localValues.get(key),'1','account switch must retain previous owners stop');
+   assert.equal(f.requests.length,before);
+   assert.equal((await f.rows())[0].id,'old-local-photo');
+   f.window.closetAuth.user={id:f.owner};
+   f.window.closetAuth.assertCurrent=()=>{throw Error('Revoked owner lease')};
+   await f.manual();
+   assert.equal(f.localValues.get(key),'1','revoked lease must keep pause');
+   assert.equal(f.requests.length,before);
+   f.window.closetAuth.assertCurrent=()=>{};
+   guard.recover();await f.manual();
+   assert.equal(f.localValues.has(key),false);
+   assert.equal((await f.rows()).length,2);
+  });
+ }finally{f.close();}
+});
