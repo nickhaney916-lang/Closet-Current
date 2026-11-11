@@ -1,0 +1,45 @@
+name: M1 P805 one-chat controller through verified P804 model — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-controller-checkpoint-805-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p805-controller-only-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-P804-parent-document-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verified exact P804 model/browser HEAD ancestor and ONLY controller markdown plus this workflow
+        run: |
+          set -euo pipefail
+          BASE=cb98edcf00a7821cc1192b43727ac90b16592e2b
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p805-docs
+          test "$(wc -l </tmp/m1-p805-docs)" -eq 2
+          while read -r path; do
+            case "$path" in
+              research/mission1-controller/CURRENT.md|.github/workflows/mission1-controller-checkpoint-805-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED APP/OWNER/MODEL/CLOUD/RELEASE CHANGE: $path"; exit 1 ;;
+            esac
+          done </tmp/m1-p805-docs
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase scripts tests benchmark)"
+          echo M1_P805_DOCUMENT_ONLY_PINNED_GREEN_P804_PARENT_NO_DEPLOY
+      - name: Recheck exact real SAM2 and prior human/phone/release honesty at resumable source checkpoint
+        run: |
+          set -euo pipefail
+          DOC=research/mission1-controller/CURRENT.md
+          for term in "FAMILY ALPHA HOLD #255" "cb98edcf00a7821cc1192b43727ac90b16592e2b" "42936152260" "3/3 JOBS SUCCESS" "1,659/1,659" "four actual source-resolution" "1,250.86 MiB" "NOT measured human-mask IoU" "NOT real customer boxes" "NOT 100% COMPLETE" "DRAFT, UNMERGED, UNDEPLOYED" "No ONNX SAM2 model has been installed"; do
+            grep -Fq "$term" "$DOC" || { echo "MISSING INDEPENDENTLY VERIFIED HONEST CHECKPOINT TERM: $term"; exit 1; }
+          done
+          if grep -Eiq 'MISSION 1 (IS|HAS BEEN) 100% COMPLETE|FAMILY ALPHA (IS )?RELEASED|PHYSICAL PHONES PASSED|REAL HUMAN DOUBLE BLIND VERIFIED' "$DOC"; then
+            echo "UNAUTHORIZED HUMAN/RELEASE CLAIM"; exit 1
+          fi
+          echo M1_P805_EXACT_HONEST_MODEL_MEMORY_HUMAN_MOBILE_UNVERIFIED_CONTROLLER_NO_RELEASE
