@@ -313,10 +313,11 @@
   const select=revisionOnly?'revision':'revision,document';
   const response=await api('/rest/v1/closet_backups?select='+select+'&owner_id=eq.'+user,{},false,assertActive);
   const rows=await readBoundedCloudJSON(response,revisionOnly?maxOwnerCloudSmallReplyBytes:maxOwnerCloudDocumentBytes,assertActive);assertActive();
-  if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');
+  if(!Array.isArray(rows)||rows.length>1)throw photoIntegrityError();
   if(!rows.length)return null;
   const row=rows[0];
-  if(!Number.isSafeInteger(row.revision)||row.revision<1)throw Error('Invalid cloud revision');
+  if(!row||typeof row!=='object'||Array.isArray(row)||
+     !Number.isSafeInteger(row.revision)||row.revision<1)throw photoIntegrityError();
   if(!revisionOnly){assertRemoteReceipts(row.document);await assertCloudPhotoReferences(row.document,assertActive);}
   return revisionOnly?{revision:row.revision}:row;
  }
@@ -388,7 +389,7 @@
   }
   return saved;
  }
- const integrityText='Cloud photograph integrity check failed or cloud backup data exceeds the safe response limit. Existing local clothing and saved outfits are unchanged. Automatic cloud sync is paused. Use Sync closet only after repairing the cloud copy.';
+ const integrityText='Cloud photograph integrity check failed or cloud backup response is invalid or exceeds the safe response limit. Existing local clothing and saved outfits are unchanged. Automatic cloud sync is paused. Use Sync closet only after repairing the cloud copy.';
  const capacityText=code=>code===413?
    'Cloud rejected a photograph as too large. Original photos remain on this device. Check photo size, then use Sync to retry.':
    'Cloud storage capacity is full. Original photos remain on this device. Free cloud space, then use Sync to retry.';
@@ -591,7 +592,11 @@
    // but never publish an outdated cloud document after a local delete/edit.
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
    const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,assertActive),revision=await readBoundedCloudJSON(response,maxOwnerCloudSmallReplyBytes,assertActive);assertActive();
-   if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
+   if(revision===null){schedule();return;}
+   // A 200 RPC may already have committed before a malformed JSON result
+   // arrived. Do not blindly retry private uploads or cloud CAS. Preserve
+   // the local dirty revision under the durable owner-only integrity pause.
+   if(!Number.isSafeInteger(revision)||revision<1)throw photoIntegrityError();
    // If another local save happened during upload, keep its durable pending flag.
    assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,dirty:current.localRevision!==m.localRevision});};});
    assertActive();const current=await marker();assertActive();if(current.dirty){status('Saved on this device · cloud backup pending');schedule();}
