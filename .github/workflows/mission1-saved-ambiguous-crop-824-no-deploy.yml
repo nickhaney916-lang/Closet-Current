@@ -1,0 +1,68 @@
+name: Mission 1 P824 block saved ambiguous photo crop before unreviewed writeAll — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-saved-ambiguous-crop-write-fence-824-HOLD]
+  pull_request:
+    branches: [research/mission1-cutout-visible-photo-identity-823-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p824-saved-crop-owner-gate-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-green-parent-native-build-and-complete-regressions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check exact verified P823 parent plus four allowlisted no-deploy paths
+        run: |
+          set -euo pipefail
+          BASE=526d61cc500018da7aedb45673da341a88eca0fe
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p824-allow
+          cat /tmp/m1-p824-allow
+          test "$(wc -l </tmp/m1-p824-allow)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              public/app.js|tests/mission1-ambiguous-photo-crop-822.test.mjs|research/mission1-saved-ambiguous-crop-824/REPORT.md|.github/workflows/mission1-saved-ambiguous-crop-824-no-deploy.yml) ;;
+              *) echo "UNAPPROVED MODEL/CLOUD/USER PHOTO/RELEASE CHANGE: $p"; exit 1 ;;
+            esac
+          done </tmp/m1-p824-allow
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/native-reviewed-private-save-167.mjs research/manual-reviewed-private-save-119/reviewed-source-commit.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-saved-ambiguous-crop-824/REPORT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-saved-ambiguous-crop-824/REPORT.md
+          echo P824_EXACT_P823_VERIFIED_PARENT_FOUR_PATHS_NO_DEPLOY
+      - name: Ephemeral full native Node dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual saved and unsaved photo crop handler, build and full app tests
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --test tests/mission1-ambiguous-photo-crop-822.test.mjs tests/mission1-ambiguous-owner-edit-820.test.mjs tests/mission1-cutout-visible-photo-823.test.mjs tests/manual-reviewed-private-save-119.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  independent-saved-source-crop-overwrite-admission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Actual native VM proof that saved ambiguous photo cannot mount direct writeAll crop path
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-ambiguous-photo-crop-822.test.mjs tests/mission1-ambiguous-owner-edit-820.test.mjs
+          grep -Fq "items.some(saved=>saved.id===item.id)" public/app.js
+          grep -Fq "sourceDisconnectedReviewRequired===true" public/app.js
+          echo P824_SAVED_AMBIGUOUS_WARDROBE_UNCHANGED_UNTIL_REVIEWED_CAS

@@ -9,7 +9,7 @@ const b=app.indexOf('function cropButton(item)',a);
 assert.ok(a>=0&&b>a,'native crop function source anchors exist');
 const nativeCrop=app.slice(a,b);
 
-function harness({ambiguous=true,confirmed=false}={}){
+function harness({ambiguous=true,confirmed=false,saved=false}={}){
  const original='data:image/jpeg;base64,AAEE';
  const item={id:'private-photo-piece',ownerId:'signed-owner-1',
   image:'data:image/jpeg;base64,AABB',
@@ -24,10 +24,16 @@ function harness({ambiguous=true,confirmed=false}={}){
   colorSource:'photo-estimate',sourceAmbiguityAcknowledged820:confirmed,
   sourceAmbiguityReviewProvenance820:confirmed?'owner-original-confirmation':undefined,
   recognitionMemory:{suggestedCategory:'Tops'}};
- const calls={inference:0,color:0,quality:0,classification:0,renders:0},stored=[];
+ const calls={inference:0,color:0,quality:0,classification:0,renders:0},stored=[],messages=[];
  let callbacks;
+ const db={transaction:()=>{
+  const tx={oncomplete:null,onerror:null,onabort:null,
+   objectStore:()=>({put:row=>{if(row.id==='draft')stored.push(structuredClone(row.batch[0]));}})};
+  queueMicrotask(()=>tx.oncomplete?.());
+  return tx;
+ }};
  const c={localPending:new Set(),busy:false,stream:null,cameraOpening:false,
-  items:[item],batch:[item],structuredClone,
+  items:saved?[item]:[],batch:[item],structuredClone,db,
   openPhotoCrop:(_item,handlers)=>{callbacks=handlers;return Promise.resolve();},
   localReady:false,enableLocal:async()=>{calls.inference++;},
   localRequest:async()=>{calls.inference++;return {strong:true,choices:[{
@@ -46,13 +52,13 @@ function harness({ambiguous=true,confirmed=false}={}){
    colorEstimate:{color:'Blue'},signature:'signature-1',aspect:1.12
   };},
   writeAll:async values=>{stored.push(structuredClone(values[0]));},
-  queued:()=>{throw Error('saved row must use the saved-item write path');},
-  render:()=>{calls.renders++;},message:()=>{},
+  queued:task=>task(),
+  render:()=>{calls.renders++;},message:m=>messages.push(m),
   stopCamera:()=>{throw Error('camera should be stopped already');}
  };
  vm.createContext(c);vm.runInContext(nativeCrop,c);c.cropClothingPhoto(item);
- assert.ok(callbacks?.analyze&&callbacks?.save,'actual crop handlers mounted');
- return {item,c,calls,stored,callbacks,original};
+ if(!saved||!ambiguous)assert.ok(callbacks?.analyze&&callbacks?.save,'actual crop handlers mounted');
+ return {item,c,calls,stored,callbacks,original,messages};
 }
 
 test('P822 real native ambiguous crop never calls model classification or fills guessed color even when helper supplies choice',async()=>{
@@ -129,4 +135,27 @@ test('P822 failed photo-quality check cannot partially commit an ambiguous crop'
  assert.equal(h.stored.length,0);
  assert.equal(h.item.image,'data:image/jpeg;base64,AABB');
  assert.equal(h.item.originalPhoto.image,h.original);
+});
+
+test('P824 saved ambiguous garment crop is blocked before opening editor or touching saved private wardrobe',()=>{
+ const h=harness({ambiguous:true,saved:true,confirmed:true});
+ assert.equal(h.callbacks,undefined,'must not mount crop editor for already-saved ambiguous source');
+ assert.equal(h.stored.length,0);
+ assert.equal(h.calls.quality,0);
+ assert.equal(h.calls.inference,0);
+ assert.equal(h.calls.renders,0);
+ assert.equal(h.item.image,'data:image/jpeg;base64,AABB');
+ assert.equal(h.item.originalPhoto.image,h.original);
+ assert.equal(h.item.sourceAmbiguityAcknowledged820,true,
+  'blocking an attempted recrop does not destroy an existing saved owner claim');
+ assert.match(h.messages.join(' '),/saved garment.*unchanged/i);
+});
+test('P824 ordinary saved nonambiguous crop remains available for existing editor path',async()=>{
+ const h=harness({ambiguous:false,saved:true});
+ assert.ok(h.callbacks,'unflagged saved clothing keeps prior crop UI');
+ const choice=await h.callbacks.analyze('data:image/jpeg;base64,AACC');
+ assert.equal(choice.category,'Tops');
+ await h.callbacks.save({image:'data:image/jpeg;base64,AADD'},choice);
+ assert.equal(h.stored.length,1);
+ assert.equal(h.item.color,'Blue');
 });
