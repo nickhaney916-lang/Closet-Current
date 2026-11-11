@@ -64,6 +64,10 @@ test('dry-run sampled extension scales are truly immutable before contact gate',
   assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
   assert.equal(result.stats.sourceLengthNewGarmentPartContacts,0);
   assert.equal(result.stats.sourceLengthNewIntrapanelContacts,0);
+  assert.equal(result.stats.sourceLengthIntrapanelAffectedPairOnly,true);
+  assert.equal(result.stats.sourceLengthIntrapanelFullBaselineEnumerated,false);
+  assert.ok(result.stats.sourceLengthIntrapanelChangedFaces>0);
+  assert.ok(result.stats.sourceLengthIntrapanelCandidateTests>=0);
   assert.equal(result.stats.sourceLengthBodyContactDistribution.total,result.stats.sourceLengthTriangleContactBefore);
   assert.equal(result.stats.sourceLengthBodyContactDistribution.byGarmentMesh.reduce((a,n)=>a+n,0),result.stats.sourceLengthTriangleContactBefore);
   assert.equal(result.stats.sourceLengthBodyContactDistribution.releaseAuthorized,false);
@@ -101,6 +105,9 @@ test('adaptive 163-bone real triangles select a reduced length, then atomically 
  assert.equal(fitted.stats.sourceLengthNewGarmentPartContacts,0);
  assert.equal(fitted.stats.sourceLengthIntrapanelStrictlyAccepted,true);
  assert.equal(fitted.stats.sourceLengthNewIntrapanelContacts,0);
+ assert.equal(fitted.stats.sourceLengthIntrapanelAffectedPairOnly,true);
+ assert.equal(fitted.stats.sourceLengthIntrapanelFullBaselineEnumerated,false);
+ assert.ok(fitted.stats.sourceLengthIntrapanelChangedFaces>0);
  assert.equal(fitted.stats.sourceLengthAdaptiveIntrapanelNonregression,true);
  assert.equal(fitted.stats.sourceLengthSelfLayerCollisionCertified,false);
  assert.equal(fitted.stats.sourceLengthNewTriangleContacts,0);
@@ -181,6 +188,9 @@ test('fail-closed enum diagnoses exact resource budget without fabricating cloth
   ['M2 garment part audit exceeds bounded contact budget; cannot certify','panel-contact-budget'],
   ['M2 self-contact exceeds bounded triangle comparison budget; cannot certify','self-comparison-budget'],
   ['M2 self-contact exceeds bounded contact budget; cannot certify','self-contact-budget'],
+  ['M2 changed-face exceeds bounded comparison budget; cannot certify','changed-self-comparison-budget'],
+  ['M2 changed-face exceeds bounded new-contact budget; cannot certify','changed-self-contact-budget'],
+  ['M2 changed-face exceeds bounded moved-face budget; cannot certify','changed-face-count-budget'],
   ['M2 source length new posed body intersection pairs 2 -> 3','coarse-body-pair-regression'],
   ['M2 source length new posed garment part triangle contacts 4','new-panel-contacts'],
   ['M2 source length new posed intrapanel self-intersections 2','new-intrapanel-contacts']
