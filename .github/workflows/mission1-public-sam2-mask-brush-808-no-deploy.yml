@@ -1,0 +1,136 @@
+name: M1 P808 actual public SAM2 mask owner brush, original source hold — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-sam2-native-mask-brush-808-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: m1-p808-sam2-manual-brush-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-P807-parent-full-node:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verified P807 parent, only seven source/QA paths, NO AUTH CLOUD RELEASE OR MODEL mutations
+        run: |
+          set -euo pipefail
+          BASE=456461522c8bbef7c3188c79a97bb2761d4fb06b
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p808-changes
+          test "$(wc -l </tmp/m1-p808-changes)" -eq 7
+          while read -r path; do
+            case "$path" in
+              public/mission1-public-sam2-mask-brush-808.mjs|public/owner-original-photo-point-798.mjs|public/app.js|scripts/test-mission1-real-segformer-to-closet-782-browser.mjs|tests/mission1-public-sam2-mask-brush-808.test.mjs|research/mission1-sam2-native-mask-brush-808/REPORT.md|.github/workflows/mission1-public-sam2-mask-brush-808-no-deploy.yml) ;;
+              *) echo "UNAPPROVED APP OWNER CLOUD MODEL RELEASE CHANGE: $path"; exit 1 ;;
+            esac
+          done </tmp/m1-p808-changes
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase public/local-worker.mjs public/auth.js public/cloud-backup.js public/native-reviewed-private-save-167.mjs public/local-catalog.mjs public/photo-color.js benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-sam2-native-mask-brush-808/REPORT.md
+          echo M1_P808_EXACT_P807_SOURCE_SEVEN_PATHS_NO_DEPLOY
+      - name: Install full ephemeral Node native app regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Original owner SHA model-mask manual add erase unit tests, native build, all app/cloud/3D regression
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/owner-original-photo-point-798.mjs
+          node --check public/mission1-public-sam2-mask-brush-808.mjs
+          node --check scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+          node --test tests/mission1-public-sam2-mask-brush-808.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-original-SAM2-public-mask-manual-brush-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 95
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    defaults:
+      run:
+        shell: bash
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MULTI16_RELAY_MODEL: '1'
+      M1_P806_PUBLIC_SAM2_ARTIFACT_DIR: /tmp/m1-p804-real-onnx-masks
+      M1_P808_REAL_SAM2_BRUSH: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retrieve frozen exact P804 public original SAM2 ONNX mask evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: mission1-P804-actual-non-oracle-native-browser-SAM2-source-mask-unverified-NO-DEPLOY
+          repository: nickhaney916-lang/Closet-Current
+          run-id: 42936152260
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: /tmp/m1-p804-real-onnx-masks
+      - name: Require immutable P804 real ONNX source/model mask PNG, not an owner cutout
+        run: |
+          set -euo pipefail
+          echo 'f8c50688b5932ae8c879b24ea638ade7994b3c1563b501c93d576c7236cb1bf9  /tmp/m1-p804-real-onnx-masks/mask-chromium-pointBox-UNVERIFIED.png' | sha256sum --check --status
+          echo 'd76ab0fb867270eafc8d76f5a6dc5fa693d342cca049fc226aa8dc661cad7f7e  /tmp/m1-p804-real-onnx-masks/mask-webkit-pointBox-UNVERIFIED.png' | sha256sum --check --status
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('/tmp/m1-p804-real-onnx-masks/real-native-browser-box-sam2-results.json'));
+          assert.equal(x.sourceSHA256,'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019');
+          assert.equal(x.familyAlpha,'HOLD');assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.ownerMaskApproved,false);assert.equal(x.actualIndependentHumanGesturePrompts,0);
+          assert.equal(x.modelRunInHostedLinuxRunnerNotPhysicalPhone,true);
+          console.log('M1_P808_VERIFIED_P804_REAL_ONNX_SOURCE_MASK_FIXTURE_NOT_OWNER_NOT_HUMAN');
+          NODE
+      - name: Perform actual original public mask mouse/keyboard brush in Chromium and WebKit native Adjust
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3
+          node --test tests/mission1-public-sam2-mask-preview-806.test.mjs
+          node --test tests/mission1-public-sam2-mask-brush-808.test.mjs
+          node scripts/test-mission1-real-segformer-to-closet-782-browser.mjs
+      - name: Require actual real-model temporary source correction, no model mask approval or save
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const r=JSON.parse(readFileSync('benchmark/mission1-real-model-native-closet-782/browser-results.json'));
+          assert.equal(r.researchOnly,true);assert.equal(r.releaseAuthorized,false);
+          assert.equal(r.familyAlpha,'HOLD');assert.equal(r.realAuthenticatedCloudUsers,false);
+          assert.deepEqual(new Set(r.scenarios.map(x=>x.browser)),new Set(['chromium','webkit']));
+          for(const row of r.scenarios){
+            for(const key of [
+              'P806ActualP804LinuxSAM2PublicArtifactRenderedNativeUnverified',
+              'P806OriginalJPEGSHAAndMaskPNGVerifiedBeforeOverlay',
+              'P808RealSAM2MaskPointerAndKeyboardCorrectionsVerified',
+              'P808RealSAM2SourceOriginalNeverSavedOrApproved',
+              'actualOriginalSourceOwnerMask803ManualCorrectionPointerAndKeyboard',
+              'actualOriginalSourceOwnerMask803NoApprovalOrPrivatePersistence',
+              'actualOriginalSourceOwnerBox800NotPersisted',
+              'actualMyClosetSaved'])
+              assert.equal(row[key],true,key);
+            assert.equal(row.actualHumanGroundTruthIndependentlyVerified,false);
+            assert.equal(row.actualSignedCloudRLS,false);
+            assert.equal(row.physicalPhoneTested,false);
+            assert.equal(row.familyAlpha,'HOLD');
+          }
+          console.log('M1_P808_TRUE_SAM2_SOURCE_MASK_MANUAL_BRUSH_CHROMIUM_WEBKIT_NOT_HUMAN_APPROVED_NOT_SAVED_NO_RELEASE');
+          NODE
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-P808-original-REAL-P804-SAM2-mask-manual-brush-pointer-keyboard-UNVERIFIED-HOLD
+          path: benchmark/mission1-real-model-native-closet-782/
+          retention-days: 14
+          if-no-files-found: warn
