@@ -127,3 +127,35 @@ test('DETECTOR57 crop review is an exact boolean, not a model score, string, obj
  }
  assert.equal(verifiedRecord24({proof,ownerId:'score57',piece:{...base,cropReviewed:true}}).sourceCropReviewed,true);
 });
+
+test('P813: 13 distinguishable original model regions are NEVER silently truncated to twelve',()=>{
+ const a=map(80,80);
+ for(let i=0;i<13;i++){
+  const row=Math.floor(i/4),col=i%4;
+  a.paint(4,2+col*19,2+row*19,8,8);
+ }
+ assert.throws(()=>visibleGarmentGroups24(a),error=>
+  error instanceof RangeError&&error.code==='MULTI24_REVIEW_OVERFLOW'&&
+  error.visibleProposalCount===13&&error.reviewLimit===12);
+ const all=visibleGarmentGroups24(a,{limit:24});
+ assert.equal(all.length,13);
+ assert.equal(new Set(all.map(g=>g.instanceKey)).size,13);
+ assert.equal(all.reduce((n,g)=>n+g.count,0),13*64);
+ assert.ok(all.every(x=>x.needsReview&&!x.accepted));
+ const pixels=new Uint8Array(80*80);
+ for(const region of all)for(let i=0;i<region.selected.length;i++)if(region.selected[i]){
+  assert.equal(pixels[i],0,'visible garments are separate, not duplicated or merged');
+  pixels[i]=1;
+ }
+});
+test('P813: source grouping caps reject invalid values and >24 components without a partial 24-item batch',()=>{
+ const a=map(100,100);
+ for(let i=0;i<25;i++)a.paint(4,2+(i%5)*18,2+Math.floor(i/5)*18,8,8);
+ for(const limit of [undefined,0,-1,12.5,25,1/0,NaN,'12']){
+  if(limit===undefined)continue;
+  assert.throws(()=>visibleGarmentGroups24(a,{limit}),/invalid reviewed garment limit/);
+ }
+ assert.throws(()=>visibleGarmentGroups24(a,{limit:24}),error=>
+  error.code==='MULTI24_REVIEW_OVERFLOW'&&error.visibleProposalCount===25&&error.reviewLimit===24);
+ assert.throws(()=>visibleGarmentGroups24(a),/MULTI24_REVIEW_OVERFLOW/);
+});
