@@ -30,3 +30,7 @@ The `.github/workflows/mission3-cloud-capacity-no-deploy.yml` pipeline must run 
 ## External acceptance still needed
 
 Actual signed isolated hosted Supabase Auth/RLS/Storage test-account rejection, physical mobile network/quota measurements, OS kill/background camera and IndexedDB quota recovery, peak heap with real distinct large JPEGs, independent owner-reviewed photos, and full Mission 1/2 integration. Existing production/staging untouched; Family Alpha HOLD #255 remains OPEN.
+
+## Inherited concurrent LRU test correction
+
+The complete regression uncovered a pre-existing overstrict assertion from Mission 3 PR #809: the restore test required **exactly 64 Storage GETs** for 64 unique originals, each referenced twice. The eight-entry LRU deliberately permits a re-fetch if four asynchronous workers interleave and evict an entry between its first and second field. A observed 65th GET did not change any photo bytes, source SHA, owner isolation or atomic result. The corrected test now requires **64 unique owner-private SHA paths**, every file fetched at least once and at most twice, and all 64 source SHA receipts validated after restore. This is an evidence assertion correction, not permission to skip integrity verification; the separately tested promise cache still coalesces simultaneous same-key reads.
