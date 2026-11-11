@@ -30,7 +30,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/cloud-backup.js|tests/mission3-device-quota-atomic-restore.test.cjs|tests/mission3-bounded-upload-manifest.test.cjs|research/mission3-device-quota-restore/REPORT.md|.github/workflows/mission3-device-quota-restore-no-deploy.yml) ;;
+              public/cloud-backup.js|tests/mission3-device-quota-atomic-restore.test.cjs|tests/mission3-bounded-upload-manifest.test.cjs|scripts/test-mission3-device-quota-restore-browser.mjs|research/mission3-device-quota-restore/REPORT.md|.github/workflows/mission3-device-quota-restore-no-deploy.yml) ;;
               *) echo "Mission 3 unexpected atomic-restore path: $p"; exit 1 ;;
             esac
           done
@@ -47,6 +47,8 @@ jobs:
         run: |
           node scripts/build.mjs
           node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Real Chromium/WebKit 320 390 430 actual IndexedDB quota abort and manual restoration
+        run: node scripts/test-mission3-device-quota-restore-browser.mjs benchmark/mission3-device-quota-atomic-browser
       - name: Real Chromium/WebKit 320 390 430 owner capacity reload/retry and accessibility
         run: node scripts/test-mission3-durable-capacity-browser.mjs benchmark/mission3-device-quota-durable-mobile
       - name: Real Chromium synthetic-owner original/cutout cloud recovery and private outfits
@@ -63,6 +65,7 @@ jobs:
         with:
           name: mission3-device-quota-atomic-restore-evidence-HOLD
           path: |
+            benchmark/mission3-device-quota-atomic-browser/
             benchmark/mission3-device-quota-durable-mobile/
             benchmark/mission3-device-quota-private-backup/
             benchmark/native-canonical-closet-style-167/
