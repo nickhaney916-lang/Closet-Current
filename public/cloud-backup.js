@@ -322,7 +322,7 @@
   'A saved clothing photograph is damaged or is not a supported JPEG. Original clothing remains on this device. Correct or replace the photo, then choose Sync closet to retry.';
  const remotePhotoText=code=>code==='REMOTE_PHOTO_MISSING'?
   'A photograph is missing from this cloud backup. Existing local clothing is unchanged. Cloud restore is paused; repair the private photo, then choose Sync closet to retry.':
-  'Cloud photograph integrity check failed. Cloud restore is paused. Existing local clothing and saved outfits are unchanged. Repair the cloud photo, then choose Sync closet to retry.';
+  'Cloud photograph integrity check failed; the private photo failed integrity verification. Cloud restore is paused. Existing local clothing and saved outfits are unchanged. Repair the cloud photo, then choose Sync closet to retry.';
  const isDeviceStorageError=error=>error?.name==='QuotaExceededError'||
   (error?.name==='DOMException'&&error?.code===22);
  const deviceStorageText='Device storage is full. Existing local clothing is unchanged; cloud restoration is paused. Free device storage, then select Sync closet to retry.';
