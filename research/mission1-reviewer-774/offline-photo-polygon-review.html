@@ -51,9 +51,11 @@ This tool uses only local files. It never shows model predictions, another revie
 <section>
 <fieldset>
 <legend>2. Draw every visible garment manually</legend>
-<p class="small">Touch or click the PHOTO to place outline points. Add at least three points and choose “Finish current polygon.” More disconnected polygons can belong to the same garment. Do not trace guessed/hidden fabric, or copy model output.</p>
+<p class="small">Touch or click the PHOTO to place outline points. Add at least three points and choose “Finish current polygon.” More disconnected polygons can belong to the same garment. To exclude a transparent/open area completely enclosed by clothing, finish at least one OUTER polygon and select “Draw inner hole” before outlining the gap. Inner holes subtract source pixels from that garment. Do not trace guessed/hidden fabric, or copy model output.</p>
 <canvas id="drawing" width="320" height="220" aria-label="Original photograph and manually added polygon outline"></canvas>
 <div class="buttons">
+<button id="outerMode" class="subtle" aria-pressed="true" disabled>Draw outer edge</button>
+<button id="holeMode" class="subtle" aria-pressed="false" disabled>Draw inner hole</button>
 <button id="undo" class="subtle" disabled>Undo last point</button>
 <button id="finish" class="subtle" disabled>Finish current polygon</button>
 <button id="remove" class="subtle" disabled>Remove last garment</button>
@@ -110,11 +112,11 @@ This tool uses only local files. It never shows model predictions, another revie
  const sel=(input,options)=>{
   input.replaceChildren();for(const x of options){const op=document.createElement('option');op.textContent=x;op.value=x;input.appendChild(op);}
  };
- const state={seal:null,photo:null,verified:false,image:null,regions:[],vertices:[],polygons:[],negative:false,href:null};
+ const state={seal:null,photo:null,verified:false,image:null,regions:[],vertices:[],polygons:[],holes:[],holeMode:false,negative:false,href:null};
  const ctx=$('drawing').getContext('2d');
  const status=(message,fail=false)=>{$('status').textContent=message;$('status').style.color=fail?'#9a2330':'#254d5b';};
  function reset(){
-  state.verified=false;state.image=null;state.regions=[];state.vertices=[];state.polygons=[];state.negative=false;
+  state.verified=false;state.image=null;state.regions=[];state.vertices=[];state.polygons=[];state.holes=[];state.holeMode=false;state.negative=false;
   $('proof').textContent='No image verified.';if(state.href){URL.revokeObjectURL(state.href);state.href=null;}
   for(const id of ['undo','finish','remove','add','negative','export'])$(id).disabled=true;
   $('regions').replaceChildren();draw();
@@ -130,18 +132,23 @@ This tool uses only local files. It never shows model predictions, another revie
    ctx.strokeStyle=color;ctx.stroke();
    for(const [x,y] of poly){ctx.beginPath();ctx.arc(x,y,Math.max(2,c.width*.005),0,2*Math.PI);ctx.fillStyle=color;ctx.fill();}
   };
-  for(const r of state.regions)for(const p of r.polygons)path(p,'#39e63c');
+  for(const r of state.regions){for(const p of r.polygons)path(p,'#39e63c');for(const h of (r.holes||[]))path(h,'#f04b59');}
   for(const p of state.polygons)path(p,'#00baff');
-  path(state.vertices,'#ffb200');
+  for(const h of state.holes)path(h,'#f04b59');
+  path(state.vertices,state.holeMode?'#db284a':'#ffb200');
   $('points').textContent=state.vertices.length+' unfinished points · '+state.polygons.length+
-   ' finished polygons for the current garment · '+state.regions.length+' saved garment outlines';
+   ' outer polygons · '+state.holes.length+' inner holes · '+state.regions.length+' saved garment outlines';
+  $('outerMode').disabled=!state.verified||!!state.vertices.length;
+  $('holeMode').disabled=!state.verified||!state.polygons.length||!!state.vertices.length;
+  $('outerMode').setAttribute('aria-pressed',String(!state.holeMode));
+  $('holeMode').setAttribute('aria-pressed',String(state.holeMode));
   $('undo').disabled=!state.verified||!state.vertices.length;
   $('finish').disabled=!state.verified||state.vertices.length<3;
-  $('add').disabled=!state.verified||!state.polygons.length||state.negative;
+  $('add').disabled=!state.verified||!state.polygons.length||!!state.vertices.length||state.negative;
   $('remove').disabled=!state.regions.length;
-  $('negative').disabled=!state.verified||!!state.regions.length||!!state.vertices.length||!!state.polygons.length;
+  $('negative').disabled=!state.verified||!!state.regions.length||!!state.vertices.length||!!state.polygons.length||!!state.holes.length;
   $('export').disabled=!state.verified||(!state.negative&&!state.regions.length)||
-   !!state.vertices.length||!!state.polygons.length;
+   !!state.vertices.length||!!state.polygons.length||!!state.holes.length;
  }
  sel($('category'),Object.keys(allowed));
  sel($('color'),colors);
@@ -213,9 +220,13 @@ This tool uses only local files. It never shows model predictions, another revie
   if(!point){status('Touch the visible photo, not its blank outer border.',true);return;}
   state.vertices.push(point);draw();
  };
+ $('outerMode').onclick=()=>{if(!state.verified||state.vertices.length)return;state.holeMode=false;draw();};
+ $('holeMode').onclick=()=>{if(!state.verified||!state.polygons.length||state.vertices.length)return;state.holeMode=true;draw();};
  $('undo').onclick=()=>{state.vertices.pop();draw();};
  $('finish').onclick=()=>{
-  if(state.vertices.length<3)return;state.polygons.push(state.vertices.map(p=>[...p]));state.vertices=[];draw();
+  if(state.vertices.length<3)return;
+  (state.holeMode?state.holes:state.polygons).push(state.vertices.map(p=>[...p]));
+  state.vertices=[];draw();
  };
  $('add').onclick=()=>{
   if(!state.polygons.length||!state.verified)return;
@@ -224,19 +235,20 @@ This tool uses only local files. It never shows model predictions, another revie
    return status('Choose a unique 3–80 character local piece ID.',true);
   state.regions.push({instanceId:id,category:$('category').value,
    subtype:$('subtype').value,primaryColor:$('color').value,
-   polygons:state.polygons.map(p=>p.map(q=>[...q]))});
-  state.vertices=[];state.polygons=[];
+   polygons:state.polygons.map(p=>p.map(q=>[...q])),
+   holes:state.holes.map(h=>h.map(q=>[...q]))});
+  state.vertices=[];state.polygons=[];state.holes=[];state.holeMode=false;
   $('instanceId').value='piece-'+(state.regions.length+1);
   const item=document.createElement('li');
   const row=state.regions[state.regions.length-1];
-  item.textContent=row.category+' / '+row.subtype+' / '+row.primaryColor+' (manual polygons: '+row.polygons.length+')';
+  item.textContent=row.category+' / '+row.subtype+' / '+row.primaryColor+' (outer polygons: '+row.polygons.length+', inner holes: '+row.holes.length+')';
   $('regions').appendChild(item);draw();
  };
  $('remove').onclick=()=>{
   state.regions.pop();$('regions').lastElementChild?.remove();draw();
  };
  $('negative').onclick=()=>{
-  if(state.regions.length||state.polygons.length||state.vertices.length)return;
+  if(state.regions.length||state.polygons.length||state.holes.length||state.vertices.length)return;
   state.negative=true;status('Explicit no-garment human decision recorded.');draw();
  };
  $('export').onclick=()=>{

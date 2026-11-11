@@ -10,6 +10,7 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
+import {authorManualSourceLabel774} from '../research/mission1-reviewer-774/offline-human-polygon-receipt.mjs';
 
 const engines=process.env.M1_REVIEWER_BROWSER||'chromium,webkit';
 const names=engines.split(',').map(x=>x.trim()).filter(Boolean);
@@ -68,6 +69,13 @@ for(const engine of names){
      await page.locator('#finish').click();
     };
     await draw([[3,3],[22,3],[22,25],[3,25]]);
+    assert.equal(await page.locator('#holeMode').isEnabled(),true);
+    await page.locator('#holeMode').click();
+    assert.equal(await page.locator('#holeMode').getAttribute('aria-pressed'),'true');
+    await draw([[9,9],[15,9],[15,16],[9,16]]);
+    assert.match(await page.locator('#points').textContent(),/1 inner holes/);
+    await page.locator('#outerMode').click();
+    assert.equal(await page.locator('#outerMode').getAttribute('aria-pressed'),'true');
     await page.locator('#category').selectOption('Tops');
     await page.locator('#subtype').selectOption('Blouse');
     await page.locator('#color').selectOption('Blue');
@@ -95,6 +103,15 @@ for(const engine of names){
      [['Tops','Blouse','Blue'],['Bottoms','Jeans','Brown']]);
     assert.equal(result.regions.length,2);
     assert.ok(result.regions.every(r=>r.polygons.length===1&&r.polygons[0].length===4));
+    assert.equal(result.regions[0].holes.length,1);
+    assert.equal(result.regions[0].holes[0].length,4);
+    assert.deepEqual(result.regions[1].holes,[]);
+    const truthful=authorManualSourceLabel774({photo:{width,height,sha256:sourceSHA},regions:[result.regions[0]]});
+    const rle=truthful.instances[0].rle;
+    const selectedAt=(x,y)=>{const pixel=y*width+x;let cursor=0,mask=0;
+     for(const run of rle){if(pixel<cursor+run)return mask;cursor+=run;mask=1-mask;}throw Error('invalid RLE');};
+    assert.equal(selectedAt(6,6),1,'retained human outer polygon fabric');
+    assert.equal(selectedAt(12,12),0,'human hole pixels excluded from signed original-source RLE');
     assert.equal(result.explicitNoGarments,false);
     assert.deepEqual(external,[]);
     await page.locator('#original').setInputFiles({
@@ -107,7 +124,7 @@ for(const engine of names){
     await page.waitForFunction(()=>
      document.getElementById('status')?.textContent?.includes('differs from the immutable registered source SHA'));
     assert.equal(await page.locator('#export').isDisabled(),true);
-    console.log('P774_HUMAN_DRAWN_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
+    console.log('P809_HUMAN_OUTER_MINUS_HOLE_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
      screenshot,sha(rendered));
    }finally{await context.close();}
   }
