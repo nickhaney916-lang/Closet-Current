@@ -16,6 +16,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-native-depth-trial-20261111-HOLD
     - research/mission2-intrapanel-fold-locality-20261111-HOLD
     - research/mission2-hem-depth-taper-20261111-HOLD
+    - research/mission2-source-seam-contact-typing-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -54,6 +55,7 @@ jobs:
     outputs:
       locality390: ${{ steps.locality_probe.outputs.report }}
       depthTrial390: ${{ steps.depth_probe.outputs.report }}
+      contactTyping390: ${{ steps.contact_typing_probe.outputs.report }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
@@ -268,6 +270,18 @@ jobs:
           assert.ok([1,.75,.5,.25].includes(a.scale));
           assert.ok([0,.008,.016,.024].includes(a.depthClearance));
           assert.ok([1,2,3,4].includes(a.depthEasingExponent));
+          if(a.selfContactTypes){
+           const t=a.selfContactTypes;
+           assert.equal(t.newSelfContactCount,a.newSelfContacts);
+           assert.equal(t.noContactWaived,true);
+           assert.equal(t.topologyGapIsNotASafetyExemption,true);
+           assert.equal(t.noPhotoOrOwnerFields,true);
+           assert.equal(t.releaseAuthorized,false);
+           assert.equal(Object.values(t.byContactGeometry).reduce((v,n)=>v+n,0),a.newSelfContacts);
+           assert.equal(t.byOriginalCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
+           assert.equal(t.byStagedCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
+           assert.equal(t.byGarmentMesh.reduce((v,n)=>v+n,0),a.newSelfContacts);
+          }
           if(a.selfRegions){
            assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
            assert.equal(a.selfRegions.newSelfContactCount,a.newSelfContacts);
@@ -316,6 +330,45 @@ jobs:
         appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
         console.log('M2_NATIVE_DEPTH_TRIAL_AGGREGATE_ONLY',report);
         NODE
+    - name: Classify genuine source self-fold intersections without seam exemptions or private triangle data
+      id: contact_typing_probe
+      env:
+        PHOTO_SOURCE_LENGTH: '1'
+        PHOTO_SOURCE_PROJECTION: '1'
+        PHOTO_TRIANGLE_CONTACTS: '1'
+        PHOTO_TRIANGLE_ADAPTIVE: '1'
+        PHOTO_DEPTH_EXPERIMENT: '1'
+      run: |
+        node --input-type=module <<'NODE'
+        import assert from 'node:assert/strict';
+        import {readFileSync,appendFileSync} from 'node:fs';
+        const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+        const r=JSON.parse(readFileSync('benchmark/user-photo-to-anatomical-3d-62/'+engine+'/results.json','utf8'));
+        const e=r.evidence.find(c=>c.width===390);
+        assert.ok(e);
+        const attempts=e.safeBodyLocality?.attempts;
+        assert.ok(attempts?.length>=4&&attempts.length<=16);
+        const active=attempts.slice(10);
+        const classes=['twoSidedPlaneStraddle','nearCoplanarOverlap',
+         'boundaryOrNearPlaneContact','degenerate'];
+        for(const a of attempts){
+         if(!a.selfContactTypes)continue;
+         const t=a.selfContactTypes;
+         assert.equal(t.newSelfContactCount,a.newSelfContacts);
+         assert.equal(t.noContactWaived,true);
+         assert.equal(t.topologyGapIsNotASafetyExemption,true);
+         assert.equal(Object.values(t.byContactGeometry).reduce((v,n)=>v+n,0),a.newSelfContacts);
+         assert.equal(t.byOriginalCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
+         assert.equal(t.byStagedCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
+        }
+        const compact=c=>active.map(a=>a.selfContactTypes?.byContactGeometry?.[c]??'x').join(',');
+        const edges=active.map(a=>a.selfContactTypes?.byOriginalCoincidentCorners?.[2]??'x').join(',');
+        const report=engine+'-cross['+compact(classes[0])+']-cop['+compact(classes[1])+']-touch['+
+         compact(classes[2])+']-deg['+compact(classes[3])+']-edge['+edges+']';
+        assert.ok(report.length<192);
+        appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
+        console.log('M2_NATIVE_SOURCE_SEAM_CONTACT_CLASS_AGGREGATES',report);
+        NODE
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -345,3 +398,12 @@ jobs:
     timeout-minutes: 5
     steps:
     - run: echo "Private-safe height/body counts only; never infer photo-measured depth or physical clearance"
+
+  show-source-contact-types-without-artifact:
+    needs: source-length-real-mobile-browser
+    if: ${{ always() && needs.source-length-real-mobile-browser.outputs.contactTyping390 != '' }}
+    name: "M2 source-contact types ${{ needs.source-length-real-mobile-browser.outputs.contactTyping390 }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - run: echo "Counts only; every type remains an unsafe NEW contact until separately fixed and retested"

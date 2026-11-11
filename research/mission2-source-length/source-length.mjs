@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -56,6 +56,7 @@ export const classifySourceLengthCandidateException=e=>{
  if(message.includes('M2 changed-face exceeds bounded comparison budget'))return 'changed-self-comparison-budget';
  if(message.includes('M2 changed-face exceeds bounded new-contact budget'))return 'changed-self-contact-budget';
  if(message.includes('M2 changed-face exceeds bounded moved-face budget'))return 'changed-face-count-budget';
+ if(message.includes('M2 seam typing exceeds bounded original-face pair budget'))return 'self-topology-budget';
  if(message.includes('new posed body triangle contacts'))return 'new-body-contacts';
  if(message.includes('new posed garment part triangle contacts'))return 'new-panel-contacts';
  if(message.includes('new posed intrapanel self-intersections'))return 'new-intrapanel-contacts';
@@ -141,12 +142,15 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   if(strictGarmentPartContacts&&!garmentPartEvidence.nonregression)
    fail('new posed garment part triangle contacts '+garmentPartEvidence.newlyIntersecting);
  }
- let selfContactEvidence=null,selfDelta=null,selfContactRegions=null;
+ let selfContactEvidence=null,selfDelta=null,selfContactRegions=null,selfContactTypes=null;
  if(traceSelfContacts){
   const selfOverrides=new Map(staged.map(r=>[r.mesh,r.next]));
   selfDelta=measureChangedFaceSelfContactDelta(root,targets,selfOverrides);
   selfContactRegions=summarizeChangedFaceSelfContactRegions(root,targets,selfOverrides,selfDelta);
-  if(selfContactRegions.newSelfContactCount!==selfDelta.newlyIntersecting)
+  selfContactTypes=classifyNewSourceSelfContactTypes(root,targets,selfOverrides,selfDelta);
+  if(selfContactRegions.newSelfContactCount!==selfDelta.newlyIntersecting||
+     selfContactTypes.newSelfContactCount!==selfDelta.newlyIntersecting||
+     selfContactTypes.noContactWaived!==true)
    fail('intrapanel original-face source region tally mismatch');
   // The complete before/after membership comparison only needs pairs touching
   // an altered source face: every unchanged/unchanged pair is geometrically
@@ -199,6 +203,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   sourceLengthIntrapanelContactsAfter:selfContactEvidence?.after??null,
   sourceLengthNewIntrapanelContacts:selfContactEvidence?.newlyIntersecting??null,
   sourceLengthNewIntrapanelContactRegions:selfContactRegions,
+  sourceLengthNewIntrapanelContactTypes:selfContactTypes,
   sourceLengthConstructionMs:performance.now()-started,sourceLengthIntersectionPairsBefore:before.intersectingPairs,
   sourceLengthIntersectionPairsAfter:after.intersectingPairs,sourceLengthTestedPairs:after.testedPairs,releaseAuthorized:false}};
 }
@@ -239,6 +244,7 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
     newlyIntersectingGarmentParts:v.sourceLengthNewGarmentPartContacts,
     newlyIntersectingIntrapanel:v.sourceLengthNewIntrapanelContacts,
     selfContactRegions:v.sourceLengthNewIntrapanelContactRegions,
+    selfContactTypes:v.sourceLengthNewIntrapanelContactTypes,
     baseline:v.sourceLengthTriangleContactBefore,
     after:v.sourceLengthTriangleContactAfter,
     movedVertices:v.sourceLengthMovedVertices,
@@ -270,6 +276,18 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   scale:a.scale,depthClearance:a.depthClearance,depthEasingExponent:a.depthEasingExponent,accepted:a.accepted===true,reason:a.reason||'candidate-preflight-unavailable',
   newBodyContacts:Number.isSafeInteger(a.newlyIntersecting)?a.newlyIntersecting:null,
   newSelfContacts:Number.isSafeInteger(a.newlyIntersectingIntrapanel)?a.newlyIntersectingIntrapanel:null,
+  selfContactTypes:a.selfContactTypes?Object.freeze({
+   newSelfContactCount:a.selfContactTypes.newSelfContactCount,
+   byContactGeometry:Object.freeze({...a.selfContactTypes.byContactGeometry}),
+   byOriginalCoincidentCorners:Object.freeze([...a.selfContactTypes.byOriginalCoincidentCorners]),
+   byStagedCoincidentCorners:Object.freeze([...a.selfContactTypes.byStagedCoincidentCorners]),
+   byGarmentMesh:Object.freeze([...a.selfContactTypes.byGarmentMesh]),
+   cornerOrder:a.selfContactTypes.cornerOrder,
+   topologyGapIsNotASafetyExemption:true,
+   noContactWaived:true,
+   noPhotoOrOwnerFields:true,
+   releaseAuthorized:false
+  }):null,
   selfRegions:a.selfContactRegions?Object.freeze({
    newSelfContactCount:a.selfContactRegions.newSelfContactCount,
    byGarmentMesh:Object.freeze([...a.selfContactRegions.byGarmentMesh]),

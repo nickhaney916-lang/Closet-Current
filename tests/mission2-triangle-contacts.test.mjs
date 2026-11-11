@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -426,4 +426,101 @@ test('new self folds are allocated by exact staged 163-bone original-face height
  assert.throws(()=>summarizeChangedFaceSelfContactRegions(root,[mesh],new Map([[mesh,new Float32Array(3)]]),delta),
   /finite staged garment vertices/);
  assert.deepEqual(g.getAttribute('position').array,original);
+});
+
+
+test('new genuine nonadjacent fold is two-sided triangle-plane crossing, never collision-whitelisted',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0, .5,-.5,0, 0,.5,0,
+  1.2,-.2,-.25, 1.2,.2,.25, 1.2,.2,-.25
+ ],3));
+ const w=new Float32Array(6*4);for(let i=0;i<6;i++)w[4*i]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(6*4),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const before=g.getAttribute('position').array.slice(),after=before.slice();
+ for(let i=3;i<6;i++)after[i*3]-=1.2;
+ const overrides=new Map([[mesh,after]]);
+ const proof=measureChangedFaceSelfContactDelta(root,[mesh],overrides);
+ assert.equal(proof.newlyIntersecting,1);
+ const report=classifyNewSourceSelfContactTypes(root,[mesh],overrides,proof);
+ assert.equal(report.newSelfContactCount,1);
+ assert.equal(report.byContactGeometry.twoSidedPlaneStraddle,1);
+ assert.deepEqual(report.byOriginalCoincidentCorners,[1,0,0,0]);
+ assert.deepEqual(report.byStagedCoincidentCorners,[1,0,0,0]);
+ assert.deepEqual(report.byGarmentMesh,[1]);
+ assert.equal(report.noContactWaived,true);
+ assert.equal(report.topologyGapIsNotASafetyExemption,true);
+ assert.equal(report.signedPenetrationDepthVerified,false);
+ assert.equal(report.releaseAuthorized,false);
+ assert.equal(report.noPhotoOrOwnerFields,true);
+ assert.equal(JSON.stringify(report).includes('sourceSHA256'),false);
+ assert.equal(JSON.stringify(report).includes('newlyIntersectingSourceKeys'),false);
+ assert.deepEqual(g.getAttribute('position').array,before);
+});
+
+test('coplanar overlap is diagnosed independently from transverse fold, without ignoring it',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0, .5,-.5,0, 0,.5,0,
+  1.2,-.5,0, 2.2,-.5,0, 1.7,.5,0
+ ],3));
+ const w=new Float32Array(6*4);for(let i=0;i<6;i++)w[4*i]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(6*4),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const before=g.getAttribute('position').array.slice(),after=before.slice();
+ for(let i=3;i<6;i++)after[3*i]-=1.25;
+ const overrides=new Map([[mesh,after]]);
+ const proof=measureChangedFaceSelfContactDelta(root,[mesh],overrides);
+ assert.equal(proof.newlyIntersecting,1);
+ const report=classifyNewSourceSelfContactTypes(root,[mesh],overrides,proof);
+ assert.equal(report.newSelfContactCount,1);
+ assert.equal(report.byContactGeometry.nearCoplanarOverlap,1);
+ assert.equal(report.byContactGeometry.twoSidedPlaneStraddle,0);
+ assert.equal(report.noContactWaived,true,'Even coplanar new contact must be a strict 3D refusal');
+ assert.deepEqual(g.getAttribute('position').array,before);
+});
+
+test('geometrically coincident disconnected UV seam remains counted as unsafe even when corners match',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  0,0,0, 1,0,0, 0,1,0,
+  0,0,0, 1,0,0, 1,1,0
+ ],3));
+ const w=new Float32Array(6*4);for(let i=0;i<6;i++)w[4*i]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(6*4),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const original=g.getAttribute('position').array.slice();
+ // A deliberately injected complete-form evidence record tests only typing
+ // of a disconnected geometric seam. It cannot approve a garment by itself.
+ const supplied={
+  completedUniqueAffectedPairComparison:true,originalSourceFaceIdentity:true,
+  sampledPoseOnly:true,newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1']
+ };
+ const report=classifyNewSourceSelfContactTypes(root,[mesh],new Map(),supplied);
+ assert.deepEqual(report.byOriginalCoincidentCorners,[0,0,1,0]);
+ assert.deepEqual(report.byStagedCoincidentCorners,[0,0,1,0]);
+ assert.equal(report.newSelfContactCount,1);
+ assert.equal(report.noContactWaived,true);
+ assert.equal(report.topologyGapIsNotASafetyExemption,true);
+ assert.equal(report.byContactGeometry.nearCoplanarOverlap,1);
+ assert.deepEqual(g.getAttribute('position').array,original);
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,[mesh],new Map(),
+  {...supplied,newlyIntersectingSourceKeys:['0:0:1','0:0:1'],newlyIntersecting:2}),
+ /complete bounded original-source self delta/);
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,[mesh],new Map(),
+  {...supplied,newlyIntersectingSourceKeys:['0:0:12']}),/source triangle outside/);
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,[mesh],new Map(),supplied,
+  {maxPairs:0}),/complete bounded/);
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,[mesh],new Map(),supplied,
+  {maxPairs:1-0-0.5}),/complete bounded/);
 });
