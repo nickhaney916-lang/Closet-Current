@@ -1,0 +1,70 @@
+name: Mission 3 durable owner cloud capacity pause across reload — NO DEPLOY
+on:
+  push:
+    branches: [research/mission3-durable-cloud-capacity-20261110-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  durable-capacity-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Guard exact prior verified Mission 3 parent, scope, and no deployment
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=773c4df18103a59bf54f2d63774b3bf30fe5f2dc
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/cloud-backup.js|tests/mission3-durable-cloud-capacity.test.cjs|scripts/test-mission3-durable-capacity-browser.mjs|research/mission3-durable-capacity/REPORT.md|.github/workflows/mission3-durable-capacity-no-deploy.yml) ;;
+              *) echo "Unexpected Mission 3 durable cloud capacity changed path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned real browser and synthetic IndexedDB test dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Reproduce exact parent retrying owner JPEG after app restart
+        run: |
+          git worktree add --detach /tmp/closet-mission3-durable-capacity-parent 773c4df18103a59bf54f2d63774b3bf30fe5f2dc
+          CLOUD_SOURCE_ROOT=/tmp/closet-mission3-durable-capacity-parent EXPECT_BASELINE=1 node --test tests/mission3-durable-cloud-capacity.test.cjs
+      - name: Prove persisted 413/507 block, manual recovery, separate owner and transient 503
+        run: node --test tests/mission3-durable-cloud-capacity.test.cjs
+      - name: Build full application and execute complete serial Node regression
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Genuine Chromium and WebKit durable capacity retry 320 390 430 accessibility
+        run: node scripts/test-mission3-durable-capacity-browser.mjs benchmark/mission3-durable-cloud-capacity
+      - name: Real Chromium synthetic-owner original JPEG/cutout cloud backup and restore
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          node scripts/test-outfit-backup-compatibility-browser.mjs benchmark/mission3-durable-original-backup
+      - name: Real Chromium and WebKit native 320 390 430 photo review to private closet and style
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Real Chromium and WebKit mobile quota recovery and accessibility
+        run: node scripts/test-family-reliability-mobile.mjs
+      - name: Preserve only synthetic owner screenshots and browser receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-durable-capacity-mobile-evidence-HOLD
+          path: |
+            benchmark/mission3-durable-cloud-capacity/
+            benchmark/mission3-durable-original-backup/
+            benchmark/native-canonical-closet-style-167/
+            benchmark/family-reliability-mobile/
+          retention-days: 14
