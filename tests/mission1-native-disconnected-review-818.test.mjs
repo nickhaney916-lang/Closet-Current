@@ -70,3 +70,16 @@ test('P818 actual native recognition path does NOT classify, color or save the a
  assert.match(item.localStatus,/original image|Nothing was automatically saved/i);
  assert.ok(recorded.renders>=2);
 });
+
+test('P820 a corrupted worker packet cannot prefill color on a model-ambiguous grouped garment',()=>{
+ const ctx=candidateHarness(),sourceImage='data:image/jpeg;base64,AAAA';
+ const flagged={categories:['Tops','Outerwear'],sourceDisconnectedReviewRequired:true,sourceIslandCount:2};
+ assert.equal(ctx.candidate('data:image/jpeg;base64,AABB',{
+  outfitSourceId:'source',originalPhoto:{image:sourceImage},segmentHint:flagged,
+  colorEstimate:{color:'Magenta',source:'photo-estimate',support:1}
+ }),true);
+ assert.equal(ctx.batch.length,1);
+ assert.equal(ctx.batch[0].color,'');
+ assert.equal(ctx.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(ctx.batch[0].sourceAmbiguityAcknowledged820,undefined);
+});
