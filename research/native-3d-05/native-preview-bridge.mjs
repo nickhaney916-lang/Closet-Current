@@ -403,7 +403,7 @@ export async function mountNative3D05({
     for(let i=0;i<40;i++){
      const render=panel?.state?.();
      if(params?.get('photoSourceTrianglePolicy')==='adaptive'&&
-        String(doc.getElementById('outfit3D01Status')?.textContent||'').includes('M2 source length new-body-triangle-contacts'))
+        String(doc.getElementById('outfit3D01Status')?.textContent||'').includes('M2 source length adaptive-geometry-refused['))
       throw Error('M2 source length new-body-triangle-contacts: original-photo/2D fallback required; 3D scene denied');
      const verdict=fitModule.inspectNativePhotoFit171({
       selection:selected,sources:selectedSources91,
@@ -760,6 +760,7 @@ export async function mountNative3D05({
    sourceLengthTriangleContactBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactBefore:null,
    sourceLengthTriangleContactAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAfter:null,
    sourceLengthNewTriangleContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewTriangleContacts:null,
+   sourceLengthBodyContactDistribution:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthBodyContactDistribution:null,
    sourceLengthGarmentPartContactStrictlyAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactStrictlyAccepted===true,
    sourceLengthGarmentPartContactsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactsBefore:null,
    sourceLengthGarmentPartContactsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactsAfter:null,
