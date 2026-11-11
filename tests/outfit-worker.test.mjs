@@ -27,9 +27,22 @@ test('full-outfit worker emits three separate garment images and excludes body l
 test('load failure returns a safe error without fabricated cutouts',async()=>{
  const h=setup({failLoad:true});await h.run();assert.equal(h.sent.filter(x=>x.type==='piece').length,0);assert.ok(h.sent.some(x=>x.type==='error'));assert.ok(!JSON.stringify(h.sent).includes('private error'));
 });
-test('later crop failure preserves pieces emitted earlier',async()=>{
- const h=setup({failSecondCrop:true});await h.run();assert.equal(h.sent.filter(x=>x.type==='piece').length,1);assert.ok(h.sent.some(x=>x.type==='error'));assert.ok(!h.sent.some(x=>x.type==='done'));
+test('P814: later source JPEG/crop failure MUST NOT emit any partial outfit pieces',async()=>{
+ const h=setup({failSecondCrop:true});await h.run();
+ assert.equal(h.sent.filter(x=>x.type==='piece').length,0,
+  'no first garment may leak into the review queue if a later crop fails');
+ assert.equal(h.sent.filter(x=>x.type==='done').length,0);
+ assert.equal(h.sent.filter(x=>x.type==='error').length,1);
+ assert.ok(!JSON.stringify(h.sent).includes('private decode error'),'raw internal errors hidden');
 });
+test('P814: successful full photo publishes every candidate and exactly one done, in order',async()=>{
+ const h=setup();await h.run();
+ const emissions=h.sent.filter(x=>x.type==='piece'||x.type==='done'||x.type==='error');
+ assert.deepEqual(emissions.map(x=>x.type),['piece','piece','piece','done']);
+ assert.equal(emissions.at(-1).count,3);
+ assert.equal(new Set(emissions.slice(0,-1).map(x=>x.piece.label)).size,3);
+});
+
 
 test('clothing-shaped regions without sufficient person evidence do not create cutouts',async()=>{
  const h=setup({noPerson:true});await h.run();assert.equal(h.sent.filter(x=>x.type==='piece').length,0);assert.equal(h.sent.find(x=>x.type==='done').count,0);
