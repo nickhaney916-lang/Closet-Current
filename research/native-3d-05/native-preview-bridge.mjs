@@ -431,8 +431,10 @@ export async function mountNative3D05({
     const physical=panel?.state?.()?.fitReceipts171?.shirt?.silhouette62;
     if(physical?.sourceLengthFit!==true||
        physical.sourceLengthTriangleContactStrictlyAccepted!==true||
-       physical.sourceLengthNewTriangleContacts!==0)
-     throw Error('M2 sampled source body triangle contact proof missing; original-photo/2D fallback required');
+       physical.sourceLengthNewTriangleContacts!==0||
+       physical.sourceLengthGarmentPartContactStrictlyAccepted!==true||
+       physical.sourceLengthNewGarmentPartContacts!==0)
+     throw Error('M2 sampled body and garment-part triangle nonregression proof missing; original-photo/2D fallback required');
    }
    if(params?.get('photoSilhouette62')==='research'){
     if(params?.get('photoFit171')!=='research'||!verifiedPhotographicFit171?.admitted)
@@ -756,6 +758,11 @@ export async function mountNative3D05({
    sourceLengthTriangleContactBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactBefore:null,
    sourceLengthTriangleContactAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAfter:null,
    sourceLengthNewTriangleContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewTriangleContacts:null,
+   sourceLengthGarmentPartContactStrictlyAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactStrictlyAccepted===true,
+   sourceLengthGarmentPartContactsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactsBefore:null,
+   sourceLengthGarmentPartContactsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactsAfter:null,
+   sourceLengthNewGarmentPartContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewGarmentPartContacts:null,
+   sourceLengthSelfLayerCollisionCertified:false,
    sourceLengthCollisionCertified:false,
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&
