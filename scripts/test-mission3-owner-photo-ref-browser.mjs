@@ -78,9 +78,14 @@ async function caseRun(engine,browserType,width){
     return json(revision);
    }
    if(u.pathname.startsWith('/storage/v1/object/closet-private/')){
-    assert.equal(verb,'GET');
     assert.equal(u.pathname.slice('/storage/v1/object/closet-private/'.length),
-     ownerA+'/'+sha+'.jpg','never fetch owner B private Storage objects');
+     ownerA+'/'+sha+'.jpg','never access owner B private Storage objects');
+    if(verb==='POST'){
+     const bytes=req.postDataBuffer();
+     assert.equal(createHash('sha256').update(bytes).digest('hex'),sha);
+     return json({path:ownerA+'/'+sha+'.jpg'});
+    }
+    assert.equal(verb,'GET');
     return route.fulfill({status:200,contentType:'image/jpeg',body:photo});
    }
    return json({},404);
