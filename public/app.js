@@ -464,7 +464,12 @@ function adjustPhoto(item){
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
  }catch(error){
   save.disabled=false;
-  message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
+  const reviewedAmbiguousError820=String(error?.message||'');
+  message(ambiguousSource820?
+   reviewedAmbiguousError820.startsWith('Review the original and confirm a single garment')?
+    'Original garment review not saved. '+reviewedAmbiguousError820+' Your original photo remains available.':
+    'Original garment review was not saved. Keep the original photograph and try again.':
+   typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
