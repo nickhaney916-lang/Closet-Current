@@ -409,7 +409,7 @@ try{
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
     }else{
      assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),
-      /M2 source length new-body-triangle-contacts: original-photo\\/2D fallback required/i,
+      /M2 source length new-body-triangle-contacts: original-photo.*2D fallback required/i,
       'Only the actual new-triangle collision gate may refuse photographic 3D');
      assert.equal(decisionState?.active,false,'No unsafe clothing mesh or owner JPEG may remain mounted');
      assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
