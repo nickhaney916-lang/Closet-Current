@@ -65,6 +65,35 @@
     throw Error('Reviewed garment receipt does not match its source');
   }
  }
+ // Full remote JSON is not trusted solely because its enclosing REST row
+ // belongs to the current user. Before a merge or restore, reject every
+ // nested photograph reference targeting another owner's private bucket.
+ // Also verify historical inline reviewed cutouts before they can be merged
+ // into a newer owner backup without going through the restore decoder.
+ async function assertCloudPhotoReferences(value,assertActive=()=>{}){
+  async function walk(x){
+   assertActive();
+   if(Array.isArray(x)){for(const entry of x)await walk(entry);return;}
+   if(!x||typeof x!=='object')return;
+   for(const [key,entry]of Object.entries(x)){
+    if((key==='image'||key==='cutoutImage')&&typeof entry==='string'&&entry){
+     if(entry.startsWith('closet-photo:')){
+      const path=photoPath(entry,user),digest=path.split('/')[1].slice(0,-4);
+      if(key==='image'&&x.sha256!==undefined&&x.sha256!==digest)
+       throw Error('Cloud original photograph SHA reference differs from receipt');
+      if(key==='cutoutImage'&&x.cutoutSHA256!==digest)
+       throw Error('Cloud reviewed cutout SHA reference differs from receipt');
+     }else if(key==='cutoutImage'&&entry.startsWith('data:image/jpeg;base64,')){
+      const bytes=imageBytes(entry),digest=await hash(bytes);
+      assertActive();
+      if(!shaReceipt.test(x.cutoutSHA256||'')||x.cutoutSHA256!==digest)
+       throw Error('Legacy reviewed cutout SHA integrity mismatch');
+     }else throw Error('Invalid owner-private cloud photograph reference');
+    }else await walk(entry);
+   }
+  }
+  await walk(value);assertActive();
+ }
  async function encode(value,assertActive=()=>{}){
   assertActive();assertSourceReceipts(value);
   const photos=new Map(),document=await E.mapImages(value,async(image,key,parent)=>{
@@ -86,7 +115,8 @@
    return 'closet-photo:'+path;
   });
   assertActive();
-  return {document:E.validateDocument(document),photos};
+  E.validateDocument(document);await assertCloudPhotoReferences(document,assertActive);
+  return {document,photos};
  }
  async function decode(document,assertActive=()=>{}){assertActive();assertSourceReceipts(document);const photos=E.createPhotoCache(8);return E.mapImages(document,async(value,key,parent)=>{
    assertActive();
@@ -138,7 +168,7 @@
   if(!rows.length)return null;
   const row=rows[0];
   if(!Number.isSafeInteger(row.revision)||row.revision<1)throw Error('Invalid cloud revision');
-  if(!revisionOnly)assertSourceReceipts(row.document);
+  if(!revisionOnly){assertSourceReceipts(row.document);await assertCloudPhotoReferences(row.document,assertActive);}
   return revisionOnly?{revision:row.revision}:row;
  }
  async function apply(document,revision,expectedRevision,assertActive){
@@ -272,6 +302,12 @@
      assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}store.put({...r.result,resolutionIds:[...ids]});};});assertActive();
     }else document=E.mergeDocuments(m.baseDocument,document,remote.document);
    }
+   // Local, remote and ancestor inputs can each be well-formed yet an
+   // automatic three-way merge or Keep both may produce a new mismatched
+   // receipt or stale private ref. Validate final outgoing JSON as well.
+   assertSourceReceipts(document);
+   await assertCloudPhotoReferences(document,assertActive);
+   assertActive();
    await upload(encoded.photos,assertActive);assertActive();
    const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,assertActive),revision=await response.json();assertActive();
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
