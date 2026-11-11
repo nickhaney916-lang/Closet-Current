@@ -515,6 +515,14 @@ try{
       assert.equal(t.byOriginalCoincidentCorners.reduce((n,v)=>n+v,0),a.newSelfContacts);
       assert.equal(t.byStagedCoincidentCorners.reduce((n,v)=>n+v,0),a.newSelfContacts);
       assert.equal(t.byGarmentMesh.reduce((n,v)=>n+v,0),a.newSelfContacts);
+      assert.equal(t.noSmallAreaWaiver,true);
+      assert.ok(Number.isSafeInteger(t.uniqueAffectedSourceFaceCount));
+      assert.ok(t.uniqueAffectedSourceFaceCount>=0&&
+       t.uniqueAffectedSourceFaceCount<=a.newSelfContacts*2);
+      assert.equal(Object.values(t.byPairAreaProvenance).reduce((n,v)=>n+v,0),a.newSelfContacts);
+      assert.equal(Object.values(t.byUniqueFaceAreaProvenance).reduce((n,v)=>n+v,0),
+       t.uniqueAffectedSourceFaceCount);
+      assert.equal(t.sourceAreaCrossSquaredThreshold,1e-10);
       if(a.newSelfContacts>0)assert.equal(a.accepted,false,
        'No source seam classification may waive any new self contact');
      }
