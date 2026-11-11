@@ -120,7 +120,21 @@
    // An existing immutable object is safe only after verifying its contents.
    const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=new Uint8Array(await existing.arrayBuffer());assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw Error('Stored photo differs');
   }}}
- async function getRemote(assertActive=()=>{}){assertActive();const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user,{},false,assertActive);const rows=await response.json();assertActive();if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');E.validateDocument(r.document);return r;}
+ async function getRemote(assertActive=()=>{},revisionOnly=false){
+  assertActive();
+  // A normal cloud check needs only the revision, never the owner's entire
+  // private wardrobe JSON. Fetch the full document ONLY on a mismatch or
+  // when a previously merged local wardrobe still needs a restore.
+  const select=revisionOnly?'revision':'revision,document';
+  const response=await api('/rest/v1/closet_backups?select='+select+'&owner_id=eq.'+user,{},false,assertActive);
+  const rows=await response.json();assertActive();
+  if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');
+  if(!rows.length)return null;
+  const row=rows[0];
+  if(!Number.isSafeInteger(row.revision)||row.revision<1)throw Error('Invalid cloud revision');
+  if(!revisionOnly)E.validateDocument(row.document);
+  return revisionOnly?{revision:row.revision}:row;
+ }
  async function apply(document,revision,expectedRevision,assertActive){
   assertActive();
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
@@ -215,7 +229,15 @@
     ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();
    }
    dirtyAtStart=m.dirty;status('Checking cloud backup…');
-   const remote=await getRemote(assertActive);assertActive();
+   const remoteRevision=await getRemote(assertActive,true);assertActive();
+   // Optimistic revision comparison is sufficient for both clean checks
+   // and same-version outgoing backups. If another owner device published
+   // a different revision, fetch its complete document for merge/restore.
+   // The expected-revision cloud RPC guards the later write against races.
+   const remote=remoteRevision&&
+     (remoteRevision.revision!==m.baseVersion||m.needsRestore)
+      ?await getRemote(assertActive):remoteRevision;
+   assertActive();
    if(!m.dirty){
     // A save may have marked the closet dirty while the remote request was
     // in flight. Do not overwrite the pending-backup message with a false
