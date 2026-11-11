@@ -1,0 +1,111 @@
+name: M1 P828 exact-source original garment miss attribution — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-original-instance-failure-audit-828-HOLD]
+  pull_request:
+    branches: [research/mission1-threshold-fused-model-diagnostics-827-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: m1-p828-actual-source-miss-audit-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-green-parent-complete-node-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently green P827 parent and only four verified research paths
+        run: |
+          set -euo pipefail
+          BASE=37f15715fc32fef6922c3beb42089b8bebe2c6c5
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p828-paths
+          cat /tmp/m1-p828-paths
+          test "$(wc -l </tmp/m1-p828-paths)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              research/mission1-original-instance-failure-audit-828/audit.mjs|tests/mission1-original-instance-failure-audit-828.test.mjs|research/mission1-original-instance-failure-audit-828/REPORT.md|.github/workflows/mission1-original-instance-failure-audit-828-no-deploy.yml) ;;
+              *) echo "UNAPPROVED MODEL/PHOTO/CLOUD/RELEASE CHANGE: $p"; exit 1;;
+            esac
+          done </tmp/m1-p828-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark scripts)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-original-instance-failure-audit-828/REPORT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-original-instance-failure-audit-828/REPORT.md
+          echo M1_P828_EXACT_GREEN_P827_FOUR_RESEARCH_PATHS_NO_DEPLOY
+      - name: Ephemeral full app and no-network numeric SHA audit tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Synthetic adversarial source receipt tests then native app and all app regressions
+        run: |
+          set -euo pipefail
+          node --check research/mission1-original-instance-failure-audit-828/audit.mjs
+          node --test tests/mission1-original-instance-failure-audit-828.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  exact-real-p827-numeric-model-artifact-attribution:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retrieve only exact source-verified prior P827 numeric artifact, NOT source JPEGs
+        uses: actions/download-artifact@v4
+        with:
+          name: mission1-P827-fused-original-B0-source-threshold-profiles-23-masks-NO-RELEASE
+          path: /tmp/p828-p827-numeric
+          repository: nickhaney916-lang/Closet-Current
+          run-id: 43078347613
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify exact source SHA and independently recompute source, family and failure totals
+        run: |
+          set -euo pipefail
+          test "$(find /tmp/p828-p827-numeric -type f | wc -l)" -eq 3
+          test -f /tmp/p828-p827-numeric/manifest.json
+          test -f /tmp/p828-p827-numeric/chromium/results.json
+          test -f /tmp/p828-p827-numeric/webkit/results.json
+          node --test tests/mission1-original-instance-failure-audit-828.test.mjs
+          node research/mission1-original-instance-failure-audit-828/audit.mjs \
+            /tmp/p828-p827-numeric/manifest.json \
+            /tmp/p828-p827-numeric/chromium/results.json \
+            /tmp/p828-p827-numeric/webkit/results.json \
+            /tmp/m1-p828-numeric-only.json
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import {readFileSync} from 'node:fs';
+          const x=JSON.parse(readFileSync('/tmp/m1-p828-numeric-only.json'));
+          assert.equal(x.summary.photos,10);
+          assert.equal(x.summary.publisherOriginalInstances,23);
+          assert.equal(x.summary.persistentMissedInBoth,13);
+          assert.equal(x.summary.matchedBoth,9);
+          assert.equal(x.summary.chromiumOnlyMatched,1);
+          assert.equal(x.summary.webkitOnlyMatched,0);
+          assert.equal(x.summary.singleSourceInstances,4);
+          assert.equal(x.summary.singleSourceMatchedChromium,1);
+          assert.equal(x.summary.singleSourceMatchedWebkit,0);
+          assert.deepEqual(x.byRegion.map(y=>[y.region,y.truth,y.chromiumMatched,y.webkitMatched]),
+           [[4,12,6,5],[5,2,0,0],[6,4,3,3],[7,1,0,0],[9,4,1,1]]);
+          assert.equal(x.releaseAuthorized,false);
+          assert.equal(x.automaticThresholdPromotionAllowed,false);
+          assert.equal(x.independentBlindedHumanAcceptance,false);
+          console.log('M1_P828_EXACT_PINNED_P827_REAL_SOURCE_13_COMMON_MISSES_NO_HOLDOUT_CLAIM');
+          NODE
+          cp /tmp/m1-p828-numeric-only.json ./mission1-p828-report.json
+      - name: Upload ONLY numerically derived audit, no JPEG, polygon data or screenshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission1-P828-23-publisher-original-instance-failure-audit-NO-RELEASE
+          path: mission1-p828-report.json
+          retention-days: 14
+          if-no-files-found: error
