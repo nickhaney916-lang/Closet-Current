@@ -30,7 +30,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/cloud-backup.js|tests/mission3-durable-cloud-capacity.test.cjs|scripts/test-mission3-durable-capacity-browser.mjs|research/mission3-durable-capacity/REPORT.md|.github/workflows/mission3-durable-capacity-no-deploy.yml) ;;
+              public/cloud-backup.js|tests/mission3-durable-cloud-capacity.test.cjs|tests/mission3-cloud-capacity-pause.test.cjs|scripts/test-mission3-durable-capacity-browser.mjs|research/mission3-durable-capacity/REPORT.md|.github/workflows/mission3-durable-capacity-no-deploy.yml) ;;
               *) echo "Unexpected Mission 3 durable cloud capacity changed path: $p"; exit 1 ;;
             esac
           done
