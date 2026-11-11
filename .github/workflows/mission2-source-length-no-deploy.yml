@@ -17,6 +17,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-intrapanel-fold-locality-20261111-HOLD
     - research/mission2-hem-depth-taper-20261111-HOLD
     - research/mission2-source-seam-contact-typing-20261111-HOLD
+    - research/mission2-original-face-area-provenance-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -56,6 +57,7 @@ jobs:
       locality390: ${{ steps.locality_probe.outputs.report }}
       depthTrial390: ${{ steps.depth_probe.outputs.report }}
       contactTyping390: ${{ steps.contact_typing_probe.outputs.report }}
+      area390: ${{ steps.area_provenance_probe.outputs.report }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
@@ -281,6 +283,11 @@ jobs:
            assert.equal(t.byOriginalCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
            assert.equal(t.byStagedCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
            assert.equal(t.byGarmentMesh.reduce((v,n)=>v+n,0),a.newSelfContacts);
+           assert.equal(t.noSmallAreaWaiver,true);
+           assert.equal(Object.values(t.byPairAreaProvenance).reduce((v,n)=>v+n,0),a.newSelfContacts);
+           assert.equal(Object.values(t.byUniqueFaceAreaProvenance).reduce((v,n)=>v+n,0),
+            t.uniqueAffectedSourceFaceCount);
+           assert.ok(t.uniqueAffectedSourceFaceCount<=a.newSelfContacts*2);
           }
           if(a.selfRegions){
            assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
@@ -369,6 +376,45 @@ jobs:
         appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
         console.log('M2_NATIVE_SOURCE_SEAM_CONTACT_CLASS_AGGREGATES',report);
         NODE
+    - name: Verify original-versus-staged area collapse for unique true-source faces
+      id: area_provenance_probe
+      env:
+        PHOTO_SOURCE_LENGTH: '1'
+        PHOTO_SOURCE_PROJECTION: '1'
+        PHOTO_TRIANGLE_CONTACTS: '1'
+        PHOTO_TRIANGLE_ADAPTIVE: '1'
+        PHOTO_DEPTH_EXPERIMENT: '1'
+      run: |
+        node --input-type=module <<'NODE'
+        import assert from 'node:assert/strict';
+        import {readFileSync,appendFileSync} from 'node:fs';
+        const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+        const r=JSON.parse(readFileSync('benchmark/user-photo-to-anatomical-3d-62/'+engine+'/results.json','utf8'));
+        const e=r.evidence.find(c=>c.width===390);
+        assert.ok(e);
+        const attempts=e.safeBodyLocality?.attempts;
+        assert.ok(attempts?.length>=4&&attempts.length<=16);
+        for(const a of attempts){
+         const t=a.selfContactTypes;
+         if(!t)continue;
+         assert.equal(t.newSelfContactCount,a.newSelfContacts);
+         assert.equal(t.noContactWaived,true);
+         assert.equal(t.noSmallAreaWaiver,true);
+         assert.equal(t.sourceAreaCrossSquaredThreshold,1e-10);
+         assert.equal(Object.values(t.byPairAreaProvenance).reduce((v,n)=>v+n,0),a.newSelfContacts);
+         assert.equal(Object.values(t.byUniqueFaceAreaProvenance).reduce((v,n)=>v+n,0),
+          t.uniqueAffectedSourceFaceCount);
+         assert.ok(t.uniqueAffectedSourceFaceCount<=a.newSelfContacts*2);
+        }
+        const opt=attempts.slice(10);
+        const group=k=>opt.map(a=>a.selfContactTypes?.byPairAreaProvenance?.[k]??'x').join(',');
+        const unique=k=>opt.map(a=>a.selfContactTypes?.byUniqueFaceAreaProvenance?.[k]??'x').join(',');
+        const report=engine+'-oldPair['+group('preexistingSmall')+']-newPair['+
+         group('newlySmall')+']-oldFaces['+unique('preexistingSmall')+']-newFaces['+unique('newlySmall')+']';
+        assert.ok(report.length<192);
+        appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
+        console.log('M2_SOURCE_FACE_AREA_PROVENANCE_AGGREGATE',report);
+        NODE
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -407,3 +453,12 @@ jobs:
     timeout-minutes: 5
     steps:
     - run: echo "Counts only; every type remains an unsafe NEW contact until separately fixed and retested"
+
+  show-original-face-area-provenance-without-artifact:
+    needs: source-length-real-mobile-browser
+    if: ${{ always() && needs.source-length-real-mobile-browser.outputs.area390 != '' }}
+    name: "M2 original-face area ${{ needs.source-length-real-mobile-browser.outputs.area390 }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - run: echo "Unique-source face collapse provenance, never a collision waiver or owner-photo release"
