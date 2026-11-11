@@ -284,7 +284,13 @@ function adjustPhoto(item){
       // P804: isolated test-only transient numeric pixel coordinates; no owner
       // identity, photo bytes, mask or persistent receipt in the app.
       enableResearchBoxReceipt804:new URLSearchParams(location.search).get('mission1BrowserBoxSam804')==='research'&&
-       new URLSearchParams(location.search).get('mission1OwnerBox800')==='research'
+       new URLSearchParams(location.search).get('mission1OwnerBox800')==='research',
+      // P806: replay ONLY exact immutable P804 PUBLIC fixture SAM2 bytes.
+      // No private model execution, owner JPEG upload, mask save or approval.
+      enableSAM2PublicEvidence806:new URLSearchParams(location.search).get('mission1Sam2PublicPreview806')==='research'&&
+       item.sourceSHA256==='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019'&&
+       new URLSearchParams(location.search).get('mission1OwnerBox800')==='research',
+      sam2PublicEvidenceProvider806:globalThis.__closetP804ImmutablePublicSAM2Evidence806
      });
     }).catch(()=>{
      if(stillCurrent798())message('Original garment point review is unavailable. Your photo is unchanged.');

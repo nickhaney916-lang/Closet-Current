@@ -23,6 +23,7 @@ const original=readFileSync('benchmark/fixtures/commons-0053.jpg');
 const sourceRecord=JSON.parse(readFileSync('benchmark/locked-photo-sources.json','utf8'))
  .find(x=>x.id==='commons-0053');
 const sourceSHA256=createHash('sha256').update(original).digest('hex');
+const publicSAM2Dir806=process.env.M1_P806_PUBLIC_SAM2_ARTIFACT_DIR||null;
 assert.ok(sourceRecord?.verified && sourceRecord?.attribution?.license==='CC BY 4.0');
 assert.match(sourceRecord.attribution.title,/Dress/i,'the source catalog must document a real dress');
 assert.equal(sourceSHA256,sourceRecord.sha256,'real original public licensed photo bytes required');
@@ -198,6 +199,18 @@ try{
     const page=await context.newPage();
     page.on('pageerror',e=>errors.push(name+'/'+width+': '+e.message));
     await page.addInitScript(weakWorker);
+    // Set P806 public-only fixture provider before native Adjust mounts.
+    // Neither the function nor the genuine public PNG is persisted to closet.
+    if(publicSAM2Dir806){
+     const originalPNG=readFileSync(resolve(publicSAM2Dir806,'mask-'+name+'-pointBox-UNVERIFIED.png'));
+     const fixed={'chromium':'f8c50688b5932ae8c879b24ea638ade7994b3c1563b501c93d576c7236cb1bf9',
+      'webkit':'d76ab0fb867270eafc8d76f5a6dc5fa693d342cca049fc226aa8dc661cad7f7e'};
+     assert.equal(createHash('sha256').update(originalPNG).digest('hex'),fixed[name],
+      'P806 public source P804 model binary mask is SHA-pinned');
+     await page.addInitScript(mask=>{
+      globalThis.__closetP804ImmutablePublicSAM2Evidence806=async()=>mask;
+     },{actorBrowser:name,pngBase64:originalPNG.toString('base64')});
+    }
     const ownerId='p120-'+name+'-'+width+'-fixture';
     await page.route('**/*',route=>{
      const url=route.request().url();
@@ -214,7 +227,8 @@ try{
       return route.abort();
      outbound.push(name+'/'+width+': '+url);return route.abort();
     });
-    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research&mission1OwnerMaskCorrection803=research&mission1BrowserBoxSam804=research',
+    await page.goto(host+'/public/index.html?captureProof01=after&index04=after&reviewedSave120=research&index02=after&mission1SourceReview785=research&mission1SourceColor790=research&mission1OwnerPoint798=research&mission1OwnerBox800=research&mission1OwnerMask802=research&mission1OwnerMaskCorrection803=research&mission1BrowserBoxSam804=research'+
+     (publicSAM2Dir806?'&mission1Sam2PublicPreview806=research':''),
      {waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>window.closetIndex02?.state()?.ready===true,
      null,{timeout:30000});
@@ -481,7 +495,58 @@ try{
     for(const [k,v] of Object.entries(manualOnly))
      assert.equal(v,true,'P803 local edit no-save '+name+'/'+width+' '+k);
     await page.screenshot({path:out+'/'+name+'-'+width+'-01f-local-owner-mask-add-erase-pointer-keyboard-UNVERIFIED.png',fullPage:true});
-    await tapReview.getByRole('button',{name:'Discard local mask preview'}).click();
+    // P806: the archival SAM2 mask was ACTUALLY generated on Linux in P804.
+    // Only the licensed public JPEG fixture is accepted; this does NOT run
+    // learned ONNX in the phone/browser, approve the mask or save a cutout.
+    if(publicSAM2Dir806){
+     const realMaskFile=resolve(publicSAM2Dir806,'mask-'+name+'-pointBox-UNVERIFIED.png');
+     const originalPNG=readFileSync(realMaskFile);
+     assert.equal(originalPNG.subarray(0,8).toString('hex'),'89504e470d0a1a0a');
+     const originalPNG_SHA=createHash('sha256').update(originalPNG).digest('hex');
+     const fixed={'chromium':'f8c50688b5932ae8c879b24ea638ade7994b3c1563b501c93d576c7236cb1bf9',
+      'webkit':'d76ab0fb867270eafc8d76f5a6dc5fa693d342cca049fc226aa8dc661cad7f7e'};
+     assert.equal(originalPNG_SHA,fixed[name],'unaltered verified P804 mask bytes');
+     const sam2Button=tapReview.getByRole('button',{name:'Show archived real SAM2 research mask'});
+     assert.equal(await sam2Button.isEnabled(),true);
+     await sam2Button.click();
+     await page.waitForFunction(()=>document.querySelector(
+      '[data-mission1-sam2-overlay806="real-p804-prediction-unverified"]')!==null,
+      null,{timeout:20000});
+     const receipt=await page.evaluate(async()=>{
+      await writes;
+      const draftSaved=await readDraft();
+      const layer=document.querySelector('[data-mission1-sam2-overlay806="real-p804-prediction-unverified"]');
+      const alpha=layer.getContext('2d').getImageData(0,0,layer.width,layer.height).data;
+      let seen=0;for(let k=3;k<alpha.length;k+=4)seen+=Number(alpha[k]===122);
+      return {
+       actualSourcePublicModelMaskPresented:seen>0&&seen<layer.width*layer.height,
+       boundedThumbnail:layer.width<=512&&layer.height<=512,
+       notCategoryAutofilled:batch[0].category==='Uncategorized'&&batch[0].itemType==='Unknown',
+       noOwnerApproval:batch[0].ownerReviewed!==true,
+       originalUntouched:batch[0].originalPhoto.sha256===batch[0].sourceSHA256,
+       noDraftMaskPersistence:draftSaved.every(x=>!('sam2Artifact806' in x)&&!('maskEvidence806' in x)),
+       noSavedGarments:(await readAll()).length===0,
+       warnsNoLiveModel:/NOT live phone inference/.test(document.querySelector('[data-mission1-sam2-status806="research-only"]')?.textContent||''),
+       warnsNoHumanTruth:/NOT independent mask accuracy/.test(document.querySelector('[data-mission1-sam2-status806="research-only"]')?.textContent||'')
+      };
+     });
+     for(const [key,val] of Object.entries(receipt))
+      assert.equal(val,true,'P806 public licensed original SAM2 preview only '+name+'/'+width+' '+key);
+     // P806 visual QA must capture the ACTUAL original photo + real model
+     // alpha overlay (not only the scroll position showing explanatory text).
+     const originalModelSurface=tapReview.locator('button[aria-label="Tap original photograph to select garment point"]');
+     assert.equal(await originalModelSurface.count(),1);
+     await originalModelSurface.screenshot({path:out+'/'+name+'-'+width+'-01g2-actual-original-P804-SAM2-photo-overlay.png'});
+     await page.screenshot({path:out+'/'+name+'-'+width+'-01g-P804-REAL-SAM2-mask-NATIVE-UNVERIFIED-PRECOMPUTED.png',fullPage:true});
+     await tapReview.getByRole('button',{name:'Discard archived SAM2 preview'}).click();
+     assert.equal(await tapReview.locator('[data-mission1-sam2-overlay806="none"]').count(),1);
+    }
+    // A P806 true model overlay intentionally replaces (and discards) the
+    // weaker P802 color overlay. An old disabled Discard must never be forced.
+    if(publicSAM2Dir806)
+     assert.equal(await tapReview.getByRole('button',{name:'Discard local mask preview'}).isDisabled(),true);
+    else
+     await tapReview.getByRole('button',{name:'Discard local mask preview'}).click();
     assert.equal(await tapReview.locator('[data-mission1-local-mask-overlay802="none"]').count(),1);
     await tapReview.getByRole('button',{name:'Clear garment rectangle'}).click();
     assert.equal(await tapReview.locator('[data-mission1-owner-box-outline-800="none"]').count(),1);
@@ -604,6 +669,8 @@ try{
      actualOriginalSourceOwnerMask802ExplicitlyUnverifiedAndNotPersisted:true,
      actualOriginalSourceOwnerMask803ManualCorrectionPointerAndKeyboard:true,
      actualOriginalSourceOwnerMask803NoApprovalOrPrivatePersistence:true,
+     P806ActualP804LinuxSAM2PublicArtifactRenderedNativeUnverified:!!publicSAM2Dir806,
+     P806OriginalJPEGSHAAndMaskPNGVerifiedBeforeOverlay:!!publicSAM2Dir806,
      simulatedPlaywrightBoxEventsNotIndependentHumans:true,
      actualOriginalSourceOwnerPoint798NoMaskOrApproval:true,
      originalSourceOwnerPointBrowserGesturesSimulated:true,
