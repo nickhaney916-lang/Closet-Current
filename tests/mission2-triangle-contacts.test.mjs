@@ -449,6 +449,10 @@ test('new genuine nonadjacent fold is two-sided triangle-plane crossing, never c
  const report=classifyNewSourceSelfContactTypes(root,[mesh],overrides,proof);
  assert.equal(report.newSelfContactCount,1);
  assert.equal(report.byContactGeometry.twoSidedPlaneStraddle,1);
+ assert.equal(report.byPairAreaProvenance.bothRegular,1);
+ assert.equal(report.uniqueAffectedSourceFaceCount,2);
+ assert.equal(report.byUniqueFaceAreaProvenance.bothRegular,2);
+ assert.equal(report.noSmallAreaWaiver,true);
  assert.deepEqual(report.byOriginalCoincidentCorners,[1,0,0,0]);
  assert.deepEqual(report.byStagedCoincidentCorners,[1,0,0,0]);
  assert.deepEqual(report.byGarmentMesh,[1]);
@@ -523,4 +527,50 @@ test('geometrically coincident disconnected UV seam remains counted as unsafe ev
   {maxPairs:0}),/complete bounded/);
  assert.throws(()=>classifyNewSourceSelfContactTypes(root,[mesh],new Map(),supplied,
   {maxPairs:1-0-0.5}),/complete bounded/);
+});
+
+
+test('area provenance identifies newly collapsed versus already tiny source faces without bypass',()=>{
+ const originalTriangles=[
+  -.5,-.5,0, .5,-.5,0, 0,.5,0,
+  1.2,0,0, 1.4,.2,0, 1.2,.3,.1
+ ];
+ const posed2=(positions,stage)=>{
+  const {root,garment}=simplePose();
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  const w=new Float32Array(6*4);for(let i=0;i<6;i++)w[i*4]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(6*4),4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+  m.userData.work56Garment=true;m.bind(garment.skeleton);root.add(m);
+  const baseline=g.getAttribute('position').array.slice();
+  const receipt={completedUniqueAffectedPairComparison:true,originalSourceFaceIdentity:true,
+   sampledPoseOnly:true,newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1']};
+  // The hand-constructed receipt exercises typing only; it is NOT a
+  // collision-audit completion or permission to admit an actual 3D fit.
+  const result=classifyNewSourceSelfContactTypes(root,[m],new Map([[m,stage]]),receipt);
+  assert.deepEqual(g.getAttribute('position').array,baseline);
+  assert.equal(result.noContactWaived,true);
+  assert.equal(result.noSmallAreaWaiver,true);
+  assert.equal(result.releaseAuthorized,false);
+  assert.equal(result.uniqueAffectedSourceFaceCount,2);
+  assert.equal(Object.values(result.byUniqueFaceAreaProvenance).reduce((a,n)=>a+n,0),2);
+  assert.equal(Object.values(result.byPairAreaProvenance).reduce((a,n)=>a+n,0),1);
+  return result;
+ };
+ const regular=Float32Array.from(originalTriangles);
+ const collapsed=regular.slice();
+ collapsed.set([1.3,.1,0],15);
+ const introduced=posed2(originalTriangles,collapsed);
+ assert.equal(introduced.byPairAreaProvenance.newlySmall,1);
+ assert.equal(introduced.byUniqueFaceAreaProvenance.newlySmall,1);
+ assert.equal(introduced.byUniqueFaceAreaProvenance.bothRegular,1);
+ assert.equal(introduced.sourceAreaCrossSquaredThreshold,1e-10);
+ const alreadySmall=posed2([...originalTriangles.slice(0,15),1.3,.1,0],
+  Float32Array.from([...originalTriangles.slice(0,15),1.3,.1,0]));
+ assert.equal(alreadySmall.byPairAreaProvenance.preexistingSmall,1);
+ assert.equal(alreadySmall.byUniqueFaceAreaProvenance.preexistingSmall,1);
+ assert.equal(alreadySmall.byUniqueFaceAreaProvenance.bothRegular,1);
+ assert.equal(alreadySmall.byPairAreaProvenance.newlySmall,0);
 });
