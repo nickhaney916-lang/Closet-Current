@@ -37,17 +37,34 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const map=clothingLabelMap(output.logits.data,output.logits.dims);
   const groups=request.multi24===true?
    (await import('../research/multi-garment-capture-01/visible-groups.mjs')).visibleGarmentGroups24(map):
-   map.personDetected?clothingMaskGroups(map):[];let count=0;
+   map.personDetected?clothingMaskGroups(map):[];
+  // The consumer adds "piece" to the review queue as soon as it arrives.
+  // A later original-photo crop/JPEG error must never leave half an outfit.
+  // Bound temporary base64 memory while preparing the complete transaction.
+  const pieces=[];let batchChars=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
    const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceKey:request.multi24===true?group.instanceKey:undefined,personDetected:map.personDetected,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
-   self.postMessage({type:'piece',id:request.id,piece});count++;
+   const size=piece.image.length+(piece.recognitionPhoto?.image?.length||0);
+   if(piece.image.length>8000000||piece.recognitionPhoto?.image?.length>8000000||
+      batchChars+size>24000000){
+    const error=new RangeError('OUTFIT_SOURCE_BATCH_MEMORY_CAP');
+    error.code='OUTFIT_SOURCE_BATCH_MEMORY_CAP';
+    throw error;
+   }
+   batchChars+=size;pieces.push(piece);
   }
-  self.postMessage({type:'done',id:request.id,count});
+  // Publish all reviewed-source candidates only after EVERY crop and JPEG
+  // has succeeded. An errored job publishes ZERO individual garment pieces.
+  for(const piece of pieces)self.postMessage({type:'piece',id:request.id,piece});
+  self.postMessage({type:'done',id:request.id,count:pieces.length});
  }catch(error){
   if(error?.code==='MULTI24_REVIEW_OVERFLOW'){
    self.postMessage({type:'error',id:request.id,
     text:'This photo contains more clothing regions than can be reviewed safely in one group. No regions were imported. Try photographing fewer garments together.'});
+  }else if(error?.code==='OUTFIT_SOURCE_BATCH_MEMORY_CAP'){
+   self.postMessage({type:'error',id:request.id,
+    text:'This photo produced too much clothing image data to review safely on this device. No pieces were imported. Try photographing fewer garments together.'});
   }else self.postMessage({type:'error',id:request.id,
    text:'This outfit could not be separated on this device. Your existing photos are kept. Try another clear photo of one person, head to toe.'});
  }

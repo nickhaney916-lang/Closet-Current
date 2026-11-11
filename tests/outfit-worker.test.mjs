@@ -2,10 +2,10 @@ import test from 'node:test';import assert from 'node:assert/strict';import vm f
 import * as segmentation from '../public/outfit-segmentation.mjs';
 import {visibleGarmentGroups24} from '../research/multi-garment-capture-01/visible-groups.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
-function setup({failLoad=false,failSecondCrop=false,noPerson=false,manyRegions=false,multi24=false}={}){
+function setup({failLoad=false,failSecondCrop=false,noPerson=false,manyRegions=false,multi24=false,oversizeCrop=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
  for(const [id,left,top,w,h]of [[4,5,4,8,5],[6,6,10,6,5],[9,6,16,3,3],[10,10,16,3,3],[11,7,1,4,3]])for(let y=top;y<top+h;y++)for(let x=left;x<left+w;x++){const i=y*width+x;data[i]=-10;data[id*400+i]=10;}
- let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
+ let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>oversizeCrop?new Uint8Array(6000010).buffer:new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  if(manyRegions){
   for(let i=0;i<400;i++){for(let c=0;c<18;c++)data[c*400+i]=-10;data[i]=10;}
@@ -27,9 +27,22 @@ test('full-outfit worker emits three separate garment images and excludes body l
 test('load failure returns a safe error without fabricated cutouts',async()=>{
  const h=setup({failLoad:true});await h.run();assert.equal(h.sent.filter(x=>x.type==='piece').length,0);assert.ok(h.sent.some(x=>x.type==='error'));assert.ok(!JSON.stringify(h.sent).includes('private error'));
 });
-test('later crop failure preserves pieces emitted earlier',async()=>{
- const h=setup({failSecondCrop:true});await h.run();assert.equal(h.sent.filter(x=>x.type==='piece').length,1);assert.ok(h.sent.some(x=>x.type==='error'));assert.ok(!h.sent.some(x=>x.type==='done'));
+test('P814: later source JPEG/crop failure MUST NOT emit any partial outfit pieces',async()=>{
+ const h=setup({failSecondCrop:true});await h.run();
+ assert.equal(h.sent.filter(x=>x.type==='piece').length,0,
+  'no first garment may leak into the review queue if a later crop fails');
+ assert.equal(h.sent.filter(x=>x.type==='done').length,0);
+ assert.equal(h.sent.filter(x=>x.type==='error').length,1);
+ assert.ok(!JSON.stringify(h.sent).includes('private decode error'),'raw internal errors hidden');
 });
+test('P814: successful full photo publishes every candidate and exactly one done, in order',async()=>{
+ const h=setup();await h.run();
+ const emissions=h.sent.filter(x=>x.type==='piece'||x.type==='done'||x.type==='error');
+ assert.deepEqual(emissions.map(x=>x.type),['piece','piece','piece','done']);
+ assert.equal(emissions.at(-1).count,3);
+ assert.equal(new Set(emissions.slice(0,-1).map(x=>x.piece.label)).size,3);
+});
+
 
 test('clothing-shaped regions without sufficient person evidence do not create cutouts',async()=>{
  const h=setup({noPerson:true});await h.run();assert.equal(h.sent.filter(x=>x.type==='piece').length,0);assert.equal(h.sent.find(x=>x.type==='done').count,0);
@@ -43,4 +56,14 @@ test('P813: multi24 13-region worker rejects entire photo, emits no pieces and e
  assert.equal(errors.length,1);
  assert.match(errors[0].text,/more clothing regions|fewer garments/);
  assert.ok(!errors[0].text.includes('MULTI24_REVIEW_OVERFLOW'),'internal detail never surfaced');
+});
+
+test('P814: overlarge generated review JPEG fails before any candidate or done message',async()=>{
+ const h=setup({oversizeCrop:true});await h.run();
+ assert.equal(h.sent.filter(x=>x.type==='piece').length,0);
+ assert.equal(h.sent.filter(x=>x.type==='done').length,0);
+ const errors=h.sent.filter(x=>x.type==='error');
+ assert.equal(errors.length,1);
+ assert.match(errors[0].text,/too much clothing image data|fewer garments/);
+ assert.ok(!JSON.stringify(errors).includes('OUTFIT_SOURCE_BATCH_MEMORY_CAP'));
 });
