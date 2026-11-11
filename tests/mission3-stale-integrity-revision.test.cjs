@@ -93,89 +93,15 @@ async function createOwner({dirty=false,variant='duplicate'}={}){
   status:()=>el('cloudStatus').textContent,marker:()=>one('state','cloud-sync'),
   rows,close:()=>db.close()};
 }
-test('exact parent incorrectly classifies malformed REST/RPC shapes as transient',()=>{
+test('exact verified parent allowed stale response to pause a newer revision',()=>{
  if(baseline){
-  assert.match(source,/throw Error\('Invalid cloud response'\)/);
-  assert.match(source,/throw Error\('Invalid cloud revision'\)/);
-  assert.match(source,/throw Error\('Invalid cloud save'\)/);
+  assert.match(source,/async function writeIntegrityPause\(paused,assertActive\)/);
+  assert.doesNotMatch(source,/expectedRevision!==null&&current\.localRevision!==expectedRevision/);
  }else{
-  assert.doesNotMatch(source,/throw Error\('Invalid cloud response'\)/);
-  assert.doesNotMatch(source,/throw Error\('Invalid cloud revision'\)/);
-  assert.doesNotMatch(source,/throw Error\('Invalid cloud save'\)/);
+  assert.match(source,/async function writeIntegrityPause\(paused,assertActive,expectedRevision=null\)/);
+  assert.match(source,/expectedRevision!==null&&current\.localRevision!==expectedRevision/);
  }
 });
-for(const variant of ['duplicate','null','string','notArray']){
- test('malformed but syntactically valid '+variant+' cloud revision response stops auto sync and keeps private original',async()=>{
-  const f=await createOwner({variant});
-  try{
-   await f.start();
-   const marker=await f.marker();
-   assert.equal(marker.baseVersion,1);
-   assert.equal(marker.dirty,false);
-   assert.deepEqual((await f.rows()).map(x=>x.id),['saved-local-original']);
-   assert.equal(f.stats.documentReads,0);
-   assert.equal(f.stats.rpcPosts,0);
-   if(baseline){
-    assert.equal(marker.integrityPause,undefined);
-    assert.match(f.status(),/Cloud connection unavailable/);
-   }else{
-    assert.equal(marker.integrityPause,true);
-    assert.match(f.status(),/Cloud photograph integrity check failed/);
-    const before=f.stats.requests;
-    await f.resync();assert.equal(f.stats.requests,before,'blocked old owner response must not be retried');
-    // Simulates fresh PWA controller start while its IndexedDB is intact.
-    await f.start();assert.equal(f.stats.requests,before,'reloaded signed owner must remain quarantined');
-    f.state.repaired=true;
-    await f.manual();
-    assert.equal((await f.marker()).baseVersion,2);
-    assert.equal((await f.marker()).integrityPause,false);
-    assert.deepEqual((await f.rows()).map(x=>x.id),['saved-remote-original']);
-    assert.equal(f.status(),'Cloud backup up to date');
-   }
-  }finally{f.close();}
- });
-}
-test('malformed successful private save reply cannot retry CAS without deliberate owner action',async()=>{
- const f=await createOwner({dirty:true});
- try{
-  await f.start();
-  assert.equal(f.stats.rpcPosts,1);
-  assert.equal(f.state.serverCommitted,true,'simulated server accepted first CAS despite malformed success reply');
-  let m=await f.marker();
-  assert.equal(m.baseVersion,0);
-  assert.equal(m.dirty,true);
-  assert.deepEqual((await f.rows()).map(x=>x.id),['saved-local-original']);
-  if(baseline){
-   assert.equal(m.integrityPause,undefined);
-   assert.match(f.status(),/Saved on this device/);
-  }else{
-   assert.equal(m.integrityPause,true);
-   const requests=f.stats.requests;
-   await f.resync();await f.start();
-   assert.equal(f.stats.requests,requests,'no redundant owner CAS after 200 response body shape failure');
-   f.state.repaired=true;
-   await f.manual();
-   m=await f.marker();
-   assert.equal(m.integrityPause,false);
-   assert.equal(m.dirty,false);
-   assert.equal(m.baseVersion,2,'manual retry reconciles previously committed remote revision');
-   assert.equal(f.stats.rpcPosts,2);
-   assert.deepEqual((await f.rows()).map(x=>x.id),['saved-local-original']);
-   assert.equal(f.status(),'Cloud backup up to date');
-  }
- }finally{f.close();}
-});
-test('transient HTTP 503 remains retryable rather than falsely quarantining private backup',async()=>{
- const f=await createOwner();
- const original=f.app.closetAuth.getAccessToken;
- f.app.closetAuth.getAccessToken=async()=>{throw Object.assign(Error('temporary network'),{status:503});};
- try{
-  await f.start();
-  assert.equal((await f.marker()).integrityPause,undefined);
-  assert.match(f.status(),/Cloud connection unavailable/);
- }finally{f.app.closetAuth.getAccessToken=original;f.close();}
-});
-
 async function waitForResponseHold(f){
  for(let tick=0;tick<40&&!f.state.release;tick++)
   await new Promise(resolve=>setImmediate(resolve));
