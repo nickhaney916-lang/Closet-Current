@@ -180,6 +180,15 @@ try{
   const combinedSourceReview=scoreInstances({truth:result.truthInstances,predictions:[...result.growthInstances,...result.unseededInstances],width:result.width,height:result.height});
   const componentInstanceDiagnostic=componentP817?scoreInstances({truth:result.truthInstances,predictions:result.componentInstances,width:result.width,height:result.height}):null;
   const nativeNormalDiagnostic=componentP817?scoreInstances({truth:result.truthInstances,predictions:result.nativeNormalInstances,width:result.width,height:result.height}):null;
+  const thresholdMetrics821=thresholdP821?Object.fromEntries(result.thresholdInstances821.map(profile=>
+   [profile.name,scoreInstances({truth:result.truthInstances,predictions:profile.groups,
+    width:result.width,height:result.height})])):null;
+  if(thresholdP821){
+   assert.equal(result.thresholdInstances821.length,5);
+   assert.equal(result.thresholdInstances821[0].sourceLabelSHA256,result.modelMaskSHA256,
+    'native profile must use exactly the same original B0 label membership');
+   assert.ok(result.thresholdInstances821.every(p=>/^(native|exploratory|strict)-[0-9]+-[0-9]+$/.test(p.name)));
+  }
   const groupedIoU=predictions=>{const regions=new Set([...result.truthInstances.map(x=>x.region),...predictions.map(x=>x.region)]);const scores=[];for(const region of regions){let intersection=0,union=0;const t=result.truthInstances.filter(x=>x.region===region),p=predictions.filter(x=>x.region===region);for(let i=0;i<result.width*result.height;i++){const a=t.some(x=>x.mask[i]),b=p.some(x=>x.mask[i]);intersection+=Number(a&&b);union+=Number(a||b);}scores.push({region,intersection,union,iou:union?intersection/union:null});}return scores;};
   const beforeGroupedIoU=groupedIoU(result.predictionInstances),candidateGroupedIoU=groupedIoU(result.growthInstances);
   for(let g=0;g<result.growthInstances.length;g++){const grown=result.growthInstances[g],seed=result.predictionInstances[g];assert.equal(grown.id,seed.id);assert.equal(grown.region,seed.region);assert.equal(grown.accepted,false);assert.equal(grown.needsReview,true);assert.ok(grown.addedPixelCount<=grown.maximumAddedPixels);for(let i=0;i<seed.mask.length;i++)if(seed.mask[i])assert.equal(grown.mask[i],1);}
@@ -188,7 +197,7 @@ try{
   const lostBaselineMatchIds=instances.matches.filter(m=>!candidateInstances.matches.some(a=>a.truthId===m.truthId)).map(m=>m.truthId);
   const gainedMatchIds=candidateInstances.matches.filter(m=>!instances.matches.some(a=>a.truthId===m.truthId)).map(m=>m.truthId);
   rows.push({lostBaselineMatchIds,gainedMatchIds,instances,nonFootwear,candidateInstances,candidateNonFootwear,
-   unseededOnly,combinedSourceReview,componentInstanceDiagnostic,nativeNormalDiagnostic,
+   unseededOnly,combinedSourceReview,componentInstanceDiagnostic,nativeNormalDiagnostic,thresholdMetrics821,
    componentProposalCount:componentP817?result.componentInstances.length:null,
    componentGainedFromGrowth:componentP817?componentInstanceDiagnostic.matches.filter(m=>!candidateInstances.matches.some(b=>b.truthId===m.truthId)).map(m=>m.truthId):[],
    componentLostFromGrowth:componentP817?candidateInstances.matches.filter(m=>!componentInstanceDiagnostic.matches.some(b=>b.truthId===m.truthId)).map(m=>m.truthId):[],
@@ -204,8 +213,24 @@ try{
  for(const frame of screens)assert.equal(hash(await readFile(out+'/'+frame.name)),frame.sha256);
  const allRegions=rows.flatMap(r=>r.measured),regions=allRegions.filter(m=>m.truthPixels>0);
  const aggregate=key=>{const values=rows.map(r=>r[key]);const tp=values.reduce((n,r)=>n+r.truePositives,0),fp=values.reduce((n,r)=>n+r.falsePositives,0),fn=values.reduce((n,r)=>n+r.falseNegatives,0);return {truePositives:tp,falsePositives:fp,falseNegatives:fn,precision:tp+fp?tp/(tp+fp):null,recall:tp+fn?tp/(tp+fn):null,f1:2*tp+fp+fn?2*tp/(2*tp+fp+fn):null};};
- const summary={allClassExploratoryArm:aggregate('allClassInstances'),
+ const aggregateThreshold821=name=>{
+   const group=rows.map(r=>r.thresholdMetrics821[name]);
+   const tp=group.reduce((n,x)=>n+x.truePositives,0),
+    fp=group.reduce((n,x)=>n+x.falsePositives,0),
+    fn=group.reduce((n,x)=>n+x.falseNegatives,0);
+   return {truePositives:tp,falsePositives:fp,falseNegatives:fn,
+    precision:tp+fp?tp/(tp+fp):null,
+    recall:tp+fn?tp/(tp+fn):null,
+    f1:2*tp+fp+fn?2*tp/(2*tp+fp+fn):null};
+  };
+  const summary={allClassExploratoryArm:aggregate('allClassInstances'),
   unseededOnlyDiagnostic:aggregate('unseededOnly'),
+   ...(thresholdP821?{thresholdSourceScores821:Object.fromEntries(
+    ['native-70-15','exploratory-65-12','exploratory-60-10','exploratory-55-08','strict-80-20']
+     .map(name=>[name,aggregateThreshold821(name)])),
+    thresholdAutoPromoteAllowed:false,
+    thresholdOriginalHumanMaskReviewers:0,
+    thresholdExposure:'already-development-exposed-not-independent-blind'}:{}),
   ...(componentP817?{componentInstanceDiagnostic:aggregate('componentInstanceDiagnostic'),nativeNormalDiagnostic:aggregate('nativeNormalDiagnostic'),
    totalComponentReviewCandidates:rows.reduce((n,r)=>n+r.componentProposalCount,0),
    componentLostGrowthMatches:rows.reduce((n,r)=>n+r.componentLostFromGrowth.length,0),
@@ -244,10 +269,11 @@ try{
   additionalPublisherSourceCohortP792:additionalP792,
   sourceUnseededModelProposalArm794:true,
   sourceComponentActualModelReviewArm817:componentP817,
+  frozenRealB0ThresholdSweep821:thresholdP821,
   nativeNormalVersusMulti24CompleteSourceComparison817:componentP817,
   sourceUnseededInstancesAutoSaved:0,
   sourceUnseededHumanReviewActuallyPerformed:false,
   rawPublisherRightsMetadataNotVerifiedForCommerce:additionalP792,
   newlyEnrolledBlindedHumanHoldout:false,
-  rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:componentP817?'Actual original SegFormer logits; same frozen baseline/growth versus source-pixel exact P776 review-only components, no app changes':'Baseline model and grouping unchanged; original logits also produce capped seeded boundary review candidates; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
+  rows,screens,exactAppSubtypeAccuracy:null,primaryColorAccuracy:null,officialInstanceAP:null,instanceMetricDefinition:'Maximum-cardinality one-to-one same semantic family raster-mask matching at IoU >=0.5; actual app grouping masks. Publisher annotates individual shoes; app can pair shoes, so non-footwear diagnostic is reported separately without dropping shoes from all-instance totals.',workerSourceSHA256:hash(workerSource),instrumentedWorkerSHA256:hash(instrumentedWorker),instrumentation:thresholdP821?'Unmodified original B0 ONNX model and source image; five predefined confidence/margin experiments only in research worker, native default exact checked, no auto promotion':componentP817?'Actual original SegFormer logits; same frozen baseline/growth versus source-pixel exact P776 review-only components, no app changes':'Baseline model and grouping unchanged; original logits also produce capped seeded boundary review candidates; no shipping app changes',newGarment3DAccepted:0,ownerReviews:0,exploratoryNotGuaranteedTrainingUnseen:true,photoRights:'Dataset-reported Pexels license; per-photo original source page not supplied by publisher',familyAlpha:'HOLD',releaseAuthorized:false},null,2));
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
