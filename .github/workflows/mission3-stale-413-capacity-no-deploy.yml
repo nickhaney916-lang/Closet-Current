@@ -6,6 +6,41 @@ on:
 permissions:
   contents: read
 jobs:
+  offline-owner-photo-capacity-revision:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify immutable parent and no deployment scope without network dependencies
+        run: |
+          set -euo pipefail
+          BASE=ab7a60754e403ecb3881f98b5695c4340c76c18c
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/cloud-backup.js|tests/mission3-stale-cloud-413-capacity.test.cjs|tests/mission3-stale-413-offline.test.cjs|scripts/test-mission3-stale-413-capacity-browser.mjs|research/mission3-stale-413-capacity/REPORT.md|.github/workflows/mission3-stale-413-capacity-no-deploy.yml) ;;
+              *) echo "Offline owner capacity gate refuses changed path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Syntax check actual current controller and browser/tests without npm
+        run: |
+          node --version
+          node --check public/cloud-backup.js
+          node --check tests/mission3-stale-cloud-413-capacity.test.cjs
+          node --check tests/mission3-stale-413-offline.test.cjs
+          node --check scripts/test-mission3-stale-413-capacity-browser.mjs
+      - name: Execute actual parent and fixed capacity transaction function in restricted Node VM
+        run: |
+          mkdir -p /tmp/closet-mission3-413-parent/public
+          git show ab7a60754e403ecb3881f98b5695c4340c76c18c:public/cloud-backup.js > /tmp/closet-mission3-413-parent/public/cloud-backup.js
+          CLOUD_SOURCE_ROOT=/tmp/closet-mission3-413-parent EXPECT_BASELINE=1 node --test tests/mission3-stale-413-offline.test.cjs
+          node --test tests/mission3-stale-413-offline.test.cjs
   native-signed-two-owner-postgres:
     runs-on: ubuntu-24.04
     timeout-minutes: 55
@@ -49,7 +84,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/cloud-backup.js|tests/mission3-stale-cloud-413-capacity.test.cjs|scripts/test-mission3-stale-413-capacity-browser.mjs|research/mission3-stale-413-capacity/REPORT.md|.github/workflows/mission3-stale-413-capacity-no-deploy.yml) ;;
+              public/cloud-backup.js|tests/mission3-stale-cloud-413-capacity.test.cjs|tests/mission3-stale-413-offline.test.cjs|scripts/test-mission3-stale-413-capacity-browser.mjs|research/mission3-stale-413-capacity/REPORT.md|.github/workflows/mission3-stale-413-capacity-no-deploy.yml) ;;
               *) echo "Mission 3 refused unapproved changed path: $p"; exit 1 ;;
             esac
           done
