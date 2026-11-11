@@ -1,0 +1,73 @@
+name: Mission 1 P826 actual owner JPEG crop reseal and separate atomic reviewed private save — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-human-crop-reseal-826-HOLD]
+  pull_request:
+    branches: [research/mission1-crop-owner-session-lease-825-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p826-crop-original-sha-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-p825-green-full-native-and-original-jpeg-suite:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict verified P825 source parent plus eight no-deploy paths only
+        run: |
+          set -euo pipefail
+          BASE=a90d14667e4adc18e2bc21e049e4aaafc7d016cf
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p826-paths
+          cat /tmp/m1-p826-paths
+          test "$(wc -l </tmp/m1-p826-paths)" -eq 8
+          while IFS= read -r p; do
+            case "$p" in
+              public/app.js|public/photo-crop-editor.js|public/native-reviewed-private-save-167.mjs|research/manual-reviewed-private-save-119/reviewed-source-commit.mjs|tests/mission1-ambiguous-photo-crop-822.test.mjs|tests/mission1-human-crop-reseal-826.test.mjs|research/mission1-human-crop-reseal-826/REPORT.md|.github/workflows/mission1-human-crop-reseal-826-no-deploy.yml) ;;
+              *) echo "UNAPPROVED PHOTO/MODEL/CLOUD/USER DATA/RELEASE CHANGE: $p";exit 1;;
+            esac
+          done </tmp/m1-p826-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/native-canonical-photo-source-167.mjs public/native-owner-wardrobe-index-167.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-human-crop-reseal-826/REPORT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-human-crop-reseal-826/REPORT.md
+          echo M1_P826_EXACT_GREEN_P825_EIGHT_ONLY_NO_DEPLOY
+      - name: Ephemeral exact native/real JPEG/fake-IDB test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual source/cutout SHA, explicit owner review, real JPEG, native build and all app regressions
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/photo-crop-editor.js
+          node --check tests/mission1-human-crop-reseal-826.test.mjs
+          node --test tests/mission1-human-crop-reseal-826.test.mjs tests/mission1-ambiguous-photo-crop-822.test.mjs tests/mission1-cutout-visible-photo-823.test.mjs tests/manual-reviewed-private-save-119.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  independent-actual-jpeg-to-photo119-cryptographic-acceptance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Ephemeral real JPEG crop and private IndexedDB SHA test libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 fake-indexeddb@6.2.4
+      - name: Actual native JS crop, cryptographic source and private PHOTO119 reviewed CAS
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-human-crop-reseal-826.test.mjs tests/mission1-ambiguous-photo-crop-822.test.mjs
+          grep -Fq 'M1_P826_EXPLICIT_ORIGINAL_ONE_GARMENT_CROP_REVIEW_REQUIRED' public/app.js
+          grep -Fq 'ownerCropCheck826.checked=false' public/photo-crop-editor.js
+          grep -Fq 'cutoutImage:photo.image,cutoutSHA256:actualCropSHA' public/app.js
+          echo P826_NEW_JPEG_EXACT_CROP_SHA_SEPARATE_ATOMIC_HUMAN_REVIEW_NOT_AUTO_SAVED

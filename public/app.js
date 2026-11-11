@@ -263,6 +263,7 @@ function cropClothingPhoto(item){
  }
  openPhotoCrop(item,{
   isActive:()=>{try{return assertCropLease825();}catch{return false;}},
+  requireOwnerSingleGarment826:sourceNeedsManualReview822,
   async analyze(image){
    assertCropLease825();
    if(sourceNeedsManualReview822)return null;
@@ -273,6 +274,8 @@ function cropClothingPhoto(item){
   },
   async save(photo,choice){
    assertCropLease825();
+   if(sourceNeedsManualReview822&&photo?.ownerSingleGarmentConfirmed826!==true)
+    throw Error('M1_P826_EXPLICIT_ORIGINAL_ONE_GARMENT_CROP_REVIEW_REQUIRED');
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
    if(sourceNeedsManualReview822){
     value.id=item.id;
@@ -297,6 +300,38 @@ function cropClothingPhoto(item){
    if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
    const quality=await checkPhoto(photo.image);
    assertCropLease825();
+   if(sourceNeedsManualReview822){
+    // P826: re-seal the ACTUAL cropped JPEG, not a previous model segment.
+    // A checked original-photo single-garment crop is an OWNER CLAIM only.
+    // The independent PHOTO119 Adjust review and atomic source SHA gate
+    // remain mandatory before any garment enters the private closet.
+    const sourceProof826=await captureProof01Module();
+    assertCropLease825();
+    const originalValid=await sourceProof826.verifyStoredCanonical({
+     image:item.originalPhoto?.image,originalPhoto:item.originalPhoto,
+     sourceSHA256:item.sourceSHA256,sourceHashVerified:item.sourceHashVerified
+    });
+    assertCropLease825();
+    if(!originalValid)throw Error('M1_P826_ORIGINAL_JPEG_SHA_PROOF_FAILED');
+    let cutoutBytes;
+    try{cutoutBytes=sourceProof826.jpegBytes(photo.image);}
+    catch{throw Error('M1_P826_INVALID_REVIEWED_CROP_JPEG');}
+    if(cutoutBytes.length>3000000)
+     throw Error('M1_P826_REVIEWED_CROP_TOO_LARGE_FOR_PRIVATE_SAVE');
+    const actualCropSHA=await sourceProof826.digestBytes(cutoutBytes);
+    assertCropLease825();
+    if(actualCropSHA===item.sourceSHA256)
+     throw Error('M1_P826_CROP_NOT_DISTINCT_FROM_ORIGINAL');
+    value.segmentHint={
+     ...value.segmentHint,
+     originalSHA256:item.sourceSHA256,
+     cutoutImage:photo.image,cutoutSHA256:actualCropSHA,
+     verified:true,ownerReviewedInstance:true,
+     sourceDisconnectedReviewRequired:true,
+     ownerCropReviewProvenance826:'explicit-original-photo-single-garment-checkbox-not-independent-human-ground-truth'
+    };
+   }
+   delete value.ownerSingleGarmentConfirmed826;
    if(!sourceNeedsManualReview822){
     Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
     if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')

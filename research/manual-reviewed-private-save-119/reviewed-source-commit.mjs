@@ -221,6 +221,11 @@ export async function commitHumanReviewedPhoto119({
   color:review.color,name:review.name&&validText(review.name,120)
    ?review.name:review.color+' '+review.itemType,
   confirmedCategory:true,confirmedColor:true,colorSource:'user',
+  // P826: owner/instance/category/type/color are separately checked here,
+  // not at tentative crop. The saved row is no longer an unconfirmed draft;
+  // retaining this stale flag would cause INDEX01 to reject a valid reviewed
+  // source-bound cutout during the same atomic PHOTO119 transaction.
+  requiresOwnershipConfirmation:false,
   userAdjusted:true,ownerReviewed:true,sourcePhotoOriginal:true,
   humanReviewedSource:true,sourceHashVerified:true,
   singleGarmentVerified:!mode.multi,
