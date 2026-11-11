@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -379,4 +379,51 @@ test('original-face newly intersecting body contacts are allocated by garment me
  }),/canonical original source face/);
  assert.throws(()=>summarizeNewPosedBodyContactRegions(root,[garment,garment],baseline,staged),
   /complete original-face contact witnesses/);
+});
+
+
+test('new self folds are allocated by exact staged 163-bone original-face height pairs, without private geometry',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0,.5,-.5,0,0,.5,0,
+  1.2,-.2,-.25,1.2,.2,.25,1.2,.2,-.25
+ ],3));
+ const weights=new Float32Array(6*4);for(let i=0;i<6;i++)weights[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(6*4),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const original=g.getAttribute('position').array.slice(),staged=original.slice();
+ for(let i=3;i<6;i++)staged[i*3]-=1.2;
+ const overrides=new Map([[mesh,staged]]);
+ const delta=measureChangedFaceSelfContactDelta(root,[mesh],overrides);
+ assert.equal(delta.newlyIntersecting,1);
+ const report=summarizeChangedFaceSelfContactRegions(root,[mesh],overrides,delta);
+ assert.equal(report.newSelfContactCount,1);
+ assert.deepEqual(report.byGarmentMesh,[1]);
+ assert.equal(report.byHeightBandPair.length,10);
+ assert.equal(report.byHeightBandPair.reduce((a,n)=>a+n,0),1);
+ assert.equal(report.byHeightSeparation.reduce((a,n)=>a+n,0),1);
+ assert.equal(report.heightPairOrder,'00,01,02,03,11,12,13,22,23,33');
+ assert.equal(report.originalSourceFaceIdentity,true);
+ assert.equal(report.completeChangedFaceComparison,true);
+ assert.equal(report.noPhotoOrOwnerFields,true);
+ assert.equal(report.signedPenetrationDepthVerified,false);
+ assert.equal(report.selfCollisionCertified,false);
+ assert.equal(report.releaseAuthorized,false);
+ assert.equal(JSON.stringify(report).includes('sourceSHA256'),false);
+ assert.equal(JSON.stringify(report).includes('newlyIntersectingSourceKeys'),false);
+ assert.deepEqual(g.getAttribute('position').array,original);
+ const empty=measureChangedFaceSelfContactDelta(root,[mesh]);
+ const zero=summarizeChangedFaceSelfContactRegions(root,[mesh],new Map(),empty);
+ assert.equal(zero.newSelfContactCount,0);
+ assert.deepEqual(zero.byHeightBandPair,[0,0,0,0,0,0,0,0,0,0]);
+ assert.throws(()=>summarizeChangedFaceSelfContactRegions(root,[mesh],overrides,
+  {...delta,newlyIntersectingSourceKeys:['0:9:10']}),/original-face source bounds/);
+ assert.throws(()=>summarizeChangedFaceSelfContactRegions(root,[mesh],overrides,
+  {...delta,newlyIntersectingSourceKeys:['0:0:1','0:0:1'],newlyIntersecting:2}),/complete bounded original-face delta/);
+ assert.throws(()=>summarizeChangedFaceSelfContactRegions(root,[mesh],new Map([[mesh,new Float32Array(3)]]),delta),
+  /finite staged garment vertices/);
+ assert.deepEqual(g.getAttribute('position').array,original);
 });
