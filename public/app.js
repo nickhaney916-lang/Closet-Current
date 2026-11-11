@@ -231,8 +231,40 @@ function cropClothingPhoto(item){
  // P822: one detected semantic family is not proof of one physical garment.
  // Cropping an ambiguous source may only prepare it for explicit owner review.
  const sourceNeedsManualReview822=item.segmentHint?.sourceDisconnectedReviewRequired===true;
+ // P825: source-ambiguous owner crops must not survive logout, owner change,
+ // original replacement, new capture session or draft replacement while the
+ // editor decodes/inspects JPEG asynchronously. This lease is for REVIEW
+ // admission, not independent garment accuracy or consent to save.
+ const lease825=sourceNeedsManualReview822?{
+  owner:captureProofOwner(),auth:window.closetAuth,db,
+  id:item.id,sourceSHA256:item.sourceSHA256,
+  originalImage:item.originalPhoto?.image,visibleImage:item.image,
+  hint:JSON.stringify(item.segmentHint),captureSession:session
+ }:null;
+ const assertCropLease825=()=>{
+  if(!lease825)return true;
+  lease825.auth?.assertCurrent?.();
+  if(!lease825.owner||!lease825.auth||window.closetAuth!==lease825.auth||
+     db!==lease825.db||captureProofOwner()!==lease825.owner||
+     item.ownerId!==lease825.owner||item.id!==lease825.id||
+     item.sourceHashVerified!==true||
+     item.sourceSHA256!==lease825.sourceSHA256||
+     item.originalPhoto?.sha256!==lease825.sourceSHA256||
+     item.originalPhoto?.image!==lease825.originalImage||
+     item.image!==lease825.visibleImage||
+     JSON.stringify(item.segmentHint)!==lease825.hint||
+     session!==lease825.captureSession||!batch.includes(item))
+   throw Error('M1_P825_STALE_OR_FOREIGN_OWNER_CROP');
+  return true;
+ };
+ try{assertCropLease825();}catch{
+  message('Original-photo crop session has changed. Reopen the correct owner draft. No clothing was modified.');
+  return;
+ }
  openPhotoCrop(item,{
+  isActive:()=>{try{return assertCropLease825();}catch{return false;}},
   async analyze(image){
+   assertCropLease825();
    if(sourceNeedsManualReview822)return null;
    if(!localReady)await enableLocal();
    const result=await localRequest('classify',image,null);
@@ -240,8 +272,10 @@ function cropClothingPhoto(item){
     {...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;
   },
   async save(photo,choice){
+   assertCropLease825();
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
    if(sourceNeedsManualReview822){
+    value.id=item.id;
     // The crop must never replace the original JPEG, owner/source SHA or
     // original segmentation uncertainty with a fresh, unverified identity.
     value.ownerId=item.ownerId;
@@ -262,6 +296,7 @@ function cropClothingPhoto(item){
    delete value.recognitionPhoto;delete value.colorMethod;
    if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
    const quality=await checkPhoto(photo.image);
+   assertCropLease825();
    if(!sourceNeedsManualReview822){
     Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
     if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')
@@ -281,10 +316,12 @@ function cropClothingPhoto(item){
     'Crop saved. Check recognition or adjust the clothing details.';
    if(items.some(x=>x.id===item.id))await writeAll([value]);
    else await queued(()=>new Promise((resolve,reject)=>{
-    const tx=db.transaction('state','readwrite');
+    try{assertCropLease825();}catch(error){reject(error);return;}
+    const tx=(lease825?.db||db).transaction('state','readwrite');
     tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});
     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
    }));
+   assertCropLease825();
    Object.assign(item,value);
    for(const key of ['visualSignature','visualAspect','localChoices','indexedAt',
     'recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails',
