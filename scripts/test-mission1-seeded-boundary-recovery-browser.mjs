@@ -14,6 +14,8 @@ import {scoreInstances} from '../research/mission1-external-human-evidence/insta
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const additionalP792=process.env.MISSION1_NEW_PUBLISHER_COHORT_792==='research';
 const componentP817=process.env.MISSION1_COMPONENT_SPLIT_817==='research';
+const thresholdP821=process.env.MISSION1_THRESHOLD_821==='research';
+if(thresholdP821&&!additionalP792)throw Error('P821 requires all registered already-exposed publisher source originals');
 if(componentP817&&!additionalP792)throw Error('P817 requires complete P792 development source cohort');
 const manifest=JSON.parse(await readFile(additionalP792?
  'benchmark/mission1-additional-publisher-originals-792/manifest.json':
@@ -35,10 +37,12 @@ let instrumentedWorker=workerSource.replace(anchor,anchor+"selectedMaskBase64:bt
 await mkdir(out,{recursive:true});
 assert.equal(workerSource.split('const results={sourceId:req.sourceId,').length,2);
 assert.equal(workerSource.split('after:await Promise.all(after.map(describe)),').length,2);
+const thresholdCode821=thresholdP821?"const {THRESHOLD_PROFILES_821,clothingLabelMapThreshold821}=await import('../mission1-real-source-threshold-profiles-821/profile-map.mjs');const {clothingMaskGroups}=await import('../../public/outfit-segmentation.mjs');const thresholdMaps821=THRESHOLD_PROFILES_821.map(profile=>{const trial=clothingLabelMapThreshold821(logits.logits.data,logits.logits.dims,profile);return {name:profile.name,map:trial,groups:trial.personDetected?clothingMaskGroups(trial).filter(g=>[4,5,6,7,9].includes(g.id)):[]};});if(!map.labels.every((x,i)=>x===thresholdMaps821[0].map.labels[i])||!map.confidence.every((x,i)=>x===thresholdMaps821[0].map.confidence[i])||map.personDetected!==thresholdMaps821[0].map.personDetected)throw Error('P821 unchanged native B0 label map mismatch');":'';
 const sourceComponentCode817=componentP817?"const {sourceComponentReview776}=await import('../mission1-component-review-776/source-component-review.mjs');const split817=sourceComponentReview776({data:logits.logits.data,dims:logits.logits.dims,map,groups:grown});const {clothingMaskGroups}=await import('../../public/outfit-segmentation.mjs');const nativeNormal817=clothingMaskGroups(map);":'';
-instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourceId,',"const {seededBoundaryReview}=await import('../mission1-seeded-boundary-recovery/review-growth.mjs');const {unseededGarmentReview773}=await import('../mission1-unseeded-region-773/original-logit-review.mjs');const grown=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after});const unseeded=unseededGarmentReview773({data:logits.logits.data,dims:logits.logits.dims,map,existingGroups:grown});const allClass=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after,recoverFootwear:true});"+sourceComponentCode817+"const results={sourceId:req.sourceId,");
+instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourceId,',"const {seededBoundaryReview}=await import('../mission1-seeded-boundary-recovery/review-growth.mjs');const {unseededGarmentReview773}=await import('../mission1-unseeded-region-773/original-logit-review.mjs');const grown=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after});const unseeded=unseededGarmentReview773({data:logits.logits.data,dims:logits.logits.dims,map,existingGroups:grown});const allClass=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after,recoverFootwear:true});"+sourceComponentCode817+thresholdCode821+"const results={sourceId:req.sourceId,");
+const thresholdReceipts821=thresholdP821?"thresholdProfiles821:await Promise.all(thresholdMaps821.map(async profile=>({name:profile.name,personDetected:profile.map.personDetected,sourceLabelSHA256:await sha(profile.map.labels),groups:await Promise.all(profile.groups.map((g,i)=>describe({...g,instanceKey:'P821-'+profile.name+'-'+g.id+'-'+i}))}))),":'';
 const sourceComponentReceipts817=componentP817?"sourceComponentReview817:await Promise.all(split817.map(async g=>({...await describe(g),sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor}))),nativeNormalB0Source817:await Promise.all(nativeNormal817.map((g,i)=>describe({...g,instanceKey:'native-normal-'+g.id+'-'+i}))),":'';
-instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),"+sourceComponentReceipts817+"allClassGrowth:await Promise.all(allClass.map(describe)),unseededReview:await Promise.all(unseeded.map(async g=>({...await describe(g),accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,originalSeedCount:g.originalSeedCount,sourceLabelChanged:g.sourceLabelChanged,subtype:g.subtype,primaryColor:g.primaryColor}))),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
+instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),"+sourceComponentReceipts817+thresholdReceipts821+"allClassGrowth:await Promise.all(allClass.map(describe)),unseededReview:await Promise.all(unseeded.map(async g=>({...await describe(g),accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,originalSeedCount:g.originalSeedCount,sourceLabelChanged:g.sourceLabelChanged,subtype:g.subtype,primaryColor:g.primaryColor}))),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
 const source=[];
 for(const row of manifest.rows){
  const bytes=await readFile((additionalP792?
@@ -68,7 +72,7 @@ try{
  });
  const page=await context.newPage();await page.goto(origin+'/');
  for(const {row,data} of source){
-  const result=await page.evaluate(async({row,data,componentP817})=>{
+  const result=await page.evaluate(async({row,data,componentP817,thresholdP821})=>{
    const image=new Image();image.src=data;await image.decode();
    if(image.naturalWidth!==row.width||image.naturalHeight!==row.height)throw Error('original dimensions mismatch');
    const decoded=document.createElement('canvas');decoded.width=row.width;decoded.height=row.height;
@@ -109,6 +113,12 @@ try{
    const unseededInstances=r.unseededReview.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256,sourcePixelCount:g.selectedCount,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,originalSeedCount:g.originalSeedCount,sourceLabelChanged:g.sourceLabelChanged,subtype:g.subtype,primaryColor:g.primaryColor}));
    const predictionInstances=r.after.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256}));
    const nativeNormalInstances=componentP817?r.nativeNormalB0Source817.filter(g=>[4,5,6,7,9].includes(g.regionId)).map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256})):[];
+   const thresholdInstances821=thresholdP821?r.thresholdProfiles821.map(profile=>({
+     name:profile.name,personDetected:profile.personDetected,sourceLabelSHA256:profile.sourceLabelSHA256,
+     groups:profile.groups.map(g=>({id:g.instanceKey,region:g.regionId,
+      mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),
+      maskSHA256:g.selectedMaskSHA256}))
+    })):[];
    const componentInstances=componentP817?r.sourceComponentReview817.map(g=>({id:g.instanceKey,region:g.regionId,sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256})):[];
    const c=document.querySelector('#photo');c.width=350;c.height=Math.round(350*row.height/row.width);const ctx=c.getContext('2d');ctx.drawImage(image,0,0,c.width,c.height);
    const layer=document.createElement('canvas');layer.width=w;layer.height=h;const lc=layer.getContext('2d'),px=lc.createImageData(w,h);
@@ -123,13 +133,13 @@ try{
    const overlay=document.createElement('canvas');overlay.width=w;overlay.height=h;const oc=overlay.getContext('2d'),op=oc.createImageData(w,h);
    for(const g of growthInstances)for(let i=0;i<g.mask.length;i++)if(g.mask[i])op.data.set([230,60,40,100],i*4);oc.putImageData(op,0,0);gc.drawImage(overlay,0,0,c.width,c.height);
    gc.strokeStyle='#00ff30';gc.lineWidth=1.5;for(const a of row.annotations)for(const poly of a.segmentation){gc.beginPath();for(let i=0;i<poly.length;i+=2){const x=poly[i]/row.width*c.width,y=poly[i+1]/row.height*c.height;i?gc.lineTo(x,y):gc.moveTo(x,y);}gc.closePath();gc.stroke();}
-   return {width:w,height:h,masks,truthInstances,predictionInstances,growthInstances,unseededInstances,allClassInstances,componentInstances,nativeNormalInstances,modelMaskSHA256:r.sourceMapLabelsSHA256,model:r.model,revision:r.modelRevision};
-  },{row,data,componentP817});
+   return {width:w,height:h,masks,truthInstances,predictionInstances,growthInstances,unseededInstances,allClassInstances,componentInstances,nativeNormalInstances,thresholdInstances821,modelMaskSHA256:r.sourceMapLabelsSHA256,model:r.model,revision:r.modelRevision};
+  },{row,data,componentP817,thresholdP821});
   const measured=result.masks.map(m=>{
    let boundary=null;if(m.truthPixels&&m.predictedPixels)boundary=measureRegisteredBoundaries66({sourcePixels:Uint8Array.from(m.truth),ownerPixels:Uint8Array.from(m.prediction),width:result.width,height:result.height});
    return {semanticRegion:m.region,intersection:m.intersection,union:m.union,truthPixels:m.truthPixels,predictedPixels:m.predictedPixels,iou:m.union?m.intersection/m.union:null,boundary,missed:m.predictedPixels===0};
   });
-  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances,...result.componentInstances,...result.nativeNormalInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
+  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances,...result.componentInstances,...result.nativeNormalInstances,...result.thresholdInstances821.flatMap(x=>x.groups)])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
   if(componentP817){
    const keys=new Set(),count=result.width*result.height;
    for(const old of result.growthInstances){
