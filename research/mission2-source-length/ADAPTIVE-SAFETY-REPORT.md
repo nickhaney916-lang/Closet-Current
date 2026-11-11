@@ -42,3 +42,18 @@ No claim of full Mission 2 completion or Family Alpha release readiness.
 ## P2-C3 final-head verification
 
 Pending dedicated no-deploy Actions on the complete exact commit. No pass totals have been claimed for this branch.
+
+
+## P2-C4 — self-crossing triangles within one photographed garment panel
+
+**Research-only extension; not a release gate approval.** P2-C3 compares different skinned meshes such as sleeve and torso, but a single deformed piece of photographed fabric can fold *through itself*. A bounded, world-space 163-bone BVH self-pair audit now compares the true triangles in each individual garment mesh before/after the proposed source extension. Triangle pairs sharing any original topological vertex are excluded because normal mesh seams and shared edges are not evidence of penetration; nonadjacent crossing triangles retain exact stable pair identities. Duplicated cast directions are collapsed.
+
+Adaptive fitting now requires zero NEW body intersections, zero NEW inter-garment-piece intersections, **and zero NEW within-piece self-intersections** before accepting the sampled geometry, followed by independent pre-commit remeasurement of all three classes. The source JPEG, reviewed cutout, UVs, skin weights, saved-outfit slots, private owner state and original-photo/2D fallback remain unchanged on failed proposals. Exhausted enumeration budgets or invalid staged geometry reject, not promote, 3D.
+
+New research regressions construct two actual nonadjacent posed triangles on a 163-bone skinned mesh, move one through the other, verify one newly intersecting pair with byte-unchanged original positions, and verify that a normal indexed two-triangle shared-edge quad does not count as self-contact. Native browser checks require the new independent receipt before accepting opt-in sampled 3D.
+
+**Important limits:** This measures *nonregression*, not absence of pre-existing intrapanel contacts. Split-vertex physically touching seams may count as baseline and motion/rotation sweeps remain entirely unverified. It does not establish complete body containment, inter-layer outfit safety, drape simulation, garment fit quality, owner-reviewed blind masks, or device GPU/OS-kill behavior. Family Alpha #255 remains HOLD, and Mission 2 cannot be called complete until those requirements are actually met.
+
+### P2-C4 verification
+
+Do not claim acceptance without exact-HEAD dedicated no-deploy GitHub Actions full regression and both genuine Chromium/WebKit jobs with independent screenshots.
