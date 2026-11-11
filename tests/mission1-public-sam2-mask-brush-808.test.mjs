@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {correctPublicSAM2Overlay808} from '../public/mission1-public-sam2-mask-brush-808.mjs';
 
-const SHA='e7a617cd23a159864f619e8397d48b684e47dddc4ad6b46b14481042019';
+const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const MASK='f8c50688b5932ae8c879b24ea638ade7994b3c1563b501c93d576c7236cb1bf9';
 const evidence=()=>({
  schema:'closet-current-m1-public-original-sam2-artifact-806/preview-only/v1',
