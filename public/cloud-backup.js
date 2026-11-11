@@ -408,15 +408,21 @@
   });
   assertActive();
  }
- async function writeIntegrityPause(paused,assertActive){
-  assertActive();
+ // Reject a stale in-flight cloud integrity fault when the owner edited
+ // another garment after the failing REST/RPC request began. Otherwise the
+ // old failed response could pause a newer saved local revision indefinitely.
+ async function writeIntegrityPause(paused,assertActive,expectedRevision=null){
+  assertActive();let outcome='stale';
   await transact(['state'],'readwrite',tx=>{
    const store=tx.objectStore('state'),r=store.get('cloud-sync');
    r.onsuccess=()=>{try{
-    assertActive();store.put({...(r.result||markerDefault()),integrityPause:!!paused});
+    assertActive();
+    const current=r.result||markerDefault();
+    if(paused&&expectedRevision!==null&&current.localRevision!==expectedRevision)return;
+    store.put({...current,integrityPause:!!paused});outcome='saved';
    }catch{try{tx.abort();}catch{}}};
   });
-  assertActive();
+  assertActive();return outcome;
  }
  // These revision-bound pause markers stay in the authenticated owner's IndexedDB,
  // never in private cloud JSON. Stale owner sessions cannot mutate them.
@@ -633,10 +639,18 @@
      status(deviceStorageText+(persisted?'':' This pause could not be saved; reopening the app may retry.'));
     }else if(e.code==='cloud-photo-integrity'){
      pausedIntegrity=true;clearTimeout(timer);timer=null;
-     let durable=true;
-     try{await callbacks.capture(()=>writeIntegrityPause(true,assertActive));}
-     catch{durable=false;}
-     if(mine===generation)status(integrityText+(durable?'':' Keep the app open if possible; this pause could not be saved.'));
+     let outcome='error';
+     try{outcome=await callbacks.capture(()=>
+      writeIntegrityPause(true,assertActive,photoRevisionAtStart));}
+     catch{}
+     if(mine===generation){
+      if(outcome==='stale'){
+       // Keep the newer owner save dirty. Recheck fresh cloud data instead
+       // of quarantining a version that never caused this integrity fault.
+       pausedIntegrity=false;staleSnapshotPending();
+      }else status(integrityText+(outcome==='saved'?'':
+       ' Keep the app open if possible; this pause could not be saved.'));
+     }
     }else if(dirtyAtStart&&(e.status===413||e.status===507)){
      pausedCapacity=e.status;clearTimeout(timer);timer=null;
      let durable=true;
