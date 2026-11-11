@@ -27,6 +27,9 @@ const performanceSamples=[];
 const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
 const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
 const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
+const sourceDepthExperiment=process.env.PHOTO_DEPTH_EXPERIMENT==='1';
+if(sourceDepthExperiment&&!sourceAdaptiveMode)
+ throw Error('Inferred depth trial requires independent native adaptive safety gate');
 if(sourceAdaptiveMode&&!sourceLengthMode)throw Error('Adaptive contact gate requires genuine source 3D');
 if(sourceTriangleMode&&!sourceLengthMode)throw Error('Triangle contacts need actual source-length 3D');
 const sourceProjectionMode=process.env.PHOTO_SOURCE_PROJECTION==='1';
@@ -373,7 +376,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -434,6 +437,14 @@ try{
       self:decisionState?.sourceLengthNewIntrapanelContacts}));
      assert.equal(decisionState?.sourceLengthCollisionCertified,false);
      assert.equal(decisionState?.sourceLengthIntrapanelFullBaselineEnumerated,false);
+     assert.equal(decisionState?.sourceLengthDepthFromPhotographVerified,false);
+     assert.ok(Number.isFinite(decisionState?.sourceLengthDepthClearance)&&
+      decisionState.sourceLengthDepthClearance>=0&&decisionState.sourceLengthDepthClearance<=.024);
+     if(sourceDepthExperiment){
+      assert.equal(decisionState.sourceLengthExperimentalDepthTrial,true);
+      assert.equal(decisionState.sourceLengthOriginalXYPhotographedSilhouetteRetained,true);
+      assert.equal(decisionState.sourceLengthDepthClearance,safeBodyLocality[0]?.selectedDepthClearance);
+     }
      assert.ok(Number.isSafeInteger(decisionState?.sourceLengthIntrapanelCandidateTests));
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
     }else{
@@ -458,10 +469,16 @@ try{
     assert.equal(safeDiagnostic.releaseAuthorized,false);
     assert.equal(safeDiagnostic.accepted,accepted);
     assert.equal(safeDiagnostic.refusalReason,refusalReason);
-    assert.ok(safeDiagnostic.attempts?.length>=1&&safeDiagnostic.attempts.length<=4);
+    assert.equal(safeDiagnostic.experimentalDepthTrial,sourceDepthExperiment);
+    assert.ok(safeDiagnostic.attempts?.length>=1&&
+     safeDiagnostic.attempts.length<=(sourceDepthExperiment?10:4));
     assert.ok(safeDiagnostic.attempts.every(a=>[1,.75,.5,.25].includes(a.scale)&&typeof a.reason==='string'));
-    if(!accepted)assert.equal(safeDiagnostic.attempts.length,4,
-     'All four immutable fitted-length scales must be exhausted before original-photo fallback');
+    if(!accepted)assert.equal(safeDiagnostic.attempts.length,sourceDepthExperiment?10:4,
+     'All bounded immutable fitting stages must be exhausted before original-photo fallback');
+    assert.ok(safeDiagnostic.attempts.every((a,i)=>Number.isFinite(a.depthClearance)&&
+      a.depthClearance>=0&&a.depthClearance<=.024&&(i<4?a.depthClearance===0:sourceDepthExperiment)));
+    assert.ok(safeDiagnostic.attempts.slice(4).every(a=>a.depthClearance>0),
+     'Experimental stages must move depth; normal stages must not');
     const sanitizedJSON=JSON.stringify(safeDiagnostic);
     assert.equal(sanitizedJSON.includes('native05-A'),false);
     assert.equal(sanitizedJSON.includes(source.originalSHA),false);
@@ -487,6 +504,9 @@ try{
      noNewGarmentPartTriangleContactsIfAccepted:accepted,
      noNewIntrapanelTriangleContactsIfAccepted:accepted,
      changedFaceDeltaVerifiedIfAccepted:accepted,
+     nativeDepthExperiment:sourceDepthExperiment,
+     inferredDepthAcceptedIfAny:accepted?decisionState.sourceLengthDepthClearance:null,
+     neverClaimedPhotographedDepth:true,
      refusalReason,
      safeBodyLocality:safeDiagnostic,
      neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
@@ -1463,7 +1483,7 @@ try{
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
-  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceLengthEvidence}:{}),
+  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence}:{}),
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
