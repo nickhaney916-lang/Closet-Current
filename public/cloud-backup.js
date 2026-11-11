@@ -44,6 +44,50 @@
  const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
  function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
  const photoIntegrityError=()=>Object.assign(Error('Cloud photograph or wardrobe integrity verification failed'),{code:'cloud-photo-integrity'});
+
+ // Private Storage JPEG objects are capped at 8 MiB by the owner's bucket.
+ // Never call response.arrayBuffer() on an untrusted browser stream before
+ // enforcing the cap: a forged/misconfigured response can exhaust mobile RAM.
+ const maxPrivateJPEGBytes=8388608;
+ async function readBoundedPrivateJPEG(response,assertActive=()=>{}){
+  assertActive();
+  const declared=response.headers?.get?.('content-length');
+  if(typeof declared==='string'&&/^\d+$/.test(declared)&&Number(declared)>maxPrivateJPEGBytes){
+   try{await response.body?.cancel?.();}catch{}
+   throw photoIntegrityError();
+  }
+  const stream=response.body;
+  if(!stream||typeof stream.getReader!=='function'){
+   // Nonstreaming synthetic/legacy response fallback. Modern mobile fetch
+   // exposes a ReadableStream and takes the bounded branch below.
+   const data=await response.arrayBuffer();assertActive();
+   if(data.byteLength>maxPrivateJPEGBytes)throw photoIntegrityError();
+   return new Uint8Array(data);
+  }
+  const reader=stream.getReader(),parts=[];
+  let length=0,expired=false;
+  const cancel=()=>{try{Promise.resolve(reader.cancel()).catch(()=>{});}catch{}};
+  const timeout=setTimeout(()=>{expired=true;cancel();},20000);
+  try{
+   while(true){
+    assertActive();
+    const result=await reader.read();
+    assertActive();
+    if(expired)throw Error('Private cloud JPEG response timed out');
+    if(result.done)break;
+    const chunk=result.value,size=chunk?.byteLength;
+    if(!Number.isSafeInteger(size)||size<0||size>maxPrivateJPEGBytes-length)
+     throw photoIntegrityError();
+    length+=size;parts.push(chunk);
+   }
+  }catch(error){cancel();throw error;}
+  finally{clearTimeout(timeout);try{reader.releaseLock();}catch{}}
+  const bytes=new Uint8Array(length);
+  let offset=0;
+  for(const chunk of parts){bytes.set(chunk,offset);offset+=chunk.byteLength;}
+  assertActive();
+  return bytes;
+ }
  function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw photoIntegrityError();return path;}
  const shaReceipt=/^[a-f0-9]{64}$/;
  function assertSourceReceipts(value){
@@ -142,7 +186,7 @@
    if(key==='cutoutImage'&&parent?.cutoutSHA256!==sha)
     throw photoIntegrityError();
    return photos.get(path,async()=>{
-    const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=new Uint8Array(await response.arrayBuffer());
+    const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=await readBoundedPrivateJPEG(response,assertActive);
     assertActive();
     if(bytes.length>8388608||await hash(bytes)!==sha)throw photoIntegrityError();
     assertActive();let binary='';
@@ -161,7 +205,7 @@
    assertActive();
    try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.
-   const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=new Uint8Array(await existing.arrayBuffer());assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw photoIntegrityError();
+   const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=await readBoundedPrivateJPEG(existing,assertActive);assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw photoIntegrityError();
   }}}
  async function getRemote(assertActive=()=>{},revisionOnly=false){
   assertActive();
