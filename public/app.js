@@ -56,7 +56,7 @@ const reviewedCloset123Active=reviewedStyle122Active&&
 // only for source-honest, photo-only styling of one human-confirmed instance.
 const reviewedCutout124Active=reviewedCloset123Active&&
  new URLSearchParams(location.search).get('reviewedCutout124')==='research';
-let saving=false;const sessionCapturedIds=new Set();
+let saving=false;const sessionCapturedIds=new Set(),failedDraftCaptures=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
@@ -79,7 +79,7 @@ window.addEventListener('closet:session-locked',()=>{
  localJobs.clear();
  localWorker?.terminate();localWorker=null;
  try{db?.close();}catch{}
- db=null;items=[];batch=[];
+ db=null;items=[];batch=[];failedDraftCaptures.clear();
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
   const source=image.getAttribute('src');
   if(source?.startsWith('blob:'))URL.revokeObjectURL(source);
@@ -716,7 +716,31 @@ function candidate(image,options={}){
    message('Original photograph verification was not available. Retake or import this photo.');
    return false;
  }
- if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
+ const duplicate=[...items,...batch].find(item=>item.image===image);
+ if(duplicate){
+  const proof=options.sourceProof||options.originalSourceProof;
+  // A failed IndexedDB draft commit leaves the original verified photo
+  // visible but unsaved. Re-presenting that exact owner's source must retry
+  // the *same* review row rather than dismissing it as a duplicate.
+  // Do not retry saved or unverified items, or another owner's source.
+  if(options.requireDraftCommit===true&&batch.includes(duplicate)&&
+     failedDraftCaptures.has(duplicate.id)&&
+     proof?.sourceHashVerified===true&&proof?.sourceSHA256===duplicate.sourceSHA256&&
+     proof?.originalPhoto?.sha256===duplicate.sourceSHA256&&
+     proof?.originalPhoto?.image===image&&proof?.image===image&&
+     duplicate.ownerId&&captureProofOwner()===duplicate.ownerId){
+   return Promise.resolve(persistDraft({required:true})).then(()=>{
+    if(!batch.includes(duplicate)||captureProofOwner()!==duplicate.ownerId)
+     throw Object.assign(Error('Capture session changed during retry'),{code:'CAPTURE_STORAGE_FAILED'});
+    failedDraftCaptures.delete(duplicate.id);
+    queueAutomatic(duplicate);
+    message('Previously unsaved photograph is now saved on this device for review.');
+    return true;
+   }).catch(error=>{failedDraftCaptures.add(duplicate.id);throw error;});
+  }
+  if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');
+  message('Exact duplicate skipped. Show the next garment.');return false;
+ }
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
@@ -743,7 +767,14 @@ function candidate(image,options={}){
  return Promise.resolve(committed).then(()=>{
   if(!batch.some(row=>row.id===item.id)||captureProofOwner()!==item.ownerId)
    throw Object.assign(Error('Capture session ended before durable review'),{code:'CAPTURE_STORAGE_FAILED'});
+  failedDraftCaptures.delete(item.id);
   queueAutomatic(item);return true;
+ }).catch(error=>{
+  // The photo stays visible in memory; only a confirmed IndexedDB commit
+  // may remove it from this ephemeral retry queue. Never persist the queue
+  // or expose it to another signed-in owner.
+  failedDraftCaptures.add(item.id);
+  throw error;
  });
 }
 function queueAutomatic(item){
