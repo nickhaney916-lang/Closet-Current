@@ -536,7 +536,12 @@ try{
      await tapReview.getByRole('button',{name:'Discard archived SAM2 preview'}).click();
      assert.equal(await tapReview.locator('[data-mission1-sam2-overlay806="none"]').count(),1);
     }
-    await tapReview.getByRole('button',{name:'Discard local mask preview'}).click();
+    // A P806 true model overlay intentionally replaces (and discards) the
+    // weaker P802 color overlay. An old disabled Discard must never be forced.
+    if(publicSAM2Dir806)
+     assert.equal(await tapReview.getByRole('button',{name:'Discard local mask preview'}).isDisabled(),true);
+    else
+     await tapReview.getByRole('button',{name:'Discard local mask preview'}).click();
     assert.equal(await tapReview.locator('[data-mission1-local-mask-overlay802="none"]').count(),1);
     await tapReview.getByRole('button',{name:'Clear garment rectangle'}).click();
     assert.equal(await tapReview.locator('[data-mission1-owner-box-outline-800="none"]').count(),1);
