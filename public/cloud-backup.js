@@ -135,8 +135,27 @@
   };
   syncingEpoch=mine;let dirtyAtStart=false;
   try{
-   let {local,m}=await callbacks.capture(()=>{assertActive();return snapshot();});assertActive();dirtyAtStart=m.dirty;status('Checking cloud backup…');const remote=await getRemote(assertActive);
-   assertActive();
+   // A clean, already-synced wardrobe needs only its small revision marker
+   // and the remote revision. Reading getAll() here clones every original
+   // full-resolution JPEG merely because the tab received focus/online.
+   let m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   let local=null;
+   if(m.dirty||!m.baseVersion){
+    ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();
+   }
+   dirtyAtStart=m.dirty;status('Checking cloud backup…');
+   const remote=await getRemote(assertActive);assertActive();
+   if(!m.dirty){
+    // A save may have marked the closet dirty while the remote request was
+    // in flight. Do not overwrite the pending-backup message with a false
+    // "Cloud backup up to date"; the next sync will take a full snapshot.
+    const newest=await callbacks.capture(()=>{assertActive();return marker();});
+    assertActive();
+    if(newest.dirty||newest.localRevision!==m.localRevision||
+       newest.baseVersion!==m.baseVersion||!!newest.needsRestore!==!!m.needsRestore){
+     status('Saved on this device · cloud backup pending');schedule();return;
+    }
+   }
    if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty(assertActive);assertActive();({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();dirtyAtStart=true;}
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision,assertActive)){schedule();return;}}
