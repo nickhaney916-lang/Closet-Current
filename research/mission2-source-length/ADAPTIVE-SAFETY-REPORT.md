@@ -66,3 +66,20 @@ CI found a fail-closed self-audit bug and then a more important audit identity b
 The self-audit also avoids throwing inside the BVH callback on contact/candidate budget exhaustion, because the pinned v0.9.2's module-global traversal guard can remain active after an exception. It returns a normal stop signal and rejects after the traversal guard resets. Invalid or incomplete observations still refuse 3D; original photographic and owner data remain untouched.
 
 Earlier PR843/P847 "new" counts are **superseded and unreliable as physical source novelty**. Corrected counts must be measured from the exact final CI HEAD before replacement claims. Mission 2 remains incomplete; Family Alpha HOLD #255 remains in force.
+
+
+## P2-C5 — exact-face contact attribution and enum-only native refusal diagnosis
+
+The previous browser release safety proof showed **six of six original-photo fallbacks**, but their screenshot receipts did not distinguish *why* each of the four 3D source-length candidates was rejected. A fallback is a successful privacy protection, but not proof which geometry needs correction.
+
+P2-C5 provides three bounded, research-only diagnostics from the existing actual 163-bone collision audit:
+
+1. **Contact attribution:** count each existing body/garment triangle contact by *garment mesh index* (torso shell, left cap, right cap) and *body mesh index*. The totals must reconcile exactly with the original-face contact-key set. Keys are parsed with hard integer bounds and exact deduplication. The result includes **only aggregate counts and stable scene indices** — no owner IDs, source photo bytes, source face coordinates, private hashes or original fabric imagery. Counting intersecting triangles does not prove signed depth/penetration.
+2. **Per-candidate refusal reasons:** map each of four immutable dry-run scales to exactly one or more fixed tags such as `coarse-body-pair-regression`, `new-body-contacts`, `new-panel-contacts`, `new-intrapanel-contacts`, `hem-extension-under-minimum` or `contact-audit-budget`. Missing or nonfinite contact evidence cannot be classified as eligible. No raw exception stack is copied into the candidate decision.
+3. **Actual native browser receipts:** if an owner-signed saved outfit cannot be admitted, the research donor propagates one fixed refusal tag through the existing original-photo/2D fallback. The test accepts only a known geometry-related cause; unknown preflight failures must fail research acceptance rather than masquerading as safe collision refusal. Both browser engines record one reason per rejection, plus the verified 320/390/430 source/body distribution.
+
+This does not commit any unsafe 3D fit or automatically solve original body contact. Source photographs and cutout evidence, saved wardrobes, user sessions, live app, hosted Supabase and staging/production are unchanged.
+
+**Acceptance:** exact-head no-deploy full Node suite and genuine Chromium+WebKit 320/390/430 source views, contact distribution count reconciliation and original JPEG/owner/outfit fallback. Historical PR #854 was verified, but **no P2-C5 passing evidence exists until its own final commit is checked**.
+
+**Still open for full Mission 2:** preexisting contact clearance (signed/nonpenetrating), realistic drape and sewing, multi-source independent masks, fitted fabrics on both bodies in multiple poses, photo-rear uncertainty, physical iPhone/Android and full owner authorization. Family Alpha HOLD #255 remains OPEN.
