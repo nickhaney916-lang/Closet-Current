@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -84,4 +84,43 @@ test('bounded triangle-contact audit refuses incomplete/forged or over-budget ev
  assert.equal(comparePosedTriangleContacts(initial,initial).nonregression,true);
  const after=measurePosedTriangleContacts(root,[garment],new Map([[garment,proposed]]));
  assert.equal(after.testedMeshPairs,1);
+});
+
+
+test('distinct shoulder/torso triangle collision is detected even when body mesh-pair gate cannot see it',()=>{
+ const {root,garment,proposed}=simplePose();
+ const secondaryGeometry=new THREE.BufferGeometry();
+ secondaryGeometry.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.15,-.2,-.3, .15,-.2,-.3, 0,-.2,.3
+ ],3));
+ secondaryGeometry.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(12),4));
+ secondaryGeometry.setAttribute('skinWeight',new THREE.BufferAttribute(new Float32Array([
+  1,0,0,0,1,0,0,0,1,0,0,0
+ ]),4));
+ const secondary=new THREE.SkinnedMesh(secondaryGeometry,new THREE.MeshStandardMaterial());
+ secondary.userData.work56Garment=true;
+ secondary.bind(garment.skeleton);root.add(secondary);
+ const originalFirst=garment.geometry.getAttribute('position').array.slice();
+ const originalSecond=secondary.geometry.getAttribute('position').array.slice();
+ const before=measurePosedGarmentPartContacts(root,[garment,secondary]);
+ const after=measurePosedGarmentPartContacts(root,[garment,secondary],new Map([[garment,proposed]]));
+ assert.ok(before.triangleContactCount>=1,'existing sleeve seam still present');
+ const result=comparePosedTriangleContacts(before,after);
+ assert.ok(result.newlyIntersecting>=1,'new inter-panel surface crossing must be vetoed');
+ assert.equal(result.nonregression,false);
+ assert.equal(after.distinctGarmentPartsOnly,true);
+ assert.equal(after.collisionCertified,false);
+ assert.equal(after.fullSelfLayerCollision,false);
+ assert.equal(after.testedMeshPairs,1);
+ assert.deepEqual(garment.geometry.getAttribute('position').array,originalFirst);
+ assert.deepEqual(secondary.geometry.getAttribute('position').array,originalSecond);
+ const one=measurePosedGarmentPartContacts(root,[garment]);
+ assert.equal(one.triangleContactCount,0,'one panel is not a full self-collision audit');
+ for(const cap of [0,-1,100001,2.5])assert.throws(
+  ()=>measurePosedGarmentPartContacts(root,[garment,secondary],new Map(),{maxContacts:cap}),/bounded valid pose/);
+ assert.throws(()=>measurePosedGarmentPartContacts(root,[garment,garment]),/bounded valid pose/);
+ assert.throws(()=>measurePosedGarmentPartContacts(root,[garment,secondary],
+  new Map([[garment,new Float32Array(2)]])),/vertex buffer/);
+ assert.throws(()=>measurePosedGarmentPartContacts(root,[garment,secondary],
+  new Map(),{maxContacts:1}),/bounded contact budget/);
 });
