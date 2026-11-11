@@ -26,6 +26,8 @@ const mission2Performance=process.env.MISSION2_PERFORMANCE==='1';
 const performanceSamples=[];
 const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
 const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
+const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
+if(sourceAdaptiveMode&&!sourceLengthMode)throw Error('Adaptive contact gate requires genuine source 3D');
 if(sourceTriangleMode&&!sourceLengthMode)throw Error('Triangle contacts need actual source-length 3D');
 const sourceProjectionMode=process.env.PHOTO_SOURCE_PROJECTION==='1';
 if(sourceProjectionMode&&!sourceLengthMode)throw Error('Source projection requires source length shape');
@@ -354,7 +356,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -382,6 +384,49 @@ try{
      viewerStatus:document.getElementById('outfit3D01Status')?.textContent,
      state:window.native3D05Bridge?.state()};}
    });
+   if(sourceAdaptiveMode){
+    const source=await page.evaluate(()=>new Promise((resolve,reject)=>{
+     const req=db.transaction('items','readonly').objectStore('items').get('native05-A-blouse');
+     req.onsuccess=()=>resolve({ownerId:req.result?.ownerId,
+      originalSHA:req.result?.originalPhoto?.sha256,
+      privateMaskSHA:req.result?.segmentHint?.ownerAlphaSHA256189});
+     req.onerror=()=>reject(req.error);
+    }));
+    assert.equal(source.ownerId,'native05-A');
+    assert.equal(source.originalSHA,photos['commons-0016'].sha256);
+    assert.deepEqual(await readBoard(page),ownerOriginal,
+     'Adaptive garment gate cannot edit/swap/delete private saved outfits');
+    const decisionState=await page.evaluate(()=>window.native3D05Bridge?.state());
+    const accepted=openProof.ok===true&&decisionState?.sourceLengthFit===true&&
+     decisionState?.sourceLengthTriangleContactStrictlyAccepted===true&&
+     decisionState?.sourceLengthNewTriangleContacts===0;
+    if(openProof.ok){
+     assert.equal(accepted,true,'3D display without a nonregressing independent triangle receipt: '+JSON.stringify({
+      source:decisionState?.sourceLengthSHA256,fit:decisionState?.sourceLengthFit,
+      strict:decisionState?.sourceLengthTriangleContactStrictlyAccepted,
+      contacts:decisionState?.sourceLengthNewTriangleContacts}));
+     assert.equal(decisionState?.sourceLengthCollisionCertified,false);
+     assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
+    }else{
+     assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),
+      /M2 source length new-body-triangle-contacts: original-photo\\/2D fallback required/i,
+      'Only the actual new-triangle collision gate may refuse photographic 3D');
+     assert.equal(decisionState?.active,false,'No unsafe clothing mesh or owner JPEG may remain mounted');
+     assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
+     assert.equal(await page.locator('#builder').isVisible(),true,
+      'Signed in original-photo outfit board must remain available after refused 3D');
+    }
+    assert.equal(await page.evaluate(()=>window.closetAuth?.user?.id),'native05-A');
+    assert.deepEqual(await readBoard(page),ownerOriginal);
+    await take(page,width,accepted?'02-contact-accepted-sampled-3d':'02-unsafe-contact-original-photo-fallback');
+    cases.push({width,sourceOriginalSHA:source.originalSHA,realSignedInSavedBoardRetained:true,
+     sampledPoseAdmitted:accepted,unsafe3DRefused:!accepted,
+     noNewBodyTriangleContactsIfAccepted:accepted,
+     neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
+     originalPrivateOwnerRetained:true,releaseAuthorized:false,familyAlpha:'HOLD'});
+    await page.close();await ctx.close();await browser.close();browser=null;
+    continue;
+   }
    if(photoOwnerCutout186&&!photoOwnerPositive188){
     assert.equal(openProof.ok,false,
      'P186 unreviewed provisional cutout must NEVER be promoted to an owner-approved 3D preview');
@@ -1332,11 +1377,11 @@ try{
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
  assert.equal(cases.length,3);(photoOwnerDamaged193||photoOwnerHairline194)?assert.equal(screens.length,6):photoOwnerPositive188?assert.equal(screens.length,22):photoOwnerCutout186?assert.equal(screens.length,6):
-  assert.equal(screens.length,photoSilhouette62?21:photoTorso173?24:15);
+  assert.equal(screens.length,sourceAdaptiveMode?6:photoSilhouette62?21:photoTorso173?24:15);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- if(sourceLengthMode)assert.equal(sourceLengthEvidence.length,6);
+ if(sourceLengthMode)assert.equal(sourceLengthEvidence.length,sourceAdaptiveMode?0:6);
  if(mission2Performance){assert.equal(performanceSamples.length,6);
   for(const width of [320,390,430])assert.deepEqual(performanceSamples.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);}
  const result={priority:photoPhysicalReadback196?'OWNER-163BONE-PHYSICAL-READBACK-196':photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
@@ -1348,7 +1393,7 @@ try{
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
-  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceLengthEvidence}:{}),
+  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceLengthEvidence}:{}),
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
