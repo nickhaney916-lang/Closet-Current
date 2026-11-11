@@ -1,0 +1,28 @@
+# Mission 1 P817 — actual frozen B0 original-source garment grouping comparison (science / no deployment)
+
+**FAMILY ALPHA HOLD #255. DRAFT, UNMERGED, UNDEPLOYED.** Direct base: primary controller P816 exact `20d5253aa26f8ad2f84d13a42159d90c7b41bed1` ([verified controller workflow](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/42963788071)); this base inherits P812 signed prospective blind review tooling and P813–P815 transactional multi-photo review source integrity. Four changed research-only paths: model test/score harness, targeted group QA, exact-head NO DEPLOY workflow and this report. **No learned weights, production app, existing native user data, cloud, staging, original photo source, title/category, training or deployment changed.**
+
+## Substantive actual model integration gap
+
+The standard private app's `public/outfit-worker.mjs` (when `multi24` is not enabled) uses `clothingMaskGroups(map)`. That parser unions all disconnected same-semantic-region pixels into **one** image crop, even for two separated shirts. A previously separate optional multi-photo research parser `visibleGarmentGroups24(map)` retains disconnected source regions and geometrically pairs adjacent shoes, but its original-photo instance advantage over the **actual native default grouping** had not been scored on the full P792 genuine publisher photo set. Results from the research multi24 parser must not be misrepresented as currently enabled normal product recognition.
+
+P817 evaluates *both true codepaths against identical frozen SegFormer model output for each original photograph* and separately evaluates the already existing source-conserving P776 component-splitting review arm on the bounded source-growth proposals. No new model/hypothesis confidence is introduced.
+
+## Trial and conservative scoring
+
+- Use exactly the ten **already development-exposed** source-original P792 publisher photographs, pinned source JPEG SHA, pinned true original photo dimensions and all **23** published garment polygons. These photos are **NOT** a fresh blinded holdout, and publisher annotations/rights don't prove independent unseen commercial training clearance.
+- Execute the unmodified `Xenova/segformer_b0_clothes` frozen model with actual source image pixels in Chromium and WebKit (not mocked tensors). The only new postprocess arms read the unchanged model logit/label map.
+- Preserve baseline `visibleGarmentGroups24` output and P767 boundary-growth candidate output. Also recover **normal native product `clothingMaskGroups`** and **P776 source-conserving component review proposals**; compare all to exactly the same published masks.
+- Score each entire original source's 23 total garment masks by maximum-cardinality one-to-one same broad semantic family at source-model raster mask IoU >= 0.50; always count false positives AND missed garment instances. Report normal baseline vs research multi24 vs existing growth vs component review in each actual browser separately. Measure a review-only decision; do not auto-adopt a candidate based on favorable sample results or a post hoc threshold.
+- P776 component review must preserve the **exact source union pixels of each original grown proposal**, with no collisions or new pixels; every proposed component remains `accepted:false`, `needsReview:true`, `autoIndex:false`, `subtype:'Unknown'`, `primaryColor:'Unknown'`. The model has not been trained to assign those attributes.
+- Native normal group mask source coordinates are reconstructed solely from actual SegFormer pixels. The test author doesn't create human polygons or manually supply owner/seed input. Real model execution is only in CI, not on any phone.
+
+## Mandatory verification and source hygiene
+
+Dedicated `.github/workflows/mission1-native-source-split-817-no-deploy.yml` must pass exact P816 commit and a strict four-path allowlist, targeted unit tests and the full native app Node/build regression, then fetch the exact pinned publisher annotation/image dataset and run all 10 true originals in both genuine browser engines. It asserts 10 unique original source SHA records, exactly 23 publisher masks for each engine, consistent per-source TP+FN denominators, no private photo, no review/auto save, and all model wrong and missed cases included. The CI first performs the original-source identity/annotation SHA intake before loading the frozen model; every original image and browser screenshot is deleted before artifact upload. Numeric source-identity and mask-score receipts only; **do not claim this milestone verified until exact-head CI passes.**
+
+The P792 data itself previously established B0 baseline **7 TP / 21 FP / 16 FN** (Chromium) and **7 / 18 / 16** (WebKit) with optional bounded growth **8 / 20 / 15** and **8 / 17 / 15**, respectively, on the research multi24 grouping. Those are actual exposed-source development diagnostics, not measured current native default model behavior or real independent acceptance.
+
+## Mission release blocker remains
+
+No signed two-actual-human original photo cohort truly blinded from model output, independently rights-cleared unseen photo/license proof, held-out class/subtype/color accuracy or acceptable mask IoU, high recall/precision, physical Android Chrome or iPhone Safari model inference and RAM, signed hosted two-owner acceptance or explicit owner release approval. A change in source grouping improves or worsens **proposal count/matched masks** only; it cannot create a missing or hallucinated garment, infer hidden pixels or verify any item category. **MISSION 1 NOT COMPLETE. FAMILY ALPHA HOLD #255.** Do not merge, deploy or promote experimental proposals from this trial.
