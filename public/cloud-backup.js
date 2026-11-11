@@ -124,6 +124,48 @@
   assertActive();
   return bytes;
  }
+ // A private backup's JSON contains owner metadata and Storage references,
+ // not full photograph bytes. Bound the HTTP body BEFORE JSON.parse() so an
+ // oversized or never-ending response cannot allocate unlimited phone RAM.
+ // Legacy reviewed inline cutouts can exist; allow 32 MiB for full recovery.
+ const maxOwnerCloudDocumentBytes=33554432;
+ const maxOwnerCloudSmallReplyBytes=65536;
+ async function readBoundedCloudJSON(response,limit,assertActive=()=>{}){
+  assertActive();
+  const declared=response.headers?.get?.('content-length');
+  if(typeof declared==='string'&&/^\d+$/.test(declared)&&Number(declared)>limit){
+   try{await response.body?.cancel?.();}catch{}
+   throw photoIntegrityError();
+  }
+  if(!response.body||typeof response.body.getReader!=='function'){
+   // Compatibility with mocked and older nonstreaming response objects:
+   // browser fetch's ReadableStream above is the only pre-allocation bound.
+   const result=await response.json();assertActive();return result;
+  }
+  const reader=response.body.getReader(),parts=[];
+  let length=0,expired=false;
+  const cancel=()=>{try{Promise.resolve(reader.cancel()).catch(()=>{});}catch{}};
+  const timeout=setTimeout(()=>{expired=true;cancel();},20000);
+  try{
+   while(true){
+    assertActive();
+    const part=await reader.read();
+    assertActive();
+    if(expired)throw Error('Cloud backup response body timed out');
+    if(part.done)break;
+    const chunk=part.value,size=chunk?.byteLength;
+    if(!Number.isSafeInteger(size)||size<0||size>limit-length)
+     throw photoIntegrityError();
+    length+=size;parts.push(chunk);
+   }
+  }catch(error){cancel();throw error;}
+  finally{clearTimeout(timeout);try{reader.releaseLock();}catch{}}
+  const bytes=new Uint8Array(length);let offset=0;
+  for(const part of parts){bytes.set(part,offset);offset+=part.byteLength;}
+  assertActive();
+  try{return JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));}
+  catch{throw photoIntegrityError();}
+ }
  function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw photoIntegrityError();return path;}
  const shaReceipt=/^[a-f0-9]{64}$/;
  function assertSourceReceipts(value){
@@ -270,7 +312,7 @@
   // when a previously merged local wardrobe still needs a restore.
   const select=revisionOnly?'revision':'revision,document';
   const response=await api('/rest/v1/closet_backups?select='+select+'&owner_id=eq.'+user,{},false,assertActive);
-  const rows=await response.json();assertActive();
+  const rows=await readBoundedCloudJSON(response,revisionOnly?maxOwnerCloudSmallReplyBytes:maxOwnerCloudDocumentBytes,assertActive);assertActive();
   if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');
   if(!rows.length)return null;
   const row=rows[0];
@@ -346,7 +388,7 @@
   }
   return saved;
  }
- const integrityText='Cloud photograph integrity check failed. Existing local clothing and saved outfits are unchanged. Automatic cloud sync is paused. Use Sync closet only after repairing the cloud copy.';
+ const integrityText='Cloud photograph integrity check failed or cloud backup data exceeds the safe response limit. Existing local clothing and saved outfits are unchanged. Automatic cloud sync is paused. Use Sync closet only after repairing the cloud copy.';
  const capacityText=code=>code===413?
    'Cloud rejected a photograph as too large. Original photos remain on this device. Check photo size, then use Sync to retry.':
    'Cloud storage capacity is full. Original photos remain on this device. Free cloud space, then use Sync to retry.';
@@ -548,7 +590,7 @@
    // In-flight immutable JPEG POST might leave unreferenced owner-only bytes,
    // but never publish an outdated cloud document after a local delete/edit.
    if(!await isCurrentDirtySnapshot(m,assertActive)){staleSnapshotPending();return;}
-   const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,assertActive),revision=await response.json();assertActive();
+   const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,assertActive),revision=await readBoundedCloudJSON(response,maxOwnerCloudSmallReplyBytes,assertActive);assertActive();
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
    // If another local save happened during upload, keep its durable pending flag.
    assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,dirty:current.localRevision!==m.localRevision});};});
