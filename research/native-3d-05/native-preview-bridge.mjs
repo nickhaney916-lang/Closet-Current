@@ -440,7 +440,14 @@ export async function mountNative3D05({
        physical.sourceLengthNewIntrapanelContacts!==0||
        physical.sourceLengthIntrapanelAffectedPairOnly!==true||
        !Number.isSafeInteger(physical.sourceLengthIntrapanelChangedFaces)||
-       physical.sourceLengthIntrapanelChangedFaces<1)
+       physical.sourceLengthIntrapanelChangedFaces<1||
+       (params?.get('photoSourceDepthTrial')==='research'&&(
+        physical.sourceLengthExperimentalDepthTrial!==true||
+        physical.sourceLengthOriginalXYPhotographedSilhouetteRetained!==true||
+        physical.sourceLengthDepthFromPhotographVerified!==false||
+        !Number.isFinite(physical.sourceLengthDepthClearance)||
+        physical.sourceLengthDepthClearance<0||
+        physical.sourceLengthDepthClearance>.024)))
      throw Error('M2 sampled body, garment-part or intrapanel triangle proof missing; original-photo/2D fallback required');
    }
    if(params?.get('photoSilhouette62')==='research'){
@@ -765,6 +772,11 @@ export async function mountNative3D05({
    sourceLengthTriangleContactBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactBefore:null,
    sourceLengthTriangleContactAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAfter:null,
    sourceLengthNewTriangleContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewTriangleContacts:null,
+   sourceLengthDepthClearance:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthDepthClearance:null,
+   sourceLengthExperimentalDepthTrial:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthExperimentalDepthTrial===true,
+   sourceLengthDepthFromPhotographVerified:false,
+   sourceLengthOriginalXYPhotographedSilhouetteRetained:active&&
+    data.fitReceipts171?.shirt?.silhouette62?.sourceLengthOriginalXYPhotographedSilhouetteRetained===true,
    sourceLengthBodyContactDistribution:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthBodyContactDistribution:null,
    sourceLengthGarmentPartContactStrictlyAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactStrictlyAccepted===true,
    sourceLengthGarmentPartContactsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactsBefore:null,
