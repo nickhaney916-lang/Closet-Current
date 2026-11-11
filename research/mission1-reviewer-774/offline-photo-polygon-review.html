@@ -115,6 +115,48 @@ This tool uses only local files. It never shows model predictions, another revie
  const state={seal:null,photo:null,verified:false,image:null,regions:[],vertices:[],polygons:[],holes:[],holeMode:false,negative:false,href:null,sourceLease:0};
  const ctx=$('drawing').getContext('2d');
  const status=(message,fail=false)=>{$('status').textContent=message;$('status').style.color=fail?'#9a2330':'#254d5b';};
+ /**
+  * P811: exact key-sorted canonical SHA used by prospective-gate.mjs.
+  * This only proves source-seal bytes have not been edited; it never
+  * authenticates a coordinator signature, rights or reviewer identity.
+  */
+ function canonicalSeal811(x){
+  if(x===null||typeof x==='boolean'||typeof x==='string')return JSON.stringify(x);
+  if(typeof x==='number'&&Number.isFinite(x))return JSON.stringify(x);
+  if(Array.isArray(x))return '['+x.map(canonicalSeal811).join(',')+']';
+  if(!x||typeof x!=='object'||Object.getPrototypeOf(x)!==Object.prototype)
+   throw Error('Unsupported prospective seal content');
+  const keys=Object.keys(x).sort();
+  if(keys.some(k=>['__proto__','prototype','constructor'].includes(k)))
+   throw Error('Unsafe prospective seal keys');
+  return '{'+keys.map(k=>JSON.stringify(k)+':'+canonicalSeal811(x[k])).join(',')+'}';
+ }
+ async function verifySeal811(seal){
+  if(!seal||typeof seal!=='object'||Array.isArray(seal)||
+     seal.schema!=='closet-current-prospective-holdout/v1'||
+     !/^[a-f0-9]{64}$/.test(seal.sealSHA256||'')||
+     !Array.isArray(seal.photos)||!seal.photos.length||seal.photos.length>300||
+     typeof crypto?.subtle?.digest!=='function')
+   throw Error('Invalid prospective original-photo seal');
+  const ids=new Set(),digests=new Set();
+  for(const p of seal.photos){
+   if(typeof p?.id!=='string'||!/^hold-[a-z0-9-]{4,60}$/.test(p.id)||
+      typeof p.image!=='string'||!/^[-a-z0-9_]+\.jpe?g$/.test(p.image)||
+      !/^[a-f0-9]{64}$/.test(p.sha256||'')||
+      !Number.isSafeInteger(p.width)||!Number.isSafeInteger(p.height)||
+      p.width<32||p.height<32||p.width*p.height>16000000||
+      ids.has(p.id)||digests.has(p.sha256))
+    throw Error('Invalid or duplicated registered original JPEG identity');
+   ids.add(p.id);digests.add(p.sha256);
+  }
+  const {sealSHA256,...body}=seal;
+  const raw=new TextEncoder().encode(canonicalSeal811(body));
+  const digest=await crypto.subtle.digest('SHA-256',raw);
+  const hex=Array.from(new Uint8Array(digest),v=>v.toString(16).padStart(2,'0')).join('');
+  if(hex!==sealSHA256)
+   throw Error('Prospective seal SHA-256 mismatch: source registration was changed');
+  return true;
+ }
  function reset(){
   // Every source, seal or file transition cancels all pending async proofs.
   state.sourceLease++;
@@ -164,11 +206,11 @@ This tool uses only local files. It never shows model predictions, another revie
    const f=$('cohort').files[0];if(!f||f.size>1024*1024)throw Error('Seal missing or too large');
    const seal=JSON.parse(await f.text());
    if(lease!==state.sourceLease)return;
-   if(!Array.isArray(seal.photos)||!seal.photos.length||
-      typeof seal.sealSHA256!=='string'||seal.sealSHA256.length!==64)throw Error('Invalid registered seal');
+   await verifySeal811(seal);
+   if(lease!==state.sourceLease)return;
    state.seal=seal;sel($('photoId'),seal.photos.map(x=>x.id));state.photo=seal.photos[0];
    $('photoId').disabled=false;$('original').disabled=false;
-   status('Choose the original JPEG and verify its SHA and source dimensions.');
+   status('Source seal SHA-256 matches; coordinator signature is NOT authenticated here. Choose exact original JPEG.');
   }catch(e){if(lease===state.sourceLease)status(e.message,true);}
  };
  $('photoId').onchange=()=>{reset();state.photo=state.seal.photos.find(x=>x.id===$('photoId').value);$('verify').disabled=!$('original').files.length;};

@@ -27,9 +27,18 @@ for(let y=0;y<height;y++)for(let x=0;x<width;x++){
 }
 const photo=await sharp(rgba,{raw:{width,height,channels:3}}).jpeg({quality:95}).toBuffer();
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
+const canonical=x=>{
+ if(x===null||typeof x==='boolean'||typeof x==='string')return JSON.stringify(x);
+ if(typeof x==='number'&&Number.isFinite(x))return JSON.stringify(x);
+ if(Array.isArray(x))return '['+x.map(canonical).join(',')+']';
+ if(!x||typeof x!=='object')throw Error('invalid test source seal body');
+ const keys=Object.keys(x).sort();
+ return '{'+keys.map(k=>JSON.stringify(k)+':'+canonical(x[k])).join(',')+'}';
+};
 const sourceSHA=sha(photo),photoId='hold-synthetic-browser-fixture';
-const seal={schema:'closet-current-prospective-holdout/v1',sealSHA256:'a'.repeat(64),
+const sealBody={schema:'closet-current-prospective-holdout/v1',
  photos:[{id:photoId,image:'synthetic-fixture.jpg',sha256:sourceSHA,width,height}]};
+const seal={...sealBody,sealSHA256:sha(Buffer.from(canonical(sealBody)))};
 for(const engine of names){
  const browser=await ({chromium,webkit})[engine].launch({headless:true,args:engine==='chromium'?['--no-sandbox']:[]});
  try{
@@ -166,6 +175,39 @@ for(const engine of names){
     hashes.push({engine,width:screenWidth,sha256:sha(await readFile(raced)),
      syntheticOnly:true,kind:'stale-source-rejected'});
     console.log('P810_STALE_SOURCE_DECODE_DISCARDED_AND_BLOB_REVOKED',engine,screenWidth);
+    // P811: a seal whose source dimensions have changed without re-sealing
+    // is never accepted as an independent pre-inference registration.
+    const tamperedSeal={...seal,photos:[{...seal.photos[0],width:65}]};
+    await page.locator('#cohort').setInputFiles({
+     name:'tampered-prospective-seal.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify(tamperedSeal))
+    });
+    await page.waitForFunction(()=>
+     document.getElementById('status')?.textContent?.includes('Prospective seal SHA-256 mismatch'));
+    assert.equal(await page.locator('#photoId').isDisabled(),true);
+    assert.equal(await page.locator('#original').isDisabled(),true);
+    assert.equal(await page.locator('#verify').isDisabled(),true);
+    assert.equal(await page.locator('#export').isDisabled(),true);
+    assert.equal(await page.locator('#proof').textContent(),'No image verified.');
+    assert.deepEqual(external,[]);
+    const tamperedPath=out+'/'+engine+'-'+screenWidth+'-tampered-seal-refused.png';
+    await page.screenshot({path:tamperedPath,fullPage:true});
+    hashes.push({engine,width:screenWidth,sha256:sha(await readFile(tamperedPath)),
+     syntheticOnly:true,kind:'tampered-seal-rejected'});
+    console.log('P811_TAMPERED_SEAL_SHA_REJECTED_BEFORE_OFFLINE_REVIEW',engine,screenWidth);
+    // Even a re-computed valid checksum cannot authorize an image that
+    // violates the signer adapter's minimum 32x32 source-pixel bounds.
+    const undersizedBody={...sealBody,photos:[{...seal.photos[0],width:31}]};
+    const undersizedSeal={...undersizedBody,sealSHA256:sha(Buffer.from(canonical(undersizedBody)))};
+    await page.locator('#cohort').setInputFiles({
+     name:'undersized-original-seal.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify(undersizedSeal))
+    });
+    await page.waitForFunction(()=>document.getElementById('status')?.textContent?.
+     includes('Invalid or duplicated registered original JPEG identity'));
+    assert.equal(await page.locator('#original').isDisabled(),true);
+    assert.equal(await page.locator('#export').isDisabled(),true);
+    console.log('P811_VALID_CHECKSUM_BUT_INVALID_SIGNER_SOURCE_DIMENSIONS_REJECTED',engine,screenWidth);
     console.log('P809_HUMAN_OUTER_MINUS_HOLE_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
      screenshot,sha(rendered));
    }finally{await context.close();}
