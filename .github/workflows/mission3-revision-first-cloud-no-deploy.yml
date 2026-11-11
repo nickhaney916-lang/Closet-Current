@@ -1,0 +1,76 @@
+name: Mission 3 owner-private revision-first cloud metadata — NO DEPLOY
+on:
+  push:
+    branches: [research/mission3-revision-first-cloud-metadata-20261110-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  revision-first-private-cloud:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact verified Mission 3 quota-safe restore parent and strict no-deployment scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=977d87f83cc08350cd9661323f862b6722e35679
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase public/local-worker.mjs public/recognition-engine.mjs
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/cloud-backup.js|tests/mission3-revision-first-cloud.test.cjs|scripts/test-mission3-revision-first-browser.mjs|research/mission3-revision-first-cloud/REPORT.md|.github/workflows/mission3-revision-first-cloud-no-deploy.yml) ;;
+              *) echo "Unexpected Mission 3 revision-first cloud path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned full Node and genuine Chromium/WebKit dependencies
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Reproduce 1000-item full JSON cloud GET at exact verified parent
+        run: |
+          git worktree add --detach /tmp/closet-mission3-revision-parent 977d87f83cc08350cd9661323f862b6722e35679
+          CLOUD_SOURCE_ROOT=/tmp/closet-mission3-revision-parent EXPECT_BASELINE=1 node --test tests/mission3-revision-first-cloud.test.cjs
+      - name: Verify metadata-only clean and dirty checks, remote updates and race-safe merges
+        run: node --test tests/mission3-revision-first-cloud.test.cjs
+      - name: Build complete app and run entire serial Node regression
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Genuine Chromium and WebKit 320 390 430 revision-first large wardrobe browser acceptance
+        run: node scripts/test-mission3-revision-first-browser.mjs benchmark/mission3-revision-first-cloud-browser
+      - name: Genuine Chromium and WebKit 320 390 430 private cloud 413 507 durable retry
+        run: node scripts/test-mission3-durable-capacity-browser.mjs benchmark/mission3-revision-capacity-browser
+      - name: Genuine Chromium and WebKit 320 390 430 atomic owner-local quota restore
+        run: node scripts/test-mission3-device-quota-restore-browser.mjs benchmark/mission3-revision-quota-browser
+      - name: Genuine Chromium original and reviewed cutout cross-browser cloud recovery
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0002
+          node scripts/test-outfit-backup-compatibility-browser.mjs benchmark/mission3-revision-compat-browser
+      - name: Genuine Chromium WebKit original photo to private closet styling 320 390 430
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Genuine Chromium WebKit mobile quota recovery and accessibility
+        run: node scripts/test-family-reliability-mobile.mjs
+      - name: Preserve synthetic owner acceptance receipts and screenshots only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-revision-first-private-cloud-evidence-HOLD
+          path: |
+            benchmark/mission3-revision-first-cloud-browser/
+            benchmark/mission3-revision-capacity-browser/
+            benchmark/mission3-revision-quota-browser/
+            benchmark/mission3-revision-compat-browser/
+            benchmark/native-canonical-closet-style-167/
+            benchmark/family-reliability-mobile/
+          retention-days: 14
