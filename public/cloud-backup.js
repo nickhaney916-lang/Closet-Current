@@ -303,7 +303,7 @@
       store.clear();for(const item of local.items)store.put(item);
       for(const id of E.stateIds)state.delete(id);
       for(const row of Object.values(local.state))state.put(row);
-      state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document,remotePhotoPause:null,integrityPause:false});
+      state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document,remotePhotoPause:null,integrityPause:m.integrityPause===true?false:m.integrityPause});
       applied=true;
      }catch(error){
       restoreError=error;
