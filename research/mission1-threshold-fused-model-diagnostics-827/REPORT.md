@@ -34,3 +34,12 @@ The first P827 workflow [Actions #43076048939](https://github.com/nickhaney916-l
 P827 now validates the exact dynamically generated instrumented worker source with Node `vm.Script` before any browser starts; it fails immediately with a `M1_P827_WORKER_BOOTSTRAP_SYNTAX` receipt instead of waiting 390 seconds if malformed. The actual browser also catches `Worker.onerror`, `Worker.onmessageerror`, and page errors with bounded no-original-byte diagnostics. Only genuine returning original model results can be scored. These bootstrap diagnostics do not weaken original SHA, model version, mask verification, dataset quarantine or no-release constraints.
 
 **Exact final commit after this change requires new CI. The earlier 1/2 job P827 failure is not overridden by Node green status.**
+
+
+## Confirmed root cause of P821/P827 first-run timeout — parser never reached the model
+
+Source-level reconstruction of the exact dynamically assembled worker identified the cause: the P821 threshold-results string `thresholdProfiles821:await Promise.all(...groups:await Promise.all(...))` had a **missing closing parenthesis for the inner `Promise.all`**. The generated worker was syntactically invalid (`SyntaxError: missing ) after argument list`). Since the browser script never parsed, it sent no initial `loading` message; the harness's old `worker.onmessage`-only handler waited for its full 390-second timeout. Repeating or simply fusing softmax work could never solve this startup defect.
+
+P827 corrects this exact generated worker string and permanently adds a **no-model, no-download Node regression test** that runs the *actual* source-composition logic for threshold mode, legacy component mode and base mode, then compiles each resulting worker. A direct read-only check of the final generated source verified all three variants parse. The real browser harness additionally rejects syntax errors before startup and catches worker onerror/messageerror instead of hanging silently. The P827 fused algorithm is an additional research efficiency improvement; it is **not claimed to have been the root-cause fix**.
+
+**The new real Chromium/WebKit source benchmark still requires final exact-HEAD CI success before publishing any new 23-instance scores or marking the research complete.**
