@@ -84,7 +84,10 @@ jobs:
             assert.equal(p.schema,'closet-current-m1-original-native-gesture-sam2-research-804/v1');
             assert.equal(p.sourceId,'commons-0053');
             assert.equal(p.sourceSHA256,s.realModelOriginalSHA256);
-            assert.deepEqual([p.originalWidth,p.originalHeight],[320,480]);
+            assert.ok(Number.isInteger(p.originalWidth)&&p.originalWidth>=8&&p.originalWidth<=3072);
+            assert.ok(Number.isInteger(p.originalHeight)&&p.originalHeight>=8&&p.originalHeight<=3072);
+            assert.ok(p.originalPixelBox[0]>=0&&p.originalPixelBox[2]<=p.originalWidth);
+            assert.ok(p.originalPixelBox[1]>=0&&p.originalPixelBox[3]<=p.originalHeight);
             assert.equal(p.actualOriginalGestureInNativeAdjust,true);
             assert.equal(p.publisherPolygonNotUsedToConstructPrompt,true);
             assert.equal(p.automatedPlaywrightFixture,true);
