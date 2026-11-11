@@ -313,6 +313,20 @@
   });
   assertActive();return outcome;
  }
+ // A user may edit/delete while an earlier snapshot is computing source SHAs,
+ // waiting for remote state or uploading immutable private JPEGs. Never
+ // publish that older wardrobe after beforeWrite committed a newer revision.
+ async function isCurrentDirtySnapshot(snapshotMarker,assertActive){
+  const latest=await callbacks.capture(()=>{assertActive();return marker();});
+  assertActive();
+  return !!latest.dirty&&latest.localRevision===snapshotMarker.localRevision&&
+   latest.baseVersion===snapshotMarker.baseVersion&&
+   !!latest.needsRestore===!!snapshotMarker.needsRestore;
+ }
+ function staleSnapshotPending(){
+  status('Saved on this device · cloud backup pending');
+  schedule();
+ }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false,retryPaused=false}={}){
   if(stopForReview145())return;
@@ -405,7 +419,15 @@
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision,assertActive)){schedule();return;}}
     status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
    }
-   status('Backing up your closet…');const encoded=await encode(local,assertActive);assertActive();let document=encoded.document;
+   if(!await isCurrentDirtySnapshot(m,assertActive)){
+    staleSnapshotPending();return;
+   }
+   status('Backing up your closet…');
+   const encoded=await encode(local,assertActive);assertActive();
+   if(!await isCurrentDirtySnapshot(m,assertActive)){
+    staleSnapshotPending();return;
+   }
+   let document=encoded.document;
    if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){
     if(keepBoth){
      const ids=new Map(m.resolutionIds||[]);document=E.keepBothDocuments(m.baseDocument,document,remote.document,row=>{const key=E.canonical(row);if(!ids.has(key))ids.set(key,crypto.randomUUID());return ids.get(key);});
@@ -419,7 +441,15 @@
    assertSourceReceipts(document);
    await assertCloudPhotoReferences(document,assertActive);
    assertActive();
+   if(!await isCurrentDirtySnapshot(m,assertActive)){
+    staleSnapshotPending();return;
+   }
    await upload(encoded.photos,assertActive);assertActive();
+   // A deletion or replacement committed while one original JPEG POST was
+   // blocked must not be resurrected by a late cloud document CAS publish.
+   if(!await isCurrentDirtySnapshot(m,assertActive)){
+    staleSnapshotPending();return;
+   }
    const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,assertActive),revision=await response.json();assertActive();
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
    // If another local save happened during upload, keep its durable pending flag.
