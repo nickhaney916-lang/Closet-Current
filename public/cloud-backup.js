@@ -52,7 +52,7 @@
  async function readBoundedPrivateJPEG(response,assertActive=()=>{}){
   assertActive();
   const declared=response.headers?.get?.('content-length');
-  if(typeof declared==='string'&&/^\\d+$/.test(declared)&&Number(declared)>maxPrivateJPEGBytes){
+  if(typeof declared==='string'&&/^\d+$/.test(declared)&&Number(declared)>maxPrivateJPEGBytes){
    try{await response.body?.cancel?.();}catch{}
    throw photoIntegrityError();
   }
