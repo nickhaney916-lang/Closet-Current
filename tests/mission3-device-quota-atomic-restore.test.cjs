@@ -133,7 +133,7 @@ test('quota during first restored garment put leaves exact original wardrobe and
    const before=f.requests.length;
    await f.window.closetCloud.sync();await f.autoEvents();
    assert.equal(f.requests.length,before,'known local quota failure must not repeatedly redownload photos');
-   assert.ok(f.scheduled.length<=1);
+   assert.equal(f.scheduled.filter(ms=>ms<20000).length,0,'quota must not schedule repeated automatic restore');
    guard.recover();await f.manual();
    assert.deepEqual((await f.rows()).map(row=>row.id),['remote-one','remote-two']);
    assert.equal((await f.board()).saved[0].id,'remote-outfit');
