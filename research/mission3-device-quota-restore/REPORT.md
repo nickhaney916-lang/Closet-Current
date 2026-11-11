@@ -22,3 +22,6 @@ A cloud REST restore can decode all verified original JPEGs successfully but the
 
 ## Remaining mission release blockers
 No authorized disposable hosted Supabase project or genuine signed A/B test accounts were available; the existing staging/production RLS metadata read-only inspection cannot be represented as real JWT cross-owner acceptance. Real Android Chrome/iPhone Safari device memory/quota/OS-kill and 1,000-distinct-full-size actual garment JPEG peak heap/restore acceptance are outstanding. Missions 1 and 2 own independent real-photo recognition and 3D realism integration. Family Alpha HOLD #255 stays OPEN.
+
+## Inherited concurrency-test correction
+The repository-wide camera/indexing workflow exposed an intermittent inherited PR #810 upload-revocation test failure: a fixed 100-event-loop-tick polling loop could complete before the synthetic second cloud upload began. That test has now been replaced with a deterministic signal from the **actual second in-flight POST**, so revocation is verified only when the request is genuinely suspended. No privacy assertion was relaxed. This adds `tests/mission3-bounded-upload-manifest.test.cjs` to the isolated path allowlist (five changed paths total).
