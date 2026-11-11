@@ -430,6 +430,29 @@
    // and the remote revision. Reading getAll() here clones every original
    // full-resolution JPEG merely because the tab received focus/online.
    let m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   if(!retryPaused&&isRemotePhotoError(m.remotePhotoPause?.reason)){
+    pausedRemotePhoto=m.remotePhotoPause;clearTimeout(timer);timer=null;
+    status(remotePhotoText(pausedRemotePhoto.reason));return;
+   }
+   if(!retryPaused&&isRemotePhotoError(pausedRemotePhoto?.reason)){
+    clearTimeout(timer);timer=null;status(remotePhotoText(pausedRemotePhoto.reason));return;
+   }
+   const localPause=m.localPhotoPause;
+   const blockedLocal=isLocalPhotoError(localPause?.reason)&&localPause.revision===m.localRevision;
+   if(!retryPaused&&(blockedLocal||pausedLocalPhoto?.revision===m.localRevision)){
+    pausedLocalPhoto=blockedLocal?localPause:pausedLocalPhoto;
+    clearTimeout(timer);timer=null;status(localPhotoText(pausedLocalPhoto.reason));return;
+   }
+   if(localPause){
+    await callbacks.capture(()=>writeLocalPhotoPause(null,m.localRevision,assertActive));
+    assertActive();m=await callbacks.capture(()=>marker());assertActive();
+   }
+   pausedLocalPhoto=null;
+   if(retryPaused&&m.remotePhotoPause){
+    await callbacks.capture(()=>writeRemotePhotoPause(null,null,m.localRevision,assertActive));
+    assertActive();m=await callbacks.capture(()=>marker());assertActive();
+    pausedRemotePhoto=null;
+   }
    if(retryPaused&&isCapacityError(m.capacityPause)){
     // Only a deliberate owner action clears the durable block. If the app
     // crashes before the upload finishes, the next start may retry once;
@@ -454,8 +477,9 @@
     // require a full snapshot of original JPEGs before cloud revision poll.
     ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();
    }
-   dirtyAtStart=m.dirty;status('Checking cloud backup…');
+   dirtyAtStart=m.dirty;photoRevisionAtStart=m.localRevision;status('Checking cloud backup…');
    const remoteRevision=await getRemote(assertActive,true);assertActive();
+   remoteRevisionAtStart=remoteRevision?.revision||null;
    // Optimistic revision comparison is sufficient for both clean checks
    // and same-version outgoing backups. If another owner device published
    // a different revision, fetch its complete document for merge/restore.
@@ -485,7 +509,7 @@
      // taking the first full snapshot. Existing owner edits are never cleared.
      await callbacks.capture(()=>markDirty(assertActive));assertActive();
      ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));
-     assertActive();dirtyAtStart=true;
+     assertActive();dirtyAtStart=true;photoRevisionAtStart=m.localRevision;
     }
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision,assertActive)){schedule();return;}}
@@ -518,7 +542,25 @@
     // Cloud quota/file limit failures do not recover from connectivity.
     // Keep local originals untouched, stop background retries, and require
     // an explicit owner-initiated Sync after the capacity issue is fixed.
-    if(isDeviceStorageError(e)){
+    if(remoteRevisionAtStart&&isRemotePhotoError(e.code)){
+     pausedRemotePhoto={reason:e.code,revision:remoteRevisionAtStart};clearTimeout(timer);timer=null;
+     let outcome='error';
+     try{outcome=await callbacks.capture(()=>writeRemotePhotoPause(e.code,remoteRevisionAtStart,photoRevisionAtStart,assertActive));}
+     catch{}
+     if(mine===generation){
+      if(outcome==='stale'){pausedRemotePhoto=null;status('Saved on this device · cloud backup pending');schedule();}
+      else status(remotePhotoText(e.code)+(outcome==='error'?' The pause could not be saved across app restart.':''));
+     }
+    }else if(dirtyAtStart&&isLocalPhotoError(e.code)){
+     pausedLocalPhoto={reason:e.code,revision:photoRevisionAtStart};clearTimeout(timer);timer=null;
+     let outcome='error';
+     try{outcome=await callbacks.capture(()=>writeLocalPhotoPause(e.code,photoRevisionAtStart,assertActive));}
+     catch{}
+     if(mine===generation){
+      if(outcome==='stale'){pausedLocalPhoto=null;status('Saved on this device · cloud backup pending');schedule();}
+      else status(localPhotoText(e.code)+(outcome==='error'?' The pause could not be saved across app restart.':''));
+     }
+    }else if(isDeviceStorageError(e)){
      pausedDeviceStorage=true;clearTimeout(timer);timer=null;
      const persisted=writeDevicePause(user,true);
      status(deviceStorageText+(persisted?'':' This pause could not be saved; reopening the app may retry.'));
