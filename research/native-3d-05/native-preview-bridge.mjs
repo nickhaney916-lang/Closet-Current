@@ -402,8 +402,8 @@ export async function mountNative3D05({
     let proof171=null;
     for(let i=0;i<40;i++){
      const render=panel?.state?.();
-     if(params?.get('photoSourceTrianglePolicy')==='adaptive'&&
-        String(doc.getElementById('outfit3D01Status')?.textContent||'').includes('M2 source length new-body-triangle-contacts'))
+     if(['adaptive','radial-loft'].includes(params?.get('photoSourceTrianglePolicy'))&&
+        /M2 source length (new-body-triangle-contacts|radial-loft-contact-blocked)/.test(String(doc.getElementById('outfit3D01Status')?.textContent||'')))
       throw Error('M2 source length new-body-triangle-contacts: original-photo/2D fallback required; 3D scene denied');
      const verdict=fitModule.inspectNativePhotoFit171({
       selection:selected,sources:selectedSources91,
@@ -427,8 +427,13 @@ export async function mountNative3D05({
     requireFresh();
     verifiedPhotographicFit171=proof171;
    }
-   if(params?.get('photoSourceTrianglePolicy')==='adaptive'){
+   if(['adaptive','radial-loft'].includes(params?.get('photoSourceTrianglePolicy'))){
     const physical=panel?.state?.()?.fitReceipts171?.shirt?.silhouette62;
+    if(params?.get('photoSourceTrianglePolicy')==='radial-loft'&&
+       (physical?.sourceLengthRadialLoftOnePoseAccepted!==true||
+        !Number.isFinite(physical?.sourceLengthRadialLoftMeters)||
+        physical.sourceLengthRadialLoftMeters<=0||physical.sourceLengthRadialLoftMeters>.08))
+     throw Error('M2 sampled radial loft proof missing; original-photo/2D fallback required');
     if(physical?.sourceLengthFit!==true||
        physical.sourceLengthTriangleContactStrictlyAccepted!==true||
        physical.sourceLengthNewTriangleContacts!==0)
@@ -756,6 +761,9 @@ export async function mountNative3D05({
    sourceLengthTriangleContactBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactBefore:null,
    sourceLengthTriangleContactAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAfter:null,
    sourceLengthNewTriangleContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewTriangleContacts:null,
+   sourceLengthRadialLoftMeters:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthRadialLoftMeters:null,
+   sourceLengthRadialLoftOnePoseAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthRadialLoftOnePoseAccepted===true,
+   sourceLengthRadialLoftCandidateCount:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthRadialLoftCandidateCount:null,
    sourceLengthCollisionCertified:false,
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&
