@@ -20,7 +20,8 @@ spec.loader.exec_module(mod)
 class BrowserBoxReceiptContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        _,cls.digest,cls.attrib=mod.pinned_source()
+        photo,cls.digest,cls.attrib=mod.pinned_source()
+        cls.size=photo.size
 
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory()
@@ -33,10 +34,12 @@ class BrowserBoxReceiptContract(unittest.TestCase):
         self.temp.cleanup()
 
     def fixture(self):
+        w,h=self.size
         src={
             "schema":mod.SCHEMA,"sourceId":"commons-0053",
-            "sourceSHA256":self.digest,"originalWidth":320,"originalHeight":480,
-            "originalPixelBox":[61,72,267,423],"originalPixelPositivePoint":[160,240],
+            "sourceSHA256":self.digest,"originalWidth":w,"originalHeight":h,
+            "originalPixelBox":[int(w*.19),int(h*.15),int(w*.83)+1,int(h*.88)+1],
+            "originalPixelPositivePoint":[w//2,h//2],
             "actualOriginalGestureInNativeAdjust":True,
             "automatedPlaywrightFixture":True,
             "publisherPolygonNotUsedToConstructPrompt":True,
@@ -57,16 +60,17 @@ class BrowserBoxReceiptContract(unittest.TestCase):
 
     def run_prompt_check(self):
         mod.INPUT.write_text(json.dumps(self.payload))
-        return mod.read_actual_native_prompts(self.digest)
+        return mod.read_actual_native_prompts(self.digest,self.size)
 
     def test_original_sha_pinned_and_two_browsers_source_coordinates(self):
         p=self.run_prompt_check()
         self.assertEqual(len(p),2)
-        self.assertEqual(p[0]["box"],[61,72,267,423])
-        self.assertEqual(p[1]["point"],[160,240])
+        w,h=self.size
+        self.assertEqual(p[0]["box"],[int(w*.19),int(h*.15),int(w*.83)+1,int(h*.88)+1])
+        self.assertEqual(p[1]["point"],[w//2,h//2])
 
     def test_cross_photo_hash_and_unverified_schema_rejected(self):
-        for field,value in (("sourceSHA256","0"*64),("originalHeight",479),("schema","incorrect")):
+        for field,value in (("sourceSHA256","0"*64),("originalHeight",self.size[1]-1),("schema","incorrect")):
             with self.subTest(field=field):
                 self.payload=self.fixture()
                 self.payload["scenarios"][0]["sourcePromptForActualSAM2804"][field]=value
