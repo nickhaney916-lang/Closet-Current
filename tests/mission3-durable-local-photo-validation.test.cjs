@@ -122,10 +122,8 @@ for(const [reason,photo] of [['LOCAL_PHOTO_FORMAT',badFormat],['LOCAL_PHOTO_INVA
     assert.equal(f.timers.filter(x=>x<20000).length,0);
    }
    const previous=f.requests.length;
-   f.close();
-   // Simulate full page-controller recreation while preserving owner IndexedDB.
-   // This fixture's start reuses same local controller; new source VM below
-   // is exercised independently by the genuine browser test.
+   // Restart the same signed owner controller without closing its DB.
+   // The separate Chromium/WebKit browser test recreates the entire page.
    if(!baseline){
     await f.window.closetCloud.start(f.db,{capture:work=>work(),
      canRestore:()=>true,async restored(){}});
