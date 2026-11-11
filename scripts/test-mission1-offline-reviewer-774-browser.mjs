@@ -124,6 +124,48 @@ for(const engine of names){
     await page.waitForFunction(()=>
      document.getElementById('status')?.textContent?.includes('differs from the immutable registered source SHA'));
     assert.equal(await page.locator('#export').isDisabled(),true);
+    // Deterministic stale promise: after cryptographic SHA, freeze decode,
+    // switch to another selected JPEG, then release the OLD image decode.
+    await page.locator('#original').setInputFiles({
+     name:'source-before-race.jpg',mimeType:'image/jpeg',buffer:photo
+    });
+    await page.evaluate(()=>{
+     const originalDecode=HTMLImageElement.prototype.decode;
+     const originalRevoke=URL.revokeObjectURL.bind(URL);
+     window.__m1Source810={release:null,done:false,revoked:[]};
+     URL.revokeObjectURL=url=>{
+      window.__m1Source810.revoked.push(url);
+      originalRevoke(url);
+     };
+     HTMLImageElement.prototype.decode=function(){
+      const that=this;
+      return new Promise((resolve,reject)=>{
+       window.__m1Source810.release=()=>{
+        originalDecode.call(that).then(()=>{
+         window.__m1Source810.done=true;resolve();
+        },reject);
+       };
+      });
+     };
+    });
+    await page.locator('#verify').click();
+    await page.waitForFunction(()=>typeof window.__m1Source810?.release==='function');
+    await page.locator('#original').setInputFiles({
+     name:'source-selected-after-race.jpg',mimeType:'image/jpeg',
+     buffer:Buffer.concat([photo.subarray(0,20),Buffer.from([8]),photo.subarray(21)])
+    });
+    await page.evaluate(()=>window.__m1Source810.release());
+    await page.waitForFunction(()=>window.__m1Source810?.done&&window.__m1Source810.revoked.length>=1);
+    assert.equal(await page.locator('#export').isDisabled(),true,'stale photo cannot re-enable export');
+    assert.equal(await page.locator('#add').isDisabled(),true);
+    assert.equal(await page.locator('#holeMode').isDisabled(),true);
+    assert.equal(await page.locator('#proof').textContent(),'No image verified.');
+    assert.deepEqual(external,[],'offline source race must not fetch remotely');
+    const raced=out+'/'+engine+'-'+screenWidth+'-source-race-stale-rejected.png';
+    await page.screenshot({path:raced,fullPage:true});
+    hashes.push({engine,width:screenWidth,sha256:sha(await readFile(raced)),
+     syntheticOnly:true,kind:'stale-source-rejected'});
+    console.log('P810_STALE_SOURCE_DECODE_DISCARDED_AND_BLOB_REVOKED',engine,screenWidth);
     console.log('P809_HUMAN_OUTER_MINUS_HOLE_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
      screenshot,sha(rendered));
    }finally{await context.close();}
