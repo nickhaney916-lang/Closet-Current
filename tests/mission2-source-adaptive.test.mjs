@@ -8,7 +8,7 @@ const SHA='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const profile={accepted:true,sourceSHA256:SHA,cutoutSHA256:'a'.repeat(64),
  inferredBack:true,releaseAuthorized:false,silhouetteAspect:.8534,
  bands:[.44,.74,.92,.89,.78,.86,.95,.67]};
-function fixture(obstacleHeight=null){
+function fixture(obstacleHeight=null,{torsoMode='plane'}={}){
  const root=new THREE.Group(),bones=Array.from({length:163},()=>new THREE.Bone());
  root.add(...bones);const skeleton=new THREE.Skeleton(bones);
  function skinned(g,role){
@@ -26,10 +26,13 @@ function fixture(obstacleHeight=null){
  const body=new THREE.CylinderGeometry(.15,.15,1,32,20,true);body.translate(0,1.05,0);
  skinned(body,'body');
  if(obstacleHeight!==null){
-  const g=new THREE.BoxGeometry(.6,.12,.3);g.translate(0,obstacleHeight,0);
+  const g=new THREE.BoxGeometry(.6,.12,.35);g.translate(0,obstacleHeight,.2);
   skinned(g,'body');
  }
- const torso=new THREE.CylinderGeometry(.23,.23,.57,32,20,true);torso.translate(0,1.365,0);
+ const torso=torsoMode==='cylinder'
+  ?new THREE.CylinderGeometry(.23,.23,.57,32,20,true)
+  :new THREE.PlaneGeometry(.46,.57,20,20);
+ torso.translate(0,1.365,torsoMode==='cylinder'?0:.25);
  const cap=(x)=>{const g=new THREE.CylinderGeometry(.04,.04,.2,24,6,true);g.translate(x,1.45,0);return g;};
  const meshes=[skinned(torso,'torso'),skinned(cap(-.45),'L'),skinned(cap(.45),'R')];
  for(const m of meshes)m.geometry.setAttribute('panelPosition',
@@ -117,5 +120,17 @@ test('no acceptable extension fails closed before ANY user-photo mesh or panel m
  fx.assertOriginal();
  assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile),
   /new-body-triangle-contacts: original-photo\/2D fallback required/);
+ fx.assertOriginal();
+});
+
+
+test('unsewn synthetic cylinder folds into new intrapanel contacts and cannot be promoted as safe 3D',()=>{
+ const fx=fixture(null,{torsoMode:'cylinder'});
+ const decision=planNoNewContactSourceLength(fx.shirt,fx.root,profile);
+ assert.equal(decision.accepted,false);
+ assert.equal(decision.originalPhotographOnly,true);
+ assert.ok(decision.attempts.some(a=>Number.isInteger(a.newlyIntersectingIntrapanel)&&a.newlyIntersectingIntrapanel>0));
+ fx.assertOriginal();
+ assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile),/original-photo\/2D fallback required/);
  fx.assertOriginal();
 });
