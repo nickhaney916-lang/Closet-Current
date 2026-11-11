@@ -24,9 +24,11 @@ export function deriveSourceLength({profile,minY,maxY,spanX}={}){
   boundedTargetLength:targetLength,absoluteSizeMeasured:false});
 }
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
- strictTriangleContacts=false,extensionScale=1,previewOnly=false}={}){
+ strictTriangleContacts=false,extensionScale=1,previewOnly=false,radialLoftMeters=0}={}){
  if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
    (previewOnly&&projectSourceRGB))fail('finite bounded extension scale and no projection in dry-run required');
+ if(!Number.isFinite(radialLoftMeters)||radialLoftMeters<0||radialLoftMeters>.08)
+  fail('M2 finite bounded radial loft required');
  if(strictTriangleContacts&&!traceTriangleContacts)fail('strict triangle gate requires actual triangle measurements');
  const started=performance.now();
  if(shirt?.stats?.sourceSHA256!==SOURCE||shirt.stats.ownerAlphaMaskBasedPhysicalGeometry190!==true||
@@ -57,6 +59,13 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    w.y-=shape.extension*extensionScale*weight;
    w.x*=1+(shape.flare-1)*extensionScale*weight;
    w.z=center+(w.z-center)*(1+.18*extensionScale*weight);
+   // Outward-loft the lower source envelope, never the photographed shoulder/caps.
+   // Rest-pose radial proxy only; not a measured signed body normal or cloth physics.
+   if(radialLoftMeters>0&&weight>0){
+    const radial=Math.hypot(w.x,w.z-center);
+    if(radial>.045){const offset=radialLoftMeters*weight/radial;
+     w.x+=w.x*offset;w.z+=(w.z-center)*offset;}
+   }
    const delta=w.distanceTo(old);maximum=Math.max(maximum,delta);
    if(delta>.0001)moved++;
    lowest=Math.min(lowest,w.y);w.applyMatrix4(inv);
@@ -90,6 +99,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   sourceLengthSHA256:SOURCE,
   sourceLengthMovedVertices:moved,sourceLengthOldHemY:minY,sourceLengthNewHemY:lowest,
   sourceLengthExtension:shape.extension*extensionScale,
+  sourceLengthRadialLoftMeters:radialLoftMeters,sourceLengthRadialLoftPhysicalMeasured:false,
   sourceLengthFlare:1+(shape.flare-1)*extensionScale,
   sourceLengthOriginalUVPreserved:true,sourceLengthRearInferred:true,
   sourceLengthPhysicalSizeMeasured:false,sourceLengthCollisionCertified:false,
@@ -148,4 +158,59 @@ export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceR
   sourceLengthAdaptiveOnePoseNonregression:true,
   sourceLengthExistingContactsNotCertified:true,
   releaseAuthorized:false}};
+}
+
+
+/**
+ * M2-C2: search bounded outward radial lower-body source envelopes while
+ * retaining the exact photographed texture and a wholly inferred back.
+ * The radial direction is a rest-pose proxy, not a measured body normal.
+ * Each candidate must independently pass the old body pair audit and the
+ * actual P843 triangle-ID nonregression; otherwise retain photo/2D only.
+ */
+export function planRadialLoftSourceLength(shirt,root,profile){
+ const trials=[
+  [1,.08],[.75,.08],[.5,.08],[.25,.08],
+  [1,.04],[.75,.04],[.5,.04],[.25,.04]
+ ];
+ const attempts=[];
+ for(const [scale,radialLoftMeters] of trials){
+  try{
+   const v=fitSourceLength(shirt,root,profile,{extensionScale:scale,
+    radialLoftMeters,traceTriangleContacts:true,previewOnly:true}).stats;
+   const accepted=v.sourceLengthNewTriangleContacts===0&&
+     v.sourceLengthTriangleContactAfter<=v.sourceLengthTriangleContactBefore&&
+     v.sourceLengthNewHemY<v.sourceLengthOldHemY-.07;
+   attempts.push(Object.freeze({scale,radialLoftMeters,accepted,
+    newTriangleContacts:v.sourceLengthNewTriangleContacts,
+    totalContactsBefore:v.sourceLengthTriangleContactBefore,
+    totalContactsAfter:v.sourceLengthTriangleContactAfter,
+    hemDeltaMeters:v.sourceLengthOldHemY-v.sourceLengthNewHemY}));
+   if(accepted)break;
+  }catch(e){
+   attempts.push(Object.freeze({scale,radialLoftMeters,accepted:false,
+    error:String(e.message||e)}));
+  }
+ }
+ const winner=attempts.find(x=>x.accepted);
+ return Object.freeze({
+  accepted:!!winner,selectedScale:winner?.scale??null,
+  selectedRadialLoftMeters:winner?.radialLoftMeters??null,
+  attempts:Object.freeze(attempts),
+  sampledPoseOnly:true,sourcePhotoAuthoritative:true,
+  unobservedRearInferred:true,physicallyMeasuredClearance:false,
+  releaseAuthorized:false});
+}
+export function applyRadialLoftSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
+ const decision=planRadialLoftSourceLength(shirt,root,profile);
+ if(!decision.accepted)
+  fail('radial-loft-contact-blocked: photographed garment remains original-photo/2D fallback; no unsafe mesh committed');
+ const result=fitSourceLength(shirt,root,profile,{projectSourceRGB,
+  traceTriangleContacts:true,strictTriangleContacts:true,
+  radialLoftMeters:decision.selectedRadialLoftMeters,
+  extensionScale:decision.selectedScale});
+ return {...result,stats:{...result.stats,
+  sourceLengthRadialLoftCandidateCount:decision.attempts.length,
+  sourceLengthRadialLoftOnePoseAccepted:true,
+  sourceLengthCollisionCertified:false,releaseAuthorized:false}};
 }
