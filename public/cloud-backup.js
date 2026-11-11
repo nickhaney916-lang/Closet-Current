@@ -375,7 +375,9 @@
     pausedIntegrity=true;clearTimeout(timer);timer=null;status(integrityText);return;
    }
    let local=null;
-   if(m.dirty||!m.baseVersion){
+   if(m.dirty){
+    // Cold signed-in starts check count/state first; only pending edits
+    // require a full snapshot of original JPEGs before cloud revision poll.
     ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();
    }
    dirtyAtStart=m.dirty;status('Checking cloud backup…');
