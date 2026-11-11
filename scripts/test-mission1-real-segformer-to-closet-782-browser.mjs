@@ -532,6 +532,11 @@ try{
      });
      for(const [key,val] of Object.entries(receipt))
       assert.equal(val,true,'P806 public licensed original SAM2 preview only '+name+'/'+width+' '+key);
+     // P806 visual QA must capture the ACTUAL original photo + real model
+     // alpha overlay (not only the scroll position showing explanatory text).
+     const originalModelSurface=tapReview.locator('button[aria-label="Tap original photograph to select garment point"]');
+     assert.equal(await originalModelSurface.count(),1);
+     await originalModelSurface.screenshot({path:out+'/'+name+'-'+width+'-01g2-actual-original-P804-SAM2-photo-overlay.png'});
      await page.screenshot({path:out+'/'+name+'-'+width+'-01g-P804-REAL-SAM2-mask-NATIVE-UNVERIFIED-PRECOMPUTED.png',fullPage:true});
      await tapReview.getByRole('button',{name:'Discard archived SAM2 preview'}).click();
      assert.equal(await tapReview.locator('[data-mission1-sam2-overlay806="none"]').count(),1);
