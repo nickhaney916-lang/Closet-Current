@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
- let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null,pausedDeviceStorage=false;
+ let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null,pausedDeviceStorage=false,pausedIntegrity=false;
  // P145: research-host-only owner-reviewed mode. The ordinary legacy cloud
  // writer MUST NOT run next to the independent consent-bound P134/P137 flow.
  // This guard does not mount P134/P137 or authorize cloud mutation.
@@ -43,7 +43,8 @@
  }
  const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
  function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
- function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw Error('Invalid private photo path');return path;}
+ const photoIntegrityError=()=>Object.assign(Error('Cloud photograph or wardrobe integrity verification failed'),{code:'cloud-photo-integrity'});
+ function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw photoIntegrityError();return path;}
  const shaReceipt=/^[a-f0-9]{64}$/;
  function assertSourceReceipts(value){
   E.validateDocument(value);
@@ -82,26 +83,26 @@
   assertActive();
   return {document:E.validateDocument(document),photos};
  }
- async function decode(document,assertActive=()=>{}){assertActive();assertSourceReceipts(document);const photos=E.createPhotoCache(8);return E.mapImages(document,async(value,key,parent)=>{
+ async function decode(document,assertActive=()=>{}){assertActive();try{assertSourceReceipts(document);}catch{throw photoIntegrityError();}const photos=E.createPhotoCache(8);return E.mapImages(document,async(value,key,parent)=>{
    assertActive();
    // Historical backups placed owner-reviewed cutoutImage JPEGs directly in
    // private JSON. Accept only an exact SHA-attested legacy cutout, so it can
    // be converted to a private Storage reference at the next backup.
    if(key==='cutoutImage'&&value.startsWith('data:image/jpeg;base64,')){
     const bytes=imageBytes(value),actual=await hash(bytes);assertActive();
-    if(parent?.cutoutSHA256!==actual)throw Error('Legacy reviewed cutout integrity check failed');
+    if(parent?.cutoutSHA256!==actual)throw photoIntegrityError();
     return value;
    }
    const path=photoPath(value,user),sha=path.split('/')[1].slice(0,-4);
    if(key==='image'&&parent?.sha256!==undefined&&
       (!shaReceipt.test(parent.sha256)||parent.sha256!==sha))
-    throw Error('Cloud original photo receipt does not match object SHA');
+    throw photoIntegrityError();
    if(key==='cutoutImage'&&parent?.cutoutSHA256!==sha)
-    throw Error('Reviewed cutout receipt does not match cloud object SHA');
+    throw photoIntegrityError();
    return photos.get(path,async()=>{
     const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=new Uint8Array(await response.arrayBuffer());
     assertActive();
-    if(bytes.length>8388608||await hash(bytes)!==sha)throw Error('Photo integrity check failed');
+    if(bytes.length>8388608||await hash(bytes)!==sha)throw photoIntegrityError();
     assertActive();let binary='';
     for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));
     return 'data:image/jpeg;base64,'+btoa(binary);
@@ -118,9 +119,9 @@
    assertActive();
    try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.
-   const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=new Uint8Array(await existing.arrayBuffer());assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw Error('Stored photo differs');
+   const existing=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),stored=new Uint8Array(await existing.arrayBuffer());assertActive();if(await hash(stored)!==path.split('/')[1].slice(0,-4))throw photoIntegrityError();
   }}}
- async function getRemote(assertActive=()=>{}){assertActive();const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user,{},false,assertActive);const rows=await response.json();assertActive();if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');E.validateDocument(r.document);return r;}
+ async function getRemote(assertActive=()=>{}){assertActive();const response=await api('/rest/v1/closet_backups?select=revision,document&owner_id=eq.'+user,{},false,assertActive);const rows=await response.json();assertActive();if(!Array.isArray(rows)||rows.length>1)throw Error('Invalid cloud response');if(!rows.length)return null;const r=rows[0];if(!Number.isSafeInteger(r.revision)||r.revision<1)throw Error('Invalid cloud revision');try{E.validateDocument(r.document);}catch{throw photoIntegrityError();}return r;}
  async function apply(document,revision,expectedRevision,assertActive){
   assertActive();
   if(callbacks.canRestore&&!callbacks.canRestore())return false;
@@ -183,6 +184,7 @@
   }
   return saved;
  }
+ const integrityText='Cloud photograph integrity check failed. Existing local clothing and saved outfits are unchanged. Automatic cloud sync is paused. Use Sync closet only after repairing the cloud copy.';
  const capacityText=code=>code===413?
    'Cloud rejected a photograph as too large. Original photos remain on this device. Check photo size, then use Sync to retry.':
    'Cloud storage capacity is full. Original photos remain on this device. Free cloud space, then use Sync to retry.';
@@ -201,17 +203,27 @@
   });
   assertActive();
  }
+ async function writeIntegrityPause(paused,assertActive){
+  assertActive();
+  await transact(['state'],'readwrite',tx=>{
+   const store=tx.objectStore('state'),r=store.get('cloud-sync');
+   r.onsuccess=()=>{try{
+    assertActive();store.put({...(r.result||markerDefault()),integrityPause:!!paused});
+   }catch{try{tx.abort();}catch{}}};
+  });
+  assertActive();
+ }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false,retryPaused=false}={}){
   if(stopForReview145())return;
-  if((pausedCapacity||pausedDeviceStorage)&&!retryPaused)return;
+  if((pausedCapacity||pausedDeviceStorage||pausedIntegrity)&&!retryPaused)return;
   if(!enabled||syncingEpoch===generation)return;
   if(retryPaused){
    // A stale Sync button from a signed-out/switching owner may NEVER clear
    // the previous owner's durable local quota stop before lease validation.
    if(window.closetAuth?.user?.id!==user)return;
    try{window.closetAuth?.assertCurrent?.();}catch{return;}
-   pausedCapacity=null;pausedDeviceStorage=false;writeDevicePause(user,false);
+   pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;writeDevicePause(user,false);
   }
   const mine=generation,ownerAtStart=user,dbAtStart=db;
   const assertActive=()=>{
@@ -237,6 +249,12 @@
     pausedCapacity=m.capacityPause;
     clearTimeout(timer);timer=null;
     status(capacityText(pausedCapacity));return;
+   }
+   if(retryPaused&&m.integrityPause){
+    await callbacks.capture(()=>writeIntegrityPause(false,assertActive));
+    assertActive();m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   }else if(!retryPaused&&m.integrityPause){
+    pausedIntegrity=true;clearTimeout(timer);timer=null;status(integrityText);return;
    }
    let local=null;
    if(m.dirty||!m.baseVersion){
@@ -287,6 +305,12 @@
      pausedDeviceStorage=true;clearTimeout(timer);timer=null;
      const persisted=writeDevicePause(user,true);
      status(deviceStorageText+(persisted?'':' This pause could not be saved; reopening the app may retry.'));
+    }else if(e.code==='cloud-photo-integrity'){
+     pausedIntegrity=true;clearTimeout(timer);timer=null;
+     let durable=true;
+     try{await callbacks.capture(()=>writeIntegrityPause(true,assertActive));}
+     catch{durable=false;}
+     if(mine===generation)status(integrityText+(durable?'':' Keep the app open if possible; this pause could not be saved.'));
     }else if(dirtyAtStart&&(e.status===413||e.status===507)){
      pausedCapacity=e.status;clearTimeout(timer);timer=null;
      let durable=true;
@@ -305,12 +329,12 @@
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
-  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    pausedDeviceStorage=readDevicePause(user);
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});if(pausedDeviceStorage){status(deviceStorageText);return;}await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db){if(window.closetAuth?.user?.id!==user)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();const ownerAtWrite=user,dbAtWrite=db;await markDirty(()=>{if(!enabled||ownerAtWrite!==user||dbAtWrite!==db||window.closetAuth?.user?.id!==ownerAtWrite)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();});}},
-  changed(){if(stopForReview145())return;if(enabled){if(pausedDeviceStorage){status(deviceStorageText);return;}if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
+  changed(){if(stopForReview145())return;if(enabled){if(pausedDeviceStorage){status(deviceStorageText);return;}if(pausedIntegrity){status(integrityText);return;}if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
  };
  window.addEventListener('pageshow',event=>{if(stopForReview145())return;if(event.persisted&&db&&window.closetAuth?.user?.id===user){enabled=true;sync();}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
