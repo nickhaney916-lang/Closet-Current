@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+import {Script} from 'node:vm';
 import {clothingLabelMap} from '../public/outfit-segmentation.mjs';
 import {THRESHOLD_PROFILES_821,clothingLabelMapThreshold821,clothingLabelMapsFused827} from '../research/mission1-real-source-threshold-profiles-821/profile-map.mjs';
 
@@ -105,4 +107,33 @@ test('P827 nonfinite and altered profiles fail closed instead of fabricating evi
   /M1_P827_UNREGISTERED_THRESHOLD_PROFILE/);
  assert.throws(()=>clothingLabelMapsFused827(data,dims,THRESHOLD_PROFILES_821.slice(1)),
   /M1_P827_UNREGISTERED_THRESHOLD_PROFILE/);
+});
+
+
+test('P827 exact dynamically instrumented real-browser B0 worker parses before any model download',async()=>{
+ const source=readFileSync('scripts/test-mission1-seeded-boundary-recovery-browser.mjs','utf8'),
+       workerSource=readFileSync('research/real-mask-evidence-31/worker.mjs','utf8');
+ const start=source.indexOf("const anchor='selectedMaskSHA256:await sha(g.selected),';"),
+       finish=source.indexOf('// P827: syntax-check',start);
+ assert.ok(start>0&&finish>start,
+  'test must inspect the actual worker-composition logic, not a paraphrase');
+ const buildSource=source.slice(start,finish);
+ // Preserve exact source generation including dynamically spliced P821
+ // threshold receipts. Skip only ephemeral directory creation, never model code.
+ const AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;
+ const compile=new AsyncFunction('workerSource','thresholdP821','componentP817',
+  'mkdir','out','assert',buildSource+'\nreturn instrumentedWorker;');
+ for(const [thresholdP821,componentP817] of [[true,false],[false,true],[false,false]]){
+  const generated=await compile(workerSource,thresholdP821,componentP817,
+   async()=>{},'/tmp/no-private-photos',assert);
+  assert.ok(generated.includes('sourceMapLabelsSHA256'));
+  if(thresholdP821){
+   assert.ok(generated.includes('thresholdProfiles821:await Promise.all('));
+   assert.ok(generated.includes('p827-fused-softmax-complete'));
+   assert.ok(generated.includes('p827-onnx-inference-complete'));
+   assert.ok(generated.includes('clothingLabelMapsFused827('));
+  }
+  assert.doesNotThrow(()=>new Script(generated,{filename:'actual-instrumented-research-worker.mjs'}),
+   'the precise real browser worker must compile before model assets load');
+ }
 });
