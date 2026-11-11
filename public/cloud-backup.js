@@ -161,6 +161,28 @@
  const isDeviceStorageError=error=>error?.name==='QuotaExceededError'||
   (error?.name==='DOMException'&&error?.code===22);
  const deviceStorageText='Device storage is full. Existing local clothing is unchanged; cloud restoration is paused. Free device storage, then select Sync closet to retry.';
+ // Owner-scoped, non-photo stop bit: IndexedDB may itself be too full to save
+ // a marker. localStorage survives PWA restart; sessionStorage is a best-
+ // effort same-tab reload fallback when localStorage is unavailable.
+ // Private garments, photo bytes and session tokens NEVER enter these stores.
+ const devicePauseKey=owner=>'closet-current:device-quota-pause:v1:'+owner;
+ function readDevicePause(owner){
+  for(const kind of ['localStorage','sessionStorage']){
+   try{if(window[kind]?.getItem(devicePauseKey(owner))==='1')return true;}catch{}
+  }
+  return false;
+ }
+ function writeDevicePause(owner,paused){
+  let saved=false;
+  for(const kind of ['localStorage','sessionStorage']){
+   try{
+    const storage=window[kind];if(!storage)continue;
+    if(paused){storage.setItem(devicePauseKey(owner),'1');if(storage.getItem(devicePauseKey(owner))==='1')saved=true;}
+    else storage.removeItem(devicePauseKey(owner));
+   }catch{} // Storage may be unavailable or fully exhausted too.
+  }
+  return saved;
+ }
  const capacityText=code=>code===413?
    'Cloud rejected a photograph as too large. Original photos remain on this device. Check photo size, then use Sync to retry.':
    'Cloud storage capacity is full. Original photos remain on this device. Free cloud space, then use Sync to retry.';
@@ -184,7 +206,7 @@
   if(stopForReview145())return;
   if((pausedCapacity||pausedDeviceStorage)&&!retryPaused)return;
   if(!enabled||syncingEpoch===generation)return;
-  if(retryPaused){pausedCapacity=null;pausedDeviceStorage=false;}
+  if(retryPaused){pausedCapacity=null;pausedDeviceStorage=false;writeDevicePause(user,false);}
   const mine=generation,ownerAtStart=user,dbAtStart=db;
   const assertActive=()=>{
    if(!enabled||mine!==generation||ownerAtStart!==user||dbAtStart!==db||
@@ -257,7 +279,8 @@
     // an explicit owner-initiated Sync after the capacity issue is fixed.
     if(isDeviceStorageError(e)){
      pausedDeviceStorage=true;clearTimeout(timer);timer=null;
-     status(deviceStorageText);
+     const persisted=writeDevicePause(user,true);
+     status(deviceStorageText+(persisted?'':' This pause could not be saved; reopening the app may retry.'));
     }else if(dirtyAtStart&&(e.status===413||e.status===507)){
      pausedCapacity=e.status;clearTimeout(timer);timer=null;
      let durable=true;
@@ -277,7 +300,8 @@
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
   async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
-   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});await sync();
+   pausedDeviceStorage=readDevicePause(user);
+   navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});if(pausedDeviceStorage){status(deviceStorageText);return;}await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db){if(window.closetAuth?.user?.id!==user)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();const ownerAtWrite=user,dbAtWrite=db;await markDirty(()=>{if(!enabled||ownerAtWrite!==user||dbAtWrite!==db||window.closetAuth?.user?.id!==ownerAtWrite)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();});}},
   changed(){if(stopForReview145())return;if(enabled){if(pausedDeviceStorage){status(deviceStorageText);return;}if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
