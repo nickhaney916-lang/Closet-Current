@@ -86,7 +86,11 @@ export function measurePosedTriangleContacts(root,meshes,overrides=new Map(),{ma
       intersectsTriangles:(bodyTri,garmentTri,bodyId,garmentId)=>{
        if(!bodyTri.intersectsTriangle(garmentTri))return false;
        hit=true;
-       contactKeys.add(garmentIndex+':'+bodyIndex+':'+garmentId+':'+bodyId);
+       // v0.9.2 bvhcast reports indirect TREE offsets, not source faces.
+       // Resolve both sides so before/after identity survives BVH rebuilding.
+       const garmentFace=g.boundsTree.resolveTriangleIndex(garmentId);
+       const bodyFace=body.boundsTree.resolveTriangleIndex(bodyId);
+       contactKeys.add(garmentIndex+':'+bodyIndex+':'+garmentFace+':'+bodyFace);
        if(contactKeys.size>=maxContacts){stop=true;return true;}
        return false; // enumerate ALL contacts, do not stop at the first one
       }
@@ -157,7 +161,9 @@ export function measurePosedGarmentPartContacts(root,meshes,overrides=new Map(),
      intersectsTriangles:(leftTri,rightTri,leftId,rightId)=>{
       if(!leftTri.intersectsTriangle(rightTri))return false;
       hit=true;
-      contactKeys.add(left+':'+right+':'+leftId+':'+rightId);
+      const sourceLeft=a.boundsTree.resolveTriangleIndex(leftId);
+      const sourceRight=c.boundsTree.resolveTriangleIndex(rightId);
+      contactKeys.add(left+':'+right+':'+sourceLeft+':'+sourceRight);
       if(contactKeys.size>=maxContacts){overflow=true;return true;}
       return false;
      }
@@ -227,11 +233,15 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
     other.boundsTree=new MeshBVH(other,{indirect:true});
     g.boundsTree.bvhcast(other.boundsTree,identity,{
      intersectsTriangles:(a,c,aId,cId)=>{
-     if(aId===cId||adjacent(aId,cId))return false;
+     // Both BVHs sort faces independently; callback IDs are tree offsets.
+     // Never infer topology or persistent contact identity from those IDs.
+     const sourceA=g.boundsTree.resolveTriangleIndex(aId);
+     const sourceC=other.boundsTree.resolveTriangleIndex(cId);
+     if(sourceA===sourceC||adjacent(sourceA,sourceC))return false;
      candidateTests++;
      if(candidateTests>maxCandidateTests){overflowReason='triangle comparison';return true;}
      if(!a.intersectsTriangle(c))return false;
-     const min=Math.min(aId,cId),max=Math.max(aId,cId);
+     const min=Math.min(sourceA,sourceC),max=Math.max(sourceA,sourceC);
      contactKeys.add(meshIndex+':'+min+':'+max);
      if(contactKeys.size>=maxContacts){overflowReason='contact';return true;}
       return false;
