@@ -23,12 +23,24 @@ try{
   {name:'PRIVATE_PHONE_GARMENT.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')},
   {name:'PRIVATE_PHONE_NEGATIVE.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0090.jpg')}
  ]);
- await page.locator('#category-0').selectOption('Tops');await page.locator('#type-0').selectOption('T-shirt');assert.equal(await page.locator('#run').isDisabled(),true);
- await page.locator('#category-1').selectOption('Uncategorized');await page.locator('#run').click();
- assert.equal(await page.locator('#category-0').isDisabled(),true);assert.equal(await page.locator('#photos').isDisabled(),true);
+ await page.locator('#category-0').selectOption('Tops');await page.locator('#type-0').selectOption('T-shirt');
+ // Exercise pre-inference optional color control without inventing ground-truth
+ // for this publisher image. Color truth must be supplied by a real human.
+ assert.equal(await page.locator('#color-0').isEnabled(),true);
+ await page.locator('#color-0').selectOption('Blue');
+ assert.equal(await page.locator('#color-0').inputValue(),'Blue');
+ await page.locator('#color-0').selectOption('');
+ assert.equal(await page.locator('#run').isDisabled(),true);
+ await page.locator('#category-1').selectOption('Uncategorized');assert.equal(await page.locator('#color-1').isDisabled(),true);await page.locator('#run').click();
+ assert.equal(await page.locator('#category-0').isDisabled(),true);assert.equal(await page.locator('#color-0').isDisabled(),true);assert.equal(await page.locator('#photos').isDisabled(),true);
  await page.locator('#download').waitFor({state:'visible',timeout:480000});
  const downloadPromise=page.waitForEvent('download');await page.locator('#download').click();const download=await downloadPromise;const reportPath=join(output,'results.json');await download.saveAs(reportPath);
- const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);console.log('M1_P829_REAL_WORKER_SANITIZED_'+engine,JSON.stringify({summary:report.summary,photos:report.photos.map(p=>({id:p.id,expectedCategory:p.expectedCategory,expectedType:p.expectedType,category:p.prediction?.category,type:p.prediction?.type,strong:p.strong,categoryConfirmed:p.categoryConfirmed,categoryMatch:p.categoryMatch,typeMatch:p.typeMatch,error:p.error}))}));assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.incorrectAutomaticCategories,0);assert.equal(report.summary.incorrectAutomaticTypes,0);assert.equal(report.summary.negativeRejected,1);if(engine==='chromium'){assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);}else{assert.ok([0,1].includes(report.summary.categoryMatches));assert.ok([0,1].includes(report.summary.typeMatches));assert.ok(report.summary.typeMatches<=report.summary.categoryMatches);}assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
+ const raw=await readFile(reportPath,'utf8'),report=JSON.parse(raw);console.log('M1_P829_REAL_WORKER_SANITIZED_'+engine,JSON.stringify({summary:report.summary,photos:report.photos.map(p=>({id:p.id,expectedCategory:p.expectedCategory,expectedType:p.expectedType,category:p.prediction?.category,type:p.prediction?.type,strong:p.strong,categoryConfirmed:p.categoryConfirmed,categoryMatch:p.categoryMatch,typeMatch:p.typeMatch,error:p.error}))}));assert.ok(!raw.includes('PRIVATE_PHONE'));assert.ok(!raw.includes('data:image'));assert.equal(report.summary.photos,2);assert.equal(report.summary.errors,0);assert.equal(report.summary.colorsChecked,0);
+ assert.equal(report.summary.colorMatches,0);
+ assert.equal(report.summary.incorrectAutomaticColors,0);
+ assert.equal(report.summary.incorrectAutomaticCategories,0);
+ assert.ok(report.photos.every(x=>x.expectedColor===null&&
+   (x.prediction?.color==null||['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor'].includes(x.prediction.color))));assert.equal(report.summary.incorrectAutomaticTypes,0);assert.equal(report.summary.negativeRejected,1);if(engine==='chromium'){assert.equal(report.summary.categoryMatches,1);assert.equal(report.summary.typeMatches,1);}else{assert.ok([0,1].includes(report.summary.categoryMatches));assert.ok([0,1].includes(report.summary.typeMatches));assert.ok(report.summary.typeMatches<=report.summary.categoryMatches);}assert.match(report.release,/^[a-f0-9]{12}$/);assert.equal(report.recognitionIndex,JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256);
  assert.equal(await page.locator('#category-0').isDisabled(),true);
  const positiveRow=report.photos[0];
  const positiveVerdict=await page.locator('#result-0').innerText();
