@@ -219,6 +219,14 @@ function clothingFields(body,item,onChange=()=>{},requireNativeCatalogType=false
 }
 function cropClothingPhoto(item){
  if(localPending.has(item.id)||busy)return;
+ // P824: existing saved owner clothing is never overwritten by an ambiguous
+ // source crop through the normal writeAll() path. A saved-item correction
+ // requires a separate original/cutout SHA-proven owner-reviewed CAS.
+ if(item.segmentHint?.sourceDisconnectedReviewRequired===true&&
+    items.some(saved=>saved.id===item.id)){
+  message('This saved garment cannot be recropped without verified original-photo and cutout review. Your saved garment is unchanged; import the original as a new reviewed capture.');
+  return;
+ }
  if(stream||cameraOpening)stopCamera();
  // P822: one detected semantic family is not proof of one physical garment.
  // Cropping an ambiguous source may only prepare it for explicit owner review.
