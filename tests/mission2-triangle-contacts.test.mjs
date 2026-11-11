@@ -319,3 +319,29 @@ test('indexed topological neighbors and unchanged parts do not create false new-
  assert.equal(result.noNewSelfContacts,true);
  assert.deepEqual(pos.array,before);
 });
+
+
+test('changed-face detector reuses correct baseline SAT cache for retained and genuinely new pairs',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0,.5,-.5,0,0,.5,0,
+  -.5,-.5,0,.5,-.5,0,0,.5,0,
+  .9,-.5,0,1.9,-.5,0,1.4,.5,0
+ ],3));
+ const n=g.getAttribute('position').count;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+ const weights=new Float32Array(n*4);for(let i=0;i<n;i++)weights[i*4]=1;
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const source=g.getAttribute('position').array.slice(),stage=source.slice();
+ for(let vertex=0;vertex<3;vertex++)stage[vertex*3]+=.6;
+ const proof=measureChangedFaceSelfContactDelta(root,[mesh],new Map([[mesh,stage]]));
+ assert.equal(proof.changedFaces,1);
+ assert.equal(proof.newlyIntersecting,1);
+ assert.deepEqual(proof.newlyIntersectingSourceKeys,['0:0:2']);
+ assert.equal(proof.retainedExistingContacts,1,
+  'Original overlapping face remains a retained, not newly introduced, intersection');
+ assert.deepEqual(mesh.geometry.getAttribute('position').array,source);
+});
