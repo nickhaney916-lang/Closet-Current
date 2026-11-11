@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,summarizePosedBodyContactDistribution
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -209,4 +209,35 @@ test('indirect BVH rebuild cannot invent new triangle identities when distant so
   'BVH rebuilt with reordered distant triangles must retain original source face IDs');
  assert.equal(comparePosedTriangleContacts(before,after).newlyIntersecting,0);
  assert.deepEqual(g.getAttribute('position').array,original);
+});
+
+
+test('privacy-safe attribution counts exact original-face contacts by garment and body mesh',()=>{
+ const keys=['0:0:0:1','0:2:1:3','1:2:8:0'];
+ const result=summarizePosedBodyContactDistribution({
+  triangleContactKeys:keys,triangleContactCount:keys.length
+ },3);
+ assert.deepEqual(result.byGarmentMesh,[2,1,0]);
+ assert.deepEqual(result.byBodyMesh,[{meshIndex:2,contacts:2},{meshIndex:0,contacts:1}]);
+ assert.equal(result.total,3);
+ assert.equal(result.signedPenetrationVerified,false);
+ assert.equal(result.collisionCertified,false);
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(JSON.stringify(result).includes('sourceSHA256'),false);
+ assert.throws(()=>summarizePosedBodyContactDistribution({
+  triangleContactKeys:['0:0:1:1','0:0:1:1'],triangleContactCount:2
+ },3),/complete bounded original-face evidence/);
+ for(const bad of ['4:0:0:0','0:4096:0:0','-1:0:0:0','0:0:NaN:0','0:0:0:10000001','01:0:0:0']){
+  assert.throws(()=>summarizePosedBodyContactDistribution({
+   triangleContactKeys:[bad],triangleContactCount:1
+  },3),/canonical original-face|bounded source-face/);
+ }
+ assert.throws(()=>summarizePosedBodyContactDistribution({
+  triangleContactKeys:[],triangleContactCount:0
+ },0),/complete bounded original-face/);
+ const {root,garment}=simplePose();
+ const actual=measurePosedTriangleContacts(root,[garment]);
+ const summary=summarizePosedBodyContactDistribution(actual,1);
+ assert.equal(summary.total,actual.triangleContactCount);
+ assert.equal(summary.byGarmentMesh.reduce((a,b)=>a+b,0),actual.triangleContactCount);
 });
