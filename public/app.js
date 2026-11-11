@@ -872,7 +872,72 @@ $('startAuto').onclick=()=>startCamera('auto');
 $('takePhoto').onclick=takePhoto;
 $('stop').onclick=finishScan;
 function waitEvent(target,event,timeout=15000){return new Promise((resolve,reject)=>{let t;const clean=()=>{clearTimeout(t);target.removeEventListener(event,ok);target.removeEventListener('error',fail);};const ok=()=>{clean();resolve();},fail=()=>{clean();reject(Error('This video could not be read. Try an MP4 recorded by your phone.'));};target.addEventListener(event,ok,{once:true});target.addEventListener('error',fail,{once:true});t=setTimeout(fail,timeout);});}
-async function upload(file){if(!file||busy)return;if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');stopCamera();busy=true;controls(true);let url;const startLength=batch.length;try{url=URL.createObjectURL(file);video.src=url;video.classList.add('visible');$('placeholder').hidden=true;const loaded=waitEvent(video,'loadedmetadata');video.load();await loaded;if(!Number.isFinite(video.duration)||video.duration<=0)throw Error('Video duration could not be read. Try a regular MP4.');if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');session=0;const interval=Number($('interval').value);for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;if(typeof captureProof01Active!=='undefined'&&captureProof01Active){const owner=captureProofOwner();const image=snap(),proof=await captureProofFromJPEG(image,{width:video.videoWidth,height:video.videoHeight,origin:'video-frame'},owner);if(captureProofOwner()!==owner)throw Error('Video import account changed');candidate(proof.image,{sourceProof:proof});}else candidate(snap());const progress=Math.round(t/video.duration*100);$('captureState').textContent=`Collecting images · ${progress}%`;}message('');switchView('review');}catch(e){render();if(batch.length>startLength){message(`${session} images recovered before processing stopped. ${e.message}`);switchView('review');}else message(e.message);}finally{busy=false;controls(false);video.removeAttribute('src');video.load();if(url)URL.revokeObjectURL(url);$('captureState').textContent='Ready for another batch';}}
+async function upload(file){
+ if(!file||busy)return;
+ if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
+ stopCamera();busy=true;controls(true);
+ let url,confirmedFrames=0;
+ const startLength=batch.length;
+ const verified=typeof captureProof01Active!=='undefined'&&captureProof01Active;
+ const owner=verified?captureProofOwner():null,ownerDB=db;
+ const assertVideoLease=()=>{
+  if(verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB||document.hidden))
+   throw Error('Video import was interrupted by backgrounding or an account change. Only committed frames are saved.');
+ };
+ try{
+  assertVideoLease();
+  url=URL.createObjectURL(file);
+  video.src=url;video.classList.add('visible');$('placeholder').hidden=true;
+  const loaded=waitEvent(video,'loadedmetadata');
+  video.load();await loaded;assertVideoLease();
+  if(!Number.isFinite(video.duration)||video.duration<=0)
+   throw Error('Video duration could not be read. Try a regular MP4.');
+  if(video.duration>180)throw Error('Please trim this video to 3 minutes or less.');
+  session=0;
+  const interval=Number($('interval').value);
+  for(let t=Math.min(.1,video.duration/2);t<video.duration;t+=interval){
+   assertVideoLease();
+   const seek=waitEvent(video,'seeked');video.currentTime=t;await seek;
+   assertVideoLease();
+   if(verified){
+    const image=snap(),proof=await captureProofFromJPEG(image,{
+     width:video.videoWidth,height:video.videoHeight,origin:'video-frame'
+    },owner);
+    assertVideoLease();
+    // Do not tell the owner a verified video frame is ready for review
+    // until the same owner-private IndexedDB draft transaction completes.
+    // This is the same durable review gate as the live camera shutter.
+    const committed=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true});
+    assertVideoLease();
+    if(committed)confirmedFrames++;
+   }else candidate(snap());
+   const progress=Math.round(t/video.duration*100);
+   $('captureState').textContent=`Collecting images · ${progress}%`;
+  }
+  assertVideoLease();
+  message('');switchView('review');
+ }catch(error){
+  render();
+  if(verified){
+   const problem=String(error?.message||error);
+   if(confirmedFrames){
+    message(`${confirmedFrames} video frame(s) saved for private review before import stopped. ${problem}`);
+    switchView('review');
+   }else if(batch.length>startLength){
+    message('A video frame is visible for review, but its device save was not confirmed. Keep this page open. '+problem);
+    switchView('review');
+   }else message(problem);
+  }else if(batch.length>startLength){
+   message(`${session} images recovered before processing stopped. ${error.message}`);
+   switchView('review');
+  }else message(error.message);
+ }finally{
+  busy=false;controls(false);
+  video.removeAttribute('src');video.load();
+  if(url)URL.revokeObjectURL(url);
+  $('captureState').textContent='Ready for another batch';
+ }
+}
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
