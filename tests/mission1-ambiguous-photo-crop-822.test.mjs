@@ -9,7 +9,7 @@ const b=app.indexOf('function cropButton(item)',a);
 assert.ok(a>=0&&b>a,'native crop function source anchors exist');
 const nativeCrop=app.slice(a,b);
 
-function harness({ambiguous=true,confirmed=false,saved=false}={}){
+function harness({ambiguous=true,confirmed=false,saved=false,signedOwner='signed-owner-1'}={}){
  const original='data:image/jpeg;base64,AAEE';
  const item={id:'private-photo-piece',ownerId:'signed-owner-1',
   image:'data:image/jpeg;base64,AABB',
@@ -26,14 +26,20 @@ function harness({ambiguous=true,confirmed=false,saved=false}={}){
   recognitionMemory:{suggestedCategory:'Tops'}};
  const calls={inference:0,color:0,quality:0,classification:0,renders:0},stored=[],messages=[];
  let callbacks;
- const db={transaction:()=>{
+ const db={name:'closet-current-user-signed-owner-1',transaction:()=>{
   const tx={oncomplete:null,onerror:null,onabort:null,
    objectStore:()=>({put:row=>{if(row.id==='draft')stored.push(structuredClone(row.batch[0]));}})};
   queueMicrotask(()=>tx.oncomplete?.());
   return tx;
  }};
+ const auth={user:{id:signedOwner},assertCurrent:()=>{}};
  const c={localPending:new Set(),busy:false,stream:null,cameraOpening:false,
-  items:saved?[item]:[],batch:[item],structuredClone,db,
+  items:saved?[item]:[],batch:[item],structuredClone,db,session:0,
+  window:{closetAuth:auth},
+  captureProofOwner:()=>{
+   const owner=c.window.closetAuth?.user?.id;
+   return owner&&c.db?.name==='closet-current-user-'+owner?owner:null;
+  },
   openPhotoCrop:(_item,handlers)=>{callbacks=handlers;return Promise.resolve();},
   localReady:false,enableLocal:async()=>{calls.inference++;},
   localRequest:async()=>{calls.inference++;return {strong:true,choices:[{
@@ -158,4 +164,92 @@ test('P824 ordinary saved nonambiguous crop remains available for existing edito
  await h.callbacks.save({image:'data:image/jpeg;base64,AADD'},choice);
  assert.equal(h.stored.length,1);
  assert.equal(h.item.color,'Blue');
+});
+
+test('P825 wrong signed owner cannot even open a flagged source crop editor',()=>{
+ const h=harness({signedOwner:'foreign-owner'});
+ assert.equal(h.callbacks,undefined);
+ assert.equal(h.stored.length,0);
+ assert.match(h.messages.join(' '),/crop session has changed/);
+});
+test('P825 source owner switch while photo quality is pending refuses stale draft write',async()=>{
+ const h=harness();
+ let release;h.c.checkPhoto=()=>new Promise(resolve=>{release=resolve;});
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC'},null);
+ assert.equal(typeof release,'function');
+ h.c.window.closetAuth={user:{id:'other-owner'},assertCurrent:()=>{}};
+ assert.equal(h.callbacks.isActive(),false);
+ release({signature:'new',aspect:1,colorEstimate:{color:'Yellow'}});
+ await assert.rejects(pending,/M1_P825_STALE_OR_FOREIGN_OWNER_CROP/);
+ assert.equal(h.stored.length,0,'cross-account draft must not be written');
+ assert.equal(h.item.image,'data:image/jpeg;base64,AABB');
+});
+test('P825 new camera session during pending analysis invalidates old owner crop lease',async()=>{
+ const h=harness();
+ let release;h.c.checkPhoto=()=>new Promise(resolve=>{release=resolve;});
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC'},null);
+ h.c.session++;
+ release({signature:'new',aspect:1,colorEstimate:{color:'Green'}});
+ await assert.rejects(pending,/M1_P825_STALE_OR_FOREIGN_OWNER_CROP/);
+ assert.equal(h.stored.length,0);
+});
+test('P825 original JPEG replacement or draft substitution is never admitted into owner state',async()=>{
+ for(const change of [
+  h=>{h.item.originalPhoto.image='data:image/jpeg;base64,REPLACED';},
+  h=>{h.item.segmentHint.cutoutSHA256='another-cutout';},
+  h=>{h.c.batch=[structuredClone(h.item)];},
+  h=>{h.c.db={...h.c.db};}
+ ]){
+  const h=harness(),old=h.item.image;
+  let release;h.c.checkPhoto=()=>new Promise(resolve=>{release=resolve;});
+  const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC'},null);
+  change(h);
+  assert.equal(h.callbacks.isActive(),false);
+  release({signature:'new',aspect:1,colorEstimate:{color:'Red'}});
+  await assert.rejects(pending,/M1_P825_STALE_OR_FOREIGN_OWNER_CROP/);
+  assert.equal(h.stored.length,0);
+  assert.equal(h.item.image,old);
+ }
+});
+test('P825 queued owner write validates lease again after an asynchronous prewrite gate',async()=>{
+ const h=harness();let work;
+ h.c.queued=task=>new Promise((resolve,reject)=>{work=()=>Promise.resolve().then(task).then(resolve,reject);});
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',id:'forged-id'},null);
+ for(let i=0;i<8&&!work;i++)await Promise.resolve();
+ assert.equal(typeof work,'function');
+ h.c.window.closetAuth={user:{id:'changed-owner'},assertCurrent:()=>{}};
+ work();
+ await assert.rejects(pending,/M1_P825_STALE_OR_FOREIGN_OWNER_CROP/);
+ assert.equal(h.stored.length,0);
+});
+test('P825 immutable owner record identity is not overwritten by crop-result id metadata',async()=>{
+ const h=harness();
+ await h.callbacks.save({image:'data:image/jpeg;base64,NEWC',id:'foreign-id',ownerId:'foreign-owner'},null);
+ assert.equal(h.stored[0].id,'private-photo-piece');
+ assert.equal(h.stored[0].ownerId,'signed-owner-1');
+ assert.equal(h.item.id,'private-photo-piece');
+});
+test('P825 crop editor fails closed after JPEG decode if owner lease expires before dialog mounts',async()=>{
+ const editor=readFileSync('public/photo-crop-editor.js','utf8');
+ let resolveDecode,appended=0,created=0;
+ const context={
+  window:{},document:{
+   createElement:()=>{created++;return {className:''};},
+   body:{append:()=>{appended++;}}
+  },
+  Image:class {
+   set src(value){this.value=value;}
+   decode(){return new Promise(resolve=>{resolveDecode=resolve;});}
+  }
+ };
+ vm.createContext(context);vm.runInContext(editor,context);
+ let active=true;
+ const pending=context.window.openPhotoCrop({
+  image:'data:image/jpeg;base64,AAEE'
+ },{analyze:async()=>null,save:async()=>{},isActive:()=>active});
+ assert.equal(typeof resolveDecode,'function');
+ active=false;resolveDecode();
+ await assert.rejects(pending,/changed during original JPEG decode/);
+ assert.equal(created,1,'only an unmounted dialog may be allocated');
+ assert.equal(appended,0,'expired private photo must never mount into next owner UI');
 });
