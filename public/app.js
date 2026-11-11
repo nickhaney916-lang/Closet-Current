@@ -255,8 +255,7 @@ function cropClothingPhoto(item){
    if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
    const quality=await checkPhoto(photo.image);
    if(!sourceNeedsManualReview822){
-    Object.assign(value,ClothingDetails.fillColor(value,
-     photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+    Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
     if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')
      value.colorMethod='garment-mask';
    }
