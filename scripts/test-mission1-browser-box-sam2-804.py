@@ -42,11 +42,11 @@ def pinned_source():
         fail("public original JPEG bytes changed")
     with Image.open(ORIGINAL) as file:
         photo=file.convert("RGB")
-    if photo.size!=(320,480):
-        fail("native original pixel dimensions changed")
+    if min(photo.size)<8 or max(photo.size)>3072:
+        fail("original source dimensions outside proven model budget")
     return photo,digest,expected["attribution"]
 
-def read_actual_native_prompts(source_sha):
+def read_actual_native_prompts(source_sha,source_size):
     payload=json.loads(INPUT.read_text())
     if payload.get("researchOnly") is not True or payload.get("familyAlpha")!="HOLD" or payload.get("releaseAuthorized") is not False:
         fail("source browser receipt is not hold-gated research")
@@ -69,7 +69,7 @@ def read_actual_native_prompts(source_sha):
         ):
             if prompt.get(name) is not required:
                 fail("native source gesture requires honest "+name)
-        if prompt.get("originalWidth")!=320 or prompt.get("originalHeight")!=480:
+        if (prompt.get("originalWidth"),prompt.get("originalHeight"))!=source_size:
             fail("native source dimensions mismatch")
         box=prompt.get("originalPixelBox")
         pt=prompt.get("originalPixelPositivePoint")
@@ -79,8 +79,10 @@ def read_actual_native_prompts(source_sha):
             fail("native garment seed point requires two integer pixels")
         x0,y0,x1,y1=box
         x,y=pt
-        if not(0<=x0<x1<=320 and 0<=y0<y1<=480 and
-               x1-x0>=7 and y1-y0>=10 and x0<=x<x1 and y0<=y<y1):
+        w,h=source_size
+        if not(0<=x0<x1<=w and 0<=y0<y1<=h and
+               x1-x0>=max(2,w//50) and y1-y0>=max(2,h//50) and
+               x0<=x<x1 and y0<=y<y1):
             fail("source rectangle/point outside original dimensions or too small")
         if row.get("actualOriginalSourceOwnerBox800BrowserDrawn") is not True or row.get("actualOriginalSourceOwnerPoint798ReviewedInNativeAdjust") is not True:
             fail("native source gesture proof flags missing")
@@ -127,7 +129,7 @@ def model_outputs(decoded,source_w,source_h):
 
 def execute():
     photo,sha,attrib=pinned_source()
-    prompts=read_actual_native_prompts(sha)
+    prompts=read_actual_native_prompts(sha,photo.size)
     mod,enc,dec=load_research_model()
     raw=enc.run(None,{"image":mod.preprocess(photo)})
     names=[z.name for z in enc.get_outputs()]
@@ -143,9 +145,9 @@ def execute():
     for gesture in prompts:
         for arm in ("box","pointBox"):
             pointcoords,labels=mod.sam2_source_prompt799(
-                arm,gesture["point"],gesture["box"],320,480)
+                arm,gesture["point"],gesture["box"],photo.width,photo.height)
             outputs=dec.run(None,{**features,"point_coords":pointcoords,"point_labels":labels})
-            idx,mask,scores=model_outputs(zip([x.name for x in dec.get_outputs()],outputs),320,480)
+            idx,mask,scores=model_outputs(zip([x.name for x in dec.get_outputs()],outputs),photo.width,photo.height)
             # Binary PNG is a model prediction on the public fixture, NEVER
             # a private user cutout, human-reviewed or approved saved image.
             mask_name=f'mask-{gesture["browser"]}-{arm}-UNVERIFIED.png'
@@ -178,6 +180,7 @@ def execute():
     evidence={
         "schema":EVIDENCE_SCHEMA,"familyAlpha":"HOLD","releaseAuthorized":False,
         "realOriginalJPEGSourceId":SOURCE_ID,"sourceSHA256":sha,
+        "actualSourcePixelDimensions":[photo.width,photo.height],
         "sourceLicense":attrib["license"],"sourceAttribution":attrib["source"],
         "realModel":"cstr/sam2.1-hiera-tiny-ONNX@8cef213",
         "pinnedEncoderSHA256":mod.MODEL_FILES["encoder.onnx"],
