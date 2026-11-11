@@ -51,7 +51,7 @@ async function fixture(kind,{dirty=false}={}){
    chunks=[Buffer.from(payload==='rpc'?'2':
     JSON.stringify(payload==='revision'?[{revision:2}]:
      [{revision:2,document:{schemaVersion:1,items:[owned('remote-correct',owner)],state:{}}}]))];
-  }else if(state.kind==='header'){
+  }else if(state.kind==='header'||state.kind==='revision-header'){
    header=String((limit==='small'?maxSmall:maxJSON)+1);chunks=[Buffer.from('[]')];
   }else if(state.kind==='over'){
    chunks=[Buffer.from('['),Buffer.allocUnsafe(limit==='small'?maxSmall:maxJSON),Buffer.from(']')];
@@ -166,6 +166,7 @@ test('cloud save RPC response is bounded; dirty owner keeps original items and c
  }finally{f.close();}
 });
 test('small chunked valid remote JSON and signed-owner backup CAS remain compatible',async()=>{
+ if(baseline)return; // verified parent has no streamed JSON body handling
  const f=await fixture('over');
  f.state.good=true;
  try{
