@@ -134,9 +134,25 @@
   await callbacks.capture(()=>transact(['items','state'],'readwrite',tx=>{const state=tx.objectStore('state'),r=state.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const m=r.result||markerDefault();if(restoreResearch)try{guard.assertLease();}catch{tx.abort();return;}if(m.localRevision!==expectedRevision||m.dirty)return;const store=tx.objectStore('items');store.clear();for(const item of local.items)store.put(item);for(const id of E.stateIds)state.delete(id);for(const row of Object.values(local.state))state.put(row);state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});applied=true;};}));
   assertActive();if(applied)await callbacks.restored?.();assertActive();return applied;
  }
+ const isCapacityError=code=>code===413||code===507;
  const capacityText=code=>code===413?
    'Cloud rejected a photograph as too large. Original photos remain on this device. Check photo size, then use Sync to retry.':
    'Cloud storage capacity is full. Original photos remain on this device. Free cloud space, then use Sync to retry.';
+ // The marker is already isolated in the authenticated owner's IndexedDB.
+ // This local-only code never enters cloud JSON (stateIds deliberately excludes
+ // 'cloud-sync'); do not clear a capacity block merely because a tab reloads.
+ async function writeCapacityPause(code,assertActive){
+  assertActive();
+  await transact(['state'],'readwrite',tx=>{
+   const store=tx.objectStore('state'),request=store.get('cloud-sync');
+   request.onsuccess=()=>{
+    try{assertActive();}catch{tx.abort();return;}
+    const prior=request.result||markerDefault();
+    store.put({...prior,capacityPause:isCapacityError(code)?code:null});
+   };
+  });
+  assertActive();
+ }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false,retryPaused=false}={}){
   if(stopForReview145())return;
@@ -156,6 +172,18 @@
    // and the remote revision. Reading getAll() here clones every original
    // full-resolution JPEG merely because the tab received focus/online.
    let m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   if(retryPaused&&isCapacityError(m.capacityPause)){
+    // Only a deliberate owner action clears the durable block. If the app
+    // crashes before the upload finishes, the next start may retry once;
+    // another 413/507 persists the block again.
+    await callbacks.capture(()=>writeCapacityPause(null,assertActive));
+    assertActive();
+    m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   }else if(!retryPaused&&isCapacityError(m.capacityPause)){
+    pausedCapacity=m.capacityPause;
+    clearTimeout(timer);timer=null;
+    status(capacityText(pausedCapacity));return;
+   }
    let local=null;
    if(m.dirty||!m.baseVersion){
     ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();
@@ -203,7 +231,11 @@
     // an explicit owner-initiated Sync after the capacity issue is fixed.
     if(dirtyAtStart&&(e.status===413||e.status===507)){
      pausedCapacity=e.status;clearTimeout(timer);timer=null;
-     status(capacityText(e.status));
+     let durable=true;
+     try{await callbacks.capture(()=>writeCapacityPause(e.status,assertActive));}
+     catch{durable=false;}
+     if(mine===generation)
+      status(capacityText(e.status)+(durable?'':' Keep the app open if possible; this pause could not be saved on this device.'));
     }else{
      status(e.code==='conflict'?'Changes differ on another device. Both copies are kept; choose Keep both versions in My account.':
       dirtyAtStart?'Saved on this device · cloud backup pending. Retrying when connected.':
