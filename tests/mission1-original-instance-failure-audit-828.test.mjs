@@ -130,7 +130,7 @@ test('P828 all five experiments preserve per-photo truth denominators and stop p
  const c=synthetic();
  const swapped=copy(c.webkit);
  const a=swapped.rows[0].thresholdMetrics821;
- a[P828_PROFILES[1]]=a[P828_PROFILES[2]];
+ a[P828_PROFILES[1]]=undefined;
  assert.throws(()=>auditOriginalSourceErrors828(c.manifest,c.chromium,swapped),
   /M1_P828_FAIL_CLOSED/);
  const removed=copy(c.chromium);
