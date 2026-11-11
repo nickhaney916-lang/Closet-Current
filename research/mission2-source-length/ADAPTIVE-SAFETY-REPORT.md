@@ -4,7 +4,7 @@
 
 ## Evidence-led problem
 
-The genuine PR843 real-browser source baseline has 1,321/1,119 Chromium female/male intersecting body/garment triangle-pairs before shape change, and the longer photographic geometry introduces 845/728 NEW intersections while binary body mesh-pair counts do not change. WebKit measured 1,327/1,121 baseline and 849/735 NEW. These are actual 163-bone source garment results at 320/390/430 CSS widths, not a synthetic proof of adequate physical fabric.
+**P2-C4 correction supersedes earlier numerical novelty claims:** PR843/847 reported 845/728 Chromium and 849/735 WebKit newly intersecting body/garment triangle pairs, but the pinned three-mesh-bvh@0.9.2 passes *indirect BVH traversal offsets* into intersectsTriangles. Those early audits treated offsets as invariant original triangle IDs even though BVH rebuilding can reorder them. Those **NEW-contact counts cannot be used as physical-penetration evidence** until rerun with resolveTriangleIndex on both body and garment. Sampled acceptance must be re-evaluated under the corrected audit. This does not certify absence of physical intersections or natural drape.
 
 A full-length source-proportion extension is therefore **not** automatically eligible for 3D merely because it looks longer and has no net increase in aggregate intersection totals.
 
@@ -42,3 +42,27 @@ No claim of full Mission 2 completion or Family Alpha release readiness.
 ## P2-C3 final-head verification
 
 Pending dedicated no-deploy Actions on the complete exact commit. No pass totals have been claimed for this branch.
+
+
+## P2-C4 — self-crossing triangles within one photographed garment panel
+
+**Research-only extension; not a release gate approval.** P2-C3 compares different skinned meshes such as sleeve and torso, but a single deformed piece of photographed fabric can fold *through itself*. A bounded, world-space 163-bone BVH self-pair audit now compares the true triangles in each individual garment mesh before/after the proposed source extension. Triangle pairs sharing any original topological vertex are excluded because normal mesh seams and shared edges are not evidence of penetration; nonadjacent crossing triangles retain exact stable pair identities. Duplicated cast directions are collapsed.
+
+Adaptive fitting now requires zero NEW body intersections, zero NEW inter-garment-piece intersections, **and zero NEW within-piece self-intersections** before accepting the sampled geometry, followed by independent pre-commit remeasurement of all three classes. The source JPEG, reviewed cutout, UVs, skin weights, saved-outfit slots, private owner state and original-photo/2D fallback remain unchanged on failed proposals. Exhausted enumeration budgets or invalid staged geometry reject, not promote, 3D.
+
+New research regressions construct two actual nonadjacent posed triangles on a 163-bone skinned mesh, move one through the other, verify one newly intersecting pair with byte-unchanged original positions, and verify that a normal indexed two-triangle shared-edge quad does not count as self-contact. Native browser checks require the new independent receipt before accepting opt-in sampled 3D.
+
+**Important limits:** This measures *nonregression*, not absence of pre-existing intrapanel contacts. Split-vertex physically touching seams may count as baseline and motion/rotation sweeps remain entirely unverified. It does not establish complete body containment, inter-layer outfit safety, drape simulation, garment fit quality, owner-reviewed blind masks, or device GPU/OS-kill behavior. Family Alpha #255 remains HOLD, and Mission 2 cannot be called complete until those requirements are actually met.
+
+### P2-C4 verification
+
+Do not claim acceptance without exact-HEAD dedicated no-deploy GitHub Actions full regression and both genuine Chromium/WebKit jobs with independent screenshots.
+
+
+## P2-C4 correction: topology-stable original triangle IDs
+
+CI found a fail-closed self-audit bug and then a more important audit identity bug. MeshBVH.bvhcast v0.9.2's intersectsTriangles callbacks supply BVH storage offsets even when indirect:true. Self-surface adjacency, before/after source-body comparisons, and distinct garment-panel comparisons now all call each BVH's resolveTriangleIndex(offset) to map to the original geometry's true triangle identities. This prevents spurious newly crossing triangles merely because a staged mesh rebuilt a differently ordered BVH. A dedicated 163-bone regression puts dozens of unrelated triangles around one actual body-crossing triangle, reorders distant triangles, and requires the original contact identities to remain unchanged.
+
+The self-audit also avoids throwing inside the BVH callback on contact/candidate budget exhaustion, because the pinned v0.9.2's module-global traversal guard can remain active after an exception. It returns a normal stop signal and rejects after the traversal guard resets. Invalid or incomplete observations still refuse 3D; original photographic and owner data remain untouched.
+
+Earlier PR843/P847 "new" counts are **superseded and unreliable as physical source novelty**. Corrected counts must be measured from the exact final CI HEAD before replacement claims. Mission 2 remains incomplete; Family Alpha HOLD #255 remains in force.

@@ -433,8 +433,10 @@ export async function mountNative3D05({
        physical.sourceLengthTriangleContactStrictlyAccepted!==true||
        physical.sourceLengthNewTriangleContacts!==0||
        physical.sourceLengthGarmentPartContactStrictlyAccepted!==true||
-       physical.sourceLengthNewGarmentPartContacts!==0)
-     throw Error('M2 sampled body and garment-part triangle nonregression proof missing; original-photo/2D fallback required');
+       physical.sourceLengthNewGarmentPartContacts!==0||
+       physical.sourceLengthIntrapanelStrictlyAccepted!==true||
+       physical.sourceLengthNewIntrapanelContacts!==0)
+     throw Error('M2 sampled body, garment-part or intrapanel triangle proof missing; original-photo/2D fallback required');
    }
    if(params?.get('photoSilhouette62')==='research'){
     if(params?.get('photoFit171')!=='research'||!verifiedPhotographicFit171?.admitted)
@@ -763,6 +765,10 @@ export async function mountNative3D05({
    sourceLengthGarmentPartContactsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthGarmentPartContactsAfter:null,
    sourceLengthNewGarmentPartContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewGarmentPartContacts:null,
    sourceLengthSelfLayerCollisionCertified:false,
+   sourceLengthIntrapanelStrictlyAccepted:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelStrictlyAccepted===true,
+   sourceLengthIntrapanelContactsBefore:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelContactsBefore:null,
+   sourceLengthIntrapanelContactsAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthIntrapanelContactsAfter:null,
+   sourceLengthNewIntrapanelContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewIntrapanelContacts:null,
    sourceLengthCollisionCertified:false,
    photoSourceShoulder185:active&&
     data.fitReceipts171?.shirt?.silhouette62?.sourceShoulderEased185===true&&

@@ -401,13 +401,16 @@ try{
      decisionState?.sourceLengthTriangleContactStrictlyAccepted===true&&
      decisionState?.sourceLengthNewTriangleContacts===0&&
      decisionState?.sourceLengthGarmentPartContactStrictlyAccepted===true&&
-     decisionState?.sourceLengthNewGarmentPartContacts===0;
+     decisionState?.sourceLengthNewGarmentPartContacts===0&&
+     decisionState?.sourceLengthIntrapanelStrictlyAccepted===true&&
+     decisionState?.sourceLengthNewIntrapanelContacts===0;
     if(openProof.ok){
      assert.equal(accepted,true,'3D display without a nonregressing independent triangle receipt: '+JSON.stringify({
       source:decisionState?.sourceLengthSHA256,fit:decisionState?.sourceLengthFit,
       strict:decisionState?.sourceLengthTriangleContactStrictlyAccepted,
       contacts:decisionState?.sourceLengthNewTriangleContacts,
-      parts:decisionState?.sourceLengthNewGarmentPartContacts}));
+      parts:decisionState?.sourceLengthNewGarmentPartContacts,
+      self:decisionState?.sourceLengthNewIntrapanelContacts}));
      assert.equal(decisionState?.sourceLengthCollisionCertified,false);
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
     }else{
@@ -426,6 +429,7 @@ try{
      sampledPoseAdmitted:accepted,unsafe3DRefused:!accepted,
      noNewBodyTriangleContactsIfAccepted:accepted,
      noNewGarmentPartTriangleContactsIfAccepted:accepted,
+     noNewIntrapanelTriangleContactsIfAccepted:accepted,
      neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
      originalPrivateOwnerRetained:true,releaseAuthorized:false,familyAlpha:'HOLD'});
     await page.close();await ctx.close();await browser.close();browser=null;

@@ -86,7 +86,11 @@ export function measurePosedTriangleContacts(root,meshes,overrides=new Map(),{ma
       intersectsTriangles:(bodyTri,garmentTri,bodyId,garmentId)=>{
        if(!bodyTri.intersectsTriangle(garmentTri))return false;
        hit=true;
-       contactKeys.add(garmentIndex+':'+bodyIndex+':'+garmentId+':'+bodyId);
+       // v0.9.2 bvhcast reports indirect TREE offsets, not source faces.
+       // Resolve both sides so before/after identity survives BVH rebuilding.
+       const garmentFace=g.boundsTree.resolveTriangleIndex(garmentId);
+       const bodyFace=body.boundsTree.resolveTriangleIndex(bodyId);
+       contactKeys.add(garmentIndex+':'+bodyIndex+':'+garmentFace+':'+bodyFace);
        if(contactKeys.size>=maxContacts){stop=true;return true;}
        return false; // enumerate ALL contacts, do not stop at the first one
       }
@@ -157,7 +161,9 @@ export function measurePosedGarmentPartContacts(root,meshes,overrides=new Map(),
      intersectsTriangles:(leftTri,rightTri,leftId,rightId)=>{
       if(!leftTri.intersectsTriangle(rightTri))return false;
       hit=true;
-      contactKeys.add(left+':'+right+':'+leftId+':'+rightId);
+      const sourceLeft=a.boundsTree.resolveTriangleIndex(leftId);
+      const sourceRight=c.boundsTree.resolveTriangleIndex(rightId);
+      contactKeys.add(left+':'+right+':'+sourceLeft+':'+sourceRight);
       if(contactKeys.size>=maxContacts){overflow=true;return true;}
       return false;
      }
@@ -172,4 +178,90 @@ export function measurePosedGarmentPartContacts(root,meshes,overrides=new Map(),
    distinctGarmentPartsOnly:true,collisionCertified:false,fullSelfLayerCollision:false
   });
  }finally{for(const geometry of geometries)geometry.dispose();}
+}
+
+
+/**
+ * M2-C4: bounded one-pose intrapanel surface-intersection audit.
+ * A mesh is checked against itself with the *actual* posed, 163-bone skinned
+ * triangle coordinates. The same triangle and triangles sharing ORIGINAL
+ * topology vertices are excluded: a sewn/shared edge is not a fold crossing.
+ * Split-vertex seams can still contribute baseline contacts; baseline identity
+ * comparison is deliberately stricter than a mere total-contact count.
+ *
+ * This is NOT cloth physics, signed clearance, motion-sweep coverage or
+ * inter-layer acceptance. On incomplete enumeration we refuse certification.
+ */
+export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
+ {maxContacts=40000,maxCandidateTests=300000}={}){
+ if(typeof root?.updateMatrixWorld!=='function'||!Array.isArray(meshes)||meshes.length<1||
+    new Set(meshes).size!==meshes.length||!(overrides instanceof Map)||
+    [...overrides.keys()].some(mesh=>!meshes.includes(mesh))||
+    !Number.isInteger(maxContacts)||maxContacts<1||maxContacts>100000||
+    !Number.isInteger(maxCandidateTests)||maxCandidateTests<1||maxCandidateTests>2000000)
+  throw Error('M2 self-contact bounded valid pose inputs required');
+ root.updateMatrixWorld(true);
+ const identity=new THREE.Matrix4(),contactKeys=new Set();
+ let candidateTests=0,triangleSurfaces=0;
+ for(let meshIndex=0;meshIndex<meshes.length;meshIndex++){
+  const mesh=meshes[meshIndex];
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+   throw Error('M2 self-contact actual 163-bone garment required');
+  const position=mesh.geometry?.getAttribute('position'),override=overrides.get(mesh);
+  if(override&&(!(override instanceof Float32Array||override instanceof Float64Array)||
+      override.length!==position?.count*3||!override.every(Number.isFinite)))
+   throw Error('M2 self-contact finite staged vertex buffer required');
+  const g=posedGeometry(mesh,override);
+  try{
+   const index=g.index?.array;
+   const faceCount=index?index.length/3:g.getAttribute('position').count/3;
+   if(!Number.isInteger(faceCount)||faceCount<1)
+    throw Error('M2 self-contact triangular surface required');
+   triangleSurfaces+=faceCount;
+   const vertex=(face,corner)=>index?index[face*3+corner]:face*3+corner;
+   const adjacent=(one,two)=>{
+    for(let j=0;j<3;j++)for(let k=0;k<3;k++)
+     if(vertex(one,j)===vertex(two,k))return true;
+    return false;
+   };
+   // three-mesh-bvh rejects some indexed recursive self-casts; build
+   // two independent immutable geometry/BVH views with identical face IDs.
+   const other=g.clone();
+   let overflowReason=null;
+   try{
+    g.boundsTree=new MeshBVH(g,{indirect:true});
+    other.boundsTree=new MeshBVH(other,{indirect:true});
+    g.boundsTree.bvhcast(other.boundsTree,identity,{
+     intersectsTriangles:(a,c,aId,cId)=>{
+     // Both BVHs sort faces independently; callback IDs are tree offsets.
+     // Never infer topology or persistent contact identity from those IDs.
+     const sourceA=g.boundsTree.resolveTriangleIndex(aId);
+     const sourceC=other.boundsTree.resolveTriangleIndex(cId);
+     if(sourceA===sourceC||adjacent(sourceA,sourceC))return false;
+     candidateTests++;
+     if(candidateTests>maxCandidateTests){overflowReason='triangle comparison';return true;}
+     if(!a.intersectsTriangle(c))return false;
+     const min=Math.min(sourceA,sourceC),max=Math.max(sourceA,sourceC);
+     contactKeys.add(meshIndex+':'+min+':'+max);
+     if(contactKeys.size>=maxContacts){overflowReason='contact';return true;}
+      return false;
+     }
+    });
+    // Never throw INSIDE bvhcast: v0.9.2 does not reset its global
+    // active-traversal guard when callbacks throw. Return true to stop,
+    // then fail closed only after the library has released its guard.
+    if(overflowReason)throw Error('M2 self-contact exceeds bounded '+overflowReason+' budget; cannot certify');
+   }finally{other.dispose();}
+  }finally{g.dispose();}
+ }
+ return Object.freeze({
+  triangleContactKeys:Object.freeze([...contactKeys].sort()),
+  triangleContactCount:contactKeys.size,
+  candidateTests,triangleSurfaces,
+  currentPoseOnly:true,
+  withinOneMeshOnly:true,
+  excludedOriginalSharedVertexPairs:true,
+  signedClearanceVerified:false,
+  collisionCertified:false,fullSelfLayerCollision:false
+ });
 }

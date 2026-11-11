@@ -43,6 +43,11 @@ await patch('research/outfit-3d-01/research-panel.mjs',
         sourceLengthGarmentPartContactsAfter:actualOutfit171[k].sourceLengthGarmentPartContactsAfter,
         sourceLengthNewGarmentPartContacts:actualOutfit171[k].sourceLengthNewGarmentPartContacts,
         sourceLengthSelfLayerCollisionCertified:false,
+        sourceLengthIntrapanelAudit:actualOutfit171[k].sourceLengthIntrapanelAudit===true,
+        sourceLengthIntrapanelStrictlyAccepted:actualOutfit171[k].sourceLengthIntrapanelStrictlyAccepted===true,
+        sourceLengthIntrapanelContactsBefore:actualOutfit171[k].sourceLengthIntrapanelContactsBefore,
+        sourceLengthIntrapanelContactsAfter:actualOutfit171[k].sourceLengthIntrapanelContactsAfter,
+        sourceLengthNewIntrapanelContacts:actualOutfit171[k].sourceLengthNewIntrapanelContacts,
         sourceLengthCollisionCertified:false,
         ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,`);
 console.log('Installed opt-in source-proportion lower garment extension; no release or physical fit certification');

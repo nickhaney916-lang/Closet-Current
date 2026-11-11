@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -123,4 +123,90 @@ test('distinct shoulder/torso triangle collision is detected even when body mesh
   new Map([[garment,new Float32Array(2)]])),/vertex buffer/);
  assert.throws(()=>measurePosedGarmentPartContacts(root,[garment,secondary],
   new Map(),{maxContacts:1}),/bounded contact budget/);
+});
+
+
+test('same skinned mesh: nonadjacent triangles crossing after fitting are detected with stable IDs',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0, .5,-.5,0, 0,.5,0,
+  1.2,-.2,-.25, 1.2,.2,.25, 1.2,.2,-.25
+ ],3));
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(6*4),4));
+ const w=new Float32Array(6*4);
+ for(let i=0;i<6;i++)w[i*4]=1;
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const initial=g.getAttribute('position').array.slice();
+ const staged=initial.slice();
+ for(let i=3;i<6;i++)staged[i*3]-=1.2;
+ const before=measurePosedGarmentSelfContacts(root,[mesh]);
+ const after=measurePosedGarmentSelfContacts(root,[mesh],new Map([[mesh,staged]]));
+ assert.equal(before.triangleContactCount,0);
+ assert.equal(after.triangleContactCount,1,'3D crossing within one mesh must be detected exactly once');
+ const comparison=comparePosedTriangleContacts(before,after);
+ assert.equal(comparison.newlyIntersecting,1);
+ assert.equal(comparison.nonregression,false);
+ assert.equal(after.withinOneMeshOnly,true);
+ assert.equal(after.fullSelfLayerCollision,false);
+ assert.equal(after.collisionCertified,false);
+ assert.deepEqual(g.getAttribute('position').array,initial,'inspection cannot mutate saved source');
+ assert.throws(()=>measurePosedGarmentSelfContacts(root,[mesh],
+  new Map([[mesh,staged]]),{maxContacts:1}),/bounded contact budget/);
+ assert.throws(()=>measurePosedGarmentSelfContacts(root,[mesh],
+  new Map([[mesh,new Float32Array(1)]])),/finite staged vertex buffer/);
+ for(const maxCandidateTests of [0,-1,2000001,1.2])
+  assert.throws(()=>measurePosedGarmentSelfContacts(root,[mesh],new Map(),{maxCandidateTests}),/bounded valid pose/);
+ assert.throws(()=>measurePosedGarmentSelfContacts(root,[mesh,mesh]),/bounded valid pose/);
+});
+
+test('actual indexed shared-edge garment triangles do not invent self-crossings at normal seams',()=>{
+ const {root,garment}=simplePose();
+ const geometry=new THREE.BufferGeometry();
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0, .5,-.5,0, .5,.5,0, -.5,.5,0
+ ],3));
+ geometry.setIndex([0,1,2,0,2,3]);
+ geometry.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(4*4),4));
+ const w=new Float32Array(4*4);
+ for(let i=0;i<4;i++)w[i*4]=1;
+ geometry.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const seam=new THREE.SkinnedMesh(geometry,new THREE.MeshStandardMaterial());
+ seam.userData.work56Garment=true;seam.bind(garment.skeleton);root.add(seam);
+ const proof=measurePosedGarmentSelfContacts(root,[seam]);
+ assert.equal(proof.triangleContactCount,0);
+ assert.equal(proof.excludedOriginalSharedVertexPairs,true);
+ assert.equal(proof.triangleSurfaces,2);
+});
+
+
+test('indirect BVH rebuild cannot invent new triangle identities when distant source triangles reorder',()=>{
+ const {root,garment}=simplePose();
+ const positions=[-.5,-.45,0,.5,-.45,0,0,.48,0];
+ for(let i=1;i<80;i++){
+  const x=(i%2?1:-1)*(2+i*.09);
+  positions.push(x,-.3,-.25,x+.2,-.3,.25,x+.1,.35,0);
+ }
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ const n=g.getAttribute('position').count;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+ const weights=new Float32Array(n*4);
+ for(let i=0;i<n;i++)weights[i*4]=1;
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const before=measurePosedTriangleContacts(root,[mesh]);
+ assert.ok(before.triangleContactCount>0);
+ assert.ok(before.triangleContactKeys.every(key=>key.split(':')[2]==='0'),
+  'Only original source face zero intersects body');
+ const original=g.getAttribute('position').array.slice(),staged=original.slice();
+ for(let i=3;i<n;i++)staged[i*3]=-staged[i*3];
+ const after=measurePosedTriangleContacts(root,[mesh],new Map([[mesh,staged]]));
+ assert.deepEqual(after.triangleContactKeys,before.triangleContactKeys,
+  'BVH rebuilt with reordered distant triangles must retain original source face IDs');
+ assert.equal(comparePosedTriangleContacts(before,after).newlyIntersecting,0);
+ assert.deepEqual(g.getAttribute('position').array,original);
 });
