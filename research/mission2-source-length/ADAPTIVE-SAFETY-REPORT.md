@@ -175,3 +175,20 @@ All staged proposed coordinates are immutable until the full existing 163-bone o
 ### Exact P2-C12 CI evidence
 
 Pending exact-head Node/full-browser test and artifact verification. No native 3D acceptance or physical fitting claim until true safety evidence is complete.
+
+
+## P2-C13 — New self-contact geometry type and disconnected seam diagnostics
+
+**Measured parent:** P2-C12 [GitHub Actions #43105558092](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43105558092) at exact draft PR #874 HEAD `63500624fbe2deca84ba92a84ac3b52d86b01066`, 5/5 successful, original photo and real Chromium/WebKit 320/390/430 screenshots. Explicit research hem-depth taper factors 2, 3, 4 kept 0 *new* body contacts but increased 8 mm outward-depth self-folds from 3 to 27/26/27 new within-shell face intersections, both tested length scales, all engines and widths. **No** signed native 3D scene admitted; original photo/2D fallback retained. Do not promote that taper.
+
+**New engineering diagnostic:** The completed changed-source-face self-contact delta yields exact original face-pair keys for newly intersecting triangles. P2-C13 uses the *original and staged posed 163-bone geometry* behind each key to count (a) triangles whose **three-dimensional signed distances strictly straddle both opposing triangle planes**; (b) very nearly coplanar overlapping/touching triangles; (c) contacts near an edge/vertex or intersecting at a boundary with no strict two-sided plane straddle; and (d) degenerate triangles. This is only a geometry **classification**, never signed tissue/fabric penetration clearance.
+
+The same source face pairs are checked for geometrically coincident *corner positions* (0/1/2/3 matched corners) in the ORIGINAL source pose and the PROPOSED pose, independently of mesh index adjacency. Original duplicated source seam edges (two coincident corners but separate vertex indices) are **topological evidence**, NOT an approved seam or a safe-contact exception. A new contact in any class continues to be **vetoed** by the existing unmodified body/garment-part/self-contact checks.
+
+The comparator reconstructs before and after poses from unchanged source geometry, requires genuine 163-bone skinned source, finite complete staged arrays, canonical nonduplicated original source face-pair IDs, a complete bounded delta, max 4,096 typed NEW pairs, and exact category-count totals. Only anonymous integer aggregates, labels and 10 micrometre geometry tolerance are exported to the disposable research browser/CI, never original owner photos, JPEG bytes, source SHA, garment vertices, face keys, tokens or identities. The same three-width real Chromium/WebKit signed-outfit original-photo fallback and full Node regression remain mandatory.
+
+**Next action after verified numbers:** If most new contacts are true two-sided intersections, investigate panel fold geometry and source edge preservation. If many are near-coplanar/disconnected UV-edge contacts, independently verify sewn topology and *still* repair the geometry; never whitelist contacts based only on a proximity label. Neither class proves visible photorealism, physical signed depth, stable moving 3D bodies, reconstructed photo backs or independent human masking. Family Alpha HOLD #255 remains; **draft, unmerged, undeployed**.
+
+### Exact P2-C13 acceptance
+
+Pending final-head no-deploy full Node + 320/390/430 Chromium/WebKit tests, screenshot SHA and contact-type receipts. No false release claim.
