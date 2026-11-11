@@ -341,7 +341,7 @@ export function mountOriginalTapReview798({
    discard.onclick=()=>{resetSAM2806();refreshSAM2806();};
    show.onclick=async()=>{
     if(busy||!live()||!selected||!selectedBox800)return;
-    resetSAM2806();busy=true;refreshSAM2806();
+    resetMask802();resetSAM2806();busy=true;refreshSAM2806();
     const pointInput=selected,boxInput=selectedBox800,run=++epoch;
     try{
      const rect=photo.getBoundingClientRect();
@@ -443,7 +443,7 @@ export function mountOriginalTapReview798({
    dismissPreview.onclick=()=>{resetMask802();refreshMask802();};
    previewButton.onclick=async()=>{
     if(maskBusy||!live()||!selectedBox800||!selected)return;
-    resetMask802();
+    resetSAM2806();resetMask802();
     maskBusy=true;refreshMask802();
     const boxInput=selectedBox800,pointInput=selected,epoch=++maskEpoch;
     try{
