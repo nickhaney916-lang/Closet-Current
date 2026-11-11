@@ -78,7 +78,7 @@
   assertActive();
   return {document:E.validateDocument(document),photos};
  }
- async function decode(document,assertActive=()=>{}){assertActive();assertSourceReceipts(document);const photos=new Map();return E.mapImages(document,async(value,key,parent)=>{
+ async function decode(document,assertActive=()=>{}){assertActive();assertSourceReceipts(document);const photos=E.createPhotoCache(8);return E.mapImages(document,async(value,key,parent)=>{
    assertActive();
    // Historical backups placed owner-reviewed cutoutImage JPEGs directly in
    // private JSON. Accept only an exact SHA-attested legacy cutout, so it can
@@ -94,15 +94,15 @@
     throw Error('Cloud original photo receipt does not match object SHA');
    if(key==='cutoutImage'&&parent?.cutoutSHA256!==sha)
     throw Error('Reviewed cutout receipt does not match cloud object SHA');
-   if(!photos.has(path))photos.set(path,(async()=>{
+   return photos.get(path,async()=>{
     const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=new Uint8Array(await response.arrayBuffer());
     assertActive();
     if(bytes.length>8388608||await hash(bytes)!==sha)throw Error('Photo integrity check failed');
     assertActive();let binary='';
     for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));
     return 'data:image/jpeg;base64,'+btoa(binary);
-   })());
-   return photos.get(path);
+   });
+
   });}
  async function upload(photos,assertActive=()=>{}){for(const [path,bytes]of photos){assertActive();try{await api('/storage/v1/object/'+BUCKET+'/'+path,{method:'POST',contentType:'image/jpeg',body:bytes},false,assertActive);}catch(e){if(e.status!==400&&e.status!==409)throw e;
    // An existing immutable object is safe only after verifying its contents.

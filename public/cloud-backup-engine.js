@@ -63,6 +63,31 @@
   }
   return walk(value);
  }
+ // Keep only a handful of recently decoded JPEG promises during a restore.
+ // The restored wardrobe owns its resulting photos; this cache must never
+ // retain a second unbounded copy of every unique original/cutout data URL.
+ function createPhotoCache(limit=8){
+  if(!Number.isSafeInteger(limit)||limit<1||limit>32)
+   throw Error('Invalid private photo cache bound');
+  const entries=new Map();
+  return {
+   get(key,loader){
+    if(typeof key!=='string'||!key||typeof loader!=='function')
+     throw Error('Invalid private photo cache request');
+    if(entries.has(key)){
+     const ready=entries.get(key);entries.delete(key);entries.set(key,ready);
+     return ready;
+    }
+    const pending=Promise.resolve().then(loader);
+    entries.set(key,pending);
+    if(entries.size>limit)entries.delete(entries.keys().next().value);
+    // A failed private read must remain retryable, never poison this cache.
+    pending.catch(()=>{if(entries.get(key)===pending)entries.delete(key);});
+    return pending;
+   },
+   size:()=>entries.size
+  };
+ }
  function keepBothDocuments(base,local,remote,makeId){
   validateDocument(local);validateDocument(remote);if(base)validateDocument(base);base=base||{items:[],state:{}};
   const copiedItems=new Map();
@@ -75,5 +100,5 @@
   if(l||r){const saved=list(b?.saved,l?.saved,r?.saved);let current;try{current=mergeValue(b?.current,l?.current,r?.current);}catch(e){if(e.code!=='conflict')throw e;current=r?.current||l?.current;if(l?.current&&r?.current){const extra=copy(l.current);const existing=saved.find(x=>x.id===extra.id);if(existing&&!equal(existing,extra))throw Error('Copy ID collision');if(!existing)saved.push(extra);}}state['outfit-board']={id:'outfit-board',current:current||{slots:{}},saved};}
   return validateDocument({schemaVersion:1,items,state});
  }
- const api={canonical,equal,validateDocument,mergeDocuments,keepBothDocuments,mapImages,stateIds};root.ClosetBackupEngine=api;if(typeof module!=='undefined')module.exports=api;
+ const api={canonical,equal,validateDocument,mergeDocuments,keepBothDocuments,mapImages,createPhotoCache,stateIds};root.ClosetBackupEngine=api;if(typeof module!=='undefined')module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
