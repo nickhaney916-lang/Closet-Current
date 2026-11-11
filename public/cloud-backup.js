@@ -25,6 +25,26 @@
  function transact(stores,mode,fn){return new Promise((resolve,reject)=>{const tx=db.transaction(stores,mode);let value;try{value=fn(tx);}catch(e){tx.abort();reject(e);return;}tx.oncomplete=()=>resolve(typeof value==='function'?value():value);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error||Error('Storage transaction stopped'));});}
  async function marker(){let value;await transact(['state'],'readonly',tx=>{const r=tx.objectStore('state').get('cloud-sync');r.onsuccess=()=>value=r.result;});return value||markerDefault();}
  async function markDirty(assertActive=()=>{}){assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const m=r.result||markerDefault();store.put({...m,dirty:true,localRevision:m.localRevision+1});};});assertActive();}
+ // First signed-in sync may have no cloud revision and a clean local marker.
+ // Probe item COUNT and the few owner-visible state rows without getAll()
+ // cloning every original JPEG just to decide if an initial backup exists.
+ async function hasLocalWardrobe(assertActive=()=>{}){
+  assertActive();
+  let count=0;const visible={};
+  await transact(['items','state'],'readonly',tx=>{
+   const total=tx.objectStore('items').count();
+   total.onsuccess=()=>{count=total.result;};
+   const state=tx.objectStore('state');
+   for(const id of E.stateIds){
+    const request=state.get(id);
+    request.onsuccess=()=>{visible[id]=request.result;};
+   }
+  });
+  assertActive();
+  return count>0||Object.values(visible).some(row=>
+   row&&(row.batch?.length||row.looks?.length||row.saved?.length||
+    Object.keys(row.current?.slots||{}).length));
+ }
  async function snapshot(){let items,state;await transact(['items','state'],'readonly',tx=>{const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();a.onsuccess=()=>items=a.result;b.onsuccess=()=>state=b.result;});return {local:{schemaVersion:1,items,state:Object.fromEntries(state.filter(x=>E.stateIds.includes(x.id)).map(x=>[x.id,x]))},m:state.find(x=>x.id==='cloud-sync')||markerDefault()};}
  async function api(path,{body,method='GET',contentType='application/json'}={},again=false,assertActive=()=>{}){
   assertActive();
@@ -383,7 +403,14 @@
      status('Saved on this device · cloud backup pending');schedule();return;
     }
    }
-   if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty(assertActive);assertActive();({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();dirtyAtStart=true;}
+   if(!m.baseVersion&&!m.dirty&&await callbacks.capture(()=>hasLocalWardrobe(assertActive))){
+     assertActive();
+     // Recheck the owner lease and atomically raise the local revision before
+     // taking the first full snapshot. Existing owner edits are never cleared.
+     await callbacks.capture(()=>markDirty(assertActive));assertActive();
+     ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));
+     assertActive();dirtyAtStart=true;
+    }
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision,assertActive)){schedule();return;}}
     status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
