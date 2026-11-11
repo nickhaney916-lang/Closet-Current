@@ -94,8 +94,12 @@
   }
   const stream=response.body;
   if(!stream||typeof stream.getReader!=='function'){
-   // Nonstreaming synthetic/legacy response fallback. Modern mobile fetch
-   // exposes a ReadableStream and takes the bounded branch below.
+   // A genuine browser Fetch Response with no readable stream cannot be
+   // bounded before arrayBuffer() allocates; refuse it rather than trusting
+   // Content-Length, which an untrusted server may omit or falsify. Plain
+   // response stubs in legacy unit tests retain their compatibility path.
+   if(typeof Response==='function'&&response instanceof Response)
+    throw photoIntegrityError();
    const data=await response.arrayBuffer();assertActive();
    if(data.byteLength>maxPrivateJPEGBytes)throw photoIntegrityError();
    return new Uint8Array(data);
@@ -138,8 +142,11 @@
    throw photoIntegrityError();
   }
   if(!response.body||typeof response.body.getReader!=='function'){
-   // Compatibility with mocked and older nonstreaming response objects:
-   // browser fetch's ReadableStream above is the only pre-allocation bound.
+   // Never call json() on a genuine unstreamed Fetch Response: it buffers
+   // arbitrary owner-private bytes before our size check. Preserve only
+   // plain legacy unit-test response stubs without native Response identity.
+   if(typeof Response==='function'&&response instanceof Response)
+    throw photoIntegrityError();
    const result=await response.json();assertActive();return result;
   }
   const reader=response.body.getReader(),parts=[];
