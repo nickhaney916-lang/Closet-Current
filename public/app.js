@@ -389,12 +389,12 @@ function adjustPhoto(item){
  if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
-  if(ambiguousSource820&&(!confirmedSingleGarment820?.checked||
+  if(item.segmentHint?.sourceDisconnectedReviewRequired===true&&(!confirmedSingleGarment820?.checked||
      typeof item.originalPhoto?.image!=='string'||
      !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(item.originalPhoto.image)))
    throw Error('Review the original and confirm a single garment before saving. If you see several items, use Crop photo first.');
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
-  if(ambiguousSource820){
+  if(item.segmentHint?.sourceDisconnectedReviewRequired===true){
    value.sourceAmbiguityAcknowledged820=true;
    value.sourceAmbiguityReviewProvenance820='explicit-owner-checkbox-not-independent-human-ground-truth';
   }
@@ -465,7 +465,7 @@ function adjustPhoto(item){
  }catch(error){
   save.disabled=false;
   const reviewedAmbiguousError820=String(error?.message||'');
-  message(ambiguousSource820?
+  message(item.segmentHint?.sourceDisconnectedReviewRequired===true?
    reviewedAmbiguousError820.startsWith('Review the original and confirm a single garment')?
     'Original garment review not saved. '+reviewedAmbiguousError820+' Your original photo remains available.':
     'Original garment review was not saved. Keep the original photograph and try again.':
