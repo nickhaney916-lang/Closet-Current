@@ -661,6 +661,9 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
  // 3=all three corners coincident. All comparisons use one fixed metric.
  const byOriginalCoincidentCorners=[0,0,0,0],byStagedCoincidentCorners=[0,0,0,0];
  const byGarmentMesh=meshes.map(()=>0);
+ const byPairAreaProvenance={bothRegular:0,preexistingSmall:0,newlySmall:0,recoveredSmall:0};
+ const byUniqueFaceAreaProvenance={bothRegular:0,preexistingSmall:0,newlySmall:0,recoveredSmall:0};
+ const uniqueAffectedSourceFaces=new Set();
  const t=new THREE.Vector3(),u=new THREE.Vector3(),v=new THREE.Vector3();
  const getFace=(g,face)=>{
   const a=g.getAttribute('position').array,idx=g.index?.array;
@@ -684,6 +687,10 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
   return new THREE.Vector3().crossVectors(t,u);
  };
  const planeDist=(f,n,opposite)=>opposite.map(p=>n.dot(v.subVectors(p,f[0])));
+ const sourceAreaStatus=(beforeSmall,afterSmall)=>
+  beforeSmall?(afterSmall?'preexistingSmall':'recoveredSmall'):
+   (afterSmall?'newlySmall':'bothRegular');
+ const small=(f)=>normal(f).lengthSq()<areaEpsilon;
  const mode=(a,b)=>{
   const na=normal(a),nb=normal(b);
   if(na.lengthSq()<areaEpsilon||nb.lengthSq()<areaEpsilon)return 'degenerate';
@@ -718,6 +725,16 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
    const afterA=getFace(g,first),afterB=getFace(g,second);
    const c=mode(afterA,afterB);
    byContactGeometry[c]++;
+   const beforeSmallA=small(beforeA),beforeSmallB=small(beforeB),
+    afterSmallA=small(afterA),afterSmallB=small(afterB);
+   byPairAreaProvenance[sourceAreaStatus(beforeSmallA||beforeSmallB,afterSmallA||afterSmallB)]++;
+   for(const [face,beforeWasSmall,nowSmall] of [
+    [first,beforeSmallA,afterSmallA],[second,beforeSmallB,afterSmallB]]){
+    const keyFace=m+':'+face;
+    if(uniqueAffectedSourceFaces.has(keyFace))continue;
+    uniqueAffectedSourceFaces.add(keyFace);
+    byUniqueFaceAreaProvenance[sourceAreaStatus(beforeWasSmall,nowSmall)]++;
+   }
    byOriginalCoincidentCorners[matchedCorners(beforeA,beforeB)]++;
    byStagedCoincidentCorners[matchedCorners(afterA,afterB)]++;
    byGarmentMesh[m]++;
@@ -726,10 +743,19 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
   for(const total of [Object.values(byContactGeometry).reduce((a,b)=>a+b,0),
    byOriginalCoincidentCorners.reduce((a,b)=>a+b,0),
    byStagedCoincidentCorners.reduce((a,b)=>a+b,0),
-   byGarmentMesh.reduce((a,b)=>a+b,0)])
+   byGarmentMesh.reduce((a,b)=>a+b,0),
+   Object.values(byPairAreaProvenance).reduce((a,b)=>a+b,0)])
    if(total!==count)throw Error('M2 seam typing source pair tally mismatch');
+  if(Object.values(byUniqueFaceAreaProvenance).reduce((a,b)=>a+b,0)!==
+    uniqueAffectedSourceFaces.size)
+   throw Error('M2 face area provenance unique source face counts mismatch');
   return Object.freeze({
    newSelfContactCount:count,
+   uniqueAffectedSourceFaceCount:uniqueAffectedSourceFaces.size,
+   byPairAreaProvenance:Object.freeze({...byPairAreaProvenance}),
+   byUniqueFaceAreaProvenance:Object.freeze({...byUniqueFaceAreaProvenance}),
+   sourceAreaCrossSquaredThreshold:areaEpsilon,
+   noSmallAreaWaiver:true,
    byContactGeometry:Object.freeze({...byContactGeometry}),
    byOriginalCoincidentCorners:Object.freeze(byOriginalCoincidentCorners),
    byStagedCoincidentCorners:Object.freeze(byStagedCoincidentCorners),
