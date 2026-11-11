@@ -7,6 +7,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createServer} from 'node:http';
 import {resolve,extname} from 'node:path';
 import {createHash} from 'node:crypto';
+import {Script} from 'node:vm';
 import {chromium,webkit} from 'playwright';
 import {routePinnedModelAsset,isPinnedModelAsset} from '../research/real-mask-evidence-31/model-assets.mjs';
 import {measureRegisteredBoundaries66} from '../research/real-garment-acceptance-66/boundary-evidence.mjs';
@@ -49,6 +50,14 @@ instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourc
 const thresholdReceipts821=thresholdP821?"thresholdProfiles821:await Promise.all(thresholdMaps821.map(async profile=>({name:profile.name,personDetected:profile.map.personDetected,sourceLabelSHA256:await sha(profile.map.labels),groups:await Promise.all(profile.groups.map((g,i)=>describe({...g,instanceKey:'P821-'+profile.name+'-'+g.id+'-'+i}))}))),":'';
 const sourceComponentReceipts817=componentP817?"sourceComponentReview817:await Promise.all(split817.map(async g=>({...await describe(g),sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor}))),nativeNormalB0Source817:await Promise.all(nativeNormal817.map((g,i)=>describe({...g,instanceKey:'native-normal-'+g.id+'-'+i}))),":'';
 instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),"+sourceComponentReceipts817+thresholdReceipts821+"allClassGrowth:await Promise.all(allClass.map(describe)),unseededReview:await Promise.all(unseeded.map(async g=>({...await describe(g),accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,originalSeedCount:g.originalSeedCount,sourceLabelChanged:g.sourceLabelChanged,subtype:g.subtype,primaryColor:g.primaryColor}))),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
+// P827: syntax-check the ACTUAL dynamically composed worker script before
+// loading a browser or making a single model request. A syntax failure would
+// otherwise cause six-minute no-progress timeouts, not a reported model error.
+if(thresholdP821){
+ try{new Script(instrumentedWorker,{filename:'p827-actual-instrumented-B0-worker.mjs'});}
+ catch(e){throw Error('M1_P827_WORKER_BOOTSTRAP_SYNTAX: '+e.message,{cause:e});}
+ console.log('M1_P827_ACTUAL_WORKER_SYNTAX_VALIDATED');
+}
 const source=[];
 for(const row of manifest.rows){
  const bytes=await readFile((additionalP792?
@@ -77,6 +86,8 @@ try{
   return route.abort();
  });
  const page=await context.newPage();
+ if(thresholdP821)page.on('pageerror',e=>
+  console.log('M1_P827_PAGEERROR',String(e.message).slice(0,180)));
  if(thresholdP821)page.on('console',m=>{
   const msg=m.text();
   if(msg.startsWith('M1_P827_'))console.log(msg);
@@ -102,6 +113,14 @@ try{
      }
      if(e.data.type==='done'){clearTimeout(timeout);done(e.data.result);}
      if(e.data.type==='error'){clearTimeout(timeout);reject(Error(JSON.stringify(e.data)));}
+    };
+    worker.onerror=e=>{
+     clearTimeout(timeout);
+     reject(Error('M1_P827_WORKER_BOOTSTRAP_ERROR: '+String(e.message||'worker failed').slice(0,160)));
+    };
+    worker.onmessageerror=()=>{
+     clearTimeout(timeout);
+     reject(Error('M1_P827_WORKER_CLONE_OR_BOOTSTRAP_MESSAGE_ERROR'));
     };
     worker.postMessage({id,sourceId:'fashionpedia-'+id,analysisImage:data,originalWidth:row.width,originalHeight:row.height,analysisRGBA:rgba,analysisWidth:row.width,analysisHeight:row.height},[rgba.buffer]);
    });
