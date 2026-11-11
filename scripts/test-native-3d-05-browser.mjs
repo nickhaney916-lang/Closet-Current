@@ -430,7 +430,8 @@ try{
      refusalReason=reason[1];
      assert.ok(['coarse-body-pair-regression','new-body-contacts','body-contact-count-regression',
       'new-panel-contacts','panel-contact-count-regression','new-intrapanel-contacts',
-      'intrapanel-count-regression','hem-extension-under-minimum','contact-audit-budget'].includes(refusalReason),
+      'intrapanel-count-regression','hem-extension-under-minimum',
+      'body-contact-budget','panel-contact-budget','self-comparison-budget','self-contact-budget'].includes(refusalReason),
       'Unknown/error candidate must not be claimed as a validated collision rejection');
      assert.equal(decisionState?.active,false,'No unsafe clothing mesh or owner JPEG may remain mounted');
      assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);

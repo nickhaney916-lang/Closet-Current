@@ -9,6 +9,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-garment-part-contact-20261110-HOLD
     - research/mission2-self-contact-20261110-HOLD
     - research/mission2-adaptive-attribution-20261111-HOLD
+    - research/mission2-unique-triangle-budget-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
