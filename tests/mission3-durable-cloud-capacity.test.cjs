@@ -7,7 +7,7 @@ const {indexedDB}=require('fake-indexeddb');
 const E=require('../public/cloud-backup-engine.js');
 const root=process.env.CLOUD_SOURCE_ROOT||'.';
 const old=process.env.EXPECT_BASELINE==='1';
-const code=readFileSync(root+'/public/cloud-backup.js','utf8');
+const cloudSource=readFileSync(root+'/public/cloud-backup.js','utf8');
 const img='data:image/jpeg;base64,'+Buffer.from([255,216,255,224,0,16,68,85,82,65,66,76,69,255,217]).toString('base64');
 const reply=(body,status=200)=>({status,ok:status>=200&&status<300,json:async()=>body});
 const stateValue=db=>new Promise((resolve,reject)=>{
@@ -77,7 +77,7 @@ async function ownerFixture(code=413){
   };
   const auth={user:{id:owner},assertCurrent(){},getAccessToken:async()=> 'synthetic-token'};
   const window={ClosetBackupEngine:E,closetAuth:auth,addEventListener(name,fn){events.set(name,fn)}};
-  vm.runInNewContext(code,{window,
+  vm.runInNewContext(cloudSource,{window,
    document:{getElementById:node},location:{hostname:'localhost',search:''},
    navigator:{storage:{persist:async()=>true}},fetch:transport,URL,URLSearchParams,
    crypto:webcrypto,Uint8Array,atob,btoa,AbortController,console,
