@@ -402,9 +402,11 @@ export async function mountNative3D05({
     let proof171=null;
     for(let i=0;i<40;i++){
      const render=panel?.state?.();
-     if(params?.get('photoSourceTrianglePolicy')==='adaptive'&&
-        String(doc.getElementById('outfit3D01Status')?.textContent||'').includes('M2 source length adaptive-geometry-refused['))
-      throw Error('M2 source length new-body-triangle-contacts: original-photo/2D fallback required; 3D scene denied');
+     if(params?.get('photoSourceTrianglePolicy')==='adaptive'){
+      const statusMessage=String(doc.getElementById('outfit3D01Status')?.textContent||'');
+      const refusal=statusMessage.match(/M2 source length adaptive-geometry-refused\[([a-z-]+)\]/);
+      if(refusal)throw Error('M2 source length adaptive-geometry-refused['+refusal[1]+']: original-photo/2D fallback required; 3D scene denied');
+     }
      const verdict=fitModule.inspectNativePhotoFit171({
       selection:selected,sources:selectedSources91,
       render:render?{...render,productionDeployed:false}:null
