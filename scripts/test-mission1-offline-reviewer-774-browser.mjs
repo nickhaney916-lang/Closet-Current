@@ -7,7 +7,7 @@ import assert from 'node:assert/strict';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {createHash} from 'node:crypto';
+import {createHash,generateKeyPairSync,sign as edSign} from 'node:crypto';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 import {authorManualSourceLabel774} from '../research/mission1-reviewer-774/offline-human-polygon-receipt.mjs';
@@ -36,9 +36,20 @@ const canonical=x=>{
  return '{'+keys.map(k=>JSON.stringify(k)+':'+canonical(x[k])).join(',')+'}';
 };
 const sourceSHA=sha(photo),photoId='hold-synthetic-browser-fixture';
+// ONLY ephemeral fabricated signing keys and synthetic photos are used in CI;
+// these signatures never represent an independent real coordinator or human.
+const members=['coordinator','reviewerA','reviewerB','adjudicator'];
+const pairs=Object.fromEntries(members.map(k=>[k,generateKeyPairSync('ed25519')]));
+const reviewerRegistry=Object.fromEntries(members.map(k=>
+ [k,pairs[k].publicKey.export({format:'pem',type:'spki'})]));
 const sealBody={schema:'closet-current-prospective-holdout/v1',
+ reviewerRegistrySHA256:sha(Buffer.from(canonical(reviewerRegistry))),
  photos:[{id:photoId,image:'synthetic-fixture.jpg',sha256:sourceSHA,width,height}]};
 const seal={...sealBody,sealSHA256:sha(Buffer.from(canonical(sealBody)))};
+const signedPayload={purpose:'register-before-inference',sealSHA256:seal.sealSHA256};
+const signedMessage=Buffer.from('closet-current-M1-v1:'+sha(Buffer.from(canonical(signedPayload))));
+const registrationWitness={signerId:'coordinator',
+ signature:edSign(null,signedMessage,pairs.coordinator.privateKey).toString('base64')};
 for(const engine of names){
  const browser=await ({chromium,webkit})[engine].launch({headless:true,args:engine==='chromium'?['--no-sandbox']:[]});
  try{
@@ -57,6 +68,30 @@ for(const engine of names){
      name:'sealed-fixture-only.json',mimeType:'application/json',
      buffer:Buffer.from(JSON.stringify(seal))
     });
+    assert.equal(await page.locator('#original').isDisabled(),true,
+      'cohort checksum alone must never allow JPEG annotation');
+    await page.locator('#reviewerRegistry812').setInputFiles({
+     name:'synthetic-public-key-registry.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify(reviewerRegistry))
+    });
+    const flipped=registrationWitness.signature.slice(0,-4)+'AAAA';
+    await page.locator('#registrationWitness812').setInputFiles({
+     name:'invalid-synthetic-coordinator-witness.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify({...registrationWitness,signature:flipped}))
+    });
+    await page.locator('#verifyRegistration812').click();
+    await page.waitForFunction(()=>
+     document.querySelector('#registrationProof812')?.textContent?.includes('REJECTED'));
+    assert.equal(await page.locator('#original').isDisabled(),true);
+    assert.equal(await page.locator('#export').isDisabled(),true);
+    await page.locator('#registrationWitness812').setInputFiles({
+     name:'valid-synthetic-coordinator-witness.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify(registrationWitness))
+    });
+    await page.locator('#verifyRegistration812').click();
+    await page.waitForFunction(()=>
+     document.querySelector('#registrationProof812')?.textContent?.includes('signature VERIFIED'));
+    assert.equal(await page.locator('#original').isEnabled(),true);
     await page.locator('#original').setInputFiles({
      name:'synthetic-fixture.jpg',mimeType:'image/jpeg',buffer:photo
     });
@@ -208,6 +243,29 @@ for(const engine of names){
     assert.equal(await page.locator('#original').isDisabled(),true);
     assert.equal(await page.locator('#export').isDisabled(),true);
     console.log('P811_VALID_CHECKSUM_BUT_INVALID_SIGNER_SOURCE_DIMENSIONS_REJECTED',engine,screenWidth);
+    // P812: importing a clean cohort alone does not restore registration.
+    // A forged coordinator witness is refused before original JPEG review.
+    await page.locator('#cohort').setInputFiles({
+     name:'reloaded-valid-synthetic-seal.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify(seal))
+    });
+    await page.waitForFunction(()=>!document.getElementById('verifyRegistration812').disabled);
+    assert.equal(await page.locator('#original').isDisabled(),true);
+    await page.locator('#registrationWitness812').setInputFiles({
+     name:'forged-coordinator-witness.json',mimeType:'application/json',
+     buffer:Buffer.from(JSON.stringify({...registrationWitness,signature:flipped}))
+    });
+    await page.locator('#verifyRegistration812').click();
+    await page.waitForFunction(()=>document.querySelector('#registrationProof812')?.
+      textContent?.includes('REJECTED'));
+    assert.equal(await page.locator('#original').isDisabled(),true);
+    assert.equal(await page.locator('#export').isDisabled(),true);
+    assert.deepEqual(external,[]);
+    const witnessScreenshot=out+'/'+engine+'-'+screenWidth+'-invalid-witness-refused.png';
+    await page.screenshot({path:witnessScreenshot,fullPage:true});
+    hashes.push({engine,width:screenWidth,sha256:sha(await readFile(witnessScreenshot)),
+     syntheticOnly:true,kind:'invalid-witness-rejected'});
+    console.log('P812_FABRICATED_WITNESS_REFUSED_BEFORE_ANY_JPEG_REVIEW',engine,screenWidth);
     console.log('P809_HUMAN_OUTER_MINUS_HOLE_SYNTHETIC_BROWSER_RECEIPT_NO_EXTERNAL_REQUEST',engine,screenWidth,
      screenshot,sha(rendered));
    }finally{await context.close();}
