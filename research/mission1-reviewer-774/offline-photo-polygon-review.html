@@ -40,6 +40,12 @@ This tool uses only local files. It never shows model predictions, another revie
 <legend>1. Enroll an already sealed source photograph</legend>
 <label for="cohort">Import the prospective pre-inference seal JSON</label>
 <input id="cohort" type="file" accept=".json,application/json">
+<label for="reviewerRegistry812">Import the independently enrolled reviewer public-key registry JSON</label>
+<input id="reviewerRegistry812" type="file" accept=".json,application/json">
+<label for="registrationWitness812">Import the coordinator's signed pre-inference registration witness JSON</label>
+<input id="registrationWitness812" type="file" accept=".json,application/json">
+<div class="buttons"><button id="verifyRegistration812" disabled>Verify coordinator registration signature</button></div>
+<p id="registrationProof812" class="small" role="status">A checksum alone does not authenticate a coordinator. Import the separate public-key registry and pre-inference signature; the public keys must be independently enrolled and trusted.</p>
 <label for="photoId">Choose a registered photograph ID</label>
 <select id="photoId" disabled></select>
 <label for="original">Open the exact original JPEG (local-only, never uploaded)</label>
@@ -112,7 +118,7 @@ This tool uses only local files. It never shows model predictions, another revie
  const sel=(input,options)=>{
   input.replaceChildren();for(const x of options){const op=document.createElement('option');op.textContent=x;op.value=x;input.appendChild(op);}
  };
- const state={seal:null,photo:null,verified:false,image:null,regions:[],vertices:[],polygons:[],holes:[],holeMode:false,negative:false,href:null,sourceLease:0};
+ const state={seal:null,photo:null,verified:false,image:null,regions:[],vertices:[],polygons:[],holes:[],holeMode:false,negative:false,href:null,sourceLease:0,registrationVerified812:false};
  const ctx=$('drawing').getContext('2d');
  const status=(message,fail=false)=>{$('status').textContent=message;$('status').style.color=fail?'#9a2330':'#254d5b';};
  /**
@@ -157,6 +163,49 @@ This tool uses only local files. It never shows model predictions, another revie
    throw Error('Prospective seal SHA-256 mismatch: source registration was changed');
   return true;
  }
+ // Mirrors signedMessage({purpose:'register-before-inference', sealSHA256})
+ // and verifySeal() in prospective-gate.mjs. This checks a cryptographic
+ // signature against the user-supplied enrolled key, NOT independent identity.
+ async function verifyRegistration812(seal,registry,witness){
+  const keys=['coordinator','reviewerA','reviewerB','adjudicator'];
+  if(!registry||typeof registry!=='object'||Array.isArray(registry)||
+     Object.getPrototypeOf(registry)!==Object.prototype||
+     !keys.every(k=>typeof registry[k]==='string'&&registry[k].length<4096)||
+     !/^[a-f0-9]{64}$/.test(seal?.reviewerRegistrySHA256||'')||
+     !witness||typeof witness!=='object'||Array.isArray(witness)||
+     witness.signerId!=='coordinator'||typeof witness.signature!=='string'||
+     !/^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(witness.signature)||
+     witness.signature.length>256)
+   throw Error('Missing exact externally enrolled registry or coordinator witness');
+  const toHex=buffer=>Array.from(new Uint8Array(buffer),b=>b.toString(16).padStart(2,'0')).join('');
+  const hash=async data=>toHex(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(data)));
+  if(await hash(canonicalSeal811(registry))!==seal.reviewerRegistrySHA256)
+   throw Error('Coordinator public-key registry does not match sealed enrollment');
+  const extract=key=>{
+   const pem=key.trim().replace(/\r/g,'');
+   if(!pem.startsWith('-----BEGIN PUBLIC KEY-----\n')||
+      !pem.endsWith('\n-----END PUBLIC KEY-----'))
+    throw Error('Coordinator public key must be exported SPKI PEM');
+   const body=pem.slice('-----BEGIN PUBLIC KEY-----\n'.length,-'\n-----END PUBLIC KEY-----'.length)
+    .replace(/\n/g,'');
+   if(!/^[A-Za-z0-9+/]+={0,2}$/.test(body)||body.length>200)
+    throw Error('Malformed coordinator public-key PEM');
+   return Uint8Array.from(atob(body),ch=>ch.charCodeAt(0));
+  };
+  // Both key duplication and invalid Ed25519 keys fail closed.
+  const bytes=keys.map(k=>extract(registry[k]));
+  if(new Set(bytes.map(k=>Array.from(k).join(','))).size!==4)
+   throw Error('Coordinator and blinded reviewers must use distinct keys');
+  const coordinatorKey=await crypto.subtle.importKey('spki',bytes[0],
+    {name:'Ed25519'},false,['verify']);
+  const payload={purpose:'register-before-inference',sealSHA256:seal.sealSHA256};
+  const message='closet-current-M1-v1:'+await hash(canonicalSeal811(payload));
+  const sig=Uint8Array.from(atob(witness.signature),ch=>ch.charCodeAt(0));
+  if(sig.length!==64||!await crypto.subtle.verify(
+    {name:'Ed25519'},coordinatorKey,sig,new TextEncoder().encode(message)))
+   throw Error('Invalid coordinator pre-inference Ed25519 signature');
+  return true;
+ }
  function reset(){
   // Every source, seal or file transition cancels all pending async proofs.
   state.sourceLease++;
@@ -199,8 +248,10 @@ This tool uses only local files. It never shows model predictions, another revie
  function subtype(){sel($('subtype'),allowed[$('category').value]);}
  $('category').onchange=subtype;subtype();
  $('cohort').onchange=async()=>{
-  reset();state.seal=null;state.photo=null;
+  reset();state.seal=null;state.photo=null;state.registrationVerified812=false;
   $('photoId').disabled=true;$('original').disabled=true;$('verify').disabled=true;
+  $('verifyRegistration812').disabled=true;
+  $('registrationProof812').textContent='Coordinator signature NOT verified; original JPEG review is locked.';
   const lease=state.sourceLease;
   try{
    const f=$('cohort').files[0];if(!f||f.size>1024*1024)throw Error('Seal missing or too large');
@@ -209,12 +260,57 @@ This tool uses only local files. It never shows model predictions, another revie
    await verifySeal811(seal);
    if(lease!==state.sourceLease)return;
    state.seal=seal;sel($('photoId'),seal.photos.map(x=>x.id));state.photo=seal.photos[0];
-   $('photoId').disabled=false;$('original').disabled=false;
-   status('Source seal SHA-256 matches; coordinator signature is NOT authenticated here. Choose exact original JPEG.');
+   $('verifyRegistration812').disabled=!$('reviewerRegistry812').files.length||
+    !$('registrationWitness812').files.length;
+   status('Source checksum matches. Verify separate coordinator Ed25519 witness before selecting JPEG.');
   }catch(e){if(lease===state.sourceLease)status(e.message,true);}
  };
- $('photoId').onchange=()=>{reset();state.photo=state.seal.photos.find(x=>x.id===$('photoId').value);$('verify').disabled=!$('original').files.length;};
- $('original').onchange=()=>{reset();$('verify').disabled=!$('original').files.length;};
+ const invalidateRegistration812=()=>{
+  reset();state.registrationVerified812=false;
+  $('photoId').disabled=true;$('original').disabled=true;$('verify').disabled=true;
+  $('registrationProof812').textContent='Coordinator signature NOT verified. Photo review remains locked.';
+  $('verifyRegistration812').disabled=!state.seal||!$('reviewerRegistry812').files.length||
+   !$('registrationWitness812').files.length;
+ };
+ $('reviewerRegistry812').onchange=invalidateRegistration812;
+ $('registrationWitness812').onchange=invalidateRegistration812;
+ $('verifyRegistration812').onclick=async()=>{
+  invalidateRegistration812();
+  const lease=state.sourceLease,seal=state.seal;
+  const registryFile=$('reviewerRegistry812').files[0],
+        witnessFile=$('registrationWitness812').files[0];
+  const current=()=>lease===state.sourceLease&&seal===state.seal&&
+   registryFile===$('reviewerRegistry812').files[0]&&
+   witnessFile===$('registrationWitness812').files[0];
+  $('verifyRegistration812').disabled=true;
+  try{
+   if(!seal||!registryFile||!witnessFile||registryFile.size>65536||
+      witnessFile.size>16384)throw Error('Registered coordinator key/witness files are missing or too large');
+   const registry=JSON.parse(await registryFile.text());
+   if(!current())return;
+   const witness=JSON.parse(await witnessFile.text());
+   if(!current())return;
+   await verifyRegistration812(seal,registry,witness);
+   if(!current())return;
+   state.registrationVerified812=true;
+   $('photoId').disabled=false;$('original').disabled=false;
+   $('verify').disabled=!$('original').files.length;
+   $('registrationProof812').textContent='Coordinator signature VERIFIED against uploaded registry and sealed source SHA. Independent registry identity and pre-inference chronology still require external audit.';
+   status('Signed registration verifies cryptographically. Choose exact original JPEG and check its bytes.');
+  }catch(e){
+   if(current())$('registrationProof812').textContent='Coordinator registration REJECTED: '+e.message;
+  }finally{
+   if(current())$('verifyRegistration812').disabled=false;
+  }
+ };
+ $('photoId').onchange=()=>{
+  reset();if(!state.registrationVerified812||!state.seal)return;
+  state.photo=state.seal.photos.find(x=>x.id===$('photoId').value);
+  $('verify').disabled=!$('original').files.length;
+ };
+ $('original').onchange=()=>{
+  reset();$('verify').disabled=!state.registrationVerified812||!$('original').files.length;
+ };
  $('verify').onclick=async()=>{
   // The proof must belong to the selected file AND registered photo at the
   // moment it becomes visible, not merely when digest/decode began.
@@ -225,7 +321,8 @@ This tool uses only local files. It never shows model predictions, another revie
   let pendingURL=null;
   $('verify').disabled=true;
   try{
-   if(!photo||!crypto.subtle)throw Error('Photo registration/secure local crypto unavailable');
+   if(!state.registrationVerified812||!photo||!crypto.subtle)
+    throw Error('Current coordinator registration and photo crypto verification required');
    if(!file||file.size>8*1024*1024)throw Error('Missing or oversized JPEG');
    const bytes=new Uint8Array(await file.arrayBuffer());
    if(!current())return;
