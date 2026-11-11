@@ -412,7 +412,10 @@ try{
      decisionState?.sourceLengthGarmentPartContactStrictlyAccepted===true&&
      decisionState?.sourceLengthNewGarmentPartContacts===0&&
      decisionState?.sourceLengthIntrapanelStrictlyAccepted===true&&
-     decisionState?.sourceLengthNewIntrapanelContacts===0;
+     decisionState?.sourceLengthNewIntrapanelContacts===0&&
+     decisionState?.sourceLengthIntrapanelAffectedPairOnly===true&&
+     Number.isSafeInteger(decisionState?.sourceLengthIntrapanelChangedFaces)&&
+     decisionState?.sourceLengthIntrapanelChangedFaces>0;
     let refusalReason=null;
     if(openProof.ok){
      assert.equal(accepted,true,'3D display without a nonregressing independent triangle receipt: '+JSON.stringify({
@@ -422,6 +425,8 @@ try{
       parts:decisionState?.sourceLengthNewGarmentPartContacts,
       self:decisionState?.sourceLengthNewIntrapanelContacts}));
      assert.equal(decisionState?.sourceLengthCollisionCertified,false);
+     assert.equal(decisionState?.sourceLengthIntrapanelFullBaselineEnumerated,false);
+     assert.ok(Number.isSafeInteger(decisionState?.sourceLengthIntrapanelCandidateTests));
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
     }else{
      const sanitized=[openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' ');
@@ -431,7 +436,8 @@ try{
      assert.ok(['coarse-body-pair-regression','new-body-contacts','body-contact-count-regression',
       'new-panel-contacts','panel-contact-count-regression','new-intrapanel-contacts',
       'intrapanel-count-regression','hem-extension-under-minimum',
-      'body-contact-budget','panel-contact-budget','self-comparison-budget','self-contact-budget'].includes(refusalReason),
+      'body-contact-budget','panel-contact-budget','self-comparison-budget','self-contact-budget',
+      'changed-self-comparison-budget','changed-self-contact-budget','changed-face-count-budget'].includes(refusalReason),
       'Unknown/error candidate must not be claimed as a validated collision rejection');
      assert.equal(decisionState?.active,false,'No unsafe clothing mesh or owner JPEG may remain mounted');
      assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
@@ -446,6 +452,7 @@ try{
      noNewBodyTriangleContactsIfAccepted:accepted,
      noNewGarmentPartTriangleContactsIfAccepted:accepted,
      noNewIntrapanelTriangleContactsIfAccepted:accepted,
+     changedFaceDeltaVerifiedIfAccepted:accepted,
      refusalReason,
      neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
      originalPrivateOwnerRetained:true,releaseAuthorized:false,familyAlpha:'HOLD'});
