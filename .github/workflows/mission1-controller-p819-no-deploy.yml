@@ -1,0 +1,37 @@
+name: Mission 1 P819 exact P818 real-model science controller checkpoint — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-controller-after-native-818-819-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-P819-controller-HOLD
+  cancel-in-progress: true
+jobs:
+  exact-parent-docs-only-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify P818 tested ancestor, exactly two documentation/audit files, no model/app/deploy mutation
+        run: |
+          set -euo pipefail
+          BASE=d4c75196913aa9814837f5143269f8e558a49e95
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p819-paths
+          test "$(wc -l </tmp/p819-paths)" -eq 2
+          grep -Fx 'research/mission1-controller/CURRENT.md' /tmp/p819-paths
+          grep -Fx '.github/workflows/mission1-controller-p819-no-deploy.yml' /tmp/p819-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-controller/CURRENT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-controller/CURRENT.md
+          grep -Fq 'P817' research/mission1-controller/CURRENT.md
+          grep -Fq 'P818' research/mission1-controller/CURRENT.md
+          grep -Fq '10 / 9 / 13' research/mission1-controller/CURRENT.md
+          grep -Fq '7 / 21 / 16' research/mission1-controller/CURRENT.md
+          grep -Fq '1,685 Node PASS' research/mission1-controller/CURRENT.md
+          echo M1_P819_VERIFIED_P818_DOCS_ONLY_NO_DEPLOY_NO_HUMAN_ACCEPTANCE
