@@ -216,7 +216,12 @@ test('invalid changed cloud JSON fails closed and does not mutate saved local cl
   assert.equal((await f.readMarker()).baseVersion,5);
   assert.equal(f.restores,0);
   assert.equal(f.saved,null);
-  assert.match(f.status(),/Cloud connection unavailable/);
+  // Integrated integrity quarantine intentionally improves the old generic
+  // connectivity message for a malformed private full document.
+  if(!baseline&&source.includes('const integrityText=')){
+   assert.match(f.status(),/Cloud photograph integrity check failed/);
+   assert.equal((await f.readMarker()).integrityPause,true);
+  }else assert.match(f.status(),/Cloud connection unavailable/);
   if(!baseline)assert.deepEqual(f.selectors,['revision','revision,document']);
  }finally{f.close();}
 });

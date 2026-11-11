@@ -42,8 +42,8 @@ const readAll=db=>new Promise((resolve,reject)=>{
  const r=db.transaction('items').objectStore('items').getAll();
  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
 });
-async function fixture(){
- const owner=randomUUID(),db=await database(owner);
+async function fixture(options={}){
+ const owner=options.owner||randomUUID(),db=await database(owner);
  await writeOld(db);
  const ref='closet-photo:'+owner+'/'+sha+'.jpg';
  const garment=id=>({id,ownerId:owner,category:'Tops',color:'Navy',userAdjusted:true,
@@ -58,7 +58,16 @@ async function fixture(){
  }};
  const events=new Map(),elements=new Map(),requests=[],scheduled=[];
  const elem=id=>{if(!elements.has(id))elements.set(id,{textContent:'',hidden:false,onclick:null});return elements.get(id)};
- const window={ClosetBackupEngine:E,closetAuth:{
+ const localValues=options.localValues||new Map(),tabValues=options.tabValues||new Map();
+ const storage=(values,blocked)=>({
+  getItem(key){if(blocked)throw Error('Storage blocked');return values.has(key)?values.get(key):null;},
+  setItem(key,value){if(blocked)throw storageError();values.set(key,String(value));},
+  removeItem(key){if(blocked)throw Error('Storage blocked');values.delete(key);}
+ });
+ const window={ClosetBackupEngine:E,
+  localStorage:storage(localValues,!!options.blockLocal),
+  sessionStorage:storage(tabValues,!!options.blockSession),
+  closetAuth:{
   user:{id:owner},assertCurrent(){},getAccessToken:async()=> 'synthetic-owner-'+owner
  },addEventListener(name,fn){events.set(name,fn)}};
  const fetch=async(url,opts={})=>{
@@ -75,15 +84,19 @@ async function fixture(){
   }
   throw Error('Unexpected synthetic cloud endpoint '+parsed.pathname);
  };
- vm.runInNewContext(source,{window,document:{getElementById:elem},
+ const install=()=>vm.runInNewContext(source,{window,document:{getElementById:elem},
   location:{hostname:'localhost',search:''},navigator:{storage:{persist:async()=>true}},
   fetch,URL,URLSearchParams,crypto:webcrypto,Uint8Array,atob,btoa,AbortController,console,
   setTimeout:(fn,ms)=>{scheduled.push(ms);return scheduled.length;},
   clearTimeout:()=>{},setInterval:()=>0});
- return {db,owner,window,events,requests,scheduled,status:()=>elem('cloudStatus').textContent,
+ install();
+ const start=()=>window.closetCloud.start(db,{capture:fn=>fn(),canRestore:()=>true,async restored(){}});
+ return {db,owner,window,events,requests,scheduled,localValues,tabValues,
+  status:()=>elem('cloudStatus').textContent,
   rows:()=>readAll(db),marker:()=>readOne(db,'state','cloud-sync'),
   board:()=>readOne(db,'state','outfit-board'),
-  start:()=>window.closetCloud.start(db,{capture:fn=>fn(),canRestore:()=>true,async restored(){}}),
+  start,
+  async reload(){events.get('pagehide')?.();install();await start();},
   manual:()=>elem('syncCloset').onclick(),
   async autoEvents(){await events.get('online')?.();await events.get('focus')?.();window.closetCloud.changed();},
   close(){events.get('pagehide')?.();db.close();}
@@ -107,8 +120,10 @@ async function withQuota(throwFor,exercise){
 }
 test('verified parent lacks explicit quota abort and device-storage pause; repair installs both',()=>{
  if(baseline){
-  assert.doesNotMatch(source,/restoreError=null/);
-  assert.doesNotMatch(source,/pausedDeviceStorage/);
+  // PR #817 already fixed atomic restore and per-page device quota pause.
+  // This new baseline must reproduce only the missing cross-reload stop.
+  assert.match(source,/restoreError=null/);
+  assert.match(source,/pausedDeviceStorage/);
  }else{
   assert.match(source,/restoreError=null/);
   assert.match(source,/pausedDeviceStorage=true/);
@@ -174,5 +189,117 @@ test('successful restore with no quota errors retains SHA-verifiable originals a
   assert.equal((await f.board()).saved[0].id,'remote-outfit');
   assert.equal((await f.marker()).baseVersion,2);
   assert.equal(f.status(),'Cloud backup up to date');
+ }finally{f.close();}
+});
+
+
+test('prior device quota pause was in memory only; repair adds owner-keyed persistent fallback',()=>{
+ if(baseline)assert.doesNotMatch(source,/readDevicePause/);
+ else{
+  assert.match(source,/readDevicePause\(user\)/);
+  assert.match(source,/writeDevicePause\(user,true\)/);
+  assert.match(source,/writeDevicePause\(user,false\)/);
+ }
+});
+test('quota pause survives reload without downloading photos; manual Sync restores SHA-bound originals and clears stop',async()=>{
+ if(baseline)return;
+ const f=await fixture();
+ try{
+  await withQuota((store,row)=>store==='items'&&row?.id==='remote-one',async guard=>{
+   await f.start();assert.equal(guard.injected,1);
+   assert.match(f.status(),/Device storage is full/);
+   assert.equal((await f.rows())[0].id,'old-local-photo');
+   const before=f.requests.length;
+   await f.reload();
+   assert.equal(f.requests.length,before,'reloading blocked owner must not access cloud');
+   assert.match(f.status(),/Device storage is full/);
+   assert.equal((await f.board()).saved[0].id,'old-outfit');
+   guard.recover();await f.manual();
+   assert.deepEqual((await f.rows()).map(x=>x.id),['remote-one','remote-two']);
+   assert.equal((await f.marker()).baseVersion,2);
+   assert.equal((await f.board()).saved[0].id,'remote-outfit');
+   assert.equal(f.status(),'Cloud backup up to date');
+   assert.equal([...f.localValues.values()].includes('1'),false);
+   assert.equal([...f.tabValues.values()].includes('1'),false);
+   await f.reload();
+   assert.equal(f.status(),'Cloud backup up to date');
+  });
+ }finally{f.close();}
+});
+test('paused device quota belongs only to that owner, not another signed-in owner',async()=>{
+ if(baseline)return;
+ const sharedLocal=new Map(),a=await fixture({localValues:sharedLocal});
+ let b;
+ try{
+  await withQuota((store,row)=>store==='items'&&row?.id==='remote-one',async guard=>{
+   await a.start();assert.equal(guard.injected,1);guard.recover();
+   b=await fixture({localValues:sharedLocal});
+   await b.start();
+   assert.equal((await b.rows()).length,2,'another owner can restore');
+   assert.equal(b.status(),'Cloud backup up to date');
+   const before=a.requests.length;await a.reload();
+   assert.equal(a.requests.length,before,'first owner remains paused');
+   assert.equal((await a.rows())[0].id,'old-local-photo');
+   assert.equal(sharedLocal.get('closet-current:device-quota-pause:v1:'+a.owner),'1');
+   assert.equal(sharedLocal.has('closet-current:device-quota-pause:v1:'+b.owner),false);
+  });
+ }finally{a.close();b?.close();}
+});
+test('sessionStorage reload fallback works if localStorage is blocked',async()=>{
+ if(baseline)return;
+ const f=await fixture({blockLocal:true});
+ try{
+  await withQuota((store,row)=>store==='items'&&row?.id==='remote-one',async guard=>{
+   await f.start();
+   assert.equal(f.tabValues.get('closet-current:device-quota-pause:v1:'+f.owner),'1');
+   const before=f.requests.length;await f.reload();
+   assert.equal(f.requests.length,before);
+   guard.recover();await f.manual();
+   assert.equal(f.tabValues.size,0);assert.equal((await f.rows()).length,2);
+  });
+ }finally{f.close();}
+});
+test('when both storage APIs are unavailable, warn about reload and preserve atomic wardrobe',async()=>{
+ if(baseline)return;
+ const f=await fixture({blockLocal:true,blockSession:true});
+ try{
+  await withQuota((store,row)=>store==='items'&&row?.id==='remote-one',async guard=>{
+   await f.start();
+   assert.match(f.status(),/pause could not be saved/);
+   assert.equal((await f.rows())[0].id,'old-local-photo');
+   guard.recover();
+   const before=f.requests.length;await f.reload();
+   assert.ok(f.requests.length>before,'unavailable storage cannot promise a durable stop');
+   assert.equal((await f.rows()).length,2);
+   assert.equal(f.status(),'Cloud backup up to date');
+  });
+ }finally{f.close();}
+});
+
+
+test('stale previous-owner Sync cannot clear quota pause after auth account switch or revoked lease',async()=>{
+ if(baseline)return;
+ const f=await fixture();
+ try{
+  await withQuota((store,row)=>store==='items'&&row?.id==='remote-one',async guard=>{
+   await f.start();assert.equal(guard.injected,1);
+   const key='closet-current:device-quota-pause:v1:'+f.owner;
+   const before=f.requests.length;
+   assert.equal(f.localValues.get(key),'1');
+   f.window.closetAuth.user={id:randomUUID()};
+   await f.manual();
+   assert.equal(f.localValues.get(key),'1','account switch must retain previous owners stop');
+   assert.equal(f.requests.length,before);
+   assert.equal((await f.rows())[0].id,'old-local-photo');
+   f.window.closetAuth.user={id:f.owner};
+   f.window.closetAuth.assertCurrent=()=>{throw Error('Revoked owner lease')};
+   await f.manual();
+   assert.equal(f.localValues.get(key),'1','revoked lease must keep pause');
+   assert.equal(f.requests.length,before);
+   f.window.closetAuth.assertCurrent=()=>{};
+   guard.recover();await f.manual();
+   assert.equal(f.localValues.has(key),false);
+   assert.equal((await f.rows()).length,2);
+  });
  }finally{f.close();}
 });
