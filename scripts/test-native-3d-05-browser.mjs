@@ -47,13 +47,21 @@ function requireSourceLength(state,width){
   assert.ok(Number.isInteger(state.sourceLengthTriangleContactBefore)&&state.sourceLengthTriangleContactBefore>=0);
   assert.ok(Number.isInteger(state.sourceLengthTriangleContactAfter)&&state.sourceLengthTriangleContactAfter>=0);
   assert.ok(Number.isInteger(state.sourceLengthNewTriangleContacts)&&state.sourceLengthNewTriangleContacts>=0);
+  const distribution=state.sourceLengthBodyContactDistribution;
+  assert.equal(distribution?.total,state.sourceLengthTriangleContactBefore);
+  assert.equal(distribution?.sourceFaceIdentity,true);
+  assert.equal(distribution?.releaseAuthorized,false);
+  assert.equal(distribution?.byGarmentMesh?.length,3);
+  assert.equal(distribution.byGarmentMesh.reduce((a,n)=>a+n,0),distribution.total);
+  assert.equal(distribution.byBodyMesh.reduce((a,b)=>a+b.contacts,0),distribution.total);
  }
  assert.ok(Number.isFinite(state.sourceLengthConstructionMs)&&state.sourceLengthConstructionMs>0);
  assert.ok(state.sourceLengthIntersectionPairsAfter<=state.sourceLengthIntersectionPairsBefore);
  sourceLengthEvidence.push({width,figure:state.figure,oldHemY:state.sourceLengthOldHemY,newHemY:state.sourceLengthNewHemY,
   movedVertices:state.sourceLengthMovedVertices,extension:state.sourceLengthExtension,flare:state.sourceLengthFlare,
   sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,constructionMs:state.sourceLengthConstructionMs,
-  triangleAudit:state.sourceLengthTriangleContactAudit,triangleContactsBefore:state.sourceLengthTriangleContactBefore,triangleContactsAfter:state.sourceLengthTriangleContactAfter,newTriangleContacts:state.sourceLengthNewTriangleContacts,collisionCertified:false});
+  triangleAudit:state.sourceLengthTriangleContactAudit,triangleContactsBefore:state.sourceLengthTriangleContactBefore,triangleContactsAfter:state.sourceLengthTriangleContactAfter,newTriangleContacts:state.sourceLengthNewTriangleContacts,
+  bodyContactDistribution:state.sourceLengthBodyContactDistribution,collisionCertified:false});
 }
 if(photoPhysicalReadback196&&!photoOwnerBilateral195)
  throw Error('P196 demands actual P195 owner-bound bilateral fitting');
@@ -404,6 +412,7 @@ try{
      decisionState?.sourceLengthNewGarmentPartContacts===0&&
      decisionState?.sourceLengthIntrapanelStrictlyAccepted===true&&
      decisionState?.sourceLengthNewIntrapanelContacts===0;
+    let refusalReason=null;
     if(openProof.ok){
      assert.equal(accepted,true,'3D display without a nonregressing independent triangle receipt: '+JSON.stringify({
       source:decisionState?.sourceLengthSHA256,fit:decisionState?.sourceLengthFit,
@@ -414,9 +423,14 @@ try{
      assert.equal(decisionState?.sourceLengthCollisionCertified,false);
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
     }else{
-     assert.match([openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' '),
-      /M2 source length new-body-triangle-contacts: original-photo.*2D fallback required/i,
-      'Only the actual new-triangle collision gate may refuse photographic 3D');
+     const sanitized=[openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' ');
+     const reason=sanitized.match(/M2 source length adaptive-geometry-refused\[([a-z-]+)\]: original-photo\/2D fallback required/i);
+     assert.ok(reason,'Adaptive 3D must return a bounded explicit geometry refusal code, not a private error');
+     refusalReason=reason[1];
+     assert.ok(['coarse-body-pair-regression','new-body-contacts','body-contact-count-regression',
+      'new-panel-contacts','panel-contact-count-regression','new-intrapanel-contacts',
+      'intrapanel-count-regression','hem-extension-under-minimum','contact-audit-budget'].includes(refusalReason),
+      'Unknown/error candidate must not be claimed as a validated collision rejection');
      assert.equal(decisionState?.active,false,'No unsafe clothing mesh or owner JPEG may remain mounted');
      assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
      assert.equal(await page.locator('#builder').isVisible(),true,
@@ -430,6 +444,7 @@ try{
      noNewBodyTriangleContactsIfAccepted:accepted,
      noNewGarmentPartTriangleContactsIfAccepted:accepted,
      noNewIntrapanelTriangleContactsIfAccepted:accepted,
+     refusalReason,
      neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
      originalPrivateOwnerRetained:true,releaseAuthorized:false,familyAlpha:'HOLD'});
     await page.close();await ctx.close();await browser.close();browser=null;
