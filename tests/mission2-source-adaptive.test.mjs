@@ -1,7 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength}
+import {fitSourceLength,planNoNewContactSourceLength,applyNoNewContactSourceLength,
+ planRadialLoftSourceLength,applyRadialLoftSourceLength}
  from '../research/mission2-source-length/source-length.mjs';
 
 const SHA='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
@@ -106,5 +107,60 @@ test('no acceptable extension fails closed before ANY user-photo mesh or panel m
  fx.assertOriginal();
  assert.throws(()=>applyNoNewContactSourceLength(fx.shirt,fx.root,profile),
   /new-body-triangle-contacts: original-photo\/2D fallback required/);
+ fx.assertOriginal();
+});
+
+
+test('radial hem loft changes real lower 163-bone surfaces only, never photo panel or private source',()=>{
+ const fx=fixture();
+ const before=fitSourceLength(fx.shirt,fx.root,profile,{previewOnly:true,
+  traceTriangleContacts:true,radialLoftMeters:0});
+ const after=fitSourceLength(fx.shirt,fx.root,profile,{previewOnly:true,
+  traceTriangleContacts:true,radialLoftMeters:.08});
+ assert.equal(before.stats.sourceLengthRadialLoftMeters,0);
+ assert.equal(after.stats.sourceLengthRadialLoftMeters,.08);
+ assert.equal(after.stats.sourceLengthDryRun,true);
+ assert.equal(after.stats.sourceLengthRadialLoftPhysicalMeasured,false);
+ assert.equal(after.stats.sourceLengthCollisionCertified,false);
+ assert.ok(after.stats.sourceLengthMovedVertices>100);
+ fx.assertOriginal();
+ for(const amount of [-.01,.0801,NaN,Infinity])
+  assert.throws(()=>fitSourceLength(fx.shirt,fx.root,profile,{radialLoftMeters:amount,previewOnly:true}),/bounded radial loft/);
+ fx.assertOriginal();
+});
+test('source-constrained radial stage commits only independently accepted actual triangle-safe 3D',()=>{
+ const fx=fixture();
+ const plan=planRadialLoftSourceLength(fx.shirt,fx.root,profile);
+ assert.equal(plan.accepted,true,JSON.stringify(plan));
+ assert.equal(plan.selectedScale,1);
+ assert.equal(plan.selectedRadialLoftMeters,.08);
+ assert.equal(plan.attempts.length,1);
+ assert.equal(plan.attempts[0].newTriangleContacts,0);
+ assert.equal(plan.physicallyMeasuredClearance,false);
+ fx.assertOriginal();
+ const result=applyRadialLoftSourceLength(fx.shirt,fx.root,profile);
+ assert.equal(result.stats.sourceLengthRadialLoftOnePoseAccepted,true);
+ assert.equal(result.stats.sourceLengthRadialLoftCandidateCount,1);
+ assert.equal(result.stats.sourceLengthTriangleContactStrictlyAccepted,true);
+ assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
+ assert.equal(result.stats.releaseAuthorized,false);
+ assert.notDeepEqual(fx.shirt.meshes[0].geometry.getAttribute('position').array,fx.positions[0]);
+ fx.shirt.meshes.forEach((m,i)=>{
+  assert.deepEqual(m.geometry.getAttribute('panelPosition').array,fx.panels[i]);
+  assert.deepEqual(m.geometry.getAttribute('skinWeight').array,fx.weights[i]);
+ });
+});
+test('body-obstructed source loft refuses all candidates and retains each original privately reviewed mesh',()=>{
+ const fx=fixture(.98);
+ fx.root.traverse(o=>{if(o.isSkinnedMesh&&!o.userData.work56Garment&&o.geometry.type==='BoxGeometry'){
+  o.scale.set(3,1,4);
+ }});
+ const plan=planRadialLoftSourceLength(fx.shirt,fx.root,profile);
+ assert.equal(plan.accepted,false,JSON.stringify(plan));
+ assert.equal(plan.attempts.length,8);
+ assert.ok(plan.attempts.every(x=>!x.accepted));
+ fx.assertOriginal();
+ assert.throws(()=>applyRadialLoftSourceLength(fx.shirt,fx.root,profile),
+  /radial-loft-contact-blocked: photographed garment remains original-photo\/2D fallback/);
  fx.assertOriginal();
 });
