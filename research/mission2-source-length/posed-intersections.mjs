@@ -202,7 +202,7 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
   throw Error('M2 self-contact bounded valid pose inputs required');
  root.updateMatrixWorld(true);
  const identity=new THREE.Matrix4(),contactKeys=new Set();
- let candidateTests=0,triangleSurfaces=0;
+ let candidateTests=0,triangleSurfaces=0,duplicateCandidateCallbacksSkipped=0;
  for(let meshIndex=0;meshIndex<meshes.length;meshIndex++){
   const mesh=meshes[meshIndex];
   if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
@@ -215,9 +215,13 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
   try{
    const index=g.index?.array;
    const faceCount=index?index.length/3:g.getAttribute('position').count/3;
-   if(!Number.isInteger(faceCount)||faceCount<1)
+   if(!Number.isInteger(faceCount)||faceCount<1||faceCount>3000000)
     throw Error('M2 self-contact triangular surface required');
    triangleSurfaces+=faceCount;
+   // A full self-cast visits each unrelated pair in both orientations.
+   // Unique source-face keys avoid twice the expensive triangle test and
+   // count one prospective contact once. At most the bounded budget is kept.
+   const seenCandidatePairs=new Set();
    const vertex=(face,corner)=>index?index[face*3+corner]:face*3+corner;
    const adjacent=(one,two)=>{
     for(let j=0;j<3;j++)for(let k=0;k<3;k++)
@@ -238,10 +242,13 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
      const sourceA=g.boundsTree.resolveTriangleIndex(aId);
      const sourceC=other.boundsTree.resolveTriangleIndex(cId);
      if(sourceA===sourceC||adjacent(sourceA,sourceC))return false;
+     const min=Math.min(sourceA,sourceC),max=Math.max(sourceA,sourceC);
+     const pairKey=min*faceCount+max; // safe with faceCount <= 3 million
+     if(seenCandidatePairs.has(pairKey)){duplicateCandidateCallbacksSkipped++;return false;}
+     seenCandidatePairs.add(pairKey);
      candidateTests++;
      if(candidateTests>maxCandidateTests){overflowReason='triangle comparison';return true;}
      if(!a.intersectsTriangle(c))return false;
-     const min=Math.min(sourceA,sourceC),max=Math.max(sourceA,sourceC);
      contactKeys.add(meshIndex+':'+min+':'+max);
      if(contactKeys.size>=maxContacts){overflowReason='contact';return true;}
       return false;
@@ -257,7 +264,8 @@ export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
  return Object.freeze({
   triangleContactKeys:Object.freeze([...contactKeys].sort()),
   triangleContactCount:contactKeys.size,
-  candidateTests,triangleSurfaces,
+  candidateTests,triangleSurfaces,duplicateCandidateCallbacksSkipped,
+  uniqueSourceTriangleCandidateBudget:true,
   currentPoseOnly:true,
   withinOneMeshOnly:true,
   excludedOriginalSharedVertexPairs:true,
