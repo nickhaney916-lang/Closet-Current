@@ -36,7 +36,7 @@ async function run(engine,type,width){
    `window.closetAuth={user:{id:'${owner}'},ready:Promise.resolve(),getAccessToken:async()=>'${owner}',assertCurrent:()=>{}};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;`}));
   await context.route('**/*',async route=>{
    const url=new URL(route.request().url());
-   if(url.protocol==='blob:'||url.protocol==='data:'||url.hostname==='127.0.0.1')return route.continue();
+   if(url.protocol==='blob:'||url.protocol==='data:'||url.hostname==='127.0.0.1')return route.fallback();
    remote.push(url.pathname);
    // Even a mocked cloud response must be fully local and never reach host.
    if(url.pathname==='/rest/v1/closet_backups')return route.fulfill({contentType:'application/json',body:'[]'});
