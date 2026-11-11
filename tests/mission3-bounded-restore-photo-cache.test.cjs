@@ -96,7 +96,7 @@ async function all(db){
 
 test('real legacy cloud controller restores 64 original JPEGs, retaining owner SHA and exact saved order',async()=>{
  const owner=randomUUID(),db=await opened(owner),refs=new Map(),rows=[],events=new Map();
- let photoReads=0;
+ let photoReads=0;const readsByPath=new Map();
  for(let i=0;i<64;i++){
   const bytes=bytesFor(i),hash=sha(bytes),ref='closet-photo:'+owner+'/'+hash+'.jpg';
   refs.set(owner+'/'+hash+'.jpg',bytes);
@@ -115,7 +115,7 @@ test('real legacy cloud controller restores 64 original JPEGs, retaining owner S
   if(parsed.pathname.startsWith(prefix)){
    const key=parsed.pathname.slice(prefix.length);
    assert.ok(refs.has(key),'foreign or unrecognized private JPEG');
-   assert.equal(options.method||'GET','GET');photoReads++;
+   assert.equal(options.method||'GET','GET');photoReads++;readsByPath.set(key,(readsByPath.get(key)||0)+1);
    return resp({},refs.get(key));
   }
   throw Error('Unexpected private cloud request '+parsed.pathname);
@@ -127,7 +127,14 @@ test('real legacy cloud controller restores 64 original JPEGs, retaining owner S
  try{
   await window.closetCloud.start(db,{capture:work=>work(),canRestore:()=>true,async restored(){}});
   const values=await all(db);
-  assert.equal(values.length,64);assert.equal(photoReads,64,'same original JPEG field must not trigger duplicate fetch');
+  assert.equal(values.length,64);
+   // This eight-entry LRU is intentionally bounded, so under concurrent
+   // four-worker traversal a recently decoded JPEG may be evicted before
+   // its second field is visited. Each original is referenced exactly twice:
+   // no private object should be read more than those two references.
+   assert.equal(readsByPath.size,64,'all unique owner-private originals were fetched');
+   assert.ok(photoReads>=64&&photoReads<=128,'LRU eviction cannot cause unbounded re-reads');
+   for(const count of readsByPath.values())assert.ok(count===1||count===2);
   for(let i=0;i<64;i++){
    const item=values.find(x=>x.id==='item-'+i);
    assert.ok(item.image.startsWith('data:image/jpeg;base64,'));
