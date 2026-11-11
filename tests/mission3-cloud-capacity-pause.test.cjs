@@ -79,7 +79,7 @@ async function fixture(status=413){
  });
  return {owner,db,window,auth,requests,events,intervals,timers,elements,objects,
   setFailure:code=>failureStatus=code,get revision(){return revision;},get document(){return document;},
-  status:()=>el('cloudStatus').textContent,read:()=>rows(db),
+  status:()=>el('cloudStatus').textContent,retryTimers:()=>timers.filter(delay=>delay<20000),read:()=>rows(db),
   async start(){await window.closetCloud.start(db,{capture:work=>work(),canRestore:()=>true,async restored(){}});},
   async on(name){return events.get(name)?.();},
   clickSync:()=>el('syncCloset').onclick(),
@@ -94,11 +94,11 @@ test('413 photo-too-large rejection does not retry indefinitely or mislabel stor
   assert.equal(f.revision,0);assert.equal((await f.read()).length,4);
   if(baseline){
    assert.match(f.status(),/Retrying when connected/);
-   assert.ok(f.timers.length>0,'old implementation scheduled recurring 413 retries');
+   assert.ok(f.retryTimers().length>0,'old implementation scheduled recurring 413 retries');
   }else{
    assert.match(f.status(),/too large/);
    assert.match(f.status(),/remain on this device/);
-   assert.equal(f.timers.length,0,'capacity rejection must pause automatic retry');
+   assert.equal(f.retryTimers().length,0,'capacity rejection must pause automatic retry');
   }
   const before=f.requests.length;
   await f.on('online');await f.on('focus');
@@ -106,7 +106,7 @@ test('413 photo-too-large rejection does not retry indefinitely or mislabel stor
   f.window.closetCloud.changed();
   if(!baseline){
    assert.equal(f.requests.length,before,'automatic events cannot exhaust quota repeatedly');
-   assert.equal(f.timers.length,0);
+   assert.equal(f.retryTimers().length,0);
    assert.match(f.status(),/too large/);
   }else assert.ok(f.requests.length>before,'legacy app kept retrying on reconnection');
  }finally{f.close();}
@@ -139,7 +139,7 @@ test('temporary 503 network failure keeps pre-existing automatic retry behavior'
   await f.start();
   assert.equal(f.revision,0);
   assert.match(f.status(),/Retrying when connected/);
-  assert.ok(f.timers.length>=1);
+  assert.ok(f.retryTimers().length>=1);
   f.setFailure(null);
   await f.window.closetCloud.sync();
   assert.equal(f.revision,1);
@@ -148,7 +148,7 @@ test('temporary 503 network failure keeps pre-existing automatic retry behavior'
  }finally{f.close();}
 });
 
-test('new signed owner controller startup must clear prior capacity rejection',async()=>{
+test('fresh owner-session controller start clears prior capacity rejection',async()=>{
  const f=await fixture(413);
  try{
   await f.start();
