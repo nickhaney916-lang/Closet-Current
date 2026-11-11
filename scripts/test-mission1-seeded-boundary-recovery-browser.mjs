@@ -35,9 +35,9 @@ let instrumentedWorker=workerSource.replace(anchor,anchor+"selectedMaskBase64:bt
 await mkdir(out,{recursive:true});
 assert.equal(workerSource.split('const results={sourceId:req.sourceId,').length,2);
 assert.equal(workerSource.split('after:await Promise.all(after.map(describe)),').length,2);
-const sourceComponentCode817=componentP817?"const {sourceComponentReview776}=await import('../mission1-component-review-776/source-component-review.mjs');const split817=sourceComponentReview776({data:logits.logits.data,dims:logits.logits.dims,map,groups:grown});":'';
+const sourceComponentCode817=componentP817?"const {sourceComponentReview776}=await import('../mission1-component-review-776/source-component-review.mjs');const split817=sourceComponentReview776({data:logits.logits.data,dims:logits.logits.dims,map,groups:grown});const {clothingMaskGroups}=await import('../../public/outfit-segmentation.mjs');const nativeNormal817=clothingMaskGroups(map);":'';
 instrumentedWorker=instrumentedWorker.replace('const results={sourceId:req.sourceId,',"const {seededBoundaryReview}=await import('../mission1-seeded-boundary-recovery/review-growth.mjs');const {unseededGarmentReview773}=await import('../mission1-unseeded-region-773/original-logit-review.mjs');const grown=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after});const unseeded=unseededGarmentReview773({data:logits.logits.data,dims:logits.logits.dims,map,existingGroups:grown});const allClass=seededBoundaryReview({data:logits.logits.data,dims:logits.logits.dims,map,groups:after,recoverFootwear:true});"+sourceComponentCode817+"const results={sourceId:req.sourceId,");
-const sourceComponentReceipts817=componentP817?"sourceComponentReview817:await Promise.all(split817.map(async g=>({...await describe(g),sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor}))),":'';
+const sourceComponentReceipts817=componentP817?"sourceComponentReview817:await Promise.all(split817.map(async g=>({...await describe(g),sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor}))),nativeNormalB0Source817:await Promise.all(nativeNormal817.map((g,i)=>describe({...g,instanceKey:'native-normal-'+g.id+'-'+i}))),":'';
 instrumentedWorker=instrumentedWorker.replace('after:await Promise.all(after.map(describe)),',"after:await Promise.all(after.map(describe)),"+sourceComponentReceipts817+"allClassGrowth:await Promise.all(allClass.map(describe)),unseededReview:await Promise.all(unseeded.map(async g=>({...await describe(g),accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,originalSeedCount:g.originalSeedCount,sourceLabelChanged:g.sourceLabelChanged,subtype:g.subtype,primaryColor:g.primaryColor}))),reviewGrowth:await Promise.all(grown.map(async g=>({...await describe(g),seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}))),");
 const source=[];
 for(const row of manifest.rows){
@@ -108,6 +108,7 @@ try{
    const growthInstances=r.reviewGrowth.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256,seedPixelCount:g.seedPixelCount,addedPixelCount:g.addedPixelCount,maximumAddedPixels:g.maximumAddedPixels,boundaryReviewConfidence:g.boundaryReviewConfidence,accepted:g.accepted,needsReview:g.needsReview}));
    const unseededInstances=r.unseededReview.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256,sourcePixelCount:g.selectedCount,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,originalSeedCount:g.originalSeedCount,sourceLabelChanged:g.sourceLabelChanged,subtype:g.subtype,primaryColor:g.primaryColor}));
    const predictionInstances=r.after.map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256}));
+   const nativeNormalInstances=componentP817?r.nativeNormalB0Source817.filter(g=>[4,5,6,7,9].includes(g.regionId)).map(g=>({id:g.instanceKey,region:g.regionId,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256})):[];
    const componentInstances=componentP817?r.sourceComponentReview817.map(g=>({id:g.instanceKey,region:g.regionId,sourceGroupId:g.sourceGroupId,sourceComponentCount:g.sourceComponentCount,sourcePixelPartitionExact:g.sourcePixelPartitionExact,accepted:g.accepted,needsReview:g.needsReview,autoIndex:g.autoIndex,subtype:g.subtype,primaryColor:g.primaryColor,mask:Array.from(atob(g.selectedMaskBase64),x=>x.charCodeAt(0)),maskSHA256:g.selectedMaskSHA256})):[];
    const c=document.querySelector('#photo');c.width=350;c.height=Math.round(350*row.height/row.width);const ctx=c.getContext('2d');ctx.drawImage(image,0,0,c.width,c.height);
    const layer=document.createElement('canvas');layer.width=w;layer.height=h;const lc=layer.getContext('2d'),px=lc.createImageData(w,h);
@@ -122,13 +123,13 @@ try{
    const overlay=document.createElement('canvas');overlay.width=w;overlay.height=h;const oc=overlay.getContext('2d'),op=oc.createImageData(w,h);
    for(const g of growthInstances)for(let i=0;i<g.mask.length;i++)if(g.mask[i])op.data.set([230,60,40,100],i*4);oc.putImageData(op,0,0);gc.drawImage(overlay,0,0,c.width,c.height);
    gc.strokeStyle='#00ff30';gc.lineWidth=1.5;for(const a of row.annotations)for(const poly of a.segmentation){gc.beginPath();for(let i=0;i<poly.length;i+=2){const x=poly[i]/row.width*c.width,y=poly[i+1]/row.height*c.height;i?gc.lineTo(x,y):gc.moveTo(x,y);}gc.closePath();gc.stroke();}
-   return {width:w,height:h,masks,truthInstances,predictionInstances,growthInstances,unseededInstances,allClassInstances,componentInstances,modelMaskSHA256:r.sourceMapLabelsSHA256,model:r.model,revision:r.modelRevision};
+   return {width:w,height:h,masks,truthInstances,predictionInstances,growthInstances,unseededInstances,allClassInstances,componentInstances,nativeNormalInstances,modelMaskSHA256:r.sourceMapLabelsSHA256,model:r.model,revision:r.modelRevision};
   },{row,data,componentP817});
   const measured=result.masks.map(m=>{
    let boundary=null;if(m.truthPixels&&m.predictedPixels)boundary=measureRegisteredBoundaries66({sourcePixels:Uint8Array.from(m.truth),ownerPixels:Uint8Array.from(m.prediction),width:result.width,height:result.height});
    return {semanticRegion:m.region,intersection:m.intersection,union:m.union,truthPixels:m.truthPixels,predictedPixels:m.predictedPixels,iou:m.union?m.intersection/m.union:null,boundary,missed:m.predictedPixels===0};
   });
-  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances,...result.componentInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
+  for(const p of [...result.predictionInstances,...result.growthInstances,...result.unseededInstances,...result.allClassInstances,...result.componentInstances,...result.nativeNormalInstances])assert.equal(hash(Uint8Array.from(p.mask)),p.maskSHA256);
   if(componentP817){
    const keys=new Set(),count=result.width*result.height;
    for(const old of result.growthInstances){
@@ -168,6 +169,7 @@ try{
   const unseededOnly=scoreInstances({truth:result.truthInstances,predictions:result.unseededInstances,width:result.width,height:result.height});
   const combinedSourceReview=scoreInstances({truth:result.truthInstances,predictions:[...result.growthInstances,...result.unseededInstances],width:result.width,height:result.height});
   const componentInstanceDiagnostic=componentP817?scoreInstances({truth:result.truthInstances,predictions:result.componentInstances,width:result.width,height:result.height}):null;
+  const nativeNormalDiagnostic=componentP817?scoreInstances({truth:result.truthInstances,predictions:result.nativeNormalInstances,width:result.width,height:result.height}):null;
   const groupedIoU=predictions=>{const regions=new Set([...result.truthInstances.map(x=>x.region),...predictions.map(x=>x.region)]);const scores=[];for(const region of regions){let intersection=0,union=0;const t=result.truthInstances.filter(x=>x.region===region),p=predictions.filter(x=>x.region===region);for(let i=0;i<result.width*result.height;i++){const a=t.some(x=>x.mask[i]),b=p.some(x=>x.mask[i]);intersection+=Number(a&&b);union+=Number(a||b);}scores.push({region,intersection,union,iou:union?intersection/union:null});}return scores;};
   const beforeGroupedIoU=groupedIoU(result.predictionInstances),candidateGroupedIoU=groupedIoU(result.growthInstances);
   for(let g=0;g<result.growthInstances.length;g++){const grown=result.growthInstances[g],seed=result.predictionInstances[g];assert.equal(grown.id,seed.id);assert.equal(grown.region,seed.region);assert.equal(grown.accepted,false);assert.equal(grown.needsReview,true);assert.ok(grown.addedPixelCount<=grown.maximumAddedPixels);for(let i=0;i<seed.mask.length;i++)if(seed.mask[i])assert.equal(grown.mask[i],1);}
@@ -176,7 +178,7 @@ try{
   const lostBaselineMatchIds=instances.matches.filter(m=>!candidateInstances.matches.some(a=>a.truthId===m.truthId)).map(m=>m.truthId);
   const gainedMatchIds=candidateInstances.matches.filter(m=>!instances.matches.some(a=>a.truthId===m.truthId)).map(m=>m.truthId);
   rows.push({lostBaselineMatchIds,gainedMatchIds,instances,nonFootwear,candidateInstances,candidateNonFootwear,
-   unseededOnly,combinedSourceReview,componentInstanceDiagnostic,
+   unseededOnly,combinedSourceReview,componentInstanceDiagnostic,nativeNormalDiagnostic,
    componentProposalCount:componentP817?result.componentInstances.length:null,
    componentGainedFromGrowth:componentP817?componentInstanceDiagnostic.matches.filter(m=>!candidateInstances.matches.some(b=>b.truthId===m.truthId)).map(m=>m.truthId):[],
    componentLostFromGrowth:componentP817?candidateInstances.matches.filter(m=>!componentInstanceDiagnostic.matches.some(b=>b.truthId===m.truthId)).map(m=>m.truthId):[],
@@ -194,7 +196,7 @@ try{
  const aggregate=key=>{const values=rows.map(r=>r[key]);const tp=values.reduce((n,r)=>n+r.truePositives,0),fp=values.reduce((n,r)=>n+r.falsePositives,0),fn=values.reduce((n,r)=>n+r.falseNegatives,0);return {truePositives:tp,falsePositives:fp,falseNegatives:fn,precision:tp+fp?tp/(tp+fp):null,recall:tp+fn?tp/(tp+fn):null,f1:2*tp+fp+fn?2*tp/(2*tp+fp+fn):null};};
  const summary={allClassExploratoryArm:aggregate('allClassInstances'),
   unseededOnlyDiagnostic:aggregate('unseededOnly'),
-  ...(componentP817?{componentInstanceDiagnostic:aggregate('componentInstanceDiagnostic'),
+  ...(componentP817?{componentInstanceDiagnostic:aggregate('componentInstanceDiagnostic'),nativeNormalDiagnostic:aggregate('nativeNormalDiagnostic'),
    totalComponentReviewCandidates:rows.reduce((n,r)=>n+r.componentProposalCount,0),
    componentLostGrowthMatches:rows.reduce((n,r)=>n+r.componentLostFromGrowth.length,0),
    componentGainedGrowthMatches:rows.reduce((n,r)=>n+r.componentGainedFromGrowth.length,0)}:{}),
@@ -211,7 +213,11 @@ try{
   additionalPublisherSourcesNotIndependentlyHumanBlinded:additionalP792,
   modelTrainingOverlapNotExcluded:additionalP792};
  if(componentP817){
-  summary.componentReviewVerdict=summary.componentLostGrowthMatches===0&&
+  summary.nativeNormalVersusMulti24Verdict='DIAGNOSTIC_EXPOSED_DEVELOPMENT_SOURCE_ONLY_NO_MODEL_PROMOTION';
+   summary.nativeMulti24ModelMaskRecallImprovementOverNormal=summary.publishedInstanceDiagnostic.recall!==null&&
+    summary.nativeNormalDiagnostic.recall!==null?
+    summary.publishedInstanceDiagnostic.recall-summary.nativeNormalDiagnostic.recall:null;
+   summary.componentReviewVerdict=summary.componentLostGrowthMatches===0&&
    rows.every(r=>r.componentInstanceDiagnostic.falsePositives<=r.candidateInstances.falsePositives)&&
    summary.componentInstanceDiagnostic.truePositives>summary.candidateInstanceDiagnostic.truePositives?
    'SOURCE_COMPONENT_GAIN_EXPOSED_DEV_REVIEW_ONLY':
@@ -228,6 +234,7 @@ try{
   additionalPublisherSourceCohortP792:additionalP792,
   sourceUnseededModelProposalArm794:true,
   sourceComponentActualModelReviewArm817:componentP817,
+  nativeNormalVersusMulti24CompleteSourceComparison817:componentP817,
   sourceUnseededInstancesAutoSaved:0,
   sourceUnseededHumanReviewActuallyPerformed:false,
   rawPublisherRightsMetadataNotVerifiedForCommerce:additionalP792,
