@@ -21,7 +21,7 @@ jobs:
           set -euo pipefail
           BASE=b17ec7767a10aea65c386631a26cc87c13c9d301
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
-          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase package.json package-lock.json
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
               public/app.js|tests/mission3-video-private-draft-lease.test.cjs|research/mission3-video-frame-commit/REPORT.md|.github/workflows/mission3-video-private-draft-no-deploy.yml) ;;
@@ -87,12 +87,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Guard exact Mission 3 P855 parent, restricted CI-only paths and no hosted changes
+      - name: Guard exact prior Mission 3 PR866 parent and permitted video app change, no hosted changes
         run: |
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=b17ec7767a10aea65c386631a26cc87c13c9d301
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
-          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
               public/app.js|tests/mission3-video-private-draft-lease.test.cjs|research/mission3-video-frame-commit/REPORT.md|.github/workflows/mission3-video-private-draft-no-deploy.yml) ;;
