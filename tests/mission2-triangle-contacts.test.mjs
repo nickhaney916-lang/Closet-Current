@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,summarizePosedBodyContactDistribution
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizePosedBodyContactDistribution
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -243,4 +243,105 @@ test('privacy-safe attribution counts exact original-face contacts by garment an
  const summary=summarizePosedBodyContactDistribution(actual,1);
  assert.equal(summary.total,actual.triangleContactCount);
  assert.equal(summary.byGarmentMesh.reduce((a,b)=>a+b,0),actual.triangleContactCount);
+});
+
+
+test('changed-source-face audit catches a new 163-bone internal fold and preserves the original garment',()=>{
+ const {root,garment}=simplePose();
+ const source=garment.geometry.getAttribute('position').array.slice(),stage=source.slice();
+ for(let i=3;i<6;i++)stage[i*3]-=1.95;
+ const evidence=measureChangedFaceSelfContactDelta(root,[garment],new Map([[garment,stage]]));
+ assert.equal(evidence.changedFaces,1);
+ assert.equal(evidence.newlyIntersecting,1);
+ assert.deepEqual(evidence.newlyIntersectingSourceKeys,['0:0:1']);
+ assert.equal(evidence.noNewSelfContacts,false);
+ assert.equal(evidence.completedUniqueAffectedPairComparison,true);
+ assert.equal(evidence.fullPreexistingContactEnumeration,false);
+ assert.equal(evidence.signedClearanceVerified,false);
+ assert.equal(evidence.releaseAuthorized,false);
+ assert.deepEqual(garment.geometry.getAttribute('position').array,source);
+ const unmodified=measureChangedFaceSelfContactDelta(root,[garment],new Map([[garment,source.slice()]]));
+ assert.equal(unmodified.newlyIntersecting,0);
+ assert.equal(unmodified.changedFaces,0);
+ assert.equal(unmodified.unchangedMeshesSkipped,1);
+ assert.throws(()=>measureChangedFaceSelfContactDelta(root,[garment],
+  new Map([[garment,stage]]),{maxCandidateTests:1-1}),/bounded valid pose/);
+ assert.throws(()=>measureChangedFaceSelfContactDelta(root,[garment],
+  new Map([[garment,new Float32Array(1)]])),/finite complete staged vertex buffer/);
+ assert.throws(()=>measureChangedFaceSelfContactDelta(root,[garment,garment]),/bounded valid pose/);
+});
+
+test('unchanged pre-existing self contacts never exhaust a changed-face-specific comparison',()=>{
+ const {root,garment}=simplePose();
+ const n=300,position=new Float32Array(n*9);
+ for(let face=0;face<n;face++){
+  position.set([-.3,-.3,0,.3,-.3,0,0,.4,0],face*9);
+ }
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.BufferAttribute(position,3));
+ const indices=new Uint16Array(n*3*4),weights=new Float32Array(n*3*4);
+ for(let i=0;i<n*3;i++)weights[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(indices,4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const saved=position.slice(),next=position.slice();
+ // Change just source face #0. Remaining ~45K old intersections are
+ // irrelevant for determining whether this altered face adds a new one.
+ for(let j=0;j<3;j++)next[j*3]+=5;
+ const proof=measureChangedFaceSelfContactDelta(root,[mesh],new Map([[mesh,next]]));
+ assert.equal(proof.changedFaces,1);
+ assert.equal(proof.newlyIntersecting,0);
+ assert.equal(proof.retainedExistingContacts,0);
+ assert.equal(proof.completedUniqueAffectedPairComparison,true);
+ assert.ok(proof.candidateTests<=300000);
+ assert.deepEqual(g.getAttribute('position').array,saved);
+ // The complete baseline is deliberately too large for a default-budget
+ // full self-pair audit; it is neither claimed absent nor required for delta.
+ assert.throws(()=>measurePosedGarmentSelfContacts(root,[mesh],
+  new Map(),{maxContacts:100}),/bounded contact budget/);
+});
+
+test('indexed topological neighbors and unchanged parts do not create false new-contact alerts',()=>{
+ const {root,garment}=simplePose();
+ const geom=new THREE.PlaneGeometry(1,1,1,1);
+ const pos=geom.getAttribute('position'),n=pos.count;
+ geom.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+ const weights=new Float32Array(n*4);for(let i=0;i<n;i++)weights[4*i]=1;
+ geom.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(geom,new THREE.MeshStandardMaterial());
+ mesh.bind(garment.skeleton);mesh.userData.work56Garment=true;root.add(mesh);
+ const before=pos.array.slice(),next=before.slice();next[2]=.2;
+ const result=measureChangedFaceSelfContactDelta(root,[mesh,garment],new Map([[mesh,next]]));
+ assert.equal(result.newlyIntersecting,0);
+ assert.ok(result.changedFaces>=1);
+ assert.equal(result.unchangedMeshesSkipped,1);
+ assert.equal(result.noNewSelfContacts,true);
+ assert.deepEqual(pos.array,before);
+});
+
+
+test('changed-face detector reuses correct baseline SAT cache for retained and genuinely new pairs',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,-.5,0,.5,-.5,0,0,.5,0,
+  -.5,-.5,0,.5,-.5,0,0,.5,0,
+  .9,-.5,0,1.9,-.5,0,1.4,.5,0
+ ],3));
+ const n=g.getAttribute('position').count;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+ const weights=new Float32Array(n*4);for(let i=0;i<n;i++)weights[i*4]=1;
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const source=g.getAttribute('position').array.slice(),stage=source.slice();
+ for(let vertex=0;vertex<3;vertex++)stage[vertex*3]+=.6;
+ const proof=measureChangedFaceSelfContactDelta(root,[mesh],new Map([[mesh,stage]]));
+ assert.equal(proof.changedFaces,1);
+ assert.equal(proof.newlyIntersecting,1);
+ assert.deepEqual(proof.newlyIntersectingSourceKeys,['0:0:2']);
+ assert.equal(proof.retainedExistingContacts,1,
+  'Original overlapping face remains a retained, not newly introduced, intersection');
+ assert.deepEqual(mesh.geometry.getAttribute('position').array,source);
 });

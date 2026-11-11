@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,summarizePosedBodyContactDistribution} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizePosedBodyContactDistribution} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -53,6 +53,9 @@ export const classifySourceLengthCandidateException=e=>{
  if(message.includes('M2 garment part audit exceeds bounded contact budget'))return 'panel-contact-budget';
  if(message.includes('M2 self-contact exceeds bounded triangle comparison budget'))return 'self-comparison-budget';
  if(message.includes('M2 self-contact exceeds bounded contact budget'))return 'self-contact-budget';
+ if(message.includes('M2 changed-face exceeds bounded comparison budget'))return 'changed-self-comparison-budget';
+ if(message.includes('M2 changed-face exceeds bounded new-contact budget'))return 'changed-self-contact-budget';
+ if(message.includes('M2 changed-face exceeds bounded moved-face budget'))return 'changed-face-count-budget';
  if(message.includes('new posed body triangle contacts'))return 'new-body-contacts';
  if(message.includes('new posed garment part triangle contacts'))return 'new-panel-contacts';
  if(message.includes('new posed intrapanel self-intersections'))return 'new-intrapanel-contacts';
@@ -127,11 +130,18 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   if(strictGarmentPartContacts&&!garmentPartEvidence.nonregression)
    fail('new posed garment part triangle contacts '+garmentPartEvidence.newlyIntersecting);
  }
- let selfContactEvidence=null;
+ let selfContactEvidence=null,selfDelta=null;
  if(traceSelfContacts){
-  const beforeSelf=measurePosedGarmentSelfContacts(root,targets);
-  const afterSelf=measurePosedGarmentSelfContacts(root,targets,new Map(staged.map(r=>[r.mesh,r.next])));
-  selfContactEvidence=comparePosedTriangleContacts(beforeSelf,afterSelf);
+  selfDelta=measureChangedFaceSelfContactDelta(root,targets,new Map(staged.map(r=>[r.mesh,r.next])));
+  // The complete before/after membership comparison only needs pairs touching
+  // an altered source face: every unchanged/unchanged pair is geometrically
+  // identical in the same pose. No pre-existing complete-contact claim.
+  selfContactEvidence=Object.freeze({
+   before:selfDelta.retainedExistingContacts,
+   after:selfDelta.retainedExistingContacts+selfDelta.newlyIntersecting,
+   newlyIntersecting:selfDelta.newlyIntersecting,
+   nonregression:selfDelta.noNewSelfContacts&&selfDelta.completedUniqueAffectedPairComparison
+  });
   if(strictSelfContacts&&!selfContactEvidence.nonregression)
    fail('new posed intrapanel self-intersections '+selfContactEvidence.newlyIntersecting);
  }
@@ -161,6 +171,10 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   sourceLengthIntrapanelAudit:selfContactEvidence!==null,
   sourceLengthIntrapanelStrictlyAccepted:selfContactEvidence!==null&&strictSelfContacts&&selfContactEvidence.nonregression,
   sourceLengthIntrapanelContactsBefore:selfContactEvidence?.before??null,
+  sourceLengthIntrapanelAffectedPairOnly:true,
+  sourceLengthIntrapanelFullBaselineEnumerated:false,
+  sourceLengthIntrapanelChangedFaces:selfDelta?.changedFaces??null,
+  sourceLengthIntrapanelCandidateTests:selfDelta?.candidateTests??null,
   sourceLengthIntrapanelContactsAfter:selfContactEvidence?.after??null,
   sourceLengthNewIntrapanelContacts:selfContactEvidence?.newlyIntersecting??null,
   sourceLengthConstructionMs:performance.now()-started,sourceLengthIntersectionPairsBefore:before.intersectingPairs,

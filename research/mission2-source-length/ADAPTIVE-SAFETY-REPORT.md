@@ -98,3 +98,20 @@ The one-letter `contact-audit-budget` category was too broad to choose a physica
 ### P2-C6 verification
 
 Pending exact final-head dedicated no-deploy Node/full regression and both native Chromium/WebKit jobs; no pass claim until verified.
+
+
+## P2-C7 — Changed-source-face self-contact delta; exact non-regression without old complete self-contact enumeration
+
+**Evidence-led blocker:** [P2-C6 exact-head 3/3 successful browser+Node](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43045249809) confirmed all six signed-fixture browser adaptive 3D proposals failed `self-contact-budget`. Deduplicating symmetric BVH callbacks did not solve the enumeration limit. The old self audit counted large amounts of unmodified garment contact before even considering the proposed extension.
+
+**P2-C7 implementation:** Compare original source vertex arrays with the staged garment vertex buffer exactly. Mark each *original triangle* sharing any changed source vertex; check ONLY candidate pairs containing at least one changed triangle against the full *staged posed* 163-bone garment BVH. For every triangle pair intersecting in the staged pose, re-test the exact same original source-face pair in the original posed mesh at the *same skeletal pose*. Only intersections absent before are **new**, using stable indirect-BVH source-face IDs. Unchanged/unchanged pairs cannot become newly intersecting in the identical pose, so their old intersections are not required for the nonregression decision.
+
+The full old self-contact enumeration is **deliberately not claimed**. Receipt fields mark `sourceLengthIntrapanelAffectedPairOnly=true`, `sourceLengthIntrapanelFullBaselineEnumerated=false`, and report the number of changed source faces and examined candidates. Its before/after counts refer ONLY to pre-existing intersections *still present among affected staged pairs* versus those plus new intersections; they are not global self-contact counts. Independent body and separate garment-panel contact tests remain mandatory. Original JPEG, original mask, UV/photo projection, 163-bone source skin weights, saved user outfits and account/session data are untouched until all candidate gates pass.
+
+**Fail closed:** Moved-face set, candidate count and new contact count are all bounded. A partially completed traversal cannot admit 3D. Tests verify a newly formed crossing is detected using the original face identity; an unchanged garment skips heavy work; indexed shared-edge topology is not falsely treated as penetration; and a source with hundreds of unchanged self-contacting triangles can still check an unrelated changed face without full old-contact enumeration. The native UI accepts an adaptive sampled 3D preview only with an independently received completed changed-face receipt and positive changed-face count.
+
+**What remains unproved:** This is an exact *new-intersection* comparison in only one skeletal pose. Existing garment self-overlap/body contact and signed physical depth, silhouette realism, natural drape, layers, animation sweeps, multi-category independent photo reconstruction, physical mobile devices and independent visual approval remain unresolved. Family Alpha HOLD #255 remains open. All research is draft and undeployed.
+
+### P2-C7 final verification
+
+Pending dedicated no-deploy GitHub Actions at its exact final HEAD; do not claim browser acceptance based on P2-C6.
