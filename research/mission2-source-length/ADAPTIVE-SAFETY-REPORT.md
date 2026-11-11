@@ -115,3 +115,18 @@ The full old self-contact enumeration is **deliberately not claimed**. Receipt f
 ### P2-C7 final verification
 
 Pending dedicated no-deploy GitHub Actions at its exact final HEAD; do not claim browser acceptance based on P2-C6.
+
+
+## P2-C8 — Source-face locality for the *native signed-outfit* body-contact failure
+
+[PR #863 exact-head verification](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43061935781) established 3/3 CI success, 1,532 Node tests and all six authentic browser simulations reaching the precise `new-body-contacts` refusal after eliminating the prior self-contact enumeration budget problem. The standalone source-length diagnostic still reports zero new body contacts, so that cannot substitute for the saved-outfit admission scene.
+
+This research-only extension now maps the **exact newly intersecting body/garment source-face keys** to the current real 163-bone figure's (a) garment mesh index and (b) four coarse posed-height quartiles, defined from the lowest posed garment vertex to the highest. It independently verifies that all bin totals reconcile to the source-stable before/after contact-key novelty. No geometry vertices, source face IDs, JPEG bytes, user names, closet records, images, photo hashes, shape measurements or skin attributes are included in the displayed counters. The only retained output is aggregate *counts* and fixed decision reason strings. The evidence does **not** measure signed penetration depth.
+
+The original owner-private outfit view remains fail closed; no garment vertex is written when a candidate is refused. The disposable research-donor installer passes exactly one sanitized callback per adaptive fit attempt. Genuine Chromium/WebKit tests validate its counts, screen captures, saved outfit, original JPEG/source identity, four bounded candidate scales and fail-closed 2D fallback. A 390-pixel viewport receipt groups the four trial stages into an independent human-readable locality diagnosis. The goal is to identify which hem/torso/shoulder region demands a physically measured correction rather than blindly applying a clearance offset.
+
+Still not certified: full signed clearance, removal of old body contacts, deformation without new panel/self collisions, true cloth physics and sewn layers, other photo garment categories, multiple poses, real physical phones, independently human-approved masks and natural 10/10 realism. Family Alpha HOLD #255 continues. All files research/test/CI only, DRAFT / UNMERGED / UNDEPLOYED.
+
+### P2-C8 verification
+
+Pending exact final-head dedicated no-deploy build, full Node suite and Chromium/WebKit native browser photo/source privacy checks. **Never claim geometry success based only on an aggregate contact count.**
