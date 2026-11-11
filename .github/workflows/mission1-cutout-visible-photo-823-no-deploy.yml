@@ -1,0 +1,70 @@
+name: Mission 1 P823 exact visible cropped JPEG must match verified cutout SHA — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-cutout-visible-photo-identity-823-HOLD]
+  pull_request:
+    branches: [research/mission1-ambiguous-photo-crop-admission-822-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p823-cutout-photo-identity-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-and-complete-app-source-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P822 base and only five signed owner photo proof research, test, CI paths
+        run: |
+          set -euo pipefail
+          BASE=ec836aa614813fe6609dc1f7899d172b5a27897b
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p823-paths
+          cat /tmp/m1-p823-paths
+          test "$(wc -l </tmp/m1-p823-paths)" -eq 5
+          while IFS= read -r p; do
+            case "$p" in
+              research/manual-reviewed-private-save-119/reviewed-source-commit.mjs|public/native-reviewed-private-save-167.mjs|tests/mission1-cutout-visible-photo-823.test.mjs|research/mission1-cutout-visible-photo-823/REPORT.md|.github/workflows/mission1-cutout-visible-photo-823-no-deploy.yml) ;;
+              *) echo "UNAPPROVED PHOTO/MODEL/CLOUD/RELEASE CHANGE $p";exit 1;;
+            esac
+          done </tmp/m1-p823-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/app.js public/outfit-segmentation.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-cutout-visible-photo-823/REPORT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-cutout-visible-photo-823/REPORT.md
+          echo P823_EXACT_P822_GREEN_FIVE_SOURCE_PROOF_PATHS_ONLY_NO_DEPLOY
+      - name: Install ephemeral native app and fake-IDB test tools
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual signed owner source, crop and original photo regression then complete Node build and tests
+        run: |
+          set -euo pipefail
+          node --check public/native-reviewed-private-save-167.mjs
+          node --check research/manual-reviewed-private-save-119/reviewed-source-commit.mjs
+          node --test tests/mission1-cutout-visible-photo-823.test.mjs tests/manual-reviewed-private-save-119.test.mjs tests/mission1-ambiguous-photo-crop-822.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  independent-original-cutout-integrity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install only fake-IndexedDB and run direct two-writer cryptographic source checks
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund fake-indexeddb@6.2.4
+          node --test tests/mission1-cutout-visible-photo-823.test.mjs
+          grep -Fq "record.image!==original&&record.image!==record.segmentHint.cutoutImage" public/native-reviewed-private-save-167.mjs
+          grep -Fq "record.image!==original&&record.image!==record.segmentHint.cutoutImage" research/manual-reviewed-private-save-119/reviewed-source-commit.mjs
+          echo P823_SAME_VISIBLE_CROP_AND_VERIFIED_CUTOUT_NO_MISMATCH_PRIVATE_SAVE
