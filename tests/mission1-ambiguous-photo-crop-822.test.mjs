@@ -40,6 +40,13 @@ function harness({ambiguous=true,confirmed=false,saved=false,signedOwner='signed
    const owner=c.window.closetAuth?.user?.id;
    return owner&&c.db?.name==='closet-current-user-'+owner?owner:null;
   },
+  // A synthetic digest provider exercises native crop admission branches.
+  // Real SHA-256/PHOTO119 are verified in separate P826 integration tests.
+  captureProof01Module:async()=>({
+   verifyStoredCanonical:async()=>true,
+   jpegBytes:()=>Uint8Array.from([255,216,1,2,255,217]),
+   digestBytes:async()=> 'fresh-cutout-826-sha'
+  }),
   openPhotoCrop:(_item,handlers)=>{callbacks=handlers;return Promise.resolve();},
   localReady:false,enableLocal:async()=>{calls.inference++;},
   localRequest:async()=>{calls.inference++;return {strong:true,choices:[{
@@ -73,7 +80,7 @@ test('P822 real native ambiguous crop never calls model classification or fills 
  const choice=await h.callbacks.analyze('data:image/jpeg;base64,AACC');
  assert.equal(choice,null);
  assert.equal(h.calls.inference,0);
- await h.callbacks.save({image:'data:image/jpeg;base64,AADD',
+ await h.callbacks.save({image:'data:image/jpeg;base64,AADD',ownerSingleGarmentConfirmed826:true,
   maskedColorEstimate:{color:'Magenta'},maskApplied:true},
   {category:'Bottoms',itemType:'Jeans',details:{},color:'Green'});
  assert.equal(h.stored.length,1);
@@ -93,7 +100,7 @@ test('P822 real native ambiguous crop never calls model classification or fills 
 test('P822 changed crop invalidates old original-one-garment confirmation and retains source identity',async()=>{
  const h=harness({confirmed:true});
  await h.callbacks.save({
-  image:'data:image/jpeg;base64,AADD',
+  image:'data:image/jpeg;base64,AADD',ownerSingleGarmentConfirmed826:true,
   originalPhoto:{image:'data:image/jpeg;base64,FORGED'},
   sourceSHA256:'forged-sha',sourceHashVerified:false,
   ownerId:'foreign-owner',outfitSourceId:'foreign-outfit',
@@ -126,7 +133,7 @@ test('P822 ordinary unambiguous crop keeps existing optional photo inference and
  assert.equal(candidate.category,'Tops');
  assert.equal(candidate.itemType,'Shirt');
  assert.equal(h.calls.inference,2,'normal crop still loads model and classifies');
- await h.callbacks.save({image:'data:image/jpeg;base64,AADD'},candidate);
+ await h.callbacks.save({image:'data:image/jpeg;base64,AADD',ownerSingleGarmentConfirmed826:true},candidate);
  assert.equal(h.stored.length,1);
  assert.equal(h.calls.color,1);
  assert.equal(h.calls.classification,1);
@@ -138,7 +145,7 @@ test('P822 ordinary unambiguous crop keeps existing optional photo inference and
 test('P822 failed photo-quality check cannot partially commit an ambiguous crop',async()=>{
  const h=harness();
  h.c.checkPhoto=async()=>{throw Error('invalid JPEG');};
- await assert.rejects(()=>h.callbacks.save({image:'data:image/jpeg;base64,AADD'},null),/invalid JPEG/);
+ await assert.rejects(()=>h.callbacks.save({image:'data:image/jpeg;base64,AADD',ownerSingleGarmentConfirmed826:true},null),/invalid JPEG/);
  assert.equal(h.stored.length,0);
  assert.equal(h.item.image,'data:image/jpeg;base64,AABB');
  assert.equal(h.item.originalPhoto.image,h.original);
@@ -162,7 +169,7 @@ test('P824 ordinary saved nonambiguous crop remains available for existing edito
  assert.ok(h.callbacks,'unflagged saved clothing keeps prior crop UI');
  const choice=await h.callbacks.analyze('data:image/jpeg;base64,AACC');
  assert.equal(choice.category,'Tops');
- await h.callbacks.save({image:'data:image/jpeg;base64,AADD'},choice);
+ await h.callbacks.save({image:'data:image/jpeg;base64,AADD',ownerSingleGarmentConfirmed826:true},choice);
  assert.equal(h.stored.length,1);
  assert.equal(h.item.color,'Blue');
 });
@@ -176,7 +183,7 @@ test('P825 wrong signed owner cannot even open a flagged source crop editor',()=
 test('P825 source owner switch while photo quality is pending refuses stale draft write',async()=>{
  const h=harness();
  let release;h.c.checkPhoto=()=>new Promise(resolve=>{release=resolve;});
- const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC'},null);
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',ownerSingleGarmentConfirmed826:true},null);
  assert.equal(typeof release,'function');
  h.c.window.closetAuth={user:{id:'other-owner'},assertCurrent:()=>{}};
  assert.equal(h.callbacks.isActive(),false);
@@ -188,7 +195,7 @@ test('P825 source owner switch while photo quality is pending refuses stale draf
 test('P825 new camera session during pending analysis invalidates old owner crop lease',async()=>{
  const h=harness();
  let release;h.c.checkPhoto=()=>new Promise(resolve=>{release=resolve;});
- const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC'},null);
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',ownerSingleGarmentConfirmed826:true},null);
  h.c.session++;
  release({signature:'new',aspect:1,colorEstimate:{color:'Green'}});
  await assert.rejects(pending,/M1_P825_STALE_OR_FOREIGN_OWNER_CROP/);
@@ -203,7 +210,7 @@ test('P825 original JPEG replacement or draft substitution is never admitted int
  ]){
   const h=harness(),old=h.item.image;
   let release;h.c.checkPhoto=()=>new Promise(resolve=>{release=resolve;});
-  const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC'},null);
+  const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',ownerSingleGarmentConfirmed826:true},null);
   change(h);
   assert.equal(h.callbacks.isActive(),false);
   release({signature:'new',aspect:1,colorEstimate:{color:'Red'}});
@@ -215,7 +222,7 @@ test('P825 original JPEG replacement or draft substitution is never admitted int
 test('P825 queued owner write validates lease again after an asynchronous prewrite gate',async()=>{
  const h=harness();let work;
  h.c.queued=task=>new Promise((resolve,reject)=>{work=()=>Promise.resolve().then(task).then(resolve,reject);});
- const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',id:'forged-id'},null);
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',ownerSingleGarmentConfirmed826:true,id:'forged-id'},null);
  for(let i=0;i<8&&!work;i++)await Promise.resolve();
  assert.equal(typeof work,'function');
  h.c.window.closetAuth={user:{id:'changed-owner'},assertCurrent:()=>{}};
@@ -225,7 +232,7 @@ test('P825 queued owner write validates lease again after an asynchronous prewri
 });
 test('P825 immutable owner record identity is not overwritten by crop-result id metadata',async()=>{
  const h=harness();
- await h.callbacks.save({image:'data:image/jpeg;base64,NEWC',id:'foreign-id',ownerId:'foreign-owner'},null);
+ await h.callbacks.save({image:'data:image/jpeg;base64,NEWC',ownerSingleGarmentConfirmed826:true,id:'foreign-id',ownerId:'foreign-owner'},null);
  assert.equal(h.stored[0].id,'private-photo-piece');
  assert.equal(h.stored[0].ownerId,'signed-owner-1');
  assert.equal(h.item.id,'private-photo-piece');
@@ -253,4 +260,70 @@ test('P825 crop editor fails closed after JPEG decode if owner lease expires bef
  await assert.rejects(pending,/changed during original JPEG decode/);
  assert.equal(created,1,'only an unmounted dialog may be allocated');
  assert.equal(appended,0,'expired private photo must never mount into next owner UI');
+});
+
+test('P826 no owner-confirmed original one-garment crop cannot reseal or enter private draft',async()=>{
+ const h=harness();
+ await assert.rejects(()=>h.callbacks.save({image:'data:image/jpeg;base64,UNAPPROVED'},null),
+  /M1_P826_EXPLICIT_ORIGINAL_ONE_GARMENT_CROP_REVIEW_REQUIRED/);
+ assert.equal(h.stored.length,0);
+ assert.equal(h.item.segmentHint.cutoutSHA256,'previous-cutout');
+});
+test('P826 owner crop refreshes exact cutout SHA, never owner category/type/color, and never auto-confirms Adjust',async()=>{
+ const h=harness();
+ await h.callbacks.save({image:'data:image/jpeg;base64,NEWC',
+  ownerSingleGarmentConfirmed826:true},null);
+ assert.equal(h.stored.length,1);
+ const saved=h.stored[0];
+ assert.equal(saved.segmentHint.cutoutSHA256,'fresh-cutout-826-sha');
+ assert.equal(saved.segmentHint.cutoutImage,'data:image/jpeg;base64,NEWC');
+ assert.equal(saved.segmentHint.ownerReviewedInstance,true);
+ assert.equal(saved.segmentHint.verified,true);
+ assert.equal(saved.segmentHint.sourceDisconnectedReviewRequired,true);
+ assert.match(saved.segmentHint.ownerCropReviewProvenance826,/explicit-original-photo/);
+ assert.equal(saved.sourceSHA256,'sha-original');
+ assert.equal(saved.color,'');
+ assert.equal(saved.itemType,'Unknown');
+ assert.equal(saved.sourceAmbiguityAcknowledged820,undefined,
+  'crop review is not final Adjust human category/type/color approval');
+ assert.equal(saved.ownerSingleGarmentConfirmed826,undefined,
+  'ephemeral UI checkbox cannot persist as generic photo metadata');
+});
+test('P826 cutout identical to the original JPEG source digest is rejected',async()=>{
+ const h=harness();
+ h.c.captureProof01Module=async()=>({
+  verifyStoredCanonical:async()=>true,
+  jpegBytes:()=>Uint8Array.from([255,216,255,217]),
+  digestBytes:async()=>h.item.sourceSHA256
+ });
+ await assert.rejects(()=>h.callbacks.save({image:'data:image/jpeg;base64,NEWC',
+  ownerSingleGarmentConfirmed826:true},null),/M1_P826_CROP_NOT_DISTINCT_FROM_ORIGINAL/);
+ assert.equal(h.stored.length,0);
+});
+test('P826 original source SHA proof rejection keeps old owner draft unchanged',async()=>{
+ const h=harness();
+ h.c.captureProof01Module=async()=>({
+  verifyStoredCanonical:async()=>false
+ });
+ await assert.rejects(()=>h.callbacks.save({image:'data:image/jpeg;base64,NEWC',
+  ownerSingleGarmentConfirmed826:true},null),/M1_P826_ORIGINAL_JPEG_SHA_PROOF_FAILED/);
+ assert.equal(h.stored.length,0);
+ assert.equal(h.item.image,'data:image/jpeg;base64,AABB');
+});
+test('P826 signed account rotation during real asynchronous crop SHA prevents private draft write',async()=>{
+ const h=harness();
+ let release;
+ h.c.captureProof01Module=async()=>({
+  verifyStoredCanonical:async()=>true,
+  jpegBytes:()=>Uint8Array.from([255,216,1,2,255,217]),
+  digestBytes:()=>new Promise(resolve=>{release=resolve;})
+ });
+ const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',
+  ownerSingleGarmentConfirmed826:true},null);
+ for(let i=0;i<20&&!release;i++)await Promise.resolve();
+ assert.equal(typeof release,'function');
+ h.c.window.closetAuth={user:{id:'changed-owner'},assertCurrent:()=>{}};
+ release('new-real-cutout-sha');
+ await assert.rejects(pending,/M1_P825_STALE_OR_FOREIGN_OWNER_CROP/);
+ assert.equal(h.stored.length,0);
 });
