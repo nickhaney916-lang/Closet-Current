@@ -44,8 +44,41 @@
  const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
  function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
  function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw Error('Invalid private photo path');return path;}
- async function encode(value,assertActive=()=>{}){const photos=new Map(),document=await E.mapImages(value,async image=>{assertActive();const bytes=imageBytes(image),owner=user,sha=await hash(bytes);assertActive();const path=owner+'/'+sha+'.jpg';photos.set(path,bytes);return 'closet-photo:'+path;});return {document:E.validateDocument(document),photos};}
- async function decode(document,assertActive=()=>{}){assertActive();E.validateDocument(document);const photos=new Map();return E.mapImages(document,async(value,key,parent)=>{
+ const shaReceipt=/^[a-f0-9]{64}$/;
+ function assertSourceReceipts(value){
+  E.validateDocument(value);
+  for(const row of [...value.items,...(value.state.draft?.batch||[])]){
+   if(row.sourceHashVerified===true&&
+      (!shaReceipt.test(row.sourceSHA256||'')||
+       row.originalPhoto?.sha256!==row.sourceSHA256))
+    throw Error('Verified source receipt does not match original photo');
+   const hint=row.segmentHint;
+   if(hint?.verified===true&&hint.ownerReviewedInstance===true&&
+      (hint.originalSHA256!==row.sourceSHA256||
+       hint.cutoutSHA256!==row.cutoutSHA256))
+    throw Error('Reviewed garment receipt does not match its source');
+  }
+ }
+ async function encode(value,assertActive=()=>{}){
+  assertActive();assertSourceReceipts(value);
+  const photos=new Map(),document=await E.mapImages(value,async(image,key,parent)=>{
+   assertActive();
+   const bytes=imageBytes(image),owner=user,sha=await hash(bytes);
+   assertActive();
+   // Original JPEG and human-reviewed cutout SHA claims must be checked
+   // against actual bytes BEFORE any photo is uploaded or a cloud revision
+   // is published. Missing receipts remain unverified legacy evidence.
+   const receipt=key==='cutoutImage'?parent?.cutoutSHA256:
+    key==='image'?parent?.sha256:undefined;
+   if(receipt!==undefined&&(!shaReceipt.test(receipt)||receipt!==sha))
+    throw Error('Original or reviewed photograph SHA receipt mismatch');
+   const path=owner+'/'+sha+'.jpg';photos.set(path,bytes);
+   return 'closet-photo:'+path;
+  });
+  assertActive();
+  return {document:E.validateDocument(document),photos};
+ }
+ async function decode(document,assertActive=()=>{}){assertActive();assertSourceReceipts(document);const photos=new Map();return E.mapImages(document,async(value,key,parent)=>{
    assertActive();
    // Historical backups placed owner-reviewed cutoutImage JPEGs directly in
    // private JSON. Accept only an exact SHA-attested legacy cutout, so it can
@@ -56,6 +89,9 @@
     return value;
    }
    const path=photoPath(value,user),sha=path.split('/')[1].slice(0,-4);
+   if(key==='image'&&parent?.sha256!==undefined&&
+      (!shaReceipt.test(parent.sha256)||parent.sha256!==sha))
+    throw Error('Cloud original photo receipt does not match object SHA');
    if(key==='cutoutImage'&&parent?.cutoutSHA256!==sha)
     throw Error('Reviewed cutout receipt does not match cloud object SHA');
    if(!photos.has(path))photos.set(path,(async()=>{
