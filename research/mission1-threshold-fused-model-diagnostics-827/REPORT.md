@@ -25,3 +25,12 @@ The P827 no-deploy workflow uses the precise unverified P821 parent and a five-f
 The source material is NOT an independently rights-cleared blinded human held-out benchmark. The next true Mission 1 accuracy gate remains acquiring legally usable original photographs with an appropriately documented source license and a genuinely prospective disjoint test set, two distinct blinded human annotators with adjudication, predeclared category/type/color/instance/boundary metrics, measured physical iPhone Safari and Android Chrome inference/memory, and hosted signed owner-private cloud review. The original Family Alpha HOLD #255 stays OPEN, no merges/deployments.
 
 **MISSION 1 NOT COMPLETE — independent original-photo model performance still unknown for P821/P827 until exact-head actual-model CI successfully finishes.**
+
+
+## P827 first exact-head diagnostic outcome and follow-up repair
+
+The first P827 workflow [Actions #43076048939](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43076048939) was **NOT green**: the exact-parent build and 1,696 Node tests passed (one optional skip), but the Chromium original-photo model job timed out after 390 seconds on its first source, reporting `last stage=no-worker-progress`—**not even the worker's pre-network loading event**. Thus the original browser worker may have failed to load/parse before entering its message handler, and the five-threshold fused computation may never have executed; there are NO new real-source scores. This is not evidence of poor score or a successful fused performance gain.
+
+P827 now validates the exact dynamically generated instrumented worker source with Node `vm.Script` before any browser starts; it fails immediately with a `M1_P827_WORKER_BOOTSTRAP_SYNTAX` receipt instead of waiting 390 seconds if malformed. The actual browser also catches `Worker.onerror`, `Worker.onmessageerror`, and page errors with bounded no-original-byte diagnostics. Only genuine returning original model results can be scored. These bootstrap diagnostics do not weaken original SHA, model version, mask verification, dataset quarantine or no-release constraints.
+
+**Exact final commit after this change requires new CI. The earlier 1/2 job P827 failure is not overridden by Node green status.**
