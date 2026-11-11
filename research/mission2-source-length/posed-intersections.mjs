@@ -173,3 +173,76 @@ export function measurePosedGarmentPartContacts(root,meshes,overrides=new Map(),
   });
  }finally{for(const geometry of geometries)geometry.dispose();}
 }
+
+
+/**
+ * M2-C4: bounded one-pose intrapanel surface-intersection audit.
+ * A mesh is checked against itself with the *actual* posed, 163-bone skinned
+ * triangle coordinates. The same triangle and triangles sharing ORIGINAL
+ * topology vertices are excluded: a sewn/shared edge is not a fold crossing.
+ * Split-vertex seams can still contribute baseline contacts; baseline identity
+ * comparison is deliberately stricter than a mere total-contact count.
+ *
+ * This is NOT cloth physics, signed clearance, motion-sweep coverage or
+ * inter-layer acceptance. On incomplete enumeration we refuse certification.
+ */
+export function measurePosedGarmentSelfContacts(root,meshes,overrides=new Map(),
+ {maxContacts=40000,maxCandidateTests=300000}={}){
+ if(typeof root?.updateMatrixWorld!=='function'||!Array.isArray(meshes)||meshes.length<1||
+    new Set(meshes).size!==meshes.length||!(overrides instanceof Map)||
+    [...overrides.keys()].some(mesh=>!meshes.includes(mesh))||
+    !Number.isInteger(maxContacts)||maxContacts<1||maxContacts>100000||
+    !Number.isInteger(maxCandidateTests)||maxCandidateTests<1||maxCandidateTests>2000000)
+  throw Error('M2 self-contact bounded valid pose inputs required');
+ root.updateMatrixWorld(true);
+ const identity=new THREE.Matrix4(),contactKeys=new Set();
+ let candidateTests=0,triangleSurfaces=0;
+ for(let meshIndex=0;meshIndex<meshes.length;meshIndex++){
+  const mesh=meshes[meshIndex];
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+   throw Error('M2 self-contact actual 163-bone garment required');
+  const position=mesh.geometry?.getAttribute('position'),override=overrides.get(mesh);
+  if(override&&(!(override instanceof Float32Array||override instanceof Float64Array)||
+      override.length!==position?.count*3||!override.every(Number.isFinite)))
+   throw Error('M2 self-contact finite staged vertex buffer required');
+  const g=posedGeometry(mesh,override);
+  try{
+   const index=g.index?.array;
+   const faceCount=index?index.length/3:g.getAttribute('position').count/3;
+   if(!Number.isInteger(faceCount)||faceCount<1)
+    throw Error('M2 self-contact triangular surface required');
+   triangleSurfaces+=faceCount;
+   const vertex=(face,corner)=>index?index[face*3+corner]:face*3+corner;
+   const adjacent=(one,two)=>{
+    for(let j=0;j<3;j++)for(let k=0;k<3;k++)
+     if(vertex(one,j)===vertex(two,k))return true;
+    return false;
+   };
+   g.boundsTree=new MeshBVH(g,{indirect:true});
+   g.boundsTree.bvhcast(g.boundsTree,identity,{
+    intersectsTriangles:(a,c,aId,cId)=>{
+     if(aId===cId||adjacent(aId,cId))return false;
+     candidateTests++;
+     if(candidateTests>maxCandidateTests)
+      throw Error('M2 self-contact exceeds bounded triangle comparison budget; cannot certify');
+     if(!a.intersectsTriangle(c))return false;
+     const min=Math.min(aId,cId),max=Math.max(aId,cId);
+     contactKeys.add(meshIndex+':'+min+':'+max);
+     if(contactKeys.size>=maxContacts)
+      throw Error('M2 self-contact exceeds bounded contact budget; cannot certify');
+     return false;
+    }
+   });
+  }finally{g.dispose();}
+ }
+ return Object.freeze({
+  triangleContactKeys:Object.freeze([...contactKeys].sort()),
+  triangleContactCount:contactKeys.size,
+  candidateTests,triangleSurfaces,
+  currentPoseOnly:true,
+  withinOneMeshOnly:true,
+  excludedOriginalSharedVertexPairs:true,
+  signedClearanceVerified:false,
+  collisionCertified:false,fullSelfLayerCollision:false
+ });
+}
