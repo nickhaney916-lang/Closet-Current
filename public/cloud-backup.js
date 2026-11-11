@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
- let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null,pausedDeviceStorage=false;
+ let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null,pausedDeviceStorage=false,pausedLocalPhoto=null;
  // P145: research-host-only owner-reviewed mode. The ordinary legacy cloud
  // writer MUST NOT run next to the independent consent-bound P134/P137 flow.
  // This guard does not mount P134/P137 or authorize cloud mutation.
@@ -42,7 +42,25 @@
   }finally{clearTimeout(timeout);}
  }
  const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
- function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
+ function photoFault(message,code){const error=Error(message);error.code=code;return error;}
+ function imageBytes(image){
+  if(typeof image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))
+   throw photoFault('Unsupported cloud photo','PHOTO_FORMAT');
+  const encoded=image.split(',')[1];
+  const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+  const approximateBytes=Math.floor(encoded.length*3/4)-padding;
+  // Reject the over-limit original BEFORE atob allocates its decoded copy.
+  if(approximateBytes>8388608)
+   throw photoFault('Cloud photo exceeds the private JPEG limit','PHOTO_OVERSIZE');
+  let bytes;
+  try{bytes=Uint8Array.from(atob(encoded),c=>c.charCodeAt(0));}
+  catch{throw photoFault('Invalid cloud JPEG base64','PHOTO_INVALID');}
+  if(bytes.length>8388608)
+   throw photoFault('Cloud photo exceeds the private JPEG limit','PHOTO_OVERSIZE');
+  if(bytes.length<2||bytes[0]!==255||bytes[1]!==216)
+   throw photoFault('Invalid cloud JPEG','PHOTO_INVALID');
+  return bytes;
+ }
  function photoPath(value,owner){const path=value.slice('closet-photo:'.length);if(!value.startsWith('closet-photo:')||!new RegExp('^'+owner+'/[a-f0-9]{64}\\.jpg$').test(path))throw Error('Invalid private photo path');return path;}
  const shaReceipt=/^[a-f0-9]{64}$/;
  function assertSourceReceipts(value){
@@ -98,7 +116,16 @@
   assertActive();assertSourceReceipts(value);
   const photos=new Map(),document=await E.mapImages(value,async(image,key,parent)=>{
    assertActive();
-   const bytes=imageBytes(image),owner=user,sha=await hash(bytes);
+   let bytes;
+   try{bytes=imageBytes(image);}
+   catch(error){
+    // Only a bad owner-LOCAL source should cause a durable owner-local
+    // photo-validation pause. Invalid remote cutouts are not local edits.
+    if(['PHOTO_FORMAT','PHOTO_INVALID','PHOTO_OVERSIZE'].includes(error.code))
+     error.code='LOCAL_'+error.code;
+    throw error;
+   }
+   const owner=user,sha=await hash(bytes);
    assertActive();
    // Original JPEG and human-reviewed cutout SHA claims must be checked
    // against actual bytes BEFORE any photo is uploaded or a cloud revision
@@ -208,6 +235,11 @@
     assertActive();if(applied)await callbacks.restored?.();assertActive();return applied;
  }
  const isCapacityError=code=>code===413||code===507;
+ const isLocalPhotoError=code=>['LOCAL_PHOTO_FORMAT','LOCAL_PHOTO_INVALID',
+  'LOCAL_PHOTO_OVERSIZE'].includes(code);
+ const localPhotoText=code=>code==='LOCAL_PHOTO_OVERSIZE'?
+  'A saved JPEG exceeds the 8 MiB cloud photo limit. Original clothing remains on this device. Correct the photo or cloud limit, then choose Sync closet to retry.':
+  'A saved clothing photograph is damaged or is not a supported JPEG. Original clothing remains on this device. Correct or replace the photo, then choose Sync closet to retry.';
  const isDeviceStorageError=error=>error?.name==='QuotaExceededError'||
   (error?.name==='DOMException'&&error?.code===22);
  const deviceStorageText='Device storage is full. Existing local clothing is unchanged; cloud restoration is paused. Free device storage, then select Sync closet to retry.';
@@ -229,6 +261,25 @@
   });
   assertActive();
  }
+ // Owner-local state only: neither localPhotoPause nor original photo bytes
+ // are copied into the owner cloud JSON. Retain the exact local revision so
+ // a later genuine edit can automatically clear a no-longer-relevant pause.
+ async function writeLocalPhotoPause(code,expectedRevision,assertActive){
+  assertActive();let outcome='stale';
+  await transact(['state'],'readwrite',tx=>{
+   const store=tx.objectStore('state'),request=store.get('cloud-sync');
+   request.onsuccess=()=>{
+    try{assertActive();}catch{tx.abort();return;}
+    const current=request.result||markerDefault();
+    if(current.localRevision!==expectedRevision)return;
+    if(code&&!current.dirty)return;
+    store.put({...current,localPhotoPause:isLocalPhotoError(code)
+      ?{reason:code,revision:current.localRevision}:null});
+    outcome='saved';
+   };
+  });
+  assertActive();return outcome;
+ }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false,retryPaused=false}={}){
   if(stopForReview145())return;
@@ -242,12 +293,28 @@
     throw Error('Cloud session or wardrobe changed');
    window.closetAuth?.assertCurrent?.();
   };
-  syncingEpoch=mine;let dirtyAtStart=false;
+  syncingEpoch=mine;let dirtyAtStart=false,photoRevisionAtStart=null;
   try{
    // A clean, already-synced wardrobe needs only its small revision marker
    // and the remote revision. Reading getAll() here clones every original
    // full-resolution JPEG merely because the tab received focus/online.
    let m=await callbacks.capture(()=>{assertActive();return marker();});assertActive();
+   const storedPhotoPause=m.localPhotoPause;
+   const activeStored=isLocalPhotoError(storedPhotoPause?.reason)&&
+     storedPhotoPause.revision===m.localRevision;
+   const activeMemory=pausedLocalPhoto&&pausedLocalPhoto.revision===m.localRevision;
+   if(!retryPaused&&(activeStored||activeMemory)){
+    pausedLocalPhoto=activeStored?storedPhotoPause:pausedLocalPhoto;
+    clearTimeout(timer);timer=null;
+    status(localPhotoText(pausedLocalPhoto.reason));return;
+   }
+   // A new owner-saved revision or deliberate Sync can clear the source
+   // validation pause. It must be re-recorded if the same photo still fails.
+   if(storedPhotoPause){
+    await callbacks.capture(()=>writeLocalPhotoPause(null,m.localRevision,assertActive));
+    assertActive();m=await callbacks.capture(()=>marker());assertActive();
+   }
+   pausedLocalPhoto=null;
    if(retryPaused&&isCapacityError(m.capacityPause)){
     // Only a deliberate owner action clears the durable block. If the app
     // crashes before the upload finishes, the next start may retry once;
@@ -264,7 +331,7 @@
    if(m.dirty||!m.baseVersion){
     ({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();
    }
-   dirtyAtStart=m.dirty;status('Checking cloud backup…');
+   dirtyAtStart=m.dirty;photoRevisionAtStart=m.localRevision;status('Checking cloud backup…');
    const remoteRevision=await getRemote(assertActive,true);assertActive();
    // Optimistic revision comparison is sufficient for both clean checks
    // and same-version outgoing backups. If another owner device published
@@ -289,7 +356,7 @@
      status('Saved on this device · cloud backup pending');schedule();return;
     }
    }
-   if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty(assertActive);assertActive();({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();dirtyAtStart=true;}
+   if(!m.baseVersion&&!m.dirty&&(local.items.length||Object.values(local.state).some(x=>x.batch?.length||x.looks?.length||x.saved?.length||Object.keys(x.current?.slots||{}).length))){await markDirty(assertActive);assertActive();({local,m}=await callbacks.capture(()=>{assertActive();return snapshot();}));assertActive();dirtyAtStart=true;photoRevisionAtStart=m.localRevision;}
    if(!m.dirty){
     if(remote&&(remote.revision!==m.baseVersion||m.needsRestore)){status('Restoring your cloud closet…');if(!await apply(remote.document,remote.revision,m.localRevision,assertActive)){schedule();return;}}
     status(remote?'Cloud backup up to date':'Your closet will back up automatically');retryDelay=2000;return;
@@ -323,7 +390,23 @@
     // Cloud quota/file limit failures do not recover from connectivity.
     // Keep local originals untouched, stop background retries, and require
     // an explicit owner-initiated Sync after the capacity issue is fixed.
-    if(isDeviceStorageError(e)){
+    if(dirtyAtStart&&isLocalPhotoError(e.code)){
+     pausedLocalPhoto={reason:e.code,revision:photoRevisionAtStart};
+     clearTimeout(timer);timer=null;
+     let recorded='error';
+     try{recorded=await callbacks.capture(
+      ()=>writeLocalPhotoPause(e.code,photoRevisionAtStart,assertActive));}
+     catch{}
+     if(mine===generation){
+      if(recorded==='stale'){
+       // Another local edit arrived during validation: do not pause its
+       // new revision based on a failed older photo.
+       pausedLocalPhoto=null;
+       status('Saved on this device · cloud backup pending');schedule();
+      }else status(localPhotoText(e.code)+
+       (recorded==='error'?' The pause could not be saved across app restart.':''));
+     }
+    }else if(isDeviceStorageError(e)){
      pausedDeviceStorage=true;clearTimeout(timer);timer=null;
      status(deviceStorageText);
     }else if(dirtyAtStart&&(e.status===413||e.status===507)){
@@ -344,7 +427,7 @@
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
-  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;pausedLocalPhoto=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db){if(window.closetAuth?.user?.id!==user)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();const ownerAtWrite=user,dbAtWrite=db;await markDirty(()=>{if(!enabled||ownerAtWrite!==user||dbAtWrite!==db||window.closetAuth?.user?.id!==ownerAtWrite)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();});}},
