@@ -1,0 +1,76 @@
+name: Mission 3 native decoded video-to-private-draft acceptance — NO DEPLOY
+on:
+  push:
+    branches: [research/mission3-native-video-browser-evidence-20261111-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  guard-native-video-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact green Mission 3 P871 baseline and no runtime changes
+        run: |
+          set -euo pipefail
+          BASE=061a50f9f4318aa7c964d0f066e346d47fd39f4d
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r path; do
+            case "$path" in
+              scripts/test-mission3-real-video-frame-browser.mjs|research/mission3-native-video-browser/REPORT.md|.github/workflows/mission3-native-video-browser-no-deploy.yml) ;;
+              *) echo "Refusing unrelated path: $path"; exit 1 ;;
+            esac
+          done
+          node --check scripts/test-mission3-real-video-frame-browser.mjs
+          node --check public/app.js
+          echo 'PASS: exact previously green native app code, three QA-only paths, no deploy'
+  native-video-to-owner-draft:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate immutable green app baseline and QA-only allowlist
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=061a50f9f4318aa7c964d0f066e346d47fd39f4d
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public supabase package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r path; do
+            case "$path" in
+              scripts/test-mission3-real-video-frame-browser.mjs|research/mission3-native-video-browser/REPORT.md|.github/workflows/mission3-native-video-browser-no-deploy.yml) ;;
+              *) echo "Refusing unrelated path: $path"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned offline synthetic browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run actual Chromium/WebKit 320 390 430 decoded synthetic video-to-private-draft tests
+        run: node scripts/test-mission3-real-video-frame-browser.mjs benchmark/mission3-native-video-source-browser
+      - name: Enforce all six decoded video owner SHA and reload receipts
+        run: |
+          node -e "const x=require('./benchmark/mission3-native-video-source-browser/results.json');if(x.cases.length!==6||x.errors.length||x.cases.some(c=>!c.committedBeforeVideoAcknowledgment||!c.ownerPrivateDraftSurvivesReload||!c.syntheticMedia||c.hostedSupabase||c.realDevice||c.realGarment))process.exit(1); console.log('PASS: actual video seek/canvas/source SHA/private IndexedDB/reload 6 cases')"
+          echo "FAMILY ALPHA HOLD #255: NO HOSTED ACCESS, NO DEPLOY."
+      - name: Upload only synthetic owner video source SHA browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-native-video-six-browser-receipts-HOLD
+          path: benchmark/mission3-native-video-source-browser/
+          compression-level: 0
+          retention-days: 14
