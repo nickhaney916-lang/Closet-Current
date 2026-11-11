@@ -75,7 +75,8 @@ test('adaptive 163-bone real triangles select a reduced length, then atomically 
  assert.ok(decision.selectedScale<1,'Full extension crosses added body geometry');
  assert.ok(decision.selectedScale>=.25);
  assert.ok(decision.attempts.length>=2);
- assert.ok(decision.attempts.some(x=>x.newlyIntersecting>0),'Reproduce unsafe full extension');
+ assert.ok(decision.attempts.some(x=>x.newlyIntersecting>0||/new posed body intersection pairs/.test(x.error||'')),
+  'Reproduce a full extension rejected by either the original body-pair gate or exact triangle gate');
  assert.equal(decision.attempts.at(-1).newlyIntersecting,0);
  assert.equal(decision.noNewContactAtOnePose,true);
  assert.equal(decision.existingIntersectionsUnresolved,true);
