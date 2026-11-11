@@ -56,8 +56,9 @@ async function fixture({size=1,unique=1,failAt=0,digestDrift=false,interruptAt=0
  const owner=randomUUID(),rows=Array.from({length:size},(_,i)=>photoRow(owner,i,unique));
  const db=await database(owner,rows),events=new Map(),objects=new Map(),requests=[];
  let stored=null,postCount=0,maxPending=0,pending=0,digests=0,failurePending=failAt>0;
- let permission;
+ let permission,reached;
  const gate=interruptAt?new Promise(resolve=>permission=resolve):null;
+ const uploadReached=interruptAt?new Promise(resolve=>reached=resolve):Promise.resolve();
  const blocking={resolve:()=>permission?.()};
  const auth={user:{id:owner},
   assertCurrent(){if(!this.user?.id)throw Error('Session expired');},
@@ -91,6 +92,7 @@ async function fixture({size=1,unique=1,failAt=0,digestDrift=false,interruptAt=0
    assert.ok(key.startsWith(owner+'/'),'foreign owner path forbidden');
    if(verb==='POST'){
     pending++;maxPending=Math.max(maxPending,pending);postCount++;
+    if(interruptAt&&postCount===interruptAt)reached();
     const bytes=Buffer.from(options.body);
     assert.equal(hash(bytes),key.split('/')[1].slice(0,-4),'original exact byte SHA');
     if(postCount===interruptAt&&gate)await gate;
@@ -113,6 +115,7 @@ async function fixture({size=1,unique=1,failAt=0,digestDrift=false,interruptAt=0
   setTimeout:()=>0,clearTimeout:()=>{},setInterval:()=>0,console
  });
  return {owner,rows,db,auth,window,blocking,requests,objects,
+   waitForInterruptedUpload:()=>uploadReached,
   get postCount(){return postCount;},get maxPending(){return maxPending;},
   get stored(){return stored;},
   start:()=>window.closetCloud.start(db,{capture:work=>work(),canRestore:()=>true,async restored(){}}),
@@ -188,8 +191,8 @@ test('owner account revocation while JPEG upload is suspended prevents any cloud
  const f=await fixture({size:2,unique:2,interruptAt:2});
  try{
   let pending=f.start();
-  for(let i=0;i<100&&f.postCount<2;i++)await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(f.postCount,2);
+  await f.waitForInterruptedUpload();
+  assert.equal(f.postCount,2,'revocation must occur while second upload is suspended');
   f.auth.user=null;f.blocking.resolve();
   await pending;
   assert.equal(f.stored,null);
