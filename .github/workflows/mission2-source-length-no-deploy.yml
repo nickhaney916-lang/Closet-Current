@@ -15,6 +15,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-depth-clearance-experiment-20261111-HOLD
     - research/mission2-native-depth-trial-20261111-HOLD
     - research/mission2-intrapanel-fold-locality-20261111-HOLD
+    - research/mission2-hem-depth-taper-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -258,11 +259,15 @@ jobs:
          assert.equal(d?.experimentalDepthTrial,true);
          assert.equal(d?.noPhotoOrOwnerFields,true);
          assert.equal(d?.releaseAuthorized,false);
-         assert.ok(d.attempts.length>=4&&d.attempts.length<=10);
+         assert.ok(d.attempts.length>=4&&d.attempts.length<=16);
          assert.deepEqual(d.attempts.slice(0,4).map(a=>a.depthClearance),[0,0,0,0]);
+         assert.ok(d.attempts.slice(0,10).every(a=>a.depthEasingExponent===1));
+         assert.ok(d.attempts.slice(10).every(a=>a.depthClearance===.008&&
+          [2,3,4].includes(a.depthEasingExponent)));
          for(const a of d.attempts){
           assert.ok([1,.75,.5,.25].includes(a.scale));
           assert.ok([0,.008,.016,.024].includes(a.depthClearance));
+          assert.ok([1,2,3,4].includes(a.depthEasingExponent));
           if(a.selfRegions){
            assert.equal(a.selfRegions.originalSourceFaceIdentity,true);
            assert.equal(a.selfRegions.newSelfContactCount,a.newSelfContacts);
@@ -284,10 +289,12 @@ jobs:
           assert.equal(e.noNewIntrapanelTriangleContactsIfAccepted,true);
           assert.ok(Number.isFinite(e.inferredDepthAcceptedIfAny));
           assert.equal(d.selectedDepthClearance,e.inferredDepthAcceptedIfAny);
+          assert.equal(d.selectedDepthEasingExponent,e.inferredHemEasingAcceptedIfAny);
          }else{
           assert.equal(e.unsafe3DRefused,true);
           assert.equal(e.inferredDepthAcceptedIfAny,null);
-          assert.equal(d.attempts.length,10);
+          assert.equal(e.inferredHemEasingAcceptedIfAny,null);
+          assert.equal(d.attempts.length,16);
          }
         }
         for(const shot of r.screens){
@@ -303,7 +310,8 @@ jobs:
         const selfCounts=opt.map(a=>Number.isSafeInteger(a.newSelfContacts)?a.newSelfContacts:'x').join(',');
         const lastSelfBand=opt.at(-1)?.selfRegions?.byHeightBandPair?.join(',')||'none';
         const acceptedDepth=selected.inferredDepthAcceptedIfAny===null?'none':Math.round(selected.inferredDepthAcceptedIfAny*1000)+'mm';
-        const report=engine+'-admitted['+admitted+']-body['+bodyCounts+']-self['+selfCounts+']-lastBand['+lastSelfBand+']-depth['+acceptedDepth+']';
+        const easing=selected.inferredHemEasingAcceptedIfAny===null?'none':selected.inferredHemEasingAcceptedIfAny;
+        const report=engine+'-admitted['+admitted+']-body['+bodyCounts+']-self['+selfCounts+']-lastBand['+lastSelfBand+']-depth['+acceptedDepth+']-easing['+easing+']';
         assert.ok(report.length<192);
         appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
         console.log('M2_NATIVE_DEPTH_TRIAL_AGGREGATE_ONLY',report);

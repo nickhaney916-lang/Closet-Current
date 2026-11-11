@@ -447,7 +447,12 @@ export async function mountNative3D05({
         physical.sourceLengthDepthFromPhotographVerified!==false||
         !Number.isFinite(physical.sourceLengthDepthClearance)||
         physical.sourceLengthDepthClearance<0||
-        physical.sourceLengthDepthClearance>.024)))
+        physical.sourceLengthDepthClearance>.024||
+        !Number.isFinite(physical.sourceLengthDepthEasingExponent)||
+        physical.sourceLengthDepthEasingExponent<1||
+        physical.sourceLengthDepthEasingExponent>4||
+        (physical.sourceLengthDepthEasingExponent>1&&
+         physical.sourceLengthDepthTaperNotPhotoMeasured!==true))))
      throw Error('M2 sampled body, garment-part or intrapanel triangle proof missing; original-photo/2D fallback required');
    }
    if(params?.get('photoSilhouette62')==='research'){
@@ -773,6 +778,9 @@ export async function mountNative3D05({
    sourceLengthTriangleContactAfter:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthTriangleContactAfter:null,
    sourceLengthNewTriangleContacts:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthNewTriangleContacts:null,
    sourceLengthDepthClearance:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthDepthClearance:null,
+   sourceLengthDepthEasingExponent:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthDepthEasingExponent:null,
+   sourceLengthHemWeightedDepthTaper:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthHemWeightedDepthTaper===true,
+   sourceLengthDepthTaperNotPhotoMeasured:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthDepthTaperNotPhotoMeasured===true,
    sourceLengthExperimentalDepthTrial:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthExperimentalDepthTrial===true,
    sourceLengthDepthFromPhotographVerified:false,
    sourceLengthOriginalXYPhotographedSilhouetteRetained:active&&

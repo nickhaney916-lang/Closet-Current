@@ -63,13 +63,15 @@ export const classifySourceLengthCandidateException=e=>{
 };
 
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
- strictTriangleContacts=false,traceGarmentPartContacts=false,strictGarmentPartContacts=false,traceSelfContacts=false,strictSelfContacts=false,extensionScale=1,depthClearance=0,previewOnly=false}={}){
+ strictTriangleContacts=false,traceGarmentPartContacts=false,strictGarmentPartContacts=false,traceSelfContacts=false,strictSelfContacts=false,extensionScale=1,depthClearance=0,depthEasingExponent=1,previewOnly=false}={}){
  if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
    (previewOnly&&projectSourceRGB))fail('finite bounded extension scale and no projection in dry-run required');
  // Experimental *depth-only* offset is never inferred from a single front
  // photo. Bound it to 24mm and retain all independent collision vetoes.
  if(!Number.isFinite(depthClearance)||depthClearance<0||depthClearance>.024)
   fail('bounded inferred outward garment depth clearance required');
+ if(!Number.isFinite(depthEasingExponent)||depthEasingExponent<1||depthEasingExponent>4)
+  fail('bounded photographic hem depth taper exponent required');
  if(strictTriangleContacts&&!traceTriangleContacts)fail('strict triangle gate requires actual triangle measurements');
  if(strictGarmentPartContacts&&!traceGarmentPartContacts)fail('strict garment part gate requires measured contacts');
  if(strictSelfContacts&&!traceSelfContacts)fail('strict self-contact gate requires measured intersections');
@@ -103,7 +105,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    w.x*=1+(shape.flare-1)*extensionScale*weight;
    const initialDepth=w.z-center;
    w.z=center+initialDepth*(1+.18*extensionScale*weight)+
-    depthClearance*weight*Math.tanh(initialDepth/.035);
+    depthClearance*Math.pow(lower,depthEasingExponent)*torso*Math.tanh(initialDepth/.035);
    const delta=w.distanceTo(old);maximum=Math.max(maximum,delta);
    if(delta>.0001)moved++;
    lowest=Math.min(lowest,w.y);w.applyMatrix4(inv);
@@ -169,6 +171,8 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   sourceLengthMovedVertices:moved,sourceLengthOldHemY:minY,sourceLengthNewHemY:lowest,
   sourceLengthExtension:shape.extension*extensionScale,
   sourceLengthDepthClearance:depthClearance,
+  sourceLengthDepthEasingExponent:depthEasingExponent,
+  sourceLengthHemWeightedDepthTaper:depthEasingExponent>1,
   sourceLengthDepthFromPhotographVerified:false,
   sourceLengthDepthCorrectionDoesNotChangeProjectedXY:true,
   sourceLengthFlare:1+(shape.flare-1)*extensionScale,
@@ -212,19 +216,23 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
  const attempts=[];
  // Keep the established original four-candidate search unchanged.
  // Only an explicit research opt-in can add depth-only offset trials.
- const candidateStages=[1,.75,.5,.25].map(scale=>({scale,depthClearance:0}));
+ const candidateStages=[1,.75,.5,.25].map(scale=>({scale,depthClearance:0,depthEasingExponent:1}));
  if(experimentalDepthTrial)
   for(const scale of [.25,.5])
    for(const depthClearance of [.008,.016,.024])
-    candidateStages.push({scale,depthClearance});
- for(const {scale,depthClearance} of candidateStages){
+    candidateStages.push({scale,depthClearance,depthEasingExponent:1});
+ if(experimentalDepthTrial)
+  for(const scale of [.25,.5])
+   for(const depthEasingExponent of [2,3,4])
+    candidateStages.push({scale,depthClearance:.008,depthEasingExponent});
+ for(const {scale,depthClearance,depthEasingExponent} of candidateStages){
   try{
    const result=fitSourceLength(shirt,root,profile,{
-    traceTriangleContacts:true,traceGarmentPartContacts:true,traceSelfContacts:true,extensionScale:scale,depthClearance,previewOnly:true});
+    traceTriangleContacts:true,traceGarmentPartContacts:true,traceSelfContacts:true,extensionScale:scale,depthClearance,depthEasingExponent,previewOnly:true});
    const v=result.stats;
    const classification=classifySourceLengthContactAttempt(v);
    const accepted=classification.accepted;
-   attempts.push(Object.freeze({scale,depthClearance,accepted,reason:classification.reason,
+   attempts.push(Object.freeze({scale,depthClearance,depthEasingExponent,accepted,reason:classification.reason,
     reasons:classification.reasons,
     newlyIntersecting:v.sourceLengthNewTriangleContacts,
     bodyContactRegions:v.sourceLengthNewBodyContactRegions,
@@ -238,12 +246,13 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
     sourceSHA256:v.sourceLengthSHA256}));
    if(accepted)break;
   }catch(e){
-   attempts.push(Object.freeze({scale,depthClearance,accepted:false,reason:classifySourceLengthCandidateException(e)}));
+   attempts.push(Object.freeze({scale,depthClearance,depthEasingExponent,accepted:false,reason:classifySourceLengthCandidateException(e)}));
   }
  }
  const winner=attempts.find(a=>a.accepted);
  return Object.freeze({accepted:!!winner,selectedScale:winner?.scale??null,
-  selectedDepthClearance:winner?.depthClearance??null,experimentalDepthTrial,
+  selectedDepthClearance:winner?.depthClearance??null,
+  selectedDepthEasingExponent:winner?.depthEasingExponent??null,experimentalDepthTrial,
   attempts:Object.freeze(attempts),refusalReason:winner?null:(attempts.at(-1)?.reason||'candidate-preflight-unavailable'),
   noNewContactAtOnePose:!!winner,
   existingIntersectionsUnresolved:true,
@@ -255,10 +264,10 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
  * geometry into browser console, saved outfits, or build artifacts.
  */
 export function safeAdaptiveBodyContactDiagnostic(decision){
- if(!decision||!Array.isArray(decision.attempts)||decision.attempts.length<1||decision.attempts.length>10)
+ if(!decision||!Array.isArray(decision.attempts)||decision.attempts.length<1||decision.attempts.length>16)
   fail('bounded adaptive source diagnostic required');
  const attempts=decision.attempts.map(a=>Object.freeze({
-  scale:a.scale,depthClearance:a.depthClearance,accepted:a.accepted===true,reason:a.reason||'candidate-preflight-unavailable',
+  scale:a.scale,depthClearance:a.depthClearance,depthEasingExponent:a.depthEasingExponent,accepted:a.accepted===true,reason:a.reason||'candidate-preflight-unavailable',
   newBodyContacts:Number.isSafeInteger(a.newlyIntersecting)?a.newlyIntersecting:null,
   newSelfContacts:Number.isSafeInteger(a.newlyIntersectingIntrapanel)?a.newlyIntersectingIntrapanel:null,
   selfRegions:a.selfContactRegions?Object.freeze({
@@ -281,6 +290,7 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
  }));
  return Object.freeze({accepted:decision.accepted===true,selectedScale:decision.selectedScale,
   selectedDepthClearance:decision.selectedDepthClearance,
+  selectedDepthEasingExponent:decision.selectedDepthEasingExponent,
   experimentalDepthTrial:decision.experimentalDepthTrial===true,
   refusalReason:decision.refusalReason,
   attempts:Object.freeze(attempts),sourcePoseOnly:true,
@@ -297,11 +307,13 @@ export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceR
   projectSourceRGB,traceTriangleContacts:true,strictTriangleContacts:true,
   traceGarmentPartContacts:true,strictGarmentPartContacts:true,
   traceSelfContacts:true,strictSelfContacts:true,
-  extensionScale:decision.selectedScale,depthClearance:decision.selectedDepthClearance});
+  extensionScale:decision.selectedScale,depthClearance:decision.selectedDepthClearance,
+  depthEasingExponent:decision.selectedDepthEasingExponent});
  return {...result,stats:{...result.stats,
   sourceLengthAdaptiveCandidateCount:decision.attempts.length,
   sourceLengthExperimentalDepthTrial:decision.experimentalDepthTrial,
   sourceLengthOriginalXYPhotographedSilhouetteRetained:true,
+  sourceLengthDepthTaperNotPhotoMeasured:true,
   sourceLengthAdaptiveOnePoseNonregression:true,
   sourceLengthAdaptiveGarmentPartNonregression:true,
   sourceLengthAdaptiveIntrapanelNonregression:true,

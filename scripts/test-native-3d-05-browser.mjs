@@ -444,6 +444,12 @@ try{
       assert.equal(decisionState.sourceLengthExperimentalDepthTrial,true);
       assert.equal(decisionState.sourceLengthOriginalXYPhotographedSilhouetteRetained,true);
       assert.equal(decisionState.sourceLengthDepthClearance,safeBodyLocality[0]?.selectedDepthClearance);
+     assert.equal(decisionState.sourceLengthDepthEasingExponent,safeBodyLocality[0]?.selectedDepthEasingExponent);
+     assert.ok([1,2,3,4].includes(decisionState.sourceLengthDepthEasingExponent));
+     if(decisionState.sourceLengthDepthEasingExponent>1){
+      assert.equal(decisionState.sourceLengthHemWeightedDepthTaper,true);
+      assert.equal(decisionState.sourceLengthDepthTaperNotPhotoMeasured,true);
+     }
      }
      assert.ok(Number.isSafeInteger(decisionState?.sourceLengthIntrapanelCandidateTests));
      assert.equal(await page.locator('#outfit3D01Photos img').count(),1);
@@ -471,12 +477,17 @@ try{
     assert.equal(safeDiagnostic.refusalReason,refusalReason);
     assert.equal(safeDiagnostic.experimentalDepthTrial,sourceDepthExperiment);
     assert.ok(safeDiagnostic.attempts?.length>=1&&
-     safeDiagnostic.attempts.length<=(sourceDepthExperiment?10:4));
+     safeDiagnostic.attempts.length<=(sourceDepthExperiment?16:4));
     assert.ok(safeDiagnostic.attempts.every(a=>[1,.75,.5,.25].includes(a.scale)&&typeof a.reason==='string'));
-    if(!accepted)assert.equal(safeDiagnostic.attempts.length,sourceDepthExperiment?10:4,
+    if(!accepted)assert.equal(safeDiagnostic.attempts.length,sourceDepthExperiment?16:4,
      'All bounded immutable fitting stages must be exhausted before original-photo fallback');
     assert.ok(safeDiagnostic.attempts.every((a,i)=>Number.isFinite(a.depthClearance)&&
-      a.depthClearance>=0&&a.depthClearance<=.024&&(i<4?a.depthClearance===0:sourceDepthExperiment)));
+      a.depthClearance>=0&&a.depthClearance<=.024&&
+      Number.isFinite(a.depthEasingExponent)&&a.depthEasingExponent>=1&&a.depthEasingExponent<=4&&
+      (i<4?a.depthClearance===0:sourceDepthExperiment)));
+    assert.ok(safeDiagnostic.attempts.slice(0,10).every(a=>a.depthEasingExponent===1));
+    assert.ok(safeDiagnostic.attempts.slice(10).every(a=>a.depthClearance===.008&&
+      [2,3,4].includes(a.depthEasingExponent)));
     assert.ok(safeDiagnostic.attempts.slice(4).every(a=>a.depthClearance>0),
      'Experimental stages must move depth; normal stages must not');
     const sanitizedJSON=JSON.stringify(safeDiagnostic);
@@ -519,6 +530,7 @@ try{
      changedFaceDeltaVerifiedIfAccepted:accepted,
      nativeDepthExperiment:sourceDepthExperiment,
      inferredDepthAcceptedIfAny:accepted?decisionState.sourceLengthDepthClearance:null,
+     inferredHemEasingAcceptedIfAny:accepted?decisionState.sourceLengthDepthEasingExponent:null,
      neverClaimedPhotographedDepth:true,
      refusalReason,
      safeBodyLocality:safeDiagnostic,

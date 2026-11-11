@@ -160,3 +160,18 @@ Following PR #863's **actual new body-contact refusal** and PR #867's source-fac
 ### P2-C11 exact final-head CI
 
 Pending dedicated NO DEPLOY 3D-source-length regression, actual Chromium/WebKit native signed outfit and screenshot checks. Never equate a zero body-contact count with physically valid fabric.
+
+
+## P2-C12 — Hem-weighted inferred depth correction research
+
+**Evidence used:** [PR #873 exact-head successful NO DEPLOY run #43103526454](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43103526454), 5/5 jobs and independently recovered Chromium/WebKit artifacts at 320/390/430 widths. The true signed outfit has **0 new body contacts** at 8mm outward depth (both .25 and .5 length scales) but **3 new self-contact pairs** in garment mesh 0, predominantly second garment-height quartile. At 16mm, there are 7 new self pairs; at 24mm, 9. This is actual original source-triangle identity evidence; old signed penetration/whole-garment physical clearance remains unknown.
+
+**New isolated experiment:** Preserve the existing four no-clearance and six fixed-clearance source-photo trial stages exactly, then add ONLY inside explicit research-opt-in `experimentalDepthTrial:true` six 8mm *hem-weighted* depth stages (.25 and .5 photographed length scales × decay exponents 2, 3, 4). Define inferred outward depth as `8mm * lowerHemWeight^depthEasingExponent * centralTorsoWeight * tanh(originalDepthFromAnatomicalCenter/35mm)`. The standard exponent is 1, recovering the original PR #870 geometry exactly. Exponents >1 retain the original 8mm outward adjustment near the lowest hem while attenuating outward shift progressively higher up the main garment, where observed self contacts cluster. **Never modify source-projected X/Y coordinates with the taper.**
+
+All staged proposed coordinates are immutable until the full existing 163-bone original-body triangle and coarse body-mesh checks, separate garment-panel triangle contacts, changed-original-face self-fold delta, original JPEG/owner/source proof and minimum length bound are successful. The native research donor records the actual bounded exponent, explicit not-photographed depth and signed-source/fallback receipt, but normal consumer app and production are not touched. Real Chromium/WebKit signed-outfit test validates 16 stages, strict contact vetoes, preserved private saved board and original-photo fallback, and only anonymous integer fold/mesh height counts.
+
+**Not a proof of success:** Some or all six tapered candidates may still introduce self/body intersection or poor visual fabric. Existing baseline contacts are not eliminated or measured with signed depth. No multiple pose sweeps, authentic cloth physics, independently human-approved mask, real owner-photo garment breadth or 10/10 photorealism certification. Family Alpha HOLD #255, DRAFT/UNMERGED/UNDEPLOYED.
+
+### Exact P2-C12 CI evidence
+
+Pending exact-head Node/full-browser test and artifact verification. No native 3D acceptance or physical fitting claim until true safety evidence is complete.
