@@ -1,7 +1,7 @@
 'use strict';
 (function(){
  const E=window.ClosetBackupEngine,BASE='https://hlkgymugtfbirlpunsra.supabase.co',KEY='sb_publishable_5bw6Gkrw3Qx73dZYGNzmIw_x_OoauDO',BUCKET='closet-private';
- let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null,pausedDeviceStorage=false,pausedIntegrity=false;
+ let db=null,user=null,enabled=false,syncingEpoch=null,timer=null,retryDelay=2000,callbacks={},generation=0,pausedCapacity=null,pausedDeviceStorage=false,pausedIntegrity=false,pausedLocalPhoto=null,pausedRemotePhoto=null;
  // P145: research-host-only owner-reviewed mode. The ordinary legacy cloud
  // writer MUST NOT run next to the independent consent-bound P134/P137 flow.
  // This guard does not mount P134/P137 or authorize cloud mutation.
@@ -62,7 +62,23 @@
   }finally{clearTimeout(timeout);}
  }
  const hash=async bytes=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
- function imageBytes(image){if(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))throw Error('Unsupported cloud photo');const bytes=Uint8Array.from(atob(image.split(',')[1]),c=>c.charCodeAt(0));if(bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)throw Error('Invalid cloud photo');return bytes;}
+ function photoFault(message,code){return Object.assign(Error(message),{code});}
+ function remotePhotoFault(message,code='REMOTE_PHOTO_INTEGRITY'){return photoFault(message,code);}
+ function imageBytes(image){
+  if(typeof image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))
+   throw photoFault('Unsupported cloud photo','PHOTO_FORMAT');
+  const encoded=image.slice('data:image/jpeg;base64,'.length);
+  const padding=encoded.endsWith('==')?2:encoded.endsWith('=')?1:0;
+  const predicted=Math.floor(encoded.length*3/4)-padding;
+  // Enforce the 8 MiB private object limit BEFORE allocating decoded JPEG bytes.
+  if(predicted>8388608)throw photoFault('Cloud photo too large','PHOTO_OVERSIZE');
+  let bytes;try{bytes=Uint8Array.from(atob(encoded),x=>x.charCodeAt(0));}
+  catch{throw photoFault('Invalid JPEG base64','PHOTO_INVALID');}
+  if(bytes.length>8388608)throw photoFault('Cloud photo too large','PHOTO_OVERSIZE');
+  if(bytes.length<2||bytes[0]!==255||bytes[1]!==216)
+   throw photoFault('Invalid JPEG marker','PHOTO_INVALID');
+  return bytes;
+ }
  const photoIntegrityError=()=>Object.assign(Error('Cloud photograph or wardrobe integrity verification failed'),{code:'cloud-photo-integrity'});
 
  // Private Storage JPEG objects are capped at 8 MiB by the owner's bucket.
@@ -170,7 +186,14 @@
   assertActive();assertSourceReceipts(value);
   const photos=new Map(),document=await E.mapImages(value,async(image,key,parent)=>{
    assertActive();
-   const bytes=imageBytes(image),owner=user,sha=await hash(bytes);
+   let bytes;
+   try{bytes=imageBytes(image);}
+   catch(error){
+    if(['PHOTO_FORMAT','PHOTO_INVALID','PHOTO_OVERSIZE'].includes(error?.code))
+     error.code='LOCAL_'+error.code;
+    throw error;
+   }
+   const owner=user,sha=await hash(bytes);
    assertActive();
    // Original JPEG and human-reviewed cutout SHA claims must be checked
    // against actual bytes BEFORE any photo is uploaded or a cloud revision
@@ -206,9 +229,16 @@
    if(key==='cutoutImage'&&parent?.cutoutSHA256!==sha)
     throw photoIntegrityError();
    return photos.get(path,async()=>{
-    const response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive),bytes=await readBoundedPrivateJPEG(response,assertActive);
+    let response;
+    try{response=await api('/storage/v1/object/'+BUCKET+'/'+path,{},false,assertActive);}
+    catch(error){
+     if(error?.status===404)throw remotePhotoFault('Private photograph is missing','REMOTE_PHOTO_MISSING');
+     throw error;
+    }
+    const bytes=await readBoundedPrivateJPEG(response,assertActive);
     assertActive();
-    if(bytes.length>8388608||await hash(bytes)!==sha)throw photoIntegrityError();
+    if(bytes.length<2||bytes[0]!==255||bytes[1]!==216||await hash(bytes)!==sha)
+     throw remotePhotoFault('Private photograph failed its SHA receipt');
     assertActive();let binary='';
     for(let offset=0;offset<bytes.length;offset+=32768)binary+=String.fromCharCode(...bytes.subarray(offset,offset+32768));
     return 'data:image/jpeg;base64,'+btoa(binary);
@@ -219,7 +249,13 @@
    assertActive();
    // Re-decode one JPEG at a time. The upload manifest contains only
    // references to immutable data-URL strings already in the local snapshot.
-   const bytes=imageBytes(image);
+   let bytes;
+   try{bytes=imageBytes(image);}
+   catch(error){
+    if(['PHOTO_FORMAT','PHOTO_INVALID','PHOTO_OVERSIZE'].includes(error?.code))
+     error.code='LOCAL_'+error.code;
+    throw error;
+   }
    if(await hash(bytes)!==path.split('/')[1].slice(0,-4))
     throw Error('Private upload manifest SHA mismatch');
    assertActive();
