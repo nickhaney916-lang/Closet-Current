@@ -1,0 +1,45 @@
+name: M1 P807 one-conversation controller updated to real P806 model preview — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-controller-checkpoint-807-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p807-controller-SAM2-public-visual-only-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-P806-parent-controller-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Require exact final verified P806 and docs/workflow ONLY
+        run: |
+          set -euo pipefail
+          BASE=6221592c566e8e0c0669c2febcdd92f5a17807b2
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p807-changes
+          test "$(wc -l </tmp/m1-p807-changes)" -eq 2
+          while read -r path; do
+            case "$path" in
+              research/mission1-controller/CURRENT.md|.github/workflows/mission1-controller-checkpoint-807-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED MODEL/OWNER/AUTH/CLOUD/RELEASE CHANGE: $path"; exit 1 ;;
+            esac
+          done </tmp/m1-p807-changes
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase scripts tests benchmark)"
+          echo M1_P807_DOCUMENTS_ONLY_EXACT_GREEN_P806_PARENT_NO_DEPLOY
+      - name: Check complete accurate resumable model results and no false alpha/human claims
+        run: |
+          set -euo pipefail
+          DOC=research/mission1-controller/CURRENT.md
+          for term in "FAMILY ALPHA HOLD #255" "6221592c566e8e0c0669c2febcdd92f5a17807b2" "42940833098" "2/2 jobs SUCCESS" "1,664 tests" "1,663 PASS" "1 intentionally SKIPPED" "ZERO FAIL" "13820581877" "NOT live or locally executed learned inference" "1,250.86 MiB" "not real independent humans" "MISSION 1 IS NOT 100% COMPLETE"; do
+           grep -Fiq "$term" "$DOC" || { echo "MISSING ACCURATE SOURCE GATE TERM: $term"; exit 1; }
+          done
+          if grep -Eiq 'MISSION 1 (IS|HAS BEEN) 100% COMPLETE|FAMILY ALPHA (IS )?RELEASED|PHYSICAL PHONES PASSED|REAL HUMAN DOUBLE BLIND VERIFIED' "$DOC"; then
+           echo "UNAUTHORIZED MASK HUMAN/RELEASE CLAIM"; exit 1
+          fi
+          echo M1_P807_P806_REAL_PUBLIC_MODEL_REPLAY_NOT_DEVICE_INFERENCE_NOT_HUMAN_GROUND_TRUTH_HOLD
