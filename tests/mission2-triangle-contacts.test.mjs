@@ -146,6 +146,9 @@ test('same skinned mesh: nonadjacent triangles crossing after fitting are detect
  const after=measurePosedGarmentSelfContacts(root,[mesh],new Map([[mesh,staged]]));
  assert.equal(before.triangleContactCount,0);
  assert.equal(after.triangleContactCount,1,'3D crossing within one mesh must be detected exactly once');
+ assert.equal(after.candidateTests,1,'Self BVH traverses one unique original face pair, not both orientations');
+ assert.equal(after.uniqueSourceTriangleCandidateBudget,true);
+ assert.ok(Number.isSafeInteger(after.duplicateCandidateCallbacksSkipped)&&after.duplicateCandidateCallbacksSkipped>=0);
  const comparison=comparePosedTriangleContacts(before,after);
  assert.equal(comparison.newlyIntersecting,1);
  assert.equal(comparison.nonregression,false);
