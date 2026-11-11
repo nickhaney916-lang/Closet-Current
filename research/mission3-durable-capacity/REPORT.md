@@ -23,3 +23,6 @@ PR #812 stopped repeated 413/507 uploads **only while the same JavaScript page r
 
 ## Remaining hard release constraints
 True authorized signed two-account Supabase Auth/JWT/RLS/Storage rejection in a **new approved disposable project**, physical Android Chrome / iPhone Safari with camera interruption and OS kills, and full 1,000-distinct-real-JPEG peak heap/quota failure tests remain outstanding. Browser emulation is not physical-device acceptance. Independent recognition and photographed-clothing 3D quality belong to Missions 1 and 2. Family Alpha HOLD #255 remains active.
+
+## Inherited regression expectation update
+The complete application Node suite initially found an **inherited PR #812 test** expecting a restarted owner controller to clear a capacity failure and upload automatically. That expectation directly conflicts with this milestone's new durable owner-specific pause. The test now requires zero cloud requests after restart and explicitly clicking **Sync closet** once the capacity issue is resolved. This is an intentional semantic update, not a disabled test. This research branch changes six paths, including the updated inherited test and strict CI allowlist.
