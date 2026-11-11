@@ -192,3 +192,20 @@ The comparator reconstructs before and after poses from unchanged source geometr
 ### Exact P2-C13 acceptance
 
 Pending final-head no-deploy full Node + 320/390/430 Chromium/WebKit tests, screenshot SHA and contact-type receipts. No false release claim.
+
+
+## P2-C14 — Original versus staged tiny-triangle area provenance
+
+**Grounded P2-C13 evidence:** Exact [GitHub Actions #43115404696](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43115404696) at PR #875 HEAD `6dc05333bac6965d3eb450bab4ef104811dfc9ab` **6/6 jobs PASS**. Actual Chromium and WebKit 320/390/430 genuine owner source screenshots and signed outfit research receipts independently retrieved (artifacts Chromium #13897944116, WebKit #13898547053). At 8 mm source depth with 0.25 photographed length, 3 NEW self contacts classify as 2 near-zero-area triangles and 1 coplanar contact. At 8 mm tapered hem depth (power 2/3/4), 26/26/26 of 27/26/27 NEW self contact pairs classify as tiny posed triangles for 0.25x length, and 24/24/24 for 0.5x. None of those taper contacts has ANY geometrically coincident original source corners. At stronger 24 mm flat clearance one actual strict two-sided triangle-plane crossing also appears. The interface correctly refuses ALL signed native 3D proposals and retains original owner JPEG/2D saved outfit.
+
+**Unresolved question:** Are the small triangles already present in the user-photo-derived/owner-mask geometry, or produced by its current anatomical lower-hem deformation? The P2-C13 diagnostic classified *proposed* contact types but did not prove their original versus staged source-face area history. Interpreting a near-zero face as a safe seam or as a harmless overlap would be incorrect.
+
+**New diagnostic:** Reconstruct original and staged 163-bone posed triangles for each previously verified exact original-face NEW self-contact pair. For each pair, categorize whether at least one tiny face was present **before and after**, became tiny **only after**, recovered from tiny after deformation, or both original and staged triangles remain regular. Independently count **unique involved original source face identities** rather than double-counting the same face across many contact pairs, with the same categorical area provenance. Use the already pinned squared cross-product area cutoff `1e-10` square-meters-to-the-fourth as a diagnostic threshold; this is not physical garment thickness, signed penetration or a source-image-pixel-resolution accuracy guarantee.
+
+**Safety and privacy:** Outputs are integer counts and one fixed threshold only. No original source-face IDs, photo JPEG, vertex coordinates, actual owner profile or account/session references are emitted. Every pair remains an unsafe NEW contact regardless of its original tiny-area status. Retain all original independent body/panel/self-contact gates and fail-closed 2D/photo fallback. Test source nonmutation and synthetic *already tiny* versus *newly collapsed* 163-bone source shapes separately; independently verify signed native saved owner outfit in Chromium/WebKit across 320/390/430 and export count-only CI evidence even if screenshot artifact storage fails.
+
+**Research purpose:** If the majority of already-tiny faces predate fitting, investigate original owner-mask topology generation with sound, photo-grounded triangulation rather than geometry offsets. If they become tiny during fitting, repair the anatomical vertex deformation locally without welding unknown separate seams or weakening contact detection. No photo-accurate clothing/cloth realism or release claim. FAMILY ALPHA HOLD #255, DRAFT/UNMERGED/UNDEPLOYED.
+
+### P2-C14 verification
+
+Pending exact final-head no-deploy full regression and Chromium/WebKit native source photo checks. Never count a diagnostic fix as cloth acceptance.

@@ -278,6 +278,11 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   newSelfContacts:Number.isSafeInteger(a.newlyIntersectingIntrapanel)?a.newlyIntersectingIntrapanel:null,
   selfContactTypes:a.selfContactTypes?Object.freeze({
    newSelfContactCount:a.selfContactTypes.newSelfContactCount,
+   uniqueAffectedSourceFaceCount:a.selfContactTypes.uniqueAffectedSourceFaceCount,
+   byPairAreaProvenance:Object.freeze({...a.selfContactTypes.byPairAreaProvenance}),
+   byUniqueFaceAreaProvenance:Object.freeze({...a.selfContactTypes.byUniqueFaceAreaProvenance}),
+   sourceAreaCrossSquaredThreshold:a.selfContactTypes.sourceAreaCrossSquaredThreshold,
+   noSmallAreaWaiver:true,
    byContactGeometry:Object.freeze({...a.selfContactTypes.byContactGeometry}),
    byOriginalCoincidentCorners:Object.freeze([...a.selfContactTypes.byOriginalCoincidentCorners]),
    byStagedCoincidentCorners:Object.freeze([...a.selfContactTypes.byStagedCoincidentCorners]),
