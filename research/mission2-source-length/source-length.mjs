@@ -23,7 +23,10 @@ export function deriveSourceLength({profile,minY,maxY,spanX}={}){
   observedPhotoAspect:profile.silhouetteAspect,sourceProportionLength:observedLength,
   boundedTargetLength:targetLength,absoluteSizeMeasured:false});
 }
-export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,strictTriangleContacts=false}={}){
+export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
+ strictTriangleContacts=false,extensionScale=1,previewOnly=false}={}){
+ if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
+   (previewOnly&&projectSourceRGB))fail('finite bounded extension scale and no projection in dry-run required');
  if(strictTriangleContacts&&!traceTriangleContacts)fail('strict triangle gate requires actual triangle measurements');
  const started=performance.now();
  if(shirt?.stats?.sourceSHA256!==SOURCE||shirt.stats.ownerAlphaMaskBasedPhysicalGeometry190!==true||
@@ -51,9 +54,9 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    const old=mesh.position.clone().fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld),w=old.clone();
    const lower=1-smooth(w.y,shape.minY,shape.pivot);
    const torso=1-smooth(Math.abs(w.x),.23,.32),weight=lower*torso;
-   w.y-=shape.extension*weight;
-   w.x*=1+(shape.flare-1)*weight;
-   w.z=center+(w.z-center)*(1+.18*weight);
+   w.y-=shape.extension*extensionScale*weight;
+   w.x*=1+(shape.flare-1)*extensionScale*weight;
+   w.z=center+(w.z-center)*(1+.18*extensionScale*weight);
    const delta=w.distanceTo(old);maximum=Math.max(maximum,delta);
    if(delta>.0001)moved++;
    lowest=Math.min(lowest,w.y);w.applyMatrix4(inv);
@@ -77,13 +80,17 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   if(strictTriangleContacts&&!triangleEvidence.nonregression)
    fail('new posed body triangle contacts '+triangleEvidence.newlyIntersecting+' (mesh pairs alone would miss)');
  }
- for(const {mesh,p,next} of staged){p.array.set(next);p.needsUpdate=true;
-  mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();}
- sourceProjection?.commit();
+ if(!previewOnly){
+  for(const {mesh,p,next} of staged){p.array.set(next);p.needsUpdate=true;
+   mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();}
+  sourceProjection?.commit();
+ }
  return {...shirt,stats:{...shirt.stats,sourceProjectionRGB:sourceProjection!==null,
-  sourceProjectionMaterialCount:sourceProjection?.materialCount||0,sourceProjectionRuntime:sourceProjection?.runtime||null,sourceProjectionRearPhotographed:false,sourceLengthFit:true,sourceLengthSHA256:SOURCE,
+  sourceProjectionMaterialCount:sourceProjection?.materialCount||0,sourceProjectionRuntime:sourceProjection?.runtime||null,sourceProjectionRearPhotographed:false,sourceLengthFit:!previewOnly,sourceLengthDryRun:previewOnly,sourceLengthExtensionScale:extensionScale,
+  sourceLengthSHA256:SOURCE,
   sourceLengthMovedVertices:moved,sourceLengthOldHemY:minY,sourceLengthNewHemY:lowest,
-  sourceLengthExtension:shape.extension,sourceLengthFlare:shape.flare,
+  sourceLengthExtension:shape.extension*extensionScale,
+  sourceLengthFlare:1+(shape.flare-1)*extensionScale,
   sourceLengthOriginalUVPreserved:true,sourceLengthRearInferred:true,
   sourceLengthPhysicalSizeMeasured:false,sourceLengthCollisionCertified:false,
   sourceLengthRestPoseOnly:true,sourceLengthTriangleContactAudit:triangleEvidence!==null,sourceLengthTriangleContactStrictlyAccepted:triangleEvidence!==null&&strictTriangleContacts&&triangleEvidence.nonregression,
@@ -91,4 +98,54 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   sourceLengthNewTriangleContacts:triangleEvidence?.newlyIntersecting??null,
   sourceLengthConstructionMs:performance.now()-started,sourceLengthIntersectionPairsBefore:before.intersectingPairs,
   sourceLengthIntersectionPairsAfter:after.intersectingPairs,sourceLengthTestedPairs:after.testedPairs,releaseAuthorized:false}};
+}
+
+
+/**
+ * Source-constrained, one-pose alternative sampler. The dry-run stages each
+ * candidate from the unchanged current original mesh and never writes any
+ * geometry/texture/owner field. It does not infer physical drape or hidden rear.
+ * A candidate is only eligible when it creates NO new body/garment triangle
+ * intersections at this sampled pose. Existing intersections remain unapproved.
+ */
+export function planNoNewContactSourceLength(shirt,root,profile){
+ const attempts=[];
+ for(const scale of [1,.75,.5,.25]){
+  try{
+   const result=fitSourceLength(shirt,root,profile,{
+    traceTriangleContacts:true,extensionScale:scale,previewOnly:true});
+   const v=result.stats;
+   const accepted=v.sourceLengthNewTriangleContacts===0&&
+    v.sourceLengthTriangleContactAfter<=v.sourceLengthTriangleContactBefore&&
+    v.sourceLengthNewHemY<v.sourceLengthOldHemY-.07;
+   attempts.push(Object.freeze({scale,accepted,
+    newlyIntersecting:v.sourceLengthNewTriangleContacts,
+    baseline:v.sourceLengthTriangleContactBefore,
+    after:v.sourceLengthTriangleContactAfter,
+    movedVertices:v.sourceLengthMovedVertices,
+    extension:v.sourceLengthExtension,
+    sourceSHA256:v.sourceLengthSHA256}));
+   if(accepted)break;
+  }catch(e){
+   attempts.push(Object.freeze({scale,accepted:false,error:String(e.message||e)}));
+  }
+ }
+ const winner=attempts.find(a=>a.accepted);
+ return Object.freeze({accepted:!!winner,selectedScale:winner?.scale??null,
+  attempts:Object.freeze(attempts),noNewContactAtOnePose:!!winner,
+  existingIntersectionsUnresolved:true,
+  originalPhotographOnly:!winner,releaseAuthorized:false});
+}
+export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false}={}){
+ const decision=planNoNewContactSourceLength(shirt,root,profile);
+ if(!decision.accepted)
+  fail('new-body-triangle-contacts: original-photo/2D fallback required; no garment geometry committed');
+ const result=fitSourceLength(shirt,root,profile,{
+  projectSourceRGB,traceTriangleContacts:true,strictTriangleContacts:true,
+  extensionScale:decision.selectedScale});
+ return {...result,stats:{...result.stats,
+  sourceLengthAdaptiveCandidateCount:decision.attempts.length,
+  sourceLengthAdaptiveOnePoseNonregression:true,
+  sourceLengthExistingContactsNotCertified:true,
+  releaseAuthorized:false}};
 }
