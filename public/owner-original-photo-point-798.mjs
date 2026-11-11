@@ -121,7 +121,7 @@ export async function verifyOriginalTap798({
  * persist a receipt or auto-confirm a saved clothing item.
  */
 export function mountOriginalTapReview798({
- host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false,enableOwnerMaskCorrection803=false
+ host,item,ownerId,currentOwner,isActive,enableOwnerBox800=false,enableOwnerMask802=false,enableOwnerMaskCorrection803=false,enableResearchBoxReceipt804=false
 }={}){
  if(!host||typeof host.prepend!=='function'||!item||
     typeof currentOwner!=='function'||typeof isActive!=='function'||
@@ -163,6 +163,7 @@ export function mountOriginalTapReview798({
   item.sourceSHA256===source.sha256&&item.originalPhoto?.image===source.image;
  const reset=()=>{
   resetMask802();
+  if(enableResearchBoxReceipt804)delete root.dataset.mission1SourcePoint804;
   selected=null;marker.style.display='none';marker.dataset.mission1OwnerPointMarker798='none';
   status.textContent='No point selected. Your original photograph is unchanged.';
   clear.disabled=true;refreshMask802();
@@ -192,6 +193,9 @@ export function mountOriginalTapReview798({
    });
    if(!live())return;
    selected=point;
+   // Research-only numeric source coordinates for actual independent model invocation.
+   // Never attaches private photo bytes, user identity or persisted data.
+   if(enableResearchBoxReceipt804)root.dataset.mission1SourcePoint804=point.pointX+','+point.pointY;
    marker.style.display='block';
    marker.style.left=(point.normalizedX*100)+'%';
    marker.style.top=(point.normalizedY*100)+'%';
@@ -235,6 +239,7 @@ export function mountOriginalTapReview798({
   };
   resetBox800=()=>{
    resetMask802();
+   if(enableResearchBoxReceipt804)delete root.dataset.mission1SourceRect804;
    boxMode=false;boxBusy=false;firstVerifiedCorner800=null;selectedBox800=null;
    keyboardCursorX800=.5;keyboardCursorY800=.5;
    overlay.style.display='none';overlay.setAttribute('data-mission1-owner-box-outline-800','none');
@@ -286,6 +291,7 @@ export function mountOriginalTapReview798({
     }else{
      const completed=sourceRectFromVerifiedPoints800(firstVerifiedCorner800,verified);
      selectedBox800=completed;boxMode=false;firstVerifiedCorner800=null;
+     if(enableResearchBoxReceipt804)root.dataset.mission1SourceRect804=[completed.x0,completed.y0,completed.x1,completed.y1].join(',');
      overlay.style.display='block';
      overlay.style.left=(completed.normalizedX0*100)+'%';
      overlay.style.top=(completed.normalizedY0*100)+'%';
