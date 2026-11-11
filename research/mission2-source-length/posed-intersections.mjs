@@ -523,3 +523,99 @@ export function summarizeNewPosedBodyContactRegions(root,meshes,before,after){
   });
  }finally{geometry.forEach(g=>g.dispose());}
 }
+
+
+/**
+ * P2-C11: locate exact NEW within-one-skinned-mesh triangle contacts without
+ * publishing garment vertices, source face IDs, JPEG hashes or owner identity.
+ * Staged geometry and source-face identities are already audited and immutable.
+ *
+ * Ten bins represent unordered pairs of low-to-high garment height quartiles:
+ * 0:00, 1:01, 2:02, 3:03, 4:11, 5:12, 6:13, 7:22, 8:23, 9:33.
+ * A contact is a posed triangle intersection, NOT signed penetration/depth,
+ * sewn topology, cloth thickness, or physical visual acceptance.
+ */
+export function summarizeChangedFaceSelfContactRegions(root,meshes,overrides,selfDelta){
+ if(typeof root?.updateMatrixWorld!=='function'||!Array.isArray(meshes)||
+    meshes.length<1||meshes.length>128||new Set(meshes).size!==meshes.length||
+    !(overrides instanceof Map)||[...overrides.keys()].some(mesh=>!meshes.includes(mesh))||
+    selfDelta?.completedUniqueAffectedPairComparison!==true||
+    selfDelta?.originalSourceFaceIdentity!==true||
+    selfDelta?.sampledPoseOnly!==true||
+    !Number.isSafeInteger(selfDelta?.newlyIntersecting)||
+    selfDelta.newlyIntersecting<0||selfDelta.newlyIntersecting>40000||
+    !Array.isArray(selfDelta.newlyIntersectingSourceKeys)||
+    selfDelta.newlyIntersectingSourceKeys.length!==selfDelta.newlyIntersecting||
+    new Set(selfDelta.newlyIntersectingSourceKeys).size!==selfDelta.newlyIntersecting)
+  throw Error('M2 fold locality complete bounded original-face delta required');
+ root.updateMatrixWorld(true);
+ const geometry=[];
+ try{
+  let minY=Infinity,maxY=-Infinity;
+  for(const mesh of meshes){
+   if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+    throw Error('M2 fold locality real 163-bone garment mesh required');
+   const original=mesh.geometry?.getAttribute('position'),override=overrides.get(mesh);
+   if(!original||override&&(
+      !(override instanceof Float32Array||override instanceof Float64Array)||
+      override.length!==original.count*3||!override.every(Number.isFinite)))
+    throw Error('M2 fold locality finite staged garment vertices required');
+   const g=posedGeometry(mesh,override);
+   const a=g.getAttribute('position').array;
+   const faces=(g.index?.count??a.length/3)/3;
+   if(!Number.isSafeInteger(faces)||faces<1||faces>3000000)
+    throw Error('M2 fold locality complete triangular source required');
+   geometry.push({g,faces});
+   for(let i=1;i<a.length;i+=3){minY=Math.min(minY,a[i]);maxY=Math.max(maxY,a[i]);}
+  }
+  if(!Number.isFinite(minY)||!Number.isFinite(maxY)||maxY-minY<1e-5)
+   throw Error('M2 fold locality finite posed vertical source required');
+  const byGarmentMesh=meshes.map(()=>0),byHeightBandPair=Array(10).fill(0),
+   byHeightSeparation=Array(4).fill(0);
+  const pairIndex=(a,b)=>{
+   // 0-0,0-1,0-2,0-3,1-1,1-2,1-3,2-2,2-3,3-3
+   return a===0?b:a===1?4+b-1:a===2?7+b-2:9;
+  };
+  const centroidY=(meshIndex,face)=>{
+   const {g}=geometry[meshIndex],a=g.getAttribute('position').array,index=g.index?.array;
+   let sum=0;
+   for(let k=0;k<3;k++){
+    const vertex=index?index[face*3+k]:face*3+k;
+    sum+=a[vertex*3+1];
+   }
+   return sum/3;
+  };
+  const quartile=(y)=>Math.max(0,Math.min(3,Math.floor(4*(y-minY)/(maxY-minY))));
+  for(const key of selfDelta.newlyIntersectingSourceKeys){
+   if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+    throw Error('M2 fold locality canonical original-face self contact required');
+   const [meshIndex,first,second]=key.split(':').map(Number);
+   if(![meshIndex,first,second].every(Number.isSafeInteger)||
+      meshIndex>=geometry.length||first>=second||second>=geometry[meshIndex].faces)
+    throw Error('M2 fold locality original-face source bounds required');
+   const a=quartile(centroidY(meshIndex,first)),
+    c=quartile(centroidY(meshIndex,second)),
+    low=Math.min(a,c),high=Math.max(a,c);
+   byGarmentMesh[meshIndex]++;
+   byHeightBandPair[pairIndex(low,high)]++;
+   byHeightSeparation[high-low]++;
+  }
+  const total=selfDelta.newlyIntersecting;
+  if(byGarmentMesh.reduce((a,n)=>a+n,0)!==total||
+     byHeightBandPair.reduce((a,n)=>a+n,0)!==total||
+     byHeightSeparation.reduce((a,n)=>a+n,0)!==total)
+   throw Error('M2 fold locality source triangle evidence totals mismatch');
+  return Object.freeze({
+   newSelfContactCount:total,
+   byGarmentMesh:Object.freeze(byGarmentMesh),
+   byHeightBandPair:Object.freeze(byHeightBandPair),
+   byHeightSeparation:Object.freeze(byHeightSeparation),
+   heightPairOrder:'00,01,02,03,11,12,13,22,23,33',
+   originalSourceFaceIdentity:true,
+   completeChangedFaceComparison:true,
+   sourcePoseOnly:true,noPhotoOrOwnerFields:true,
+   signedPenetrationDepthVerified:false,
+   selfCollisionCertified:false,releaseAuthorized:false
+  });
+ }finally{for(const item of geometry)item.g.dispose();}
+}
