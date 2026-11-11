@@ -223,7 +223,7 @@ test('P825 queued owner write validates lease again after an asynchronous prewri
  const h=harness();let work;
  h.c.queued=task=>new Promise((resolve,reject)=>{work=()=>Promise.resolve().then(task).then(resolve,reject);});
  const pending=h.callbacks.save({image:'data:image/jpeg;base64,NEWC',ownerSingleGarmentConfirmed826:true,id:'forged-id'},null);
- for(let i=0;i<8&&!work;i++)await Promise.resolve();
+ for(let i=0;i<120&&!work;i++)await new Promise(resolve=>setImmediate(resolve));
  assert.equal(typeof work,'function');
  h.c.window.closetAuth={user:{id:'changed-owner'},assertCurrent:()=>{}};
  work();
