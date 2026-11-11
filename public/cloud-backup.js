@@ -238,6 +238,10 @@
      (remoteRevision.revision!==m.baseVersion||m.needsRestore)
       ?await getRemote(assertActive):remoteRevision;
    assertActive();
+   // A stale replicated response must never move the owner backward after
+   // a newer head was just observed; retry rather than restoring old data.
+   if(remoteRevision&&(!remote||remote.revision<remoteRevision.revision))
+    throw Error('Cloud revision changed while reading private wardrobe');
    if(!m.dirty){
     // A save may have marked the closet dirty while the remote request was
     // in flight. Do not overwrite the pending-backup message with a false
