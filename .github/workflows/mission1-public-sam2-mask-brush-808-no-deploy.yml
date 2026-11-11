@@ -87,7 +87,7 @@ jobs:
           import assert from 'node:assert/strict';
           import {readFileSync} from 'node:fs';
           const x=JSON.parse(readFileSync('/tmp/m1-p804-real-onnx-masks/real-native-browser-box-sam2-results.json'));
-          assert.equal(x.sourceSHA256,'e7a617cd23a159864f619e8397d48b684e47dddc4ad6b46b14481042019');
+          assert.equal(x.sourceSHA256,'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019');
           assert.equal(x.familyAlpha,'HOLD');assert.equal(x.releaseAuthorized,false);
           assert.equal(x.ownerMaskApproved,false);assert.equal(x.actualIndependentHumanGesturePrompts,0);
           assert.equal(x.modelRunInHostedLinuxRunnerNotPhysicalPhone,true);
