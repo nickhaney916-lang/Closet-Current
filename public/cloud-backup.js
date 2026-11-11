@@ -303,7 +303,7 @@
       store.clear();for(const item of local.items)store.put(item);
       for(const id of E.stateIds)state.delete(id);
       for(const row of Object.values(local.state))state.put(row);
-      state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document});
+      state.put({...m,dirty:false,resolutionIds:[],needsRestore:false,baseVersion:revision,baseDocument:document,remotePhotoPause:null,integrityPause:false});
       applied=true;
      }catch(error){
       restoreError=error;
@@ -315,6 +315,14 @@
     assertActive();if(applied)await callbacks.restored?.();assertActive();return applied;
  }
  const isCapacityError=code=>code===413||code===507;
+ const isLocalPhotoError=code=>['LOCAL_PHOTO_FORMAT','LOCAL_PHOTO_INVALID','LOCAL_PHOTO_OVERSIZE'].includes(code);
+ const isRemotePhotoError=code=>code==='REMOTE_PHOTO_MISSING'||code==='REMOTE_PHOTO_INTEGRITY';
+ const localPhotoText=code=>code==='LOCAL_PHOTO_OVERSIZE'?
+  'A saved JPEG exceeds the 8 MiB cloud photo limit. Original clothing remains on this device. Correct the photo, then choose Sync closet to retry.':
+  'A saved clothing photograph is damaged or is not a supported JPEG. Original clothing remains on this device. Correct or replace the photo, then choose Sync closet to retry.';
+ const remotePhotoText=code=>code==='REMOTE_PHOTO_MISSING'?
+  'A photograph is missing from this cloud backup. Existing local clothing is unchanged. Cloud restore is paused; repair the private photo, then choose Sync closet to retry.':
+  'Cloud photograph integrity check failed. Cloud restore is paused. Existing local clothing and saved outfits are unchanged. Repair the cloud photo, then choose Sync closet to retry.';
  const isDeviceStorageError=error=>error?.name==='QuotaExceededError'||
   (error?.name==='DOMException'&&error?.code===22);
  const deviceStorageText='Device storage is full. Existing local clothing is unchanged; cloud restoration is paused. Free device storage, then select Sync closet to retry.';
@@ -367,6 +375,36 @@
   });
   assertActive();
  }
+ // These revision-bound pause markers stay in the authenticated owner's IndexedDB,
+ // never in private cloud JSON. Stale owner sessions cannot mutate them.
+ async function writeLocalPhotoPause(reason,localRevision,assertActive){
+  assertActive();let result='stale';
+  await transact(['state'],'readwrite',tx=>{
+   const store=tx.objectStore('state'),q=store.get('cloud-sync');
+   q.onsuccess=()=>{try{
+    assertActive();const m=q.result||markerDefault();
+    if(m.localRevision!==localRevision||reason&&!m.dirty)return;
+    store.put({...m,localPhotoPause:isLocalPhotoError(reason)?
+     {reason,revision:localRevision}:null});result='saved';
+   }catch{try{tx.abort();}catch{}}};
+  });
+  assertActive();return result;
+ }
+ async function writeRemotePhotoPause(reason,remoteRevision,localRevision,assertActive){
+  assertActive();let result='stale';
+  await transact(['state'],'readwrite',tx=>{
+   const store=tx.objectStore('state'),q=store.get('cloud-sync');
+   q.onsuccess=()=>{try{
+    assertActive();const m=q.result||markerDefault();
+    if(m.localRevision!==localRevision)return;
+    store.put({...m,remotePhotoPause:isRemotePhotoError(reason)?
+     {reason,revision:remoteRevision}:null,
+     integrityPause:reason==='REMOTE_PHOTO_INTEGRITY'?true:reason?m.integrityPause:false});
+    result='saved';
+   }catch{try{tx.abort();}catch{}}};
+  });
+  assertActive();return result;
+ }
  function schedule(delay=1500){clearTimeout(timer);timer=setTimeout(()=>sync(),delay);}
  async function sync({keepBoth=false,retryPaused=false}={}){
   if(stopForReview145())return;
@@ -386,7 +424,7 @@
     throw Error('Cloud session or wardrobe changed');
    window.closetAuth?.assertCurrent?.();
   };
-  syncingEpoch=mine;let dirtyAtStart=false;
+  syncingEpoch=mine;let dirtyAtStart=false,photoRevisionAtStart=null,remoteRevisionAtStart=null;
   try{
    // A clean, already-synced wardrobe needs only its small revision marker
    // and the remote revision. Reading getAll() here clones every original
@@ -469,7 +507,7 @@
    const response=await api('/rest/v1/rpc/save_closet_backup',{method:'POST',body:{p_expected_revision:remote?.revision||0,p_document:document}},false,assertActive),revision=await response.json();assertActive();
    if(revision===null){schedule();return;}if(!Number.isSafeInteger(revision)||revision<1)throw Error('Invalid cloud save');
    // If another local save happened during upload, keep its durable pending flag.
-   assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),dirty:current.localRevision!==m.localRevision});};});
+   assertActive();await transact(['state'],'readwrite',tx=>{const store=tx.objectStore('state'),r=store.get('cloud-sync');r.onsuccess=()=>{try{assertActive();}catch{tx.abort();return;}const current=r.result||markerDefault();store.put({...current,baseVersion:revision,baseDocument:E.equal(document,encoded.document)?document:encoded.document,needsRestore:!E.equal(document,encoded.document),remotePhotoPause:null,dirty:current.localRevision!==m.localRevision});};});
    assertActive();const current=await marker();assertActive();if(current.dirty){status('Saved on this device · cloud backup pending');schedule();}
    else if(!E.equal(document,encoded.document)){if(!await apply(document,revision,current.localRevision,assertActive))schedule();else status('Cloud backup up to date');}
    else status('Cloud backup up to date');retryDelay=2000;
@@ -508,12 +546,12 @@
  }
  window.closetCloud={
   ownerReviewHold145:reviewHold145,
-  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
+  async start(database,settings){generation++;enabled=false;pausedCapacity=null;pausedDeviceStorage=false;pausedIntegrity=false;pausedLocalPhoto=null;pausedRemotePhoto=null;clearTimeout(timer);timer=null;if(stopForReview145())return {paused:true,reason:'owner-review-required'};db=database;callbacks=settings||{};user=window.closetAuth?.user?.id;enabled=!!db&&db.name==='closet-current-user-'+user&&typeof window.closetAuth?.getAccessToken==='function'&&/^[a-f0-9-]{36}$/i.test(user||'');if(!enabled)return;
    pausedDeviceStorage=readDevicePause(user);
    navigator.storage?.persist?.().catch(()=>{});const button=document.getElementById('syncCloset');if(button){button.hidden=false;button.onclick=()=>sync({retryPaused:true});}const resolveButton=document.getElementById('resolveCloudConflict');if(resolveButton)resolveButton.onclick=()=>sync({keepBoth:true,retryPaused:true});if(pausedDeviceStorage){status(deviceStorageText);return;}await sync();
   },
   async beforeWrite(database){if(stopForReview145())return;if(enabled&&database===db){if(window.closetAuth?.user?.id!==user)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();const ownerAtWrite=user,dbAtWrite=db;await markDirty(()=>{if(!enabled||ownerAtWrite!==user||dbAtWrite!==db||window.closetAuth?.user?.id!==ownerAtWrite)throw Error('Cloud owner session changed');window.closetAuth?.assertCurrent?.();});}},
-  changed(){if(stopForReview145())return;if(enabled){if(pausedDeviceStorage){status(deviceStorageText);return;}if(pausedIntegrity){status(integrityText);return;}if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
+  changed(){if(stopForReview145())return;if(enabled){if(pausedDeviceStorage){status(deviceStorageText);return;}if(pausedIntegrity){status(integrityText);return;}if(pausedRemotePhoto){status(remotePhotoText(pausedRemotePhoto.reason));return;}if(pausedCapacity){status(capacityText(pausedCapacity));return;}status('Saved on this device · cloud backup pending');schedule();}},sync
  };
  window.addEventListener('pageshow',event=>{if(stopForReview145())return;if(event.persisted&&db&&window.closetAuth?.user?.id===user){enabled=true;sync();}});
  window.addEventListener('online',()=>sync());window.addEventListener('focus',()=>sync());setInterval(()=>sync(),60000);
