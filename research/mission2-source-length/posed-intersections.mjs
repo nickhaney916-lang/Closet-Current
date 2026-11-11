@@ -401,6 +401,9 @@ export function measureChangedFaceSelfContactDelta(root,meshes,overrides=new Map
      const off=vertex(face,k)*3;
      v.set(sourcePositions[off],sourcePositions[off+1],sourcePositions[off+2]);
     }
+    // ExtendedTriangle retains SAT planes and edges; invalidate its caches
+    // each time the two original source faces are reused for a different pair.
+    t.needsUpdate=true;
    };
    const adjacent=(a,c)=>{
     for(let k=0;k<3;k++)for(let j=0;j<3;j++)
