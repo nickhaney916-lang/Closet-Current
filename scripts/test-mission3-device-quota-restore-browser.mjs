@@ -27,7 +27,7 @@ const server=createServer(async(req,res)=>{
   const full=resolve(root,'.'+(path==='/'?'/index.html':path));
   if(!full.startsWith(root+'/')||path.includes('\\'))throw Error('Invalid path');
   const bytes=await readFile(full);
-  res.writeHead(200,{'Content-Type':types[extname(path)]||'application/octet-stream','Cache-Control':'no-store'});res.end(bytes);
+  res.writeHead(200,{'Content-Type':types[extname(full)]||'application/octet-stream','Cache-Control':'no-store'});res.end(bytes);
  }catch{res.writeHead(404);res.end();}
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
