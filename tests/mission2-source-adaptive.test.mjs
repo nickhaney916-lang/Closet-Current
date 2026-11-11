@@ -236,3 +236,74 @@ test('research-only diagnostic callback runs once before 3D refusal without muta
   {onResearchDiagnostic:'malformed'}),/bounded research diagnostic callback/);
  fx.assertOriginal();
 });
+
+
+test('inferred 8–24mm depth-only trial preserves photographic projected silhouette and private original UV/skin',()=>{
+ const noDepth=fixture(),withDepth=fixture();
+ const scale=.5;
+ const no=fitSourceLength(noDepth.shirt,noDepth.root,profile,{extensionScale:scale});
+ const yes=fitSourceLength(withDepth.shirt,withDepth.root,profile,{extensionScale:scale,depthClearance:.016});
+ assert.equal(no.stats.sourceLengthDepthClearance,0);
+ assert.equal(yes.stats.sourceLengthDepthClearance,.016);
+ assert.equal(yes.stats.sourceLengthDepthFromPhotographVerified,false);
+ assert.equal(yes.stats.sourceLengthDepthCorrectionDoesNotChangeProjectedXY,true);
+ assert.equal(yes.stats.releaseAuthorized,false);
+ assert.equal(noDepth.shirt.meshes.length,withDepth.shirt.meshes.length);
+ let zShift=0,xyChanged=0;
+ for(let i=0;i<noDepth.shirt.meshes.length;i++){
+  const a=noDepth.shirt.meshes[i].geometry.getAttribute('position').array;
+  const c=withDepth.shirt.meshes[i].geometry.getAttribute('position').array;
+  for(let j=0;j<a.length;j++){
+   if(j%3===2)zShift=Math.max(zShift,Math.abs(c[j]-a[j]));
+   else xyChanged=Math.max(xyChanged,Math.abs(c[j]-a[j]));
+  }
+  assert.deepEqual(withDepth.shirt.meshes[i].geometry.getAttribute('panelPosition').array,
+   withDepth.panels[i],'Original owner source panel evidence must not be rewritten');
+  assert.deepEqual(withDepth.shirt.meshes[i].geometry.getAttribute('skinWeight').array,
+   withDepth.weights[i],'163-bone original skin weights must stay unchanged');
+ }
+ assert.ok(zShift>.001,'Depth-only research stage must actually move front/rear geometry');
+ assert.ok(xyChanged<1e-6,'Depth-only clearance must preserve all front-projected X/Y coordinates exactly');
+ for(const invalid of [-.01,.025,Infinity,NaN,'0.01'])
+  assert.throws(()=>fitSourceLength(withDepth.shirt,withDepth.root,profile,
+   {extensionScale:.5,depthClearance:invalid,previewOnly:true}),/bounded inferred outward garment depth clearance/);
+});
+
+test('opt-in ten-stage depth search never bypasses genuine body/panel/self contact veto or rewrites source',()=>{
+ const f=fixture(.98);
+ const standard=planNoNewContactSourceLength(f.shirt,f.root,profile);
+ assert.equal(standard.accepted,false,'Established four-stage search remains unmodified');
+ assert.equal(standard.attempts.length,4);
+ assert.equal(standard.experimentalDepthTrial,false);
+ const trial=planNoNewContactSourceLength(f.shirt,f.root,profile,{experimentalDepthTrial:true});
+ assert.equal(trial.experimentalDepthTrial,true);
+ assert.ok(trial.attempts.length>=5&&trial.attempts.length<=10);
+ assert.ok(trial.attempts.slice(4).every(a=>a.depthClearance>0&&a.depthClearance<=.024));
+ assert.ok(trial.attempts.every(a=>[1,.75,.5,.25].includes(a.scale)));
+ assert.ok(trial.attempts.every(a=>[0,.008,.016,.024].includes(a.depthClearance)));
+ const safe=safeAdaptiveBodyContactDiagnostic(trial);
+ assert.equal(safe.experimentalDepthTrial,true);
+ assert.equal(safe.accepted,trial.accepted);
+ assert.equal(safe.noPhotoOrOwnerFields,true);
+ assert.equal(JSON.stringify(safe).includes(profile.sourceSHA256),false);
+ assert.equal(JSON.stringify(safe).includes('ownerId'),false);
+ f.assertOriginal();
+ if(trial.accepted){
+  assert.ok(trial.selectedDepthClearance>0);
+  const result=applyNoNewContactSourceLength(f.shirt,f.root,profile,{experimentalDepthTrial:true});
+  assert.equal(result.stats.sourceLengthDepthClearance,trial.selectedDepthClearance);
+  assert.equal(result.stats.sourceLengthNewTriangleContacts,0);
+  assert.equal(result.stats.sourceLengthNewGarmentPartContacts,0);
+  assert.equal(result.stats.sourceLengthNewIntrapanelContacts,0);
+  assert.equal(result.stats.sourceLengthCollisionCertified,false);
+  assert.equal(result.stats.releaseAuthorized,false);
+ }else{
+  assert.equal(trial.selectedScale,null);
+  assert.equal(trial.selectedDepthClearance,null);
+  assert.throws(()=>applyNoNewContactSourceLength(f.shirt,f.root,profile,
+   {experimentalDepthTrial:true}),/original-photo\/2D fallback required/);
+  f.assertOriginal();
+ }
+ assert.throws(()=>planNoNewContactSourceLength(f.shirt,f.root,profile,
+  {experimentalDepthTrial:'research'}),/bounded depth experiment opt-in/);
+});
