@@ -148,13 +148,18 @@ test('temporary 503 network failure keeps pre-existing automatic retry behavior'
  }finally{f.close();}
 });
 
-test('fresh owner-session controller start clears prior capacity rejection',async()=>{
+test('fresh owner-session start preserves durable 413 stop until the owner deliberately retries',async()=>{
  const f=await fixture(413);
  try{
   await f.start();
   f.setFailure(null);
+  const before=f.requests.length;
   await f.start();
-  assert.equal(f.revision,1,'new start invalidates old pause and creates fresh owner lease');
+  assert.equal(f.revision,0,'reopening must not silently send private JPEGs');
+  assert.equal(f.requests.length,before,'reopened owner marker prevents any cloud request');
+  assert.match(f.status(),/too large/);
+  await f.clickSync();
+  assert.equal(f.revision,1,'owner-initiated Sync resumes after capacity is resolved');
   assert.equal(f.status(),'Cloud backup up to date');
  }finally{f.close();}
 });
