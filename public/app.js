@@ -745,7 +745,7 @@ function candidate(image,options={}){
    item.recognitionFromOriginal=options.sourceProof?.image===image;
   }
  }
- if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalSourceProof?.originalPhoto||options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
+ if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=options.segmentHint?.sourceDisconnectedReviewRequired===true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalSourceProof?.originalPhoto||options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
 }
@@ -1046,6 +1046,18 @@ async function recognizeItem(item){
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
   if(!batch.some(x=>x.id===item.id))return;
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
+  // P818: original SegFormer class-4 union spans significant disconnected
+  // areas. P817 measured naive auto-splitting as WORSE on true publisher masks.
+  // Never infer one real shirt, a subtype/color, or a private owner save from
+  // this ambiguous model region. Keep the unchanged original for manual review.
+  if(item.segmentHint?.sourceDisconnectedReviewRequired===true){
+   item.requiresOwnershipConfirmation=true;
+   item.localAnalyzed=true;
+   item.recognitionReviewReasons=['disconnected_semantic_upper_region','manual_original_instance_review_required'];
+   item.localStatus='The model found separate upper-clothing areas. These may be parts of one item or several items. Review the original image and confirm each garment, category, type and color in Adjust. Nothing was automatically saved.';
+   render();
+   return true;
+  }
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
   if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}

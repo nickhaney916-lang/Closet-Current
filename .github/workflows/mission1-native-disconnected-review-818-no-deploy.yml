@@ -1,0 +1,68 @@
+name: Mission 1 P818 native disconnected same-class garment requires original review — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-native-ambiguous-garment-review-818-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-P818-source-review-HOLD
+  cancel-in-progress: true
+jobs:
+  full-native-regression-source-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact green P817 parent, 8 allowlisted offline app/source/test/report paths
+        run: |
+          set -euo pipefail
+          BASE=457e1c2b5c29dd93f306492c2422bce5fc4f6299
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p818-paths
+          test "$(wc -l </tmp/p818-paths)" -eq 8
+          while read -r path; do
+            case "$path" in
+              public/outfit-segmentation.mjs|public/outfit-worker.mjs|public/app.js|tests/outfit-segmentation.test.mjs|tests/outfit-worker.test.mjs|tests/mission1-native-disconnected-review-818.test.mjs|research/mission1-native-disconnected-review-818/REPORT.md|.github/workflows/mission1-native-disconnected-review-818-no-deploy.yml) ;;
+              *) echo "UNAPPROVED MODEL PRIVATE CLOUD RELEASE OR COHORT CHANGE: $path"; exit 1 ;;
+            esac
+          done </tmp/p818-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-native-disconnected-review-818/REPORT.md
+          grep -Fq 'MISSION 1 NOT COMPLETE' research/mission1-native-disconnected-review-818/REPORT.md
+          echo M1_P818_ONLY_EIGHT_OWNER_SOURCE_REVIEW_SOURCE_PATHS_NO_DEPLOY
+      - name: Install ephemeral full app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Exact source review integration tests, app bundle and full Node suite
+        run: |
+          set -euo pipefail
+          node --check public/outfit-worker.mjs
+          node --check public/outfit-segmentation.mjs
+          node --check public/app.js
+          node --test tests/outfit-segmentation.test.mjs tests/outfit-worker.test.mjs tests/mission1-native-disconnected-review-818.test.mjs tests/outfit-capture.test.cjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  independent-no-auto-save-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Independent native app direct function and unchanged source pixel masks
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-native-disconnected-review-818.test.mjs tests/outfit-segmentation.test.mjs
+          grep -Fq 'sourceDisconnectedReviewRequired' public/app.js
+          grep -Fq 'sourceDisconnectedReviewRequired' public/outfit-worker.mjs
+          grep -Fq "region.id===4&&largeSourceIslandCount>=2" public/outfit-segmentation.mjs
+          echo M1_P818_OWNER_ORIGINAL_REVIEW_NO_MODEL_AUTOSAVE_OR_HUMAN_TRUTH_HOLD

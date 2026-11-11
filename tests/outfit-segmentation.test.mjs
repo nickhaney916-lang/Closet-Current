@@ -37,3 +37,30 @@ test('garment color sampling excludes dominant background and display white',asy
  const sample=clothingColorSample({data,width:20,height:20,channels:3},{width:20,height:20},{selected,bounds:{left:6,top:6,right:14,bottom:14}});
  for(let i=0;i<sample.data.length;i+=4)assert.deepEqual(Array.from(sample.data.slice(i,i+4)),[20,70,210,255]);
 });
+
+test('P818 two substantial disconnected same-class upper regions require original-photo owner review',()=>{
+ const l=logits(40,40);
+ l.paint(4,3,3,10,8);
+ l.paint(4,23,3,10,8);
+ const map=clothingLabelMap(l.data,l.dims),groups=clothingMaskGroups(map);
+ const upper=groups.find(g=>g.id===4);
+ assert.ok(upper);
+ assert.equal(groups.filter(g=>g.id===4).length,1,'no automatic instance splitting');
+ assert.equal(upper.count,160,'all unchanged model upper-class pixels remain in union');
+ assert.equal(upper.largeSourceIslandCount,2);
+ assert.equal(upper.sourceDisconnectedReviewRequired,true);
+ assert.equal(upper.autoVerifiedSingleGarment,false);
+ assert.equal(Array.from(upper.selected).filter(Boolean).length,160);
+});
+test('P818 single upper region, tiny background specks, and disconnected shoes do not trigger a false split warning',()=>{
+ const l=logits(40,40);
+ l.paint(4,3,3,10,8);l.paint(4,24,8,2,2);
+ l.paint(9,8,30,5,5);l.paint(10,18,30,5,5);
+ const groups=clothingMaskGroups(clothingLabelMap(l.data,l.dims));
+ const upper=groups.find(g=>g.id===4),shoes=groups.find(g=>g.id===9);
+ assert.equal(upper.sourceDisconnectedReviewRequired,false,'tiny component ignored');
+ assert.equal(upper.largeSourceIslandCount,1);
+ assert.equal(upper.count,84,'retain the existing four-pixel model speck but do not treat it as a second significant garment');
+ assert.equal(shoes.count,50,'both shoe regions remain one existing pair review proposal');
+ assert.equal(shoes.sourceDisconnectedReviewRequired,false,'shoe pair is not two upper garments');
+});
