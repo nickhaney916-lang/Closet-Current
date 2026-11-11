@@ -393,7 +393,9 @@ export function measureChangedFaceSelfContactDelta(root,meshes,overrides=new Map
    subset.computeBoundingBox();
    subset.boundsTree=new MeshBVH(subset,{indirect:true});
    after.boundsTree=new MeshBVH(after,{indirect:true});
-   const seen=new Set(),originalA=new THREE.Triangle(),originalB=new THREE.Triangle();
+   // bvhcast supplies ExtendedTriangle with intersectsTriangle(), unlike
+   // THREE.Triangle. Use the exact pinned callback constructor for baseline.
+   const seen=new Set();let originalA=null,originalB=null;
    const loadOriginal=(face,t)=>{
     for(const [k,v] of [t.a,t.b,t.c].entries()){
      const off=vertex(face,k)*3;
@@ -418,6 +420,7 @@ export function measureChangedFaceSelfContactDelta(root,meshes,overrides=new Map
      candidateTests++;
      if(candidateTests>maxCandidateTests){overflowReason='comparison';return true;}
      if(!changedTri.intersectsTriangle(fullTri))return false;
+     if(!originalA){originalA=new changedTri.constructor();originalB=new fullTri.constructor();}
      loadOriginal(a,originalA);loadOriginal(c,originalB);
      if(originalA.intersectsTriangle(originalB)){retainedExistingContacts++;return false;}
      newContacts.add(meshIndex+':'+min+':'+max);
