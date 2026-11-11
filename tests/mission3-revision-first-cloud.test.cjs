@@ -174,6 +174,39 @@ test('remote advancing between revision and document requests uses fresh coheren
  }finally{f.close();}
 });
 
+test('dirty owner edits merge remote new pieces only after fetching full changed document',async()=>{
+ const f=await fixture({dirty:true,cloudRevision:6,
+  cloudDocument:{schemaVersion:1,items:[{id:'remote-parallel-piece',category:'Tops'}],state:{}},
+  local:[{id:'local-parallel-piece',category:'Tops'}]});
+ try{
+  await f.start();
+  if(baseline)assert.deepEqual(f.selectors,['revision,document']);
+  else assert.deepEqual(f.selectors,['revision','revision,document']);
+  assert.ok(f.saved,'the successful optimistic backup should publish the merged wardrobe');
+  assert.equal(f.saved.p_expected_revision,6);
+  assert.deepEqual(f.saved.p_document.items.map(x=>x.id).sort(),
+   ['local-parallel-piece','remote-parallel-piece']);
+  assert.equal(f.revision,7);
+  assert.deepEqual((await f.readItems()).map(x=>x.id).sort(),
+   ['local-parallel-piece','remote-parallel-piece']);
+ }finally{f.close();}
+});
+
+test('full response older than revision head refuses stale private restore without touching local records',async()=>{
+ if(baseline)return; // the verified parent has no two-step metadata fetch
+ const f=await fixture({cloudRevision:6,secondRevision:4,
+  secondDocument:{schemaVersion:1,items:[{id:'stale-remote-piece'}],state:{}},
+  local:[{id:'retained-local-original'}]});
+ try{
+  await f.start();
+  assert.deepEqual(f.selectors,['revision','revision,document']);
+  assert.deepEqual((await f.readItems()).map(x=>x.id),['retained-local-original']);
+  assert.equal((await f.readMarker()).baseVersion,5);
+  assert.equal(f.saved,null);
+  assert.match(f.status(),/Cloud connection unavailable/);
+ }finally{f.close();}
+});
+
 test('invalid changed cloud JSON fails closed and does not mutate saved local clothing',async()=>{
  const f=await fixture({cloudRevision:6,failFull:true,
   local:[{id:'keep-original-owner-photo'}]});
@@ -193,7 +226,7 @@ test('owner save during revision-only request remains pending and is never silen
  try{
   const inFlight=f.start();
   if(!baseline)await f.waitForRevision();
-  else return; // parent does not issue a revision-only request
+  else {await inFlight;return;} // parent always downloads full document
   await f.window.closetCloud.beforeWrite(f.db);
   f.window.closetCloud.changed();
   f.release();await inFlight;
