@@ -113,7 +113,9 @@ def load_research_model():
     return module,encoder,decoder
 
 def model_outputs(decoded,source_w,source_h):
-    keys={z.name:v for z,v in decoded}
+    # The caller passes normalized (output-name, tensor) tuples, not ORT
+    # NodeArg objects. Preserve the real immutable decoder output contract.
+    keys={name:tensor for name,tensor in decoded}
     if set(keys)!={"mask_logits","iou"} or keys["mask_logits"].shape!=(1,4,256,256) or keys["iou"].shape!=(1,4):
         fail("real SAM2 original box decoder shapes changed")
     scores=keys["iou"][0]
