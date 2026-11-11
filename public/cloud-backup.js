@@ -206,7 +206,13 @@
   if(stopForReview145())return;
   if((pausedCapacity||pausedDeviceStorage)&&!retryPaused)return;
   if(!enabled||syncingEpoch===generation)return;
-  if(retryPaused){pausedCapacity=null;pausedDeviceStorage=false;writeDevicePause(user,false);}
+  if(retryPaused){
+   // A stale Sync button from a signed-out/switching owner may NEVER clear
+   // the previous owner's durable local quota stop before lease validation.
+   if(window.closetAuth?.user?.id!==user)return;
+   try{window.closetAuth?.assertCurrent?.();}catch{return;}
+   pausedCapacity=null;pausedDeviceStorage=false;writeDevicePause(user,false);
+  }
   const mine=generation,ownerAtStart=user,dbAtStart=db;
   const assertActive=()=>{
    if(!enabled||mine!==generation||ownerAtStart!==user||dbAtStart!==db||
