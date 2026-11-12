@@ -14,7 +14,7 @@ P884 guards old capture failure state and video messages after signout, but the 
 
 The actual `public/app.js` maintains **one monotonically increasing `captureOperationEpoch`**. Every `closet:session-locked` increments it before shutting down the camera, closing owner-visible data, clearing active upload/busy controls and retiring an old Blob media source. Video import, photo/video gallery import, live camera capture and delayed error callbacks capture the current epoch, checking it after each asynchronous stage and before manipulating UI or shared media. An old video's `finally` revokes only its own temporary URL, never clears a new owner's media, buttons or status. Same-owner normal completion still cleans everything. Owner and IndexedDB checks remain in place, not replaced by the epoch: re-signing in with the same owner ID does not revive an earlier import.
 
-Four existing source-extracted test fixtures now supply a generation variable to the actual extracted `app.js` functions; no unrelated production source, authentication, storage SQL, or hosted resources are changed.
+Four existing source-extracted test fixtures now supply a generation variable (and the original gallery fixture supplies an explicitly null database) to the actual extracted `app.js` functions. The existing capture proof static regression now explicitly requires the new session-generation condition; no unrelated production source, authentication, storage SQL, or hosted resources are changed.
 
 ## Tests and scope
 
@@ -22,7 +22,7 @@ New `tests/mission3-capture-operation-epoch.test.cjs` runs actual extracted app 
 
 `scripts/test-mission3-video-epoch-controls-browser.mjs` uses real Chromium/WebKit native synthetic video decode at 320, 390 and 430 CSS widths. It signs a synthetic old owner out after a completed JPEG frame, creates a fresh second-owner media source and busy state while the old import is still resolving, then tests that **the second owner's media URL, disabled capture controls and status remain unchanged**, alongside old/new account isolation and original photo SHA. Six test cases, screenshots and JSON SHA evidence only.
 
-Dedicated no-deploy GitHub Actions enforces the accepted parent SHA and **nine changed paths**: one `public/app.js`, four inherited source-extraction fixture tests, one new unit test, one new browser test, this report and one new workflow. It reruns full serial Node, signed disposable PostgreSQL RLS, all previous synthetic Chromium/WebKit viewport suites and the new six cases, then packages only synthetic evidence.
+Dedicated no-deploy GitHub Actions enforces the accepted parent SHA and **ten changed paths**: one `public/app.js`, four inherited source-extraction fixture tests, one inherited capture-proof assertion test, one new unit test, one new browser test, this report and one new workflow. It reruns full serial Node, signed disposable PostgreSQL RLS, all previous synthetic Chromium/WebKit viewport suites and the new six cases, then packages only synthetic evidence.
 
 ## Limits
 
