@@ -527,7 +527,8 @@ function renderPhotoResults(grid,results){
   const card=node('article',null,'card photo-result'),image=node('img');image.src=item.image;image.alt=item.name||'Clothing photo';
   const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id),known=item.category!=='Uncategorized';
   const title=item.name||(known&&item.itemType&&item.itemType!=='Unknown'?item.itemType:known?item.category:'Clothing photo');
-  const needsDraftRetry=!saved&&batch.includes(item)&&failedDraftCaptures.has(item.id);
+  const needsDraftRetry=!saved&&typeof batch!=='undefined'&&batch.includes(item)&&
+   typeof failedDraftCaptures!=='undefined'&&failedDraftCaptures.has(item.id);
   const state=pending?'checking':saved?'saved':needsDraftRetry||item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
   const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):needsDraftRetry?'Photo not saved on this device':item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
@@ -877,7 +878,7 @@ async function captureProofPhoto(){
  }finally{captureProofTaking=false;}
 }
 function reportCaptureCommitFailure(error){
- render();
+ if(typeof render==='function')render();
  if(error?.code==='CAPTURE_STORAGE_FAILED'){
   $('captureState').textContent='Photo in review · device storage not confirmed';
   message('Your photo remains visible in this review, but it was not saved on this device. Free space or export it before leaving this page.');
@@ -1274,7 +1275,7 @@ async function importClothingPhotos(files){
     return accepted;
   });
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
-  render();
+  if(typeof render==='function')render();
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
  }finally{busy=false;controls(false);}
