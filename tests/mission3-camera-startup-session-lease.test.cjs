@@ -87,7 +87,8 @@ test('late old camera permission finalizer cannot unlock newer owner video impor
 test('delayed AudioContext.resume never requests camera permission after logout',async()=>{
  const f=fixture(),opening=f.ctx.startCamera('manual');
  f.switchOwner();f.audioHold.resolve();
- await Promise.resolve();await Promise.resolve();
+ // Flush the VM async continuation through the real Node event loop.
+ await new Promise(resolve=>setImmediate(resolve));
  assert.equal(f.cameraRequests,baseline?1:0);
  if(baseline)f.permission.resolve(f.acquired);
  await opening;
