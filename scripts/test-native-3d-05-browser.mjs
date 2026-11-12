@@ -29,6 +29,9 @@ const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
 const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
 const sourceDepthExperiment=process.env.PHOTO_DEPTH_EXPERIMENT==='1';
 const sourceStageAudit=process.env.PHOTO_STAGE_AREA_AUDIT==='1';
+const sourceShortEdgeTrial=process.env.PHOTO_SHORT_EDGE_TRIAL==='1';
+if(sourceShortEdgeTrial&&(!sourceAdaptiveMode||!sourceDepthExperiment||!sourceStageAudit))
+ throw Error('M2 C21 reversible short-edge trial requires full native source stages and collision gates');
 if(sourceStageAudit&&!sourceAdaptiveMode)
  throw Error('Source-stage area audit requires real owner-private signed adaptive 3D');
 if(sourceDepthExperiment&&!sourceAdaptiveMode)
@@ -386,7 +389,8 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+    (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -668,9 +672,42 @@ try{
     assert.equal(sanitizedJSON.includes('sourceFace'),false);
     assert.equal(sanitizedJSON.includes('ownerId'),false);
     assert.equal(sanitizedJSON.includes('sourceSHA256'),false);
+    assert.equal(sanitizedJSON.includes('"privateOverrides"'),false);
+    assert.equal(sanitizedJSON.includes('"newlyIntersectingSourceKeys"'),false);
     for(const secret of ['"localXYZ"','"posedXYZ"','"skinWeight"','"skinIndex"',
       '"newlyIntersectingSourceKeys"','"sourceUV"'])
      assert.equal(sanitizedJSON.includes(secret),false);
+    const sourceShortEdgeSamples=safeDiagnostic.attempts.filter(a=>a.shortEdgeCounterfactual);
+    if(sourceShortEdgeTrial){
+     assert.equal(sourceShortEdgeSamples.length,1,
+      'One complete bounded short-edge depth counterfactual must run and stay uncommitted');
+     const a=safeDiagnostic.attempts.find(x=>x.shortEdgeCounterfactual);
+     assert.equal(a.scale,.25);
+     assert.equal(a.depthClearance,.008);
+     assert.equal(a.depthEasingExponent,2);
+     assert.equal(a.accepted,false);
+     const q=a.shortEdgeCounterfactual;
+     assert.equal(q.originallyNewSelfContactPairs,a.newSelfContacts);
+     assert.ok(Number.isSafeInteger(q.implicatedNearEdgeVertices)&&q.implicatedNearEdgeVertices>0);
+     assert.ok(Number.isSafeInteger(q.actuallyChangedDepthVertices)&&
+      q.actuallyChangedDepthVertices>=0&&q.actuallyChangedDepthVertices<=q.implicatedNearEdgeVertices);
+     assert.ok(q.maximumDepthAdjustmentMeters>=0&&q.maximumDepthAdjustmentMeters<=.01200001);
+     assert.equal(q.testedDepthAdjustmentCapMeters,.012);
+     for(const key of ['originalProposalNewBodyContacts','originalProposalNewPanelContacts',
+      'originalProposalNewSelfContacts','depthHoldNewBodyContacts','depthHoldNewPanelContacts',
+      'depthHoldNewSelfContacts'])
+      assert.ok(Number.isSafeInteger(q[key])&&q[key]>=0);
+     assert.equal(q.originalProposalNewSelfContacts,a.newSelfContacts);
+     assert.equal(q.originalSourcePhotoXYBitIdentical,true);
+     assert.equal(q.originalSourceAndStagedArraysUnchanged,true);
+     assert.equal(q.seamAndBoneWeightsUnchanged,true);
+     assert.equal(q.requiresFullBodyPanelSelfContactReaudit,true);
+     assert.equal(q.counterfactualNeverApplied,true);
+     assert.equal(q.notAdmissibleFor3DOrRelease,true);
+     assert.equal(q.noCandidateAcceptedOnCounterfactual,true);
+     assert.equal(q.noContactWaived,true);
+     assert.equal(q.releaseAuthorized,false);
+    }else assert.equal(sourceShortEdgeSamples.length,0);
     for(const a of safeDiagnostic.attempts){
      if(a.selfContactTypes){
       const t=a.selfContactTypes;
