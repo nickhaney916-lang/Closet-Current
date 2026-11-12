@@ -29,4 +29,14 @@ A dedicated strict **NO DEPLOY** workflow pins exact P843 SHA, four allowed chan
 - Parallel #71 signed owner/cloud conflict and #72 owner learning must be integrated separately; P844's test harness uses a mocked in-memory pending write, not cloud.
 - No 10/10, no family trial, no release approval.
 
-**CI status:** PENDING exact-head no-deploy GitHub Actions confirmation.
+## Verified executable-head results — November 12, 2026
+
+At exact executable HEAD `f9fc41ec9f80ec3de36628f88c10ecdbf10a76dd`, [NO DEPLOY GitHub Actions #43321975883](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43321975883) **COMPLETED SUCCESS: 2/2 jobs**. Exact P843 ancestry and **four-path changed-file scope** verified. **8/8 focused P843 source-executed tests** and **318/318 full native Node tests**, zero failures/skips, plus both research builds passed.
+
+The scripted original `adjustPhoto` DOM in **real Chromium and WebKit at 320, 390, 430 CSS widths** reproduced P843 **2 attempted duplicate writes** in **6/6** configurations. P844 **1 attempted write** in **6/6** configurations. All **6/6** candidate checks passed for pending-cancel/remove/Escape blocking, disabled field edits, successful first write, simulated failed storage rollback/retry, and zero JavaScript page errors. Inherited P843 scanner admission and P841 explicit owner Adjust editor tests also passed in both engines at all three widths.
+
+**Important qualification:** This is in-memory synthetic store, simulated images and scripted DOM, not actual private signed accounts, production/cloud writes or physical Android/iPhone. It does **not** measure improved recognition model accuracy.
+
+The subsequent report-only update does not alter executable source, but triggers a fresh no-deploy workflow. Exact final HEAD confirmation requires that run to pass.
+
+**FAMILY ALPHA HOLD #255 REMAINS OPEN.**
