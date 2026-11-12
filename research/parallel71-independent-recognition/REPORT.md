@@ -50,4 +50,31 @@ The #71 `?recognitionAcceptance71=1` research-only flag adds a per-dialog pendin
 
 Do not use these 16 previously exposed photographs to choose thresholds. Obtain fresh permitted, independent human category/subtype/color/mask/pair labels, freeze source SHA and splits **before** scoring, and then run held-out real segmentation/FashionCLIP + actual authenticated local-save acceptance on isolated permitted accounts and physical Android/iPhone. Until then **recognition accuracy and final end-to-end acceptance are incomplete**, regardless of green tests.
 
-**Exact-head CI and final candidate result:** PENDING verification; do not claim green until all required jobs succeed. **FAMILY ALPHA HOLD #255 stays OPEN.**
+## Verified genuine-original and browser-safety checkpoint — November 12, 2026
+
+[NO DEPLOY Actions #43294058433](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43294058433), exact research HEAD `934c751c52c18f5560e1f585e895cfbf57f294f4`: **7/7 jobs SUCCESS** (native evidence/scope/build/full Node suite; extracted-source browser test; four genuine-original FashionCLIP browser partitions; fail-closed numeric aggregate). **305/305 full Node tests passed, zero failures/skips**, plus targeted three adversarial provenance tests. Camera/indexing branch checks are tracked separately and do not authorize release.
+
+**Actual new #71 re-run on the same 16 historic original public JPEGs**, same immutable original manifest and human publisher label definitions, P841 recognition model/worker unchanged:
+
+| Metric (actual #71 current branch) | Chromium | WebKit |
+| --- | ---: | ---: |
+| Garment originals / nonclothing originals | 13 / 3 | 13 / 3 |
+| Correct accepted broad category (auto or conservative category review) | **8/13** | **7/13** |
+| Correct automatic category | **4/13** | **4/13** |
+| Wrong automatic category | **0/13** | **0/13** |
+| Known exact-type matches / truth-supported exact-type labels | **4/10** | **4/10** |
+| Predeclared accepted broad-type matches / garment records | **4/13** | **4/13** |
+| Wrong automatic subtype | **0** | **0** |
+| Entirely unresolved/abstained garment category | **5/13** | **6/13** |
+| Nonclothing correctly rejected | **3/3** | **3/3** |
+| Runtime exceptions | **0** | **0** |
+
+**Real-photo failure ledger:** earlier confidently wrong `commons-0003` (T-shirt→Sweatshirt), `commons-0014` (Blouse→Tunic), `commons-0078` (Sneakers→Ankle boots) were now safely **category-only review / subtype Unknown**, not automatically wrong saved types. Five unclassified garments in both engines are `commons-0016` (Blouse), `commons-0036` (Skirt), `commons-0059` (Dress), `commons-0062` (Jacket), `commons-0095` (Boots). `commons-0049` (Dress) had a Chromium-only category-review result and was unresolved in WebKit. This is **reduced unsafe admission but not improved exact subtype accuracy**.
+
+**Baseline comparison:** P834 historical same original cohort (an earlier code checkpoint) automatically categorized **7/13** correctly in each engine but produced **3 automatic wrong subtype** predictions. P841 inherited intervening P837/P838 confidence safeguards, and #71 itself did **not** alter a model, worker, subtype rule or threshold. Therefore the **7→4 automatic acceptance and 3→0 wrong automatic type changes cannot be attributed to #71's model-quality work**, nor accepted as blind held-out improvement. The #71 isolated safety improvement is the actual repeated-save event admission described below.
+
+**Real-browser failure-before/pass-after:** in both Chromium and WebKit at **320, 390 and 430 CSS px**, the actual P841 parent handler attempted **2/2 storage writes per paired synchronous submits**, whereas the #71 opt-in handler attempted **1/2**. **Six parental baseline exposures and six candidate containment checks passed**, with zero page exceptions; six additional P839/P841 reviewed-photo editor browser cases passed. Test fixture uses synthetic 1px photo data and controlled in-memory save, **not actual model detections/hosted accounts/physical phones**.
+
+**Source and archival receipts:** manifest SHA-256 `05d6604566dad006221d643c55df24ce719e83652c424046e043851d6534dc27`; Commons original source-index SHA-256 `6064df4fafe5633313f9825d349746332ae14ecf4d32f3a058b56131e7b234f3`; all 16 individual original JPEG SHA-256 checked at inference. Downloadable numerical-only [ledger artifact #13977837910](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43294058433/artifacts/13977837910), ZIP SHA-256 `6ce182f1619bb8aa0b2ab6cb3247697118df3bd551f0e560fd21a97b3c175d14`. No JPEG, photo bytes or private user data were uploaded to evidence artifacts. The public-domain `commons-0086` legitimately has license text without a Creative Commons license URL; fail-closed provenance now allows only that exact licensed/public-domain form, not missing attribution.
+
+**Next exact-head requirement:** any subsequent report or log-format-only research commit must receive its own full seven-job no-deploy verification; see the draft PR's final HEAD/status. This verified checkpoint does **not** fulfill independent new human source labels, color, masks, pair ownership, real signed private closet or physical phones. **Family Alpha HOLD #255 remains OPEN; no merge/deploy.**
