@@ -947,6 +947,11 @@ async function startCamera(mode){
  try{
   // A delayed AudioContext.resume must not request camera permission for a revoked session.
   if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
+  if(typeof document!=='undefined'&&document.hidden){
+   stopCamera();
+   message('Camera access was interrupted while the app was in the background. Your photos are ready to review.');
+   return;
+  }
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const facing=typeof captureProof01Active!=='undefined'&&captureProof01Active?$('captureCameraFacing')?.value||'environment':'environment';
   let acquired;
