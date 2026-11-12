@@ -19,6 +19,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-source-seam-contact-typing-20261111-HOLD
     - research/mission2-original-face-area-provenance-20261111-HOLD
     - research/mission2-upstream-face-quality-trace-20261111-HOLD
+    - research/mission2-stage-blend-feasibility-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -465,12 +466,28 @@ jobs:
           assert.equal(s[field],s.byGarmentMesh.reduce((a,b)=>a+b[byMeshField],0));
         }
         const s=r.evidence.find(e=>e.width===390).safeStageAreaProvenance;
-        const report=engine+'-anatomy['+s.smallAtAnatomicalConstruction+
+        for(const [samples,before,after] of [
+         [s.photoStageBlendFeasibility,s.smallAtAnatomicalConstruction,s.smallAfterPhotoFit],
+         [s.ownerStageBlendFeasibility,s.smallAfterPhotoFit,s.smallAfterOwnerMaskFit]]){
+         assert.deepEqual(samples.map(x=>x.fraction),[0,.25,.5,.75,1]);
+         assert.equal(samples[0].smallSourceFaces,before);
+         assert.equal(samples.at(-1).smallSourceFaces,after);
+         for(const trial of samples)
+          assert.equal(trial.smallSourceFaces,before+trial.newlySmallSourceFaces-trial.recoveredSourceFaces);
+        }
+        assert.equal(s.partialBlendNotApplied,true);
+        assert.equal(s.sourcePhotoShapeUnverifiedForBlend,true);
+        assert.equal(JSON.stringify(s).includes('posedXYZ'),false);
+        const shorten=items=>items.map(x=>x.newlySmallSourceFaces).join(',');
+        const report=engine+'-trialP62['+shorten(s.photoStageBlendFeasibility)+
+         ']-trialP190['+shorten(s.ownerStageBlendFeasibility)+']';
+        console.log('M2_STAGE_BLEND_TRIAL_COUNTS_ONLY',report);
+        const legacyReport=engine+'-anatomy['+s.smallAtAnatomicalConstruction+
          ']-photo['+s.smallAfterPhotoFit+']-owner['+s.smallAfterOwnerMaskFit+
          ']-newP62['+s.newlySmallDuringPhotoFit+']-newP190['+s.newlySmallDuringOwnerMaskFit+']';
-        assert.ok(report.length<192);
-        appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
-        console.log('M2_ANATOMICAL_PHOTO_OWNER_AREA_STAGE_COUNTS',report);
+        assert.ok(report.length<192&&legacyReport.length<192);
+        appendFileSync(process.env.GITHUB_OUTPUT,'report='+legacyReport+'\n');
+        console.log('M2_ANATOMICAL_PHOTO_OWNER_AREA_STAGE_COUNTS',legacyReport);
         NODE
     - uses: actions/upload-artifact@v4
       if: always()

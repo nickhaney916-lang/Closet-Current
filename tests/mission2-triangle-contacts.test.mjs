@@ -651,4 +651,36 @@ test('real 163-bone source shell with multiple left/right cap meshes pinpoints f
  // Original vertices have been changed in this test fixture only; no source
  // photographed JPEG or persistent account record was ever used or changed.
  assert.deepEqual(meshes[2].geometry.getAttribute('position').array,before[2]);
+ assert.deepEqual(delta.photoStageBlendFeasibility.map(x=>x.fraction),[0,.25,.5,.75,1]);
+ assert.deepEqual(delta.ownerStageBlendFeasibility.map(x=>x.fraction),[0,.25,.5,.75,1]);
+ assert.equal(delta.photoStageBlendFeasibility[0].smallSourceFaces,first.smallTotal);
+ assert.equal(delta.photoStageBlendFeasibility[4].smallSourceFaces,photo.smallTotal);
+ assert.equal(delta.photoStageBlendFeasibility[4].newlySmallSourceFaces,1);
+ assert.equal(delta.ownerStageBlendFeasibility[4].smallSourceFaces,owner.smallTotal);
+ assert.equal(delta.ownerStageBlendFeasibility[4].newlySmallSourceFaces,1);
+ assert.equal(delta.partialBlendNotApplied,true);
+ assert.equal(delta.sourcePhotoShapeUnverifiedForBlend,true);
+ assert.equal(delta.onlyOneRealSampledPose,true);
+ assert.equal(first.witnesses[0].posedXYZ instanceof Float32Array,true);
+ assert.equal(JSON.stringify(delta).includes('posedXYZ'),false);
+ assert.equal(JSON.stringify(delta).includes('sourceFaceIds'),false);
+ assert.equal(JSON.stringify(delta).includes('sourceSHA256'),false);
+
+ // Regular BEFORE and AFTER faces can still collapse at the midpoint:
+ // scan every intermediate original face rather than trusting endpoints.
+ const start=capturePhotoConstructionFaceAreas(root,shirt);
+ const firstTriangle=meshes[0].geometry.getAttribute('position');
+ firstTriangle.setXYZ(2,0,-1,0);firstTriangle.needsUpdate=true;
+ const end=capturePhotoConstructionFaceAreas(root,shirt);
+ const mid=comparePhotoConstructionAreaStages(start,end,end);
+ assert.equal(mid.photoStageBlendFeasibility[0].newlySmallSourceFaces,0);
+ assert.equal(mid.photoStageBlendFeasibility[2].newlySmallSourceFaces,1);
+ assert.equal(mid.photoStageBlendFeasibility[4].newlySmallSourceFaces,0);
+ assert.equal(mid.photoStageBlendFeasibility[2].smallSourceFaces,start.smallTotal+1);
+ assert.equal(mid.partialBlendNotApplied,true);
+ // Finite, in-bounds original source posed vertices are mandatory.
+ const invalid={...end,witnesses:end.witnesses.map((w,i)=>i?w:
+  {...w,posedXYZ:new Float32Array(2)})};
+ assert.throws(()=>comparePhotoConstructionAreaStages(start,invalid,end),
+  /canonical original garment identity changed/);
 });

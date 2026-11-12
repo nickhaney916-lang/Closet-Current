@@ -226,3 +226,18 @@ The disposable donor stage capture is opt-in only with `photoSourceStageAudit=re
 ### P2-C15 exact-head verification
 
 Pending full Node and real Chromium/WebKit native source stage evidence with SHA screenshots, no deployment. Family Alpha HOLD #255 remains DRAFT/UNMERGED/UNDEPLOYED.
+
+
+## P2-C16 — non-mutating staged deformation blend feasibility (diagnostic only)
+
+**Exact verified parent:** [P2-C15 PR #882](https://github.com/nickhaney916-lang/Closet-Current/pull/882) HEAD `023f8686d13c90cbef55a244d29c88ca06140e63`, dedicated [NO DEPLOY Actions #43129570563](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43129570563), **8/8 jobs successful**. The actual original-licensed-blouse signed saved-outfit Chromium and WebKit native browser stage receipt reports **1,395 tiny source faces at the anatomical stage, 1,430 after P62/P185 photographed-silhouette fitting, and 1,439 after P190/P195 owner-alpha contour fitting** at 390px. There are **45 newly small original faces at P62** (net +35) and **16 newly small at P190** (net +9); some different source faces recover. This strongly indicates the *largest observed tiny-face population is upstream of both photo fits*. It is not evidence of physical clearance, inferred rear truth or full cloth fidelity.
+
+**New experiment:** For the same genuine 163-bone fixed pose and unchanged original face indices, retain the three posed vertex snapshots *transiently and privately* inside the disposable donor and calculate original-triangle area for strictly non-mutating virtual interpolations 0%, 25%, 50%, 75%, 100% between anatomical→photo, then photo→owner stage. Count all small faces, newly small faces and recovered faces separately at each fraction using the existing `cross² < 1e-10` diagnostic threshold. Preserve the exact 0/100% stage counts, strict identity checks, finite indexed triangle bounds, count reconciliation, and an explicit source-face work cap. Also cover the counterexample where **both** endpoint shapes have valid triangle area yet **the middle blend collapses**, proving endpoint-only heuristics are unsound.
+
+Only these five fractions and **anonymous count totals** may leave transient research memory. Original positioned 3D vertices, original face IDs, original JPEGs, owner identifiers, silhouette pixels, original source SHA and session/cloud data are never placed in the returned report. Never persist or display a sampled partial fit, reinterpret a blend as independently photographed shape, or remove any pre-existing body/part/self-contact veto. Native 320/390/430 Chromium/WebKit original-photo fallback, screenshot hashes and 163-bone regression must pass before claiming verified new counts.
+
+**What remains:** This identifies whether a conservative deformation reduction may be geometrically useful; **it does not actually change or repair garment topology, fit, drape, the 1,395 preexisting tiny source faces, or rear fabric**. Any future adjustment needs independent source-photo likeness measurements plus full body/panel/self collisions and pose/physical-device tests. Family Alpha HOLD #255, draft/unmerged/undeployed.
+
+### P2-C16 exact-head verification
+
+Pending dedicated final HEAD no-deploy CI. No passing test count or garment 3D admission is claimed for this new branch until GitHub Actions completes.
