@@ -1,0 +1,272 @@
+{
+  "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 18158.046338000004,
+  "detection": {
+    "regions": [
+      {
+        "category": "Dresses",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "fancy dress",
+        "box": [
+          366.42949999999996,
+          427.52,
+          576.1105,
+          891.392
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "fancy dress",
+            "box": [
+              366.42949999999996,
+              427.52,
+              576.1105,
+              891.392
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "dress",
+            "box": [
+              367.1125,
+              425.472,
+              577.4765,
+              889.344
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          452.4875,
+          918.016,
+          500.9805,
+          1001.984
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              452.4875,
+              918.016,
+              500.9805,
+              1001.984
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "sandals",
+            "box": [
+              451.12149999999997,
+              912.896,
+              500.2975,
+              1001.984
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          436.09549999999996,
+          358.912,
+          490.7355,
+          429.568
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "woman",
+        "box": [
+          358.2335,
+          307.712,
+          578.1595,
+          1000.96
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A woman",
+        "box": [
+          356.86749999999995,
+          304.64,
+          580.2085000000001,
+          1001.984
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The woman",
+        "box": [
+          356.86749999999995,
+          303.616,
+          580.2085000000001,
+          1001.984
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "hair",
+        "box": [
+          398.5305,
+          306.688,
+          531.7155,
+          417.28
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The wall",
+        "box": [
+          0.3415,
+          0.512,
+          681.9755,
+          933.376
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The women",
+        "box": [
+          356.86749999999995,
+          304.64,
+          580.8915000000001,
+          1001.984
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>fancy dress<loc_536><loc_417><loc_843><loc_870>footwear<loc_662><loc_896><loc_733><loc_978>human face<loc_638><loc_350><loc_718><loc_419>woman<loc_524><loc_300><loc_846><loc_977></s>",
+        "parsed": {
+          "labels": [
+            "fancy dress",
+            "footwear",
+            "human face",
+            "woman"
+          ],
+          "bboxes": [
+            [
+              366.42949999999996,
+              427.52,
+              576.1105,
+              891.392
+            ],
+            [
+              452.4875,
+              918.016,
+              500.9805,
+              1001.984
+            ],
+            [
+              436.09549999999996,
+              358.912,
+              490.7355,
+              429.568
+            ],
+            [
+              358.2335,
+              307.712,
+              578.1595,
+              1000.96
+            ]
+          ]
+        },
+        "elapsedMs": 3976.6327519999977
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A woman is standing in front of a wall. She is wearing a yellow dress. The woman has black hair. The wall is made of wood. The women is wearing sandals on her feet. </s>",
+        "parsed": "A woman is standing in front of a wall. She is wearing a yellow dress. The woman has black hair. The wall is made of wood. The women is wearing sandals on her feet. ",
+        "elapsedMs": 4037.922859000002
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A woman is standing in front of a wall. She is wearing a yellow dress. The woman has black hair. The wall is made of wood. The women is wearing sandals on her feet. ",
+        "raw": "</s><s>A woman<loc_522><loc_297><loc_849><loc_978>dress<loc_537><loc_415><loc_845><loc_868>The woman<loc_522><loc_296><loc_849><loc_978>hair<loc_583><loc_299><loc_778><loc_407>The wall<loc_0><loc_0><loc_998><loc_911>The women<loc_522><loc_297><loc_850><loc_978>sandals<loc_660><loc_891><loc_732><loc_978></s>",
+        "parsed": {
+          "labels": [
+            "A woman",
+            "dress",
+            "The woman",
+            "hair",
+            "The wall",
+            "The women",
+            "sandals"
+          ],
+          "bboxes": [
+            [
+              356.86749999999995,
+              304.64,
+              580.2085000000001,
+              1001.984
+            ],
+            [
+              367.1125,
+              425.472,
+              577.4765,
+              889.344
+            ],
+            [
+              356.86749999999995,
+              303.616,
+              580.2085000000001,
+              1001.984
+            ],
+            [
+              398.5305,
+              306.688,
+              531.7155,
+              417.28
+            ],
+            [
+              0.3415,
+              0.512,
+              681.9755,
+              933.376
+            ],
+            [
+              356.86749999999995,
+              304.64,
+              580.8915000000001,
+              1001.984
+            ],
+            [
+              451.12149999999997,
+              912.896,
+              500.2975,
+              1001.984
+            ]
+          ]
+        },
+        "elapsedMs": 10141.747823999998
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

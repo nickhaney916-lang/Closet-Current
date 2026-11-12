@@ -1,0 +1,267 @@
+{
+  "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 12096.245527000006,
+  "detection": {
+    "regions": [
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          183.799,
+          941.568,
+          331.793,
+          1022.464
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              183.799,
+              941.568,
+              331.793,
+              1022.464
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          116.96300000000001,
+          796.16,
+          243.815,
+          889.344
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              116.96300000000001,
+              796.16,
+              243.815,
+              889.344
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Bottoms",
+        "itemType": "Trousers",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "trousers",
+        "box": [
+          137.423,
+          429.568,
+          585.4970000000001,
+          995.84
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "trousers",
+            "box": [
+              137.423,
+              429.568,
+              585.4970000000001,
+              995.84
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "jeans",
+            "box": [
+              136.741,
+              425.472,
+              586.179,
+              994.816
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Tops",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "shirt",
+        "box": [
+          283.371,
+          227.84,
+          541.8489999999999,
+          505.344
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "shirt",
+            "box": [
+              283.371,
+              227.84,
+              541.8489999999999,
+              505.344
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          271.095,
+          95.744,
+          379.533,
+          240.128
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "woman",
+        "box": [
+          116.96300000000001,
+          60.928,
+          672.793,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A woman",
+        "box": [
+          120.37299999999999,
+          59.904,
+          672.793,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "stairs",
+        "box": [
+          0.341,
+          712.192,
+          680.9770000000001,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>footwear<loc_269><loc_919><loc_486><loc_998><loc_171><loc_777><loc_357><loc_868>human face<loc_397><loc_93><loc_556><loc_234>trousers<loc_201><loc_419><loc_858><loc_972>woman<loc_171><loc_59><loc_986><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "footwear",
+            "footwear",
+            "human face",
+            "trousers",
+            "woman"
+          ],
+          "bboxes": [
+            [
+              183.799,
+              941.568,
+              331.793,
+              1022.464
+            ],
+            [
+              116.96300000000001,
+              796.16,
+              243.815,
+              889.344
+            ],
+            [
+              271.095,
+              95.744,
+              379.533,
+              240.128
+            ],
+            [
+              137.423,
+              429.568,
+              585.4970000000001,
+              995.84
+            ],
+            [
+              116.96300000000001,
+              60.928,
+              672.793,
+              1022.464
+            ]
+          ]
+        },
+        "elapsedMs": 4093.6004149999935
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A woman is sitting on the stairs. She is wearing a white shirt and blue jeans. She has a silver bracelet on her wrist. </s>",
+        "parsed": "A woman is sitting on the stairs. She is wearing a white shirt and blue jeans. She has a silver bracelet on her wrist. ",
+        "elapsedMs": 4144.805202000003
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A woman is sitting on the stairs. She is wearing a white shirt and blue jeans. She has a silver bracelet on her wrist. ",
+        "raw": "</s><s>A woman<loc_176><loc_58><loc_986><loc_998>stairs<loc_0><loc_695><loc_998><loc_998>shirt<loc_415><loc_222><loc_794><loc_493>jeans<loc_200><loc_415><loc_859><loc_971></s>",
+        "parsed": {
+          "labels": [
+            "A woman",
+            "stairs",
+            "shirt",
+            "jeans"
+          ],
+          "bboxes": [
+            [
+              120.37299999999999,
+              59.904,
+              672.793,
+              1022.464
+            ],
+            [
+              0.341,
+              712.192,
+              680.9770000000001,
+              1022.464
+            ],
+            [
+              283.371,
+              227.84,
+              541.8489999999999,
+              505.344
+            ],
+            [
+              136.741,
+              425.472,
+              586.179,
+              994.816
+            ]
+          ]
+        },
+        "elapsedMs": 3855.7411069999944
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

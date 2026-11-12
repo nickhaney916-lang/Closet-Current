@@ -1,0 +1,625 @@
+{
+  "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 12746.964418000003,
+  "detection": {
+    "regions": [
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "boots",
+        "box": [
+          486.7965,
+          699.904,
+          651.5894999999999,
+          810.496
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "boots",
+            "box": [
+              486.7965,
+              699.904,
+              651.5894999999999,
+              810.496
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "boots",
+        "box": [
+          622.2705000000001,
+          797.184,
+          753.7005,
+          910.848
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "boots",
+            "box": [
+              622.2705000000001,
+              797.184,
+              753.7005,
+              910.848
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Accessories",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "handbag",
+        "box": [
+          806.2725,
+          627.2,
+          935.6804999999999,
+          736.768
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "handbag",
+            "box": [
+              806.2725,
+              627.2,
+              935.6804999999999,
+              736.768
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Bottoms",
+        "itemType": "Trousers",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "trousers",
+        "box": [
+          602.0505,
+          587.264,
+          768.8655,
+          814.592
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "trousers",
+            "box": [
+              602.0505,
+              587.264,
+              768.8655,
+              814.592
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Outerwear",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "jacket",
+        "box": [
+          723.3705,
+          426.496,
+          977.1315000000001,
+          770.56
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "jacket",
+            "box": [
+              723.3705,
+              426.496,
+              977.1315000000001,
+              770.56
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "bench",
+        "box": [
+          753.7005,
+          688.64,
+          1009.4835,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          682.9304999999999,
+          412.16,
+          750.6675,
+          474.624
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "person",
+        "box": [
+          486.7965,
+          344.576,
+          976.1205,
+          910.848
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "person",
+        "box": [
+          904.3394999999999,
+          249.344,
+          937.7025,
+          361.984
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A man",
+        "box": [
+          485.78549999999996,
+          337.408,
+          977.1315000000001,
+          912.896
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "woman",
+        "box": [
+          787.0635,
+          276.992,
+          862.8885,
+          429.568
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "bench",
+        "box": [
+          749.6565,
+          684.544,
+          1009.4835,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The man",
+        "box": [
+          485.78549999999996,
+          338.432,
+          977.1315000000001,
+          912.896
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "book",
+        "box": [
+          601.0395,
+          502.272,
+          713.2605,
+          608.768
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The woman",
+        "box": [
+          485.78549999999996,
+          337.408,
+          978.1425,
+          912.896
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The bench",
+        "box": [
+          749.6565,
+          684.544,
+          1008.4725000000001,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "fence",
+        "box": [
+          0.5055000000000001,
+          235.008,
+          1009.4835,
+          757.248
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "fence",
+        "box": [
+          0.5055000000000001,
+          237.056,
+          792.1184999999999,
+          756.224
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "buildings",
+        "box": [
+          0.5055000000000001,
+          0.512,
+          1009.4835,
+          244.224
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "fence",
+        "box": [
+          1.5165,
+          237.056,
+          792.1184999999999,
+          757.248
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "water",
+        "box": [
+          0.5055000000000001,
+          235.008,
+          792.1184999999999,
+          757.248
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "water",
+        "box": [
+          0.5055000000000001,
+          235.008,
+          791.1075,
+          757.248
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "water",
+        "box": [
+          0.5055000000000001,
+          236.032,
+          791.1075,
+          646.656
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "water",
+        "box": [
+          0.5055000000000001,
+          236.032,
+          790.0965,
+          645.632
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "sky",
+        "box": [
+          0.5055000000000001,
+          0.512,
+          1008.4725000000001,
+          190.976
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "people",
+        "box": [
+          485.78549999999996,
+          337.408,
+          1009.4835,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a pole",
+        "box": [
+          858.8445,
+          0.512,
+          917.4825,
+          514.56
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "benches",
+        "box": [
+          749.6565,
+          684.544,
+          1007.4615,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>bench<loc_745><loc_672><loc_998><loc_998>boots<loc_481><loc_683><loc_644><loc_791><loc_615><loc_778><loc_745><loc_889>handbag<loc_797><loc_612><loc_925><loc_719>human face<loc_675><loc_402><loc_742><loc_463>person<loc_481><loc_336><loc_965><loc_889><loc_894><loc_243><loc_927><loc_353>trousers<loc_595><loc_573><loc_760><loc_795></s>",
+        "parsed": {
+          "labels": [
+            "bench",
+            "boots",
+            "boots",
+            "handbag",
+            "human face",
+            "person",
+            "person",
+            "trousers"
+          ],
+          "bboxes": [
+            [
+              753.7005,
+              688.64,
+              1009.4835,
+              1022.464
+            ],
+            [
+              486.7965,
+              699.904,
+              651.5894999999999,
+              810.496
+            ],
+            [
+              622.2705000000001,
+              797.184,
+              753.7005,
+              910.848
+            ],
+            [
+              806.2725,
+              627.2,
+              935.6804999999999,
+              736.768
+            ],
+            [
+              682.9304999999999,
+              412.16,
+              750.6675,
+              474.624
+            ],
+            [
+              486.7965,
+              344.576,
+              976.1205,
+              910.848
+            ],
+            [
+              904.3394999999999,
+              249.344,
+              937.7025,
+              361.984
+            ],
+            [
+              602.0505,
+              587.264,
+              768.8655,
+              814.592
+            ]
+          ]
+        },
+        "elapsedMs": 3723.5985720000026
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A man and woman are sitting on a bench. The man is reading a book. The woman is wearing a brown jacket. The bench is made of wood. There is a fence next to the man. There are buildings behind the fence. There water is next to them. There sky above the buildings. There people are walking on the sidewalk. There's a pole next to one of the benches.</s>",
+        "parsed": "A man and woman are sitting on a bench. The man is reading a book. The woman is wearing a brown jacket. The bench is made of wood. There is a fence next to the man. There are buildings behind the fence. There water is next to them. There sky above the buildings. There people are walking on the sidewalk. There's a pole next to one of the benches.",
+        "elapsedMs": 4255.166873000009
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A man and woman are sitting on a bench. The man is reading a book. The woman is wearing a brown jacket. The bench is made of wood. There is a fence next to the man. There are buildings behind the fence. There water is next to them. There sky above the buildings. There people are walking on the sidewalk. There's a pole next to one of the benches.",
+        "raw": "</s><s>A man<loc_480><loc_329><loc_966><loc_891>woman<loc_778><loc_270><loc_853><loc_419>bench<loc_741><loc_668><loc_998><loc_998>The man<loc_480><loc_330><loc_966><loc_891>book<loc_594><loc_490><loc_705><loc_594>The woman<loc_480><loc_329><loc_967><loc_891>jacket<loc_715><loc_416><loc_966><loc_752>The bench<loc_741><loc_668><loc_997><loc_998>fence<loc_0><loc_229><loc_998><loc_739><loc_0><loc_231><loc_783><loc_738>buildings<loc_0><loc_0><loc_998><loc_238>fence<loc_1><loc_231><loc_783><loc_739>water<loc_0><loc_229><loc_783><loc_739><loc_0><loc_229><loc_782><loc_739><loc_0><loc_230><loc_782><loc_631><loc_0><loc_230><loc_781><loc_630>sky<loc_0><loc_0><loc_997><loc_186>people<loc_480><loc_329><loc_998><loc_998>a pole<loc_849><loc_0><loc_907><loc_502>benches<loc_741><loc_668><loc_996><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "A man",
+            "woman",
+            "bench",
+            "The man",
+            "book",
+            "The woman",
+            "jacket",
+            "The bench",
+            "fence",
+            "fence",
+            "buildings",
+            "fence",
+            "water",
+            "water",
+            "water",
+            "water",
+            "sky",
+            "people",
+            "a pole",
+            "benches"
+          ],
+          "bboxes": [
+            [
+              485.78549999999996,
+              337.408,
+              977.1315000000001,
+              912.896
+            ],
+            [
+              787.0635,
+              276.992,
+              862.8885,
+              429.568
+            ],
+            [
+              749.6565,
+              684.544,
+              1009.4835,
+              1022.464
+            ],
+            [
+              485.78549999999996,
+              338.432,
+              977.1315000000001,
+              912.896
+            ],
+            [
+              601.0395,
+              502.272,
+              713.2605,
+              608.768
+            ],
+            [
+              485.78549999999996,
+              337.408,
+              978.1425,
+              912.896
+            ],
+            [
+              723.3705,
+              426.496,
+              977.1315000000001,
+              770.56
+            ],
+            [
+              749.6565,
+              684.544,
+              1008.4725000000001,
+              1022.464
+            ],
+            [
+              0.5055000000000001,
+              235.008,
+              1009.4835,
+              757.248
+            ],
+            [
+              0.5055000000000001,
+              237.056,
+              792.1184999999999,
+              756.224
+            ],
+            [
+              0.5055000000000001,
+              0.512,
+              1009.4835,
+              244.224
+            ],
+            [
+              1.5165,
+              237.056,
+              792.1184999999999,
+              757.248
+            ],
+            [
+              0.5055000000000001,
+              235.008,
+              792.1184999999999,
+              757.248
+            ],
+            [
+              0.5055000000000001,
+              235.008,
+              791.1075,
+              757.248
+            ],
+            [
+              0.5055000000000001,
+              236.032,
+              791.1075,
+              646.656
+            ],
+            [
+              0.5055000000000001,
+              236.032,
+              790.0965,
+              645.632
+            ],
+            [
+              0.5055000000000001,
+              0.512,
+              1008.4725000000001,
+              190.976
+            ],
+            [
+              485.78549999999996,
+              337.408,
+              1009.4835,
+              1022.464
+            ],
+            [
+              858.8445,
+              0.512,
+              917.4825,
+              514.56
+            ],
+            [
+              749.6565,
+              684.544,
+              1007.4615,
+              1022.464
+            ]
+          ]
+        },
+        "elapsedMs": 4757.303027999995
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

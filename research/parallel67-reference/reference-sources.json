@@ -1,0 +1,247 @@
+{
+  "schema": "closet-current-parallel67-grounded-reference-sources/v1",
+  "status": "isolated-research-FAMILY-ALPHA-HOLD-255",
+  "auditDateUTC": "2026-11-12",
+  "upstreamExample": {
+    "repository": "https://github.com/IDEA-Research/Grounded-SAM-2",
+    "revision": "b7a9c29f196edff0eb54dbe14588d7ae5e3dde28",
+    "license": "Apache-2.0 (repository LICENSE and LICENSE_sam2)",
+    "files": [
+      {
+        "path": "grounded_sam2_florence2_image_demo.py",
+        "sha256": "34f6ce50292c801606bb5c28754e79008abbfad3f4bc18e35cf7fb68050d9648",
+        "source": "https://github.com/IDEA-Research/Grounded-SAM-2/blob/b7a9c29f196edff0eb54dbe14588d7ae5e3dde28/grounded_sam2_florence2_image_demo.py"
+      },
+      {
+        "path": "grounded_sam2_florence2_autolabel_pipeline.py",
+        "sha256": "d76d82e3161df0577eac0be63ac51103f6fbc4e93d930decd077aec6e105cb6c",
+        "source": "https://github.com/IDEA-Research/Grounded-SAM-2/blob/b7a9c29f196edff0eb54dbe14588d7ae5e3dde28/grounded_sam2_florence2_autolabel_pipeline.py"
+      },
+      {
+        "path": "README.md",
+        "sha256": "57fe437854ea6bebd9d21a21816d52ced2f1a1a774fae26c7473958abf614895",
+        "source": "https://github.com/IDEA-Research/Grounded-SAM-2/blob/b7a9c29f196edff0eb54dbe14588d7ae5e3dde28/README.md"
+      },
+      {
+        "path": "LICENSE",
+        "sha256": "2e4d1dce96fbe0eb02c44ddb6cb9e980e953f3590dd4f6b9ef6d7075252fb63d",
+        "source": "https://github.com/IDEA-Research/Grounded-SAM-2/blob/b7a9c29f196edff0eb54dbe14588d7ae5e3dde28/LICENSE"
+      },
+      {
+        "path": "LICENSE_sam2",
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+        "source": "https://github.com/IDEA-Research/Grounded-SAM-2/blob/b7a9c29f196edff0eb54dbe14588d7ae5e3dde28/LICENSE_sam2"
+      }
+    ],
+    "exactReferenceModels": {
+      "detector": "microsoft/Florence-2-large",
+      "segmenterCheckpoint": "./checkpoints/sam2.1_hiera_large.pt",
+      "segmenterConfig": "configs/sam2.1/sam2.1_hiera_l.yaml",
+      "execution": "PyTorch CUDA bfloat16 autocast/TF32 setup in image demo; torch_dtype auto; direct Florence-generated boxes feed SAM2 predictor"
+    },
+    "referenceDataFlow": "Florence2 task token/text -> parsed bboxes and labels -> original image SAM2ImagePredictor -> box-prompted masks"
+  },
+  "models": [
+    {
+      "id": "onnx-community/sam2.1-hiera-tiny-ONNX",
+      "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+      "declaredLicense": null,
+      "primarySource": "https://huggingface.co/onnx-community/sam2.1-hiera-tiny-ONNX/tree/814a066640debee5a91e70aa401fb8e17e030503",
+      "files": [
+        {
+          "path": "config.json",
+          "bytes": 5814,
+          "sha256": null,
+          "gitBlobId": "b813a2653a470cef15cd575473cc8e32e73646da"
+        },
+        {
+          "path": "onnx/prompt_encoder_mask_decoder_quantized.onnx",
+          "bytes": 290416,
+          "sha256": "a5f31dba5a7f03203dc3a130fdd7766f0fea952eb4aac1f55458549170eb51ff",
+          "gitBlobId": "3cab8eb5cc5f0d1db8d4a05c7ff04bd00c1e65a8"
+        },
+        {
+          "path": "onnx/prompt_encoder_mask_decoder_quantized.onnx_data",
+          "bytes": 8662016,
+          "sha256": "fdb3179a32388267a944a416c0f992c77a138b69a4bfd94f0bbf7089430d7489",
+          "gitBlobId": "b3b650b1b786ec7de51005900b9842f3e2f65a0d"
+        },
+        {
+          "path": "onnx/vision_encoder_quantized.onnx",
+          "bytes": 441167,
+          "sha256": "8800fdd04b9045cb6060ba8962b83c78ce9bb0976da8f030afa073467a888524",
+          "gitBlobId": "c81b41db3d5d7e2871f7d5f5dfed23d005394050"
+        },
+        {
+          "path": "onnx/vision_encoder_quantized.onnx_data",
+          "bytes": 52573088,
+          "sha256": "ea1f677596dc82cef0dc317d78135d892f4b26e20a4439f899aa58d84965b324",
+          "gitBlobId": "7e2c5de6b3e86327c0a2c80818df76b186ed7ddd"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "bytes": 749,
+          "sha256": null,
+          "gitBlobId": "0163db5e82dcc4c9bdd94b0507b6eab88b22dd65"
+        },
+        {
+          "path": "processor_config.json",
+          "bytes": 932,
+          "sha256": null,
+          "gitBlobId": "330f6b10c468451d1456a989fb40e1b8b29e93d7"
+        }
+      ]
+    },
+    {
+      "id": "facebook/sam2.1-hiera-tiny",
+      "revision": "de431c4043854a71d8101e17995dfe596bf101a5",
+      "declaredLicense": "apache-2.0",
+      "primarySource": "https://huggingface.co/facebook/sam2.1-hiera-tiny/tree/de431c4043854a71d8101e17995dfe596bf101a5",
+      "files": [
+        {
+          "path": "README.md",
+          "bytes": 19965,
+          "sha256": null,
+          "gitBlobId": "12b65bdbc03bb143004d17be09037c39c19d6c5e"
+        },
+        {
+          "path": "config.json",
+          "bytes": 5695,
+          "sha256": null,
+          "gitBlobId": "e8fa1e6d6d31299bba32d2f5759c2d156c8a6bd1"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "bytes": 683,
+          "sha256": null,
+          "gitBlobId": "8499e53cb79bf1786a890021550e6994b9808f39"
+        },
+        {
+          "path": "processor_config.json",
+          "bytes": 95,
+          "sha256": null,
+          "gitBlobId": "7556f607c3581a19f545de09d8b3fc98502b9f36"
+        }
+      ]
+    },
+    {
+      "id": "onnx-community/Florence-2-base-ft",
+      "revision": "e88a44eaf3791a35eae0c5a47b3dbcd36e67eb6f",
+      "declaredLicense": "mit",
+      "primarySource": "https://huggingface.co/onnx-community/Florence-2-base-ft/tree/e88a44eaf3791a35eae0c5a47b3dbcd36e67eb6f",
+      "files": [
+        {
+          "path": "README.md",
+          "bytes": 2665,
+          "sha256": null,
+          "gitBlobId": "389c8c7d8209945bccd770464d36b016cbb4fa54"
+        },
+        {
+          "path": "config.json",
+          "bytes": 5432,
+          "sha256": null,
+          "gitBlobId": "f73f68ab97b370d4e70759c1be2967d891726ad8"
+        },
+        {
+          "path": "onnx/decoder_model_merged_quantized.onnx",
+          "bytes": 98177697,
+          "sha256": "f22f52f980c33df0efa15932c2f3db6d9d3595ce6387eca938b8cfe23dc4c641",
+          "gitBlobId": "a829b21bf5c3a6a31636d86641462af0aa8af791"
+        },
+        {
+          "path": "onnx/decoder_model_quantized.onnx",
+          "bytes": 97760937,
+          "sha256": "c529b26bafce2ee76f886f3a0e374bb646b07a6d8b7640fd8a50d7a48843dd67",
+          "gitBlobId": "2edb164fc75dea8ccaab146649856c5604aa3909"
+        },
+        {
+          "path": "onnx/decoder_with_past_model_quantized.onnx",
+          "bytes": 90568893,
+          "sha256": "edb4ad2c8a65e48c3ddc840275c6cf2b916acabd04ec9cae536d346c6bf8fbea",
+          "gitBlobId": "f0fa122f467ed094b452fdceedd6126c53dcd328"
+        },
+        {
+          "path": "onnx/embed_tokens_quantized.onnx",
+          "bytes": 39390433,
+          "sha256": "6b2258db1c8ee9b160576ccde3cd3814d83a2edaed0dd1c6ca9ff3c38fa62214",
+          "gitBlobId": "5a7768d9a84867ce56f21b6dbc85d5629365ccf5"
+        },
+        {
+          "path": "onnx/encoder_model_quantized.onnx",
+          "bytes": 43651493,
+          "sha256": "f4ad7a68f1fb875d3bcf735ea14a7021b7ba7e83baf7cf10289881b4ed6d9b85",
+          "gitBlobId": "6ba49645ae0ded7b23673d930c3f8e90d48ec2b0"
+        },
+        {
+          "path": "onnx/vision_encoder_quantized.onnx",
+          "bytes": 93746540,
+          "sha256": "3b79d54f23f666f731549db23cb070c35a979ce19cbd9720e90e67a78dc9768c",
+          "gitBlobId": "e0ef0cdb5c4ce033488607ba1abea90a964f1070"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "bytes": 2673,
+          "sha256": null,
+          "gitBlobId": "f0262fff97911d278f7ae3b3447f04c74a3c032c"
+        }
+      ]
+    },
+    {
+      "id": "microsoft/Florence-2-base-ft",
+      "revision": "f6c1a25888ffc1d945ee8a1a77ac833c7303d46e",
+      "declaredLicense": "mit",
+      "primarySource": "https://huggingface.co/microsoft/Florence-2-base-ft/tree/f6c1a25888ffc1d945ee8a1a77ac833c7303d46e",
+      "files": [
+        {
+          "path": "LICENSE",
+          "bytes": 1141,
+          "sha256": null,
+          "gitBlobId": "9e841e7a26e4eb057b24511e7b92d42b257a80e5"
+        },
+        {
+          "path": "README.md",
+          "bytes": 14820,
+          "sha256": null,
+          "gitBlobId": "cb71629851d9aed7df36388b996169f2018255e5"
+        },
+        {
+          "path": "config.json",
+          "bytes": 2430,
+          "sha256": null,
+          "gitBlobId": "74a4482afd52515c89ae8d7d388a537a16f5d350"
+        },
+        {
+          "path": "preprocessor_config.json",
+          "bytes": 806,
+          "sha256": null,
+          "gitBlobId": "85cd7be3568df661ad536b6ab20d59b08ba079ae"
+        }
+      ]
+    }
+  ],
+  "prototypeDifferences": [
+    "ONNX Florence-2-base-ft replaces reference microsoft/Florence-2-large.",
+    "ONNX SAM2.1 Hiera tiny replaces reference Hiera large checkpoint.",
+    "Transformers.js CPU/WASM q8 replaces PyTorch GPU path.",
+    "Model sizes, architecture variant, precision/runtime and prompt behavior differ; this is a reference-pattern port, not exact-model reproduction or transferred accuracy."
+  ],
+  "licenseGates": [
+    "Florence conversion declares MIT and upstream publisher ships LICENSE. Preserve copyright/license when redistributing.",
+    "SAM2 conversion repository has no model card or declared license. Upstream Meta model declares Apache-2.0; confirm conversion provenance/notices or reproduce export from licensed pinned upstream before redistribution.",
+    "Hugging Face API LFS digests are source metadata; verify downloaded graph AND external-data bytes against them before claiming integrity."
+  ],
+  "sam2JSContract": {
+    "runtime": "@huggingface/transformers 3.8.1 source inspected locally",
+    "imports": [
+      "AutoProcessor",
+      "Sam2Model",
+      "RawImage"
+    ],
+    "boxes": "processor(image,{input_boxes:[[[x1,y1,x2,y2],...]]}) using original image pixel coordinates, batch x num_boxes x4; processor rescales them.",
+    "inference": "Sam2Model.from_pretrained(id,{revision,dtype:q8,device:cpu or wasm,use_external_data_format:true}); await model(inputs). Verify option support/runtime on actual execution.",
+    "outputs": "pred_masks [batch,num_boxes_or_points,3,256,256], iou_scores [batch,num_boxes_or_points,3], object_score_logits [batch,num_boxes_or_points,1].",
+    "postprocess": "processor.post_process_masks(outputs.pred_masks,inputs.original_sizes,inputs.reshaped_input_sizes); choose mask using model iou score, not ground truth.",
+    "constraint": "SAM2 only segments prompted boxes; SAM2 scores do not validate clothing category/subtype or independently detected-instance recall."
+  },
+  "accuracyClaim": "None. Public upstream examples demonstrate an architecture pattern, not garment recognition accuracy on this cohort or mobile acceptance."
+}

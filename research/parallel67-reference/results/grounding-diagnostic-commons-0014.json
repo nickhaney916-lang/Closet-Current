@@ -1,0 +1,171 @@
+{
+  "sha256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 12829.089185,
+  "detection": {
+    "regions": [],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "person",
+        "box": [
+          60.480000000000004,
+          72.624,
+          1861.44,
+          1590.384
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A piece",
+        "box": [
+          0.96,
+          0.8160000000000001,
+          1917.1200000000001,
+          1629.5520000000001
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "art",
+        "box": [
+          0.96,
+          0.8160000000000001,
+          1915.2,
+          1629.5520000000001
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The art",
+        "box": [
+          0.96,
+          0.8160000000000001,
+          1913.2800000000002,
+          1629.5520000000001
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The person",
+        "box": [
+          665.28,
+          72.624,
+          1187.52,
+          1133.424
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The jesUS",
+        "box": [
+          665.28,
+          72.624,
+          1189.44,
+          1133.424
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The hand",
+        "box": [
+          665.28,
+          72.624,
+          1185.6000000000001,
+          1133.424
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>person<loc_31><loc_44><loc_969><loc_974></s>",
+        "parsed": {
+          "labels": [
+            "person"
+          ],
+          "bboxes": [
+            [
+              60.480000000000004,
+              72.624,
+              1861.44,
+              1590.384
+            ]
+          ]
+        },
+        "elapsedMs": 5128.428473
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.</s>",
+        "parsed": "A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.",
+        "elapsedMs": 4263.197640999999
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.",
+        "raw": "</s><s>A piece<loc_0><loc_0><loc_998><loc_998>art<loc_0><loc_0><loc_997><loc_998>The art<loc_0><loc_0><loc_996><loc_998>The person<loc_346><loc_44><loc_618><loc_694>The jesUS<loc_346><loc_44><loc_619><loc_694>The hand<loc_346><loc_44><loc_617><loc_694></s>",
+        "parsed": {
+          "labels": [
+            "A piece",
+            "art",
+            "The art",
+            "The person",
+            "The jesUS",
+            "The hand"
+          ],
+          "bboxes": [
+            [
+              0.96,
+              0.8160000000000001,
+              1917.1200000000001,
+              1629.5520000000001
+            ],
+            [
+              0.96,
+              0.8160000000000001,
+              1915.2,
+              1629.5520000000001
+            ],
+            [
+              0.96,
+              0.8160000000000001,
+              1913.2800000000002,
+              1629.5520000000001
+            ],
+            [
+              665.28,
+              72.624,
+              1187.52,
+              1133.424
+            ],
+            [
+              665.28,
+              72.624,
+              1189.44,
+              1133.424
+            ],
+            [
+              665.28,
+              72.624,
+              1185.6000000000001,
+              1133.424
+            ]
+          ]
+        },
+        "elapsedMs": 3435.4631579999987
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

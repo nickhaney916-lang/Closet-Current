@@ -1,0 +1,287 @@
+{
+  "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 18342.625974,
+  "detection": {
+    "regions": [
+      {
+        "category": "Dresses",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "fancy dress",
+        "box": [
+          258.819,
+          215.552,
+          458.645,
+          958.976
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "fancy dress",
+            "box": [
+              258.819,
+              215.552,
+              458.645,
+              958.976
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "a red dress",
+            "box": [
+              258.819,
+              214.528,
+              459.327,
+              958.976
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          305.195,
+          945.664,
+          420.45300000000003,
+          1019.392
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              305.195,
+              945.664,
+              420.45300000000003,
+              1019.392
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "gold high heels",
+            "box": [
+              301.785,
+              941.568,
+              423.86300000000006,
+              1020.416
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Accessories",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "a long red scarf",
+        "box": [
+          258.819,
+          214.528,
+          458.645,
+          958.976
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "a long red scarf",
+            "box": [
+              258.819,
+              214.528,
+              458.645,
+              958.976
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          282.007,
+          103.936,
+          349.525,
+          206.336
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "woman",
+        "box": [
+          169.477,
+          80.384,
+          540.485,
+          1018.368
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A woman",
+        "box": [
+          170.841,
+          79.36,
+          541.167,
+          1015.296
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a brick wall",
+        "box": [
+          0.341,
+          0.512,
+          680.9770000000001,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The woman",
+        "box": [
+          170.841,
+          78.336,
+          541.167,
+          1015.296
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "hair",
+        "box": [
+          205.623,
+          80.384,
+          354.981,
+          306.688
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>fancy dress<loc_379><loc_210><loc_672><loc_936>footwear<loc_447><loc_923><loc_616><loc_995>human face<loc_413><loc_101><loc_512><loc_201>woman<loc_248><loc_78><loc_792><loc_994></s>",
+        "parsed": {
+          "labels": [
+            "fancy dress",
+            "footwear",
+            "human face",
+            "woman"
+          ],
+          "bboxes": [
+            [
+              258.819,
+              215.552,
+              458.645,
+              958.976
+            ],
+            [
+              305.195,
+              945.664,
+              420.45300000000003,
+              1019.392
+            ],
+            [
+              282.007,
+              103.936,
+              349.525,
+              206.336
+            ],
+            [
+              169.477,
+              80.384,
+              540.485,
+              1018.368
+            ]
+          ]
+        },
+        "elapsedMs": 6502.447773000001
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A woman is standing in front of a brick wall. She is wearing a red dress and a long red scarf. The woman has long brown hair and is smiling. She has gold high heels on her feet.</s>",
+        "parsed": "A woman is standing in front of a brick wall. She is wearing a red dress and a long red scarf. The woman has long brown hair and is smiling. She has gold high heels on her feet.",
+        "elapsedMs": 7401.8227289999995
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A woman is standing in front of a brick wall. She is wearing a red dress and a long red scarf. The woman has long brown hair and is smiling. She has gold high heels on her feet.",
+        "raw": "</s><s>A woman<loc_250><loc_77><loc_793><loc_991>a brick wall<loc_0><loc_0><loc_998><loc_998>a red dress<loc_379><loc_209><loc_673><loc_936>a long red scarf<loc_379><loc_209><loc_672><loc_936>The woman<loc_250><loc_76><loc_793><loc_991>hair<loc_301><loc_78><loc_520><loc_299>gold high heels<loc_442><loc_919><loc_621><loc_996></s>",
+        "parsed": {
+          "labels": [
+            "A woman",
+            "a brick wall",
+            "a red dress",
+            "a long red scarf",
+            "The woman",
+            "hair",
+            "gold high heels"
+          ],
+          "bboxes": [
+            [
+              170.841,
+              79.36,
+              541.167,
+              1015.296
+            ],
+            [
+              0.341,
+              0.512,
+              680.9770000000001,
+              1022.464
+            ],
+            [
+              258.819,
+              214.528,
+              459.327,
+              958.976
+            ],
+            [
+              258.819,
+              214.528,
+              458.645,
+              958.976
+            ],
+            [
+              170.841,
+              78.336,
+              541.167,
+              1015.296
+            ],
+            [
+              205.623,
+              80.384,
+              354.981,
+              306.688
+            ],
+            [
+              301.785,
+              941.568,
+              423.86300000000006,
+              1020.416
+            ]
+          ]
+        },
+        "elapsedMs": 4433.148911
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

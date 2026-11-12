@@ -1,0 +1,11 @@
+{
+  "format": "closet-current-parallel67-reference-protocol/v1",
+  "status": "FAMILY ALPHA HOLD #255; isolated reference reproduction",
+  "sourceReference": "IDEA-Research/Grounded-SAM-2@b7a9c29f196edff0eb54dbe14588d7ae5e3dde28",
+  "portDifferences": "Florence-2-base-ft and SAM2.1-tiny q8 ONNX on CPU, versus upstream large models on GPU. No transferred performance claim.",
+  "stages": ["Florence OD", "Florence generated detailed caption", "ground generated caption phrases", "garment-description filtering", "same-category duplicate box suppression at IoU >=0.85", "SAM2 predicted-IoU mask selection", "review-only proposals"],
+  "generation": {"max_new_tokens":160,"num_beams":1,"do_sample":false},
+  "maskMatching": {"threshold":0.5,"criterion":"binary original-resolution mask IoU","assignment":"maximum-cardinality one-to-one matching; no same-mask reuse","reportBoth":"class-agnostic instance and broad-category-aware instance precision/recall"},
+  "baseline": "Unchanged Xenova/segformer_b0_clothes and public/outfit-segmentation.mjs clothingMaskGroups at pinned app revision",
+  "limits": ["Public Fashionpedia validation images are human annotated but not a sealed novel acceptance cohort; pretraining overlap unknown", "Fashionpedia combines several fine subtypes; do not score T-shirt versus sweatshirt, blouse versus shirt, or sneaker versus boot as independent subtype truth", "No color ground truth", "SAM predicted IoU is not measured annotation IoU", "All proposals require review; no wardrobe saves", "No physical-device or hosted trial claim"]
+}

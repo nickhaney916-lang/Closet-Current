@@ -1,0 +1,1680 @@
+{
+  "format": "closet-current-parallel67-grounded-reference/v1",
+  "cohort": "diagnostic",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "florence": {
+    "model": "onnx-community/Florence-2-base-ft",
+    "revision": "e88a44eaf3791a35eae0c5a47b3dbcd36e67eb6f",
+    "dtype": "q8"
+  },
+  "sam2": {
+    "model": "onnx-community/sam2.1-hiera-tiny-ONNX",
+    "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+    "dtype": "q8",
+    "device": "cpu"
+  },
+  "automaticSave": false,
+  "notBlindAcceptance": true,
+  "rows": [
+    {
+      "id": "commons-0003",
+      "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "width": 1920,
+      "height": 2868,
+      "source": null,
+      "elapsedMs": 22708.730698999996,
+      "detectionMs": 16061.367171999998,
+      "segmentationMs": 6647.363526999998,
+      "regions": [
+        {
+          "category": "Bottoms",
+          "itemType": "Trousers",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            346.56,
+            1610.382,
+            1504.32,
+            2863.6980000000003
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                346.56,
+                1610.382,
+                1504.32,
+                2863.6980000000003
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The pants",
+              "box": [
+                346.56,
+                1613.25,
+                1508.1599999999999,
+                2863.6980000000003
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0003-0.bin.gz",
+          "maskSha256": "ef1477659c658181def7288f618d13387f869b8551f7302c89790027060261f8",
+          "foregroundPixels": 1064777,
+          "predictedMaskIoU": 0.9931132793426514,
+          "objectScoreLogit": 20.760684967041016,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Multicolor",
+            "palette": [
+              {
+                "color": "Blue",
+                "fraction": 0.66102385757769
+              },
+              {
+                "color": "Black",
+                "fraction": 0.2922846755705655
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.044304112504308414
+              },
+              {
+                "color": "Green",
+                "fraction": 0.0015749776713809558
+              },
+              {
+                "color": "Brown",
+                "fraction": 0.0007428785557914944
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.000030992404982451726
+              },
+              {
+                "color": "Beige",
+                "fraction": 0.000021600767108981507
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.000015965784384899373
+              },
+              {
+                "color": "Red",
+                "fraction": 9.39163787347022e-7
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        },
+        {
+          "category": "Tops",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "The shirt",
+          "box": [
+            73.92,
+            58.794000000000004,
+            1857.6000000000001,
+            1808.274
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The shirt",
+              "box": [
+                73.92,
+                58.794000000000004,
+                1857.6000000000001,
+                1808.274
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0003-1.bin.gz",
+          "maskSha256": "2b3b8db86b6ed6582c8ebef614a2a2a257337a34ef61a2bfad1b1f978d9f7767",
+          "foregroundPixels": 2096018,
+          "predictedMaskIoU": 0.9862971305847168,
+          "objectScoreLogit": 18.98761749267578,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Black",
+            "palette": [
+              {
+                "color": "Black",
+                "fraction": 0.7505422186259851
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.2408734085298886
+              },
+              {
+                "color": "Brown",
+                "fraction": 0.0037003499015752727
+              },
+              {
+                "color": "Blue",
+                "fraction": 0.002434139401474606
+              },
+              {
+                "color": "White",
+                "fraction": 0.0019226934119840574
+              },
+              {
+                "color": "Beige",
+                "fraction": 0.00024570399681682125
+              },
+              {
+                "color": "Green",
+                "fraction": 0.00013501792446438915
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.000054865941036765904
+              },
+              {
+                "color": "Red",
+                "fraction": 0.000049140799363364245
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.00003673632573766065
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.000003339665976150968
+              },
+              {
+                "color": "Purple",
+                "fraction": 0.0000023854756972506914
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        }
+      ],
+      "ignored": [
+        {
+          "stage": "object_detection",
+          "label": "person",
+          "box": [
+            64.32000000000001,
+            1.434,
+            1863.3600000000001,
+            2863.6980000000003
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "A mannequin",
+          "box": [
+            62.400000000000006,
+            1.434,
+            1869.1200000000001,
+            2863.6980000000003
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "letters",
+          "box": [
+            601.92,
+            460.314,
+            1435.2,
+            899.118
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The mannequins head",
+          "box": [
+            763.2,
+            1.434,
+            1218.24,
+            202.194
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The wall",
+          "box": [
+            0.96,
+            1.434,
+            1917.1200000000001,
+            2863.6980000000003
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The legs",
+          "box": [
+            346.56,
+            1613.25,
+            1510.08,
+            2863.6980000000003
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The arms",
+          "box": [
+            66.24000000000001,
+            179.25,
+            552,
+            1839.822
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The arms",
+          "box": [
+            1437.1200000000001,
+            225.138,
+            1867.2,
+            1814.0099999999998
+          ],
+          "reason": "no_garment_description"
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>person<loc_33><loc_0><loc_970><loc_998>trousers<loc_180><loc_561><loc_783><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "person",
+              "trousers"
+            ],
+            "bboxes": [
+              [
+                64.32000000000001,
+                1.434,
+                1863.3600000000001,
+                2863.6980000000003
+              ],
+              [
+                346.56,
+                1610.382,
+                1504.32,
+                2863.6980000000003
+              ]
+            ]
+          },
+          "elapsedMs": 6802.206739000001
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.</s>",
+          "parsed": "A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.",
+          "elapsedMs": 5795.294646
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.",
+          "raw": "</s><s>A mannequin<loc_32><loc_0><loc_973><loc_998>The shirt<loc_38><loc_20><loc_967><loc_630>letters<loc_313><loc_160><loc_747><loc_313>The pants<loc_180><loc_562><loc_785><loc_998>The mannequins head<loc_397><loc_0><loc_634><loc_70>The wall<loc_0><loc_0><loc_998><loc_998>The legs<loc_180><loc_562><loc_786><loc_998>The arms<loc_34><loc_62><loc_287><loc_641><loc_748><loc_78><loc_972><loc_632></s>",
+          "parsed": {
+            "labels": [
+              "A mannequin",
+              "The shirt",
+              "letters",
+              "The pants",
+              "The mannequins head",
+              "The wall",
+              "The legs",
+              "The arms",
+              "The arms"
+            ],
+            "bboxes": [
+              [
+                62.400000000000006,
+                1.434,
+                1869.1200000000001,
+                2863.6980000000003
+              ],
+              [
+                73.92,
+                58.794000000000004,
+                1857.6000000000001,
+                1808.274
+              ],
+              [
+                601.92,
+                460.314,
+                1435.2,
+                899.118
+              ],
+              [
+                346.56,
+                1613.25,
+                1508.1599999999999,
+                2863.6980000000003
+              ],
+              [
+                763.2,
+                1.434,
+                1218.24,
+                202.194
+              ],
+              [
+                0.96,
+                1.434,
+                1917.1200000000001,
+                2863.6980000000003
+              ],
+              [
+                346.56,
+                1613.25,
+                1510.08,
+                2863.6980000000003
+              ],
+              [
+                66.24000000000001,
+                179.25,
+                552,
+                1839.822
+              ],
+              [
+                1437.1200000000001,
+                225.138,
+                1867.2,
+                1814.0099999999998
+              ]
+            ]
+          },
+          "elapsedMs": 3460.3974530000014
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "commons-0014",
+      "sha256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+      "width": 1920,
+      "height": 1632,
+      "source": null,
+      "elapsedMs": 12829.089185,
+      "detectionMs": 12829.089185,
+      "segmentationMs": 0,
+      "regions": [],
+      "ignored": [
+        {
+          "stage": "object_detection",
+          "label": "person",
+          "box": [
+            60.480000000000004,
+            72.624,
+            1861.44,
+            1590.384
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "A piece",
+          "box": [
+            0.96,
+            0.8160000000000001,
+            1917.1200000000001,
+            1629.5520000000001
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "art",
+          "box": [
+            0.96,
+            0.8160000000000001,
+            1915.2,
+            1629.5520000000001
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The art",
+          "box": [
+            0.96,
+            0.8160000000000001,
+            1913.2800000000002,
+            1629.5520000000001
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The person",
+          "box": [
+            665.28,
+            72.624,
+            1187.52,
+            1133.424
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The jesUS",
+          "box": [
+            665.28,
+            72.624,
+            1189.44,
+            1133.424
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The hand",
+          "box": [
+            665.28,
+            72.624,
+            1185.6000000000001,
+            1133.424
+          ],
+          "reason": "no_garment_description"
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>person<loc_31><loc_44><loc_969><loc_974></s>",
+          "parsed": {
+            "labels": [
+              "person"
+            ],
+            "bboxes": [
+              [
+                60.480000000000004,
+                72.624,
+                1861.44,
+                1590.384
+              ]
+            ]
+          },
+          "elapsedMs": 5128.428473
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.</s>",
+          "parsed": "A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.",
+          "elapsedMs": 4263.197640999999
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.",
+          "raw": "</s><s>A piece<loc_0><loc_0><loc_998><loc_998>art<loc_0><loc_0><loc_997><loc_998>The art<loc_0><loc_0><loc_996><loc_998>The person<loc_346><loc_44><loc_618><loc_694>The jesUS<loc_346><loc_44><loc_619><loc_694>The hand<loc_346><loc_44><loc_617><loc_694></s>",
+          "parsed": {
+            "labels": [
+              "A piece",
+              "art",
+              "The art",
+              "The person",
+              "The jesUS",
+              "The hand"
+            ],
+            "bboxes": [
+              [
+                0.96,
+                0.8160000000000001,
+                1917.1200000000001,
+                1629.5520000000001
+              ],
+              [
+                0.96,
+                0.8160000000000001,
+                1915.2,
+                1629.5520000000001
+              ],
+              [
+                0.96,
+                0.8160000000000001,
+                1913.2800000000002,
+                1629.5520000000001
+              ],
+              [
+                665.28,
+                72.624,
+                1187.52,
+                1133.424
+              ],
+              [
+                665.28,
+                72.624,
+                1189.44,
+                1133.424
+              ],
+              [
+                665.28,
+                72.624,
+                1185.6000000000001,
+                1133.424
+              ]
+            ]
+          },
+          "elapsedMs": 3435.4631579999987
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "commons-0049",
+      "sha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+      "width": 1920,
+      "height": 2880,
+      "source": null,
+      "elapsedMs": 22539.255909,
+      "detectionMs": 17176.075943999997,
+      "segmentationMs": 5363.179965000003,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            448.32000000000005,
+            387.36,
+            1371.8400000000001,
+            2642.4
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                448.32000000000005,
+                387.36,
+                1371.8400000000001,
+                2642.4
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The dress",
+              "box": [
+                450.23999999999995,
+                381.6,
+                1373.76,
+                2633.7599999999998
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0049-0.bin.gz",
+          "maskSha256": "8fb36b8ee6bc90fd65b6a6081a6e79b8a57f3ae2479597be14459ab20e4cbc31",
+          "foregroundPixels": 1277823,
+          "predictedMaskIoU": 0.9816805124282837,
+          "objectScoreLogit": 20.738210678100586,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Multicolor",
+            "palette": [
+              {
+                "color": "Brown",
+                "fraction": 0.5523816678835801
+              },
+              {
+                "color": "Beige",
+                "fraction": 0.2581343425497898
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.10973898575937356
+              },
+              {
+                "color": "Black",
+                "fraction": 0.04820307663893982
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.012455559181514185
+              },
+              {
+                "color": "White",
+                "fraction": 0.011302817369854824
+              },
+              {
+                "color": "Red",
+                "fraction": 0.006914885707957988
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.00034590080159771735
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.00033103176261501006
+              },
+              {
+                "color": "Blue",
+                "fraction": 0.00011582198786529903
+              },
+              {
+                "color": "Green",
+                "fraction": 0.00004617227894630164
+              },
+              {
+                "color": "Purple",
+                "fraction": 0.000029738077965414614
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        },
+        {
+          "category": "Tops",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "The shirt",
+          "box": [
+            450.23999999999995,
+            381.6,
+            1377.6000000000001,
+            1188
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The shirt",
+              "box": [
+                450.23999999999995,
+                381.6,
+                1377.6000000000001,
+                1188
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0049-1.bin.gz",
+          "maskSha256": "021209945055861d031bc39517685a306aa3dabea993ee75b7afaa73db0330c4",
+          "foregroundPixels": 283613,
+          "predictedMaskIoU": 0.8777226209640503,
+          "objectScoreLogit": 19.070249557495117,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Multicolor",
+            "palette": [
+              {
+                "color": "Beige",
+                "fraction": 0.6286030612136961
+              },
+              {
+                "color": "Brown",
+                "fraction": 0.17438199236283244
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.13637597712375668
+              },
+              {
+                "color": "Red",
+                "fraction": 0.029561409385324366
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.020774788179667363
+              },
+              {
+                "color": "White",
+                "fraction": 0.007358618963164594
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.0009978386040132151
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.00097668301523555
+              },
+              {
+                "color": "Black",
+                "fraction": 0.0005958824172375738
+              },
+              {
+                "color": "Green",
+                "fraction": 0.0001516150529066016
+              },
+              {
+                "color": "Blue",
+                "fraction": 0.00014103725851776893
+              },
+              {
+                "color": "Purple",
+                "fraction": 0.00008109642364771714
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        }
+      ],
+      "ignored": [
+        {
+          "stage": "generated_caption_grounding",
+          "label": "A mannequin",
+          "box": [
+            444.48,
+            300.96,
+            1385.28,
+            2642.4
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The mannequins torso",
+          "box": [
+            450.23999999999995,
+            381.6,
+            1375.68,
+            2633.7599999999998
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The legs",
+          "box": [
+            561.5999999999999,
+            986.4000000000001,
+            1310.4,
+            2628
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The arms",
+          "box": [
+            446.40000000000003,
+            413.28,
+            1375.68,
+            1188
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The arms",
+          "box": [
+            446.40000000000003,
+            419.03999999999996,
+            732.48,
+            1020.9599999999999
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "two small squares",
+          "box": [
+            669.12,
+            2633.7599999999998,
+            1304.6399999999999,
+            2780.64
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "two small squares",
+          "box": [
+            1174.0800000000002,
+            2639.52,
+            1293.12,
+            2751.84
+          ],
+          "reason": "no_garment_description"
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_233><loc_134><loc_714><loc_917></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress"
+            ],
+            "bboxes": [
+              [
+                448.32000000000005,
+                387.36,
+                1371.8400000000001,
+                2642.4
+              ]
+            ]
+          },
+          "elapsedMs": 2639.760875
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.</s>",
+          "parsed": "A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.",
+          "elapsedMs": 9274.191845000001
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.",
+          "raw": "</s><s>A mannequin<loc_231><loc_104><loc_721><loc_917>The mannequins torso<loc_234><loc_132><loc_716><loc_914>The dress<loc_234><loc_132><loc_715><loc_914>The legs<loc_292><loc_342><loc_682><loc_912>The arms<loc_232><loc_143><loc_716><loc_412><loc_232><loc_145><loc_381><loc_354>The shirt<loc_234><loc_132><loc_717><loc_412>two small squares<loc_348><loc_914><loc_679><loc_965><loc_611><loc_916><loc_673><loc_955></s>",
+          "parsed": {
+            "labels": [
+              "A mannequin",
+              "The mannequins torso",
+              "The dress",
+              "The legs",
+              "The arms",
+              "The arms",
+              "The shirt",
+              "two small squares",
+              "two small squares"
+            ],
+            "bboxes": [
+              [
+                444.48,
+                300.96,
+                1385.28,
+                2642.4
+              ],
+              [
+                450.23999999999995,
+                381.6,
+                1375.68,
+                2633.7599999999998
+              ],
+              [
+                450.23999999999995,
+                381.6,
+                1373.76,
+                2633.7599999999998
+              ],
+              [
+                561.5999999999999,
+                986.4000000000001,
+                1310.4,
+                2628
+              ],
+              [
+                446.40000000000003,
+                413.28,
+                1375.68,
+                1188
+              ],
+              [
+                446.40000000000003,
+                419.03999999999996,
+                732.48,
+                1020.9599999999999
+              ],
+              [
+                450.23999999999995,
+                381.6,
+                1377.6000000000001,
+                1188
+              ],
+              [
+                669.12,
+                2633.7599999999998,
+                1304.6399999999999,
+                2780.64
+              ],
+              [
+                1174.0800000000002,
+                2639.52,
+                1293.12,
+                2751.84
+              ]
+            ]
+          },
+          "elapsedMs": 5257.391078000001
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "commons-0059",
+      "sha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "width": 1920,
+      "height": 1440,
+      "source": null,
+      "elapsedMs": 15313.025855999993,
+      "detectionMs": 11460.448692000005,
+      "segmentationMs": 3852.5771639999875,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            0.96,
+            0.72,
+            1917.1200000000001,
+            1437.8400000000001
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                0.96,
+                0.72,
+                1917.1200000000001,
+                1437.8400000000001
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0059-0.bin.gz",
+          "maskSha256": "8c1843a4e19e9d583079613fc90fbc7f63e34caf6f5650159736800c62709057",
+          "foregroundPixels": 2364118,
+          "predictedMaskIoU": 0.9719069004058838,
+          "objectScoreLogit": 19.27345848083496,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Gray",
+            "palette": [
+              {
+                "color": "Gray",
+                "fraction": 0.8108647707094147
+              },
+              {
+                "color": "White",
+                "fraction": 0.1324003285791995
+              },
+              {
+                "color": "Blue",
+                "fraction": 0.05320758100906977
+              },
+              {
+                "color": "Purple",
+                "fraction": 0.003102214018082008
+              },
+              {
+                "color": "Green",
+                "fraction": 0.0002296839667055536
+              },
+              {
+                "color": "Black",
+                "fraction": 0.00017258021807710106
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.00000972878680336599
+              },
+              {
+                "color": "Red",
+                "fraction": 0.00000761383315046034
+              },
+              {
+                "color": "Brown",
+                "fraction": 0.0000029609351140679104
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.00000253794438348678
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        },
+        {
+          "category": "Tops",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "A grey shirt",
+          "box": [
+            0.96,
+            0.72,
+            1917.1200000000001,
+            1437.8400000000001
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "A grey shirt",
+              "box": [
+                0.96,
+                0.72,
+                1917.1200000000001,
+                1437.8400000000001
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "A grey shirt",
+              "box": [
+                0.96,
+                88.56,
+                1917.1200000000001,
+                1437.8400000000001
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0059-1.bin.gz",
+          "maskSha256": "8c1843a4e19e9d583079613fc90fbc7f63e34caf6f5650159736800c62709057",
+          "foregroundPixels": 2364118,
+          "predictedMaskIoU": 0.9719069004058838,
+          "objectScoreLogit": 19.27345848083496,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Gray",
+            "palette": [
+              {
+                "color": "Gray",
+                "fraction": 0.8108647707094147
+              },
+              {
+                "color": "White",
+                "fraction": 0.1324003285791995
+              },
+              {
+                "color": "Blue",
+                "fraction": 0.05320758100906977
+              },
+              {
+                "color": "Purple",
+                "fraction": 0.003102214018082008
+              },
+              {
+                "color": "Green",
+                "fraction": 0.0002296839667055536
+              },
+              {
+                "color": "Black",
+                "fraction": 0.00017258021807710106
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.00000972878680336599
+              },
+              {
+                "color": "Red",
+                "fraction": 0.00000761383315046034
+              },
+              {
+                "color": "Brown",
+                "fraction": 0.0000029609351140679104
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.00000253794438348678
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        }
+      ],
+      "ignored": [
+        {
+          "stage": "generated_caption_grounding",
+          "label": "a black lace trim",
+          "box": [
+            0.96,
+            84.24000000000001,
+            1867.2,
+            581.0400000000001
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "black chairs",
+          "box": [
+            0.96,
+            0.72,
+            632.64,
+            272.88
+          ],
+          "reason": "no_garment_description"
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_0><loc_0><loc_998><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress"
+            ],
+            "bboxes": [
+              [
+                0.96,
+                0.72,
+                1917.1200000000001,
+                1437.8400000000001
+              ]
+            ]
+          },
+          "elapsedMs": 3667.0998560000007
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. </s>",
+          "parsed": "A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. ",
+          "elapsedMs": 4505.473129000005
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. ",
+          "raw": "</s><s>A grey shirt<loc_0><loc_0><loc_998><loc_998><loc_0><loc_61><loc_998><loc_998>a black lace trim<loc_0><loc_58><loc_972><loc_403>black chairs<loc_0><loc_0><loc_329><loc_189></s>",
+          "parsed": {
+            "labels": [
+              "A grey shirt",
+              "A grey shirt",
+              "a black lace trim",
+              "black chairs"
+            ],
+            "bboxes": [
+              [
+                0.96,
+                0.72,
+                1917.1200000000001,
+                1437.8400000000001
+              ],
+              [
+                0.96,
+                88.56,
+                1917.1200000000001,
+                1437.8400000000001
+              ],
+              [
+                0.96,
+                84.24000000000001,
+                1867.2,
+                581.0400000000001
+              ],
+              [
+                0.96,
+                0.72,
+                632.64,
+                272.88
+              ]
+            ]
+          },
+          "elapsedMs": 3285.8355729999894
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "commons-0078",
+      "sha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+      "width": 1920,
+      "height": 2095,
+      "source": null,
+      "elapsedMs": 18166.569602999996,
+      "detectionMs": 11242.88797299999,
+      "segmentationMs": 6923.681630000006,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "sneakers",
+          "box": [
+            104.64,
+            200.0725,
+            1135.68,
+            1735.7075
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "sneakers",
+              "box": [
+                104.64,
+                200.0725,
+                1135.68,
+                1735.7075
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The shoes",
+              "box": [
+                104.64,
+                193.7875,
+                1137.6000000000001,
+                1741.9925
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The brown shoes",
+              "box": [
+                104.64,
+                193.7875,
+                1139.52,
+                1741.9925
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0078-0.bin.gz",
+          "maskSha256": "ad68b3692d56ea51baf8b96c7bad66e37ce0c4785091d2ac027db099e38d2621",
+          "foregroundPixels": 776467,
+          "predictedMaskIoU": 0.9736834764480591,
+          "objectScoreLogit": 19.317617416381836,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Multicolor",
+            "palette": [
+              {
+                "color": "Brown",
+                "fraction": 0.5244434084127207
+              },
+              {
+                "color": "Black",
+                "fraction": 0.18427698794668673
+              },
+              {
+                "color": "Beige",
+                "fraction": 0.18377342501355498
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.07526655994395126
+              },
+              {
+                "color": "Red",
+                "fraction": 0.02580277075522849
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.003126984147426742
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.002372283690098871
+              },
+              {
+                "color": "Green",
+                "fraction": 0.0006400787155152762
+              },
+              {
+                "color": "White",
+                "fraction": 0.00025371329367506926
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.000043788081141890124
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "sneakers",
+          "box": [
+            841.92,
+            185.4075,
+            1686.7199999999998,
+            1926.3525
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "sneakers",
+              "box": [
+                841.92,
+                185.4075,
+                1686.7199999999998,
+                1926.3525
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The shoes",
+              "box": [
+                841.92,
+                179.1225,
+                1692.48,
+                1932.6375
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The brown shoes",
+              "box": [
+                841.92,
+                181.21749999999997,
+                1692.48,
+                1932.6375
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The shoe",
+              "box": [
+                841.92,
+                179.1225,
+                1694.3999999999999,
+                1932.6375
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0078-1.bin.gz",
+          "maskSha256": "ec1da3c8faff13693330872cb9c13a6da4758b453df57a9f19592bef4ce9067f",
+          "foregroundPixels": 850820,
+          "predictedMaskIoU": 0.9637038707733154,
+          "objectScoreLogit": 17.999582290649414,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Multicolor",
+            "palette": [
+              {
+                "color": "Brown",
+                "fraction": 0.43144378364401403
+              },
+              {
+                "color": "Beige",
+                "fraction": 0.23764250957899438
+              },
+              {
+                "color": "Black",
+                "fraction": 0.22402505817916832
+              },
+              {
+                "color": "Red",
+                "fraction": 0.05294186784513763
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.05087797654027879
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.0018711360804870595
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.0010096142544839097
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.00010930631625960837
+              },
+              {
+                "color": "White",
+                "fraction": 0.00007404621424037987
+              },
+              {
+                "color": "Green",
+                "fraction": 0.000004701346935897135
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "Two shoes",
+          "box": [
+            104.64,
+            170.7425,
+            1698.24,
+            1934.7325
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "Two shoes",
+              "box": [
+                104.64,
+                170.7425,
+                1698.24,
+                1934.7325
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The brown shoes",
+              "box": [
+                104.64,
+                179.1225,
+                1694.3999999999999,
+                1930.5425
+              ]
+            }
+          ],
+          "strong": false,
+          "maskFile": "benchmark/parallel67-reference-masks/diagnostic-commons-0078-2.bin.gz",
+          "maskSha256": "b0928ba2bd7ac28265b07884ff5e610985d14a5d6aab9fdeb6a528742ff0da8b",
+          "foregroundPixels": 1621728,
+          "predictedMaskIoU": 0.9440369009971619,
+          "objectScoreLogit": 18.31890106201172,
+          "maskQualityVerified": false,
+          "colorProposal": {
+            "color": "Multicolor",
+            "palette": [
+              {
+                "color": "Brown",
+                "fraction": 0.4767562747883739
+              },
+              {
+                "color": "Beige",
+                "fraction": 0.21208365397896564
+              },
+              {
+                "color": "Black",
+                "fraction": 0.20394912093766648
+              },
+              {
+                "color": "Orange",
+                "fraction": 0.062231150969829716
+              },
+              {
+                "color": "Red",
+                "fraction": 0.04036435209850234
+              },
+              {
+                "color": "Yellow",
+                "fraction": 0.0020687809546360426
+              },
+              {
+                "color": "Gray",
+                "fraction": 0.0019787535271019556
+              },
+              {
+                "color": "Green",
+                "fraction": 0.0003311282779849642
+              },
+              {
+                "color": "White",
+                "fraction": 0.00016032281615659347
+              },
+              {
+                "color": "Pink",
+                "fraction": 0.00007646165078237535
+              }
+            ],
+            "verified": false,
+            "requiresReview": true
+          }
+        }
+      ],
+      "ignored": [
+        {
+          "stage": "generated_caption_grounding",
+          "label": "laces",
+          "box": [
+            1166.4,
+            304.8225,
+            1625.28,
+            1302.0425
+          ],
+          "reason": "no_garment_description"
+        },
+        {
+          "stage": "generated_caption_grounding",
+          "label": "The floor",
+          "box": [
+            0.96,
+            1.0475,
+            1917.1200000000001,
+            2091.8575
+          ],
+          "reason": "no_garment_description"
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>sneakers<loc_54><loc_95><loc_591><loc_828><loc_438><loc_88><loc_878><loc_919></s>",
+          "parsed": {
+            "labels": [
+              "sneakers",
+              "sneakers"
+            ],
+            "bboxes": [
+              [
+                104.64,
+                200.0725,
+                1135.68,
+                1735.7075
+              ],
+              [
+                841.92,
+                185.4075,
+                1686.7199999999998,
+                1926.3525
+              ]
+            ]
+          },
+          "elapsedMs": 3947.7974759999925
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.</s>",
+          "parsed": "Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.",
+          "elapsedMs": 4148.666119000001
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.",
+          "raw": "</s><s>Two shoes<loc_54><loc_81><loc_884><loc_923>The shoes<loc_54><loc_92><loc_592><loc_831><loc_438><loc_85><loc_881><loc_922>The brown shoes<loc_54><loc_85><loc_882><loc_921><loc_54><loc_92><loc_593><loc_831><loc_438><loc_86><loc_881><loc_922>laces<loc_607><loc_145><loc_846><loc_621>The shoe<loc_438><loc_85><loc_882><loc_922>The floor<loc_0><loc_0><loc_998><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "Two shoes",
+              "The shoes",
+              "The shoes",
+              "The brown shoes",
+              "The brown shoes",
+              "The brown shoes",
+              "laces",
+              "The shoe",
+              "The floor"
+            ],
+            "bboxes": [
+              [
+                104.64,
+                170.7425,
+                1698.24,
+                1934.7325
+              ],
+              [
+                104.64,
+                193.7875,
+                1137.6000000000001,
+                1741.9925
+              ],
+              [
+                841.92,
+                179.1225,
+                1692.48,
+                1932.6375
+              ],
+              [
+                104.64,
+                179.1225,
+                1694.3999999999999,
+                1930.5425
+              ],
+              [
+                104.64,
+                193.7875,
+                1139.52,
+                1741.9925
+              ],
+              [
+                841.92,
+                181.21749999999997,
+                1692.48,
+                1932.6375
+              ],
+              [
+                1166.4,
+                304.8225,
+                1625.28,
+                1302.0425
+              ],
+              [
+                841.92,
+                179.1225,
+                1694.3999999999999,
+                1932.6375
+              ],
+              [
+                0.96,
+                1.0475,
+                1917.1200000000001,
+                2091.8575
+              ]
+            ]
+          },
+          "elapsedMs": 3144.346860999998
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    }
+  ],
+  "processPeakResidentBytes": 3939602432
+}
