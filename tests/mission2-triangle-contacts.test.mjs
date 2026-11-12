@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,auditSourcePhotoMicroMultiPose,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -1324,4 +1324,72 @@ test('P2-C25 exact single-pair true 163-bone source micro-Z 0.5/1mm tests preser
  assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],input,single,
   {maxDepthMeters:.007,maxPairs:1,maxVertices:6}),
   /complete bounded exact residual original-face pair evidence/);
+});
+
+
+test('P2-C26 two real named shoulder/torso 163-bone source poses re-audit actual body/panels/self and restore all source bytes and bone quaternions',()=>{
+ const {root,garment,bones}=simplePose();
+ bones[0].name='upperarm01L';bones[1].name='upperarm01R';bones[2].name='spine01';
+ const originalBones=bones.map(b=>b.quaternion.clone());
+ const originalMesh=garment.geometry.getAttribute('position').array.slice();
+ const sample=(name,micro)=>{
+  const v=originalMesh.slice();
+  v[2]+=micro;v[5]+=micro;v[8]+=micro;
+  return {name,overrides:new Map([[garment,v]])};
+ };
+ const trials=[sample('half-mm-separate',.0005),
+  sample('half-mm-reverse',-.0005),sample('one-mm-reverse',-.001)];
+ const report=auditSourcePhotoMicroMultiPose(root,[garment],trials);
+ assert.deepEqual(report.poses.map(p=>p.pose),
+  ['bilateral-shoulder-8-torso-3','asymmetric-shoulder-12-torso-5']);
+ assert.deepEqual(report.poses.map(p=>[p.shoulderLeftDegrees,p.shoulderRightDegrees,p.torsoDegrees]),
+  [[8,-8,3],[-12,6,-5]]);
+ assert.equal(report.onlyTwoPredeclaredArticulatedPoseSamples,true);
+ assert.equal(report.originalBoneRotationsAndGarmentPositionsRestored,true);
+ assert.equal(report.originalPhotoUVOwnerSourceUntouched,true);
+ assert.equal(report.noClothDynamicsSweptOrHumanVisualAcceptance,true);
+ assert.equal(report.noAbsoluteZeroContactCertificate,true);
+ assert.equal(report.distinctBilateralShoulderAndTorsoMotion,true);
+ assert.equal(report.allThreeIndependentCollisionTypesMeasured,true);
+ assert.equal(report.noExperimentAppliedOrSaved,true);
+ assert.equal(report.noCollisionWaived,true);
+ assert.equal(report.noAutomatic3DAdmission,true);
+ assert.equal(report.releaseAuthorized,false);
+ for(const p of report.poses){
+  assert.ok(p.actualSkinnedGarmentVerticesMoved>0);
+  assert.equal(p.trials.length,3);
+  assert.deepEqual(p.trials.map(x=>x.candidate),
+   ['half-mm-separate','half-mm-reverse','one-mm-reverse']);
+  assert.equal(p.original163BoneSourcePose,true);
+  assert.equal(p.sampledPoseOnly,true);
+  for(const x of p.trials){
+   for(const key of ['newBody','newSeparatePanel','newSelf',
+    'originalPoseBodyContactCount','originalPoseSeparatePanelContactCount'])
+    assert.ok(Number.isSafeInteger(x[key])&&x[key]>=0);
+   assert.equal(x.originalPhotoXYAndSourceSkinPreserved,true);
+   assert.equal(x.originalOriginalSourceFacesPreserved,true);
+   assert.equal(x.noAutomaticAdmission,true);
+   assert.equal(x.noContactWaived,true);
+   assert.equal(x.existingContactsNotCertifiedAsClear,true);
+   assert.equal(x.continuousCollisionUnverified,true);
+   assert.equal(x.releaseAuthorized,false);
+  }
+ }
+ assert.deepEqual(garment.geometry.getAttribute('position').array,originalMesh);
+ for(let i=0;i<bones.length;i++)assert.ok(bones[i].quaternion.angleTo(originalBones[i])<1e-9);
+ const counts=JSON.stringify(report);
+ for(const hidden of ['"localXYZ"','"sourceUV"','"skinIndex"',
+   '"newlyIntersectingSourceKeys"','"ownerId"','"sourceSHA256"'])
+  assert.equal(counts.includes(hidden),false);
+ const missing=bones[2].name;bones[2].name='unnamed_source_bone';
+ assert.throws(()=>auditSourcePhotoMicroMultiPose(root,[garment],trials),
+  /missing unambiguous original source shoulder and torso/);
+ bones[2].name=missing;
+ const forged=[sample('half-mm-separate',.001),sample('half-mm-separate',.002)];
+ assert.throws(()=>auditSourcePhotoMicroMultiPose(root,[garment],forged),
+  /predeclared unique private/);
+ assert.throws(()=>auditSourcePhotoMicroMultiPose(root,[garment],[
+  {name:'half-mm-separate',overrides:new Map([[garment,new Float32Array(3)]])}]),
+  /finite original-photograph staged source vertices/);
+ assert.deepEqual(garment.geometry.getAttribute('position').array,originalMesh);
 });
