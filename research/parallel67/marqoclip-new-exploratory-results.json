@@ -1,0 +1,987 @@
+{
+  "candidate": "marqoclip",
+  "model": "Marqo/marqo-fashionCLIP",
+  "revision": "44f4c655124ed71e90cbf528d82f508d69d8a81b",
+  "runtime": "Transformers.js 3.8.1 CPU q8",
+  "cohort": "P834 development-exposed diagnostics; NOT blind acceptance",
+  "loadMs": 5318.2048429999995,
+  "rows": [
+    {
+      "id": "p67-new-0001",
+      "sha256": "4837ca53534a870ec556bb6e457a0427796b320231806f27a871cfda2b36dff1",
+      "expectedCategory": "Tops",
+      "expectedType": "T-shirt",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "category": "Tops",
+      "itemType": "T-shirt",
+      "cosine": 0.21785020745369318,
+      "margin": 0.022339366520228998,
+      "elapsedMs": 1363.1983330000003,
+      "top": [
+        {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Unknown",
+          "cosine": 0.21785020745369318
+        },
+        {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1955108409334642
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.18552616472439357
+        },
+        {
+          "label": "a polo shirt",
+          "category": "Tops",
+          "itemType": "Polo",
+          "sleeveLength": "Unknown",
+          "cosine": 0.18115151684758216
+        },
+        {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "cosine": 0.17367789378123774
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0002",
+      "sha256": "c0291bc392be741df8d81fe4d566b7c836780a0eb3c369c30b743bb0118cf94e",
+      "expectedCategory": "Tops",
+      "expectedType": "T-shirt",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "category": "Tops",
+      "itemType": "T-shirt",
+      "cosine": 0.21293369111089716,
+      "margin": 0.011615848981413074,
+      "elapsedMs": 1084.5823050000008,
+      "top": [
+        {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Unknown",
+          "cosine": 0.21293369111089716
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2013178421294841
+        },
+        {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "cosine": 0.14415508906448973
+        },
+        {
+          "label": "a hand with no garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.14020738373212469
+        },
+        {
+          "label": "a tank top",
+          "category": "Tops",
+          "itemType": "Tank top",
+          "sleeveLength": "Sleeveless",
+          "cosine": 0.13992299686745924
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0006",
+      "sha256": "2c44d39231b0f09486551d779a0e4aa6385ce925873ba55b8890f26b3df29f66",
+      "expectedCategory": "Tops",
+      "expectedType": "Sweatshirt",
+      "acceptedTypes": [
+        "Sweatshirt"
+      ],
+      "category": "Tops",
+      "itemType": "Sweatshirt",
+      "cosine": 0.2495467065230226,
+      "margin": 0.019727699257799852,
+      "elapsedMs": 850.8716840000016,
+      "top": [
+        {
+          "label": "a sweatshirt",
+          "category": "Tops",
+          "itemType": "Sweatshirt",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2495467065230226
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.22981900726522275
+        },
+        {
+          "label": "a knitted sweater",
+          "category": "Tops",
+          "itemType": "Sweater",
+          "sleeveLength": "Unknown",
+          "cosine": 0.22074292723026373
+        },
+        {
+          "label": "a T-shirt",
+          "category": "Tops",
+          "itemType": "T-shirt",
+          "sleeveLength": "Unknown",
+          "cosine": 0.21717085487908086
+        },
+        {
+          "label": "a hoodie",
+          "category": "Tops",
+          "itemType": "Hoodie",
+          "sleeveLength": "Unknown",
+          "cosine": 0.20003619165959538
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0010",
+      "sha256": "6d30f180b07d9b42ee6cbd91034f859f1bd4b9113f2d8a7ba6377fd172c3b126",
+      "expectedCategory": "Tops",
+      "expectedType": "Blouse",
+      "acceptedTypes": [
+        "Blouse"
+      ],
+      "category": "Tops",
+      "itemType": "Blouse",
+      "cosine": 0.24107337203219778,
+      "margin": 0.02419289226176849,
+      "elapsedMs": 918.6952290000008,
+      "top": [
+        {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "cosine": 0.24107337203219778
+        },
+        {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2168804797704293
+        },
+        {
+          "label": "a hand with no garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.21251010956686317
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.19001955789324312
+        },
+        {
+          "label": "a jacket",
+          "category": "Outerwear",
+          "itemType": "Jacket",
+          "sleeveLength": "Unknown",
+          "cosine": 0.18459313347081496
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0012",
+      "sha256": "6e851b62199b3b9c19f0306c925e960a7e1b5e4caa59fa6cefc46d93dcdc6cae",
+      "expectedCategory": "Tops",
+      "expectedType": "Blouse",
+      "acceptedTypes": [
+        "Blouse"
+      ],
+      "category": "Tops",
+      "itemType": "Tunic",
+      "cosine": 0.25525727610939636,
+      "margin": 0.014916706775525423,
+      "elapsedMs": 931.06581,
+      "top": [
+        {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "cosine": 0.25525727610939636
+        },
+        {
+          "label": "a blouse",
+          "category": "Tops",
+          "itemType": "Blouse",
+          "sleeveLength": "Unknown",
+          "cosine": 0.24034056933387093
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1774751706489475
+        },
+        {
+          "label": "a room with no clothing item",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1611842397939152
+        },
+        {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.16016276497776136
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0014",
+      "sha256": "f098978b05e37bab1ff164895d6b934d41196704d54892a0e49a6ce706394066",
+      "expectedCategory": "Tops",
+      "expectedType": "Tunic",
+      "acceptedTypes": [
+        "Tunic"
+      ],
+      "category": "Tops",
+      "itemType": "Tunic",
+      "cosine": 0.2538132504715963,
+      "margin": 0.05294433220028821,
+      "elapsedMs": 695.9332530000011,
+      "top": [
+        {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2538132504715963
+        },
+        {
+          "label": "a coat",
+          "category": "Outerwear",
+          "itemType": "Coat",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2008689182713081
+        },
+        {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.19820945527052594
+        },
+        {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.19814254617175017
+        },
+        {
+          "label": "a raincoat",
+          "category": "Outerwear",
+          "itemType": "Raincoat",
+          "sleeveLength": "Unknown",
+          "cosine": 0.18975391977488543
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0017",
+      "sha256": "12fbc90a863bb2ed7ec76ff42b85eecfc01953888808133f8bb52b98f02452eb",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "cosine": 0.24402186158329559,
+      "margin": 0.041592246512020425,
+      "elapsedMs": 1176.6765269999996,
+      "top": [
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.24402186158329559
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.20242961507127516
+        },
+        {
+          "label": "loafers",
+          "category": "Shoes",
+          "itemType": "Loafers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.18018056496123996
+        },
+        {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.1597838953498651
+        },
+        {
+          "label": "high heel shoes",
+          "category": "Shoes",
+          "itemType": "Heels",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.156172901532506
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0018",
+      "sha256": "d500c89bd5aa0110912033432108a245f8afcfbd3eca62bcf08d28a42743b9ee",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "category": "Accessories",
+      "itemType": "Hat",
+      "cosine": 0.22371617016064588,
+      "margin": 0.006628536505882826,
+      "elapsedMs": 1865.6018669999994,
+      "top": [
+        {
+          "label": "a hat",
+          "category": "Accessories",
+          "itemType": "Hat",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.22371617016064588
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.21708763365476305
+        },
+        {
+          "label": "loafers",
+          "category": "Shoes",
+          "itemType": "Loafers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.21370202830101784
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.20865411196843026
+        },
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.20611629038788085
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0019",
+      "sha256": "d72caeac8ec7724dd0c5e37dade6cdb43dd08f4a0dbb4b2c5d05f8ae0961d5df",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "cosine": 0.2470761247480724,
+      "margin": 0.05454351698551632,
+      "elapsedMs": 647.3004899999978,
+      "top": [
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.2470761247480724
+        },
+        {
+          "label": "high heel shoes",
+          "category": "Shoes",
+          "itemType": "Heels",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.19253260776255607
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.16351392433061235
+        },
+        {
+          "label": "loafers",
+          "category": "Shoes",
+          "itemType": "Loafers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.1556744528691416
+        },
+        {
+          "label": "ankle boots",
+          "category": "Shoes",
+          "itemType": "Ankle boots",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.14331335423061958
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0020",
+      "sha256": "0dd308aebd7712e24ec6ee9b84d92791ce06ec839428b622f996f1e796276903",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "category": "Shoes",
+      "itemType": "Sneakers",
+      "cosine": 0.2266244436369103,
+      "margin": 0.06360242182905668,
+      "elapsedMs": 1055.733397,
+      "top": [
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.2266244436369103
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.16302202180785363
+        },
+        {
+          "label": "loafers",
+          "category": "Shoes",
+          "itemType": "Loafers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.14927531093527915
+        },
+        {
+          "label": "high heel shoes",
+          "category": "Shoes",
+          "itemType": "Heels",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.13500288863368465
+        },
+        {
+          "label": "a pair of joggers",
+          "category": "Bottoms",
+          "itemType": "Joggers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.12171532492695666
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0021",
+      "sha256": "d3fa5ebd954de5ce2ef21a20eff6b19a84cc8ded12bd50bb01c91c2f605ddc71",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "acceptedTypes": [
+        "Ankle boots"
+      ],
+      "category": "Shoes",
+      "itemType": "Heels",
+      "cosine": 0.25822449486907323,
+      "margin": 0.012795591292844438,
+      "elapsedMs": 767.7818590000024,
+      "top": [
+        {
+          "label": "high heel shoes",
+          "category": "Shoes",
+          "itemType": "Heels",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.25822449486907323
+        },
+        {
+          "label": "ankle boots",
+          "category": "Shoes",
+          "itemType": "Ankle boots",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.2454289035762288
+        },
+        {
+          "label": "tall boots",
+          "category": "Shoes",
+          "itemType": "Tall boots",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.23392792312600377
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.2090381895858901
+        },
+        {
+          "label": "sandals",
+          "category": "Shoes",
+          "itemType": "Sandals",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.19086043885471388
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0022",
+      "sha256": "03c38b27f231a78ff2fff683ca41e028b77c141b205713ef06a1e7b7646eacf2",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "acceptedTypes": [
+        "Ankle boots"
+      ],
+      "category": "Shoes",
+      "itemType": "Ankle boots",
+      "cosine": 0.22584194078104358,
+      "margin": 0.05165306690232202,
+      "elapsedMs": 831.5200710000026,
+      "top": [
+        {
+          "label": "ankle boots",
+          "category": "Shoes",
+          "itemType": "Ankle boots",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.22584194078104358
+        },
+        {
+          "label": "tall boots",
+          "category": "Shoes",
+          "itemType": "Tall boots",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.17418887387872156
+        },
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.16449421802870542
+        },
+        {
+          "label": "loafers",
+          "category": "Shoes",
+          "itemType": "Loafers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.14761681344143265
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.14619281212717278
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0023",
+      "sha256": "db11e0995251531889b5d6fbef350b8d051772e9fcba620fa9b7fa1f20cdb8bc",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "acceptedTypes": [
+        "Ankle boots"
+      ],
+      "category": "Shoes",
+      "itemType": "Heels",
+      "cosine": 0.2647644648044987,
+      "margin": 0.047651978719496,
+      "elapsedMs": 1064.3387289999991,
+      "top": [
+        {
+          "label": "high heel shoes",
+          "category": "Shoes",
+          "itemType": "Heels",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.2647644648044987
+        },
+        {
+          "label": "ankle boots",
+          "category": "Shoes",
+          "itemType": "Ankle boots",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.21711248608500272
+        },
+        {
+          "label": "flat shoes",
+          "category": "Shoes",
+          "itemType": "Flats",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.19077641554562766
+        },
+        {
+          "label": "loafers",
+          "category": "Shoes",
+          "itemType": "Loafers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.13964669445850914
+        },
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.1389735989575594
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0025",
+      "sha256": "b5c78190aa5aabd539aa4608aebb655dda48923c4dd1f906c90b5b6d98f53c6b",
+      "expectedCategory": "Dresses",
+      "expectedType": "Casual dress",
+      "acceptedTypes": [
+        "Casual dress"
+      ],
+      "category": "Dresses",
+      "itemType": "Formal dress",
+      "cosine": 0.2014805635185668,
+      "margin": 0.0023932636774308957,
+      "elapsedMs": 518.0063119999977,
+      "top": [
+        {
+          "label": "a formal dress",
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2014805635185668
+        },
+        {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1990872998411359
+        },
+        {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "cosine": 0.16972283066934307
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.14517658252337626
+        },
+        {
+          "label": "a shirt dress",
+          "category": "Dresses",
+          "itemType": "Shirt dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.14136163935040197
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0027",
+      "sha256": "a7cd760b284a12adb44876c28a6da27f4baa9f47e37454bb04f1ce9768cc05fe",
+      "expectedCategory": "Dresses",
+      "expectedType": "Dress",
+      "acceptedTypes": [
+        "Casual dress",
+        "Formal dress",
+        "Shirt dress"
+      ],
+      "category": "Tops",
+      "itemType": "Tunic",
+      "cosine": 0.24076826865358347,
+      "margin": 0.040766224569635856,
+      "elapsedMs": 351.63344700000016,
+      "top": [
+        {
+          "label": "a tunic",
+          "category": "Tops",
+          "itemType": "Tunic",
+          "sleeveLength": "Unknown",
+          "cosine": 0.24076826865358347
+        },
+        {
+          "label": "a coat",
+          "category": "Outerwear",
+          "itemType": "Coat",
+          "sleeveLength": "Unknown",
+          "cosine": 0.20000204408394762
+        },
+        {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1942518899340163
+        },
+        {
+          "label": "a formal dress",
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.17926868482526906
+        },
+        {
+          "label": "a raincoat",
+          "category": "Outerwear",
+          "itemType": "Raincoat",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1740867780960949
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0028",
+      "sha256": "221ad9dfc17d3287144d9f85317fffe4264bff72d4407454b3752082652c8810",
+      "expectedCategory": "Dresses",
+      "expectedType": "Formal dress",
+      "acceptedTypes": [
+        "Formal dress"
+      ],
+      "category": "Dresses",
+      "itemType": "Formal dress",
+      "cosine": 0.21546868376635156,
+      "margin": 0.02428358318988333,
+      "elapsedMs": 743.3055269999968,
+      "top": [
+        {
+          "label": "a formal dress",
+          "category": "Dresses",
+          "itemType": "Formal dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.21546868376635156
+        },
+        {
+          "label": "a coat",
+          "category": "Outerwear",
+          "itemType": "Coat",
+          "sleeveLength": "Unknown",
+          "cosine": 0.19118510057646823
+        },
+        {
+          "label": "a casual dress",
+          "category": "Dresses",
+          "itemType": "Casual dress",
+          "sleeveLength": "Unknown",
+          "cosine": 0.17984607021274152
+        },
+        {
+          "label": "a handbag",
+          "category": "Accessories",
+          "itemType": "Bag",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.17498767653678868
+        },
+        {
+          "label": "a skirt",
+          "category": "Bottoms",
+          "itemType": "Skirt",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.1741654806818148
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0030",
+      "sha256": "afb5385be40dc3002d1aa252054cdc25064969e92b9c16321b5227d06ef15a9d",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "category": "Uncategorized",
+      "itemType": "Unknown",
+      "cosine": 0.2537097417878051,
+      "margin": 0.09046052345817199,
+      "elapsedMs": 697.9329790000011,
+      "top": [
+        {
+          "label": "an empty floor",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2537097417878051
+        },
+        {
+          "label": "a blank wall",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1632492183296331
+        },
+        {
+          "label": "a room with no clothing item",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.16270506845563526
+        },
+        {
+          "label": "a belt",
+          "category": "Accessories",
+          "itemType": "Belt",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.12910621931250843
+        },
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.1269902889910531
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0031",
+      "sha256": "9608e6de2b97acf8ea73d458ae74795f517a52c28d434f14e88a5534b2c8caee",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "category": "Uncategorized",
+      "itemType": "Unknown",
+      "cosine": 0.19545757257288912,
+      "margin": 0.032476124799052514,
+      "elapsedMs": 463.7377419999975,
+      "top": [
+        {
+          "label": "an empty floor",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.19545757257288912
+        },
+        {
+          "label": "a room with no clothing item",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1629814477738366
+        },
+        {
+          "label": "a blank wall",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.14961500231584454
+        },
+        {
+          "label": "a blurry image with no identifiable garment",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.1252266638729736
+        },
+        {
+          "label": "jewelry",
+          "category": "Accessories",
+          "itemType": "Jewelry",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.12057124577881213
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0032",
+      "sha256": "e6d3b959315c2cc68e22fbfb4cb7509735a9ec0e8ff8a6f4fd0a31361427e6d8",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "category": "Uncategorized",
+      "itemType": "Unknown",
+      "cosine": 0.2656936941294903,
+      "margin": 0.03977204091451003,
+      "elapsedMs": 656.341843000002,
+      "top": [
+        {
+          "label": "an empty floor",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.2656936941294903
+        },
+        {
+          "label": "a room with no clothing item",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.22592165321498026
+        },
+        {
+          "label": "a blank wall",
+          "category": "Uncategorized",
+          "itemType": "Unknown",
+          "sleeveLength": "Unknown",
+          "cosine": 0.17298508765480006
+        },
+        {
+          "label": "a belt",
+          "category": "Accessories",
+          "itemType": "Belt",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.16495192333903672
+        },
+        {
+          "label": "sneakers",
+          "category": "Shoes",
+          "itemType": "Sneakers",
+          "sleeveLength": "Not applicable",
+          "cosine": 0.15255745325159611
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "garments": 16,
+    "rawCategoryCorrect": 14,
+    "rawSubtypeCorrect": 10,
+    "negativeTop1Correct": 3
+  }
+}

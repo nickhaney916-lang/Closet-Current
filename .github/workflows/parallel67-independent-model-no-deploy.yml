@@ -1,0 +1,80 @@
+name: Parallel67 independent model evidence NO DEPLOY
+on:
+  push:
+    branches: [research/parallel67-independent-model-HOLD]
+permissions:
+  contents: read
+concurrency:
+  group: parallel67-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Research-only source boundary
+        run: |
+          git merge-base --is-ancestor beb7f27b18f70faa32c94ca2ac5d4260e83f0f0f HEAD
+          git diff --name-only beb7f27b18f70faa32c94ca2ac5d4260e83f0f0f HEAD > /tmp/paths67
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel67/*|scripts/parallel67-*|tests/parallel67-*|.github/workflows/parallel67-independent-model-no-deploy.yml) ;;
+              *) echo "Outside isolated research boundary: $p"; exit 1 ;;
+            esac
+          done < /tmp/paths67
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: node scripts/build.mjs
+      - run: node scripts/parallel67-build-vectors.mjs marqo
+      - run: node scripts/parallel67-build-vectors.mjs marqoclip
+      - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-browser-model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        model: [baseline, marqo]
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: python3 research/parallel67/new-photos/download.py
+      - run: node scripts/parallel67-warm-model.mjs ${{ matrix.model }}
+      - if: matrix.model != 'baseline'
+        run: node scripts/parallel67-build-vectors.mjs ${{ matrix.model }}
+      - run: node scripts/parallel67-browser-batches.mjs ${{ matrix.browser }} ${{ matrix.model }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parallel67-${{ matrix.browser }}-${{ matrix.model }}-photo-free-evidence
+          path: research/parallel67/${{ matrix.browser }}-${{ matrix.model }}-new-browser.json
+          if-no-files-found: error
+          retention-days: 14
+  compare:
+    needs: [native, actual-browser-model]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: parallel67-*-photo-free-evidence
+          path: research/parallel67
+          merge-multiple: true
+      - run: node scripts/parallel67-compare.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: parallel67-source-matched-comparison-NO-PROMOTION
+          path: research/parallel67/browser-comparison.json
+          if-no-files-found: error
+          retention-days: 14

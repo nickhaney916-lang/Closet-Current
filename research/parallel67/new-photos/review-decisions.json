@@ -1,0 +1,165 @@
+{
+  "noModelInference": true,
+  "rows": [
+    {
+      "id": "p67-new-0001",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0002",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0003",
+      "reviewDecision": "excluded",
+      "reason": "Pens, not a garment"
+    },
+    {
+      "id": "p67-new-0004",
+      "reviewDecision": "excluded",
+      "reason": "Logo artwork, not a garment photograph"
+    },
+    {
+      "id": "p67-new-0005",
+      "reviewDecision": "excluded",
+      "reason": "Crowd on a beach; no isolated sweatshirt"
+    },
+    {
+      "id": "p67-new-0006",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0007",
+      "reviewDecision": "excluded",
+      "reason": "Towels and closet scene; sweatshirt not isolated"
+    },
+    {
+      "id": "p67-new-0008",
+      "reviewDecision": "excluded",
+      "reason": "Performance by artist Earl Sweatshirt; not isolated apparel"
+    },
+    {
+      "id": "p67-new-0009",
+      "reviewDecision": "excluded",
+      "reason": "Embroidery equipment; not blouse photograph"
+    },
+    {
+      "id": "p67-new-0010",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0011",
+      "reviewDecision": "excluded",
+      "reason": "Same museum garment as 0012; excluded alternate view before inference"
+    },
+    {
+      "id": "p67-new-0012",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0013",
+      "reviewDecision": "excluded",
+      "reason": "Scanned illustration rather than real garment photograph"
+    },
+    {
+      "id": "p67-new-0014",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0015",
+      "reviewDecision": "excluded",
+      "reason": "Fragment detail without complete tunic silhouette"
+    },
+    {
+      "id": "p67-new-0016",
+      "reviewDecision": "excluded",
+      "reason": "Scanned narrow historical textile fragment; not complete garment"
+    },
+    {
+      "id": "p67-new-0017",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0018",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0019",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0020",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0021",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0022",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0023",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0024",
+      "reviewDecision": "excluded",
+      "reason": "Multiple visible outfit layers; no single-garment truth or instance masks"
+    },
+    {
+      "id": "p67-new-0025",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0026",
+      "reviewDecision": "excluded",
+      "reason": "Close view of same Marimekko dress as 0025; excluded same-object duplicate"
+    },
+    {
+      "id": "p67-new-0027",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0028",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0029",
+      "reviewDecision": "excluded",
+      "reason": "Microphone and monitor with person, not a clean garment-free negative"
+    },
+    {
+      "id": "p67-new-0030",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0031",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    },
+    {
+      "id": "p67-new-0032",
+      "reviewDecision": "eligible-for-exploratory-comparison-only",
+      "reason": null
+    }
+  ]
+}

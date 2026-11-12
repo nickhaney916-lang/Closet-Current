@@ -1,0 +1,95 @@
+{
+  "format": "closet-current-parallel67-model-candidates/v1",
+  "status": "research-only-family-alpha-HOLD-255",
+  "auditDate": "2026-11-12",
+  "verification": "Hugging Face model API with blobs=true; model cards and ONNX commit pages. Metadata audit is not downloaded-byte verification or measured accuracy.",
+  "candidates": [
+    {
+      "id": "Marqo/marqo-fashionSigLIP",
+      "revision": "c56244cc94f92419e8369fa71efdaf403b124ce8",
+      "architecture": "SigLIP ViT-B/16 fine-tuned with fashion-specific Generalised Contrastive Learning",
+      "license": "apache-2.0",
+      "licenseEvidence": "Publisher model-card license metadata. No standalone LICENSE or NOTICE found in repository file listing.",
+      "source": "https://huggingface.co/Marqo/marqo-fashionSigLIP",
+      "api": "https://huggingface.co/api/models/Marqo/marqo-fashionSigLIP?blobs=true",
+      "onnxExportCommit": "ef343cf10da5bbc6f069ebb3519e50009d3c11c8",
+      "onnxExportSource": "https://huggingface.co/Marqo/marqo-fashionSigLIP/commit/ef343cf10da5bbc6f069ebb3519e50009d3c11c8",
+      "browserSupportEvidence": "Publisher documents Transformers.js SiglipVisionModel, SiglipTextModel, AutoProcessor and AutoTokenizer.",
+      "vision": {
+        "path": "onnx/vision_model_quantized.onnx",
+        "bytes": 93973443,
+        "sha256": "f1009cfce0eedd409f601e8351eedab72e8529641105eee6517821a9a634a2f4"
+      },
+      "text": {
+        "path": "onnx/text_model_quantized.onnx",
+        "bytes": 111125229,
+        "sha256": "f5a7995e029c6ee9346fa46857661c4a171d28b164fa7703b85a527d73adf170"
+      },
+      "input": {
+        "width": 224,
+        "height": 224,
+        "imageMean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "imageStd": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "rescaleFactor": 0.00392156862745098
+      },
+      "deploymentStatus": "Candidate for isolated evaluation; not authorized for deployment. Include Apache-2.0 license and publisher attribution when redistributing. Preserve applicable notices. Training-image rights and measured recognition performance are not established by model-card benchmark claims."
+    },
+    {
+      "id": "onnx-community/siglip2-base-patch16-224-ONNX",
+      "revision": "ba1f3b0843f24bc5417d38e19c37b287d719b2f4",
+      "architecture": "SigLIP 2 ViT-B/16; independently pretrained general vision-language encoder",
+      "license": null,
+      "licenseEvidence": "Conversion model card does not declare a license. It identifies google/siglip2-base-patch16-224 as source; that publisher card explicitly declares Apache-2.0.",
+      "upstream": {
+        "id": "google/siglip2-base-patch16-224",
+        "revision": "75de2d55ec2d0b4efc50b3e9ad70dba96a7b2fa2",
+        "license": "apache-2.0",
+        "source": "https://huggingface.co/google/siglip2-base-patch16-224"
+      },
+      "source": "https://huggingface.co/onnx-community/siglip2-base-patch16-224-ONNX",
+      "filesSource": "https://huggingface.co/onnx-community/siglip2-base-patch16-224-ONNX/tree/ba1f3b0843f24bc5417d38e19c37b287d719b2f4/onnx",
+      "api": "https://huggingface.co/api/models/onnx-community/siglip2-base-patch16-224-ONNX?blobs=true",
+      "vision": {
+        "path": "onnx/vision_model_quantized.onnx",
+        "bytes": 94553333,
+        "sha256": "5f2b401c1a4fc095702a5d45348e17ad46c4f87064085365b43c6e8eaa5c0070"
+      },
+      "text": {
+        "path": "onnx/text_model_quantized.onnx",
+        "bytes": 283438275,
+        "sha256": "3a0603d3a00c05a80a6ded4743c16aaac7b1e62cdcc7e362e7ce418659b96400"
+      },
+      "deploymentStatus": "Research evaluation only. Missing conversion-specific license/notice provenance is an unresolved redistribution gate, not evidence that upstream Apache-2.0 forbids commercial use. Before deployment, confirm export provenance/license or reproduce ONNX export from pinned licensed Google weights and retain required license/notices."
+    },
+    {
+      "id": "Marqo/marqo-fashionCLIP",
+      "revision": "44f4c655124ed71e90cbf528d82f508d69d8a81b",
+      "architecture": "Fashion-specific CLIP fine-tuning; different weights from original patrickjohncyh FashionCLIP, but correlated CLIP model family",
+      "license": "apache-2.0",
+      "licenseEvidence": "Publisher model-card metadata at pinned revision declares apache-2.0.",
+      "source": "https://huggingface.co/Marqo/marqo-fashionCLIP",
+      "api": "https://huggingface.co/api/models/Marqo/marqo-fashionCLIP/revision/44f4c655124ed71e90cbf528d82f508d69d8a81b?blobs=true",
+      "vision": {
+        "path": "onnx/vision_model_quantized.onnx",
+        "bytes": 87301119,
+        "sha256": "ffd9b2a43e4221a1252f08bd1ecb327a873f793aa118549c2bc4a8401ba41b48"
+      },
+      "text": {
+        "path": "onnx/text_model_quantized.onnx",
+        "bytes": 64358586,
+        "sha256": "2a941099c0a03b7b5535eb5e541c76170a821c1ba19169e95cf137fe064d4d3c"
+      },
+      "deploymentStatus": "Research evaluation only, subject to Apache-2.0 redistribution obligations and genuine inference benchmarking. Different model weights do not make this an independent ground-truth source."
+    }
+  ],
+  "mobilePlan": "Precompute fixed text vectors offline using the matching pinned text model; ship only vision tower plus small text-vector asset. Both q8 vision towers are about 94 MB download each. Download size is not peak memory; ONNX initialization, graph execution, image buffers, browser runtime and caches add memory. Load one candidate at a time, release sessions between trials, and measure Chromium/WebKit startup, warm inference and memory separately. WASM q8 support must be demonstrated by actual inference; native Android/iOS testing remains separate.",
+  "accuracyCaveat": "Marqo reports fashion retrieval gains, not Closet Current subtype/category/color accuracy. SigLIP 2 semantic/localization improvements are not evidence of fashion classification acceptance. Neither candidate may be promoted without real-photo comparisons and manual-review safety evidence."
+}
