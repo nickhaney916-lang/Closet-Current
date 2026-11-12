@@ -9,6 +9,10 @@ import {localCandidates} from '../public/local-catalog.mjs';
 
 export const P67_MODEL='Xenova/siglip-base-patch16-224';
 export const P67_REVISION='4649052661e53c7000355844105f8a1792088239';
+export const P67_FASHION_MODEL='Marqo/marqo-fashionSigLIP';
+// ONNX was introduced Sep 2024, and the Sep 17 pinned commit contains that model.
+export const P67_FASHION_REVISION='782eaf7a0b95411ac96893d2300d1a61a2bcb757';
+export const P67_ALLOWED_MODELS=Object.freeze({[P67_MODEL]:P67_REVISION,[P67_FASHION_MODEL]:P67_FASHION_REVISION});
 export const P67_LABELS=Object.freeze(localCandidates.map(x=>x.label));
 const candidates=new Map(localCandidates.map(x=>[x.label,x]));
 const categories=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories','Uncategorized']);
@@ -33,7 +37,8 @@ export function rankIndependentSiglip67(raw){
   scoreMeaning:'uncalibrated-sigmoid-ranking-only'};
 }
 
-export function evaluateIndependentSiglip67(frozen,rows){
+export function evaluateIndependentSiglip67(frozen,rows,{model=P67_MODEL,revision=P67_REVISION}={}){
+ if(!Object.hasOwn(P67_ALLOWED_MODELS,model)||P67_ALLOWED_MODELS[model]!==revision)throw Error('P67: unsupported unpinned independent model');
  if(!Array.isArray(frozen)||frozen.length!==16||!Array.isArray(rows)||rows.length!==16||
    new Set(frozen.map(x=>x.id)).size!==16||new Set(rows.map(x=>x.id)).size!==16)
   throw Error('P67: incomplete historical source set');
@@ -65,7 +70,7 @@ export function evaluateIndependentSiglip67(frozen,rows){
  const garment=typed.filter(x=>!x.categoryOnly),negatives=typed.filter(x=>x.categoryOnly);
  return {
   schema:'closet-current-parallel67-foreign-siglip-developer-exposed-v1',
-  model:P67_MODEL,revision:P67_REVISION,
+  model,revision,
   independentModelFromFashionCLIP:true,
   developerExposedNotBlind:true,
   candidateScoresNotCalibrated:true,
