@@ -1,6 +1,6 @@
 /** Registered planar FRONT photograph projection. Never fabricates unseen rear texels. */
 import * as THREE from 'three';
-import {auditOriginalPhotoTexelRegistration} from './source-texel-audit.mjs';
+import {auditOriginalPhotoTexelRegistration,auditOriginalPhotoProjectedTriangles} from './source-texel-audit.mjs';
 const UV='vec2 panel=vec2(.5+vPanel.x/uPhotoSpan.x,(vPanel.y-1.11)/uPhotoSpan.y);';
 const CHEST='float chest=1.-smoothstep(.22,.29,abs(vPanel.x));';
 const fail=m=>{throw Error('M2 source projection '+m);};
@@ -42,7 +42,11 @@ export function prepareSourceProjection(shirt,staged,projection){
   patchSourceProjectionShader(probe,projection);
  }
  const compiled=new Set(),runtime={compiledMaterialCount:0,originalPhotoTexelEvidence:null};
- const recheck=()=>auditOriginalPhotoTexelRegistration(attributes,projection,photos);
+ // Actual GLSL photo projection is defined by SOURCE positions, not
+ // standard mesh UVs. Face-level coverage is captured read-only, once.
+ const triangleProjectionAudit=auditOriginalPhotoProjectedTriangles(attributes,projection);
+ const recheck=()=>Object.freeze({...auditOriginalPhotoTexelRegistration(
+  attributes,projection,photos),triangleProjectionAudit});
  // This is source texture registration evidence, not independent pixel match
  // or owner validation. The pixel sampler can be unavailable before decode.
  runtime.originalPhotoTexelEvidence=recheck();
