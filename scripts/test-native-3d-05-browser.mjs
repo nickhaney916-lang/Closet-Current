@@ -33,6 +33,9 @@ const sourceShortEdgeTrial=process.env.PHOTO_SHORT_EDGE_TRIAL==='1';
 const sourceNeighborRelaxation=process.env.PHOTO_NEIGHBOR_RELAXATION==='1';
 const sourceResidualDirection=process.env.PHOTO_RESIDUAL_DIRECTION_TRIAL==='1';
 const sourceLastPairMicro=process.env.PHOTO_LAST_PAIR_MICRO_TRIAL==='1';
+const sourceMultiPose26=process.env.PHOTO_MULTIPOSE_26==='1';
+if(sourceMultiPose26&&!sourceLastPairMicro)
+ throw Error('M2 C26 two actual shoulder/torso poses require verified single-pair source original micro variants');
 if(sourceLastPairMicro&&!sourceResidualDirection)
  throw Error('M2 C25 strict private one-pair photo-depth audit requires full two-direction source witness');
 if(sourceResidualDirection&&!sourceNeighborRelaxation)
@@ -402,7 +405,8 @@ try{
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
-    (sourceLastPairMicro?'&photoSourceLastPairMicroDepth=research':''),
+    (sourceLastPairMicro?'&photoSourceLastPairMicroDepth=research':'')+
+    (sourceMultiPose26?'&photoSourceMultiPose26=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -690,6 +694,14 @@ try{
       '"newlyIntersectingSourceKeys"','"sourceUV"'])
      assert.equal(sanitizedJSON.includes(secret),false);
     const sourceShortEdgeSamples=safeDiagnostic.attempts.filter(a=>a.shortEdgeCounterfactual);
+    if(sourceMultiPose26&&sourceShortEdgeSamples.length!==1){
+     const diagnostic=safeDiagnostic.attempts.find(x=>
+      x.scale===.25&&x.depthClearance===.008&&x.depthEasingExponent===2);
+     // Fixed, enumerated failure-reason tag only: no original JPEG, source
+     // face keys, owner tokens, actual skeleton IDs or vertex positions.
+     console.log('M2_P26_MULTIPOSE_REFUSAL_REASON_COUNTS_ONLY',
+      diagnostic?.reason||'candidate-not-reached');
+    }
     if(sourceShortEdgeTrial){
      assert.equal(sourceShortEdgeSamples.length,1,
       'One complete bounded short-edge depth counterfactual must run and stay uncommitted');
@@ -842,6 +854,51 @@ try{
         assert.equal(last.noMeshOrWardrobeMutation,true);
         assert.equal(last.collisionCertified,false);
         assert.equal(last.releaseAuthorized,false);
+        if(sourceMultiPose26){
+         const mp=last.multiPoseSourceAudit;
+         assert.ok(mp,'A complete actual shared 163-bone source pose audit is required');
+         assert.equal(mp.poses.length,2);
+         assert.deepEqual(mp.poses.map(p=>p.pose),
+          ['bilateral-shoulder-8-torso-3','asymmetric-shoulder-12-torso-5']);
+         assert.deepEqual(mp.poses.map(p=>[
+          p.shoulderLeftDegrees,p.shoulderRightDegrees,p.torsoDegrees]),
+          [[8,-8,3],[-12,6,-5]]);
+         assert.equal(mp.onlyTwoPredeclaredArticulatedPoseSamples,true);
+         assert.equal(mp.originalBoneRotationsAndGarmentPositionsRestored,true);
+         assert.equal(mp.originalPhotoUVOwnerSourceUntouched,true);
+         assert.equal(mp.noClothDynamicsSweptOrHumanVisualAcceptance,true);
+         assert.equal(mp.noAbsoluteZeroContactCertificate,true);
+         assert.equal(mp.distinctBilateralShoulderAndTorsoMotion,true);
+         assert.equal(mp.allThreeIndependentCollisionTypesMeasured,true);
+         assert.equal(mp.noExperimentAppliedOrSaved,true);
+         assert.equal(mp.noCollisionWaived,true);
+         assert.equal(mp.noAutomatic3DAdmission,true);
+         assert.equal(mp.releaseAuthorized,false);
+         for(const pose of mp.poses){
+          assert.ok(Number.isSafeInteger(pose.actualSkinnedGarmentVerticesMoved)&&
+           pose.actualSkinnedGarmentVerticesMoved>0);
+          assert.equal(pose.trials.length,3);
+          assert.deepEqual(pose.trials.map(v=>v.candidate),
+           ['half-mm-separate','half-mm-reverse','one-mm-reverse']);
+          assert.equal(pose.original163BoneSourcePose,true);
+          assert.equal(pose.sampledPoseOnly,true);
+          assert.equal(pose.notHumanFashionDrapeApproved,true);
+          for(const v of pose.trials){
+           for(const field of ['newBody','newSeparatePanel','newSelf',
+            'originalPoseBodyContactCount','originalPoseSeparatePanelContactCount',
+            'poseOriginalSelfDelta'])
+            assert.ok(Number.isSafeInteger(v[field])&&v[field]>=0);
+           assert.equal(v.originalOriginalSourceFacesPreserved,true);
+           assert.equal(v.originalPhotoXYAndSourceSkinPreserved,true);
+           assert.equal(v.existingContactsNotCertifiedAsClear,true);
+           assert.equal(v.continuousCollisionUnverified,true);
+           assert.equal(v.noAutomaticAdmission,true);
+           assert.equal(v.noContactWaived,true);
+           assert.equal(v.releaseAuthorized,false);
+          }
+         }
+         assert.equal(a.accepted,false);
+        }else assert.equal(last.multiPoseSourceAudit,null);
         for(const [i,t] of last.microVariants.entries()){
          const meters=[.0005,.0005,.001,.001][i];
          assert.equal(t.maximumDepthMeters,meters);

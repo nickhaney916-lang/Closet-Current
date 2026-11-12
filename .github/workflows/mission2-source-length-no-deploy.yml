@@ -29,6 +29,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-one-ring-weight-sweep-20261112-HOLD
     - research/mission2-persistent-contact-depth-direction-20261112-HOLD
     - research/mission2-single-pair-microdepth-20261112-HOLD
+    - research/mission2-multipose-source-collision-20261112-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -252,6 +253,7 @@ jobs:
         PHOTO_NEIGHBOR_RELAXATION: '1'
         PHOTO_RESIDUAL_DIRECTION_TRIAL: '1'
         PHOTO_LAST_PAIR_MICRO_TRIAL: '1'
+        PHOTO_MULTIPOSE_26: '1'
         MISSION2_PERFORMANCE: '0'
       run: |
         node scripts/test-native-3d-05-browser.mjs
@@ -583,6 +585,49 @@ jobs:
          for(const key of ['afterNewSelfPairs','afterNewBodyPairs','afterNewSeparatePanelPairs'])
           assert.ok(Number.isSafeInteger(t[key])&&t[key]>=0);
         }
+        const mp=last.multiPoseSourceAudit;
+        assert.ok(mp,'True source 163-bone bilateral shoulder/torso motion must be measured');
+        assert.deepEqual(mp.poses.map(p=>p.pose),
+         ['bilateral-shoulder-8-torso-3','asymmetric-shoulder-12-torso-5']);
+        assert.deepEqual(mp.poses.map(p=>[
+         p.shoulderLeftDegrees,p.shoulderRightDegrees,p.torsoDegrees]),
+         [[8,-8,3],[-12,6,-5]]);
+        assert.equal(mp.originalBoneRotationsAndGarmentPositionsRestored,true);
+        assert.equal(mp.originalPhotoUVOwnerSourceUntouched,true);
+        assert.equal(mp.onlyTwoPredeclaredArticulatedPoseSamples,true);
+        assert.equal(mp.allThreeIndependentCollisionTypesMeasured,true);
+        assert.equal(mp.noClothDynamicsSweptOrHumanVisualAcceptance,true);
+        assert.equal(mp.noAbsoluteZeroContactCertificate,true);
+        assert.equal(mp.noExperimentAppliedOrSaved,true);
+        assert.equal(mp.noCollisionWaived,true);
+        assert.equal(mp.noAutomatic3DAdmission,true);
+        assert.equal(mp.releaseAuthorized,false);
+        for(const pose of mp.poses){
+         assert.ok(pose.actualSkinnedGarmentVerticesMoved>0);
+         assert.equal(pose.trials.length,3);
+         assert.deepEqual(pose.trials.map(v=>v.candidate),
+          ['half-mm-separate','half-mm-reverse','one-mm-reverse']);
+         assert.equal(pose.original163BoneSourcePose,true);
+         assert.equal(pose.notHumanFashionDrapeApproved,true);
+         for(const trial of pose.trials){
+          for(const key of ['newSelf','newBody','newSeparatePanel',
+           'originalPoseBodyContactCount','originalPoseSeparatePanelContactCount','poseOriginalSelfDelta'])
+           assert.ok(Number.isSafeInteger(trial[key])&&trial[key]>=0);
+          assert.equal(trial.existingContactsNotCertifiedAsClear,true);
+          assert.equal(trial.continuousCollisionUnverified,true);
+          assert.equal(trial.noAutomaticAdmission,true);
+          assert.equal(trial.noContactWaived,true);
+          assert.equal(trial.releaseAuthorized,false);
+         }
+        }
+        const poseNames=mp.poses.map(p=>p.pose).join(',');
+        const poseCounts=key=>mp.poses.map(p=>p.trials.map(x=>x[key]).join(',')).join(' / ');
+        console.log('M2_ACTUAL_SOURCE_163_BONE_MULTIPOSE_COUNTS_ONLY',
+         engine+'-poses['+poseNames+']-moved['+
+         mp.poses.map(p=>p.actualSkinnedGarmentVerticesMoved).join(',')+
+         ']-self['+poseCounts('newSelf')+
+         ']-body['+poseCounts('newBody')+
+         ']-panels['+poseCounts('newSeparatePanel')+']');
         const micro=k=>last.microVariants.map(v=>v[k]).join(',');
         console.log('M2_EXACT_LAST_PAIR_MICRO_DEPTH_COUNTS_ONLY',
          engine+'-microMillimeters[0.5,0.5,1,1]-direction[sep,rev,sep,rev]'+
