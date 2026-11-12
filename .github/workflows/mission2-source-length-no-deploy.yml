@@ -21,6 +21,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-upstream-face-quality-trace-20261111-HOLD
     - research/mission2-stage-blend-feasibility-20261111-HOLD
     - research/mission2-original-triangle-skin-provenance-20261111-HOLD
+    - research/mission2-source-topology-triage-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -467,6 +468,30 @@ jobs:
           assert.equal(s[field],s.byGarmentMesh.reduce((a,b)=>a+b[byMeshField],0));
         }
         const s=r.evidence.find(e=>e.width===390).safeStageAreaProvenance;
+        const q=s.sourceTopologyQuality;
+        assert.equal(q.totalSourceFaces,s.totalOriginalSourceFaces);
+        assert.equal(q.originalLocalTinyFaces,s.sourceLocalSmallAtAnatomicalConstruction);
+        assert.equal(Object.values(q.tinyShape).reduce((a,b)=>a+b,0),q.originalLocalTinyFaces);
+        assert.equal(q.byMesh.length,s.byGarmentMesh.length);
+        assert.equal(q.byMesh.reduce((n,m)=>n+m.localSmallFaces,0),q.originalLocalTinyFaces);
+        assert.equal(q.sourceBoundaryFaceCount,
+         q.byMesh.reduce((n,m)=>n+m.sourceBoundaryFaceCount,0));
+        assert.equal(q.sourceNonManifoldFaceCount,
+         q.byMesh.reduce((n,m)=>n+m.sourceNonManifoldFaceCount,0));
+        assert.equal(q.noGeometryChanged,true);
+        assert.equal(q.noCollisionWaived,true);
+        assert.equal(q.exactIndexedAdjacencyNotPhysicalSewing,true);
+        assert.equal(q.releaseAuthorized,false);
+        assert.equal(s.noMeshRepairApplied,true);
+        assert.equal(JSON.stringify(s).includes('localXYZ'),false);
+        console.log('M2_NATIVE_SOURCE_TOPOLOGY_COUNTS_ONLY',
+         engine+'-micro['+q.tinyShape.pointMicro+
+         ']-edge['+q.tinyShape.nearCoincidentEdge+
+         ']-sliver['+q.tinyShape.thinSliver+
+         ']-wellShapedSmall['+q.tinyShape.smallButWellShaped+
+         ']-smallBoundary['+q.localTinyBoundaryFaces+
+         ']-smallInterior['+q.localTinyInteriorFaces+
+         ']-smallNonManifold['+q.localTinyNonManifoldFaces+']');
         assert.equal(s.sourceWorldPosedSmallAtAnatomicalConstruction,s.smallAtAnatomicalConstruction);
         assert.equal(s.sourceLocalSmallOnlyBeforePose+s.sourceSmallInBothLocalAndWorldPose,
          s.sourceLocalSmallAtAnatomicalConstruction);
