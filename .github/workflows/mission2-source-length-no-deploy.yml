@@ -27,6 +27,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-counterfactual-short-edge-depth-20261111-HOLD
     - research/mission2-neighborhood-depth-relaxation-20261111-HOLD
     - research/mission2-one-ring-weight-sweep-20261112-HOLD
+    - research/mission2-persistent-contact-depth-direction-20261112-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -248,6 +249,7 @@ jobs:
         PHOTO_STAGE_AREA_AUDIT: '1'
         PHOTO_SHORT_EDGE_TRIAL: '1'
         PHOTO_NEIGHBOR_RELAXATION: '1'
+        PHOTO_RESIDUAL_DIRECTION_TRIAL: '1'
         MISSION2_PERFORMANCE: '0'
       run: |
         node scripts/test-native-3d-05-browser.mjs
@@ -501,6 +503,62 @@ jobs:
           'featherNewSelfContacts'])
           assert.ok(Number.isSafeInteger(x[metric])&&x[metric]>=0);
         }
+        assert.equal(cf.predeclaredDirectionVariantsOnly,true);
+        assert.equal(cf.noAutomaticDirectionSelection,true);
+        assert.equal(cf.residualPairDirectionSweep.length,2);
+        assert.deepEqual(cf.residualPairDirectionSweep.map(v=>v.directionHypothesis),
+         ['separate','reverse']);
+        const classified=cf.residualGeometryClassification;
+        assert.ok(classified,'Actual posed residual geometry classification required');
+        assert.equal(Object.values(classified.byContactGeometry).reduce((sum,x)=>sum+x,0),
+         n.featherNewSelfContacts);
+        assert.equal(classified.byStagedCoincidentCorners.reduce((sum,x)=>sum+x,0),
+         n.featherNewSelfContacts);
+        assert.equal(classified.byOriginalCoincidentCorners.reduce((sum,x)=>sum+x,0),
+         n.featherNewSelfContacts);
+        assert.equal(classified.residualOriginalSourceFaceCount,n.residualUniqueOriginalSourceFaces);
+        assert.equal(classified.noSewnSeamOrPhysicalPenetrationInference,true);
+        assert.equal(classified.releaseAuthorized,false);
+        for(const d of cf.residualPairDirectionSweep){
+         assert.equal(d.residualOriginalSelfContactPairs,n.featherNewSelfContacts);
+         assert.equal(d.oneRing50NewSelfPairs,n.featherNewSelfContacts);
+         assert.equal(d.originalProposalNewSelfPairs,n.originNewSelfContacts);
+         assert.equal(d.maximumDepthMeters,.003);
+         assert.ok(d.maximumAppliedLocalZMeters<=.00300001);
+         assert.equal(d.nearEqualLocalDepthResidualPairs+
+          d.differentLocalDepthResidualPairs,d.residualOriginalSelfContactPairs);
+         assert.equal(d.retainedOneRingOriginalPairKeys+d.newVersusOneRingPairKeys,
+          d.adjustedNewSelfPairs);
+         assert.ok(d.retainedOneRingOriginalPairKeys<=n.featherNewSelfContacts);
+         assert.equal(d.residualOriginalSourceFacesByMesh.reduce((s,x)=>s+x,0),
+          d.residualOriginalSourceFaces);
+         assert.equal(d.distinctOriginalSourceFacesByMesh.reduce((s,x)=>s+x,0),
+          d.distinctOriginalSourceFaces);
+         assert.equal(d.residualOriginalFaceKeysNeverExported,true);
+         assert.equal(d.originalSourcePairIdentityComparedPrivately,true);
+         assert.equal(d.sourcePhotoXYBitIdentical,true);
+         assert.equal(d.noGeometryApplied,true);
+         assert.equal(d.counterfactualNeverApplied,true);
+         assert.equal(d.noAutomaticDirectionSelection,true);
+         assert.equal(d.unchangedFullBodyPanelSelfCollisionVeto,true);
+         assert.equal(d.notAdmissibleFor3DOrRelease,true);
+         assert.equal(d.noContactWaived,true);
+         assert.equal(d.releaseAuthorized,false);
+         for(const metric of ['adjustedNewSelfPairs','adjustedNewBodyPairs',
+          'adjustedNewSeparatePanelPairs'])
+          assert.ok(Number.isSafeInteger(d[metric])&&d[metric]>=0);
+        }
+        const directionValues=k=>cf.residualPairDirectionSweep.map(v=>v[k]).join(',');
+        console.log('M2_PERSISTENT_SOURCE_PAIR_DIRECTION_CONTACT_COUNTS_ONLY',
+         engine+'-baseSelf['+n.featherNewSelfContacts+
+         ']-directionSelf['+directionValues('adjustedNewSelfPairs')+
+         ']-body['+directionValues('adjustedNewBodyPairs')+
+         ']-panels['+directionValues('adjustedNewSeparatePanelPairs')+
+         ']-retained['+directionValues('retainedOneRingOriginalPairKeys')+
+         ']-newPairs['+directionValues('newVersusOneRingPairKeys')+
+         ']-newFaces['+directionValues('residualOriginalSourceFaces')+
+         ']-posedDegenerate['+classified.byContactGeometry.degenerate+
+         ']-posedCoplanar['+classified.byContactGeometry.nearCoplanarOverlap+']');
         const sweep=(k)=>cf.oneRingSweep.map(v=>v[k]).join(',');
         console.log('M2_ONE_RING_SWEEP_CONTACT_COUNTS_ONLY',
          engine+'-weights[25,50,75]-self['+sweep('featherNewSelfContacts')+
