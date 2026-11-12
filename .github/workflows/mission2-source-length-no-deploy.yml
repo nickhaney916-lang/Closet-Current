@@ -19,6 +19,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-source-seam-contact-typing-20261111-HOLD
     - research/mission2-original-face-area-provenance-20261111-HOLD
     - research/mission2-upstream-face-quality-trace-20261111-HOLD
+    - research/mission2-stage-blend-feasibility-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
