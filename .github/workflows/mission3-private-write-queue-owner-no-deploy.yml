@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and five-path no-deploy allowlist
+      - name: Exact parent and seven-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-private-write-queue-owner-lease.test.cjs|scripts/test-mission3-private-write-queue-owner-browser.mjs|research/mission3-private-write-queue-owner-lease/REPORT.md|.github/workflows/mission3-private-write-queue-owner-no-deploy.yml) ;;
+              public/app.js|tests/mission3-private-write-queue-owner-lease.test.cjs|tests/auth-review-session-36.test.mjs|tests/wardrobe-index-02.test.mjs|scripts/test-mission3-private-write-queue-owner-browser.mjs|research/mission3-private-write-queue-owner-lease/REPORT.md|.github/workflows/mission3-private-write-queue-owner-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -34,7 +34,7 @@ jobs:
           node --check public/app.js
           node --check tests/mission3-private-write-queue-owner-lease.test.cjs
           node --check scripts/test-mission3-private-write-queue-owner-browser.mjs
-          node --test tests/mission3-private-write-queue-owner-lease.test.cjs tests/mission3-mobile-media-interruption.test.cjs tests/mission3-gallery-decode-session-cancellation.test.cjs tests/mission3-video-private-draft-lease.test.cjs tests/mission3-late-owner-session-capture.test.cjs tests/photo-import.test.cjs tests/mission3-capture-operation-epoch.test.cjs tests/mission3-recognition-session-epoch.test.cjs tests/mission3-camera-interruption.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs tests/capture.test.cjs tests/capture-proof-01.test.mjs
+          node --test tests/auth-review-session-36.test.mjs tests/wardrobe-index-02.test.mjs tests/mission3-private-write-queue-owner-lease.test.cjs tests/mission3-mobile-media-interruption.test.cjs tests/mission3-gallery-decode-session-cancellation.test.cjs tests/mission3-video-private-draft-lease.test.cjs tests/mission3-late-owner-session-capture.test.cjs tests/photo-import.test.cjs tests/mission3-capture-operation-epoch.test.cjs tests/mission3-recognition-session-epoch.test.cjs tests/mission3-camera-interruption.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs tests/capture.test.cjs tests/capture-proof-01.test.mjs
 
   native-signed-and-browser:
     runs-on: ubuntu-24.04
@@ -80,7 +80,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-private-write-queue-owner-lease.test.cjs|scripts/test-mission3-private-write-queue-owner-browser.mjs|research/mission3-private-write-queue-owner-lease/REPORT.md|.github/workflows/mission3-private-write-queue-owner-no-deploy.yml) ;;
+              public/app.js|tests/mission3-private-write-queue-owner-lease.test.cjs|tests/auth-review-session-36.test.mjs|tests/wardrobe-index-02.test.mjs|scripts/test-mission3-private-write-queue-owner-browser.mjs|research/mission3-private-write-queue-owner-lease/REPORT.md|.github/workflows/mission3-private-write-queue-owner-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
