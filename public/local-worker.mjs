@@ -3,9 +3,9 @@ let scannerStage='idle';
 // Register the message handler before downloading dependencies, so import
 // failures become explicit job errors instead of an unexplained setup wait.
 let classifierPromise,RawImageClass;
-async function load(){
+async function load(requestId){
  if(!classifierPromise)classifierPromise=(async()=>{
-  scannerStage='runtime_import';self.postMessage({type:'progress',stage:'runtime',phase:scannerStage});
+  scannerStage='runtime_import';self.postMessage({type:'progress',id:requestId,stage:'runtime',phase:scannerStage});
   const {CLIPVisionModelWithProjection,AutoProcessor,env,RawImage}=await import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js');
   RawImageClass=RawImage;
   env.allowLocalModels=false;env.useBrowserCache=true;
@@ -17,7 +17,7 @@ async function load(){
   const processor=await AutoProcessor.from_pretrained(metadata.model,{revision:metadata.revision});
   const vision=await CLIPVisionModelWithProjection.from_pretrained(metadata.model,{revision:metadata.revision,device:'wasm',dtype:'q8',progress_callback:event=>{
    const weights=String(event.file||'').endsWith('.onnx');if(weights)scannerStage='model_download';
-   self.postMessage({type:'progress',stage:weights?'weights':'runtime',phase:scannerStage,percent:weights&&Number.isFinite(event.progress)?Math.round(event.progress):null});
+   self.postMessage({type:'progress',id:requestId,stage:weights?'weights':'runtime',phase:scannerStage,percent:weights&&Number.isFinite(event.progress)?Math.round(event.progress):null});
   }});
   const whole=makeVectorScorer(async image=>{
    const fitted=await prepareRecognitionPhoto(image,RawImageClass),result=await vision(await processor(fitted));
@@ -48,12 +48,18 @@ async function load(){
 }
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
+ const started=Date.now();
  try{
-  const model=await load();
-  if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
-  if(!['classify','features','benchmark-frames'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
+  // Reject malformed or over-budget payloads BEFORE downloading large models.
+  // No photo bytes, labels or owner identifiers enter runtime diagnostics.
+  scannerStage='input';
+  if(!request||typeof request!=='object'||!['load','classify','features','benchmark-frames'].includes(request.type)||
+   (request.type!=='load'&&(typeof request.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(request.image)||request.image.length>12000000)))
+    throw Error('Invalid captured image.');
+  const loadingAt=Date.now(),model=await load(request.id),loadMs=Date.now()-loadingAt;
+  if(request.type==='load'){self.postMessage({type:'ready',id:request.id,runtimeMetrics:{loadMs,totalMs:Date.now()-started}});return;}
   scannerStage='catalog_import';const {recognizeWithRecovery,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
-  scannerStage='identify';const image=await RawImageClass.read(request.image);
+  scannerStage='identify';const decodeAt=Date.now(),image=await RawImageClass.read(request.image),decodeMs=Date.now()-decodeAt;
   if(request.type==='benchmark-frames'){
    // Offline test only. Do not save garments or alter production recognition.
    const {localCandidates}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
@@ -64,10 +70,10 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
     const ranked=await model.originalCenter(framed,labels);
     variants.push({contentSize:size,top:ranked.slice(0,5)});
    }
-   self.postMessage({type:'result',id:request.id,variants});return;
+   self.postMessage({type:'result',id:request.id,variants,runtimeMetrics:{loadMs,decodeMs,totalMs:Date.now()-started}});return;
   }
-  if(request.type==='features'){const features=await model.whole.features(image);self.postMessage({type:'result',id:request.id,recognitionMemory:{version:1,modelKey:model.modelKey,features}});return;}
-  const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
+  if(request.type==='features'){const features=await model.whole.features(image);self.postMessage({type:'result',id:request.id,recognitionMemory:{version:1,modelKey:model.modelKey,features},runtimeMetrics:{loadMs,decodeMs,totalMs:Date.now()-started}});return;}
+  const inferenceAt=Date.now(),classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
   const result=await classify(model.whole,image,{
    hint:request.hint,
    confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,coatNearFullModel:model.coatNearFull,
@@ -75,8 +81,9 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
   });
+  const inferenceMs=Date.now()-inferenceAt;
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
-  self.postMessage({type:'result',id:request.id,...result,recognitionMemory});
+  self.postMessage({type:'result',id:request.id,...result,recognitionMemory,runtimeMetrics:{loadMs,decodeMs,inferenceMs,totalMs:Date.now()-started}});
  }catch(error){
   self.postMessage({type:'error',id:request.id,stage:scannerStage,code:scannerErrorCode(error,scannerStage),text:'Recognition could not finish on this device. Try again or use Adjust.'});
  }

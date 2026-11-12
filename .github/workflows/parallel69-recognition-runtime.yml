@@ -1,0 +1,39 @@
+name: Parallel 69 recognition runtime NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/local-worker.mjs'
+      - 'public/outfit-worker.mjs'
+      - 'public/benchmark-runner.mjs'
+      - 'tests/recognition-worker.test.mjs'
+      - 'tests/outfit-worker.test.mjs'
+      - 'scripts/summarize-recognition-runtime.mjs'
+      - '.github/workflows/parallel69-recognition-runtime.yml'
+      - 'docs/parallel69-runtime-report.md'
+permissions:
+  contents: read
+jobs:
+  regression-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact checked-out commit
+        run: |
+          git rev-parse HEAD
+          git status --porcelain
+      - name: Verify source syntax
+        run: |
+          node --check public/local-worker.mjs
+          node --check public/outfit-worker.mjs
+          node --check public/benchmark-runner.mjs
+          node --check scripts/summarize-recognition-runtime.mjs
+      - name: All Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Static application build only, never deploy
+        run: node scripts/build.mjs
