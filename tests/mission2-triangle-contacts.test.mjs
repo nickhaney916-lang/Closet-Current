@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -963,4 +963,67 @@ test('P2-C20 original contacted short edge first appears in owner mask, with gen
  assert.throws(()=>classifyNewSourceSelfContactTypes(root,meshObjects,new Map(),proof,
   {sourceAreaStages:[before,photo,stale]}),
   /owner stage changed before depth trial/);
+});
+
+
+test('P2-C21 depth-only counterfactual preserves photographed XY and source geometry while changing only contact-linked short-edge Z',()=>{
+ const {root,garment}=simplePose();
+ const build=(positions)=>{
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  const n=positions.length/3;
+  const weights=new Float32Array(n*4);for(let i=0;i<n;i++)weights[i*4]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+  m.userData.work56Garment=true;m.bind(garment.skeleton);root.add(m);return m;
+ };
+ const m=build([
+  0,0,0, 1,0,0, 0,.000001,0,
+  2,0,0, 3,0,0, 2,1,0
+ ]);
+ const unchanged=m.geometry.attributes.position.array.slice(),staged=unchanged.slice();
+ staged[2]=.02;staged[8]=.009;staged[3*3+2]=.02;
+ const savedStaged=staged.slice(),overrides=new Map([[m,staged]]);
+ const newContacts={newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1'],
+  completedUniqueAffectedPairComparison:true,originalSourceFaceIdentity:true,sampledPoseOnly:true};
+ const result=buildContactLinkedShortEdgeDepthCounterfactual([m],overrides,newContacts);
+ assert.equal(result.countOnly.originallyNewSelfContactPairs,1);
+ assert.equal(result.countOnly.implicatedNearEdgeVertices,2);
+ assert.equal(result.countOnly.actuallyChangedDepthVertices,2);
+ assert.equal(result.countOnly.maximumDepthAdjustmentMeters>0,true);
+ assert.equal(result.countOnly.maximumDepthAdjustmentMeters<=.012000001,true);
+ assert.equal(result.countOnly.originalSourcePhotoXYBitIdentical,true);
+ assert.equal(result.countOnly.originalSourceAndStagedArraysUnchanged,true);
+ assert.equal(result.countOnly.seamAndBoneWeightsUnchanged,true);
+ assert.equal(result.countOnly.notAdmissibleFor3DOrRelease,true);
+ assert.equal(result.countOnly.releaseAuthorized,false);
+ const alternate=result.privateOverrides.get(m);
+ assert.ok(Math.abs(alternate[2]-(staged[2]-.012))<1e-8);
+ assert.equal(alternate[8],unchanged[8]);
+ assert.equal(alternate[3*3+2],staged[3*3+2]);
+ for(let i=0;i<unchanged.length/3;i++){
+  assert.equal(alternate[3*i],savedStaged[3*i]);
+  assert.equal(alternate[3*i+1],savedStaged[3*i+1]);
+ }
+ assert.deepEqual(m.geometry.attributes.position.array,unchanged);
+ assert.deepEqual(staged,savedStaged);
+ assert.equal(JSON.stringify(result.countOnly).includes('newlyIntersectingSourceKeys'),false);
+ assert.equal(JSON.stringify(result.countOnly).includes('sourceSHA256'),false);
+ assert.equal(JSON.stringify(result.countOnly).includes('skinIndex'),false);
+ // A counterfactual Map must NEVER enter the signed browser/owner receipt.
+ assert.equal(Object.hasOwn(result.countOnly,'privateOverrides'),false);
+ assert.throws(()=>buildContactLinkedShortEdgeDepthCounterfactual([m],overrides,
+  {...newContacts,newlyIntersectingSourceKeys:['0:0:9000']}),
+  /outside bounded original geometry/);
+ assert.throws(()=>buildContactLinkedShortEdgeDepthCounterfactual([m],new Map(),
+  newContacts),/complete private original self contact delta required/);
+ const corrupt=new Float32Array(staged);corrupt[7]=NaN;
+ assert.throws(()=>buildContactLinkedShortEdgeDepthCounterfactual([m],
+  new Map([[m,corrupt]]),newContacts),/actual finite 163-bone original/);
+ const none=buildContactLinkedShortEdgeDepthCounterfactual([m],overrides,
+  {...newContacts,newlyIntersecting:0,newlyIntersectingSourceKeys:[]});
+ assert.equal(none.countOnly.implicatedNearEdgeVertices,0);
+ assert.equal(none.countOnly.actuallyChangedDepthVertices,0);
+ assert.deepEqual(none.privateOverrides.get(m),savedStaged);
 });

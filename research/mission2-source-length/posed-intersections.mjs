@@ -763,6 +763,123 @@ function traceContactLinkedNearEdges(meshes,contactFaceKeys,sourceAreaStages){
  });
 }
 
+
+/**
+ * P2-C21: NOT A FIT OR REPAIR. A bounded depth-only, disposable counterfactual
+ * tests whether allowing a few contact-linked short-edge vertices to retain
+ * some original Z would change the exact NEW 163-bone collision results.
+ * Source X/Y (photo silhouette), UV, skin weights and all garment bytes remain
+ * unchanged. A caller MUST independently re-audit body, panel AND self pairs.
+ *
+ * The returned Map holds private source vertex positions. Never serialize or
+ * attach it to an owner wardrobe, mobile console or persistent diagnostics.
+ */
+export function buildContactLinkedShortEdgeDepthCounterfactual(
+ meshes,overrides,selfDelta,{maxDepthChange=.012,maxFaces=128}={}){
+ if(!Array.isArray(meshes)||meshes.length<1||meshes.length>32||
+    new Set(meshes).size!==meshes.length||
+    !(overrides instanceof Map)||overrides.size!==meshes.length||
+    !Number.isFinite(maxDepthChange)||maxDepthChange<=0||maxDepthChange>.024||
+    !Number.isSafeInteger(maxFaces)||maxFaces<1||maxFaces>4096||
+    selfDelta?.completedUniqueAffectedPairComparison!==true||
+    selfDelta?.originalSourceFaceIdentity!==true||
+    selfDelta?.sampledPoseOnly!==true||
+    !Array.isArray(selfDelta.newlyIntersectingSourceKeys)||
+    selfDelta.newlyIntersectingSourceKeys.length!==selfDelta.newlyIntersecting||
+    !Number.isSafeInteger(selfDelta.newlyIntersecting)||
+    selfDelta.newlyIntersecting<0||selfDelta.newlyIntersecting>maxFaces||
+    new Set(selfDelta.newlyIntersectingSourceKeys).size!==selfDelta.newlyIntersecting)
+  throw Error('M2 C21 bounded complete private original self contact delta required');
+ const affected=meshes.map(()=>new Set()),sourceFaces=meshes.map(()=>new Set());
+ const inRange=(id,count)=>Number.isSafeInteger(id)&&id>=0&&id<count;
+ for(let m=0;m<meshes.length;m++){
+  const mesh=meshes[m],p=mesh?.geometry?.getAttribute('position'),
+   staged=overrides.get(mesh);
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||
+     !p?.isBufferAttribute||p.itemSize!==3||
+     p.isInterleavedBufferAttribute||!p.array?.every(Number.isFinite)||
+     !(staged instanceof Float32Array||staged instanceof Float64Array)||
+     staged.length!==p.count*3||!staged.every(Number.isFinite))
+   throw Error('M2 C21 actual finite 163-bone original and disposable staged garment required');
+ }
+ for(const key of selfDelta.newlyIntersectingSourceKeys){
+  if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+   throw Error('M2 C21 canonical source face pair identity required');
+  const [m,a,b]=key.split(':').map(Number);
+  if(![m,a,b].every(Number.isSafeInteger)||m>=meshes.length||a>=b)
+   throw Error('M2 C21 invalid contact source pair identity');
+  const mesh=meshes[m],g=mesh.geometry,p=g.getAttribute('position'),
+   idx=g.index?.array,n=idx?idx.length/3:p.count/3;
+  if(!Number.isSafeInteger(n)||n<1||n>600000||!inRange(b,n))
+   throw Error('M2 C21 contact source face outside bounded original geometry');
+  for(const face of [a,b]){
+   if(sourceFaces[m].has(face))continue;
+   sourceFaces[m].add(face);
+   const ids=[0,1,2].map(k=>idx?idx[face*3+k]:face*3+k);
+   if(ids.some(v=>!inRange(v,p.count)))
+    throw Error('M2 C21 noncanonical source face vertex');
+   const arr=p.array;
+   const lenSq=(u,v)=>{
+    const x=arr[3*u]-arr[3*v],y=arr[3*u+1]-arr[3*v+1],z=arr[3*u+2]-arr[3*v+2];
+    return x*x+y*y+z*z;
+   };
+   const pairs=[[ids[0],ids[1]],[ids[1],ids[2]],[ids[2],ids[0]]],
+    squared=pairs.map(([u,v])=>lenSq(u,v)),
+    minimum=Math.min(...squared),maximum=Math.max(...squared);
+   const [i,j,k]=ids;
+   const ux=arr[3*j]-arr[3*i],uy=arr[3*j+1]-arr[3*i+1],uz=arr[3*j+2]-arr[3*i+2],
+    vx=arr[3*k]-arr[3*i],vy=arr[3*k+1]-arr[3*i+1],vz=arr[3*k+2]-arr[3*i+2],
+    nx=uy*vz-uz*vy,ny=uz*vx-ux*vz,nz=ux*vy-uy*vx,
+    crossSq=nx*nx+ny*ny+nz*nz;
+   if(![...squared,crossSq].every(Number.isFinite))
+    throw Error('M2 C21 nonfinite original local source triangle');
+   if(crossSq<1e-10&&minimum<1e-8&&maximum>=1e-8){
+    for(const vertex of pairs[squared.indexOf(minimum)])affected[m].add(vertex);
+   }
+  }
+ }
+ const counterfactual=new Map();
+ let affectedVertices=0,changedVertices=0,changedZMaximum=0;
+ for(let m=0;m<meshes.length;m++){
+  const mesh=meshes[m],original=mesh.geometry.getAttribute('position').array,
+   next=overrides.get(mesh),copy=next.slice();
+  affectedVertices+=affected[m].size;
+  for(const vertex of affected[m]){
+   const offset=vertex*3+2,delta=Math.max(-maxDepthChange,
+    Math.min(maxDepthChange,original[offset]-next[offset]));
+   if(!Number.isFinite(delta))throw Error('M2 C21 counterfactual nonfinite bounded source depth');
+   if(Math.abs(delta)>1e-12){
+    copy[offset]+=delta;changedVertices++;
+    changedZMaximum=Math.max(changedZMaximum,Math.abs(delta));
+   }
+  }
+  if(!copy.every(Number.isFinite)||
+     Array.from({length:copy.length/3},(_,i)=>i).some(i=>
+      copy[3*i]!==next[3*i]||copy[3*i+1]!==next[3*i+1]))
+   throw Error('M2 C21 photographed X/Y must remain byte-identical');
+  counterfactual.set(mesh,copy);
+ }
+ if(affectedVertices>maxFaces*4||changedZMaximum>maxDepthChange+1e-9)
+  throw Error('M2 C21 private source counterfactual trial out of safety bounds');
+ return Object.freeze({
+  privateOverrides:counterfactual,
+  countOnly:Object.freeze({
+   originallyNewSelfContactPairs:selfDelta.newlyIntersecting,
+   implicatedNearEdgeVertices:affectedVertices,
+   actuallyChangedDepthVertices:changedVertices,
+   maximumDepthAdjustmentMeters:changedZMaximum,
+   testedDepthAdjustmentCapMeters:maxDepthChange,
+   originalSourcePhotoXYBitIdentical:true,
+   originalSourceAndStagedArraysUnchanged:true,
+   seamAndBoneWeightsUnchanged:true,
+   originalPhotoShapeAndClothNotCertified:true,
+   requiresFullBodyPanelSelfContactReaudit:true,
+   notAdmissibleFor3DOrRelease:true,
+   noContactWaived:true,releaseAuthorized:false
+  })
+ });
+}
+
 export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
  {maxPairs=4096,sourceAreaStages=null}={}){
  if(!root||typeof root.updateMatrixWorld!=='function'||
