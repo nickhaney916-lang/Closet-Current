@@ -1,11 +1,18 @@
 'use strict';
 /* Parallel #73 isolated research. Advisory only; never alters or stores source pixels. */
 (function(root){
- const VERSION='P73-1';
+ const VERSION='P73-2';
+ // EXIF orientation 5–8 rotates a rectangular source by 90 degrees.
+ function orientedDimensions(width,height,orientation=1){
+  if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||
+     !Number.isInteger(orientation)||orientation<1||orientation>8)
+   throw Error('Invalid image dimensions or EXIF orientation.');
+  return orientation>=5?{width:height,height:width}:{width,height};
+ }
  const number=(value)=>Math.round(value*1000)/1000;
  function analyzePixels(pixels,width,height,sourceWidth=width,sourceHeight=height){
-  if(!Number.isInteger(width)||!Number.isInteger(height)||width<8||height<8||width>512||height>512||
-     !pixels||pixels.length!==width*height*4||!Number.isInteger(sourceWidth)||!Number.isInteger(sourceHeight)||
+  if(!Number.isInteger(width)||!Number.isInteger(height)||width<1||height<1||width>512||height>512||
+     !pixels||!ArrayBuffer.isView(pixels)||pixels.BYTES_PER_ELEMENT!==1||pixels.length!==width*height*4||!Number.isInteger(sourceWidth)||!Number.isInteger(sourceHeight)||
      sourceWidth<1||sourceHeight<1||sourceWidth>100000||sourceHeight>100000)
    throw Error('Invalid bounded quality sample.');
   const gray=new Uint8Array(width*height),opaque=new Uint8Array(width*height);
@@ -43,7 +50,7 @@
   function add(code,text,evidence){advice.push({code,text,evidence});}
   if(Math.min(sourceWidth,sourceHeight)<640)
    add('limited-resolution','This photo has limited resolution. If details are hard to see, try a higher-resolution photo.','shortest side under 640 pixels');
-  if(count>=width*height*.65&&p90!==null){
+  if(width>=8&&height>=8&&count>=width*height*.65&&p90!==null){
    if(p90<105&&dark/count>.7)
     add('low-light','Much of the photo is very dark. Try more even light, then check the garment color in Adjust.','upper brightness percentile below 105');
    if(p10>215&&bright/count>.6)
@@ -57,7 +64,7 @@
    notMeasured:['garment boundary or cut-off hems','background clutter','actual motion blur','true garment color','multiple garments','human-rated usability']};
  }
  function enabled(){return root.document?.getElementById('photoQualityResearch73')?.checked===true;}
- const api={VERSION,enabled,analyzePixels};
+ const api={VERSION,enabled,analyzePixels,orientedDimensions};
  root.PhotoQualityResearch=api;
  if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(typeof window!=='undefined'?window:globalThis);
