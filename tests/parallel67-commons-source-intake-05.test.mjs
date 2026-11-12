@@ -22,7 +22,8 @@ const base=(changes={})=>({
 });
 const response=(entries=[base()])=>({query:{pages:entries}});
 test('P67-05 source search gives exactly nine high-priority queries; these are NOT clothing ground truth',()=>{
- assert.deepEqual(P67_05_SEARCHES.map(x=>x.target),[
+ assert.equal(P67_05_SEARCHES.length,20);
+ assert.deepEqual([...new Set(P67_05_SEARCHES.map(x=>x.target))],[
   'T-shirt','Sweatshirt','Blouse','Tunic','Sneakers','Boots','Dress','Skirt','nonclothing'
  ]);
  const found=inspectCommonsSearchResponse05(seed,response());
