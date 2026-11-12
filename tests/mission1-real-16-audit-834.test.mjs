@@ -51,8 +51,8 @@ test('P834 deterministic all-original comparison merges interleaved 16 sources w
  assert.equal(result.browsers.chromium.categoryMatches,1);
  assert.equal(result.browsers.webkit.categoryMatches,0);
  assert.deepEqual(result.sourceIds,truth.map(x=>x.id));
- assert.equal(result.crossBrowser.categoryAgreement,15);
- assert.equal(result.crossBrowser.subtypeAgreement,15);
+ assert.equal(result.crossBrowser.samePredictionCategoryIncludingAbstentions,15);
+ assert.equal(result.crossBrowser.samePredictionSubtypeIncludingAbstentions,15);
  assert.equal(result.crossBrowser.failedRuntimeEither.length,0);
  assert.equal(result.noHumanBlindAccuracyClaim,true);
 });
