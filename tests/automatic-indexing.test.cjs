@@ -122,3 +122,29 @@ test('outfit recognition uses original crop texture while masked garment color w
  c.candidate('isolated-display',{outfitSourceId:'capture',recognitionPhoto:{image:'raw-textured-crop'},originalPhoto:{image:'whole-outfit'},cropBounds:{x:.1,y:.2,width:.3,height:.4},colorEstimate:{color:'Blue'},segmentHint:{categories:['Tops'],types:[],clipped:false}});await done(c);
  assert.equal(modelImage,'raw-textured-crop');assert.equal(qualityImage,'raw-textured-crop');assert.equal(stored.length,1);assert.equal(stored[0].image,'isolated-display');assert.equal(stored[0].color,'Blue');assert.equal(stored[0].name,'Blue T-shirt');assert.equal(stored[0].colorMethod,'garment-mask');assert.equal(stored[0].originalPhoto.image,'whole-outfit');assert.equal(stored[0].recognitionPhoto.image,'raw-textured-crop');
 });
+
+test('P836 review-first trial retains confident garment as draft instead of silently saving',async()=>{
+ const {c,stored}=setup();c.reviewFirst836=true;c.candidate('one');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Tops');assert.equal(c.batch[0].itemType,'T-shirt');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.match(c.batch[0].localStatus,/Tap Adjust to confirm/);
+});
+test('P836 review-first trial retains category-only plus color without auto admission',async()=>{
+ const {c,stored}=setup({
+  quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),
+  result:{strong:false,categoryConfirmed:true,categoryOnly:true,choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],details:{}}
+ });
+ c.reviewFirst836=true;c.candidate('one');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Tops');assert.equal(c.batch[0].itemType,'Unknown');
+ assert.equal(c.batch[0].color,'Blue');assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.match(c.batch[0].localStatus,/Tap Adjust to confirm/);
+});
+test('P836 review-first trial respects a nonclothing/uncertain prediction and never saves',async()=>{
+ const {c,stored}=setup({result:{strong:false,choices:[],reason:'category_uncertain'}});
+ c.reviewFirst836=true;c.candidate('one');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);
+ assert.equal(c.batch[0].category,'Uncategorized');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,false);
+});
