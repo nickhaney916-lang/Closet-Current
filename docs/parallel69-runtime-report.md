@@ -18,8 +18,8 @@ The current `local-worker.mjs` serializes work and retains its FashionCLIP sessi
 ## Reproduction
 
 ```sh
-node --test tests/*.test.cjs tests/*.test.mjs
 node scripts/build.mjs
+node --test tests/*.test.cjs tests/*.test.mjs
 # With rights-cleared downloaded original photos and a browser with genuine model access:
 node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-reviewed-32.json benchmark/p69-before
 cp benchmark/p69-before/results.json /tmp/p69-before.json

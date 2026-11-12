@@ -33,7 +33,7 @@ jobs:
           node --check public/outfit-worker.mjs
           node --check public/benchmark-runner.mjs
           node --check scripts/summarize-recognition-runtime.mjs
-      - name: All Node regressions
-        run: node --test tests/*.test.cjs tests/*.test.mjs
       - name: Static application build only, never deploy
         run: node scripts/build.mjs
+      - name: All Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs

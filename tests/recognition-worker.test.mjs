@@ -21,7 +21,7 @@ function setup({width=500,decodeError=false,detailError=false}={}){
  const c={vectorsAPI,photoAPI,engine,self:{postMessage:x=>sent.push(x)},catalog,runtime,scannerErrorCode,URL};vm.createContext(c);
  const transformed=source.replace("import {scannerErrorCode} from './scanner-errors.mjs';",'').replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./vector-scorer.mjs'+version)",'await Promise.resolve(vectorsAPI)').replace("await import('./recognition-photo.mjs'+version)",'await Promise.resolve(photoAPI)').replace("await import('./recognition-engine.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(engine)').replaceAll('new URL(import.meta.url).search',"''");
  vm.runInContext(transformed,c);
- return {sent,calls,loads,async scan(){c.self.onmessage({data:{id:'test',type:'classify',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);return sent.find(x=>x.type==='result');}};
+ return {sent,calls,loads,c,async scan(){c.self.onmessage({data:{id:'test',type:'classify',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);return sent.find(x=>x.type==='result');}};
 }
 test('worker keeps classification but drops disagreeing and uncertain details',async()=>{
  const h=setup(),result=await h.scan();assert.equal(result.strong,true);assert.equal(result.choices[0].itemType,'T-shirt');assert.deepEqual({...result.details},{pattern:'Solid',sleeveLength:'Sleeveless'});
@@ -40,6 +40,7 @@ test('optional detail failure preserves confirmed garment identity without inven
 test('invalid and oversized recognition payloads fail before model initialization',async()=>{
  const h=setup();
  for(const request of [
+  null,
   {id:'bad-type',type:'unexpected',image:'data:image/jpeg;base64,AAAA'},
   {id:'bad-payload',type:'classify',image:'data:image/png;base64,AAAA'},
   {id:'too-large',type:'classify',image:'data:image/jpeg;base64,'+'A'.repeat(12000000)}

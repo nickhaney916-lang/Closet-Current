@@ -85,6 +85,6 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
   self.postMessage({type:'result',id:request.id,...result,recognitionMemory,runtimeMetrics:{loadMs,decodeMs,inferenceMs,totalMs:Date.now()-started}});
  }catch(error){
-  self.postMessage({type:'error',id:request.id,stage:scannerStage,code:scannerErrorCode(error,scannerStage),text:'Recognition could not finish on this device. Try again or use Adjust.'});
+  self.postMessage({type:'error',id:request?.id,stage:scannerStage,code:scannerErrorCode(error,scannerStage),text:'Recognition could not finish on this device. Try again or use Adjust.'});
  }
-}).catch(()=>{self.postMessage({type:'error',id:request.id,text:'Recognition stopped. Try again or use Adjust.'});});};
+}).catch(()=>{self.postMessage({type:'error',id:request?.id,text:'Recognition stopped. Try again or use Adjust.'});});};
