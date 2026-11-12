@@ -333,3 +333,20 @@ Re-audit the hypothetical, disposable corrected arrays with three independently 
 ### P2-C22 final-head measurements
 
 Pending full exact final commit CI evidence. No measured improvement may be claimed until the native original-source audit succeeds in both browsers.
+
+
+## P2-C23 — predeclared exact-source one-ring Z weight sweep and residual contact-pair accounting
+
+**Verified baseline:** [Mission 2 P2-C22 draft PR #907](https://github.com/nickhaney916-lang/Closet-Current/pull/907), exact head 23e7fa8b525965e45358fd341e2e5de4242ba359. [NO DEPLOY Actions #43156812548](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43156812548): 8/8 jobs and 1,550 full Node tests PASS. Independent Chromium and WebKit at 320/390/430 on the signed licensed-blouse fixture measured **27 new source-intrapanel contacts** on original proposed 3D length/depth, **19** after depth-only short-edge anchor hold, and **17** after 50% one-ring original indexed source-neighbor Z propagation; **no new body or separate garment panel contacts** in all three. Zero 3D candidates admitted, original photographs/wardrobe/2D fallback protected.
+
+**New engineering experiment:** For the identical previously rejected 8mm optical depth taper (25% source length, hem exponent 2) and identical original-contact-linked 16 source vertices, use exactly three deterministic, predeclared neighborhood weights **0.25, 0.50, 0.75**. Each is a fresh, isolated, bounded clone of the original P2-C21 short-edge hold (not successive edits), on which the original indexed-triangle one-ring Z correction is applied; X/Y remain bit-identical to the source-photographed proposal, original vertices and staged preview unchanged, 12mm anchor and 9mm neighbor caps unchanged. Index incidence, not coordinate proximity, defines neighbors: no bridging split seam or UV vertices.
+
+**Essential new residual truth:** After *each* weight, independently compute actual signed-original 163-bone contact relative to pristine source for (1) garment/body, (2) independently skinned garment panels, and (3) exact moved-original-triangle self contacts. Do not stop at a lower total: compare the true private original face-pair IDs to the first unsafe 27-pair proposal to count **retained original pair contacts** versus **newly introduced/different pairs**, plus the number of distinct implicated original faces **per garment source mesh**. This detects geometry changes that merely exchange one bad fold for another, without exposing original source face IDs or source XY/UV/JPEG/bones. The browser/CI receives only anonymous count arrays at weights 25/50/75 with fully reconciled totals and no source ID or photo data.
+
+**No optimization-based automatic approval:** A 75% neighborhood weight may reduce self-pairs yet distort local depth or introduce new source contacts elsewhere; lower numbers are not sufficient for release. Never select or commit the least-bad candidate. Preserve all original body/panel/self vetoes, all original full-res photo/owner/wardrobe evidence, unphotographed rear honesty and the private photo-backed 2D fallback. A single licensed blouse with simulated owner-review cutout cannot certify garments across categories, real user measurements, correct sewn UV seams, multi-pose dynamics, photo depth, photorealistic drape, physical mobile acceptance or family trial.
+
+**Acceptance before any numerical claim:** Full exact-HEAD Node regression, genuine Chromium/WebKit 320/390/430 signed original-photo browser checks, SHA pixel/screenshots, full source identity/count reconciliation, no-deploy GitHub Actions and release HOLD #255. This stage is a *bounded reproducible diagnostic sweep*, not production material or a repaired 3D garment.
+
+### P2-C23 final-head native measurements
+
+Pending full exact-final-head no-deploy CI with all three native weights and original-source residual pair provenance. Do not claim a best weight or corrected garment before results pass both engines.
