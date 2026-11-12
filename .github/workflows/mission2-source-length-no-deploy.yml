@@ -18,6 +18,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-hem-depth-taper-20261111-HOLD
     - research/mission2-source-seam-contact-typing-20261111-HOLD
     - research/mission2-original-face-area-provenance-20261111-HOLD
+    - research/mission2-upstream-face-quality-trace-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -58,6 +59,7 @@ jobs:
       depthTrial390: ${{ steps.depth_probe.outputs.report }}
       contactTyping390: ${{ steps.contact_typing_probe.outputs.report }}
       area390: ${{ steps.area_provenance_probe.outputs.report }}
+      sourceStages390: ${{ steps.source_stages_probe.outputs.report }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     container:
@@ -235,6 +237,7 @@ jobs:
         PHOTO_TRIANGLE_CONTACTS: '1'
         PHOTO_TRIANGLE_ADAPTIVE: '1'
         PHOTO_DEPTH_EXPERIMENT: '1'
+        PHOTO_STAGE_AREA_AUDIT: '1'
         MISSION2_PERFORMANCE: '0'
       run: |
         node scripts/test-native-3d-05-browser.mjs
@@ -256,6 +259,22 @@ jobs:
          const d=e.safeBodyLocality;
          assert.equal(e.nativeDepthExperiment,true);
          assert.equal(e.neverClaimedPhotographedDepth,true);
+         const stages=e.safeStageAreaProvenance;
+         assert.deepEqual(stages?.stages,[
+          'anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']);
+         assert.equal(stages.sourceTriangleIdentityUnchanged,true);
+         assert.equal(stages.noSourceFaceIdsCoordinatesOrOwnerFields,true);
+         assert.equal(stages.noCollisionWaived,true);
+         assert.equal(stages.releaseAuthorized,false);
+         assert.equal(stages.byGarmentMesh.length,3);
+         assert.equal(stages.totalOriginalSourceFaces,
+          stages.byGarmentMesh.reduce((n,m)=>n+m.sourceFaceCount,0));
+         assert.equal(stages.smallAfterPhotoFit,
+          stages.smallAtAnatomicalConstruction+stages.newlySmallDuringPhotoFit-
+           stages.recoveredDuringPhotoFit);
+         assert.equal(stages.smallAfterOwnerMaskFit,
+          stages.smallAfterPhotoFit+stages.newlySmallDuringOwnerMaskFit-
+           stages.recoveredDuringOwnerMaskFit);
          assert.equal(e.realSignedInSavedBoardRetained,true);
          assert.equal(e.originalJPEGRetained,true);
          assert.equal(e.originalPrivateOwnerRetained,true);
@@ -415,6 +434,42 @@ jobs:
         appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
         console.log('M2_SOURCE_FACE_AREA_PROVENANCE_AGGREGATE',report);
         NODE
+    - name: Report exact anatomical-versus-P62-versus-P190 unique source face area origins
+      id: source_stages_probe
+      run: |
+        node --input-type=module <<'NODE'
+        import assert from 'node:assert/strict';
+        import {readFileSync,appendFileSync} from 'node:fs';
+        const engine=process.env.PHOTO_SILHOUETTE62_BROWSER;
+        const r=JSON.parse(readFileSync('benchmark/user-photo-to-anatomical-3d-62/'+engine+'/results.json','utf8'));
+        assert.equal(r.sourceDepthExperiment,true);
+        assert.equal(r.evidence.length,3);
+        for(const e of r.evidence){
+         const s=e.safeStageAreaProvenance;
+         assert.equal(s.sourceAreaCrossSquaredThreshold,1e-10);
+         assert.equal(s.sourceTriangleIdentityUnchanged,true);
+         assert.equal(s.noSourceFaceIdsCoordinatesOrOwnerFields,true);
+         assert.equal(s.noCollisionWaived,true);
+         assert.equal(s.releaseAuthorized,false);
+         assert.equal(s.physicalClearanceVerified,false);
+         assert.equal(s.byGarmentMesh.length,3);
+         assert.equal(s.totalOriginalSourceFaces,s.byGarmentMesh.reduce((a,b)=>a+b.sourceFaceCount,0));
+         for(const [field,byMeshField] of [
+          ['smallAtAnatomicalConstruction','originalSmall'],
+          ['smallAfterPhotoFit','afterPhotoSmall'],
+          ['smallAfterOwnerMaskFit','afterOwnerSmall'],
+          ['newlySmallDuringPhotoFit','photoFitNewSmall'],
+          ['newlySmallDuringOwnerMaskFit','ownerFitNewSmall']])
+          assert.equal(s[field],s.byGarmentMesh.reduce((a,b)=>a+b[byMeshField],0));
+        }
+        const s=r.evidence.find(e=>e.width===390).safeStageAreaProvenance;
+        const report=engine+'-anatomy['+s.smallAtAnatomicalConstruction+
+         ']-photo['+s.smallAfterPhotoFit+']-owner['+s.smallAfterOwnerMaskFit+
+         ']-newP62['+s.newlySmallDuringPhotoFit+']-newP190['+s.newlySmallDuringOwnerMaskFit+']';
+        assert.ok(report.length<192);
+        appendFileSync(process.env.GITHUB_OUTPUT,'report='+report+'\n');
+        console.log('M2_ANATOMICAL_PHOTO_OWNER_AREA_STAGE_COUNTS',report);
+        NODE
     - uses: actions/upload-artifact@v4
       if: always()
       with:
@@ -462,3 +517,12 @@ jobs:
     timeout-minutes: 5
     steps:
     - run: echo "Unique-source face collapse provenance, never a collision waiver or owner-photo release"
+
+  show-owner-source-triangulation-stage-without-artifact:
+    needs: source-length-real-mobile-browser
+    if: ${{ always() && needs.source-length-real-mobile-browser.outputs.sourceStages390 != '' }}
+    name: "M2 upstream 3D face stages ${{ needs.source-length-real-mobile-browser.outputs.sourceStages390 }}"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+    - run: echo "Anonymous counts only; evidence does not prove cloth is release-ready"
