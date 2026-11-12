@@ -41,12 +41,13 @@ test('owner switch while first decode awaits never calls old owner candidate',as
  assert.equal(visited.includes('decode:second.jpg'),baseline);
 });
 test('revocation during candidate await produces no misleading duplicate or next decode',async()=>{
- const pending=deferred(),decoded=[],called=[];let active=true;
+ const pending=deferred(),entered=deferred(),decoded=[],called=[];let active=true;
  const ctx=context({});
  const task=ctx.readPhotoBatch(files,async file=>{decoded.push(file.name);return file.name;},
- async(_img,file)=>{called.push(file.name);return pending.promise;},{shouldContinue:()=>active});
- // The batch first awaits decode(); allow that microtask to reach onPhoto.
- await Promise.resolve();
+ async(_img,file)=>{called.push(file.name);entered.resolve();return pending.promise;},{shouldContinue:()=>active});
+ // Wait for the real decoder/candidate boundary, not an assumed number of
+ // foreign-VM microtask hops (which varies across Node versions).
+ await entered.promise;
  assert.deepEqual(called,['first.jpg']);
  active=false;pending.resolve(false);
  const result=await task;
