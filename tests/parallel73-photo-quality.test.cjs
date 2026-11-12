@@ -11,13 +11,28 @@ const pixels=(width,height,paint)=>{
 };
 test('research flag is disabled by default and never authorizes saving',()=>{
  assert.equal(api.enabled(),false);
- assert.equal(api.VERSION,'P73-1');
+ assert.equal(api.VERSION,'P73-2');
 });
 test('bounded sample rejects corruption, untrusted oversized dimensions and zero pixels',()=>{
  assert.throws(()=>api.analyzePixels(new Uint8Array(4),16,16));
  assert.throws(()=>api.analyzePixels([],0,0));
  assert.throws(()=>api.analyzePixels(new Uint8Array(513*16*4),513,16));
  assert.throws(()=>api.analyzePixels(new Uint8Array(16*16*4),16,16,Infinity,16));
+ assert.throws(()=>api.analyzePixels(Array(16*16*4).fill(NaN),16,16),'reject malformed untyped arrays');
+ assert.throws(()=>api.analyzePixels(new Float64Array(16*16*4),16,16),'reject non-byte pixel arrays');
+});
+test('EXIF rotations use displayed photo dimensions, including mirrored rotations',()=>{
+ assert.deepEqual(api.orientedDimensions(4032,3024,1),{width:4032,height:3024});
+ assert.deepEqual(api.orientedDimensions(4032,3024,3),{width:4032,height:3024});
+ for(const orientation of [5,6,7,8])assert.deepEqual(api.orientedDimensions(4032,3024,orientation),{width:3024,height:4032});
+ assert.throws(()=>api.orientedDimensions(4032,3024,9));
+ assert.throws(()=>api.orientedDimensions(0,3024,6));
+});
+test('very narrow originals stay advisory rather than silently losing diagnostics',()=>{
+ const sample=api.analyzePixels(pixels(256,3,()=>[8,8,8,255]),256,3,2500,29);
+ assert.equal(sample.metrics.sampledHeight,3);
+ assert.ok(sample.advice.some(a=>a.code==='limited-resolution'));
+ assert.ok(!sample.advice.some(a=>a.code==='possible-softness'));
 });
 test('severely dark frame produces optional light guidance, not a verdict',()=>{
  const p=pixels(96,96,()=>[14,14,14,255]);
@@ -61,6 +76,9 @@ test('source-level integration keeps original JPEG and human review protections'
  assert.match(photo,/const decoded=new Image\(\)/);
  assert.match(photo,/captureGuidance=window\.PhotoQualityResearch\.analyzePixels/);
  assert.match(app,/const reviewFirst836=true;/);
+ assert.match(app,/new WeakMap\(\)/);
+ assert.match(app,/photoQualityHints73\.set\(item,\{/);
+ assert.doesNotMatch(app,/photoQualityHints73\.set\(item\.id/);
  assert.match(app,/owner73===\(typeof window==='undefined'\?null:window\.closetAuth/);
  assert.match(app,/hint73\.source===\(item\.recognitionPhoto\?\.image\|\|item\.image\)/);
  assert.match(app,/Take another photo/);
