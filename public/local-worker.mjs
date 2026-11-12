@@ -68,13 +68,25 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   }
   if(request.type==='features'){const features=await model.whole.features(image);self.postMessage({type:'result',id:request.id,recognitionMemory:{version:1,modelKey:model.modelKey,features}});return;}
   const classify=request.hint?classifyIsolatedGarment:recognizeWithRecovery;
-  const result=await classify(model.whole,image,{
+  // Defer the provisional identified event until after the complete result
+  // has passed source-independent risk-class admission checks.
+  let tentativelyIdentified=null;
+  let result=await classify(model.whole,image,{
    hint:request.hint,
    confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,coatNearFullModel:model.coatNearFull,
    recoveryModel:model.originalWhole,recoveryConfirmationModel:model.originalCenter,
    onStage:stage=>{scannerStage=stage;},
-   onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
+   onIdentified:choice=>{tentativelyIdentified=choice;}
   });
+  // Adopt ONLY the previously real-original A/B-verified P766 type-review rule;
+  // never rely on extra FashionCLIP views agreeing on a wrong subtype.
+  if(!request.hint&&result.strong){
+   const {corroborateAmbiguousType}=await import('./recognition-confusion-guard.mjs'+new URL(import.meta.url).search);
+   result=await corroborateAmbiguousType(result);
+  }
+  if(result.strong&&tentativelyIdentified&&result.choices?.[0]?.category===tentativelyIdentified.category&&
+     result.choices?.[0]?.itemType===tentativelyIdentified.itemType)
+   self.postMessage({type:'identified',id:request.id,choice:tentativelyIdentified});
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
   self.postMessage({type:'result',id:request.id,...result,recognitionMemory});
  }catch(error){
