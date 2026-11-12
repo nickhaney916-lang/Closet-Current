@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import vm from 'node:vm';import fs from 'node:fs';import {createRequire} from 'node:module';const require=createRequire(import.meta.url),PhotoColor=require('../public/photo-color.js');
 import * as segmentation from '../public/outfit-segmentation.mjs';
+import * as trial from '../public/outfit-instance-review-840.mjs';
 const source=fs.readFileSync('public/outfit-worker.mjs','utf8');
 function setup({failLoad=false,failSecondCrop=false,noPerson=false}={}){
  const sent=[],width=20,height=20,data=new Float32Array(18*width*height);data.fill(-10);for(let i=0;i<400;i++)data[i]=10;
@@ -7,8 +8,8 @@ function setup({failLoad=false,failSecondCrop=false,noPerson=false}={}){
  let crops=0;class Image{constructor(data,width,height,channels){Object.assign(this,{data,width,height,channels});}static async read(){return new Image(new Uint8ClampedArray(1200).fill(40),20,20,3);}async toBlob(){if(failSecondCrop&&++crops===3)throw Error('private decode error');return {arrayBuffer:async()=>new Uint8Array([255,216,255]).buffer};}}
  if(noPerson)for(let y=1;y<4;y++)for(let x=7;x<11;x++){data[11*400+y*20+x]=-10;data[y*20+x]=10;}
  const runtime={AutoModelForSemanticSegmentation:{from_pretrained:async()=>{if(failLoad)throw Error('private error');return async()=>({logits:{data,dims:[1,18,20,20]}});}},AutoProcessor:{from_pretrained:async()=>async()=>({})},RawImage:Image,env:{backends:{onnx:{wasm:{}}}}};
- const c={runtime,segmentation,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
- vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()'),c);
+ const c={runtime,segmentation,trial,PhotoColor,self:{postMessage:value=>sent.push(value)},Uint8Array,Uint8ClampedArray,btoa:text=>Buffer.from(text,'binary').toString('base64')};vm.createContext(c);
+ vm.runInContext(source.replace(/await import\('https:[^']+'\)/,'await Promise.resolve(runtime)').replace("await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(segmentation)').replace("await import('./outfit-instance-review-840.mjs'+new URL(import.meta.url).search)",'await Promise.resolve(trial)').replace("await import('./photo-color.js'+new URL(import.meta.url).search)",'await Promise.resolve()'),c);
  return {sent,async run(){c.self.onmessage({data:{id:'outfit',image:'data:image/jpeg;base64,AAAA'}});await vm.runInContext('chain',c);}};
 }
 test('full-outfit worker emits three separate garment images and excludes body labels',async()=>{

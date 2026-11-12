@@ -1,0 +1,51 @@
+name: Mission 1 P840 real-photo-inspired footwear trial bridge — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-p68-footwear-instance-preview-840-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mission1-p840-footwear-review-HOLD
+  cancel-in-progress: true
+jobs:
+  exact-parent-scope-and-native-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict eight-file allowlist against exact verified P839 research baseline
+        run: |
+          set -euo pipefail
+          BASE=1a1c742d1dee34a78c39ecd52b3ca677d7a08f5f
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/changed-p840
+          cat /tmp/changed-p840
+          test "$(wc -l </tmp/changed-p840)" -eq 8
+          while IFS= read -r p; do
+            case "$p" in
+              public/outfit-instance-review-840.mjs|public/outfit-worker.mjs|public/outfit-capture.js|tests/outfit-instance-review-840.test.mjs|tests/outfit-worker.test.mjs|tests/outfit-capture.test.cjs|research/mission1-p68-footwear-instance-preview-840/REPORT.md|.github/workflows/mission1-p68-footwear-instance-preview-840-no-deploy.yml) ;;
+              *) echo "P840 UNSCOPED CHANGE: $p"; exit 1 ;;
+            esac
+          done </tmp/changed-p840
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/recognition-engine.mjs public/local-worker.mjs public/recognition-vectors.json public/recognition-vectors.bin supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-p68-footwear-instance-preview-840/REPORT.md
+          echo M1_P840_ISOLATED_NO_DEPLOY
+      - name: Install temporary native dependency set
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual worker source event parity and full application tests
+        run: |
+          set -euo pipefail
+          node --check public/outfit-worker.mjs
+          node --check public/outfit-capture.js
+          node --check public/outfit-instance-review-840.mjs
+          node --test tests/outfit-instance-review-840.test.mjs tests/outfit-worker.test.mjs tests/outfit-capture.test.cjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs

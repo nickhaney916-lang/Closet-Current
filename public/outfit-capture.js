@@ -1,5 +1,8 @@
 'use strict';
 let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null;
+// P840 no-deploy diagnostic flag; never enable all-user segmentation changes
+// until prospective human-ground-truth and actual device gates are met.
+const outfitInstances840=typeof location!=='undefined'&&new URL(location.href).searchParams.get('outfitInstances840')==='1';
 function renderOutfitCapture(){
  if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
  const pending=batch.filter(x=>x.outfitSourceId===outfitActiveId),saved=items.filter(x=>x.outfitSourceId===outfitActiveId);
@@ -41,7 +44,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
-  job.worker.postMessage({id:job.id,image});
+  job.worker.postMessage({id:job.id,image,...(outfitInstances840?{instanceReview840:true}:{})});
  }catch{finishOutfitSplit(job,'Outfit separation is unavailable on this device. Try again or use individual clothing photos.',true);}
 }
 async function readOutfitPhoto(file){
