@@ -82,7 +82,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
     if(outfitUnits70&&(!p.reconciliation70||!job.ownerId||!p.reconciliation70.sourceSha256||!p.reconciliation70.maskSha256)){outfitUnit70Error='A garment mask has no verifiable source identity. Please retry.';return;}
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:p.colorEstimate,
-      ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId},reconciliation70Status:'unresolved'}:{})}))job.added++;
+      ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:p.colorEstimate||p.reconciliation70.colorEstimate||null},reconciliation70Status:'unresolved'}:{})}))job.added++;
     renderOutfitCapture();return;
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
