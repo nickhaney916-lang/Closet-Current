@@ -68,6 +68,9 @@ export function aggregateReal16Audit834(manifest,parts){
    };
    for(const k of fields)if(n(p.summary[k],k)!==derive[k])fail('Inconsistent '+k+' count in '+browser+half);
   }
+  // The fixed halves are even/odd source IDs, not first-eight / last-eight.
+  // Restore the original frozen manifest order before all cross-browser joins.
+  rows.sort((x,y)=>ids.indexOf(x.id)-ids.indexOf(y.id));
   if(rows.length!==16||new Set(rows.map(x=>x.id)).size!==16||rows.some((x,i)=>x.id!==ids[i]))
    fail('Incomplete 16 originals in '+browser);
   const types={};
