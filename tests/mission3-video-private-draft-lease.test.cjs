@@ -31,7 +31,8 @@ function fixture({pauseAtSeek=false}={}){
  };
  const doc={hidden:false};
  const ctx={
-  busy:false,batch:[],session:0,captureOperationEpoch:0,captureProof01Active:true,db:database,
+  busy:false,batch:[],session:0,captureOperationEpoch:0,mediaLifecycleEpoch:0,
+  videoImportSerial:0,videoImportActive:false,captureProof01Active:true,db:database,
   captureProofOwner:()=>owner,document:doc,
   stopCamera(){calls.push('stop')},
   controls(flag){calls.push('controls:'+flag)},
