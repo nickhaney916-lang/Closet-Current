@@ -1,0 +1,74 @@
+name: Mission 1 P842 source-level auto-index admission — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-automatic-admission-guard-842-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mission1-p842-admission-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-parent-native-research-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P841 parent and strict four-path isolation
+        run: |
+          set -euo pipefail
+          BASE=899f1962d53546ec15ff62e8af3a1bcbf937dbdb
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/m1-p842-changed
+          cat /tmp/m1-p842-changed
+          test "$(wc -l </tmp/m1-p842-changed)" -eq 4
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|tests/mission1-automatic-admission-842.test.cjs|research/mission1-automatic-admission-guard-842/REPORT.md|.github/workflows/mission1-automatic-admission-guard-842-no-deploy.yml) ;;
+              *) echo "P842 UNSCOPED CHANGE: $path"; exit 1 ;;
+            esac
+          done </tmp/m1-p842-changed
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/outfit-worker.mjs public/local-worker.mjs public/recognition-engine.mjs public/recognition-vectors.bin public/recognition-vectors.json supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-automatic-admission-guard-842/REPORT.md
+          echo M1_P842_STRICTLY_ISOLATED_NO_DEPLOY
+      - name: Install temporary test dependencies without tracked changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Source-executed auto-index admission cases
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check tests/mission1-automatic-admission-842.test.cjs
+          node --test tests/mission1-automatic-admission-842.test.cjs
+      - name: Full native regression and isolated research build
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-P841-editor-browser-regression-HOLD:
+    needs: [pinned-parent-native-research-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install genuine browser engines for in-memory research fixtures
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Verify full pending photo owner review remains intact at 320/390/430
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-owner-review-editor-839.mjs
+          echo M1_P842_P841_OWNER_REVIEW_BROWSER_REGRESSION_PASS_NOT_PHYSICAL_PHONES
