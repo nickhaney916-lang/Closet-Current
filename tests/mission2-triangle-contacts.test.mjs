@@ -1427,7 +1427,7 @@ test('P2-C27 source-photo UV and posed face continuity audits unchanged original
  bones[0].rotation.z=Math.PI/12;
  const posed=[capture()];
  const noChange=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed);
- assert.equal(noChange.sourceFaces,2);
+ assert.equal(noChange.triangleCount,2);
  assert.equal(noChange.uvMappedFaces,2);
  assert.equal(noChange.meshesWithoutUV,0);
  assert.equal(noChange.uvDegenerateFaces,0);
