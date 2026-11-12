@@ -168,7 +168,10 @@ function persistDraft({required=false}={}){
   tx.onerror=()=>reject(tx.error);
   tx.onabort=()=>reject(tx.error||Error('Capture draft write aborted'));
  })).catch(error=>{
-  message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');
+  // An old owner may sign out while a queued transaction is rejecting.
+  // Never show the former owner's capture warning in a new session.
+  if(owner&&db===ownerDB&&window.closetAuth?.user?.id===owner)
+   message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');
   if(required)throw Object.assign(Error('Capture photo is in review but not saved on this device'),{
    code:'CAPTURE_STORAGE_FAILED',cause:error
   });
@@ -547,7 +550,11 @@ function renderPhotoResults(grid,results){
    retry.onclick=async()=>{
     retry.disabled=true;
     try{await retryUncommittedCapture(item);}
-    catch(error){message('Photo is still not saved. '+String(error.message||error));render();}
+    catch(error){
+     if(item.ownerId===captureProofOwner()&&batch.includes(item)){
+      message('Photo is still not saved. '+String(error.message||error));render();
+     }
+    }
     finally{retry.disabled=false;}
    };
    body.append(retry);
@@ -783,7 +790,13 @@ function candidate(image,options={}){
     queueAutomatic(duplicate);
     message('Previously unsaved photograph is now saved on this device for review.');
     return true;
-   }).catch(error=>{failedDraftCaptures.add(duplicate.id);throw error;});
+   }).catch(error=>{
+    // Session lock clears this set. An old in-flight rejection must not
+    // repopulate it after the next signed-in owner takes control.
+    if(batch.includes(duplicate)&&captureProofOwner()===duplicate.ownerId)
+     failedDraftCaptures.add(duplicate.id);
+    throw error;
+   });
   }
   if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');
   message('Exact duplicate skipped. Show the next garment.');return false;
@@ -820,7 +833,8 @@ function candidate(image,options={}){
   // The photo stays visible in memory; only a confirmed IndexedDB commit
   // may remove it from this ephemeral retry queue. Never persist the queue
   // or expose it to another signed-in owner.
-  failedDraftCaptures.add(item.id);
+  if(batch.includes(item)&&item.ownerId&&captureProofOwner()===item.ownerId)
+   failedDraftCaptures.add(item.id);
   throw error;
  });
 }
@@ -996,6 +1010,9 @@ async function upload(file){
   assertVideoLease();
   message('');switchView('review');
  }catch(error){
+  // A revoked video-import lease must not navigate or populate messages in
+  // the next account's review screen, even after some older frames committed.
+  if(verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
   render();
   if(verified){
    const problem=String(error?.message||error);

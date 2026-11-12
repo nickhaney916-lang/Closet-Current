@@ -106,5 +106,6 @@ test('changed owner before loaded video frame cannot publish private draft',asyn
  };
  await f.ctx.upload({size:500});
  assert.equal(f.calls.includes('candidate'),false);
- assert.ok(f.calls.some(x=>x.includes('account change')));
+ assert.equal(f.calls.some(x=>x.includes('account change')),false,
+  'a revoked former owner must not show an old video error in the next owner session');
 });
