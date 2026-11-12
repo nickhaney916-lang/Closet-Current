@@ -764,7 +764,7 @@ function traceContactLinkedNearEdges(meshes,contactFaceKeys,sourceAreaStages){
 }
 
 export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
- {maxPairs=4096}={}){
+ {maxPairs=4096,sourceAreaStages=null}={}){
  if(!root||typeof root.updateMatrixWorld!=='function'||
     !Array.isArray(meshes)||meshes.length<1||meshes.length>128||
     new Set(meshes).size!==meshes.length||
@@ -952,6 +952,9 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
   if(Object.values(byUniqueFaceAreaProvenance).reduce((a,b)=>a+b,0)!==
     uniqueAffectedSourceFaces.size)
    throw Error('M2 face area provenance unique source face counts mismatch');
+  const shortEvidence=traceContactLinkedNearEdges(meshes,uniqueAffectedSourceFaces,sourceAreaStages);
+  if(shortEvidence.nearCoincidentAffectedFaces!==bySourceLocalShape.nearCoincidentEdge)
+   throw Error('M2 C20 implicated short-edge count differs from original-source area classification');
   if(Object.values(bySourceLocalShape).reduce((a,b)=>a+b,0)!==
       uniqueAffectedSourceFaces.size||
      byUniqueAffectedGarmentMesh.reduce((a,b)=>a+b,0)!==
@@ -966,6 +969,7 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
    byPairAreaProvenance:Object.freeze({...byPairAreaProvenance}),
    byUniqueFaceAreaProvenance:Object.freeze({...byUniqueFaceAreaProvenance}),
    byPhotoOwnerFittedSourceLocalShape:Object.freeze({...bySourceLocalShape}),
+   contactLinkedShortEdgeStageUVSkinEvidence:shortEvidence,
    uniqueAffectedByGarmentMesh:Object.freeze([...byUniqueAffectedGarmentMesh]),
    affectedIndexedBoundaryFaces:indexedBoundaryAffectedFaces,
    affectedIndexedInteriorFaces:indexedInteriorAffectedFaces,
