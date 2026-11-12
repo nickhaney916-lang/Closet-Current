@@ -6,6 +6,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {resolve,join} from 'node:path';
 import {pathToFileURL} from 'node:url';
+import {photoTypes} from '../public/phone-photo-benchmark.mjs';
 
 const fail=reason=>{throw Error('M1_P834_AUDIT_FAIL_CLOSED: '+reason);};
 const fields=['garments','negatives','categoryMatches','automaticCorrectCategory',
@@ -41,15 +42,29 @@ export function aggregateReal16Audit834(manifest,parts){
        typeof x.categoryMatch!=='boolean'||typeof x.categoryConfirmed!=='boolean'||
        !Array.isArray(x.acceptedTypes)||!x.acceptedTypes.length||
        x.acceptedTypes.some(a=>typeof a!=='string')||
-       !x.acceptedTypes.includes(truth.expectedType)||
-       !!truth.acceptedTypes!==!!(x.acceptedTypes.length>1)||
+       JSON.stringify(x.acceptedTypes)!==JSON.stringify(truth.acceptedTypes||[truth.expectedType])||
        x.error!==null&&typeof x.error!=='string')
       fail('Invalid original annotated photo source truth '+x.id);
-    if(x.expectedCategory==='Uncategorized'&&x.negativeRejected!==x.categoryMatch)fail('Negative accounting');
-    if(x.expectedCategory!=='Uncategorized'&&x.negativeRejected!==null)fail('Garment counted as negative');
+    const negative=x.expectedCategory==='Uncategorized';
+    const exactLabelSupported=!negative&&photoTypes(x.expectedCategory).includes(x.expectedType);
+    if(x.expectedTypeLabelSupported!==exactLabelSupported)fail('Non-clothing or generic type counted as exact subtype '+x.id);
+    if(negative&&(x.negativeRejected!==x.categoryMatch||x.acceptedTypeMatch!==null||x.exactTypeMatch!==null))
+     fail('Negative excluded from subtype denominators '+x.id);
+    if(!negative&&x.negativeRejected!==null)fail('Garment counted as negative');
     if(x.strong&&(!x.predictedCategory||x.predictedCategory==='Uncategorized'))fail('Fabricated strong category');
-    if(x.acceptedTypeMatch===true&&(!x.categoryMatch||!x.acceptedTypes.includes(x.predictedType)))fail('Fabricated accepted subtype');
-    if(x.error&&x.strong)fail('Runtime error promoted to strong classification');
+    if(x.error&&(x.strong||x.categoryConfirmed||x.categoryMatch))fail('Runtime error promoted to successful classification');
+    if(!negative&&x.categoryMatch!==(
+      x.predictedCategory===x.expectedCategory&&(x.strong||x.categoryConfirmed)))
+     fail('Category-match status not supported by actual acceptance '+x.id);
+    if(negative&&x.categoryMatch!==(!x.predictedCategory&&!x.strong&&!x.categoryConfirmed))
+     fail('Non-clothing rejection not supported by raw abstention '+x.id);
+    const exactMatch=exactLabelSupported?
+      x.categoryMatch&&x.predictedType===x.expectedType:null;
+    if(x.exactTypeMatch!==exactMatch)fail('Exact subtype match not supported by original label '+x.id);
+    const typeCovered=!negative&&(exactLabelSupported||!!truth.acceptedTypes);
+    const acceptedMatch=typeCovered?
+      x.categoryMatch&&x.acceptedTypes.includes(x.predictedType):null;
+    if(x.acceptedTypeMatch!==acceptedMatch)fail('Accepted subtype evidence not supported '+x.id);
     rows.push(x);
    }
    const derive={
