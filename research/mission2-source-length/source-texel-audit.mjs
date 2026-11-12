@@ -150,3 +150,118 @@ export function auditOriginalPhotoTexelRegistration(attributes,projection,photos
   releaseAuthorized:false
  });
 }
+
+
+/**
+ * P2-C31: count-only ORIGINAL front-photo projection *face* diagnostics.
+ * The previous P2-C30 witness sampled mapped vertices. That cannot detect
+ * a triangular surface whose registered photo UV area is ZERO or whose
+ * triangle straddles the photo boundary. We inspect the actual shader
+ * sourceProjectionPosition attribute's pending coordinates and source
+ * geometry index, never the unrelated standard mesh UV attribute.
+ *
+ * Projection is planar; side/rear faces legitimately may have zero projected
+ * area. This is NOT a photorealism criterion, physically sewn seam metric,
+ * source-photo ground-truth comparison, or 3D release authorization.
+ */
+export function auditOriginalPhotoProjectedTriangles(attributes,projection,{
+ maxTriangles=300000,uvAreaEpsilon=1e-12,worldAreaEpsilon=1e-12,
+ sourceGridSize=16,outsideTolerance=0.0001
+}={}){
+ if(!Array.isArray(attributes)||attributes.length<1||attributes.length>8||
+    !finiteProjection(projection)||
+    !Number.isSafeInteger(maxTriangles)||maxTriangles<1||maxTriangles>3000000||
+    !Number.isFinite(uvAreaEpsilon)||uvAreaEpsilon<=0||uvAreaEpsilon>1e-6||
+    !Number.isFinite(worldAreaEpsilon)||worldAreaEpsilon<=0||worldAreaEpsilon>1e-6||
+    !Number.isSafeInteger(sourceGridSize)||sourceGridSize<4||sourceGridSize>32||
+    !Number.isFinite(outsideTolerance)||outsideTolerance<0||outsideTolerance>0.01)
+  fail('complete bounded original source triangle surface evidence required');
+ const [center,spanX,spanY,bottom]=projection,seen=new Set();
+ const filled=new Set();
+ let sourceTriangles=0,sourceTrianglesWithMappedPhotoCentroid=0,
+  projectedDegenerateTriangles=0,sourceWorldDegenerateTriangles=0,
+  projectionPartiallyOutsideTriangles=0,projectionFullyOutsideTriangles=0,
+  planarProjectionSeverelyForeshortenedTriangles=0;
+ for(const {mesh,coords} of attributes){
+  const p=mesh?.geometry?.getAttribute('position'),
+   indices=mesh?.geometry?.index?.array??null;
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||seen.has(mesh)||
+     !p?.isBufferAttribute||p.itemSize!==3||p.isInterleavedBufferAttribute||
+     !finite(coords)||coords.length!==p.count*3||!coords.every(Number.isFinite))
+   fail('full finite original 163-bone indexed source triangles required');
+  seen.add(mesh);
+  const triangles=indices?indices.length/3:p.count/3;
+  if(!Number.isSafeInteger(triangles)||triangles<1||
+     sourceTriangles+triangles>maxTriangles)
+   fail('complete bounded original photographic source triangle count required');
+  sourceTriangles+=triangles;
+  for(let face=0;face<triangles;face++){
+   const ids=indices?[indices[face*3],indices[face*3+1],indices[face*3+2]]:
+    [face*3,face*3+1,face*3+2];
+   if(ids.some(id=>!Number.isSafeInteger(id)||id<0||id>=p.count))
+    fail('original indexed photographic source vertex out of range');
+   const points=ids.map(id=>[
+    coords[id*3],coords[id*3+1],coords[id*3+2]
+   ]);
+   if(points.some(row=>row.some(v=>!Number.isFinite(v)||Math.abs(v)>100)))
+    fail('unbounded original source garment registration');
+   const uv=points.map(([x,y])=>[
+    .5+(x-center)/spanX,(y-bottom)/spanY
+   ]);
+   if(uv.some(a=>a.some(v=>!Number.isFinite(v))))fail('nonfinite photo projection');
+   const minU=Math.min(...uv.map(v=>v[0])),
+    maxU=Math.max(...uv.map(v=>v[0])),
+    minV=Math.min(...uv.map(v=>v[1])),
+    maxV=Math.max(...uv.map(v=>v[1]));
+   const fullyOutside=maxU < -outsideTolerance||
+    minU>1+outsideTolerance||maxV < -outsideTolerance||
+    minV>1+outsideTolerance;
+   if(fullyOutside)projectionFullyOutsideTriangles++;
+   else if(minU< -outsideTolerance||maxU>1+outsideTolerance||
+      minV< -outsideTolerance||maxV>1+outsideTolerance)
+    projectionPartiallyOutsideTriangles++;
+   const ux=uv[1][0]-uv[0][0],uy=uv[1][1]-uv[0][1],
+    vx=uv[2][0]-uv[0][0],vy=uv[2][1]-uv[0][1],
+    projectedArea=Math.abs(ux*vy-uy*vx);
+   if(projectedArea<=uvAreaEpsilon)projectedDegenerateTriangles++;
+   const ab=points[1].map((v,i)=>v-points[0][i]),
+    ac=points[2].map((v,i)=>v-points[0][i]);
+   const n=[ab[1]*ac[2]-ab[2]*ac[1],
+    ab[2]*ac[0]-ab[0]*ac[2],
+    ab[0]*ac[1]-ab[1]*ac[0]];
+   const surfaceArea=Math.hypot(...n);
+   if(surfaceArea<=worldAreaEpsilon)sourceWorldDegenerateTriangles++;
+   else if(Math.abs(n[2])/surfaceArea <.25)
+    planarProjectionSeverelyForeshortenedTriangles++;
+   const midU=(uv[0][0]+uv[1][0]+uv[2][0])/3,
+    midV=(uv[0][1]+uv[1][1]+uv[2][1])/3;
+   if(!fullyOutside&&projectedArea>uvAreaEpsilon&&
+      surfaceArea>worldAreaEpsilon&&midU>=0&&midU<=1&&
+      midV>=0&&midV<=1){
+    sourceTrianglesWithMappedPhotoCentroid++;
+    filled.add(Math.min(sourceGridSize-1,Math.floor(midU*sourceGridSize))+
+     ':'+Math.min(sourceGridSize-1,Math.floor(midV*sourceGridSize)));
+   }
+  }
+ }
+ return Object.freeze({
+  sourceTriangles,
+  sourceTrianglesWithMappedPhotoCentroid,
+  projectedDegenerateTriangles,sourceWorldDegenerateTriangles,
+  projectionPartiallyOutsideTriangles,projectionFullyOutsideTriangles,
+  planarProjectionSeverelyForeshortenedTriangles,
+  sourcePhotoGridCellsWithMappedFaceCentroids:filled.size,
+  sourcePhotoGridCellsTotal:sourceGridSize*sourceGridSize,
+  actualSourceShaderProjectionUsed:true,
+  original163BoneGeometryTrianglesObserved:true,
+  planarSideFacesMayBeIntentionallyDegenerate:true,
+  originalSourcePhotoAndGeometryUntouched:true,
+  noFaceIndicesUVOrPixelDataExported:true,
+  noOwnerDataExported:true,
+  sourcePhotoColorMatchNotMeasured:true,
+  fabricDrapeNotCertified:true,
+  physicalPhoneNotTested:true,
+  humanPhotorealismNotCertified:true,
+  releaseAuthorized:false
+ });
+}
