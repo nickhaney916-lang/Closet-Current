@@ -664,6 +664,74 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
  const byPairAreaProvenance={bothRegular:0,preexistingSmall:0,newlySmall:0,recoveredSmall:0};
  const byUniqueFaceAreaProvenance={bothRegular:0,preexistingSmall:0,newlySmall:0,recoveredSmall:0};
  const uniqueAffectedSourceFaces=new Set();
+ // P2-C19: relate each fully evidenced NEW self-contact ORIGINAL source face
+ // to its photo/owner-contour-fitted (pre-length) LOCAL triangle morphology.
+ // Never infer the untouched anatomical source shape from these coordinates.
+ // All original face IDs and vertex values stay ephemeral inside this donor.
+ const bySourceLocalShape={regularNotTiny:0,pointMicro:0,
+  nearCoincidentEdge:0,thinSliver:0,smallButWellShaped:0};
+ const byUniqueAffectedGarmentMesh=meshes.map(()=>0);
+ let indexedBoundaryAffectedFaces=0,indexedInteriorAffectedFaces=0,
+  indexedNonManifoldAffectedFaces=0;
+ const sourceTopologyCache=new Map();
+ const localSourceFace=(meshIndex,face)=>{
+  const mesh=meshes[meshIndex],geo=mesh.geometry;
+  const attr=geo?.getAttribute('position'),index=geo?.index?.array;
+  if(!attr?.isBufferAttribute||attr.itemSize!==3||
+     attr.isInterleavedBufferAttribute||!attr.array?.every(Number.isFinite))
+   throw Error('M2 linked local-source contact finite packed source XYZ required');
+  const faceCount=index?index.length/3:attr.count/3;
+  if(!Number.isSafeInteger(faceCount)||faceCount<1||faceCount>600000||
+     !Number.isSafeInteger(face)||face<0||face>=faceCount)
+   throw Error('M2 linked local-source face outside original bounded mesh');
+  if(!sourceTopologyCache.has(meshIndex)){
+   const owners=new Map(),bound=new Uint8Array(faceCount),nonman=new Uint8Array(faceCount);
+   const vertex=(f,k)=>index?index[f*3+k]:f*3+k;
+   for(let f=0;f<faceCount;f++){
+    const ids=[vertex(f,0),vertex(f,1),vertex(f,2)];
+    if(ids.some(id=>!Number.isSafeInteger(id)||id<0||id>=attr.count))
+     throw Error('M2 linked local-source original face index invalid');
+    for(const [i,j] of [[ids[0],ids[1]],[ids[1],ids[2]],[ids[2],ids[0]]]){
+     if(i===j)continue;
+     const key=i<j?i+':'+j:j+':'+i;
+     if(!owners.has(key))owners.set(key,[]);
+     const used=owners.get(key);if(!used.includes(f))used.push(f);
+    }
+   }
+   for(const faces of owners.values())for(const f of faces){
+    if(faces.length===1)bound[f]=1;
+    if(faces.length>2)nonman[f]=1;
+   }
+   sourceTopologyCache.set(meshIndex,{bound,nonman});
+  }
+  const vertex=k=>index?index[face*3+k]:face*3+k;
+  const ids=[vertex(0),vertex(1),vertex(2)];
+  if(ids.some(id=>!Number.isSafeInteger(id)||id<0||id>=attr.count))
+   throw Error('M2 linked local-source face index invalid');
+  const a=attr.array;
+  const squared=(i,j)=>{
+   const x=a[i*3]-a[j*3],y=a[i*3+1]-a[j*3+1],z=a[i*3+2]-a[j*3+2];
+   return x*x+y*y+z*z;
+  };
+  const e0=squared(ids[0],ids[1]),e1=squared(ids[1],ids[2]),
+   e2=squared(ids[2],ids[0]);
+  const [i,j,k]=ids;
+  const ux=a[j*3]-a[i*3],uy=a[j*3+1]-a[i*3+1],uz=a[j*3+2]-a[i*3+2];
+  const wx=a[k*3]-a[i*3],wy=a[k*3+1]-a[i*3+1],wz=a[k*3+2]-a[i*3+2];
+  const cx=uy*wz-uz*wy,cy=uz*wx-ux*wz,cz=ux*wy-uy*wx;
+  const crossSquared=cx*cx+cy*cy+cz*cz,edgeSum=e0+e1+e2;
+  if(![e0,e1,e2,crossSquared,edgeSum].every(Number.isFinite))
+   throw Error('M2 linked local-source nonfinite triangle shape');
+  let shape='regularNotTiny';
+  if(crossSquared<1e-10){
+   const maxEdge=Math.max(e0,e1,e2),minEdge=Math.min(e0,e1,e2);
+   const ratio=edgeSum?2*Math.sqrt(3)*Math.sqrt(crossSquared)/edgeSum:0;
+   shape=maxEdge<1e-8?'pointMicro':minEdge<1e-8?'nearCoincidentEdge':
+    ratio<.05?'thinSliver':'smallButWellShaped';
+  }
+  const flags=sourceTopologyCache.get(meshIndex);
+  return {shape,boundary:flags.bound[face]===1,nonManifold:flags.nonman[face]===1};
+ };
  const t=new THREE.Vector3(),u=new THREE.Vector3(),v=new THREE.Vector3();
  const getFace=(g,face)=>{
   const a=g.getAttribute('position').array,idx=g.index?.array;
@@ -734,6 +802,12 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
     if(uniqueAffectedSourceFaces.has(keyFace))continue;
     uniqueAffectedSourceFaces.add(keyFace);
     byUniqueFaceAreaProvenance[sourceAreaStatus(beforeWasSmall,nowSmall)]++;
+    const quality=localSourceFace(m,face);
+    bySourceLocalShape[quality.shape]++;
+    byUniqueAffectedGarmentMesh[m]++;
+    if(quality.boundary)indexedBoundaryAffectedFaces++;
+    else indexedInteriorAffectedFaces++;
+    if(quality.nonManifold)indexedNonManifoldAffectedFaces++;
    }
    byOriginalCoincidentCorners[matchedCorners(beforeA,beforeB)]++;
    byStagedCoincidentCorners[matchedCorners(afterA,afterB)]++;
@@ -749,11 +823,27 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
   if(Object.values(byUniqueFaceAreaProvenance).reduce((a,b)=>a+b,0)!==
     uniqueAffectedSourceFaces.size)
    throw Error('M2 face area provenance unique source face counts mismatch');
+  if(Object.values(bySourceLocalShape).reduce((a,b)=>a+b,0)!==
+      uniqueAffectedSourceFaces.size||
+     byUniqueAffectedGarmentMesh.reduce((a,b)=>a+b,0)!==
+      uniqueAffectedSourceFaces.size||
+     indexedBoundaryAffectedFaces+indexedInteriorAffectedFaces!==
+      uniqueAffectedSourceFaces.size||
+     indexedNonManifoldAffectedFaces>uniqueAffectedSourceFaces.size)
+   throw Error('M2 linked source shape and indexed topology counts incomplete');
   return Object.freeze({
    newSelfContactCount:count,
    uniqueAffectedSourceFaceCount:uniqueAffectedSourceFaces.size,
    byPairAreaProvenance:Object.freeze({...byPairAreaProvenance}),
    byUniqueFaceAreaProvenance:Object.freeze({...byUniqueFaceAreaProvenance}),
+   byPhotoOwnerFittedSourceLocalShape:Object.freeze({...bySourceLocalShape}),
+   uniqueAffectedByGarmentMesh:Object.freeze([...byUniqueAffectedGarmentMesh]),
+   affectedIndexedBoundaryFaces:indexedBoundaryAffectedFaces,
+   affectedIndexedInteriorFaces:indexedInteriorAffectedFaces,
+   affectedIndexedNonManifoldFaces:indexedNonManifoldAffectedFaces,
+   sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy:true,
+   indexedBoundaryDoesNotProveSewnSeam:true,
+   noSourcePositionsOrFaceKeysExported:true,
    sourceAreaCrossSquaredThreshold:areaEpsilon,
    noSmallAreaWaiver:true,
    byContactGeometry:Object.freeze({...byContactGeometry}),
