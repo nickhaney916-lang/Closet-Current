@@ -871,12 +871,12 @@ try{
          // texture approval. Missing UV / degenerate source faces are counted.
          for(const pose of mp.poses){
           const uv=pose.sourcePhotoUVSurfaceBaseline;
-          assert.ok(uv&&Number.isSafeInteger(uv.sourceFaces)&&uv.sourceFaces>0);
+          assert.ok(uv&&Number.isSafeInteger(uv.triangleCount)&&uv.triangleCount>0);
           for(const field of ['uvMappedFaces','meshesWithoutUV','uvDegenerateFaces',
            'uvMirroredFaces','poseAreaOverTwofoldFaces','newCollapsedCandidateFaces',
            'candidateAreaOver25PercentFaces','newCandidateInvertedNormals'])
            assert.ok(Number.isSafeInteger(uv[field])&&uv[field]>=0);
-          assert.ok(uv.uvMappedFaces<=uv.sourceFaces);
+          assert.ok(uv.uvMappedFaces<=uv.triangleCount);
           assert.equal(uv.newCollapsedCandidateFaces,0);
           assert.equal(uv.candidateAreaOver25PercentFaces,0);
           assert.equal(uv.newCandidateInvertedNormals,0);
@@ -885,7 +885,7 @@ try{
           assert.equal(uv.releaseAuthorized,false);
           for(const candidate of pose.trials){
            const audit=candidate.sourcePhotoUVSurfaceAudit;
-           assert.equal(audit.sourceFaces,uv.sourceFaces);
+           assert.equal(audit.triangleCount,uv.triangleCount);
            assert.equal(audit.uvMappedFaces,uv.uvMappedFaces);
            assert.equal(audit.uvDegenerateFaces,uv.uvDegenerateFaces);
            assert.ok(Number.isSafeInteger(audit.newCollapsedCandidateFaces));
