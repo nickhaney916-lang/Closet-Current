@@ -1,0 +1,56 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,readFile,readdir,writeFile,copyFile,mkdir,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
+import {buildTrialBundle831,TRIAL_FILES_831,sha256} from './build-m1-no-account-trial-831.mjs';
+
+test('P831 copies ONLY genuine built local model trial dependencies and byte-verifies every asset',async t=>{
+ const directory=await mkdtemp(join(tmpdir(),'m1-p831-no-account-'));
+ t.after(async()=>rm(directory,{recursive:true,force:true}));
+ const result=await buildTrialBundle831({sourceDir:'dist',outputDir:directory});
+ const manifest=JSON.parse(await readFile(join(directory,'bundle-manifest.json'),'utf8'));
+ assert.deepEqual(manifest,result.manifest);
+ assert.equal(manifest.format,'closet-current-isolated-no-account-recognition-trial/v1');
+ assert.equal(manifest.familyAlpha,'HOLD');
+ assert.equal(manifest.releaseAuthorized,false);
+ assert.equal(manifest.hosted,false);
+ assert.match(manifest.release,/^[a-f0-9]{12}$/);
+ assert.match(manifest.recognitionIndex,/^[a-f0-9]{64}$/);
+ const files=(await readdir(directory)).sort();
+ assert.deepEqual(files,[...TRIAL_FILES_831,'bundle-manifest.json','TRIAL_README.txt'].sort());
+ assert.equal(Object.keys(manifest.files).length,13);
+ assert.equal(TRIAL_FILES_831.length,new Set(TRIAL_FILES_831).size);
+ for(const file of TRIAL_FILES_831){
+  const bytes=await readFile(join(directory,file));
+  assert.equal(sha256(bytes),manifest.files[file],file+' hash changed');
+ }
+ const html=await readFile(join(directory,'phone-photo-check.html'),'utf8');
+ assert.ok(!html.includes('Back to my closet'));
+ assert.match(html,/wardrobe, account and cloud pages are not included/);
+ assert.ok(!html.includes('__RELEASE__'));
+ assert.ok(!html.includes('__RECOGNITION_INDEX__'));
+ assert.match(html,/phone-photo-check.mjs\?v=[a-f0-9]{12}/);
+ assert.match(html,/photo-import.js\?v=[a-f0-9]{12}/);
+ const readme=await readFile(join(directory,'TRIAL_README.txt'),'utf8');
+ assert.match(readme,/Family Alpha HOLD #255/);
+ assert.match(readme,/protected HTTPS preview/);
+ assert.match(readme,/no hosted preview URL/);
+ assert.ok(!files.includes('index.html'));
+ assert.ok(!files.includes('cloud-backup.js'));
+ assert.ok(!files.includes('supabase'));
+ assert.ok(!files.some(x=>/\.jpe?g$|\.png$|\.webp$/.test(x)),'no photograph bytes in distributed bundle');
+ const source=await readFile('dist/phone-photo-check.html','utf8');
+ assert.notEqual(sha256(source),manifest.files['phone-photo-check.html'],'no accidental old live app navigation');
+});
+test('P831 rejects unbuilt, modified release metadata and source/output nesting',async t=>{
+ const tmp=await mkdtemp(join(tmpdir(),'m1-p831-invalid-'));t.after(async()=>rm(tmp,{recursive:true,force:true}));
+ const source=join(tmp,'source'),out=join(tmp,'preview');
+ await mkdir(source);
+ const original=await readFile('dist/phone-photo-check.html','utf8');
+ await writeFile(join(source,'phone-photo-check.html'),original.replace(/<meta name="closet-release" content="[a-f0-9]{12}">/,'<meta name="closet-release" content="__RELEASE__">'));
+ await assert.rejects(buildTrialBundle831({sourceDir:source,outputDir:out}),/built recognition page/);
+ await assert.rejects(buildTrialBundle831({sourceDir:'dist',outputDir:'dist/nested'}),/non-nested/);
+ await assert.rejects(buildTrialBundle831({sourceDir:'dist',outputDir:'dist'}),/non-nested/);
+ await assert.rejects(buildTrialBundle831({sourceDir:'.',outputDir:'benchmark'}),/non-nested/);
+});

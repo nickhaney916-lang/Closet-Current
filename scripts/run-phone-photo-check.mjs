@@ -4,7 +4,7 @@ import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {resolve,extname,join} from 'node:path';
 import assert from 'node:assert/strict';
 
-const root=resolve('dist'),output=resolve(process.argv[2]||'benchmark/phone-photo-flow');
+const root=resolve(process.env.M1_TRIAL_ROOT||'dist'),output=resolve(process.argv[2]||'benchmark/phone-photo-flow');
 const engine=process.argv[3]||'chromium';
 if(!['chromium','webkit'].includes(engine))throw Error('Unsupported recognition browser: '+engine);
 const types={'.html':'text/html','.mjs':'text/javascript','.js':'text/javascript','.json':'application/json','.css':'text/css','.bin':'application/octet-stream'};
@@ -16,8 +16,22 @@ const server=createServer(async(req,res)=>{try{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;
 try{
  await mkdir(output,{recursive:true});browser=await ({chromium,webkit})[engine].launch({headless:true,...(engine==='chromium'?{args:['--no-sandbox','--enable-unsafe-swiftshader']}:{})});
- const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true}),pageErrors=[];page.on('pageerror',e=>pageErrors.push(e.message));
+ const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true,acceptDownloads:true}),pageErrors=[],wireViolations=[],networkMethods=new Set();
+ // Privacy regression: the original JPEG and identifying source filename
+ // must never be put in a URL or any request body. This is a no-account GET-
+ // only local model trial; CDN/weight downloads are allowed but uploads aren't.
+ page.context().on('request',req=>{
+  const method=req.method(),url=req.url(),body=req.postData()||'';
+  networkMethods.add(method);
+  if(!['GET','HEAD','OPTIONS'].includes(method))wireViolations.push('unexpected-upload-method:'+method);
+  if(/PRIVATE_PHONE_|data:image\/(jpeg|png)|data%3Aimage|base64%2C/i.test(url)||/PRIVATE_PHONE_|data:image\/(jpeg|png)/i.test(body))
+   wireViolations.push('original-image-or-file-identity-on-network');
+ });page.on('pageerror',e=>pageErrors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/phone-photo-check.html');
+ if(process.env.M1_TRIAL_ROOT){
+  assert.equal(await page.getByText('Private diagnostic preview:',{exact:false}).count(),1);
+  assert.equal(await page.getByText('Back to my closet',{exact:false}).count(),0);
+ }
  assert.equal(await page.locator('#run').isDisabled(),true);
  await page.locator('#photos').setInputFiles([
   {name:'PRIVATE_PHONE_GARMENT.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')},
@@ -67,6 +81,8 @@ try{
  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
  await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
  await page.waitForTimeout(150);assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#status').innerText(),'Choose your photos to begin.');assert.deepEqual(pageErrors,[]);
- await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,engine,realWorker:true,fixturePhotos:2,viewports:[320,390,430],lockedLabels:true,visibleHonestVerdicts:true,reportPrivacy:true,cancellation:true,pageErrors},null,2));
+ assert.deepEqual(wireViolations,[],'no source JPEG, private file identity or upload on the wire');
+ assert.ok(networkMethods.has('GET'),'real model and static files must load through real GET requests');
+ await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,engine,realWorker:true,fixturePhotos:2,viewports:[320,390,430],lockedLabels:true,visibleHonestVerdicts:true,reportPrivacy:true,noPhotoNetworkUpload:true,cancellation:true,pageErrors},null,2));
  console.log('Phone photo-check '+engine+' flow passed with real recognition, per-item blind verdicts and private filenames excluded.');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

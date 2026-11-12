@@ -1,0 +1,101 @@
+name: Mission 1 P831 isolated no-account photo trial artifact — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-no-account-trial-package-831-HOLD]
+  pull_request:
+    branches: [research/mission1-single-garment-color-receipts-830-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p831-no-account-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  frozen-P830-full-node-and-build-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independently green P830 baseline, only FIVE code/test/CI paths
+        run: |
+          set -euo pipefail
+          BASE=cf0f928daea5718b7c8c30b0ff3ebdc12f1be54a
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/m1-p831-paths
+          cat /tmp/m1-p831-paths
+          test "$(wc -l < /tmp/m1-p831-paths)" -eq 5
+          while IFS= read -r file; do
+            case "$file" in
+              scripts/build-m1-no-account-trial-831.mjs|scripts/test-m1-no-account-trial-831.mjs|scripts/run-phone-photo-check.mjs|research/mission1-no-account-trial-package-831/REPORT.md|.github/workflows/mission1-no-account-trial-package-831-no-deploy.yml) ;;
+              *) echo "UNAPPROVED APP/CLOUD/MODEL/RELEASE PATH: $file"; exit 1 ;;
+            esac
+          done < /tmp/m1-p831-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-no-account-trial-package-831/REPORT.md
+          echo M1_P831_EXACT_P830_PARENT_FIVE_ONLY_NO_DEPLOY
+      - name: Install ephemeral native test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build original app; package ONLY recognition; SHA verify; ALL Node regressions
+        run: |
+          set -euo pipefail
+          node --check scripts/build-m1-no-account-trial-831.mjs
+          node --check scripts/run-phone-photo-check.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test scripts/test-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          test ! -e benchmark/m1-no-account-trial-831/index.html
+      - name: Upload only SHA-verified isolated owner preview static files — NOT DEPLOYED
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission1-P831-ISOLATED-OWNER-RECOGNITION-TRIAL-NOT-HOSTED-HOLD
+          path: benchmark/m1-no-account-trial-831/
+          retention-days: 14
+          if-no-files-found: error
+  genuine-worker-isolated-phone-preview-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real browser plus previously SHA reviewed publisher source photos
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0001,commons-0090
+      - name: Real original model in exact NO-ACCOUNT bundle; verify no private network upload
+        env:
+          M1_TRIAL_ROOT: benchmark/m1-no-account-trial-831
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test scripts/test-m1-no-account-trial-831.mjs
+          node scripts/run-phone-photo-check.mjs benchmark/phone-photo-flow-${{ matrix.browser }} ${{ matrix.browser }}
+      - name: Upload ONLY sanitized numerical results, not phone photos
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: mission1-P831-${{ matrix.browser }}-NO-ACCOUNT-WIRE-PRIVATE-NUMERIC-HOLD
+          path: |
+            benchmark/phone-photo-flow-${{ matrix.browser }}/results.json
+            benchmark/phone-photo-flow-${{ matrix.browser }}/summary.json
+          retention-days: 14
+          if-no-files-found: error
