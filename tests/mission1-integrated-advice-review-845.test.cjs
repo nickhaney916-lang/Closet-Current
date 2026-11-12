@@ -80,3 +80,25 @@ test('P845 source advice remains optional, no permission to bypass first owner c
  assert.equal(x.item.requiresOwnershipConfirmation,true);
  assert.match(x.item.localStatus,/Tap Adjust to confirm/);
 });
+
+test('P845 expired advice releases source references on remove, crop, save, and owner switch',()=>{
+ const cleanup=section('function purgePhotoQualityHints845(', 'function render(){');
+ const checks=[
+  {name:'saved or removed',mutate:c=>{c.batch=[];}},
+  {name:'crop changed',mutate:c=>{c.batch[0].image='data:image/jpeg;base64,QkJC';}},
+  {name:'owner switched',mutate:c=>{c.window.closetAuth.user.id='owner-B';}},
+  {name:'replaced same-id source',mutate:c=>{c.batch=[{id:'s',image:'same-photo'}];}}
+ ];
+ for(const check of checks){
+  const item={id:'s',image:'same-photo'};
+  const receipt={item,source:'same-photo',owner:'owner-A',advice:[]};
+  const c={photoQualityHints73:new Map([['s',receipt]]),
+    batch:[item],window:{closetAuth:{user:{id:'owner-A'}}}};
+  vm.createContext(c);vm.runInContext(cleanup,c);
+  c.purgePhotoQualityHints845();
+  assert.equal(c.photoQualityHints73.size,1,check.name+' valid source retained');
+  check.mutate(c);
+  c.purgePhotoQualityHints845();
+  assert.equal(c.photoQualityHints73.size,0,check.name+' expired source removed');
+ }
+});
