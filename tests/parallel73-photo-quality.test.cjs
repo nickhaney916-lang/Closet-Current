@@ -11,7 +11,7 @@ const pixels=(width,height,paint)=>{
 };
 test('research flag is disabled by default and never authorizes saving',()=>{
  assert.equal(api.enabled(),false);
- assert.equal(api.VERSION,'P73-2');
+ assert.equal(api.VERSION,'P73-3');
 });
 test('bounded sample rejects corruption, untrusted oversized dimensions and zero pixels',()=>{
  assert.throws(()=>api.analyzePixels(new Uint8Array(4),16,16));
@@ -53,6 +53,19 @@ test('black garment on white contrasting background is not automatically judged 
 test('highly patterned image is not forced into softness advice',()=>{
  const x=api.analyzePixels(pixels(96,96,(x,y)=>(x+y)%2?[8,16,20,255]:[239,250,244,255]),96,96,1600,1600);
  assert.equal(x.advice.some(w=>w.code==='possible-softness'),false);
+});
+test('border interference can suggest a simpler backdrop without claiming garment identity',()=>{
+ const x=api.analyzePixels(pixels(128,128,(px,py)=>{
+  const outer=px<25||px>=103||py<25||py>=103;
+  return outer&&((px+py)%2)?[13,13,13,255]:outer?[238,238,238,255]:[120,120,120,255];
+ }),128,128,1600,1600);
+ assert.ok(x.advice.some(w=>w.code==='busy-border'));
+ assert.ok(x.metrics.borderEdgeFraction>x.metrics.centerEdgeFraction);
+ assert.ok(x.notMeasured.includes('garment boundary or cut-off hems'));
+});
+test('textured garment filling frame is NOT automatically treated as busy background',()=>{
+ const x=api.analyzePixels(pixels(128,128,(px,py)=>(px+py)%2?[12,12,12,255]:[243,243,243,255]),128,128,1500,1600);
+ assert.equal(x.advice.some(w=>w.code==='busy-border'),false);
 });
 test('flat-but-valid color and transparent PNG are not forced to retake',()=>{
  const gray=api.analyzePixels(pixels(96,96,()=>[98,98,98,255]),96,96,1600,1600);
