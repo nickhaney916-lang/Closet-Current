@@ -84,6 +84,13 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    assert.equal(await page.evaluate(()=>privateState72().receipts),2);
    // Real editor proposal, only from those two owner-bound consented sources.
    await page.evaluate(()=>fixture72('query','#2a6b9b','Unknown'));
+   const diagnostic=await page.evaluate(async()=>({
+    consentedCount:items.filter(x=>Boolean(x.correctionReceipt72)).length,
+    verifiedCount:(await Promise.all(items.map(x=>ClothingMemory.verified72(x,window.__closetCurrentOwnerScope72)))).filter(Boolean).length,
+    directProposal:Boolean(await ClothingMemory.suggest72(batch[0],items,window.__closetCurrentOwnerScope72)),
+    enabled:learningMode72(),secureContext:window.isSecureContext
+   }));
+   console.log('P72_BROWSER_DIAGNOSTIC_SAFE_COUNTS',JSON.stringify({name,width,...diagnostic}));
    const use=page.getByRole('button',{name:'Use owner-confirmed suggestion'});
    await use.waitFor({state:'visible',timeout:10000});
    assert.equal(await page.getByLabel('Item type').inputValue(),'Unknown');
