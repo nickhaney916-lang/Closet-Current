@@ -148,7 +148,8 @@ test('revoked old camera failure cannot show former owner warning',()=>{
  ctx.reportCaptureCommitFailure(Object.assign(Error('quota'),{code:'CAPTURE_STORAGE_FAILED'}),1);
  assert.equal(records.length,baseline?2:0);
  ctx.reportCaptureCommitFailure(Object.assign(Error('quota'),{code:'CAPTURE_STORAGE_FAILED'}),2);
- assert.equal(records.filter(x=>/remains visible/.test(x)).length,1);
+ assert.equal(records.filter(x=>/remains visible/.test(x)).length,baseline?2:1,
+  'parent reports both former and current owner failures; patched code reports only the current owner');
 });
 test('session lock revokes old blob and releases controls before the new owner begins',()=>{
  const calls=[],handlers={};
