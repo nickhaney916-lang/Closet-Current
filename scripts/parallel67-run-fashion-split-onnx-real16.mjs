@@ -43,7 +43,7 @@ const [tokenizer,processor,textModel,visionModel]=await Promise.all([
 const texts=P67_LABELS.map(label=>'a photo of '+label);
 const textInputs=tokenizer(texts,{padding:'max_length',truncation:true});
 const outputText=await textModel(textInputs);
-const textVectors=outputText.pooler_output?.data;
+const textVectors=outputText.text_embeds?.data;
 console.log('P67_TEXT_OUTPUT_SHAPE_DIAGNOSTIC',JSON.stringify({
  labels:P67_LABELS.length,
  keys:Object.keys(outputText),
@@ -54,7 +54,9 @@ console.log('P67_TEXT_OUTPUT_SHAPE_DIAGNOSTIC',JSON.stringify({
  tokenDims:textInputs?.input_ids?.dims||null
 }));
 if(!(textVectors instanceof Float32Array)||
-    textVectors.length%P67_LABELS.length!==0)
+    outputText.text_embeds?.dims?.[0]!==P67_LABELS.length||
+    outputText.text_embeds?.dims?.[1]!==768||
+    textVectors.length!==P67_LABELS.length*768)
  throw Error('P67: actual fashion text encoder did not return aligned source-pinned embeddings');
 const dimensions=textVectors.length/P67_LABELS.length;
 if(dimensions!==768)throw Error('P67: unexpected fashion joint text embedding dimension');
@@ -71,7 +73,11 @@ try{
   try{
    const photo=await RawImage.read(resolve(file));
    const outputImage=await visionModel(await processor(photo));
-   const imgVector=outputImage.pooler_output?.data;
+   const imgVector=outputImage.image_embeds?.data;
+   if(!(imgVector instanceof Float32Array)||
+      outputImage.image_embeds?.dims?.[0]!==1||
+      outputImage.image_embeds?.dims?.[1]!==dimensions)
+    throw Error('P67: invalid native vision image_embeds shape');
    const ranked=rankSplitFashionEmbeddings67(imgVector,textVectors,dimensions);
    row={id:label.id,expectedCategory:label.expectedCategory,
     expectedType:label.expectedType,sourceShaVerified:true,...ranked,
