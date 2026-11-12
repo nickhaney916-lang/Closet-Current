@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {preparePhotoUVSplitEdgeWitness} from '../research/mission2-source-length/split-edge-continuity.mjs';
 import {
  createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,auditSourcePhotoMicroMultiPose,auditSourcePhotoUVSurfaceAtPose,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
@@ -1484,4 +1485,80 @@ test('P2-C27 source-photo UV and posed face continuity audits unchanged original
  for(const secret of ['sourceSHA256','ownerId','localXYZ','posedXYZ',
   '"sourceUV"','"faceKey"','"sourceFaceIds"','"texturePixels"'])
   assert.equal(exported.includes(secret),false);
+});
+
+
+test('P2-C28 original-photo UV split-edge candidate gap measures genuine posed 163-bone seam opening without touching source vertices or certifying sewing',()=>{
+ const {root,garment,bones}=simplePose();
+ const geometry=garment.geometry;
+ // Two separately indexed source triangles share a NEUTRAL geometric edge.
+ // They have deliberately different UV endpoints; that is NOT proof sewing.
+ geometry.setAttribute('position',new THREE.Float32BufferAttribute([
+  0,0,0, 1,0,0, 0,1,0,
+  1,0,0, 0,0,0, 1,-1,0
+ ],3));
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute([
+  0,0, 1,0, 0,1,
+  .6,.2, .2,.2, .6,1
+ ],2));
+ const source=geometry.getAttribute('position').array.slice();
+ const originalUV=geometry.getAttribute('uv').array.slice();
+ const capture=()=>{
+  root.updateMatrixWorld(true);garment.skeleton.update();
+  const p=geometry.getAttribute('position'),out=new Float32Array(p.count*3),
+   v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){
+   v.fromBufferAttribute(p,i);garment.applyBoneTransform(i,v);
+   v.applyMatrix4(garment.matrixWorld);v.toArray(out,i*3);
+  }
+  return out;
+ };
+ const reference=[capture()];
+ bones[0].rotation.z=.11;
+ const posed=[capture()];
+ const witness=preparePhotoUVSplitEdgeWitness([garment],reference);
+ assert.equal(witness.sourceSummary.sourcePhotoSplitUVEdgePairs,1);
+ assert.equal(witness.sourceSummary.ambiguousSplitEdgeGroups,0);
+ assert.equal(witness.sourceSummary.originalSplitPairsAreNotProvenSewnSeams,true);
+ const baseline=witness.measure(root,posed);
+ assert.equal(baseline.sourcePhotoSplitUVEdgePairs,1);
+ assert.equal(baseline.originalAlreadyOpenPairs,0);
+ assert.equal(baseline.newlyOpenPairs,0);
+ assert.equal(baseline.newlyWidenedPairs,0);
+ const next=source.slice();
+ for(const i of [3,4])next[i*3+2]+=.002;
+ const opened=witness.measure(root,posed,new Map([[garment,next]]));
+ assert.equal(opened.newlyOpenPairs,1);
+ assert.equal(opened.newlyWidenedPairs,1);
+ assert.equal(opened.afterOpenPairs,1);
+ assert.equal(opened.uvSplitIsNotSewnSeamProof,true);
+ assert.equal(opened.noOriginalSourceMutation,true);
+ assert.equal(opened.noAutomaticGarment3DAdmission,true);
+ assert.equal(opened.releaseAuthorized,false);
+ const shiftTogether=source.slice();
+ for(const i of [0,1,3,4])shiftTogether[i*3+2]+=.002;
+ const same=witness.measure(root,posed,new Map([[garment,shiftTogether]]));
+ assert.equal(same.newlyOpenPairs,0);
+ assert.equal(same.newlyWidenedPairs,0);
+ assert.deepEqual(geometry.getAttribute('position').array,source);
+ assert.deepEqual(geometry.getAttribute('uv').array,originalUV);
+ for(const result of [witness.sourceSummary,opened]){
+  const json=JSON.stringify(result);
+  for(const secret of ['ownerId','sourceSHA256','sourceFace',
+   '"sourceUV"','"localXYZ"','"posedXYZ"','"faceKey"','"sourceIndices"'])
+   assert.equal(json.includes(secret),false);
+ }
+ assert.throws(()=>witness.measure(root,[new Float32Array(3)]),
+  /source geometry, actual pose or candidate has changed identity/);
+ const uv=geometry.getAttribute('uv');
+ uv.array[0]=NaN;
+ assert.throws(()=>preparePhotoUVSplitEdgeWitness([garment],reference),
+  /complete finite original UV mapping/);
+ uv.array.set(originalUV);
+ geometry.deleteAttribute('uv');
+ const missing=preparePhotoUVSplitEdgeWitness([garment],reference);
+ assert.equal(missing.sourceSummary.meshesMissingUV,1);
+ assert.equal(missing.sourceSummary.sourcePhotoSplitUVEdgePairs,0);
+ assert.equal(missing.measure(root,posed).releaseAuthorized,false);
+ geometry.setAttribute('uv',uv);
 });
