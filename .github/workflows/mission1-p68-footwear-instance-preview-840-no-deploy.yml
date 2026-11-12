@@ -20,17 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict seven-file allowlist against exact verified P839 research baseline
+      - name: Strict eight-file allowlist against exact verified P839 research baseline
         run: |
           set -euo pipefail
           BASE=1a1c742d1dee34a78c39ecd52b3ca677d7a08f5f
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD >/tmp/changed-p840
           cat /tmp/changed-p840
-          test "$(wc -l </tmp/changed-p840)" -eq 7
+          test "$(wc -l </tmp/changed-p840)" -eq 8
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|public/outfit-worker.mjs|public/outfit-capture.js|tests/outfit-instance-review-840.test.mjs|tests/outfit-capture.test.cjs|research/mission1-p68-footwear-instance-preview-840/REPORT.md|.github/workflows/mission1-p68-footwear-instance-preview-840-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-worker.mjs|public/outfit-capture.js|tests/outfit-instance-review-840.test.mjs|tests/outfit-worker.test.mjs|tests/outfit-capture.test.cjs|research/mission1-p68-footwear-instance-preview-840/REPORT.md|.github/workflows/mission1-p68-footwear-instance-preview-840-no-deploy.yml) ;;
               *) echo "P840 UNSCOPED CHANGE: $p"; exit 1 ;;
             esac
           done </tmp/changed-p840
