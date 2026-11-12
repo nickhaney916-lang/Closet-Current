@@ -452,6 +452,14 @@ test('new genuine nonadjacent fold is two-sided triangle-plane crossing, never c
  assert.equal(report.byPairAreaProvenance.bothRegular,1);
  assert.equal(report.uniqueAffectedSourceFaceCount,2);
  assert.equal(report.byUniqueFaceAreaProvenance.bothRegular,2);
+ assert.equal(Object.values(report.byPhotoOwnerFittedSourceLocalShape).reduce((a,n)=>a+n,0),2);
+ assert.deepEqual(report.uniqueAffectedByGarmentMesh,[2]);
+ assert.equal(report.affectedIndexedBoundaryFaces,2);
+ assert.equal(report.affectedIndexedInteriorFaces,0);
+ assert.equal(report.affectedIndexedNonManifoldFaces,0);
+ assert.equal(report.sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy,true);
+ assert.equal(report.indexedBoundaryDoesNotProveSewnSeam,true);
+ assert.equal(report.noSourcePositionsOrFaceKeysExported,true);
  assert.equal(report.noSmallAreaWaiver,true);
  assert.deepEqual(report.byOriginalCoincidentCorners,[1,0,0,0]);
  assert.deepEqual(report.byStagedCoincidentCorners,[1,0,0,0]);
@@ -819,4 +827,45 @@ test('P2-C18 canonical indexed source topology separates slivers, microscopic de
  forgedFlag.witnesses[0].localFlags[2]=0;
  assert.throws(()=>summarizeCanonicalSourceFaceQuality(forgedFlag),
   /differs from canonical original flags/);
+});
+
+
+test('P2-C19 ties genuinely skinned source face sliver and regular neighbor to exact contact keys without exposing geometry',()=>{
+ const {root,garment}=simplePose();
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute([
+  -.5,0,0,.5,0,0,0,.000001,0,
+  1,0,0,2,0,0,1.5,1,0
+ ],3));
+ const w=new Float32Array(6*4);for(let i=0;i<6;i++)w[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(24),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+ const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ m.userData.work56Garment=true;m.bind(garment.skeleton);root.add(m);
+ const original=g.getAttribute('position').array.slice();
+ // An explicitly hand-constructed exact-source contact claim tests only
+ // classification and privacy; it does NOT authorize a genuine 3D fit.
+ const proof={completedUniqueAffectedPairComparison:true,originalSourceFaceIdentity:true,
+  sampledPoseOnly:true,newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1']};
+ const result=classifyNewSourceSelfContactTypes(root,[m],new Map(),proof);
+ assert.equal(result.newSelfContactCount,1);
+ assert.equal(result.uniqueAffectedSourceFaceCount,2);
+ assert.deepEqual(result.byPhotoOwnerFittedSourceLocalShape,{
+  regularNotTiny:1,pointMicro:0,nearCoincidentEdge:0,thinSliver:1,smallButWellShaped:0
+ });
+ assert.deepEqual(result.uniqueAffectedByGarmentMesh,[2]);
+ assert.equal(result.affectedIndexedBoundaryFaces,2);
+ assert.equal(result.affectedIndexedInteriorFaces,0);
+ assert.equal(result.affectedIndexedNonManifoldFaces,0);
+ assert.equal(result.sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy,true);
+ assert.equal(result.indexedBoundaryDoesNotProveSewnSeam,true);
+ assert.equal(result.noSourcePositionsOrFaceKeysExported,true);
+ assert.equal(result.noContactWaived,true);
+ assert.equal(result.releaseAuthorized,false);
+ for(const term of ['newlyIntersectingSourceKeys','faceKey','localXYZ','sourceSHA256','ownerId'])
+  assert.equal(JSON.stringify(result).includes('\"'+term+'\"'),false);
+ assert.deepEqual(m.geometry.getAttribute('position').array,original);
+ const forged={...proof,newlyIntersectingSourceKeys:['0:0:999']};
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,[m],new Map(),forged),
+  /source triangle outside complete posed garment/);
 });
