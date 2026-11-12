@@ -1109,3 +1109,67 @@ test('P2-C22 feathered one-ring 163-bone short-edge correction touches only sour
   root.remove(m);
  }
 });
+
+
+test('P2-C23 predeclared 25/50/75 one-ring source-only Z sweep is bounded, monotonic per neighbor, preserves disconnected panel and owner photo',()=>{
+ const {root,garment}=simplePose();
+ const coords=[0,0,0, 1,0,0, 0,.000001,0,
+   2,0,0,3,0,0,2,1,0];
+ const geo=new THREE.BufferGeometry();
+ geo.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));
+ geo.setIndex([0,1,2,0,3,4,3,4,5]);
+ const bones=new Uint16Array(6*4),weights=new Float32Array(6*4);
+ for(let i=0;i<6;i++)weights[i*4]=1;
+ geo.setAttribute('skinIndex',new THREE.BufferAttribute(bones,4));
+ geo.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const mesh=new THREE.SkinnedMesh(geo,new THREE.MeshStandardMaterial());
+ mesh.userData.work56Garment=true;mesh.bind(garment.skeleton);root.add(mesh);
+ const original=geo.getAttribute('position').array.slice();
+ const proposed=original.slice();
+ for(const v of [0,1,2,3,4])proposed[v*3+2]=.02;
+ const savedProposal=proposed.slice(),input=new Map([[mesh,proposed]]);
+ const sourcePair={newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:2'],
+  originalSourceFaceIdentity:true,completedUniqueAffectedPairComparison:true,sampledPoseOnly:true};
+ const held=buildContactLinkedShortEdgeDepthCounterfactual([mesh],input,sourcePair);
+ const seen=[];
+ for(const weight of [.25,.5,.75]){
+  const sw=buildOneRingShortEdgeDepthFeather([mesh],input,held,
+   {neighborWeight:weight,maxNeighborVertices:512});
+  const rec=sw.countOnly,alt=sw.privateOverrides.get(mesh);
+  assert.equal(rec.oneRingPropagationWeight,weight);
+  assert.equal(rec.originalShortEdgeAnchors,2);
+  assert.equal(rec.oneRingVerticesMoved,3);
+  assert.equal(rec.photoXYSilhouetteBitIdentical,true);
+  assert.equal(rec.originalSourceIndexedAdjacencyOnly,true);
+  assert.equal(rec.nonIndexedVerticesNeverReconnected,true);
+  assert.equal(rec.noCrossSeamInference,true);
+  assert.equal(rec.sourceMeshAndShortEdgeProposalUnchanged,true);
+  assert.equal(rec.noUVSkinWeightOrOriginalPhotoMutation,true);
+  assert.equal(rec.requiresIndependentBodyPanelSelfAudits,true);
+  assert.equal(rec.notAdmissibleFor3DOrRelease,true);
+  assert.equal(rec.releaseAuthorized,false);
+  assert.ok(rec.maximumOneRingDepthMeters>=0&&rec.maximumOneRingDepthMeters<=.00900001);
+  for(const vertex of [0,2]){
+   assert.equal(alt[vertex*3+2],held.privateOverrides.get(mesh)[vertex*3+2]);
+  }
+  assert.equal(alt[5*3+2],savedProposal[5*3+2]);
+  for(let v=0;v<6;v++){
+   assert.equal(alt[v*3],savedProposal[v*3]);
+   assert.equal(alt[v*3+1],savedProposal[v*3+1]);
+  }
+  // Synthetic neighbor 3 shares original indexed face with short-edge anchor.
+  const amt=savedProposal[3*3+2]-alt[3*3+2];
+  assert.ok(amt>0&&amt<=.00900001);
+  seen.push(amt);
+  assert.deepEqual(mesh.geometry.getAttribute('position').array,original);
+  assert.deepEqual(proposed,savedProposal);
+  assert.equal(Object.hasOwn(rec,'privateOverrides'),false);
+  for(const forbidden of ['sourceFaceKeys','newlyIntersectingSourceKeys','localXYZ',
+   'sourceSHA256','skinWeight','sourceUV'])
+   assert.equal(JSON.stringify(rec).includes('"'+forbidden+'"'),false);
+ }
+ assert.ok(seen[0]<seen[1]&&seen[1]<seen[2],
+  'predeclared local Z neighbor adjustments increase without changing the anchors');
+ assert.throws(()=>buildOneRingShortEdgeDepthFeather([mesh],input,held,
+   {neighborWeight:.8}),/complete private immutable original short-edge trial/);
+});
