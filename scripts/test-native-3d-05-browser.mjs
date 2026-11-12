@@ -28,6 +28,9 @@ const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
 const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
 const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
 const sourceDepthExperiment=process.env.PHOTO_DEPTH_EXPERIMENT==='1';
+const sourceStageAudit=process.env.PHOTO_STAGE_AREA_AUDIT==='1';
+if(sourceStageAudit&&!sourceAdaptiveMode)
+ throw Error('Source-stage area audit requires real owner-private signed adaptive 3D');
 if(sourceDepthExperiment&&!sourceAdaptiveMode)
  throw Error('Inferred depth trial requires independent native adaptive safety gate');
 if(sourceAdaptiveMode&&!sourceLengthMode)throw Error('Adaptive contact gate requires genuine source 3D');
@@ -360,6 +363,13 @@ try{
   });
   const page=await ctx.newPage();
   const safeBodyLocality=[];
+  const safeStageAreaProvenance=[];
+  if(sourceStageAudit)page.on('console',msg=>{
+   const prefix='M2_PHOTO_STAGE_AREAS:';
+   if(msg.type()==='info'&&msg.text().startsWith(prefix)){
+    safeStageAreaProvenance.push(JSON.parse(msg.text().slice(prefix.length)));
+   }
+  });
   if(sourceAdaptiveMode)page.on('console',msg=>{
    const prefix='M2_BODY_CONTACT_LOCALITY:';
    if(msg.type()==='info'&&msg.text().startsWith(prefix)){
@@ -376,7 +386,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -468,6 +478,43 @@ try{
      assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
      assert.equal(await page.locator('#builder').isVisible(),true,
       'Signed in original-photo outfit board must remain available after refused 3D');
+    }
+    if(sourceStageAudit){
+     assert.equal(safeStageAreaProvenance.length,1,
+      'One real 163-bone staged anatomical→photo→owner provenance per signed private outfit');
+     const a=safeStageAreaProvenance[0];
+     assert.deepEqual(a.stages,[
+      'anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']);
+     assert.equal(a.noSourceFaceIdsCoordinatesOrOwnerFields,true);
+     assert.equal(a.baselineStageIsSkinnedNotSourceJPEG,true);
+     assert.equal(a.sourceTriangleIdentityUnchanged,true);
+     assert.equal(a.noCollisionWaived,true);
+     assert.equal(a.releaseAuthorized,false);
+     assert.equal(a.physicalClearanceVerified,false);
+     assert.equal(a.sourceAreaCrossSquaredThreshold,1e-10);
+     assert.equal(a.byGarmentMesh.length,3);
+     assert.equal(a.totalOriginalSourceFaces,
+      a.byGarmentMesh.reduce((n,m)=>n+m.sourceFaceCount,0));
+     for(const [field,parts] of [
+      ['smallAtAnatomicalConstruction','originalSmall'],
+      ['smallAfterPhotoFit','afterPhotoSmall'],
+      ['smallAfterOwnerMaskFit','afterOwnerSmall'],
+      ['newlySmallDuringPhotoFit','photoFitNewSmall'],
+      ['recoveredDuringPhotoFit','photoFitRecoveredSmall'],
+      ['newlySmallDuringOwnerMaskFit','ownerFitNewSmall'],
+      ['recoveredDuringOwnerMaskFit','ownerFitRecoveredSmall'],
+      ['persistentlySmallFromAnatomicalStage','smallAtEveryStage']])
+      assert.equal(a[field],a.byGarmentMesh.reduce((n,m)=>n+m[parts],0));
+     assert.equal(a.smallAfterPhotoFit,
+      a.smallAtAnatomicalConstruction+a.newlySmallDuringPhotoFit-a.recoveredDuringPhotoFit);
+     assert.equal(a.smallAfterOwnerMaskFit,
+      a.smallAfterPhotoFit+a.newlySmallDuringOwnerMaskFit-a.recoveredDuringOwnerMaskFit);
+     const redacted=JSON.stringify(a);
+     assert.equal(redacted.includes(source.originalSHA),false);
+     assert.equal(redacted.includes('sourceFaceIds'),true,
+      'Only the negative noSourceFaceIdsCoordinatesOrOwnerFields safety tag may mention sourceFaceIds');
+     assert.equal(redacted.includes('ownerId'),false);
+     assert.equal(redacted.includes('coordinates\"'),false);
     }
     assert.equal(safeBodyLocality.length,1,'Exactly one private-safe 3D fit diagnosis from the disposable donor');
     const safeDiagnostic=safeBodyLocality[0];
@@ -564,6 +611,7 @@ try{
      neverClaimedPhotographedDepth:true,
      refusalReason,
      safeBodyLocality:safeDiagnostic,
+     safeStageAreaProvenance:sourceStageAudit?safeStageAreaProvenance[0]:null,
      neverClaimedCompleteCollisionPhysics:true,originalJPEGRetained:true,
      originalPrivateOwnerRetained:true,releaseAuthorized:false,familyAlpha:'HOLD'});
     await page.close();await ctx.close();await browser.close();browser=null;
