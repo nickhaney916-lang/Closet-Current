@@ -212,7 +212,9 @@ test('INDEX-02 is opt-in, does not change database schemas, source photo, model,
  const module=readFileSync('research/wardrobe-index-02/mobile-index-app.mjs','utf8');
  assert.ok(app.includes("get('index02')==='after'"));
  assert.ok(app.includes("db?.name!=='closet-current-user-'+owner"));
- assert.ok(app.includes('result.then(()=>window.closetIndex02?.refresh()).catch(()=>{})'));
+ // Index refresh must now be gated by the exact originating owner lease.
+ assert.ok(app.includes('result.then(()=>{if(current())window.closetIndex02?.refresh();}).catch(()=>{})'));
+ assert.ok(app.includes("ownerDB?.name==='closet-current-user-'+owner"));
  assert.ok(app.includes('window.closetIndex02.includes(x.id)'));
  assert.ok(backup.includes('window.closetIndex02?.refresh().catch(()=>{})'));
  assert.ok(!/source\.image\s*=|\.image\s*=\s*|\.category\s*=\s*.*recognition/i.test(module));
