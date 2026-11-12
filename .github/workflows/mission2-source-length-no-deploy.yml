@@ -22,6 +22,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-stage-blend-feasibility-20261111-HOLD
     - research/mission2-original-triangle-skin-provenance-20261111-HOLD
     - research/mission2-source-topology-triage-20261111-HOLD
+    - research/mission2-contact-linked-source-shape-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -390,7 +391,23 @@ jobs:
          assert.equal(Object.values(t.byContactGeometry).reduce((v,n)=>v+n,0),a.newSelfContacts);
          assert.equal(t.byOriginalCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
          assert.equal(t.byStagedCoincidentCorners.reduce((v,n)=>v+n,0),a.newSelfContacts);
+         assert.equal(Object.values(t.byPhotoOwnerFittedSourceLocalShape).reduce((v,n)=>v+n,0),
+          t.uniqueAffectedSourceFaceCount);
+         assert.equal(t.uniqueAffectedByGarmentMesh.reduce((v,n)=>v+n,0),
+          t.uniqueAffectedSourceFaceCount);
+         assert.equal(t.affectedIndexedBoundaryFaces+t.affectedIndexedInteriorFaces,
+          t.uniqueAffectedSourceFaceCount);
+         assert.equal(t.sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy,true);
+         assert.equal(t.noSourcePositionsOrFaceKeysExported,true);
+         assert.equal(t.indexedBoundaryDoesNotProveSewnSeam,true);
         }
+        const shape=k=>active.map(a=>a.selfContactTypes?.byPhotoOwnerFittedSourceLocalShape?.[k]??'x').join(',');
+        const safeShape=engine+'-sliver['+shape('thinSliver')+
+         ']-nearEdge['+shape('nearCoincidentEdge')+
+         ']-wellSmall['+shape('smallButWellShaped')+
+         ']-regular['+shape('regularNotTiny')+
+         ']-micro['+shape('pointMicro')+']';
+        console.log('M2_NEW_SELF_CONTACT_SOURCE_SHAPE_COUNTS_ONLY',safeShape);
         const compact=c=>active.map(a=>a.selfContactTypes?.byContactGeometry?.[c]??'x').join(',');
         const edges=active.map(a=>a.selfContactTypes?.byOriginalCoincidentCorners?.[2]??'x').join(',');
         const report=engine+'-cross['+compact(classes[0])+']-cop['+compact(classes[1])+']-touch['+
