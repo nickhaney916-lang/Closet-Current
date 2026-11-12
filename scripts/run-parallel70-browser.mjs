@@ -38,18 +38,31 @@ async function runCase(engine,width){
   await page.addScriptTag({content:scaffold});
   await page.addScriptTag({url:'http://127.0.0.1:'+port+'/outfit-capture.js'});
   const sha=n=>n.toString(16).padStart(64,'0');
-  await page.evaluate(hashes=>{
-   window.startOutfitSplit('data:image/jpeg;base64,AAAA','source-1');
-   for(const [image,x,mask] of [['AAAA',.15,hashes[0]],['BBBB',.4,hashes[1]]]){
+  const photos=await page.evaluate(async()=>{
+   const make=(color)=>{
+    const c=document.createElement('canvas');c.width=180;c.height=130;
+    const ctx=c.getContext('2d');ctx.fillStyle='#f3f4f7';ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(18,83);ctx.lineTo(75,45);ctx.lineTo(113,49);
+    ctx.lineTo(148,81);ctx.lineTo(164,96);ctx.lineTo(164,113);ctx.lineTo(18,113);ctx.closePath();ctx.fill();
+    return c.toDataURL('image/jpeg',.91);
+   };
+   const scene=make('#777777'),a=make('#313131'),b=make('#292929');
+   const bytes=Uint8Array.from(atob(scene.split(',')[1]),v=>v.charCodeAt(0));
+   const digest=await crypto.subtle.digest('SHA-256',bytes),sourceSha256=[...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
+   return {scene,a,b,sourceSha256};
+  });
+  await page.evaluate(({hashes,photos})=>{
+   window.startOutfitSplit(photos.scene,'source-1');
+   for(const [image,x,mask] of [[photos.a,.15,hashes[0]],[photos.b,.4,hashes[1]]]){
     window.workerRecord.onmessage({data:{id:window.workerRecord.request.id,type:'piece',
-     piece:{image:'data:image/jpeg;base64,'+image,
+     piece:{image,
       hint:{categories:['Shoes'],types:[],clipped:false},
       cropBounds:{x,y:.67,width:.12,height:.14},
       colorEstimate:{color:'Black',support:.94},
-      reconciliation70:{sourceSha256:hashes[2],maskSha256:mask,instanceOrdinal:0}}}});
+      reconciliation70:{sourceSha256:photos.sourceSha256,maskSha256:mask,instanceOrdinal:0}}}});
    }
    window.workerRecord.onmessage({data:{id:window.workerRecord.request.id,type:'done',count:2}});
-  },[sha(11),sha(12),sha(222)]);
+  },{hashes:[sha(11),sha(12)],photos});
   await page.waitForTimeout(750);
   console.log('BROWSER70_DEBUG '+JSON.stringify({state:await page.evaluate(()=>({
     flags:{instanceReview840:window.workerRecord?.request?.instanceReview840,units70:window.workerRecord?.request?.instanceReview70},
@@ -59,6 +72,9 @@ async function runCase(engine,width){
     scripts:[...document.scripts].map(x=>x.src)
   })),errors}));
   await page.getByRole('button',{name:'Confirm matching pair',exact:true}).waitFor({timeout:7000});
+  await page.waitForFunction(()=>[...document.querySelectorAll('.unit70-proposal img')].length===2&&
+   [...document.querySelectorAll('.unit70-proposal img')].every(i=>i.complete&&i.naturalWidth>0));
+  await page.screenshot({path:join(output,engine.name()+'-'+width+'-proposal.png'),fullPage:true});
   let state=await page.evaluate(()=>({drafts:batch.length,closet:items.length,statuses:batch.map(x=>x.reconciliation70Status),flag:window.workerRecord.request.instanceReview70}));
   assert.equal(state.drafts,2);assert.equal(state.closet,0);assert.equal(state.flag,true);
   await page.getByRole('button',{name:'Confirm matching pair',exact:true}).click();
@@ -67,8 +83,8 @@ async function runCase(engine,width){
    photo:batch[0].originalPhoto.image,companion:batch[0].shoePair.companion.image,
    needsReview:batch[0].requiresOwnershipConfirmation}));
   assert.deepEqual([state.drafts,state.closet,state.status,state.companion,state.needsReview],
-   [1,0,'paired_confirmed','data:image/jpeg;base64,BBBB',true]);
-  assert.equal(state.photo,'data:image/jpeg;base64,AAAA');
+   [1,0,'paired_confirmed',photos.b,true]);
+  assert.equal(state.photo,photos.scene);
   await page.getByRole('button',{name:'Separate regions again'}).click();
   await page.waitForFunction(()=>batch.length===2&&batch.every(x=>x.reconciliation70Status==='separate_confirmed'));
   assert.equal(await page.evaluate(()=>items.length),0);
