@@ -1,0 +1,165 @@
+{
+  "sha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 11460.448692000005,
+  "detection": {
+    "regions": [
+      {
+        "category": "Dresses",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "fancy dress",
+        "box": [
+          0.96,
+          0.72,
+          1917.1200000000001,
+          1437.8400000000001
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "fancy dress",
+            "box": [
+              0.96,
+              0.72,
+              1917.1200000000001,
+              1437.8400000000001
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Tops",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "A grey shirt",
+        "box": [
+          0.96,
+          0.72,
+          1917.1200000000001,
+          1437.8400000000001
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "A grey shirt",
+            "box": [
+              0.96,
+              0.72,
+              1917.1200000000001,
+              1437.8400000000001
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "A grey shirt",
+            "box": [
+              0.96,
+              88.56,
+              1917.1200000000001,
+              1437.8400000000001
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a black lace trim",
+        "box": [
+          0.96,
+          84.24000000000001,
+          1867.2,
+          581.0400000000001
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "black chairs",
+        "box": [
+          0.96,
+          0.72,
+          632.64,
+          272.88
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>fancy dress<loc_0><loc_0><loc_998><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "fancy dress"
+          ],
+          "bboxes": [
+            [
+              0.96,
+              0.72,
+              1917.1200000000001,
+              1437.8400000000001
+            ]
+          ]
+        },
+        "elapsedMs": 3667.0998560000007
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. </s>",
+        "parsed": "A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. ",
+        "elapsedMs": 4505.473129000005
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. ",
+        "raw": "</s><s>A grey shirt<loc_0><loc_0><loc_998><loc_998><loc_0><loc_61><loc_998><loc_998>a black lace trim<loc_0><loc_58><loc_972><loc_403>black chairs<loc_0><loc_0><loc_329><loc_189></s>",
+        "parsed": {
+          "labels": [
+            "A grey shirt",
+            "A grey shirt",
+            "a black lace trim",
+            "black chairs"
+          ],
+          "bboxes": [
+            [
+              0.96,
+              0.72,
+              1917.1200000000001,
+              1437.8400000000001
+            ],
+            [
+              0.96,
+              88.56,
+              1917.1200000000001,
+              1437.8400000000001
+            ],
+            [
+              0.96,
+              84.24000000000001,
+              1867.2,
+              581.0400000000001
+            ],
+            [
+              0.96,
+              0.72,
+              632.64,
+              272.88
+            ]
+          ]
+        },
+        "elapsedMs": 3285.8355729999894
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

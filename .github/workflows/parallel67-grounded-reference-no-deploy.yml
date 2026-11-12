@@ -1,0 +1,58 @@
+name: Parallel67 grounded reference human masks NO DEPLOY
+on:
+  push:
+    branches: [research/parallel67-grounded-reference-HOLD]
+permissions:
+  contents: read
+concurrency:
+  group: parallel67-reference-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  genuine-reference-comparison:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0, persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Isolated reference-only source boundary
+        run: |
+          git merge-base --is-ancestor 5fbb01773b0a4299843355a10a013abe7ce71b1a HEAD
+          git diff --name-only 5fbb01773b0a4299843355a10a013abe7ce71b1a HEAD > /tmp/p67-reference-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/parallel67-reference/*|scripts/parallel67-reference-*|.github/workflows/parallel67-grounded-reference-no-deploy.yml) ;;
+              *) echo "Outside isolated research boundary: $p"; exit 1 ;;
+            esac
+          done < /tmp/p67-reference-paths
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: pip install numpy==2.3.5 pycocotools==2.0.10
+      - run: node scripts/build.mjs
+      - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - run: node --test research/parallel67-reference/regions.test.mjs
+      - run: python research/parallel67-reference/matching.test.py
+      - run: python research/parallel67-reference/fashionpedia/download_reference.py
+      - name: Clear committed numeric evidence before actual inference
+        run: |
+          rm -f research/parallel67-reference/results/reference-fashionpedia.json
+          rm -f research/parallel67-reference/results/segformer-fashionpedia.json
+          rm -f research/parallel67-reference/results/grounding-fashionpedia-*.json
+          rm -f research/parallel67-reference/results/human-mask-comparison.json
+      - run: node scripts/parallel67-reference-baseline.mjs
+      - run: node --expose-gc scripts/parallel67-reference-run.mjs fashionpedia
+      - run: python scripts/parallel67-reference-verify-models.py
+      - run: python scripts/parallel67-reference-evaluate.py
+      - name: Save only photo-free numeric evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel67-human-mask-reference-NO-RELEASE
+          path: |
+            research/parallel67-reference/results/reference-fashionpedia.json
+            research/parallel67-reference/results/segformer-fashionpedia.json
+            research/parallel67-reference/results/human-mask-comparison.json
+            research/parallel67-reference/results/verified-model-bytes.json
+          if-no-files-found: error
+          retention-days: 14

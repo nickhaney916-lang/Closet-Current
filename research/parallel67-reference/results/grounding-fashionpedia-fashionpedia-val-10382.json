@@ -1,0 +1,299 @@
+{
+  "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 10570.976111000004,
+  "detection": {
+    "regions": [
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          157.883,
+          922.112,
+          271.095,
+          1022.464
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              157.883,
+              922.112,
+              271.095,
+              1022.464
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          92.411,
+          913.92,
+          198.12099999999998,
+          1014.272
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              92.411,
+              913.92,
+              198.12099999999998,
+              1014.272
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Accessories",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "hat",
+        "box": [
+          99.231,
+          7.68,
+          256.773,
+          111.104
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "hat",
+            "box": [
+              99.231,
+              7.68,
+              256.773,
+              111.104
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "hat",
+            "box": [
+              96.50299999999999,
+              7.68,
+              257.455,
+              110.08
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Bottoms",
+        "itemType": "Shorts",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "shorts",
+        "box": [
+          43.989000000000004,
+          441.856,
+          230.85700000000003,
+          569.856
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "shorts",
+            "box": [
+              43.989000000000004,
+              441.856,
+              230.85700000000003,
+              569.856
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "shorts",
+            "box": [
+              42.625,
+              437.76,
+              232.221,
+              571.904
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Tops",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "shirt",
+        "box": [
+          53.537,
+          151.04,
+          236.99499999999998,
+          476.672
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "shirt",
+            "box": [
+              53.537,
+              151.04,
+              236.99499999999998,
+              476.672
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          138.10500000000002,
+          66.048,
+          226.083,
+          168.448
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "woman",
+        "box": [
+          0.341,
+          0.512,
+          272.459,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A woman",
+        "box": [
+          5.797000000000001,
+          7.68,
+          271.095,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>footwear<loc_231><loc_900><loc_397><loc_998><loc_135><loc_892><loc_290><loc_990>hat<loc_145><loc_7><loc_376><loc_108>human face<loc_202><loc_64><loc_331><loc_164>shorts<loc_64><loc_431><loc_338><loc_556>woman<loc_0><loc_0><loc_399><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "footwear",
+            "footwear",
+            "hat",
+            "human face",
+            "shorts",
+            "woman"
+          ],
+          "bboxes": [
+            [
+              157.883,
+              922.112,
+              271.095,
+              1022.464
+            ],
+            [
+              92.411,
+              913.92,
+              198.12099999999998,
+              1014.272
+            ],
+            [
+              99.231,
+              7.68,
+              256.773,
+              111.104
+            ],
+            [
+              138.10500000000002,
+              66.048,
+              226.083,
+              168.448
+            ],
+            [
+              43.989000000000004,
+              441.856,
+              230.85700000000003,
+              569.856
+            ],
+            [
+              0.341,
+              0.512,
+              272.459,
+              1022.464
+            ]
+          ]
+        },
+        "elapsedMs": 3742.2758849999955
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A woman is standing on a dirt ground. She is wearing a black shirt and a black hat. She has a pink bra on her chest. She also has a pair of blue and white shorts on her.</s>",
+        "parsed": "A woman is standing on a dirt ground. She is wearing a black shirt and a black hat. She has a pink bra on her chest. She also has a pair of blue and white shorts on her.",
+        "elapsedMs": 3594.4162429999997
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A woman is standing on a dirt ground. She is wearing a black shirt and a black hat. She has a pink bra on her chest. She also has a pair of blue and white shorts on her.",
+        "raw": "</s><s>A woman<loc_8><loc_7><loc_397><loc_998>shirt<loc_78><loc_147><loc_347><loc_465>hat<loc_141><loc_7><loc_377><loc_107>shorts<loc_62><loc_427><loc_340><loc_558></s>",
+        "parsed": {
+          "labels": [
+            "A woman",
+            "shirt",
+            "hat",
+            "shorts"
+          ],
+          "bboxes": [
+            [
+              5.797000000000001,
+              7.68,
+              271.095,
+              1022.464
+            ],
+            [
+              53.537,
+              151.04,
+              236.99499999999998,
+              476.672
+            ],
+            [
+              96.50299999999999,
+              7.68,
+              257.455,
+              110.08
+            ],
+            [
+              42.625,
+              437.76,
+              232.221,
+              571.904
+            ]
+          ]
+        },
+        "elapsedMs": 3230.802800999998
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

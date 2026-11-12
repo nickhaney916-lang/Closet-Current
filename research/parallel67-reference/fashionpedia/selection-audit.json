@@ -1,0 +1,101 @@
+{
+  "selectionBeforeModelInference": true,
+  "modelInferencePerformed": false,
+  "selectedImageIds": [
+    8519,
+    9711,
+    10216,
+    10382,
+    10776,
+    10898,
+    10905,
+    10994
+  ],
+  "candidateDecisions": [
+    {
+      "imageId": 8519,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 8554,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 8947,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 9481,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 9656,
+      "decision": "excluded-RLE-human-mask-for-polygon-only-reference",
+      "reason": null
+    },
+    {
+      "imageId": 9711,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 9835,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 9971,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 10160,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 10216,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 10382,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 10566,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    },
+    {
+      "imageId": 10776,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 10898,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 10905,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 10994,
+      "decision": "selected",
+      "reason": null
+    },
+    {
+      "imageId": 11041,
+      "decision": "excluded-primary-page-license",
+      "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt"
+    }
+  ]
+}

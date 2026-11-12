@@ -1,0 +1,497 @@
+{
+  "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 14835.728627999997,
+  "detection": {
+    "regions": [
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          362.88,
+          825.856,
+          438.144,
+          916.992
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              362.88,
+              825.856,
+              438.144,
+              916.992
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Accessories",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "glasses",
+        "box": [
+          319.104,
+          279.04,
+          388.99199999999996,
+          327.168
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "glasses",
+            "box": [
+              319.104,
+              279.04,
+              388.99199999999996,
+              327.168
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Accessories",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "handbag",
+        "box": [
+          257.664,
+          514.56,
+          344.448,
+          595.456
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "handbag",
+            "box": [
+              257.664,
+              514.56,
+              344.448,
+              595.456
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Outerwear",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "jacket",
+        "box": [
+          276.864,
+          310.784,
+          492.67199999999997,
+          586.24
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "jacket",
+            "box": [
+              276.864,
+              310.784,
+              492.67199999999997,
+              586.24
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "a red jacket",
+            "box": [
+              277.632,
+              311.808,
+              493.43999999999994,
+              586.24
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Bottoms",
+        "itemType": "Trousers",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "trousers",
+        "box": [
+          312.192,
+          545.28,
+          475.00800000000004,
+          851.456
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "trousers",
+            "box": [
+              312.192,
+              545.28,
+              475.00800000000004,
+              851.456
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "blue jeans",
+            "box": [
+              312.96,
+              543.232,
+              471.93600000000004,
+              847.36
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "bracelet",
+        "box": [
+          382.08,
+          478.72,
+          398.976,
+          511.488
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "flowerpot",
+        "box": [
+          91.776,
+          626.176,
+          290.688,
+          890.368
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          324.48,
+          271.872,
+          398.20799999999997,
+          347.648
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "person",
+        "box": [
+          279.936,
+          201.216,
+          501.888,
+          915.968
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "ring",
+        "box": [
+          345.216,
+          475.648,
+          353.664,
+          489.984
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A woman",
+        "box": [
+          275.328,
+          200.192,
+          504.96,
+          918.016
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a purse",
+        "box": [
+          254.592,
+          509.44,
+          347.52,
+          599.552
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A large gray pot",
+        "box": [
+          88.70400000000001,
+          623.104,
+          292.224,
+          891.392
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a green plant",
+        "box": [
+          71.03999999999999,
+          276.992,
+          276.096,
+          696.832
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The building",
+        "box": [
+          2.688,
+          0.512,
+          766.8480000000001,
+          1022.464
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The building",
+        "box": [
+          2.688,
+          0.512,
+          474.24,
+          847.36
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a sign",
+        "box": [
+          546.432,
+          48.64,
+          759.168,
+          297.472
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "a sign",
+        "box": [
+          551.808,
+          109.056,
+          729.984,
+          257.536
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "Hippies Welcome",
+        "box": [
+          551.808,
+          109.056,
+          730.752,
+          257.536
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>bracelet<loc_497><loc_467><loc_519><loc_499>flowerpot<loc_119><loc_611><loc_378><loc_869>footwear<loc_472><loc_806><loc_570><loc_895>glasses<loc_415><loc_272><loc_506><loc_319>handbag<loc_335><loc_502><loc_448><loc_581>human face<loc_422><loc_265><loc_518><loc_339>jacket<loc_360><loc_303><loc_641><loc_572>person<loc_364><loc_196><loc_653><loc_894>ring<loc_449><loc_464><loc_460><loc_478>trousers<loc_406><loc_532><loc_618><loc_831></s>",
+        "parsed": {
+          "labels": [
+            "bracelet",
+            "flowerpot",
+            "footwear",
+            "glasses",
+            "handbag",
+            "human face",
+            "jacket",
+            "person",
+            "ring",
+            "trousers"
+          ],
+          "bboxes": [
+            [
+              382.08,
+              478.72,
+              398.976,
+              511.488
+            ],
+            [
+              91.776,
+              626.176,
+              290.688,
+              890.368
+            ],
+            [
+              362.88,
+              825.856,
+              438.144,
+              916.992
+            ],
+            [
+              319.104,
+              279.04,
+              388.99199999999996,
+              327.168
+            ],
+            [
+              257.664,
+              514.56,
+              344.448,
+              595.456
+            ],
+            [
+              324.48,
+              271.872,
+              398.20799999999997,
+              347.648
+            ],
+            [
+              276.864,
+              310.784,
+              492.67199999999997,
+              586.24
+            ],
+            [
+              279.936,
+              201.216,
+              501.888,
+              915.968
+            ],
+            [
+              345.216,
+              475.648,
+              353.664,
+              489.984
+            ],
+            [
+              312.192,
+              545.28,
+              475.00800000000004,
+              851.456
+            ]
+          ]
+        },
+        "elapsedMs": 5541.254946999994
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A woman is standing outside of a building. She is wearing a red jacket and blue jeans. She has a purse in her hand and is looking at her phone. A large gray pot with a green plant in it is sitting on the ground. The building behind the woman is black and silver. There is a sign on the front of the building that says \"closed\" and \"Hippies Welcome\".</s>",
+        "parsed": "A woman is standing outside of a building. She is wearing a red jacket and blue jeans. She has a purse in her hand and is looking at her phone. A large gray pot with a green plant in it is sitting on the ground. The building behind the woman is black and silver. There is a sign on the front of the building that says \"closed\" and \"Hippies Welcome\".",
+        "elapsedMs": 5076.120609999998
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A woman is standing outside of a building. She is wearing a red jacket and blue jeans. She has a purse in her hand and is looking at her phone. A large gray pot with a green plant in it is sitting on the ground. The building behind the woman is black and silver. There is a sign on the front of the building that says \"closed\" and \"Hippies Welcome\".",
+        "raw": "</s><s>A woman<loc_358><loc_195><loc_657><loc_896>a red jacket<loc_361><loc_304><loc_642><loc_572>blue jeans<loc_407><loc_530><loc_614><loc_827>a purse<loc_331><loc_497><loc_452><loc_585>A large gray pot<loc_115><loc_608><loc_380><loc_870>a green plant<loc_92><loc_270><loc_359><loc_680>The building<loc_3><loc_0><loc_998><loc_998><loc_3><loc_0><loc_617><loc_827>a sign<loc_711><loc_47><loc_988><loc_290><loc_718><loc_106><loc_950><loc_251>Hippies Welcome<loc_718><loc_106><loc_951><loc_251></s>",
+        "parsed": {
+          "labels": [
+            "A woman",
+            "a red jacket",
+            "blue jeans",
+            "a purse",
+            "A large gray pot",
+            "a green plant",
+            "The building",
+            "The building",
+            "a sign",
+            "a sign",
+            "Hippies Welcome"
+          ],
+          "bboxes": [
+            [
+              275.328,
+              200.192,
+              504.96,
+              918.016
+            ],
+            [
+              277.632,
+              311.808,
+              493.43999999999994,
+              586.24
+            ],
+            [
+              312.96,
+              543.232,
+              471.93600000000004,
+              847.36
+            ],
+            [
+              254.592,
+              509.44,
+              347.52,
+              599.552
+            ],
+            [
+              88.70400000000001,
+              623.104,
+              292.224,
+              891.392
+            ],
+            [
+              71.03999999999999,
+              276.992,
+              276.096,
+              696.832
+            ],
+            [
+              2.688,
+              0.512,
+              766.8480000000001,
+              1022.464
+            ],
+            [
+              2.688,
+              0.512,
+              474.24,
+              847.36
+            ],
+            [
+              546.432,
+              48.64,
+              759.168,
+              297.472
+            ],
+            [
+              551.808,
+              109.056,
+              729.984,
+              257.536
+            ],
+            [
+              551.808,
+              109.056,
+              730.752,
+              257.536
+            ]
+          ]
+        },
+        "elapsedMs": 4214.919731000002
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

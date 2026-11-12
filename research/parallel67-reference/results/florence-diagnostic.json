@@ -1,0 +1,795 @@
+{
+  "format": "closet-current-parallel67-reference-florence/v1",
+  "model": "onnx-community/Florence-2-base-ft",
+  "revision": "e88a44eaf3791a35eae0c5a47b3dbcd36e67eb6f",
+  "dtype": "q8",
+  "runtime": "Transformers.js 3.8.1 CPU",
+  "referenceCommit": "b7a9c29f196edff0eb54dbe14588d7ae5e3dde28",
+  "notBlindAcceptance": true,
+  "automaticSave": false,
+  "tasks": [
+    {
+      "task": "<OD>",
+      "input": ""
+    },
+    {
+      "task": "<DENSE_REGION_CAPTION>",
+      "input": ""
+    },
+    {
+      "task": "<MORE_DETAILED_CAPTION>",
+      "input": ""
+    },
+    {
+      "task": "<OPEN_VOCABULARY_DETECTION>",
+      "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+    }
+  ],
+  "rows": [
+    {
+      "id": "commons-0003",
+      "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+      "expectedCategory": "Tops",
+      "expectedType": "T-shirt",
+      "source": "https://commons.wikimedia.org/wiki/File:Zwart_shirt_met_lange_mouwen_van_merk_Armani_Jeans,_opdruk_letters_%E2%80%9CAJ%E2%80%9D_op_voorkant,_maat_M,_objectnr_86975-3.JPG",
+      "width": 1920,
+      "height": 2868,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>person<loc_33><loc_0><loc_970><loc_998>trousers<loc_180><loc_561><loc_783><loc_998></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "person",
+                "trousers"
+              ],
+              "bboxes": [
+                [
+                  64.32000000000001,
+                  1.434,
+                  1863.3600000000001,
+                  2863.6980000000003
+                ],
+                [
+                  346.56,
+                  1610.382,
+                  1504.32,
+                  2863.6980000000003
+                ]
+              ]
+            }
+          },
+          "elapsedMs": 9556.142367
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>person<loc_33><loc_0><loc_970><loc_998>trousers<loc_177><loc_561><loc_785><loc_998></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "person",
+                "trousers"
+              ],
+              "bboxes": [
+                [
+                  64.32000000000001,
+                  1.434,
+                  1863.3600000000001,
+                  2863.6980000000003
+                ],
+                [
+                  340.79999999999995,
+                  1610.382,
+                  1508.1599999999999,
+                  2863.6980000000003
+                ]
+              ]
+            }
+          },
+          "elapsedMs": 5317.155179000001
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.</s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long."
+          },
+          "elapsedMs": 5489.422293999996
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<poly><loc_0><loc_0><loc_998><loc_998></s>",
+          "parsed": null,
+          "parser": "native",
+          "parseError": "UNSUPPORTED_GENERATED_FORMAT",
+          "elapsedMs": 7480.259025
+        }
+      ]
+    },
+    {
+      "id": "commons-0014",
+      "sha256": "d1074e4375b5e60f1bc43996c41b168dcb67425c9d0fac376e43719ecf9fe35f",
+      "expectedCategory": "Tops",
+      "expectedType": "Blouse",
+      "source": "https://commons.wikimedia.org/wiki/File:Blouse_MET_CI44.111_F.jpg",
+      "width": 1920,
+      "height": 1632,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>person<loc_31><loc_44><loc_969><loc_974></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "person"
+              ],
+              "bboxes": [
+                [
+                  60.480000000000004,
+                  72.624,
+                  1861.44,
+                  1590.384
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 13123.102305999999
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>person<loc_343><loc_44><loc_618><loc_689></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "person"
+              ],
+              "bboxes": [
+                [
+                  659.5200000000001,
+                  72.624,
+                  1187.52,
+                  1125.264
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 5490.881657000002
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white.</s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "A piece of art is shown. The art is yellow, black and white. There are small yellow flowers on the art. The design is a person's hand. The person is wearing a jesus. The jesUS is wearing jesu. The hand is in the shape of a jESUS. The background of the art is white."
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4904.971550000002
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<loc_31><loc_44><loc_968><loc_974></s>",
+          "parsed": {
+            "<OPEN_VOCABULARY_DETECTION>": {
+              "labels": [
+                "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+              ],
+              "bboxes": [
+                [
+                  60.480000000000004,
+                  72.624,
+                  1859.52,
+                  1590.384
+                ]
+              ]
+            }
+          },
+          "parser": "native-OD-bbox-parser-for-unsupported-open-vocabulary-task",
+          "parseError": null,
+          "elapsedMs": 6478.284964999999
+        }
+      ]
+    },
+    {
+      "id": "commons-0049",
+      "sha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+      "expectedCategory": "Dresses",
+      "expectedType": "Dress",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress_(AM_17186-5).jpg",
+      "width": 1920,
+      "height": 2880,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_233><loc_134><loc_714><loc_917></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "fancy dress"
+              ],
+              "bboxes": [
+                [
+                  448.32000000000005,
+                  387.36,
+                  1371.8400000000001,
+                  2642.4
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 3713.356136999995
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_233><loc_134><loc_715><loc_916></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "fancy dress"
+              ],
+              "bboxes": [
+                [
+                  448.32000000000005,
+                  387.36,
+                  1373.76,
+                  2639.52
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 7099.817539999996
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.</s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image."
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 8285.580408000002
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<loc_233><loc_134><loc_714><loc_917></s>",
+          "parsed": {
+            "<OPEN_VOCABULARY_DETECTION>": {
+              "labels": [
+                "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+              ],
+              "bboxes": [
+                [
+                  448.32000000000005,
+                  387.36,
+                  1371.8400000000001,
+                  2642.4
+                ]
+              ]
+            }
+          },
+          "parser": "native-OD-bbox-parser-for-unsupported-open-vocabulary-task",
+          "parseError": null,
+          "elapsedMs": 5950.416943000004
+        }
+      ]
+    },
+    {
+      "id": "commons-0059",
+      "sha256": "f7b8eea8f6d741a5f685119cc5c92f69300a5f294940162429e3febd1482f44c",
+      "expectedCategory": "Dresses",
+      "expectedType": "Dress",
+      "source": "https://commons.wikimedia.org/wiki/File:Dress_and_jacket_(AM_1970.236-4).jpg",
+      "width": 1920,
+      "height": 1440,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_0><loc_0><loc_998><loc_998></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "fancy dress"
+              ],
+              "bboxes": [
+                [
+                  0.96,
+                  0.72,
+                  1917.1200000000001,
+                  1437.8400000000001
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 5208.804376
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>chair<loc_0><loc_0><loc_329><loc_190></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "chair"
+              ],
+              "bboxes": [
+                [
+                  0.96,
+                  0.72,
+                  632.64,
+                  274.32
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 10656.519677000004
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. </s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "A grey shirt is laying on a white table. There is a black lace trim on the top of the shirt. There are black chairs behind the table. "
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4653.727885999993
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<loc_0><loc_0><loc_998><loc_998></s>",
+          "parsed": {
+            "<OPEN_VOCABULARY_DETECTION>": {
+              "labels": [
+                "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+              ],
+              "bboxes": [
+                [
+                  0.96,
+                  0.72,
+                  1917.1200000000001,
+                  1437.8400000000001
+                ]
+              ]
+            }
+          },
+          "parser": "native-OD-bbox-parser-for-unsupported-open-vocabulary-task",
+          "parseError": null,
+          "elapsedMs": 4335.889643000002
+        }
+      ]
+    },
+    {
+      "id": "commons-0078",
+      "sha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "source": "https://commons.wikimedia.org/wiki/File:Perfection_high-top_sneakers,_1900-1929_-_Bata_Shoe_Museum_-_DSC00727.JPG",
+      "width": 1920,
+      "height": 2095,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>sneakers<loc_54><loc_95><loc_591><loc_828><loc_438><loc_88><loc_878><loc_919></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "sneakers",
+                "sneakers"
+              ],
+              "bboxes": [
+                [
+                  104.64,
+                  200.0725,
+                  1135.68,
+                  1735.7075
+                ],
+                [
+                  841.92,
+                  185.4075,
+                  1686.7199999999998,
+                  1926.3525
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4300.668917000003
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>boot<loc_52><loc_94><loc_591><loc_831><loc_436><loc_87><loc_879><loc_923></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "boot",
+                "boot"
+              ],
+              "bboxes": [
+                [
+                  100.8,
+                  197.9775,
+                  1135.68,
+                  1741.9925
+                ],
+                [
+                  838.08,
+                  183.3125,
+                  1688.6399999999999,
+                  1934.7325
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 3915.077046000006
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.</s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white."
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4443.2743679999985
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<loc_53><loc_94><loc_591><loc_830></s>",
+          "parsed": {
+            "<OPEN_VOCABULARY_DETECTION>": {
+              "labels": [
+                "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+              ],
+              "bboxes": [
+                [
+                  102.72,
+                  197.9775,
+                  1135.68,
+                  1739.8975
+                ]
+              ]
+            }
+          },
+          "parser": "native-OD-bbox-parser-for-unsupported-open-vocabulary-task",
+          "parseError": null,
+          "elapsedMs": 4422.018774000011
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0006",
+      "sha256": "2c44d39231b0f09486551d779a0e4aa6385ce925873ba55b8890f26b3df29f66",
+      "expectedCategory": "Tops",
+      "expectedType": "Sweatshirt",
+      "source": "https://commons.wikimedia.org/wiki/File:Dunkles_Sweatshirt_mit_hellem_Ornament.jpg",
+      "width": 377,
+      "height": 461,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>jacket<loc_57><loc_50><loc_942><loc_952></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "jacket"
+              ],
+              "bboxes": [
+                [
+                  21.677500000000002,
+                  23.2805,
+                  355.3225,
+                  439.1025
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 3786.830105999994
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>shirt<loc_55><loc_50><loc_942><loc_952></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "shirt"
+              ],
+              "bboxes": [
+                [
+                  20.9235,
+                  23.2805,
+                  355.3225,
+                  439.1025
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 3985.701786999998
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A black sweater is hanging on a hanger. There is a design on the front of the sweater. There are two long sleeves on the sweater and a long sleeve on the back. </s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "A black sweater is hanging on a hanger. There is a design on the front of the sweater. There are two long sleeves on the sweater and a long sleeve on the back. "
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4438.810666000005
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<loc_57><loc_50><loc_942><loc_953></s>",
+          "parsed": {
+            "<OPEN_VOCABULARY_DETECTION>": {
+              "labels": [
+                "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+              ],
+              "bboxes": [
+                [
+                  21.677500000000002,
+                  23.2805,
+                  355.3225,
+                  439.56350000000003
+                ]
+              ]
+            }
+          },
+          "parser": "native-OD-bbox-parser-for-unsupported-open-vocabulary-task",
+          "parseError": null,
+          "elapsedMs": 4052.906157999998
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0023",
+      "sha256": "db11e0995251531889b5d6fbef350b8d051772e9fcba620fa9b7fa1f20cdb8bc",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "source": "https://commons.wikimedia.org/wiki/File:Black_8cm_high-heeled_ankle_boots_(20211007153232).jpg",
+      "width": 4852,
+      "height": 3235,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>high heels<loc_328><loc_210><loc_792><loc_825><loc_191><loc_189><loc_658><loc_768></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "high heels",
+                "high heels"
+              ],
+              "bboxes": [
+                [
+                  1593.882,
+                  680.9675,
+                  3845.21,
+                  2670.4925
+                ],
+                [
+                  929.158,
+                  613.0325,
+                  3195.042,
+                  2486.0975
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4265.285675000006
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>black leather high heels<loc_326><loc_210><loc_792><loc_825><loc_189><loc_188><loc_658><loc_768></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "black leather high heels",
+                "black leather high heels"
+              ],
+              "bboxes": [
+                [
+                  1584.178,
+                  680.9675,
+                  3845.21,
+                  2670.4925
+                ],
+                [
+                  919.4540000000001,
+                  609.7975,
+                  3195.042,
+                  2486.0975
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 3681.1640939999925
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A pair of black high heels are sitting on a cement surface. The heels have a pointed toe and a stiletto heel. The shoes have laces that are tied in a bow at the top of the heels. The pavement is a light grey color. The grass is visible in the background. The image is taken during daylight hours.</s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "A pair of black high heels are sitting on a cement surface. The heels have a pointed toe and a stiletto heel. The shoes have laces that are tied in a bow at the top of the heels. The pavement is a light grey color. The grass is visible in the background. The image is taken during daylight hours."
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 4564.305967000022
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<loc_190><loc_188><loc_659><loc_766></s>",
+          "parsed": {
+            "<OPEN_VOCABULARY_DETECTION>": {
+              "labels": [
+                "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots."
+              ],
+              "bboxes": [
+                [
+                  924.306,
+                  609.7975,
+                  3199.894,
+                  2479.6275
+                ]
+              ]
+            }
+          },
+          "parser": "native-OD-bbox-parser-for-unsupported-open-vocabulary-task",
+          "parseError": null,
+          "elapsedMs": 4498.062955000001
+        }
+      ]
+    },
+    {
+      "id": "p67-new-0030",
+      "sha256": "afb5385be40dc3002d1aa252054cdc25064969e92b9c16321b5227d06ef15a9d",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "source": "https://commons.wikimedia.org/wiki/File:23_0067415_Convair_Negative_Image_-_Empty_room_(54157976224).jpg",
+      "width": 1600,
+      "height": 1165,
+      "tasks": [
+        {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>furniture<loc_0><loc_374><loc_74><loc_459>person<loc_924><loc_288><loc_961><loc_428><loc_925><loc_288><loc_960><loc_357><loc_964><loc_296><loc_991><loc_353>table<loc_555><loc_348><loc_896><loc_480></s>",
+          "parsed": {
+            "<OD>": {
+              "labels": [
+                "furniture",
+                "person",
+                "person",
+                "person",
+                "table"
+              ],
+              "bboxes": [
+                [
+                  0.8,
+                  436.2925,
+                  119.19999999999999,
+                  535.3175
+                ],
+                [
+                  1479.2,
+                  336.10249999999996,
+                  1538.4,
+                  499.2025
+                ],
+                [
+                  1480.8,
+                  336.10249999999996,
+                  1536.8,
+                  416.48749999999995
+                ],
+                [
+                  1543.2,
+                  345.42249999999996,
+                  1586.4,
+                  411.8275
+                ],
+                [
+                  888.8,
+                  406.0025,
+                  1434.3999999999999,
+                  559.7825
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 3103.328693999996
+        },
+        {
+          "task": "<DENSE_REGION_CAPTION>",
+          "input": "",
+          "raw": "</s><s>furniture<loc_0><loc_374><loc_74><loc_458></s>",
+          "parsed": {
+            "<DENSE_REGION_CAPTION>": {
+              "labels": [
+                "furniture"
+              ],
+              "bboxes": [
+                [
+                  0.8,
+                  436.2925,
+                  119.19999999999999,
+                  534.1525
+                ]
+              ]
+            }
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 5455.841727999999
+        },
+        {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>The inside of a building. The ceiling is white. The floor is made of concrete. There are white lines painted on the floor. There is a long brown table with wheels on it. There's a long red wall in the background. There people are standing on the right side of the room. The people are wearing white shirts. There appears to be a door in the room to the left of the people.</s>",
+          "parsed": {
+            "<MORE_DETAILED_CAPTION>": "The inside of a building. The ceiling is white. The floor is made of concrete. There are white lines painted on the floor. There is a long brown table with wheels on it. There's a long red wall in the background. There people are standing on the right side of the room. The people are wearing white shirts. There appears to be a door in the room to the left of the people."
+          },
+          "parser": "native",
+          "parseError": null,
+          "elapsedMs": 7484.1825070000195
+        },
+        {
+          "task": "<OPEN_VOCABULARY_DETECTION>",
+          "input": "shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.",
+          "raw": "</s><s>shirt. blouse. sweatshirt. tunic. dress. skirt. trousers. shoes. sneakers. boots.<poly><loc_927><loc_408><loc_947><loc_415></s>",
+          "parsed": null,
+          "parser": "native",
+          "parseError": "UNSUPPORTED_GENERATED_FORMAT",
+          "elapsedMs": 5500.075767000002
+        }
+      ]
+    }
+  ],
+  "loadMs": 3667.1928550000002
+}

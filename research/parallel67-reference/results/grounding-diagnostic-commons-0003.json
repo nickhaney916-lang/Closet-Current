@@ -1,0 +1,273 @@
+{
+  "sha256": "cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 16061.367171999998,
+  "detection": {
+    "regions": [
+      {
+        "category": "Bottoms",
+        "itemType": "Trousers",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "trousers",
+        "box": [
+          346.56,
+          1610.382,
+          1504.32,
+          2863.6980000000003
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "trousers",
+            "box": [
+              346.56,
+              1610.382,
+              1504.32,
+              2863.6980000000003
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The pants",
+            "box": [
+              346.56,
+              1613.25,
+              1508.1599999999999,
+              2863.6980000000003
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Tops",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "The shirt",
+        "box": [
+          73.92,
+          58.794000000000004,
+          1857.6000000000001,
+          1808.274
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The shirt",
+            "box": [
+              73.92,
+              58.794000000000004,
+              1857.6000000000001,
+              1808.274
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "person",
+        "box": [
+          64.32000000000001,
+          1.434,
+          1863.3600000000001,
+          2863.6980000000003
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A mannequin",
+        "box": [
+          62.400000000000006,
+          1.434,
+          1869.1200000000001,
+          2863.6980000000003
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "letters",
+        "box": [
+          601.92,
+          460.314,
+          1435.2,
+          899.118
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The mannequins head",
+        "box": [
+          763.2,
+          1.434,
+          1218.24,
+          202.194
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The wall",
+        "box": [
+          0.96,
+          1.434,
+          1917.1200000000001,
+          2863.6980000000003
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The legs",
+        "box": [
+          346.56,
+          1613.25,
+          1510.08,
+          2863.6980000000003
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The arms",
+        "box": [
+          66.24000000000001,
+          179.25,
+          552,
+          1839.822
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The arms",
+        "box": [
+          1437.1200000000001,
+          225.138,
+          1867.2,
+          1814.0099999999998
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>person<loc_33><loc_0><loc_970><loc_998>trousers<loc_180><loc_561><loc_783><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "person",
+            "trousers"
+          ],
+          "bboxes": [
+            [
+              64.32000000000001,
+              1.434,
+              1863.3600000000001,
+              2863.6980000000003
+            ],
+            [
+              346.56,
+              1610.382,
+              1504.32,
+              2863.6980000000003
+            ]
+          ]
+        },
+        "elapsedMs": 6802.206739000001
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.</s>",
+        "parsed": "A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.",
+        "elapsedMs": 5795.294646
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A mannequin is wearing a black long sleeve shirt. The shirt has white letters on it. The pants are blue with a bit of rust on them. The mannequins head is white. The wall behind the mannequet is purple. The legs of the man are bent at the knees. The arms of the person are long.",
+        "raw": "</s><s>A mannequin<loc_32><loc_0><loc_973><loc_998>The shirt<loc_38><loc_20><loc_967><loc_630>letters<loc_313><loc_160><loc_747><loc_313>The pants<loc_180><loc_562><loc_785><loc_998>The mannequins head<loc_397><loc_0><loc_634><loc_70>The wall<loc_0><loc_0><loc_998><loc_998>The legs<loc_180><loc_562><loc_786><loc_998>The arms<loc_34><loc_62><loc_287><loc_641><loc_748><loc_78><loc_972><loc_632></s>",
+        "parsed": {
+          "labels": [
+            "A mannequin",
+            "The shirt",
+            "letters",
+            "The pants",
+            "The mannequins head",
+            "The wall",
+            "The legs",
+            "The arms",
+            "The arms"
+          ],
+          "bboxes": [
+            [
+              62.400000000000006,
+              1.434,
+              1869.1200000000001,
+              2863.6980000000003
+            ],
+            [
+              73.92,
+              58.794000000000004,
+              1857.6000000000001,
+              1808.274
+            ],
+            [
+              601.92,
+              460.314,
+              1435.2,
+              899.118
+            ],
+            [
+              346.56,
+              1613.25,
+              1508.1599999999999,
+              2863.6980000000003
+            ],
+            [
+              763.2,
+              1.434,
+              1218.24,
+              202.194
+            ],
+            [
+              0.96,
+              1.434,
+              1917.1200000000001,
+              2863.6980000000003
+            ],
+            [
+              346.56,
+              1613.25,
+              1510.08,
+              2863.6980000000003
+            ],
+            [
+              66.24000000000001,
+              179.25,
+              552,
+              1839.822
+            ],
+            [
+              1437.1200000000001,
+              225.138,
+              1867.2,
+              1814.0099999999998
+            ]
+          ]
+        },
+        "elapsedMs": 3460.3974530000014
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

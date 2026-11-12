@@ -1,0 +1,306 @@
+{
+  "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 11314.508063000001,
+  "detection": {
+    "regions": [
+      {
+        "category": "Dresses",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "fancy dress",
+        "box": [
+          407.04,
+          206.987,
+          591.36,
+          475.01300000000003
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "fancy dress",
+            "box": [
+              407.04,
+              206.987,
+              591.36,
+              475.01300000000003
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "dress",
+            "box": [
+              409.088,
+              205.623,
+              591.36,
+              477.741
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "footwear",
+        "box": [
+          557.568,
+          585.4970000000001,
+          597.504,
+          646.877
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "footwear",
+            "box": [
+              557.568,
+              585.4970000000001,
+              597.504,
+              646.877
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Accessories",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "glasses",
+        "box": [
+          495.104,
+          155.155,
+          547.328,
+          182.435
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "glasses",
+            "box": [
+              495.104,
+              155.155,
+              547.328,
+              182.435
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "object_detection",
+        "label": "human face",
+        "box": [
+          501.248,
+          139.469,
+          544.256,
+          200.167
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "object_detection",
+        "label": "woman",
+        "box": [
+          402.944,
+          124.465,
+          605.696,
+          644.149
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A woman",
+        "box": [
+          407.04,
+          121.737,
+          600.576,
+          650.969
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "face",
+        "box": [
+          497.152,
+          138.10500000000002,
+          548.352,
+          202.89499999999998
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The trees",
+        "box": [
+          0.512,
+          0.341,
+          1022.464,
+          504.33900000000006
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The trees",
+        "box": [
+          0.512,
+          0.341,
+          314.88,
+          306.559
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The ground",
+        "box": [
+          0.512,
+          267.685,
+          1022.464,
+          680.9770000000001
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The ground",
+        "box": [
+          0.512,
+          294.283,
+          1022.464,
+          680.9770000000001
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>fancy dress<loc_397><loc_303><loc_577><loc_696>footwear<loc_544><loc_858><loc_583><loc_948>human face<loc_489><loc_204><loc_531><loc_293>woman<loc_393><loc_182><loc_591><loc_944></s>",
+        "parsed": {
+          "labels": [
+            "fancy dress",
+            "footwear",
+            "human face",
+            "woman"
+          ],
+          "bboxes": [
+            [
+              407.04,
+              206.987,
+              591.36,
+              475.01300000000003
+            ],
+            [
+              557.568,
+              585.4970000000001,
+              597.504,
+              646.877
+            ],
+            [
+              501.248,
+              139.469,
+              544.256,
+              200.167
+            ],
+            [
+              402.944,
+              124.465,
+              605.696,
+              644.149
+            ]
+          ]
+        },
+        "elapsedMs": 3764.544600000001
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A woman is walking in a forest. She is wearing a pink dress with pink designs on it. She has long brown hair and glasses on her face. The trees are green and tall. The ground is covered in brown leaves.</s>",
+        "parsed": "A woman is walking in a forest. She is wearing a pink dress with pink designs on it. She has long brown hair and glasses on her face. The trees are green and tall. The ground is covered in brown leaves.",
+        "elapsedMs": 3707.5855510000038
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A woman is walking in a forest. She is wearing a pink dress with pink designs on it. She has long brown hair and glasses on her face. The trees are green and tall. The ground is covered in brown leaves.",
+        "raw": "</s><s>A woman<loc_397><loc_178><loc_586><loc_954>dress<loc_399><loc_301><loc_577><loc_700>glasses<loc_483><loc_227><loc_534><loc_267>face<loc_485><loc_202><loc_535><loc_297>The trees<loc_0><loc_0><loc_998><loc_739><loc_0><loc_0><loc_307><loc_449>The ground<loc_0><loc_392><loc_998><loc_998><loc_0><loc_431><loc_998><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "A woman",
+            "dress",
+            "glasses",
+            "face",
+            "The trees",
+            "The trees",
+            "The ground",
+            "The ground"
+          ],
+          "bboxes": [
+            [
+              407.04,
+              121.737,
+              600.576,
+              650.969
+            ],
+            [
+              409.088,
+              205.623,
+              591.36,
+              477.741
+            ],
+            [
+              495.104,
+              155.155,
+              547.328,
+              182.435
+            ],
+            [
+              497.152,
+              138.10500000000002,
+              548.352,
+              202.89499999999998
+            ],
+            [
+              0.512,
+              0.341,
+              1022.464,
+              504.33900000000006
+            ],
+            [
+              0.512,
+              0.341,
+              314.88,
+              306.559
+            ],
+            [
+              0.512,
+              267.685,
+              1022.464,
+              680.9770000000001
+            ],
+            [
+              0.512,
+              294.283,
+              1022.464,
+              680.9770000000001
+            ]
+          ]
+        },
+        "elapsedMs": 3839.874149000003
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

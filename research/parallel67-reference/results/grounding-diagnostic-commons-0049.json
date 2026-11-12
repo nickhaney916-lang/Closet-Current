@@ -1,0 +1,255 @@
+{
+  "sha256": "819ff96e55abf6f79cb99b5abca1870bc0bccfc669681bbc755562be9dbab547",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 17176.075943999997,
+  "detection": {
+    "regions": [
+      {
+        "category": "Dresses",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "fancy dress",
+        "box": [
+          448.32000000000005,
+          387.36,
+          1371.8400000000001,
+          2642.4
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "fancy dress",
+            "box": [
+              448.32000000000005,
+              387.36,
+              1371.8400000000001,
+              2642.4
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The dress",
+            "box": [
+              450.23999999999995,
+              381.6,
+              1373.76,
+              2633.7599999999998
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Tops",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "The shirt",
+        "box": [
+          450.23999999999995,
+          381.6,
+          1377.6000000000001,
+          1188
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The shirt",
+            "box": [
+              450.23999999999995,
+              381.6,
+              1377.6000000000001,
+              1188
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "generated_caption_grounding",
+        "label": "A mannequin",
+        "box": [
+          444.48,
+          300.96,
+          1385.28,
+          2642.4
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The mannequins torso",
+        "box": [
+          450.23999999999995,
+          381.6,
+          1375.68,
+          2633.7599999999998
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The legs",
+        "box": [
+          561.5999999999999,
+          986.4000000000001,
+          1310.4,
+          2628
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The arms",
+        "box": [
+          446.40000000000003,
+          413.28,
+          1375.68,
+          1188
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The arms",
+        "box": [
+          446.40000000000003,
+          419.03999999999996,
+          732.48,
+          1020.9599999999999
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "two small squares",
+        "box": [
+          669.12,
+          2633.7599999999998,
+          1304.6399999999999,
+          2780.64
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "two small squares",
+        "box": [
+          1174.0800000000002,
+          2639.52,
+          1293.12,
+          2751.84
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>fancy dress<loc_233><loc_134><loc_714><loc_917></s>",
+        "parsed": {
+          "labels": [
+            "fancy dress"
+          ],
+          "bboxes": [
+            [
+              448.32000000000005,
+              387.36,
+              1371.8400000000001,
+              2642.4
+            ]
+          ]
+        },
+        "elapsedMs": 2639.760875
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.</s>",
+        "parsed": "A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.",
+        "elapsedMs": 9274.191845000001
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "A mannequin is standing on a white background. The mannequins torso is covered with a tan dress. The dress has long sleeves that are red. The legs of the dress are long and skinny. The arms are also covered with golden embroidery. The shirt is draped over the back of the mannekin. There are two small squares on the ground in front of the image.",
+        "raw": "</s><s>A mannequin<loc_231><loc_104><loc_721><loc_917>The mannequins torso<loc_234><loc_132><loc_716><loc_914>The dress<loc_234><loc_132><loc_715><loc_914>The legs<loc_292><loc_342><loc_682><loc_912>The arms<loc_232><loc_143><loc_716><loc_412><loc_232><loc_145><loc_381><loc_354>The shirt<loc_234><loc_132><loc_717><loc_412>two small squares<loc_348><loc_914><loc_679><loc_965><loc_611><loc_916><loc_673><loc_955></s>",
+        "parsed": {
+          "labels": [
+            "A mannequin",
+            "The mannequins torso",
+            "The dress",
+            "The legs",
+            "The arms",
+            "The arms",
+            "The shirt",
+            "two small squares",
+            "two small squares"
+          ],
+          "bboxes": [
+            [
+              444.48,
+              300.96,
+              1385.28,
+              2642.4
+            ],
+            [
+              450.23999999999995,
+              381.6,
+              1375.68,
+              2633.7599999999998
+            ],
+            [
+              450.23999999999995,
+              381.6,
+              1373.76,
+              2633.7599999999998
+            ],
+            [
+              561.5999999999999,
+              986.4000000000001,
+              1310.4,
+              2628
+            ],
+            [
+              446.40000000000003,
+              413.28,
+              1375.68,
+              1188
+            ],
+            [
+              446.40000000000003,
+              419.03999999999996,
+              732.48,
+              1020.9599999999999
+            ],
+            [
+              450.23999999999995,
+              381.6,
+              1377.6000000000001,
+              1188
+            ],
+            [
+              669.12,
+              2633.7599999999998,
+              1304.6399999999999,
+              2780.64
+            ],
+            [
+              1174.0800000000002,
+              2639.52,
+              1293.12,
+              2751.84
+            ]
+          ]
+        },
+        "elapsedMs": 5257.391078000001
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}

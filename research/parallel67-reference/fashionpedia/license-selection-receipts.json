@@ -1,0 +1,256 @@
+[
+  {
+    "imageId": 8519,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8048878883",
+    "primaryPageSha256": "18dc39ab80302931b0cdfbfdc98c14f7294d24582a20f7388f94e66feab9fd1d",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8048878883",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8035/8048878883_8ca45786c4_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:21.728303+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 8554,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5532520712",
+    "primaryPageSha256": "fed8777187fa61a312cd201fd8bf273e1cc790d14c3bfeedc07469cb3f5dcb2c"
+  },
+  {
+    "imageId": 8947,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5531205821",
+    "primaryPageSha256": "bb529eb4cef436b10512e641a04e5255489592c3d892ccd30c98e3a0ba1db9b4"
+  },
+  {
+    "imageId": 9481,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=17283840341",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9656,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=36501437664",
+    "primaryPageSha256": "a112467a02dbccec4f41dc90698d90fbb8b71421fc5aa90c1ec5d04200e0bd04",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/36501437664",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4391/36501437664_e215cc1f3a_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:21.804001+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 9711,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=40211297790",
+    "primaryPageSha256": "1a1ad960ac76a3fa602faee3b4bf0e902ef3adbb702ee7a53b6dedec3f79cb64",
+    "primaryPhotoPage": "https://www.flickr.com/photos/142088869@N02/40211297790",
+    "creator": {
+      "@type": "Person",
+      "name": "Katie Cauthen",
+      "url": "https://www.flickr.com/photos/142088869@N02",
+      "image": "https://live.staticflickr.com/979/buddyicons/142088869@N02.jpg?1525963943#142088869@N02"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/944/40211297790_cda751697a_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:33.196464+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 9835,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3481202957",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9971,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9349117595",
+    "primaryPageSha256": "418a7fc063d592a0cb301144addace3029c5611a8cc1dfe5899c351858cc5b66"
+  },
+  {
+    "imageId": 10160,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=4832182752",
+    "primaryPageSha256": "811922b6c1ffee5da864467c154477df3c0d79ba2544f424ab6ed6f1aa68d960"
+  },
+  {
+    "imageId": 10216,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=24710418442",
+    "primaryPageSha256": "ef47b3aa49177f1a69a59e370ae4699a8729ebb2afc1a31d6d61cf157a84c4ab",
+    "primaryPhotoPage": "https://www.flickr.com/photos/zamerzla/24710418442",
+    "creator": {
+      "@type": "Person",
+      "name": "Anastasia Pavlenko",
+      "url": "https://www.flickr.com/photos/zamerzla",
+      "image": "https://live.staticflickr.com/4296/buddyicons/40391641@N04.jpg?1500754050#40391641@N04"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/1487/24710418442_ed269bc2b4_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:21.597488+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 10382,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2895057983",
+    "primaryPageSha256": "4f6a791b71c3f0261a30aa62c2e94cf5fc2a9f87fb905f6f20b24f27df4060ac",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2895057983",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3001/2895057983_7b4e64a1a5_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:21.609406+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 10566,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32150084240",
+    "primaryPageSha256": "6cf325985804ac130c3c69bcc8e9adcbd5da7cf044875cf873548530c2dd37d0"
+  },
+  {
+    "imageId": 10776,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=38313948242",
+    "primaryPageSha256": "e020f90fb7941a6f978f8c008697e4524cb3b291e512a2d9b8f2b1c28719c402",
+    "primaryPhotoPage": "https://www.flickr.com/photos/rankingfuuta/38313948242",
+    "creator": {
+      "@type": "Person",
+      "name": "Aaron Stidwell",
+      "url": "https://www.flickr.com/photos/rankingfuuta",
+      "image": "https://live.staticflickr.com/2826/buddyicons/36602595@N03.jpg?1493348877#36602595@N03"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4573/38313948242_acd1809e72_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:33.569411+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 10898,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8346159231",
+    "primaryPageSha256": "b32b2c815d896ef383a0f60d2ccead6930f65090ec125887e79b9f44213f5bb6",
+    "primaryPhotoPage": "https://www.flickr.com/photos/goonerpower/8346159231",
+    "creator": {
+      "@type": "Person",
+      "name": "Kieran Clarke",
+      "url": "https://www.flickr.com/photos/goonerpower",
+      "image": "https://live.staticflickr.com/2875/buddyicons/71835142@N08.jpg?1395067129#71835142@N08"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8043/8346159231_aa0fc1ace3_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:33.317466+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 10905,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=38115412676",
+    "primaryPageSha256": "0202ac8c706cee4991e0bc7f921fb38b4e8320dcacd9d2712094aec6a5a35aa5",
+    "primaryPhotoPage": "https://www.flickr.com/photos/bktrl/38115412676",
+    "creator": {
+      "@type": "Person",
+      "name": "Bet\u00fcl Y\u0131ld\u0131z",
+      "url": "https://www.flickr.com/photos/bktrl",
+      "image": "https://live.staticflickr.com/5641/buddyicons/46053585@N02.jpg?1478645301#46053585@N02"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4462/38115412676_fbba74551b_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:33.360062+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 10994,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2898696433",
+    "primaryPageSha256": "37e11abdca37ed8884bc994fe6b8d31f0564ccd7cf31d396227e525e7fdc5416",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2898696433",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3232/2898696433_2decca82ca_b.jpg",
+    "title": null,
+    "checkedAtUtc": "2026-11-12T04:12:33.193147+00:00",
+    "assertion": "Current primary Flickr JSON-LD and official Fashionpedia image metadata agree on CC BY 2.0; annotation license is separate."
+  },
+  {
+    "imageId": 11041,
+    "excluded": true,
+    "reason": "Primary page unavailable or no current unique CC BY2 author/license receipt",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6821827142",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  }
+]

@@ -1,0 +1,283 @@
+{
+  "sha256": "ba080a9a5d4aa68c193738e728e83c45b6a833a9bf80c45de4d2b35ece38154e",
+  "protocolSha256": "d707ce4c8e4002d3a422418c72b90f180a7b51fc033f97ddf20cbbf6cb8c714f",
+  "elapsedMs": 11242.88797299999,
+  "detection": {
+    "regions": [
+      {
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "sneakers",
+        "box": [
+          104.64,
+          200.0725,
+          1135.68,
+          1735.7075
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "sneakers",
+            "box": [
+              104.64,
+              200.0725,
+              1135.68,
+              1735.7075
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The shoes",
+            "box": [
+              104.64,
+              193.7875,
+              1137.6000000000001,
+              1741.9925
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The brown shoes",
+            "box": [
+              104.64,
+              193.7875,
+              1139.52,
+              1741.9925
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Sneakers",
+        "requiresReview": true,
+        "reason": "generated_description_requires_review",
+        "label": "sneakers",
+        "box": [
+          841.92,
+          185.4075,
+          1686.7199999999998,
+          1926.3525
+        ],
+        "evidence": [
+          {
+            "stage": "object_detection",
+            "label": "sneakers",
+            "box": [
+              841.92,
+              185.4075,
+              1686.7199999999998,
+              1926.3525
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The shoes",
+            "box": [
+              841.92,
+              179.1225,
+              1692.48,
+              1932.6375
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The brown shoes",
+            "box": [
+              841.92,
+              181.21749999999997,
+              1692.48,
+              1932.6375
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The shoe",
+            "box": [
+              841.92,
+              179.1225,
+              1694.3999999999999,
+              1932.6375
+            ]
+          }
+        ],
+        "strong": false
+      },
+      {
+        "category": "Shoes",
+        "itemType": "Unknown",
+        "requiresReview": true,
+        "reason": "specific_subtype_not_established",
+        "label": "Two shoes",
+        "box": [
+          104.64,
+          170.7425,
+          1698.24,
+          1934.7325
+        ],
+        "evidence": [
+          {
+            "stage": "generated_caption_grounding",
+            "label": "Two shoes",
+            "box": [
+              104.64,
+              170.7425,
+              1698.24,
+              1934.7325
+            ]
+          },
+          {
+            "stage": "generated_caption_grounding",
+            "label": "The brown shoes",
+            "box": [
+              104.64,
+              179.1225,
+              1694.3999999999999,
+              1930.5425
+            ]
+          }
+        ],
+        "strong": false
+      }
+    ],
+    "ignored": [
+      {
+        "stage": "generated_caption_grounding",
+        "label": "laces",
+        "box": [
+          1166.4,
+          304.8225,
+          1625.28,
+          1302.0425
+        ],
+        "reason": "no_garment_description"
+      },
+      {
+        "stage": "generated_caption_grounding",
+        "label": "The floor",
+        "box": [
+          0.96,
+          1.0475,
+          1917.1200000000001,
+          2091.8575
+        ],
+        "reason": "no_garment_description"
+      }
+    ],
+    "stages": {
+      "objectDetection": {
+        "task": "<OD>",
+        "input": "",
+        "raw": "</s><s>sneakers<loc_54><loc_95><loc_591><loc_828><loc_438><loc_88><loc_878><loc_919></s>",
+        "parsed": {
+          "labels": [
+            "sneakers",
+            "sneakers"
+          ],
+          "bboxes": [
+            [
+              104.64,
+              200.0725,
+              1135.68,
+              1735.7075
+            ],
+            [
+              841.92,
+              185.4075,
+              1686.7199999999998,
+              1926.3525
+            ]
+          ]
+        },
+        "elapsedMs": 3947.7974759999925
+      },
+      "caption": {
+        "task": "<MORE_DETAILED_CAPTION>",
+        "input": "",
+        "raw": "</s><s>Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.</s>",
+        "parsed": "Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.",
+        "elapsedMs": 4148.666119000001
+      },
+      "grounded": {
+        "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+        "input": "Two shoes are sitting on a table. The shoes are brown and white. The brown shoes have brown laces on them. The shoe have a white stripe on the side. The floor is white.",
+        "raw": "</s><s>Two shoes<loc_54><loc_81><loc_884><loc_923>The shoes<loc_54><loc_92><loc_592><loc_831><loc_438><loc_85><loc_881><loc_922>The brown shoes<loc_54><loc_85><loc_882><loc_921><loc_54><loc_92><loc_593><loc_831><loc_438><loc_86><loc_881><loc_922>laces<loc_607><loc_145><loc_846><loc_621>The shoe<loc_438><loc_85><loc_882><loc_922>The floor<loc_0><loc_0><loc_998><loc_998></s>",
+        "parsed": {
+          "labels": [
+            "Two shoes",
+            "The shoes",
+            "The shoes",
+            "The brown shoes",
+            "The brown shoes",
+            "The brown shoes",
+            "laces",
+            "The shoe",
+            "The floor"
+          ],
+          "bboxes": [
+            [
+              104.64,
+              170.7425,
+              1698.24,
+              1934.7325
+            ],
+            [
+              104.64,
+              193.7875,
+              1137.6000000000001,
+              1741.9925
+            ],
+            [
+              841.92,
+              179.1225,
+              1692.48,
+              1932.6375
+            ],
+            [
+              104.64,
+              179.1225,
+              1694.3999999999999,
+              1930.5425
+            ],
+            [
+              104.64,
+              193.7875,
+              1139.52,
+              1741.9925
+            ],
+            [
+              841.92,
+              181.21749999999997,
+              1692.48,
+              1932.6375
+            ],
+            [
+              1166.4,
+              304.8225,
+              1625.28,
+              1302.0425
+            ],
+            [
+              841.92,
+              179.1225,
+              1694.3999999999999,
+              1932.6375
+            ],
+            [
+              0.96,
+              1.0475,
+              1917.1200000000001,
+              2091.8575
+            ]
+          ]
+        },
+        "elapsedMs": 3144.346860999998
+      }
+    },
+    "requiresReview": true,
+    "automaticSave": false
+  }
+}
