@@ -379,6 +379,14 @@ try{
   const page=await ctx.newPage();
   const safeBodyLocality=[];
   const safeStageAreaProvenance=[];
+  const safeSourcePhotoTexelAudit=[];
+  if(sourceProjectionMode)page.on('console',msg=>{
+   const prefix='M2_SOURCE_FRONT_TEXEL_COUNTS_ONLY:';
+   if(msg.type()==='info'&&msg.text().startsWith(prefix)){
+    const audit=JSON.parse(msg.text().slice(prefix.length));
+    safeSourcePhotoTexelAudit.push(audit);
+   }
+  });
   if(sourceStageAudit)page.on('console',msg=>{
    const prefix='M2_PHOTO_STAGE_AREAS:';
    if(msg.type()==='info'&&msg.text().startsWith(prefix)){
@@ -1237,6 +1245,35 @@ try{
    if(sourceProjectionMode)await page.waitForFunction(()=>window.native3D05Bridge.state().sourceProjectionCompiledMaterialCount>=1,null,{timeout:15000});
    const blouseState=await page.evaluate(()=>window.native3D05Bridge.state());
    if(sourceLengthMode)requireSourceLength(blouseState,width);
+   if(sourceProjectionMode){
+    assert.ok(safeSourcePhotoTexelAudit.length>=1,
+     'P2-C30 original photo RGB shader must compile and report registered source texel counts');
+    for(const evidence of safeSourcePhotoTexelAudit){
+     assert.ok(Number.isSafeInteger(evidence.registeredVertices)&&
+      evidence.registeredVertices>100);
+     assert.ok(evidence.original163BoneSourceMeshes>=1);
+     assert.ok(evidence.eligibleSourceSamples>=1);
+     assert.equal(evidence.nonFiniteProjectionVertices,0);
+     assert.ok(evidence.uvDomainOutsideVertices>=0);
+     assert.ok(evidence.sourceShaderTexturesBound>=1);
+     for(const k of ['sourceTextureImagesDecodable','sourceTextureImagesUnavailable',
+      'eligibleTexelSamples','nonTransparentTexelSamples','differentRGBQuantizedBuckets'])
+      assert.ok(Number.isSafeInteger(evidence[k])&&evidence[k]>=0);
+     if(evidence.sourceTextureImagesDecodable>0){
+      assert.ok(evidence.eligibleTexelSamples>=1);
+      assert.ok(evidence.nonTransparentTexelSamples<=evidence.eligibleTexelSamples);
+     }
+     assert.equal(evidence.sourceRGBValuesNeverReported,true);
+     assert.equal(evidence.allOriginalSourcePixelsStayPrivate,true);
+     assert.equal(evidence.colorAccuracyNotVerified,true);
+     assert.equal(evidence.photorealismNotVerified,true);
+     assert.equal(evidence.releaseAuthorized,false);
+     const sanitized=JSON.stringify(evidence);
+     for(const forbidden of ['ownerId','sourceSHA256','sourceFace','sourceUV',
+       'localXYZ','sourceImage','texelRGB','data:image'])
+      assert.equal(sanitized.includes(forbidden),false);
+    }
+   }
    assert.equal(blouseState.opened,'native05-A-verified-blouse-3D');
    assert.ok(blouseState.silhouetteVertices62>=20);
    assert.ok(blouseState.silhouetteMaxMeters62>=.001&&blouseState.silhouetteMaxMeters62<=.0251);
@@ -1394,6 +1431,8 @@ try{
      assert.equal(maleProof.state?.mannequinBaseCoverDisclosure185,true);
     }
     if(sourceLengthMode)requireSourceLength(maleProof.state,width);
+    if(sourceProjectionMode)assert.ok(safeSourcePhotoTexelAudit.length>=2,
+     'P2-C30 source-photo shader evidence must be collected for BOTH actual models');
     await take(page,width,'04-male-front-provisional-blouse');
     await page.locator('#outfit3D01Side').click(); await take(page,width,'05-male-side-provisional-blouse');
     await page.locator('#outfit3D01Back').click(); await take(page,width,'06-male-inferred-rear-provisional-blouse');
