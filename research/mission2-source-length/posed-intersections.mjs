@@ -1305,7 +1305,12 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
     throw Error('M2 C26 original source mesh silently mutated during pose trial');
   }
  }
- if([...original].some(([b,q])=>b.quaternion.angleTo(q)>1e-9))
+ // Original source GLB quaternions are not guaranteed mathematically unit
+ // length to 1e-9 angle tolerance. Exact float components copied in finally
+ // are the stronger, actual byte-preserving restoration proof.
+ if([...original].some(([b,q])=>
+    b.quaternion.x!==q.x||b.quaternion.y!==q.y||
+    b.quaternion.z!==q.z||b.quaternion.w!==q.w))
   throw Error('M2 C26 body/garment source skeleton bone quaternions not restored');
  return Object.freeze({
   poses:Object.freeze(checks),
