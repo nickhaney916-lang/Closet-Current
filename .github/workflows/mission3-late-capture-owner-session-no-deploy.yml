@@ -24,7 +24,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-late-owner-session-capture.test.cjs|scripts/test-mission3-video-owner-switch-browser.mjs|research/mission3-late-capture-session-guard/REPORT.md|.github/workflows/mission3-late-capture-owner-session-no-deploy.yml) ;;
+              public/app.js|tests/mission3-video-private-draft-lease.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|scripts/test-mission3-video-owner-switch-browser.mjs|research/mission3-late-capture-session-guard/REPORT.md|.github/workflows/mission3-late-capture-owner-session-no-deploy.yml) ;;
               *) echo "Offline owner capacity gate refuses changed path: $p"; exit 1 ;;
             esac
           done
@@ -112,7 +112,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-late-owner-session-capture.test.cjs|scripts/test-mission3-video-owner-switch-browser.mjs|research/mission3-late-capture-session-guard/REPORT.md|.github/workflows/mission3-late-capture-owner-session-no-deploy.yml) ;;
+              public/app.js|tests/mission3-video-private-draft-lease.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|scripts/test-mission3-video-owner-switch-browser.mjs|research/mission3-late-capture-session-guard/REPORT.md|.github/workflows/mission3-late-capture-owner-session-no-deploy.yml) ;;
               *) echo "Mission 3 refused unapproved changed path: $p"; exit 1 ;;
             esac
           done
