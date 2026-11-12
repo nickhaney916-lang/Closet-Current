@@ -61,7 +61,7 @@ test('source-level integration keeps original JPEG and human review protections'
  assert.match(photo,/const decoded=new Image\(\)/);
  assert.match(photo,/captureGuidance=window\.PhotoQualityResearch\.analyzePixels/);
  assert.match(app,/const reviewFirst836=true;/);
- assert.match(app,/owner73===window\.closetAuth/);
+ assert.match(app,/owner73===\(typeof window==='undefined'\?null:window\.closetAuth/);
  assert.match(app,/hint73\.source===\(item\.recognitionPhoto\?\.image\|\|item\.image\)/);
  assert.match(app,/Take another photo/);
  assert.match(app,/Keep this photo/);
