@@ -8,9 +8,14 @@
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {join,resolve} from 'node:path';
 import {createHash} from 'node:crypto';
-import {P67_MODEL,P67_REVISION,P67_LABELS,rankIndependentSiglip67,evaluateIndependentSiglip67} from './parallel67-independent-siglip-scoring.mjs';
+import {P67_MODEL,P67_REVISION,P67_FASHION_MODEL,P67_FASHION_REVISION,P67_ALLOWED_MODELS,P67_LABELS,rankIndependentSiglip67,evaluateIndependentSiglip67} from './parallel67-independent-siglip-scoring.mjs';
 
 const output=resolve(process.argv[2]||'benchmark/parallel67-siglip-real16');
+const selected=process.argv[3]||'base-siglip';
+if(!['base-siglip','fashion-siglip'].includes(selected))throw Error('Unrecognized experimental model');
+const modelId=selected==='fashion-siglip'?P67_FASHION_MODEL:P67_MODEL;
+const modelRevision=selected==='fashion-siglip'?P67_FASHION_REVISION:P67_REVISION;
+if(P67_ALLOWED_MODELS[modelId]!==modelRevision)throw Error('Unpinned pretrained source');
 const frozen=JSON.parse(await readFile('benchmark/manifest-holdout-16.json','utf8'));
 const sources=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
 const lookup=new Map(sources.map(row=>[row.id,row]));
@@ -27,9 +32,9 @@ env.useFSCache=true;
 // The library fetches model weights over HTTPS, but the source JPEG is read
 // strictly from its SHAs-verified local file (no remote image URL or POST).
 const loadStarted=performance.now();
-console.log('P67_INDEPENDENT_MODEL_LOADING',P67_MODEL,P67_REVISION);
-const classifier=await pipeline('zero-shot-image-classification',P67_MODEL,{
- revision:P67_REVISION,device:'cpu',dtype:'q8',
+console.log('P67_INDEPENDENT_MODEL_LOADING',modelId,modelRevision);
+const classifier=await pipeline('zero-shot-image-classification',modelId,{
+ revision:modelRevision,device:'cpu',dtype:'q8',
  progress_callback:progress=>{
   if(progress?.status==='done'&&progress?.file)console.log('P67_MODEL_ASSET_LOADED',String(progress.file).slice(0,100));
  }
@@ -69,9 +74,10 @@ try{
   }));
  }
 }finally{await classifier.dispose();}
-const summary=evaluateIndependentSiglip67(frozen,results);
+const summary=evaluateIndependentSiglip67(frozen,results,{model:modelId,revision:modelRevision});
 summary.modelLoadMs=loadMs;
 summary.pipeline='@huggingface/transformers@3.8.1/q8/cpu';
+summary.variant=selected;
 summary.truthFileSha256=createHash('sha256').update(await readFile('benchmark/manifest-holdout-16.json')).digest('hex');
 summary.sourceIndexSha256=createHash('sha256').update(await readFile('benchmark/locked-photo-sources.json')).digest('hex');
 summary.missingNoSource=0;
