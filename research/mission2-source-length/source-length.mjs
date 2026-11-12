@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -65,7 +65,7 @@ export const classifySourceLengthCandidateException=e=>{
 
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
  strictTriangleContacts=false,traceGarmentPartContacts=false,strictGarmentPartContacts=false,traceSelfContacts=false,strictSelfContacts=false,extensionScale=1,depthClearance=0,depthEasingExponent=1,previewOnly=false,sourceAreaStages=null,
- counterfactualShortEdgeDepthTrial=false}={}){
+ counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false}={}){
  if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
    (previewOnly&&projectSourceRGB))fail('finite bounded extension scale and no projection in dry-run required');
  // Experimental *depth-only* offset is never inferred from a single front
@@ -77,6 +77,8 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
  if(strictTriangleContacts&&!traceTriangleContacts)fail('strict triangle gate requires actual triangle measurements');
  if(strictGarmentPartContacts&&!traceGarmentPartContacts)fail('strict garment part gate requires measured contacts');
  if(strictSelfContacts&&!traceSelfContacts)fail('strict self-contact gate requires measured intersections');
+ if(neighborDepthRelaxationTrial&&!counterfactualShortEdgeDepthTrial)
+  fail('M2 C22 neighbor relaxation requires original bounded short-edge trial');
  if(counterfactualShortEdgeDepthTrial&&
    (!previewOnly||!traceTriangleContacts||!traceGarmentPartContacts||!traceSelfContacts))
   fail('M2 C21 counterfactual requires disposable preview and complete independent collision measurements');
@@ -190,6 +192,38 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
      heldSelf.sampledPoseOnly!==true||
      heldSelf.collisionCertified!==false||heldSelf.releaseAuthorized!==false)
    fail('M2 C21 bounded counterfactual exact source-face self audit incomplete');
+  let neighborCounterfactual=null;
+  if(neighborDepthRelaxationTrial){
+   const relaxed=buildOneRingShortEdgeDepthFeather(targets,originalOverrides,counter,
+    {neighborWeight:.5,maxNeighborVertices:512});
+   const feathered=relaxed.privateOverrides;
+   const neighborBody=comparePosedTriangleContacts(baselineBody,
+    measurePosedTriangleContacts(root,targets,feathered));
+   const neighborPanel=comparePosedTriangleContacts(baselinePanels,
+    measurePosedGarmentPartContacts(root,targets,feathered));
+   const neighborSelf=measureChangedFaceSelfContactDelta(root,targets,feathered);
+   if(neighborSelf.completedUniqueAffectedPairComparison!==true||
+      neighborSelf.originalSourceFaceIdentity!==true||
+      neighborSelf.sampledPoseOnly!==true||
+      neighborSelf.collisionCertified!==false||neighborSelf.releaseAuthorized!==false)
+    fail('M2 C22 full exact original-source self contact re-audit incomplete');
+   neighborCounterfactual=Object.freeze({
+    ...relaxed.countOnly,
+    originNewBodyContacts:triangleEvidence.newlyIntersecting,
+    originNewPanelContacts:garmentPartEvidence.newlyIntersecting,
+    originNewSelfContacts:selfDelta.newlyIntersecting,
+    heldNewBodyContacts:heldBodyDiff.newlyIntersecting,
+    heldNewPanelContacts:heldPanelDiff.newlyIntersecting,
+    heldNewSelfContacts:heldSelf.newlyIntersecting,
+    featherNewBodyContacts:neighborBody.newlyIntersecting,
+    featherNewPanelContacts:neighborPanel.newlyIntersecting,
+    featherNewSelfContacts:neighborSelf.newlyIntersecting,
+    counterfactualNeverApplied:true,
+    unchangedCollisionAdmissionPolicy:true,
+    noPhotoMeasuredDepth:true,
+    releaseAuthorized:false
+   });
+  }
   shortEdgeCounterfactual=Object.freeze({
    ...counter.countOnly,
    originalProposalNewBodyContacts:triangleEvidence.newlyIntersecting,
@@ -199,6 +233,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    depthHoldNewPanelContacts:heldPanelDiff.newlyIntersecting,
    depthHoldNewSelfContacts:heldSelf.newlyIntersecting,
    depthHoldSourcePoseOnly:true,
+   neighborCounterfactual,
    cannotCertifySourceUVOrPhysicalDrape:true,
    counterfactualNeverApplied:true,
    noCandidateAcceptedOnCounterfactual:true,
@@ -258,10 +293,12 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
  * A candidate is only eligible when it creates NO new body/garment triangle
  * intersections at this sampled pose. Existing intersections remain unapproved.
  */
-export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false}={}){
+export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false}={}){
  if(typeof experimentalDepthTrial!=='boolean'||
     typeof counterfactualShortEdgeDepthTrial!=='boolean'||
-    (counterfactualShortEdgeDepthTrial&&!experimentalDepthTrial))
+    typeof neighborDepthRelaxationTrial!=='boolean'||
+    (counterfactualShortEdgeDepthTrial&&!experimentalDepthTrial)||
+    (neighborDepthRelaxationTrial&&!counterfactualShortEdgeDepthTrial))
   fail('bounded depth experiment opt-in or short-edge counterfactual requires explicit research opt-in');
  const attempts=[];
  // Keep the established original four-candidate search unchanged.
@@ -280,6 +317,8 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
    const result=fitSourceLength(shirt,root,profile,{
     traceTriangleContacts:true,traceGarmentPartContacts:true,traceSelfContacts:true,extensionScale:scale,depthClearance,depthEasingExponent,previewOnly:true,sourceAreaStages,
     counterfactualShortEdgeDepthTrial:counterfactualShortEdgeDepthTrial&&
+      scale===.25&&depthClearance===.008&&depthEasingExponent===2,
+    neighborDepthRelaxationTrial:neighborDepthRelaxationTrial&&
       scale===.25&&depthClearance===.008&&depthEasingExponent===2});
    const v=result.stats;
    const classification=classifySourceLengthContactAttempt(v);
@@ -325,7 +364,9 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   newBodyContacts:Number.isSafeInteger(a.newlyIntersecting)?a.newlyIntersecting:null,
   newSelfContacts:Number.isSafeInteger(a.newlyIntersectingIntrapanel)?a.newlyIntersectingIntrapanel:null,
   shortEdgeCounterfactual:a.shortEdgeCounterfactual?
-   Object.freeze({...a.shortEdgeCounterfactual}):null,
+   Object.freeze({...a.shortEdgeCounterfactual,
+    neighborCounterfactual:a.shortEdgeCounterfactual.neighborCounterfactual?
+     Object.freeze({...a.shortEdgeCounterfactual.neighborCounterfactual}):null}):null,
   selfContactTypes:a.selfContactTypes?Object.freeze({
    newSelfContactCount:a.selfContactTypes.newSelfContactCount,
    uniqueAffectedSourceFaceCount:a.selfContactTypes.uniqueAffectedSourceFaceCount,
@@ -380,10 +421,10 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   attempts:Object.freeze(attempts),sourcePoseOnly:true,
   noPhotoOrOwnerFields:true,releaseAuthorized:false});
 }
-export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false,onResearchDiagnostic=null,experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false}={}){
+export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false,onResearchDiagnostic=null,experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false}={}){
  if(onResearchDiagnostic!==null&&typeof onResearchDiagnostic!=='function')
   fail('bounded research diagnostic callback required');
- const decision=planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial,sourceAreaStages,counterfactualShortEdgeDepthTrial});
+ const decision=planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial,sourceAreaStages,counterfactualShortEdgeDepthTrial,neighborDepthRelaxationTrial});
  if(onResearchDiagnostic)onResearchDiagnostic(safeAdaptiveBodyContactDiagnostic(decision));
  if(!decision.accepted)
   fail('adaptive-geometry-refused['+decision.refusalReason+']: original-photo/2D fallback required; no garment geometry committed (body, garment part or intrapanel)');
