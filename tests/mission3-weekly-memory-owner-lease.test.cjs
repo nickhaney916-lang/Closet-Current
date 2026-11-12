@@ -101,6 +101,8 @@ function reviewerFixture(){
   setTimeout:()=>123,clearTimeout:()=>{},Date
  };
  context(ctx);
+ // The actual refresh function is under test; mock only its final persistence dependency.
+ ctx.saveMemoryReview=async row=>{events.push('save:'+ctx.window.closetAuth.user.id);return row;};
  return {ctx,hold,events,switchOwner(){
   ctx.captureOperationEpoch++;ctx.db=b.db;ctx.window.closetAuth.user.id=ownerB;
   ctx.items=[structuredClone(original)];
