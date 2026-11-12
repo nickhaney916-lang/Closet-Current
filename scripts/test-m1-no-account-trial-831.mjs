@@ -31,7 +31,10 @@ test('P831 copies ONLY genuine built local model trial dependencies and byte-ver
  assert.ok(!html.includes('__RELEASE__'));
  assert.ok(!html.includes('__RECOGNITION_INDEX__'));
  assert.match(html,/phone-photo-check.mjs\?v=[a-f0-9]{12}/);
- assert.match(html,/photo-import.js\?v=[a-f0-9]{12}/);
+ assert.doesNotMatch(html,/photo-import\.js/,'old non-cancelable import must not run in the trial');
+ assert.ok(files.includes('phone-photo-prep-832.mjs'));
+ assert.ok(!files.includes('photo-import.js'));
+ assert.match(await readFile(join(directory,'phone-photo-check.mjs'),'utf8'),/phone-photo-prep-832\.mjs/);
  const readme=await readFile(join(directory,'TRIAL_README.txt'),'utf8');
  assert.match(readme,/Family Alpha HOLD #255/);
  assert.match(readme,/protected HTTPS preview/);
