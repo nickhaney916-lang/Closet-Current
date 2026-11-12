@@ -24,6 +24,6 @@ All existing successful same-owner quota, original SHA, private draft and user-c
 
 ## Verification plan
 
-Strict five-path branch: `public/app.js`, one new source-extracted test, one new native browser test, this report, and dedicated no-deploy workflow. Exact-parent baseline/current reproduction, full serial Node, locally signed PostgreSQL RLS, inherited mobile Chromium/WebKit cases, new six-case owner-switch verification, and two synthetic-only evidence uploads.
+Strict six-path branch: `public/app.js`, one new source-extracted test, one new native browser test, the existing video owner-switch regression updated to require no former-owner warning, this report, and dedicated no-deploy workflow. Exact-parent baseline/current reproduction, full serial Node, locally signed PostgreSQL RLS, inherited mobile Chromium/WebKit cases, new six-case owner-switch verification, and two synthetic-only evidence uploads.
 
 **Status: new exact-head CI pending.** No production, staging, private real-user data, physical Android/iPhone, or hosted Supabase Auth/Storage operations. Family Alpha remains HOLD #255.
