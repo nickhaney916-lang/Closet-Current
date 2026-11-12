@@ -75,12 +75,13 @@
  function close72(scope){if(sessions72.has(scope))scope.active=false;}
  function live72(scope){return Boolean(scope&&sessions72.has(scope)&&scope.active);}
  const same72=(a,b)=>Boolean(a&&b&&Object.keys(a).every(k=>a[k]===b[k]));
- async function begin72(item,scope){
-  if(!live72(scope))return null;
+ async function begin72(item,scope,{reviewedKeys=['category','itemType']}={}){
+  if(!live72(scope)||!Array.isArray(reviewedKeys)||reviewedKeys.some(key=>!keys.includes(key))||
+     !reviewedKeys.includes('category')||!reviewedKeys.includes('itemType'))return null;
   const evidence=await fingerprint72(item).catch(()=>null);
   if(!live72(scope)||!evidence)return null;
   const token=Object.freeze({type:'owner-photo-review-pending-72'});
-  pending72.set(token,{scope,item,evidence,consumed:false});return token;
+  pending72.set(token,{scope,item,evidence,reviewedKeys:[...new Set(reviewedKeys)],consumed:false});return token;
  }
  async function accept72(item,token,scope,{ownerChecked=false}={}){
   const ctx=pending72.get(token);if(!ownerChecked||!live72(scope)||!ctx||
@@ -88,12 +89,13 @@
   ctx.consumed=true;pending72.delete(token);
   const current=await fingerprint72(item).catch(()=>null);
   if(!live72(scope)||!same72(current,ctx.evidence))return null;
-  const details={};for(const key of keys)
+  const details={};for(const key of ctx.reviewedKeys)
    if(!missing(item[key])&&typeof item[key]==='string')details[key]=item[key];
   if(missing(details.category)||missing(details.itemType)||missing(item.color))return null;
   return {...item,confirmedDetails:details,correctionReceipt72:{
    version:1,ownerId:scope.ownerId,...current,
-   fields:fieldRecord72(item),review:'owner-explicit-photo-consent',
+   fields:fieldRecord72(item),reviewedKeys:ctx.reviewedKeys,
+   review:'owner-explicit-photo-consent',
    timestamp:new Date().toISOString()
   }};
  }
@@ -101,13 +103,15 @@
   const receipt=item?.correctionReceipt72;
   if(!live72(scope)||receipt?.version!==1||receipt.ownerId!==scope.ownerId||
     receipt.review!=='owner-explicit-photo-consent'||
+    !Array.isArray(receipt.reviewedKeys)||receipt.reviewedKeys.some(key=>!keys.includes(key))||
+    !receipt.reviewedKeys.includes('category')||!receipt.reviewedKeys.includes('itemType')||
     !item?.confirmedDetails||missing(item.confirmedDetails.category)||
     missing(item.confirmedDetails.itemType))return false;
   const current=await fingerprint72(item).catch(()=>null);
   if(!current||!same72(current,receipt)||JSON.stringify(receipt.fields)!==
     JSON.stringify(fieldRecord72(item)))return false;
   for(const [key,value] of Object.entries(item.confirmedDetails))
-   if(!keys.includes(key)||item[key]!==value||missing(value))return false;
+   if(!receipt.reviewedKeys.includes(key)||item[key]!==value||missing(value))return false;
   return true;
  }
  async function suggest72(item,examples,scope){
