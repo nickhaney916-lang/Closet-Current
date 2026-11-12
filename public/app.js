@@ -180,8 +180,8 @@ function writeAll(values){
 // Compare the persisted garment inside the same transaction that saves it.
 // A stale editor must not resurrect a deleted piece or overwrite another tab.
 function saveEditedGarment(updated,expected){
- const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db;
- const assertOwner=()=>{auth?.assertCurrent?.();if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||db!==ownerDB||ownerDB.name!=='closet-current-user-'+owner)throw Error('Saved garment owner changed');};
+ const {ownerDB,assertLease}=ownerWardrobeMutationLease();
+ const assertOwner=()=>{assertLease();};
  return queued(()=>new Promise((resolve,reject)=>{
   assertOwner();const tx=ownerDB.transaction('items','readwrite'),store=tx.objectStore('items');
   let failure;const request=store.get(expected.id);
@@ -190,8 +190,9 @@ function saveEditedGarment(updated,expected){
    if(!request.result||JSON.stringify(normalizeClothing(request.result))!==JSON.stringify(normalizeClothing(expected)))throw Error('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR');
    store.put(updated);
   }catch(error){failure=error;tx.abort();}};
-  tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Changes were not saved'));
- })).then(nativeIndex07Refresh);
+  tx.oncomplete=()=>{try{assertOwner();resolve();}catch(error){reject(error);}};
+  tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Changes were not saved'));
+ })).then(async value=>{assertOwner();await nativeIndex07Refresh();assertOwner();return value;});
 }
 function removeItem(id){
  const {ownerDB,assertLease}=ownerWardrobeMutationLease();
@@ -261,16 +262,19 @@ function nativeCorrection10Active(){
 }
 async function commitOwnerCorrection10(value,expectedSavedRow,nextBatch){
  if(!nativeCorrection10Active())throw Error('CORRECTION10 explicit private research gate required');
- const {commitNativeCorrection10}=await import('../research/native-correction-10/owner-correction-cas.mjs');
+ // Bind the originating exact owner/database BEFORE dynamic module loading.
+ const {ownerDB,assertLease}=ownerWardrobeMutationLease();
  const auth=window.closetAuth,owner=auth?.user?.id;
  const assertOwner=()=>{
-  if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||
-     db?.name!=='closet-current-user-'+owner||
+  assertLease();
+  if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||db!==ownerDB||
      $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
    throw Error('CORRECTION10 owner changed during saved clothing correction');
  };
  assertOwner();
- return commitNativeCorrection10({db,ownerId:owner,before:expectedSavedRow,
+ const {commitNativeCorrection10}=await import('../research/native-correction-10/owner-correction-cas.mjs');
+ assertOwner();
+ return commitNativeCorrection10({db:ownerDB,ownerId:owner,before:expectedSavedRow,
   after:value,nextBatch,assertOwner});
 }
 function savePiece(value,nextBatch,{expectedSavedRow=null}={}){
@@ -736,7 +740,9 @@ function render(){
  const visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
  const page=visible.length<=100?visible:visible.slice(0,closetRendered136);
- for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>{try{const auth=window.closetAuth,owner=auth?.user?.id;auth?.assertCurrent?.();if(!owner||db?.name!=='closet-current-user-'+owner||!items.some(saved=>saved.id===item.id))throw Error('This saved item is no longer available in your signed-in closet.');if(typeof refreshStylistFocusItems!=='function')throw Error('Style My New Clothes is not ready yet.');refreshStylistFocusItems();const select=$('stylistFocusItem');if(![...select.options].some(option=>option.value===item.id))throw Error('Review and save this clothing category before styling it.');switchView('stylist');select.value=item.id;$('styleCollectionForm').requestSubmit();}catch(error){message(error.message||'Could not start styling this saved item.');}};edit.onclick=()=>{const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
+ for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>{try{const auth=window.closetAuth,owner=auth?.user?.id;auth?.assertCurrent?.();if(!owner||db?.name!=='closet-current-user-'+owner||!items.some(saved=>saved.id===item.id))throw Error('This saved item is no longer available in your signed-in closet.');if(typeof refreshStylistFocusItems!=='function')throw Error('Style My New Clothes is not ready yet.');refreshStylistFocusItems();const select=$('stylistFocusItem');if(![...select.options].some(option=>option.value===item.id))throw Error('Review and save this clothing category before styling it.');switchView('stylist');select.value=item.id;$('styleCollectionForm').requestSubmit();}catch(error){message(error.message||'Could not start styling this saved item.');}};edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
+ const assertEditor=()=>{editorLease.assertLease();if(!items.includes(item))throw Error('This saved garment is no longer in the signed-owner wardrobe');};
+ const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
  {
   // Mobile saved-item editors can otherwise extend past the viewport and
   // their Save/Cancel buttons become covered by scrolling clothing fields.
@@ -764,7 +770,7 @@ function render(){
  const protectUnsaved=event=>{if(dirty||saving){event.preventDefault();event.returnValue='';}};window.addEventListener('beforeunload',protectUnsaved);f.addEventListener('input',()=>dirty=true);f.addEventListener('change',()=>dirty=true);
  const closeEditor=()=>{if(saving)return;if(!dirty||confirm('Discard your unsaved clothing changes?'))dialog.close();};
  dialog.addEventListener('cancel',event=>{event.preventDefault();closeEditor();});
- cancel.type='button';cancel.onclick=closeEditor;f.onsubmit=async e=>{e.preventDefault();if(saving)return;saving=true;ok.disabled=cancel.disabled=true;editStatus.textContent='Saving changes…';try{const updated={...collect(),name:draft.name.trim()||'Closet piece'};
+ cancel.type='button';cancel.onclick=closeEditor;f.onsubmit=async e=>{e.preventDefault();if(saving)return;try{assertEditor();}catch{return;}saving=true;ok.disabled=cancel.disabled=true;editStatus.textContent='Saving changes…';try{assertEditor();const updated={...collect(),name:draft.name.trim()||'Closet piece'};
   // COLOR41: Notes/type edits preserve estimated color provenance; only a
   // direct Color input marks source=user. Still record deliberately reviewed
   // category, subtype, and other *non-color* facts as confirmed learning.
@@ -781,10 +787,11 @@ function render(){
   // snapshot). Re-read under the owner's DB; fail closed on conflicting edits.
   const before=expectedSavedRow.sourcePieceKey?await new Promise(resolve=>{
    try{
-    const r=db.transaction('items').objectStore('items').get(expectedSavedRow.id);
+    assertEditor();const r=editorLease.ownerDB.transaction('items').objectStore('items').get(expectedSavedRow.id);
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>resolve(null);
    }catch{resolve(null);}
   }):expectedSavedRow;
+  assertEditor();
   if(!before||(expectedSavedRow.sourcePieceKey&&
     JSON.stringify(normalizeClothing(before))!==JSON.stringify(expectedSavedRow)))
    throw Error('CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR');
@@ -794,13 +801,15 @@ function render(){
   if(typeof location!=='undefined'&&new URLSearchParams(location.search).get('correctedName66')==='research'&&
      expectedSavedRow.sourcePieceKey){
    const {syncOwnerGarmentName66}=await import('../research/corrected-name-index-66/owner-label-sync.mjs');
-   updated.name=syncOwnerGarmentName66(before,updated).name;
+   assertEditor();updated.name=syncOwnerGarmentName66(before,updated).name;
   }
-  await queued(()=>commitOwnerCorrection10(updated,before,null));
-  await nativeIndex07Refresh();
- }else await saveEditedGarment(updated,expectedSavedRow);
- Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
+  await queued(()=>{assertEditor();return commitOwnerCorrection10(updated,before,null);});
+  assertEditor();await nativeIndex07Refresh();assertEditor();
+ }else{assertEditor();await saveEditedGarment(updated,expectedSavedRow);assertEditor();}
+ assertEditor();Object.assign(item,updated);dialog.close();render();scheduleMemoryReview();
  }catch(error){
+  // A revoked modal may be closed by logout: never show its old error on a new owner's screen.
+  try{assertEditor();}catch{return;}
   const errorMessage=error?.name==='QuotaExceededError'?
    'Changes were not saved. Storage is full. Your edits are still here. Free space, then try Save changes again.':expectedSavedRow?
    String(error.message||error).includes('CORRECTION10_STALE_SAVED_GARMENT')?
@@ -818,6 +827,7 @@ function render(){
   actionRow.append(editStatus,ok,cancel);f.append(actionRow);
  }
  dialog.append(f);document.body.append(dialog);dialog.onclose=()=>{window.removeEventListener('beforeunload',protectUnsaved);dialog.remove();
+ try{assertEditor();}catch{return;}
  const restoreFocus=()=>{if($('closet').hidden||$('appShell').hidden||document.querySelector('dialog[open]'))return;const card=[...document.querySelectorAll('#closetGrid .card')].find(card=>card.dataset.itemId===item.id);(card?.querySelector('[data-action=edit-clothing]')||$('search')).focus({preventScroll:true});};
  restoreFocus();requestAnimationFrame(()=>{if(document.activeElement===document.body)restoreFocus();});
  };dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
@@ -1218,22 +1228,33 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
   }catch(e){message(e.message||'Private backup failed; no data changed.');}
   return;
  }if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
-$('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');try{const data=JSON.parse(await file.text());
+$('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
+ // A file read and owner confirmation may each take arbitrarily long.
+ // A backup selected by one account can never be restored into the next.
+ let importLease;
+ try{importLease=ownerWardrobeMutationLease();}catch{return message('Sign in to import a private backup.');}
+ const assertImport=()=>importLease.assertLease();
+ const importMessage=value=>{try{assertImport();message(value);}catch{}};
+ try{const data=JSON.parse(await file.text());assertImport();
  if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
    if(new URLSearchParams(location.search).get('nativeLossless04')!=='research'||
       !window.restoreAtomic01Bridge)throw Error('Verified lossless restore unavailable; nothing changed');
-   const result=await window.restoreAtomic01Bridge.importBackup(data,{
-    confirm:({incoming,existing,savedExisting})=>confirm(
+   assertImport();
+   const restoreBridge=window.restoreAtomic01Bridge;
+   const result=await restoreBridge.importBackup(data,{
+    confirm:({incoming,existing,savedExisting})=>{assertImport();const accepted=confirm(
      'Replace '+existing+' existing clothes and '+savedExisting+' saved outfits with '+
      incoming.itemCount+' backup clothes and '+incoming.savedCount+
-     ' saved outfits? The old local version will be replaced. Cancel keeps everything unchanged.')
+     ' saved outfits? The old local version will be replaced. Cancel keeps everything unchanged.');
+     assertImport();return accepted;}
    });
-   if(result.cancelled)return message('Restore canceled. Your original closet is unchanged.');
-   message('All clothing photos, category corrections and outfits restored together.');
+   assertImport();
+   if(result.cancelled)return importMessage('Restore canceled. Your original closet is unchanged.');
+   importMessage('All clothing photos, category corrections and outfits restored together.');
    return;
   }
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
-   throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
+   throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
