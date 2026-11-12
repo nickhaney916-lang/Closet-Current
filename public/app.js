@@ -274,7 +274,15 @@ function localRequest(type,image,itemId,hint){
       renderRecognitionNotice();return;
      }
      const job=localJobs.get(data.id);if(!job)return;
-     if(data.type==='identified'){const item=batch.find(x=>x.id===job.itemId);if(item&&!item.userAdjusted&&segmentationAllows(item,data.choice)){applyLocalChoice(item,data.choice);render();}return;}
+     if(data.type==='identified'){
+      // The worker reports this before the complete category/type/details
+      // result. In review-first trial mode it is not an owner-approved label.
+      // Wait for the final result, then keep it in the private Adjust draft.
+      if(typeof reviewFirst836!=='undefined'&&reviewFirst836)return;
+      const item=batch.find(x=>x.id===job.itemId);
+      if(item&&!item.userAdjusted&&segmentationAllows(item,data.choice)){applyLocalChoice(item,data.choice);render();}
+      return;
+     }
      clearTimeout(job.timer);localJobs.delete(data.id);
      if(data.type==='error'){localReady=false;if(typeof recordDeviceEvent==='function')recordDeviceEvent('scanner_error',{stage:data.stage,code:data.code,durationMs:Date.now()-job.started});job.reject(Error(data.text));}else job.resolve(data);
     };
