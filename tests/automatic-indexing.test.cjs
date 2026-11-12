@@ -148,3 +148,34 @@ test('P836 review-first trial respects a nonclothing/uncertain prediction and ne
  assert.equal(c.batch[0].category,'Uncategorized');
  assert.notEqual(c.batch[0].requiresOwnershipConfirmation,true);
 });
+
+test('P838 empirically risky subtype cannot bypass review by saving broad category and estimated color',async()=>{
+ const guarded={strong:false,categoryConfirmed:true,categoryOnly:true,
+  reason:'type_uncertain',choices:[{category:'Tops',itemType:'Unknown',label:'Tops',sleeveLength:'Unknown'}],
+  details:{},diagnostics:{mission1SubtypeSafety:{ownerSubtypeReviewRequired:true}}};
+ const {c,stored}=setup({
+  quality:async()=>({blank:false,signature:[10,20,100],aspect:1,colorEstimate:{color:'Blue'}}),
+  result:guarded
+ });
+ c.reviewFirst836=false;
+ c.candidate('sweatshirt-risk');await done(c);
+ assert.equal(stored.length,0,'no automatic category-color admission');
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,1,'original remains in draft');
+ assert.equal(c.batch[0].category,'Tops');
+ assert.equal(c.batch[0].itemType,'Unknown');
+ assert.equal(c.batch[0].color,'Blue','photo estimate remains visible, not owner-confirmed');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.match(c.batch[0].localStatus,/Tap Adjust to confirm/);
+});
+test('P838 empirically risky subtype without verified color still requires owner review',async()=>{
+ const guarded={strong:false,categoryConfirmed:true,categoryOnly:true,
+  reason:'type_uncertain',choices:[{category:'Shoes',itemType:'Unknown',label:'Shoes',sleeveLength:'Not applicable'}],
+  details:{},diagnostics:{mission1SubtypeSafety:{ownerSubtypeReviewRequired:true}}};
+ const {c,stored}=setup({result:guarded});
+ c.reviewFirst836=false;c.candidate('boot-risk');await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Shoes');
+ assert.equal(c.batch[0].itemType,'Unknown');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+});
