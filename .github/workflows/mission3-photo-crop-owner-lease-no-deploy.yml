@@ -96,10 +96,12 @@ jobs:
           node scripts/test-signed-jwt-postgres-147.mjs
       - name: Pinned current source private-crop regression
         run: node --test tests/mission3-photo-crop-owner-session-lease.test.cjs
-      - name: Exact full serial Node regression
-        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Build current application before PWA and full Node validation (NO DEPLOY)
+        run: node scripts/build.mjs
       - name: Actual Chromium WebKit 320 390 430 owner private crop and JPEG evidence
         run: node scripts/test-mission3-crop-owner-lease-browser.mjs benchmark/mission3-crop-owner-browser
+      - name: Exact full serial Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Reverify native Chromium WebKit saved garment mutation isolation
         run: node scripts/test-mission3-private-mutation-browser.mjs benchmark/mission3-private-mutation-browser
       - name: Reverify native canonical photographed garment to private wardrobe styling
