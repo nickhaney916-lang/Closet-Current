@@ -40,4 +40,45 @@ For **genuine original-photo model regression control**, the no-deploy CI runs u
 
 No main/staging/production/hosted Supabase; no private wardrobe data, family photos or external model re-training. PR must remain DRAFT; branch changes must pass strict exact-parent path allowlist, full native tests, real source-editor Chromium/WebKit proof and four real-original FashionCLIP numeric jobs. **FAMILY ALPHA HOLD #255 stays OPEN.**
 
-**CI exact-head results and final measured outcomes:** Await exact-head verification; do not claim success before evidence is collected.
+## Verified empirical checkpoint — November 12, 2026
+
+[NO DEPLOY Actions #43302802201](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43302802201), exact candidate HEAD `1e453d513700e082d63e68665a69f5947877b094`: **7/7 jobs SUCCESS**. Exact pinned parent, seven-file path allowlist, no-deploy restrictions, both builds, 11/11 focused source/consent/poisoning tests and **321/321 full Node regression tests PASS** with 0 failures/skips. [Camera and indexing Actions #43302802074](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43302802074) independently checks the same source checkpoint.
+
+### Before/after: owner-review lifecycle (synthetic demonstration only)
+
+Genuine Chromium and WebKit engines at 320, 390 and 430 CSS pixels each executed the **actual app editor and memory source** using distinct locally generated JPEGs, synthetic normalized embeddings and simulated in-memory owner scopes, with no live owner data.
+
+| Controlled outcome | Without opt-in owner-confirmed learning | With two explicit owner-confirmed references |
+| --- | ---: | ---: |
+| Existing unsaved draft manually saved without separate learning consent | 1 save; **0 learning receipts** | Not applicable |
+| Eligible owner-confirmed independently sourced examples | **0** | **2** |
+| Fresh third synthetic photo: eligible subtype suggestion | **0** | **1**, visible and review-only |
+| Save triggered solely by suggestion without owner submission | **0** | **0** |
+| Suggested subtype reused after owner switch | **0** | **0** |
+
+All six browser configurations verified **3 deliberate local in-memory writes only** (one unconsented initial photo plus two consented ones), **2** consented receipts and **no fourth save** from merely using/canceling the proposal. Existing all-pending owner review guard passed **6/6** mobile-width scenarios without browser exceptions. This before/after is a **synthetic logic exercise**, not measured real-original accuracy or physical-phone/authenticated-tenant acceptance.
+
+### Genuine-original recognition control — actual model, no simulated inference
+
+The exact unchanged P842 FashionCLIP model worker processed all **16 existing publisher originals per engine** (13 clothing, 3 nonclothing), with all original-JPEG SHA-256 verified before inference; browser halves and source receipts were independently aggregated with historical fail-closed conservation. Dataset was previously development-exposed, and none of its photos has a separately obtained owner-learning correction label.
+
+| Metric | Chromium | WebKit |
+| --- | ---: | ---: |
+| Correct broad category including review-only | **8/13** | **7/13** |
+| Correct automatic broad category | **4/13** | **4/13** |
+| Wrong automatic broad category | **0/13** | **0/13** |
+| Exact correct subtype, among truth-supported records | **4/10** | **4/10** |
+| Broad type accepted within predeclared labels | **4/13** | **4/13** |
+| Wrong automatic subtype | **0** | **0** |
+| Nonclothing correctly rejected | **3/3** | **3/3** |
+| Runtime errors | **0** | **0** |
+
+The model and its classification gates were **untouched by #72**, so the real-photo **before vs after model results are unchanged by construction**. Do not attribute any category/type improvements to learning. Historical-source manifest SHA-256: `05d6604566dad006221d643c55df24ce719e83652c424046e043851d6534dc27`. Original source/permission index SHA-256: `6064df4fafe5633313f9825d349746332ae14ecf4d32f3a058b56131e7b234f3`.
+
+[Numeric-only original model evidence artifact #13983170714](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43302802201/artifacts/13983170714), ZIP SHA-256 `6beef086996f9cb0f3be0ed645e1da5432dda6446d2cc8e69ad1602cef202f38`. Includes SHA-verified source index and numerical scores, **no JPEGs, private embeddings or owner data**.
+
+### Explicit unresolved acceptance blockers
+
+Independent, legally permitted, source-disjoint genuine photo **human correction learning**: training **0**, validation **0**, untouched held-out **0**. Therefore the numerator/denominator for new owner-learning precision, coverage, abstention and real-photo improvement are **UNKNOWN / NOT ESTABLISHED**, not 100%. Independent color and SegFormer masks/owned shoe-pair truth are also **UNKNOWN**. This isolated branch has not integrated a verified owner scope backed by actual signed authentication, cloud two-account RLS/privacy, physical Android Chrome, iPhone Safari, or genuine private local-IndexedDB through Cloud restore. Feature remains **OFF BY DEFAULT** and cannot serve as release proof.
+
+**Checkpoint SHA and CI above describe verified full execution; any later report-only commit needs its own exact-head successful workflow before final status is claimed.** Keep draft PR unmerged and undeployed. **FAMILY ALPHA HOLD #255 MUST STAY OPEN.**
