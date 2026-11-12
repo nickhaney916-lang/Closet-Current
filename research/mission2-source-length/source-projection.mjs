@@ -1,5 +1,6 @@
 /** Registered planar FRONT photograph projection. Never fabricates unseen rear texels. */
 import * as THREE from 'three';
+import {auditOriginalPhotoTexelRegistration} from './source-texel-audit.mjs';
 const UV='vec2 panel=vec2(.5+vPanel.x/uPhotoSpan.x,(vPanel.y-1.11)/uPhotoSpan.y);';
 const CHEST='float chest=1.-smoothstep(.22,.29,abs(vPanel.x));';
 const fail=m=>{throw Error('M2 source projection '+m);};
@@ -18,7 +19,7 @@ export function patchSourceProjectionShader(shader,projection){
   .replace('photo.a*smoothstep(.95,1.,interiorAlpha)','photo.a*smoothstep(.95,.975,interiorAlpha)');
 }
 export function prepareSourceProjection(shirt,staged,projection){
- const materials=new Set(),attributes=[],overrides=new Map(staged.map(r=>[r.mesh,r.next]));
+ const materials=new Set(),photos=[],attributes=[],overrides=new Map(staged.map(r=>[r.mesh,r.next]));
  for(const mesh of shirt.meshes){
   const list=Array.isArray(mesh.material)?mesh.material:[mesh.material];
   for(const material of list)if(material?.isMeshStandardMaterial&&typeof material.onBeforeCompile==='function'&&material.onBeforeCompile!==THREE.MeshStandardMaterial.prototype.onBeforeCompile)materials.add(material);
@@ -37,14 +38,19 @@ export function prepareSourceProjection(shirt,staged,projection){
    vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader};
   material.onBeforeCompile.call(material,probe);
   if(!probe.uniforms.uPhoto?.value?.isTexture)fail('original source photo sampler missing');
+  photos.push(probe.uniforms.uPhoto.value);
   patchSourceProjectionShader(probe,projection);
  }
- const compiled=new Set(),runtime={compiledMaterialCount:0};
+ const compiled=new Set(),runtime={compiledMaterialCount:0,originalPhotoTexelEvidence:null};
+ const recheck=()=>auditOriginalPhotoTexelRegistration(attributes,projection,photos);
+ // This is source texture registration evidence, not independent pixel match
+ // or owner validation. The pixel sampler can be unavailable before decode.
+ runtime.originalPhotoTexelEvidence=recheck();
  return {materialCount:materials.size,runtime,commit(){
   for(const {mesh,coords} of attributes)mesh.geometry.setAttribute('sourceProjectionPosition',new THREE.BufferAttribute(coords,3));
   for(const material of materials){
    const original=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
-   material.onBeforeCompile=function(shader,renderer){original.call(this,shader,renderer);patchSourceProjectionShader(shader,projection);compiled.add(material);runtime.compiledMaterialCount=compiled.size;};
+   material.onBeforeCompile=function(shader,renderer){original.call(this,shader,renderer);patchSourceProjectionShader(shader,projection);compiled.add(material);runtime.compiledMaterialCount=compiled.size;runtime.originalPhotoTexelEvidence=recheck();};
    material.customProgramCacheKey=()=>key()+';M2_REGISTERED_FRONT_SOURCE_PROJECTION_V1';
    material.needsUpdate=true;
   }
