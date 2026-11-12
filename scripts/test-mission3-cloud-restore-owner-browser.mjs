@@ -80,8 +80,12 @@ try{
      const gate=new Promise(resolve=>{window.__releaseOldRestore=resolve;});
      if(stage==='readAll'){
       readAllFrom=async ownerDB=>{
+       // Complete the actual IndexedDB read before suspending its response:
+       // logout closes the old connection, so do not begin a *new* read
+       // after the sign-out event has already revoked the database.
+       const snapshot=await window.__originalReads.readAllFrom(ownerDB);
        window.__restoreStageStarted=true;await gate;
-       return window.__originalReads.readAllFrom(ownerDB);
+       return snapshot;
       };
      }else if(stage==='looks'){
       reloadCloudLooks=async opts=>{
