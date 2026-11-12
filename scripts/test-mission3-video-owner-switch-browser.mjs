@@ -126,7 +126,7 @@ async function run(engine,type,width){
   assert.equal(receipt.postRevocationViews.includes('review'),false,
    'old in-flight video must never navigate the newly signed in owner to Review');
   assert.equal(receipt.postRevocationMessages.some(m=>/video frame\(s\) saved|Video import was interrupted/i.test(m)),false,
-   'old in-flight video must never show former owner's saved-frame count/error in new session');
+   "old in-flight video must never show former owner's saved-frame count/error in new session");
   assert.ok(!remote.some(p=>/storage\/v1\/object/.test(p)),'no hosted storage request');
   const png=await page.screenshot({path:resolve(out,engine+'-'+width+'-owner-switch.png')});
   assert.equal((await sharp(png).metadata()).width,width);
