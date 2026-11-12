@@ -1339,7 +1339,7 @@ async function importClothingPhotos(files){
    const accepted=await candidate(proof?proof.image:decoded,
      proof?{sourceProof:proof,requireDraftCommit:true,importFilename:file.name}:{importFilename:file.name});
     return sameImportLease()&&accepted;
-  });
+  },{shouldContinue:sameImportLease});
   if(!sameImportLease())return;
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(typeof render==='function')render();
