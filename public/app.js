@@ -357,6 +357,13 @@ async function recognizeItem(item){
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');
+   // P838: the empirically unsafe subtype guard is an OWNER REVIEW order,
+   // not permission to auto-save a category+estimated color as a substitute.
+   if(result.diagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired===true){
+    item.requiresOwnershipConfirmation=true;
+    item.localStatus='This clothing type is easy to misidentify. Tap Adjust to confirm the category, type and color before saving.';
+    return true;
+   }
    if(!item.color||item.color==='Unknown'){item.localStatus='Garment category recognized. Confirm the specific type and color in Adjust; optional details can stay blank.';return true;}
   }
   if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}
