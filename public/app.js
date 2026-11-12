@@ -86,6 +86,10 @@ function adjustPhoto(item){
  const pendingDraft=batch.some(x=>x.id===item.id)&&!items.some(x=>x.id===item.id);
  const explicitReview=Boolean(pendingDraft||item.requiresOwnershipConfirmation||item.outfitSourceId||
   item.recognitionDiagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired);
+ // Parallel #71: opt-in only, no deploy. Native submit event re-entry can
+ // otherwise write the same approved unsaved source twice while awaiting IO.
+ const parallel71ReviewGate=new URLSearchParams(location.search).get('recognitionAcceptance71')==='1';
+ let parallel71Saving=false;
  let confirmReview=null,save=null,reviewStatus=null;
  const form=node('form'),draft=structuredClone(item);
  const reviewedCore=()=>{
@@ -137,10 +141,14 @@ function adjustPhoto(item){
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();
+  if(parallel71ReviewGate&&parallel71Saving){
+   message('This photo save is already in progress.');return;
+  }
   if(explicitReview&&!canSaveReview()){
    message('Confirm the garment category and color against the photo, then check the review box before saving.');
    return;
   }
+  if(parallel71ReviewGate)parallel71Saving=true;
   save.disabled=true;try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
@@ -148,7 +156,7 @@ function adjustPhoto(item){
   await savePiece(value,batch.filter(x=>x.id!==item.id));
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
- }catch{if(explicitReview)canSaveReview();else save.disabled=false;message('Could not save changes. Try again.');}};
+ }catch{parallel71Saving=false;if(explicitReview)canSaveReview();else save.disabled=false;message('Could not save changes. Try again.');}};
  dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
