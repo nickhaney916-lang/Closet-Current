@@ -21,8 +21,16 @@ const exactTypes=new Map(P67_04_CATEGORIES.map(cat=>[
 ]));
 const genericTypes=new Set(['Dress','Boots']);
 
-function assertTrainingRow(row){
- if(!row||!/^commons-\d{4}$/.test(row.id)||!allowed.has(row.category)||
+function assertTrainingRow(row,{allowNegative=false}={}){
+ const negative=row?.category==='Uncategorized';
+ const permitted=negative?
+  allowNegative&&row.type==='Unknown':
+  allowed.has(row?.category)&&(
+   exactTypes.get(row.category).has(row.type)||
+   (row.category==='Dresses'&&row.type==='Dress')||
+   (row.category==='Shoes'&&row.type==='Boots')
+  );
+ if(!row||!/^commons-\d{4}$/.test(row.id)||!permitted||
     typeof row.type!=='string'||!row.type||!row.shaVerified||
     !/^[a-f0-9]{64}$/.test(row.originalSha256||'')||
     !(row.embedding instanceof Float32Array)||row.embedding.length!==P67_04_DIMENSION)
@@ -143,8 +151,7 @@ export function scoreHierarchicalFashion67_04(model,evaluationRows){
   throw Error('P67-04: incomplete original held-out development audit');
  const trainIDs=new Set(model.trainIds),trainSHAs=new Set(model.trainHashes);
  const scored=evaluationRows.map(row=>{
-  assertTrainingRow({...row,category:row.category==='Uncategorized'?'Tops':row.category,
-   type:row.type||'Unknown'});
+  assertTrainingRow(row,{allowNegative:true});
   if(trainIDs.has(row.id)||trainSHAs.has(row.originalSha256))
    throw Error('P67-04: original source leak across train/evaluation');
   const pred=predictHierarchicalFashion67_04(model,row.embedding);
