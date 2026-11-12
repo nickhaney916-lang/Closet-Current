@@ -45,7 +45,8 @@ test('revocation during candidate await produces no misleading duplicate or next
  const ctx=context({});
  const task=ctx.readPhotoBatch(files,async file=>{decoded.push(file.name);return file.name;},
  async(_img,file)=>{called.push(file.name);return pending.promise;},{shouldContinue:()=>active});
- // The first onPhoto executes synchronously before waiting.
+ // The batch first awaits decode(); allow that microtask to reach onPhoto.
+ await Promise.resolve();
  assert.deepEqual(called,['first.jpg']);
  active=false;pending.resolve(false);
  const result=await task;
@@ -62,7 +63,7 @@ test('normal current-owner multi-photo import preserves accepted, duplicate, rej
  async file=>{if(file.name==='bad.jpg')throw Error('unsupported image');return file.name;},
  async(_img,file)=>file.name!=='duplicate.jpg',{shouldContinue:()=>true});
  assert.equal(result.added,1);
- assert.deepEqual(result.results.map(x=>x.status),['added','duplicate','rejected','error']);
+ assert.deepEqual(Array.from(result.results,x=>x.status),['added','duplicate','rejected','error']);
  assert.equal(result.cancelled,undefined);
  assert.match(result.errors.join(' '),/not an image/);
  assert.match(result.errors.join(' '),/could not open/);
