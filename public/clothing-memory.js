@@ -129,6 +129,14 @@
    let cosine=0;
    for(let i=0;i<512;i++)cosine+=other.recognitionMemory.features[i]*item.recognitionMemory.features[i];
    if(cosine<.90)continue; // Historical guard; NOT calibrated confidence.
+   // Reject strongly correlated feature clones even when two re-encoded crops
+   // have different source JPEG hashes and wardrobe IDs. Heuristic: conservative
+   // coverage loss is preferable to counting clones as independent evidence.
+   if(eligible.some(({other:prior})=>{
+    let agreement=0;for(let i=0;i<512;i++)
+     agreement+=prior.recognitionMemory.features[i]*other.recognitionMemory.features[i];
+    return agreement>=.999995;
+   }))continue;
    origins.add(receipt.sourceSha256);units.add(String(other.ownedUnitId||other.id));
    eligible.push({other,cosine});
   }
