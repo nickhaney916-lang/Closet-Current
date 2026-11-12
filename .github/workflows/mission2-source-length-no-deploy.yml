@@ -53,7 +53,7 @@ jobs:
       run: "set -eu\nBASE=349322687edb7035c321e11b54a9ed5c52476c5f\ntest \"$(git merge-base \"$BASE\" HEAD)\" = \"$BASE\"\ngit diff --name-only\
         \ \"$BASE\" HEAD > /tmp/mission2-length-paths\nwhile IFS= read -r p; do\n case \"$p\" in\n  tests/mission2-source-adaptive.test.mjs|research/mission2-source-length/ADAPTIVE-SAFETY-REPORT.md|tests/mission2-triangle-contacts.test.mjs|research/mission2-source-length/TRIANGLE-CONTACT-AUDIT.md|scripts/check-mission2-visual-delta.mjs|tests/mission2-visible-acceptance.test.mjs|research/mission2-source-length/source-length.mjs|research/mission2-source-length/source-projection.mjs|research/mission2-source-length/posed-intersections.mjs|research/mission2-source-length/split-edge-continuity.mjs|research/mission2-source-length/REPORT.md|scripts/install-mission2-source-length.mjs|scripts/test-native-3d-05-browser.mjs|research/native-3d-05/native-preview-bridge.mjs|tests/mission2-source-length.test.mjs|.github/workflows/mission2-source-length-no-deploy.yml)\
         \ ;;\n  *) echo \"Unexpected source-length path $p\"; exit 1 ;;\n esac\ndone < /tmp/mission2-length-paths\ntest \"$(wc -l < /tmp/mission2-length-paths)\"\
-        \ -eq 16\ngit diff --exit-code \"$BASE\" HEAD -- public supabase\n"
+        \ -eq 17\ngit diff --exit-code \"$BASE\" HEAD -- public supabase\n"
     - &id003
       run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2
         axe-core@4.10.3
