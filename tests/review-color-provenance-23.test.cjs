@@ -44,7 +44,8 @@ async function savedClosetSubmit(source,{cas=false}={}){
   ClothingMemory:M,nativeCorrection10Active:()=>cas,saveEditedGarment:async val=>{persisted=clone(val);calls++;},
   queued:async work=>work(),
   commitOwnerCorrection10:async val=>{persisted=clone(val);calls++;},
-  nativeIndex07Refresh:async()=>{},
+  // The owner stays current in this isolated color provenance form fixture.
+  assertEditor:()=>{},nativeIndex07Refresh:async()=>{},
   writeAll:async rows=>{persisted=clone(rows[0]);calls++;},
   render:()=>{},scheduleMemoryReview:()=>{},message:()=>{},
   dialog:{close:()=>{closed=true;}}
