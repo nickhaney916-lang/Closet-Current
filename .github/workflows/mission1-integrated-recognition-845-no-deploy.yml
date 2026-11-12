@@ -1,0 +1,114 @@
+name: Mission 1 P845 integrated recognition review and photo guidance — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-recognition-photo-quality-integration-845-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: mission1-p845-integrated-recognition-HOLD
+  cancel-in-progress: true
+jobs:
+  native-strict-integration-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: P844 verified immutable parent, exact 10-path scope and no-deploy safeguards
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c2c79eace58409b635833d9419f458d945e66048
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p845-paths
+          cat /tmp/p845-paths
+          test "$(wc -l < /tmp/p845-paths)" -eq 10
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/index.html|public/photo-check.js|public/photo-quality-research.js|tests/parallel73-photo-quality.test.cjs|tests/mission1-integrated-advice-review-845.test.cjs|scripts/test-parallel73-photo-quality-browser.mjs|scripts/evaluate-parallel73-real-photo.mjs|research/mission1-integrated-recognition-845/REPORT.md|.github/workflows/mission1-integrated-recognition-845-no-deploy.yml) ;;
+              *) echo "UNEXPECTED SCOPE $path"; exit 1 ;;
+            esac
+          done < /tmp/p845-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/recognition-engine.mjs public/photo-import.js supabase benchmark public/recognition-vectors.bin public/recognition-vectors.json)"
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'let saveInFlight=false;' public/app.js
+          grep -Fq 'photoQualityHints73=new Map()' public/app.js
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-integrated-recognition-845/REPORT.md
+          echo M1_P845_PINNED_10_PATH_INTEGRATION_NO_DEPLOY_PASS
+      - name: Install temporary regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual source integration tests, builds and full native regression
+        run: |
+          set -euo pipefail
+          node --check public/photo-quality-research.js
+          node --check public/photo-check.js
+          node --check public/app.js
+          node --check tests/mission1-integrated-advice-review-845.test.cjs
+          node --test tests/mission1-integrated-advice-review-845.test.cjs tests/parallel73-photo-quality.test.cjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          echo M1_P845_NATIVE_AND_BUILDS_PASS
+  genuine-engines-integration-HOLD:
+    needs: [native-strict-integration-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual desktop Chromium and WebKit only
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: P845 advisory UI and P843 default no-auto-save
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel73-photo-quality-browser.mjs
+          node scripts/test-m1-review-first-default-843.mjs
+      - name: P844 exact source browser duplicate-save and failure recovery
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-save-lifecycle-844.mjs candidate
+          node scripts/test-m1-owner-review-editor-839.mjs
+          echo M1_P845_ALL_BROWSER_ENGINE_ACCEPTANCE_PASS
+  original-photo-descriptive-audit-HOLD:
+    needs: [native-strict-integration-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      P73_PHOTO_IDS: commons-0003,commons-0014,commons-0021,commons-0033,commons-0049,commons-0060,commons-0077,commons-0082,commons-0094,validation-0001,validation-0019
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install only decoder for lawful original-photo audit
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: SHA-verify all 11 lawful original images; descriptive metrics NOT ML accuracy
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P73_PHOTO_IDS"
+          node scripts/evaluate-parallel73-real-photo.mjs
+          echo M1_P845_DESCRIPTIVE_REAL_ORIGINAL_PHOTOS_PASS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission1-p845-numeric-photo-diagnostics-NO-PHOTOS
+          path: research/parallel73-photo-quality/runtime-real-photo-metrics.json
+          if-no-files-found: ignore
+          retention-days: 14
