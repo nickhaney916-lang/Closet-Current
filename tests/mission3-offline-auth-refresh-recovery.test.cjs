@@ -12,7 +12,7 @@ function fixture(kind='offline'){
  const events={},els=new Map(),values=new Map([[STORE,saved]]),requests=[];
  const $=id=>{
   if(!els.has(id))els.set(id,{
-   hidden:false,disabled:false,value:'',textContent:'',type:id==='authPassword'?'password':'text',
+   hidden:id==='appShell',disabled:false,value:'',textContent:'',type:id==='authPassword'?'password':'text',
    minLength:0,autocomplete:'',required:false,title:'',validity:{valid:true},
    setAttribute(){},getAttribute(){return null},addEventListener(){},checkValidity(){return true},
    classList:{add(){},remove(){}}
@@ -24,6 +24,9 @@ function fixture(kind='offline'){
  const fetch=async(path)=>{
   requests.push(path);
   if(state.kind==='offline')throw new TypeError('offline network failure');
+  if(state.kind==='delayed-offline')return new Promise((_resolve,reject)=>{
+   state.failLater=()=>reject(new TypeError('late offline failure'));
+  });
   if(state.kind==='timeout'){const error=Error('timeout');error.name='AbortError';throw error;}
   if(state.kind==='badtoken')return {ok:false,status:401,
    json:async()=>({error_code:'invalid_grant',message:'Refresh token expired'})};
@@ -99,15 +102,15 @@ test('a recovered verified token unlocks only the verified user; cached credenti
  assert.notEqual(f.storage.getItem(STORE),saved);
  f.events.online();assert.equal(f.location.reloadCount,0);
 });
-test('new owner credentials placed by another tab are not removed by late transient failure',async()=>{
- let release;
- const held=new Promise(resolve=>release=resolve);
- const f=fixture('success');
- // The real startup fetch was already scheduled; verify that when a new
- // session replaces the snapshot before its reply, it never overwrites.
+test('new owner credentials placed by another tab survive a late transient failure',async()=>{
+ const f=fixture('delayed-offline');
+ // The real startup fetch is still pending when a different tab replaces the
+ // stored account. A late network rejection must not remove the newer value.
  const newSession=JSON.stringify({epoch:'new-owner',refresh_token:'B'});
  f.storage.setItem(STORE,newSession);
- await ticks();
+ f.state.failLater();await ticks();
  assert.equal(f.storage.getItem(STORE),newSession);
  assert.equal(f.ctx.window.closetAuth.user,null);
+ assert.equal(f.els.get('appShell').hidden,true);
+ f.events.online();assert.equal(f.location.reloadCount,0);
 });
