@@ -1170,7 +1170,7 @@ export function auditSourcePhotoUVSurfaceAtPose(root,meshes,neutralWorld,posedBa
     !Number.isSafeInteger(maxFaces)||maxFaces<1||maxFaces>3000000||
     !Number.isFinite(collapseArea)||collapseArea<=0||collapseArea>1e-6)
   throw Error('M2 C27 bounded original-photo UV and posed source-face evidence required');
- let sourceFaces=0,uvMappedFaces=0,meshesWithoutUV=0,uvDegenerateFaces=0;
+ let triangleCount=0,uvMappedFaces=0,meshesWithoutUV=0,uvDegenerateFaces=0;
  let uvMirroredFaces=0,poseAreaOverTwofoldFaces=0,newCollapsedCandidateFaces=0;
  let candidateAreaOver25PercentFaces=0,newCandidateInvertedNormals=0;
  const faceCross=(a,i,j,k)=>{
@@ -1204,9 +1204,9 @@ export function auditSourcePhotoUVSurfaceAtPose(root,meshes,neutralWorld,posedBa
   const index=geometry.index?.array;
   const faces=index?index.length/3:p.count/3;
   if(!Number.isSafeInteger(faces)||faces<1||faces>maxFaces||
-     sourceFaces+faces>maxFaces)
+     triangleCount+faces>maxFaces)
    throw Error('M2 C27 bounded complete triangular source faces required');
-  sourceFaces+=faces;
+  triangleCount+=faces;
   const staged=posedGeometry(mesh,override);
   try{
    const after=staged.getAttribute('position').array;
@@ -1244,7 +1244,7 @@ export function auditSourcePhotoUVSurfaceAtPose(root,meshes,neutralWorld,posedBa
   }finally{staged.dispose();}
  }
  return Object.freeze({
-  sourceFaces,uvMappedFaces,meshesWithoutUV,uvDegenerateFaces,uvMirroredFaces,
+  triangleCount,uvMappedFaces,meshesWithoutUV,uvDegenerateFaces,uvMirroredFaces,
   poseAreaOverTwofoldFaces,newCollapsedCandidateFaces,
   candidateAreaOver25PercentFaces,newCandidateInvertedNormals,
   originalSourceFaceIdentity:true,currentPoseOnly:true,
@@ -1386,7 +1386,7 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
      throw Error('M2 C26 exact new skinned pose source-face delta missing');
     const uvSurface=auditSourcePhotoUVSurfaceAtPose(
      root,meshes,reference,posedBaselines,trial.overrides);
-    if(uvSurface.sourceFaces!==sourceUVSurfaceBaseline.sourceFaces||
+    if(uvSurface.triangleCount!==sourceUVSurfaceBaseline.triangleCount||
        uvSurface.uvMappedFaces!==sourceUVSurfaceBaseline.uvMappedFaces||
        uvSurface.uvDegenerateFaces!==sourceUVSurfaceBaseline.uvDegenerateFaces)
      throw Error('M2 C27 source UV/face identity diverged during candidate pose');
