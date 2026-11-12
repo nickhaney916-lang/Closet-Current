@@ -25,6 +25,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-contact-linked-source-shape-20261111-HOLD
     - research/mission2-short-edge-stage-uv-skin-20261111-HOLD
     - research/mission2-counterfactual-short-edge-depth-20261111-HOLD
+    - research/mission2-neighborhood-depth-relaxation-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -245,6 +246,7 @@ jobs:
         PHOTO_DEPTH_EXPERIMENT: '1'
         PHOTO_STAGE_AREA_AUDIT: '1'
         PHOTO_SHORT_EDGE_TRIAL: '1'
+        PHOTO_NEIGHBOR_RELAXATION: '1'
         MISSION2_PERFORMANCE: '0'
       run: |
         node scripts/test-native-3d-05-browser.mjs
@@ -453,6 +455,33 @@ jobs:
         for(const k of ['originalProposalNewBodyContacts','originalProposalNewPanelContacts',
          'depthHoldNewBodyContacts','depthHoldNewPanelContacts','depthHoldNewSelfContacts'])
          assert.ok(Number.isSafeInteger(cf[k])&&cf[k]>=0);
+        const n=cf.neighborCounterfactual;
+        assert.ok(n,'One complete neighbor original-source intervention required');
+        assert.equal(n.originalShortEdgeAnchors,cf.actuallyChangedDepthVertices);
+        assert.equal(n.oneRingPropagationWeight,.5);
+        assert.equal(n.maximumOneRingVertices,512);
+        assert.equal(n.photoXYSilhouetteBitIdentical,true);
+        assert.equal(n.noCrossSeamInference,true);
+        assert.equal(n.nonIndexedVerticesNeverReconnected,true);
+        assert.equal(n.counterfactualNeverApplied,true);
+        assert.equal(n.unchangedCollisionAdmissionPolicy,true);
+        assert.equal(n.notAdmissibleFor3DOrRelease,true);
+        assert.equal(n.noContactWaived,true);
+        assert.equal(n.releaseAuthorized,false);
+        assert.ok(Number.isSafeInteger(n.oneRingVerticesMoved)&&n.oneRingVerticesMoved>=0);
+        assert.ok(n.maximumOneRingDepthMeters<=.00900001);
+        for(const metric of ['originNewBodyContacts','originNewPanelContacts','originNewSelfContacts',
+         'heldNewBodyContacts','heldNewPanelContacts','heldNewSelfContacts',
+         'featherNewBodyContacts','featherNewPanelContacts','featherNewSelfContacts'])
+         assert.ok(Number.isSafeInteger(n[metric])&&n[metric]>=0);
+        assert.equal(n.heldNewSelfContacts,cf.depthHoldNewSelfContacts);
+        assert.equal(n.originNewSelfContacts,cf.originalProposalNewSelfContacts);
+        console.log('M2_ONE_RING_FEATHER_CONTACT_COUNTS_ONLY',
+         engine+'-anchors['+n.originalShortEdgeAnchors+
+         ']-neighbors['+n.oneRingVerticesMoved+
+         ']-newSelf['+n.originNewSelfContacts+','+n.heldNewSelfContacts+','+n.featherNewSelfContacts+
+         ']-newBody['+n.originNewBodyContacts+','+n.heldNewBodyContacts+','+n.featherNewBodyContacts+
+         ']-newPanels['+n.originNewPanelContacts+','+n.heldNewPanelContacts+','+n.featherNewPanelContacts+']');
         console.log('M2_SHORT_EDGE_DEPTH_COUNTERFACTUAL_COUNTS_ONLY',
          engine+'-vertices['+cf.implicatedNearEdgeVertices+
          ']-changed['+cf.actuallyChangedDepthVertices+
