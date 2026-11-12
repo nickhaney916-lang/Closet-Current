@@ -117,3 +117,78 @@ test('projection preparation has no precommit mutation and actual shader callbac
  material.onBeforeCompile(sourceShader());assert.equal(plan.runtime.compiledMaterialCount,1);
  assert.ok(material.customProgramCacheKey().includes('REGISTERED_FRONT_SOURCE_PROJECTION'));
 });
+
+
+import {auditOriginalPhotoTexelRegistration} from '../research/mission2-source-length/source-texel-audit.mjs';
+test('P2-C30 original source photo texel coverage counts real skinned source vertices and decoded RGB safely',()=>{
+ const {root,shirt}=fixture();
+ root.updateMatrixWorld(true);
+ const attrs=shirt.meshes.map(mesh=>{
+  const p=mesh.geometry.getAttribute('position'),coords=new Float32Array(p.array.length),v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){
+   v.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld).toArray(coords,i*3);
+  }
+  return {mesh,coords};
+ });
+ const bytes=new Uint8Array(8*8*4);
+ for(let y=0;y<8;y++)for(let x=0;x<8;x++){
+  const i=(y*8+x)*4;
+  bytes[i]=x*30;bytes[i+1]=y*29;bytes[i+2]=(x+y)*13;
+  bytes[i+3]=255;
+ }
+ const originalBytes=bytes.slice();
+ const sourcePhoto=new THREE.DataTexture(bytes,8,8);
+ const first=auditOriginalPhotoTexelRegistration(attrs,[0,.98,.95,.7],[sourcePhoto]);
+ assert.equal(first.original163BoneSourceMeshes,3);
+ assert.ok(first.registeredVertices>100);
+ assert.ok(first.eligibleSourceSamples>0);
+ assert.equal(first.nonFiniteProjectionVertices,0);
+ assert.equal(first.uvDomainOutsideVertices,0);
+ assert.equal(first.sourceShaderTexturesBound,1);
+ assert.equal(first.sourceTextureImagesDecodable,1);
+ assert.equal(first.sourceTextureImagesUnavailable,0);
+ assert.ok(first.eligibleTexelSamples>0);
+ assert.equal(first.nonTransparentTexelSamples,first.eligibleTexelSamples);
+ assert.ok(first.differentRGBQuantizedBuckets>1);
+ assert.equal(first.normalizedFrontProjectionOnly,true);
+ assert.equal(first.sourceRGBValuesNeverReported,true);
+ assert.equal(first.allOriginalSourcePixelsStayPrivate,true);
+ assert.equal(first.colorAccuracyNotVerified,true);
+ assert.equal(first.photorealismNotVerified,true);
+ assert.equal(first.humanVisualAcceptanceNotVerified,true);
+ assert.equal(first.releaseAuthorized,false);
+ assert.deepEqual(bytes,originalBytes);
+ const originalPositions=shirt.meshes.map(mesh=>
+  mesh.geometry.getAttribute('position').array.slice());
+ const out=attrs.map(({mesh,coords})=>({mesh,coords:coords.slice()}));
+ for(const entry of out)for(let i=0;i<entry.coords.length;i+=3)entry.coords[i]+=3;
+ const invalid=auditOriginalPhotoTexelRegistration(out,[0,.98,.95,.7],[sourcePhoto]);
+ assert.ok(invalid.uvDomainOutsideVertices>0);
+ assert.equal(invalid.eligibleTexelSamples,0);
+ assert.equal(invalid.nonTransparentTexelSamples,0);
+ assert.equal(invalid.releaseAuthorized,false);
+ const unready=new THREE.Texture();
+ const unknown=auditOriginalPhotoTexelRegistration(attrs,[0,.98,.95,.7],[unready]);
+ assert.equal(unknown.sourceTextureImagesDecodable,0);
+ assert.equal(unknown.sourceTextureImagesUnavailable,1);
+ assert.equal(unknown.missingTextureDecodeIsNotPhotoValidation,true);
+ assert.equal(unknown.releaseAuthorized,false);
+ const invalidSource=attrs.map(entry=>({...entry,coords:entry.coords.slice()}));
+ invalidSource[0].coords[0]=NaN;
+ assert.throws(()=>auditOriginalPhotoTexelRegistration(invalidSource,
+  [0,.98,.95,.7],[sourcePhoto]),
+  /complete finite original 163-bone source coordinate mapping/);
+ assert.throws(()=>auditOriginalPhotoTexelRegistration(attrs,
+  [0,-.1,.95,.7],[sourcePhoto]),
+  /complete bounded source shader photo and source registration/);
+ assert.throws(()=>auditOriginalPhotoTexelRegistration(attrs,
+  [0,.98,.95,.7],[{}]),
+  /complete bounded source shader photo and source registration/);
+ shirt.meshes.forEach((mesh,i)=>assert.deepEqual(
+  mesh.geometry.getAttribute('position').array,originalPositions[i]));
+ assert.deepEqual(bytes,originalBytes);
+ const exported=JSON.stringify(first);
+ for(const secret of ['"ownerId"','"sourceSHA256"','"sourceUV"',
+  '"sourceFace"','"sourceImage"','"texelRGB"','"localXYZ"'])
+  assert.equal(exported.includes(secret),false);
+});
