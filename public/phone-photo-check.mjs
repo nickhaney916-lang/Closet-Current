@@ -1,5 +1,6 @@
 import {photoCategories,photoTypes,photoColors,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos,phonePhotoColorTrialReadout} from './phone-photo-benchmark.mjs';
 import {photoTestSession} from './photo-test-session.mjs';
+import {createTrialRecoverySession833} from './phone-photo-run-recovery-833.mjs';
 import {prepareTrialPhotoJPEG832} from './phone-photo-prep-832.mjs';
 const $=id=>document.getElementById(id);let rows=[],report=null,session=null,decodeController=null,generation=0,locked=false;
 function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
@@ -31,14 +32,18 @@ $('run').onclick=async()=>{
  const results=[];
  try{
   $('status').textContent='Preparing recognition…';
-  session=photoTestSession({workerUrl:'./local-worker.mjs'+new URL(import.meta.url).search,onProgress:data=>{if(mine===generation&&data.stage==='weights'&&Number.isFinite(data.percent))$('status').textContent='Preparing recognition… '+Math.max(0,Math.min(100,data.percent))+'%';}});
-  await session.call({type:'load'});
+  session=createTrialRecoverySession833({
+   makeSession:()=>photoTestSession({workerUrl:'./local-worker.mjs'+new URL(import.meta.url).search,onProgress:data=>{if(mine===generation&&data.stage==='weights'&&Number.isFinite(data.percent))$('status').textContent='Preparing recognition… '+Math.max(0,Math.min(100,data.percent))+'%';}}),
+   isActive:()=>mine===generation&&!decodeController?.signal.aborted,
+   onRestart:()=>{if(mine===generation)$('status').textContent='Recognition stopped on the previous photo. Restarting once for the next photo…';},
+  });
+  await session.load();
   for(const [i,row] of rows.entries()){
    if(mine!==generation)return;$('status').textContent='Checking photo '+(i+1)+' of '+rows.length+'…';row.result.textContent='Checking…';const started=performance.now();let result;
    try{
     const image=await prepareTrialPhotoJPEG832(row.file,{signal:decodeController.signal});
     if(mine!==generation)return;
-    const raw=await session.call({type:'classify',image});result=phonePhotoResult(labels[i].id,raw,performance.now()-started);
+    const raw=await session.classify(image);result=phonePhotoResult(labels[i].id,raw,performance.now()-started);
    }catch(e){result=photoFailure(labels[i].id,e.code||'image');}
    if(mine!==generation)return;results.push(result);
    row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');

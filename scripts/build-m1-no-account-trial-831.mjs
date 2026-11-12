@@ -11,7 +11,7 @@ import {pathToFileURL} from 'node:url';
 
 export const TRIAL_FILES_831=Object.freeze([
  'phone-photo-check.html','phone-photo-check.mjs','phone-photo-benchmark.mjs',
- 'photo-test-session.mjs','phone-photo-prep-832.mjs','local-worker.mjs',
+ 'photo-test-session.mjs','phone-photo-prep-832.mjs','phone-photo-run-recovery-833.mjs','local-worker.mjs',
  'local-catalog.mjs','recognition-engine.mjs','scanner-errors.mjs',
  'vector-scorer.mjs','recognition-photo.mjs',
  'recognition-vectors.json','recognition-vectors.bin'
