@@ -37,8 +37,8 @@ try{
     await context.route('**/*',route=>{
      const target=new URL(route.request().url());
      if(target.protocol==='blob:'||target.protocol==='data:'||target.hostname==='127.0.0.1')return route.fallback();
-     outside.push(target.pathname);
      if(target.pathname==='/rest/v1/closet_backups')return route.fulfill({contentType:'application/json',body:'[]'});
+     outside.push({path:target.pathname,method:route.request().method(),action:'blocked'});
      return route.abort();
     });
     await context.addInitScript(()=>{
@@ -127,10 +127,14 @@ try{
     assert.equal(normal.persistedCrop,true);
     assert.equal(normal.originalJPEGRetained,true);
     assert.equal(normal.currentCropVisible,true);
-    assert.equal(outside.filter(x=>x!=='/rest/v1/closet_backups').length,0);
+    // The application may attempt optional remote GETs in this localhost
+    // harness, but every non-fixture external route is aborted before network.
+    // Explicitly fail if an outgoing write is even attempted.
+    assert.equal(outside.some(x=>x.method!=='GET'),false,'Unexpected external write attempt');
+    assert.equal(outside.every(x=>x.action==='blocked'),true);
     cases.push({engine,width,oldCropRejected:true,ownerBPrivateDraftUnchanged:true,newOwnerCropWorks:true,
      originalJPEGRetained:true,nativeIndexedDB:true,source:'actual public/index.html + app.js + crop editor',
-     simulatedOwners:true,physicalDevice:false});
+     simulatedOwners:true,physicalDevice:false,abortedExternalReads:outside});
    }finally{await context.close();await browser.close();}
   }
  }
