@@ -11,7 +11,8 @@
 ## Verification evidence policy
 
 - `tests/mission3-edit-backup-owner-lease.test.cjs` executes the exact unmodified runtime function bodies (not a rewritten pseudocode implementation), with synthetic A/B owners, identical row IDs, delayed files, confirmation switches, same-ID re-login, held IndexedDB get/transaction completion, legitimate restore and valid owner edit.
-- Strict two-job no-deploy workflow requires exact-parent ancestry, four-path diff allowlist, node syntax validation, these new regressions, old crop-owner tests, existing signed-owner disposable PostgreSQL RLS checks, current app build, full serial Node suite, and independent native Chromium/WebKit browser integration at 320/390/430 widths.
+- `scripts/test-mission3-edit-backup-owner-browser.mjs` exercises the actual app, two synthetic users, native IndexedDB, delayed backup file read, rejected cross-owner import, and the new owner's valid import in Chromium and WebKit at 320/390/430 widths. All external requests are intercepted and rejected (no hosted writes); screenshot/device claims are not made.
+- Strict two-job no-deploy workflow requires exact-parent ancestry, five-path diff allowlist, node syntax validation, both regressions, inherited crop-owner cases, existing signed-owner disposable PostgreSQL RLS checks, current app build, full serial Node suite, and independent native Chromium/WebKit browser integration.
 - Results are **not verified until an exact HEAD Actions run passes**. Do not infer any successful tests solely from this report.
 
 ## Remaining blockers
