@@ -860,6 +860,15 @@ test('P2-C19 ties genuinely skinned source face sliver and regular neighbor to e
  assert.equal(result.sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy,true);
  assert.equal(result.indexedBoundaryDoesNotProveSewnSeam,true);
  assert.equal(result.noSourcePositionsOrFaceKeysExported,true);
+ const short=result.contactLinkedShortEdgeStageUVSkinEvidence;
+ assert.equal(short.nearCoincidentAffectedFaces,1);
+ assert.equal(short.stageSourceEvidenceComplete,false);
+ assert.equal(short.shortEdgeShapeBySourceStage,null);
+ assert.equal(short.nearEdgeFirstObservedStage,null);
+ assert.deepEqual(short.shortEdgeUVEndpointEvidence,{unavailable:1,nearSameUV:0,differentUV:0});
+ assert.deepEqual(short.shortEdge163BoneInfluenceEvidence,{same:1,different:0});
+ assert.equal(short.noGeometryEdited,true);
+ assert.equal(short.noContactWaived,true);
  assert.equal(result.noContactWaived,true);
  assert.equal(result.releaseAuthorized,false);
  for(const term of ['newlyIntersectingSourceKeys','faceKey','localXYZ','sourceSHA256','ownerId'])
@@ -868,4 +877,90 @@ test('P2-C19 ties genuinely skinned source face sliver and regular neighbor to e
  const forged={...proof,newlyIntersectingSourceKeys:['0:0:999']};
  assert.throws(()=>classifyNewSourceSelfContactTypes(root,[m],new Map(),forged),
   /source triangle outside complete posed garment/);
+});
+
+
+test('P2-C20 original contacted short edge first appears in owner mask, with genuine 163-bone influence and UV difference; all source buffers stay byte-identical',()=>{
+ const {root,garment}=simplePose(),meshObjects=[];
+ const make=(name,side,coords)=>{
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(coords,3));
+  g.setAttribute('uv',new THREE.Float32BufferAttribute([
+   0,0,1,0,.3,.4, 0,0,1,0,0,1
+  ],2));
+  const bones=new Uint16Array(24),weights=new Float32Array(24);
+  for(let i=0;i<6;i++)weights[i*4]=1;
+  // A distinct weight on the short-edge endpoint, not a claim of defect.
+  bones[2*4]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(bones,4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+  m.name=name;m.userData.work56Garment=true;
+  if(side)m.userData.work45IndependentShoulderCap=side;
+  m.bind(garment.skeleton);root.add(m);meshObjects.push(m);return m;
+ };
+ const input=[
+  0,0,0,1,0,0,0,.05,0,
+  3,0,0,4,0,0,3,1,0
+ ];
+ const shell=make('Work56-independent-shirt-shell',null,input);
+ make('Independent-left-cap','L',input);
+ make('Independent-right-cap','R',input);
+ const shirt={meshes:meshObjects};
+ const before=capturePhotoConstructionFaceAreas(root,shirt);
+ const pos=shell.geometry.getAttribute('position');
+ pos.setY(2,.002);pos.needsUpdate=true;
+ const photo=capturePhotoConstructionFaceAreas(root,shirt);
+ pos.setY(2,.000001);pos.needsUpdate=true;
+ const owner=capturePhotoConstructionFaceAreas(root,shirt);
+ const fixed=meshObjects.map(m=>({
+  position:m.geometry.getAttribute('position').array.slice(),
+  uv:m.geometry.getAttribute('uv').array.slice(),
+  skin:m.geometry.getAttribute('skinWeight').array.slice()
+ }));
+ // A synthetic exact-face pair exercises lineage only. This deliberate hand
+ // claim never authorizes an actual intersection or a user-photo 3D outfit.
+ const proof={completedUniqueAffectedPairComparison:true,originalSourceFaceIdentity:true,
+  sampledPoseOnly:true,newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1']};
+ const result=classifyNewSourceSelfContactTypes(root,meshObjects,new Map(),proof,
+  {sourceAreaStages:[before,photo,owner]});
+ const lineage=result.contactLinkedShortEdgeStageUVSkinEvidence;
+ assert.equal(lineage.nearCoincidentAffectedFaces,1);
+ assert.equal(lineage.stageSourceEvidenceComplete,true);
+ assert.deepEqual(lineage.shortEdgeShapeBySourceStage.map(x=>x.stage),
+  ['anatomical','afterPhoto62','afterOwner190']);
+ assert.deepEqual(lineage.shortEdgeShapeBySourceStage.map(x=>x.counts.nearCoincidentEdge),
+  [0,0,1]);
+ assert.deepEqual(lineage.nearEdgeFirstObservedStage,
+  {anatomical:0,photoFit:0,ownerFit:1});
+ assert.deepEqual(lineage.shortEdgeUVEndpointEvidence,
+  {unavailable:0,nearSameUV:0,differentUV:1});
+ assert.deepEqual(lineage.shortEdge163BoneInfluenceEvidence,
+  {same:0,different:1});
+ assert.equal(lineage.noGeometryEdited,true);
+ assert.equal(lineage.noContactWaived,true);
+ assert.equal(lineage.releaseAuthorized,false);
+ assert.equal(lineage.uvSamenessIsNotProofOfSewnSeams,true);
+ assert.equal(lineage.skinDisagreementIsNotProofOfRigDefect,true);
+ for(let i=0;i<meshObjects.length;i++){
+  assert.deepEqual(meshObjects[i].geometry.getAttribute('position').array,fixed[i].position);
+  assert.deepEqual(meshObjects[i].geometry.getAttribute('uv').array,fixed[i].uv);
+  assert.deepEqual(meshObjects[i].geometry.getAttribute('skinWeight').array,fixed[i].skin);
+ }
+ const redacted=JSON.stringify(result);
+ for(const forbidden of ['sourceSHA256','localXYZ','posedXYZ','sourceFaceIds',
+  'newlyIntersectingSourceKeys','skinWeight','skinIndex','sourceUV','sourceFaceKeys'])
+  assert.equal(redacted.includes('"'+forbidden+'"'),false);
+ const corrupted={...owner,witnesses:owner.witnesses.map((w,i)=>
+  i? w:{...w,indices:new Uint32Array(w.indices)})};
+ corrupted.witnesses[0].indices[1]=2;
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,meshObjects,new Map(),proof,
+  {sourceAreaStages:[before,photo,corrupted]}),
+  /original three-stage face identity mismatch/);
+ const stale={...owner,witnesses:owner.witnesses.map((w,i)=>
+  i? w:{...w,localXYZ:new Float32Array(w.localXYZ)})};
+ stale.witnesses[0].localXYZ[7]=.08;
+ assert.throws(()=>classifyNewSourceSelfContactTypes(root,meshObjects,new Map(),proof,
+  {sourceAreaStages:[before,photo,stale]}),
+  /owner stage changed before depth trial/);
 });
