@@ -1,7 +1,7 @@
 'use strict';
 /* Parallel #73 isolated research. Advisory only; never alters or stores source pixels. */
 (function(root){
- const VERSION='P73-2';
+ const VERSION='P73-3';
  // EXIF orientation 5–8 rotates a rectangular source by 90 degrees.
  function orientedDimensions(width,height,orientation=1){
   if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||width<1||height<1||
@@ -31,13 +31,19 @@
    for(let i=0;i<256;i++){total+=hist[i];if(total>=target)return i;}
    return 255;
   };
-  let edges=0,edgeSum=0,edgeStrong=0;
+  let edges=0,edgeSum=0,edgeStrong=0,borderEdges=0,borderStrong=0,centerEdges=0,centerStrong=0;
   // Adjacent-pixel contrast is a focus *proxy*, not a blur diagnosis.
   for(let y=1;y<height;y++)for(let x=1;x<width;x++){
    const i=y*width+x;
    if(!opaque[i]||!opaque[i-1]||!opaque[i-width])continue;
    const magnitude=(Math.abs(gray[i]-gray[i-1])+Math.abs(gray[i]-gray[i-width]))/2;
    edges++;edgeSum+=magnitude;if(magnitude>=20)edgeStrong++;
+   // A border-vs-center *texture* measurement. It is NOT a clothing mask.
+   const border=x<width*.18||x>=width*.82||y<height*.18||y>=height*.82;
+   const center=x>=width*.32&&x<width*.68&&y>=height*.32&&y<height*.68;
+   if(border){borderEdges++;if(magnitude>=32)borderStrong++;}
+   if(center){centerEdges++;if(magnitude>=32)centerStrong++;}
+
   }
   const p10=percentile(.1),p90=percentile(.9);
   const metrics={sourceWidth,sourceHeight,sampledWidth:width,sampledHeight:height,
@@ -45,7 +51,9 @@
    lumaP10:p10,lumaP90:p90,darkFraction:count?number(dark/count):null,
    highlightFraction:count?number(bright/count):null,
    adjacentContrast:edges?number(edgeSum/edges):null,
-   edgeFraction:edges?number(edgeStrong/edges):null};
+   edgeFraction:edges?number(edgeStrong/edges):null,
+   borderEdgeFraction:borderEdges?number(borderStrong/borderEdges):null,
+   centerEdgeFraction:centerEdges?number(centerStrong/centerEdges):null};
   const advice=[];
   function add(code,text,evidence){advice.push({code,text,evidence});}
   if(Math.min(sourceWidth,sourceHeight)<640)
@@ -57,6 +65,9 @@
     add('bright-detail','Much of the photo is very bright. Check that white fabric, seams, and edges are visible.','lower brightness percentile above 215');
    if(bright/count>.35&&p10<165)
     add('highlights','Bright areas may hide fabric detail. Check for reflections or glare before deciding to retake.','more than 35% near-white pixels and mixed brightness');
+   if(count>=width*height*.85&&borderEdges>500&&centerEdges>200&&
+      borderStrong/borderEdges>.34&&borderStrong/borderEdges>(centerStrong/centerEdges)*3+.12)
+    add('busy-border','The edges of the photo look more visually busy than the middle. Check whether a simpler contrasting background would make the garment easier to see.','higher high-contrast texture at photo borders; does not locate a garment');
    if(edges>1000&&p90-p10>=50&&edgeSum/edges<4&&edgeStrong/edges<.022)
     add('possible-softness','Fine details may be soft. Check focus on seams or logos; a steady retake may help.','low adjacent contrast despite broad tonal range');
   }
