@@ -25,6 +25,7 @@ function fixture(){
  let readyToDecode=false,decodeCount=0,candidates=0,stops=0,rendered=0;
  const dom={captureState:{textContent:''}};
  const video={
+  classList:{add(){},remove(){}},
   src:'',load(){events.push('video-load');},pause(){events.push('video-pause');},
   removeAttribute(name){if(name==='src')this.src='';},
   getAttribute(name){return name==='src'?this.src:null;}
