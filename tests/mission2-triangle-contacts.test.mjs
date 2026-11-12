@@ -1101,8 +1101,11 @@ test('P2-C22 feathered one-ring 163-bone short-edge correction touches only sour
    assert.equal(serial.includes('"'+hidden+'"'),false);
   assert.throws(()=>buildOneRingShortEdgeDepthFeather([m],overrides,held,
    {neighborWeight:1}),/complete private immutable original short-edge trial/);
-  assert.throws(()=>buildOneRingShortEdgeDepthFeather([m],overrides,held,
-   {maxNeighborVertices:1}),indexed?/neighbor budget exhausted/:/neighbor budget exhausted/);
+  if(indexed)
+   assert.throws(()=>buildOneRingShortEdgeDepthFeather([m],overrides,held,
+    {maxNeighborVertices:1}),/neighbor budget exhausted/);
+  else assert.equal(buildOneRingShortEdgeDepthFeather([m],overrides,held,
+    {maxNeighborVertices:1}).countOnly.oneRingVerticesMoved,1);
   root.remove(m);
  }
 });
