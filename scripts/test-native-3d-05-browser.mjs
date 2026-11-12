@@ -539,8 +539,10 @@ try{
       a.smallAfterPhotoFit+a.newlySmallDuringOwnerMaskFit-a.recoveredDuringOwnerMaskFit);
      const redacted=JSON.stringify(a);
      assert.equal(redacted.includes(source.originalSHA),false);
-     assert.equal(redacted.includes('sourceFaceIds'),true,
-      'Only the negative noSourceFaceIdsCoordinatesOrOwnerFields safety tag may mention sourceFaceIds');
+     assert.equal(redacted.includes('"indices"'),false,
+      'No transient original triangle index buffers may leave the disposable owner donor');
+     assert.equal(redacted.includes('newlyIntersectingSourceKeys'),false,
+      'No real source-face contact identities may enter mobile browser evidence');
      assert.equal(redacted.includes('ownerId'),false);
      assert.equal(redacted.includes('coordinates\"'),false);
     }
