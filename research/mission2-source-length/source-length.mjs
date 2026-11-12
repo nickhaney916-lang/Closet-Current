@@ -226,7 +226,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
     const facesByMesh=targets.map(()=>new Set());
     let retainedOriginalNewPairs=0,newlyIntroducedPairKeys=0;
     for(const key of neighborSelf.newlyIntersectingSourceKeys){
-     if(typeof key!=='string'||!/^(?:0|[1-9]\\d*):(?:0|[1-9]\\d*):(?:0|[1-9]\\d*)$/.test(key))
+     if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
       fail('M2 C23 original source face identity in residual delta invalid');
      const [m,a,b]=key.split(':').map(Number);
      if(!Number.isSafeInteger(m)||m<0||m>=targets.length||
