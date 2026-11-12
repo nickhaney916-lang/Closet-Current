@@ -51,7 +51,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
-  if(!['classify','features','benchmark-frames'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
+  if(!['classify','classify-guard835','features','benchmark-frames'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
   scannerStage='catalog_import';const {recognizeWithRecovery,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
   scannerStage='identify';const image=await RawImageClass.read(request.image);
   if(request.type==='benchmark-frames'){
@@ -73,10 +73,16 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    confirmationModel:model.center,skirtPaddingModel:model.skirtPadding,coatNearFullModel:model.coatNearFull,
    recoveryModel:model.originalWhole,recoveryConfirmationModel:model.originalCenter,
    onStage:stage=>{scannerStage=stage;},
-   onIdentified:choice=>self.postMessage({type:'identified',id:request.id,choice})
+   onIdentified:choice=>{if(request.type!=='classify-guard835')self.postMessage({type:'identified',id:request.id,choice});}
   });
+  // P835 pilot opt-in only: the unchanged 'classify' path remains byte-for-
+  // byte behaviorally identical; no release or wardrobe auto-save is changed.
+  const finalResult=request.type==='classify-guard835'?
+   await (await import('./phone-photo-subtype-guard-835.mjs'+new URL(import.meta.url).search))
+    .corroborateOriginalSubtype835(result,image,{wholeView:model.originalWhole,centerView:model.originalCenter}):
+   result;
   let recognitionMemory;try{if(model.whole.features)recognitionMemory={version:1,modelKey:model.modelKey,features:await model.whole.features(image)};}catch{/* Optional memory cannot reject a garment. */}
-  self.postMessage({type:'result',id:request.id,...result,recognitionMemory});
+  self.postMessage({type:'result',id:request.id,...finalResult,recognitionMemory});
  }catch(error){
   self.postMessage({type:'error',id:request.id,stage:scannerStage,code:scannerErrorCode(error,scannerStage),text:'Recognition could not finish on this device. Try again or use Adjust.'});
  }
