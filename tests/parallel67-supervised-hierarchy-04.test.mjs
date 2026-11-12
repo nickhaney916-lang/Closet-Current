@@ -4,6 +4,8 @@ import {
  fitHierarchicalFashion67_04,predictHierarchicalFashion67_04,
  scoreHierarchicalFashion67_04,P67_04_DIMENSION
 } from '../scripts/parallel67-hierarchical-prototypes-04.mjs';
+import {compareSupervisedHierarchy67_04} from '../scripts/parallel67-compare-hierarchy-04.mjs';
+import {P67_FASHION_MODEL,P67_FASHION_REVISION} from '../scripts/parallel67-independent-siglip-scoring.mjs';
 
 const digest=id=>id.toString(16).padStart(64,'0');
 function photo(id,category,type,{index,sha=digest(id)}={}){
@@ -141,4 +143,60 @@ test('P67-04 unsupported category and subtype training classes are explicitly li
  assert.ok(fit.availability.Dresses.missingFineTypeExamples.includes('Casual dress'));
  assert.equal(fit.availability.Shoes.exactSourceTypeCounts.Boots,2);
  assert.deepEqual(fit.availability.Shoes.trainedContrastingTypes.sort(),['Boots','Sneakers']);
+});
+
+function fakePair(){
+ const train=fitHierarchicalFashion67_04(typical());
+ const b=scoreHierarchicalFashion67_04(train,diagnostic());
+ b.trainCount=32;
+ b.model=P67_FASHION_MODEL;b.revision=P67_FASHION_REVISION;
+ b.sourceIndexSha256='b'.repeat(64);
+ b.evaluationManifestSha256='a'.repeat(64);
+ b.trainingAndTestOriginalIDsDisjoint=true;
+ b.trainingAndTestOriginalSHAsDisjoint=true;
+ const rows=b.sourceRows.map(s=>({
+  id:s.id,truthCategory:s.expectedCategory,truthSubtype:s.expectedType,
+  categoryOnly:s.negative,categoryTop1Correct:s.categoryTop1Correct,
+  subtypeTop1Correct:s.subtypeTop1Correct,
+  predictedCategory:s.predictedCategory,predictedSubtype:s.predictedType,error:null
+ }));
+ const a={
+  schema:'closet-current-parallel67-foreign-siglip-developer-exposed-v1',
+  model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION,
+  originalCount:16,garments:13,negatives:3,
+  categoryTop1:b.categoryTop1,broadSubtypeTop1:b.subtypeBroadTop1,
+  negativeTop1:b.negativeTop1,developerExposedNotBlind:true,
+  sourceIndexSha256:'b'.repeat(64),truthFileSha256:'a'.repeat(64),rows
+ };
+ return [a,b];
+}
+test('P67-04 baseline comparison reports changes on precisely original 16 IDs, not accepted save accuracy',()=>{
+ const [a,b]=fakePair();
+ const comparison=compareSupervisedHierarchy67_04(a,b);
+ assert.equal(comparison.originalSources,16);
+ assert.equal(comparison.trainingPhotos,32);
+ assert.equal(comparison.garments,13);
+ assert.equal(comparison.negatives,3);
+ assert.equal(comparison.differenceCategory,0);
+ assert.equal(comparison.differenceSubtype,0);
+ assert.equal(comparison.noAutomaticClosetSave,true);
+ assert.equal(comparison.notBlind,true);
+});
+test('P67-04 model comparison rejects fabricated source, wrong class or inflated success denominators',()=>{
+ const variants=[
+  ([,b])=>b.sourceRows.reverse(),
+  ([a])=>a.rows[1].truthCategory='PRIVATE_OWNER',
+  ([,b])=>b.sourceRows[0].predictedCategory='PRIVATE',
+  ([,b])=>b.sourceRows[0].needsManualReview=false,
+  ([,b])=>b.automaticSaveAllowed=true,
+  ([,b])=>b.trainCount=16,
+  ([a])=>a.categoryTop1=500,
+  ([,b])=>b.subtypeBroadTop1=50,
+  ([,b])=>b.evaluationManifestSha256='c'.repeat(64),
+  ([,b])=>b.sourceRows.pop()
+ ];
+ for(const mutation of variants){
+  const pair=fakePair();mutation(pair);
+  assert.throws(()=>compareSupervisedHierarchy67_04(...pair),/P67-04/);
+ }
 });
