@@ -5,7 +5,7 @@ const donor=resolve(process.argv[2]||'.');
 if(donor===resolve('.')||donor==='/'||donor.startsWith(resolve('public'))||donor.startsWith(resolve('supabase')))throw Error('Explicit disposable donor required');
 const patch=async(path,anchor,replacement)=>{const file=join(donor,path),s=await readFile(file,'utf8');assert.equal(s.split(anchor).length,2,path);await writeFile(file,s.replace(anchor,replacement));};
 await mkdir(join(donor,'research/mission2-source-length'),{recursive:true});
-for(const name of ['source-length.mjs','posed-intersections.mjs','source-projection.mjs'])await copyFile('research/mission2-source-length/'+name,join(donor,'research/mission2-source-length/'+name));
+for(const name of ['source-length.mjs','posed-intersections.mjs','source-projection.mjs','split-edge-continuity.mjs'])await copyFile('research/mission2-source-length/'+name,join(donor,'research/mission2-source-length/'+name));
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',"import {fitOwnerAlphaToSkinnedBlouse190}","import {fitSourceLength,applyNoNewContactSourceLength} from '../mission2-source-length/source-length.mjs';\nimport {fitOwnerAlphaToSkinnedBlouse190}");
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
  "import {fitOwnerAlphaToSkinnedBlouse190}",
