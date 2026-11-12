@@ -1031,31 +1031,30 @@ function captureTick(now=Date.now()){
   else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
- try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch;captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(error=>reportCaptureCommitFailure(error,epoch,lifecycle));return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
+ try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){const epoch=captureOperationEpoch;captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(error=>reportCaptureCommitFailure(error,epoch));return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
 async function captureProofPhoto(){
  if(captureProofTaking||!stream||!cameraMode)return false;
- const owner=captureProofOwner(),request=cameraRequest,epoch=captureOperationEpoch,
-  lifecycle=mediaLifecycleEpoch;
+ const owner=captureProofOwner(),request=cameraRequest,epoch=captureOperationEpoch;
  if(!owner){message('Sign in again before adding a photo.');return false;}
  captureProofTaking=true;
  try{
   const width=video.videoWidth,height=video.videoHeight,image=snap();
   const proof=await captureProofFromJPEG(image,{width,height,origin:'camera'},owner);
-  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
+  if(epoch!==captureOperationEpoch||request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
   const durable=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true});
-  return durable&&epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
+  return durable&&epoch===captureOperationEpoch&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
  }finally{
   // An old in-flight frame must not reset a newer camera's busy flag after
   // Stop/Done, backgrounding, track-ended recovery, or facing-mode switch.
   if(epoch===captureOperationEpoch&&request===cameraRequest)captureProofTaking=false;
  }
 }
-function reportCaptureCommitFailure(error,epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch){
- // Old owner or interrupted camera promises cannot update the resumed UI.
- if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch)return;
+function reportCaptureCommitFailure(error,epoch=captureOperationEpoch){
+ // Old owner camera promises are forbidden from updating new owner UI.
+ if(epoch!==captureOperationEpoch)return;
  if(typeof render==='function')render();
  if(error?.code==='CAPTURE_STORAGE_FAILED'){
   $('captureState').textContent='Photo in review · device storage not confirmed';
@@ -1065,21 +1064,21 @@ function reportCaptureCommitFailure(error,epoch=captureOperationEpoch,lifecycle=
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
-  const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch;
-  captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
-  .catch(error=>reportCaptureCommitFailure(error,epoch,lifecycle));return;
+  const epoch=captureOperationEpoch;
+  captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
+  .catch(error=>reportCaptureCommitFailure(error,epoch));return;
  }
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
 }
 async function startCamera(mode){
  if(busy||stream||cameraOpening)return;
- const request=++cameraRequest,epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch;cameraOpening=true;busy=true;controls(true);
+ const request=++cameraRequest,epoch=captureOperationEpoch;cameraOpening=true;busy=true;controls(true);
  $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
   // A delayed AudioContext.resume must not request camera permission for a revoked session.
-  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||request!==cameraRequest)return;
+  if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
   if(typeof document!=='undefined'&&document.hidden){
    stopCamera();
    message('Camera access was interrupted while the app was in the background. Your photos are ready to review.');
@@ -1096,7 +1095,7 @@ async function startCamera(mode){
       ['OverconstrainedError','NotFoundError','NotReadableError'].includes(error.name)))throw error;
    // A preferred-camera failure may arrive after Stop, sign-out or app hide.
    // Never request a *second* camera stream for a revoked old session.
-   if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||request!==cameraRequest)return;
+   if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
    if(typeof document!=='undefined'&&document.hidden){
     stopCamera();
     message('Camera access was interrupted while the app was in the background. Your photos are ready to review.');
@@ -1105,9 +1104,9 @@ async function startCamera(mode){
    // On unsupported devices relax preference only; permission denial never bypassed.
    acquired=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
   }
-  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||request!==cameraRequest||(typeof document!=='undefined'&&document.hidden)){
+  if(epoch!==captureOperationEpoch||request!==cameraRequest||(typeof document!=='undefined'&&document.hidden)){
    acquired.getTracks().forEach(track=>track.stop());
-   if(typeof document!=='undefined'&&document.hidden&&epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&request===cameraRequest){stopCamera();message('Camera access finished after the app was backgrounded. Your captured photos are safe; start the camera again when ready.');}
+   if(typeof document!=='undefined'&&document.hidden&&epoch===captureOperationEpoch&&request===cameraRequest){stopCamera();message('Camera access finished after the app was backgrounded. Your captured photos are safe; start the camera again when ready.');}
    return;
   }
   stream=acquired;cameraMode=mode;
@@ -1118,7 +1117,7 @@ async function startCamera(mode){
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
   await video.play();
   // play() can resolve after sign-out and a different owner begins another capture.
-  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||request!==cameraRequest)return;
+  if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
   session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
@@ -1130,12 +1129,12 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(epoch===captureOperationEpoch&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
  }
  finally{
   // An older, cancelled getUserMedia() request must not unlock controls
   // while a newer request is still opening or streaming.
-  if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&request===cameraRequest){
+  if(epoch===captureOperationEpoch&&request===cameraRequest){
    busy=false;if(!stream)controls(false);
   }
  }
