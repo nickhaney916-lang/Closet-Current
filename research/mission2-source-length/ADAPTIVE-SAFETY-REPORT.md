@@ -209,3 +209,20 @@ Pending final-head no-deploy full Node + 320/390/430 Chromium/WebKit tests, scre
 ### P2-C14 verification
 
 Pending exact final-head no-deploy full regression and Chromium/WebKit native source photo checks. Never count a diagnostic fix as cloth acceptance.
+
+
+## P2-C15 — Trace exact source triangulation quality through real anatomy → photograph → owner mask
+
+**Verified parent finding:** Draft [PR #879](https://github.com/nickhaney916-lang/Closet-Current/pull/879) exact HEAD `0166a580f8eb87f42062bb573c21e2a945672372`, [NO DEPLOY GitHub Actions #43117211237](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43117211237) 7/7 success, Chromium/WebKit actual genuine photo/private outfit three widths and both humanoids; screenshot evidence preserved. Tiny faces involved in NEW lower-garment self-contact pairs were already tiny in the **pre-source-length P62/P190 fitted skinned garment**; none became newly tiny in those length/depth trials. The precise upstream stage of their creation was **not yet known**.
+
+**New research work:** Take three exact canonical source-face snapshots of the unmodified private source-identified 163-bone blouse shell and its LEFT/RIGHT separately skinned shoulder caps from the genuine disposable research donor. At checkpoint 1, immediately before `fitReviewedUpperPhoto62(..., {naturalShoulder185:true})`, count posed triangle areas after anatomical build/rigging; checkpoint 2 immediately after the photographic shoulder/hem silhouette fit; checkpoint 3 immediately after `fitOwnerAlphaToSkinnedBlouse190` and its real registered P195 bilateral owner contour. All three share **unchanged exact source face identities** (same mesh object, face count and every triangle vertex index) and measure `|cross(b-a,c-a)|² < 1e-10` in the same real posed world frame. Pairwise comparisons count *new* and *recovered* tiny source triangles during P62 and P190 independently, by garment shell and both caps, rather than simply observing the final total.
+
+Snapshots contain original source-face indices and a per-face flag solely **inside the disposable donor runtime**; they are never serialized, logged, sent to CI, or persisted. A separate **counts-only** report exposes the source-face totals, per-part small-face counts, new/recovered stage transitions and explicit honesty/safety status. Invalid 163-bone faces, changed topology, malformed mesh identities or inconsistent counts cause a fail-closed test. No mask, photo pixel, JPEG hash, owner ID, garment coordinates, session or new persistence fields are exported.
+
+The disposable donor stage capture is opt-in only with `photoSourceStageAudit=research`; the native signed-outfit Chromium/WebKit test enables that ONLY in its no-deploy research depth comparison and enforces one report, three stages and all independent aggregate identities at 320/390/430. Existing owner photo/2D fallback, full body/part/self contact gates, unphotographed rear disclosure and lack of physical/visual certification are **unchanged**. All of this diagnoses the source problem; it does **not** repair degenerate source triangles or certify 3D fabric.
+
+**Decision after evidence:** If tiny faces exist before P62, prioritize canonical anatomical donor triangulation/skin binding repair. If they first appear after P62/P185, prioritize photograph silhouette deformation invariants. If they first appear during P190/P195, prioritize private owner mask bilateral contour deformation and seams. Never weld/retriangulate an unverified photographic panel or whitelist tiny-face contacts without independent geometric/visual proof.
+
+### P2-C15 exact-head verification
+
+Pending full Node and real Chromium/WebKit native source stage evidence with SHA screenshots, no deployment. Family Alpha HOLD #255 remains DRAFT/UNMERGED/UNDEPLOYED.
