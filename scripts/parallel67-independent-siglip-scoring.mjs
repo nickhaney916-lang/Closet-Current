@@ -17,7 +17,9 @@ export const P67_LABELS=Object.freeze(localCandidates.map(x=>x.label));
 const candidates=new Map(localCandidates.map(x=>[x.label,x]));
 const categories=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories','Uncategorized']);
 
-export function rankIndependentSiglip67(raw){
+export function rankIndependentSiglip67(raw,{scoreMeaning='uncalibrated-sigmoid-ranking-only'}={}){
+ if(!['uncalibrated-sigmoid-ranking-only','uncalibrated-cosine-ranking-only'].includes(scoreMeaning))
+  throw Error('P67: unapproved independent embedding score interpretation');
  if(!Array.isArray(raw)||raw.length!==P67_LABELS.length||new Set(raw.map(x=>x?.label)).size!==P67_LABELS.length)
   throw Error('P67: incomplete or duplicate alternative model labels');
  const choices=raw.map(x=>{
@@ -34,7 +36,7 @@ export function rankIndependentSiglip67(raw){
   categoryRank:[...new Set(choices.map(x=>x.category))],
   topThree:choices.slice(0,3).map(x=>({category:x.category,type:x.type,score:x.score})),
   admissionAllowed:false,
-  scoreMeaning:'uncalibrated-sigmoid-ranking-only'};
+  scoreMeaning};
 }
 
 export function evaluateIndependentSiglip67(frozen,rows,{model=P67_MODEL,revision=P67_REVISION}={}){
@@ -48,7 +50,7 @@ export function evaluateIndependentSiglip67(frozen,rows,{model=P67_MODEL,revisio
      x.expectedType!==original.expectedType||
      !categories.has(x.expectedCategory)||x.admissionAllowed!==false||
      !x.sourceShaVerified||!Array.isArray(x.categoryRank)||
-     x.scoreMeaning!=='uncalibrated-sigmoid-ranking-only')
+     x.scoreMeaning!==(model===P67_FASHION_MODEL?'uncalibrated-cosine-ranking-only':'uncalibrated-sigmoid-ranking-only'))
    throw Error('P67: source or primary-label integrity failure');
   if(x.top?.category&&(!categories.has(x.top.category)||typeof x.top.type!=='string'))
    throw Error('P67: unsupported model prediction');
@@ -87,4 +89,33 @@ export function evaluateIndependentSiglip67(frozen,rows,{model=P67_MODEL,revisio
   })),
   rows:typed
  };
+}
+
+
+/** Source-independent cosine similarities between actual q8 ONNX text/vision
+ * SigLIP pooler embeddings. Text model loaded once, original source decoded
+ * locally. Class ranking only; no calibrated class probability or auto-save.
+ */
+export function rankSplitFashionEmbeddings67(imageEmbedding,textEmbeddings,dim=768){
+ if(!Number.isInteger(dim)||dim<64||dim>1024||
+    !(imageEmbedding instanceof Float32Array)||
+    !(textEmbeddings instanceof Float32Array)||
+    imageEmbedding.length!==dim||textEmbeddings.length!==P67_LABELS.length*dim)
+  throw Error('P67: invalid independent split ONNX embedding dimensions');
+ const norm=v=>{
+  let n=0;for(const x of v){if(!Number.isFinite(x))throw Error('P67: nonfinite ONNX embedding');n+=x*x;}
+  if(n<1e-16)throw Error('P67: zero ONNX embedding');
+  return Math.sqrt(n);
+ };
+ const imageNorm=norm(imageEmbedding);
+ const scores=[];
+ for(let k=0;k<P67_LABELS.length;k++){
+  const offset=k*dim,vector=textEmbeddings.subarray(offset,offset+dim);
+  const textNorm=norm(vector);
+  let dot=0;
+  for(let n=0;n<dim;n++)dot+=imageEmbedding[n]*vector[n];
+  const cos=Math.max(-1,Math.min(1,dot/(imageNorm*textNorm)));
+  scores.push({label:P67_LABELS[k],score:(cos+1)/2});
+ }
+ return rankIndependentSiglip67(scores,{scoreMeaning:'uncalibrated-cosine-ranking-only'});
 }
