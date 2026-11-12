@@ -9,11 +9,17 @@ import {localCandidates} from '../public/local-catalog.mjs';
 
 export const P67_MODEL='Xenova/siglip-base-patch16-224';
 export const P67_REVISION='4649052661e53c7000355844105f8a1792088239';
+export const P67_FASHION_MODEL='Marqo/marqo-fashionSigLIP';
+// ONNX was introduced Sep 2024, and the Sep 17 pinned commit contains that model.
+export const P67_FASHION_REVISION='782eaf7a0b95411ac96893d2300d1a61a2bcb757';
+export const P67_ALLOWED_MODELS=Object.freeze({[P67_MODEL]:P67_REVISION,[P67_FASHION_MODEL]:P67_FASHION_REVISION});
 export const P67_LABELS=Object.freeze(localCandidates.map(x=>x.label));
 const candidates=new Map(localCandidates.map(x=>[x.label,x]));
 const categories=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories','Uncategorized']);
 
-export function rankIndependentSiglip67(raw){
+export function rankIndependentSiglip67(raw,{scoreMeaning='uncalibrated-sigmoid-ranking-only'}={}){
+ if(!['uncalibrated-sigmoid-ranking-only','uncalibrated-cosine-ranking-only'].includes(scoreMeaning))
+  throw Error('P67: unapproved independent embedding score interpretation');
  if(!Array.isArray(raw)||raw.length!==P67_LABELS.length||new Set(raw.map(x=>x?.label)).size!==P67_LABELS.length)
   throw Error('P67: incomplete or duplicate alternative model labels');
  const choices=raw.map(x=>{
@@ -30,10 +36,11 @@ export function rankIndependentSiglip67(raw){
   categoryRank:[...new Set(choices.map(x=>x.category))],
   topThree:choices.slice(0,3).map(x=>({category:x.category,type:x.type,score:x.score})),
   admissionAllowed:false,
-  scoreMeaning:'uncalibrated-sigmoid-ranking-only'};
+  scoreMeaning};
 }
 
-export function evaluateIndependentSiglip67(frozen,rows){
+export function evaluateIndependentSiglip67(frozen,rows,{model=P67_MODEL,revision=P67_REVISION}={}){
+ if(!Object.hasOwn(P67_ALLOWED_MODELS,model)||P67_ALLOWED_MODELS[model]!==revision)throw Error('P67: unsupported unpinned independent model');
  if(!Array.isArray(frozen)||frozen.length!==16||!Array.isArray(rows)||rows.length!==16||
    new Set(frozen.map(x=>x.id)).size!==16||new Set(rows.map(x=>x.id)).size!==16)
   throw Error('P67: incomplete historical source set');
@@ -43,7 +50,7 @@ export function evaluateIndependentSiglip67(frozen,rows){
      x.expectedType!==original.expectedType||
      !categories.has(x.expectedCategory)||x.admissionAllowed!==false||
      !x.sourceShaVerified||!Array.isArray(x.categoryRank)||
-     x.scoreMeaning!=='uncalibrated-sigmoid-ranking-only')
+     x.scoreMeaning!==(model===P67_FASHION_MODEL?'uncalibrated-cosine-ranking-only':'uncalibrated-sigmoid-ranking-only'))
    throw Error('P67: source or primary-label integrity failure');
   if(x.top?.category&&(!categories.has(x.top.category)||typeof x.top.type!=='string'))
    throw Error('P67: unsupported model prediction');
@@ -65,7 +72,7 @@ export function evaluateIndependentSiglip67(frozen,rows){
  const garment=typed.filter(x=>!x.categoryOnly),negatives=typed.filter(x=>x.categoryOnly);
  return {
   schema:'closet-current-parallel67-foreign-siglip-developer-exposed-v1',
-  model:P67_MODEL,revision:P67_REVISION,
+  model,revision,
   independentModelFromFashionCLIP:true,
   developerExposedNotBlind:true,
   candidateScoresNotCalibrated:true,
@@ -82,4 +89,33 @@ export function evaluateIndependentSiglip67(frozen,rows){
   })),
   rows:typed
  };
+}
+
+
+/** Source-independent cosine similarities between actual q8 ONNX text/vision
+ * SigLIP pooler embeddings. Text model loaded once, original source decoded
+ * locally. Class ranking only; no calibrated class probability or auto-save.
+ */
+export function rankSplitFashionEmbeddings67(imageEmbedding,textEmbeddings,dim=768){
+ if(!Number.isInteger(dim)||dim<64||dim>1024||
+    !(imageEmbedding instanceof Float32Array)||
+    !(textEmbeddings instanceof Float32Array)||
+    imageEmbedding.length!==dim||textEmbeddings.length!==P67_LABELS.length*dim)
+  throw Error('P67: invalid independent split ONNX embedding dimensions');
+ const norm=v=>{
+  let n=0;for(const x of v){if(!Number.isFinite(x))throw Error('P67: nonfinite ONNX embedding');n+=x*x;}
+  if(n<1e-16)throw Error('P67: zero ONNX embedding');
+  return Math.sqrt(n);
+ };
+ const imageNorm=norm(imageEmbedding);
+ const scores=[];
+ for(let k=0;k<P67_LABELS.length;k++){
+  const offset=k*dim,vector=textEmbeddings.subarray(offset,offset+dim);
+  const textNorm=norm(vector);
+  let dot=0;
+  for(let n=0;n<dim;n++)dot+=imageEmbedding[n]*vector[n];
+  const cos=Math.max(-1,Math.min(1,dot/(imageNorm*textNorm)));
+  scores.push({label:P67_LABELS[k],score:(cos+1)/2});
+ }
+ return rankIndependentSiglip67(scores,{scoreMeaning:'uncalibrated-cosine-ranking-only'});
 }

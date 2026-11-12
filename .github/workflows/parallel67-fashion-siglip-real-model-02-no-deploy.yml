@@ -1,0 +1,121 @@
+name: PARALLEL 67 fashion-specific Marqo SigLIP genuine model compare — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel67-fashion-siglip-real-model-02-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel67-fashion-siglip-02-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-P67-01-full-native-and-source-safety-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact previous independently successful P67-01 and SIX research-only paths
+        run: |
+          set -euo pipefail
+          BASE=e1d64de88bb27b46f01bd42ddc9d4bd432d355dd
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p67-02-files
+          cat /tmp/p67-02-files
+          test "$(wc -l </tmp/p67-02-files)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/parallel67-independent-siglip-scoring.mjs|scripts/parallel67-run-fashion-split-onnx-real16.mjs|scripts/parallel67-compare-fashion-real16.mjs|tests/parallel67-independent-siglip-evidence.test.mjs|research/parallel67-fashion-siglip-real-model-02/REPORT.md|.github/workflows/parallel67-fashion-siglip-real-model-02-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED OWNER, ML, PRODUCTION, CLOUD OR RELEASE MODIFICATION $p"; exit 1 ;;
+            esac
+          done </tmp/p67-02-files
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel67-fashion-siglip-real-model-02/REPORT.md
+          echo PARALLEL67_FASHION_INDEPENDENT_BOTH_SOURCE_MODELS_NO_DEPLOY
+      - name: Install ephemeral app regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual native application regression, independent score and compare adversarial tests
+        run: |
+          set -euo pipefail
+          node --check scripts/parallel67-run-fashion-split-onnx-real16.mjs
+          node --check scripts/parallel67-compare-fashion-real16.mjs
+          node --test tests/parallel67-independent-siglip-evidence.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actually-run-frozen-fashionsiglip-on-16-original-photos-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    env:
+      NODE_OPTIONS: "--max-old-space-size=5120"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned Node ONNX inference runtime only
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1
+      - name: Original public garment and non-clothing SHA-256 verified JPEG bytes, no owner uploads
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          IDS=$(node -e 'process.stdout.write(require("./benchmark/manifest-holdout-16.json").map(x=>x.id).join(","))')
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+      - name: Actually run quantized Marqo fashion model on sixteen locally decoded real originals
+        run: |
+          set -euo pipefail
+          node scripts/parallel67-run-fashion-split-onnx-real16.mjs benchmark/p67-fashion-real16
+      - name: Upload source-ID/numeric-only garment-category evidence, not any model weights or private original JPEG
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: P67-02-Marqo-fashionSigLIP-16-originals-FORCED-TOP1-NUMERIC-NOT-BLIND
+          path: benchmark/p67-fashion-real16/siglip-developer-exposed-real16.json
+          retention-days: 14
+          if-no-files-found: error
+  compare-two-actually-run-SigLIP-models-same-original-SHAs-HOLD:
+    runs-on: ubuntu-24.04
+    needs: [actually-run-frozen-fashionsiglip-on-16-original-photos-HOLD]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Retrieve exact originally green independent generic SigLIP source receipt
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 43149987612
+          github-token: ${{ github.token }}
+          name: PARALLEL67-independent-SigLIP-real16-NUMERIC-ONLY-NOT-BLIND-NO-DEPLOY
+          path: benchmark/p67-exact-generic-baseline
+      - name: Retrieve exact new fashion-SigLIP source receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: P67-02-Marqo-fashionSigLIP-16-originals-FORCED-TOP1-NUMERIC-NOT-BLIND
+          path: benchmark/p67-fashion-real16
+      - name: Reject any mismatched source labels or purported automatic confidence and score gains AND losses
+        run: |
+          set -euo pipefail
+          node --test tests/parallel67-independent-siglip-evidence.test.mjs
+          node scripts/parallel67-compare-fashion-real16.mjs benchmark/p67-exact-generic-baseline/siglip-developer-exposed-real16.json benchmark/p67-fashion-real16/siglip-developer-exposed-real16.json benchmark/p67-fashion-real16/comparison.json
+      - name: Publish only checked numeric two-model same-16-source comparison, NO PHOTOS/DEPLOY
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: P67-02-generic-vs-fashion-original-16-SAME-SHA-RESEARCH-COMPARISON
+          path: benchmark/p67-fashion-real16/comparison.json
+          retention-days: 14
+          if-no-files-found: error
