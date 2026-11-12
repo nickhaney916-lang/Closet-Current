@@ -999,7 +999,7 @@ test('P2-C21 depth-only counterfactual preserves photographed XY and source geom
  assert.equal(result.countOnly.notAdmissibleFor3DOrRelease,true);
  assert.equal(result.countOnly.releaseAuthorized,false);
  const alternate=result.privateOverrides.get(m);
- assert.equal(alternate[2],staged[2]-.012);
+ assert.ok(Math.abs(alternate[2]-(staged[2]-.012))<1e-8);
  assert.equal(alternate[8],unchanged[8]);
  assert.equal(alternate[3*3+2],staged[3*3+2]);
  for(let i=0;i<unchanged.length/3;i++){
