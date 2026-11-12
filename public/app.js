@@ -333,18 +333,78 @@ function clothingFields(body,item,onChange=()=>{}){
 }
 function cropClothingPhoto(item){
  if(localPending.has(item.id)||busy)return;
+ // A crop can await JPEG decoding, model inference, color analysis or an
+ // IndexedDB queue. Keep every one of those continuations on its originating
+ // signed owner, exact DB and session epoch, even after same-ID re-login.
+ const {ownerDB,assertLease}=ownerWardrobeMutationLease();
+ const assertCrop=()=>{
+  assertLease();
+  if(!items.includes(item)&&!batch.includes(item))
+   throw Error('This clothing photo is no longer in the active private wardrobe');
+ };
+ assertCrop();
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
-  async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;},
+  isCurrent:()=>{
+   try{assertCrop();return true;}catch{return false;}
+  },
+  async analyze(image){
+   assertCrop();
+   if(!localReady)await enableLocal();
+   assertCrop();
+   const result=await localRequest('classify',image,null);
+   assertCrop();
+   return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&
+    segmentationAllows(item,result.choices[0])
+    ?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}
+    :null;
+  },
   async save(photo,choice){
+   assertCrop();
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   delete value.recognitionMemory;delete value.confirmedDetails;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}const quality=await checkPhoto(photo.image);Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';delete value.maskedColorEstimate;delete value.maskApplied;value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
-   if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
+   delete value.recognitionMemory;delete value.confirmedDetails;
+   delete value.learningReviewedWeek;delete value.weeklySuggestion;
+   delete value.recognitionPhoto;delete value.colorMethod;
+   if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}
+   const quality=await checkPhoto(photo.image);
+   assertCrop();
+   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));
+   if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';
+   delete value.maskedColorEstimate;delete value.maskApplied;
+   value.visualSignature=quality.signature;value.visualAspect=quality.aspect;
+   delete value.localChoices;delete value.indexedAt;
+   if(choice){
+    applyLocalChoice(value,choice,true);
+    Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));
+    value.indexedAt=new Date().toISOString();
+   }
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
-   if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
-   Object.assign(item,value);for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];render();
+   // A saved garment uses the existing signed-owner writeAll lease.
+   // An unsaved photo stays a draft, pinned to the same original owner DB.
+   if(items.includes(item))await writeAll([value]);
+   else await queued(()=>new Promise((resolve,reject)=>{
+    try{
+     assertCrop();
+     const snapshot=batch.map(x=>x===item?value:x);
+     const tx=ownerDB.transaction('state','readwrite');
+     tx.objectStore('state').put({id:'draft',batch:snapshot});
+     tx.oncomplete=()=>{try{assertCrop();resolve();}catch(error){reject(error);}};
+     tx.onerror=()=>reject(tx.error);
+     tx.onabort=()=>reject(tx.error||Error('Crop draft transaction interrupted'));
+    }catch(error){reject(error);}
+   }));
+   // An old transaction completion must never mutate a new owner's visible
+   // photo, clear its recognition flags or render the wrong wardrobe.
+   assertCrop();
+   Object.assign(item,value);
+   for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','learningReviewedWeek','weeklySuggestion'])
+    if(!(key in value))delete item[key];
+   render();
   }
- }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
+ }).catch(()=>{
+  // A revoked editor cannot display errors on a different signed-in owner.
+  try{assertCrop();message('Could not open this photo for cropping. Your saved photo is kept.');}catch{}
+ });
 }
 function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id);button.onclick=()=>cropClothingPhoto(item);return button;}
 function adjustPhoto(item){
