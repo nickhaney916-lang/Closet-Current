@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {compareIndependentFashion67} from '../scripts/parallel67-compare-fashion-real16.mjs';
 import {
- P67_MODEL,P67_REVISION,P67_FASHION_MODEL,P67_FASHION_REVISION,P67_ALLOWED_MODELS,P67_LABELS,rankIndependentSiglip67,evaluateIndependentSiglip67
+ P67_MODEL,P67_REVISION,P67_FASHION_MODEL,P67_FASHION_REVISION,P67_ALLOWED_MODELS,P67_LABELS,rankIndependentSiglip67,rankSplitFashionEmbeddings67,evaluateIndependentSiglip67
 } from '../scripts/parallel67-independent-siglip-scoring.mjs';
 
 const manifest=JSON.parse(await readFile('benchmark/manifest-holdout-16.json','utf8'));
@@ -96,7 +96,7 @@ test('P67-02 only source-pinned distinct original and fashion-specific SigLIP pe
  assert.notEqual(P67_REVISION,P67_FASHION_REVISION);
  assert.equal(Object.keys(P67_ALLOWED_MODELS).length,2);
  const rows=generated();
- const candidate=evaluateIndependentSiglip67(manifest,rows,{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
+ const candidate=evaluateIndependentSiglip67(manifest,rows.map(x=>({...x,scoreMeaning:'uncalibrated-cosine-ranking-only'})),{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
  assert.equal(candidate.model,P67_FASHION_MODEL);
  assert.equal(candidate.revision,P67_FASHION_REVISION);
  assert.equal(candidate.automaticSaveAdmissionAllowed,false);
@@ -112,7 +112,7 @@ test('P67-02 only source-pinned distinct original and fashion-specific SigLIP pe
 test('P67-02 source-identical FashionSigLIP comparison measures subtype gains and losses without invented automatic save',()=>{
  const generatedRows=generated();
  const generic=evaluateIndependentSiglip67(manifest,generatedRows);
- const fashion=evaluateIndependentSiglip67(manifest,generatedRows,{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
+ const fashion=evaluateIndependentSiglip67(manifest,generatedRows.map(x=>({...x,scoreMeaning:'uncalibrated-cosine-ranking-only'})),{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
  for(const x of [generic,fashion]){x.truthFileSha256='a'.repeat(64);x.sourceIndexSha256='b'.repeat(64);x.modelLoadMs=1500;}
  const r=compareIndependentFashion67(generic,fashion);
  assert.equal(r.originals,16);
@@ -129,7 +129,7 @@ test('P67-02 comparison refuses missing original, changed truth, swapped model, 
  const prepare=()=>{
   const rows=generated();
   const a=evaluateIndependentSiglip67(manifest,rows);
-  const b=evaluateIndependentSiglip67(manifest,rows,{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
+  const b=evaluateIndependentSiglip67(manifest,rows.map(x=>({...x,scoreMeaning:'uncalibrated-cosine-ranking-only'})),{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
   for(const x of [a,b]){x.truthFileSha256='a'.repeat(64);x.sourceIndexSha256='b'.repeat(64);x.modelLoadMs=300;}
   return [a,b];
  };
@@ -138,7 +138,7 @@ test('P67-02 comparison refuses missing original, changed truth, swapped model, 
   ([,b])=>b.rows.pop(),
   ([,b])=>b.rows[0].truthCategory='PRIVATE_DIFFERENT_CATEGORY',
   ([a])=>a.model=P67_FASHION_MODEL,
-  ([a])=>a.categoryTop1=13,
+  ([a])=>a.categoryTop1=0,
   ([,b])=>b.broadSubtypeTop1=100,
   ([,b])=>b.automaticSaveAdmissionAllowed=true,
   ([,b])=>b.sourceIndexSha256='c'.repeat(64),
@@ -147,4 +147,34 @@ test('P67-02 comparison refuses missing original, changed truth, swapped model, 
   const pair=prepare();mutate(pair);
   assert.throws(()=>compareIndependentFashion67(...pair),/P67:/);
  }
+});
+
+test('P67-02 correct split ONNX cosine score ranking cannot become calibrated sigmoid or a closet auto save',()=>{
+ const dim=768,labels=P67_LABELS.length,img=new Float32Array(dim),matrix=new Float32Array(labels*dim);
+ img[0]=1;
+ for(let k=0;k<labels;k++){matrix[k*dim+1]=1;}
+ const good=P67_LABELS.indexOf('a T-shirt');
+ assert.ok(good>=0);
+ matrix[good*dim]=1;
+ matrix[good*dim+1]=0;
+ const ranked=rankSplitFashionEmbeddings67(img,matrix,dim);
+ assert.equal(ranked.top.category,'Tops');
+ assert.equal(ranked.top.type,'T-shirt');
+ assert.equal(ranked.top.score,1);
+ assert.equal(ranked.admissionAllowed,false);
+ assert.equal(ranked.scoreMeaning,'uncalibrated-cosine-ranking-only');
+ assert.equal(ranked.topThree.length,3);
+});
+test('P67-02 no split model rank if nonfinite, missing/zero, wrong dimensionality or source text mismatch',()=>{
+ const dim=768,labels=P67_LABELS.length,img=new Float32Array(dim).fill(1),
+  txt=new Float32Array(labels*dim).fill(1);
+ assert.throws(()=>rankSplitFashionEmbeddings67(new Float32Array(dim-1),txt),/invalid independent/);
+ assert.throws(()=>rankSplitFashionEmbeddings67(img,new Float32Array(dim)),/invalid independent/);
+ assert.throws(()=>rankSplitFashionEmbeddings67(img,txt,65),/invalid independent/);
+ const bad=img.slice();bad[2]=Number.NaN;
+ assert.throws(()=>rankSplitFashionEmbeddings67(bad,txt),/nonfinite/);
+ const zeros=new Float32Array(dim);
+ assert.throws(()=>rankSplitFashionEmbeddings67(zeros,txt),/zero ONNX embedding/);
+ const corrupted=txt.slice();corrupted[110]=Infinity;
+ assert.throws(()=>rankSplitFashionEmbeddings67(img,corrupted),/nonfinite/);
 });
