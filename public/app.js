@@ -1,9 +1,13 @@
 'use strict';
 const $=id=>document.getElementById(id), categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
 const recognitionAssetVersion=new URL(document.currentScript?.src||location.href).searchParams.get('v')||'';
-// P836 opt-in research safeguard. Never enabled by default or promoted from URL
-// gating without new independently labeled recognition evidence and owner review.
-const reviewFirst836=new URL(location.href).searchParams.get('reviewFirst836')==='1';
+// P843 isolated, UNDEPLOYED research: every first-time camera/imported garment
+// stays an unsaved original-photo draft until the owner explicitly confirms it.
+// P842 already blocks category-only/unknown-color/high-risk auto-admission;
+// #71's public-source diagnostic still shows insufficient category/type accuracy
+// for model confidence alone to authorize ownership. No URL query can disable
+// the safeguard in this research branch. This does not change production.
+const reviewFirst836=true;
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
