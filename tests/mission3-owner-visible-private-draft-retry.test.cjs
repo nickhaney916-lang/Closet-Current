@@ -68,8 +68,9 @@ if(baseline){
   assert.equal(f.context.session,1);
   assert.equal(f.queued.length,1);
   assert.equal(f.failedDraftCaptures.has(id),false);
-  assert.equal(f.context.candidate(image,options),false,'saved photo remains normal duplicate');
   assert.match(f.messages.at(-1),/saved privately on this device/);
+  assert.equal(f.context.candidate(image,options),false,'saved photo remains normal duplicate');
+  assert.match(f.messages.at(-1),/Exact duplicate skipped/);
  });
  test('invalid original SHA verifier refuses retry without any storage write',async()=>{
   const f=fixture();
