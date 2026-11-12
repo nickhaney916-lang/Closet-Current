@@ -137,7 +137,7 @@ test('late live camera proof cannot clear next owner pending capture flag',async
  ctx.captureOperationEpoch++;
  ctx.captureProofTaking=true; // new owner has begun a new captured photo
  hold.resolve(proof);
- assert.equal(await operation,false===baseline?false:false);
+ assert.equal(await operation,baseline,'old proof can finish after logout; fenced proof must stop');
  assert.equal(ctx.candidateCalls,baseline?1:0);
  assert.equal(ctx.captureProofTaking,baseline?false:true);
 });
