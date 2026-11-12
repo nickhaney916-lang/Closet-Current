@@ -776,3 +776,133 @@ export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelt
   for(const g of staged)g.dispose();
  }
 }
+
+
+/**
+ * P2-C15: private, transient source-face area witness at three existing
+ * 163-bone stages: before P62, after P62/P185, after P190/P195.
+ *
+ * The witness holds exact source-face indices and flags IN MEMORY ONLY.
+ * Never serialize a witness or send it to a browser log or saved wardrobe.
+ * comparePhotoConstructionAreaStages returns COUNTS ONLY, not face IDs,
+ * coordinates, images, SHA values, wearer data, or collision exemptions.
+ * Threshold is the same cross-product squared area as P2-C14.
+ */
+export function capturePhotoConstructionFaceAreas(root,shirt){
+ if(typeof root?.updateMatrixWorld!=='function'||!Array.isArray(shirt?.meshes))
+  throw Error('M2 photo stages require actual existing owner garment');
+ const meshes=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
+  ['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
+ if(meshes.length!==3||new Set(meshes).size!==3||
+    !meshes.some(m=>m.name==='Work56-independent-shirt-shell')||
+    !['L','R'].every(side=>meshes.some(m=>m.userData?.work45IndependentShoulderCap===side)))
+  throw Error('M2 photo stages require exactly original torso and two sewn cap source pieces');
+ root.updateMatrixWorld(true);
+ const witnesses=[];
+ let smallTotal=0,faceTotal=0;
+ for(const mesh of meshes){
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||
+     !mesh.geometry?.getAttribute('skinIndex')||
+     !mesh.geometry?.getAttribute('skinWeight'))
+   throw Error('M2 photo stages genuine 163-bone original garment mesh required');
+  const original=mesh.geometry,index=original.index?.array;
+  const pos=original.getAttribute('position');
+  const count=index?index.length/3:pos?.count/3;
+  if(!Number.isSafeInteger(count)||count<1||count>3000000||
+     !pos?.count||index&&index.length%3)
+   throw Error('M2 photo stages bounded original source face identity required');
+  const faceVertex=(face,corner)=>index?index[face*3+corner]:face*3+corner;
+  const indices=new Uint32Array(count*3),flags=new Uint8Array(count);
+  const posed=posedGeometry(mesh);
+  try{
+   const a=posed.getAttribute('position').array;
+   let tiny=0;
+   for(let face=0;face<count;face++){
+    const i=faceVertex(face,0),j=faceVertex(face,1),k=faceVertex(face,2);
+    if(![i,j,k].every(v=>Number.isSafeInteger(v)&&v>=0&&v<pos.count))
+     throw Error('M2 photo stages out-of-range canonical source face');
+    indices.set([i,j,k],face*3);
+    const i3=i*3,j3=j*3,k3=k*3;
+    const ab=new THREE.Vector3(a[j3]-a[i3],a[j3+1]-a[i3+1],a[j3+2]-a[i3+2]);
+    const ac=new THREE.Vector3(a[k3]-a[i3],a[k3+1]-a[i3+1],a[k3+2]-a[i3+2]);
+    const crossSq=ab.cross(ac).lengthSq();
+    if(!Number.isFinite(crossSq))throw Error('M2 photo stages nonfinite posed source triangle area');
+    if(crossSq<1e-10){flags[face]=1;tiny++;}
+   }
+   witnesses.push({mesh,indices,flags,faceCount:count,tinyCount:tiny});
+   smallTotal+=tiny;faceTotal+=count;
+  }finally{posed.dispose();}
+ }
+ return {witnesses,smallTotal,faceTotal,
+  transientPrivateSourceFaceIds:true,neverSerialize:true};
+}
+
+export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterOwner){
+ const stages=[beforePhoto,afterPhoto,afterOwner];
+ if(stages.some(stage=>!stage?.transientPrivateSourceFaceIds||
+    stage.neverSerialize!==true||
+    !Array.isArray(stage.witnesses)||stage.witnesses.length!==3||
+    !Number.isSafeInteger(stage.smallTotal)||!Number.isSafeInteger(stage.faceTotal)))
+  throw Error('M2 photo stage complete ephemeral original-face witnesses required');
+ const areas=stages.map(s=>s.witnesses.map(w=>w.tinyCount));
+ const totalFaces=stages[0].faceTotal;
+ let newP62=0,recoveredP62=0,newP190=0,recoveredP190=0,persistentlySmall=0,smallAtBaseline=0;
+ const byMesh=[];
+ for(let meshIndex=0;meshIndex<3;meshIndex++){
+  const w=stages.map(s=>s.witnesses[meshIndex]),base=w[0];
+  if(w.some(x=>x.mesh!==base.mesh||x.faceCount!==base.faceCount||
+     x.indices?.length!==base.indices?.length||x.flags?.length!==base.flags?.length))
+   throw Error('M2 photo stage canonical original garment identity changed');
+  for(const x of w)for(let k=0;k<x.indices.length;k++)
+   if(x.indices[k]!==base.indices[k])
+    throw Error('M2 photo stage original source triangle identity changed');
+  let n62=0,r62=0,n190=0,r190=0,persistent=0,old=0;
+  for(let k=0;k<base.faceCount;k++){
+   const a=base.flags[k],b=w[1].flags[k],c=w[2].flags[k];
+   if(a>1||b>1||c>1)
+    throw Error('M2 photo stage canonical area flags invalid');
+   if(a)old++;
+   if(!a&&b)n62++;
+   if(a&&!b)r62++;
+   if(!b&&c)n190++;
+   if(b&&!c)r190++;
+   if(a&&b&&c)persistent++;
+  }
+  if(old!==base.tinyCount||n62-r62+old!==w[1].tinyCount||
+     n190-r190+w[1].tinyCount!==w[2].tinyCount)
+   throw Error('M2 photo stage collapsed source-face tally mismatch');
+  byMesh.push(Object.freeze({
+   meshIndex,sourceFaceCount:base.faceCount,
+   originalSmall:old,afterPhotoSmall:w[1].tinyCount,afterOwnerSmall:w[2].tinyCount,
+   photoFitNewSmall:n62,photoFitRecoveredSmall:r62,
+   ownerFitNewSmall:n190,ownerFitRecoveredSmall:r190,
+   smallAtEveryStage:persistent
+  }));
+  newP62+=n62;recoveredP62+=r62;newP190+=n190;recoveredP190+=r190;
+  persistentlySmall+=persistent;smallAtBaseline+=old;
+ }
+ const sum=(name)=>byMesh.reduce((a,m)=>a+m[name],0);
+ if(stages.some(s=>s.faceTotal!==totalFaces)||
+    smallAtBaseline!==stages[0].smallTotal||
+    sum('afterPhotoSmall')!==stages[1].smallTotal||
+    sum('afterOwnerSmall')!==stages[2].smallTotal)
+  throw Error('M2 photo stage complete aggregate witness mismatch');
+ return Object.freeze({
+  stages:Object.freeze(['anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']),
+  totalOriginalSourceFaces:totalFaces,
+  smallAtAnatomicalConstruction:stages[0].smallTotal,
+  smallAfterPhotoFit:stages[1].smallTotal,
+  smallAfterOwnerMaskFit:stages[2].smallTotal,
+  newlySmallDuringPhotoFit:newP62,
+  recoveredDuringPhotoFit:recoveredP62,
+  newlySmallDuringOwnerMaskFit:newP190,
+  recoveredDuringOwnerMaskFit:recoveredP190,
+  persistentlySmallFromAnatomicalStage:persistentlySmall,
+  byGarmentMesh:Object.freeze(byMesh),
+  sourceAreaCrossSquaredThreshold:1e-10,
+  sourceTriangleIdentityUnchanged:true,
+  noSourceFaceIdsCoordinatesOrOwnerFields:true,
+  baselineStageIsSkinnedNotSourceJPEG:true,
+  noCollisionWaived:true,physicalClearanceVerified:false,releaseAuthorized:false
+ });
+}
