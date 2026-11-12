@@ -361,11 +361,22 @@ function applyLocalChoice(item,choice,overwrite=false){
  if(!item.name?.trim())item.name=choice.label.replace(/^a |^an /,'').replace(/^./,c=>c.toUpperCase());
  Object.assign(item,normalizeClothing(item));item.localStatus='Local suggestion applied. Confirm the category, sleeves, and seasons before saving.';
 }
+// P842 research-only admission invariant: a model score is never a substitute
+// for coherent, non-ambiguous source/category/color evidence. Even when
+// recognition mistakenly calls the persistence path, fail closed.
+function automaticAdmissionCore842(item){
+ const color=String(item?.color||'').trim();
+ return Boolean(item?.image&&categories.includes(item.category)&&item.category!=='Uncategorized'&&
+  color&&color.toLowerCase()!=='unknown'&&!item.possibleDuplicate&&
+  !item.requiresOwnershipConfirmation&&!item.outfitSourceId&&!item.segmentHint?.clipped);
+}
 async function saveIndexed(item){
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
-  if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation)return resolve(false);
+  if(!batch.some(x=>x.id===item.id)||item.userAdjusted||
+   !automaticAdmissionCore842(item)||!automaticAdmissionCore842(value)||
+   (typeof reviewFirst836!=='undefined'&&reviewFirst836))return resolve(false);
   const tx=db.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
@@ -399,14 +410,13 @@ async function recognizeItem(item){
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');
-   // P838: the empirically unsafe subtype guard is an OWNER REVIEW order,
-   // not permission to auto-save a category+estimated color as a substitute.
-   if(result.diagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired===true||item.outfitSourceId){
-    item.requiresOwnershipConfirmation=true;
-    item.localStatus=item.outfitSourceId?'Separated outfit piece. Tap Adjust to confirm its category, type and color before saving.':'This clothing type is easy to misidentify. Tap Adjust to confirm the category, type and color before saving.';
-    return true;
-   }
-   if(!item.color||item.color==='Unknown'){item.localStatus='Garment category recognized. Confirm the specific type and color in Adjust; optional details can stay blank.';return true;}
+   // P842: a category-only guess, even with an estimated color, is not
+   // reliable enough to admit as an owned piece without photo acknowledgement.
+   item.requiresOwnershipConfirmation=true;
+   item.localStatus=item.outfitSourceId?
+    'Separated outfit category suggested. Tap Adjust to confirm category, type and color before saving.':
+    'Only a broad garment category was recognized. Tap Adjust to confirm the garment and color before saving.';
+   return true;
   }
   if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}
   if(!segmentationAllows(item,result.choices[0])){item.localStatus=item.segmentHint?.clipped?'This piece is partly outside the photo. Retake the whole garment or use Adjust.':'The clothing mask and garment checks disagree. Use Adjust or take a clearer photo.';return true;}
@@ -423,6 +433,11 @@ async function recognizeItem(item){
   if(typeof reviewFirst836!=='undefined'&&reviewFirst836){
    item.requiresOwnershipConfirmation=true;
    item.localStatus='Scanner suggestion ready. Tap Adjust to confirm the category, type and color before saving.';
+   return true;
+  }
+  if(!automaticAdmissionCore842(item)){
+   item.requiresOwnershipConfirmation=true;
+   item.localStatus='Recognition has incomplete or ambiguous core details. Tap Adjust to confirm category and color before saving.';
    return true;
   }
   item.localStatus='Recognized. Saving to your closet…';
