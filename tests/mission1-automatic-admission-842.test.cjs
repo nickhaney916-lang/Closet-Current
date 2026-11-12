@@ -21,7 +21,7 @@ const baseItem=()=>({id:'synthetic-id',image:'data:image/jpeg;base64,QUJDRA==',c
 function makeStorage(item,reviewFirst=false){
  const writes=[],c={categories,reviewFirst836:reviewFirst,structuredClone,Date,
   batch:[item],items:[],normalizeClothing:x=>({...x}),queued:work=>work(),
-  persistDraft(){this.draftsPersisted=true;},
+  persistDraft(){},
   db:{transaction(){
    const tx={oncomplete:null,objectStore(name){return {put(value){writes.push({name,value});}}}};
    queueMicrotask(()=>{if(tx.oncomplete)tx.oncomplete();});
