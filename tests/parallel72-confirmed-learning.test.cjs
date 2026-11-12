@@ -168,3 +168,18 @@ test('P72 merely checking category/type never certifies untouched AI pattern, sl
  assert.equal(proposal.fields.color,undefined);
  M.close72(a);
 });
+
+test('P72 same authenticated owner can reopen a persisted receipt without replaying approval token',async()=>{
+ const a=M.open72({ownerId:'private-A',sessionId:'session-0011'});
+ const saved=await learning(a,garment('saved',9));
+ const serialized=JSON.stringify(saved);
+ M.close72(a);
+ const newScope=M.open72({ownerId:'private-A',sessionId:'session-0012'});
+ const restored=JSON.parse(serialized);
+ assert.equal(await M.verified72(restored,newScope),true,'persistence retains SHA-backed receipt');
+ const other=M.open72({ownerId:'private-B',sessionId:'session-0013'});
+ assert.equal(await M.verified72(restored,other),false,'another owner cannot restore A evidence');
+ restored.image=photo(90);
+ assert.equal(await M.verified72(restored,newScope),false,'replaced photo must relearn via new owner confirmation');
+ M.close72(newScope);M.close72(other);
+});
