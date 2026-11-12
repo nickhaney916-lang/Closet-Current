@@ -732,6 +732,40 @@ try{
       assert.equal(n.notAdmissibleFor3DOrRelease,true);
       assert.equal(n.noContactWaived,true);
       assert.equal(n.releaseAuthorized,false);
+      assert.equal(q.predeclaredOneRingWeightsOnly,true);
+      assert.equal(q.noAutomaticSweepWinner,true);
+      assert.equal(q.oneRingSweep.length,3);
+      assert.deepEqual(q.oneRingSweep.map(x=>x.oneRingPropagationWeight),[.25,.5,.75]);
+      assert.deepEqual(q.oneRingSweep[1],n);
+      for(const [i,variant] of q.oneRingSweep.entries()){
+       assert.equal(variant.originalShortEdgeAnchors,q.actuallyChangedDepthVertices);
+       assert.equal(variant.originalShortEdgeAnchors,n.originalShortEdgeAnchors);
+       assert.equal(variant.oneRingPropagationWeight,[.25,.5,.75][i]);
+       assert.ok(Number.isSafeInteger(variant.oneRingVerticesMoved)&&
+        variant.oneRingVerticesMoved>=0&&variant.oneRingVerticesMoved<=512);
+       assert.ok(Number.isSafeInteger(variant.residualUniqueOriginalSourceFaces)&&
+        variant.residualUniqueOriginalSourceFaces>=0);
+       assert.equal(variant.residualUniqueSourceFacesByMesh.length,
+        a.selfContactTypes.byGarmentMesh.length);
+       assert.equal(variant.residualUniqueSourceFacesByMesh.reduce((s,v)=>s+v,0),
+        variant.residualUniqueOriginalSourceFaces);
+       assert.equal(variant.retainedOriginalProposalNewSelfPairs+
+        variant.newlyIntroducedVersusOriginalProposalSelfPairs,variant.featherNewSelfContacts);
+       assert.ok(variant.retainedOriginalProposalNewSelfPairs<=variant.originNewSelfContacts);
+       assert.equal(variant.comparisonOriginalSourceFaceKeysNeverSerialized,true);
+       assert.equal(variant.photoXYSilhouetteBitIdentical,true);
+       assert.equal(variant.noCrossSeamInference,true);
+       assert.equal(variant.nonIndexedVerticesNeverReconnected,true);
+       assert.equal(variant.noUVSkinWeightOrOriginalPhotoMutation,true);
+       assert.equal(variant.counterfactualNeverApplied,true);
+       assert.equal(variant.unchangedCollisionAdmissionPolicy,true);
+       assert.equal(variant.noContactWaived,true);
+       assert.equal(variant.releaseAuthorized,false);
+       for(const field of ['featherNewBodyContacts','featherNewPanelContacts',
+        'featherNewSelfContacts'])
+        assert.ok(Number.isSafeInteger(variant[field])&&variant[field]>=0);
+      }
+      assert.equal(q.oneRingSweep.some(v=>v.releaseAuthorized===true),false);
       assert.equal(n.originNewSelfContacts,q.originalProposalNewSelfContacts);
       assert.equal(n.heldNewSelfContacts,q.depthHoldNewSelfContacts);
       assert.equal(n.originNewBodyContacts,q.originalProposalNewBodyContacts);
