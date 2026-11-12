@@ -90,6 +90,12 @@ window.addEventListener('closet:session-locked',()=>{
  }
  localJobs.clear();
  localWorker?.terminate();localWorker=null;
+ // Invalidate pending recognition after sign-out; old async finalizers are
+ // separately fenced from the next owner's scanner state.
+ automaticQueue.length=0;localPending.clear();automaticRunning=false;
+ localBatch=false;localLoadPromise=null;localReady=false;recognitionUnavailable=false;
+ recognitionState.phase='idle';recognitionState.percent=null;recognitionState.activeId=null;
+ sessionCapturedIds.clear();
  try{db?.close();}catch{}
  db=null;items=[];batch=[];failedDraftCaptures.clear();
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
@@ -856,8 +862,9 @@ function queueAutomatic(item){
 }
 async function drainAutomatic(){
  if(automaticRunning)return;automaticRunning=true;
- try{while(automaticQueue.length){const item=automaticQueue.shift();if(batch.some(x=>x.id===item.id))await recognizeItem(item);else localPending.delete(item.id);}}
- finally{automaticRunning=false;render();scheduleMemoryReview();}
+ const epoch=captureOperationEpoch;
+ try{while(epoch===captureOperationEpoch&&automaticQueue.length){const item=automaticQueue.shift();if(batch.some(x=>x.id===item.id))await recognizeItem(item);else localPending.delete(item.id);}}
+ finally{if(epoch===captureOperationEpoch){automaticRunning=false;render();scheduleMemoryReview();}}
 }
 function stopCamera(){
  const wasOpening=cameraOpening;
@@ -1168,12 +1175,19 @@ function localRequest(type,image,itemId,hint){
 }
 async function enableLocal(){
  if(localReady)return true;
- if(!localLoadPromise)localLoadPromise=(async()=>{
-  recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();render();
-  try{await localRequest('load');localReady=true;recognitionUnavailable=false;scheduleMemoryReview();if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;render();return true;}
-  catch(error){recognitionState.phase='failed';renderRecognitionNotice();throw error;}
-  finally{localLoadPromise=null;}
- })();
+ if(!localLoadPromise){
+  const epoch=captureOperationEpoch;
+  const loading=(async()=>{
+   recognitionState.phase='loading';recognitionState.percent=null;if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_start');const setupStarted=Date.now();render();
+   try{
+    await localRequest('load');
+    if(epoch!==captureOperationEpoch)throw Error('Recognition account session ended');
+    localReady=true;recognitionUnavailable=false;scheduleMemoryReview();if(typeof recordDeviceEvent==='function')recordDeviceEvent('setup_ready',{durationMs:Date.now()-setupStarted});recognitionState.phase='ready';recognitionState.percent=null;render();return true;
+   }catch(error){if(epoch===captureOperationEpoch){recognitionState.phase='failed';renderRecognitionNotice();}throw error;}
+   finally{if(localLoadPromise===loading)localLoadPromise=null;}
+  })();
+  localLoadPromise=loading;
+ }
  return localLoadPromise;
 }
 function segmentationAllows(item,choice){
@@ -1189,27 +1203,31 @@ function applyLocalChoice(item,choice,overwrite=false){
 }
 async function saveIndexed(item,index04ApprovedOwner=null){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
+ const epoch=captureOperationEpoch,ownerDB=db;
+ if(!ownerDB)return false;
  if(index04Active&&(!index04ApprovedOwner||window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner))return false;
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
-  if(!db)return reject(Error('Browser storage is unavailable.'));
+  if(epoch!==captureOperationEpoch||db!==ownerDB)return resolve(false);
   if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||
      (index04Active&&(window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner)))return resolve(false);
-  const tx=db.transaction(['items','state'],'readwrite');
+  const tx=ownerDB.transaction(['items','state'],'readwrite');
   tx.objectStore('items').put(value);
   tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
   tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
  }));
- if(!saved)return false;
+ if(!saved||epoch!==captureOperationEpoch||db!==ownerDB)return false;
  if(!items.some(x=>x.id===item.id))items.push(value);
  batch=batch.filter(x=>x.id!==item.id);persistDraft();await nativeIndex07Refresh();return true;
 }
 async function recognizeItem(item){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
+ const epoch=captureOperationEpoch;
+ const sameRecognitionLease=()=>epoch===captureOperationEpoch&&batch.includes(item);
  const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
-  if(!batch.some(x=>x.id===item.id))return;
+  if(!sameRecognitionLease())return;
   if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
@@ -1218,9 +1236,9 @@ async function recognizeItem(item){
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
   let result;
-  try{if(!localReady)await enableLocal();result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
-  catch(error){recognitionUnavailable=true;throw error;}
-  if(!batch.some(x=>x.id===item.id))return;
+  try{if(!localReady)await enableLocal();if(!sameRecognitionLease())return;result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
+  catch(error){if(sameRecognitionLease())recognitionUnavailable=true;throw error;}
+  if(!sameRecognitionLease())return;
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
@@ -1240,7 +1258,7 @@ async function recognizeItem(item){
      ownerId:owner,currentOwner:()=>window.closetAuth?.user?.id||null,
      record:item,recognition:result,savedItems:saved
     });
-    if(!batch.some(x=>x.id===item.id))return true;
+    if(!sameRecognitionLease())return;
     if(!decision.autoSaveSafe){
      item.recognitionReviewReasons=[...decision.reviewReasons];
      const suggested=decision.suggestion.category!=='Uncategorized'
@@ -1277,17 +1295,19 @@ async function recognizeItem(item){
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
   const wasSaved=await saveIndexed(item,index04ApprovedOwner);
+  if(epoch!==captureOperationEpoch)return;
   if(wasSaved&&typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
   if(!wasSaved&&index04Active){item.localStatus='Owner changed or confirmation is needed. Your photo remains unsaved for review.';return true;}
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
+  if(epoch!==captureOperationEpoch)return false;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
- }finally{localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;persistDraft();render();}
+ }finally{if(epoch===captureOperationEpoch){localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;persistDraft();render();}}
 }
 async function recognizeBatch(){
  if(localBatch)return;localBatch=true;recognitionUnavailable=false;
