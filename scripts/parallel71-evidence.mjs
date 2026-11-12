@@ -141,15 +141,14 @@ if(isCli){
    digest(manifestBytes),digest(sourcesBytes));
   await mkdir(input,{recursive:true});
   await writeFile(join(input,'parallel71-evidence.json'),JSON.stringify(report,null,2)+'\n');
+  const publicFields=['garmentDenominator','nonclothingDenominator',
+   'correctAcceptedCategory','correctAutoCategory','wrongAutoCategory',
+   'wrongAutoSubtype','supportedExactTypeDenominator','correctExactSubtype',
+   'predeclaredBroadTypeDenominator','correctPredeclaredBroadType',
+   'negativeRejected','unresolvedGarments','runtimeFailures'];
+  const publicCounts=browser=>Object.fromEntries(publicFields.map(k=>[k,report.browsers[browser][k]]));
   console.log('P71_ACTUAL_MODEL_HISTORICAL_16_DIAGNOSTIC',JSON.stringify({
-   chromium:((({garmentDenominator,correctAcceptedCategory,correctAutoCategory,
-    wrongAutoCategory,wrongAutoSubtype,negativeRejected})=>({
-     garmentDenominator,correctAcceptedCategory,correctAutoCategory,wrongAutoCategory,
-     wrongAutoSubtype,negativeRejected}))(report.browsers.chromium)),
-   webkit:((({garmentDenominator,correctAcceptedCategory,correctAutoCategory,
-    wrongAutoCategory,wrongAutoSubtype,negativeRejected})=>({
-     garmentDenominator,correctAcceptedCategory,correctAutoCategory,wrongAutoCategory,
-     wrongAutoSubtype,negativeRejected}))(report.browsers.webkit)),
+   chromium:publicCounts('chromium'),webkit:publicCounts('webkit'),
    groundTruthStatus:report.dataset.evaluationStatus,
    blindAccuracy:report.notScored.externalBlindAcceptance}));
  }
