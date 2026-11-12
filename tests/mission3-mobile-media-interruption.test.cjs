@@ -40,7 +40,7 @@ function fixture(){
   render:()=>{rendered++;},controls:v=>control.push(v),message:v=>logs.push(v),
   URL:{createObjectURL:()=>{events.push('video-url');return 'blob:synthetic';},
    revokeObjectURL:u=>revoked.push(u)},
-  stopCamera(){stops++;this.cameraOpening=false;this.stream=null;},
+  stopCamera(){stops++;ctx.cameraOpening=false;ctx.stream=null;},
   waitEvent:()=>metadata.promise,
   readPhotoBatch:undefined,
   captureProofOwner:()=>ctx.window.closetAuth.user.id,
