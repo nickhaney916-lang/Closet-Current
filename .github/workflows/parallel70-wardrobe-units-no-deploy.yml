@@ -1,0 +1,88 @@
+name: Parallel 70 footwear pairing and wardrobe reconciliation NO DEPLOY
+on:
+  push:
+    branches: [research/parallel70-garment-unit-reconciliation-20261112-HOLD]
+  pull_request:
+    paths:
+      - 'public/outfit-unit-reconciliation-70.mjs'
+      - 'public/outfit-worker.mjs'
+      - 'public/outfit-capture.js'
+      - 'public/app.js'
+      - 'public/index.html'
+      - 'public/app-theme.css'
+      - 'tests/outfit-unit-reconciliation-70.test.mjs'
+      - 'tests/outfit-unit-worker70.test.mjs'
+      - 'scripts/run-parallel70-browser.mjs'
+      - 'docs/parallel70-reconciliation-report.md'
+      - '.github/workflows/parallel70-wardrobe-units-no-deploy.yml'
+permissions:
+  contents: read
+concurrency:
+  group: parallel70-hold-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable research parent and restricted change scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c44166443e52ac7487ea84d8218098ff629610d2
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/outfit-capture.js|public/outfit-worker.mjs|public/outfit-unit-reconciliation-70.mjs|public/index.html|public/app-theme.css|tests/outfit-unit-reconciliation-70.test.mjs|tests/outfit-unit-worker70.test.mjs|scripts/run-parallel70-browser.mjs|docs/parallel70-reconciliation-report.md|.github/workflows/parallel70-wardrobe-units-no-deploy.yml) ;;
+              *) echo "UNSCOPED $path"; exit 1 ;;
+            esac
+          done < <(git diff --name-only "$BASE" HEAD)
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase public/auth.js public/local-worker.mjs public/outfit-segmentation.mjs public/recognition-engine.mjs benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' docs/parallel70-reconciliation-report.md
+      - name: Install temporary native test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Syntax and reconciliation tests
+        run: |
+          node --check public/outfit-unit-reconciliation-70.mjs
+          node --check public/outfit-capture.js
+          node --check public/outfit-worker.mjs
+          node --check public/app.js
+          node --test tests/outfit-unit-reconciliation-70.test.mjs tests/outfit-unit-worker70.test.mjs
+      - name: Build app and owner-independent research preview
+        run: |
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+      - name: Full native regression suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  browser-mobile-width-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium and WebKit browser engines
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Build isolated static research application
+        run: node scripts/build.mjs
+      - name: Verify real browser DOM at 320, 390 and 430 CSS widths
+        run: node scripts/run-parallel70-browser.mjs benchmark/parallel70-browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel70-browser-evidence
+          path: benchmark/parallel70-browser/
+          retention-days: 14
