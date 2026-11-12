@@ -1,0 +1,141 @@
+name: M1 P835 original-frame subtype safety experiment — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-subtype-cross-view-safety-835-HOLD]
+  pull_request:
+    branches: [research/mission1-real-16-original-recognition-audit-834-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p835-subtype-guard-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-P834-full-native-guard-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact six-job verified P834 source and ONLY twelve approved experimental paths
+        run: |
+          set -euo pipefail
+          BASE=beb7f27b18f70faa32c94ca2ac5d4260e83f0f0f
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p835-changes
+          cat /tmp/p835-changes
+          test "$(wc -l </tmp/p835-changes)" -eq 12
+          while IFS= read -r p; do
+            case "$p" in
+              public/phone-photo-subtype-guard-835.mjs|public/local-worker.mjs|public/phone-photo-run-recovery-833.mjs|public/phone-photo-check.mjs|public/phone-photo-benchmark.mjs|scripts/build-m1-no-account-trial-831.mjs|scripts/test-m1-no-account-trial-831.mjs|scripts/run-m1-real-16-originals-834.mjs|tests/mission1-subtype-cross-view-835.test.mjs|scripts/compare-m1-subtype-835.mjs|research/mission1-subtype-cross-view-safety-835/REPORT.md|.github/workflows/mission1-subtype-cross-view-safety-835-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED PRODUCTION, CLOUD, ORIGINAL PHOTO, MODEL WEIGHT OR DEPLOY CHANGE: $p"; exit 1 ;;
+            esac
+          done </tmp/p835-changes
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/recognition-vectors.json public/recognition-vectors.bin public/recognition-engine.mjs public/local-catalog.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-subtype-cross-view-safety-835/REPORT.md
+          echo M1_P835_P834_EXACT_PARENT_TWELVE_PATH_NO_DEPLOY
+      - name: Install unchanged ephemeral app test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Build genuine original worker and run all Node test suites plus SHA standalone archive
+        run: |
+          set -euo pipefail
+          node --check public/phone-photo-subtype-guard-835.mjs
+          node --check public/local-worker.mjs
+          node --check scripts/compare-m1-subtype-835.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test tests/mission1-subtype-cross-view-835.test.mjs
+          node --test scripts/test-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Save ONLY owner diagnostic no-account bundle — NOT hosted
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-p835-EXPERIMENTAL-SUBTYPE-SAFETY-OWNER-REVIEW-NOT-HOSTED
+          path: benchmark/m1-no-account-trial-831/
+          retention-days: 14
+          if-no-files-found: error
+  guarded-real-original-16-browser-evidence-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        half: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify original SHA-locked 8 public publisher JPEG bytes, install actual browser
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          IDS=$(node -e 'const rows=require("./benchmark/manifest-holdout-16.json");const h=process.argv[1];process.stdout.write(rows.filter((_,i)=>i%2===(h==="a"?0:1)).map(x=>x.id).join(","))' "${{ matrix.half }}")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+      - name: Original FashionCLIP with opt-in cross-view subtype check, eight real JPEG originals
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node scripts/run-m1-real-16-originals-834.mjs ${{ matrix.browser }} ${{ matrix.half }} benchmark/m1-real16-partition guard835
+      - name: Upload numerical, photo-free, original-source-ID receipts
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: m1-p834-${{ matrix.browser }}-${{ matrix.half }}
+          path: |
+            benchmark/m1-real16-partition/audit.json
+            benchmark/m1-real16-partition/source-receipt.json
+          retention-days: 14
+          if-no-files-found: error
+  verify-exact-original-baseline-and-guard-delta-HOLD:
+    needs: [guarded-real-original-16-browser-evidence-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download four P835 original-source numeric partitions only, no JPEG images
+        uses: actions/download-artifact@v4
+        with:
+          pattern: m1-p834-*
+          merge-multiple: false
+          path: benchmark/m1-real16-835
+      - name: Download exact successful P834 baseline aggregate, NOT a guessed or modified comparison
+        uses: actions/download-artifact@v4
+        with:
+          name: m1-p834-16-original-public-garments-both-browsers-AGGREGATED-NUMERIC-HOLD
+          run-id: 43144750475
+          github-token: ${{ github.token }}
+          path: benchmark/m1-p834-original-baseline
+      - name: Fail closed on missing, reordered, overstated or unverified original photo receipts
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-real-16-audit-834.test.mjs tests/mission1-subtype-cross-view-835.test.mjs
+          node scripts/aggregate-m1-real-16-834.mjs benchmark/m1-real16-835
+          node scripts/compare-m1-subtype-835.mjs benchmark/m1-p834-original-baseline/aggregate.json benchmark/m1-real16-835/aggregate.json benchmark/m1-real16-835/comparison.json
+      - name: Upload numerical tradeoff — wrong automatic subtypes PREVENTED vs correct ones LOST
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: m1-p835-16-original-guarded-VS-exact-P834-baseline-TRADEOFF-NUMERIC-HOLD
+          path: |
+            benchmark/m1-real16-835/aggregate.json
+            benchmark/m1-real16-835/comparison.json
+          retention-days: 14
+          if-no-files-found: error
