@@ -50,7 +50,12 @@ export function prepareSourceProjection(shirt,staged,projection){
   for(const {mesh,coords} of attributes)mesh.geometry.setAttribute('sourceProjectionPosition',new THREE.BufferAttribute(coords,3));
   for(const material of materials){
    const original=material.onBeforeCompile,key=material.customProgramCacheKey.bind(material);
-   material.onBeforeCompile=function(shader,renderer){original.call(this,shader,renderer);patchSourceProjectionShader(shader,projection);compiled.add(material);runtime.compiledMaterialCount=compiled.size;runtime.originalPhotoTexelEvidence=recheck();};
+   material.onBeforeCompile=function(shader,renderer){original.call(this,shader,renderer);patchSourceProjectionShader(shader,projection);
+    compiled.add(material);runtime.compiledMaterialCount=compiled.size;
+    runtime.originalPhotoTexelEvidence=recheck();
+    // Research donor-only diagnostics. Never expose the original photograph,
+    // individual source colors or per-vertex/source UV correspondences.
+    console.info('M2_SOURCE_FRONT_TEXEL_COUNTS_ONLY:'+JSON.stringify(runtime.originalPhotoTexelEvidence));};
    material.customProgramCacheKey=()=>key()+';M2_REGISTERED_FRONT_SOURCE_PROJECTION_V1';
    material.needsUpdate=true;
   }
