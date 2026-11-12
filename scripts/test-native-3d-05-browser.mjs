@@ -693,6 +693,20 @@ try{
       assert.equal(Object.values(t.byPairAreaProvenance).reduce((n,v)=>n+v,0),a.newSelfContacts);
       assert.equal(Object.values(t.byUniqueFaceAreaProvenance).reduce((n,v)=>n+v,0),
        t.uniqueAffectedSourceFaceCount);
+      assert.equal(Object.values(t.byPhotoOwnerFittedSourceLocalShape).reduce((n,v)=>n+v,0),
+       t.uniqueAffectedSourceFaceCount);
+      assert.deepEqual(Object.keys(t.byPhotoOwnerFittedSourceLocalShape).sort(),[
+       'regularNotTiny','pointMicro','nearCoincidentEdge','thinSliver','smallButWellShaped'].sort());
+      assert.equal(t.uniqueAffectedByGarmentMesh.length,t.byGarmentMesh.length);
+      assert.equal(t.uniqueAffectedByGarmentMesh.reduce((n,v)=>n+v,0),
+       t.uniqueAffectedSourceFaceCount);
+      assert.equal(t.affectedIndexedBoundaryFaces+t.affectedIndexedInteriorFaces,
+       t.uniqueAffectedSourceFaceCount);
+      assert.ok(t.affectedIndexedNonManifoldFaces>=0&&
+       t.affectedIndexedNonManifoldFaces<=t.uniqueAffectedSourceFaceCount);
+      assert.equal(t.sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy,true);
+      assert.equal(t.indexedBoundaryDoesNotProveSewnSeam,true);
+      assert.equal(t.noSourcePositionsOrFaceKeysExported,true);
       assert.equal(t.sourceAreaCrossSquaredThreshold,1e-10);
       if(a.newSelfContacts>0)assert.equal(a.accepted,false,
        'No source seam classification may waive any new self contact');
