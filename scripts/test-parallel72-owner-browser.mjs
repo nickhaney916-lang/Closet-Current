@@ -54,10 +54,10 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
   for(const width of [320,390,430]){
    const page=await browser.newPage({viewport:{width,height:860},isMobile:true,hasTouch:true});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.route('http://p72.local/**',route=>route.fulfill({
+   await page.route('http://127.0.0.1:27272/**',route=>route.fulfill({
     status:200,contentType:'text/html',body:'<!doctype html><html><body><main id="root"></main></body></html>'
    }));
-   await page.goto('http://p72.local/?confirmedLearning72=1');
+   await page.goto('http://127.0.0.1:27272/?confirmedLearning72=1');
    for(const input of [taxonomy,details,learning,harness,src])await page.addScriptTag({content:input});
    await page.evaluate(()=>owner72('owner-A','owner-A-session-0001'));
    const review=()=>page.getByRole('checkbox',{name:/I checked the clothing photo/});
