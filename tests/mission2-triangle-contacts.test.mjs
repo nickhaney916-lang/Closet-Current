@@ -620,6 +620,18 @@ test('real 163-bone source shell with multiple left/right cap meshes pinpoints f
   'anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']);
  assert.equal(delta.totalOriginalSourceFaces,10);
  assert.equal(delta.smallAtAnatomicalConstruction,0);
+ assert.equal(delta.sourceLocalSmallAtAnatomicalConstruction,0);
+ assert.equal(delta.sourceWorldPosedSmallAtAnatomicalConstruction,0);
+ assert.equal(delta.sourceLocalSmallOnlyBeforePose,0);
+ assert.equal(delta.sourceWorldPosedSmallOnlyAfterTransform,0);
+ assert.equal(delta.sourceSmallInBothLocalAndWorldPose,0);
+ assert.equal(delta.sourceRepeatedIndexFacesAtAnatomicalConstruction,0);
+ assert.equal(delta.sourceExactCoincidentCornerFacesAtAnatomicalConstruction,0);
+ assert.equal(delta.sourceLocalSmallAfterPhotoFit,1);
+ assert.equal(delta.sourceLocalSmallAfterOwnerFit,1);
+ assert.equal(delta.worldPoseIncludesSkinAndMeshTransforms,true);
+ assert.equal(delta.sourceLocalVsWorldAreaThresholdIsDiagnosticOnly,true);
+ assert.equal(delta.localSourceFaceNonregressionOnly,true);
  assert.equal(delta.smallAfterPhotoFit,1);
  assert.equal(delta.smallAfterOwnerMaskFit,1);
  assert.equal(delta.newlySmallDuringPhotoFit,1);
@@ -683,4 +695,56 @@ test('real 163-bone source shell with multiple left/right cap meshes pinpoints f
   {...w,posedXYZ:new Float32Array(2)})};
  assert.throws(()=>comparePhotoConstructionAreaStages(start,invalid,end),
   /canonical original garment identity changed/);
+});
+
+
+test('P2-C17 distinguishes repeated original indices, source-local tiny faces, and world-pose-only tiny faces without disclosure',()=>{
+ const {root,garment}=simplePose();
+ const vertices=[0,0,0,1,0,0,0,1,0, 2,0,0,3,0,0,2,1,0];
+ const make=(name,side,indices,scale)=>{
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
+  if(indices)g.setIndex(indices);
+  const weight=new Float32Array(6*4);
+  for(let i=0;i<6;i++)weight[i*4]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(24),4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(weight,4));
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+  m.name=name;m.userData.work56Garment=true;
+  if(side)m.userData.work45IndependentShoulderCap=side;
+  m.scale.x=scale;
+  m.bind(garment.skeleton);root.add(m);
+  return m;
+ };
+ const shell=make('Work56-independent-shirt-shell',null,null,1e-6);
+ const left=make('Left-canonical-shoulder','L',[0,1,1,3,4,5],1);
+ const right=make('Right-canonical-shoulder','R',null,1);
+ const meshes=[shell,left,right],shirt={meshes};
+ const originals=meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ const stage=capturePhotoConstructionFaceAreas(root,shirt);
+ const result=comparePhotoConstructionAreaStages(stage,stage,stage);
+ assert.equal(result.totalOriginalSourceFaces,6);
+ assert.equal(result.sourceLocalSmallAtAnatomicalConstruction,1);
+ assert.equal(result.sourceWorldPosedSmallAtAnatomicalConstruction,3);
+ assert.equal(result.sourceLocalSmallOnlyBeforePose,0);
+ assert.equal(result.sourceWorldPosedSmallOnlyAfterTransform,2);
+ assert.equal(result.sourceSmallInBothLocalAndWorldPose,1);
+ assert.equal(result.sourceRepeatedIndexFacesAtAnatomicalConstruction,1);
+ assert.equal(result.sourceExactCoincidentCornerFacesAtAnatomicalConstruction,1);
+ assert.equal(result.smallAtAnatomicalConstruction,3);
+ assert.deepEqual(result.byGarmentMesh.map(m=>m.worldPosedSmallOnlyAfterTransform),[2,0,0]);
+ assert.deepEqual(result.byGarmentMesh.map(m=>m.repeatedSourceVertexIndexFaces),[0,1,0]);
+ assert.equal(result.noCollisionWaived,true);
+ assert.equal(result.releaseAuthorized,false);
+ assert.equal(result.worldPoseIncludesSkinAndMeshTransforms,true);
+ assert.equal(result.sourceLocalVsWorldAreaThresholdIsDiagnosticOnly,true);
+ for(let i=0;i<meshes.length;i++)
+  assert.deepEqual(meshes[i].geometry.getAttribute('position').array,originals[i]);
+ const redacted=JSON.stringify(result);
+ for(const field of ['localFlags','repeatIndexFlags','coincidentCornerFlags','posedXYZ','indices','sourceSHA256','ownerId'])
+  assert.equal(redacted.includes('"'+field+'"'),false);
+ const forged={...stage,witnesses:stage.witnesses.map((w,i)=>i?w:{...w,localFlags:w.localFlags.slice()})};
+ forged.witnesses[0].localFlags[0]=1;
+ assert.throws(()=>comparePhotoConstructionAreaStages(stage,forged,stage),
+  /source-local canonical original face flags invalid|collapsed source-face tally mismatch|original local source face aggregate mismatch/);
 });

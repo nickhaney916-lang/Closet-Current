@@ -807,16 +807,23 @@ export function capturePhotoConstructionFaceAreas(root,shirt){
    throw Error('M2 photo stages genuine 163-bone original garment mesh required');
   const original=mesh.geometry,index=original.index?.array;
   const pos=original.getAttribute('position');
+  if(!pos?.isBufferAttribute||pos.isInterleavedBufferAttribute||
+     pos.itemSize!==3||!pos.array?.every(Number.isFinite))
+   throw Error('M2 photo stages finite packed anatomical source XYZ required');
   const count=index?index.length/3:pos?.count/3;
   if(!Number.isSafeInteger(count)||count<1||count>3000000||
      !pos?.count||index&&index.length%3)
    throw Error('M2 photo stages bounded original source face identity required');
   const faceVertex=(face,corner)=>index?index[face*3+corner]:face*3+corner;
   const indices=new Uint32Array(count*3),flags=new Uint8Array(count);
+  // P2-C17: preserve SOURCE-LOCAL versus actual skinned WORLD-POSE
+  // area flags independently. These remain ephemeral donor-only fields.
+  const localFlags=new Uint8Array(count),repeatIndexFlags=new Uint8Array(count);
+  const coincidentCornerFlags=new Uint8Array(count);
   const posed=posedGeometry(mesh);
   try{
    const a=posed.getAttribute('position').array;
-   let tiny=0;
+   let tiny=0,localTiny=0,repeated=0,coincident=0;
    for(let face=0;face<count;face++){
     const i=faceVertex(face,0),j=faceVertex(face,1),k=faceVertex(face,2);
     if(![i,j,k].every(v=>Number.isSafeInteger(v)&&v>=0&&v<pos.count))
@@ -828,11 +835,29 @@ export function capturePhotoConstructionFaceAreas(root,shirt){
     const crossSq=ab.cross(ac).lengthSq();
     if(!Number.isFinite(crossSq))throw Error('M2 photo stages nonfinite posed source triangle area');
     if(crossSq<1e-10){flags[face]=1;tiny++;}
+    // Compare the exact same canonical face in the original mesh attribute.
+    // World-pose changes include skinning AND mesh/world transforms. Do not
+    // falsely attribute a discrepancy solely to bone weighting.
+    const q=pos.array;
+    const abx=q[j3]-q[i3],aby=q[j3+1]-q[i3+1],abz=q[j3+2]-q[i3+2];
+    const acx=q[k3]-q[i3],acy=q[k3+1]-q[i3+1],acz=q[k3+2]-q[i3+2];
+    const nx=aby*acz-abz*acy,ny=abz*acx-abx*acz,nz=abx*acy-aby*acx;
+    const localCrossSq=nx*nx+ny*ny+nz*nz;
+    if(!Number.isFinite(localCrossSq))throw Error('M2 photo stages nonfinite original local source triangle area');
+    if(localCrossSq<1e-10){localFlags[face]=1;localTiny++;}
+    if(i===j||j===k||i===k){repeatIndexFlags[face]=1;repeated++;}
+    // Exact equal XYZ on distinct source indices can be a UV/sewn seam,
+    // so report it as diagnostic only, NEVER as safe or as a weld request.
+    const same=(u,v)=>q[u*3]===q[v*3]&&q[u*3+1]===q[v*3+1]&&q[u*3+2]===q[v*3+2];
+    if(same(i,j)||same(j,k)||same(i,k)){coincidentCornerFlags[face]=1;coincident++;}
+    if((repeatIndexFlags[face]||coincidentCornerFlags[face])&&!localFlags[face])
+     throw Error('M2 photo stages identical source corners have inconsistent face area');
    }
-   // P2-C16: posed points are TRANSIENT private source evidence. The scanner
-   // compares geometrically staged face quality without writing any repair.
-   // Only count-only reductions may leave this disposable research donor.
-   witnesses.push({mesh,indices,flags,faceCount:count,tinyCount:tiny,
+   // All source IDs, local flags and vertex coordinates remain private
+   // transient runtime state. Only reconciled aggregate counts are exported.
+   witnesses.push({mesh,indices,flags,localFlags,repeatIndexFlags,
+    coincidentCornerFlags,faceCount:count,tinyCount:tiny,localTinyCount:localTiny,
+    repeatedIndexCount:repeated,coincidentCornerCount:coincident,
     posedXYZ:new Float32Array(a)});
    smallTotal+=tiny;faceTotal+=count;
   }finally{posed.dispose();}
@@ -861,6 +886,11 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
   const w=stages.map(s=>s.witnesses[meshIndex]),base=w[0];
   if(w.some(x=>x.mesh!==base.mesh||x.faceCount!==base.faceCount||
      x.indices?.length!==base.indices?.length||x.flags?.length!==base.flags?.length||
+     !(x.localFlags instanceof Uint8Array)||x.localFlags.length!==base.faceCount||
+     !(x.repeatIndexFlags instanceof Uint8Array)||x.repeatIndexFlags.length!==base.faceCount||
+     !(x.coincidentCornerFlags instanceof Uint8Array)||x.coincidentCornerFlags.length!==base.faceCount||
+     ![x.localTinyCount,x.repeatedIndexCount,x.coincidentCornerCount].every(n=>
+      Number.isSafeInteger(n)&&n>=0&&n<=base.faceCount)||
      !(x.posedXYZ instanceof Float32Array)||x.posedXYZ.length<3||
      x.posedXYZ.length%3||!x.posedXYZ.every(Number.isFinite)||
      x.indices.some(vertex=>vertex*3+2>=x.posedXYZ.length)))
@@ -869,11 +899,23 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
    if(x.indices[k]!==base.indices[k])
     throw Error('M2 photo stage original source triangle identity changed');
   let n62=0,r62=0,n190=0,r190=0,persistent=0,old=0;
+  let localOnly=0,posedOnly=0,bothSmall=0,localSmall=0,repeat=0,coincident=0;
   for(let k=0;k<base.faceCount;k++){
    const a=base.flags[k],b=w[1].flags[k],c=w[2].flags[k];
    if(a>1||b>1||c>1)
     throw Error('M2 photo stage canonical area flags invalid');
    if(a)old++;
+   const local=base.localFlags[k],repeated=base.repeatIndexFlags[k],
+    sameCorner=base.coincidentCornerFlags[k];
+   if(local>1||repeated>1||sameCorner>1||
+      (repeated&&!local)||(sameCorner&&!local))
+    throw Error('M2 source-local canonical original face flags invalid');
+   if(local)localSmall++;
+   if(local&&!a)localOnly++;
+   if(!local&&a)posedOnly++;
+   if(local&&a)bothSmall++;
+   if(repeated)repeat++;
+   if(sameCorner)coincident++;
    if(!a&&b)n62++;
    if(a&&!b)r62++;
    if(!b&&c)n190++;
@@ -881,14 +923,39 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
    if(a&&b&&c)persistent++;
   }
   if(old!==base.tinyCount||n62-r62+old!==w[1].tinyCount||
-     n190-r190+w[1].tinyCount!==w[2].tinyCount)
+     n190-r190+w[1].tinyCount!==w[2].tinyCount||
+     localSmall!==base.localTinyCount||localOnly+bothSmall!==localSmall||
+     posedOnly+bothSmall!==old||
+     repeat!==base.repeatedIndexCount||coincident!==base.coincidentCornerCount)
    throw Error('M2 photo stage collapsed source-face tally mismatch');
+  for(const item of w){
+   let observedLocal=0,observedRepeated=0,observedCoincident=0;
+   for(let face=0;face<item.faceCount;face++){
+    const l=item.localFlags[face],r=item.repeatIndexFlags[face],
+     same=item.coincidentCornerFlags[face];
+    if(l>1||r>1||same>1||(r&&!l)||(same&&!l))
+     throw Error('M2 original local source face flags invalid');
+    observedLocal+=l;observedRepeated+=r;observedCoincident+=same;
+   }
+   if(observedLocal!==item.localTinyCount||
+      observedRepeated!==item.repeatedIndexCount||
+      observedCoincident!==item.coincidentCornerCount)
+    throw Error('M2 original local source face aggregate mismatch');
+  }
   byMesh.push(Object.freeze({
    meshIndex,sourceFaceCount:base.faceCount,
    originalSmall:old,afterPhotoSmall:w[1].tinyCount,afterOwnerSmall:w[2].tinyCount,
    photoFitNewSmall:n62,photoFitRecoveredSmall:r62,
    ownerFitNewSmall:n190,ownerFitRecoveredSmall:r190,
-   smallAtEveryStage:persistent
+   smallAtEveryStage:persistent,
+   originalLocalSmall:localSmall,originalWorldPosedSmall:old,
+   localSmallOnlyBeforePose:localOnly,
+   worldPosedSmallOnlyAfterTransform:posedOnly,
+   smallInBothLocalAndWorldPose:bothSmall,
+   repeatedSourceVertexIndexFaces:repeat,
+   exactCoincidentLocalCornerFaces:coincident,
+   localSmallAfterPhotoFit:w[1].localTinyCount,
+   localSmallAfterOwnerFit:w[2].localTinyCount
   }));
   newP62+=n62;recoveredP62+=r62;newP190+=n190;recoveredP190+=r190;
   persistentlySmall+=persistent;smallAtBaseline+=old;
@@ -953,6 +1020,18 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
   recoveredDuringOwnerMaskFit:recoveredP190,
   persistentlySmallFromAnatomicalStage:persistentlySmall,
   byGarmentMesh:Object.freeze(byMesh),
+  sourceLocalSmallAtAnatomicalConstruction:sum('originalLocalSmall'),
+  sourceWorldPosedSmallAtAnatomicalConstruction:sum('originalWorldPosedSmall'),
+  sourceLocalSmallOnlyBeforePose:sum('localSmallOnlyBeforePose'),
+  sourceWorldPosedSmallOnlyAfterTransform:sum('worldPosedSmallOnlyAfterTransform'),
+  sourceSmallInBothLocalAndWorldPose:sum('smallInBothLocalAndWorldPose'),
+  sourceRepeatedIndexFacesAtAnatomicalConstruction:sum('repeatedSourceVertexIndexFaces'),
+  sourceExactCoincidentCornerFacesAtAnatomicalConstruction:sum('exactCoincidentLocalCornerFaces'),
+  sourceLocalSmallAfterPhotoFit:sum('localSmallAfterPhotoFit'),
+  sourceLocalSmallAfterOwnerFit:sum('localSmallAfterOwnerFit'),
+  worldPoseIncludesSkinAndMeshTransforms:true,
+  sourceLocalVsWorldAreaThresholdIsDiagnosticOnly:true,
+  localSourceFaceNonregressionOnly:true,
   photoStageBlendFeasibility:photoBlend,
   ownerStageBlendFeasibility:ownerBlend,
   partialBlendNotApplied:true,sourcePhotoShapeUnverifiedForBlend:true,

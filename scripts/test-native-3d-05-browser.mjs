@@ -537,6 +537,34 @@ try{
       a.smallAtAnatomicalConstruction+a.newlySmallDuringPhotoFit-a.recoveredDuringPhotoFit);
      assert.equal(a.smallAfterOwnerMaskFit,
       a.smallAfterPhotoFit+a.newlySmallDuringOwnerMaskFit-a.recoveredDuringOwnerMaskFit);
+     assert.equal(a.sourceWorldPosedSmallAtAnatomicalConstruction,a.smallAtAnatomicalConstruction);
+     assert.equal(a.sourceLocalSmallOnlyBeforePose+a.sourceSmallInBothLocalAndWorldPose,
+      a.sourceLocalSmallAtAnatomicalConstruction);
+     assert.equal(a.sourceWorldPosedSmallOnlyAfterTransform+a.sourceSmallInBothLocalAndWorldPose,
+      a.smallAtAnatomicalConstruction);
+     assert.equal(a.worldPoseIncludesSkinAndMeshTransforms,true);
+     assert.equal(a.sourceLocalVsWorldAreaThresholdIsDiagnosticOnly,true);
+     assert.equal(a.localSourceFaceNonregressionOnly,true);
+     for(const [top,perMesh] of [
+      ['sourceLocalSmallAtAnatomicalConstruction','originalLocalSmall'],
+      ['sourceWorldPosedSmallOnlyAfterTransform','worldPosedSmallOnlyAfterTransform'],
+      ['sourceSmallInBothLocalAndWorldPose','smallInBothLocalAndWorldPose'],
+      ['sourceLocalSmallOnlyBeforePose','localSmallOnlyBeforePose'],
+      ['sourceRepeatedIndexFacesAtAnatomicalConstruction','repeatedSourceVertexIndexFaces'],
+      ['sourceExactCoincidentCornerFacesAtAnatomicalConstruction','exactCoincidentLocalCornerFaces'],
+      ['sourceLocalSmallAfterPhotoFit','localSmallAfterPhotoFit'],
+      ['sourceLocalSmallAfterOwnerFit','localSmallAfterOwnerFit']]){
+      assert.equal(a[top],a.byGarmentMesh.reduce((n,m)=>n+m[perMesh],0));
+      assert.ok(Number.isSafeInteger(a[top])&&a[top]>=0&&a[top]<=a.totalOriginalSourceFaces);
+     }
+     for(const part of a.byGarmentMesh){
+      assert.equal(part.localSmallOnlyBeforePose+part.smallInBothLocalAndWorldPose,
+       part.originalLocalSmall);
+      assert.equal(part.worldPosedSmallOnlyAfterTransform+part.smallInBothLocalAndWorldPose,
+       part.originalWorldPosedSmall);
+      assert.ok(part.repeatedSourceVertexIndexFaces<=part.originalLocalSmall);
+      assert.ok(part.exactCoincidentLocalCornerFaces<=part.originalLocalSmall);
+     }
      const verifyUnappliedBlend=(samples,from,to,added,recovered)=>{
       assert.deepEqual(samples.map(t=>t.fraction),[0,.25,.5,.75,1]);
       for(const sample of samples){
@@ -565,6 +593,9 @@ try{
      const redacted=JSON.stringify(a);
      assert.equal(redacted.includes('posedXYZ'),false,
       'Only anonymous source-face counts may leave the private research donor');
+     for(const field of ['localFlags','repeatIndexFlags','coincidentCornerFlags'])
+      assert.equal(redacted.includes('"'+field+'"'),false,
+       'Only count-only original local source mesh quality may leave the owner donor');
      assert.equal(redacted.includes(source.originalSHA),false);
      assert.equal(redacted.includes('"indices"'),false,
       'No transient original triangle index buffers may leave the disposable owner donor');
