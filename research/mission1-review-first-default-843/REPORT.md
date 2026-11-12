@@ -28,4 +28,10 @@ The scoped no-deploy GitHub workflow pins parent, strictly validates changed fil
 
 The current published/staging app is unchanged. Promotion of P843 for even four-owner Family Alpha must await independent photo recognition/instance/color acceptance; Mission 3 signed owner storage, privacy and account switching; a clean integration branch reconciling Parallel #67-#72 work; real Android/iPhone capture→review→save tests; performance; and explicit owner release approval. User experience impact: additional intentional review for every first-time scan, reducing silent wrong saves but increasing capture effort. A phone walkthrough must verify this friction is acceptable.
 
-**Evidence status: PENDING exact-head CI.** No benchmark/accuracy numerator is inferred from scripted stubs. Family Alpha HOLD #255 remains OPEN.
+## Exact executable-head evidence (verified November 12, 2026)
+
+**Verified source HEAD:** `0916c6c490ec870ec5d7fe4017c921da5763cd48`. [NO DEPLOY Actions #43298931796](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43298931796) **COMPLETE SUCCESS — 2/2 jobs**. The strict pinned P842 parent and five-path scope check passed. **8/8 focused P843 source-executed tests** and **318/318 full native Node tests** passed, zero skips/failures; normal and owner-independent research builds passed. Browser test logs prove **6/6** genuine Chromium and WebKit executions of the actual P843 scanner at CSS viewport widths 320, 390, 430: all strong predictions and category-only predictions remain unsaved; direct `saveIndexed` fails; no page exceptions. Also **6/6** P841 inherited actual editor scenarios passed in the same engines/widths: explicit user approval permits saving, missing/Unknown core values reject, editing revokes approval, existing saved items remain editable. These are browser engines with synthetic model results, **not independent photo-accuracy or physical device acceptance**.
+
+A subsequent documentation-only report commit does not change executable code; it will trigger a fresh no-deploy job. The verified functional result above is pinned to the exact executable head. This does not establish a mobile family-trial release gate.
+
+**No benchmark/accuracy numerator is inferred from scripted stubs. Family Alpha HOLD #255 remains OPEN.**
