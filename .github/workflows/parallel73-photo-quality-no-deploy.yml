@@ -1,0 +1,101 @@
+name: Parallel 73 photo quality — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel73-photo-quality-capture-guidance-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel73-photo-quality-HOLD
+  cancel-in-progress: true
+jobs:
+  parent-native-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: P843 verified immutable parent and strict changed-path allowlist
+        run: |
+          set -euo pipefail
+          BASE=cc5c0640e8c2814a053807e7159a591ab3e96a3f
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p73-paths
+          cat /tmp/p73-paths
+          while IFS= read -r path; do
+            case "$path" in
+              public/photo-quality-research.js|public/photo-check.js|public/index.html|public/app.js|tests/parallel73-photo-quality.test.cjs|scripts/test-parallel73-photo-quality-browser.mjs|scripts/evaluate-parallel73-real-photo.mjs|research/parallel73-photo-quality/REPORT.md|.github/workflows/parallel73-photo-quality-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE $path"; exit 1 ;;
+            esac
+          done < /tmp/p73-paths
+          test "$(wc -l < /tmp/p73-paths)" -eq 9
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/photo-import.js public/local-worker.mjs public/recognition-engine.mjs public/outfit-worker.mjs supabase benchmark public/recognition-vectors.bin public/recognition-vectors.json)"
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel73-photo-quality/REPORT.md
+          echo P73_PINNED_PARENT_NO_DEPLOY_ALLOWED
+      - name: Install temporary native test requirements only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Quality source, no-deploy build and full serial native regression
+        run: |
+          set -euo pipefail
+          node --check public/photo-quality-research.js
+          node --check public/photo-check.js
+          node --check public/app.js
+          node --check scripts/evaluate-parallel73-real-photo.mjs
+          node --check scripts/test-parallel73-photo-quality-browser.mjs
+          node --test tests/parallel73-photo-quality.test.cjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-browser-HOLD:
+    needs: [parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install genuine desktop Chromium and WebKit
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Scanner quality hints, preserved source and per-owner fences
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel73-photo-quality-browser.mjs
+          node scripts/test-m1-review-first-default-843.mjs
+  genuine-photo-audit-HOLD:
+    needs: [parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      P73_PHOTO_IDS: commons-0003,commons-0014,commons-0021,commons-0033,commons-0049,commons-0060,commons-0077,commons-0082,commons-0094,validation-0001,validation-0019
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install temporary image decoder
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Verify lawful public-photo source bytes and run descriptive diagnostics
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P73_PHOTO_IDS"
+          node scripts/evaluate-parallel73-real-photo.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel73-source-verified-descriptive-metrics-NO-PHOTOS
+          path: research/parallel73-photo-quality/runtime-real-photo-metrics.json
+          if-no-files-found: ignore
+          retention-days: 14

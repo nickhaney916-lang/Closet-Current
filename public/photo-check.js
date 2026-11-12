@@ -22,5 +22,18 @@ async function checkPhoto(image){
  if(!decoded.width||!decoded.height)throw Error('The photo could not be decoded.');
  const sample=document.createElement('canvas');sample.width=16;sample.height=16;
  const ctx=sample.getContext('2d',{willReadFrequently:true});ctx.drawImage(decoded,0,0,16,16);
- const pixels=ctx.getImageData(0,0,16,16).data;return {...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,aspect:decoded.width/decoded.height};
+ const pixels=ctx.getImageData(0,0,16,16).data;
+ let captureGuidance=null;
+ // Optional analysis reuses the decoded image: do not change original recognition input.
+ if(window.PhotoQualityResearch?.enabled()){
+  try{
+   const scale=Math.min(1,256/Math.max(decoded.width,decoded.height));
+   const width=Math.max(1,Math.round(decoded.width*scale)),height=Math.max(1,Math.round(decoded.height*scale));
+   const preview=document.createElement('canvas');preview.width=width;preview.height=height;
+   const context=preview.getContext('2d',{willReadFrequently:true});
+   context.drawImage(decoded,0,0,width,height);
+   captureGuidance=window.PhotoQualityResearch.analyzePixels(context.getImageData(0,0,width,height).data,width,height,decoded.width,decoded.height);
+  }catch{captureGuidance={kind:'diagnostic-unavailable',advice:[],notMeasured:['pixel inspection unavailable']};}
+ }
+ return {...photoQuality(pixels),colorEstimate:window.PhotoColor?.estimate(pixels,16,16)||null,aspect:decoded.width/decoded.height,captureGuidance};
 }
