@@ -19,7 +19,7 @@ function deferred(){
  return {promise,resolve,reject};
 }
 function fixture(){
- const audioHold=deferred(),permission=deferred(),playHold=deferred(),playEntered=deferred();
+ const audioHold=deferred(),permission=deferred(),permissionEntered=deferred(),playHold=deferred(),playEntered=deferred();
  const events=[],elements=new Map();
  let cameraRequests=0,stops=0;
  const $=id=>{
@@ -41,7 +41,7 @@ function fixture(){
   captureOperationEpoch:0,captureProof01Active:true,
   timer:null,session:5,audio:null,cadence:null,
   video,document:{hidden:false},navigator:{mediaDevices:{
-   getUserMedia(){cameraRequests++;return permission.promise;}
+   getUserMedia(){cameraRequests++;permissionEntered.resolve();return permission.promise;}
   }},
   window:{AudioContext},$,message:v=>events.push('message:'+v),
   controls:v=>events.push('controls:'+v),
@@ -59,7 +59,7 @@ function fixture(){
   $('lastCaptureImage').hidden=false;
   events.push('NEXT_OWNER_STARTED');
  }
- return {ctx,$,events,video,acquired,audioHold,permission,playHold,playEntered,
+ return {ctx,$,events,video,acquired,audioHold,permission,permissionEntered,playHold,playEntered,
   switchOwner,get cameraRequests(){return cameraRequests;},get stops(){return stops;}};
 }
 test('late old video.play result cannot reset next owner camera counters or controls',async()=>{
@@ -78,7 +78,7 @@ test('late old video.play result cannot reset next owner camera counters or cont
 test('late old camera permission finalizer cannot unlock newer owner video import',async()=>{
  const f=fixture();
  const opening=f.ctx.startCamera('manual');
- f.audioHold.resolve();await Promise.resolve();
+ f.audioHold.resolve();await f.permissionEntered.promise;
  f.switchOwner();f.permission.resolve(f.acquired);await opening;
  assert.equal(f.stops,1,'revoked tracks must be stopped');
  assert.equal(f.ctx.busy,baseline?false:true);
