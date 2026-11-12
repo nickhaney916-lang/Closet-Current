@@ -829,7 +829,11 @@ export function capturePhotoConstructionFaceAreas(root,shirt){
     if(!Number.isFinite(crossSq))throw Error('M2 photo stages nonfinite posed source triangle area');
     if(crossSq<1e-10){flags[face]=1;tiny++;}
    }
-   witnesses.push({mesh,indices,flags,faceCount:count,tinyCount:tiny});
+   // P2-C16: posed points are TRANSIENT private source evidence. The scanner
+   // compares geometrically staged face quality without writing any repair.
+   // Only count-only reductions may leave this disposable research donor.
+   witnesses.push({mesh,indices,flags,faceCount:count,tinyCount:tiny,
+    posedXYZ:new Float32Array(a)});
    smallTotal+=tiny;faceTotal+=count;
   }finally{posed.dispose();}
  }
@@ -845,6 +849,9 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
     !Number.isSafeInteger(stage.smallTotal)||!Number.isSafeInteger(stage.faceTotal)))
   throw Error('M2 photo stage complete ephemeral original-face witnesses required');
  const areas=stages.map(s=>s.witnesses.map(w=>w.tinyCount));
+ // Never run unbounded source topology trials or export posed coordinates.
+ if(stages[0].faceTotal>600000)
+  throw Error('M2 stage blend feasibility exceeds bounded original source face budget');
  const totalFaces=stages[0].faceTotal;
  if(stages.some(s=>s.witnesses.length!==stages[0].witnesses.length))
   throw Error('M2 photo stage original source panel count changed');
@@ -853,7 +860,10 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
  for(let meshIndex=0;meshIndex<stages[0].witnesses.length;meshIndex++){
   const w=stages.map(s=>s.witnesses[meshIndex]),base=w[0];
   if(w.some(x=>x.mesh!==base.mesh||x.faceCount!==base.faceCount||
-     x.indices?.length!==base.indices?.length||x.flags?.length!==base.flags?.length))
+     x.indices?.length!==base.indices?.length||x.flags?.length!==base.flags?.length||
+     !(x.posedXYZ instanceof Float32Array)||x.posedXYZ.length<3||
+     x.posedXYZ.length%3||!x.posedXYZ.every(Number.isFinite)||
+     x.indices.some(vertex=>vertex*3+2>=x.posedXYZ.length)))
    throw Error('M2 photo stage canonical original garment identity changed');
   for(const x of w)for(let k=0;k<x.indices.length;k++)
    if(x.indices[k]!==base.indices[k])
@@ -883,6 +893,47 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
   newP62+=n62;recoveredP62+=r62;newP190+=n190;recoveredP190+=r190;
   persistentlySmall+=persistent;smallAtBaseline+=old;
  }
+ // P2-C16: bounded interpolation diagnostic, NOT a proposed mesh or
+ // approved deformation. At each original face, interpolate the fixed-pose
+ // BEFORE and AFTER world coordinates, preserving original face indexing.
+ // This cannot establish photo silhouette fidelity, sewing or all-pose fit.
+ const fractions=Object.freeze([0,.25,.5,.75,1]);
+ const scan=(first,second)=>{
+  const samples=[];
+  for(const fraction of fractions){
+   let small=0,introduced=0,recovered=0;
+   for(let mi=0;mi<first.witnesses.length;mi++){
+    const a=first.witnesses[mi],b=second.witnesses[mi],from=a.posedXYZ,to=b.posedXYZ;
+    const point=(vertex,axis)=>fraction===0?from[vertex*3+axis]:
+      fraction===1?to[vertex*3+axis]:
+      from[vertex*3+axis]+(to[vertex*3+axis]-from[vertex*3+axis])*fraction;
+    for(let face=0;face<a.faceCount;face++){
+     const j=face*3,i0=a.indices[j],i1=a.indices[j+1],i2=a.indices[j+2];
+     const abx=point(i1,0)-point(i0,0),aby=point(i1,1)-point(i0,1),abz=point(i1,2)-point(i0,2);
+     const acx=point(i2,0)-point(i0,0),acy=point(i2,1)-point(i0,1),acz=point(i2,2)-point(i0,2);
+     const nx=aby*acz-abz*acy,ny=abz*acx-abx*acz,nz=abx*acy-aby*acx;
+     const squared=nx*nx+ny*ny+nz*nz;
+     if(!Number.isFinite(squared))
+      throw Error('M2 stage blend nonfinite original source face area');
+     const tiny=squared<1e-10;
+     if(tiny)small++;
+     if(tiny&&!a.flags[face])introduced++;
+     if(!tiny&&a.flags[face])recovered++;
+    }
+   }
+   if(small!==first.smallTotal+introduced-recovered)
+    throw Error('M2 stage blend source face counts do not reconcile');
+   samples.push(Object.freeze({fraction,smallSourceFaces:small,
+    newlySmallSourceFaces:introduced,recoveredSourceFaces:recovered}));
+  }
+  if(samples[0].smallSourceFaces!==first.smallTotal||
+     samples[0].newlySmallSourceFaces!==0||samples[0].recoveredSourceFaces!==0||
+     samples.at(-1).smallSourceFaces!==second.smallTotal)
+   throw Error('M2 stage blend endpoints mismatch genuine fitted source faces');
+  return Object.freeze(samples);
+ };
+ const photoBlend=scan(stages[0],stages[1]);
+ const ownerBlend=scan(stages[1],stages[2]);
  const sum=(name)=>byMesh.reduce((a,m)=>a+m[name],0);
  if(stages.some(s=>s.faceTotal!==totalFaces)||
     smallAtBaseline!==stages[0].smallTotal||
@@ -902,6 +953,10 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
   recoveredDuringOwnerMaskFit:recoveredP190,
   persistentlySmallFromAnatomicalStage:persistentlySmall,
   byGarmentMesh:Object.freeze(byMesh),
+  photoStageBlendFeasibility:photoBlend,
+  ownerStageBlendFeasibility:ownerBlend,
+  partialBlendNotApplied:true,sourcePhotoShapeUnverifiedForBlend:true,
+  onlyOneRealSampledPose:true,
   sourceAreaCrossSquaredThreshold:1e-10,
   sourceTriangleIdentityUnchanged:true,
   noSourceFaceIdsCoordinatesOrOwnerFields:true,
