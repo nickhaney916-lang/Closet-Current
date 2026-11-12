@@ -17,9 +17,11 @@ export function createTrialRecoverySession833({
  isActive=()=>true,
  onRestart=()=>{},
  maxRestarts=1,
+ classifyType='classify',
 }={}){
  if(typeof makeSession!=='function'||typeof isActive!=='function'||
-    typeof onRestart!=='function'||maxRestarts!==1)
+    typeof onRestart!=='function'||maxRestarts!==1||
+    !['classify','classify-guard835'].includes(classifyType))
   throw Error('Invalid bounded trial session configuration.');
  let session=null,state='new',restartCount=0;
  const active=()=>state!=='closed'&&isActive();
@@ -61,7 +63,7 @@ export function createTrialRecoverySession833({
   await load();
   if(!active())throw failure833('cancelled');
   try{
-   const reply=await session.call({type:'classify',image});
+   const reply=await session.call({type:classifyType,image});
    if(!active())throw failure833('cancelled');
    return reply;
   }catch(e){
