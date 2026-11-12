@@ -5,7 +5,7 @@ export function photoTypes(category){return [...new Set(localCandidates.filter(x
 // Mirror the verified garment-detail scorer's fixed palette, not arbitrary model strings.
 export const photoColors=Object.freeze(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']);
 const errors=new Set(['image','network','memory','runtime','asset','unknown','timeout','cancelled','invalid_result']);
-const reasons=new Set(['category_uncertain','type_uncertain','checks_disagree','views_disagree','dress_type_review']);
+const reasons=new Set(['category_uncertain','type_uncertain','checks_disagree','views_disagree','dress_type_review','subtype_cross_view_review','subtype_corroboration_unavailable']);
 const categoryValid=category=>photoCategories.includes(category)||category==='Uncategorized';
 const safeId=id=>/^photo-\d{3}$/.test(id);
 export function lockPhotoLabels(annotations){

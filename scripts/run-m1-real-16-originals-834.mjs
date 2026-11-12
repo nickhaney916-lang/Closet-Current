@@ -14,7 +14,8 @@ import {join,resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
 import {photoTypes,photoCategories} from '../public/phone-photo-benchmark.mjs';
 
-const engine=process.argv[2]||'chromium',half=process.argv[3]||'a';
+const engine=process.argv[2]||'chromium',half=process.argv[3]||'a',experimentalMode=process.argv[5]||'baseline';
+if(!['baseline','guard835'].includes(experimentalMode))throw Error('Unsupported audit mode');
 const output=resolve(process.argv[4]||'benchmark/m1-real16-audit-'+engine+'-'+half);
 if(!['chromium','webkit'].includes(engine)||!['a','b'].includes(half))throw Error('Invalid fixed audit partition/browser');
 const original=JSON.parse(await readFile('benchmark/manifest-holdout-16.json','utf8'));
@@ -61,7 +62,8 @@ try{
   const url=req.url(),body=req.postData()||'';
   if(/data:image|base64%2c|PRIVATE_PHONE_/i.test(url+' '+body))violations.push('SOURCE_PAYLOAD_ON_NETWORK');
  });
- await page.goto('http://127.0.0.1:'+server.address().port+'/phone-photo-check.html');
+ await page.goto('http://127.0.0.1:'+server.address().port+'/phone-photo-check.html'+(experimentalMode==='guard835'?'?subtypeGuard835=1':''));
+ if(experimentalMode==='guard835')assert.equal(await page.getByText('EXPERIMENTAL — additional subtype views',{exact:false}).count(),1);
  assert.equal(await page.getByText('Private diagnostic preview:',{exact:false}).count(),1);
  const fileList=[];
  for(const row of parts){
@@ -119,7 +121,7 @@ try{
    elapsedMs:scored.elapsedMs};
  });
  const summary={
-  browser:engine,partition:half,
+  browser:engine,partition:half,experimentalMode,
   sourceCohort:'existing-publisher-labeled-development-exposed-holdout16',
   model:'UNCHANGED-existing-closet-current-FashionCLIP-worker',
   count:8,garments:detailed.filter(x=>x.expectedCategory!=='Uncategorized').length,
@@ -143,7 +145,7 @@ try{
  await writeFile(join(output,'source-receipt.json'),JSON.stringify({
   manifestSha256:createHash('sha256').update(await readFile('benchmark/manifest-holdout-16.json')).digest('hex'),
   sourceIndexSha256:createHash('sha256').update(await readFile('benchmark/locked-photo-sources.json')).digest('hex'),
-  browser:engine,partition:half,sourceIds:detailed.map(x=>x.id)
+  browser:engine,partition:half,experimentalMode,sourceIds:detailed.map(x=>x.id)
  },null,2)+'\n');
  console.log('M1_P834_REAL_16_PHOTO_PARTITION',JSON.stringify(summary));
  console.log('M1_P834_PER_ORIGINAL_ID',JSON.stringify(detailed.map(x=>({id:x.id,categoryMatch:x.categoryMatch,

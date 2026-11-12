@@ -2,7 +2,8 @@ import {photoCategories,photoTypes,photoColors,lockPhotoLabels,phonePhotoResult,
 import {photoTestSession} from './photo-test-session.mjs';
 import {createTrialRecoverySession833} from './phone-photo-run-recovery-833.mjs';
 import {prepareTrialPhotoJPEG832} from './phone-photo-prep-832.mjs';
-const $=id=>document.getElementById(id);let rows=[],report=null,session=null,decodeController=null,generation=0,locked=false;
+const $=id=>document.getElementById(id);const subtypeSafety835=new URL(location.href).searchParams.get('subtypeGuard835')==='1';let rows=[],report=null,session=null,decodeController=null,generation=0,locked=false;
+if(subtypeSafety835){const note=document.createElement('p');note.textContent='EXPERIMENTAL — additional subtype views may require manual review. This does not prove improved accuracy.';document.querySelector('h1')?.after(note);}
 function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
 function readiness(){ $('run').disabled=locked||!rows.length||rows.some(r=>!r.category.value); }
 function reset({preserveFiles=false}={}){
@@ -33,6 +34,7 @@ $('run').onclick=async()=>{
  try{
   $('status').textContent='Preparing recognition…';
   session=createTrialRecoverySession833({
+   classifyType:subtypeSafety835?'classify-guard835':'classify',
    makeSession:()=>photoTestSession({workerUrl:'./local-worker.mjs'+new URL(import.meta.url).search,onProgress:data=>{if(mine===generation&&data.stage==='weights'&&Number.isFinite(data.percent))$('status').textContent='Preparing recognition… '+Math.max(0,Math.min(100,data.percent))+'%';}}),
    isActive:()=>mine===generation&&!decodeController?.signal.aborted,
    onRestart:()=>{if(mine===generation)$('status').textContent='Recognition stopped on the previous photo. Restarting once for the next photo…';},
