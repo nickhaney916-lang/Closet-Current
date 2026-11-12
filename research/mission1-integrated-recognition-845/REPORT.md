@@ -39,4 +39,18 @@ No ML inference/model weights altered; no claim of category/type/color accuracy 
 
 No legitimate inference of 10/10 recognition, family trial or full Mission 1 completion follows from synthetic fixture success or previously exposed photo tests. Do not unfreeze #255.
 
-**Verification status:** PENDING exact-head no-deploy workflow. Report will be updated with numerators and exact head after CI passes.
+## Verified executable-head P845 results — November 12, 2026
+
+**Functional exact SHA `f26a7c9cb0cf581710af2ef9551812cd73fbe494`** passed [NO DEPLOY GitHub Actions #43330919517](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43330919517): **all 3/3 jobs SUCCESS**, pinned P844 parent plus strict ten-path changed-file list. New combined **15/15 focused native tests**, complete **333/333 Node tests (zero failure/skip)** and both normal/research-preview app builds succeeded.
+
+Actual Chromium & WebKit at **320/390/430 CSS px**:
+- **6/6** original-photo advice/keep/retake/source+owner fences, feature off by default, no page errors;
+- **6/6** P843 scanner cases block strong/broad prediction and direct automatic storage;
+- **6/6** P844 original before-fix baseline reproduces **two** write attempts on double submit; candidate **6/6** makes **one** attempt and blocks Cancel/Remove/Escape/field edits during the write and supports failed-write retry;
+- **6/6** inherited P841 owner-confirmed editor save paths succeed with zero browser errors.
+
+Original lawful photographs re-evaluated from SHA-verified publisher sources: **11/11 downloaded originals** match frozen digests. Original near-uniform checker rejected **0/11**, the additional optional advisory flagged **1/11** limited-resolution image, **0/11** other quality pixel warnings. **No independent human quality labels (0), matched real retake pairs (0), newly blind human garment accuracy labels (0); recognition accuracy gain is UNKNOWN.** No private photos or original images are uploaded to CI artifacts.
+
+P845 additionally fixes the #73 research-only advisory-retention problem: `purgePhotoQualityHints845()` removes ephemeral original source references when their draft is saved/removed, cropped, replaced or their signed-in owner changes. New source-executed tests cover these cases; combined full regression and browser acceptance is green.
+
+**Document-only follow-up:** this report update does not modify executable code, but a new exact-final-HEAD no-deploy run must pass before marking the documentation SHA verified. Family Alpha HOLD #255 remains OPEN and release decision remains **NO-GO**.
