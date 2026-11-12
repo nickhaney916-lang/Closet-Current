@@ -154,6 +154,7 @@ function readyFixture({itemsHold=false,draftHold=false}={}){
   queueAutomatic:item=>calls.push('scan:'+item.ownerId)
  };
  bind(ctx,readAllSource+'\n'+readDraftSource+'\n'+readySource);
+ ctx.closetReady=vm.runInContext('closetReady',ctx);
  return {ctx,initial,next,calls,switchOwner({sameOwner=false}={}){
   ctx.captureOperationEpoch++;
   if(!sameOwner)ctx.window.closetAuth.user.id=b;
