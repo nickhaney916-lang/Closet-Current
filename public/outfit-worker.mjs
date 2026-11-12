@@ -22,10 +22,16 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const image=await RawImage.read(request.image);if(!image.width||!image.height||Math.max(image.width,image.height)>3072)throw Error('Invalid outfit photo dimensions.');
   const output=await model(await processor(image)),{clothingLabelMap,clothingMaskGroups,cropClothingPhotoPixels,isolateClothingPixels,clothingColorSample}=await import('./outfit-segmentation.mjs'+new URL(import.meta.url).search);
   await import('./photo-color.js'+new URL(import.meta.url).search);
-  const map=clothingLabelMap(output.logits.data,output.logits.dims),groups=map.personDetected?clothingMaskGroups(map):[];let count=0;
+  const map=clothingLabelMap(output.logits.data,output.logits.dims);
+  // P840 opt-in ONLY. Parallel #68's evaluated connected-footwear proposal
+  // is a private review draft, not new automatic wardrobe admission.
+  const groups=!map.personDetected?[]:request.instanceReview840===true?
+   (await import('./outfit-instance-review-840.mjs'+new URL(import.meta.url).search)).clothingReviewInstances840(map):
+   clothingMaskGroups(map);
+  let count=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
-   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
+   const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceMethod:group.instanceMethod||'native_semantic_group',requiresReview:request.instanceReview840===true,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});
