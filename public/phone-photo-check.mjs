@@ -1,10 +1,11 @@
 import {photoCategories,photoTypes,photoColors,lockPhotoLabels,phonePhotoResult,photoFailure,scorePhonePhotos,phonePhotoColorTrialReadout} from './phone-photo-benchmark.mjs';
 import {photoTestSession} from './photo-test-session.mjs';
-const $=id=>document.getElementById(id);let rows=[],report=null,session=null,generation=0,locked=false;
+import {prepareTrialPhotoJPEG832} from './phone-photo-prep-832.mjs';
+const $=id=>document.getElementById(id);let rows=[],report=null,session=null,decodeController=null,generation=0,locked=false;
 function option(select,text,value){const item=document.createElement('option');item.textContent=text;item.value=value;select.append(item);}
 function readiness(){ $('run').disabled=locked||!rows.length||rows.some(r=>!r.category.value); }
 function reset({preserveFiles=false}={}){
- generation++;session?.close();session=null;for(const row of rows){clearTimeout(row.decodeTimer);URL.revokeObjectURL(row.url);}rows=[];report=null;locked=false;
+ generation++;decodeController?.abort();decodeController=null;session?.close();session=null;for(const row of rows){URL.revokeObjectURL(row.url);}rows=[];report=null;locked=false;
  $('photoRows').replaceChildren();if(!preserveFiles)$('photos').value='';$('photos').disabled=false;$('run').textContent='Check recognition';$('run').disabled=true;$('restart').hidden=true;$('download').hidden=true;$('summary').hidden=true;$('status').textContent='Choose your photos to begin.';
 }
 $('restart').onclick=reset;
@@ -26,7 +27,7 @@ $('photos').onchange=()=>{
 $('run').onclick=async()=>{
  const mine=generation;let labels;
  try{labels=lockPhotoLabels(rows.map(r=>({category:r.category.value,type:r.type.value,color:r.color.value})));}catch(e){$('status').textContent=e.message;return;}
- locked=true;report=null;$('download').hidden=true;$('summary').hidden=true;$('run').disabled=true;$('photos').disabled=true;for(const row of rows){row.category.disabled=true;row.type.disabled=true;row.color.disabled=true;row.result.textContent='Waiting…';}
+ locked=true;decodeController?.abort();decodeController=new AbortController();report=null;$('download').hidden=true;$('summary').hidden=true;$('run').disabled=true;$('photos').disabled=true;for(const row of rows){row.category.disabled=true;row.type.disabled=true;row.color.disabled=true;row.result.textContent='Waiting…';}
  const results=[];
  try{
   $('status').textContent='Preparing recognition…';
@@ -35,10 +36,10 @@ $('run').onclick=async()=>{
   for(const [i,row] of rows.entries()){
    if(mine!==generation)return;$('status').textContent='Checking photo '+(i+1)+' of '+rows.length+'…';row.result.textContent='Checking…';const started=performance.now();let result;
    try{
-    const image=await Promise.race([photoToJPEG(row.file),new Promise((_,reject)=>{row.decodeTimer=setTimeout(()=>reject(Object.assign(Error('Cannot open photo'),{code:'image'})),15000);})]);
-    clearTimeout(row.decodeTimer);if(mine!==generation)return;
+    const image=await prepareTrialPhotoJPEG832(row.file,{signal:decodeController.signal});
+    if(mine!==generation)return;
     const raw=await session.call({type:'classify',image});result=phonePhotoResult(labels[i].id,raw,performance.now()-started);
-   }catch(e){clearTimeout(row.decodeTimer);result=photoFailure(labels[i].id,e.code||'image');}
+   }catch(e){result=photoFailure(labels[i].id,e.code||'image');}
    if(mine!==generation)return;results.push(result);
    row.result.textContent=result.error?'Could not finish this photo.':!result.strong&&!result.categoryConfirmed?(labels[i].expectedCategory==='Uncategorized'?'No clothing label accepted':'Needs review'):result.prediction.category+' · '+(result.prediction.type||'Unknown')+(result.categoryConfirmed&&!result.strong?' · Review type':'');
   }
@@ -54,9 +55,9 @@ $('run').onclick=async()=>{
   $('summary').textContent=s.categoryMatches+' of '+s.garments+' labeled garment categories matched (including results that require review). '+s.typeMatches+' of '+s.typesChecked+' labeled types matched. '+s.colorMatches+' of '+s.colorsChecked+' labeled primary colors matched; '+s.colorUnreported+' were not verified. '+s.incorrectAutomaticColors+' incorrect automatic colors. '+s.incorrectAutomaticCategories+' wrong automatic category results. '+s.uncertain+' uncertain results. '+s.errors+' photos could not finish.'+(s.negativePhotos?' '+s.negativeRejected+' of '+s.negativePhotos+' nonclothing photos rejected.':'');
   $('summary').hidden=false;$('download').hidden=false;$('status').textContent='Finished. Review each photo below and download the photo-free result report, or start over.';
  }catch(e){if(mine===generation){$('status').textContent='Recognition could not start. Try again, or start over with different photos.';$('run').textContent='Try again';$('run').disabled=false;}}
- finally{if(mine===generation){session?.close();session=null;}}
+ finally{if(mine===generation){decodeController?.abort();decodeController=null;session?.close();session=null;}}
 };
 $('download').onclick=()=>{
  if(!report)return;const url=URL.createObjectURL(new Blob([JSON.stringify(report,null,2)],{type:'application/json'})),link=document.createElement('a');link.href=url;link.download='closet-phone-photo-results.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 };
-window.addEventListener('pagehide',()=>{session?.close();for(const row of rows){clearTimeout(row.decodeTimer);URL.revokeObjectURL(row.url);}});
+window.addEventListener('pagehide',()=>{decodeController?.abort();session?.close();for(const row of rows){URL.revokeObjectURL(row.url);}});
