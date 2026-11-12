@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -1026,4 +1026,83 @@ test('P2-C21 depth-only counterfactual preserves photographed XY and source geom
  assert.equal(none.countOnly.implicatedNearEdgeVertices,0);
  assert.equal(none.countOnly.actuallyChangedDepthVertices,0);
  assert.deepEqual(none.privateOverrides.get(m),savedStaged);
+});
+
+
+test('P2-C22 feathered one-ring 163-bone short-edge correction touches only source indexed faces and never joins separate seams',()=>{
+ const {root,garment}=simplePose();
+ const positions=[
+  0,0,0, 1,0,0, 0,.000001,0,
+  2,0,0, 3,0,0, 2,1,0
+ ];
+ const make=(indexed)=>{
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+  if(indexed)g.setIndex([0,1,2,0,3,4,3,4,5]);
+  const weights=new Float32Array(6*4);for(let v=0;v<6;v++)weights[v*4]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(24),4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+  m.userData.work56Garment=true;m.bind(garment.skeleton);root.add(m);
+  return m;
+ };
+ for(const indexed of [false,true]){
+  const m=make(indexed);
+  const original=m.geometry.attributes.position.array.slice();
+  const next=original.slice();
+  for(const v of [0,1,2,3,4])next[v*3+2]=.02;
+  const reference=next.slice();
+  const overrides=new Map([[m,next]]);
+  const originalProof={newlyIntersecting:1,
+   newlyIntersectingSourceKeys:indexed?['0:0:2']:['0:0:1'],
+   completedUniqueAffectedPairComparison:true,originalSourceFaceIdentity:true,sampledPoseOnly:true};
+  const held=buildContactLinkedShortEdgeDepthCounterfactual([m],overrides,originalProof);
+  const result=buildOneRingShortEdgeDepthFeather([m],overrides,held);
+  const counts=result.countOnly,arr=result.privateOverrides.get(m),
+   heldArray=held.privateOverrides.get(m);
+  assert.equal(counts.originalShortEdgeAnchors,2);
+  assert.equal(counts.oneRingPropagationWeight,.5);
+  assert.equal(counts.photoXYSilhouetteBitIdentical,true);
+  assert.equal(counts.sourceMeshAndShortEdgeProposalUnchanged,true);
+  assert.equal(counts.originalSourceIndexedAdjacencyOnly,true);
+  assert.equal(counts.nonIndexedVerticesNeverReconnected,true);
+  assert.equal(counts.noCrossSeamInference,true);
+  assert.equal(counts.noUVSkinWeightOrOriginalPhotoMutation,true);
+  assert.equal(counts.requiresIndependentBodyPanelSelfAudits,true);
+  assert.equal(counts.notAdmissibleFor3DOrRelease,true);
+  assert.equal(counts.noContactWaived,true);
+  assert.equal(counts.releaseAuthorized,false);
+  assert.ok(counts.oneRingVerticesMoved>=1);
+  assert.ok(counts.maximumOneRingDepthMeters<=.00900001);
+  // Hold the P2-C21 exact affected original source vertices byte-identical.
+  assert.equal(arr[2],heldArray[2]);
+  assert.equal(arr[8],heldArray[8]);
+  assert.ok(arr[5]<heldArray[5]&&arr[5]>reference[5]-.00900001);
+  if(indexed){
+   assert.ok(arr[3*3+2]<heldArray[3*3+2]);
+   assert.ok(arr[3*4+2]<heldArray[3*4+2]);
+   assert.equal(counts.oneRingVerticesMoved,3);
+  }else{
+   assert.equal(arr[3*3+2],heldArray[3*3+2]);
+   assert.equal(arr[3*4+2],heldArray[3*4+2]);
+   assert.equal(counts.oneRingVerticesMoved,1);
+  }
+  assert.equal(arr[3*5+2],reference[3*5+2]);
+  for(let v=0;v<6;v++){
+   assert.equal(arr[v*3],reference[v*3]);
+   assert.equal(arr[v*3+1],reference[v*3+1]);
+  }
+  assert.deepEqual(m.geometry.attributes.position.array,original);
+  assert.deepEqual(next,reference);
+  assert.deepEqual(held.privateOverrides.get(m),heldArray);
+  const serial=JSON.stringify(counts);
+  for(const hidden of ['privateOverrides','sourceSHA256','originalSourceFaceKeys',
+   'sourceXYZ','skinIndex','skinWeight','sourceUV'])
+   assert.equal(serial.includes('"'+hidden+'"'),false);
+  assert.throws(()=>buildOneRingShortEdgeDepthFeather([m],overrides,held,
+   {neighborWeight:1}),/complete private immutable original short-edge trial/);
+  assert.throws(()=>buildOneRingShortEdgeDepthFeather([m],overrides,held,
+   {maxNeighborVertices:1}),indexed?/neighbor budget exhausted/:/neighbor budget exhausted/);
+  root.remove(m);
+ }
 });
