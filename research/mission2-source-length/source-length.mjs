@@ -193,36 +193,78 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
      heldSelf.collisionCertified!==false||heldSelf.releaseAuthorized!==false)
    fail('M2 C21 bounded counterfactual exact source-face self audit incomplete');
   let neighborCounterfactual=null;
+  // P2-C23: A predeclared, immutable 25/50/75%-weight sweep.
+  // Every hypothetical garment is separately tested against original-source
+  // rest-pose body/panel/self witnesses. No alternative may be committed or
+  // used to approve 3D regardless of its scores.
+  const oneRingSweep=[];
   if(neighborDepthRelaxationTrial){
-   const relaxed=buildOneRingShortEdgeDepthFeather(targets,originalOverrides,counter,
-    {neighborWeight:.5,maxNeighborVertices:512});
-   const feathered=relaxed.privateOverrides;
-   const neighborBody=comparePosedTriangleContacts(baselineBody,
-    measurePosedTriangleContacts(root,targets,feathered));
-   const neighborPanel=comparePosedTriangleContacts(baselinePanels,
-    measurePosedGarmentPartContacts(root,targets,feathered));
-   const neighborSelf=measureChangedFaceSelfContactDelta(root,targets,feathered);
-   if(neighborSelf.completedUniqueAffectedPairComparison!==true||
-      neighborSelf.originalSourceFaceIdentity!==true||
-      neighborSelf.sampledPoseOnly!==true||
-      neighborSelf.collisionCertified!==false||neighborSelf.releaseAuthorized!==false)
-    fail('M2 C22 full exact original-source self contact re-audit incomplete');
-   neighborCounterfactual=Object.freeze({
-    ...relaxed.countOnly,
-    originNewBodyContacts:triangleEvidence.newlyIntersecting,
-    originNewPanelContacts:garmentPartEvidence.newlyIntersecting,
-    originNewSelfContacts:selfDelta.newlyIntersecting,
-    heldNewBodyContacts:heldBodyDiff.newlyIntersecting,
-    heldNewPanelContacts:heldPanelDiff.newlyIntersecting,
-    heldNewSelfContacts:heldSelf.newlyIntersecting,
-    featherNewBodyContacts:neighborBody.newlyIntersecting,
-    featherNewPanelContacts:neighborPanel.newlyIntersecting,
-    featherNewSelfContacts:neighborSelf.newlyIntersecting,
-    counterfactualNeverApplied:true,
-    unchangedCollisionAdmissionPolicy:true,
-    noPhotoMeasuredDepth:true,
-    releaseAuthorized:false
-   });
+   const referenceSelfKeys=new Set(selfDelta.newlyIntersectingSourceKeys);
+   if(referenceSelfKeys.size!==selfDelta.newlyIntersecting||
+      selfDelta.completedUniqueAffectedPairComparison!==true||
+      selfDelta.originalSourceFaceIdentity!==true)
+    fail('M2 C23 complete original-source new self-contact pair identities required');
+   for(const neighborWeight of [.25,.5,.75]){
+    const relaxed=buildOneRingShortEdgeDepthFeather(targets,originalOverrides,counter,
+     {neighborWeight,maxNeighborVertices:512});
+    const feathered=relaxed.privateOverrides;
+    const neighborBody=comparePosedTriangleContacts(baselineBody,
+     measurePosedTriangleContacts(root,targets,feathered));
+    const neighborPanel=comparePosedTriangleContacts(baselinePanels,
+     measurePosedGarmentPartContacts(root,targets,feathered));
+    const neighborSelf=measureChangedFaceSelfContactDelta(root,targets,feathered);
+    if(neighborSelf.completedUniqueAffectedPairComparison!==true||
+       neighborSelf.originalSourceFaceIdentity!==true||
+       neighborSelf.sampledPoseOnly!==true||
+       neighborSelf.collisionCertified!==false||
+       neighborSelf.releaseAuthorized!==false||
+       !Array.isArray(neighborSelf.newlyIntersectingSourceKeys)||
+       neighborSelf.newlyIntersectingSourceKeys.length!==neighborSelf.newlyIntersecting)
+     fail('M2 C23 exact original-source counterfactual self contact re-audit incomplete');
+    // Join the *private* original face keys only transiently. The browser
+    // receives anonymous per-original-mesh and overlap counts, no face keys.
+    const facesByMesh=targets.map(()=>new Set());
+    let retainedOriginalNewPairs=0,newlyIntroducedPairKeys=0;
+    for(const key of neighborSelf.newlyIntersectingSourceKeys){
+     if(typeof key!=='string'||!/^(?:0|[1-9]\\d*):(?:0|[1-9]\\d*):(?:0|[1-9]\\d*)$/.test(key))
+      fail('M2 C23 original source face identity in residual delta invalid');
+     const [m,a,b]=key.split(':').map(Number);
+     if(!Number.isSafeInteger(m)||m<0||m>=targets.length||
+        !Number.isSafeInteger(a)||!Number.isSafeInteger(b)||a>=b)
+      fail('M2 C23 invalid residual original source face order');
+     const g=targets[m].geometry,faceCount=g.index?g.index.count/3:g.getAttribute('position').count/3;
+     if(!Number.isSafeInteger(faceCount)||a<0||b>=faceCount)
+      fail('M2 C23 residual original source face out of bounds');
+     facesByMesh[m].add(a);facesByMesh[m].add(b);
+     if(referenceSelfKeys.has(key))retainedOriginalNewPairs++;
+     else newlyIntroducedPairKeys++;
+    }
+    if(retainedOriginalNewPairs+newlyIntroducedPairKeys!==neighborSelf.newlyIntersecting)
+     fail('M2 C23 full original source residual pair comparison incomplete');
+    const result=Object.freeze({
+     ...relaxed.countOnly,
+     originNewBodyContacts:triangleEvidence.newlyIntersecting,
+     originNewPanelContacts:garmentPartEvidence.newlyIntersecting,
+     originNewSelfContacts:selfDelta.newlyIntersecting,
+     heldNewBodyContacts:heldBodyDiff.newlyIntersecting,
+     heldNewPanelContacts:heldPanelDiff.newlyIntersecting,
+     heldNewSelfContacts:heldSelf.newlyIntersecting,
+     featherNewBodyContacts:neighborBody.newlyIntersecting,
+     featherNewPanelContacts:neighborPanel.newlyIntersecting,
+     featherNewSelfContacts:neighborSelf.newlyIntersecting,
+     residualUniqueSourceFacesByMesh:Object.freeze(facesByMesh.map(s=>s.size)),
+     residualUniqueOriginalSourceFaces:facesByMesh.reduce((a,s)=>a+s.size,0),
+     retainedOriginalProposalNewSelfPairs:retainedOriginalNewPairs,
+     newlyIntroducedVersusOriginalProposalSelfPairs:newlyIntroducedPairKeys,
+     comparisonOriginalSourceFaceKeysNeverSerialized:true,
+     counterfactualNeverApplied:true,
+     unchangedCollisionAdmissionPolicy:true,
+     noPhotoMeasuredDepth:true,
+     releaseAuthorized:false
+    });
+    oneRingSweep.push(result);
+    if(neighborWeight===.5)neighborCounterfactual=result;
+   }
   }
   shortEdgeCounterfactual=Object.freeze({
    ...counter.countOnly,
@@ -234,6 +276,9 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    depthHoldNewSelfContacts:heldSelf.newlyIntersecting,
    depthHoldSourcePoseOnly:true,
    neighborCounterfactual,
+   oneRingSweep:Object.freeze(oneRingSweep),
+   predeclaredOneRingWeightsOnly:true,
+   noAutomaticSweepWinner:true,
    cannotCertifySourceUVOrPhysicalDrape:true,
    counterfactualNeverApplied:true,
    noCandidateAcceptedOnCounterfactual:true,
@@ -366,7 +411,10 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   shortEdgeCounterfactual:a.shortEdgeCounterfactual?
    Object.freeze({...a.shortEdgeCounterfactual,
     neighborCounterfactual:a.shortEdgeCounterfactual.neighborCounterfactual?
-     Object.freeze({...a.shortEdgeCounterfactual.neighborCounterfactual}):null}):null,
+     Object.freeze({...a.shortEdgeCounterfactual.neighborCounterfactual}):null,
+    oneRingSweep:Object.freeze((a.shortEdgeCounterfactual.oneRingSweep||[])
+     .map(entry=>Object.freeze({...entry,
+      residualUniqueSourceFacesByMesh:Object.freeze([...entry.residualUniqueSourceFacesByMesh])})))}):null,
   selfContactTypes:a.selfContactTypes?Object.freeze({
    newSelfContactCount:a.selfContactTypes.newSelfContactCount,
    uniqueAffectedSourceFaceCount:a.selfContactTypes.uniqueAffectedSourceFaceCount,
