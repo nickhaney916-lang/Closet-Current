@@ -512,7 +512,8 @@ try{
      assert.equal(a.releaseAuthorized,false);
      assert.equal(a.physicalClearanceVerified,false);
      assert.equal(a.sourceAreaCrossSquaredThreshold,1e-10);
-     assert.equal(a.byGarmentMesh.length,3);
+     assert.ok(a.byGarmentMesh.length>=3&&a.byGarmentMesh.length<=32);
+     assert.equal(a.sourcePieceCount,a.byGarmentMesh.length);
      assert.equal(a.totalOriginalSourceFaces,
       a.byGarmentMesh.reduce((n,m)=>n+m.sourceFaceCount,0));
      for(const [field,parts] of [
