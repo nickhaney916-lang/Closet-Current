@@ -77,7 +77,7 @@ test('backgrounding during preferred-camera rejection does not attempt a second 
  assert.ok(f.events.some(v=>v==='controls:false'));
 });
 test('backgrounded while optional AudioContext resumes never requests camera permission',async()=>{
- const audio=deferred(),f=cameraFixture({waitAudio:audio});
+ const audio=deferred(),f=cameraFixture({waitAudio:audio,permission:(_options,_n,media)=>Promise.resolve(media)});
  const opening=f.ctx.startCamera('manual');
  f.ctx.document.hidden=true;
  audio.resolve();
