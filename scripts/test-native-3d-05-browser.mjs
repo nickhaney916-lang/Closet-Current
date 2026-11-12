@@ -545,6 +545,41 @@ try{
      assert.equal(a.worldPoseIncludesSkinAndMeshTransforms,true);
      assert.equal(a.sourceLocalVsWorldAreaThresholdIsDiagnosticOnly,true);
      assert.equal(a.localSourceFaceNonregressionOnly,true);
+     const q=a.sourceTopologyQuality;
+     assert.equal(a.noMeshRepairApplied,true);
+     assert.equal(a.sourceQualityIsDiagnosticOnly,true);
+     assert.equal(q.totalSourceFaces,a.totalOriginalSourceFaces);
+     assert.equal(q.originalLocalTinyFaces,a.sourceLocalSmallAtAnatomicalConstruction);
+     assert.equal(q.byMesh.length,a.byGarmentMesh.length);
+     assert.equal(q.tinyShape.pointMicro+q.tinyShape.nearCoincidentEdge+
+      q.tinyShape.thinSliver+q.tinyShape.smallButWellShaped,q.originalLocalTinyFaces);
+     assert.equal(q.byMesh.reduce((sum,m)=>sum+m.localSmallFaces,0),q.originalLocalTinyFaces);
+     assert.equal(q.sourceBoundaryFaceCount,
+      q.byMesh.reduce((sum,m)=>sum+m.sourceBoundaryFaceCount,0));
+     assert.equal(q.sourceNonManifoldFaceCount,
+      q.byMesh.reduce((sum,m)=>sum+m.sourceNonManifoldFaceCount,0));
+     assert.equal(q.localTinyBoundaryFaces,
+      q.byMesh.reduce((sum,m)=>sum+m.localTinyBoundaryFaces,0));
+     assert.equal(q.localTinyInteriorFaces,
+      q.byMesh.reduce((sum,m)=>sum+m.localTinyInteriorFaces,0));
+     assert.equal(q.duplicateCanonicalIndexFaces,
+      q.byMesh.reduce((sum,m)=>sum+m.duplicateCanonicalIndexFaces,0));
+     assert.equal(q.sourceQualityCrossSquaredThreshold,1e-10);
+     assert.equal(q.microEdgeSquaredThreshold,1e-8);
+     assert.equal(q.thinSliverRatioThreshold,.05);
+     assert.equal(q.noGeometryChanged,true);
+     assert.equal(q.noCollisionWaived,true);
+     assert.equal(q.exactIndexedAdjacencyNotPhysicalSewing,true);
+     assert.equal(q.normalsAndUVSeamsUnverified,true);
+     assert.equal(q.releaseAuthorized,false);
+     for(let i=0;i<q.byMesh.length;i++){
+      assert.equal(q.byMesh[i].meshIndex,i);
+      assert.equal(q.byMesh[i].sourceFaceCount,a.byGarmentMesh[i].sourceFaceCount);
+      assert.equal(q.byMesh[i].localSmallFaces,a.byGarmentMesh[i].originalLocalSmall);
+      assert.equal(Object.values(q.byMesh[i].tinyShape).reduce((x,y)=>x+y,0),
+       q.byMesh[i].localSmallFaces);
+      assert.ok(q.byMesh[i].localTinyInteriorFaces<=q.byMesh[i].localSmallFaces);
+     }
      for(const [top,perMesh] of [
       ['sourceLocalSmallAtAnatomicalConstruction','originalLocalSmall'],
       ['sourceWorldPosedSmallOnlyAfterTransform','worldPosedSmallOnlyAfterTransform'],
@@ -593,6 +628,7 @@ try{
      const redacted=JSON.stringify(a);
      assert.equal(redacted.includes('posedXYZ'),false,
       'Only anonymous source-face counts may leave the private research donor');
+     assert.equal(redacted.includes('"localXYZ"'),false);
      for(const field of ['localFlags','repeatIndexFlags','coincidentCornerFlags'])
       assert.equal(redacted.includes('"'+field+'"'),false,
        'Only count-only original local source mesh quality may leave the owner donor');

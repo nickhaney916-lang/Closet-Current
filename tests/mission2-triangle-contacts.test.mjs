@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -621,6 +621,13 @@ test('real 163-bone source shell with multiple left/right cap meshes pinpoints f
  assert.equal(delta.totalOriginalSourceFaces,10);
  assert.equal(delta.smallAtAnatomicalConstruction,0);
  assert.equal(delta.sourceLocalSmallAtAnatomicalConstruction,0);
+ assert.equal(delta.sourceTopologyQuality.totalSourceFaces,10);
+ assert.equal(delta.sourceTopologyQuality.originalLocalTinyFaces,0);
+ assert.equal(delta.sourceTopologyQuality.tinyShape.smallButWellShaped,0);
+ assert.equal(delta.sourceTopologyQuality.noGeometryChanged,true);
+ assert.equal(delta.sourceTopologyQuality.exactIndexedAdjacencyNotPhysicalSewing,true);
+ assert.equal(delta.noMeshRepairApplied,true);
+ assert.equal(delta.sourceQualityIsDiagnosticOnly,true);
  assert.equal(delta.sourceWorldPosedSmallAtAnatomicalConstruction,0);
  assert.equal(delta.sourceLocalSmallOnlyBeforePose,0);
  assert.equal(delta.sourceWorldPosedSmallOnlyAfterTransform,0);
@@ -747,4 +754,69 @@ test('P2-C17 distinguishes repeated original indices, source-local tiny faces, a
  forged.witnesses[0].localFlags[0]=1;
  assert.throws(()=>comparePhotoConstructionAreaStages(stage,forged,stage),
   /source-local canonical original face flags invalid|collapsed source-face tally mismatch|original local source face aggregate mismatch/);
+});
+
+
+test('P2-C18 canonical indexed source topology separates slivers, microscopic detail, duplicates and nonmanifold seams without repairs',()=>{
+ const {root,garment}=simplePose();
+ const specs=[
+  {name:'Work56-independent-shirt-shell',side:null,
+   p:[0,0,0,1,0,0,0,1,0,1,1,0,1e-8,1e-8,0],
+   indices:[0,1,2,1,3,2,0,4,1,0,1,2,0,0,1]},
+  {name:'Left-source-shoulder-cap',side:'L',
+   p:[0,0,0,1,0,0,.5,1e-6,0, 2,0,0,2.000001,0,0,2,.000001,0],
+   indices:null},
+  {name:'Right-source-shoulder-cap',side:'R',
+   p:[0,0,0,.002,0,0,.001,.00173205,0],indices:null}
+ ];
+ const meshes=specs.map(({name,side,p,indices})=>{
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(p,3));
+  if(indices)geo.setIndex(indices);
+  const n=p.length/3,w=new Float32Array(n*4);
+  for(let i=0;i<n;i++)w[i*4]=1;
+  geo.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(n*4),4));
+  geo.setAttribute('skinWeight',new THREE.BufferAttribute(w,4));
+  const mesh=new THREE.SkinnedMesh(geo,new THREE.MeshStandardMaterial());
+  mesh.name=name;mesh.userData.work56Garment=true;
+  if(side)mesh.userData.work45IndependentShoulderCap=side;
+  mesh.bind(garment.skeleton);root.add(mesh);
+  return mesh;
+ });
+ const sourceBefore=meshes.map(m=>m.geometry.attributes.position.array.slice());
+ const stage=capturePhotoConstructionFaceAreas(root,{meshes});
+ const topology=summarizeCanonicalSourceFaceQuality(stage);
+ assert.equal(topology.totalSourceFaces,8);
+ assert.equal(topology.originalLocalTinyFaces,5);
+ assert.deepEqual(topology.byMesh.map(m=>m.localSmallFaces),[2,2,1]);
+ assert.deepEqual(topology.tinyShape,{
+  pointMicro:1,nearCoincidentEdge:2,thinSliver:1,smallButWellShaped:1
+ });
+ assert.equal(topology.duplicateCanonicalIndexFaces,1);
+ assert.equal(topology.sourceNonManifoldFaceCount>0,true);
+ assert.equal(topology.sourceBoundaryFaceCount>0,true);
+ assert.equal(topology.byMesh[0].localTinyBoundaryFaces>0,true);
+ assert.equal(topology.noGeometryChanged,true);
+ assert.equal(topology.exactIndexedAdjacencyNotPhysicalSewing,true);
+ assert.equal(topology.normalsAndUVSeamsUnverified,true);
+ assert.equal(topology.releaseAuthorized,false);
+ const summary=comparePhotoConstructionAreaStages(stage,stage,stage);
+ assert.equal(summary.sourceTopologyQuality.originalLocalTinyFaces,5);
+ assert.equal(summary.sourceTopologyQuality.duplicateCanonicalIndexFaces,1);
+ assert.equal(summary.noMeshRepairApplied,true);
+ const safe=JSON.stringify(summary);
+ for(const privateField of ['localXYZ','posedXYZ','indices','faceKey','sourceSHA256','ownerId','skinWeight'])
+  assert.equal(safe.includes('"'+privateField+'"'),false);
+ for(let i=0;i<meshes.length;i++)
+  assert.deepEqual(meshes[i].geometry.attributes.position.array,sourceBefore[i]);
+ const forged={...stage,witnesses:stage.witnesses.map((w,i)=>i?w:
+  {...w,localXYZ:new Float32Array(w.localXYZ)})};
+ forged.witnesses[0].localXYZ[1]=NaN;
+ assert.throws(()=>summarizeCanonicalSourceFaceQuality(forged),
+  /finite coordinates required/);
+ const forgedFlag={...stage,witnesses:stage.witnesses.map((w,i)=>i?w:
+  {...w,localFlags:w.localFlags.slice()})};
+ forgedFlag.witnesses[0].localFlags[2]=0;
+ assert.throws(()=>summarizeCanonicalSourceFaceQuality(forgedFlag),
+  /differs from canonical original flags/);
 });
