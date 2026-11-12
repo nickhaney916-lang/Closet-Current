@@ -112,7 +112,7 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
  const manifest=JSON.parse(await readFile('benchmark/manifest-holdout-16.json','utf8'));
  const parts={};
  for(const engine of ['chromium','webkit'])for(const half of ['a','b'])
-  parts[engine+'-'+half]=JSON.parse(await readFile(join(input,engine+'-'+half,'audit.json'),'utf8'));
+  parts[engine+'-'+half]=JSON.parse(await readFile(join(input,'m1-p834-'+engine+'-'+half,'audit.json'),'utf8'));
  const report=aggregateReal16Audit834(manifest,parts);
  await mkdir(input,{recursive:true});
  await writeFile(join(input,'aggregate.json'),JSON.stringify(report,null,2)+'\n');
