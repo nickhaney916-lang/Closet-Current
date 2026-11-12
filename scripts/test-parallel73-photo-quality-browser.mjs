@@ -1,0 +1,66 @@
+/** Synthetic control pixels ONLY: tests actual checkPhoto and render code in
+ * Chromium/WebKit at CSS mobile sizes, not real garment/model/physical phone QA. */
+import {chromium,webkit} from 'playwright';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const check=await readFile('public/photo-check.js','utf8');
+const quality=await readFile('public/photo-quality-research.js','utf8');
+const app=await readFile('public/app.js','utf8');
+const start=app.indexOf('function renderPhotoResults('),end=app.indexOf('function render(){',start);
+assert.ok(start>=0&&end>start);
+const harness=[
+ "const photoQualityHints73=new Map(),items=[],batch=[],localPending=new Set();",
+ "const recognitionState={activeId:null},reviewFirst836=true;",
+ "const $=id=>document.getElementById(id);",
+ "const node=(tag,text,cl)=>{const el=document.createElement(tag);if(text)el.textContent=text;if(cl)el.className=cl;return el;};",
+ "const cropButton=()=>document.createElement('button'),adjustPhoto=()=>{};",
+ "let renders=0,view='';",
+ "const render=()=>{renders++;},switchView=name=>{view=name;};",
+ "window.closetAuth={user:{id:'owner-A'}};",
+ "window.init73=(photo,advice)=>{const item={id:'a',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',name:'Test photo',seasons:[],localAnalyzed:true,requiresOwnershipConfirmation:true};batch.splice(0,batch.length,item);photoQualityHints73.set(item.id,{item,source:item.image,owner:'owner-A',advice});renderPhotoResults($('grid'),batch);};",
+ "window.refresh73=()=>{renderPhotoResults($('grid'),batch);return {visible:!!document.querySelector('.photo-extra'),view,photo:batch[0].image,adviceCount:photoQualityHints73.size};};",
+ "window.changeSource73=photo=>{batch[0].image=photo;return window.refresh73();};",
+ "window.changeOwner73=owner=>{window.closetAuth.user.id=owner;return window.refresh73();};",
+ "window.count73=()=>({kept:batch.length,view,adviceCount:photoQualityHints73.size});"
+].join('\n');
+for(const [name,engine] of Object.entries({chromium,webkit})){
+ const browser=await engine.launch({headless:true,...(name==='chromium'?{args:['--no-sandbox']}: {})});
+ try{for(const width of [320,390,430]){
+   const page=await browser.newPage({viewport:{width,height:820},isMobile:true,hasTouch:true});
+   const errors=[];page.on('pageerror',e=>errors.push(e.message));
+   await page.setContent('<!doctype html><html><body><label><input type="checkbox" id="photoQualityResearch73">Research photo tips</label><button id="start">Camera</button><div id="grid"></div></body></html>');
+   await page.addScriptTag({content:quality});await page.addScriptTag({content:check});
+   const baseline=await page.evaluate(async()=>{
+     const c=document.createElement('canvas');c.width=960;c.height=720;
+     const ctx=c.getContext('2d');ctx.fillStyle='#111';ctx.fillRect(0,0,960,720);
+     const image=c.toDataURL('image/jpeg',.94),q=await checkPhoto(image);
+     return {image,hasTips:!!q.captureGuidance};
+   });
+   assert.equal(baseline.hasTips,false,'off by default');
+   assert.equal(await page.locator('#photoQualityResearch73').isChecked(),false);
+   await page.locator('#photoQualityResearch73').check();
+   const result=await page.evaluate(async image=>{
+      const q=await checkPhoto(image);
+      return {advice:q.captureGuidance?.advice,metrics:q.captureGuidance?.metrics};
+   },baseline.image);
+   assert.ok(result.metrics?.sampledWidth<=256);
+   assert.ok(result.advice?.some(a=>a.code==='low-light'));
+   await page.addScriptTag({content:harness+'\n'+app.slice(start,end)});
+   await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
+   await page.locator('summary').click();
+   assert.equal(await page.getByRole('button',{name:'Keep this photo'}).count(),1);
+   assert.equal(await page.getByRole('button',{name:'Take another photo'}).count(),1);
+   await page.getByRole('button',{name:'Take another photo'}).click();
+   assert.deepEqual(await page.evaluate(()=>window.count73()),{kept:1,view:'scan',adviceCount:1});
+   await page.getByRole('button',{name:'Keep this photo'}).click();
+   assert.equal((await page.evaluate(()=>window.count73())).adviceCount,0);
+   await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
+   assert.equal((await page.evaluate(()=>window.changeSource73('replacement-photo'))).visible,false);
+   await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
+   assert.equal((await page.evaluate(()=>window.changeOwner73('owner-B'))).visible,false);
+   await page.locator('#photoQualityResearch73').uncheck();
+   assert.equal(errors.length,0,errors.join('; '));
+   console.log('P73_BROWSER_NO_DEPLOY '+JSON.stringify({browser:name,width,offByDefault:true,retakeKeepsOriginal:true,sourceFence:true,ownerFence:true,pageErrors:0}));
+   await page.close();
+ }}finally{await browser.close();}
+}
