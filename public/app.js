@@ -958,8 +958,12 @@ async function startCamera(mode){
       ['OverconstrainedError','NotFoundError','NotReadableError'].includes(error.name)))throw error;
    // A preferred-camera failure may arrive after Stop, sign-out or app hide.
    // Never request a *second* camera stream for a revoked old session.
-   if(epoch!==captureOperationEpoch||request!==cameraRequest||
-      (typeof document!=='undefined'&&document.hidden))return;
+   if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
+   if(typeof document!=='undefined'&&document.hidden){
+    stopCamera();
+    message('Camera access was interrupted while the app was in the background. Your photos are ready to review.');
+    return;
+   }
    // On unsupported devices relax preference only; permission denial never bypassed.
    acquired=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
   }
