@@ -416,11 +416,12 @@ async function saveIndexed(item){
 async function recognizeItem(item){
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
-  const source73=item.recognitionPhoto?.image||item.image,owner73=window.closetAuth?.user?.id;
+  const source73=item.recognitionPhoto?.image||item.image,owner73=typeof window==='undefined'?null:window.closetAuth?.user?.id;
   const quality=await checkPhoto(source73);
   if(!batch.some(x=>x===item))return;
   if(quality.captureGuidance&&source73===(item.recognitionPhoto?.image||item.image)&&
-     owner73===window.closetAuth?.user?.id){
+     owner73===(typeof window==='undefined'?null:window.closetAuth?.user?.id)&&
+     typeof photoQualityHints73!=='undefined'){
    photoQualityHints73.set(item.id,{item,source:source73,owner:owner73,advice:quality.captureGuidance.advice||[]});
   }
   if(quality.blank&&!quality.captureGuidance){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
