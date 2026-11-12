@@ -1,0 +1,144 @@
+name: Parallel 72 confirmed-only correction learning evidence NO DEPLOY
+on:
+  push:
+    branches: [research/parallel72-confirmed-correction-learning-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel72-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-parent-native-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact compatible P842 research parent and seven file scope; no deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=0de0b712f5c02feb5fc173194eec775f068f499b
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p72-changed
+          cat /tmp/p72-changed
+          test "$(wc -l </tmp/p72-changed)" -eq 7
+          while IFS= read -r p; do
+            case "$p" in
+              public/clothing-memory.js|public/app.js|tests/parallel72-confirmed-learning.test.cjs|scripts/test-parallel72-owner-browser.mjs|scripts/parallel72-historical-control.mjs|research/parallel72-confirmed-learning/REPORT.md|.github/workflows/parallel72-confirmed-learning-no-deploy.yml) ;;
+              *) echo "P72_OUT_OF_SCOPE $p";exit 1 ;;
+            esac
+          done < /tmp/p72-changed
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/outfit-worker.mjs public/recognition-engine.mjs public/recognition-vectors.bin public/recognition-vectors.json public/auth.js supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel72-confirmed-learning/REPORT.md
+          grep -Fq "get('confirmedLearning72')==='1'" public/app.js
+          echo P72_EXACT_P842_NO_DEPLOY_SCOPE
+      - name: Install ephemeral native dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: New native owner-confirmed-only consent, stale and poisoning regressions
+        run: |
+          set -euo pipefail
+          node --check public/clothing-memory.js
+          node --check public/app.js
+          node --check scripts/test-parallel72-owner-browser.mjs
+          node --check scripts/parallel72-historical-control.mjs
+          node --test tests/parallel72-confirmed-learning.test.cjs
+      - name: Full native source and both no-account/static builds
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-mobile-width-browser-consent-HOLD:
+    needs: [exact-parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install true Chromium and WebKit engines (not physical phones)
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Actual app editor, owner-consented original JPEG, later suggestion, cross owner 320 390 430
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel72-owner-browser.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+  actual-public-original-FashionCLIP-HOLD:
+    needs: [exact-parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        half: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Only source-licensed historic original Commons photos; SHA-verified
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          IDS=$(node -e 'const m=require("./benchmark/manifest-holdout-16.json");const h=process.argv[1];process.stdout.write(m.filter((_,i)=>i%2===(h==="a"?0:1)).map(x=>x.id).join(","))' "${{ matrix.half }}")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+      - name: Unchanged genuine FashionCLIP model on real original JPEG in actual browser
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node scripts/run-m1-real-16-originals-834.mjs ${{ matrix.browser }} ${{ matrix.half }} benchmark/p72-real-original/p72-${{ matrix.browser }}-${{ matrix.half }}
+      - name: Upload only numeric model receipts, never original JPEGs
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: p72-${{ matrix.browser }}-${{ matrix.half }}
+          path: |
+            benchmark/p72-real-original/p72-${{ matrix.browser }}-${{ matrix.half }}/audit.json
+            benchmark/p72-real-original/p72-${{ matrix.browser }}-${{ matrix.half }}/source-receipt.json
+          if-no-files-found: error
+          retention-days: 14
+  actual-original-accuracy-control-HOLD:
+    needs: [actual-public-original-FashionCLIP-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect four independent exact original-identity numeric model receipts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p72-*
+          merge-multiple: false
+          path: benchmark/p72-real-original
+      - name: Explicit no owner confirmed truth and no invented learning accuracy
+        run: node scripts/parallel72-historical-control.mjs benchmark/p72-real-original
+      - name: Preserve only SHA and numeric results, NOT source photos
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel72-real-public-original-model-only-report-HOLD
+          path: benchmark/p72-real-original/report.json
+          retention-days: 14
+          if-no-files-found: error
