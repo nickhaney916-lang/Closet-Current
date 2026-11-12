@@ -46,11 +46,14 @@ export function createTrialRecoverySession833({
    if(!active()||session!==candidate)throw failure833('cancelled');
    state='ready';
   }catch(e){
-   candidate?.close?.();
+   // close() can run while the replacement model is still loading. It
+   // already terminated that candidate: never double-close it, and retain
+   // cancellation rather than converting an intentional reset to runtime.
+   const cancelled=!active()||e?.code==='cancelled';
+   if(state!=='closed')candidate?.close?.();
    if(session===candidate)session=null;
    if(state!=='closed')state='dead';
-   throw failure833(active()&&e?.code==='timeout'?'timeout':
-    active()&&e?.code==='cancelled'?'cancelled':'runtime');
+   throw failure833(cancelled?'cancelled':e?.code==='timeout'?'timeout':'runtime');
   }
  }
 
