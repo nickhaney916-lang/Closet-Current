@@ -76,6 +76,7 @@ function clothingFields(body,item,onChange=()=>{}){
    // to the same detached form, which will be shown only if still open.
    if(!suggestion||scope!==learningScope72())return;
    const memory=node('details',null,'clothing-details');
+   memory.open=true; // The source-confirmed suggestion needs a visible review action.
    memory.append(node('summary','Owner-confirmed local learning (review only)'),
     node('p','Previously reviewed garments suggest: '+Object.values(suggestion.fields).join(' · ')+'. Verify against the original photo before applying.','fine'));
    const use=node('button','Use owner-confirmed suggestion','secondary');
