@@ -129,7 +129,7 @@ function switchView(view){
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('closet-current-user-'+window.closetAuth.user.id,2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('items'))r.result.createObjectStore('items',{keyPath:'id'});if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
-function readAll(){return new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+function readAll(ownerDB=db){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 // NATIVE-INDEX-07 opt-in only: refresh the original native outfit controller
 // after a committed saved-item mutation, not on every draft/photo write.
 // Owner/session/CAS attestation is performed by the controller itself.
@@ -199,7 +199,7 @@ function persistDraft({required=false}={}){
   });
  });
 }
-function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
+function readDraft(ownerDB=db){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 async function captureProofVerifyBeforeSave(value){
  if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active))return;
  const owner=captureProofOwner();
@@ -235,17 +235,36 @@ async function commitOwnerCorrection10(value,expectedSavedRow,nextBatch){
  return commitNativeCorrection10({db,ownerId:owner,before:expectedSavedRow,
   after:value,nextBatch,assertOwner});
 }
-function savePiece(value,nextBatch,{expectedSavedRow=null}={}){return queued(async()=>{
- await captureProofVerifyBeforeSave(value);
- // CORRECTION10: only original SAVED garments, with a pre-edit row snapshot,
- // use strict owner/photo CAS. Newly captured draft photo saves continue via
- // unchanged existing save path. No change on the default app URL.
- if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research')
-  return commitOwnerCorrection10(value,expectedSavedRow,nextBatch);
- return new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');
- tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
- tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});
-}).then(async result=>{await nativeIndex07Refresh();return result;});}
+function savePiece(value,nextBatch,{expectedSavedRow=null}={}){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
+ const current=()=>!!owner&&epoch===captureOperationEpoch&&window.closetAuth===auth&&
+  auth.user?.id===owner&&db===ownerDB&&ownerDB?.name==='closet-current-user-'+owner;
+ const requireLease=()=>{
+  auth?.assertCurrent?.();
+  if(!current())throw Error('Saved clothing account session changed; reopen the editor');
+ };
+ return queued(async()=>{
+  requireLease();
+  // Source SHA verification can be asynchronous. Never let its old result
+  // write to a different owner's current mutable global IndexedDB.
+  await captureProofVerifyBeforeSave(value);
+  requireLease();
+  // CORRECTION10 retains its separate row-level CAS and human review guard.
+  if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research'){
+   const result=await commitOwnerCorrection10(value,expectedSavedRow,nextBatch);
+   requireLease();return result;
+  }
+  return new Promise((resolve,reject)=>{
+   try{requireLease();}catch(error){reject(error);return;}
+   const tx=ownerDB.transaction(['items','state'],'readwrite');
+   tx.objectStore('items').put(value);
+   tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+   tx.oncomplete=()=>{try{requireLease();resolve();}catch(error){reject(error);}};
+   tx.onerror=()=>reject(tx.error);
+   tx.onabort=()=>reject(tx.error||Error('Garment save interrupted'));
+  });
+ }).then(async result=>{requireLease();await nativeIndex07Refresh();requireLease();return result;});
+}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
@@ -1118,9 +1137,41 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
    throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;await writeAll(valid);items=(await readAll()).map(normalizeClothing);if(data.looks)await importLooks(data.looks);if(data.outfitBoard&&typeof importBoardBackup==='function')await importBoardBackup(data.outfitBoard);render();message('Backup imported.');}catch(err){message(err.message||'Import failed.');}};
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
-const closetReady=(async()=>{await window.closetAuth.ready;try{window.closetAuth?.assertCurrent?.();const connection=await openDB();
- try{window.closetAuth?.assertCurrent?.();}catch(error){connection.close();return;}
- db=connection;items=(await readAll()).map(normalizeClothing);window.closetAuth?.assertCurrent?.();batch=(await readDraft()).map(normalizeClothing);window.closetAuth?.assertCurrent?.();for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;}if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);}catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);})();
+const closetReady=(async()=>{
+ await window.closetAuth.ready;
+ const auth=window.closetAuth,owner=auth?.user?.id,epoch=captureOperationEpoch;
+ const current=()=>!!owner&&epoch===captureOperationEpoch&&window.closetAuth===auth&&
+  auth.user?.id===owner;
+ let connection=null;
+ try{
+  if(!current())return;
+  auth.assertCurrent?.();
+  connection=await openDB();
+  if(!current()){connection.close();return;}
+  auth.assertCurrent?.();
+  // Keep both asynchronous reads on the initiating account's DB. Do not
+  // publish either owner's photos until the entire local roster loads.
+  const loadedItems=await readAll(connection);
+  if(!current()){connection.close();return;}
+  const loadedDraft=await readDraft(connection);
+  if(!current()){connection.close();return;}
+  auth.assertCurrent?.();
+  if(db&&db!==connection){connection.close();return;}
+  const nextItems=loadedItems.map(normalizeClothing);
+  const nextBatch=loadedDraft.map(normalizeClothing);
+  db=connection;items=nextItems;batch=nextBatch;
+  for(const item of batch)if(item.outfitSourceId&&item.requiresOwnershipConfirmation){
+   item.requiresOwnershipConfirmation=false;item.localAnalyzed=false;
+  }
+  if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);
+ }catch{
+  if(connection&&db!==connection)try{connection.close();}catch{}
+  if(!current())return;
+  message('Browser storage is unavailable. Use a regular browser to save your closet.');
+ }
+ if(!current())return;
+ render();for(const item of batch)if(!item.localAnalyzed)queueAutomatic(item);
+})();
 
 /**
  * INDEX-02 is opt-in research ONLY. Default app behavior does not load this
