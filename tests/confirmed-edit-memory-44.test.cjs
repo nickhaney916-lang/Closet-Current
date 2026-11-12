@@ -56,7 +56,9 @@ async function runSavedEdit(before,formData,{cas=false,stale=false}={}){
    await putOne(db,next);
   },
   async writeAll(rows){attempted++;for(const row of rows)await putOne(db,row);},
-  nativeIndex07Refresh:async()=>{refreshes++;},
+  // Source-extracted form fixture models an unchanged signed-in owner.
+  // Owner revocation is tested in separate Mission 3 source lease regressions.
+  assertEditor:()=>{},nativeIndex07Refresh:async()=>{refreshes++;},
   dialog:{close:()=>{closed=true;}},render:()=>{rendered++;},
   scheduleMemoryReview:()=>{},message:t=>errors.push(t)
  };
