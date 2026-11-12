@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,auditSourcePhotoMicroMultiPose,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -65,7 +65,7 @@ export const classifySourceLengthCandidateException=e=>{
 
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
  strictTriangleContacts=false,traceGarmentPartContacts=false,strictGarmentPartContacts=false,traceSelfContacts=false,strictSelfContacts=false,extensionScale=1,depthClearance=0,depthEasingExponent=1,previewOnly=false,sourceAreaStages=null,
- counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false,microDepthSinglePairTrial=false}={}){
+ counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false,microDepthSinglePairTrial=false,multiPoseMicroTrial=false}={}){
  if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
    (previewOnly&&projectSourceRGB))fail('finite bounded extension scale and no projection in dry-run required');
  // Experimental *depth-only* offset is never inferred from a single front
@@ -83,6 +83,8 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   fail('M2 C24 persistent source-face trial requires complete neighbor original-pair evidence');
  if(microDepthSinglePairTrial&&!residualPairDirectionTrial)
   fail('M2 C25 exact single-pair micro trial requires both P2-C24 opposite-direction source witnesses');
+ if(multiPoseMicroTrial&&!microDepthSinglePairTrial)
+  fail('M2 C26 real articulated source-pose audit requires complete P2-C25 single-pair micro evidence');
  if(counterfactualShortEdgeDepthTrial&&
    (!previewOnly||!traceTriangleContacts||!traceGarmentPartContacts||!traceSelfContacts))
   fail('M2 C21 counterfactual requires disposable preview and complete independent collision measurements');
@@ -362,6 +364,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
            diagnosed.releaseAuthorized!==false)
          fail('M2 C25 last-pair true posed shape and strict refusal classification missing');
         const microVariants=[];
+        const privatePoseCandidates=[];
         const survivingKey=pairs.newlyIntersectingSourceKeys[0];
         for(const microMeters of [.0005,.001]){
          for(const microDirection of ['separate','reverse']){
@@ -394,6 +397,17 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
           if(retainedLast+createdDifferent!==microPairs.newlyIntersecting||
              retainedLast>1)
            fail('M2 C25 original surviving pair comparison did not reconcile');
+          if(microPairs.newlyIntersecting===0&&
+             microBody.newlyIntersecting===0&&microPanels.newlyIntersecting===0){
+           const name=microMeters===.0005?
+            (microDirection==='separate'?'half-mm-separate':'half-mm-reverse'):
+            'one-mm-reverse';
+           // No automatic product selection: only the three predeclared
+           // originally-zero-new-contact research alternatives proceed.
+           if(microMeters===.001&&microDirection==='separate')
+            fail('M2 C26 1mm separate known nonpassing original pose must not join pose audit');
+           privatePoseCandidates.push({name,overrides:counterfactual});
+          }
           microVariants.push(Object.freeze({
            ...changed.countOnly,
            beforeNewSelfPairs:1,
@@ -410,8 +424,17 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
           }));
          }
         }
+        let multiPoseSourceAudit=null;
+        if(multiPoseMicroTrial){
+         if(privatePoseCandidates.length!==3||
+            privatePoseCandidates.map(c=>c.name).join(',')!==
+             'half-mm-separate,half-mm-reverse,one-mm-reverse')
+          fail('M2 C26 only the three independently zero-NEW single-pose candidates may be audited');
+         multiPoseSourceAudit=auditSourcePhotoMicroMultiPose(root,targets,privatePoseCandidates);
+        }
         lastPairMicroDepthTrial=Object.freeze({
          oneSurvivingOriginalSourcePair:true,
+         multiPoseSourceAudit,
          diagnosedSourceContactGeometry:Object.freeze({...diagnosed.byContactGeometry}),
          diagnosedOriginalCoincidentCorners:Object.freeze([...diagnosed.byOriginalCoincidentCorners]),
          diagnosedFittedCoincidentCorners:Object.freeze([...diagnosed.byStagedCoincidentCorners]),
@@ -508,16 +531,18 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
  * A candidate is only eligible when it creates NO new body/garment triangle
  * intersections at this sampled pose. Existing intersections remain unapproved.
  */
-export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false,microDepthSinglePairTrial=false}={}){
+export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false,microDepthSinglePairTrial=false,multiPoseMicroTrial=false}={}){
  if(typeof experimentalDepthTrial!=='boolean'||
     typeof counterfactualShortEdgeDepthTrial!=='boolean'||
     typeof neighborDepthRelaxationTrial!=='boolean'||
     typeof residualPairDirectionTrial!=='boolean'||
     typeof microDepthSinglePairTrial!=='boolean'||
+    typeof multiPoseMicroTrial!=='boolean'||
     (counterfactualShortEdgeDepthTrial&&!experimentalDepthTrial)||
     (neighborDepthRelaxationTrial&&!counterfactualShortEdgeDepthTrial)||
     (residualPairDirectionTrial&&!neighborDepthRelaxationTrial)||
-    (microDepthSinglePairTrial&&!residualPairDirectionTrial))
+    (microDepthSinglePairTrial&&!residualPairDirectionTrial)||
+    (multiPoseMicroTrial&&!microDepthSinglePairTrial))
   fail('bounded depth experiment opt-in or short-edge counterfactual requires explicit research opt-in');
  const attempts=[];
  // Keep the established original four-candidate search unchanged.
@@ -542,6 +567,8 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
     residualPairDirectionTrial:residualPairDirectionTrial&&
       scale===.25&&depthClearance===.008&&depthEasingExponent===2,
     microDepthSinglePairTrial:microDepthSinglePairTrial&&
+      scale===.25&&depthClearance===.008&&depthEasingExponent===2,
+    multiPoseMicroTrial:multiPoseMicroTrial&&
       scale===.25&&depthClearance===.008&&depthEasingExponent===2});
    const v=result.stats;
    const classification=classifySourceLengthContactAttempt(v);
@@ -603,7 +630,9 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
      Object.freeze({...a.shortEdgeCounterfactual.lastPairMicroDepthTrial,
       microVariants:Object.freeze(a.shortEdgeCounterfactual.lastPairMicroDepthTrial.microVariants
        .map(v=>Object.freeze({...v,
-        distinctOriginalSourceFacesByMesh:Object.freeze([...v.distinctOriginalSourceFacesByMesh])})))})
+        distinctOriginalSourceFacesByMesh:Object.freeze([...v.distinctOriginalSourceFacesByMesh])}))),
+      multiPoseSourceAudit:a.shortEdgeCounterfactual.lastPairMicroDepthTrial.multiPoseSourceAudit?
+       Object.freeze({...a.shortEdgeCounterfactual.lastPairMicroDepthTrial.multiPoseSourceAudit}):null})
       :null}):null,
   selfContactTypes:a.selfContactTypes?Object.freeze({
    newSelfContactCount:a.selfContactTypes.newSelfContactCount,
@@ -659,10 +688,10 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   attempts:Object.freeze(attempts),sourcePoseOnly:true,
   noPhotoOrOwnerFields:true,releaseAuthorized:false});
 }
-export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false,onResearchDiagnostic=null,experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false,microDepthSinglePairTrial=false}={}){
+export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false,onResearchDiagnostic=null,experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false,microDepthSinglePairTrial=false,multiPoseMicroTrial=false}={}){
  if(onResearchDiagnostic!==null&&typeof onResearchDiagnostic!=='function')
   fail('bounded research diagnostic callback required');
- const decision=planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial,sourceAreaStages,counterfactualShortEdgeDepthTrial,neighborDepthRelaxationTrial,residualPairDirectionTrial,microDepthSinglePairTrial});
+ const decision=planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial,sourceAreaStages,counterfactualShortEdgeDepthTrial,neighborDepthRelaxationTrial,residualPairDirectionTrial,microDepthSinglePairTrial,multiPoseMicroTrial});
  if(onResearchDiagnostic)onResearchDiagnostic(safeAdaptiveBodyContactDiagnostic(decision));
  if(!decision.accepted)
   fail('adaptive-geometry-refused['+decision.refusalReason+']: original-photo/2D fallback required; no garment geometry committed (body, garment part or intrapanel)');
