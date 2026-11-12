@@ -4,15 +4,15 @@ if(!paths.length||paths.length>2)throw Error('Usage: node scripts/summarize-reco
 const reports=await Promise.all(paths.map(async path=>{
  const rows=JSON.parse(await readFile(path,'utf8'));
  if(!Array.isArray(rows))throw Error('Expected the downloaded browser benchmark JSON array.');
- const sample=key=>rows.map(x=>x.runtimeMetrics?.[key]).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b);
+ const sample=key=>rows.map(x=>key==='elapsedMs'?x.elapsedMs:x.runtimeMetrics?.[key]).filter(x=>Number.isFinite(x)&&x>=0).sort((a,b)=>a-b);
  const percentile=(values,p)=>values.length?values[Math.ceil(values.length*p)-1]:null;
- const timings=Object.fromEntries(['loadMs','decodeMs','inferenceMs','totalMs'].map(key=>{
+ const timings=Object.fromEntries(['elapsedMs','loadMs','decodeMs','inferenceMs','totalMs'].map(key=>{
   const vals=sample(key);return [key,{n:vals.length,p50:percentile(vals,.5),p95:percentile(vals,.95)}];
  }));
  const outputs=new Map(rows.map(x=>[x.id,{category:x.prediction?.category??null,type:x.prediction?.type??null,strong:!!x.strong,categoryConfirmed:!!x.categoryConfirmed,reason:x.reason??null,details:x.details??{},error:x.error??null}]));
- return {path,rows:rows.length,errors:rows.filter(x=>x.error).length,coldLoadMs:rows.find(x=>Number.isFinite(x.coldLoadMs))?.coldLoadMs??null,timings,outputs};
+ return {path,rows:rows.length,errors:rows.filter(x=>x.error).length,coldLoadMs:rows.find(x=>Number.isFinite(x.coldLoadMs))?.coldLoadMs??null,coldLoadWallMs:rows.find(x=>Number.isFinite(x.coldLoadWallMs))?.coldLoadWallMs??null,timings,outputs};
 }));
-const view=r=>({file:r.path,count:r.rows,errors:r.errors,coldLoadMs:r.coldLoadMs,timings:r.timings});
+const view=r=>({file:r.path,count:r.rows,errors:r.errors,coldLoadMs:r.coldLoadMs,coldLoadWallMs:r.coldLoadWallMs,timings:r.timings});
 const result={reports:reports.map(view)};
 if(reports.length===2){
  const [a,b]=reports;
