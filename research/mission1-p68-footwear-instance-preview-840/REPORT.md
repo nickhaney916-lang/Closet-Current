@@ -21,3 +21,5 @@ New native test uses actual `clothingLabelMap`, `clothingMaskGroups`, `clothingR
 Synthetic tests **cannot substitute for real photograph inference**. P68's model inference results are cited for motivation, NOT counted as P840's result. Before any promotion, run the exact optimized worker on newly externally human-labeled, source-disjoint multi-garment photographs in Chromium and WebKit, verify instance recall and unwanted duplication of shoes, and validate actual iPhone/Android performance. Keep in mind in wardrobe taxonomy a pair of shoes may correctly remain **one** closet item. As this is off-by-default, it has no effect on existing staging or production. Real-world 10/10 accuracy remains unproven.
 
 **Decision: isolated integration trial only. Do not promote/merge/deploy or authorize family alpha.** Parallel #68 owns mask model acceptance; Parallel #69 owns mobile inference performance; Mission 1 owns owner-confirmed UI and integration.
+
+P840 integration regression harness also loads the optional module into the *existing* outfit-worker VM tests (unchanged default-worker assertions); the strict research diff contains eight files.
