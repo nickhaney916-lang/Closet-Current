@@ -10,7 +10,7 @@
  let resolveReady,rejectReady;
  const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
  window.closetAuth={ready,user:null};
- let storedSession=null,locked=false,epoch=null;
+ let storedSession=null,locked=false,epoch=null,offlineRestoreRetry=null;
  function currentEpoch(){
   try{return JSON.parse(localStorage.getItem(STORE)||'null')?.epoch??null;}catch{return null;}
  }
@@ -31,6 +31,19 @@
  });
  window.addEventListener('pageshow',()=>{
   if(session&&!stillCurrent())lockAccount();
+ });
+ // A temporary offline/5xx refresh is NOT a revoked session. Keep the
+ // previous credential in the browser's origin-scoped storage, and
+ // keep the private wardrobe LOCKED until a real verified refresh succeeds.
+ // An online transition may retry only if no other tab changed that session.
+ window.addEventListener('online',()=>{
+  const pending=offlineRestoreRetry;
+  if(!pending||locked||session||window.closetAuth.user?.id)return;
+  offlineRestoreRetry=null;
+  if(localStorage.getItem(STORE)!==pending)return;
+  // Do not discard sign-in form entries the owner has started typing.
+  if($('authEmail').value||$('authPassword').value)return;
+  location.reload();
  });
  let signup=false,session=null,busy=false,recovery=false,restoringSession=false,refreshing=null;
  window.closetAuth.getAccessToken=async({force=false}={})=>{
@@ -190,7 +203,20 @@
     if(localStorage.getItem(STORE)!==snapshot){lockAccount();return;}
     showUser(data,saved.epoch);return;
    }
-  }catch(error){if(!locked&&restoringSession&&localStorage.getItem(STORE)===storedSession)localStorage.removeItem(STORE);status(restoringSession?(error instanceof TypeError?'Could not restore your login. Check your connection and log in again.':'Your login session has expired. Log in again.'):'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');return;}finally{setBusy(false);}
+  }catch(error){
+   const retryable=error instanceof TypeError||error?.name==='AbortError'||
+    error?.status===429||error?.status>=500||error?.code==='invalid_response';
+   // A 401/invalid refresh is a real revocation; a network/timeout/server
+   // error is not. Never unlock the wardrobe with unverified cached claims.
+   if(!locked&&restoringSession&&localStorage.getItem(STORE)===storedSession){
+    if(retryable)offlineRestoreRetry=storedSession;
+    else localStorage.removeItem(STORE);
+   }
+   status(restoringSession?
+    retryable?'Cannot verify your previous login while the connection is unavailable. Your private wardrobe stays locked and saved on this device. Reconnect to retry automatically, or reload when connected.':'Your login session has expired. Log in again.':
+    'This sign-in link could not be verified. Log in with your email and password, or request a fresh email link.');
+   return;
+  }finally{setBusy(false);}
   status(modeHint());
  })();
 })();
