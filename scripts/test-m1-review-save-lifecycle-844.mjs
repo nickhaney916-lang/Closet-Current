@@ -79,7 +79,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      const dialog=document.querySelector('dialog');
      const event=new Event('cancel',{bubbles:false,cancelable:true});
      dialog.dispatchEvent(event);
-     dialog.querySelector('button:nth-child(2)')?.onclick?.();
+     const cancel=[...dialog.querySelectorAll('button')].find(x=>x.textContent==='Cancel');
+     cancel?.onclick?.();
      const removal=[...dialog.querySelectorAll('button')].find(x=>x.textContent==='Remove photo');
      removal?.onclick?.();
      dialog.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
