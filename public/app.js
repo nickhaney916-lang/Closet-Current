@@ -72,7 +72,9 @@ function clothingFields(body,item,onChange=()=>{}){
  if(typeof ClothingMemory!=='undefined'&&learningMode72()&&learningScope72()){
   const scope=learningScope72();
   ClothingMemory.suggest72(item,items,scope).then(suggestion=>{
-   if(!suggestion||!body.isConnected||scope!==learningScope72())return;
+   // The offline SHA digest can finish before the editor is attached; append
+   // to the same detached form, which will be shown only if still open.
+   if(!suggestion||scope!==learningScope72())return;
    const memory=node('details',null,'clothing-details');
    memory.append(node('summary','Owner-confirmed local learning (review only)'),
     node('p','Previously reviewed garments suggest: '+Object.values(suggestion.fields).join(' · ')+'. Verify against the original photo before applying.','fine'));
