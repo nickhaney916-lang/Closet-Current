@@ -24,6 +24,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-source-topology-triage-20261111-HOLD
     - research/mission2-contact-linked-source-shape-20261111-HOLD
     - research/mission2-short-edge-stage-uv-skin-20261111-HOLD
+    - research/mission2-counterfactual-short-edge-depth-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -243,6 +244,7 @@ jobs:
         PHOTO_TRIANGLE_ADAPTIVE: '1'
         PHOTO_DEPTH_EXPERIMENT: '1'
         PHOTO_STAGE_AREA_AUDIT: '1'
+        PHOTO_SHORT_EDGE_TRIAL: '1'
         MISSION2_PERFORMANCE: '0'
       run: |
         node scripts/test-native-3d-05-browser.mjs
@@ -428,6 +430,38 @@ jobs:
         const lineage=k=>active.map(a=>
          a.selfContactTypes?.contactLinkedShortEdgeStageUVSkinEvidence?.[k]??null);
         const lineageCount=(k,v)=>lineage(k).map(x=>x?.[v]??'x').join(',');
+        const counterfactual=attempts.filter(a=>a.shortEdgeCounterfactual);
+        assert.equal(counterfactual.length,1);
+        const selected=counterfactual[0];
+        const cf=selected.shortEdgeCounterfactual;
+        assert.equal(selected.scale,.25);
+        assert.equal(selected.depthClearance,.008);
+        assert.equal(selected.depthEasingExponent,2);
+        assert.equal(selected.accepted,false);
+        assert.equal(cf.originalProposalNewSelfContacts,selected.newSelfContacts);
+        assert.equal(cf.originalSourcePhotoXYBitIdentical,true);
+        assert.equal(cf.originalSourceAndStagedArraysUnchanged,true);
+        assert.equal(cf.seamAndBoneWeightsUnchanged,true);
+        assert.equal(cf.counterfactualNeverApplied,true);
+        assert.equal(cf.notAdmissibleFor3DOrRelease,true);
+        assert.equal(cf.noCandidateAcceptedOnCounterfactual,true);
+        assert.equal(cf.noContactWaived,true);
+        assert.equal(cf.releaseAuthorized,false);
+        assert.ok(cf.implicatedNearEdgeVertices>0);
+        assert.ok(cf.actuallyChangedDepthVertices<=cf.implicatedNearEdgeVertices);
+        assert.ok(cf.maximumDepthAdjustmentMeters<=.01200001);
+        for(const k of ['originalProposalNewBodyContacts','originalProposalNewPanelContacts',
+         'depthHoldNewBodyContacts','depthHoldNewPanelContacts','depthHoldNewSelfContacts'])
+         assert.ok(Number.isSafeInteger(cf[k])&&cf[k]>=0);
+        console.log('M2_SHORT_EDGE_DEPTH_COUNTERFACTUAL_COUNTS_ONLY',
+         engine+'-vertices['+cf.implicatedNearEdgeVertices+
+         ']-changed['+cf.actuallyChangedDepthVertices+
+         ']-selfBefore['+cf.originalProposalNewSelfContacts+
+         ']-selfHeld['+cf.depthHoldNewSelfContacts+
+         ']-bodyBefore['+cf.originalProposalNewBodyContacts+
+         ']-bodyHeld['+cf.depthHoldNewBodyContacts+
+         ']-panelsBefore['+cf.originalProposalNewPanelContacts+
+         ']-panelsHeld['+cf.depthHoldNewPanelContacts+']');
         console.log('M2_SHORT_EDGE_SOURCE_STAGE_UV_SKIN_COUNTS_ONLY',
          engine+'-bornAnatomy['+lineageCount('nearEdgeFirstObservedStage','anatomical')+
          ']-bornPhoto['+lineageCount('nearEdgeFirstObservedStage','photoFit')+
