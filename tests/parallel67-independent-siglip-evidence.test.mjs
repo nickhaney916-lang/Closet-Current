@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 import {
- P67_MODEL,P67_REVISION,P67_LABELS,rankIndependentSiglip67,evaluateIndependentSiglip67
+ P67_MODEL,P67_REVISION,P67_FASHION_MODEL,P67_FASHION_REVISION,P67_ALLOWED_MODELS,P67_LABELS,rankIndependentSiglip67,evaluateIndependentSiglip67
 } from '../scripts/parallel67-independent-siglip-scoring.mjs';
 
 const manifest=JSON.parse(await readFile('benchmark/manifest-holdout-16.json','utf8'));
@@ -86,4 +86,24 @@ test('P67 failure reports no confidence, never counts skipped source as correct,
  assert.equal(score.rows[0].categoryTop1Correct,false);
  assert.equal(score.rows[0].subtypeTop1Correct,false);
  assert.ok(!JSON.stringify(score).includes('data:image/jpeg'));
+});
+
+test('P67-02 only source-pinned distinct original and fashion-specific SigLIP permitted',()=>{
+ assert.equal(P67_FASHION_MODEL,'Marqo/marqo-fashionSigLIP');
+ assert.match(P67_FASHION_REVISION,/^[a-f0-9]{40}$/);
+ assert.notEqual(P67_MODEL,P67_FASHION_MODEL);
+ assert.notEqual(P67_REVISION,P67_FASHION_REVISION);
+ assert.equal(Object.keys(P67_ALLOWED_MODELS).length,2);
+ const rows=generated();
+ const candidate=evaluateIndependentSiglip67(manifest,rows,{model:P67_FASHION_MODEL,revision:P67_FASHION_REVISION});
+ assert.equal(candidate.model,P67_FASHION_MODEL);
+ assert.equal(candidate.revision,P67_FASHION_REVISION);
+ assert.equal(candidate.automaticSaveAdmissionAllowed,false);
+ assert.deepEqual(candidate.rows.map(x=>x.id),manifest.map(x=>x.id));
+ for(const args of [
+  {model:'PRIVATE_UNTRUSTED_FASHION',revision:P67_FASHION_REVISION},
+  {model:P67_FASHION_MODEL,revision:P67_REVISION},
+  {model:P67_FASHION_MODEL,revision:'main'},
+  {model:P67_FASHION_MODEL,revision:'PRIVATE_OWNER_ID'}
+ ])assert.throws(()=>evaluateIndependentSiglip67(manifest,rows,args),/unsupported unpinned/);
 });
