@@ -36,7 +36,7 @@ const summary={evaluation:'source-verified real-photo descriptive pixel receipts
  cohort:outcomes.length,sourceShaVerified:outcomes.length,
  preexistingFlat16x16:outcomes.filter(x=>x.legacy16x16Blank).length,
  newPixelAdvisoryCount:outcomes.filter(x=>x.advisoryCodes.length).length,
- advisoryByCode:Object.fromEntries(['limited-resolution','low-light','bright-detail','highlights','possible-softness'].map(code=>[code,warned(code)])),
+ advisoryByCode:Object.fromEntries(['limited-resolution','low-light','bright-detail','highlights','possible-softness','busy-border'].map(code=>[code,warned(code)])),
  recognitionAccuracyBefore:null,recognitionAccuracyAfter:null,
  independentlyRatedHumanQualityCount:0,matchedRecapturePairs:0,
  qualityPrecision:null,qualityRecall:null,falsePositiveRetakeRate:null,
