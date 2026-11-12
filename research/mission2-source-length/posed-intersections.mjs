@@ -858,7 +858,7 @@ export function capturePhotoConstructionFaceAreas(root,shirt){
    witnesses.push({mesh,indices,flags,localFlags,repeatIndexFlags,
     coincidentCornerFlags,faceCount:count,tinyCount:tiny,localTinyCount:localTiny,
     repeatedIndexCount:repeated,coincidentCornerCount:coincident,
-    posedXYZ:new Float32Array(a)});
+    posedXYZ:new Float32Array(a),localXYZ:new Float32Array(pos.array)});
    smallTotal+=tiny;faceTotal+=count;
   }finally{posed.dispose();}
  }
@@ -891,6 +891,9 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
      !(x.coincidentCornerFlags instanceof Uint8Array)||x.coincidentCornerFlags.length!==base.faceCount||
      ![x.localTinyCount,x.repeatedIndexCount,x.coincidentCornerCount].every(n=>
       Number.isSafeInteger(n)&&n>=0&&n<=base.faceCount)||
+     !(x.localXYZ instanceof Float32Array)||x.localXYZ.length<9||
+     x.localXYZ.length%3||!x.localXYZ.every(Number.isFinite)||
+     x.indices.some(vertex=>vertex*3+2>=x.localXYZ.length)||
      !(x.posedXYZ instanceof Float32Array)||x.posedXYZ.length<3||
      x.posedXYZ.length%3||!x.posedXYZ.every(Number.isFinite)||
      x.indices.some(vertex=>vertex*3+2>=x.posedXYZ.length)))
@@ -1001,6 +1004,10 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
  };
  const photoBlend=scan(stages[0],stages[1]);
  const ownerBlend=scan(stages[1],stages[2]);
+ const sourceTopologyQuality=summarizeCanonicalSourceFaceQuality(stages[0]);
+ if(sourceTopologyQuality.totalSourceFaces!==totalFaces||
+    sourceTopologyQuality.originalLocalTinyFaces!==sumByOriginalLocalSmall(byMesh))
+  throw Error('M2 original source quality does not reconcile with immutable anatomy');
  const sum=(name)=>byMesh.reduce((a,m)=>a+m[name],0);
  if(stages.some(s=>s.faceTotal!==totalFaces)||
     smallAtBaseline!==stages[0].smallTotal||
@@ -1020,6 +1027,9 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
   recoveredDuringOwnerMaskFit:recoveredP190,
   persistentlySmallFromAnatomicalStage:persistentlySmall,
   byGarmentMesh:Object.freeze(byMesh),
+  sourceTopologyQuality,
+  sourceQualityIsDiagnosticOnly:true,
+  noMeshRepairApplied:true,
   sourceLocalSmallAtAnatomicalConstruction:sum('originalLocalSmall'),
   sourceWorldPosedSmallAtAnatomicalConstruction:sum('originalWorldPosedSmall'),
   sourceLocalSmallOnlyBeforePose:sum('localSmallOnlyBeforePose'),
@@ -1041,5 +1051,164 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
   noSourceFaceIdsCoordinatesOrOwnerFields:true,
   baselineStageIsSkinnedNotSourceJPEG:true,
   noCollisionWaived:true,physicalClearanceVerified:false,releaseAuthorized:false
+ });
+}
+
+
+/**
+ * P2-C18 — Research-only canonical source-local triangle triage.
+ *
+ * Faces and vertex coordinates are transient and private inside the donor.
+ * The returned value contains only count aggregates: never identifiers,
+ * coordinates, normals, owner JPEGs, skin weights, source SHA, or UV seams.
+ *
+ * Area is NOT a visual defect classifier. Exact indexed boundaries can be UV
+ * splits or intended sewn panels. No indices/positions/normals are rewritten;
+ * this receipt does not permit any new 3D collision/photorealism acceptance.
+ */
+function sumByOriginalLocalSmall(meshes){
+ return meshes.reduce((total,mesh)=>total+mesh.originalLocalSmall,0);
+}
+
+export function summarizeCanonicalSourceFaceQuality(stage){
+ if(!stage||stage.neverSerialize!==true||
+    stage.transientPrivateSourceFaceIds!==true||
+    !Array.isArray(stage.witnesses)||stage.witnesses.length<3||
+    stage.witnesses.length>32||!Number.isSafeInteger(stage.faceTotal)||
+    stage.faceTotal<3||stage.faceTotal>600000)
+  throw Error('M2 original local topology needs bounded private canonical source witness');
+ const qualityNames=Object.freeze(['pointMicro','nearCoincidentEdge','thinSliver','smallButWellShaped']);
+ const shapeTotal=Object.fromEntries(qualityNames.map(k=>[k,0]));
+ const byMesh=[];
+ let totalFaces=0,tinyFaces=0;
+ for(let meshIndex=0;meshIndex<stage.witnesses.length;meshIndex++){
+  const w=stage.witnesses[meshIndex];
+  const N=w?.faceCount,idx=w?.indices,v=w?.localXYZ;
+  if(!Number.isSafeInteger(N)||N<1||N>600000||
+     !(idx instanceof Uint32Array)||idx.length!==3*N||
+     !(v instanceof Float32Array)||v.length<9||v.length%3||
+     !v.every(Number.isFinite)||idx.some(i=>i*3+2>=v.length)||
+     !(w.localFlags instanceof Uint8Array)||w.localFlags.length!==N||
+     !(w.repeatIndexFlags instanceof Uint8Array)||w.repeatIndexFlags.length!==N||
+     !(w.coincidentCornerFlags instanceof Uint8Array)||w.coincidentCornerFlags.length!==N||
+     ![w.localTinyCount,w.repeatedIndexCount,w.coincidentCornerCount].every(n=>
+      Number.isSafeInteger(n)&&n>=0&&n<=N))
+   throw Error('M2 canonical original local source identity and finite coordinates required');
+  const edges=new Map(),triangles=new Set();
+  const edgeCounts=new Uint8Array(N),nonManifoldCounts=new Uint8Array(N),
+   duplicateFaceFlags=new Uint8Array(N);
+  const shapeCounts=Object.fromEntries(qualityNames.map(k=>[k,0]));
+  let small=0, repeated=0, coincident=0, duplicateFaces=0;
+  const xyz=(id,axis)=>v[id*3+axis];
+  const edgeKey=(i,j)=>i<j?i+':'+j:j+':'+i;
+  for(let f=0;f<N;f++){
+   const a=idx[f*3],b=idx[f*3+1],d=idx[f*3+2];
+   const repeatedFace=a===b||b===d||a===d;
+   const equalPoint=(i,j)=>xyz(i,0)===xyz(j,0)&&
+    xyz(i,1)===xyz(j,1)&&xyz(i,2)===xyz(j,2);
+   const coincidence=equalPoint(a,b)||equalPoint(b,d)||equalPoint(a,d);
+   const squared=(i,j)=>{
+    const x=xyz(i,0)-xyz(j,0),y=xyz(i,1)-xyz(j,1),z=xyz(i,2)-xyz(j,2);
+    return x*x+y*y+z*z;
+   };
+   const ab=squared(a,b),bd=squared(b,d),da=squared(d,a);
+   const ux=xyz(b,0)-xyz(a,0),uy=xyz(b,1)-xyz(a,1),uz=xyz(b,2)-xyz(a,2);
+   const wx=xyz(d,0)-xyz(a,0),wy=xyz(d,1)-xyz(a,1),wz=xyz(d,2)-xyz(a,2);
+   const nx=uy*wz-uz*wy,ny=uz*wx-ux*wz,nz=ux*wy-uy*wx;
+   const normSq=nx*nx+ny*ny+nz*nz;
+   if(![ab,bd,da,normSq].every(Number.isFinite))
+    throw Error('M2 nonfinite actual source local triangle quality');
+   const tiny=normSq<1e-10;
+   if(w.localFlags[f]!==Number(tiny)||
+      w.repeatIndexFlags[f]!==Number(repeatedFace)||
+      w.coincidentCornerFlags[f]!==Number(coincidence)||
+      ((repeatedFace||coincidence)&&!tiny))
+    throw Error('M2 source face quality differs from canonical original flags');
+   if(repeatedFace)repeated++;
+   if(coincidence)coincident++;
+   if(tiny){
+    small++;
+    const max=Math.max(ab,bd,da),min=Math.min(ab,bd,da);
+    const ratio=ab+bd+da?2*Math.sqrt(3)*Math.sqrt(normSq)/(ab+bd+da):0;
+    const name=max<1e-8?'pointMicro':
+      min<1e-8?'nearCoincidentEdge':
+      ratio<.05?'thinSliver':'smallButWellShaped';
+    shapeCounts[name]++;
+    shapeTotal[name]++;
+   }
+   // Each distinct canonical triangular face ID is considered at most once;
+   // duplicates across different face IDs are diagnostic, not auto-welded.
+   const tri=[a,b,d].sort((x,y)=>x-y).join(':');
+   if(triangles.has(tri)){duplicateFaceFlags[f]=1;duplicateFaces++;}
+   else triangles.add(tri);
+   for(const [i,j] of [[a,b],[b,d],[d,a]]){
+    if(i===j)continue;
+    const key=edgeKey(i,j);
+    if(!edges.has(key))edges.set(key,[]);
+    const faces=edges.get(key);
+    if(!faces.includes(f))faces.push(f);
+   }
+  }
+  if(small!==w.localTinyCount||repeated!==w.repeatedIndexCount||
+     coincident!==w.coincidentCornerCount)
+   throw Error('M2 source quality source flag totals mismatch');
+  for(const faces of edges.values()){
+   for(const f of faces) {
+    if(faces.length===1)edgeCounts[f]++;
+    if(faces.length>2)nonManifoldCounts[f]++;
+   }
+  }
+  let smallBoundary=0,smallInterior=0,smallNonManifold=0,
+   smallDuplicate=0,boundary=0,nonManifold=0;
+  for(let face=0;face<N;face++){
+   const onBoundary=edgeCounts[face]>0,nonManifoldFace=nonManifoldCounts[face]>0;
+   if(onBoundary)boundary++;
+   if(nonManifoldFace)nonManifold++;
+   if(w.localFlags[face]){
+    if(onBoundary)smallBoundary++;
+    if(!onBoundary&&!nonManifoldFace)smallInterior++;
+    if(nonManifoldFace)smallNonManifold++;
+    if(duplicateFaceFlags[face])smallDuplicate++;
+   }
+  }
+  const shapeSum=Object.values(shapeCounts).reduce((a,b)=>a+b,0);
+  if(shapeSum!==small||smallBoundary+smallInterior>small||
+     smallNonManifold>small||smallDuplicate>small)
+   throw Error('M2 source local quality classification does not reconcile');
+  byMesh.push(Object.freeze({meshIndex,sourceFaceCount:N,localSmallFaces:small,
+   tinyShape: Object.freeze(shapeCounts),sourceBoundaryFaceCount:boundary,
+   sourceNonManifoldFaceCount:nonManifold,
+   localTinyBoundaryFaces:smallBoundary,localTinyInteriorFaces:smallInterior,
+   localTinyNonManifoldFaces:smallNonManifold,
+   duplicateCanonicalIndexFaces:duplicateFaces,
+   localTinyDuplicateCanonicalIndexFaces:smallDuplicate}));
+  totalFaces+=N;tinyFaces+=small;
+ }
+ if(totalFaces!==stage.faceTotal||
+    byMesh.length!==stage.witnesses.length||
+    Object.values(shapeTotal).reduce((a,b)=>a+b,0)!==tinyFaces)
+  throw Error('M2 source local topology totals incomplete');
+ const sum=k=>byMesh.reduce((a,m)=>a+m[k],0);
+ return Object.freeze({
+  totalSourceFaces:totalFaces,originalLocalTinyFaces:tinyFaces,
+  byMesh:Object.freeze(byMesh),
+  tinyShape:Object.freeze(shapeTotal),
+  sourceBoundaryFaceCount:sum('sourceBoundaryFaceCount'),
+  sourceNonManifoldFaceCount:sum('sourceNonManifoldFaceCount'),
+  localTinyBoundaryFaces:sum('localTinyBoundaryFaces'),
+  localTinyInteriorFaces:sum('localTinyInteriorFaces'),
+  localTinyNonManifoldFaces:sum('localTinyNonManifoldFaces'),
+  duplicateCanonicalIndexFaces:sum('duplicateCanonicalIndexFaces'),
+  localTinyDuplicateCanonicalIndexFaces:sum('localTinyDuplicateCanonicalIndexFaces'),
+  sourceQualityCrossSquaredThreshold:1e-10,
+  microEdgeSquaredThreshold:1e-8,
+  thinSliverRatioThreshold:.05,
+  exactIndexedAdjacencyNotPhysicalSewing:true,
+  normalsAndUVSeamsUnverified:true,
+  sampledSourceMeshOnly:true,
+  noSourceCoordinatesOrFaceKeys:true,
+  noGeometryChanged:true,
+  noCollisionWaived:true,
+  releaseAuthorized:false
  });
 }
