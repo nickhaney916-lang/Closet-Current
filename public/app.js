@@ -78,7 +78,26 @@ function cropButton(item){const button=node('button','Crop photo','secondary');b
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
- const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
+ // P839: opening Adjust and pressing Save is not evidence the owner checked
+ // an unreliable model suggestion. Require active photo-based acknowledgement.
+ const explicitReview=Boolean(item.requiresOwnershipConfirmation||item.outfitSourceId||
+  item.recognitionDiagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired);
+ let confirmReview=null,save=null,reviewStatus=null;
+ const form=node('form'),draft=structuredClone(item);
+ const reviewedCore=()=>draft.category!=='Uncategorized'&&
+  Boolean(draft.color&&String(draft.color).trim()&&draft.color!=='Unknown');
+ const canSaveReview=()=>{
+  if(!explicitReview)return true;
+  const valid=Boolean(confirmReview?.checked&&reviewedCore());
+  if(save)save.disabled=!valid;
+  if(reviewStatus)reviewStatus.textContent=reviewedCore()?
+   'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
+   'Choose a garment category and color from the photo before confirming.';
+  return valid;
+ };
+ const collect=clothingFields(form,draft,()=>{
+  if(confirmReview)confirmReview.checked=false;canSaveReview();
+ });
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -95,18 +114,34 @@ function adjustPhoto(item){
   };
   suggestion.append(use);form.prepend(suggestion);
  }
- const save=node('button','Save changes','primary'),cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
+ save=node('button','Save changes','primary');
+ const cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
+ if(explicitReview){
+  const approval=node('label',null,'review-acknowledgement');
+  confirmReview=node('input');confirmReview.type='checkbox';confirmReview.required=true;
+  confirmReview.setAttribute('aria-label','I checked the clothing photo and confirmed the category type and color');
+  approval.append(confirmReview,document.createTextNode('I checked the garment photo and confirmed its category, specific type (or Unknown), and color.'));
+  reviewStatus=node('p',null,'fine');
+  confirmReview.onchange=canSaveReview;
+  form.append(approval,reviewStatus);canSaveReview();
+ }
  cancel.type=remove.type='button';cancel.onclick=()=>dialog.close();
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
- form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
+ form.onsubmit=async event=>{
+  event.preventDefault();
+  if(explicitReview&&!canSaveReview()){
+   message('Confirm the garment category and color against the photo, then check the review box before saving.');
+   return;
+  }
+  save.disabled=true;try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
   await savePiece(value,batch.filter(x=>x.id!==item.id));
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
- }catch{save.disabled=false;message('Could not save changes. Try again.');}};
+ }catch{if(explicitReview)canSaveReview();else save.disabled=false;message('Could not save changes. Try again.');}};
  dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
@@ -129,7 +164,7 @@ function renderPhotoResults(grid,results){
   const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id),known=item.category!=='Uncategorized';
   const title=item.name||(known&&item.itemType&&item.itemType!=='Unknown'?item.itemType:known?item.category:'Clothing photo');
   const state=pending?'checking':saved?'saved':item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
-  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?(reviewFirst836||item.recognitionDiagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired?'Confirm before adding':'Ready to add'):known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
+  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?(reviewFirst836||item.outfitSourceId||item.recognitionDiagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired?'Confirm before adding':'Ready to add'):known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
   if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
   else if(!pending)body.append(node('p',item.color?'Color: '+item.color+' · confirm the garment category.':item.scanFailed?'Try again, or add the details with Adjust.':'Retake this item, or add its details with Adjust.','fine'));
@@ -161,7 +196,7 @@ function candidate(image,options={}){
  if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
- if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=false;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
+ if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
 }
@@ -359,9 +394,9 @@ async function recognizeItem(item){
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');
    // P838: the empirically unsafe subtype guard is an OWNER REVIEW order,
    // not permission to auto-save a category+estimated color as a substitute.
-   if(result.diagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired===true){
+   if(result.diagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired===true||item.outfitSourceId){
     item.requiresOwnershipConfirmation=true;
-    item.localStatus='This clothing type is easy to misidentify. Tap Adjust to confirm the category, type and color before saving.';
+    item.localStatus=item.outfitSourceId?'Separated outfit piece. Tap Adjust to confirm its category, type and color before saving.':'This clothing type is easy to misidentify. Tap Adjust to confirm the category, type and color before saving.';
     return true;
    }
    if(!item.color||item.color==='Unknown'){item.localStatus='Garment category recognized. Confirm the specific type and color in Adjust; optional details can stay blank.';return true;}
@@ -373,7 +408,7 @@ async function recognizeItem(item){
   Object.assign(item,ClothingDetails.fill(item,result.choices[0],result.details));
   item.name=[item.color,item.itemType&&item.itemType!=='Unknown'?item.itemType:item.category].filter(Boolean).join(' ');item.indexingLevel=item.itemType==='Unknown'?'category-color':'specific-type';
   if(item.possibleDuplicate){if(typeof recordDeviceEvent==='function')recordDeviceEvent('duplicate_review');item.localStatus='Possible duplicate: compare this photo with your closet before saving.';return true;}
-  if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
+  if(item.requiresOwnershipConfirmation||item.outfitSourceId){item.requiresOwnershipConfirmation=true;item.localStatus=item.outfitSourceId?'Outfit piece suggestion ready. Tap Adjust to confirm the category, type and color before saving.':'Scanner suggestion ready. Tap Adjust to confirm the category, type and color before saving.';return true;}
   // P836 no-deploy review-first trial: real-original P834 saw three confidently
   // wrong subtypes. A model 'strong' result is NOT a human confirmation.
   // Retain the original JPEG and suggestion in the private draft until Adjust

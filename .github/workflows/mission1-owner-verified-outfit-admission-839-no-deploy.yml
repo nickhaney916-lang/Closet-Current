@@ -1,0 +1,72 @@
+name: Mission 1 P839 outfit owner-confirmed admission — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-owner-verified-outfit-admission-839-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p839-owner-review-HOLD
+  cancel-in-progress: true
+jobs:
+  exact-p838-scope-and-node-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict verified P838 parent and seven-file allowlist
+        run: |
+          set -euo pipefail
+          BASE=4774d4a6cfd719ed59e168be8aa1d14d6e35ec6a
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p839-files
+          cat /tmp/p839-files
+          test "$(wc -l </tmp/p839-files)" -eq 7
+          while IFS= read -r p; do
+            case "$p" in
+              public/app.js|public/outfit-capture.js|tests/automatic-indexing.test.cjs|tests/outfit-capture.test.cjs|scripts/test-m1-owner-review-editor-839.mjs|research/mission1-owner-verified-outfit-admission-839/REPORT.md|.github/workflows/mission1-owner-verified-outfit-admission-839-no-deploy.yml) ;;
+              *) echo "P839_UNAUTHORIZED_FILE: $p"; exit 1 ;;
+            esac
+          done </tmp/p839-files
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/recognition-engine.mjs public/recognition-vectors.bin public/recognition-vectors.json public/outfit-worker.mjs supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-owner-verified-outfit-admission-839/REPORT.md
+          echo M1_P839_SCOPED_NO_DEPLOY
+      - name: Install pinned native requirements ephemerally
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Native full regression and no-account bundle
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/outfit-capture.js
+          node --check scripts/test-m1-owner-review-editor-839.mjs
+          node --test tests/automatic-indexing.test.cjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-browser-owner-review-DOM-HOLD:
+    needs: [exact-p838-scope-and-node-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install clean browser runtimes, no user images or accounts
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Actual app.js owner editor in Chromium and WebKit at 320/390/430
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-owner-review-editor-839.mjs
+          echo M1_P839_BROWSER_OWNER_CONFIRMATION_PASS_NO_ML_OR_RELEASE_CLAIM
