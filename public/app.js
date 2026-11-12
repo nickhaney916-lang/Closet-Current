@@ -1254,7 +1254,56 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    return;
   }
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
-   throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
+   throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');
+  // Mission 3 research-only: legacy v1-v3 IMPORT is a single CAS-bound
+  // IndexedDB write for clothes, inspiration, outfit board and cloud revision.
+  // The production legacy path below stays unchanged until owner release.
+  if(new URLSearchParams(location.search).get('legacyAtomicM3')==='research'){
+   assertImport();
+   if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
+    throw Error('Save or discard your unfinished outfit changes before importing.');
+   const {prepareLegacyAtomicM3,commitLegacyAtomicM3}=
+    await import('../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs');
+   assertImport();
+   const ownerId=window.closetAuth?.user?.id;
+   const prepared=await prepareLegacyAtomicM3({
+    data,ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+    normalizeClothing,validLook,cleanOutfitBoard
+   });
+   assertImport();
+   if(!confirm('Import '+prepared.counts.garments+' clothing pieces, '+
+      prepared.counts.looks+' inspiration looks and '+
+      prepared.counts.savedOutfits+' saved outfits together? All changes are atomic; '+
+      'Cancel or a conflict keeps the existing closet unchanged.'))
+    return importMessage('Import canceled. Your closet is unchanged.');
+   assertImport();
+   const operation=writes.then(()=>{
+    assertImport();
+    if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
+     throw Error('Your outfit changed during import. Save it and retry.');
+    return commitLegacyAtomicM3({
+     ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+     prepared,confirmed:true
+    });
+   });
+   writes=operation.catch(()=>{});
+   await operation;
+   assertImport();
+   window.closetCloud?.changed?.();
+   try{
+    if(typeof mission3ReloadOwnerCloudView!=='function')
+     throw Error('Owner-private closet refresh unavailable');
+    await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
+    assertImport();
+    importMessage('Clothing, inspiration and outfits imported atomically.');
+   }catch(error){
+    // Commit has ALREADY succeeded. Never tell the owner nothing was saved.
+    assertImport();
+    importMessage('Backup imported atomically. Reload My Closet to refresh the view.');
+   }
+   return;
+  }
+  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
 window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
