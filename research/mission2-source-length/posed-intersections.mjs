@@ -793,10 +793,10 @@ export function capturePhotoConstructionFaceAreas(root,shirt){
   throw Error('M2 photo stages require actual existing owner garment');
  const meshes=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
   ['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
- if(meshes.length!==3||new Set(meshes).size!==3||
-    !meshes.some(m=>m.name==='Work56-independent-shirt-shell')||
+ if(meshes.length<3||meshes.length>32||new Set(meshes).size!==meshes.length||
+    meshes.filter(m=>m.name==='Work56-independent-shirt-shell').length!==1||
     !['L','R'].every(side=>meshes.some(m=>m.userData?.work45IndependentShoulderCap===side)))
-  throw Error('M2 photo stages require exactly original torso and two sewn cap source pieces');
+  throw Error('M2 photo stages require one original torso and verified left/right sewn cap source pieces');
  root.updateMatrixWorld(true);
  const witnesses=[];
  let smallTotal=0,faceTotal=0;
@@ -841,14 +841,16 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
  const stages=[beforePhoto,afterPhoto,afterOwner];
  if(stages.some(stage=>!stage?.transientPrivateSourceFaceIds||
     stage.neverSerialize!==true||
-    !Array.isArray(stage.witnesses)||stage.witnesses.length!==3||
+    !Array.isArray(stage.witnesses)||stage.witnesses.length<3||stage.witnesses.length>32||
     !Number.isSafeInteger(stage.smallTotal)||!Number.isSafeInteger(stage.faceTotal)))
   throw Error('M2 photo stage complete ephemeral original-face witnesses required');
  const areas=stages.map(s=>s.witnesses.map(w=>w.tinyCount));
  const totalFaces=stages[0].faceTotal;
+ if(stages.some(s=>s.witnesses.length!==stages[0].witnesses.length))
+  throw Error('M2 photo stage original source panel count changed');
  let newP62=0,recoveredP62=0,newP190=0,recoveredP190=0,persistentlySmall=0,smallAtBaseline=0;
  const byMesh=[];
- for(let meshIndex=0;meshIndex<3;meshIndex++){
+ for(let meshIndex=0;meshIndex<stages[0].witnesses.length;meshIndex++){
   const w=stages.map(s=>s.witnesses[meshIndex]),base=w[0];
   if(w.some(x=>x.mesh!==base.mesh||x.faceCount!==base.faceCount||
      x.indices?.length!==base.indices?.length||x.flags?.length!==base.flags?.length))
@@ -890,6 +892,7 @@ export function comparePhotoConstructionAreaStages(beforePhoto,afterPhoto,afterO
  return Object.freeze({
   stages:Object.freeze(['anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']),
   totalOriginalSourceFaces:totalFaces,
+  sourcePieceCount:byMesh.length,
   smallAtAnatomicalConstruction:stages[0].smallTotal,
   smallAfterPhotoFit:stages[1].smallTotal,
   smallAfterOwnerMaskFit:stages[2].smallTotal,
