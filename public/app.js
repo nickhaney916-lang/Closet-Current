@@ -433,7 +433,7 @@ function automaticAdmissionCore842(item){
   !item.outfitSourceId&&!item.segmentHint?.clipped);
 }
 async function saveIndexed(item){
- if(learningMode72())return false; // Research-only owner-review, never auto learn or save.
+ if(typeof location!=='undefined'&&new URLSearchParams(location.search).get('confirmedLearning72')==='1')return false; // Research-only owner review; standalone extracted-source tests stay compatible.
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
