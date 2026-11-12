@@ -32,7 +32,8 @@ await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
       new URLSearchParams(globalThis.location?.search||'').get('photoSourceLength')==='research')
     built.shirt=(new URLSearchParams(globalThis.location?.search||'').get('photoSourceTrianglePolicy')==='adaptive'
       ?applyNoNewContactSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',onResearchDiagnostic:diagnostic=>console.info('M2_BODY_CONTACT_LOCALITY:'+JSON.stringify(diagnostic)),
-       experimentalDepthTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceDepthTrial')==='research'})
+       experimentalDepthTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceDepthTrial')==='research',
+       sourceAreaStages:__m2PhotoStageAreas})
       :fitSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',traceTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleAudit')==='research',strictTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleStrict')==='research'}));`);
 await patch('research/outfit-3d-01/research-panel.mjs',
  'ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,',
