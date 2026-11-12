@@ -88,7 +88,9 @@ function adjustPhoto(item){
   Boolean(draft.color&&String(draft.color).trim()&&draft.color!=='Unknown')&&
   item.reconciliation70Status!=='unresolved'&&
   (!item.shoePair||draft.category==='Shoes')&&
-  (typeof ownerMaySaveUnit70!=='function'||ownerMaySaveUnit70(item,items));
+  !(item.reconciliation70?.sourceSha256&&item.reconciliation70?.maskSha256&&items.some(saved=>
+    saved.id!==item.id&&saved.reconciliation70?.sourceSha256===item.reconciliation70.sourceSha256&&
+    saved.reconciliation70?.maskSha256===item.reconciliation70.maskSha256));
  const canSaveReview=()=>{
   if(!explicitReview)return true;
   const valid=Boolean(confirmReview?.checked&&reviewedCore());
@@ -141,7 +143,10 @@ function adjustPhoto(item){
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();
-  if((typeof ownerMaySaveUnit70==='function'&&!ownerMaySaveUnit70(item,items))||item.reconciliation70Status==='unresolved'){message('Resolve grouping or duplicate source before saving.');return;}
+  if((item.reconciliation70?.sourceSha256&&item.reconciliation70?.maskSha256&&items.some(saved=>
+      saved.id!==item.id&&saved.reconciliation70?.sourceSha256===item.reconciliation70.sourceSha256&&
+      saved.reconciliation70?.maskSha256===item.reconciliation70.maskSha256))||
+    item.reconciliation70Status==='unresolved'){message('Resolve grouping or duplicate source before saving.');return;}
   if(explicitReview&&!canSaveReview()){
    message('Confirm the garment category and color against the photo, then check the review box before saving.');
    return;

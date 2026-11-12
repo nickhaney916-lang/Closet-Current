@@ -37,6 +37,7 @@ function renderUnit70Panel(){
  const target=document.getElementById('outfitUnitReview70');if(!target)return;
  unit70Api.then(api=>{
   if(!outfitUnits70)return;
+  if(typeof window!=='undefined')window.ownerMaySaveUnit70=api.ownerMaySaveUnit70;
   api.renderUnitReview70(target,{drafts:batch,existing:items,sourceId:outfitActiveId,
    onPair:(a,b)=>updateUnit70('pair',[a,b]),onCombine:(a,b)=>updateUnit70('combine',[a,b]),
    onKeep:ids=>updateUnit70('keep',ids),onDiscard:ids=>updateUnit70('discard',ids),onUnpair:id=>updateUnit70('unpair',[id])});
