@@ -38,6 +38,7 @@ function videoFixture({switchOwner=true}={}){
   removeAttribute(name){if(name==='src')this.src='';calls.push('video.remove:'+name);}};
  const ctx={
   busy:false,db:oldDB,batch:[],session:0,captureProof01Active:true,captureOperationEpoch:0,
+  mediaLifecycleEpoch:0,videoImportSerial:0,videoImportActive:false,
   captureProofOwner:()=>owner,document:{hidden:false},
   stopCamera(){calls.push('stop')},controls:v=>calls.push('controls:'+v),
   $:el,video,waitEvent:async()=>{},snap:()=>image,
@@ -86,7 +87,8 @@ function galleryFixture(){
  let owner=ownerA;
  const window={__lastPhotoImportResult:'NEXT'};
  const ctx={
-  busy:false,captureOperationEpoch:0,db:oldDB,session:0,window,batch:[],
+  busy:false,captureOperationEpoch:0,mediaLifecycleEpoch:0,photoImportSerial:0,photoImportActive:false,
+  document:{hidden:false},db:oldDB,session:0,window,batch:[],
   captureProof01Active:true,mobileCameraToCloset75Active:false,
   captureProofOwner:()=>owner,
   stopCamera(){logs.push('stop')},controls:v=>logs.push('controls:'+v),
@@ -157,7 +159,8 @@ test('session lock revokes old blob and releases controls before the new owner b
   removeAttribute(){video.src='';calls.push('video.remove')},
   load(){calls.push('video.load')}};
  const ctx={
-  captureOperationEpoch:0,busy:true,captureProofTaking:true,video,
+  captureOperationEpoch:0,videoImportSerial:0,videoImportActive:false,
+  photoImportSerial:0,photoImportActive:false,busy:true,captureProofTaking:true,video,
   window:{addEventListener:(n,cb)=>handlers[n]=cb},
   stopCamera:()=>calls.push('stop'),controls:x=>calls.push('controls:'+x),
   localJobs:new Map(),localWorker:null,
