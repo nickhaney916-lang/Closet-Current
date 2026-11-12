@@ -50,7 +50,7 @@ export function inspectCommonsSearchResponse05(search,raw,known=new Set()){
   let validLicense=false;
   try{
    const parsed=new URL(licenseUrl);
-   validLicense=parsed.protocol==='https:'&&
+   validLicense=['https:','http:'].includes(parsed.protocol)&&
     (parsed.hostname==='creativecommons.org'||parsed.hostname==='www.creativecommons.org');
   }catch{}
   const key=candidateKey(page),sha1=info?.sha1;
@@ -103,9 +103,10 @@ export function combineSourceCandidates05(items,originals){
      candidate.reviewerA!==null||candidate.reviewerB!==null||
      candidate.sourcePixelsSha256!==null||
      !candidate.intakeKey?.startsWith('commons-page-')||
-     existing.has(candidate.sourceTitle?.toLowerCase()))
+     !candidate.sourceTitle?.startsWith('File:'))
    throw Error('P67-05: unreviewed metadata cannot be promoted to a training label');
-  if(ids.has(candidate.intakeKey)||shas.has(candidate.commonsOriginalSha1))continue;
+  if(existing.has(candidate.sourceTitle.toLowerCase())||
+     ids.has(candidate.intakeKey)||shas.has(candidate.commonsOriginalSha1))continue;
   ids.add(candidate.intakeKey);shas.add(candidate.commonsOriginalSha1);
   retained.push(candidate);
  }
