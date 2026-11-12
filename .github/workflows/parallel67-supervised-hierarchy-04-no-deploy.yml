@@ -1,0 +1,127 @@
+name: PARALLEL 67 supervised fashion hierarchy 32 train 16 source-separated audit — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel67-supervised-hierarchical-prototypes-04-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel67-supervised-hierarchy-04-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  strict-P67-02-parent-full-native-safety-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact independent fashion-source parent and 6 LIMITED research-only paths
+        run: |
+          set -euo pipefail
+          BASE=42dd05cb3378fdb103d16408d4751460054d35e9
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p67-04-paths
+          cat /tmp/p67-04-paths
+          test "$(wc -l </tmp/p67-04-paths)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/parallel67-hierarchical-prototypes-04.mjs|scripts/parallel67-run-hierarchical-real48-04.mjs|scripts/parallel67-compare-hierarchy-04.mjs|tests/parallel67-supervised-hierarchy-04.test.mjs|research/parallel67-supervised-hierarchical-prototypes-04/REPORT.md|.github/workflows/parallel67-supervised-hierarchy-04-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED MODEL WEIGHTS, SOURCE LABELS, OWNER, CLOUD OR DEPLOY EDIT: $p"; exit 1 ;;
+            esac
+          done </tmp/p67-04-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel67-supervised-hierarchical-prototypes-04/REPORT.md
+          echo P67_04_VERIFIED_PARENT_SIX_RESEARCH_PATHS_NO_DEPLOY
+      - name: Ephemeral native app dependencies (no release changes)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Verify actual supervised model training rules, SHA heldout isolation, unsupported class review + full node tests
+        run: |
+          set -euo pipefail
+          node --check scripts/parallel67-hierarchical-prototypes-04.mjs
+          node --check scripts/parallel67-run-hierarchical-real48-04.mjs
+          node --check scripts/parallel67-compare-hierarchy-04.mjs
+          node --test tests/parallel67-supervised-hierarchy-04.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  ACTUAL-q8-fitted-supervised-model-32-train-16-test-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    env:
+      NODE_OPTIONS: "--max-old-space-size=5120"
+      HF_HUB_DISABLE_TELEMETRY: "1"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install original pinned q8 ONNX vision model engine only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1
+      - name: Download ALL 32 reviewed train and 16 separate historical eval photos with immutable publisher SHA
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          IDS=$(node -e 'const train=require("./benchmark/manifest-reviewed-32.json");const hold=require("./benchmark/manifest-holdout-16.json");const ids=[...train,...hold].map(x=>x.id);if(ids.length!==48||new Set(ids).size!==48)process.exit(2);process.stdout.write(ids.join(","));')
+          # Download serially to avoid Wikimedia Commons HTTP429, and verify
+          # byte-for-byte original hashes in both downloader and model runner.
+          IFS=',' read -r -a SOURCES <<< "$IDS"
+          for id in "${SOURCES[@]}"; do
+            node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$id"
+            sleep 2
+          done
+          test "$(find benchmark/photos -type f \( -name '*.jpg' -o -name '*.png' -o -name '*.webp' \) | wc -l)" -eq 48
+      - name: Actually fit supervised 768-D garment prototypes and rank 16 source-SHA-distinct real photos
+        run: |
+          set -euo pipefail
+          node scripts/parallel67-run-hierarchical-real48-04.mjs benchmark/p67-supervised-real48
+      - name: Export only labeled-category counts and source-ID numerical results, NO JPEGs nor embeddings
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: P67-04-REAL-fitted-32-train-16-dev-public-originals-NUMERIC-NOT-BLIND-HOLD
+          path: benchmark/p67-supervised-real48/hierarchical-supervised-diagnostic.json
+          retention-days: 14
+          if-no-files-found: error
+  exact-pretrained-baseline-versus-actual-supervised-model-HOLD:
+    needs: [ACTUAL-q8-fitted-supervised-model-32-train-16-test-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download proven unchanged fashion-trained q8 source baseline from 3-of-3 green run
+        uses: actions/download-artifact@v4
+        with:
+          run-id: 43151861029
+          github-token: ${{ github.token }}
+          name: P67-02-Marqo-fashionSigLIP-16-originals-FORCED-TOP1-NUMERIC-NOT-BLIND
+          path: benchmark/p67-fashion-original
+      - name: Download source-complete supervised hierarchy numerical evidence only
+        uses: actions/download-artifact@v4
+        with:
+          name: P67-04-REAL-fitted-32-train-16-dev-public-originals-NUMERIC-NOT-BLIND-HOLD
+          path: benchmark/p67-supervised-real48
+      - name: Reject missing/mutated originals and calculate corrected vs newly wrong garment subtypes
+        run: |
+          set -euo pipefail
+          node --test tests/parallel67-supervised-hierarchy-04.test.mjs
+          node scripts/parallel67-compare-hierarchy-04.mjs benchmark/p67-fashion-original/siglip-developer-exposed-real16.json benchmark/p67-supervised-real48/hierarchical-supervised-diagnostic.json benchmark/p67-supervised-real48/compared-with-zero-shot.json
+      - name: Upload only honest model improvements and regressions, NOT photos/private data
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: P67-04-source-disjoint-supervised-VS-original-fashion-research-only
+          path: benchmark/p67-supervised-real48/compared-with-zero-shot.json
+          retention-days: 14
+          if-no-files-found: error
