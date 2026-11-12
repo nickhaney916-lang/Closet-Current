@@ -1330,6 +1330,10 @@ test('P2-C25 exact single-pair true 163-bone source micro-Z 0.5/1mm tests preser
 test('P2-C26 two real named shoulder/torso 163-bone source poses re-audit actual body/panels/self and restore all source bytes and bone quaternions',()=>{
  const {root,garment,bones}=simplePose();
  bones[0].name='upperarm01L';bones[1].name='upperarm01R';bones[2].name='spine01';
+ // Real GLB source quaternions may have tiny, harmless non-unit floating
+ // norms. Confirm restoration by exact original components, not angleTo()
+ // whose self-comparison can be nonzero for an unnormalized quaternion.
+ bones[2].quaternion.set(.002,-.003,.001,.99999);
  const originalBones=bones.map(b=>b.quaternion.clone());
  const originalMesh=garment.geometry.getAttribute('position').array.slice();
  const sample=(name,micro)=>{
@@ -1376,7 +1380,12 @@ test('P2-C26 two real named shoulder/torso 163-bone source poses re-audit actual
   }
  }
  assert.deepEqual(garment.geometry.getAttribute('position').array,originalMesh);
- for(let i=0;i<bones.length;i++)assert.ok(bones[i].quaternion.angleTo(originalBones[i])<1e-9);
+ for(let i=0;i<bones.length;i++){
+  assert.equal(bones[i].quaternion.x,originalBones[i].x);
+  assert.equal(bones[i].quaternion.y,originalBones[i].y);
+  assert.equal(bones[i].quaternion.z,originalBones[i].z);
+  assert.equal(bones[i].quaternion.w,originalBones[i].w);
+ }
  const counts=JSON.stringify(report);
  for(const hidden of ['"localXYZ"','"sourceUV"','"skinIndex"',
    '"newlyIntersectingSourceKeys"','"ownerId"','"sourceSHA256"'])
