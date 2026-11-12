@@ -537,7 +537,34 @@ try{
       a.smallAtAnatomicalConstruction+a.newlySmallDuringPhotoFit-a.recoveredDuringPhotoFit);
      assert.equal(a.smallAfterOwnerMaskFit,
       a.smallAfterPhotoFit+a.newlySmallDuringOwnerMaskFit-a.recoveredDuringOwnerMaskFit);
+     const verifyUnappliedBlend=(samples,from,to,added,recovered)=>{
+      assert.deepEqual(samples.map(t=>t.fraction),[0,.25,.5,.75,1]);
+      for(const sample of samples){
+       assert.ok(Number.isSafeInteger(sample.smallSourceFaces)&&sample.smallSourceFaces>=0);
+       assert.ok(Number.isSafeInteger(sample.newlySmallSourceFaces)&&sample.newlySmallSourceFaces>=0);
+       assert.ok(Number.isSafeInteger(sample.recoveredSourceFaces)&&sample.recoveredSourceFaces>=0);
+       assert.equal(sample.smallSourceFaces,
+        from+sample.newlySmallSourceFaces-sample.recoveredSourceFaces);
+      }
+      assert.equal(samples[0].smallSourceFaces,from);
+      assert.equal(samples[0].newlySmallSourceFaces,0);
+      assert.equal(samples[0].recoveredSourceFaces,0);
+      assert.equal(samples.at(-1).smallSourceFaces,to);
+      assert.equal(samples.at(-1).newlySmallSourceFaces,added);
+      assert.equal(samples.at(-1).recoveredSourceFaces,recovered);
+     };
+     verifyUnappliedBlend(a.photoStageBlendFeasibility,
+      a.smallAtAnatomicalConstruction,a.smallAfterPhotoFit,
+      a.newlySmallDuringPhotoFit,a.recoveredDuringPhotoFit);
+     verifyUnappliedBlend(a.ownerStageBlendFeasibility,
+      a.smallAfterPhotoFit,a.smallAfterOwnerMaskFit,
+      a.newlySmallDuringOwnerMaskFit,a.recoveredDuringOwnerMaskFit);
+     assert.equal(a.partialBlendNotApplied,true);
+     assert.equal(a.sourcePhotoShapeUnverifiedForBlend,true);
+     assert.equal(a.onlyOneRealSampledPose,true);
      const redacted=JSON.stringify(a);
+     assert.equal(redacted.includes('posedXYZ'),false,
+      'Only anonymous source-face counts may leave the private research donor');
      assert.equal(redacted.includes(source.originalSHA),false);
      assert.equal(redacted.includes('"indices"'),false,
       'No transient original triangle index buffers may leave the disposable owner donor');
