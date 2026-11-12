@@ -31,6 +31,7 @@ jobs:
       - name: Syntax check actual current controller and browser/tests without npm
         run: |
           node --version
+          node --check public/app.js
           node --check public/cloud-backup.js
           node --check tests/mission3-stale-cloud-413-capacity.test.cjs
           node --check tests/mission3-stale-413-offline.test.cjs
