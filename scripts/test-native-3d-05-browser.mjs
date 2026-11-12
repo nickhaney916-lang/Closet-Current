@@ -32,6 +32,9 @@ const sourceStageAudit=process.env.PHOTO_STAGE_AREA_AUDIT==='1';
 const sourceShortEdgeTrial=process.env.PHOTO_SHORT_EDGE_TRIAL==='1';
 const sourceNeighborRelaxation=process.env.PHOTO_NEIGHBOR_RELAXATION==='1';
 const sourceResidualDirection=process.env.PHOTO_RESIDUAL_DIRECTION_TRIAL==='1';
+const sourceLastPairMicro=process.env.PHOTO_LAST_PAIR_MICRO_TRIAL==='1';
+if(sourceLastPairMicro&&!sourceResidualDirection)
+ throw Error('M2 C25 strict private one-pair photo-depth audit requires full two-direction source witness');
 if(sourceResidualDirection&&!sourceNeighborRelaxation)
  throw Error('M2 C24 two-direction residual source trial requires complete 50-percent one-ring original-face proof');
 if(sourceNeighborRelaxation&&!sourceShortEdgeTrial)
@@ -398,7 +401,8 @@ try{
   await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
-    (sourceResidualDirection?'&photoSourceResidualPairDirection=research':''),
+    (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
+    (sourceLastPairMicro?'&photoSourceLastPairMicroDepth=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -822,6 +826,48 @@ try{
         assert.equal(trial.noContactWaived,true);
         assert.equal(trial.releaseAuthorized,false);
        }
+       if(sourceLastPairMicro){
+        const last=q.lastPairMicroDepthTrial;
+        assert.ok(last,'A real surviving one-original-face-pair micro test must be present');
+        assert.equal(last.oneSurvivingOriginalSourcePair,true);
+        assert.equal(Object.values(last.diagnosedSourceContactGeometry).reduce((s,v)=>s+v,0),1);
+        assert.equal(last.diagnosedOriginalCoincidentCorners.reduce((s,v)=>s+v,0),1);
+        assert.equal(last.diagnosedFittedCoincidentCorners.reduce((s,v)=>s+v,0),1);
+        assert.deepEqual(last.microMetersPredeclared,[.0005,.001]);
+        assert.deepEqual(last.directionsPredeclared,['separate','reverse']);
+        assert.equal(last.microVariants.length,4);
+        assert.equal(last.noDegenerateCollisionExemption,true);
+        assert.equal(last.exactOriginalFaceIdsPrivate,true);
+        assert.equal(last.noSuccessfulVariantAutomaticallyApplied,true);
+        assert.equal(last.noMeshOrWardrobeMutation,true);
+        assert.equal(last.collisionCertified,false);
+        assert.equal(last.releaseAuthorized,false);
+        for(const [i,t] of last.microVariants.entries()){
+         const meters=[.0005,.0005,.001,.001][i];
+         assert.equal(t.maximumDepthMeters,meters);
+         assert.equal(t.directionHypothesis,['separate','reverse'][i%2]);
+         assert.equal(t.residualOriginalSelfContactPairs,1);
+         assert.equal(t.beforeNewSelfPairs,1);
+         assert.equal(t.retainedOriginalLastSelfPair+
+          t.newlyIntroducedDifferentSelfPairs,t.afterNewSelfPairs);
+         assert.ok(t.maximumAppliedLocalZMeters>=0&&
+          t.maximumAppliedLocalZMeters<=meters+1e-8);
+         assert.ok(Number.isSafeInteger(t.afterNewSelfPairs)&&t.afterNewSelfPairs>=0);
+         assert.ok(Number.isSafeInteger(t.afterNewBodyPairs)&&t.afterNewBodyPairs>=0);
+         assert.ok(Number.isSafeInteger(t.afterNewSeparatePanelPairs)&&
+          t.afterNewSeparatePanelPairs>=0);
+         assert.equal(t.untouchedPhotographicXYVerified,true);
+         assert.equal(t.noAutomaticMicroVariantAdmission,true);
+         assert.equal(t.noGeometryApplied,true);
+         assert.equal(t.sourcePhotoXYBitIdentical,true);
+         assert.equal(t.originalSourcePairKeyComparedPrivately,true);
+         assert.equal(t.counterfactualNeverApplied,true);
+         assert.equal(t.notAdmissibleFor3DOrRelease,true);
+         assert.equal(t.noContactWaived,true);
+         assert.equal(t.releaseAuthorized,false);
+        }
+        assert.equal(a.accepted,false);
+       }else assert.equal(q.lastPairMicroDepthTrial,null);
        assert.equal(a.accepted,false);
       }else{
        assert.equal(q.residualPairDirectionSweep.length,0);

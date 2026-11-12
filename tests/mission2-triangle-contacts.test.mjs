@@ -1254,3 +1254,74 @@ test('P2-C24 true 163-bone original source residual face pairs get two opposite 
  assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],proposed,sameFace),
   /original residual source face pair out of bounds/);
 });
+
+
+test('P2-C25 exact single-pair true 163-bone source micro-Z 0.5/1mm tests preserve both photographed XY axes and never admit or overwrite geometry',()=>{
+ const {root,garment}=simplePose();
+ const src=[0,0,0, 1,0,0, 0,1,0,
+            0,0,.001, 1,0,.001, 0,1,.001];
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute(src,3));
+ const weights=new Float32Array(24);
+ for(let i=0;i<6;i++)weights[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(24),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ m.userData.work56Garment=true;m.bind(garment.skeleton);root.add(m);
+ const actual=g.getAttribute('position').array.slice(),
+  prior=actual.slice(),backup=prior.slice(),input=new Map([[m,prior]]);
+ const single={originalSourceFaceIdentity:true,
+  completedUniqueAffectedPairComparison:true,sampledPoseOnly:true,
+  newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1']};
+ const receipts=[];
+ for(const meters of [.0005,.001])for(const direction of ['separate','reverse']){
+  const candidate=buildResidualSourcePairZDirectionTrial(
+   [m],input,single,{direction,maxDepthMeters:meters,maxPairs:1,maxVertices:6});
+  const d=candidate.countOnly,privateXYZ=candidate.privateOverrides.get(m);
+  assert.equal(d.residualOriginalSelfContactPairs,1);
+  assert.equal(d.directionHypothesis,direction);
+  assert.equal(d.maximumDepthMeters,meters);
+  assert.equal(d.votedOriginalSourceVertices,6);
+  assert.equal(d.movedOriginalSourceVertices,6);
+  assert.ok(d.maximumAppliedLocalZMeters>0&&
+   d.maximumAppliedLocalZMeters<=meters+1e-9);
+  assert.deepEqual(d.distinctOriginalSourceFacesByMesh,[2]);
+  assert.equal(d.noGeometryApplied,true);
+  assert.equal(d.notAdmissibleFor3DOrRelease,true);
+  assert.equal(d.noContactWaived,true);
+  assert.equal(d.releaseAuthorized,false);
+  assert.equal(d.residualOriginalFaceKeysNeverExported,true);
+  assert.equal(d.noUVSkinWeightOrSourcePhotoMutation,true);
+  for(let i=0;i<6;i++){
+   assert.equal(privateXYZ[3*i],backup[3*i]);
+   assert.equal(privateXYZ[3*i+1],backup[3*i+1]);
+   assert.ok(Math.abs(privateXYZ[3*i+2]-backup[3*i+2])<=meters+1e-8);
+  }
+  assert.deepEqual(g.getAttribute('position').array,actual);
+  assert.deepEqual(prior,backup);
+  assert.equal(Object.hasOwn(d,'privateOverrides'),false);
+  for(const forbidden of ['sourceSHA256','localXYZ','sourceFaceKeys',
+   'skinWeight','ownerId','newlyIntersectingSourceKeys'])
+   assert.equal(JSON.stringify(d).includes('"'+forbidden+'"'),false);
+  receipts.push({direction,meters,actual:Array.from(privateXYZ)});
+ }
+ for(const meters of [.0005,.001]){
+  const a=receipts.find(x=>x.direction==='separate'&&x.meters===meters),
+   b=receipts.find(x=>x.direction==='reverse'&&x.meters===meters);
+  for(let i=2;i<a.actual.length;i+=3)
+   assert.ok(Math.abs((a.actual[i]-backup[i])+
+    (b.actual[i]-backup[i]))<2e-8,
+    'two micro directions are mathematically opposite Z-only hypotheses');
+ }
+ const forged={...single,newlyIntersectingSourceKeys:['0:0:9000']};
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],input,forged,
+  {maxDepthMeters:.001,maxPairs:1,maxVertices:6}),
+  /original residual source face pair out of bounds/);
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],input,
+  {...single,newlyIntersecting:2,newlyIntersectingSourceKeys:['0:0:1','0:0:2']},
+  {maxDepthMeters:.001,maxPairs:1,maxVertices:6}),
+  /complete bounded exact residual original-face pair evidence/);
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],input,single,
+  {maxDepthMeters:.007,maxPairs:1,maxVertices:6}),
+  /complete bounded exact residual original-face pair evidence/);
+});

@@ -28,6 +28,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-neighborhood-depth-relaxation-20261111-HOLD
     - research/mission2-one-ring-weight-sweep-20261112-HOLD
     - research/mission2-persistent-contact-depth-direction-20261112-HOLD
+    - research/mission2-single-pair-microdepth-20261112-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -250,6 +251,7 @@ jobs:
         PHOTO_SHORT_EDGE_TRIAL: '1'
         PHOTO_NEIGHBOR_RELAXATION: '1'
         PHOTO_RESIDUAL_DIRECTION_TRIAL: '1'
+        PHOTO_LAST_PAIR_MICRO_TRIAL: '1'
         MISSION2_PERFORMANCE: '0'
       run: |
         node scripts/test-native-3d-05-browser.mjs
@@ -548,6 +550,49 @@ jobs:
           'adjustedNewSeparatePanelPairs'])
           assert.ok(Number.isSafeInteger(d[metric])&&d[metric]>=0);
         }
+        const last=cf.lastPairMicroDepthTrial;
+        assert.ok(last,'Exact original 1-pair micro-Z experiment must be present');
+        assert.equal(last.oneSurvivingOriginalSourcePair,true);
+        assert.equal(last.noDegenerateCollisionExemption,true);
+        assert.equal(last.noSuccessfulVariantAutomaticallyApplied,true);
+        assert.equal(last.noMeshOrWardrobeMutation,true);
+        assert.equal(last.releaseAuthorized,false);
+        assert.deepEqual(last.microMetersPredeclared,[.0005,.001]);
+        assert.deepEqual(last.directionsPredeclared,['separate','reverse']);
+        assert.equal(last.microVariants.length,4);
+        assert.equal(Object.values(last.diagnosedSourceContactGeometry)
+         .reduce((s,n)=>s+n,0),1);
+        assert.equal(last.diagnosedOriginalCoincidentCorners.reduce((s,n)=>s+n,0),1);
+        assert.equal(last.diagnosedFittedCoincidentCorners.reduce((s,n)=>s+n,0),1);
+        for(const [i,t] of last.microVariants.entries()){
+         assert.equal(t.directionHypothesis,['separate','reverse'][i%2]);
+         assert.equal(t.maximumDepthMeters,[.0005,.0005,.001,.001][i]);
+         assert.equal(t.residualOriginalSelfContactPairs,1);
+         assert.equal(t.beforeNewSelfPairs,1);
+         assert.equal(t.retainedOriginalLastSelfPair+t.newlyIntroducedDifferentSelfPairs,
+          t.afterNewSelfPairs);
+         assert.equal(t.originalSourcePairKeyComparedPrivately,true);
+         assert.equal(t.untouchedPhotographicXYVerified,true);
+         assert.equal(t.noGeometryApplied,true);
+         assert.equal(t.noAutomaticMicroVariantAdmission,true);
+         assert.equal(t.counterfactualNeverApplied,true);
+         assert.equal(t.notAdmissibleFor3DOrRelease,true);
+         assert.equal(t.noContactWaived,true);
+         assert.equal(t.releaseAuthorized,false);
+         assert.ok(t.maximumAppliedLocalZMeters<=[.0005,.0005,.001,.001][i]+1e-8);
+         for(const key of ['afterNewSelfPairs','afterNewBodyPairs','afterNewSeparatePanelPairs'])
+          assert.ok(Number.isSafeInteger(t[key])&&t[key]>=0);
+        }
+        const micro=k=>last.microVariants.map(v=>v[k]).join(',');
+        console.log('M2_EXACT_LAST_PAIR_MICRO_DEPTH_COUNTS_ONLY',
+         engine+'-microMillimeters[0.5,0.5,1,1]-direction[sep,rev,sep,rev]'+
+         '-self['+micro('afterNewSelfPairs')+
+         ']-body['+micro('afterNewBodyPairs')+
+         ']-panels['+micro('afterNewSeparatePanelPairs')+
+         ']-retained['+micro('retainedOriginalLastSelfPair')+
+         ']-newPairs['+micro('newlyIntroducedDifferentSelfPairs')+
+         ']-sourceGeometry['+
+          Object.entries(last.diagnosedSourceContactGeometry).map(([k,v])=>k+':'+v).join(',')+']');
         const directionValues=k=>cf.residualPairDirectionSweep.map(v=>v[k]).join(',');
         console.log('M2_PERSISTENT_SOURCE_PAIR_DIRECTION_CONTACT_COUNTS_ONLY',
          engine+'-baseSelf['+n.featherNewSelfContacts+
