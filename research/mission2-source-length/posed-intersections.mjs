@@ -995,6 +995,158 @@ export function buildOneRingShortEdgeDepthFeather(
  });
 }
 
+
+/**
+ * P2-C24. A *new*, reversible local fold direction hypothesis linked only to
+ * exact residual original source-face pairs after the P2-C23 one-ring trial.
+ * Not photo depth, sewn seam truth, a collision exemption, or accepted 3D.
+ *
+ * For each nonadjacent original triangle pair, take the relative LOCAL-Z face
+ * centroid ordering at the still-unsafe staged proposal and give the two
+ * faces equal/opposite bounded Z votes. Both the "separate" and "reverse"
+ * signs must be tested: owner images do not reveal physical depth ordering.
+ * Only temporary cloned arrays leave this helper; they must never be logged,
+ * saved, or included in the signed browser evidence.
+ */
+export function buildResidualSourcePairZDirectionTrial(
+ meshes,stagedOverrides,residualSelfDelta,
+ {direction='separate',maxDepthMeters=.003,maxPairs=128,maxVertices=256}={}){
+ if(!Array.isArray(meshes)||meshes.length<1||meshes.length>32||
+    new Set(meshes).size!==meshes.length||
+    !(stagedOverrides instanceof Map)||stagedOverrides.size!==meshes.length||
+    !['separate','reverse'].includes(direction)||
+    !Number.isFinite(maxDepthMeters)||maxDepthMeters<=0||maxDepthMeters>.006||
+    !Number.isSafeInteger(maxPairs)||maxPairs<1||maxPairs>2048||
+    !Number.isSafeInteger(maxVertices)||maxVertices<1||maxVertices>4096||
+    residualSelfDelta?.originalSourceFaceIdentity!==true||
+    residualSelfDelta?.completedUniqueAffectedPairComparison!==true||
+    residualSelfDelta?.sampledPoseOnly!==true||
+    !Number.isSafeInteger(residualSelfDelta.newlyIntersecting)||
+    residualSelfDelta.newlyIntersecting<1||
+    residualSelfDelta.newlyIntersecting>maxPairs||
+    !Array.isArray(residualSelfDelta.newlyIntersectingSourceKeys)||
+    residualSelfDelta.newlyIntersectingSourceKeys.length!==
+      residualSelfDelta.newlyIntersecting||
+    new Set(residualSelfDelta.newlyIntersectingSourceKeys).size!==
+      residualSelfDelta.newlyIntersecting)
+  throw Error('M2 C24 complete bounded exact residual original-face pair evidence required');
+ const votes=meshes.map(()=>new Map()),distinctFaces=meshes.map(()=>new Set());
+ let nearlySameStagedLocalZPairs=0,distinctStagedLocalZPairs=0,
+  exactDuplicateCornerPositionPairs=0;
+ const configs=meshes.map((mesh,m)=>{
+  const g=mesh?.geometry,p=g?.getAttribute('position'),
+   staged=stagedOverrides.get(mesh),index=g?.index?.array,
+   faceCount=index?index.length/3:p?.count/3;
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||
+     !p?.isBufferAttribute||p.itemSize!==3||p.isInterleavedBufferAttribute||
+     !(staged instanceof Float32Array||staged instanceof Float64Array)||
+     staged.length!==p.count*3||!p.array.every(Number.isFinite)||
+     !staged.every(Number.isFinite)||
+     !Number.isSafeInteger(faceCount)||faceCount<1||faceCount>600000||
+     (index&&index.length!==3*faceCount))
+   throw Error('M2 C24 full finite 163-bone original source and staged geometry required');
+  return {m,p,index,faceCount,staged};
+ });
+ for(const key of residualSelfDelta.newlyIntersectingSourceKeys){
+  if(typeof key!=='string'||
+     !/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+   throw Error('M2 C24 canonical original residual source pair required');
+  const [m,a,b]=key.split(':').map(Number),cfg=configs[m];
+  if(!cfg||![m,a,b].every(Number.isSafeInteger)||a>=b||a<0||b>=cfg.faceCount)
+   throw Error('M2 C24 original residual source face pair out of bounds');
+  const corners=face=>[0,1,2].map(k=>
+   cfg.index?cfg.index[face*3+k]:face*3+k);
+  const ai=corners(a),bi=corners(b);
+  if([...ai,...bi].some(i=>!Number.isSafeInteger(i)||i<0||i>=cfg.p.count)||
+     ai.some(i=>bi.includes(i)))
+   throw Error('M2 C24 only complete, nonadjacent indexed original source faces supported');
+  distinctFaces[m].add(a);distinctFaces[m].add(b);
+  const depth=ids=>ids.reduce((sum,i)=>sum+cfg.staged[i*3+2],0)/3,
+   za=depth(ai),zb=depth(bi);
+  if(!Number.isFinite(za)||!Number.isFinite(zb))
+   throw Error('M2 C24 finite contact-linked staged local depth required');
+  if(Math.abs(za-zb)<.001)nearlySameStagedLocalZPairs++;
+  else distinctStagedLocalZPairs++;
+  let coincident=false;
+  for(const i of ai)for(const j of bi){
+   if(cfg.staged[i*3]===cfg.staged[j*3]&&
+      cfg.staged[i*3+1]===cfg.staged[j*3+1]&&
+      cfg.staged[i*3+2]===cfg.staged[j*3+2])coincident=true;
+  }
+  if(coincident)exactDuplicateCornerPositionPairs++;
+  // A ties by canonical face index, but does NOT claim real seam or layering
+  // order; both opposite signs are independently examined and rejected.
+  const sign=(za>=zb?1:-1)*(direction==='separate'?1:-1);
+  const add=(indices,weight)=>{
+   for(const vertex of indices){
+    const prev=votes[m].get(vertex)||{sum:0,count:0};
+    prev.sum+=weight;prev.count++;
+    votes[m].set(vertex,prev);
+   }
+  };
+  add(ai,sign);add(bi,-sign);
+ }
+ const out=new Map();
+ let votedOriginalSourceVertices=0,movedOriginalSourceVertices=0,maximumTrialLocalZMeters=0;
+ for(const cfg of configs){
+  const copy=cfg.staged.slice();
+  votedOriginalSourceVertices+=votes[cfg.m].size;
+  if(votedOriginalSourceVertices>maxVertices)
+   throw Error('M2 C24 narrow original source vertex budget exceeded');
+  for(const [vertex,vote] of votes[cfg.m]){
+   const delta=maxDepthMeters*vote.sum/vote.count;
+   if(!Number.isFinite(delta)||Math.abs(delta)>maxDepthMeters+1e-12)
+    throw Error('M2 C24 bounded opposite local Z vote invalid');
+   if(Math.abs(delta)>1e-12){
+    copy[vertex*3+2]+=delta;
+    movedOriginalSourceVertices++;
+    maximumTrialLocalZMeters=Math.max(maximumTrialLocalZMeters,Math.abs(delta));
+   }
+  }
+  for(let k=0;k<copy.length;k++){
+   if(!Number.isFinite(copy[k])||
+      (k%3!==2&&copy[k]!==cfg.staged[k])||
+      (k%3===2&&!votes[cfg.m].has(Math.floor(k/3))&&copy[k]!==cfg.staged[k]))
+    throw Error('M2 C24 source photo XY or non-participating vertex modified');
+  }
+  out.set(meshes[cfg.m],copy);
+ }
+ const distinctSourceFacesByMesh=distinctFaces.map(faces=>faces.size);
+ const total=distinctSourceFacesByMesh.reduce((a,b)=>a+b,0);
+ if(total<2||total>2*residualSelfDelta.newlyIntersecting||
+    nearlySameStagedLocalZPairs+distinctStagedLocalZPairs!==
+      residualSelfDelta.newlyIntersecting||
+    exactDuplicateCornerPositionPairs>residualSelfDelta.newlyIntersecting)
+  throw Error('M2 C24 exact residual contact local topology tallies incomplete');
+ return Object.freeze({
+  privateOverrides:out,
+  countOnly:Object.freeze({
+   residualOriginalSelfContactPairs:residualSelfDelta.newlyIntersecting,
+   distinctOriginalSourceFacesByMesh:Object.freeze(distinctSourceFacesByMesh),
+   distinctOriginalSourceFaces:total,
+   nearEqualLocalDepthResidualPairs:nearlySameStagedLocalZPairs,
+   differentLocalDepthResidualPairs:distinctStagedLocalZPairs,
+   exactCoincidentOriginalSourceCornerPairs:exactDuplicateCornerPositionPairs,
+   directionHypothesis:direction,
+   maximumDepthMeters:maxDepthMeters,
+   votedOriginalSourceVertices,
+   movedOriginalSourceVertices,
+   maximumAppliedLocalZMeters:maximumTrialLocalZMeters,
+   bothOppositeSignHypothesesRequired:true,
+   noPhysicalSewingOrDepthClaim:true,
+   sourceOriginalAndStagedArraysUnchanged:true,
+   sourcePhotoXYBitIdentical:true,
+   noUVSkinWeightOrSourcePhotoMutation:true,
+   residualOriginalFaceKeysNeverExported:true,
+   noGeometryApplied:true,
+   independentFullBodyPanelSelfAuditMandatory:true,
+   noContactWaived:true,
+   notAdmissibleFor3DOrRelease:true,
+   releaseAuthorized:false
+  })
+ });
+}
+
 export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
  {maxPairs=4096,sourceAreaStages=null}={}){
  if(!root||typeof root.updateMatrixWorld!=='function'||
