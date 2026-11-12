@@ -20,17 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exact verified P841 parent and strict four-path isolation
+      - name: Exact verified P841 parent and strict five-path isolation
         run: |
           set -euo pipefail
           BASE=899f1962d53546ec15ff62e8af3a1bcbf937dbdb
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD >/tmp/m1-p842-changed
           cat /tmp/m1-p842-changed
-          test "$(wc -l </tmp/m1-p842-changed)" -eq 4
+          test "$(wc -l </tmp/m1-p842-changed)" -eq 5
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|tests/mission1-automatic-admission-842.test.cjs|research/mission1-automatic-admission-guard-842/REPORT.md|.github/workflows/mission1-automatic-admission-guard-842-no-deploy.yml) ;;
+              public/app.js|tests/automatic-indexing.test.cjs|tests/mission1-automatic-admission-842.test.cjs|research/mission1-automatic-admission-guard-842/REPORT.md|.github/workflows/mission1-automatic-admission-guard-842-no-deploy.yml) ;;
               *) echo "P842 UNSCOPED CHANGE: $path"; exit 1 ;;
             esac
           done </tmp/m1-p842-changed
