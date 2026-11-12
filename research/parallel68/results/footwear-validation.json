@@ -1,0 +1,4234 @@
+{
+  "schema": "closet-current-parallel68-grounded-footwear/v1",
+  "mode": "footwear",
+  "split": "validation",
+  "manifestSha256": "b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd",
+  "florence": {
+    "model": "onnx-community/Florence-2-base-ft",
+    "revision": "e88a44eaf3791a35eae0c5a47b3dbcd36e67eb6f",
+    "dtype": "q8"
+  },
+  "sam2": {
+    "model": "onnx-community/sam2.1-hiera-tiny-ONNX",
+    "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+    "dtype": "q8",
+    "device": "cpu"
+  },
+  "automaticSave": false,
+  "rows": [
+    {
+      "id": "fashionpedia-val-10913",
+      "sha256": "c2f475c0a2134ac8b71fb19785529360a1efd39f9db47da699856a2f6b2a1195",
+      "width": 859,
+      "height": 1024,
+      "elapsedMs": 10522.774617000001,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            252.11649999999997,
+            314.88,
+            655.8465,
+            899.584
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                252.11649999999997,
+                314.88,
+                655.8465,
+                899.584
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                253.8345,
+                313.856,
+                654.9875,
+                899.584
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The dress",
+              "box": [
+                253.8345,
+                313.856,
+                654.1284999999999,
+                899.584
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-10913-0.bin.gz",
+          "maskSha256": "c7eb20c429d0665b76275385547191259c9e502dd905ff8f1c874634e5fb15c5",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_293><loc_307><loc_763><loc_878>human face<loc_376><loc_127><loc_493><loc_277>woman<loc_279><loc_91><loc_842><loc_965></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                252.11649999999997,
+                314.88,
+                655.8465,
+                899.584
+              ],
+              [
+                323.4135,
+                130.56,
+                423.9165,
+                284.16
+              ],
+              [
+                240.09050000000002,
+                93.696,
+                723.7075,
+                988.672
+              ]
+            ]
+          },
+          "elapsedMs": 2212.587248
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a wall. She is wearing a short sleeve blue dress. The dress has stripes on it. The woman has long brown hair. There are pictures on the wall behind the woman. </s>",
+          "parsed": "A woman is standing in front of a wall. She is wearing a short sleeve blue dress. The dress has stripes on it. The woman has long brown hair. There are pictures on the wall behind the woman. ",
+          "elapsedMs": 2891.5317940000004
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a wall. She is wearing a short sleeve blue dress. The dress has stripes on it. The woman has long brown hair. There are pictures on the wall behind the woman. ",
+          "raw": "</s><s>A woman<loc_283><loc_90><loc_842><loc_963>dress<loc_295><loc_306><loc_762><loc_878>The dress<loc_295><loc_306><loc_761><loc_878>The woman<loc_283><loc_89><loc_842><loc_963>hair<loc_326><loc_91><loc_602><loc_490>pictures<loc_621><loc_551><loc_834><loc_872><loc_694><loc_735><loc_825><loc_870><loc_878><loc_609><loc_958><loc_742><loc_621><loc_638><loc_711><loc_726><loc_736><loc_573><loc_814><loc_665></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "The dress",
+              "The woman",
+              "hair",
+              "pictures",
+              "pictures",
+              "pictures",
+              "pictures",
+              "pictures"
+            ],
+            "bboxes": [
+              [
+                243.52649999999997,
+                92.672,
+                723.7075,
+                986.624
+              ],
+              [
+                253.8345,
+                313.856,
+                654.9875,
+                899.584
+              ],
+              [
+                253.8345,
+                313.856,
+                654.1284999999999,
+                899.584
+              ],
+              [
+                243.52649999999997,
+                91.648,
+                723.7075,
+                986.624
+              ],
+              [
+                280.4635,
+                93.696,
+                517.5475,
+                502.272
+              ],
+              [
+                533.8685,
+                564.736,
+                716.8355,
+                893.44
+              ],
+              [
+                596.5755,
+                753.152,
+                709.1045,
+                891.392
+              ],
+              [
+                754.6315,
+                624.128,
+                823.3515,
+                760.32
+              ],
+              [
+                533.8685,
+                653.824,
+                611.1785,
+                743.936
+              ],
+              [
+                632.6535,
+                587.264,
+                699.6555,
+                681.472
+              ]
+            ]
+          },
+          "elapsedMs": 2490.700304
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-15851",
+      "sha256": "0dc702710972659f72b27df4d859cf4aaec54e9908a02e21f65e6f9ed8203b75",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 8271.777177,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            288.827,
+            466.432,
+            539.121,
+            838.144
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                288.827,
+                466.432,
+                539.121,
+                838.144
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                288.827,
+                462.336,
+                540.485,
+                840.192
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-15851-0.bin.gz",
+          "maskSha256": "517a1ff90ebb61f16bd83c065fb86254295f854cb59366cad2848befb1067619",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            81.499,
+            861.696,
+            191.30100000000002,
+            961.024
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                81.499,
+                861.696,
+                191.30100000000002,
+                961.024
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-15851-1.bin.gz",
+          "maskSha256": "2fb5557db70199cf130b3a4c6f871f640a45e8b64051ebf54d91bb98599ada1a",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            177.661,
+            855.552,
+            287.46299999999997,
+            938.496
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                177.661,
+                855.552,
+                287.46299999999997,
+                938.496
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-15851-2.bin.gz",
+          "maskSha256": "85af714055b66d5d709a9707b92d6f82e4f52cbcc7c6899540772ea182f74f7b",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_423><loc_455><loc_790><loc_818>footwear<loc_119><loc_841><loc_280><loc_938><loc_260><loc_835><loc_421><loc_916>human face<loc_577><loc_354><loc_692><loc_458>woman<loc_119><loc_304><loc_871><loc_938></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "footwear",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                288.827,
+                466.432,
+                539.121,
+                838.144
+              ],
+              [
+                81.499,
+                861.696,
+                191.30100000000002,
+                961.024
+              ],
+              [
+                177.661,
+                855.552,
+                287.46299999999997,
+                938.496
+              ],
+              [
+                393.855,
+                363.008,
+                472.285,
+                469.504
+              ],
+              [
+                81.499,
+                311.808,
+                594.363,
+                961.024
+              ]
+            ]
+          },
+          "elapsedMs": 2070.1097850000006
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is sitting on a step. She is wearing a white dress and green sandals. She has a necklace around her neck. There is a building behind her. </s>",
+          "parsed": "A woman is sitting on a step. She is wearing a white dress and green sandals. She has a necklace around her neck. There is a building behind her. ",
+          "elapsedMs": 2138.9823639999995
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is sitting on a step. She is wearing a white dress and green sandals. She has a necklace around her neck. There is a building behind her. ",
+          "raw": "</s><s>A woman<loc_119><loc_302><loc_869><loc_939>dress<loc_423><loc_451><loc_792><loc_820>necklace<loc_561><loc_444><loc_690><loc_508>a building<loc_0><loc_0><loc_998><loc_998><loc_0><loc_0><loc_997><loc_679></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "necklace",
+              "a building",
+              "a building"
+            ],
+            "bboxes": [
+              [
+                81.499,
+                309.76,
+                592.999,
+                962.048
+              ],
+              [
+                288.827,
+                462.336,
+                540.485,
+                840.192
+              ],
+              [
+                382.943,
+                455.168,
+                470.921,
+                520.704
+              ],
+              [
+                0.341,
+                0.512,
+                680.9770000000001,
+                1022.464
+              ],
+              [
+                0.341,
+                0.512,
+                680.2950000000001,
+                695.808
+              ]
+            ]
+          },
+          "elapsedMs": 2130.559342999997
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9425",
+      "sha256": "5650233266502722921f6d0ca68ebbdc0d92315fc777d1ec5efe88d1ae00b16a",
+      "width": 683,
+      "height": 1024,
+      "elapsedMs": 7933.125416000003,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            290.6165,
+            266.752,
+            677.1945000000001,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                290.6165,
+                266.752,
+                677.1945000000001,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9425-0.bin.gz",
+          "maskSha256": "1d91ca979032da920ebd3fcdd9e614f2a5c14ce56e8ef955f8c3750f345897eb",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "skirt",
+          "box": [
+            289.2505,
+            434.688,
+            675.1455000000001,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "skirt",
+              "box": [
+                289.2505,
+                434.688,
+                675.1455000000001,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9425-1.bin.gz",
+          "maskSha256": "d02304a640560b55fcf00756c1b3ac7966b89c532f1f3eecf7880e03b00ec705",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_425><loc_260><loc_991><loc_998>human face<loc_592><loc_90><loc_753><loc_234>woman<loc_315><loc_55><loc_998><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                290.6165,
+                266.752,
+                677.1945000000001,
+                1022.464
+              ],
+              [
+                404.6775,
+                92.672,
+                514.6405,
+                240.128
+              ],
+              [
+                215.4865,
+                56.832,
+                681.9755,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 1897.1561619999993
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in a room. She is wearing a long skirt that has pictures on it. The woman has long brown hair that is hanging in a ponytail. There is a light behind the woman. </s>",
+          "parsed": "A woman is standing in a room. She is wearing a long skirt that has pictures on it. The woman has long brown hair that is hanging in a ponytail. There is a light behind the woman. ",
+          "elapsedMs": 2104.805794
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in a room. She is wearing a long skirt that has pictures on it. The woman has long brown hair that is hanging in a ponytail. There is a light behind the woman. ",
+          "raw": "</s><s>A woman<loc_315><loc_58><loc_989><loc_998>room<loc_0><loc_0><loc_998><loc_998>skirt<loc_423><loc_424><loc_988><loc_998>The woman<loc_315><loc_57><loc_989><loc_998>hair<loc_529><loc_58><loc_957><loc_410>ponytail<loc_529><loc_58><loc_956><loc_410>a light<loc_0><loc_0><loc_292><loc_406>woman<loc_315><loc_58><loc_990><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "room",
+              "skirt",
+              "The woman",
+              "hair",
+              "ponytail",
+              "a light",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                215.4865,
+                59.904,
+                675.8285000000001,
+                1022.464
+              ],
+              [
+                0.3415,
+                0.512,
+                681.9755,
+                1022.464
+              ],
+              [
+                289.2505,
+                434.688,
+                675.1455000000001,
+                1022.464
+              ],
+              [
+                215.4865,
+                58.88,
+                675.8285000000001,
+                1022.464
+              ],
+              [
+                361.64849999999996,
+                59.904,
+                653.9725,
+                420.352
+              ],
+              [
+                361.64849999999996,
+                59.904,
+                653.2895,
+                420.352
+              ],
+              [
+                0.3415,
+                0.512,
+                199.77749999999997,
+                416.256
+              ],
+              [
+                215.4865,
+                59.904,
+                676.5115000000001,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2207.8394979999975
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9246",
+      "sha256": "2bd826ef2cd611d5be43586d42c6781db8bb641b5c1e97cfe21f78959251b80e",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 9705.149913999998,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            64.449,
+            324.096,
+            598.4549999999999,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                64.449,
+                324.096,
+                598.4549999999999,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9246-0.bin.gz",
+          "maskSha256": "3a13682fdc9008245d6ec7463c9bcd50d3a6831d16042a655de9b8c6d234b749",
+          "colorVerified": false
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "dress",
+          "box": [
+            143.561,
+            359.936,
+            598.4549999999999,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                143.561,
+                359.936,
+                598.4549999999999,
+                1022.464
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The dress",
+              "box": [
+                143.561,
+                359.936,
+                599.137,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9246-1.bin.gz",
+          "maskSha256": "e10db6e31da2ec50158dee02405a13c147fd915de9f53548760a9b8137eea270",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "scarf",
+          "box": [
+            62.403,
+            323.072,
+            599.137,
+            670.208
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "scarf",
+              "box": [
+                62.403,
+                323.072,
+                599.137,
+                670.208
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9246-2.bin.gz",
+          "maskSha256": "471a6f63750043f995e3c8cd79f9ca3ec537abfdc7d24e449c3ef2ea175108f4",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_94><loc_316><loc_877><loc_998>human face<loc_430><loc_85><loc_617><loc_257>woman<loc_93><loc_48><loc_880><loc_998><loc_0><loc_361><loc_245><loc_965></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "woman",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                64.449,
+                324.096,
+                598.4549999999999,
+                1022.464
+              ],
+              [
+                293.601,
+                87.552,
+                421.13500000000005,
+                263.68
+              ],
+              [
+                63.767,
+                49.664,
+                600.501,
+                1022.464
+              ],
+              [
+                0.341,
+                370.176,
+                167.43099999999998,
+                988.672
+              ]
+            ]
+          },
+          "elapsedMs": 1912.1254479999989
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing on a runway wearing a black dress. The dress has a long black scarf around the neck. The woman has her hair pulled back into a ponytail. The hair is brown and her eyes are blue. The runway is white and there are other women standing in the background.</s>",
+          "parsed": "A woman is standing on a runway wearing a black dress. The dress has a long black scarf around the neck. The woman has her hair pulled back into a ponytail. The hair is brown and her eyes are blue. The runway is white and there are other women standing in the background.",
+          "elapsedMs": 2836.8801419999945
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing on a runway wearing a black dress. The dress has a long black scarf around the neck. The woman has her hair pulled back into a ponytail. The hair is brown and her eyes are blue. The runway is white and there are other women standing in the background.",
+          "raw": "</s><s>A woman<loc_99><loc_48><loc_880><loc_998>dress<loc_210><loc_351><loc_877><loc_998>The dress<loc_210><loc_351><loc_878><loc_998>scarf<loc_91><loc_315><loc_878><loc_654>The woman<loc_99><loc_49><loc_880><loc_998>hair<loc_408><loc_49><loc_629><loc_170>The hair<loc_408><loc_49><loc_630><loc_170>eyes<loc_449><loc_147><loc_594><loc_173><loc_539><loc_150><loc_591><loc_172>The runway<loc_0><loc_0><loc_998><loc_998>other women<loc_0><loc_359><loc_236><loc_966></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "The dress",
+              "scarf",
+              "The woman",
+              "hair",
+              "The hair",
+              "eyes",
+              "eyes",
+              "The runway",
+              "other women"
+            ],
+            "bboxes": [
+              [
+                67.85900000000001,
+                49.664,
+                600.501,
+                1022.464
+              ],
+              [
+                143.561,
+                359.936,
+                598.4549999999999,
+                1022.464
+              ],
+              [
+                143.561,
+                359.936,
+                599.137,
+                1022.464
+              ],
+              [
+                62.403,
+                323.072,
+                599.137,
+                670.208
+              ],
+              [
+                67.85900000000001,
+                50.688,
+                600.501,
+                1022.464
+              ],
+              [
+                278.597,
+                50.688,
+                429.31899999999996,
+                174.592
+              ],
+              [
+                278.597,
+                50.688,
+                430.001,
+                174.592
+              ],
+              [
+                306.559,
+                151.04,
+                405.449,
+                177.664
+              ],
+              [
+                367.93899999999996,
+                154.112,
+                403.403,
+                176.64
+              ],
+              [
+                0.341,
+                0.512,
+                680.9770000000001,
+                1022.464
+              ],
+              [
+                0.341,
+                368.128,
+                161.29299999999998,
+                989.696
+              ]
+            ]
+          },
+          "elapsedMs": 3007.8511949999956
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-11800",
+      "sha256": "1791be4720af53131965e00426a7e25fdba234a13992ec4233bd1557c45a5dd5",
+      "width": 680,
+      "height": 1024,
+      "elapsedMs": 9748.858535,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            100.97999999999999,
+            138.752,
+            315.86,
+            556.544
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                100.97999999999999,
+                138.752,
+                315.86,
+                556.544
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a white dress",
+              "box": [
+                100.97999999999999,
+                155.136,
+                317.22,
+                558.592
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-11800-0.bin.gz",
+          "maskSha256": "4a67e9ddf3b3eb0737e69d325473396dd746d6ba74da7ca80d713b4c163623db",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            181.22,
+            896.512,
+            264.86,
+            998.912
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                181.22,
+                896.512,
+                264.86,
+                998.912
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-11800-1.bin.gz",
+          "maskSha256": "51b18263c03bdab4135311f4df0d3b9d41badf049ae56f6aec8ee2304da2e585",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "hat",
+          "box": [
+            72.42,
+            14.848,
+            281.18,
+            141.824
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "hat",
+              "box": [
+                72.42,
+                14.848,
+                281.18,
+                141.824
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a hat",
+              "box": [
+                71.06,
+                12.8,
+                283.9,
+                143.872
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-11800-2.bin.gz",
+          "maskSha256": "6f28215a58dce04efb3bf73c8431d063163b55c726574ad54fd0e37a08dec000",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_148><loc_135><loc_464><loc_543>footwear<loc_266><loc_875><loc_389><loc_975>hat<loc_106><loc_14><loc_413><loc_138>human face<loc_205><loc_46><loc_309><loc_142>person<loc_72><loc_15><loc_471><loc_988></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "hat",
+              "human face",
+              "person"
+            ],
+            "bboxes": [
+              [
+                100.97999999999999,
+                138.752,
+                315.86,
+                556.544
+              ],
+              [
+                181.22,
+                896.512,
+                264.86,
+                998.912
+              ],
+              [
+                72.42,
+                14.848,
+                281.18,
+                141.824
+              ],
+              [
+                139.73999999999998,
+                47.616,
+                210.46,
+                145.92
+              ],
+              [
+                49.3,
+                15.872,
+                320.62,
+                1012.224
+              ]
+            ]
+          },
+          "elapsedMs": 2287.591484999997
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing on a stage. She is wearing a white dress and a hat. There is a white table in front of her with a sign on it. </s>",
+          "parsed": "A woman is standing on a stage. She is wearing a white dress and a hat. There is a white table in front of her with a sign on it. ",
+          "elapsedMs": 2316.6338660000038
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing on a stage. She is wearing a white dress and a hat. There is a white table in front of her with a sign on it. ",
+          "raw": "</s><s>A woman<loc_73><loc_13><loc_475><loc_987>a white dress<loc_148><loc_151><loc_466><loc_545>a hat<loc_104><loc_12><loc_417><loc_140>a white table<loc_670><loc_554><loc_998><loc_998>sign<loc_791><loc_555><loc_998><loc_667></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "a white dress",
+              "a hat",
+              "a white table",
+              "sign"
+            ],
+            "bboxes": [
+              [
+                49.98,
+                13.824,
+                323.34,
+                1011.2
+              ],
+              [
+                100.97999999999999,
+                155.136,
+                317.22,
+                558.592
+              ],
+              [
+                71.06,
+                12.8,
+                283.9,
+                143.872
+              ],
+              [
+                455.94,
+                567.808,
+                678.98,
+                1022.464
+              ],
+              [
+                538.22,
+                568.832,
+                678.98,
+                683.52
+              ]
+            ]
+          },
+          "elapsedMs": 2359.358159000003
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-13260",
+      "sha256": "36ec95313761a48cdc46ea026d9067397320a69938644dac5f50b3517552a887",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 8575.657830999997,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            174.933,
+            251.392,
+            401.357,
+            695.808
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                174.933,
+                251.392,
+                401.357,
+                695.808
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                174.251,
+                251.392,
+                403.403,
+                695.808
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13260-0.bin.gz",
+          "maskSha256": "1c785bd97e746ec12e996f4b8413c5baddc8febf754d56856a85ffe72fc627d0",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            314.743,
+            844.288,
+            408.85900000000004,
+            920.064
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                314.743,
+                844.288,
+                408.85900000000004,
+                920.064
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13260-1.bin.gz",
+          "maskSha256": "3e6036968710ce4db059e3ff45da882e2df74311a1523c10549cb8d460c0e08f",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            237.677,
+            872.96,
+            286.099,
+            953.856
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                237.677,
+                872.96,
+                286.099,
+                953.856
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13260-2.bin.gz",
+          "maskSha256": "9dafbaab68491f8db123516f53ae75c8247e75ef393b492ad18c145156a2ef81",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_256><loc_245><loc_588><loc_679>footwear<loc_461><loc_824><loc_599><loc_898><loc_348><loc_852><loc_419><loc_931>human face<loc_341><loc_121><loc_451><loc_223>person<loc_252><loc_100><loc_602><loc_930></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "footwear",
+              "human face",
+              "person"
+            ],
+            "bboxes": [
+              [
+                174.933,
+                251.392,
+                401.357,
+                695.808
+              ],
+              [
+                314.743,
+                844.288,
+                408.85900000000004,
+                920.064
+              ],
+              [
+                237.677,
+                872.96,
+                286.099,
+                953.856
+              ],
+              [
+                232.90300000000002,
+                124.416,
+                307.923,
+                228.864
+              ],
+              [
+                172.205,
+                102.912,
+                410.90500000000003,
+                952.832
+              ]
+            ]
+          },
+          "elapsedMs": 2234.289773000004
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a black background with the word \"audible\" written on it. The woman is wearing a pink dress and has brown hair. She is wearing tan shoes. The carpet under the woman is red.</s>",
+          "parsed": "A woman is standing in front of a black background with the word \"audible\" written on it. The woman is wearing a pink dress and has brown hair. She is wearing tan shoes. The carpet under the woman is red.",
+          "elapsedMs": 2299.1026649999985
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a black background with the word \"audible\" written on it. The woman is wearing a pink dress and has brown hair. She is wearing tan shoes. The carpet under the woman is red.",
+          "raw": "</s><s>A woman<loc_252><loc_99><loc_605><loc_931>The woman<loc_252><loc_100><loc_605><loc_931>dress<loc_255><loc_245><loc_591><loc_679>hair<loc_306><loc_100><loc_529><loc_310>The carpet<loc_0><loc_785><loc_998><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "The woman",
+              "dress",
+              "hair",
+              "The carpet"
+            ],
+            "bboxes": [
+              [
+                172.205,
+                101.888,
+                412.951,
+                953.856
+              ],
+              [
+                172.205,
+                102.912,
+                412.951,
+                953.856
+              ],
+              [
+                174.251,
+                251.392,
+                403.403,
+                695.808
+              ],
+              [
+                209.033,
+                102.912,
+                361.11899999999997,
+                317.952
+              ],
+              [
+                0.341,
+                804.352,
+                680.9770000000001,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2174.462249000004
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-15424",
+      "sha256": "668737b3fde3e26e6ba813866dd6bfee648918173a9be18200315a32a6db4d9a",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 11121.104135999994,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            277.91499999999996,
+            162.304,
+            475.01300000000003,
+            643.584
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                277.91499999999996,
+                162.304,
+                475.01300000000003,
+                643.584
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                279.279,
+                164.352,
+                476.377,
+                638.464
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                279.279,
+                163.328,
+                476.377,
+                638.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-15424-0.bin.gz",
+          "maskSha256": "bc00401a3903a846499889ae705c9f8be741ccb1c69286559a956f2a8b4267e3",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            335.885,
+            868.864,
+            404.767,
+            1005.056
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                335.885,
+                868.864,
+                404.767,
+                1005.056
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "heels",
+              "box": [
+                336.567,
+                863.744,
+                406.13100000000003,
+                1005.056
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [
+            {
+              "parentIndex": 3,
+              "childIndex": 1,
+              "label": "heels"
+            }
+          ],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-15424-1.bin.gz",
+          "maskSha256": "234a3d591e8e4f64a1afe5c276b2c3c794843dda908ea021608cf13912fe56c0",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            254.727,
+            805.376,
+            305.195,
+            934.4
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                254.727,
+                805.376,
+                305.195,
+                934.4
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "heels",
+              "box": [
+                254.045,
+                802.304,
+                307.923,
+                935.424
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [
+            {
+              "parentIndex": 3,
+              "childIndex": 0,
+              "label": "heels"
+            }
+          ],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-15424-2.bin.gz",
+          "maskSha256": "4c30bc50a7192bc6d683a0a6b4b08b6d480877d458cff9e694d76cc28604789c",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_407><loc_158><loc_696><loc_628>footwear<loc_492><loc_848><loc_593><loc_981><loc_373><loc_786><loc_447><loc_912>human face<loc_495><loc_51><loc_596><loc_143>woman<loc_300><loc_42><loc_783><loc_979></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "footwear",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                277.91499999999996,
+                162.304,
+                475.01300000000003,
+                643.584
+              ],
+              [
+                335.885,
+                868.864,
+                404.767,
+                1005.056
+              ],
+              [
+                254.727,
+                805.376,
+                305.195,
+                934.4
+              ],
+              [
+                337.931,
+                52.736,
+                406.81300000000005,
+                146.944
+              ],
+              [
+                204.941,
+                43.52,
+                534.347,
+                1003.008
+              ]
+            ]
+          },
+          "elapsedMs": 2665.9294240000017
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing on a runway. She is wearing a white dress and a black coat. The woman is wearing black high heels. The runway is made of concrete. There are white curtains on the stage. There is a light on a pole behind the woman. The ceiling is dark. There's a light shining on the woman's dress. The women has her arms around her waist.</s>",
+          "parsed": "A woman is standing on a runway. She is wearing a white dress and a black coat. The woman is wearing black high heels. The runway is made of concrete. There are white curtains on the stage. There is a light on a pole behind the woman. The ceiling is dark. There's a light shining on the woman's dress. The women has her arms around her waist.",
+          "elapsedMs": 3234.535662000002
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing on a runway. She is wearing a white dress and a black coat. The woman is wearing black high heels. The runway is made of concrete. There are white curtains on the stage. There is a light on a pole behind the woman. The ceiling is dark. There's a light shining on the woman's dress. The women has her arms around her waist.",
+          "raw": "</s><s>A woman<loc_306><loc_38><loc_752><loc_980>dress<loc_409><loc_160><loc_698><loc_623>The woman<loc_306><loc_39><loc_752><loc_980>heels<loc_370><loc_782><loc_599><loc_981><loc_493><loc_843><loc_595><loc_981><loc_372><loc_783><loc_451><loc_913>The runway<loc_0><loc_709><loc_998><loc_998>white curtains<loc_0><loc_465><loc_839><loc_719><loc_0><loc_466><loc_449><loc_717>a light<loc_889><loc_337><loc_955><loc_804>pole<loc_889><loc_337><loc_954><loc_804>The ceiling<loc_0><loc_0><loc_998><loc_340>dress<loc_409><loc_159><loc_698><loc_623></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "The woman",
+              "heels",
+              "heels",
+              "heels",
+              "The runway",
+              "white curtains",
+              "white curtains",
+              "a light",
+              "pole",
+              "The ceiling",
+              "dress"
+            ],
+            "bboxes": [
+              [
+                209.033,
+                39.424,
+                513.2049999999999,
+                1004.032
+              ],
+              [
+                279.279,
+                164.352,
+                476.377,
+                638.464
+              ],
+              [
+                209.033,
+                40.448,
+                513.2049999999999,
+                1004.032
+              ],
+              [
+                252.68099999999998,
+                801.28,
+                408.85900000000004,
+                1005.056
+              ],
+              [
+                336.567,
+                863.744,
+                406.13100000000003,
+                1005.056
+              ],
+              [
+                254.045,
+                802.304,
+                307.923,
+                935.424
+              ],
+              [
+                0.341,
+                726.528,
+                680.9770000000001,
+                1022.464
+              ],
+              [
+                0.341,
+                476.672,
+                572.539,
+                736.768
+              ],
+              [
+                0.341,
+                477.696,
+                306.559,
+                734.72
+              ],
+              [
+                606.639,
+                345.6,
+                651.6510000000001,
+                823.808
+              ],
+              [
+                606.639,
+                345.6,
+                650.969,
+                823.808
+              ],
+              [
+                0.341,
+                0.512,
+                680.9770000000001,
+                348.672
+              ],
+              [
+                279.279,
+                163.328,
+                476.377,
+                638.464
+              ]
+            ]
+          },
+          "elapsedMs": 3248.825060999996
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-18517",
+      "sha256": "6628d8679227523971de27c564f2a0cae7d3391d981c97923c841abe3b6494fe",
+      "width": 683,
+      "height": 1024,
+      "elapsedMs": 8249.735755999995,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            225.04850000000002,
+            155.136,
+            528.9834999999999,
+            610.816
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                225.04850000000002,
+                155.136,
+                528.9834999999999,
+                610.816
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a white dress",
+              "box": [
+                224.3655,
+                155.136,
+                531.0325,
+                613.888
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18517-0.bin.gz",
+          "maskSha256": "357342fce7a248234c3364ea0a167b9e261035b84326d9f45006a0f70357d704",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            190.8985,
+            896.512,
+            313.1555,
+            999.936
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                190.8985,
+                896.512,
+                313.1555,
+                999.936
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "black high heels",
+              "box": [
+                188.1665,
+                892.416,
+                317.9365,
+                1003.008
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18517-1.bin.gz",
+          "maskSha256": "a40d19e4fb8c68a9550e427d97a7483e5158182bfb5e9b5e139cf94738eefb19",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            339.1095,
+            912.896,
+            434.0465,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                339.1095,
+                912.896,
+                434.0465,
+                1022.464
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "black high heels",
+              "box": [
+                338.4265,
+                908.8,
+                438.8275,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18517-2.bin.gz",
+          "maskSha256": "4abc2d47e7422930618700126ac9fc8e893f96cb1de54f326909273fdc8f5b2f",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_329><loc_151><loc_774><loc_596>footwear<loc_279><loc_875><loc_458><loc_976><loc_496><loc_891><loc_635><loc_998>human face<loc_476><loc_34><loc_594><loc_138><loc_3><loc_729><loc_55><loc_769><loc_174><loc_658><loc_205><loc_686>woman<loc_276><loc_11><loc_774><loc_998><loc_0><loc_714><loc_107><loc_834></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "footwear",
+              "human face",
+              "human face",
+              "human face",
+              "woman",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                225.04850000000002,
+                155.136,
+                528.9834999999999,
+                610.816
+              ],
+              [
+                190.8985,
+                896.512,
+                313.1555,
+                999.936
+              ],
+              [
+                339.1095,
+                912.896,
+                434.0465,
+                1022.464
+              ],
+              [
+                325.4495,
+                35.328,
+                406.0435,
+                141.824
+              ],
+              [
+                2.3905,
+                747.008,
+                37.9065,
+                787.968
+              ],
+              [
+                119.1835,
+                674.304,
+                140.35649999999998,
+                702.976
+              ],
+              [
+                188.8495,
+                11.776,
+                528.9834999999999,
+                1022.464
+              ],
+              [
+                0.3415,
+                731.648,
+                73.4225,
+                854.528
+              ]
+            ]
+          },
+          "elapsedMs": 2069.9604370000015
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing on a runway wearing a white dress. She has long brown hair and is wearing black high heels. There are people sitting on the side of the runway watching her.</s>",
+          "parsed": "A woman is standing on a runway wearing a white dress. She has long brown hair and is wearing black high heels. There are people sitting on the side of the runway watching her.",
+          "elapsedMs": 2188.028416999994
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing on a runway wearing a white dress. She has long brown hair and is wearing black high heels. There are people sitting on the side of the runway watching her.",
+          "raw": "</s><s>A woman<loc_278><loc_11><loc_774><loc_998>a runway<loc_0><loc_647><loc_998><loc_998>a white dress<loc_328><loc_151><loc_777><loc_599>long brown hair<loc_375><loc_11><loc_690><loc_311>black high heels<loc_275><loc_871><loc_465><loc_979><loc_495><loc_887><loc_642><loc_998>people<loc_0><loc_608><loc_327><loc_832><loc_0><loc_712><loc_111><loc_832></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "a runway",
+              "a white dress",
+              "long brown hair",
+              "black high heels",
+              "black high heels",
+              "people",
+              "people"
+            ],
+            "bboxes": [
+              [
+                190.21550000000002,
+                11.776,
+                528.9834999999999,
+                1022.464
+              ],
+              [
+                0.3415,
+                663.04,
+                681.9755,
+                1022.464
+              ],
+              [
+                224.3655,
+                155.136,
+                531.0325,
+                613.888
+              ],
+              [
+                256.4665,
+                11.776,
+                471.6115,
+                318.976
+              ],
+              [
+                188.1665,
+                892.416,
+                317.9365,
+                1003.008
+              ],
+              [
+                338.4265,
+                908.8,
+                438.8275,
+                1022.464
+              ],
+              [
+                0.3415,
+                623.104,
+                223.6825,
+                852.48
+              ],
+              [
+                0.3415,
+                729.6,
+                76.1545,
+                852.48
+              ]
+            ]
+          },
+          "elapsedMs": 2104.7330470000015
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-13339",
+      "sha256": "e6c30030bf868edd7217fab716718f7f35fb986b63756c50a9479eb44078b04a",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 8997.075838999997,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            172.887,
+            265.728,
+            552.761,
+            936.448
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                172.887,
+                265.728,
+                552.761,
+                936.448
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                173.56900000000002,
+                269.824,
+                554.125,
+                936.448
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13339-0.bin.gz",
+          "maskSha256": "c1ec325e8e783140b95e04ff909ebd9b38414cbac1ae767dbb66832ff0835855",
+          "colorVerified": false
+        },
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            39.215,
+            256.512,
+            210.397,
+            782.848
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                39.215,
+                256.512,
+                210.397,
+                782.848
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13339-1.bin.gz",
+          "maskSha256": "f0f7596bfe15817df763dc50dd2ea9cede023678ef57e8c3e8315fefe184b352",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            612.095,
+            882.176,
+            680.9770000000001,
+            949.76
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                612.095,
+                882.176,
+                680.9770000000001,
+                949.76
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13339-2.bin.gz",
+          "maskSha256": "b2f10ad976cd07873b215d92d5c4594e860d4b4bdf37f2b3c13c9f2846db699a",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_253><loc_259><loc_810><loc_914><loc_57><loc_250><loc_308><loc_764>footwear<loc_897><loc_861><loc_998><loc_927>human face<loc_388><loc_50><loc_569><loc_220><loc_899><loc_0><loc_998><loc_123><loc_667><loc_123><loc_741><loc_181><loc_218><loc_63><loc_282><loc_122>woman<loc_169><loc_13><loc_878><loc_998><loc_50><loc_50><loc_343><loc_998><loc_690><loc_44><loc_998><loc_998><loc_0><loc_0><loc_62><loc_695><loc_634><loc_97><loc_764><loc_276></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "fancy dress",
+              "footwear",
+              "human face",
+              "human face",
+              "human face",
+              "human face",
+              "woman",
+              "woman",
+              "woman",
+              "woman",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                172.887,
+                265.728,
+                552.761,
+                936.448
+              ],
+              [
+                39.215,
+                256.512,
+                210.397,
+                782.848
+              ],
+              [
+                612.095,
+                882.176,
+                680.9770000000001,
+                949.76
+              ],
+              [
+                264.957,
+                51.712,
+                388.399,
+                225.792
+              ],
+              [
+                613.459,
+                0.512,
+                680.9770000000001,
+                126.464
+              ],
+              [
+                455.235,
+                126.464,
+                505.70300000000003,
+                185.856
+              ],
+              [
+                149.017,
+                65.024,
+                192.665,
+                125.44
+              ],
+              [
+                115.599,
+                13.824,
+                599.137,
+                1022.464
+              ],
+              [
+                34.441,
+                51.712,
+                234.26700000000002,
+                1022.464
+              ],
+              [
+                470.921,
+                45.568,
+                680.9770000000001,
+                1022.464
+              ],
+              [
+                0.341,
+                0.512,
+                42.625,
+                712.192
+              ],
+              [
+                432.729,
+                99.84,
+                521.389,
+                283.136
+              ]
+            ]
+          },
+          "elapsedMs": 2723.4338639999914
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a mirror. She is wearing a red and white striped dress. She has a gray purse on her shoulder. There are people behind her. </s>",
+          "parsed": "A woman is standing in front of a mirror. She is wearing a red and white striped dress. She has a gray purse on her shoulder. There are people behind her. ",
+          "elapsedMs": 2346.642771999992
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a mirror. She is wearing a red and white striped dress. She has a gray purse on her shoulder. There are people behind her. ",
+          "raw": "</s><s>A woman<loc_170><loc_12><loc_878><loc_998>dress<loc_254><loc_263><loc_812><loc_914>people<loc_0><loc_0><loc_998><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "people"
+            ],
+            "bboxes": [
+              [
+                116.281,
+                12.8,
+                599.137,
+                1022.464
+              ],
+              [
+                173.56900000000002,
+                269.824,
+                554.125,
+                936.448
+              ],
+              [
+                0.341,
+                0.512,
+                680.9770000000001,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2080.064455999993
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9031",
+      "sha256": "24a6b45a90f9b06d14a8b2a821b55705f08ea88f1c0c033bd1000b9136a34481",
+      "width": 1024,
+      "height": 823,
+      "elapsedMs": 9088.996817000007,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            666.112,
+            351.0095,
+            856.576,
+            625.8915
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                666.112,
+                351.0095,
+                856.576,
+                625.8915
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                668.16,
+                349.3635,
+                857.6,
+                627.5374999999999
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9031-0.bin.gz",
+          "maskSha256": "ff392b19e4906942e0adfaaa42f7036f4bc19ac7f447755749da34831a3a5c2c",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            437.76,
+            518.9014999999999,
+            545.28,
+            606.1395
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                437.76,
+                518.9014999999999,
+                545.28,
+                606.1395
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "boots",
+              "box": [
+                435.712,
+                514.7864999999999,
+                545.28,
+                606.1395
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9031-1.bin.gz",
+          "maskSha256": "97dba0021cfd495313e5542d4ffe3d067a7fdb6a17f1bf48cd70445a23b3d824",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            545.28,
+            713.9525,
+            666.112,
+            783.9075
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                545.28,
+                713.9525,
+                666.112,
+                783.9075
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "boots",
+              "box": [
+                542.208,
+                709.0145,
+                663.04,
+                783.9075
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-9031-2.bin.gz",
+          "maskSha256": "bbf0b34e2179c31a94a49123497b7ce4e744fac26ff9aa1c41e251dfc3f985f4",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_650><loc_426><loc_836><loc_760>footwear<loc_427><loc_630><loc_532><loc_736><loc_532><loc_867><loc_650><loc_952>human face<loc_666><loc_349><loc_729><loc_442>woman<loc_427><loc_305><loc_835><loc_950></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "footwear",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                666.112,
+                351.0095,
+                856.576,
+                625.8915
+              ],
+              [
+                437.76,
+                518.9014999999999,
+                545.28,
+                606.1395
+              ],
+              [
+                545.28,
+                713.9525,
+                666.112,
+                783.9075
+              ],
+              [
+                682.496,
+                287.63849999999996,
+                747.008,
+                364.1775
+              ],
+              [
+                437.76,
+                251.4265,
+                855.552,
+                782.2615
+              ]
+            ]
+          },
+          "elapsedMs": 2367.164453999998
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is sitting on a stone wall. She is wearing a yellow dress and black boots. The wall has graffiti on it. </s>",
+          "parsed": "A woman is sitting on a stone wall. She is wearing a yellow dress and black boots. The wall has graffiti on it. ",
+          "elapsedMs": 2272.772947999998
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is sitting on a stone wall. She is wearing a yellow dress and black boots. The wall has graffiti on it. ",
+          "raw": "</s><s>A woman<loc_426><loc_302><loc_838><loc_952>dress<loc_652><loc_424><loc_837><loc_762>boots<loc_425><loc_625><loc_532><loc_736><loc_529><loc_861><loc_647><loc_952>The wall<loc_10><loc_11><loc_991><loc_984></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "boots",
+              "boots",
+              "The wall"
+            ],
+            "bboxes": [
+              [
+                436.736,
+                248.95749999999998,
+                858.624,
+                783.9075
+              ],
+              [
+                668.16,
+                349.3635,
+                857.6,
+                627.5374999999999
+              ],
+              [
+                435.712,
+                514.7864999999999,
+                545.28,
+                606.1395
+              ],
+              [
+                542.208,
+                709.0145,
+                663.04,
+                783.9075
+              ],
+              [
+                10.752,
+                9.4645,
+                1015.296,
+                810.2435
+              ]
+            ]
+          },
+          "elapsedMs": 2213.5552370000078
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-18008",
+      "sha256": "82d1a32c9575b4eabd4aba824386688341caddc35199a924478ac513b3d15253",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 10342.111438000007,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            224.037,
+            857.6,
+            294.283,
+            952.832
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                224.037,
+                857.6,
+                294.283,
+                952.832
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-0.bin.gz",
+          "maskSha256": "018bc18e8c9f9a6f95f5fa28e11fcf5e3cd445565054c5130fca13e416fc542d",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            340.659,
+            860.672,
+            399.31100000000004,
+            958.976
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                340.659,
+                860.672,
+                399.31100000000004,
+                958.976
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-1.bin.gz",
+          "maskSha256": "e55273881f53c10079099ed6e103309131fb9de729e2500a26f6ed7913cb563e",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            597.7729999999999,
+            367.104,
+            632.555,
+            389.632
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                597.7729999999999,
+                367.104,
+                632.555,
+                389.632
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-2.bin.gz",
+          "maskSha256": "2c8c4bab9a40dd5a39f0f6f59cb65586c9e56fdf5f1daadb88c7ff7f31e255a0",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            565.037,
+            367.104,
+            583.451,
+            387.584
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                565.037,
+                367.104,
+                583.451,
+                387.584
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 3,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-3.bin.gz",
+          "maskSha256": "d03974dac5665a8c5c59f076692068a0c7b147d397fe2f24c2c4ec949fa71d78",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "glasses",
+          "box": [
+            316.78900000000004,
+            132.608,
+            402.03900000000004,
+            162.304
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "glasses",
+              "box": [
+                316.78900000000004,
+                132.608,
+                402.03900000000004,
+                162.304
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 4,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-4.bin.gz",
+          "maskSha256": "6f1e6138013c9074a99fe9128a28eccc088b26d1662b0f26b57e347baf58f015",
+          "colorVerified": false
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "jacket",
+          "box": [
+            199.48499999999999,
+            203.264,
+            493.427,
+            551.424
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "jacket",
+              "box": [
+                199.48499999999999,
+                203.264,
+                493.427,
+                551.424
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "jacket",
+              "box": [
+                198.12099999999998,
+                203.264,
+                495.473,
+                606.72
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Outerwear"
+          ],
+          "parentIndex": 5,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-5.bin.gz",
+          "maskSha256": "9924b51455d8ad13d8c8614d23ced9862636ce3f19a6b2865000b6b1891fd531",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "shorts",
+          "box": [
+            238.35899999999998,
+            550.4,
+            430.683,
+            701.952
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "shorts",
+              "box": [
+                238.35899999999998,
+                550.4,
+                430.683,
+                701.952
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "shorts",
+              "box": [
+                238.35899999999998,
+                543.232,
+                432.729,
+                702.976
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 6,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-6.bin.gz",
+          "maskSha256": "30c95080af30466b6c25a35dcf1b44304267793ac1dd8c365a393c94e03dc249",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            567.083,
+            274.944,
+            629.145,
+            375.296
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                567.083,
+                274.944,
+                629.145,
+                375.296
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 7,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-7.bin.gz",
+          "maskSha256": "8f683a5effac6606ca119109bf49c5819d53a9bd57d7dcd4a4e14b8742a7461a",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            466.147,
+            251.392,
+            512.5229999999999,
+            321.024
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                466.147,
+                251.392,
+                512.5229999999999,
+                321.024
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 8,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-8.bin.gz",
+          "maskSha256": "66a05ceef0b452cad5e934049567573b796e89686c4e8b0fe07055c0f444f59f",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            661.1990000000001,
+            248.32,
+            680.9770000000001,
+            357.888
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                661.1990000000001,
+                248.32,
+                680.9770000000001,
+                357.888
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 9,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-9.bin.gz",
+          "maskSha256": "b1db60b9a181e929c88784993a76a83a6416e888f067e01ad923e10a5187fd1c",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            175.615,
+            229.888,
+            204.259,
+            289.28
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                175.615,
+                229.888,
+                204.259,
+                289.28
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 10,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-10.bin.gz",
+          "maskSha256": "a51e534550e71da998446b1c3e8a13d6715e0c5a9ceee6c7f3c6d1875f2a01af",
+          "colorVerified": false
+        },
+        {
+          "category": "Tops",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "shirt",
+          "box": [
+            258.819,
+            232.96,
+            442.277,
+            571.904
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "shirt",
+              "box": [
+                258.819,
+                232.96,
+                442.277,
+                571.904
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Tops"
+          ],
+          "parentIndex": 11,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-11.bin.gz",
+          "maskSha256": "407b7c7355298fcb08e55782d1f07f18b819dc0983709f9ecc9d83a27e57f22c",
+          "colorVerified": false
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "jacket",
+          "box": [
+            197.439,
+            203.264,
+            495.473,
+            607.744
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "jacket",
+              "box": [
+                197.439,
+                203.264,
+                495.473,
+                607.744
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Outerwear"
+          ],
+          "parentIndex": 12,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-18008-12.bin.gz",
+          "maskSha256": "a5d36dd21f1a1c729e78e1e286be86ab9bc4d5e2e1d6006b9b594c359f19cb06",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>footwear<loc_328><loc_837><loc_431><loc_930><loc_499><loc_840><loc_585><loc_936><loc_876><loc_358><loc_927><loc_380><loc_828><loc_358><loc_855><loc_378>glasses<loc_464><loc_129><loc_589><loc_158>human face<loc_470><loc_100><loc_583><loc_203>jacket<loc_292><loc_198><loc_723><loc_538>man<loc_288><loc_76><loc_724><loc_933><loc_827><loc_155><loc_942><loc_380>shorts<loc_349><loc_537><loc_631><loc_685>trousers<loc_831><loc_268><loc_922><loc_366><loc_683><loc_245><loc_751><loc_313><loc_969><loc_242><loc_998><loc_349><loc_257><loc_224><loc_299><loc_282></s>",
+          "parsed": {
+            "labels": [
+              "footwear",
+              "footwear",
+              "footwear",
+              "footwear",
+              "glasses",
+              "human face",
+              "jacket",
+              "man",
+              "man",
+              "shorts",
+              "trousers",
+              "trousers",
+              "trousers",
+              "trousers"
+            ],
+            "bboxes": [
+              [
+                224.037,
+                857.6,
+                294.283,
+                952.832
+              ],
+              [
+                340.659,
+                860.672,
+                399.31100000000004,
+                958.976
+              ],
+              [
+                597.7729999999999,
+                367.104,
+                632.555,
+                389.632
+              ],
+              [
+                565.037,
+                367.104,
+                583.451,
+                387.584
+              ],
+              [
+                316.78900000000004,
+                132.608,
+                402.03900000000004,
+                162.304
+              ],
+              [
+                320.881,
+                102.912,
+                397.947,
+                208.384
+              ],
+              [
+                199.48499999999999,
+                203.264,
+                493.427,
+                551.424
+              ],
+              [
+                196.75699999999998,
+                78.336,
+                494.10900000000004,
+                955.904
+              ],
+              [
+                564.355,
+                159.232,
+                642.785,
+                389.632
+              ],
+              [
+                238.35899999999998,
+                550.4,
+                430.683,
+                701.952
+              ],
+              [
+                567.083,
+                274.944,
+                629.145,
+                375.296
+              ],
+              [
+                466.147,
+                251.392,
+                512.5229999999999,
+                321.024
+              ],
+              [
+                661.1990000000001,
+                248.32,
+                680.9770000000001,
+                357.888
+              ],
+              [
+                175.615,
+                229.888,
+                204.259,
+                289.28
+              ]
+            ]
+          },
+          "elapsedMs": 2754.410195999997
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A man is standing on a sidewalk. He is wearing a blue jacket and blue shorts. He has a white shirt under the jacket. There are people walking on the sidewalk behind him.</s>",
+          "parsed": "A man is standing on a sidewalk. He is wearing a blue jacket and blue shorts. He has a white shirt under the jacket. There are people walking on the sidewalk behind him.",
+          "elapsedMs": 2241.3206340000033
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A man is standing on a sidewalk. He is wearing a blue jacket and blue shorts. He has a white shirt under the jacket. There are people walking on the sidewalk behind him.",
+          "raw": "</s><s>A man<loc_289><loc_73><loc_727><loc_936>jacket<loc_290><loc_198><loc_726><loc_592>shorts<loc_349><loc_530><loc_634><loc_686>shirt<loc_379><loc_227><loc_648><loc_558>jacket<loc_289><loc_198><loc_726><loc_593>people<loc_0><loc_114><loc_998><loc_382></s>",
+          "parsed": {
+            "labels": [
+              "A man",
+              "jacket",
+              "shorts",
+              "shirt",
+              "jacket",
+              "people"
+            ],
+            "bboxes": [
+              [
+                197.439,
+                75.264,
+                496.15500000000003,
+                958.976
+              ],
+              [
+                198.12099999999998,
+                203.264,
+                495.473,
+                606.72
+              ],
+              [
+                238.35899999999998,
+                543.232,
+                432.729,
+                702.976
+              ],
+              [
+                258.819,
+                232.96,
+                442.277,
+                571.904
+              ],
+              [
+                197.439,
+                203.264,
+                495.473,
+                607.744
+              ],
+              [
+                0.341,
+                117.248,
+                680.9770000000001,
+                391.68
+              ]
+            ]
+          },
+          "elapsedMs": 2115.5131619999884
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-13049",
+      "sha256": "c12ef9df87e0413fd6d9f62da262f7da7fa666d675480c677e73a83fa7bcd4e3",
+      "width": 1024,
+      "height": 1024,
+      "elapsedMs": 9527.874368999997,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            206.336,
+            283.136,
+            629.248,
+            755.2
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                206.336,
+                283.136,
+                629.248,
+                755.2
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                208.384,
+                289.28,
+                630.272,
+                755.2
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13049-0.bin.gz",
+          "maskSha256": "5a2387f6b0ebb1423beb0b87473877c510cc79d626d158ffcc5292f6e7530607",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "high heels",
+          "box": [
+            577.024,
+            793.088,
+            748.032,
+            947.712
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "high heels",
+              "box": [
+                577.024,
+                793.088,
+                748.032,
+                947.712
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "high heels",
+              "box": [
+                576,
+                791.04,
+                750.08,
+                950.784
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13049-1.bin.gz",
+          "maskSha256": "188423dca80f40785cec86618b5771cbd74fcb077b09affb268e7ace97551d69",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "high heels",
+          "box": [
+            278.016,
+            745.984,
+            419.328,
+            884.224
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "high heels",
+              "box": [
+                278.016,
+                745.984,
+                419.328,
+                884.224
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "high heels",
+              "box": [
+                276.992,
+                743.936,
+                421.376,
+                888.32
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-13049-2.bin.gz",
+          "maskSha256": "91e4e82b4b3036b17cca3789d737942ef4e14db1056c9b5e87ed453bd86fe50f",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_201><loc_276><loc_614><loc_737>high heels<loc_563><loc_774><loc_730><loc_925><loc_271><loc_728><loc_409><loc_863>human face<loc_409><loc_112><loc_519><loc_248>woman<loc_201><loc_89><loc_731><loc_925></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "high heels",
+              "high heels",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                206.336,
+                283.136,
+                629.248,
+                755.2
+              ],
+              [
+                577.024,
+                793.088,
+                748.032,
+                947.712
+              ],
+              [
+                278.016,
+                745.984,
+                419.328,
+                884.224
+              ],
+              [
+                419.328,
+                115.2,
+                531.968,
+                254.464
+              ],
+              [
+                206.336,
+                91.648,
+                749.056,
+                947.712
+              ]
+            ]
+          },
+          "elapsedMs": 2274.541314999995
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is sitting on a stool. She is wearing a black dress and black high heels. The woman has dark brown hair and is looking off to the side. Her right hand is resting on her face. Her left hand is touching her face with her left hand. Her eyes are closed. Her hair is dark brown. The background is white.</s>",
+          "parsed": "A woman is sitting on a stool. She is wearing a black dress and black high heels. The woman has dark brown hair and is looking off to the side. Her right hand is resting on her face. Her left hand is touching her face with her left hand. Her eyes are closed. Her hair is dark brown. The background is white.",
+          "elapsedMs": 2425.1581559999904
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is sitting on a stool. She is wearing a black dress and black high heels. The woman has dark brown hair and is looking off to the side. Her right hand is resting on her face. Her left hand is touching her face with her left hand. Her eyes are closed. Her hair is dark brown. The background is white.",
+          "raw": "</s><s>A woman<loc_203><loc_88><loc_733><loc_928>dress<loc_203><loc_282><loc_615><loc_737>high heels<loc_562><loc_772><loc_732><loc_928><loc_270><loc_726><loc_411><loc_867>The woman<loc_203><loc_87><loc_733><loc_928>hair<loc_345><loc_89><loc_512><loc_262>her right hand<loc_483><loc_172><loc_553><loc_269>face<loc_412><loc_113><loc_519><loc_252>Her left hand<loc_483><loc_173><loc_553><loc_269>her eyes<loc_434><loc_149><loc_507><loc_183><loc_479><loc_150><loc_506><loc_171>Her hair<loc_345><loc_89><loc_513><loc_262></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "high heels",
+              "high heels",
+              "The woman",
+              "hair",
+              "her right hand",
+              "face",
+              "Her left hand",
+              "her eyes",
+              "her eyes",
+              "Her hair"
+            ],
+            "bboxes": [
+              [
+                208.384,
+                90.624,
+                751.104,
+                950.784
+              ],
+              [
+                208.384,
+                289.28,
+                630.272,
+                755.2
+              ],
+              [
+                576,
+                791.04,
+                750.08,
+                950.784
+              ],
+              [
+                276.992,
+                743.936,
+                421.376,
+                888.32
+              ],
+              [
+                208.384,
+                89.6,
+                751.104,
+                950.784
+              ],
+              [
+                353.792,
+                91.648,
+                524.8,
+                268.8
+              ],
+              [
+                495.104,
+                176.64,
+                566.784,
+                275.968
+              ],
+              [
+                422.4,
+                116.224,
+                531.968,
+                258.56
+              ],
+              [
+                495.104,
+                177.664,
+                566.784,
+                275.968
+              ],
+              [
+                444.928,
+                153.088,
+                519.68,
+                187.904
+              ],
+              [
+                491.008,
+                154.112,
+                518.656,
+                175.616
+              ],
+              [
+                353.792,
+                91.648,
+                525.824,
+                268.8
+              ]
+            ]
+          },
+          "elapsedMs": 2654.640155000001
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-19616",
+      "sha256": "a41f738cf7327c6713c02e6859942c45606c07bfd2751ee9da713dd02b67002c",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 8217.124895,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            166.749,
+            298.496,
+            660.517,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                166.749,
+                298.496,
+                660.517,
+                1022.464
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                167.43099999999998,
+                298.496,
+                658.471,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-19616-0.bin.gz",
+          "maskSha256": "fd3d896acd596c65269a66fe51d6c6e55b0b80748e980043d74c93867d01364e",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_244><loc_291><loc_968><loc_998>human face<loc_472><loc_83><loc_680><loc_269><loc_43><loc_977><loc_78><loc_998>woman<loc_244><loc_31><loc_968><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                166.749,
+                298.496,
+                660.517,
+                1022.464
+              ],
+              [
+                322.245,
+                85.504,
+                464.101,
+                275.968
+              ],
+              [
+                29.666999999999998,
+                1000.96,
+                53.537,
+                1022.464
+              ],
+              [
+                166.749,
+                32.256,
+                660.517,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2192.845690000002
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in a room. She is wearing a black dress. She has a headband on her head. There are lights on the ceiling behind her. </s>",
+          "parsed": "A woman is standing in a room. She is wearing a black dress. She has a headband on her head. There are lights on the ceiling behind her. ",
+          "elapsedMs": 2173.4268440000014
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in a room. She is wearing a black dress. She has a headband on her head. There are lights on the ceiling behind her. ",
+          "raw": "</s><s>A woman<loc_245><loc_34><loc_965><loc_998>dress<loc_245><loc_291><loc_965><loc_998>headband<loc_447><loc_43><loc_684><loc_153>head<loc_449><loc_37><loc_723><loc_275>lights<loc_0><loc_0><loc_998><loc_318><loc_43><loc_43><loc_952><loc_285>ceiling<loc_0><loc_0><loc_997><loc_319></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "headband",
+              "head",
+              "lights",
+              "lights",
+              "ceiling"
+            ],
+            "bboxes": [
+              [
+                167.43099999999998,
+                35.328,
+                658.471,
+                1022.464
+              ],
+              [
+                167.43099999999998,
+                298.496,
+                658.471,
+                1022.464
+              ],
+              [
+                305.195,
+                44.544,
+                466.829,
+                157.184
+              ],
+              [
+                306.559,
+                38.4,
+                493.427,
+                282.112
+              ],
+              [
+                0.341,
+                0.512,
+                680.9770000000001,
+                326.144
+              ],
+              [
+                29.666999999999998,
+                44.544,
+                649.605,
+                292.352
+              ],
+              [
+                0.341,
+                0.512,
+                680.2950000000001,
+                327.168
+              ]
+            ]
+          },
+          "elapsedMs": 2241.132866
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-16629",
+      "sha256": "421dfea8d2fb4faaa8b4ec0d1b3c4d5c4c252c3b5e6985904fe5a9d66701d7dd",
+      "width": 702,
+      "height": 1024,
+      "elapsedMs": 8696.209204000013,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            159.705,
+            360.96,
+            587.9250000000001,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                159.705,
+                360.96,
+                587.9250000000001,
+                1022.464
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                154.791,
+                360.96,
+                587.9250000000001,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-16629-0.bin.gz",
+          "maskSha256": "1e6a21fa3a009f032ba3aa001ea5274c1c3789dd4e8e5a9e0a409b2040678e8a",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_227><loc_352><loc_837><loc_998>human face<loc_355><loc_104><loc_564><loc_298>woman<loc_0><loc_0><loc_837><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                159.705,
+                360.96,
+                587.9250000000001,
+                1022.464
+              ],
+              [
+                249.56099999999998,
+                107.008,
+                396.279,
+                305.664
+              ],
+              [
+                0.35100000000000003,
+                0.512,
+                587.9250000000001,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2456.477766000011
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a wall. She is wearing a black and gold dress. The woman has long dark hair that is hanging in a bun. She has large silver earrings on her ears. </s>",
+          "parsed": "A woman is standing in front of a wall. She is wearing a black and gold dress. The woman has long dark hair that is hanging in a bun. She has large silver earrings on her ears. ",
+          "elapsedMs": 2497.9452859999874
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a wall. She is wearing a black and gold dress. The woman has long dark hair that is hanging in a bun. She has large silver earrings on her ears. ",
+          "raw": "</s><s>A woman<loc_0><loc_0><loc_998><loc_998><loc_0><loc_0><loc_842><loc_998>dress<loc_220><loc_352><loc_837><loc_998>The woman<loc_189><loc_0><loc_727><loc_540>hair<loc_190><loc_0><loc_726><loc_539></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "A woman",
+              "dress",
+              "The woman",
+              "hair"
+            ],
+            "bboxes": [
+              [
+                0.35100000000000003,
+                0.512,
+                700.947,
+                1022.464
+              ],
+              [
+                0.35100000000000003,
+                0.512,
+                591.4350000000001,
+                1022.464
+              ],
+              [
+                154.791,
+                360.96,
+                587.9250000000001,
+                1022.464
+              ],
+              [
+                133.029,
+                0.512,
+                510.70500000000004,
+                553.472
+              ],
+              [
+                133.731,
+                0.512,
+                510.00300000000004,
+                552.448
+              ]
+            ]
+          },
+          "elapsedMs": 2131.77034800002
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-11859",
+      "sha256": "98abb1f6d145ba8ab3be776f1e2646279d87637f286f980983761fb5220860ae",
+      "width": 1024,
+      "height": 773,
+      "elapsedMs": 9479.81902699999,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            251.392,
+            318.86249999999995,
+            479.744,
+            597.9155
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                251.392,
+                318.86249999999995,
+                479.744,
+                597.9155
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                251.392,
+                317.31649999999996,
+                479.744,
+                594.8235
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-11859-0.bin.gz",
+          "maskSha256": "461b4ee563495bda20c0475d40761162eddd162ccdac6aa34f1e1e0427b5ba6c",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_245><loc_412><loc_468><loc_773>human face<loc_326><loc_198><loc_404><loc_341>woman<loc_123><loc_147><loc_914><loc_963></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                251.392,
+                318.86249999999995,
+                479.744,
+                597.9155
+              ],
+              [
+                334.336,
+                153.44050000000001,
+                414.208,
+                263.97950000000003
+              ],
+              [
+                126.464,
+                114.0175,
+                936.448,
+                744.7855000000001
+              ]
+            ]
+          },
+          "elapsedMs": 2052.724726000015
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is sitting on a rock wall. She is wearing a colorful dress. The woman has long brown hair. The wall behind the woman is white with colorful designs on it. The rock wall is made of rocks. The women is sitting with her legs crossed. The womans legs are crossed in front of her. Her hair is long and wavy.</s>",
+          "parsed": "A woman is sitting on a rock wall. She is wearing a colorful dress. The woman has long brown hair. The wall behind the woman is white with colorful designs on it. The rock wall is made of rocks. The women is sitting with her legs crossed. The womans legs are crossed in front of her. Her hair is long and wavy.",
+          "elapsedMs": 2677.3107509999827
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is sitting on a rock wall. She is wearing a colorful dress. The woman has long brown hair. The wall behind the woman is white with colorful designs on it. The rock wall is made of rocks. The women is sitting with her legs crossed. The womans legs are crossed in front of her. Her hair is long and wavy.",
+          "raw": "</s><s>A woman<loc_126><loc_144><loc_914><loc_961>dress<loc_245><loc_410><loc_468><loc_769>The wall<loc_11><loc_14><loc_991><loc_982>The rock wall<loc_11><loc_13><loc_991><loc_982><loc_11><loc_555><loc_988><loc_986>The women<loc_126><loc_144><loc_913><loc_961>legs<loc_430><loc_517><loc_914><loc_961>The womans legs<loc_430><loc_517><loc_913><loc_961>Her hair<loc_250><loc_145><loc_477><loc_529></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "The wall",
+              "The rock wall",
+              "The rock wall",
+              "The women",
+              "legs",
+              "The womans legs",
+              "Her hair"
+            ],
+            "bboxes": [
+              [
+                129.536,
+                111.6985,
+                936.448,
+                743.2395
+              ],
+              [
+                251.392,
+                317.31649999999996,
+                479.744,
+                594.8235
+              ],
+              [
+                11.776,
+                11.2085,
+                1015.296,
+                759.4725000000001
+              ],
+              [
+                11.776,
+                10.4355,
+                1015.296,
+                759.4725000000001
+              ],
+              [
+                11.776,
+                429.4015,
+                1012.224,
+                762.5645000000001
+              ],
+              [
+                129.536,
+                111.6985,
+                935.424,
+                743.2395
+              ],
+              [
+                440.832,
+                400.0275,
+                936.448,
+                743.2395
+              ],
+              [
+                440.832,
+                400.0275,
+                935.424,
+                743.2395
+              ],
+              [
+                256.512,
+                112.47149999999999,
+                488.96,
+                409.3035
+              ]
+            ]
+          },
+          "elapsedMs": 2719.0600710000144
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-16820",
+      "sha256": "6832902058eaf04fafeb07d5f57eaab1c2adeba58cdc9c6ce67ba0049110f68b",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 10012.66552899999,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            196.75699999999998,
+            338.432,
+            540.485,
+            971.264
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                196.75699999999998,
+                338.432,
+                540.485,
+                971.264
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-16820-0.bin.gz",
+          "maskSha256": "faef26d8e4a79af3f194100c56e0317e5175477574537c427256896f7fd80ae5",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "a short skirt",
+          "box": [
+            196.75699999999998,
+            596.48,
+            541.167,
+            969.216
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a short skirt",
+              "box": [
+                196.75699999999998,
+                596.48,
+                541.167,
+                969.216
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "The skirt",
+              "box": [
+                196.75699999999998,
+                595.456,
+                541.167,
+                969.216
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 1,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-16820-1.bin.gz",
+          "maskSha256": "588ed6567105cef48bd7c6446f1c88454ce3d586a8dc5af1ab74d108c4058828",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "a belt",
+          "box": [
+            243.13299999999998,
+            566.784,
+            462.73699999999997,
+            626.176
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a belt",
+              "box": [
+                243.13299999999998,
+                566.784,
+                462.73699999999997,
+                626.176
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "childIndex": 0,
+          "parentSplitCount": 1,
+          "duplicateEvidence": [],
+          "maskFile": "benchmark/parallel68-masks/footwear-validation-fashionpedia-val-16820-2.bin.gz",
+          "maskSha256": "fda6878170a3f68ec6403b79e32b4087c1ab29760942bbd0f31290eec233f602",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_288><loc_330><loc_792><loc_948>human face<loc_433><loc_128><loc_607><loc_289>miniskirt<loc_289><loc_581><loc_792><loc_948>woman<loc_231><loc_52><loc_802><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "human face",
+              "miniskirt",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                196.75699999999998,
+                338.432,
+                540.485,
+                971.264
+              ],
+              [
+                295.647,
+                131.584,
+                414.31500000000005,
+                296.448
+              ],
+              [
+                197.439,
+                595.456,
+                540.485,
+                971.264
+              ],
+              [
+                157.883,
+                53.76,
+                547.305,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2575.292561999988
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a brown wall. She is wearing a short skirt that is light purple in color. The skirt has a belt around the waist that is black in color with silver and black dots on it. The woman has long dark brown hair that is pulled back into a ponytail. She has a big smile on her face.</s>",
+          "parsed": "A woman is standing in front of a brown wall. She is wearing a short skirt that is light purple in color. The skirt has a belt around the waist that is black in color with silver and black dots on it. The woman has long dark brown hair that is pulled back into a ponytail. She has a big smile on her face.",
+          "elapsedMs": 2470.113169999997
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a brown wall. She is wearing a short skirt that is light purple in color. The skirt has a belt around the waist that is black in color with silver and black dots on it. The woman has long dark brown hair that is pulled back into a ponytail. She has a big smile on her face.",
+          "raw": "</s><s>A woman<loc_242><loc_52><loc_796><loc_998>a short skirt<loc_288><loc_582><loc_793><loc_946>The skirt<loc_288><loc_581><loc_793><loc_946>a belt<loc_356><loc_553><loc_678><loc_611>the waist<loc_356><loc_553><loc_679><loc_611>The woman<loc_242><loc_51><loc_796><loc_998>hair<loc_275><loc_51><loc_747><loc_477>ponytail<loc_275><loc_51><loc_748><loc_477>face<loc_429><loc_127><loc_612><loc_292></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "a short skirt",
+              "The skirt",
+              "a belt",
+              "the waist",
+              "The woman",
+              "hair",
+              "ponytail",
+              "face"
+            ],
+            "bboxes": [
+              [
+                165.385,
+                53.76,
+                543.213,
+                1022.464
+              ],
+              [
+                196.75699999999998,
+                596.48,
+                541.167,
+                969.216
+              ],
+              [
+                196.75699999999998,
+                595.456,
+                541.167,
+                969.216
+              ],
+              [
+                243.13299999999998,
+                566.784,
+                462.73699999999997,
+                626.176
+              ],
+              [
+                243.13299999999998,
+                566.784,
+                463.419,
+                626.176
+              ],
+              [
+                165.385,
+                52.736,
+                543.213,
+                1022.464
+              ],
+              [
+                187.89100000000002,
+                52.736,
+                509.795,
+                488.96
+              ],
+              [
+                187.89100000000002,
+                52.736,
+                510.47700000000003,
+                488.96
+              ],
+              [
+                292.919,
+                130.56,
+                417.725,
+                299.52
+              ]
+            ]
+          },
+          "elapsedMs": 2641.1602760000096
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    }
+  ],
+  "processPeakResidentBytes": 3704627200
+}

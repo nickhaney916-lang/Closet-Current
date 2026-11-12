@@ -1,0 +1,732 @@
+{
+  "schema": "closet-current-parallel68-semantic-instances/v1",
+  "mode": "components",
+  "split": "validation",
+  "manifestSha256": "b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd",
+  "model": "Xenova/segformer_b0_clothes",
+  "revision": "a2489ea8e7ec1ee912190546bad31a4906ccca76",
+  "dtype": "fp32",
+  "automaticSave": false,
+  "rows": [
+    {
+      "id": "fashionpedia-val-10913",
+      "sha256": "c2f475c0a2134ac8b71fb19785529360a1efd39f9db47da699856a2f6b2a1195",
+      "width": 859,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.8029505496933347,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-10913-0.bin.gz",
+          "maskSha256": "cb2d521a9a356c82055e34b5e94e3c79b6eae1ffd2433c47f99f49931dca2ffb",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9567466341738924,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-10913-1.bin.gz",
+          "maskSha256": "67c2d0cdaa71771956a8d279cda1a748645cad5b8b1d92ec6ddd967d1ed4ce6a",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 726.155932,
+      "elapsedMs": 726.155932,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-15851",
+      "sha256": "0dc702710972659f72b27df4d859cf4aaec54e9908a02e21f65e6f9ed8203b75",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.9376771412869935,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15851-0.bin.gz",
+          "maskSha256": "2933a1ffc4845c932e481bc6e0ba00f154690b10d17eeff50e2fe7c399e83562",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "confidence": 0.8009169499079386,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15851-1.bin.gz",
+          "maskSha256": "26d866405ac39cf0a2bdf8e742e7d8129c4aadfffc3163ccc4b65642153143af",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9145485856493966,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15851-2.bin.gz",
+          "maskSha256": "89b449fc29bf153136f5256c95a188b7d431b3a89d9fdb186c19ba21b165b43b",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.8674344275055862,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15851-3.bin.gz",
+          "maskSha256": "ef594fff69a9f78e5e46acf1c15b37ce072684f150f49ac47a82a9f6a5c6461f",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 657.3266580000002,
+      "elapsedMs": 657.3266580000002,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9425",
+      "sha256": "5650233266502722921f6d0ca68ebbdc0d92315fc777d1ec5efe88d1ae00b16a",
+      "width": 683,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.8678599524045895,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-9425-0.bin.gz",
+          "maskSha256": "4c0052a6a6e4217bfcb52f6818306e599f4e98aff37d51266fb1498a03c6f8be",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 248.592087,
+      "elapsedMs": 248.592087,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9246",
+      "sha256": "2bd826ef2cd611d5be43586d42c6781db8bb641b5c1e97cfe21f78959251b80e",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.914894113127691,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-9246-0.bin.gz",
+          "maskSha256": "8304c4d1068441224b5308dc00410f80b1890ec71c2df48804dffb1e0e7e8f6e",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 231.57185299999992,
+      "elapsedMs": 231.57185299999992,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-11800",
+      "sha256": "1791be4720af53131965e00426a7e25fdba234a13992ec4233bd1557c45a5dd5",
+      "width": 680,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "confidence": 0.8648891715066773,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-11800-0.bin.gz",
+          "maskSha256": "643f231fc531db7c9e576a7389c459dadd8ffb31bbaef899681c15577b1dd462",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9715808534334197,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-11800-1.bin.gz",
+          "maskSha256": "045aab5c917a7e5d0a4b989fbed5a69b48b393c23cd6dd742b24167da6a88065",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.8620034246831327,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-11800-2.bin.gz",
+          "maskSha256": "eeaa335f2fc462cada58c865e2d7a16724562720818da1bf9c316eeda839bbb5",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 219.81791499999963,
+      "elapsedMs": 219.81791499999963,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-13260",
+      "sha256": "36ec95313761a48cdc46ea026d9067397320a69938644dac5f50b3517552a887",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9798671191151546,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13260-0.bin.gz",
+          "maskSha256": "3a5cf30cde349f01f57b03bfec9fca2f0e6e6385c8c04f625f071a2d5a7985d6",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.831358580212844,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13260-1.bin.gz",
+          "maskSha256": "e5f2ef4e8ae4e6f23b6727ca9f19d06bb81c2ac11eef3c7515d7e6f74173704f",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 227.47347899999977,
+      "elapsedMs": 227.47347899999977,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-15424",
+      "sha256": "668737b3fde3e26e6ba813866dd6bfee648918173a9be18200315a32a6db4d9a",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.9194071678126731,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15424-0.bin.gz",
+          "maskSha256": "f0ce7230ced817e5d21606b9846148fa94f9c06daae9280aa27a0ca699d79735",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9562905918894791,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15424-1.bin.gz",
+          "maskSha256": "a792b99130e77066c478a3fba9efde4639af69a6d36486c1e7416fcc28e3cf8c",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9213072806596756,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15424-2.bin.gz",
+          "maskSha256": "7875ecfa0a8fc8f8873f6df8057895f7d550c664dba2123922d20301be88e934",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.838359534740448,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-15424-3.bin.gz",
+          "maskSha256": "5ecdc2cde2df0bbeff1a9328c8fc562f121d79c1f9af56d80d0fb18714165946",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 252.85718599999973,
+      "elapsedMs": 252.85718599999973,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-18517",
+      "sha256": "6628d8679227523971de27c564f2a0cae7d3391d981c97923c841abe3b6494fe",
+      "width": 683,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9805510184075624,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18517-0.bin.gz",
+          "maskSha256": "a334b10d218fd5d03064ea6927567b363d4f20314195c22560733a9b793f868b",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9031592136621476,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18517-1.bin.gz",
+          "maskSha256": "d6c1879d8315415dfbe1556a99b09168455c63e2dcb289711b0246121980c837",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.8670740967447107,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18517-2.bin.gz",
+          "maskSha256": "00015e6a68c0e2118060b181ff27ad9bded70967d0c2c1d7b4d03487649a2a3e",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.8886941723656236,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18517-3.bin.gz",
+          "maskSha256": "7060868dff9e4fa3bf366efbaf700c5ab5a272ec194f2588bc9c4f49e916f402",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 228.16787499999964,
+      "elapsedMs": 228.16787499999964,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-13339",
+      "sha256": "e6c30030bf868edd7217fab716718f7f35fb986b63756c50a9479eb44078b04a",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9491714857572461,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13339-0.bin.gz",
+          "maskSha256": "bba49684b94c42d4444181254ca9ef92c000d3b5f39d8fe7c5b9b0a411ed2889",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "confidence": 0.8213403942633648,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13339-1.bin.gz",
+          "maskSha256": "d9d584501c65b5be72b709f12a69fa84f868bc018eccff1c21c6245bb1f2a945",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 220.11602700000003,
+      "elapsedMs": 220.11602700000003,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9031",
+      "sha256": "24a6b45a90f9b06d14a8b2a821b55705f08ea88f1c0c033bd1000b9136a34481",
+      "width": 1024,
+      "height": 823,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9291584966511562,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-9031-0.bin.gz",
+          "maskSha256": "4bce037def38eec6fd07d2e3cea652ff7109dc664f0e0b582efad9bd9812e38f",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9368116048317922,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-9031-1.bin.gz",
+          "maskSha256": "492e9ca04c86c741af3848f65d0521da0fe83204e607c4a20ccabd70c220cc47",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9523988629496375,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-9031-2.bin.gz",
+          "maskSha256": "56e7ea63fe4f70d2d06333b1c26bd125cfdfb82edba8e35b1933b7fab891fc89",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 220.50697900000068,
+      "elapsedMs": 220.50697900000068,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-18008",
+      "sha256": "82d1a32c9575b4eabd4aba824386688341caddc35199a924478ac513b3d15253",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.9541413846727059,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18008-0.bin.gz",
+          "maskSha256": "be89d236542495df03eae7329a1354c37d534b2945aa21eeaef082a4cf58e178",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "confidence": 0.9611283112139929,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18008-1.bin.gz",
+          "maskSha256": "3e771dd612b1d740f7279c3bc1b98f84811fc7a3686ff6cfaca38f9a8d30a7fb",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9400123937029234,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18008-2.bin.gz",
+          "maskSha256": "5a87876a262e4e2ec6f325fc83cfca1ea8b67a058d1426a88929637691bb937a",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9437445431579778,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-18008-3.bin.gz",
+          "maskSha256": "2a3277ea00935aff3fd119ddb673d05fb38a798f4fc1686fd94ed2177b41b8d1",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 213.85410599999977,
+      "elapsedMs": 213.85410599999977,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-13049",
+      "sha256": "c12ef9df87e0413fd6d9f62da262f7da7fa666d675480c677e73a83fa7bcd4e3",
+      "width": 1024,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.891565476335076,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13049-0.bin.gz",
+          "maskSha256": "b17733bd74dade8677281b8eb5c0b0db2743d432d2dfd9d540dc65f57c419bdf",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.8373421973356322,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13049-1.bin.gz",
+          "maskSha256": "4a6a51d0f93f555aceffb4a99baf6ea33fbfdd64e77b5b6b118d4ef1fa03c667",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.8758184089176897,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13049-2.bin.gz",
+          "maskSha256": "f68db22cbfa45a6ea97185e4af1877c63662a4dd254cbc45d14f72a9df57ad11",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "confidence": 0.9198261735675571,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-13049-3.bin.gz",
+          "maskSha256": "cb17382f6febf8db339cb678b75bb8df80593ddab2d1e1fe930bec0970b663a0",
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 220.7746960000004,
+      "elapsedMs": 220.7746960000004,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-19616",
+      "sha256": "a41f738cf7327c6713c02e6859942c45606c07bfd2751ee9da713dd02b67002c",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9694001544579952,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-19616-0.bin.gz",
+          "maskSha256": "72ca7e7e158a4283c6184a1433ad103f86f4ef6b61c1c64df438e52ec15d3cbb",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 271.70506099999966,
+      "elapsedMs": 271.70506099999966,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-16629",
+      "sha256": "421dfea8d2fb4faaa8b4ec0d1b3c4d5c4c252c3b5e6985904fe5a9d66701d7dd",
+      "width": 702,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.8743910407177126,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-16629-0.bin.gz",
+          "maskSha256": "3257ca6e169751714f7947c75ee1d2ebc2d78d586f2f60caa6ebc15b093d853e",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "confidence": 0.8233563376743944,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-16629-1.bin.gz",
+          "maskSha256": "f1176108b001fbf1d7350dd72129ae4e71e1eacdc03370ec6a425d27684f1140",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 207.2329069999996,
+      "elapsedMs": 207.2329069999996,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-11859",
+      "sha256": "98abb1f6d145ba8ab3be776f1e2646279d87637f286f980983761fb5220860ae",
+      "width": 1024,
+      "height": 773,
+      "regions": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "confidence": 0.9515122347733737,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-11859-0.bin.gz",
+          "maskSha256": "9ae40ec7d6d767cb0e0de75d462573771e8f6315eacafbbd6b8237954d2ea530",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 201.76950300000044,
+      "elapsedMs": 201.76950300000044,
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-16820",
+      "sha256": "6832902058eaf04fafeb07d5f57eaab1c2adeba58cdc9c6ce67ba0049110f68b",
+      "width": 682,
+      "height": 1024,
+      "regions": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "confidence": 0.9365748142792006,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-16820-0.bin.gz",
+          "maskSha256": "91c29ed59e6230820bae53e3db8af9efa1fc2353c0dae023efc31adf2a061527",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "confidence": 0.9722915298494942,
+          "maskFile": "benchmark/parallel68-masks/components-validation-fashionpedia-val-16820-1.bin.gz",
+          "maskSha256": "ed167b298194f54ea398680a554d9b5f60b81624e97a4b5564868a04db92b4d4",
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true,
+          "itemType": "Unknown",
+          "colorVerified": false
+        }
+      ],
+      "inferenceMs": 201.98458300000038,
+      "elapsedMs": 201.98458300000038,
+      "requiresReview": true,
+      "automaticSave": false
+    }
+  ],
+  "processPeakResidentBytes": 616128512
+}

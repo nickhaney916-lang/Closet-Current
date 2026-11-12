@@ -1,0 +1,2301 @@
+{
+  "schema": "closet-current-parallel68-grounded-footwear/v1",
+  "mode": "reference",
+  "split": "development",
+  "manifestSha256": "cfb7734271c0b14a95e0a826a33230eb05b67867999bf0d500763a64a19874d8",
+  "florence": {
+    "model": "onnx-community/Florence-2-base-ft",
+    "revision": "e88a44eaf3791a35eae0c5a47b3dbcd36e67eb6f",
+    "dtype": "q8"
+  },
+  "sam2": {
+    "model": "onnx-community/sam2.1-hiera-tiny-ONNX",
+    "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+    "dtype": "q8",
+    "device": "cpu"
+  },
+  "automaticSave": false,
+  "rows": [
+    {
+      "id": "fashionpedia-val-8519",
+      "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 10633.939626999996,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            258.819,
+            215.552,
+            458.645,
+            958.976
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                258.819,
+                215.552,
+                458.645,
+                958.976
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a red dress",
+              "box": [
+                258.819,
+                214.528,
+                459.327,
+                958.976
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-8519-0.bin.gz",
+          "maskSha256": "d092ecb6a19f0960321812aa460e0cef00144a8720e1c57308ebaa2576bbcd33",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            305.195,
+            945.664,
+            420.45300000000003,
+            1019.392
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                305.195,
+                945.664,
+                420.45300000000003,
+                1019.392
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "gold high heels",
+              "box": [
+                301.785,
+                941.568,
+                423.86300000000006,
+                1020.416
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-8519-1.bin.gz",
+          "maskSha256": "bef31f80bce2ff91e562ae2e4656d7ca7cfeef87e56e1763628bb060fff7c61b",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "a long red scarf",
+          "box": [
+            258.819,
+            214.528,
+            458.645,
+            958.976
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a long red scarf",
+              "box": [
+                258.819,
+                214.528,
+                458.645,
+                958.976
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-8519-2.bin.gz",
+          "maskSha256": "bc787e9bb156863bcd2fa790de61ab525e0e0d69fa4051f02963b38a39f2bea5",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_379><loc_210><loc_672><loc_936>footwear<loc_447><loc_923><loc_616><loc_995>human face<loc_413><loc_101><loc_512><loc_201>woman<loc_248><loc_78><loc_792><loc_994></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                258.819,
+                215.552,
+                458.645,
+                958.976
+              ],
+              [
+                305.195,
+                945.664,
+                420.45300000000003,
+                1019.392
+              ],
+              [
+                282.007,
+                103.936,
+                349.525,
+                206.336
+              ],
+              [
+                169.477,
+                80.384,
+                540.485,
+                1018.368
+              ]
+            ]
+          },
+          "elapsedMs": 2913.2008730000016
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a brick wall. She is wearing a red dress and a long red scarf. The woman has long brown hair and is smiling. She has gold high heels on her feet.</s>",
+          "parsed": "A woman is standing in front of a brick wall. She is wearing a red dress and a long red scarf. The woman has long brown hair and is smiling. She has gold high heels on her feet.",
+          "elapsedMs": 2463.7853099999993
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a brick wall. She is wearing a red dress and a long red scarf. The woman has long brown hair and is smiling. She has gold high heels on her feet.",
+          "raw": "</s><s>A woman<loc_250><loc_77><loc_793><loc_991>a brick wall<loc_0><loc_0><loc_998><loc_998>a red dress<loc_379><loc_209><loc_673><loc_936>a long red scarf<loc_379><loc_209><loc_672><loc_936>The woman<loc_250><loc_76><loc_793><loc_991>hair<loc_301><loc_78><loc_520><loc_299>gold high heels<loc_442><loc_919><loc_621><loc_996></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "a brick wall",
+              "a red dress",
+              "a long red scarf",
+              "The woman",
+              "hair",
+              "gold high heels"
+            ],
+            "bboxes": [
+              [
+                170.841,
+                79.36,
+                541.167,
+                1015.296
+              ],
+              [
+                0.341,
+                0.512,
+                680.9770000000001,
+                1022.464
+              ],
+              [
+                258.819,
+                214.528,
+                459.327,
+                958.976
+              ],
+              [
+                258.819,
+                214.528,
+                458.645,
+                958.976
+              ],
+              [
+                170.841,
+                78.336,
+                541.167,
+                1015.296
+              ],
+              [
+                205.623,
+                80.384,
+                354.981,
+                306.688
+              ],
+              [
+                301.785,
+                941.568,
+                423.86300000000006,
+                1020.416
+              ]
+            ]
+          },
+          "elapsedMs": 2859.745839999996
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-9711",
+      "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+      "width": 683,
+      "height": 1024,
+      "elapsedMs": 9194.199630999996,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            366.42949999999996,
+            427.52,
+            576.1105,
+            891.392
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                366.42949999999996,
+                427.52,
+                576.1105,
+                891.392
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                367.1125,
+                425.472,
+                577.4765,
+                889.344
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-9711-0.bin.gz",
+          "maskSha256": "5ea171a5041b6e10bca2d8025a7e4b9391a620797c0e0dab23a21b2bb13f843f",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            452.4875,
+            918.016,
+            500.9805,
+            1001.984
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                452.4875,
+                918.016,
+                500.9805,
+                1001.984
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "sandals",
+              "box": [
+                451.12149999999997,
+                912.896,
+                500.2975,
+                1001.984
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-9711-1.bin.gz",
+          "maskSha256": "52ea51477791f7c27f5e0bb407d439668c39062cf3607b86cce681251e622103",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_536><loc_417><loc_843><loc_870>footwear<loc_662><loc_896><loc_733><loc_978>human face<loc_638><loc_350><loc_718><loc_419>woman<loc_524><loc_300><loc_846><loc_977></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                366.42949999999996,
+                427.52,
+                576.1105,
+                891.392
+              ],
+              [
+                452.4875,
+                918.016,
+                500.9805,
+                1001.984
+              ],
+              [
+                436.09549999999996,
+                358.912,
+                490.7355,
+                429.568
+              ],
+              [
+                358.2335,
+                307.712,
+                578.1595,
+                1000.96
+              ]
+            ]
+          },
+          "elapsedMs": 2167.7729739999995
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing in front of a wall. She is wearing a yellow dress. The woman has black hair. The wall is made of wood. The women is wearing sandals on her feet. </s>",
+          "parsed": "A woman is standing in front of a wall. She is wearing a yellow dress. The woman has black hair. The wall is made of wood. The women is wearing sandals on her feet. ",
+          "elapsedMs": 2232.91057
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing in front of a wall. She is wearing a yellow dress. The woman has black hair. The wall is made of wood. The women is wearing sandals on her feet. ",
+          "raw": "</s><s>A woman<loc_522><loc_297><loc_849><loc_978>dress<loc_537><loc_415><loc_845><loc_868>The woman<loc_522><loc_296><loc_849><loc_978>hair<loc_583><loc_299><loc_778><loc_407>The wall<loc_0><loc_0><loc_998><loc_911>The women<loc_522><loc_297><loc_850><loc_978>sandals<loc_660><loc_891><loc_732><loc_978></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "The woman",
+              "hair",
+              "The wall",
+              "The women",
+              "sandals"
+            ],
+            "bboxes": [
+              [
+                356.86749999999995,
+                304.64,
+                580.2085000000001,
+                1001.984
+              ],
+              [
+                367.1125,
+                425.472,
+                577.4765,
+                889.344
+              ],
+              [
+                356.86749999999995,
+                303.616,
+                580.2085000000001,
+                1001.984
+              ],
+              [
+                398.5305,
+                306.688,
+                531.7155,
+                417.28
+              ],
+              [
+                0.3415,
+                0.512,
+                681.9755,
+                933.376
+              ],
+              [
+                356.86749999999995,
+                304.64,
+                580.8915000000001,
+                1001.984
+              ],
+              [
+                451.12149999999997,
+                912.896,
+                500.2975,
+                1001.984
+              ]
+            ]
+          },
+          "elapsedMs": 2239.8642429999963
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-10216",
+      "sha256": "43e8d91b902670a2a7a120eea6582e3757544222da4e4b8e5bfe6b73066d3ad4",
+      "width": 1024,
+      "height": 683,
+      "elapsedMs": 9591.949393000003,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            840.192,
+            552.2055,
+            898.56,
+            637.5805
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                840.192,
+                552.2055,
+                898.56,
+                637.5805
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10216-0.bin.gz",
+          "maskSha256": "b80004d6f7bec59b1ec7c0cf141c23ad32996192ee2cde32e8dcab1ff5c7a90c",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "sneakers",
+          "box": [
+            843.264,
+            346.62249999999995,
+            929.28,
+            404.6775
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "sneakers",
+              "box": [
+                843.264,
+                346.62249999999995,
+                929.28,
+                404.6775
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10216-1.bin.gz",
+          "maskSha256": "988e0f2661172d24d1e58c9a2ef415b32193d03b881ed58356453e149f60edfd",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            725.504,
+            343.8905,
+            883.2,
+            562.4505
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                725.504,
+                343.8905,
+                883.2,
+                562.4505
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "jeans",
+              "box": [
+                729.6,
+                341.1585,
+                881.152,
+                563.1335
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10216-2.bin.gz",
+          "maskSha256": "af23cd0154bbda11cea5b066a877f9649917f639e7677da01bd8cd9e5c385fab",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>footwear<loc_820><loc_808><loc_877><loc_933>human face<loc_762><loc_256><loc_811><loc_348>person<loc_654><loc_210><loc_909><loc_933>sneakers<loc_823><loc_507><loc_907><loc_592>trousers<loc_708><loc_503><loc_862><loc_823></s>",
+          "parsed": {
+            "labels": [
+              "footwear",
+              "human face",
+              "person",
+              "sneakers",
+              "trousers"
+            ],
+            "bboxes": [
+              [
+                840.192,
+                552.2055,
+                898.56,
+                637.5805
+              ],
+              [
+                780.8,
+                175.1895,
+                830.976,
+                238.0255
+              ],
+              [
+                670.208,
+                143.7715,
+                931.328,
+                637.5805
+              ],
+              [
+                843.264,
+                346.62249999999995,
+                929.28,
+                404.6775
+              ],
+              [
+                725.504,
+                343.8905,
+                883.2,
+                562.4505
+              ]
+            ]
+          },
+          "elapsedMs": 2872.546386000002
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is sitting on a ledge. The ledge is on a wall made of rocks. The woman is wearing a long sleeve shirt and blue jeans. The sky above the woman is blue with white clouds.</s>",
+          "parsed": "A woman is sitting on a ledge. The ledge is on a wall made of rocks. The woman is wearing a long sleeve shirt and blue jeans. The sky above the woman is blue with white clouds.",
+          "elapsedMs": 2332.8960919999954
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is sitting on a ledge. The ledge is on a wall made of rocks. The woman is wearing a long sleeve shirt and blue jeans. The sky above the woman is blue with white clouds.",
+          "raw": "</s><s>A woman<loc_652><loc_205><loc_914><loc_933>The ledge<loc_0><loc_131><loc_998><loc_995><loc_650><loc_570><loc_963><loc_647>rocks<loc_0><loc_131><loc_997><loc_997>The woman<loc_652><loc_206><loc_914><loc_933>jeans<loc_712><loc_499><loc_860><loc_824>The sky<loc_0><loc_0><loc_998><loc_143></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "The ledge",
+              "The ledge",
+              "rocks",
+              "The woman",
+              "jeans",
+              "The sky"
+            ],
+            "bboxes": [
+              [
+                668.16,
+                140.35649999999998,
+                936.448,
+                637.5805
+              ],
+              [
+                0.512,
+                89.81450000000001,
+                1022.464,
+                679.9265
+              ],
+              [
+                666.112,
+                389.6515,
+                986.624,
+                442.24249999999995
+              ],
+              [
+                0.512,
+                89.81450000000001,
+                1021.44,
+                681.2925
+              ],
+              [
+                668.16,
+                141.0395,
+                936.448,
+                637.5805
+              ],
+              [
+                729.6,
+                341.1585,
+                881.152,
+                563.1335
+              ],
+              [
+                0.512,
+                0.3415,
+                1022.464,
+                98.0105
+              ]
+            ]
+          },
+          "elapsedMs": 2340.299261
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-10382",
+      "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 10070.706444999996,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            157.883,
+            922.112,
+            271.095,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                157.883,
+                922.112,
+                271.095,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10382-0.bin.gz",
+          "maskSha256": "09933dcf02908bf866d12f8140a75c30539415baec49ffdd5335387f18fb40c2",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            92.411,
+            913.92,
+            198.12099999999998,
+            1014.272
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                92.411,
+                913.92,
+                198.12099999999998,
+                1014.272
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10382-1.bin.gz",
+          "maskSha256": "dd92c51a77b1f3d11e00f5938b003e07f5c2d3c788650c4986c73a1d4e8098a2",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "hat",
+          "box": [
+            99.231,
+            7.68,
+            256.773,
+            111.104
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "hat",
+              "box": [
+                99.231,
+                7.68,
+                256.773,
+                111.104
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "hat",
+              "box": [
+                96.50299999999999,
+                7.68,
+                257.455,
+                110.08
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10382-2.bin.gz",
+          "maskSha256": "48a6eac982937b6d4d0c92b4901c2e27f241ae0a98b44c24453031048877b5df",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "shorts",
+          "box": [
+            43.989000000000004,
+            441.856,
+            230.85700000000003,
+            569.856
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "shorts",
+              "box": [
+                43.989000000000004,
+                441.856,
+                230.85700000000003,
+                569.856
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "shorts",
+              "box": [
+                42.625,
+                437.76,
+                232.221,
+                571.904
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 3,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10382-3.bin.gz",
+          "maskSha256": "7cd971d9cdd7e4ae23916194717b91f45b782ca76b04d2b853c08b78d412ed11",
+          "colorVerified": false
+        },
+        {
+          "category": "Tops",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "shirt",
+          "box": [
+            53.537,
+            151.04,
+            236.99499999999998,
+            476.672
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "shirt",
+              "box": [
+                53.537,
+                151.04,
+                236.99499999999998,
+                476.672
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Tops"
+          ],
+          "parentIndex": 4,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10382-4.bin.gz",
+          "maskSha256": "70a729c453a02b5888124bd63d919d6f5c0ed98524edecc9f7266376bf7b00f0",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>footwear<loc_231><loc_900><loc_397><loc_998><loc_135><loc_892><loc_290><loc_990>hat<loc_145><loc_7><loc_376><loc_108>human face<loc_202><loc_64><loc_331><loc_164>shorts<loc_64><loc_431><loc_338><loc_556>woman<loc_0><loc_0><loc_399><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "footwear",
+              "footwear",
+              "hat",
+              "human face",
+              "shorts",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                157.883,
+                922.112,
+                271.095,
+                1022.464
+              ],
+              [
+                92.411,
+                913.92,
+                198.12099999999998,
+                1014.272
+              ],
+              [
+                99.231,
+                7.68,
+                256.773,
+                111.104
+              ],
+              [
+                138.10500000000002,
+                66.048,
+                226.083,
+                168.448
+              ],
+              [
+                43.989000000000004,
+                441.856,
+                230.85700000000003,
+                569.856
+              ],
+              [
+                0.341,
+                0.512,
+                272.459,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2310.9955869999976
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing on a dirt ground. She is wearing a black shirt and a black hat. She has a pink bra on her chest. She also has a pair of blue and white shorts on her.</s>",
+          "parsed": "A woman is standing on a dirt ground. She is wearing a black shirt and a black hat. She has a pink bra on her chest. She also has a pair of blue and white shorts on her.",
+          "elapsedMs": 2807.941466999997
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing on a dirt ground. She is wearing a black shirt and a black hat. She has a pink bra on her chest. She also has a pair of blue and white shorts on her.",
+          "raw": "</s><s>A woman<loc_8><loc_7><loc_397><loc_998>shirt<loc_78><loc_147><loc_347><loc_465>hat<loc_141><loc_7><loc_377><loc_107>shorts<loc_62><loc_427><loc_340><loc_558></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "shirt",
+              "hat",
+              "shorts"
+            ],
+            "bboxes": [
+              [
+                5.797000000000001,
+                7.68,
+                271.095,
+                1022.464
+              ],
+              [
+                53.537,
+                151.04,
+                236.99499999999998,
+                476.672
+              ],
+              [
+                96.50299999999999,
+                7.68,
+                257.455,
+                110.08
+              ],
+              [
+                42.625,
+                437.76,
+                232.221,
+                571.904
+              ]
+            ]
+          },
+          "elapsedMs": 2254.7138080000004
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-10776",
+      "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+      "width": 1024,
+      "height": 682,
+      "elapsedMs": 9263.158874,
+      "regions": [
+        {
+          "category": "Dresses",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "fancy dress",
+          "box": [
+            407.04,
+            206.987,
+            591.36,
+            475.01300000000003
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "fancy dress",
+              "box": [
+                407.04,
+                206.987,
+                591.36,
+                475.01300000000003
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "dress",
+              "box": [
+                409.088,
+                205.623,
+                591.36,
+                477.741
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Dresses"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10776-0.bin.gz",
+          "maskSha256": "78698f79c62f3335d8423f0538c089d6a25e1b4990285da8e2f8d0a1cbdcfbf2",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            557.568,
+            585.4970000000001,
+            597.504,
+            646.877
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                557.568,
+                585.4970000000001,
+                597.504,
+                646.877
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10776-1.bin.gz",
+          "maskSha256": "45fcb75b1d4016c1d911be58566630d8b79a7ad2b1a4a5f654b6cf31f32a13ef",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "glasses",
+          "box": [
+            495.104,
+            155.155,
+            547.328,
+            182.435
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "glasses",
+              "box": [
+                495.104,
+                155.155,
+                547.328,
+                182.435
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10776-2.bin.gz",
+          "maskSha256": "d79e48bb0ff1e13c003fc1cb749f7f0b9e8409b7da664abe3c57e90cce20768b",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>fancy dress<loc_397><loc_303><loc_577><loc_696>footwear<loc_544><loc_858><loc_583><loc_948>human face<loc_489><loc_204><loc_531><loc_293>woman<loc_393><loc_182><loc_591><loc_944></s>",
+          "parsed": {
+            "labels": [
+              "fancy dress",
+              "footwear",
+              "human face",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                407.04,
+                206.987,
+                591.36,
+                475.01300000000003
+              ],
+              [
+                557.568,
+                585.4970000000001,
+                597.504,
+                646.877
+              ],
+              [
+                501.248,
+                139.469,
+                544.256,
+                200.167
+              ],
+              [
+                402.944,
+                124.465,
+                605.696,
+                644.149
+              ]
+            ]
+          },
+          "elapsedMs": 1972.2782189999998
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is walking in a forest. She is wearing a pink dress with pink designs on it. She has long brown hair and glasses on her face. The trees are green and tall. The ground is covered in brown leaves.</s>",
+          "parsed": "A woman is walking in a forest. She is wearing a pink dress with pink designs on it. She has long brown hair and glasses on her face. The trees are green and tall. The ground is covered in brown leaves.",
+          "elapsedMs": 2198.026905000006
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is walking in a forest. She is wearing a pink dress with pink designs on it. She has long brown hair and glasses on her face. The trees are green and tall. The ground is covered in brown leaves.",
+          "raw": "</s><s>A woman<loc_397><loc_178><loc_586><loc_954>dress<loc_399><loc_301><loc_577><loc_700>glasses<loc_483><loc_227><loc_534><loc_267>face<loc_485><loc_202><loc_535><loc_297>The trees<loc_0><loc_0><loc_998><loc_739><loc_0><loc_0><loc_307><loc_449>The ground<loc_0><loc_392><loc_998><loc_998><loc_0><loc_431><loc_998><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "dress",
+              "glasses",
+              "face",
+              "The trees",
+              "The trees",
+              "The ground",
+              "The ground"
+            ],
+            "bboxes": [
+              [
+                407.04,
+                121.737,
+                600.576,
+                650.969
+              ],
+              [
+                409.088,
+                205.623,
+                591.36,
+                477.741
+              ],
+              [
+                495.104,
+                155.155,
+                547.328,
+                182.435
+              ],
+              [
+                497.152,
+                138.10500000000002,
+                548.352,
+                202.89499999999998
+              ],
+              [
+                0.512,
+                0.341,
+                1022.464,
+                504.33900000000006
+              ],
+              [
+                0.512,
+                0.341,
+                314.88,
+                306.559
+              ],
+              [
+                0.512,
+                267.685,
+                1022.464,
+                680.9770000000001
+              ],
+              [
+                0.512,
+                294.283,
+                1022.464,
+                680.9770000000001
+              ]
+            ]
+          },
+          "elapsedMs": 2309.7091320000036
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-10898",
+      "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+      "width": 1011,
+      "height": 1024,
+      "elapsedMs": 10426.758619999993,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "boots",
+          "box": [
+            486.7965,
+            699.904,
+            651.5894999999999,
+            810.496
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "boots",
+              "box": [
+                486.7965,
+                699.904,
+                651.5894999999999,
+                810.496
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10898-0.bin.gz",
+          "maskSha256": "181928a484a90b860cbafae9559f7614fcc34dcf970fe89378c91c4e4bb21489",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "boots",
+          "box": [
+            622.2705000000001,
+            797.184,
+            753.7005,
+            910.848
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "boots",
+              "box": [
+                622.2705000000001,
+                797.184,
+                753.7005,
+                910.848
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10898-1.bin.gz",
+          "maskSha256": "f47149534bf8bc331b4b5c9b3fd998aadfa71163c87e654e05af3e5c1c91bc01",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "handbag",
+          "box": [
+            806.2725,
+            627.2,
+            935.6804999999999,
+            736.768
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "handbag",
+              "box": [
+                806.2725,
+                627.2,
+                935.6804999999999,
+                736.768
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10898-2.bin.gz",
+          "maskSha256": "0ee41a2822b1ab49cf721424a14d47aa8336f39f4496c1144d67033ed92df585",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            602.0505,
+            587.264,
+            768.8655,
+            814.592
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                602.0505,
+                587.264,
+                768.8655,
+                814.592
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 3,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10898-3.bin.gz",
+          "maskSha256": "db983bc097833d31aa3cf5a0bfc5ac150a3d44cea936371530dc6b7c1ea0d48b",
+          "colorVerified": false
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "jacket",
+          "box": [
+            723.3705,
+            426.496,
+            977.1315000000001,
+            770.56
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "jacket",
+              "box": [
+                723.3705,
+                426.496,
+                977.1315000000001,
+                770.56
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Outerwear"
+          ],
+          "parentIndex": 4,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10898-4.bin.gz",
+          "maskSha256": "08f02f3016ec2093924ec360ffef009d2b2b5b24e7474497561ee62abc8664cc",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>bench<loc_745><loc_672><loc_998><loc_998>boots<loc_481><loc_683><loc_644><loc_791><loc_615><loc_778><loc_745><loc_889>handbag<loc_797><loc_612><loc_925><loc_719>human face<loc_675><loc_402><loc_742><loc_463>person<loc_481><loc_336><loc_965><loc_889><loc_894><loc_243><loc_927><loc_353>trousers<loc_595><loc_573><loc_760><loc_795></s>",
+          "parsed": {
+            "labels": [
+              "bench",
+              "boots",
+              "boots",
+              "handbag",
+              "human face",
+              "person",
+              "person",
+              "trousers"
+            ],
+            "bboxes": [
+              [
+                753.7005,
+                688.64,
+                1009.4835,
+                1022.464
+              ],
+              [
+                486.7965,
+                699.904,
+                651.5894999999999,
+                810.496
+              ],
+              [
+                622.2705000000001,
+                797.184,
+                753.7005,
+                910.848
+              ],
+              [
+                806.2725,
+                627.2,
+                935.6804999999999,
+                736.768
+              ],
+              [
+                682.9304999999999,
+                412.16,
+                750.6675,
+                474.624
+              ],
+              [
+                486.7965,
+                344.576,
+                976.1205,
+                910.848
+              ],
+              [
+                904.3394999999999,
+                249.344,
+                937.7025,
+                361.984
+              ],
+              [
+                602.0505,
+                587.264,
+                768.8655,
+                814.592
+              ]
+            ]
+          },
+          "elapsedMs": 2169.2140840000066
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A man and woman are sitting on a bench. The man is reading a book. The woman is wearing a brown jacket. The bench is made of wood. There is a fence next to the man. There are buildings behind the fence. There water is next to them. There sky above the buildings. There people are walking on the sidewalk. There's a pole next to one of the benches.</s>",
+          "parsed": "A man and woman are sitting on a bench. The man is reading a book. The woman is wearing a brown jacket. The bench is made of wood. There is a fence next to the man. There are buildings behind the fence. There water is next to them. There sky above the buildings. There people are walking on the sidewalk. There's a pole next to one of the benches.",
+          "elapsedMs": 2512.5227679999953
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A man and woman are sitting on a bench. The man is reading a book. The woman is wearing a brown jacket. The bench is made of wood. There is a fence next to the man. There are buildings behind the fence. There water is next to them. There sky above the buildings. There people are walking on the sidewalk. There's a pole next to one of the benches.",
+          "raw": "</s><s>A man<loc_480><loc_329><loc_966><loc_891>woman<loc_778><loc_270><loc_853><loc_419>bench<loc_741><loc_668><loc_998><loc_998>The man<loc_480><loc_330><loc_966><loc_891>book<loc_594><loc_490><loc_705><loc_594>The woman<loc_480><loc_329><loc_967><loc_891>jacket<loc_715><loc_416><loc_966><loc_752>The bench<loc_741><loc_668><loc_997><loc_998>fence<loc_0><loc_229><loc_998><loc_739><loc_0><loc_231><loc_783><loc_738>buildings<loc_0><loc_0><loc_998><loc_238>fence<loc_1><loc_231><loc_783><loc_739>water<loc_0><loc_229><loc_783><loc_739><loc_0><loc_229><loc_782><loc_739><loc_0><loc_230><loc_782><loc_631><loc_0><loc_230><loc_781><loc_630>sky<loc_0><loc_0><loc_997><loc_186>people<loc_480><loc_329><loc_998><loc_998>a pole<loc_849><loc_0><loc_907><loc_502>benches<loc_741><loc_668><loc_996><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "A man",
+              "woman",
+              "bench",
+              "The man",
+              "book",
+              "The woman",
+              "jacket",
+              "The bench",
+              "fence",
+              "fence",
+              "buildings",
+              "fence",
+              "water",
+              "water",
+              "water",
+              "water",
+              "sky",
+              "people",
+              "a pole",
+              "benches"
+            ],
+            "bboxes": [
+              [
+                485.78549999999996,
+                337.408,
+                977.1315000000001,
+                912.896
+              ],
+              [
+                787.0635,
+                276.992,
+                862.8885,
+                429.568
+              ],
+              [
+                749.6565,
+                684.544,
+                1009.4835,
+                1022.464
+              ],
+              [
+                485.78549999999996,
+                338.432,
+                977.1315000000001,
+                912.896
+              ],
+              [
+                601.0395,
+                502.272,
+                713.2605,
+                608.768
+              ],
+              [
+                485.78549999999996,
+                337.408,
+                978.1425,
+                912.896
+              ],
+              [
+                723.3705,
+                426.496,
+                977.1315000000001,
+                770.56
+              ],
+              [
+                749.6565,
+                684.544,
+                1008.4725000000001,
+                1022.464
+              ],
+              [
+                0.5055000000000001,
+                235.008,
+                1009.4835,
+                757.248
+              ],
+              [
+                0.5055000000000001,
+                237.056,
+                792.1184999999999,
+                756.224
+              ],
+              [
+                0.5055000000000001,
+                0.512,
+                1009.4835,
+                244.224
+              ],
+              [
+                1.5165,
+                237.056,
+                792.1184999999999,
+                757.248
+              ],
+              [
+                0.5055000000000001,
+                235.008,
+                792.1184999999999,
+                757.248
+              ],
+              [
+                0.5055000000000001,
+                235.008,
+                791.1075,
+                757.248
+              ],
+              [
+                0.5055000000000001,
+                236.032,
+                791.1075,
+                646.656
+              ],
+              [
+                0.5055000000000001,
+                236.032,
+                790.0965,
+                645.632
+              ],
+              [
+                0.5055000000000001,
+                0.512,
+                1008.4725000000001,
+                190.976
+              ],
+              [
+                485.78549999999996,
+                337.408,
+                1009.4835,
+                1022.464
+              ],
+              [
+                858.8445,
+                0.512,
+                917.4825,
+                514.56
+              ],
+              [
+                749.6565,
+                684.544,
+                1007.4615,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 3197.9811210000044
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-10905",
+      "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+      "width": 768,
+      "height": 1024,
+      "elapsedMs": 10928.125595999998,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            362.88,
+            825.856,
+            438.144,
+            916.992
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                362.88,
+                825.856,
+                438.144,
+                916.992
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10905-0.bin.gz",
+          "maskSha256": "4fdbaad00d5ef7a27d0174e56e346c61d8c5e9e80bae51e3401473444893dc50",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "glasses",
+          "box": [
+            319.104,
+            279.04,
+            388.99199999999996,
+            327.168
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "glasses",
+              "box": [
+                319.104,
+                279.04,
+                388.99199999999996,
+                327.168
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10905-1.bin.gz",
+          "maskSha256": "5c965ccad23f27bc3f90a5741aeed29ceaacb310cda98d901ce8975b47ee8967",
+          "colorVerified": false
+        },
+        {
+          "category": "Accessories",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "handbag",
+          "box": [
+            257.664,
+            514.56,
+            344.448,
+            595.456
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "handbag",
+              "box": [
+                257.664,
+                514.56,
+                344.448,
+                595.456
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Accessories"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10905-2.bin.gz",
+          "maskSha256": "2dd7c54659e47d2ce5294679d77475e055f36d8897aa4cc6260525fbb4b30bbb",
+          "colorVerified": false
+        },
+        {
+          "category": "Outerwear",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "jacket",
+          "box": [
+            276.864,
+            310.784,
+            492.67199999999997,
+            586.24
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "jacket",
+              "box": [
+                276.864,
+                310.784,
+                492.67199999999997,
+                586.24
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "a red jacket",
+              "box": [
+                277.632,
+                311.808,
+                493.43999999999994,
+                586.24
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Outerwear"
+          ],
+          "parentIndex": 3,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10905-3.bin.gz",
+          "maskSha256": "bd9f4c3fe9700fd9207fe87990ccd860854e8fc95d163b355db7df319e7d0842",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            312.192,
+            545.28,
+            475.00800000000004,
+            851.456
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                312.192,
+                545.28,
+                475.00800000000004,
+                851.456
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "blue jeans",
+              "box": [
+                312.96,
+                543.232,
+                471.93600000000004,
+                847.36
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 4,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10905-4.bin.gz",
+          "maskSha256": "d84daca19d82d46ef8d65cb924082b9c05df08f137893bb2c903549a011df6b5",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>bracelet<loc_497><loc_467><loc_519><loc_499>flowerpot<loc_119><loc_611><loc_378><loc_869>footwear<loc_472><loc_806><loc_570><loc_895>glasses<loc_415><loc_272><loc_506><loc_319>handbag<loc_335><loc_502><loc_448><loc_581>human face<loc_422><loc_265><loc_518><loc_339>jacket<loc_360><loc_303><loc_641><loc_572>person<loc_364><loc_196><loc_653><loc_894>ring<loc_449><loc_464><loc_460><loc_478>trousers<loc_406><loc_532><loc_618><loc_831></s>",
+          "parsed": {
+            "labels": [
+              "bracelet",
+              "flowerpot",
+              "footwear",
+              "glasses",
+              "handbag",
+              "human face",
+              "jacket",
+              "person",
+              "ring",
+              "trousers"
+            ],
+            "bboxes": [
+              [
+                382.08,
+                478.72,
+                398.976,
+                511.488
+              ],
+              [
+                91.776,
+                626.176,
+                290.688,
+                890.368
+              ],
+              [
+                362.88,
+                825.856,
+                438.144,
+                916.992
+              ],
+              [
+                319.104,
+                279.04,
+                388.99199999999996,
+                327.168
+              ],
+              [
+                257.664,
+                514.56,
+                344.448,
+                595.456
+              ],
+              [
+                324.48,
+                271.872,
+                398.20799999999997,
+                347.648
+              ],
+              [
+                276.864,
+                310.784,
+                492.67199999999997,
+                586.24
+              ],
+              [
+                279.936,
+                201.216,
+                501.888,
+                915.968
+              ],
+              [
+                345.216,
+                475.648,
+                353.664,
+                489.984
+              ],
+              [
+                312.192,
+                545.28,
+                475.00800000000004,
+                851.456
+              ]
+            ]
+          },
+          "elapsedMs": 2700.323575000002
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is standing outside of a building. She is wearing a red jacket and blue jeans. She has a purse in her hand and is looking at her phone. A large gray pot with a green plant in it is sitting on the ground. The building behind the woman is black and silver. There is a sign on the front of the building that says \"closed\" and \"Hippies Welcome\".</s>",
+          "parsed": "A woman is standing outside of a building. She is wearing a red jacket and blue jeans. She has a purse in her hand and is looking at her phone. A large gray pot with a green plant in it is sitting on the ground. The building behind the woman is black and silver. There is a sign on the front of the building that says \"closed\" and \"Hippies Welcome\".",
+          "elapsedMs": 2856.6860739999975
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is standing outside of a building. She is wearing a red jacket and blue jeans. She has a purse in her hand and is looking at her phone. A large gray pot with a green plant in it is sitting on the ground. The building behind the woman is black and silver. There is a sign on the front of the building that says \"closed\" and \"Hippies Welcome\".",
+          "raw": "</s><s>A woman<loc_358><loc_195><loc_657><loc_896>a red jacket<loc_361><loc_304><loc_642><loc_572>blue jeans<loc_407><loc_530><loc_614><loc_827>a purse<loc_331><loc_497><loc_452><loc_585>A large gray pot<loc_115><loc_608><loc_380><loc_870>a green plant<loc_92><loc_270><loc_359><loc_680>The building<loc_3><loc_0><loc_998><loc_998><loc_3><loc_0><loc_617><loc_827>a sign<loc_711><loc_47><loc_988><loc_290><loc_718><loc_106><loc_950><loc_251>Hippies Welcome<loc_718><loc_106><loc_951><loc_251></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "a red jacket",
+              "blue jeans",
+              "a purse",
+              "A large gray pot",
+              "a green plant",
+              "The building",
+              "The building",
+              "a sign",
+              "a sign",
+              "Hippies Welcome"
+            ],
+            "bboxes": [
+              [
+                275.328,
+                200.192,
+                504.96,
+                918.016
+              ],
+              [
+                277.632,
+                311.808,
+                493.43999999999994,
+                586.24
+              ],
+              [
+                312.96,
+                543.232,
+                471.93600000000004,
+                847.36
+              ],
+              [
+                254.592,
+                509.44,
+                347.52,
+                599.552
+              ],
+              [
+                88.70400000000001,
+                623.104,
+                292.224,
+                891.392
+              ],
+              [
+                71.03999999999999,
+                276.992,
+                276.096,
+                696.832
+              ],
+              [
+                2.688,
+                0.512,
+                766.8480000000001,
+                1022.464
+              ],
+              [
+                2.688,
+                0.512,
+                474.24,
+                847.36
+              ],
+              [
+                546.432,
+                48.64,
+                759.168,
+                297.472
+              ],
+              [
+                551.808,
+                109.056,
+                729.984,
+                257.536
+              ],
+              [
+                551.808,
+                109.056,
+                730.752,
+                257.536
+              ]
+            ]
+          },
+          "elapsedMs": 3012.9892189999955
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    },
+    {
+      "id": "fashionpedia-val-10994",
+      "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+      "width": 682,
+      "height": 1024,
+      "elapsedMs": 10366.556461,
+      "regions": [
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            183.799,
+            941.568,
+            331.793,
+            1022.464
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                183.799,
+                941.568,
+                331.793,
+                1022.464
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 0,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10994-0.bin.gz",
+          "maskSha256": "67e5f497ecfc393227c21363e8df2b12538c66fb4c6061169c22be0dee9d8e8e",
+          "colorVerified": false
+        },
+        {
+          "category": "Shoes",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "footwear",
+          "box": [
+            116.96300000000001,
+            796.16,
+            243.815,
+            889.344
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "footwear",
+              "box": [
+                116.96300000000001,
+                796.16,
+                243.815,
+                889.344
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Shoes"
+          ],
+          "parentIndex": 1,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10994-1.bin.gz",
+          "maskSha256": "93a3427cd6ca145f0c83937d7453bee220234e7d667c597249085d213f439a1b",
+          "colorVerified": false
+        },
+        {
+          "category": "Bottoms",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "generated_description_requires_review",
+          "label": "trousers",
+          "box": [
+            137.423,
+            429.568,
+            585.4970000000001,
+            995.84
+          ],
+          "evidence": [
+            {
+              "stage": "object_detection",
+              "label": "trousers",
+              "box": [
+                137.423,
+                429.568,
+                585.4970000000001,
+                995.84
+              ]
+            },
+            {
+              "stage": "generated_caption_grounding",
+              "label": "jeans",
+              "box": [
+                136.741,
+                425.472,
+                586.179,
+                994.816
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "parentIndex": 2,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10994-2.bin.gz",
+          "maskSha256": "fce67b6abf193975c80497bf2d8890f74d5a5738770c0f3deb8a9c5bdf67aa9c",
+          "colorVerified": false
+        },
+        {
+          "category": "Tops",
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "reason": "specific_subtype_not_established",
+          "label": "shirt",
+          "box": [
+            283.371,
+            227.84,
+            541.8489999999999,
+            505.344
+          ],
+          "evidence": [
+            {
+              "stage": "generated_caption_grounding",
+              "label": "shirt",
+              "box": [
+                283.371,
+                227.84,
+                541.8489999999999,
+                505.344
+              ]
+            }
+          ],
+          "strong": false,
+          "categories": [
+            "Tops"
+          ],
+          "parentIndex": 3,
+          "parentSplitCount": 1,
+          "maskFile": "benchmark/parallel68-masks/reference-development-fashionpedia-val-10994-3.bin.gz",
+          "maskSha256": "7d5c8e14f5c6185a63354ae2c8c30575304d6be86f351091b0cc943aaf08d1d1",
+          "colorVerified": false
+        }
+      ],
+      "stages": {
+        "objectDetection": {
+          "task": "<OD>",
+          "input": "",
+          "raw": "</s><s>footwear<loc_269><loc_919><loc_486><loc_998><loc_171><loc_777><loc_357><loc_868>human face<loc_397><loc_93><loc_556><loc_234>trousers<loc_201><loc_419><loc_858><loc_972>woman<loc_171><loc_59><loc_986><loc_998></s>",
+          "parsed": {
+            "labels": [
+              "footwear",
+              "footwear",
+              "human face",
+              "trousers",
+              "woman"
+            ],
+            "bboxes": [
+              [
+                183.799,
+                941.568,
+                331.793,
+                1022.464
+              ],
+              [
+                116.96300000000001,
+                796.16,
+                243.815,
+                889.344
+              ],
+              [
+                271.095,
+                95.744,
+                379.533,
+                240.128
+              ],
+              [
+                137.423,
+                429.568,
+                585.4970000000001,
+                995.84
+              ],
+              [
+                116.96300000000001,
+                60.928,
+                672.793,
+                1022.464
+              ]
+            ]
+          },
+          "elapsedMs": 2772.045572999996
+        },
+        "caption": {
+          "task": "<MORE_DETAILED_CAPTION>",
+          "input": "",
+          "raw": "</s><s>A woman is sitting on the stairs. She is wearing a white shirt and blue jeans. She has a silver bracelet on her wrist. </s>",
+          "parsed": "A woman is sitting on the stairs. She is wearing a white shirt and blue jeans. She has a silver bracelet on her wrist. ",
+          "elapsedMs": 2788.5803379999998
+        },
+        "grounded": {
+          "task": "<CAPTION_TO_PHRASE_GROUNDING>",
+          "input": "A woman is sitting on the stairs. She is wearing a white shirt and blue jeans. She has a silver bracelet on her wrist. ",
+          "raw": "</s><s>A woman<loc_176><loc_58><loc_986><loc_998>stairs<loc_0><loc_695><loc_998><loc_998>shirt<loc_415><loc_222><loc_794><loc_493>jeans<loc_200><loc_415><loc_859><loc_971></s>",
+          "parsed": {
+            "labels": [
+              "A woman",
+              "stairs",
+              "shirt",
+              "jeans"
+            ],
+            "bboxes": [
+              [
+                120.37299999999999,
+                59.904,
+                672.793,
+                1022.464
+              ],
+              [
+                0.341,
+                712.192,
+                680.9770000000001,
+                1022.464
+              ],
+              [
+                283.371,
+                227.84,
+                541.8489999999999,
+                505.344
+              ],
+              [
+                136.741,
+                425.472,
+                586.179,
+                994.816
+              ]
+            ]
+          },
+          "elapsedMs": 2822.6435280000005
+        }
+      },
+      "requiresReview": true,
+      "automaticSave": false
+    }
+  ],
+  "processPeakResidentBytes": 3670577152
+}

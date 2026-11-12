@@ -1,0 +1,2729 @@
+{
+  "format": "closet-current-parallel68-actual-browser-model/v1",
+  "engine": "chromium",
+  "browserVersion": "141.0.7390.37",
+  "model": "Xenova/segformer_b0_clothes",
+  "revision": "a2489ea8e7ec1ee912190546bad31a4906ccca76",
+  "dtype": "fp32",
+  "modelBytes": 15199746,
+  "modelSha256": "02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3",
+  "moduleSha256": "efd991ae9870997a23ba94feb1db984ec43866d1706a4cc5794a3a3b5a12dded",
+  "developmentManifestSha256": "cfb7734271c0b14a95e0a826a33230eb05b67867999bf0d500763a64a19874d8",
+  "cohort": "P67 original eight development photos only; NO validation or sealed acceptance access",
+  "physicalDevice": false,
+  "desktopMobileViewportEmulation": true,
+  "maskHashesFromActualWasm": true,
+  "notHumanAcceptance": true,
+  "automaticSave": false,
+  "views": [
+    {
+      "width": 320,
+      "contentWidth": 320
+    },
+    {
+      "width": 390,
+      "contentWidth": 390
+    },
+    {
+      "width": 430,
+      "contentWidth": 430
+    }
+  ],
+  "loads": [
+    {
+      "width": 320,
+      "loadMs": 1860.6000000000931
+    },
+    {
+      "width": 390,
+      "loadMs": 1369.7999999998137
+    },
+    {
+      "width": 430,
+      "loadMs": 1941.5
+    }
+  ],
+  "networkViolations": [],
+  "pageErrors": [],
+  "rows": [
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-8519",
+      "type": "result",
+      "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1498,
+          "confidence": 0.9517695820220163,
+          "bounds": {
+            "left": 50,
+            "top": 32,
+            "right": 83,
+            "bottom": 119
+          },
+          "selectedMaskSha256": "ba8ba83d37af0c64cb1465fc180b001c7a9fac2e7ad3cecd0fe270f3ed41ab0a",
+          "originalResolutionMaskSha256": "161fe70086aaeb42c164fa1dd724394e6079ea07fa412ddcc87a39460f3c69c3",
+          "originalResolutionPixels": 63768,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1498,
+          "confidence": 0.9517695820220163,
+          "bounds": {
+            "left": 50,
+            "top": 32,
+            "right": 83,
+            "bottom": 119
+          },
+          "selectedMaskSha256": "ba8ba83d37af0c64cb1465fc180b001c7a9fac2e7ad3cecd0fe270f3ed41ab0a",
+          "originalResolutionMaskSha256": "161fe70086aaeb42c164fa1dd724394e6079ea07fa412ddcc87a39460f3c69c3",
+          "originalResolutionPixels": 63768,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1410.9000000003725,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-9711",
+      "type": "result",
+      "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+      "width": 683,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1449,
+          "confidence": 0.9761034107109527,
+          "bounds": {
+            "left": 70,
+            "top": 57,
+            "right": 107,
+            "bottom": 111
+          },
+          "selectedMaskSha256": "78a7b6f1b34970b87e3ae71f80fb0aa7f0f484f975007b70fa282e7dd8b97863",
+          "originalResolutionMaskSha256": "e157cdd03f6c1c6ff1b0b108c5ae110a68a89c56f5c752d1ec2ce43e00a71606",
+          "originalResolutionPixels": 61832,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1449,
+          "confidence": 0.9761034107109527,
+          "bounds": {
+            "left": 70,
+            "top": 57,
+            "right": 107,
+            "bottom": 111
+          },
+          "selectedMaskSha256": "78a7b6f1b34970b87e3ae71f80fb0aa7f0f484f975007b70fa282e7dd8b97863",
+          "originalResolutionMaskSha256": "e157cdd03f6c1c6ff1b0b108c5ae110a68a89c56f5c752d1ec2ce43e00a71606",
+          "originalResolutionPixels": 61832,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 920.2999999998137,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-10216",
+      "type": "result",
+      "sha256": "43e8d91b902670a2a7a120eea6582e3757544222da4e4b8e5bfe6b73066d3ad4",
+      "width": 1024,
+      "height": 683,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 530,
+          "confidence": 0.8836707518910462,
+          "bounds": {
+            "left": 85,
+            "top": 43,
+            "right": 116,
+            "bottom": 66
+          },
+          "selectedMaskSha256": "5a4c2fd298541f29d87af9f8165e06a12e7df5b53ab69671237cc4fdb56c4694",
+          "originalResolutionMaskSha256": "7fd8f8a2e428d403556005d9548d079ec4150d0be9f3e0463c74b83efdc385be",
+          "originalResolutionPixels": 22600,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 262,
+          "confidence": 0.9210884409551402,
+          "bounds": {
+            "left": 89,
+            "top": 66,
+            "right": 109,
+            "bottom": 102
+          },
+          "selectedMaskSha256": "f2a57cbfd1f5148243fd8175acb9744f009a9158f779e67edc90b2657ffda579",
+          "originalResolutionMaskSha256": "349b758790fa97a62a258eec767c7fba666df1a55154c30bc61ef7d59e95cc25",
+          "originalResolutionPixels": 11176,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 530,
+          "confidence": 0.8836707518910462,
+          "bounds": {
+            "left": 85,
+            "top": 43,
+            "right": 116,
+            "bottom": 66
+          },
+          "selectedMaskSha256": "5a4c2fd298541f29d87af9f8165e06a12e7df5b53ab69671237cc4fdb56c4694",
+          "originalResolutionMaskSha256": "7fd8f8a2e428d403556005d9548d079ec4150d0be9f3e0463c74b83efdc385be",
+          "originalResolutionPixels": 22600,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 262,
+          "confidence": 0.9210884409551402,
+          "bounds": {
+            "left": 89,
+            "top": 66,
+            "right": 109,
+            "bottom": 102
+          },
+          "selectedMaskSha256": "f2a57cbfd1f5148243fd8175acb9744f009a9158f779e67edc90b2657ffda579",
+          "originalResolutionMaskSha256": "349b758790fa97a62a258eec767c7fba666df1a55154c30bc61ef7d59e95cc25",
+          "originalResolutionPixels": 11176,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 926.7999999998137,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-10382",
+      "type": "result",
+      "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 157,
+          "confidence": 0.9080942246564634,
+          "bounds": {
+            "left": 20,
+            "top": 1,
+            "right": 48,
+            "bottom": 12
+          },
+          "selectedMaskSha256": "a04178b03957abf55db123214cfd23c0b9ee643bfe131d8fe2b8db9537be634a",
+          "originalResolutionMaskSha256": "ba40ddf8ad21270229c62524bf814a6d8ae2e7525e1a46628c37918cb5289c06",
+          "originalResolutionPixels": 6696,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 689,
+          "confidence": 0.9591976105734294,
+          "bounds": {
+            "left": 11,
+            "top": 20,
+            "right": 39,
+            "bottom": 61
+          },
+          "selectedMaskSha256": "ce26e572c90710d7fdb2a68f1217b7760dda14327dfcd2c6e31e7b121ece3aa5",
+          "originalResolutionMaskSha256": "8a3ed1ef59384dac9ec7418216ae8f4706a9278221671a7b63fd01613deacd09",
+          "originalResolutionPixels": 29368,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 235,
+          "confidence": 0.8988739832918695,
+          "bounds": {
+            "left": 9,
+            "top": 57,
+            "right": 39,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "8a29272b404d8f3c900d7a5c4813ae593bee565fe37f8d46dbe2cca7873f1a0e",
+          "originalResolutionMaskSha256": "4750a51c62e17c990b5b4218b2c6ad879fd8785b2d202c85caa0f0846dede75e",
+          "originalResolutionPixels": 10008,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 66,
+          "confidence": 0.8362128165635195,
+          "bounds": {
+            "left": 19,
+            "top": 116,
+            "right": 43,
+            "bottom": 127
+          },
+          "selectedMaskSha256": "0eb078fbcc4a006aec75601fefea54edba3f347b485fba61dfcb25b5b821d71a",
+          "originalResolutionMaskSha256": "1d81f9c2015d3817ebd64d49f7dcafa2a08d51d67aaf76fb11f14faef54dc17d",
+          "originalResolutionPixels": 2800,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 157,
+          "confidence": 0.9080942246564634,
+          "bounds": {
+            "left": 20,
+            "top": 1,
+            "right": 48,
+            "bottom": 12
+          },
+          "selectedMaskSha256": "a04178b03957abf55db123214cfd23c0b9ee643bfe131d8fe2b8db9537be634a",
+          "originalResolutionMaskSha256": "ba40ddf8ad21270229c62524bf814a6d8ae2e7525e1a46628c37918cb5289c06",
+          "originalResolutionPixels": 6696,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 689,
+          "confidence": 0.9591976105734294,
+          "bounds": {
+            "left": 11,
+            "top": 20,
+            "right": 39,
+            "bottom": 61
+          },
+          "selectedMaskSha256": "ce26e572c90710d7fdb2a68f1217b7760dda14327dfcd2c6e31e7b121ece3aa5",
+          "originalResolutionMaskSha256": "8a3ed1ef59384dac9ec7418216ae8f4706a9278221671a7b63fd01613deacd09",
+          "originalResolutionPixels": 29368,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 235,
+          "confidence": 0.8988739832918695,
+          "bounds": {
+            "left": 9,
+            "top": 57,
+            "right": 39,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "8a29272b404d8f3c900d7a5c4813ae593bee565fe37f8d46dbe2cca7873f1a0e",
+          "originalResolutionMaskSha256": "4750a51c62e17c990b5b4218b2c6ad879fd8785b2d202c85caa0f0846dede75e",
+          "originalResolutionPixels": 10008,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 66,
+          "confidence": 0.8362128165635195,
+          "bounds": {
+            "left": 19,
+            "top": 116,
+            "right": 43,
+            "bottom": 127
+          },
+          "selectedMaskSha256": "0eb078fbcc4a006aec75601fefea54edba3f347b485fba61dfcb25b5b821d71a",
+          "originalResolutionMaskSha256": "1d81f9c2015d3817ebd64d49f7dcafa2a08d51d67aaf76fb11f14faef54dc17d",
+          "originalResolutionPixels": 2800,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 988.6000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-10776",
+      "type": "result",
+      "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+      "width": 1024,
+      "height": 682,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [],
+      "candidate": [],
+      "elapsedMs": 1010.1000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-10898",
+      "type": "result",
+      "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+      "width": 1011,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 563,
+          "confidence": 0.9109082387141606,
+          "bounds": {
+            "left": 91,
+            "top": 54,
+            "right": 119,
+            "bottom": 95
+          },
+          "selectedMaskSha256": "b062263ea1a018b36ad2dd2ca59b599b7f83789ab4fa960b591dfe07f775fc9a",
+          "originalResolutionMaskSha256": "5290120ee647222c9496feb85c649bead4e17ee16166b7d5a89005908e4aa3b8",
+          "originalResolutionPixels": 35520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 239,
+          "confidence": 0.9303156805836506,
+          "bounds": {
+            "left": 78,
+            "top": 77,
+            "right": 95,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "b50ecd103855383f726744d64283d335b8965a9e702d9c28d02c7655bb252ab1",
+          "originalResolutionMaskSha256": "6480eaf028a39370e1184bb5e4d50bdff7c88639f7a9df4b6791743f4c852a94",
+          "originalResolutionPixels": 15096,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 217,
+          "confidence": 0.9200564900301569,
+          "bounds": {
+            "left": 62,
+            "top": 90,
+            "right": 95,
+            "bottom": 113
+          },
+          "selectedMaskSha256": "d6807c7edf04c37d0f86c3e21488afbb24f32add7039541457909c5ca9811725",
+          "originalResolutionMaskSha256": "ef3a974c3a2e054e2cd301d6815ca201cdfe2edc73cbc85b38ad54575e969e49",
+          "originalResolutionPixels": 13720,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 195,
+          "confidence": 0.9016926847971403,
+          "bounds": {
+            "left": 102,
+            "top": 78,
+            "right": 122,
+            "bottom": 91
+          },
+          "selectedMaskSha256": "6cb8d85f32104b5d147e512396584c3f97200db3e45061803777ae594eeb4401",
+          "originalResolutionMaskSha256": "1c2d37f5a08a50aaf260f84e38893c5c66ac95bdb8725a68c6327da5405b3c02",
+          "originalResolutionPixels": 12304,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 563,
+          "confidence": 0.9109082387141606,
+          "bounds": {
+            "left": 91,
+            "top": 54,
+            "right": 119,
+            "bottom": 95
+          },
+          "selectedMaskSha256": "b062263ea1a018b36ad2dd2ca59b599b7f83789ab4fa960b591dfe07f775fc9a",
+          "originalResolutionMaskSha256": "5290120ee647222c9496feb85c649bead4e17ee16166b7d5a89005908e4aa3b8",
+          "originalResolutionPixels": 35520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 239,
+          "confidence": 0.9303156805836506,
+          "bounds": {
+            "left": 78,
+            "top": 77,
+            "right": 95,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "b50ecd103855383f726744d64283d335b8965a9e702d9c28d02c7655bb252ab1",
+          "originalResolutionMaskSha256": "6480eaf028a39370e1184bb5e4d50bdff7c88639f7a9df4b6791743f4c852a94",
+          "originalResolutionPixels": 15096,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 109,
+          "confidence": 0.912135515737971,
+          "bounds": {
+            "left": 62,
+            "top": 90,
+            "right": 79,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "f738c0d62896d2f1b82e272b68871c2527e9a72f98cf8d2fa2ccc3dfea1290bd",
+          "originalResolutionMaskSha256": "a502f75a4e44727a3e2909a3de2555860de7bd961103f2e7ff20100e7b350c6e",
+          "originalResolutionPixels": 6904,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 108,
+          "confidence": 0.9280508066769,
+          "bounds": {
+            "left": 80,
+            "top": 101,
+            "right": 95,
+            "bottom": 113
+          },
+          "selectedMaskSha256": "10596dce0f03e5a36dbc6e6563ba5d4f1eebb0aa691771533c66e675bc9c4069",
+          "originalResolutionMaskSha256": "647995416064c3873c51ab8d26d80c4b5e4642ce0b0fc0af7ffca50c7359687a",
+          "originalResolutionPixels": 6816,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 195,
+          "confidence": 0.9016926847971403,
+          "bounds": {
+            "left": 102,
+            "top": 78,
+            "right": 122,
+            "bottom": 91
+          },
+          "selectedMaskSha256": "6cb8d85f32104b5d147e512396584c3f97200db3e45061803777ae594eeb4401",
+          "originalResolutionMaskSha256": "1c2d37f5a08a50aaf260f84e38893c5c66ac95bdb8725a68c6327da5405b3c02",
+          "originalResolutionPixels": 12304,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1154.8999999999069,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-10905",
+      "type": "result",
+      "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+      "width": 768,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 648,
+          "confidence": 0.9351744823801664,
+          "bounds": {
+            "left": 47,
+            "top": 40,
+            "right": 81,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "852674c61f55a50d1f86fd15c932d3fc131e9a64dc42e4e38de5c930b8d91139",
+          "originalResolutionMaskSha256": "fcfc79b6327361d7c1c10d8fab79bba3a2da0751c67ea6dfcf69b534936b3d04",
+          "originalResolutionPixels": 31104,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 421,
+          "confidence": 0.9501723948680307,
+          "bounds": {
+            "left": 54,
+            "top": 68,
+            "right": 75,
+            "bottom": 104
+          },
+          "selectedMaskSha256": "d1661d2f786765347a737d85e3a1f5fb9ff7229127adc53b18e4e19c698727f7",
+          "originalResolutionMaskSha256": "763548bd17632ce43c83aab1b165384fa4833229271d0588f807f5f3c54f32ac",
+          "originalResolutionPixels": 20208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 55,
+          "confidence": 0.8473260175098073,
+          "bounds": {
+            "left": 46,
+            "top": 65,
+            "right": 56,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "3d1725c76befce90bb9caff109129c877d3161de6f915bc786731dc484116966",
+          "originalResolutionMaskSha256": "c9c020c3b69155dfb208ce6e9cad6bc3aa621d0d389fe96a9121a2b416d1c537",
+          "originalResolutionPixels": 2640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 648,
+          "confidence": 0.9351744823801664,
+          "bounds": {
+            "left": 47,
+            "top": 40,
+            "right": 81,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "852674c61f55a50d1f86fd15c932d3fc131e9a64dc42e4e38de5c930b8d91139",
+          "originalResolutionMaskSha256": "fcfc79b6327361d7c1c10d8fab79bba3a2da0751c67ea6dfcf69b534936b3d04",
+          "originalResolutionPixels": 31104,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 421,
+          "confidence": 0.9501723948680307,
+          "bounds": {
+            "left": 54,
+            "top": 68,
+            "right": 75,
+            "bottom": 104
+          },
+          "selectedMaskSha256": "d1661d2f786765347a737d85e3a1f5fb9ff7229127adc53b18e4e19c698727f7",
+          "originalResolutionMaskSha256": "763548bd17632ce43c83aab1b165384fa4833229271d0588f807f5f3c54f32ac",
+          "originalResolutionPixels": 20208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 55,
+          "confidence": 0.8473260175098073,
+          "bounds": {
+            "left": 46,
+            "top": 65,
+            "right": 56,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "3d1725c76befce90bb9caff109129c877d3161de6f915bc786731dc484116966",
+          "originalResolutionMaskSha256": "c9c020c3b69155dfb208ce6e9cad6bc3aa621d0d389fe96a9121a2b416d1c537",
+          "originalResolutionPixels": 2640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1049.7000000001863,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 320,
+      "id": "fashionpedia-val-10994",
+      "type": "result",
+      "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 1330,
+          "confidence": 0.9544338213770013,
+          "bounds": {
+            "left": 28,
+            "top": 30,
+            "right": 100,
+            "bottom": 99
+          },
+          "selectedMaskSha256": "4d9a646adff2b5bd08c8862aadd78c32bff0d53f7c1b3bfa1c80b3e00c45c39d",
+          "originalResolutionMaskSha256": "66361a57968ab686846d794c620f6d7a14fd500cb965c8cd58e8d26dc060b19c",
+          "originalResolutionPixels": 56640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 263,
+          "confidence": 0.8521573010959552,
+          "bounds": {
+            "left": 75,
+            "top": 57,
+            "right": 100,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "e237a6524c2c009c8a961b28e06ac19d14e86abe1bae3e19b879fc4d74df1170",
+          "originalResolutionMaskSha256": "67c6a5b009ceb70e94f7ed080bac2118936a0e013d7e3dfeb54502b9c1bff3d2",
+          "originalResolutionPixels": 11208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 1632,
+          "confidence": 0.9484836968648083,
+          "bounds": {
+            "left": 48,
+            "top": 56,
+            "right": 106,
+            "bottom": 124
+          },
+          "selectedMaskSha256": "c101523b752609a2c4f5e6e11a8a6c2ce49caf228d6fd60b25b2ffa064c96fc4",
+          "originalResolutionMaskSha256": "59dc1900bd41672c8e5d86778803cd0ded820440e682ff10318371d373f789c2",
+          "originalResolutionPixels": 69520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 42,
+          "confidence": 0.842472201301938,
+          "bounds": {
+            "left": 28,
+            "top": 105,
+            "right": 48,
+            "bottom": 128
+          },
+          "selectedMaskSha256": "2eb8ab3a9f06b714176c055b6b9cf96a3093310f608732e66b84deb626abe26c",
+          "originalResolutionMaskSha256": "764349b70fed1b436498af06d5db1814f37ccf8c20efdb2ba1e643ba8bbfdfae",
+          "originalResolutionPixels": 1784,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 1330,
+          "confidence": 0.9544338213770013,
+          "bounds": {
+            "left": 28,
+            "top": 30,
+            "right": 100,
+            "bottom": 99
+          },
+          "selectedMaskSha256": "4d9a646adff2b5bd08c8862aadd78c32bff0d53f7c1b3bfa1c80b3e00c45c39d",
+          "originalResolutionMaskSha256": "66361a57968ab686846d794c620f6d7a14fd500cb965c8cd58e8d26dc060b19c",
+          "originalResolutionPixels": 56640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 263,
+          "confidence": 0.8521573010959552,
+          "bounds": {
+            "left": 75,
+            "top": 57,
+            "right": 100,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "e237a6524c2c009c8a961b28e06ac19d14e86abe1bae3e19b879fc4d74df1170",
+          "originalResolutionMaskSha256": "67c6a5b009ceb70e94f7ed080bac2118936a0e013d7e3dfeb54502b9c1bff3d2",
+          "originalResolutionPixels": 11208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 1632,
+          "confidence": 0.9484836968648083,
+          "bounds": {
+            "left": 48,
+            "top": 56,
+            "right": 106,
+            "bottom": 124
+          },
+          "selectedMaskSha256": "c101523b752609a2c4f5e6e11a8a6c2ce49caf228d6fd60b25b2ffa064c96fc4",
+          "originalResolutionMaskSha256": "59dc1900bd41672c8e5d86778803cd0ded820440e682ff10318371d373f789c2",
+          "originalResolutionPixels": 69520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 28,
+          "confidence": 0.8608387368065971,
+          "bounds": {
+            "left": 28,
+            "top": 105,
+            "right": 37,
+            "bottom": 110
+          },
+          "selectedMaskSha256": "5819c83533e16ebe12947c901f50504ba8cd69f9e1b1e459a1684d9897619e00",
+          "originalResolutionMaskSha256": "c4177d9ba6a95f2c90962d76d27cdc645414e2fa3fc0ab26b08974ab2c11b2e1",
+          "originalResolutionPixels": 1192,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1037,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-8519",
+      "type": "result",
+      "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1498,
+          "confidence": 0.9517695820220163,
+          "bounds": {
+            "left": 50,
+            "top": 32,
+            "right": 83,
+            "bottom": 119
+          },
+          "selectedMaskSha256": "ba8ba83d37af0c64cb1465fc180b001c7a9fac2e7ad3cecd0fe270f3ed41ab0a",
+          "originalResolutionMaskSha256": "161fe70086aaeb42c164fa1dd724394e6079ea07fa412ddcc87a39460f3c69c3",
+          "originalResolutionPixels": 63768,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1498,
+          "confidence": 0.9517695820220163,
+          "bounds": {
+            "left": 50,
+            "top": 32,
+            "right": 83,
+            "bottom": 119
+          },
+          "selectedMaskSha256": "ba8ba83d37af0c64cb1465fc180b001c7a9fac2e7ad3cecd0fe270f3ed41ab0a",
+          "originalResolutionMaskSha256": "161fe70086aaeb42c164fa1dd724394e6079ea07fa412ddcc87a39460f3c69c3",
+          "originalResolutionPixels": 63768,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1406.5,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-9711",
+      "type": "result",
+      "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+      "width": 683,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1449,
+          "confidence": 0.9761034107109527,
+          "bounds": {
+            "left": 70,
+            "top": 57,
+            "right": 107,
+            "bottom": 111
+          },
+          "selectedMaskSha256": "78a7b6f1b34970b87e3ae71f80fb0aa7f0f484f975007b70fa282e7dd8b97863",
+          "originalResolutionMaskSha256": "e157cdd03f6c1c6ff1b0b108c5ae110a68a89c56f5c752d1ec2ce43e00a71606",
+          "originalResolutionPixels": 61832,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1449,
+          "confidence": 0.9761034107109527,
+          "bounds": {
+            "left": 70,
+            "top": 57,
+            "right": 107,
+            "bottom": 111
+          },
+          "selectedMaskSha256": "78a7b6f1b34970b87e3ae71f80fb0aa7f0f484f975007b70fa282e7dd8b97863",
+          "originalResolutionMaskSha256": "e157cdd03f6c1c6ff1b0b108c5ae110a68a89c56f5c752d1ec2ce43e00a71606",
+          "originalResolutionPixels": 61832,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 997.8999999999069,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-10216",
+      "type": "result",
+      "sha256": "43e8d91b902670a2a7a120eea6582e3757544222da4e4b8e5bfe6b73066d3ad4",
+      "width": 1024,
+      "height": 683,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 530,
+          "confidence": 0.8836707518910462,
+          "bounds": {
+            "left": 85,
+            "top": 43,
+            "right": 116,
+            "bottom": 66
+          },
+          "selectedMaskSha256": "5a4c2fd298541f29d87af9f8165e06a12e7df5b53ab69671237cc4fdb56c4694",
+          "originalResolutionMaskSha256": "7fd8f8a2e428d403556005d9548d079ec4150d0be9f3e0463c74b83efdc385be",
+          "originalResolutionPixels": 22600,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 262,
+          "confidence": 0.9210884409551402,
+          "bounds": {
+            "left": 89,
+            "top": 66,
+            "right": 109,
+            "bottom": 102
+          },
+          "selectedMaskSha256": "f2a57cbfd1f5148243fd8175acb9744f009a9158f779e67edc90b2657ffda579",
+          "originalResolutionMaskSha256": "349b758790fa97a62a258eec767c7fba666df1a55154c30bc61ef7d59e95cc25",
+          "originalResolutionPixels": 11176,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 530,
+          "confidence": 0.8836707518910462,
+          "bounds": {
+            "left": 85,
+            "top": 43,
+            "right": 116,
+            "bottom": 66
+          },
+          "selectedMaskSha256": "5a4c2fd298541f29d87af9f8165e06a12e7df5b53ab69671237cc4fdb56c4694",
+          "originalResolutionMaskSha256": "7fd8f8a2e428d403556005d9548d079ec4150d0be9f3e0463c74b83efdc385be",
+          "originalResolutionPixels": 22600,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 262,
+          "confidence": 0.9210884409551402,
+          "bounds": {
+            "left": 89,
+            "top": 66,
+            "right": 109,
+            "bottom": 102
+          },
+          "selectedMaskSha256": "f2a57cbfd1f5148243fd8175acb9744f009a9158f779e67edc90b2657ffda579",
+          "originalResolutionMaskSha256": "349b758790fa97a62a258eec767c7fba666df1a55154c30bc61ef7d59e95cc25",
+          "originalResolutionPixels": 11176,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1154.1999999997206,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-10382",
+      "type": "result",
+      "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 157,
+          "confidence": 0.9080942246564634,
+          "bounds": {
+            "left": 20,
+            "top": 1,
+            "right": 48,
+            "bottom": 12
+          },
+          "selectedMaskSha256": "a04178b03957abf55db123214cfd23c0b9ee643bfe131d8fe2b8db9537be634a",
+          "originalResolutionMaskSha256": "ba40ddf8ad21270229c62524bf814a6d8ae2e7525e1a46628c37918cb5289c06",
+          "originalResolutionPixels": 6696,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 689,
+          "confidence": 0.9591976105734294,
+          "bounds": {
+            "left": 11,
+            "top": 20,
+            "right": 39,
+            "bottom": 61
+          },
+          "selectedMaskSha256": "ce26e572c90710d7fdb2a68f1217b7760dda14327dfcd2c6e31e7b121ece3aa5",
+          "originalResolutionMaskSha256": "8a3ed1ef59384dac9ec7418216ae8f4706a9278221671a7b63fd01613deacd09",
+          "originalResolutionPixels": 29368,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 235,
+          "confidence": 0.8988739832918695,
+          "bounds": {
+            "left": 9,
+            "top": 57,
+            "right": 39,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "8a29272b404d8f3c900d7a5c4813ae593bee565fe37f8d46dbe2cca7873f1a0e",
+          "originalResolutionMaskSha256": "4750a51c62e17c990b5b4218b2c6ad879fd8785b2d202c85caa0f0846dede75e",
+          "originalResolutionPixels": 10008,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 66,
+          "confidence": 0.8362128165635195,
+          "bounds": {
+            "left": 19,
+            "top": 116,
+            "right": 43,
+            "bottom": 127
+          },
+          "selectedMaskSha256": "0eb078fbcc4a006aec75601fefea54edba3f347b485fba61dfcb25b5b821d71a",
+          "originalResolutionMaskSha256": "1d81f9c2015d3817ebd64d49f7dcafa2a08d51d67aaf76fb11f14faef54dc17d",
+          "originalResolutionPixels": 2800,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 157,
+          "confidence": 0.9080942246564634,
+          "bounds": {
+            "left": 20,
+            "top": 1,
+            "right": 48,
+            "bottom": 12
+          },
+          "selectedMaskSha256": "a04178b03957abf55db123214cfd23c0b9ee643bfe131d8fe2b8db9537be634a",
+          "originalResolutionMaskSha256": "ba40ddf8ad21270229c62524bf814a6d8ae2e7525e1a46628c37918cb5289c06",
+          "originalResolutionPixels": 6696,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 689,
+          "confidence": 0.9591976105734294,
+          "bounds": {
+            "left": 11,
+            "top": 20,
+            "right": 39,
+            "bottom": 61
+          },
+          "selectedMaskSha256": "ce26e572c90710d7fdb2a68f1217b7760dda14327dfcd2c6e31e7b121ece3aa5",
+          "originalResolutionMaskSha256": "8a3ed1ef59384dac9ec7418216ae8f4706a9278221671a7b63fd01613deacd09",
+          "originalResolutionPixels": 29368,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 235,
+          "confidence": 0.8988739832918695,
+          "bounds": {
+            "left": 9,
+            "top": 57,
+            "right": 39,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "8a29272b404d8f3c900d7a5c4813ae593bee565fe37f8d46dbe2cca7873f1a0e",
+          "originalResolutionMaskSha256": "4750a51c62e17c990b5b4218b2c6ad879fd8785b2d202c85caa0f0846dede75e",
+          "originalResolutionPixels": 10008,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 66,
+          "confidence": 0.8362128165635195,
+          "bounds": {
+            "left": 19,
+            "top": 116,
+            "right": 43,
+            "bottom": 127
+          },
+          "selectedMaskSha256": "0eb078fbcc4a006aec75601fefea54edba3f347b485fba61dfcb25b5b821d71a",
+          "originalResolutionMaskSha256": "1d81f9c2015d3817ebd64d49f7dcafa2a08d51d67aaf76fb11f14faef54dc17d",
+          "originalResolutionPixels": 2800,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 953.3999999999069,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-10776",
+      "type": "result",
+      "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+      "width": 1024,
+      "height": 682,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [],
+      "candidate": [],
+      "elapsedMs": 1192.1000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-10898",
+      "type": "result",
+      "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+      "width": 1011,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 563,
+          "confidence": 0.9109082387141606,
+          "bounds": {
+            "left": 91,
+            "top": 54,
+            "right": 119,
+            "bottom": 95
+          },
+          "selectedMaskSha256": "b062263ea1a018b36ad2dd2ca59b599b7f83789ab4fa960b591dfe07f775fc9a",
+          "originalResolutionMaskSha256": "5290120ee647222c9496feb85c649bead4e17ee16166b7d5a89005908e4aa3b8",
+          "originalResolutionPixels": 35520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 239,
+          "confidence": 0.9303156805836506,
+          "bounds": {
+            "left": 78,
+            "top": 77,
+            "right": 95,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "b50ecd103855383f726744d64283d335b8965a9e702d9c28d02c7655bb252ab1",
+          "originalResolutionMaskSha256": "6480eaf028a39370e1184bb5e4d50bdff7c88639f7a9df4b6791743f4c852a94",
+          "originalResolutionPixels": 15096,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 217,
+          "confidence": 0.9200564900301569,
+          "bounds": {
+            "left": 62,
+            "top": 90,
+            "right": 95,
+            "bottom": 113
+          },
+          "selectedMaskSha256": "d6807c7edf04c37d0f86c3e21488afbb24f32add7039541457909c5ca9811725",
+          "originalResolutionMaskSha256": "ef3a974c3a2e054e2cd301d6815ca201cdfe2edc73cbc85b38ad54575e969e49",
+          "originalResolutionPixels": 13720,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 195,
+          "confidence": 0.9016926847971403,
+          "bounds": {
+            "left": 102,
+            "top": 78,
+            "right": 122,
+            "bottom": 91
+          },
+          "selectedMaskSha256": "6cb8d85f32104b5d147e512396584c3f97200db3e45061803777ae594eeb4401",
+          "originalResolutionMaskSha256": "1c2d37f5a08a50aaf260f84e38893c5c66ac95bdb8725a68c6327da5405b3c02",
+          "originalResolutionPixels": 12304,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 563,
+          "confidence": 0.9109082387141606,
+          "bounds": {
+            "left": 91,
+            "top": 54,
+            "right": 119,
+            "bottom": 95
+          },
+          "selectedMaskSha256": "b062263ea1a018b36ad2dd2ca59b599b7f83789ab4fa960b591dfe07f775fc9a",
+          "originalResolutionMaskSha256": "5290120ee647222c9496feb85c649bead4e17ee16166b7d5a89005908e4aa3b8",
+          "originalResolutionPixels": 35520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 239,
+          "confidence": 0.9303156805836506,
+          "bounds": {
+            "left": 78,
+            "top": 77,
+            "right": 95,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "b50ecd103855383f726744d64283d335b8965a9e702d9c28d02c7655bb252ab1",
+          "originalResolutionMaskSha256": "6480eaf028a39370e1184bb5e4d50bdff7c88639f7a9df4b6791743f4c852a94",
+          "originalResolutionPixels": 15096,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 109,
+          "confidence": 0.912135515737971,
+          "bounds": {
+            "left": 62,
+            "top": 90,
+            "right": 79,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "f738c0d62896d2f1b82e272b68871c2527e9a72f98cf8d2fa2ccc3dfea1290bd",
+          "originalResolutionMaskSha256": "a502f75a4e44727a3e2909a3de2555860de7bd961103f2e7ff20100e7b350c6e",
+          "originalResolutionPixels": 6904,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 108,
+          "confidence": 0.9280508066769,
+          "bounds": {
+            "left": 80,
+            "top": 101,
+            "right": 95,
+            "bottom": 113
+          },
+          "selectedMaskSha256": "10596dce0f03e5a36dbc6e6563ba5d4f1eebb0aa691771533c66e675bc9c4069",
+          "originalResolutionMaskSha256": "647995416064c3873c51ab8d26d80c4b5e4642ce0b0fc0af7ffca50c7359687a",
+          "originalResolutionPixels": 6816,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 195,
+          "confidence": 0.9016926847971403,
+          "bounds": {
+            "left": 102,
+            "top": 78,
+            "right": 122,
+            "bottom": 91
+          },
+          "selectedMaskSha256": "6cb8d85f32104b5d147e512396584c3f97200db3e45061803777ae594eeb4401",
+          "originalResolutionMaskSha256": "1c2d37f5a08a50aaf260f84e38893c5c66ac95bdb8725a68c6327da5405b3c02",
+          "originalResolutionPixels": 12304,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1237,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-10905",
+      "type": "result",
+      "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+      "width": 768,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 648,
+          "confidence": 0.9351744823801664,
+          "bounds": {
+            "left": 47,
+            "top": 40,
+            "right": 81,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "852674c61f55a50d1f86fd15c932d3fc131e9a64dc42e4e38de5c930b8d91139",
+          "originalResolutionMaskSha256": "fcfc79b6327361d7c1c10d8fab79bba3a2da0751c67ea6dfcf69b534936b3d04",
+          "originalResolutionPixels": 31104,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 421,
+          "confidence": 0.9501723948680307,
+          "bounds": {
+            "left": 54,
+            "top": 68,
+            "right": 75,
+            "bottom": 104
+          },
+          "selectedMaskSha256": "d1661d2f786765347a737d85e3a1f5fb9ff7229127adc53b18e4e19c698727f7",
+          "originalResolutionMaskSha256": "763548bd17632ce43c83aab1b165384fa4833229271d0588f807f5f3c54f32ac",
+          "originalResolutionPixels": 20208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 55,
+          "confidence": 0.8473260175098073,
+          "bounds": {
+            "left": 46,
+            "top": 65,
+            "right": 56,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "3d1725c76befce90bb9caff109129c877d3161de6f915bc786731dc484116966",
+          "originalResolutionMaskSha256": "c9c020c3b69155dfb208ce6e9cad6bc3aa621d0d389fe96a9121a2b416d1c537",
+          "originalResolutionPixels": 2640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 648,
+          "confidence": 0.9351744823801664,
+          "bounds": {
+            "left": 47,
+            "top": 40,
+            "right": 81,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "852674c61f55a50d1f86fd15c932d3fc131e9a64dc42e4e38de5c930b8d91139",
+          "originalResolutionMaskSha256": "fcfc79b6327361d7c1c10d8fab79bba3a2da0751c67ea6dfcf69b534936b3d04",
+          "originalResolutionPixels": 31104,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 421,
+          "confidence": 0.9501723948680307,
+          "bounds": {
+            "left": 54,
+            "top": 68,
+            "right": 75,
+            "bottom": 104
+          },
+          "selectedMaskSha256": "d1661d2f786765347a737d85e3a1f5fb9ff7229127adc53b18e4e19c698727f7",
+          "originalResolutionMaskSha256": "763548bd17632ce43c83aab1b165384fa4833229271d0588f807f5f3c54f32ac",
+          "originalResolutionPixels": 20208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 55,
+          "confidence": 0.8473260175098073,
+          "bounds": {
+            "left": 46,
+            "top": 65,
+            "right": 56,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "3d1725c76befce90bb9caff109129c877d3161de6f915bc786731dc484116966",
+          "originalResolutionMaskSha256": "c9c020c3b69155dfb208ce6e9cad6bc3aa621d0d389fe96a9121a2b416d1c537",
+          "originalResolutionPixels": 2640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1024,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 390,
+      "id": "fashionpedia-val-10994",
+      "type": "result",
+      "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 1330,
+          "confidence": 0.9544338213770013,
+          "bounds": {
+            "left": 28,
+            "top": 30,
+            "right": 100,
+            "bottom": 99
+          },
+          "selectedMaskSha256": "4d9a646adff2b5bd08c8862aadd78c32bff0d53f7c1b3bfa1c80b3e00c45c39d",
+          "originalResolutionMaskSha256": "66361a57968ab686846d794c620f6d7a14fd500cb965c8cd58e8d26dc060b19c",
+          "originalResolutionPixels": 56640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 263,
+          "confidence": 0.8521573010959552,
+          "bounds": {
+            "left": 75,
+            "top": 57,
+            "right": 100,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "e237a6524c2c009c8a961b28e06ac19d14e86abe1bae3e19b879fc4d74df1170",
+          "originalResolutionMaskSha256": "67c6a5b009ceb70e94f7ed080bac2118936a0e013d7e3dfeb54502b9c1bff3d2",
+          "originalResolutionPixels": 11208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 1632,
+          "confidence": 0.9484836968648083,
+          "bounds": {
+            "left": 48,
+            "top": 56,
+            "right": 106,
+            "bottom": 124
+          },
+          "selectedMaskSha256": "c101523b752609a2c4f5e6e11a8a6c2ce49caf228d6fd60b25b2ffa064c96fc4",
+          "originalResolutionMaskSha256": "59dc1900bd41672c8e5d86778803cd0ded820440e682ff10318371d373f789c2",
+          "originalResolutionPixels": 69520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 42,
+          "confidence": 0.842472201301938,
+          "bounds": {
+            "left": 28,
+            "top": 105,
+            "right": 48,
+            "bottom": 128
+          },
+          "selectedMaskSha256": "2eb8ab3a9f06b714176c055b6b9cf96a3093310f608732e66b84deb626abe26c",
+          "originalResolutionMaskSha256": "764349b70fed1b436498af06d5db1814f37ccf8c20efdb2ba1e643ba8bbfdfae",
+          "originalResolutionPixels": 1784,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 1330,
+          "confidence": 0.9544338213770013,
+          "bounds": {
+            "left": 28,
+            "top": 30,
+            "right": 100,
+            "bottom": 99
+          },
+          "selectedMaskSha256": "4d9a646adff2b5bd08c8862aadd78c32bff0d53f7c1b3bfa1c80b3e00c45c39d",
+          "originalResolutionMaskSha256": "66361a57968ab686846d794c620f6d7a14fd500cb965c8cd58e8d26dc060b19c",
+          "originalResolutionPixels": 56640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 263,
+          "confidence": 0.8521573010959552,
+          "bounds": {
+            "left": 75,
+            "top": 57,
+            "right": 100,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "e237a6524c2c009c8a961b28e06ac19d14e86abe1bae3e19b879fc4d74df1170",
+          "originalResolutionMaskSha256": "67c6a5b009ceb70e94f7ed080bac2118936a0e013d7e3dfeb54502b9c1bff3d2",
+          "originalResolutionPixels": 11208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 1632,
+          "confidence": 0.9484836968648083,
+          "bounds": {
+            "left": 48,
+            "top": 56,
+            "right": 106,
+            "bottom": 124
+          },
+          "selectedMaskSha256": "c101523b752609a2c4f5e6e11a8a6c2ce49caf228d6fd60b25b2ffa064c96fc4",
+          "originalResolutionMaskSha256": "59dc1900bd41672c8e5d86778803cd0ded820440e682ff10318371d373f789c2",
+          "originalResolutionPixels": 69520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 28,
+          "confidence": 0.8608387368065971,
+          "bounds": {
+            "left": 28,
+            "top": 105,
+            "right": 37,
+            "bottom": 110
+          },
+          "selectedMaskSha256": "5819c83533e16ebe12947c901f50504ba8cd69f9e1b1e459a1684d9897619e00",
+          "originalResolutionMaskSha256": "c4177d9ba6a95f2c90962d76d27cdc645414e2fa3fc0ab26b08974ab2c11b2e1",
+          "originalResolutionPixels": 1192,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1116.2999999998137,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-8519",
+      "type": "result",
+      "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1498,
+          "confidence": 0.9517695820220163,
+          "bounds": {
+            "left": 50,
+            "top": 32,
+            "right": 83,
+            "bottom": 119
+          },
+          "selectedMaskSha256": "ba8ba83d37af0c64cb1465fc180b001c7a9fac2e7ad3cecd0fe270f3ed41ab0a",
+          "originalResolutionMaskSha256": "161fe70086aaeb42c164fa1dd724394e6079ea07fa412ddcc87a39460f3c69c3",
+          "originalResolutionPixels": 63768,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1498,
+          "confidence": 0.9517695820220163,
+          "bounds": {
+            "left": 50,
+            "top": 32,
+            "right": 83,
+            "bottom": 119
+          },
+          "selectedMaskSha256": "ba8ba83d37af0c64cb1465fc180b001c7a9fac2e7ad3cecd0fe270f3ed41ab0a",
+          "originalResolutionMaskSha256": "161fe70086aaeb42c164fa1dd724394e6079ea07fa412ddcc87a39460f3c69c3",
+          "originalResolutionPixels": 63768,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 4151.199999999721,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-9711",
+      "type": "result",
+      "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+      "width": 683,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1449,
+          "confidence": 0.9761034107109527,
+          "bounds": {
+            "left": 70,
+            "top": 57,
+            "right": 107,
+            "bottom": 111
+          },
+          "selectedMaskSha256": "78a7b6f1b34970b87e3ae71f80fb0aa7f0f484f975007b70fa282e7dd8b97863",
+          "originalResolutionMaskSha256": "e157cdd03f6c1c6ff1b0b108c5ae110a68a89c56f5c752d1ec2ce43e00a71606",
+          "originalResolutionPixels": 61832,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Dress",
+          "categories": [
+            "Dresses"
+          ],
+          "count": 1449,
+          "confidence": 0.9761034107109527,
+          "bounds": {
+            "left": 70,
+            "top": 57,
+            "right": 107,
+            "bottom": 111
+          },
+          "selectedMaskSha256": "78a7b6f1b34970b87e3ae71f80fb0aa7f0f484f975007b70fa282e7dd8b97863",
+          "originalResolutionMaskSha256": "e157cdd03f6c1c6ff1b0b108c5ae110a68a89c56f5c752d1ec2ce43e00a71606",
+          "originalResolutionPixels": 61832,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1418.1000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-10216",
+      "type": "result",
+      "sha256": "43e8d91b902670a2a7a120eea6582e3757544222da4e4b8e5bfe6b73066d3ad4",
+      "width": 1024,
+      "height": 683,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 530,
+          "confidence": 0.8836707518910462,
+          "bounds": {
+            "left": 85,
+            "top": 43,
+            "right": 116,
+            "bottom": 66
+          },
+          "selectedMaskSha256": "5a4c2fd298541f29d87af9f8165e06a12e7df5b53ab69671237cc4fdb56c4694",
+          "originalResolutionMaskSha256": "7fd8f8a2e428d403556005d9548d079ec4150d0be9f3e0463c74b83efdc385be",
+          "originalResolutionPixels": 22600,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 262,
+          "confidence": 0.9210884409551402,
+          "bounds": {
+            "left": 89,
+            "top": 66,
+            "right": 109,
+            "bottom": 102
+          },
+          "selectedMaskSha256": "f2a57cbfd1f5148243fd8175acb9744f009a9158f779e67edc90b2657ffda579",
+          "originalResolutionMaskSha256": "349b758790fa97a62a258eec767c7fba666df1a55154c30bc61ef7d59e95cc25",
+          "originalResolutionPixels": 11176,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 530,
+          "confidence": 0.8836707518910462,
+          "bounds": {
+            "left": 85,
+            "top": 43,
+            "right": 116,
+            "bottom": 66
+          },
+          "selectedMaskSha256": "5a4c2fd298541f29d87af9f8165e06a12e7df5b53ab69671237cc4fdb56c4694",
+          "originalResolutionMaskSha256": "7fd8f8a2e428d403556005d9548d079ec4150d0be9f3e0463c74b83efdc385be",
+          "originalResolutionPixels": 22600,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 262,
+          "confidence": 0.9210884409551402,
+          "bounds": {
+            "left": 89,
+            "top": 66,
+            "right": 109,
+            "bottom": 102
+          },
+          "selectedMaskSha256": "f2a57cbfd1f5148243fd8175acb9744f009a9158f779e67edc90b2657ffda579",
+          "originalResolutionMaskSha256": "349b758790fa97a62a258eec767c7fba666df1a55154c30bc61ef7d59e95cc25",
+          "originalResolutionPixels": 11176,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1388.6999999997206,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-10382",
+      "type": "result",
+      "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 157,
+          "confidence": 0.9080942246564634,
+          "bounds": {
+            "left": 20,
+            "top": 1,
+            "right": 48,
+            "bottom": 12
+          },
+          "selectedMaskSha256": "a04178b03957abf55db123214cfd23c0b9ee643bfe131d8fe2b8db9537be634a",
+          "originalResolutionMaskSha256": "ba40ddf8ad21270229c62524bf814a6d8ae2e7525e1a46628c37918cb5289c06",
+          "originalResolutionPixels": 6696,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 689,
+          "confidence": 0.9591976105734294,
+          "bounds": {
+            "left": 11,
+            "top": 20,
+            "right": 39,
+            "bottom": 61
+          },
+          "selectedMaskSha256": "ce26e572c90710d7fdb2a68f1217b7760dda14327dfcd2c6e31e7b121ece3aa5",
+          "originalResolutionMaskSha256": "8a3ed1ef59384dac9ec7418216ae8f4706a9278221671a7b63fd01613deacd09",
+          "originalResolutionPixels": 29368,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 235,
+          "confidence": 0.8988739832918695,
+          "bounds": {
+            "left": 9,
+            "top": 57,
+            "right": 39,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "8a29272b404d8f3c900d7a5c4813ae593bee565fe37f8d46dbe2cca7873f1a0e",
+          "originalResolutionMaskSha256": "4750a51c62e17c990b5b4218b2c6ad879fd8785b2d202c85caa0f0846dede75e",
+          "originalResolutionPixels": 10008,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 66,
+          "confidence": 0.8362128165635195,
+          "bounds": {
+            "left": 19,
+            "top": 116,
+            "right": 43,
+            "bottom": 127
+          },
+          "selectedMaskSha256": "0eb078fbcc4a006aec75601fefea54edba3f347b485fba61dfcb25b5b821d71a",
+          "originalResolutionMaskSha256": "1d81f9c2015d3817ebd64d49f7dcafa2a08d51d67aaf76fb11f14faef54dc17d",
+          "originalResolutionPixels": 2800,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Hat",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 157,
+          "confidence": 0.9080942246564634,
+          "bounds": {
+            "left": 20,
+            "top": 1,
+            "right": 48,
+            "bottom": 12
+          },
+          "selectedMaskSha256": "a04178b03957abf55db123214cfd23c0b9ee643bfe131d8fe2b8db9537be634a",
+          "originalResolutionMaskSha256": "ba40ddf8ad21270229c62524bf814a6d8ae2e7525e1a46628c37918cb5289c06",
+          "originalResolutionPixels": 6696,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 689,
+          "confidence": 0.9591976105734294,
+          "bounds": {
+            "left": 11,
+            "top": 20,
+            "right": 39,
+            "bottom": 61
+          },
+          "selectedMaskSha256": "ce26e572c90710d7fdb2a68f1217b7760dda14327dfcd2c6e31e7b121ece3aa5",
+          "originalResolutionMaskSha256": "8a3ed1ef59384dac9ec7418216ae8f4706a9278221671a7b63fd01613deacd09",
+          "originalResolutionPixels": 29368,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 235,
+          "confidence": 0.8988739832918695,
+          "bounds": {
+            "left": 9,
+            "top": 57,
+            "right": 39,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "8a29272b404d8f3c900d7a5c4813ae593bee565fe37f8d46dbe2cca7873f1a0e",
+          "originalResolutionMaskSha256": "4750a51c62e17c990b5b4218b2c6ad879fd8785b2d202c85caa0f0846dede75e",
+          "originalResolutionPixels": 10008,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 66,
+          "confidence": 0.8362128165635195,
+          "bounds": {
+            "left": 19,
+            "top": 116,
+            "right": 43,
+            "bottom": 127
+          },
+          "selectedMaskSha256": "0eb078fbcc4a006aec75601fefea54edba3f347b485fba61dfcb25b5b821d71a",
+          "originalResolutionMaskSha256": "1d81f9c2015d3817ebd64d49f7dcafa2a08d51d67aaf76fb11f14faef54dc17d",
+          "originalResolutionPixels": 2800,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1239,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-10776",
+      "type": "result",
+      "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+      "width": 1024,
+      "height": 682,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [],
+      "candidate": [],
+      "elapsedMs": 896.1000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-10898",
+      "type": "result",
+      "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+      "width": 1011,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 563,
+          "confidence": 0.9109082387141606,
+          "bounds": {
+            "left": 91,
+            "top": 54,
+            "right": 119,
+            "bottom": 95
+          },
+          "selectedMaskSha256": "b062263ea1a018b36ad2dd2ca59b599b7f83789ab4fa960b591dfe07f775fc9a",
+          "originalResolutionMaskSha256": "5290120ee647222c9496feb85c649bead4e17ee16166b7d5a89005908e4aa3b8",
+          "originalResolutionPixels": 35520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 239,
+          "confidence": 0.9303156805836506,
+          "bounds": {
+            "left": 78,
+            "top": 77,
+            "right": 95,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "b50ecd103855383f726744d64283d335b8965a9e702d9c28d02c7655bb252ab1",
+          "originalResolutionMaskSha256": "6480eaf028a39370e1184bb5e4d50bdff7c88639f7a9df4b6791743f4c852a94",
+          "originalResolutionPixels": 15096,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 217,
+          "confidence": 0.9200564900301569,
+          "bounds": {
+            "left": 62,
+            "top": 90,
+            "right": 95,
+            "bottom": 113
+          },
+          "selectedMaskSha256": "d6807c7edf04c37d0f86c3e21488afbb24f32add7039541457909c5ca9811725",
+          "originalResolutionMaskSha256": "ef3a974c3a2e054e2cd301d6815ca201cdfe2edc73cbc85b38ad54575e969e49",
+          "originalResolutionPixels": 13720,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 195,
+          "confidence": 0.9016926847971403,
+          "bounds": {
+            "left": 102,
+            "top": 78,
+            "right": 122,
+            "bottom": 91
+          },
+          "selectedMaskSha256": "6cb8d85f32104b5d147e512396584c3f97200db3e45061803777ae594eeb4401",
+          "originalResolutionMaskSha256": "1c2d37f5a08a50aaf260f84e38893c5c66ac95bdb8725a68c6327da5405b3c02",
+          "originalResolutionPixels": 12304,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 563,
+          "confidence": 0.9109082387141606,
+          "bounds": {
+            "left": 91,
+            "top": 54,
+            "right": 119,
+            "bottom": 95
+          },
+          "selectedMaskSha256": "b062263ea1a018b36ad2dd2ca59b599b7f83789ab4fa960b591dfe07f775fc9a",
+          "originalResolutionMaskSha256": "5290120ee647222c9496feb85c649bead4e17ee16166b7d5a89005908e4aa3b8",
+          "originalResolutionPixels": 35520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 239,
+          "confidence": 0.9303156805836506,
+          "bounds": {
+            "left": 78,
+            "top": 77,
+            "right": 95,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "b50ecd103855383f726744d64283d335b8965a9e702d9c28d02c7655bb252ab1",
+          "originalResolutionMaskSha256": "6480eaf028a39370e1184bb5e4d50bdff7c88639f7a9df4b6791743f4c852a94",
+          "originalResolutionPixels": 15096,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 109,
+          "confidence": 0.912135515737971,
+          "bounds": {
+            "left": 62,
+            "top": 90,
+            "right": 79,
+            "bottom": 101
+          },
+          "selectedMaskSha256": "f738c0d62896d2f1b82e272b68871c2527e9a72f98cf8d2fa2ccc3dfea1290bd",
+          "originalResolutionMaskSha256": "a502f75a4e44727a3e2909a3de2555860de7bd961103f2e7ff20100e7b350c6e",
+          "originalResolutionPixels": 6904,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 108,
+          "confidence": 0.9280508066769,
+          "bounds": {
+            "left": 80,
+            "top": 101,
+            "right": 95,
+            "bottom": 113
+          },
+          "selectedMaskSha256": "10596dce0f03e5a36dbc6e6563ba5d4f1eebb0aa691771533c66e675bc9c4069",
+          "originalResolutionMaskSha256": "647995416064c3873c51ab8d26d80c4b5e4642ce0b0fc0af7ffca50c7359687a",
+          "originalResolutionPixels": 6816,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 195,
+          "confidence": 0.9016926847971403,
+          "bounds": {
+            "left": 102,
+            "top": 78,
+            "right": 122,
+            "bottom": 91
+          },
+          "selectedMaskSha256": "6cb8d85f32104b5d147e512396584c3f97200db3e45061803777ae594eeb4401",
+          "originalResolutionMaskSha256": "1c2d37f5a08a50aaf260f84e38893c5c66ac95bdb8725a68c6327da5405b3c02",
+          "originalResolutionPixels": 12304,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1123.5,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-10905",
+      "type": "result",
+      "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+      "width": 768,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 648,
+          "confidence": 0.9351744823801664,
+          "bounds": {
+            "left": 47,
+            "top": 40,
+            "right": 81,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "852674c61f55a50d1f86fd15c932d3fc131e9a64dc42e4e38de5c930b8d91139",
+          "originalResolutionMaskSha256": "fcfc79b6327361d7c1c10d8fab79bba3a2da0751c67ea6dfcf69b534936b3d04",
+          "originalResolutionPixels": 31104,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 421,
+          "confidence": 0.9501723948680307,
+          "bounds": {
+            "left": 54,
+            "top": 68,
+            "right": 75,
+            "bottom": 104
+          },
+          "selectedMaskSha256": "d1661d2f786765347a737d85e3a1f5fb9ff7229127adc53b18e4e19c698727f7",
+          "originalResolutionMaskSha256": "763548bd17632ce43c83aab1b165384fa4833229271d0588f807f5f3c54f32ac",
+          "originalResolutionPixels": 20208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 55,
+          "confidence": 0.8473260175098073,
+          "bounds": {
+            "left": 46,
+            "top": 65,
+            "right": 56,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "3d1725c76befce90bb9caff109129c877d3161de6f915bc786731dc484116966",
+          "originalResolutionMaskSha256": "c9c020c3b69155dfb208ce6e9cad6bc3aa621d0d389fe96a9121a2b416d1c537",
+          "originalResolutionPixels": 2640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 648,
+          "confidence": 0.9351744823801664,
+          "bounds": {
+            "left": 47,
+            "top": 40,
+            "right": 81,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "852674c61f55a50d1f86fd15c932d3fc131e9a64dc42e4e38de5c930b8d91139",
+          "originalResolutionMaskSha256": "fcfc79b6327361d7c1c10d8fab79bba3a2da0751c67ea6dfcf69b534936b3d04",
+          "originalResolutionPixels": 31104,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 421,
+          "confidence": 0.9501723948680307,
+          "bounds": {
+            "left": 54,
+            "top": 68,
+            "right": 75,
+            "bottom": 104
+          },
+          "selectedMaskSha256": "d1661d2f786765347a737d85e3a1f5fb9ff7229127adc53b18e4e19c698727f7",
+          "originalResolutionMaskSha256": "763548bd17632ce43c83aab1b165384fa4833229271d0588f807f5f3c54f32ac",
+          "originalResolutionPixels": 20208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bag",
+          "categories": [
+            "Accessories"
+          ],
+          "count": 55,
+          "confidence": 0.8473260175098073,
+          "bounds": {
+            "left": 46,
+            "top": 65,
+            "right": 56,
+            "bottom": 73
+          },
+          "selectedMaskSha256": "3d1725c76befce90bb9caff109129c877d3161de6f915bc786731dc484116966",
+          "originalResolutionMaskSha256": "c9c020c3b69155dfb208ce6e9cad6bc3aa621d0d389fe96a9121a2b416d1c537",
+          "originalResolutionPixels": 2640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 974.1000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    },
+    {
+      "viewportWidth": 430,
+      "id": "fashionpedia-val-10994",
+      "type": "result",
+      "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+      "width": 682,
+      "height": 1024,
+      "semanticWidth": 128,
+      "semanticHeight": 128,
+      "personDetected": true,
+      "baseline": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 1330,
+          "confidence": 0.9544338213770013,
+          "bounds": {
+            "left": 28,
+            "top": 30,
+            "right": 100,
+            "bottom": 99
+          },
+          "selectedMaskSha256": "4d9a646adff2b5bd08c8862aadd78c32bff0d53f7c1b3bfa1c80b3e00c45c39d",
+          "originalResolutionMaskSha256": "66361a57968ab686846d794c620f6d7a14fd500cb965c8cd58e8d26dc060b19c",
+          "originalResolutionPixels": 56640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 263,
+          "confidence": 0.8521573010959552,
+          "bounds": {
+            "left": 75,
+            "top": 57,
+            "right": 100,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "e237a6524c2c009c8a961b28e06ac19d14e86abe1bae3e19b879fc4d74df1170",
+          "originalResolutionMaskSha256": "67c6a5b009ceb70e94f7ed080bac2118936a0e013d7e3dfeb54502b9c1bff3d2",
+          "originalResolutionPixels": 11208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 1632,
+          "confidence": 0.9484836968648083,
+          "bounds": {
+            "left": 48,
+            "top": 56,
+            "right": 106,
+            "bottom": 124
+          },
+          "selectedMaskSha256": "c101523b752609a2c4f5e6e11a8a6c2ce49caf228d6fd60b25b2ffa064c96fc4",
+          "originalResolutionMaskSha256": "59dc1900bd41672c8e5d86778803cd0ded820440e682ff10318371d373f789c2",
+          "originalResolutionPixels": 69520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 42,
+          "confidence": 0.842472201301938,
+          "bounds": {
+            "left": 28,
+            "top": 105,
+            "right": 48,
+            "bottom": 128
+          },
+          "selectedMaskSha256": "2eb8ab3a9f06b714176c055b6b9cf96a3093310f608732e66b84deb626abe26c",
+          "originalResolutionMaskSha256": "764349b70fed1b436498af06d5db1814f37ccf8c20efdb2ba1e643ba8bbfdfae",
+          "originalResolutionPixels": 1784,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        }
+      ],
+      "candidate": [
+        {
+          "label": "Upper garment",
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "count": 1330,
+          "confidence": 0.9544338213770013,
+          "bounds": {
+            "left": 28,
+            "top": 30,
+            "right": 100,
+            "bottom": 99
+          },
+          "selectedMaskSha256": "4d9a646adff2b5bd08c8862aadd78c32bff0d53f7c1b3bfa1c80b3e00c45c39d",
+          "originalResolutionMaskSha256": "66361a57968ab686846d794c620f6d7a14fd500cb965c8cd58e8d26dc060b19c",
+          "originalResolutionPixels": 56640,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Skirt",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 263,
+          "confidence": 0.8521573010959552,
+          "bounds": {
+            "left": 75,
+            "top": 57,
+            "right": 100,
+            "bottom": 71
+          },
+          "selectedMaskSha256": "e237a6524c2c009c8a961b28e06ac19d14e86abe1bae3e19b879fc4d74df1170",
+          "originalResolutionMaskSha256": "67c6a5b009ceb70e94f7ed080bac2118936a0e013d7e3dfeb54502b9c1bff3d2",
+          "originalResolutionPixels": 11208,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Bottoms",
+          "categories": [
+            "Bottoms"
+          ],
+          "count": 1632,
+          "confidence": 0.9484836968648083,
+          "bounds": {
+            "left": 48,
+            "top": 56,
+            "right": 106,
+            "bottom": 124
+          },
+          "selectedMaskSha256": "c101523b752609a2c4f5e6e11a8a6c2ce49caf228d6fd60b25b2ffa064c96fc4",
+          "originalResolutionMaskSha256": "59dc1900bd41672c8e5d86778803cd0ded820440e682ff10318371d373f789c2",
+          "originalResolutionPixels": 69520,
+          "instanceMethod": "native_semantic_group",
+          "requiresReview": true
+        },
+        {
+          "label": "Shoes",
+          "categories": [
+            "Shoes"
+          ],
+          "count": 28,
+          "confidence": 0.8608387368065971,
+          "bounds": {
+            "left": 28,
+            "top": 105,
+            "right": 37,
+            "bottom": 110
+          },
+          "selectedMaskSha256": "5819c83533e16ebe12947c901f50504ba8cd69f9e1b1e459a1684d9897619e00",
+          "originalResolutionMaskSha256": "c4177d9ba6a95f2c90962d76d27cdc645414e2fa3fc0ab26b08974ab2c11b2e1",
+          "originalResolutionPixels": 1192,
+          "instanceMethod": "connected_footwear_component",
+          "requiresReview": true
+        }
+      ],
+      "elapsedMs": 1057.6000000000931,
+      "automaticSave": false,
+      "requiresReview": true
+    }
+  ]
+}

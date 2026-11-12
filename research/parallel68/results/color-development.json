@@ -1,0 +1,845 @@
+{
+  "schema": "closet-current-parallel68-human-color-comparison/v1",
+  "split": "development",
+  "manifestSha256": "6ace53ea9f881633c117022d25411e098b284309d9156a5db307ce756e3a7065",
+  "estimatorSha256": "10dee3bd647ee8b5daf23e74358adf03a4d858a5748f0fddda86e84bfa123484",
+  "sam2": {
+    "model": "onnx-community/sam2.1-hiera-tiny-ONNX",
+    "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+    "dtype": "q8",
+    "device": "cpu"
+  },
+  "maskTruthAvailable": false,
+  "annotationScope": "Dataset publisher README: prepredicted colors approved, corrected or rejected by a human validator. Per-record adjudication action/timestamp are NOT supplied; release filename 2024-06-01 is not an individual annotation timestamp.",
+  "automaticColorSaveAllowed": false,
+  "rows": [
+    {
+      "id": "03998294de6d88e280af849eb9131eb4",
+      "sha256": "7c13d8772b57b8e0fbc322cbb03aab5535ef16b10a2ca14d7384d7c46f0b29d5",
+      "width": 398,
+      "height": 500,
+      "expectedColor": "White",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9898204003290376
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.010179599670962434
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "7c13d8772b57b8e0fbc322cbb03aab5535ef16b10a2ca14d7384d7c46f0b29d5",
+        "foregroundPixels": 87528,
+        "coverage": 0.4398391959798995,
+        "corePixels": 83543,
+        "samplePixels": 27848,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 27583,
+            "fraction": 0.9904840563056593
+          },
+          {
+            "color": "Gray",
+            "pixels": 265,
+            "fraction": 0.009515943694340707
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 28880,
+            "fraction": 0.9898546750754045
+          },
+          {
+            "color": "Gray",
+            "pixels": 296,
+            "fraction": 0.010145324924595559
+          }
+        ],
+        "boundaryPaletteDistance": 0.0006293812302548257,
+        "dominance": 0.9904840563056593,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.054761562769319164,
+        "offWhiteShadeFraction": 0.00010772766446423441,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": true,
+      "improvedCorrect": true,
+      "maskFile": "benchmark/parallel68-masks/color-development-03998294de6d88e280af849eb9131eb4.bin.gz",
+      "maskSha256": "6c2bfbbf609ce0383af9a95fcdcdc87aff9eaaa705a7bc4cf5ca81cc71b404c3",
+      "maskPredictedIoU": 0.9370985627174377,
+      "maskHumanVerified": false,
+      "elapsedMs": 1968.7552109999997
+    },
+    {
+      "id": "15497e28250cc5bcfa1aca808181905c",
+      "sha256": "ba6542b6ae881a1842e9949779355b8553b76df586d67f0fcb6ecb4ac09d5278",
+      "width": 357,
+      "height": 500,
+      "expectedColor": "Black",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9499533914019666
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.05004660859803342
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "ba6542b6ae881a1842e9949779355b8553b76df586d67f0fcb6ecb4ac09d5278",
+        "foregroundPixels": 99767,
+        "coverage": 0.5589187675070028,
+        "corePixels": 96836,
+        "samplePixels": 32279,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 30705,
+            "fraction": 0.9512376467672481
+          },
+          {
+            "color": "Gray",
+            "pixels": 1574,
+            "fraction": 0.048762353232751944
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 23698,
+            "fraction": 0.9501242883489696
+          },
+          {
+            "color": "Gray",
+            "pixels": 1244,
+            "fraction": 0.04987571165103039
+          }
+        ],
+        "boundaryPaletteDistance": 0.00111335841827849,
+        "dominance": 0.9512376467672481,
+        "clippedFraction": 0.0010842962917066825,
+        "neutralBoundaryFraction": 0.12466309365221971,
+        "offWhiteShadeFraction": 0,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-15497e28250cc5bcfa1aca808181905c.bin.gz",
+      "maskSha256": "85acca48ef5e4ffa3d2bcaef7256caf25705479a02c39ab7b434efc099125f68",
+      "maskPredictedIoU": 0.9787135124206543,
+      "maskHumanVerified": false,
+      "elapsedMs": 2238.912704
+    },
+    {
+      "id": "1c6b2c592d79ad6699bee7089b230cda",
+      "sha256": "14153fef58d9ae2455d55c3301e8a8b460402ba35ef4b1b1379e5d71fb8f4632",
+      "width": 357,
+      "height": 500,
+      "expectedColor": "Black",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.997394746751066
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.0026052532489339833
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "14153fef58d9ae2455d55c3301e8a8b460402ba35ef4b1b1379e5d71fb8f4632",
+        "foregroundPixels": 98263,
+        "coverage": 0.5504929971988796,
+        "corePixels": 95036,
+        "samplePixels": 31679,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 31652,
+            "fraction": 0.9991477003693299
+          },
+          {
+            "color": "Gray",
+            "pixels": 27,
+            "fraction": 0.00085229963067016
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 32676,
+            "fraction": 0.9975881544802321
+          },
+          {
+            "color": "Gray",
+            "pixels": 79,
+            "fraction": 0.0024118455197679745
+          }
+        ],
+        "boundaryPaletteDistance": 0.0015595458890978026,
+        "dominance": 0.9991477003693299,
+        "clippedFraction": 0.002588465544998264,
+        "neutralBoundaryFraction": 0.01038542883298084,
+        "offWhiteShadeFraction": 0.000031566652987783707,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-1c6b2c592d79ad6699bee7089b230cda.bin.gz",
+      "maskSha256": "d3261b357e808f936b7b3aeedea25a2b991a68b04242ffe75bef23ed81617cb3",
+      "maskPredictedIoU": 0.9893797039985657,
+      "maskHumanVerified": false,
+      "elapsedMs": 1620.01195
+    },
+    {
+      "id": "9b80a4fec8fc64c6e1c38bf5c1a734ee",
+      "sha256": "a693f0b4af929de9ea034193424f41cc1e5d7a78f47af238977c993e994219b2",
+      "width": 334,
+      "height": 500,
+      "expectedColor": "Grey",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9998999929995099
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.0001000070004900343
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "a693f0b4af929de9ea034193424f41cc1e5d7a78f47af238977c993e994219b2",
+        "foregroundPixels": 99993,
+        "coverage": 0.5987604790419162,
+        "corePixels": 97015,
+        "samplePixels": 32339,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 32339,
+            "fraction": 1
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 24996,
+            "fraction": 0.999879995199808
+          },
+          {
+            "color": "Gray",
+            "pixels": 3,
+            "fraction": 0.00012000480019200768
+          }
+        ],
+        "boundaryPaletteDistance": 0.00012000480019201916,
+        "dominance": 1,
+        "clippedFraction": 0.0016698104455920096,
+        "neutralBoundaryFraction": 0.00043291381922755807,
+        "offWhiteShadeFraction": 0.0005256810662048919,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-9b80a4fec8fc64c6e1c38bf5c1a734ee.bin.gz",
+      "maskSha256": "416d6d68c12cdb8d478b21e5a23d94eb4efeff194cdbc5d5735d5cd397c3bd81",
+      "maskPredictedIoU": 0.9848318099975586,
+      "maskHumanVerified": false,
+      "elapsedMs": 1570.305007
+    },
+    {
+      "id": "0293f9b6c15dfcad06c5f5d96f27c8d6",
+      "sha256": "5c9ade8562184c665d8e4c550a8a9b40de2cae239b00fc13bb2433400a24e019",
+      "width": 455,
+      "height": 500,
+      "expectedColor": "Red",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9857890690778636
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.013010213420214519
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.0010982172273675734
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.00008053593000695537
+          },
+          {
+            "color": "Green",
+            "fraction": 0.000021964344547351467
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "5c9ade8562184c665d8e4c550a8a9b40de2cae239b00fc13bb2433400a24e019",
+        "foregroundPixels": 136585,
+        "coverage": 0.6003736263736263,
+        "corePixels": 133553,
+        "samplePixels": 26711,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 26463,
+            "fraction": 0.9907154355883344
+          },
+          {
+            "color": "Gray",
+            "pixels": 239,
+            "fraction": 0.008947624574145482
+          },
+          {
+            "color": "Blue",
+            "pixels": 3,
+            "fraction": 0.00011231327917337427
+          },
+          {
+            "color": "Pink",
+            "pixels": 3,
+            "fraction": 0.00011231327917337427
+          },
+          {
+            "color": "Purple",
+            "pixels": 2,
+            "fraction": 0.00007487551944891618
+          },
+          {
+            "color": "Green",
+            "pixels": 1,
+            "fraction": 0.00003743775972445809
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 27017,
+            "fraction": 0.9890178277263243
+          },
+          {
+            "color": "Gray",
+            "pixels": 276,
+            "fraction": 0.010103598491781675
+          },
+          {
+            "color": "Pink",
+            "pixels": 9,
+            "fraction": 0.00032946516821027197
+          },
+          {
+            "color": "Beige",
+            "pixels": 5,
+            "fraction": 0.00018303620456126222
+          },
+          {
+            "color": "Blue",
+            "pixels": 5,
+            "fraction": 0.00018303620456126222
+          },
+          {
+            "color": "Purple",
+            "pixels": 4,
+            "fraction": 0.00014642896364900978
+          },
+          {
+            "color": "Green",
+            "pixels": 1,
+            "fraction": 0.000036607240912252445
+          }
+        ],
+        "boundaryPaletteDistance": 0.0016984383808223294,
+        "dominance": 0.9907154355883344,
+        "clippedFraction": 0.003069896297405563,
+        "neutralBoundaryFraction": 0.05623151510613605,
+        "offWhiteShadeFraction": 0.00606491707536221,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-0293f9b6c15dfcad06c5f5d96f27c8d6.bin.gz",
+      "maskSha256": "ac12b66c32cd61bc7e7f075b37cfa944ea658076e21afb88da543786403bbbe2",
+      "maskPredictedIoU": 0.9866713285446167,
+      "maskHumanVerified": false,
+      "elapsedMs": 1598.6508709999998
+    },
+    {
+      "id": "03de8a72670a391ad5ff80a6e0b38f36",
+      "sha256": "993cb24569be81068df67f5dcb957dd2bd47793f7029fb32162cb783b887ae9e",
+      "width": 500,
+      "height": 340,
+      "expectedColor": "Brown",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9949940429110642
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.00456543286510948
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.0004305123096484817
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.000010011914177871667
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "993cb24569be81068df67f5dcb957dd2bd47793f7029fb32162cb783b887ae9e",
+        "foregroundPixels": 99881,
+        "coverage": 0.587535294117647,
+        "corePixels": 96930,
+        "samplePixels": 32310,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 32240,
+            "fraction": 0.9978334880841845
+          },
+          {
+            "color": "Gray",
+            "pixels": 70,
+            "fraction": 0.002166511915815537
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 24888,
+            "fraction": 0.9966761443274198
+          },
+          {
+            "color": "Gray",
+            "pixels": 79,
+            "fraction": 0.00316366985703416
+          },
+          {
+            "color": "Beige",
+            "pixels": 4,
+            "fraction": 0.0001601858155460334
+          }
+        ],
+        "boundaryPaletteDistance": 0.00115734375676467,
+        "dominance": 0.9978334880841845,
+        "clippedFraction": 0.000030950170225936245,
+        "neutralBoundaryFraction": 0.019622407923243577,
+        "offWhiteShadeFraction": 0.008016094088517486,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-03de8a72670a391ad5ff80a6e0b38f36.bin.gz",
+      "maskSha256": "bb0a847e81f064566a90bd396e5a6803dfff68e887a465b04a68a5eaf783d2dc",
+      "maskPredictedIoU": 0.9826706647872925,
+      "maskHumanVerified": false,
+      "elapsedMs": 1642.4240740000005
+    },
+    {
+      "id": "065b6d3aa8ab29fa1475d05d4cc1db87",
+      "sha256": "153d3a5fb3ecc851fe073f74ce6a5fcaf0389c18129ad091b28cf1cdd05a4afa",
+      "width": 349,
+      "height": 500,
+      "expectedColor": "Yellow",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9171047342218374
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.08205262995145181
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.0008117134110516714
+          },
+          {
+            "color": "Green",
+            "fraction": 0.000023191811744333466
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.000007730603914777822
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "153d3a5fb3ecc851fe073f74ce6a5fcaf0389c18129ad091b28cf1cdd05a4afa",
+        "foregroundPixels": 129356,
+        "coverage": 0.7412951289398281,
+        "corePixels": 126223,
+        "samplePixels": 31556,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 28984,
+            "fraction": 0.9184941057168209
+          },
+          {
+            "color": "Gray",
+            "pixels": 2557,
+            "fraction": 0.08103054886550894
+          },
+          {
+            "color": "Purple",
+            "pixels": 9,
+            "fraction": 0.0002852072506021042
+          },
+          {
+            "color": "Blue",
+            "pixels": 6,
+            "fraction": 0.00019013816706806946
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 29642,
+            "fraction": 0.9166022449673769
+          },
+          {
+            "color": "Gray",
+            "pixels": 2663,
+            "fraction": 0.08234639290021337
+          },
+          {
+            "color": "Purple",
+            "pixels": 17,
+            "fraction": 0.0005256810662048919
+          },
+          {
+            "color": "Beige",
+            "pixels": 13,
+            "fraction": 0.00040199140356844676
+          },
+          {
+            "color": "Blue",
+            "pixels": 4,
+            "fraction": 0.00012368966263644516
+          }
+        ],
+        "boundaryPaletteDistance": 0.0019583092538756593,
+        "dominance": 0.9184941057168209,
+        "clippedFraction": 0.000697173279249588,
+        "neutralBoundaryFraction": 0.27940803650652807,
+        "offWhiteShadeFraction": 0.006337938902268982,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-065b6d3aa8ab29fa1475d05d4cc1db87.bin.gz",
+      "maskSha256": "d77302adc04d14bce8a309bfd95569dd6a7c26a3d59ccd438528b185d6037cf0",
+      "maskPredictedIoU": 0.9847860336303711,
+      "maskHumanVerified": false,
+      "elapsedMs": 1628.9938199999997
+    },
+    {
+      "id": "531620274919cd53c0ccebbbde565a6f",
+      "sha256": "1060c6484fc5427a492e21f54216c160458f733a364914a05dd166df84746156",
+      "width": 426,
+      "height": 500,
+      "expectedColor": "Orange",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "Multicolor",
+        "palette": [
+          {
+            "color": "Gray",
+            "fraction": 0.5834385229241993
+          },
+          {
+            "color": "White",
+            "fraction": 0.41647589910357075
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.000042788986114974004
+          },
+          {
+            "color": "Green",
+            "fraction": 0.0000320917395862305
+          },
+          {
+            "color": "Blue",
+            "fraction": 0.000010697246528743501
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "1060c6484fc5427a492e21f54216c160458f733a364914a05dd166df84746156",
+        "status": "review",
+        "color": null,
+        "reason": "neutral_family_boundary_requires_review",
+        "foregroundPixels": 93482,
+        "coverage": 0.4388826291079812,
+        "corePixels": 89579,
+        "samplePixels": 29860,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Gray",
+            "pixels": 17511,
+            "fraction": 0.5864367046215673
+          },
+          {
+            "color": "White",
+            "pixels": 12343,
+            "fraction": 0.41336235766912255
+          },
+          {
+            "color": "Green",
+            "pixels": 3,
+            "fraction": 0.00010046885465505693
+          },
+          {
+            "color": "Purple",
+            "pixels": 3,
+            "fraction": 0.00010046885465505693
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Gray",
+            "pixels": 18002,
+            "fraction": 0.5777093161323449
+          },
+          {
+            "color": "White",
+            "pixels": 13152,
+            "fraction": 0.4220660440935785
+          },
+          {
+            "color": "Green",
+            "pixels": 4,
+            "fraction": 0.00012836558518661146
+          },
+          {
+            "color": "Purple",
+            "pixels": 3,
+            "fraction": 0.0000962741888899586
+          }
+        ],
+        "boundaryPaletteDistance": 0.0087315831549875,
+        "dominance": 0.5864367046215673,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.3940053583389149,
+        "offWhiteShadeFraction": 0.007032819825853985
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-531620274919cd53c0ccebbbde565a6f.bin.gz",
+      "maskSha256": "a2c8beaeeb56fd02c2858a4ee65fe7b7c6ce80a05f64313e644bb203795842b9",
+      "maskPredictedIoU": 0.975164532661438,
+      "maskHumanVerified": false,
+      "elapsedMs": 1633.0310759999993
+    },
+    {
+      "id": "139e6afe4c004dfba0f87b1ce7532c48",
+      "sha256": "a7a676f230262ad607913726cba2649d64ae163fcd4e4217d994c92b3433be92",
+      "width": 341,
+      "height": 500,
+      "expectedColor": "Beige",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9973976662344879
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.002602333765512132
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "a7a676f230262ad607913726cba2649d64ae163fcd4e4217d994c92b3433be92",
+        "foregroundPixels": 107980,
+        "coverage": 0.6333137829912023,
+        "corePixels": 104878,
+        "samplePixels": 26220,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 26179,
+            "fraction": 0.9984363081617086
+          },
+          {
+            "color": "Gray",
+            "pixels": 40,
+            "fraction": 0.0015255530129672007
+          },
+          {
+            "color": "Purple",
+            "pixels": 1,
+            "fraction": 0.00003813882532418002
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 26915,
+            "fraction": 0.9970364882385627
+          },
+          {
+            "color": "Gray",
+            "pixels": 79,
+            "fraction": 0.0029264678644193368
+          },
+          {
+            "color": "Purple",
+            "pixels": 1,
+            "fraction": 0.00003704389701796629
+          }
+        ],
+        "boundaryPaletteDistance": 0.0014009148514521057,
+        "dominance": 0.9984363081617086,
+        "clippedFraction": 0.02288329519450801,
+        "neutralBoundaryFraction": 0.05564454614797864,
+        "offWhiteShadeFraction": 0.0004958047292143402,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-139e6afe4c004dfba0f87b1ce7532c48.bin.gz",
+      "maskSha256": "ee1e04a9916d950675f01511c3392432ca9a0a5647dbb02e71fedb0f0cc9cf7f",
+      "maskPredictedIoU": 0.9792801141738892,
+      "maskHumanVerified": false,
+      "elapsedMs": 1592.6280889999998
+    }
+  ],
+  "summary": {
+    "photos": 9,
+    "baselineCorrect": 1,
+    "improvedCorrect": 1,
+    "improvedProposed": 8,
+    "improvedUnreported": 1,
+    "wrongImprovedProposals": 7,
+    "automaticColorSaves": 0,
+    "primaryGarmentColorAcceptanceEstablished": false
+  }
+}

@@ -1,0 +1,1071 @@
+[
+  {
+    "id": "00c7ec737717ccc1351e84fe59a7d1f8",
+    "decision": "included development",
+    "title": "Item",
+    "color": "white"
+  },
+  {
+    "id": "02a4bb8af3020c15f168bc644887e1c8",
+    "decision": "included development",
+    "title": "Item",
+    "color": "white"
+  },
+  {
+    "id": "03998294de6d88e280af849eb9131eb4",
+    "decision": "included development",
+    "title": "Item",
+    "color": "white"
+  },
+  {
+    "id": "0425181eae4e0ba8390b1dc3733c9167",
+    "decision": "included development",
+    "title": "Item",
+    "color": "white"
+  },
+  {
+    "id": "114335cfcceec7605feb064077ae66bb",
+    "decision": "included development",
+    "title": "Item",
+    "color": "black"
+  },
+  {
+    "id": "15497e28250cc5bcfa1aca808181905c",
+    "decision": "included development",
+    "title": "Item",
+    "color": "black"
+  },
+  {
+    "id": "155f5049184ad7fc2e2e3eb2a6027489",
+    "decision": "included development",
+    "title": "Item",
+    "color": "black"
+  },
+  {
+    "id": "1c6b2c592d79ad6699bee7089b230cda",
+    "decision": "included development",
+    "title": "Item",
+    "color": "black"
+  },
+  {
+    "id": "264577d7043fcdfe434c3ef39ff270a3",
+    "decision": "exclude",
+    "reason": "HTTPError"
+  },
+  {
+    "id": "29493268f3e2b89c6168e4aceb4cac3c",
+    "decision": "included development",
+    "title": "Item",
+    "color": "grey"
+  },
+  {
+    "id": "2dd8f5811277771830349615809d3550",
+    "decision": "exclude",
+    "reason": "HTTPError"
+  },
+  {
+    "id": "836b37ca2168536ded0e2c7b08ce8018",
+    "decision": "included development",
+    "title": "Item",
+    "color": "grey"
+  },
+  {
+    "id": "8692c5029a5099fb4fa28e697bac81ee",
+    "decision": "included development",
+    "title": "Item",
+    "color": "grey"
+  },
+  {
+    "id": "9b80a4fec8fc64c6e1c38bf5c1a734ee",
+    "decision": "included development",
+    "title": "Item",
+    "color": "grey"
+  },
+  {
+    "id": "0293f9b6c15dfcad06c5f5d96f27c8d6",
+    "decision": "included development",
+    "title": "Item",
+    "color": "red"
+  },
+  {
+    "id": "13d1387586c8ac7d2ab41c45ea434cbc",
+    "decision": "exclude",
+    "reason": "HTTPError"
+  },
+  {
+    "id": "46952dbab3a4f91148b8744d3778350c",
+    "decision": "included development",
+    "title": "Item",
+    "color": "red"
+  },
+  {
+    "id": "3494a4ad898190c55eea97fa1d2bde12",
+    "decision": "included development",
+    "title": "Item",
+    "color": "blue"
+  },
+  {
+    "id": "3e27688381644d03ffc1238b2b4e024d",
+    "decision": "included development",
+    "title": "Item",
+    "color": "blue"
+  },
+  {
+    "id": "008e93a015146fbcd4db3e5fca4add64",
+    "decision": "exclude",
+    "reason": "HTTPError"
+  },
+  {
+    "id": "03de8a72670a391ad5ff80a6e0b38f36",
+    "decision": "included development",
+    "title": "Item",
+    "color": "brown"
+  },
+  {
+    "id": "0768af8dba6ec4823490e96d63c0c468",
+    "decision": "included development",
+    "title": "Item",
+    "color": "brown"
+  },
+  {
+    "id": "779897f2e0555a5b275abb2d2bcea239",
+    "decision": "included development",
+    "title": "Item",
+    "color": "green"
+  },
+  {
+    "id": "879ca50206a7a4dfc8edd2089af23b47",
+    "decision": "exclude",
+    "reason": "HTTPError"
+  },
+  {
+    "id": "8eb8bfec4acc75337a885a76a8a8187e",
+    "decision": "included development",
+    "title": "Item",
+    "color": "green"
+  },
+  {
+    "id": "065b6d3aa8ab29fa1475d05d4cc1db87",
+    "decision": "included development",
+    "title": "Item",
+    "color": "yellow"
+  },
+  {
+    "id": "1cbe59b8ea6d0d3f0e43ca913d7703ad",
+    "decision": "included development",
+    "title": "Item",
+    "color": "yellow"
+  },
+  {
+    "id": "00377e51fde4f1646411f5c799786272",
+    "decision": "included development",
+    "title": "Item",
+    "color": "pink"
+  },
+  {
+    "id": "13cfc8b2a6a99e53164a013e8b3e58d3",
+    "decision": "included development",
+    "title": "Item",
+    "color": "pink"
+  },
+  {
+    "id": "531620274919cd53c0ccebbbde565a6f",
+    "decision": "included development",
+    "title": "Item",
+    "color": "orange"
+  },
+  {
+    "id": "6c8d1c72a24f847c837501caa9344d46",
+    "decision": "included development",
+    "title": "Item",
+    "color": "orange"
+  },
+  {
+    "id": "139e6afe4c004dfba0f87b1ce7532c48",
+    "decision": "included development",
+    "title": "Item",
+    "color": "beige"
+  },
+  {
+    "id": "adc209e6a948edcbc721af49671879af",
+    "decision": "included development",
+    "title": "Item",
+    "color": "multicoloured"
+  },
+  {
+    "id": "079f47e09aa613a2169850118c45cd6f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Onderrok, behorende bij pop \"LILLY\", van katoen, met strook Engels borduurwerk"
+  },
+  {
+    "id": "081ffbae6c6d1cf5b64209df7719ce0e",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kraag van duchesse met grote bloemenranken en point de Flandre met kleine bloemtakken"
+  },
+  {
+    "id": "08c318528f61e4e7d9680d4d4436c566",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kraag van gemengde kant met rozet gevat in s-lijnen en een vaas met zevenblad"
+  },
+  {
+    "id": "09824f34b8e63c46e869f292df7bc5a1",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Pop met hoofd en onderarmen van biscuit, bruine slaapogen van glas en blonde krullen van echt haar."
+  },
+  {
+    "id": "0a5c37e7bc15a8607b960c577928c835",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Broekje van katoen, met korte pijpen en vetertje"
+  },
+  {
+    "id": "10313cf4c4cd195338184eea8dee3c5a",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knoop uit het wrak van de Oost-Indi\u00ebvaarder 't Vliegend Hart"
+  },
+  {
+    "id": "1082e0b43de22a879ba1a3cde7679f10",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Luierbroek van katoenen piqu\u00e9"
+  },
+  {
+    "id": "11bfd2115a393cc84a9fda8a90e0a61d",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knoop van parelmoer uit het wrak van de in 1735 vergane Oost-Indi\u00ebvaarder 't Vliegend Hart"
+  },
+  {
+    "id": "1257f680ba7760913479ed1fb0ca78a2",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Onderbroek van wit katoen"
+  },
+  {
+    "id": "12d1453244317ad284e82f936530ddac",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knikkerzak van keperkatoen"
+  },
+  {
+    "id": "1350340c91496b3475ea1459e99d80dc",
+    "decision": "included acceptance",
+    "title": "Lijfje van een Empire-kinderjurk \"lange jurk\"",
+    "color": "white"
+  },
+  {
+    "id": "1383dfb0392360a00a31140befaadad8",
+    "decision": "included acceptance",
+    "title": "Wit linnen hemd met een gefestonneerde gegolfde hals en armsgaten, afgezet met een strookje machinale kant",
+    "color": "white"
+  },
+  {
+    "id": "13d0dfc19cfe1ee16b4f239ba051fd7b",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Zak met brede banden en gemerkt GL"
+  },
+  {
+    "id": "14615844a15fe346d5deda8aa5e4d733",
+    "decision": "included acceptance",
+    "title": "Broek van lichtblauw laken, onderdeel van een ambtskostuum, met lange pijpen en schuine steekzakken",
+    "color": "white"
+  },
+  {
+    "id": "15368fbc48b9c52de09b6d71a34423a1",
+    "decision": "included acceptance",
+    "title": "Broek van piqu\u00e9, met lange pijpen en met banden",
+    "color": "white"
+  },
+  {
+    "id": "03255684b65b86a2dd8669de3bb36ab2",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Linkerschoen maat 35"
+  },
+  {
+    "id": "051778c73ff2b1ebe270cd3f1d5a554b",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Doek"
+  },
+  {
+    "id": "08b37ea117057d19e6f47076d055a34e",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Vouwwaaier van fijne zijden zwarte gaas waaraan zwarte stroken, op een zwart kunststof montuur"
+  },
+  {
+    "id": "0c6822f01dd6e278f2e9b603cc10448b",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haakje uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "0ccfbb1bf5f4eb4f79ee83b0c22b7a12",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Reticule in een langwerpig model van gehaakte zwarte koordzijde, gevoerd met donkergroene katoen"
+  },
+  {
+    "id": "1025249abf699f2ac133248a4e37d5f2",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Shoes"
+  },
+  {
+    "id": "1209af9f8c1536c521a6a54ae85dc9e5",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Boordeknoopje uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "17b326c6b3e9eaea60c1502e2f2085c9",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Speld uit het wrak van de Oost-Indi\u00ebvaarder 't Vliegend Hart"
+  },
+  {
+    "id": "1c4e0d3b5e22a3fa4df4249e8e5073bb",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van zwarte kunststof, U-vormig, waarvan de ronde rug met zwarte gitten is belegd"
+  },
+  {
+    "id": "1d7220fd57759de8edf893512360e670",
+    "decision": "included acceptance",
+    "title": "Fragment van een mantel van cisel\u00e9fluweel met kloskant, volgens overlevering afkomstig van Hugo de Groot",
+    "color": "black"
+  },
+  {
+    "id": "20a00dd2328254bf9f7f58621b9d2483",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van schildpad en hoorn met rijk gesneden rug, acht tanden"
+  },
+  {
+    "id": "226d08c857568c32a232ee3c4714ead9",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van zwartgelakt hout met langwerpige rechthoekige ajour gesneden rug"
+  },
+  {
+    "id": "22d06e802d1c5e43c99c69de7660cf06",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knooplaars voor een kind van (goudtorren)leer in bruin"
+  },
+  {
+    "id": "24c9bbc48a238ac27537094550747a1f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Speld uit het wrak van de Oost-Indi\u00ebvaarder 't Vliegend Hart"
+  },
+  {
+    "id": "262e0bafbf1eb52625b56de09ddba2f9",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Uniformjas behorend bij het uniform van F.W.R. baron Bentinck tot Schoonheten"
+  },
+  {
+    "id": "2747cb11a2f175a29262e64a07ed7bdf",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Speld uit het wrak van de Oost-Indi\u00ebvaarder 't Vliegend Hart"
+  },
+  {
+    "id": "31fdee8046488feac58a5a79031d41e6",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Menswear"
+  },
+  {
+    "id": "392d8a93a22e32670ede2b74eb7675e2",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Boa van zwarte struisveren met aan beide zijden een zwarte zijden kwast"
+  },
+  {
+    "id": "3b582186b694ee2e53b0d60799ed3630",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Fragmenten hakken van schoenzolen uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "3ba642cce89066b961f8e3ef580495c3",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Pandjesjas van zwart laken met zilverborduursel en knopen met een gekroonde W"
+  },
+  {
+    "id": "3c91422ba2220426ecc616c4a945e79a",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Bril met ovale glazen in blauw stalen, scharnierend montuur, met \u00e9\u00e9n ongekleurd en \u00e9\u00e9n zwart geverfd glas"
+  },
+  {
+    "id": "4039cb652875d139e43199f7e65644bb",
+    "decision": "included acceptance",
+    "title": "Vest van zwart laken met rug van witte katoen met negen zilveren knopen met gekroonde W",
+    "color": "black"
+  },
+  {
+    "id": "431c7d42744e423f70b43a392e91e6db",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Pair of ladies\u2019 shoes with a wedge heel and a tassel"
+  },
+  {
+    "id": "48bcf765be86e2e9fc83450ebbfa64bd",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "4c39c23ffeb1588e2c8507f2c66766bc",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "4e2b6a2e6f937d6742f51bca95cc3274",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Vouwwaaier met onversierd blad van zwarte moir\u00e9-zijde op ajour en in reli\u00ebf gesneden montuur van zwart gelakt hout"
+  },
+  {
+    "id": "622c47f231018dabdeec3e00cab9e827",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Dress and Jacket (complet)"
+  },
+  {
+    "id": "67ea56a84f49960c9239aca8add9e780",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Schoenendoos van paar avondschoenen"
+  },
+  {
+    "id": "75c7364e04a3424c1fee2cfc4ef279ea",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Bustehouder van zwart nylon afgezet met zwart satijn en zwart fluweel, met beugel"
+  },
+  {
+    "id": "783eb8ecbc7094a649a0bd598caa212f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knoop uit het wrak van de Oost-Indi\u00ebvaarder Princesse Maria"
+  },
+  {
+    "id": "799c2a7e966b83745948db2e91adbad6",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Wandelstok bekleed met balein en knop in de vorm van pijp"
+  },
+  {
+    "id": "81cdb3c6aa226f1c42ca4b044f0dd54c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Platte schoen van zwarte zijde met lint"
+  },
+  {
+    "id": "88aa2eee6a3569026b11dfdc53166918",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Walking stick of Johan van Oldenbarnevelt"
+  },
+  {
+    "id": "8cee0547e3efe85e3ae10ef367b927ca",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kinderschoen van goudtorrenleer met wreefbandje en rozet van zijden gaas met goudkleurige metalen kralen"
+  },
+  {
+    "id": "8cf8753eabdcc52560ac432ed14e683c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Brieventas met wapen van Napoleon"
+  },
+  {
+    "id": "0559e0dd0b5732c5efd052d5551f394a",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Bottle in the form of a shoe"
+  },
+  {
+    "id": "102b0d16290e69b2e1abb70362994d8c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Lijfje van bruine wol met geruite biesjes en gitten"
+  },
+  {
+    "id": "26c5c700e3a7e4be20fce529a9f58846",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kraag van kloskant gemaakt van grijze wol"
+  },
+  {
+    "id": "5329d7c250320c93313ab353a5249b57",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Hak van een schoenzool uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "6eceef195fa519e75a60bc7fcdc0e628",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Schoengesp uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "70e2c85266cf46b8dba241c0ef6aee0a",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Letter pouch of Michiel de Ruyter"
+  },
+  {
+    "id": "8485338129bfe9640a2e532ddb192441",
+    "decision": "included acceptance",
+    "title": "Fragment van een mantel van cisel\u00e9fluweel met kloskant, volgens overlevering afkomstig van Hugo de Groot",
+    "color": "grey"
+  },
+  {
+    "id": "9e3d55058c6f20845575adf1e0304767",
+    "decision": "included acceptance",
+    "title": "Rok van bruine wol met geruite bies en gitten",
+    "color": "grey"
+  },
+  {
+    "id": "9f8bde4dfcadeeb64441258f7658954e",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Leren damesschoen, gedragen bij de executie van freule Johanna Magdalena Catharina Judith van Dorth tot Holthuysen"
+  },
+  {
+    "id": "af859d01b5f28065c23c478d7ca52240",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Schoengesp uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "b663fab1d92ebb7e2d43c3e9eb9bdb79",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Boordeknoopje uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "d129865e9bb4b11be385eb4c209c645d",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Pair of women\u2019s shoes with peacock-feather pattern"
+  },
+  {
+    "id": "e64e81099910994029b6b5f018b9da7f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knoop, konisch met ribben en een bladvormig oog"
+  },
+  {
+    "id": "efc4a39946da760a72a36759bcef548a",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Knoop uit het wrak van de Oost-Indi\u00ebvaarder 't Vliegend Hart"
+  },
+  {
+    "id": "09a773b6aa61e978efb031e61a637af3",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Shingles"
+  },
+  {
+    "id": "158ebe567c542616495ee5d0c02e0c42",
+    "decision": "included acceptance",
+    "title": "Boy\u2019s Coat",
+    "color": "red"
+  },
+  {
+    "id": "17b27b41764e7d48822868b3fe097823",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Heupdoek"
+  },
+  {
+    "id": "471f3dfd6d54ce7ff9312f12f9316c6f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kous van rode gebreide katoen"
+  },
+  {
+    "id": "499229e2ac3eb914640245b44845a0d6",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "555a74702856ea0c25599f79fe36efec",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Hair ribbon"
+  },
+  {
+    "id": "5d06e4c75124c44e295b92a38066e9bf",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Red quechqu\u00e9mitl"
+  },
+  {
+    "id": "b246a2a1b65a9cb7817c5133d41a2f1c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Belt"
+  },
+  {
+    "id": "242323ca0ffdab6df8e59fad0307a560",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Pyjamabroek van katoen met fantasiemotief in blauw en wit"
+  },
+  {
+    "id": "38e74b4a9d1afbe5ebcc8c01a3221863",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Hoedenspeld van staal met een langwerpig ornament van facet geslepen blauw glas gevat in een stalen rand met in facet geslepen stras"
+  },
+  {
+    "id": "67a124929d82431ec176578af1e6c492",
+    "decision": "included acceptance",
+    "title": "Japon van blauwe wol bestaande uit een lijf, een mouwloos lijf en een rok",
+    "color": "blue"
+  },
+  {
+    "id": "7eb6ffa7364788c33ba5d5ea0c602fa5",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kokerdoek"
+  },
+  {
+    "id": "a053271abb227e66ab743a646aa8c02b",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Dark blue wraparound skirt with Jaspe"
+  },
+  {
+    "id": "b30430698a2aba73a949e51540b2df50",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Hoedenspeld van staal met een langwerpig ornament van facet geslepen blauw glas gevat in een stalen rand met in facet geslepen stras"
+  },
+  {
+    "id": "bf47e12ccb453cb62acaa9a8084ad1ea",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Cotton shroud"
+  },
+  {
+    "id": "00af2b288530e08578fd2fe37aedc903",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Colored band of fiber threads"
+  },
+  {
+    "id": "018c0d32359a02e92ca40f26c7a2e6e4",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Parasolknop van namaak schildpad"
+  },
+  {
+    "id": "03655a4c2c5d8e0085811f56cc23def7",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Langwerpig kussen bestaande uit twee gelijke helften, bekleed met rood fluweel versierd met zilveren passement. Binnenwerk van hout belijmd met schildpad en voorzien van compartimenten met beschilderde deksels met rollijsten van ebbenhout. Messing slot middenvoor."
+  },
+  {
+    "id": "04791ae7f59c172ab7e6050c562ee35d",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Damesschoen van bruin zijden brokaat met iriserende draden"
+  },
+  {
+    "id": "064ebd3776353036d1b74f3dc5a2d6a6",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Doek"
+  },
+  {
+    "id": "093bae7cdf641b33df78a6b18abe6102",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Wandelstok van een knoestige tak, met kromme haak"
+  },
+  {
+    "id": "09706d6f7376bd3ca5b53d71805ad9f9",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Schoen van zwart fluweel"
+  },
+  {
+    "id": "0ded5a15a3968ab2c83976a8dcc506a9",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Laars"
+  },
+  {
+    "id": "1029c5855398da6d4f7ae61a83924760",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Iron money (manila)"
+  },
+  {
+    "id": "109a48a600ae1fe525249f5d27a22820",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Flag"
+  },
+  {
+    "id": "12511f2aae73172b2c13197aa9c67d29",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Waaiermontuur van schilpad met sluitpin en waaierring"
+  },
+  {
+    "id": "16e979eb85c2eaac4217c155cb3370c0",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Schoen uit het wrak van de Oost-Indi\u00ebvaarder Meresteijn"
+  },
+  {
+    "id": "1ce3a131f806b2445a25c9d21c8dda19",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Leren schoen"
+  },
+  {
+    "id": "1e966817ab5e399eb6d3e2e4bb118704",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van imitatie schildpad of hoorn met smalle rug waarop vijf bollen"
+  },
+  {
+    "id": "24a2b98c61748744b01fbe39ee1613dd",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Shamrock"
+  },
+  {
+    "id": "25c60ec074de53e7d637cc92196ca284",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Laars van lichtbruin kalfsleer"
+  },
+  {
+    "id": "27ade603f2f5fa7ffeca7125ad363be9",
+    "decision": "included acceptance",
+    "title": "Jas, groen met wit gestreept, van dunne, soepele stof",
+    "color": "brown"
+  },
+  {
+    "id": "2e6aac4b6ab00e01392d43a595d94995",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kniekous, lichtbruin, de boord is gebreid in averechte steek en er loopt een siernaad vanaf de boord tot aan de hiel"
+  },
+  {
+    "id": "2edec28e9c769ed08f0f2fb4d01abc17",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Herenvest of gilet persan met sjaalkraag, geheel geborduurd met veekleurige bloemmotieven onderbroken door schuine en rechte strepen"
+  },
+  {
+    "id": "31e57e97f8d6c7937d777bdd3f44944d",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Brown and white belt"
+  },
+  {
+    "id": "321c0b64c06d0eec3ab1b258183998ac",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kokerdoek"
+  },
+  {
+    "id": "32e043ea4470c6c00ebaebf3a1e1b506",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Bergschoen, hoog model met rijgveters, van lichtbruin kalfsleer"
+  },
+  {
+    "id": "35fdcc3c991481d5a1a35263fa16f620",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Rotting van rotan, gemonteerd met verguld zilver en koper"
+  },
+  {
+    "id": "37cf1069c2c76d9e097b4dca43290a07",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van imitatie schildpad met gladde, paraboolvormige rug, vier tanden"
+  },
+  {
+    "id": "3d8b39cf08f7c3141f7bec94c877b27c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "424a711ece00756d2fc23fb94235d377",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Stok van een dikke tak in draaigroei met een koperen stootdop, waarin 'SAMADI, WASPADA GAROET' is gegraveerd"
+  },
+  {
+    "id": "43a617fb771d85482307ab945d454a82",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van schildpad en hoorn met een onversierde taps toelopende rug die haaks op de tanden staat"
+  },
+  {
+    "id": "469fd490bda3399874cf5dd1d2db5905",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Two \u2018walking sticks\u2019 of Van Oldenbarnevelt"
+  },
+  {
+    "id": "488ce8578ed3941b7a917364e39e0b98",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Fragmenten schoenzool en twee hakken uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "4a30a0ecff7784a6ee8173c3c5aad2fa",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Handschoenen van beige vilt. Versierd met bloemenpatroon op de kap"
+  },
+  {
+    "id": "4bfecabc845079ec10347439c0c37b8f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kniekous, donkerbruin, grof rondgebreid, grotendeels vervilt"
+  },
+  {
+    "id": "4c37a234c3b4a414bb07b40a4f712833",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Polsband, bestaande uit \u00e9\u00e9n reep leer"
+  },
+  {
+    "id": "4c4be54290259d9f1d0aaefa8dfe3bf1",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Laars van lichtbruin kalfsleer"
+  },
+  {
+    "id": "4f03f6a044442031e6da47edd99214da",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "4f89e58c2792d2cc8fbb810dcfab6223",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van imitatie schildpad of hoorn met in punten gesneden rugversiering waarop vijf bollen"
+  },
+  {
+    "id": "02626056281494a83f71791499dc7d27",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Cloth"
+  },
+  {
+    "id": "123d3b68e55f31d0be9d963514d4148c",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Pair of High-Heeled Women\u2019s Shoes"
+  },
+  {
+    "id": "1cff40fd531ee3da89eef2a0247a0e95",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Instapschoen van tot roze verbleekte zijde, in banen gebrocheerd met groen, platte, roze-rode hak"
+  },
+  {
+    "id": "1e0209543133986203b54e27a098b004",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Kleine tas in een enveloppemodel, geheel geweven van fijne groengrijze kralen, met een parelmoeren knoop als sluiting"
+  },
+  {
+    "id": "3048caca09c218c54ebd4f693f7226fd",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Punthoed van groen boucl\u00e9"
+  },
+  {
+    "id": "341ddce46fb85733466b86df90d74c9e",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Boy\u2019s Coat with Matching Waistcoat"
+  },
+  {
+    "id": "4abb817f0ebe380246001fe1c7e8d03f",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Bracelet"
+  },
+  {
+    "id": "59c3bfd4cbf16edba075c5d5b2ab5f32",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Green hairband with flower pattern"
+  },
+  {
+    "id": "6510b0b99d2cb26643decfab02f9ad81",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Beurs in een plat, rechthoekig model van groene zijde, waarop in goud- en zilverdraad enerzijds een gekroond dubbel medaillon en anderzijds een hertogshoed waaronder leeuw geborduurd"
+  },
+  {
+    "id": "6fb00d5c4dea39f99c3084f2f67e7bce",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Decoratie uit het wrak van de Oost-Indi\u00ebvaarder Hollandia"
+  },
+  {
+    "id": "9c9d8734d16250968586fe4d3fcbc625",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Avondjasje van flessengroene velours chiffon"
+  },
+  {
+    "id": "9d9ec32f99ccddc7ee4ff7b0a094439c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Doos van karton beplakt met groen geruit papier waarop, \"n.v. Reveillon/ het huis voor geschenken/ Amsterdam/ Kalverstraat 48-52/ tel.36478-3357\""
+  },
+  {
+    "id": "dd909e4be7eb68badbd97a3253fad199",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Brieventas in een envelopmodel van groen fluweel, geborduurd met een maskerachtig gezicht op voorkant en een fantasie dier op de achterkant"
+  },
+  {
+    "id": "e0a0f09ff36f1ddbbc232d0d83af5a01",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Toque van groen vilt afgezet met drie repen groen ripslint, versierd met zwarte, gele en rode veren"
+  },
+  {
+    "id": "0cab7036a3ceb61869b7e904fd8c8796",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarspeld van gevlekte kunststof, vorm van gebogen rechthoek"
+  },
+  {
+    "id": "45c5eaec13fdf1c4bf3dc0ae0e3cd27e",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van kunststof, met rug waarop parels en stras"
+  },
+  {
+    "id": "628bd4baff42862f3238f4b7dbcf572e",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarspeld van oranjegele kunststof, in gebogen trapeziumvorm"
+  },
+  {
+    "id": "65e1ce30ccfac0fc0e6719bca079fb43",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarspeld van oranjegele kunststof, in gebogen trapeziumvorm"
+  },
+  {
+    "id": "87687132497ce4ec364af30785fb4e1f",
+    "decision": "included acceptance",
+    "title": "Ball Dress of Blonde Lace",
+    "color": "yellow"
+  },
+  {
+    "id": "acf392e8f8683b746a9db2b413bb15ae",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "ad5d99ddf9af57a2d353a4537dd00045",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van kunststof, met rug waarop parels en stras"
+  },
+  {
+    "id": "c14f7d6fe6d1793ee6a9a76da2f9c8f6",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "c3ec43f0e2aee8e18c255e9ab84854b4",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Gazette du Bon Ton. Art \u2013 Modes & Frivolit\u00e9s: Layout"
+  },
+  {
+    "id": "cd2ab9e9b91208e5a97f896d8067c657",
+    "decision": "exclude",
+    "reason": "compound object or non-object title",
+    "title": "Parasol with handle"
+  },
+  {
+    "id": "d7c73dafcc41dc03aa5ccbaa492f35dc",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Haarkam van blonde schildpad en hoorn met ajour gewerkte rug waarin twee gekruiste pijlen, tien tanden"
+  },
+  {
+    "id": "fcf662e253abb9e0008603432271b8b2",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Bris\u00e9-waaier van ivoor, beschilderd met tempera en goudverf, met centrale cartouche waarin Zephyros en Flora, omgeven door Chinoiserie\u00ebn"
+  },
+  {
+    "id": "9e467aa330c24372404ffdfaef36f76c",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Waaierdoos van papier, beplakt met rozekleurig papier"
+  },
+  {
+    "id": "551465bca8d872a839bf3c31fc185557",
+    "decision": "included acceptance",
+    "title": "Visiting kimono",
+    "color": "orange"
+  },
+  {
+    "id": "02a8ca517395d6650dbba55a0fea0c95",
+    "decision": "included acceptance",
+    "title": "Meisjes miyamairi kimono met anjelieren en water",
+    "color": "purple"
+  },
+  {
+    "id": "776e7b6762bd83907d20ab5ae8cffee1",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Item"
+  },
+  {
+    "id": "9a8cc245f1a1d0f55d332c2a090cde13",
+    "decision": "included acceptance",
+    "title": "Meisjes miyamairi kimono met bloeiende herfstplanten",
+    "color": "purple"
+  },
+  {
+    "id": "45e24b3ecc892ebc5a6648cec139a43b",
+    "decision": "exclude",
+    "reason": "garment identity not established in publisher title",
+    "title": "Borstrok met Zaans stikwerk met enkele open steken"
+  }
+]

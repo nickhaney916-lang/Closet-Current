@@ -1,0 +1,844 @@
+{
+  "schema": "closet-current-parallel68-human-validated-color-object-reference/v1",
+  "sourceRepository": "https://github.com/datable-be/AI4_C_datasets",
+  "sourceRevision": "767169b2b053485ee7b909fd19b96e98f6be0453",
+  "sourceAnnotationPath": "color_detection_dataset/AI4C_Fashion_Color_Dataset_2024-06-01_0.json",
+  "annotationFileSha256": "178e15455e82f5e2fd1d916ae896d0b68dd4a78abba9a57918c5cfd5b4b3aada",
+  "annotationDatasetLicense": "CC0-1.0; image rights separate",
+  "humanValidationProvenance": "Dataset publisher README: prepredicted colors approved, corrected or rejected by a human validator. Per-record adjudication action/timestamp are NOT supplied; release filename 2024-06-01 is not an individual annotation timestamp.",
+  "splitPolicy": "Development MoMu/Antwerp; acceptance other institutions. No shared landing page, source image SHA or metadata identity. Metadata/title/license screening only, no pixel algorithm or inference on acceptance before freeze.",
+  "unseenToOurAlgorithm": true,
+  "notSealedAgainstFoundationPretraining": true,
+  "fineCategoryTruth": false,
+  "perInstanceMaskTruth": false,
+  "offWhiteTruthAvailable": false,
+  "archives": {
+    "col1.tar.gz": {
+      "url": "https://raw.githubusercontent.com/datable-be/AI4_C_datasets/767169b2b053485ee7b909fd19b96e98f6be0453/color_detection_dataset/col1.tar.gz",
+      "sha256": "031dea7683f3620991155aba191f1ec61e7851827f89466550befc0c0b029512"
+    },
+    "col2.tar.gz": {
+      "url": "https://raw.githubusercontent.com/datable-be/AI4_C_datasets/767169b2b053485ee7b909fd19b96e98f6be0453/color_detection_dataset/col2.tar.gz",
+      "sha256": "2fb777ee771f8d3e403f39cc485171994b8c21999238d0018df5cd46f2350628"
+    },
+    "col3.tar.gz": {
+      "url": "https://raw.githubusercontent.com/datable-be/AI4_C_datasets/767169b2b053485ee7b909fd19b96e98f6be0453/color_detection_dataset/col3.tar.gz",
+      "sha256": "9c376e7f56681300c3902821ddff2395c312606037521c04a11cdefa4493fff1"
+    }
+  },
+  "split": "development",
+  "rows": [
+    {
+      "id": "00c7ec737717ccc1351e84fe59a7d1f8",
+      "file_name": "52cad3cff830561cf796bf7643df50ca778f892e.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m12jrp",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m12jrp.json",
+      "source": "Collectie ModeMuseum Antwerpen, foto Amber Tillemans",
+      "image": "ai4culture-00c7ec737717ccc1351e84fe59a7d1f8.jpg",
+      "sha256": "20d81ad44ccd02b7b3049abcd832b088858011bf0d2b21a8701470c8b993aa93",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/52cad3cff830561cf796bf7643df50ca778f892e.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "df9fc5e27448eef5f2b9a1567180eba6",
+          "image_id": "00c7ec737717ccc1351e84fe59a7d1f8",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "c23e1b5aceb1a9e28788606ba8f4470750079bd35dfc774c6b298dc63a177b72",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "02a4bb8af3020c15f168bc644887e1c8",
+      "file_name": "128f8bb0d2ac30e5a54e4ea8cdc0428f8ba98a02.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mn5tgx",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mn5tgx.json",
+      "source": "? Collectie Modemuseum Antwerpen, schenking Jacoba de Jonge, foto Stany Dederen",
+      "image": "ai4culture-02a4bb8af3020c15f168bc644887e1c8.jpg",
+      "sha256": "5d13ecc0a8da95fd59e52554c80ceb1ced0d1b925d4309bc10f585dd62f04614",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/128f8bb0d2ac30e5a54e4ea8cdc0428f8ba98a02.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "eead23daba00575a0e1a3a67a132d0c6",
+          "image_id": "02a4bb8af3020c15f168bc644887e1c8",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "08fdd83353129fc0e85dee8f6c7795000dcdb1b01060166644459b5bf6c78da9",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "03998294de6d88e280af849eb9131eb4",
+      "file_name": "38c61363ac05e71d93e89f6a6434c1102d1581dc.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mf1vpc",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mf1vpc.json",
+      "source": "? Collectie Modemuseum Antwerpen, foto Stany Dederen",
+      "image": "ai4culture-03998294de6d88e280af849eb9131eb4.jpg",
+      "sha256": "7c13d8772b57b8e0fbc322cbb03aab5535ef16b10a2ca14d7384d7c46f0b29d5",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/38c61363ac05e71d93e89f6a6434c1102d1581dc.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "9d7ca54313b625e70ecee5825877447a",
+          "image_id": "03998294de6d88e280af849eb9131eb4",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "0eaafc072e6e8881a168b3e25f1ec4eeed426ceb8f53d0077da9fabcb0428dc3",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "0425181eae4e0ba8390b1dc3733c9167",
+      "file_name": "801e62708d3acf8bb88a389a7022e1b98d1afcd9.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mbnzz1",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mbnzz1.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-0425181eae4e0ba8390b1dc3733c9167.jpg",
+      "sha256": "915395e6398b7d4d5fd624fb8ba7989590e6969afa2c7834c6417b3093ab710c",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/801e62708d3acf8bb88a389a7022e1b98d1afcd9.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "84109d6ff01825536ebe43dc7abcb6be",
+          "image_id": "0425181eae4e0ba8390b1dc3733c9167",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "72b06d9c18f6dd32294f929a413d07f7dfbcba5702c5b737dce7e9674386834b",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "114335cfcceec7605feb064077ae66bb",
+      "file_name": "a0f82f0461ecbb5390373238e79b6dba50a0504c.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mdr7zd",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mdr7zd.json",
+      "source": "? Collectie Modemuseum Antwerpen, schenking Jacoba de Jonge, foto Stany Dederen",
+      "image": "ai4culture-114335cfcceec7605feb064077ae66bb.jpg",
+      "sha256": "f7313cc56b4fba76d85cf22faf34dbb80677d50dd45ff2f47d85c26f661eeaa4",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/a0f82f0461ecbb5390373238e79b6dba50a0504c.jpg",
+      "humanColor": "black",
+      "humanAnnotations": [
+        {
+          "id": "76374631d1a14d0e481869744a9455f3",
+          "image_id": "114335cfcceec7605feb064077ae66bb",
+          "category_id": "1ffd9e753c8054cc61456ac7fac1ac89"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "ff56040e9aa23c81d82e2cc883dcdc8331dc8bbc3c8243bcd24598d0233915aa",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "15497e28250cc5bcfa1aca808181905c",
+      "file_name": "9465857f59eb55254d6d91b2aa9a739a25eaef9a.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m0004w",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m0004w.json",
+      "source": "Collectie ModeMuseum Antwerpen, foto Stany Dederen",
+      "image": "ai4culture-15497e28250cc5bcfa1aca808181905c.jpg",
+      "sha256": "ba6542b6ae881a1842e9949779355b8553b76df586d67f0fcb6ecb4ac09d5278",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/9465857f59eb55254d6d91b2aa9a739a25eaef9a.jpg",
+      "humanColor": "black",
+      "humanAnnotations": [
+        {
+          "id": "9b6d1651335387f8209ecfac11d2eefd",
+          "image_id": "15497e28250cc5bcfa1aca808181905c",
+          "category_id": "1ffd9e753c8054cc61456ac7fac1ac89"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "f1ca1e7f97bb756ceec22942094e9f5b96462076e5de148c685a69f1b227aff3",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "155f5049184ad7fc2e2e3eb2a6027489",
+      "file_name": "2810424224e055aeb4be3a3b978754e1bdb7b59c.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m1c5gf",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m1c5gf.json",
+      "source": "? Collectie Modemuseum Antwerpen, schenking Frieda Dauphin-Verhees, foto Monica Ho",
+      "image": "ai4culture-155f5049184ad7fc2e2e3eb2a6027489.jpg",
+      "sha256": "181df72008e41eeab52e838829df5a29604fe71251981d79dbe589aa9eeec93b",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/2810424224e055aeb4be3a3b978754e1bdb7b59c.jpg",
+      "humanColor": "black",
+      "humanAnnotations": [
+        {
+          "id": "ef1f6bdcaab3dca50ff077f4332b6040",
+          "image_id": "155f5049184ad7fc2e2e3eb2a6027489",
+          "category_id": "1ffd9e753c8054cc61456ac7fac1ac89"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "cf5346a4b5690e2da43507e4aa6d80c5f8ddc205da3ed2e5ee0423ff1e51fd35",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "1c6b2c592d79ad6699bee7089b230cda",
+      "file_name": "068c70451bd72e5b6aaf43c648a98e1280d032c8.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mmw6sb",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mmw6sb.json",
+      "source": "? Collectie Modemuseum Antwerpen, foto Stany Dederen",
+      "image": "ai4culture-1c6b2c592d79ad6699bee7089b230cda.jpg",
+      "sha256": "14153fef58d9ae2455d55c3301e8a8b460402ba35ef4b1b1379e5d71fb8f4632",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/068c70451bd72e5b6aaf43c648a98e1280d032c8.jpg",
+      "humanColor": "black",
+      "humanAnnotations": [
+        {
+          "id": "e2a975bfaed3f5888c6f3f53f00bb3e5",
+          "image_id": "1c6b2c592d79ad6699bee7089b230cda",
+          "category_id": "1ffd9e753c8054cc61456ac7fac1ac89"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "ab3b43a5888899e4263e92efa1df5499811319ae66a2c73e915090a9f6be0663",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "29493268f3e2b89c6168e4aceb4cac3c",
+      "file_name": "161f90f27eeb16020b289a78e267acd8ef824ef8.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mpzgsq",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mpzgsq.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-29493268f3e2b89c6168e4aceb4cac3c.jpg",
+      "sha256": "98e52253901d75b22b09c3d180a16634313eab01f010f63db9f15b0c01ad211b",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/161f90f27eeb16020b289a78e267acd8ef824ef8.jpg",
+      "humanColor": "grey",
+      "humanAnnotations": [
+        {
+          "id": "1be5c458df659871fe9627458d2dbe1d",
+          "image_id": "29493268f3e2b89c6168e4aceb4cac3c",
+          "category_id": "ca50000a180a293de0b27acb67a695cb"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "4fd0280ea3edc2ec7126a9c8a3acd906182fde3dad7a480faf59ddf4f3cf990c",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "836b37ca2168536ded0e2c7b08ce8018",
+      "file_name": "56cebc056ee29e67b149931ced33ab73699daece.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mm643p",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mm643p.json",
+      "source": "? Collectie Modemuseum Antwerpen, schenking Jacoba de Jonge, foto Stany Dederen",
+      "image": "ai4culture-836b37ca2168536ded0e2c7b08ce8018.jpg",
+      "sha256": "c617851921514a01cd2bab3ff4790d988f42ca46c854bb7caaaa2a0c791f1fca",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/56cebc056ee29e67b149931ced33ab73699daece.jpg",
+      "humanColor": "grey",
+      "humanAnnotations": [
+        {
+          "id": "c1fe62272d18af3809b85404fcc1900c",
+          "image_id": "836b37ca2168536ded0e2c7b08ce8018",
+          "category_id": "ca50000a180a293de0b27acb67a695cb"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "9cf01f0cda26b22a36e9553f92abff8fe6c9d88bc5ebf3b17f1858414761bcc6",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "8692c5029a5099fb4fa28e697bac81ee",
+      "file_name": "027964e7fe2d3f3ec29f6e60b7bf02fecf743756.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mk98z7",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mk98z7.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-8692c5029a5099fb4fa28e697bac81ee.jpg",
+      "sha256": "993360fd172a39165fcd1a78180b5e055a48788f12ed51411e34f9f02d5564b7",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/027964e7fe2d3f3ec29f6e60b7bf02fecf743756.jpg",
+      "humanColor": "grey",
+      "humanAnnotations": [
+        {
+          "id": "3912e12ceed2ab2023f199932c0425c1",
+          "image_id": "8692c5029a5099fb4fa28e697bac81ee",
+          "category_id": "ca50000a180a293de0b27acb67a695cb"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "4b6346e43ed574750d72a392b54e3954413513453af44ade2c42f050ca179b64",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "9b80a4fec8fc64c6e1c38bf5c1a734ee",
+      "file_name": "3a7f9cf4f69c541a6a9278adcc33efee0d3ce46d.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m5mkrg",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m5mkrg.json",
+      "source": "? Collectie Modemuseum Antwerpen, bruikleen Universiteit Antwerpen CMU-AP (Campus Mutsaard - Artesis Plantijn), foto Stany Dederen",
+      "image": "ai4culture-9b80a4fec8fc64c6e1c38bf5c1a734ee.jpg",
+      "sha256": "a693f0b4af929de9ea034193424f41cc1e5d7a78f47af238977c993e994219b2",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/3a7f9cf4f69c541a6a9278adcc33efee0d3ce46d.jpg",
+      "humanColor": "grey",
+      "humanAnnotations": [
+        {
+          "id": "f347af49b5cd586cb44f7d7e7c8d9435",
+          "image_id": "9b80a4fec8fc64c6e1c38bf5c1a734ee",
+          "category_id": "ca50000a180a293de0b27acb67a695cb"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "86a478d3ba0c2064e165afcd959b3e33f3c5c06ffa38d87d246d8f59a26f5939",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "0293f9b6c15dfcad06c5f5d96f27c8d6",
+      "file_name": "27081f214712c93e57785dac3c414e1c345099b8.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mjhb1z",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mjhb1z.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-0293f9b6c15dfcad06c5f5d96f27c8d6.jpg",
+      "sha256": "5c9ade8562184c665d8e4c550a8a9b40de2cae239b00fc13bb2433400a24e019",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/27081f214712c93e57785dac3c414e1c345099b8.jpg",
+      "humanColor": "red",
+      "humanAnnotations": [
+        {
+          "id": "e0081b22ed3b97cf717adbf9aea2b74a",
+          "image_id": "0293f9b6c15dfcad06c5f5d96f27c8d6",
+          "category_id": "bda9643ac6601722a28f238714274da4"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "2c7dbd14e660c498c71ea58975054cf693af3f5995d3b9244f4c14dce7d5e560",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "46952dbab3a4f91148b8744d3778350c",
+      "file_name": "8c2018813d90b88f5332938c535c17576979f273.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mrxwk8",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mrxwk8.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-46952dbab3a4f91148b8744d3778350c.jpg",
+      "sha256": "73676b2cb3e29859c3162ffd61ba26155d3bfacdb991ca7b89419b6230486edf",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/8c2018813d90b88f5332938c535c17576979f273.jpg",
+      "humanColor": "red",
+      "humanAnnotations": [
+        {
+          "id": "4eda3fbc39c273ffa9e91ca67652d98c",
+          "image_id": "46952dbab3a4f91148b8744d3778350c",
+          "category_id": "bda9643ac6601722a28f238714274da4"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "a5715d5cb5fc470c2a672cadd9ecbea7ba7aa8da3e627f6f562103a462bbd539",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "3494a4ad898190c55eea97fa1d2bde12",
+      "file_name": "023bc2a8b30cd38c78d3be3648f5494d74ffe3b7.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mw0w0b",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mw0w0b.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-3494a4ad898190c55eea97fa1d2bde12.jpg",
+      "sha256": "62409ad89945d0cb6cdbc714d69e6a30fe0ce59a2e478ed5c2656ecfbec1a249",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/023bc2a8b30cd38c78d3be3648f5494d74ffe3b7.jpg",
+      "humanColor": "blue",
+      "humanAnnotations": [
+        {
+          "id": "45a78fce882bcc41aa502765d3321da5",
+          "image_id": "3494a4ad898190c55eea97fa1d2bde12",
+          "category_id": "48d6215903dff56238e52e8891380c8f"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "779b015e52b6b135b992fbb8e036c06a674208c0f53f9c4f121c7faa9587e612",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "3e27688381644d03ffc1238b2b4e024d",
+      "file_name": "514a313c55d6f3f38e9b60d45bd9c76efe96608d.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mg4f9g",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mg4f9g.json",
+      "source": "? Collectie Modemuseum Antwerpen, schenking Jacoba de Jonge, foto Stany Dederen",
+      "image": "ai4culture-3e27688381644d03ffc1238b2b4e024d.jpg",
+      "sha256": "87841361d7a86f5101c2c4cf1fe5b991d78b9b9277439455bd4c2a79c2ff158a",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/514a313c55d6f3f38e9b60d45bd9c76efe96608d.jpg",
+      "humanColor": "blue",
+      "humanAnnotations": [
+        {
+          "id": "73060aea139a59b88c9d64ddc86000f0",
+          "image_id": "3e27688381644d03ffc1238b2b4e024d",
+          "category_id": "48d6215903dff56238e52e8891380c8f"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "7977c63408f1f72c1239f56b4ffac0a6839d077f933a44e51c431041dfc18df0",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "03de8a72670a391ad5ff80a6e0b38f36",
+      "file_name": "b8b68c9320b309f53c457f54be75e57356ca33ef.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mpvmjv",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mpvmjv.json",
+      "source": "Collectie ModeMuseum Antwerpen, foto Stany Dederen",
+      "image": "ai4culture-03de8a72670a391ad5ff80a6e0b38f36.jpg",
+      "sha256": "993cb24569be81068df67f5dcb957dd2bd47793f7029fb32162cb783b887ae9e",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/b8b68c9320b309f53c457f54be75e57356ca33ef.jpg",
+      "humanColor": "brown",
+      "humanAnnotations": [
+        {
+          "id": "9925a91784d0a3c2aa349dfe0294d3c6",
+          "image_id": "03de8a72670a391ad5ff80a6e0b38f36",
+          "category_id": "6ff47afa5dc7daa42cc705a03fca8a9b"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "6067bc4e571d0dc09c1bdc2d73f87dd0d41aef8591b3dbe414aedf4494a285bc",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "0768af8dba6ec4823490e96d63c0c468",
+      "file_name": "ad50fa36fd777026c3f86e918ded9201a8c5a4c5.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mk0p7d",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mk0p7d.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-0768af8dba6ec4823490e96d63c0c468.jpg",
+      "sha256": "fdb9c0ee819b9a786448d1e1b7192f891f703a7325499b08dd37436a31f1b1d4",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/ad50fa36fd777026c3f86e918ded9201a8c5a4c5.jpg",
+      "humanColor": "brown",
+      "humanAnnotations": [
+        {
+          "id": "d1ed2b79269b55b25aa5e1298f1e3142",
+          "image_id": "0768af8dba6ec4823490e96d63c0c468",
+          "category_id": "6ff47afa5dc7daa42cc705a03fca8a9b"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "45196bc1c8637f1831ed16e40f37c94befa6848246c3bf79014e07fb054c5974",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "779897f2e0555a5b275abb2d2bcea239",
+      "file_name": "f833f5c3e0b82b0da4cfd14ac73d4fea7920f430.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mmw6s9",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mmw6s9.json",
+      "source": "Collectie ModeMuseum Antwerpen, foto Amber Tillemans",
+      "image": "ai4culture-779897f2e0555a5b275abb2d2bcea239.jpg",
+      "sha256": "88784905eaaae35f77f7027e14b4fa4779fc8fa26a59ff489e278a78072ecd62",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/f833f5c3e0b82b0da4cfd14ac73d4fea7920f430.jpg",
+      "humanColor": "green",
+      "humanAnnotations": [
+        {
+          "id": "775c363a2ecebad8912f12e2d544174d",
+          "image_id": "779897f2e0555a5b275abb2d2bcea239",
+          "category_id": "9f27410725ab8cc8854a2769c7a516b8"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "64bd39bd9d0accd8778beeb4e3b204cf3f16a845c31bbcd0fbe8e2385f13dfd8",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "8eb8bfec4acc75337a885a76a8a8187e",
+      "file_name": "RS41142_T3796_0022-hpr_7.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_220007",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_220007.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-8eb8bfec4acc75337a885a76a8a8187e.jpg",
+      "sha256": "6046e1753d5aea3075029339f27e92e220eed73c6a82e702913231a254bf4e25",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/RS41142_T3796_0022-hpr_7.jpg",
+      "humanColor": "green",
+      "humanAnnotations": [
+        {
+          "id": "d1fec589ca9801d4c2ff108c8742cda9",
+          "image_id": "8eb8bfec4acc75337a885a76a8a8187e",
+          "category_id": "9f27410725ab8cc8854a2769c7a516b8"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "1479f3f81c8de63a50ae59f8c6694fffe1e14e3ee80d2b955294525ef9a54f8f",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "065b6d3aa8ab29fa1475d05d4cc1db87",
+      "file_name": "2190be727c1babb7ca46478c1beaaf86f7b67d15.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mdncqk",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mdncqk.json",
+      "source": "? Collectie Modemuseum Antwerpen, bruikleen Universiteit Antwerpen CMU-AP (Campus Mutsaard - Artesis Plantijn), foto Stany Dederen",
+      "image": "ai4culture-065b6d3aa8ab29fa1475d05d4cc1db87.jpg",
+      "sha256": "153d3a5fb3ecc851fe073f74ce6a5fcaf0389c18129ad091b28cf1cdd05a4afa",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/2190be727c1babb7ca46478c1beaaf86f7b67d15.jpg",
+      "humanColor": "yellow",
+      "humanAnnotations": [
+        {
+          "id": "ff9fc29237cc7726d9e36dc09d321c03",
+          "image_id": "065b6d3aa8ab29fa1475d05d4cc1db87",
+          "category_id": "d487dd0b55dfcacdd920ccbdaeafa351"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "45a237f0f4dfef568554d9a2fa8eb362f68839ea653e2dee06c035383be95760",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "1cbe59b8ea6d0d3f0e43ca913d7703ad",
+      "file_name": "RS41274_T3796_0154-hpr_36.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_1540036",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_1540036.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-1cbe59b8ea6d0d3f0e43ca913d7703ad.jpg",
+      "sha256": "94bcc5cea89d7573363a7f271d5bb82213e3210ca3215b88e777205f2b8ab1c0",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/RS41274_T3796_0154-hpr_36.jpg",
+      "humanColor": "yellow",
+      "humanAnnotations": [
+        {
+          "id": "2b90223be89363e79ce8416d1d55e046",
+          "image_id": "1cbe59b8ea6d0d3f0e43ca913d7703ad",
+          "category_id": "d487dd0b55dfcacdd920ccbdaeafa351"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "27f48b7a6e11264e3747d09b225e187ebcf1358c3fbd48176d1ba81545aee9c6",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "00377e51fde4f1646411f5c799786272",
+      "file_name": "2dccb113345ce8b632efa24d643dbe3bb5ada8a1.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m1c5gd",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_m1c5gd.json",
+      "source": "Collectie ModeMuseum Antwerpen, foto Amber Tillemans",
+      "image": "ai4culture-00377e51fde4f1646411f5c799786272.jpg",
+      "sha256": "016ee06892f71622de2d35aca57d8a19942a99ca86fda06f01b618bcd4ddc74b",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/2dccb113345ce8b632efa24d643dbe3bb5ada8a1.jpg",
+      "humanColor": "pink",
+      "humanAnnotations": [
+        {
+          "id": "0d97df49bb0b4a979b270bd54dd40eb6",
+          "image_id": "00377e51fde4f1646411f5c799786272",
+          "category_id": "4a0b0dcedd48f780778d1cd1bb8f9877"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "9f8dc3d392087654667d77881e9d09addd947ddb09cd1218f240b4b0cac857ec",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "13cfc8b2a6a99e53164a013e8b3e58d3",
+      "file_name": "12e4d9aa798208ff5ec8073be16dcf54b3bc5a83.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mwstwn",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mwstwn.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-13cfc8b2a6a99e53164a013e8b3e58d3.jpg",
+      "sha256": "e177a5c42dc6a2797c331899da90293d06b157e79bc5958dd13b9797f18ea058",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/12e4d9aa798208ff5ec8073be16dcf54b3bc5a83.jpg",
+      "humanColor": "pink",
+      "humanAnnotations": [
+        {
+          "id": "8fd71fc939083f4922d82a4b5ab607b9",
+          "image_id": "13cfc8b2a6a99e53164a013e8b3e58d3",
+          "category_id": "4a0b0dcedd48f780778d1cd1bb8f9877"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "509b1e9f94e1209d905e1a42e01ff8f456c4f933c20c3fb6e8ddb02dbfdb9f22",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "531620274919cd53c0ccebbbde565a6f",
+      "file_name": "0cf81897ccc7b3a54033d52f5b80b11dc2c3f1c1.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mzcrqq",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mzcrqq.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-531620274919cd53c0ccebbbde565a6f.jpg",
+      "sha256": "1060c6484fc5427a492e21f54216c160458f733a364914a05dd166df84746156",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/0cf81897ccc7b3a54033d52f5b80b11dc2c3f1c1.jpg",
+      "humanColor": "orange",
+      "humanAnnotations": [
+        {
+          "id": "060af9ef569dd0e0b1814f749c28e09f",
+          "image_id": "531620274919cd53c0ccebbbde565a6f",
+          "category_id": "fe01d67a002dfa0f3ac084298142eccd"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "adaf1db06891e6f143739a7e86665f591abe930a19e32295adce6a6198a98f16",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "6c8d1c72a24f847c837501caa9344d46",
+      "file_name": "RS41239_T3796_0119-hpr_6.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_1190006",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_1190006.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-6c8d1c72a24f847c837501caa9344d46.jpg",
+      "sha256": "e08e473785c60a8c7274db5208c923ac86d8c84e1fed5a47ccaa877eeaf94c4b",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/RS41239_T3796_0119-hpr_6.jpg",
+      "humanColor": "orange",
+      "humanAnnotations": [
+        {
+          "id": "b590c80c2aa9a2750f4bd0bc70d71614",
+          "image_id": "6c8d1c72a24f847c837501caa9344d46",
+          "category_id": "fe01d67a002dfa0f3ac084298142eccd"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "1914f0a7f1b68ab2baed5630e5c776621dc85d0b1bfe982cf69537161a4dd56d",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "139e6afe4c004dfba0f87b1ce7532c48",
+      "file_name": "7492cb0e7881da4dbd4f7e436c02df8a289684ac.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mn5th0",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mn5th0.json",
+      "source": "Collectie ModeMuseum Antwerpen, foto Stany Dederen",
+      "image": "ai4culture-139e6afe4c004dfba0f87b1ce7532c48.jpg",
+      "sha256": "a7a676f230262ad607913726cba2649d64ae163fcd4e4217d994c92b3433be92",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/7492cb0e7881da4dbd4f7e436c02df8a289684ac.jpg",
+      "humanColor": "beige",
+      "humanAnnotations": [
+        {
+          "id": "a82a95d9bd33c8acf86b8264bfb725df",
+          "image_id": "139e6afe4c004dfba0f87b1ce7532c48",
+          "category_id": "efc5f4b470619b932aed03953e50ce60"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "7cb766867662517c063402e9d50bc8e5e194dd8a1f556fb1f0759acfc2048249",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "adc209e6a948edcbc721af49671879af",
+      "file_name": "3d400f76e354945736e3b4f0b9aeb34a69cf7294.jpg",
+      "license": "http://creativecommons.org/licenses/by/4.0/",
+      "landing_page": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mjm68s",
+      "url": "https://www.europeana.eu/en/item/2048208/europeana_fashion_http___data_momu_be_ark_34546_mjm68s.json",
+      "source": "Fashion Museum Antwerp",
+      "image": "ai4culture-adc209e6a948edcbc721af49671879af.jpg",
+      "sha256": "52dfea54174626770cdb143ec0457cb51c64afd17ab884a91d09edde72da13b5",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/3d400f76e354945736e3b4f0b9aeb34a69cf7294.jpg",
+      "humanColor": "multicoloured",
+      "humanAnnotations": [
+        {
+          "id": "759ccd1d729bdf37e4038abeb5a40bc8",
+          "image_id": "adc209e6a948edcbc721af49671879af",
+          "category_id": "b73d2f5dfe7e365d06b515bb80ad0987"
+        }
+      ],
+      "primaryTitle": "Item",
+      "primaryLicense": "http://creativecommons.org/licenses/by/4.0/",
+      "primaryPageSha256": "9d8b4a6be50c926bc3ff10c805a77ee701bc23cdf2cb05fef6e8f76c8d9ce5b7",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "development",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    }
+  ]
+}

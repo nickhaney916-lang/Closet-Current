@@ -1,0 +1,79 @@
+{
+  "model": "onnx-community/grounding-dino-tiny-ONNX",
+  "revision": "ff690b0a8050566c290287545bd059350f3e9096",
+  "dtype": "fp32",
+  "id": "fashionpedia-val-8519",
+  "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+  "developmentOnly": true,
+  "rows": [
+    {
+      "prompt": "a dress.",
+      "actual": {
+        "scores": [
+          0.8098492622375488
+        ],
+        "boxes": [
+          [
+            248.5246715247631,
+            215.19476318359375,
+            458.39733722805977,
+            957.3828735351562
+          ]
+        ],
+        "labels": [
+          "a dress"
+        ]
+      },
+      "elapsedMs": 10518.302716
+    },
+    {
+      "prompt": "dress.",
+      "actual": {
+        "scores": [
+          0.83556067943573
+        ],
+        "boxes": [
+          [
+            247.6506987810135,
+            215.124267578125,
+            457.8761080503464,
+            956.9385986328125
+          ]
+        ],
+        "labels": [
+          "dress"
+        ]
+      },
+      "elapsedMs": 9695.264738999998
+    },
+    {
+      "prompt": "shirt. pants. dress. shoe.",
+      "actual": {
+        "scores": [
+          0.5267998576164246
+        ],
+        "boxes": [
+          [
+            251.225664883852,
+            215.03656005859375,
+            458.33235761523247,
+            957.4994506835938
+          ]
+        ],
+        "labels": [
+          "shirt"
+        ]
+      },
+      "elapsedMs": 9505.281959
+    },
+    {
+      "prompt": "shirt. top. sweater. jacket. coat. vest. cardigan. pants. shorts. skirt. dress. jumpsuit. shoe. sock. hat. glasses. tie. glove. watch. belt. bag. scarf. umbrella.",
+      "actual": {
+        "scores": [],
+        "boxes": [],
+        "labels": []
+      },
+      "elapsedMs": 10067.806075999993
+    }
+  ]
+}

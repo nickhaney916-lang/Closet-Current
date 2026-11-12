@@ -1,0 +1,685 @@
+{
+  "schema": "closet-current-parallel68-real-instance-inference/v1",
+  "split": "development",
+  "manifestSha256": "cfb7734271c0b14a95e0a826a33230eb05b67867999bf0d500763a64a19874d8",
+  "detector": {
+    "model": "onnx-community/grounding-dino-tiny-ONNX",
+    "revision": "ff690b0a8050566c290287545bd059350f3e9096",
+    "dtype": "q8",
+    "modelBytes": 203824675,
+    "modelSha256": "70bf2d3310d1ae73769c96a71e00cbf2861eb33a1f4d97d84a108a7bf02c03c9"
+  },
+  "sam2": {
+    "model": "onnx-community/sam2.1-hiera-tiny-ONNX",
+    "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+    "dtype": "q8",
+    "device": "cpu"
+  },
+  "queries": [
+    "shirt",
+    "top",
+    "sweater",
+    "jacket",
+    "coat",
+    "vest",
+    "cardigan",
+    "pants",
+    "shorts",
+    "skirt",
+    "dress",
+    "jumpsuit",
+    "shoe",
+    "sock",
+    "hat",
+    "glasses",
+    "tie",
+    "glove",
+    "watch",
+    "belt",
+    "bag",
+    "scarf",
+    "umbrella"
+  ],
+  "boxThreshold": 0.3,
+  "textThreshold": 0.3,
+  "maskDedupIoU": 0.85,
+  "automaticSave": false,
+  "rows": [
+    {
+      "id": "fashionpedia-val-8519",
+      "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+      "width": 682,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.31466472148895264
+        ],
+        "boxes": [
+          [
+            257.2139823436737,
+            218.07647705078125,
+            460.0067970752716,
+            577.7632446289062
+          ]
+        ],
+        "labels": [
+          "shirt"
+        ]
+      },
+      "regions": [
+        {
+          "label": "shirt",
+          "box": [
+            257.2139823436737,
+            218.07647705078125,
+            460.0067970752716,
+            577.7632446289062
+          ],
+          "originalBox": [
+            257.2139823436737,
+            218.07647705078125,
+            460.0067970752716,
+            577.7632446289062
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops"
+          ],
+          "score": 0.31466472148895264,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                257.2139823436737,
+                218.07647705078125,
+                460.0067970752716,
+                577.7632446289062
+              ],
+              "score": 0.31466472148895264
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9266622066497803,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-8519-0.bin.gz",
+          "maskSha256": "b8105d6d5ce4503c611ef2bee20262459037663f73120c8859e9b78d4c18a4b4",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 21699.669058000003
+    },
+    {
+      "id": "fashionpedia-val-9711",
+      "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+      "width": 683,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [],
+        "boxes": [],
+        "labels": []
+      },
+      "regions": [],
+      "elapsedMs": 13191.777299999994
+    },
+    {
+      "id": "fashionpedia-val-10216",
+      "sha256": "43e8d91b902670a2a7a120eea6582e3757544222da4e4b8e5bfe6b73066d3ad4",
+      "width": 1024,
+      "height": 683,
+      "rawDetections": {
+        "scores": [
+          0.39305171370506287
+        ],
+        "boxes": [
+          [
+            729.6181030273438,
+            344.20744724571705,
+            886.4917602539062,
+            564.7877765148878
+          ]
+        ],
+        "labels": [
+          "pants shorts"
+        ]
+      },
+      "regions": [
+        {
+          "label": "pants shorts",
+          "box": [
+            729.6181030273438,
+            344.20744724571705,
+            886.4917602539062,
+            564.7877765148878
+          ],
+          "originalBox": [
+            729.6181030273438,
+            344.20744724571705,
+            886.4917602539062,
+            564.7877765148878
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.39305171370506287,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants shorts",
+              "box": [
+                729.6181030273438,
+                344.20744724571705,
+                886.4917602539062,
+                564.7877765148878
+              ],
+              "score": 0.39305171370506287
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9351919889450073,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10216-0.bin.gz",
+          "maskSha256": "14bb284c94d44c33bfdec83c9446a38991fb112e401042b71d23e15fd47cde8d",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 17451.714305
+    },
+    {
+      "id": "fashionpedia-val-10382",
+      "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+      "width": 682,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.44401732087135315,
+          0.42890045046806335
+        ],
+        "boxes": [
+          [
+            42.12301877140999,
+            440.05763244628906,
+            229.84416088461876,
+            570.8929901123047
+          ],
+          [
+            53.600924491882324,
+            154.64671325683594,
+            234.0943295955658,
+            485.1104278564453
+          ]
+        ],
+        "labels": [
+          "pants shorts skirt belt bag",
+          "shirt"
+        ]
+      },
+      "regions": [
+        {
+          "label": "pants shorts skirt belt bag",
+          "box": [
+            42.12301877140999,
+            440.05763244628906,
+            229.84416088461876,
+            570.8929901123047
+          ],
+          "originalBox": [
+            42.12301877140999,
+            440.05763244628906,
+            229.84416088461876,
+            570.8929901123047
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms",
+            "Accessories"
+          ],
+          "score": 0.44401732087135315,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants shorts skirt belt bag",
+              "box": [
+                42.12301877140999,
+                440.05763244628906,
+                229.84416088461876,
+                570.8929901123047
+              ],
+              "score": 0.44401732087135315
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.9729767441749573,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10382-0.bin.gz",
+          "maskSha256": "579abae5656e77c0f4251938ae2f0bdeea197ccda12431fb849925c5af3beb13",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "shirt",
+          "box": [
+            53.600924491882324,
+            154.64671325683594,
+            234.0943295955658,
+            485.1104278564453
+          ],
+          "originalBox": [
+            53.600924491882324,
+            154.64671325683594,
+            234.0943295955658,
+            485.1104278564453
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops"
+          ],
+          "score": 0.42890045046806335,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                53.600924491882324,
+                154.64671325683594,
+                234.0943295955658,
+                485.1104278564453
+              ],
+              "score": 0.42890045046806335
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9684388637542725,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10382-1.bin.gz",
+          "maskSha256": "5e28116eaf11a1738f4cb1599bc50e60aacc094026c427e9f55a8784fa0f683b",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 16900.907586
+    },
+    {
+      "id": "fashionpedia-val-10776",
+      "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+      "width": 1024,
+      "height": 682,
+      "rawDetections": {
+        "scores": [
+          0.45655491948127747,
+          0.30654770135879517
+        ],
+        "boxes": [
+          [
+            407.1182098388672,
+            207.71344012022018,
+            590.8924713134766,
+            478.7020028233528
+          ],
+          [
+            408.2290802001953,
+            397.77740520238876,
+            545.5695037841797,
+            475.9192412495613
+          ]
+        ],
+        "labels": [
+          "shirt",
+          "shorts"
+        ]
+      },
+      "regions": [
+        {
+          "label": "shirt",
+          "box": [
+            407.1182098388672,
+            207.71344012022018,
+            590.8924713134766,
+            478.7020028233528
+          ],
+          "originalBox": [
+            407.1182098388672,
+            207.71344012022018,
+            590.8924713134766,
+            478.7020028233528
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops"
+          ],
+          "score": 0.45655491948127747,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                407.1182098388672,
+                207.71344012022018,
+                590.8924713134766,
+                478.7020028233528
+              ],
+              "score": 0.45655491948127747
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9707475304603577,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10776-0.bin.gz",
+          "maskSha256": "ef16c0df02cb78370d826f2a358657e978451fc6f0c25e6b67cab9743c615df4",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "shorts",
+          "box": [
+            408.2290802001953,
+            397.77740520238876,
+            545.5695037841797,
+            475.9192412495613
+          ],
+          "originalBox": [
+            408.2290802001953,
+            397.77740520238876,
+            545.5695037841797,
+            475.9192412495613
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.30654770135879517,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shorts",
+              "box": [
+                408.2290802001953,
+                397.77740520238876,
+                545.5695037841797,
+                475.9192412495613
+              ],
+              "score": 0.30654770135879517
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9158779978752136,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10776-1.bin.gz",
+          "maskSha256": "8f17642d5313880be02134991baa4183cb3d42bbaa6a79fbec403fd2e40ec525",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 11784.882850999988
+    },
+    {
+      "id": "fashionpedia-val-10898",
+      "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+      "width": 1011,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.39942625164985657
+        ],
+        "boxes": [
+          [
+            592.6855602264404,
+            587.8054504394531,
+            761.5838406085968,
+            819.4367370605469
+          ]
+        ],
+        "labels": [
+          "pants shorts"
+        ]
+      },
+      "regions": [
+        {
+          "label": "pants shorts",
+          "box": [
+            592.6855602264404,
+            587.8054504394531,
+            761.5838406085968,
+            819.4367370605469
+          ],
+          "originalBox": [
+            592.6855602264404,
+            587.8054504394531,
+            761.5838406085968,
+            819.4367370605469
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.39942625164985657,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants shorts",
+              "box": [
+                592.6855602264404,
+                587.8054504394531,
+                761.5838406085968,
+                819.4367370605469
+              ],
+              "score": 0.39942625164985657
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9434446692466736,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10898-0.bin.gz",
+          "maskSha256": "72c9d92940b828754c7a79e589d5d9bb9dd61b49c52d9c71eed8bc6e85efd9f6",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 10766.937332000001
+    },
+    {
+      "id": "fashionpedia-val-10905",
+      "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+      "width": 768,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.42065688967704773
+        ],
+        "boxes": [
+          [
+            314.4481658935547,
+            546.7708129882812,
+            467.88954162597656,
+            849.2108764648438
+          ]
+        ],
+        "labels": [
+          "pants shorts"
+        ]
+      },
+      "regions": [
+        {
+          "label": "pants shorts",
+          "box": [
+            314.4481658935547,
+            546.7708129882812,
+            467.88954162597656,
+            849.2108764648438
+          ],
+          "originalBox": [
+            314.4481658935547,
+            546.7708129882812,
+            467.88954162597656,
+            849.2108764648438
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.42065688967704773,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants shorts",
+              "box": [
+                314.4481658935547,
+                546.7708129882812,
+                467.88954162597656,
+                849.2108764648438
+              ],
+              "score": 0.42065688967704773
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9568103551864624,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10905-0.bin.gz",
+          "maskSha256": "3a96aee2f60a8a5c3577ee2e12fd22abc8bf6769c696484fd9c87c6cdd99d0a3",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 10991.817784000013
+    },
+    {
+      "id": "fashionpedia-val-10994",
+      "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+      "width": 682,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.4414798319339752,
+          0.40392404794692993
+        ],
+        "boxes": [
+          [
+            135.44913911819458,
+            433.701416015625,
+            582.9692814350128,
+            1002.164306640625
+          ],
+          [
+            282.9946894645691,
+            227.65545654296875,
+            536.1787569522858,
+            506.23675537109375
+          ]
+        ],
+        "labels": [
+          "sweater pants shorts",
+          "shirt"
+        ]
+      },
+      "regions": [
+        {
+          "label": "sweater pants shorts",
+          "box": [
+            135.44913911819458,
+            433.701416015625,
+            582.9692814350128,
+            1002.164306640625
+          ],
+          "originalBox": [
+            135.44913911819458,
+            433.701416015625,
+            582.9692814350128,
+            1002.164306640625
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops",
+            "Bottoms"
+          ],
+          "score": 0.4414798319339752,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "sweater pants shorts",
+              "box": [
+                135.44913911819458,
+                433.701416015625,
+                582.9692814350128,
+                1002.164306640625
+              ],
+              "score": 0.4414798319339752
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.9631600379943848,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10994-0.bin.gz",
+          "maskSha256": "67b1d1e025f76f303dd98396d6fedcb2b157202bb0aab3fc2ff2e4336ccad869",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "shirt",
+          "box": [
+            282.9946894645691,
+            227.65545654296875,
+            536.1787569522858,
+            506.23675537109375
+          ],
+          "originalBox": [
+            282.9946894645691,
+            227.65545654296875,
+            536.1787569522858,
+            506.23675537109375
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops"
+          ],
+          "score": 0.40392404794692993,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                282.9946894645691,
+                227.65545654296875,
+                536.1787569522858,
+                506.23675537109375
+              ],
+              "score": 0.40392404794692993
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.979352593421936,
+          "maskFile": "benchmark/parallel68-masks/development-fashionpedia-val-10994-1.bin.gz",
+          "maskSha256": "d97e4b7df8f021c1c8e73347aa20dce177d0f04f03a82faf43a0a113084dcf01",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "elapsedMs": 11137.066098999989
+    }
+  ],
+  "loadMs": 31224.716635,
+  "processPeakResidentBytes": 5141536768
+}

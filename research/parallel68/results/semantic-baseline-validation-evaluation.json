@@ -1,0 +1,1099 @@
+{
+  "schema": "closet-current-parallel68-human-mask-evaluation/v1",
+  "split": "validation",
+  "photos": 16,
+  "truthInstances": 53,
+  "predictedInstances": 33,
+  "matched": 19,
+  "falseNegatives": 34,
+  "falsePositives": 14,
+  "instanceRecall": 0.3584905660377358,
+  "instancePrecision": 0.5757575757575758,
+  "categoryCompatibleMatched": 15,
+  "perCategory": {
+    "Accessories": {
+      "matched": 0,
+      "total": 13,
+      "instanceRecall": 0.0
+    },
+    "Bottoms": {
+      "matched": 3,
+      "total": 6,
+      "instanceRecall": 0.5
+    },
+    "Dresses": {
+      "matched": 11,
+      "total": 12,
+      "instanceRecall": 0.9166666666666666
+    },
+    "Outerwear": {
+      "matched": 2,
+      "total": 2,
+      "instanceRecall": 1.0
+    },
+    "Shoes": {
+      "matched": 2,
+      "total": 16,
+      "instanceRecall": 0.125
+    },
+    "Tops": {
+      "matched": 1,
+      "total": 4,
+      "instanceRecall": 0.25
+    }
+  },
+  "boundaryFAllTruth": 0.13923875403414546,
+  "latencyMs": {
+    "median": 224.1240875000001,
+    "p95": 726.155932
+  },
+  "broadCategoryAccuracy": "NOT_ESTABLISHED_BY_INSTANCE_COMPATIBILITY",
+  "fineSubtypeAccuracy": "NO_HUMAN_SUBTYPE_LABELS",
+  "primaryColorAccuracy": "NO_HUMAN_COLOR_LABELS_IN_THIS_MASK_CORPUS",
+  "automaticAcceptance": {
+    "coverage": 0,
+    "errorRate": null,
+    "status": "NOT_CALIBRATED_NO_AUTOMATIC_ADMISSION"
+  },
+  "independentHumanMasks": true,
+  "pretrainingExposure": "unknown_public_dataset",
+  "notSealedNovelAcceptance": true,
+  "rows": [
+    {
+      "id": "fashionpedia-val-10913",
+      "sha256": "c2f475c0a2134ac8b71fb19785529360a1efd39f9db47da699856a2f6b2a1195",
+      "truthCount": 1,
+      "predictedCount": 2,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "iou": 0.7552373416505981
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "iou": 0.7552373416505981
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.043800281929268464,
+          0.7552373416505981
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "fScore": 0.34634259326278605
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 7021,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 726.155932
+    },
+    {
+      "id": "fashionpedia-val-15851",
+      "sha256": "0dc702710972659f72b27df4d859cf4aaec54e9908a02e21f65e6f9ed8203b75",
+      "truthCount": 5,
+      "predictedCount": 3,
+      "matches": [
+        {
+          "truthIndex": 4,
+          "predictionIndex": 0,
+          "iou": 0.5268579426172149
+        }
+      ],
+      "categoryCompatibleMatches": [],
+      "measuredMaskIoU": [
+        [
+          0.0,
+          0.0,
+          0.4514846235418876
+        ],
+        [
+          0.0,
+          0.0,
+          0.13134788799240626
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.015138197089559527,
+          0.0,
+          0.0
+        ],
+        [
+          0.5268579426172149,
+          0.17939936029890458,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 4,
+          "predictionIndex": 0,
+          "fScore": 0.42786114101664935
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 684,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 685,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 686,
+          "categoryId": 18,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 687,
+          "categoryId": 19,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 690,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 657.3266580000002
+    },
+    {
+      "id": "fashionpedia-val-9425",
+      "sha256": "5650233266502722921f6d0ca68ebbdc0d92315fc777d1ec5efe88d1ae00b16a",
+      "truthCount": 4,
+      "predictedCount": 1,
+      "matches": [],
+      "categoryCompatibleMatches": [],
+      "measuredMaskIoU": [
+        [
+          0.10483355951145526
+        ],
+        [
+          0.0
+        ],
+        [
+          0.061724772298906355
+        ],
+        [
+          0.45033970196313955
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [],
+      "truth": [
+        {
+          "annotationId": 5675,
+          "categoryId": 1,
+          "category": "Tops"
+        },
+        {
+          "annotationId": 5677,
+          "categoryId": 15,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 5678,
+          "categoryId": 19,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 5680,
+          "categoryId": 8,
+          "category": "Bottoms"
+        }
+      ],
+      "elapsedMs": 248.592087
+    },
+    {
+      "id": "fashionpedia-val-9246",
+      "sha256": "2bd826ef2cd611d5be43586d42c6781db8bb641b5c1e97cfe21f78959251b80e",
+      "truthCount": 3,
+      "predictedCount": 1,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.8167477266246317
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.8167477266246317
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.8167477266246317
+        ],
+        [
+          0.0007130421898729488
+        ],
+        [
+          0.0004864328578171205
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "fScore": 0.36708804644006676
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 5544,
+          "categoryId": 10,
+          "category": "Dresses"
+        },
+        {
+          "annotationId": 5548,
+          "categoryId": 21,
+          "category": "Bottoms"
+        },
+        {
+          "annotationId": 5549,
+          "categoryId": 21,
+          "category": "Bottoms"
+        }
+      ],
+      "elapsedMs": 231.57185299999992
+    },
+    {
+      "id": "fashionpedia-val-11800",
+      "sha256": "1791be4720af53131965e00426a7e25fdba234a13992ec4233bd1557c45a5dd5",
+      "truthCount": 4,
+      "predictedCount": 3,
+      "matches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 1,
+          "iou": 0.8396187673248691
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 2,
+          "iou": 0.5960346964064436
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 1,
+          "iou": 0.8396187673248691
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 2,
+          "iou": 0.5960346964064436
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.20203227734608487,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.8396187673248691,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.5960346964064436
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 1,
+          "fScore": 0.2804034862965349
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 2,
+          "fScore": 0.32282795876483217
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 7747,
+          "categoryId": 14,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 7748,
+          "categoryId": 10,
+          "category": "Dresses"
+        },
+        {
+          "annotationId": 7750,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 7751,
+          "categoryId": 23,
+          "category": "Shoes"
+        }
+      ],
+      "elapsedMs": 219.81791499999963
+    },
+    {
+      "id": "fashionpedia-val-13260",
+      "sha256": "36ec95313761a48cdc46ea026d9067397320a69938644dac5f50b3517552a887",
+      "truthCount": 5,
+      "predictedCount": 2,
+      "matches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.902407771619286
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.902407771619286
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.0003360860380257346,
+          0.0
+        ],
+        [
+          0.902407771619286,
+          0.0
+        ],
+        [
+          0.09725141601014071,
+          0.0
+        ],
+        [
+          0.0,
+          0.23795513056270687
+        ],
+        [
+          0.0,
+          0.3212869105332746
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "fScore": 0.6055308955425034
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 8901,
+          "categoryId": 18,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 8902,
+          "categoryId": 10,
+          "category": "Dresses"
+        },
+        {
+          "annotationId": 8903,
+          "categoryId": 19,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 8904,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 8905,
+          "categoryId": 23,
+          "category": "Shoes"
+        }
+      ],
+      "elapsedMs": 227.47347899999977
+    },
+    {
+      "id": "fashionpedia-val-15424",
+      "sha256": "668737b3fde3e26e6ba813866dd6bfee648918173a9be18200315a32a6db4d9a",
+      "truthCount": 5,
+      "predictedCount": 3,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.6401508884550479
+        },
+        {
+          "truthIndex": 4,
+          "predictionIndex": 1,
+          "iou": 0.6623653219744425
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.6401508884550479
+        },
+        {
+          "truthIndex": 4,
+          "predictionIndex": 1,
+          "iou": 0.6623653219744425
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.6401508884550479,
+          0.007914140416194348,
+          0.0
+        ],
+        [
+          0.006013525081321691,
+          0.00026797079118376095,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.31840927047669215
+        ],
+        [
+          0.0,
+          0.0,
+          0.3530708661417323
+        ],
+        [
+          0.062431372549019606,
+          0.6623653219744425,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "fScore": 0.3739076782494345
+        },
+        {
+          "truthIndex": 4,
+          "predictionIndex": 1,
+          "fScore": 0.3660861514832299
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 317,
+          "categoryId": 9,
+          "category": "Outerwear"
+        },
+        {
+          "annotationId": 318,
+          "categoryId": 19,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 319,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 320,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 322,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 252.85718599999973
+    },
+    {
+      "id": "fashionpedia-val-18517",
+      "sha256": "6628d8679227523971de27c564f2a0cae7d3391d981c97923c841abe3b6494fe",
+      "truthCount": 3,
+      "predictedCount": 2,
+      "matches": [
+        {
+          "truthIndex": 2,
+          "predictionIndex": 0,
+          "iou": 0.9241383202358949
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 2,
+          "predictionIndex": 0,
+          "iou": 0.9241383202358949
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.0,
+          0.3383913412563667
+        ],
+        [
+          0.0,
+          0.44774764552365826
+        ],
+        [
+          0.9241383202358949,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 2,
+          "predictionIndex": 0,
+          "fScore": 0.6838365506982724
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 5193,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 5194,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 5195,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 228.16787499999964
+    },
+    {
+      "id": "fashionpedia-val-13339",
+      "sha256": "e6c30030bf868edd7217fab716718f7f35fb986b63756c50a9479eb44078b04a",
+      "truthCount": 3,
+      "predictedCount": 2,
+      "matches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.6713911723999934
+        }
+      ],
+      "categoryCompatibleMatches": [],
+      "measuredMaskIoU": [
+        [
+          0.008740511944271022,
+          0.30446652005763253
+        ],
+        [
+          0.6713911723999934,
+          0.0013029901377125783
+        ],
+        [
+          0.2512214752927573,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "fScore": 0.1943855898392094
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 8961,
+          "categoryId": 24,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 8962,
+          "categoryId": 8,
+          "category": "Bottoms"
+        },
+        {
+          "annotationId": 8964,
+          "categoryId": 1,
+          "category": "Tops"
+        }
+      ],
+      "elapsedMs": 220.11602700000003
+    },
+    {
+      "id": "fashionpedia-val-9031",
+      "sha256": "24a6b45a90f9b06d14a8b2a821b55705f08ea88f1c0c033bd1000b9136a34481",
+      "truthCount": 4,
+      "predictedCount": 2,
+      "matches": [
+        {
+          "truthIndex": 2,
+          "predictionIndex": 0,
+          "iou": 0.7415017211703959
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 2,
+          "predictionIndex": 0,
+          "iou": 0.7415017211703959
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.0,
+          0.4543939562270859
+        ],
+        [
+          0.0,
+          0.4102313457152167
+        ],
+        [
+          0.7415017211703959,
+          0.0
+        ],
+        [
+          0.0,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 2,
+          "predictionIndex": 0,
+          "fScore": 0.40304589498985954
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 5326,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 5327,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 5329,
+          "categoryId": 10,
+          "category": "Dresses"
+        },
+        {
+          "annotationId": 5330,
+          "categoryId": 15,
+          "category": "Accessories"
+        }
+      ],
+      "elapsedMs": 220.50697900000068
+    },
+    {
+      "id": "fashionpedia-val-18008",
+      "sha256": "82d1a32c9575b4eabd4aba824386688341caddc35199a924478ac513b3d15253",
+      "truthCount": 7,
+      "predictedCount": 3,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.6412610504805201
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 1,
+          "iou": 0.8473451327433629
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.6412610504805201
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 1,
+          "iou": 0.8473451327433629
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.6412610504805201,
+          0.0,
+          0.0
+        ],
+        [
+          0.20421132075471699,
+          0.0011866971252262142,
+          0.0
+        ],
+        [
+          0.000734771272813463,
+          0.8473451327433629,
+          0.0
+        ],
+        [
+          0.08881569097170235,
+          3.746862003072427e-05,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.46841272125485683
+        ],
+        [
+          0.0,
+          0.0,
+          0.41379310344827586
+        ],
+        [
+          0.0,
+          0.0,
+          0.0
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "fScore": 0.42863597871363085
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 1,
+          "fScore": 0.6360564070415127
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 2477,
+          "categoryId": 4,
+          "category": "Outerwear"
+        },
+        {
+          "annotationId": 2478,
+          "categoryId": 1,
+          "category": "Tops"
+        },
+        {
+          "annotationId": 2484,
+          "categoryId": 7,
+          "category": "Bottoms"
+        },
+        {
+          "annotationId": 2485,
+          "categoryId": 24,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 2486,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 2487,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 2488,
+          "categoryId": 13,
+          "category": "Accessories"
+        }
+      ],
+      "elapsedMs": 213.85410599999977
+    },
+    {
+      "id": "fashionpedia-val-13049",
+      "sha256": "c12ef9df87e0413fd6d9f62da262f7da7fa666d675480c677e73a83fa7bcd4e3",
+      "truthCount": 4,
+      "predictedCount": 3,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "iou": 0.5128693540322389
+        },
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.5709123983005445
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 2,
+          "iou": 0.5035776869158879
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.5709123983005445
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 2,
+          "iou": 0.5035776869158879
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.0,
+          0.5128693540322389,
+          0.0
+        ],
+        [
+          0.5709123983005445,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.5035776869158879
+        ],
+        [
+          0.0,
+          0.0,
+          0.2883831998876247
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "fScore": 0.2909546627349797
+        },
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "fScore": 0.17582077286342984
+        },
+        {
+          "truthIndex": 2,
+          "predictionIndex": 2,
+          "fScore": 0.4401433468693438
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 8763,
+          "categoryId": 8,
+          "category": "Bottoms"
+        },
+        {
+          "annotationId": 8765,
+          "categoryId": 1,
+          "category": "Tops"
+        },
+        {
+          "annotationId": 8766,
+          "categoryId": 23,
+          "category": "Shoes"
+        },
+        {
+          "annotationId": 8767,
+          "categoryId": 23,
+          "category": "Shoes"
+        }
+      ],
+      "elapsedMs": 220.7746960000004
+    },
+    {
+      "id": "fashionpedia-val-19616",
+      "sha256": "a41f738cf7327c6713c02e6859942c45606c07bfd2751ee9da713dd02b67002c",
+      "truthCount": 2,
+      "predictedCount": 1,
+      "matches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.8885595224914191
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "iou": 0.8885595224914191
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.0
+        ],
+        [
+          0.8885595224914191
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 1,
+          "predictionIndex": 0,
+          "fScore": 0.5356892849882349
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 4141,
+          "categoryId": 15,
+          "category": "Accessories"
+        },
+        {
+          "annotationId": 4142,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 271.70506099999966
+    },
+    {
+      "id": "fashionpedia-val-16629",
+      "sha256": "421dfea8d2fb4faaa8b4ec0d1b3c4d5c4c252c3b5e6985904fe5a9d66701d7dd",
+      "truthCount": 1,
+      "predictedCount": 2,
+      "matches": [],
+      "categoryCompatibleMatches": [],
+      "measuredMaskIoU": [
+        [
+          0.20584511632571198,
+          0.40938164960988954
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [],
+      "truth": [
+        {
+          "annotationId": 4946,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 207.2329069999996
+    },
+    {
+      "id": "fashionpedia-val-11859",
+      "sha256": "98abb1f6d145ba8ab3be776f1e2646279d87637f286f980983761fb5220860ae",
+      "truthCount": 1,
+      "predictedCount": 1,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.8403252445686697
+        }
+      ],
+      "categoryCompatibleMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "iou": 0.8403252445686697
+        }
+      ],
+      "measuredMaskIoU": [
+        [
+          0.8403252445686697
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 0,
+          "fScore": 0.2713643483390631
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 7778,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 201.76950300000044
+    },
+    {
+      "id": "fashionpedia-val-16820",
+      "sha256": "6832902058eaf04fafeb07d5f57eaab1c2adeba58cdc9c6ce67ba0049110f68b",
+      "truthCount": 1,
+      "predictedCount": 2,
+      "matches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "iou": 0.6817660590307941
+        }
+      ],
+      "categoryCompatibleMatches": [],
+      "measuredMaskIoU": [
+        [
+          0.1746919556722645,
+          0.6817660590307941
+        ]
+      ],
+      "boundaryTolerancePixels": 3,
+      "boundaryMatches": [
+        {
+          "truthIndex": 0,
+          "predictionIndex": 1,
+          "fScore": 0.22967317567613627
+        }
+      ],
+      "truth": [
+        {
+          "annotationId": 2936,
+          "categoryId": 10,
+          "category": "Dresses"
+        }
+      ],
+      "elapsedMs": 201.98458300000038
+    }
+  ]
+}

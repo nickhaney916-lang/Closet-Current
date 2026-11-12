@@ -1,0 +1,3032 @@
+[
+  {
+    "imageId": 8554,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5532520712",
+    "primaryPageSha256": "40f0c029ef0ffc87de265981dc14440a16e04e609fe003036e467cacb26114c3"
+  },
+  {
+    "imageId": 8947,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5531205821",
+    "primaryPageSha256": "805b3c78d78a8bfd51f118a10f5a158b8a9acd9c20f2cfe8ce2b8cbb4b28c81d"
+  },
+  {
+    "imageId": 8980,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=40758275411",
+    "primaryPageSha256": "9fc245bed343428a8849cdd57fb410249fdd960c0ac2a2bc4607bdaff84702a6",
+    "primaryPhotoPage": "https://www.flickr.com/photos/rankingfuuta/40758275411",
+    "creator": {
+      "@type": "Person",
+      "name": "Aaron Stidwell",
+      "url": "https://www.flickr.com/photos/rankingfuuta",
+      "image": "https://live.staticflickr.com/2826/buddyicons/36602595@N03.jpg?1493348877#36602595@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/rankingfuuta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4788/40758275411_ffc5b64bca_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:18.922588+00:00"
+  },
+  {
+    "imageId": 9014,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8288757900",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9031,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6016931284",
+    "primaryPageSha256": "c61f12b4e551a93c23a84882017ff4f2d977a3b851ce5e251929aa417efd6655",
+    "primaryPhotoPage": "https://www.flickr.com/photos/37873897@N06/6016931284",
+    "creator": {
+      "@type": "Person",
+      "name": "Flavio~",
+      "url": "https://www.flickr.com/photos/37873897@N06",
+      "image": "https://live.staticflickr.com/7326/buddyicons/37873897@N06.jpg?1381165663#37873897@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/37873897@n06",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/6145/6016931284_5d3b1d9d19_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:30.526350+00:00"
+  },
+  {
+    "imageId": 9104,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=28304579848",
+    "primaryPageSha256": "007b65954752b5af0823a947aad8591b336560d1f566c6fd02a3fe0a322c1a90",
+    "primaryPhotoPage": "https://www.flickr.com/photos/zamerzla/28304579848",
+    "creator": {
+      "@type": "Person",
+      "name": "Anastasia Pavlenko",
+      "url": "https://www.flickr.com/photos/zamerzla",
+      "image": "https://live.staticflickr.com/4296/buddyicons/40391641@N04.jpg?1500754050#40391641@N04"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/zamerzla",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/971/28304579848_cffb82b752_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:30.533254+00:00"
+  },
+  {
+    "imageId": 9112,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=37124408663",
+    "primaryPageSha256": "f71aae7569b00a5aafbf129c1a6fdde4702aff07633d66cb8282820578dfafb1",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/37124408663",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4445/37124408663_0393db52e4_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:30.447867+00:00"
+  },
+  {
+    "imageId": 9246,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=23337452360",
+    "primaryPageSha256": "6a39f769730dfdda14152c81a37f0ef826a09e25277e8eecb4d6857d012e4388",
+    "primaryPhotoPage": "https://www.flickr.com/photos/universityofwolverhampton/23337452360",
+    "creator": {
+      "@type": "Person",
+      "name": "University of Wolverhampton",
+      "url": "https://www.flickr.com/photos/universityofwolverhampton",
+      "image": "https://live.staticflickr.com/660/buddyicons/138373116@N05.jpg?1449593819#138373116@N05"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/universityofwolverhampton",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/716/23337452360_265fc400ea_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:34.077811+00:00"
+  },
+  {
+    "imageId": 9390,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=35748817382",
+    "primaryPageSha256": "c68e00d3c87f4d9cbe25a277d16eea2b19ac2fd735e223496519ceb88137859c"
+  },
+  {
+    "imageId": 9396,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7249489",
+    "primaryPageSha256": "263d84a67e04a3deb9b55fcf8066ba83ad0c32718707bc7699526deef27eb2e8"
+  },
+  {
+    "imageId": 9425,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=21055830846",
+    "primaryPageSha256": "95acb7fcf4e73b1f7227fc2cae34d67ac4018e4f84e3ee935dce857572e0eb5d",
+    "primaryPhotoPage": "https://www.flickr.com/photos/134712202@N07/21055830846",
+    "creator": {
+      "@type": "Person",
+      "name": "Oliver Ayala",
+      "url": "https://www.flickr.com/photos/134712202@N07",
+      "image": "https://live.staticflickr.com/709/buddyicons/134712202@N07.jpg?1442287342#134712202@N07"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/134712202@n07",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/633/21055830846_7a6cc8241e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:42.866812+00:00"
+  },
+  {
+    "imageId": 9481,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=17283840341",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9564,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8194486681",
+    "primaryPageSha256": "5c2cadb0d0a22c1ffd96b63a55d2b73a29cc80bf626e800f6e82e055f8fa41c3",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8194486681",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8069/8194486681_265cfe08ab_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:06:54.126822+00:00"
+  },
+  {
+    "imageId": 9601,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8431553837",
+    "primaryPageSha256": "9ceb1a6c8b578426fb794a5f614e2c9f98db7f2a4cc8dd17cee027e1a33a0bbd"
+  },
+  {
+    "imageId": 9613,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8675351371",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9669,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15083202680",
+    "primaryPageSha256": "5df32ac79e08c700364d7565971605651f74132413e990d9f9c4bac1f05db653",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/15083202680",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5592/15083202680_844f830832_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:00.563066+00:00"
+  },
+  {
+    "imageId": 9676,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8225520164",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9692,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5420850558",
+    "primaryPageSha256": "4fc8e954caabd5bd0cab41e398eec118b9903265848bb06a096b7fec33a329c9",
+    "primaryPhotoPage": "https://www.flickr.com/photos/dance_photographer/5420850558",
+    "creator": {
+      "@type": "Person",
+      "name": "Brendan",
+      "url": "https://www.flickr.com/photos/dance_photographer",
+      "image": "https://live.staticflickr.com/4008/buddyicons/50570552@N05.jpg?1275015732#50570552@N05"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/dance_photographer",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5178/5420850558_f9fa153f53_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:04.575008+00:00"
+  },
+  {
+    "imageId": 9835,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3481202957",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 9914,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2507900768",
+    "primaryPageSha256": "b092af3ad0362d17f8332f5104e63676ca4d31114254dca0b517182856153662",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2507900768",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2347/2507900768_fc326bb98e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:12.619856+00:00"
+  },
+  {
+    "imageId": 9971,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9349117595",
+    "primaryPageSha256": "535a9cc14ca01307984a4018bc25026e97313301f9837e794650e6a66aefd22c"
+  },
+  {
+    "imageId": 10071,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=42189816271",
+    "primaryPageSha256": "1027c4eb97d2614f70c33cd625b0feeb0df87a4208da03426ed1bc3b50b813a4",
+    "primaryPhotoPage": "https://www.flickr.com/photos/zamerzla/42189816271",
+    "creator": {
+      "@type": "Person",
+      "name": "Anastasia Pavlenko",
+      "url": "https://www.flickr.com/photos/zamerzla",
+      "image": "https://live.staticflickr.com/4296/buddyicons/40391641@N04.jpg?1500754050#40391641@N04"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/zamerzla",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/972/42189816271_ed9626afe1_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:19.338420+00:00"
+  },
+  {
+    "imageId": 10160,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=4832182752",
+    "primaryPageSha256": "c77a49af4dcfa08dc7fc440bc81ccb9301f45adb108a7e23a75d41de098608dd"
+  },
+  {
+    "imageId": 10180,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=30600620386",
+    "primaryPageSha256": "2fa9b03df62d4b7edc23a5d4f4562971db4cbbaf30c39fcaf805ac6a9c59e06a",
+    "primaryPhotoPage": "https://www.flickr.com/photos/zamerzla/30600620386",
+    "creator": {
+      "@type": "Person",
+      "name": "Anastasia Pavlenko",
+      "url": "https://www.flickr.com/photos/zamerzla",
+      "image": "https://live.staticflickr.com/4296/buddyicons/40391641@N04.jpg?1500754050#40391641@N04"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/zamerzla",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5512/30600620386_f778b818be_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:22.134758+00:00"
+  },
+  {
+    "imageId": 10202,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=30169173183",
+    "primaryPageSha256": "8541b824da3a6ca42e1ead0f5d306e436614420eae0c5bcbdba8c173de533da8",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/30169173183",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5611/30169173183_60bd2b21f3_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:25.714978+00:00"
+  },
+  {
+    "imageId": 10222,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=27985403664",
+    "primaryPageSha256": "b180b0ec497ba9a9a133baa2338bde294cbf67b5029eacd8cd4028918b0a799e"
+  },
+  {
+    "imageId": 10239,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=19405980026",
+    "primaryPageSha256": "6401c82ef81038d25c1cc953c9bf4aafa4bd451fe92fed074ae5ee53b068a815"
+  },
+  {
+    "imageId": 10282,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3102831464",
+    "primaryPageSha256": "5e03065abced1b5e311dce154c4649c6f67385fb3eebaa7681b5f8730099e255"
+  },
+  {
+    "imageId": 10455,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=18925242004",
+    "primaryPageSha256": "3be320e6b718f869f98bc6d8c97bb588778be5d65cc64788aeb39cb73c21754a"
+  },
+  {
+    "imageId": 10471,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3830819860",
+    "primaryPageSha256": "f91d6af7b8a873a0ccb4f692a907db03a6402353d1a89cc5765dc5c087108b3d",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/3830819860",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3520/3830819860_0da5a260ab_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:44.546044+00:00"
+  },
+  {
+    "imageId": 10525,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7563090068",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 10533,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2680961359",
+    "primaryPageSha256": "8647481ba6a1cd79b21fb7f3ff0e7fcf27e53935eda43e6441e6150964fd54e3",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2680961359",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3037/2680961359_35c558d8d4_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:42.834578+00:00"
+  },
+  {
+    "imageId": 10566,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32150084240",
+    "primaryPageSha256": "3dc1c8e8842c4b9b1adde348b154e026de5dd7e758cacd10585d866bfc17c0dc"
+  },
+  {
+    "imageId": 10613,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5242928636",
+    "primaryPageSha256": "94a43a252c3bf82e422a107afe0b84383c81f18aab33f6be920732ce13cb48c2",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/5242928636",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5089/5242928636_d2ced9ac6f_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:54.811847+00:00"
+  },
+  {
+    "imageId": 10727,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=944645874",
+    "primaryPageSha256": "393adf295360df389711eb1766f276b1544048c974b7626dcd3e0bde44d8bdb5",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/944645874",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/1184/944645874_118ed8dfed_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:07:54.750723+00:00"
+  },
+  {
+    "imageId": 10822,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8487827487",
+    "primaryPageSha256": "13a04433bdfc5cb690e601d3335547e6d1cc932fada70709e737654887b38364"
+  },
+  {
+    "imageId": 10912,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=19919527953",
+    "primaryPageSha256": "f74700e7ccd3806a48e3ff7929e79235d6e56f4aa984bcc9ea152beb96e0839c"
+  },
+  {
+    "imageId": 10913,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8357560768",
+    "primaryPageSha256": "aa7ccf71ce45c2a7a99410943d10f020e912d3bec5b3b00578fe6a1b985008f7",
+    "primaryPhotoPage": "https://www.flickr.com/photos/madmarv/8357560768",
+    "creator": {
+      "@type": "Person",
+      "name": "Kyle Nishioka",
+      "url": "https://www.flickr.com/photos/madmarv",
+      "image": "https://live.staticflickr.com/5464/buddyicons/55254782@N00.jpg?1369503088#55254782@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/madmarv",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8377/8357560768_f2a9691591_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:05.626292+00:00"
+  },
+  {
+    "imageId": 11041,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6821827142",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 11073,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8270480092",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 11101,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=40034373831",
+    "primaryPageSha256": "c2630c660b0d147aa974674718e960ba33c1a51850715d9052db5c56a1ca8be8"
+  },
+  {
+    "imageId": 11152,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=20531571802",
+    "primaryPageSha256": "7d6c8d11c16a891ae38d7c2aa9d60354c35dd2e709b6b2e6fe97076f877c6660"
+  },
+  {
+    "imageId": 11227,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=34007437521",
+    "primaryPageSha256": "cc39fa51ae78a304810ec3a4a5c001b1445580100bc806d0d016de4ffa8fb2a9"
+  },
+  {
+    "imageId": 11303,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5461288269",
+    "primaryPageSha256": "946f499db25f156ed50561b975e12b502e56b03c3d9cd3757b3d365a309c2660",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/5461288269",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5173/5461288269_227c2126fe_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:19.096028+00:00"
+  },
+  {
+    "imageId": 11446,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8513580063",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 11489,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=33161486845",
+    "primaryPageSha256": "f4b758df567e154aacbc85046d5964c93cb0b49f329b6f552805241d08b8fd59"
+  },
+  {
+    "imageId": 11522,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8737228591",
+    "primaryPageSha256": "f1845741271c50876bb437f7378370830b019f47be201b61c41151016b3833e5"
+  },
+  {
+    "imageId": 11532,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8674156543",
+    "primaryPageSha256": "ca6c1b5569eacc3681b0f85bf3bb4a1bec1b1ad83f28f2d0838d29a5411743e0"
+  },
+  {
+    "imageId": 11593,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32574399580",
+    "primaryPageSha256": "dbdfe611b02c7745b028e9609a53df7fb0503c315543f563716c69986a22d7e6"
+  },
+  {
+    "imageId": 11800,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5499704573",
+    "primaryPageSha256": "f1b7cbf04bda876df1dc403c24a45f33986431e3525b9f43f2d90c902410c0f4",
+    "primaryPhotoPage": "https://www.flickr.com/photos/matte0ne/5499704573",
+    "creator": {
+      "@type": "Person",
+      "name": "mat&#x27;s eye",
+      "url": "https://www.flickr.com/photos/matte0ne",
+      "image": "https://live.staticflickr.com/4015/buddyicons/22550935@N03.jpg?1271583045#22550935@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/matte0ne",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5131/5499704573_bb113cd69b_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:38.502185+00:00"
+  },
+  {
+    "imageId": 11803,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=16864625326",
+    "primaryPageSha256": "eb9b38ec3481be69e226661155d5fea330afc44f664658ec0b9c3d64c930f507",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/16864625326",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7654/16864625326_7844c757f6_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:42.665532+00:00"
+  },
+  {
+    "imageId": 11859,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6004503660",
+    "primaryPageSha256": "56a06885d5e43ce598e60c45720ae2039c912e38582c5b0103181bfec3d64dca",
+    "primaryPhotoPage": "https://www.flickr.com/photos/37873897@N06/6004503660",
+    "creator": {
+      "@type": "Person",
+      "name": "Flavio~",
+      "url": "https://www.flickr.com/photos/37873897@N06",
+      "image": "https://live.staticflickr.com/7326/buddyicons/37873897@N06.jpg?1381165663#37873897@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/37873897@n06",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/6147/6004503660_b7c559a9ef_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:42.608663+00:00"
+  },
+  {
+    "imageId": 11972,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=37460724154",
+    "primaryPageSha256": "f0c86bad8dab640e2072282b99eba02fc36b0d1e579e33bb235643fa7c664827",
+    "primaryPhotoPage": "https://www.flickr.com/photos/bktrl/37460724154",
+    "creator": {
+      "@type": "Person",
+      "name": "Bet\u00fcl Y\u0131ld\u0131z",
+      "url": "https://www.flickr.com/photos/bktrl",
+      "image": "https://live.staticflickr.com/5641/buddyicons/46053585@N02.jpg?1478645301#46053585@N02"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/bktrl",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4561/37460724154_d89c79874e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:42.755770+00:00"
+  },
+  {
+    "imageId": 12007,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5748824181",
+    "primaryPageSha256": "388b48f60b4461b539abe82eb66ff92e5a6f2fa76b84e7fa0bae57b454281a38",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/5748824181",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2565/5748824181_11cdc7c632_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:50.579818+00:00"
+  },
+  {
+    "imageId": 12073,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2075778383",
+    "primaryPageSha256": "0d4cf54cea8daaf08dd2b57ba192d6796d818abf4f56cd1b6ccfbbd8fc4d61d9",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2075778383",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2401/2075778383_04d8ace19a_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:04.623581+00:00"
+  },
+  {
+    "imageId": 12120,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=944809332",
+    "primaryPageSha256": "c297829b988edef175397d6dbc300368d0d3a9ec747ceb7680c002dbbda8d6c8",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/944809332",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/1253/944809332_16c6866ba6_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:08:54.635796+00:00"
+  },
+  {
+    "imageId": 12174,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=4756098446",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 12344,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=30172193984",
+    "primaryPageSha256": "636ea6a6cee2704665ea808e74ce2eb621de91286bbad5d884d68d495d561f01",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/30172193984",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5745/30172193984_cc00b1715d_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:02.054244+00:00"
+  },
+  {
+    "imageId": 12449,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8534034640",
+    "primaryPageSha256": "225908a80e9aa51ccacbae2d89c8294eec92a16b982ab5535cc8eb7ab8535472"
+  },
+  {
+    "imageId": 12524,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=30713183021",
+    "primaryPageSha256": "aa8c08a15c0958fd9b236753e848db55fddb4d65865e9df242b7dba05d17cf2f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/30713183021",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5714/30713183021_8d9e270bbe_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:10.259826+00:00"
+  },
+  {
+    "imageId": 12525,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2539416510",
+    "primaryPageSha256": "89ee2af87a66646faf83b456b0fd5067f743d430fa741d5e36635dcc4474b34b",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2539416510",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3151/2539416510_8bd5063195_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:13.470042+00:00"
+  },
+  {
+    "imageId": 12526,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9349126419",
+    "primaryPageSha256": "b61dcf307f4a6ad0f4918e0d2e1c4b34494e2b82d901d33c7587df7415d70868"
+  },
+  {
+    "imageId": 12546,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6995040150",
+    "primaryPageSha256": "8df306fd6472b0365ee1a2b59b46058ea32f3fc27ea436cdd0aea421d440e2cc"
+  },
+  {
+    "imageId": 12554,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8674155573",
+    "primaryPageSha256": "128e757dc35f48e38a8243d5d9a94a89500f7b2f3d2de41620c5d704f31904b6"
+  },
+  {
+    "imageId": 12704,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7202774894",
+    "primaryPageSha256": "f34574b038531b7d63b40e1bdc9a78a88600ff9801af0fdba6157601215b0f8b"
+  },
+  {
+    "imageId": 12719,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6196560183",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 12729,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3587706284",
+    "primaryPageSha256": "0b422f857012777a6f6a15b0089ac70dff71ed37f3aea1f35587c0fa39584367",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/3587706284",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3558/3587706284_6ccef50865_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:29.518530+00:00"
+  },
+  {
+    "imageId": 12796,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15161453801",
+    "primaryPageSha256": "471d3c2c6d8eb859ea2f04f2a436b435e494c7ad2b0d59a7dae4ef12296246c4"
+  },
+  {
+    "imageId": 12813,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=37148493156",
+    "primaryPageSha256": "a8359f6d758205fe15ecb36b2d0dbe9fb5533e7b497c38ede796be78b91e39a5",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/37148493156",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4361/37148493156_b872f1419a_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:37.038264+00:00"
+  },
+  {
+    "imageId": 12831,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2621108191",
+    "primaryPageSha256": "0c6cc3b359a37e6c6a57ed8ae0295e80cbf9963f8191dff89abfca3e25c67218",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2621108191",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3101/2621108191_2498de5a49_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:36.998289+00:00"
+  },
+  {
+    "imageId": 12842,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7739349854",
+    "primaryPageSha256": "71f03046927831013971b1f6a163ffeccd30fddbba497004215a2b39b035ef2e"
+  },
+  {
+    "imageId": 13011,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8532930883",
+    "primaryPageSha256": "6de010f726a0948823217580a3052522d6386e9bdaa3002bb91b3415b39f35ff"
+  },
+  {
+    "imageId": 13049,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8297310282",
+    "primaryPageSha256": "35a6c8cf9368bb9a5ad62a3e413b2086993f22b870facf240281c85bc260ea04",
+    "primaryPhotoPage": "https://www.flickr.com/photos/matte0ne/8297310282",
+    "creator": {
+      "@type": "Person",
+      "name": "mat&#x27;s eye",
+      "url": "https://www.flickr.com/photos/matte0ne",
+      "image": "https://live.staticflickr.com/4015/buddyicons/22550935@N03.jpg?1271583045#22550935@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/matte0ne",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8502/8297310282_152277de4c_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:48.688250+00:00"
+  },
+  {
+    "imageId": 13148,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=944809284",
+    "primaryPageSha256": "a45955b73a92cddc944a24f9767666b67ea24d2c8a4ca88e770e15f715a67fa2",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/944809284",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/1201/944809284_f1bd84b22e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:58.711387+00:00"
+  },
+  {
+    "imageId": 13173,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15190548993",
+    "primaryPageSha256": "bef04f246b7ef81a7bd8de1c3c88eb448cfa9cbac5be183ce9532b493459bafa"
+  },
+  {
+    "imageId": 13260,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=40914176875",
+    "primaryPageSha256": "ff36338e7fa2a879daaa9822602231e859bfe5f1ba8d7e9877b1ac6743a9bb19",
+    "primaryPhotoPage": "https://www.flickr.com/photos/montclairfilmfest/40914176875",
+    "creator": {
+      "@type": "Person",
+      "name": "Montclair Film",
+      "url": "https://www.flickr.com/photos/montclairfilmfest",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/77549586@N03.jpg?1793656871#77549586@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/montclairfilmfest",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/964/40914176875_5bf32c2e80_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:56.229901+00:00"
+  },
+  {
+    "imageId": 13283,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8048898293",
+    "primaryPageSha256": "a3a6bf5e5dad7abe1a7e5c67e4af4679c59e8fa876be71eee496bdc404ecaf3c",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8048898293",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8177/8048898293_6fd07db0bb_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:09:59.629371+00:00"
+  },
+  {
+    "imageId": 13317,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5476141386",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 13331,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2139433139",
+    "primaryPageSha256": "284bb5c038337253c735763b367e792be5a9cea682c56fd57ba44b972ed66400",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2139433139",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2386/2139433139_1efddfd578_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:19.442632+00:00"
+  },
+  {
+    "imageId": 13339,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=13251521873",
+    "primaryPageSha256": "e6a6d3c8baf6c5ef8ae3a219a5215b4656f82a3d1e10cbd7ef58802a22155d7f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/lifeissimpleinthemoonlight/13251521873",
+    "creator": {
+      "@type": "Person",
+      "name": "Vivian Farinazzo",
+      "url": "https://www.flickr.com/photos/lifeissimpleinthemoonlight",
+      "image": "https://live.staticflickr.com/1514/buddyicons/84958441@N08.jpg?1458937440#84958441@N08"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/lifeissimpleinthemoonlight",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3820/13251521873_6e68330a39_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:24.600581+00:00"
+  },
+  {
+    "imageId": 13397,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2145713830",
+    "primaryPageSha256": "d711bc4020178816fe01bba630d55032f659ee12863d6c24e71fd8657faf9312",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2145713830",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2338/2145713830_7a7a48ee0a_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:27.338782+00:00"
+  },
+  {
+    "imageId": 13530,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=16853827736",
+    "primaryPageSha256": "254da24b4a9cfedfe2a434c0b78d95b33b96d17adcccd0c1bf4b7420f3cb7095",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/16853827736",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7598/16853827736_5fedf309d4_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:35.690572+00:00"
+  },
+  {
+    "imageId": 13538,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7141143095",
+    "primaryPageSha256": "319a1e267c41600a79244cb5f748da813cc23b4d5d8361e6a353cad9bd5b3e7e"
+  },
+  {
+    "imageId": 13560,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=14271184198",
+    "primaryPageSha256": "3ee8ddd97e80ebf20a5d3bc4519ebc0a5d98545a94dc648065b65350660ee91b"
+  },
+  {
+    "imageId": 14432,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=17134406638",
+    "primaryPageSha256": "7e407b888da613258894a5cc3519e41e9d819d3c3259065aca5a82d217e3c54b",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/17134406638",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8860/17134406638_11ffed0912_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:38.614337+00:00"
+  },
+  {
+    "imageId": 14794,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6400562303",
+    "primaryPageSha256": "e39287e24142eb7e5be719587840986c2af37b8789a31c434db2fe1db0ad2de8",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/6400562303",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7158/6400562303_01b8bae60c_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:45.427162+00:00"
+  },
+  {
+    "imageId": 14983,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8370547760",
+    "primaryPageSha256": "0f1ca1ec60f23a8ef0d592da64360af9c5927fc5963f3cc55bea7b1a70e2ab14",
+    "primaryPhotoPage": "https://www.flickr.com/photos/salforduniversity/8370547760",
+    "creator": {
+      "@type": "Person",
+      "name": "University of Salford Press Office",
+      "url": "https://www.flickr.com/photos/salforduniversity",
+      "image": "https://live.staticflickr.com/4867/buddyicons/32104790@N02.jpg?1546446299#32104790@N02"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/salforduniversity",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8499/8370547760_0b6fd111cc_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:45.287302+00:00"
+  },
+  {
+    "imageId": 15073,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7825589080",
+    "primaryPageSha256": "f29d51158d1a21d32803f23f81ac72fbba4a6353e15bb98bf4881910c7b76301"
+  },
+  {
+    "imageId": 15291,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=39861642711",
+    "primaryPageSha256": "5f1e8017bde1ef80152156a84418c38a066cc51892c832eedea9199488681bb0"
+  },
+  {
+    "imageId": 15347,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=19917268254",
+    "primaryPageSha256": "d153bfb805e1e49ce6658d0e4086513f238e2ba014997b4d073407d2cb2d150e"
+  },
+  {
+    "imageId": 15368,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8048893914",
+    "primaryPageSha256": "1e23ad67e8925b454415d465d51cf0c0b0cd4799839d16dc1227f04523726d90",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8048893914",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8177/8048893914_9772b1dbfb_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:55.569846+00:00"
+  },
+  {
+    "imageId": 15424,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=10623629034",
+    "primaryPageSha256": "19dbe7fef2af6e5a8587e7d088c6f1000ad9e13b1e5950299fbbdc3fdefdb260",
+    "primaryPhotoPage": "https://www.flickr.com/photos/stmunchins/10623629034",
+    "creator": {
+      "@type": "Person",
+      "name": "St Munchin&#x27;s College",
+      "url": "https://www.flickr.com/photos/stmunchins",
+      "image": "https://live.staticflickr.com/5119/buddyicons/64796686@N03.jpg?1309794072#64796686@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/stmunchins",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5504/10623629034_826f87a5c7_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:10:55.554628+00:00"
+  },
+  {
+    "imageId": 15504,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=11149414775",
+    "primaryPageSha256": "5b536bbe03cd854ad2336a04d784a38c65d87cf79be06016c3920d96c5dc3432"
+  },
+  {
+    "imageId": 15559,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32702405963",
+    "primaryPageSha256": "9aa5d2830304db38fece0b81e1e43fb233d681ec424f803fd95edb635aeeba02"
+  },
+  {
+    "imageId": 15619,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=37705198755",
+    "primaryPageSha256": "97e0184b740c5ab32113cf0f9b8a73fdb9e25a654c59eab7808bdca52b6eae75",
+    "primaryPhotoPage": "https://www.flickr.com/photos/bktrl/37705198755",
+    "creator": {
+      "@type": "Person",
+      "name": "Bet\u00fcl Y\u0131ld\u0131z",
+      "url": "https://www.flickr.com/photos/bktrl",
+      "image": "https://live.staticflickr.com/5641/buddyicons/46053585@N02.jpg?1478645301#46053585@N02"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/bktrl",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4554/37705198755_37e03c6234_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:05.604090+00:00"
+  },
+  {
+    "imageId": 15661,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8551704036",
+    "primaryPageSha256": "dcc080115bcd9ed78e4ebb0ff4195cb163bdaea9ed89b792dbc5fb27b0e048bd"
+  },
+  {
+    "imageId": 15676,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6056458060",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 15687,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8080171234",
+    "primaryPageSha256": "082f4ea1d6be14d358465d538f0cc5080fae6b35256ccb73596e2148232f2982",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8080171234",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8326/8080171234_55b726b684_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:15.975423+00:00"
+  },
+  {
+    "imageId": 15707,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5461896264",
+    "primaryPageSha256": "6b9a3cbcbb9cce6637be53bcad06334a51d5d294931a84660b27004582bc46aa",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/5461896264",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5140/5461896264_07cf9c115e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:15.958731+00:00"
+  },
+  {
+    "imageId": 15737,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5998737348",
+    "primaryPageSha256": "16629e55dabde36fa20e3a1af4c38fe9f1edad2a887c2fe7f11020442ff5f231"
+  },
+  {
+    "imageId": 15743,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=1552317435",
+    "primaryPageSha256": "d616d9e905104e7254e78f896da58da25ba4ace9b896f18c6cec1192e28d83fb",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/1552317435",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2276/1552317435_bc4e3274b3_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:22.753017+00:00"
+  },
+  {
+    "imageId": 15771,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5532553780",
+    "primaryPageSha256": "fb643be1c8359bb603c11be743e0a8aff2f58f13a0aa47e9b9c6c1e58184fa63"
+  },
+  {
+    "imageId": 15783,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "id": 1,
+      "name": "Attribution-ShareAlike License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9650650562",
+    "primaryPageSha256": "12ab47810221917dceab7dba4c015852bc8deb2ea37f2705535b6e1d52a6b113",
+    "primaryPhotoPage": "https://www.flickr.com/photos/xubangwen/9650650562",
+    "creator": {
+      "@type": "Person",
+      "name": "Mathilda Samuelsson",
+      "url": "https://www.flickr.com/photos/xubangwen",
+      "image": "https://live.staticflickr.com/7406/buddyicons/93882601@N06.jpg?1394766370#93882601@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/xubangwen",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3729/9650650562_16b7a58b66_z.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:26.886568+00:00"
+  },
+  {
+    "imageId": 15785,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=13374805555",
+    "primaryPageSha256": "41ca89f2e7dbc7b58f9f531c81ff85903917fc99bdb7ce870a8028e0c4a70187",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/13374805555",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7302/13374805555_a4c62eb05f_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:26.945968+00:00"
+  },
+  {
+    "imageId": 15813,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2260704815",
+    "primaryPageSha256": "8d1a6fbe00ecb8f6f4f644d873de3d4252a115eeb8c219fa73e225fc6e418d65",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2260704815",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2221/2260704815_9ff001e696_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:34.430067+00:00"
+  },
+  {
+    "imageId": 15840,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6736931023",
+    "primaryPageSha256": "f19ef485de9fbe8a42f86a996b03a398849e62db81d4fa3b8bf2a57c06bc719e",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/6736931023",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7008/6736931023_3a3958d101_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:38.354998+00:00"
+  },
+  {
+    "imageId": 15851,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9778424543",
+    "primaryPageSha256": "407787614fd36edd5871905f58eb6e83c803fb2496883445bbef0734b7ac9079",
+    "primaryPhotoPage": "https://www.flickr.com/photos/34268121@N07/9778424543",
+    "creator": {
+      "@type": "Person",
+      "name": "Juanjo Zanabria Masaveu",
+      "url": "https://www.flickr.com/photos/34268121@N07",
+      "image": "https://live.staticflickr.com/297/buddyicons/34268121@N07.jpg?1433797028#34268121@N07"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/34268121@n07",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2860/9778424543_cbac630cfc_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:43.354704+00:00"
+  },
+  {
+    "imageId": 15958,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=14091108261",
+    "primaryPageSha256": "f8fe06c3762b85ab2219c3b85c567e25b70cb5ef281e1efb0189d56acaf31d0e"
+  },
+  {
+    "imageId": 15967,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=14404251815",
+    "primaryPageSha256": "70e22c0c909f01c6b60a92592d2e00a85b245c95e254bda3d2dfafadc1539a9d"
+  },
+  {
+    "imageId": 16027,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2725769246",
+    "primaryPageSha256": "85247875ca87c88ff5aef980266a76de98c5445c8f37320986d6e149adfd270a",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2725769246",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3023/2725769246_a1ef088600_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:53.171622+00:00"
+  },
+  {
+    "imageId": 16056,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32913338436",
+    "primaryPageSha256": "872ae389fb06bbc9acc13ee2cb4611cef4dbdc53f1377380e84ae4f83799966c"
+  },
+  {
+    "imageId": 16065,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7183563021",
+    "primaryPageSha256": "ee21738d1426181d6a8056dd1449651ee9831bf2c30778ecf6426e8d8bfdb8f9",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/7183563021",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7084/7183563021_055c3fc5a4_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:11:57.852428+00:00"
+  },
+  {
+    "imageId": 16186,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=14230248759",
+    "primaryPageSha256": "b5701d6c179db922d3a7f71d07ffe5bc4481ea1172d52d1f4d5fe0d582fb1ac2"
+  },
+  {
+    "imageId": 16212,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=24717822068",
+    "primaryPageSha256": "27f325e7749d0c31a0bdb6b35d6f4fc493ccd01ad7c8d3b8d5a47ba1441658a3",
+    "primaryPhotoPage": "https://www.flickr.com/photos/bktrl/24717822068",
+    "creator": {
+      "@type": "Person",
+      "name": "Bet\u00fcl Y\u0131ld\u0131z",
+      "url": "https://www.flickr.com/photos/bktrl",
+      "image": "https://live.staticflickr.com/5641/buddyicons/46053585@N02.jpg?1478645301#46053585@N02"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/bktrl",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4535/24717822068_dfecef9e26_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:05.027900+00:00"
+  },
+  {
+    "imageId": 16222,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5532526988",
+    "primaryPageSha256": "a6ea7d1ae6612e5153063a0308f0f854de6bde0015481fac5a3743587254fb15"
+  },
+  {
+    "imageId": 16275,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=17597565672",
+    "primaryPageSha256": "3940f0ba665affd7959b33ed07ca17ed9aa2cc86b1bdc3c4cfffd36e63471e0b"
+  },
+  {
+    "imageId": 16320,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8569308688",
+    "primaryPageSha256": "4712674e33ef46589f76ba2ee218968ca3c0b5562752d1003a20fa7bd2d4f8c3",
+    "primaryPhotoPage": "https://www.flickr.com/photos/patkuhl/8569308688",
+    "creator": {
+      "@type": "Person",
+      "name": "Patrick Kuhl",
+      "url": "https://www.flickr.com/photos/patkuhl",
+      "image": "https://live.staticflickr.com/5532/buddyicons/33398244@N00.jpg?1371688116#33398244@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/patkuhl",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8373/8569308688_56a7d76095_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:12.270932+00:00"
+  },
+  {
+    "imageId": 16343,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8698852029",
+    "primaryPageSha256": "216727277afe96a6158bb607728481027fcbba5d921d2965ef450494eec44e6b"
+  },
+  {
+    "imageId": 16406,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8431551291",
+    "primaryPageSha256": "5dec9a5da2bfe8280a9af395734f4ca0e3c3ea6585d84292af6280871479ffbd"
+  },
+  {
+    "imageId": 16489,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=30169270153",
+    "primaryPageSha256": "872d14d4c84d069685f2ad07e65cf24f19d982a881e60fb14b03f85e3c46aad1",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/30169270153",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5794/30169270153_0046af70bb_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:19.022440+00:00"
+  },
+  {
+    "imageId": 16629,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=14045723909",
+    "primaryPageSha256": "8925a35271637d1cd91ba6be46a64fd851fffc7ce1b6a42f7b8b504c7d549008",
+    "primaryPhotoPage": "https://www.flickr.com/photos/lifeissimpleinthemoonlight/14045723909",
+    "creator": {
+      "@type": "Person",
+      "name": "Vivian Farinazzo",
+      "url": "https://www.flickr.com/photos/lifeissimpleinthemoonlight",
+      "image": "https://live.staticflickr.com/1514/buddyicons/84958441@N08.jpg?1458937440#84958441@N08"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/lifeissimpleinthemoonlight",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5489/14045723909_b65510a3fb_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:22.186328+00:00"
+  },
+  {
+    "imageId": 16638,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8385541197",
+    "primaryPageSha256": "56b6102c774ed9b86e4d77805b29fdac3d4a6bd23b2d1f7c29346966c9e1b935"
+  },
+  {
+    "imageId": 16648,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8674154219",
+    "primaryPageSha256": "489f70082292ec3f2b8fb627dbcc4de7f734004624931e377d5246db3f2459c5"
+  },
+  {
+    "imageId": 16747,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8738341110",
+    "primaryPageSha256": "c9a899f5b8bb27879fd40f86f99c77905cdd700857cab93a8470900d64ac61ca"
+  },
+  {
+    "imageId": 16820,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=14230384282",
+    "primaryPageSha256": "dd5f9d7f24a89f538c7d9163bf08814b2e3db830ba83b0b7f4860cff6d976d1f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/lifeissimpleinthemoonlight/14230384282",
+    "creator": {
+      "@type": "Person",
+      "name": "Vivian Farinazzo",
+      "url": "https://www.flickr.com/photos/lifeissimpleinthemoonlight",
+      "image": "https://live.staticflickr.com/1514/buddyicons/84958441@N08.jpg?1458937440#84958441@N08"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/lifeissimpleinthemoonlight",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5591/14230384282_80e73cc5cb_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:32.791777+00:00"
+  },
+  {
+    "imageId": 16824,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5357079751",
+    "primaryPageSha256": "029db8b2503b3b815195a0903da56438a90a4ecd9543ee2cab49cfdc23d4a804",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/5357079751",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5010/5357079751_2dae70067e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:37.922951+00:00"
+  },
+  {
+    "imageId": 16892,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8364462936",
+    "primaryPageSha256": "bd61a9bd9ca4a3f4511c2d9540f6d3ff57aa88f3cb0e710cba4dd75df54ca929"
+  },
+  {
+    "imageId": 16936,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=33461287394",
+    "primaryPageSha256": "d8ba2b911831fced97b366757438c42b83b130a25f9b65e7c13e720166f68174"
+  },
+  {
+    "imageId": 17085,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=1553250846",
+    "primaryPageSha256": "d4f0352d1ea2283c142812c0d7c735ddcd13bc5a68589ed6043c1b45f184381c",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/1553250846",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2038/1553250846_61a4946be5_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:45.054285+00:00"
+  },
+  {
+    "imageId": 17091,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=1552298423",
+    "primaryPageSha256": "197369b4621dbc7069d2a03bd1a84977e73ef98030ff5a8f785457247875ed82",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/1552298423",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2078/1552298423_1854aa8011_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:49.068672+00:00"
+  },
+  {
+    "imageId": 17207,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8594090569",
+    "primaryPageSha256": "83a1b650b0118e8367a8284e0f12c996ff9972123887531bb4496272cbdeca07"
+  },
+  {
+    "imageId": 17312,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5475545985",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 17333,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5071495492",
+    "primaryPageSha256": "0b07c7348f199879934f42b687c6e07534a4c70410c2e7943cb1ad5c61210fea",
+    "primaryPhotoPage": "https://www.flickr.com/photos/designfederation/5071495492",
+    "creator": {
+      "@type": "Person",
+      "name": "Design Federation",
+      "url": "https://www.flickr.com/photos/designfederation",
+      "image": "https://live.staticflickr.com/2588/buddyicons/45608301@N08.jpg?1260760436#45608301@N08"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/designfederation",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4152/5071495492_3f7670b941_c.jpg",
+    "checkedAtUtc": "2026-11-12T15:12:58.903497+00:00"
+  },
+  {
+    "imageId": 17402,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "id": 1,
+      "name": "Attribution-ShareAlike License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=4942436823",
+    "primaryPageSha256": "856c1e7bf7ee9a550e3eccf5aec39acc84c538ca289f7bec4b837011d968b3fb",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mikeplaces/4942436823",
+    "creator": {
+      "@type": "Person",
+      "name": "Michael Kendrick",
+      "url": "https://www.flickr.com/photos/mikeplaces",
+      "image": "https://combo.staticflickr.com/pw/images/bbuddyicon09.png#25399921@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mikeplaces",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4095/4942436823_1a7a19de37_z.jpg",
+    "checkedAtUtc": "2026-11-12T15:13:05.472708+00:00"
+  },
+  {
+    "imageId": 17533,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6821929190",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 17557,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8599473901",
+    "primaryPageSha256": "8fca37ceb67fd69b8b478ed892010935702b1025027bd1ada7cd4af40e653276"
+  },
+  {
+    "imageId": 17591,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15013847648",
+    "primaryPageSha256": "c3483997339a17da50b1024d3421b2831f6009ba6c1bc96a59ffb8b7452bf10f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/15013847648",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3920/15013847648_a013ea258d_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:13:15.850514+00:00"
+  },
+  {
+    "imageId": 17600,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7221019400",
+    "primaryPageSha256": "c34100420e0e38a0480ad3356e42b7e5a4bb8135fc753a3213e258f5087a301a"
+  },
+  {
+    "imageId": 17714,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=1281818085",
+    "primaryPageSha256": "ae033814a860f8f81334db2037784d3aa4a79badcd280f8061ec429eb8739fe9",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/1281818085",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/1303/1281818085_b81ecaad14_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:13:25.132643+00:00"
+  },
+  {
+    "imageId": 17725,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15222030505",
+    "primaryPageSha256": "cfc12b61f06db65764b46814677b95bf0807adecfb0efe7f584c09fe302ca277"
+  },
+  {
+    "imageId": 17775,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=37148507936",
+    "primaryPageSha256": "bdaea2511e5279b8802e92cf1045ea3764135120d7a421dd7b7276e1709c0e85",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/37148507936",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4345/37148507936_de9a65255b_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:13:28.872847+00:00"
+  },
+  {
+    "imageId": 17805,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15083339297",
+    "primaryPageSha256": "31dbc283beeb04ff6d03eb4389baa7344143cb8f906e0046061fb2dce9d58eeb",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/15083339297",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5573/15083339297_8aee7d95ed_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:13:33.483107+00:00"
+  },
+  {
+    "imageId": 17847,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8551702402",
+    "primaryPageSha256": "932557cc2332e5c719589cdd84316ae4a403a7a423f349776f34ee39962eb100"
+  },
+  {
+    "imageId": 17854,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3037543933",
+    "primaryPageSha256": "9e99f59b4de38d0cc66a2cfdd1c8590f30889b411c3ee2fcc657f1a76d220bd9",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/3037543933",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3281/3037543933_ac1c8f41d7_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:13:37.991326+00:00"
+  },
+  {
+    "imageId": 17869,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5475546303",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 17968,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32110993014",
+    "primaryPageSha256": "fcfe6580a80cf701f65df077864abafd1d029c5c29f0e00ce352ef0c4fa69849"
+  },
+  {
+    "imageId": 17994,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32904538284",
+    "primaryPageSha256": "6220768c994094b45fe15c1fe8a53c0edee3ed44d45f975fcae4d18275d06623"
+  },
+  {
+    "imageId": 17997,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=36324039591",
+    "primaryPageSha256": "55389eab16ed55982076bcf1f616b00e89da110780a2499472c8c5779fac39c1"
+  },
+  {
+    "imageId": 18008,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7603877996",
+    "primaryPageSha256": "b96979c2c6ce131e3002b0e6e88a432ff461c22a3e8de6971ffde078ef2b9bbc",
+    "primaryPhotoPage": "https://www.flickr.com/photos/34268121@N07/7603877996",
+    "creator": {
+      "@type": "Person",
+      "name": "Juanjo Zanabria Masaveu",
+      "url": "https://www.flickr.com/photos/34268121@N07",
+      "image": "https://live.staticflickr.com/297/buddyicons/34268121@N07.jpg?1433797028#34268121@N07"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/34268121@n07",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7246/7603877996_7dd700997a_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:11.819592+00:00"
+  },
+  {
+    "imageId": 18108,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=13737212405",
+    "primaryPageSha256": "b23bb4025c725ba04dc0571e68ec73e8263f36f321edead626d7db5e7fb24b35"
+  },
+  {
+    "imageId": 18165,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=25544036594",
+    "primaryPageSha256": "1477d228b8a2906382c65f5a08ff34ec4fffdecbc6e7d3f1579cb78cbfba2c81"
+  },
+  {
+    "imageId": 18212,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=33326003823",
+    "primaryPageSha256": "ab7045a1b9282bfba7f0900e31b8c20479a22a35750aee35d25fc0ad5ab069ce"
+  },
+  {
+    "imageId": 18328,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7167281317",
+    "primaryPageSha256": "300cd32cef2a3696c2b06d15cd5fcae0277de75a97cb4c6f8009331a13d97b4e",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/7167281317",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7073/7167281317_e9e7ef0ddb_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:23.158924+00:00"
+  },
+  {
+    "imageId": 18358,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6820087780",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 18405,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9365702912",
+    "primaryPageSha256": "10fbf7e76fa1cfca9ebec59ac2bbbca3c0a553143bbcb913e716a8a2a9c0147b",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gax8627/9365702912",
+    "creator": {
+      "@type": "Person",
+      "name": "gax8627",
+      "url": "https://www.flickr.com/photos/gax8627",
+      "image": "https://live.staticflickr.com/5328/buddyicons/7157308@N03.jpg?1334733680#7157308@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gax8627",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7440/9365702912_9409eb8d83_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:26.587920+00:00"
+  },
+  {
+    "imageId": 18517,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3507435811",
+    "primaryPageSha256": "ccd910e3760464a423b95da36c3d0aaf47de550515774c9d1db8e8f64d300408",
+    "primaryPhotoPage": "https://www.flickr.com/photos/ge_photo/3507435811",
+    "creator": {
+      "@type": "Person",
+      "name": "George Vale",
+      "url": "https://www.flickr.com/photos/ge_photo",
+      "image": "https://live.staticflickr.com/5464/buddyicons/27360488@N08.jpg?1369229969#27360488@N08"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/ge_photo",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3410/3507435811_b6e2d5f71d_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:26.763755+00:00"
+  },
+  {
+    "imageId": 18529,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=29087728890",
+    "primaryPageSha256": "e61cdcf3a2a87eed03840ab9022612bf36e138297eedfc42a082ec8b7f7acd32"
+  },
+  {
+    "imageId": 18620,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "id": 1,
+      "name": "Attribution-ShareAlike License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5709063189",
+    "primaryPageSha256": "303d40bcf3c16a78a155ca6295db03387a1193ce77d685356ed07c4de94ff3d2",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mikeplaces/5709063189",
+    "creator": {
+      "@type": "Person",
+      "name": "Michael Kendrick",
+      "url": "https://www.flickr.com/photos/mikeplaces",
+      "image": "https://combo.staticflickr.com/pw/images/bbuddyicon09.png#25399921@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mikeplaces",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2742/5709063189_14e32cc482_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:36.567177+00:00"
+  },
+  {
+    "imageId": 18669,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5706156955",
+    "primaryPageSha256": "27c1e8e587f9e8ec0ed0ea25218ea86994d68c16f461d7d5e7d81bce00f001f7",
+    "primaryPhotoPage": "https://www.flickr.com/photos/hashtag158/5706156955",
+    "creator": {
+      "@type": "Person",
+      "name": "#158",
+      "url": "https://www.flickr.com/photos/hashtag158",
+      "image": "https://combo.staticflickr.com/pw/images/bbuddyicon01.png#61470197@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/hashtag158",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2065/5706156955_7ec5135d83_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:36.454376+00:00"
+  },
+  {
+    "imageId": 18812,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "id": 1,
+      "name": "Attribution-ShareAlike License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5709653390",
+    "primaryPageSha256": "7c3ce2d39a983698dd74d5cb0123fe8eb046bd73c7c69ac1a5ce6b672f54fc42",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mikeplaces/5709653390",
+    "creator": {
+      "@type": "Person",
+      "name": "Michael Kendrick",
+      "url": "https://www.flickr.com/photos/mikeplaces",
+      "image": "https://combo.staticflickr.com/pw/images/bbuddyicon09.png#25399921@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mikeplaces",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2749/5709653390_b846d212dd_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:36.414335+00:00"
+  },
+  {
+    "imageId": 18821,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=24192061031",
+    "primaryPageSha256": "d0606f1daf4cda470b502988cef3930a1b26fa123257c7af7c1aeff4d92abe12",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/24192061031",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/1514/24192061031_3aa45f92f2_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:43.998397+00:00"
+  },
+  {
+    "imageId": 18904,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5532532170",
+    "primaryPageSha256": "876acb4fb23ef1d2d4f640068bae3ba204ad2aabed813e612b0a01cd81ff0987"
+  },
+  {
+    "imageId": 18960,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=26809889362",
+    "primaryPageSha256": "631da7240cda21188d7f0b60fcdf7d4a29ab9c75e0575c74715a4708a6102ae5"
+  },
+  {
+    "imageId": 18980,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=19877029960",
+    "primaryPageSha256": "be1508df1b39a8d94e309c0884f7b1c611b87449733706423116cecab26f2aeb"
+  },
+  {
+    "imageId": 19062,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6400561727",
+    "primaryPageSha256": "4623c5a727a43485710a51412846dff2404acf8a7b0893f140b831f43a544c06",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/6400561727",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7158/6400561727_f5d9dec67d_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:54.715882+00:00"
+  },
+  {
+    "imageId": 19063,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=30797422865",
+    "primaryPageSha256": "8bb25fd6732f36d6faaab13facb544fc79670ae53c341f2d9a16880a186d00a6",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/30797422865",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5455/30797422865_fe5056e428_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:58.183457+00:00"
+  },
+  {
+    "imageId": 19133,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3497464007",
+    "primaryPageSha256": "ce78ef2a4fef38aae2d27d0e792a004d7915615cdbb6d2c49c97a0f1f7fc6083"
+  },
+  {
+    "imageId": 19218,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6030919025",
+    "primaryPageSha256": "dd9bdbe1b600c2d385c9bbd562738fa93aa06b67117bb47d0739b8afc0484d37",
+    "primaryPhotoPage": "https://www.flickr.com/photos/37873897@N06/6030919025",
+    "creator": {
+      "@type": "Person",
+      "name": "Flavio~",
+      "url": "https://www.flickr.com/photos/37873897@N06",
+      "image": "https://live.staticflickr.com/7326/buddyicons/37873897@N06.jpg?1381165663#37873897@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/37873897@n06",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/6121/6030919025_f5f90fab36_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:14:58.222493+00:00"
+  },
+  {
+    "imageId": 19219,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3635336639",
+    "primaryPageSha256": "91de5677b8b0655beea0704dfd454736034118cb3b43194ebbd4439f7243f9e8",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/3635336639",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3333/3635336639_5845dddb13_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:04.863876+00:00"
+  },
+  {
+    "imageId": 19375,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8048896915",
+    "primaryPageSha256": "dc402b22e78295b4545b22d5f57e1bdbb6eb0b85995be3fd9352826e0de6a0c2",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8048896915",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8455/8048896915_b0fd4973f7_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:09.513972+00:00"
+  },
+  {
+    "imageId": 19480,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=42019011501",
+    "primaryPageSha256": "b9aed139567daebfdcc4649bdfd30a393be6650c82c5fa2194da836b1b91ccc0",
+    "primaryPhotoPage": "https://www.flickr.com/photos/142088869@N02/42019011501",
+    "creator": {
+      "@type": "Person",
+      "name": "Katie Cauthen",
+      "url": "https://www.flickr.com/photos/142088869@N02",
+      "image": "https://live.staticflickr.com/979/buddyicons/142088869@N02.jpg?1525963943#142088869@N02"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/142088869@n02",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/825/42019011501_d7aeb637a7_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:09.714725+00:00"
+  },
+  {
+    "imageId": 19496,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=4360546220",
+    "primaryPageSha256": "6656252588fd56d15eb332b905cce534a52bf17af301cb2635d19f3ddcd3513b",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/4360546220",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4059/4360546220_001f484247_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:14.752076+00:00"
+  },
+  {
+    "imageId": 19616,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3487033340",
+    "primaryPageSha256": "90214b0f7b1b03e3585fb128001afdd5e62ea13a93f2e9a625fa796a01d93927",
+    "primaryPhotoPage": "https://www.flickr.com/photos/ge_photo/3487033340",
+    "creator": {
+      "@type": "Person",
+      "name": "George Vale",
+      "url": "https://www.flickr.com/photos/ge_photo",
+      "image": "https://live.staticflickr.com/5464/buddyicons/27360488@N08.jpg?1369229969#27360488@N08"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/ge_photo",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3633/3487033340_804e6879c6_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:16.411079+00:00"
+  },
+  {
+    "imageId": 19669,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=399254364",
+    "primaryPageSha256": "574a815c09a72f62a58b6f07064158d2e33335550012bc7137b583675b81046e",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/399254364",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/140/399254364_986c3674e9_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:22.158012+00:00"
+  },
+  {
+    "imageId": 19676,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by-sa/2.0/",
+      "id": 1,
+      "name": "Attribution-ShareAlike License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15979362988",
+    "primaryPageSha256": "2e7bd755e2409befc290e26431098b6230f3c6eac4c77f35c7b8f87c32e08f4f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/birdy_photo/15979362988",
+    "creator": {
+      "@type": "Person",
+      "name": "withbeautiful",
+      "url": "https://www.flickr.com/photos/birdy_photo",
+      "image": "https://live.staticflickr.com/5643/buddyicons/96113078@N02.jpg?1451215248#96113078@N02"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/birdy_photo",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by-sa/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7462/15979362988_7852a8f2b6_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:22.067289+00:00"
+  },
+  {
+    "imageId": 19760,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=19435980441",
+    "primaryPageSha256": "bbbaf05f774d19a0ebb4ca14be0d8a557a0b917829eab7376b5ce0c046835a34"
+  },
+  {
+    "imageId": 19771,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8778393423",
+    "primaryPageSha256": "9efbe12d02e31e9e2b4d1fcbde54c5ddaffcf7b0ebabf22496042decfa446ab3"
+  },
+  {
+    "imageId": 19786,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32641532302",
+    "primaryPageSha256": "9562a3a410e4f233f5971725a0279a65cd8d5353ecb4103631d0352abf4a0f7b"
+  },
+  {
+    "imageId": 19808,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=17411849208",
+    "primaryPageSha256": "ee283d1076468a22a88461639a5c5adc61bc6a74e93d0e13b3048137d7660d70"
+  },
+  {
+    "imageId": 19824,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=25834617686",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 19825,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7167277595",
+    "primaryPageSha256": "1bac1697690a9c592e3baa6df7de901b99d4841955f5c0ebf4f1993c53d86e9f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/7167277595",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8154/7167277595_ed13790266_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:39.009477+00:00"
+  },
+  {
+    "imageId": 19829,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8356225220",
+    "primaryPageSha256": "a1a32f8fc1ed630f1e838a90b86aa0ec9b6468882cb5ae74752818d6fd8e68ef"
+  },
+  {
+    "imageId": 19845,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=35786464631",
+    "primaryPageSha256": "b531dd508a7f1a280a51653d356e6fdfd4040770b0425afe28b9effcdb0ec6ea"
+  },
+  {
+    "imageId": 19898,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8090467187",
+    "primaryPageSha256": "4ed91bfa6bbac0274c4f49846e784b6fb772d58c7f8208fd6f4ba7c69bce372f",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/8090467187",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/8464/8090467187_0e6f46845d_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:50.162433+00:00"
+  },
+  {
+    "imageId": 19905,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=32954119155",
+    "primaryPageSha256": "ce94e762c575ce2a875f3a0389c346ecbb5612ddc6f0081d85bd9c555868f000"
+  },
+  {
+    "imageId": 19945,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5608309873",
+    "primaryPageSha256": "bef0b0070349d65f231e6cd958105093fff1a87d94347a0bedec0bbc17f1cd63",
+    "primaryPhotoPage": "https://www.flickr.com/photos/37873897@N06/5608309873",
+    "creator": {
+      "@type": "Person",
+      "name": "Flavio~",
+      "url": "https://www.flickr.com/photos/37873897@N06",
+      "image": "https://live.staticflickr.com/7326/buddyicons/37873897@N06.jpg?1381165663#37873897@N06"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/37873897@n06",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5064/5608309873_ceca3a5822_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:53.356587+00:00"
+  },
+  {
+    "imageId": 19973,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=15107651647",
+    "primaryPageSha256": "ed1129de72bcea0fcc2f89070da6b8ccff6a90bbad8c7c5a8eef402205b707c1",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gotovan/15107651647",
+    "creator": {
+      "@type": "Person",
+      "name": "GoToVan",
+      "url": "https://www.flickr.com/photos/gotovan",
+      "image": "https://live.staticflickr.com/7463/buddyicons/47022937@N03.jpg?1469468169#47022937@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gotovan",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3840/15107651647_5ffe87bc0e_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:15:53.409446+00:00"
+  },
+  {
+    "imageId": 20051,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=20057211792",
+    "primaryPageSha256": "71221b263906c553234b2858cd6f671c6cceab24a3c70d0bd17b851e260b3e24"
+  },
+  {
+    "imageId": 20106,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=8225520732",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 20155,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2140112862",
+    "primaryPageSha256": "09c146aad6be0049a71b748bc9f2da4de81b72edf4a77b755c64982e1a8fe149",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2140112862",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2098/2140112862_11298de4c5_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:04.101193+00:00"
+  },
+  {
+    "imageId": 20167,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=6736892033",
+    "primaryPageSha256": "cfbcfd6055570e9a57297477213edd0dcf1bb17ca7e221a7564bc72516b83ee9",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/6736892033",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/7174/6736892033_3542f0f108_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:04.062953+00:00"
+  },
+  {
+    "imageId": 20170,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=29043939670",
+    "primaryPageSha256": "e15a826540b3c869b19dd7008eb1402ecd7ca0667dfe3003537f53c660ca0848"
+  },
+  {
+    "imageId": 20180,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=4512046312",
+    "primaryPageSha256": "646a81c2a9555863569e60c81f09745e6cb623be27759cfe31e7a98914e927a2"
+  },
+  {
+    "imageId": 20235,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5055896208",
+    "primaryPageSha256": "0fee76c1936d7da284bc53e7bf98a054d1e93b3934225a5c48d786903f000587",
+    "primaryPhotoPage": "https://www.flickr.com/photos/follow_mel_photo/5055896208",
+    "creator": {
+      "@type": "Person",
+      "name": "Follow_Mel_Photo",
+      "url": "https://www.flickr.com/photos/follow_mel_photo",
+      "image": "https://live.staticflickr.com/2665/buddyicons/44862952@N03.jpg?1316676005#44862952@N03"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/follow_mel_photo",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/4112/5055896208_672ec1b7be_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:14.014900+00:00"
+  },
+  {
+    "imageId": 20246,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7202984722",
+    "primaryPageSha256": "9d73a04d1797312ec921c1db330d52a5a304e22587a3f5fd3eba6421031a420f"
+  },
+  {
+    "imageId": 20256,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=25546184953",
+    "primaryPageSha256": "5d12e6d08ee0ab5ffb9a9bfd1186fa7709815e55ca56efd45714504b5f012687"
+  },
+  {
+    "imageId": 20275,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=3412650746",
+    "primaryPageSha256": "57c140eeac6f4da86dbe861a0d092ec36526910f2a693f7ffdaacccf2fb65a0a",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/3412650746",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3579/3412650746_348210b5b2_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:24.414960+00:00"
+  },
+  {
+    "imageId": 20331,
+    "excluded": true,
+    "reason": "No unique matching current creator/license",
+    "primaryPage": "https://www.flickr.com/photo.gne?id=7140870855",
+    "primaryPageSha256": "9a9ada9e347aef390dc6602a530a78365f256ae71fc650fc9d75b1eabc643a78"
+  },
+  {
+    "imageId": 20362,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=5242347783",
+    "primaryPageSha256": "66643fc63b6c7cbfb5590abf910f79bb65f7f7057c8a30d6e157f7c66609e113",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/5242347783",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/5083/5242347783_be57bd76d1_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:28.908299+00:00"
+  },
+  {
+    "imageId": 20458,
+    "excluded": false,
+    "reason": null,
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=9451036527",
+    "primaryPageSha256": "14acf74e33c5801bf8b4b695a249b32a43cc95d13855a9865cfb842276379a62",
+    "primaryPhotoPage": "https://www.flickr.com/photos/gloriamunty/9451036527",
+    "creator": {
+      "@type": "Person",
+      "name": "Pseph",
+      "url": "https://www.flickr.com/photos/gloriamunty",
+      "image": "https://live.staticflickr.com/5441/buddyicons/15429340@N00.jpg?1369235876#15429340@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/gloriamunty",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/2837/9451036527_8953577b47_z.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:32.371025+00:00"
+  },
+  {
+    "imageId": 20583,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2502895735",
+    "primaryPageSha256": "c47edee6de637525af5fcb4f7c3a20c76c56861ef0eefb1316dd726ea8ea853b",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2502895735",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3123/2502895735_018d2041ba_c.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:36.634216+00:00"
+  },
+  {
+    "imageId": 20702,
+    "excluded": true,
+    "reason": "Photographer already used in development",
+    "datasetLicense": {
+      "url": "https://creativecommons.org/licenses/by/2.0/",
+      "id": 0,
+      "name": "Attribution License"
+    },
+    "primaryPage": "https://www.flickr.com/photo.gne?id=2672342293",
+    "primaryPageSha256": "3d9a0ca57098b08367397f46e67f99455be75af0f85228875ea6119e09457539",
+    "primaryPhotoPage": "https://www.flickr.com/photos/mejiaperalta/2672342293",
+    "creator": {
+      "@type": "Person",
+      "name": "Jorge Mej\u00eda peralta",
+      "url": "https://www.flickr.com/photos/mejiaperalta",
+      "image": "https://farm66.staticflickr.com/65535/buddyicons/45879387@N00.jpg?1594675758#45879387@N00"
+    },
+    "creatorIdentity": "https://www.flickr.com/photos/mejiaperalta",
+    "primaryLicenseUrl": "https://creativecommons.org/licenses/by/2.0/",
+    "primaryContentUrl": "https://live.staticflickr.com/3219/2672342293_5643255a91_b.jpg",
+    "checkedAtUtc": "2026-11-12T15:16:36.578706+00:00"
+  }
+]
