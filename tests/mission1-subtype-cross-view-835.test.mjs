@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {guardedSubtypeVerdict835,corroborateOriginalSubtype835} from '../public/phone-photo-subtype-guard-835.mjs';
 import {localCandidates} from '../public/local-catalog.mjs';
 import {phonePhotoResult,lockPhotoLabels,scorePhonePhotos} from '../public/phone-photo-benchmark.mjs';
+import {compareSubtypeSafety835} from '../scripts/compare-m1-subtype-835.mjs';
+import {readFile} from 'node:fs/promises';
 
 const prompt=(category,type)=>localCandidates.find(x=>x.category===category&&x.itemType===type).label;
 const vector=(category,type,runnerCategory='Tops',runnerType='Blouse')=>[
@@ -91,5 +93,61 @@ test('P835 entirely unchanged original classifier and catalog subtype are requir
    centerView:async()=>vector('Shoes',type,'Shoes',type==='Sneakers'?'Ankle boots':'Sneakers')
   });
   assert.equal(r.strong,true);
+ }
+});
+
+const historical=JSON.parse(await readFile('benchmark/manifest-holdout-16.json','utf8'));
+function syntheticComparison835(){
+ const row=source=>({
+  id:source.id,expectedCategory:source.expectedCategory,expectedType:source.expectedType,
+  strong:source.expectedCategory!=='Uncategorized',
+  categoryMatch:true,
+  predictedCategory:source.expectedCategory==='Uncategorized'?null:source.expectedCategory,
+  predictedType:source.expectedCategory==='Uncategorized'?null:source.expectedType,
+  acceptedTypeMatch:source.expectedCategory==='Uncategorized'?null:true,
+  negativeRejected:source.expectedCategory==='Uncategorized'?true:null,
+  error:null
+ });
+ const original=historical.map(row),guarded=historical.map(row);
+ for(const item of original.filter(x=>x.id==='commons-0003')){
+  item.predictedType='Sweatshirt';item.acceptedTypeMatch=false;
+ }
+ for(const item of guarded.filter(x=>x.id==='commons-0003')){
+  item.strong=false;item.predictedType='Unknown';item.acceptedTypeMatch=false;
+ }
+ const pack=(source,wrong)=>{
+  const browser={
+   rows:structuredClone(source),automaticWrongSubtype:wrong,
+   categoryMatches:source.filter(x=>x.categoryMatch&&x.expectedCategory!=='Uncategorized').length,
+   negatives:3,negativeRejected:3,garments:13
+  };
+  return {format:'closet-current-m1-real16-unchanged-model-diagnostic/v1',
+   sourceIds:historical.map(x=>x.id),sourceCount:16,noHumanBlindAccuracyClaim:true,
+   browsers:{chromium:structuredClone(browser),webkit:structuredClone(browser)}};
+ };
+ return [pack(original,1),pack(guarded,0)];
+}
+test('P835 exact original-ID comparator counts a prevented wrong automatic subtype and no invented category improvement',()=>{
+ const [base,guard]=syntheticComparison835();
+ const r=compareSubtypeSafety835(base,guard);
+ assert.equal(r.browser.chromium.wrongAutomaticSubtypePrevented,1);
+ assert.equal(r.browser.webkit.wrongAutomaticSubtypePrevented,1);
+ assert.equal(r.browser.chromium.correctAutomaticSubtypeLost,0);
+ assert.equal(r.browser.chromium.negativeRejectedAfter,3);
+ assert.equal(r.browser.webkit.rowChanges.length,16);
+ assert.equal(r.notBlind,true);
+});
+test('P835 comparator rejects fabricated strong label, reordered originals or bogus reduction in incorrect auto types',()=>{
+ for(const mutation of [
+  ([,g])=>{g.browsers.chromium.rows.reverse();},
+  ([,g])=>{g.browsers.webkit.rows[0].strong=true;g.browsers.webkit.rows[0].predictedType='Sneakers';},
+  ([,g])=>{g.browsers.webkit.automaticWrongSubtype=7;},
+  ([,g])=>{g.browsers.webkit.negativeRejected=2;},
+  ([b])=>{b.sourceIds.pop();},
+  ([,g])=>{g.noHumanBlindAccuracyClaim=false;}
+ ]){
+  const reports=syntheticComparison835();
+  mutation(reports);
+  assert.throws(()=>compareSubtypeSafety835(...reports),/BASELINE_COMPARISON_FAIL/);
  }
 });
