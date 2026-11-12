@@ -924,10 +924,12 @@ function takePhoto(){
 }
 async function startCamera(mode){
  if(busy||stream||cameraOpening)return;
- const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
+ const request=++cameraRequest,epoch=captureOperationEpoch;cameraOpening=true;busy=true;controls(true);
  $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
  try{
+  // A delayed AudioContext.resume must not request camera permission for a revoked session.
+  if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const facing=typeof captureProof01Active!=='undefined'&&captureProof01Active?$('captureCameraFacing')?.value||'environment':'environment';
   let acquired;
@@ -940,9 +942,9 @@ async function startCamera(mode){
    // On unsupported devices relax preference only; permission denial never bypassed.
    acquired=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
   }
-  if(request!==cameraRequest||(typeof document!=='undefined'&&document.hidden)){
+  if(epoch!==captureOperationEpoch||request!==cameraRequest||(typeof document!=='undefined'&&document.hidden)){
    acquired.getTracks().forEach(track=>track.stop());
-   if(typeof document!=='undefined'&&document.hidden&&request===cameraRequest){stopCamera();message('Camera access finished after the app was backgrounded. Your captured photos are safe; start the camera again when ready.');}
+   if(typeof document!=='undefined'&&document.hidden&&epoch===captureOperationEpoch&&request===cameraRequest){stopCamera();message('Camera access finished after the app was backgrounded. Your captured photos are safe; start the camera again when ready.');}
    return;
   }
   stream=acquired;cameraMode=mode;
@@ -951,8 +953,10 @@ async function startCamera(mode){
     if(stream===acquired){stopCamera();message('Camera disconnected. Your existing photos are ready for review.');}
    },{once:true});
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
-  if(request!==cameraRequest)return;
+  await video.play();
+  // play() can resolve after sign-out and a different owner begins another capture.
+  if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
+  session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
@@ -963,12 +967,12 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(epoch===captureOperationEpoch&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
  }
  finally{
   // An older, cancelled getUserMedia() request must not unlock controls
   // while a newer request is still opening or streaming.
-  if(request===cameraRequest||(!cameraOpening&&!stream)){
+  if(epoch===captureOperationEpoch&&request===cameraRequest){
    busy=false;if(!stream)controls(false);
   }
  }
