@@ -36,7 +36,8 @@ await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
        sourceAreaStages:__m2PhotoStageAreas,
        counterfactualShortEdgeDepthTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceShortEdgeTrial')==='research',
        neighborDepthRelaxationTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceNeighborFeather')==='research',
-       residualPairDirectionTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceResidualPairDirection')==='research'})
+       residualPairDirectionTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceResidualPairDirection')==='research',
+       microDepthSinglePairTrial:new URLSearchParams(globalThis.location?.search||'').get('photoSourceLastPairMicroDepth')==='research'})
       :fitSourceLength(built.shirt,root,candidate.silhouette62,{projectSourceRGB:new URLSearchParams(globalThis.location?.search||'').get('photoSourceProjection')==='research',traceTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleAudit')==='research',strictTriangleContacts:new URLSearchParams(globalThis.location?.search||'').get('photoSourceTriangleStrict')==='research'}));`);
 await patch('research/outfit-3d-01/research-panel.mjs',
  'ownerAlphaMaskBasedPhysicalGeometry190:actualOutfit171[k].ownerAlphaMaskBasedPhysicalGeometry190===true,',
