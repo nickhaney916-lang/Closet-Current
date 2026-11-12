@@ -1,0 +1,737 @@
+{
+  "model": "Marqo/marqo-fashionSigLIP",
+  "revision": "c56244cc94f92419e8369fa71efdaf403b124ce8",
+  "runtime": "CPU q8; browser parity must be separately verified",
+  "cohort": "development diagnostics only",
+  "rows": [
+    {
+      "id": "p67-new-0001",
+      "sha256": "4837ca53534a870ec556bb6e457a0427796b320231806f27a871cfda2b36dff1",
+      "expectedCategory": "Tops",
+      "expectedType": "T-shirt",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "T-shirt",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a T-shirt",
+            "category": "Tops",
+            "itemType": "T-shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.6386588276877883
+          },
+          {
+            "label": "a tunic",
+            "category": "Tops",
+            "itemType": "Tunic",
+            "sleeveLength": "Unknown",
+            "score": 0.2893405394992182
+          },
+          {
+            "label": "a button-down shirt",
+            "category": "Tops",
+            "itemType": "Button-down shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.02168329584100608
+          }
+        ],
+        "details": {}
+      },
+      "elapsedMs": 745.6982900000003
+    },
+    {
+      "id": "p67-new-0002",
+      "sha256": "c0291bc392be741df8d81fe4d566b7c836780a0eb3c369c30b743bb0118cf94e",
+      "expectedCategory": "Tops",
+      "expectedType": "T-shirt",
+      "acceptedTypes": [
+        "T-shirt"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "T-shirt",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain",
+        "diagnostics": {
+          "category": [
+            {
+              "category": "Uncategorized",
+              "score": 0.41785059813371717
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.17863191865998823
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.1414757764328344
+            }
+          ]
+        }
+      },
+      "elapsedMs": 378.8470500000003
+    },
+    {
+      "id": "p67-new-0006",
+      "sha256": "2c44d39231b0f09486551d779a0e4aa6385ce925873ba55b8890f26b3df29f66",
+      "expectedCategory": "Tops",
+      "expectedType": "Sweatshirt",
+      "acceptedTypes": [
+        "Sweatshirt"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "Sweatshirt",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "type_uncertain",
+        "diagnostics": {
+          "dressEvidence": {},
+          "category": [
+            {
+              "category": "Outerwear",
+              "score": 0.5461775133905536
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.2677290071049193
+            }
+          ],
+          "branch": [
+            {
+              "category": "Outerwear",
+              "type": "Cardigan",
+              "score": 0.42823434638873176
+            },
+            {
+              "category": "Outerwear",
+              "type": "Jacket",
+              "score": 0.31063353619334766
+            },
+            {
+              "category": "Uncategorized",
+              "type": "Unknown",
+              "score": 0.10147438456114272
+            }
+          ]
+        }
+      },
+      "elapsedMs": 220.71645800000033
+    },
+    {
+      "id": "p67-new-0010",
+      "sha256": "6d30f180b07d9b42ee6cbd91034f859f1bd4b9113f2d8a7ba6377fd172c3b126",
+      "expectedCategory": "Tops",
+      "expectedType": "Blouse",
+      "acceptedTypes": [
+        "Blouse"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "Blouse",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain",
+        "diagnostics": {
+          "category": [
+            {
+              "category": "Outerwear",
+              "score": 0.2444640290851335
+            },
+            {
+              "category": "Tops",
+              "score": 0.20590189741743498
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.20587927355219882
+            }
+          ]
+        }
+      },
+      "elapsedMs": 402.32492900000034
+    },
+    {
+      "id": "p67-new-0012",
+      "sha256": "6e851b62199b3b9c19f0306c925e960a7e1b5e4caa59fa6cefc46d93dcdc6cae",
+      "expectedCategory": "Tops",
+      "expectedType": "Blouse",
+      "acceptedTypes": [
+        "Blouse"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "Blouse",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a blouse",
+            "category": "Tops",
+            "itemType": "Blouse",
+            "sleeveLength": "Unknown",
+            "score": 0.9292398621926163
+          },
+          {
+            "label": "a tunic",
+            "category": "Tops",
+            "itemType": "Tunic",
+            "sleeveLength": "Unknown",
+            "score": 0.023439576388102932
+          },
+          {
+            "label": "a T-shirt",
+            "category": "Tops",
+            "itemType": "T-shirt",
+            "sleeveLength": "Unknown",
+            "score": 0.022644422533755225
+          }
+        ],
+        "details": {
+          "color": "Beige"
+        }
+      },
+      "elapsedMs": 750.8554690000001
+    },
+    {
+      "id": "p67-new-0014",
+      "sha256": "f098978b05e37bab1ff164895d6b934d41196704d54892a0e49a6ce706394066",
+      "expectedCategory": "Tops",
+      "expectedType": "Tunic",
+      "acceptedTypes": [
+        "Tunic"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "Tunic",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain",
+        "diagnostics": {
+          "category": [
+            {
+              "category": "Uncategorized",
+              "score": 0.5922449362183998
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.14181476115296252
+            },
+            {
+              "category": "Outerwear",
+              "score": 0.07388843734572591
+            }
+          ]
+        }
+      },
+      "elapsedMs": 254.2163330000003
+    },
+    {
+      "id": "p67-new-0017",
+      "sha256": "12fbc90a863bb2ed7ec76ff42b85eecfc01953888808133f8bb52b98f02452eb",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Sneakers",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "sneakers",
+            "category": "Shoes",
+            "itemType": "Sneakers",
+            "sleeveLength": "Not applicable",
+            "score": 0.836918244855373
+          },
+          {
+            "label": "flat shoes",
+            "category": "Shoes",
+            "itemType": "Flats",
+            "sleeveLength": "Not applicable",
+            "score": 0.09771756873099303
+          },
+          {
+            "label": "loafers",
+            "category": "Shoes",
+            "itemType": "Loafers",
+            "sleeveLength": "Not applicable",
+            "score": 0.043415597332638896
+          }
+        ],
+        "details": {}
+      },
+      "elapsedMs": 656.7458139999999
+    },
+    {
+      "id": "p67-new-0018",
+      "sha256": "d500c89bd5aa0110912033432108a245f8afcfbd3eca62bcf08d28a42743b9ee",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Sneakers",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "sneakers",
+            "category": "Shoes",
+            "itemType": "Sneakers",
+            "sleeveLength": "Not applicable",
+            "score": 0.9471270000163532
+          },
+          {
+            "label": "loafers",
+            "category": "Shoes",
+            "itemType": "Loafers",
+            "sleeveLength": "Not applicable",
+            "score": 0.019000670193275573
+          },
+          {
+            "label": "ankle boots",
+            "category": "Shoes",
+            "itemType": "Ankle boots",
+            "sleeveLength": "Not applicable",
+            "score": 0.01604645334654183
+          }
+        ],
+        "details": {
+          "color": "Orange"
+        }
+      },
+      "elapsedMs": 838.62525
+    },
+    {
+      "id": "p67-new-0019",
+      "sha256": "d72caeac8ec7724dd0c5e37dade6cdb43dd08f4a0dbb4b2c5d05f8ae0961d5df",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Sneakers",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "sneakers",
+            "category": "Shoes",
+            "itemType": "Sneakers",
+            "sleeveLength": "Not applicable",
+            "score": 0.8735792714973387
+          },
+          {
+            "label": "high heel shoes",
+            "category": "Shoes",
+            "itemType": "Heels",
+            "sleeveLength": "Not applicable",
+            "score": 0.06263850073381876
+          },
+          {
+            "label": "flat shoes",
+            "category": "Shoes",
+            "itemType": "Flats",
+            "sleeveLength": "Not applicable",
+            "score": 0.04521279106050009
+          }
+        ],
+        "details": {
+          "color": "White"
+        }
+      },
+      "elapsedMs": 699.2422299999998
+    },
+    {
+      "id": "p67-new-0020",
+      "sha256": "0dd308aebd7712e24ec6ee9b84d92791ce06ec839428b622f996f1e796276903",
+      "expectedCategory": "Shoes",
+      "expectedType": "Sneakers",
+      "acceptedTypes": [
+        "Sneakers"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Sneakers",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "sneakers",
+            "category": "Shoes",
+            "itemType": "Sneakers",
+            "sleeveLength": "Not applicable",
+            "score": 0.7018443793227842
+          },
+          {
+            "label": "flat shoes",
+            "category": "Shoes",
+            "itemType": "Flats",
+            "sleeveLength": "Not applicable",
+            "score": 0.28246426674871705
+          },
+          {
+            "label": "high heel shoes",
+            "category": "Shoes",
+            "itemType": "Heels",
+            "sleeveLength": "Not applicable",
+            "score": 0.009275273183613014
+          }
+        ],
+        "details": {
+          "color": "Blue"
+        }
+      },
+      "elapsedMs": 2078.8779109999996
+    },
+    {
+      "id": "p67-new-0021",
+      "sha256": "d3fa5ebd954de5ce2ef21a20eff6b19a84cc8ded12bd50bb01c91c2f605ddc71",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "acceptedTypes": [
+        "Ankle boots"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Ankle boots",
+      "result": {
+        "strong": false,
+        "categoryConfirmed": true,
+        "categoryOnly": true,
+        "choices": [
+          {
+            "label": "Shoes",
+            "category": "Shoes",
+            "itemType": "Unknown",
+            "sleeveLength": "Not applicable",
+            "score": 0.9996648438539099
+          }
+        ],
+        "details": {},
+        "reason": "category_type_review"
+      },
+      "elapsedMs": 1046.3209970000007
+    },
+    {
+      "id": "p67-new-0022",
+      "sha256": "03c38b27f231a78ff2fff683ca41e028b77c141b205713ef06a1e7b7646eacf2",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "acceptedTypes": [
+        "Ankle boots"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Ankle boots",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "ankle boots",
+            "category": "Shoes",
+            "itemType": "Ankle boots",
+            "sleeveLength": "Not applicable",
+            "score": 0.911915000722268
+          },
+          {
+            "label": "tall boots",
+            "category": "Shoes",
+            "itemType": "Tall boots",
+            "sleeveLength": "Not applicable",
+            "score": 0.06830474366132003
+          },
+          {
+            "label": "sneakers",
+            "category": "Shoes",
+            "itemType": "Sneakers",
+            "sleeveLength": "Not applicable",
+            "score": 0.009697579293006903
+          }
+        ],
+        "details": {
+          "color": "Brown"
+        }
+      },
+      "elapsedMs": 1363.1259179999997
+    },
+    {
+      "id": "p67-new-0023",
+      "sha256": "db11e0995251531889b5d6fbef350b8d051772e9fcba620fa9b7fa1f20cdb8bc",
+      "expectedCategory": "Shoes",
+      "expectedType": "Ankle boots",
+      "acceptedTypes": [
+        "Ankle boots"
+      ],
+      "rawCategory": "Shoes",
+      "rawType": "Heels",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "high heel shoes",
+            "category": "Shoes",
+            "itemType": "Heels",
+            "sleeveLength": "Not applicable",
+            "score": 0.7411889795518204
+          },
+          {
+            "label": "ankle boots",
+            "category": "Shoes",
+            "itemType": "Ankle boots",
+            "sleeveLength": "Not applicable",
+            "score": 0.205015487117038
+          },
+          {
+            "label": "flat shoes",
+            "category": "Shoes",
+            "itemType": "Flats",
+            "sleeveLength": "Not applicable",
+            "score": 0.030992539524338683
+          }
+        ],
+        "details": {
+          "color": "Black"
+        }
+      },
+      "elapsedMs": 1476.1168750000015
+    },
+    {
+      "id": "p67-new-0025",
+      "sha256": "b5c78190aa5aabd539aa4608aebb655dda48923c4dd1f906c90b5b6d98f53c6b",
+      "expectedCategory": "Dresses",
+      "expectedType": "Casual dress",
+      "acceptedTypes": [
+        "Casual dress"
+      ],
+      "rawCategory": "Dresses",
+      "rawType": "Shirt dress",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "type_uncertain",
+        "diagnostics": {
+          "dressEvidence": {},
+          "category": [
+            {
+              "category": "Dresses",
+              "score": 0.7660972467342944
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.1367994976466954
+            }
+          ],
+          "branch": [
+            {
+              "category": "Dresses",
+              "type": "Shirt dress",
+              "score": 0.34519182296628015
+            },
+            {
+              "category": "Dresses",
+              "type": "Formal dress",
+              "score": 0.259032532008254
+            },
+            {
+              "category": "Dresses",
+              "type": "Casual dress",
+              "score": 0.2525124907957812
+            }
+          ]
+        }
+      },
+      "elapsedMs": 488.9210899999998
+    },
+    {
+      "id": "p67-new-0027",
+      "sha256": "a7cd760b284a12adb44876c28a6da27f4baa9f47e37454bb04f1ce9768cc05fe",
+      "expectedCategory": "Dresses",
+      "expectedType": "Dress",
+      "acceptedTypes": [
+        "Casual dress",
+        "Formal dress",
+        "Shirt dress"
+      ],
+      "rawCategory": "Tops",
+      "rawType": "Tunic",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "type_uncertain",
+        "diagnostics": {
+          "dressEvidence": {},
+          "category": [
+            {
+              "category": "Outerwear",
+              "score": 0.6196850218081043
+            },
+            {
+              "category": "Dresses",
+              "score": 0.20415550048422906
+            }
+          ],
+          "branch": [
+            {
+              "category": "Outerwear",
+              "type": "Coat",
+              "score": 0.41610010404033915
+            },
+            {
+              "category": "Outerwear",
+              "type": "Jacket",
+              "score": 0.27050389955369253
+            },
+            {
+              "category": "Outerwear",
+              "type": "Cardigan",
+              "score": 0.16691368357406222
+            }
+          ]
+        }
+      },
+      "elapsedMs": 302.4094010000008
+    },
+    {
+      "id": "p67-new-0028",
+      "sha256": "221ad9dfc17d3287144d9f85317fffe4264bff72d4407454b3752082652c8810",
+      "expectedCategory": "Dresses",
+      "expectedType": "Formal dress",
+      "acceptedTypes": [
+        "Formal dress"
+      ],
+      "rawCategory": "Dresses",
+      "rawType": "Formal dress",
+      "result": {
+        "strong": true,
+        "choices": [
+          {
+            "label": "a formal dress",
+            "category": "Dresses",
+            "itemType": "Formal dress",
+            "sleeveLength": "Unknown",
+            "score": 0.6508994762012336
+          }
+        ],
+        "details": {},
+        "reason": "skirt_dress_independent_agreement",
+        "preprocessingRecovery": true
+      },
+      "elapsedMs": 1780.3611930000006
+    },
+    {
+      "id": "p67-new-0030",
+      "sha256": "afb5385be40dc3002d1aa252054cdc25064969e92b9c16321b5227d06ef15a9d",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "rawCategory": "Uncategorized",
+      "rawType": "Unknown",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain",
+        "diagnostics": {
+          "category": [
+            {
+              "category": "Uncategorized",
+              "score": 0.8596338143532865
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.13203556470651115
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.007923866057469352
+            }
+          ]
+        }
+      },
+      "elapsedMs": 265.3583389999985
+    },
+    {
+      "id": "p67-new-0031",
+      "sha256": "9608e6de2b97acf8ea73d458ae74795f517a52c28d434f14e88a5534b2c8caee",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "rawCategory": "Uncategorized",
+      "rawType": "Unknown",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain",
+        "diagnostics": {
+          "category": [
+            {
+              "category": "Uncategorized",
+              "score": 0.782437855928064
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.12392806333632313
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.08807358453166209
+            }
+          ]
+        }
+      },
+      "elapsedMs": 237.38405599999896
+    },
+    {
+      "id": "p67-new-0032",
+      "sha256": "e6d3b959315c2cc68e22fbfb4cb7509735a9ec0e8ff8a6f4fd0a31361427e6d8",
+      "expectedCategory": "Uncategorized",
+      "expectedType": "Unknown",
+      "acceptedTypes": [
+        "Unknown"
+      ],
+      "rawCategory": "Uncategorized",
+      "rawType": "Unknown",
+      "result": {
+        "strong": false,
+        "choices": [],
+        "details": {},
+        "reason": "category_uncertain",
+        "diagnostics": {
+          "category": [
+            {
+              "category": "Uncategorized",
+              "score": 0.8424926575045457
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.14690445129648058
+            },
+            {
+              "category": "Uncategorized",
+              "score": 0.009755848982684953
+            }
+          ]
+        }
+      },
+      "elapsedMs": 219.249534999999
+    }
+  ]
+}

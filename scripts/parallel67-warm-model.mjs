@@ -1,0 +1,13 @@
+import {AutoProcessor,SiglipVisionModel,CLIPVisionModelWithProjection} from '@huggingface/transformers';
+import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {MODELS67} from '../research/parallel67/independent-scorer.mjs';
+const key=process.argv[2],baseline=JSON.parse(await readFile('public/recognition-vectors.json'));
+const spec=key==='baseline'?baseline:MODELS67[key];if(!spec)throw Error('Unknown model');
+await AutoProcessor.from_pretrained(spec.model,{revision:spec.revision});
+const model=await (key==='marqo'?SiglipVisionModel:CLIPVisionModelWithProjection).from_pretrained(spec.model,{revision:spec.revision,dtype:'q8',device:'cpu'});await model.dispose();
+const bytes=await readFile('node_modules/@huggingface/transformers/.cache/'+spec.model+'/'+spec.revision+'/onnx/vision_model_quantized.onnx');
+const sha256=createHash('sha256').update(bytes).digest('hex');
+const audited=JSON.parse(await readFile('research/parallel67/model-candidates.json')).candidates.find(x=>x.id===spec.model);
+if(audited&&(sha256!==audited.vision.sha256||bytes.length!==audited.vision.bytes))throw Error('Publisher model bytes do not match pinned SHA');
+console.log(JSON.stringify({model:spec.model,revision:spec.revision,bytes:bytes.length,sha256,verifiedCandidateSha:!!audited}));
