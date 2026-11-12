@@ -883,6 +883,21 @@ try{
           assert.equal(uv.texturePixelsNotInspected,true);
           assert.equal(uv.seamContinuityNotVerified,true);
           assert.equal(uv.releaseAuthorized,false);
+          // P2-C28: UV split-edge overlap is only a geometric/texture
+          // discontinuity witness, never a certified sewn or safe seam.
+          const splitSource=pose.sourcePhotoSplitEdgeSourceSummary;
+          const splitBase=pose.sourcePhotoSplitEdgeBaseline;
+          assert.ok(splitSource&&splitBase);
+          for(const field of ['sourceDistinctEdgeGroups','ambiguousSplitEdgeGroups',
+           'sourcePhotoSplitUVEdgePairs','uvMissingDuplicateEdgeGroups'])
+           assert.ok(Number.isSafeInteger(splitSource[field])&&splitSource[field]>=0);
+          assert.equal(splitSource.originalSplitPairsAreNotProvenSewnSeams,true);
+          assert.equal(splitBase.sourcePhotoSplitUVEdgePairs,
+           splitSource.sourcePhotoSplitUVEdgePairs);
+          assert.equal(splitBase.newlyOpenPairs,0);
+          assert.equal(splitBase.newlyWidenedPairs,0);
+          assert.equal(splitBase.uvSplitIsNotSewnSeamProof,true);
+          assert.equal(splitBase.releaseAuthorized,false);
           for(const candidate of pose.trials){
            const audit=candidate.sourcePhotoUVSurfaceAudit;
            assert.equal(audit.triangleCount,uv.triangleCount);
@@ -894,6 +909,19 @@ try{
            assert.equal(audit.texturePixelsNotInspected,true);
            assert.equal(audit.seamContinuityNotVerified,true);
            assert.equal(audit.releaseAuthorized,false);
+           const split=candidate.sourcePhotoSplitEdgeAudit;
+           assert.ok(split);
+           assert.equal(split.sourcePhotoSplitUVEdgePairs,
+            splitSource.sourcePhotoSplitUVEdgePairs);
+           assert.equal(split.originalAlreadyOpenPairs,
+            splitBase.originalAlreadyOpenPairs);
+           for(const field of ['newlyOpenPairs','newlyWidenedPairs',
+            'afterOpenPairs','originalAlreadyOpenPairs','improvedGapPairs'])
+            assert.ok(Number.isSafeInteger(split[field])&&split[field]>=0);
+           assert.equal(split.uvSplitIsNotSewnSeamProof,true);
+           assert.equal(split.noOriginalSourceMutation,true);
+           assert.equal(split.noAutomaticGarment3DAdmission,true);
+           assert.equal(split.releaseAuthorized,false);
           }
          }
          assert.equal(mp.noAbsoluteZeroContactCertificate,true);
