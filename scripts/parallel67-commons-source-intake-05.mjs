@@ -125,7 +125,7 @@ export function combineSourceCandidates05(items,originals){
 }
 
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-export async function searchCommonsCandidates05(search,{fetchImpl=fetch,limit=20,maxAttempts=4}={}){
+export async function searchCommonsCandidates05(search,{fetchImpl=fetch,limit=12,maxAttempts=4}={}){
  if(!P67_05_SEARCHES.some(x=>x.target===search?.target&&x.query===search.query)||
     !Number.isInteger(limit)||limit<1||limit>20||
     !Number.isInteger(maxAttempts)||maxAttempts<1||maxAttempts>5)
@@ -145,14 +145,24 @@ export async function searchCommonsCandidates05(search,{fetchImpl=fetch,limit=20
     signal:AbortSignal.timeout(25000)
    });
    if(!response.ok){
-    if(response.status===429||response.status>=500){error='rate-limit-or-server';}
+    if(response.status===429||response.status>=500){
+     error='rate-limit-or-server';
+     const retryAfter=Number(response.headers?.get?.('retry-after'));
+     const delay=Number.isFinite(retryAfter)&&retryAfter>0?
+      Math.min(60000,Math.ceil(retryAfter*1000)):
+      Math.min(30000,4000*(2**attempt));
+     if(attempt<maxAttempts-1)await pause(delay);
+    }
     else throw Error('P67-05: license metadata request unavailable');
    }else{
     const raw=await response.json();
     return inspectCommonsSearchResponse05(search,raw);
    }
   }catch(e){error='connection-or-response-error';}
-  if(attempt<maxAttempts-1)await pause(1000*(2**attempt));
+  // Explicit 429 responses have already received an independent
+  // server-respecting cooldown. Non-429 connection errors back off too.
+  if(attempt<maxAttempts-1&&error!=='rate-limit-or-server')
+   await pause(Math.min(30000,3000*(2**attempt)));
  }
  throw Error('P67-05: source query unresolved: '+String(error||'unavailable'));
 }
@@ -165,6 +175,9 @@ export async function buildQuarantinedSourcePool05({
   const results=await searchCommonsCandidates05(search,{fetchImpl});
   counts[search.target]=(counts[search.target]||0)+results.length;
   candidates.push(...results);
+  // Respect Commons high-cost extmetadata API limits. Metadata is only a
+  // source shortlist; do not burst requests or retry without backoff.
+  await pause(2300);
  }
  const distinct=combineSourceCandidates05(candidates,current);
  const report={
