@@ -18,7 +18,7 @@ An interrupted camera had been stopped on backgrounding, but video and gallery i
 
 `scripts/test-mission3-mobile-media-interruption-browser.mjs` loads actual `public/index.html`, mobile source and real native IndexedDB in **Chromium and WebKit at 320, 390, 430 CSS pixels**. It uses synthetic original JPEGs with actual SHA-256, source-verification and owner-private IndexedDB writes. It stalls an actual media element's loadedmetadata await, triggers pagehide, immediately starts another JPEG gallery import, and proves the stale video finalizer cannot unlock the new operation. It then stalls a second gallery during a rapid hidden/visible transition and verifies no stale photo was added. A fresh retry must add the original privately. Finally, signed-owner switch during decode must prevent a former owner's photo from reaching the next owner. Off-host requests are blocked; video metadata is simulated and no physical phone or hosted cloud is claimed.
 
-The dedicated no-deploy CI includes exact-parent and five-path allowlist, source tests, full serial Node suite, owner-private Chromium/WebKit regression, native restore and backup import, a disposable two-user PostgreSQL Storage RLS run, and proof artifacts.
+The dedicated no-deploy CI includes exact-parent and six-path allowlist, source tests, full serial Node suite, owner-private Chromium/WebKit regression, native restore and backup import, a disposable two-user PostgreSQL Storage RLS run, and proof artifacts.
 
 **Do not mark verified until exact-HEAD dedicated CI is successful.**
 
