@@ -880,6 +880,121 @@ export function buildContactLinkedShortEdgeDepthCounterfactual(
  });
 }
 
+
+/**
+ * P2-C22 — one-ring indexed incidence feather for P2-C21's exact-source
+ * short-edge depth hold. Produces a *different, disposable* physical trial.
+ *
+ * Topological adjacency is only within ORIGINAL indexed triangle faces. If a
+ * source panel uses nonindexed split vertices, DO NOT stitch geometrically
+ * coincident points: they may be real fabric/UV seams. No UV continuity or
+ * sewn garment truth can be inferred. This never authorizes 3D admission.
+ */
+export function buildOneRingShortEdgeDepthFeather(
+ meshes,proposedOverrides,shortEdgeHold,
+ {neighborWeight=.5,maxNeighborVertices=512}={}){
+ if(!Array.isArray(meshes)||meshes.length<1||meshes.length>32||
+    new Set(meshes).size!==meshes.length||
+    !(proposedOverrides instanceof Map)||proposedOverrides.size!==meshes.length||
+    !(shortEdgeHold?.privateOverrides instanceof Map)||
+    shortEdgeHold.privateOverrides.size!==meshes.length||
+    shortEdgeHold?.countOnly?.originalSourcePhotoXYBitIdentical!==true||
+    shortEdgeHold.countOnly.notAdmissibleFor3DOrRelease!==true||
+    shortEdgeHold.countOnly.releaseAuthorized!==false||
+    !Number.isFinite(neighborWeight)||neighborWeight<=0||neighborWeight>.75||
+    !Number.isSafeInteger(maxNeighborVertices)||
+    maxNeighborVertices<1||maxNeighborVertices>4096)
+  throw Error('M2 C22 complete private immutable original short-edge trial required');
+ const feathered=new Map();
+ let anchored=0,featheredNeighbors=0,maxActual=0,indexedFacesExamined=0;
+ for(const mesh of meshes){
+  const g=mesh?.geometry,p=g?.getAttribute('position'),
+   before=proposedOverrides.get(mesh),held=shortEdgeHold.privateOverrides.get(mesh);
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||
+     !p?.isBufferAttribute||p.itemSize!==3||p.isInterleavedBufferAttribute||
+     !p.array?.every(Number.isFinite)||
+     !(before instanceof Float32Array||before instanceof Float64Array)||
+     !(held instanceof Float32Array||held instanceof Float64Array)||
+     before.length!==p.count*3||held.length!==before.length||
+     !before.every(Number.isFinite)||!held.every(Number.isFinite))
+   throw Error('M2 C22 finite original, staged and short-edge-held 163-bone geometry required');
+  const anchor=new Map(),neighborSum=new Map(),neighborCount=new Map();
+  for(let v=0;v<p.count;v++){
+   if(before[v*3]!==held[v*3]||before[v*3+1]!==held[v*3+1])
+    throw Error('M2 C22 original photographed X/Y was modified by short-edge parent');
+   const d=held[v*3+2]-before[v*3+2];
+   if(Math.abs(d)>1e-12){
+    if(Math.abs(d)>.01200001)
+     throw Error('M2 C22 original short-edge depth exceeds 12mm bound');
+    anchor.set(v,d);anchored++;
+   }
+  }
+  const index=g.index?.array,faces=index?index.length/3:p.count/3;
+  if(!Number.isSafeInteger(faces)||faces<1||faces>600000||
+     (index&&index.length%3!==0)||(!index&&p.count%3!==0))
+   throw Error('M2 C22 bounded original indexed face incidence required');
+  for(let face=0;face<faces;face++){
+   const ids=[0,1,2].map(i=>index?index[face*3+i]:face*3+i);
+   if(ids.some(v=>!Number.isSafeInteger(v)||v<0||v>=p.count))
+    throw Error('M2 C22 original indexed source triangle has invalid corner');
+   const contributions=ids.filter(v=>anchor.has(v)).map(v=>anchor.get(v));
+   if(!contributions.length)continue;
+   indexedFacesExamined++;
+   const mean=contributions.reduce((a,b)=>a+b,0)/contributions.length;
+   for(const v of ids){
+    if(anchor.has(v))continue;
+    neighborSum.set(v,(neighborSum.get(v)||0)+mean);
+    neighborCount.set(v,(neighborCount.get(v)||0)+1);
+   }
+  }
+  if(featheredNeighbors+neighborCount.size>maxNeighborVertices)
+   throw Error('M2 C22 indexed one-ring neighbor budget exhausted; cannot certify');
+  const out=held.slice();
+  for(const [v,sum] of neighborSum){
+   const adjustment=sum/neighborCount.get(v)*neighborWeight;
+   if(!Number.isFinite(adjustment)||Math.abs(adjustment)>.00900001)
+    throw Error('M2 C22 feathered depth outside bounded source face incidence');
+   if(Math.abs(adjustment)>1e-12){
+    out[v*3+2]+=adjustment;
+    featheredNeighbors++;
+    maxActual=Math.max(maxActual,Math.abs(adjustment));
+   }
+  }
+  for(let v=0;v<p.count;v++){
+   if(out[v*3]!==before[v*3]||out[v*3+1]!==before[v*3+1]||
+      !Number.isFinite(out[v*3+2])||
+      (!anchor.has(v)&&!neighborCount.has(v)&&out[v*3+2]!==before[v*3+2]))
+    throw Error('M2 C22 photo XY or unconnected source original vertex changed');
+  }
+  feathered.set(mesh,out);
+ }
+ if(anchored!==shortEdgeHold.countOnly.actuallyChangedDepthVertices||
+    featheredNeighbors>maxNeighborVertices)
+  throw Error('M2 C22 exact parent short-edge source anchor tally mismatch');
+ return Object.freeze({
+  privateOverrides:feathered,
+  countOnly:Object.freeze({
+   originalShortEdgeAnchors:anchored,
+   adjacentOriginalSourceFacesExamined:indexedFacesExamined,
+   oneRingVerticesMoved:featheredNeighbors,
+   maximumOneRingDepthMeters:maxActual,
+   oneRingPropagationWeight:neighborWeight,
+   maximumOneRingVertices:maxNeighborVertices,
+   photoXYSilhouetteBitIdentical:true,
+   sourceMeshAndShortEdgeProposalUnchanged:true,
+   originalSourceIndexedAdjacencyOnly:true,
+   nonIndexedVerticesNeverReconnected:true,
+   noCrossSeamInference:true,
+   noUVSkinWeightOrOriginalPhotoMutation:true,
+   noAutomaticallyAcceptedSourceGeometry:true,
+   requiresIndependentBodyPanelSelfAudits:true,
+   onePoseOnly:true,
+   notAdmissibleFor3DOrRelease:true,
+   noContactWaived:true,releaseAuthorized:false
+  })
+ });
+}
+
 export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
  {maxPairs=4096,sourceAreaStages=null}={}){
  if(!root||typeof root.updateMatrixWorld!=='function'||
