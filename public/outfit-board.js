@@ -403,19 +403,23 @@ async function refreshTrendLibrary(force=false){
 })();
 window.addEventListener('focus',()=>refreshTrendLibrary());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTrendLibrary();});setInterval(()=>refreshTrendLibrary(),3600000);
 
-async function reloadCloudBoard(){
+async function reloadCloudBoard({ownerDB=db,assertLease=()=>{}}={}){
+ assertLease();
  if(nativeLossless04Active){
   if(!nativeLossless04)throw Error('Private lossless reload unavailable');
   await nativeLossless04.load();
+  assertLease();
   currentBoard=nativeLossless04.view();
   savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
   syncBoardInputs();renderOutfitBoard();return;
  }
- const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
+ const auth=window.closetAuth,owner=auth?.user?.id;
+ assertLease();
  const state=await new Promise((resolve,reject)=>{
   const r=ownerDB.transaction('state').objectStore('state').get('outfit-board');
   r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
  });
+ assertLease();
  if(db!==ownerDB||window.closetAuth!==auth||auth?.user?.id!==owner)throw Error('Owner changed while reloading outfit draft');
  const loaded=cleanOutfitBoard(state?.current||{},items),stored=JSON.stringify(state?.current??null);
  if(boardHasUnsavedDraft()&&JSON.stringify(currentBoard)!==JSON.stringify(loaded)){
