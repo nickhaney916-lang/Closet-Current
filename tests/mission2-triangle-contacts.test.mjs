@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -573,4 +573,79 @@ test('area provenance identifies newly collapsed versus already tiny source face
  assert.equal(alreadySmall.byUniqueFaceAreaProvenance.preexistingSmall,1);
  assert.equal(alreadySmall.byUniqueFaceAreaProvenance.bothRegular,1);
  assert.equal(alreadySmall.byPairAreaProvenance.newlySmall,0);
+});
+
+
+test('real 163-bone source shell and two cap stages pinpoint collapsed faces without mutating original source identity',()=>{
+ const {root,garment}=simplePose(),meshes=[];
+ const input=[
+  0,0,0, 1,0,0, 0,1,0,
+  2,0,0, 3,0,0, 2,1,0
+ ];
+ for(const [n,side] of [
+  ['Work56-independent-shirt-shell',null],
+  ['Left-actual-independent-cap','L'],
+  ['Right-actual-independent-cap','R']
+ ]){
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(input,3));
+  const weights=new Float32Array(6*4);
+  for(let i=0;i<6;i++)weights[i*4]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(24),4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+  const mesh=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+  mesh.name=n;mesh.userData.work56Garment=true;
+  if(side)mesh.userData.work45IndependentShoulderCap=side;
+  mesh.bind(garment.skeleton);root.add(mesh);meshes.push(mesh);
+ }
+ const shirt={meshes};
+ const before=meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ const first=capturePhotoConstructionFaceAreas(root,shirt);
+ assert.equal(first.faceTotal,6);
+ assert.equal(first.smallTotal,0);
+ assert.equal(first.transientPrivateSourceFaceIds,true);
+ const shell=meshes[0].geometry.getAttribute('position');
+ shell.setXYZ(2,.5,0,0);shell.needsUpdate=true;
+ const photo=capturePhotoConstructionFaceAreas(root,shirt);
+ assert.equal(photo.smallTotal,1);
+ shell.setXYZ(2,0,1,0);shell.needsUpdate=true;
+ const left=meshes[1].geometry.getAttribute('position');
+ left.setXYZ(5,2.5,0,0);left.needsUpdate=true;
+ const owner=capturePhotoConstructionFaceAreas(root,shirt);
+ assert.equal(owner.smallTotal,1);
+ const delta=comparePhotoConstructionAreaStages(first,photo,owner);
+ assert.deepEqual(delta.stages,[
+  'anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']);
+ assert.equal(delta.totalOriginalSourceFaces,6);
+ assert.equal(delta.smallAtAnatomicalConstruction,0);
+ assert.equal(delta.smallAfterPhotoFit,1);
+ assert.equal(delta.smallAfterOwnerMaskFit,1);
+ assert.equal(delta.newlySmallDuringPhotoFit,1);
+ assert.equal(delta.recoveredDuringPhotoFit,0);
+ assert.equal(delta.newlySmallDuringOwnerMaskFit,1);
+ assert.equal(delta.recoveredDuringOwnerMaskFit,1);
+ assert.equal(delta.persistentlySmallFromAnatomicalStage,0);
+ assert.equal(delta.sourceTriangleIdentityUnchanged,true);
+ assert.equal(delta.noSourceFaceIdsCoordinatesOrOwnerFields,true);
+ assert.equal(delta.noCollisionWaived,true);
+ assert.equal(delta.releaseAuthorized,false);
+ assert.equal(delta.physicalClearanceVerified,false);
+ assert.deepEqual(delta.byGarmentMesh.map(m=>m.sourceFaceCount),[2,2,2]);
+ assert.deepEqual(delta.byGarmentMesh.map(m=>m.photoFitNewSmall),[1,0,0]);
+ assert.deepEqual(delta.byGarmentMesh.map(m=>m.ownerFitNewSmall),[0,1,0]);
+ assert.equal(JSON.stringify(delta).includes('sourceSHA256'),false);
+ assert.equal(JSON.stringify(delta).includes('indices'),false);
+ assert.equal(JSON.stringify(delta).includes('originalVertex'),false);
+ // Ephemeral audit flags are NOT allowed to be published as count-only source receipts.
+ assert.equal(JSON.stringify(first).includes('indices'),true);
+ const tampered={...photo,witnesses:photo.witnesses.map((w,i)=>
+  i? w:{...w,indices:w.indices.slice()})};
+ tampered.witnesses[0].indices[0]=5;
+ assert.throws(()=>comparePhotoConstructionAreaStages(first,tampered,owner),
+  /source triangle identity changed/);
+ assert.throws(()=>capturePhotoConstructionFaceAreas(root,{meshes:[meshes[0]]}),
+  /exactly original torso and two sewn cap/);
+ // Original vertices have been changed in this test fixture only; no source
+ // photographed JPEG or persistent account record was ever used or changed.
+ assert.deepEqual(meshes[2].geometry.getAttribute('position').array,before[2]);
 });
