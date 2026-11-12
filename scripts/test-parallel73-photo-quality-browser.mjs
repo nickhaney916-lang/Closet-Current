@@ -9,7 +9,7 @@ const app=await readFile('public/app.js','utf8');
 const start=app.indexOf('function renderPhotoResults('),end=app.indexOf('function render(){',start);
 assert.ok(start>=0&&end>start);
 const harness=[
- "const photoQualityHints73=new Map(),items=[],batch=[],localPending=new Set();",
+ "const photoQualityHints73=new WeakMap(),items=[],batch=[],localPending=new Set();",
  "const recognitionState={activeId:null},reviewFirst836=true;",
  "const $=id=>document.getElementById(id);",
  "const node=(tag,text,cl)=>{const el=document.createElement(tag);if(text)el.textContent=text;if(cl)el.className=cl;return el;};",
@@ -17,11 +17,12 @@ const harness=[
  "let renders=0,view='';",
  "const render=()=>{renders++;},switchView=name=>{view=name;};",
  "window.closetAuth={user:{id:'owner-A'}};",
- "window.init73=(photo,advice)=>{const item={id:'a',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',name:'Test photo',seasons:[],localAnalyzed:true,requiresOwnershipConfirmation:true};batch.splice(0,batch.length,item);photoQualityHints73.set(item.id,{item,source:item.image,owner:'owner-A',advice});renderPhotoResults($('grid'),batch);};",
- "window.refresh73=()=>{renderPhotoResults($('grid'),batch);return {visible:!!document.querySelector('.photo-extra'),view,photo:batch[0].image,adviceCount:photoQualityHints73.size};};",
+ "window.init73=(photo,advice)=>{const item={id:'a',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',name:'Test photo',seasons:[],localAnalyzed:true,requiresOwnershipConfirmation:true};batch.splice(0,batch.length,item);photoQualityHints73.set(item,{source:item.image,owner:'owner-A',advice});renderPhotoResults($('grid'),batch);};",
+ "window.refresh73=()=>{renderPhotoResults($('grid'),batch);return {visible:!!document.querySelector('.photo-extra'),view,photo:batch[0].image,adviceCount:Number(photoQualityHints73.has(batch[0]))};};",
  "window.changeSource73=photo=>{batch[0].image=photo;return window.refresh73();};",
+ "window.replaceSameId73=()=>{batch[0]={...batch[0]};return window.refresh73();};",
  "window.changeOwner73=owner=>{window.closetAuth.user.id=owner;return window.refresh73();};",
- "window.count73=()=>({kept:batch.length,view,adviceCount:photoQualityHints73.size});"
+ "window.count73=()=>({kept:batch.length,view,adviceCount:Number(photoQualityHints73.has(batch[0]))});"
 ].join('\n');
 for(const [name,engine] of Object.entries({chromium,webkit})){
  const browser=await engine.launch({headless:true,...(name==='chromium'?{args:['--no-sandbox']}: {})});
@@ -57,10 +58,12 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
    assert.equal((await page.evaluate(()=>window.changeSource73('replacement-photo'))).visible,false);
    await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
+   assert.equal((await page.evaluate(()=>window.replaceSameId73())).visible,false,'same ID must not inherit another object’s hints');
+   await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
    assert.equal((await page.evaluate(()=>window.changeOwner73('owner-B'))).visible,false);
    await page.locator('#photoQualityResearch73').uncheck();
    assert.equal(errors.length,0,errors.join('; '));
-   console.log('P73_BROWSER_NO_DEPLOY '+JSON.stringify({browser:name,width,offByDefault:true,retakeKeepsOriginal:true,sourceFence:true,ownerFence:true,pageErrors:0}));
+   console.log('P73_BROWSER_NO_DEPLOY '+JSON.stringify({browser:name,width,offByDefault:true,retakeKeepsOriginal:true,sourceFence:true,ownerFence:true,itemIdentityFence:true,pageErrors:0}));
    await page.close();
  }}finally{await browser.close();}
 }
