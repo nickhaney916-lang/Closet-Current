@@ -140,7 +140,8 @@ try{
     assert.equal(result.sourceOwnerId,B);
     assert.deepEqual(result.events.filter(x=>x.startsWith('changed:')),['changed:'+B,'changed:'+B]);
     assert.deepEqual(result.events.filter(x=>x.startsWith('index:')),['index:'+B,'index:'+B]);
-    assert.equal(result.events.filter(x=>x.startsWith('before:')&&x.endsWith(B)).length,0);
+    assert.equal(result.events.filter(x=>x==='before:closet-current-user-'+A).length,1);
+    assert.equal(result.events.filter(x=>x==='before:closet-current-user-'+B).length,3);
     assert.equal(external.filter(x=>x.method!=='GET').length,0);
     const shot=await page.screenshot({path:resolve(out,engine+'-'+width+'-queue-owner.png')});
     assert.equal((await sharp(shot).metadata()).width,width);
