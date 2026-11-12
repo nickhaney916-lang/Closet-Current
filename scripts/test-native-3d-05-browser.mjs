@@ -863,7 +863,43 @@ try{
          assert.deepEqual(mp.poses.map(p=>[
           p.shoulderLeftDegrees,p.shoulderRightDegrees,p.torsoDegrees]),
           [[8,-8,3],[-12,6,-5]]);
-         assert.equal(mp.onlyTwoPredeclaredArticulatedPoseSamples,true);
+         assert.equal(mp.twoPrescribedEndpointsAndSixIntermediateSamples,true);
+         assert.deepEqual(mp.intermediateFractions,[.25,.5,.75]);
+         assert.equal(mp.transitionPoseSamples.length,6);
+         assert.equal(mp.sampledTransitionCollisionAndUVOnly,true);
+         assert.equal(mp.noContinuousSweptVolumeCertificate,true);
+         assert.equal(mp.originalSourceGlbNotModifiedByIntermediateAudit,true);
+         assert.deepEqual(mp.transitionPoseSamples.map(p=>[
+          p.sourceEndpointPose,p.sourceJointInterpolationFraction]),[
+          ['bilateral-shoulder-8-torso-3',.25],
+          ['bilateral-shoulder-8-torso-3',.5],
+          ['bilateral-shoulder-8-torso-3',.75],
+          ['asymmetric-shoulder-12-torso-5',.25],
+          ['asymmetric-shoulder-12-torso-5',.5],
+          ['asymmetric-shoulder-12-torso-5',.75]
+         ]);
+         for(const frame of mp.transitionPoseSamples){
+          assert.equal(frame.interpolationUsesActualNamed163BoneJoints,true);
+          assert.equal(frame.intermediateSampleOnly,true);
+          assert.equal(frame.sweptBetweenSamplesNotTested,true);
+          assert.ok(frame.actualSkinnedGarmentVerticesMoved>0);
+          assert.equal(frame.trials.length,3);
+          assert.equal(frame.sourcePhotoUVSurfaceBaseline.releaseAuthorized,false);
+          assert.equal(frame.sourcePhotoSplitEdgeBaseline.releaseAuthorized,false);
+          const end=mp.poses.find(p=>p.pose===frame.sourceEndpointPose);
+          assert.ok(end);
+          for(const k of ['shoulderLeftDegrees','shoulderRightDegrees','torsoDegrees'])
+           assert.ok(Math.abs(frame[k]-
+            end[k]*frame.sourceJointInterpolationFraction)<1e-8);
+          for(const trial of frame.trials){
+           for(const key of ['newBody','newSeparatePanel','newSelf'])
+            assert.ok(Number.isSafeInteger(trial[key])&&trial[key]>=0);
+           assert.equal(trial.sourcePhotoUVSurfaceAudit.releaseAuthorized,false);
+           assert.equal(trial.sourcePhotoSplitEdgeAudit.releaseAuthorized,false);
+           assert.equal(trial.noAutomaticAdmission,true);
+           assert.equal(trial.continuousCollisionUnverified,true);
+          }
+         }
          assert.equal(mp.originalBoneRotationsAndGarmentPositionsRestored,true);
          assert.equal(mp.originalPhotoUVOwnerSourceUntouched,true);
          assert.equal(mp.noClothDynamicsSweptOrHumanVisualAcceptance,true);

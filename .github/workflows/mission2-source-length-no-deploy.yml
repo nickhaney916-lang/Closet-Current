@@ -32,6 +32,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-multipose-source-collision-20261112-HOLD
     - research/mission2-photo-uv-surface-pose-20261112-HOLD
     - research/mission2-uv-split-seam-pose-20261112-HOLD
+    - research/mission2-interpolated-3d-contact-samples-20261112-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -596,7 +597,30 @@ jobs:
          [[8,-8,3],[-12,6,-5]]);
         assert.equal(mp.originalBoneRotationsAndGarmentPositionsRestored,true);
         assert.equal(mp.originalPhotoUVOwnerSourceUntouched,true);
-        assert.equal(mp.onlyTwoPredeclaredArticulatedPoseSamples,true);
+        assert.equal(mp.twoPrescribedEndpointsAndSixIntermediateSamples,true);
+        assert.deepEqual(mp.intermediateFractions,[.25,.5,.75]);
+        assert.equal(mp.transitionPoseSamples.length,6);
+        assert.equal(mp.sampledTransitionCollisionAndUVOnly,true);
+        assert.equal(mp.noContinuousSweptVolumeCertificate,true);
+        assert.equal(mp.originalSourceGlbNotModifiedByIntermediateAudit,true);
+        for(const sample of mp.transitionPoseSamples){
+         assert.equal(sample.intermediateSampleOnly,true);
+         assert.equal(sample.interpolationUsesActualNamed163BoneJoints,true);
+         assert.equal(sample.sweptBetweenSamplesNotTested,true);
+         assert.ok(Number.isSafeInteger(sample.actualSkinnedGarmentVerticesMoved)&&
+          sample.actualSkinnedGarmentVerticesMoved>0);
+         assert.equal(sample.sourcePhotoUVSurfaceBaseline.releaseAuthorized,false);
+         assert.equal(sample.sourcePhotoSplitEdgeBaseline.releaseAuthorized,false);
+         assert.equal(sample.trials.length,3);
+         for(const trial of sample.trials){
+          for(const k of ['newBody','newSeparatePanel','newSelf'])
+           assert.ok(Number.isSafeInteger(trial[k])&&trial[k]>=0);
+          assert.equal(trial.noAutomaticAdmission,true);
+          assert.equal(trial.continuousCollisionUnverified,true);
+          assert.equal(trial.sourcePhotoUVSurfaceAudit.releaseAuthorized,false);
+          assert.equal(trial.sourcePhotoSplitEdgeAudit.releaseAuthorized,false);
+         }
+        }
         assert.equal(mp.allThreeIndependentCollisionTypesMeasured,true);
         assert.equal(mp.noClothDynamicsSweptOrHumanVisualAcceptance,true);
         assert.equal(mp.noAbsoluteZeroContactCertificate,true);
@@ -622,6 +646,13 @@ jobs:
           assert.equal(trial.releaseAuthorized,false);
          }
         }
+        const transitionCounts=k=>mp.transitionPoseSamples.map(p=>
+         p.trials.map(t=>t[k]).join(',')).join('/');
+        console.log('M2_SOURCE_INTERPOLATED_POSE_COUNTS_ONLY',
+         engine+'-fractions[25,50,75,25,50,75]-newBody['+
+         transitionCounts('newBody')+']-newPanel['+
+         transitionCounts('newSeparatePanel')+']-newSelf['+
+         transitionCounts('newSelf')+']');
         const poseNames=mp.poses.map(p=>p.pose).join(',');
         const poseCounts=key=>mp.poses.map(p=>p.trials.map(x=>x[key]).join(',')).join(' / ');
         console.log('M2_ACTUAL_SOURCE_163_BONE_MULTIPOSE_COUNTS_ONLY',

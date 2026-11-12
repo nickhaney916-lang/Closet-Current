@@ -1325,6 +1325,20 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
   {name:'asymmetric-shoulder-12-torso-5',
    shoulderLeftZ:-12,shoulderRightZ:6,torsoY:-5}
  ];
+ // P2-C29: six fixed interpolation samples (t=.25,.5,.75 toward each
+ // actual 163-bone endpoint). Real source joints are rotated—not the
+ // camera or photograph. At every sample baseline/body/panels/self, UV
+ // and source split-edge checks are rebuilt independently. This is
+ // DISCRETE sampling, never swept-geometry collision or cloth physics.
+ const fractions=[.25,.5,.75];
+ const transitionPoseCases=poseCases.flatMap(endPose=>fractions.map(f=>({
+  name:endPose.name+'-transition-'+String(Math.round(f*100)),
+  endpoint:endPose.name,sampleFraction:f,
+  shoulderLeftZ:endPose.shoulderLeftZ*f,
+  shoulderRightZ:endPose.shoulderRightZ*f,
+  torsoY:endPose.torsoY*f
+ })));
+ const transitionChecks=[];
  const restore=()=>{
   for(const [b,q] of original)b.quaternion.copy(q);
   root.updateMatrixWorld(true);
@@ -1339,7 +1353,7 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
  // original neutral garment. Never export correspondence or weld panels.
  const photoSplitEdgeWitness=preparePhotoUVSplitEdgeWitness(meshes,reference);
  try{
-  for(const pose of poseCases){
+  for(const pose of [...poseCases,...transitionPoseCases]){
    restore();
    for(const [bone,axis,degrees] of [
     [left[0],new THREE.Vector3(0,0,1),pose.shoulderLeftZ],
@@ -1416,8 +1430,15 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
      continuousCollisionUnverified:true,releaseAuthorized:false
     }));
    }
-   checks.push(Object.freeze({
+   const record=Object.freeze({
     pose:pose.name,
+    ...(pose.sampleFraction?{
+     sourceEndpointPose:pose.endpoint,
+     sourceJointInterpolationFraction:pose.sampleFraction,
+     interpolationUsesActualNamed163BoneJoints:true,
+     intermediateSampleOnly:true,
+     sweptBetweenSamplesNotTested:true
+    }:{}),
     shoulderLeftDegrees:pose.shoulderLeftZ,
     shoulderRightDegrees:pose.shoulderRightZ,
     torsoDegrees:pose.torsoY,
@@ -1429,7 +1450,9 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
     original163BoneSourcePose:true,
     sampledPoseOnly:true,
     notHumanFashionDrapeApproved:true,releaseAuthorized:false
-   }));
+   });
+   if(pose.sampleFraction)transitionChecks.push(record);
+   else checks.push(record);
   }
  }finally{
   restore();
@@ -1454,7 +1477,12 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
   throw Error('M2 C26 body/garment source skeleton bone quaternions not restored');
  return Object.freeze({
   poses:Object.freeze(checks),
-  onlyTwoPredeclaredArticulatedPoseSamples:true,
+  transitionPoseSamples:Object.freeze(transitionChecks),
+  twoPrescribedEndpointsAndSixIntermediateSamples:true,
+  intermediateFractions:Object.freeze([...fractions]),
+  sampledTransitionCollisionAndUVOnly:true,
+  noContinuousSweptVolumeCertificate:true,
+  originalSourceGlbNotModifiedByIntermediateAudit:true,
   originalBoneRotationsAndGarmentPositionsRestored:true,
   originalPhotoUVOwnerSourceUntouched:true,
   noClothDynamicsSweptOrHumanVisualAcceptance:true,
