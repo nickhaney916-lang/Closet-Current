@@ -1147,6 +1147,182 @@ export function buildResidualSourcePairZDirectionTrial(
  });
 }
 
+
+/**
+ * P2-C26. Measure disposable, still-unapproved photographic-source garment
+ * candidates on real DIFFERENT 163-bone articulated source shoulder/torso poses.
+ * Only named bones from the loaded original skeleton may be moved. Every bone
+ * quaternion and all original garment arrays are restored in finally.
+ *
+ * Comparing NEW source face pairs against baseline at EACH new pose does NOT
+ * prove swept collisions, pre-existing pair clearance or cloth dynamics.
+ * Body, separate garment panel and within-panel self audits are independent.
+ */
+export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
+ {maxTrials=3,maxNewContacts=40000}={}){
+ if(!root?.isObject3D||typeof root.traverse!=='function'||
+    !Array.isArray(meshes)||meshes.length<1||meshes.length>8||
+    new Set(meshes).size!==meshes.length||
+    !Array.isArray(trials)||trials.length<1||trials.length>maxTrials||
+    !Number.isSafeInteger(maxTrials)||maxTrials<1||maxTrials>6||
+    !Number.isSafeInteger(maxNewContacts)||maxNewContacts<1||maxNewContacts>100000)
+  throw Error('M2 C26 bounded actual original 163-bone source pose and candidates required');
+ const skeleton=meshes[0]?.skeleton,bones=skeleton?.bones;
+ if(!Array.isArray(bones)||bones.length!==163||
+    meshes.some(m=>!m?.isSkinnedMesh||m.skeleton?.bones?.length!==163||
+      m.skeleton.bones.some((b,i)=>b!==bones[i])))
+  throw Error('M2 C26 exactly one shared original anatomical 163-bone donor rig required');
+ const norm=name=>String(name||'').replaceAll('.','').toLowerCase();
+ const get=name=>bones.filter(b=>norm(b.name)===name);
+ const left=get('upperarm01l'),right=get('upperarm01r');
+ const torso=bones.filter(b=>/^(spine0?[123]|chest|torso|abdomen)$/.test(norm(b.name)));
+ if(left.length!==1||right.length!==1||torso.length<1)
+  throw Error('M2 C26 missing unambiguous original source shoulder and torso landmarks; do not claim multipose');
+ const backbone=torso[0];
+ if(new Set([left[0],right[0],backbone]).size!==3)
+  throw Error('M2 C26 source anatomical joint landmarks overlap');
+ const actual=new Set();
+ root.traverse(o=>{if(o.isBone)actual.add(o);});
+ if([left[0],right[0],backbone].some(b=>!actual.has(b)))
+  throw Error('M2 C26 source original pose bones must be attached to measured figure');
+ const original=new Map(bones.map(b=>[b,b.quaternion.clone()]));
+ const originalBuffers=new Map(meshes.map(m=>{
+  const p=m.geometry?.getAttribute('position');
+  if(!p?.isBufferAttribute||p.itemSize!==3||p.isInterleavedBufferAttribute||
+     !p.array?.every(Number.isFinite))
+   throw Error('M2 C26 complete finite original mesh positions required');
+  return [m,p.array.slice()];
+ }));
+ const names=new Set(),checks=[];
+ for(const trial of trials){
+  if(typeof trial?.name!=='string'||!/^(half-mm-separate|half-mm-reverse|one-mm-reverse)$/.test(trial.name)||
+     names.has(trial.name)||!(trial.overrides instanceof Map)||
+     trial.overrides.size!==meshes.length)
+   throw Error('M2 C26 predeclared unique private 0.5/1mm zero-new-contact candidates required');
+  names.add(trial.name);
+  for(const mesh of meshes){
+   const xy=trial.overrides.get(mesh),p=mesh.geometry.getAttribute('position');
+   if(!(xy instanceof Float32Array||xy instanceof Float64Array)||
+      xy.length!==p.count*3||!xy.every(Number.isFinite))
+    throw Error('M2 C26 finite original-photograph staged source vertices required');
+  }
+ }
+ // Each candidate starts from an independently assessed no-NEW-contact
+ // hypothesis; no winner, fit approval, original source JPEG or owner write.
+ const poseCases=[
+  {name:'bilateral-shoulder-8-torso-3',
+   shoulderLeftZ:8,shoulderRightZ:-8,torsoY:3},
+  {name:'asymmetric-shoulder-12-torso-5',
+   shoulderLeftZ:-12,shoulderRightZ:6,torsoY:-5}
+ ];
+ const restore=()=>{
+  for(const [b,q] of original)b.quaternion.copy(q);
+  root.updateMatrixWorld(true);
+  root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton?.update();});
+ };
+ const reference=meshes.map(mesh=>{
+  const g=posedGeometry(mesh);
+  try{return g.getAttribute('position').array.slice();}
+  finally{g.dispose();}
+ });
+ try{
+  for(const pose of poseCases){
+   restore();
+   for(const [bone,axis,degrees] of [
+    [left[0],new THREE.Vector3(0,0,1),pose.shoulderLeftZ],
+    [right[0],new THREE.Vector3(0,0,1),pose.shoulderRightZ],
+    [backbone,new THREE.Vector3(0,1,0),pose.torsoY]]){
+    bone.quaternion.multiply(new THREE.Quaternion()
+     .setFromAxisAngle(axis,THREE.MathUtils.degToRad(degrees)));
+   }
+   root.updateMatrixWorld(true);
+   root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton?.update();});
+   const poseMoved=meshes.reduce((acc,m,i)=>{
+    const g=posedGeometry(m);
+    try{
+     const a=g.getAttribute('position').array,b=reference[i];
+     if(a.length!==b.length)throw Error('M2 C26 actual source skinned pose vertices changed identity');
+     for(let j=0;j<a.length;j+=3){
+      const dx=a[j]-b[j],dy=a[j+1]-b[j+1],dz=a[j+2]-b[j+2];
+      if(dx*dx+dy*dy+dz*dz>1e-8)acc++;
+     }
+     return acc;
+    }finally{g.dispose();}
+   },0);
+   if(poseMoved<1)
+    throw Error('M2 C26 named original shoulder/torso bones failed to move actual photographed garment');
+   const baselineBody=measurePosedTriangleContacts(root,meshes,new Map(),{maxContacts:maxNewContacts});
+   const baselinePanel=measurePosedGarmentPartContacts(root,meshes,new Map(),{maxContacts:maxNewContacts});
+   const sourceSelf=measureChangedFaceSelfContactDelta(root,meshes,new Map());
+   if(sourceSelf.newlyIntersecting!==0||sourceSelf.collisionCertified!==false||
+      sourceSelf.originalSourceFaceIdentity!==true)
+    throw Error('M2 C26 original 163-bone source-pose self-contact witness incomplete');
+   const poseOut=[];
+   for(const trial of trials){
+    const body=comparePosedTriangleContacts(baselineBody,
+     measurePosedTriangleContacts(root,meshes,trial.overrides,{maxContacts:maxNewContacts}));
+    const panels=comparePosedTriangleContacts(baselinePanel,
+     measurePosedGarmentPartContacts(root,meshes,trial.overrides,{maxContacts:maxNewContacts}));
+    const self=measureChangedFaceSelfContactDelta(root,meshes,trial.overrides);
+    if(self.originalSourceFaceIdentity!==true||
+       self.completedUniqueAffectedPairComparison!==true||
+       self.sampledPoseOnly!==true||
+       self.collisionCertified!==false||self.releaseAuthorized!==false||
+       !Array.isArray(self.newlyIntersectingSourceKeys)||
+       self.newlyIntersectingSourceKeys.length!==self.newlyIntersecting)
+     throw Error('M2 C26 exact new skinned pose source-face delta missing');
+    poseOut.push(Object.freeze({
+     candidate:trial.name,
+     newBody:body.newlyIntersecting,newSeparatePanel:panels.newlyIntersecting,
+     newSelf:self.newlyIntersecting,
+     originalPoseBodyContactCount:baselineBody.triangleContactCount,
+     originalPoseSeparatePanelContactCount:baselinePanel.triangleContactCount,
+     poseOriginalSelfDelta:sourceSelf.newlyIntersecting,
+     originalOriginalSourceFacesPreserved:true,
+     originalPhotoXYAndSourceSkinPreserved:true,
+     noAutomaticAdmission:true,noContactWaived:true,
+     existingContactsNotCertifiedAsClear:true,
+     continuousCollisionUnverified:true,releaseAuthorized:false
+    }));
+   }
+   checks.push(Object.freeze({
+    pose:pose.name,
+    shoulderLeftDegrees:pose.shoulderLeftZ,
+    shoulderRightDegrees:pose.shoulderRightZ,
+    torsoDegrees:pose.torsoY,
+    actualSkinnedGarmentVerticesMoved:poseMoved,
+    trials:Object.freeze(poseOut),
+    original163BoneSourcePose:true,
+    sampledPoseOnly:true,
+    notHumanFashionDrapeApproved:true,releaseAuthorized:false
+   }));
+  }
+ }finally{
+  restore();
+  for(const [mesh,saved] of originalBuffers){
+   const a=mesh.geometry.getAttribute('position').array;
+   if(a.length!==saved.length||a.some((v,i)=>v!==saved[i]))
+    throw Error('M2 C26 original source mesh silently mutated during pose trial');
+  }
+ }
+ if([...original].some(([b,q])=>b.quaternion.angleTo(q)>1e-9))
+  throw Error('M2 C26 body/garment source skeleton bone quaternions not restored');
+ return Object.freeze({
+  poses:Object.freeze(checks),
+  onlyTwoPredeclaredArticulatedPoseSamples:true,
+  originalBoneRotationsAndGarmentPositionsRestored:true,
+  originalPhotoUVOwnerSourceUntouched:true,
+  noClothDynamicsSweptOrHumanVisualAcceptance:true,
+  noAbsoluteZeroContactCertificate:true,
+  distinctBilateralShoulderAndTorsoMotion:true,
+  allThreeIndependentCollisionTypesMeasured:true,
+  noExperimentAppliedOrSaved:true,
+  noCollisionWaived:true,
+  noAutomatic3DAdmission:true,
+  releaseAuthorized:false
+ });
+}
+
 export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
  {maxPairs=4096,sourceAreaStages=null}={}){
  if(!root||typeof root.updateMatrixWorld!=='function'||
