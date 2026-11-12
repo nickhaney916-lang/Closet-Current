@@ -262,7 +262,7 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
  if(typeof experimentalDepthTrial!=='boolean'||
     typeof counterfactualShortEdgeDepthTrial!=='boolean'||
     (counterfactualShortEdgeDepthTrial&&!experimentalDepthTrial))
-  fail('bounded source length or depth-only counterfactual requires explicit research opt-in');
+  fail('bounded depth experiment opt-in or short-edge counterfactual requires explicit research opt-in');
  const attempts=[];
  // Keep the established original four-candidate search unchanged.
  // Only an explicit research opt-in can add depth-only offset trials.
