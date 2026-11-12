@@ -27,8 +27,9 @@ export function verifyHistoricalSource71(manifest,sources){
     !m.conditions?.includes('visual-review')||!m.conditions?.includes('commons-public-photo')||
     !sha.test(s.sha256)||hashes.has(s.sha256)||!a?.license||
     !/^https:\/\/commons\.wikimedia\.org\/wiki\/File:/.test(a.source||'')||
-    origins.has(a.source)||m.source!==a.source||!a.licenseUrl||
-    !/^https?:\/\/creativecommons\.org\//.test(a.licenseUrl))
+    origins.has(a.source)||m.source!==a.source||
+    !(a.license==='Public domain'&&a.licenseUrl===''||
+      /^https?:\/\/creativecommons\.org\//.test(a.licenseUrl||'')))
    fail('missing license, unique original, frozen source, or publisher truth '+m.id);
   ids.add(m.id);hashes.add(s.sha256);origins.add(a.source);
   entries.push({id:m.id,sourceSha256:s.sha256,license:a.license,
