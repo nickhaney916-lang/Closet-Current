@@ -13,7 +13,7 @@ function extract(a,b){
 }
 const lease=extract('function ownerWardrobeMutationLease(){','function writeAll(values){');
 const edit=extract('function saveEditedGarment(updated,expected){','function removeItem(id){');
-const backup=extract("$('import').onchange=async e=>","window.addEventListener('pagehide'");
+const backup=extract("$('import').onchange=async e=>","window.addEventListener('beforeunload'");
 const jpeg='data:image/jpeg;base64,/9j/';
 const piece={id:'shared-row',image:jpeg,category:'Tops',color:'Blue',name:'Blue shirt'};
 const backupData={format:'closet-current',version:3,items:[piece]};

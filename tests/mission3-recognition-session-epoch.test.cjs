@@ -101,7 +101,8 @@ test('session lock clears previous scanner jobs, queue and loading state before 
  const worker={terminate:()=>events.push('terminated')};
  const ctx=context({
   window:{addEventListener:(name,handler)=>handlers[name]=handler},
-  captureOperationEpoch:0,automaticQueue:[old],localPending:new Set([old.id]),
+  captureOperationEpoch:0,videoImportSerial:0,videoImportActive:false,
+  photoImportSerial:0,photoImportActive:false,automaticQueue:[old],localPending:new Set([old.id]),
   automaticRunning:true,localBatch:true,localLoadPromise:Promise.resolve(),
   localReady:true,recognitionUnavailable:true,
   recognitionState:{phase:'loading',percent:64,activeId:old.id},

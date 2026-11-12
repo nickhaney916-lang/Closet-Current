@@ -71,9 +71,14 @@ let cameraMode=null,cameraOpening=false,cameraRequest=0,captureProofTaking=false
 // A logout invalidates every pre-existing asynchronous capture operation,
 // even if the same owner later signs back in with an identical user ID.
 let captureOperationEpoch=0;
+// A rapid background/foreground transition invalidates pending media work.
+let mediaLifecycleEpoch=0,videoImportSerial=0,videoImportActive=false,
+ photoImportSerial=0,photoImportActive=false;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 window.addEventListener('closet:session-locked',()=>{
  ++captureOperationEpoch;
+ ++videoImportSerial;videoImportActive=false;
+ ++photoImportSerial;photoImportActive=false;
  // AUTH36: immediately revoke all owner-visible local photo state. Supabase
  // signed RLS remains authoritative server-side; this protects stale tabs.
  stopCamera();
@@ -1144,13 +1149,17 @@ function waitEvent(target,event,timeout=15000){return new Promise((resolve,rejec
 async function upload(file){
  if(!file||busy)return;
  if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
- stopCamera();const epoch=captureOperationEpoch;busy=true;controls(true);
+ stopCamera();const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch,
+  importToken=++videoImportSerial;
+ videoImportActive=true;busy=true;controls(true);
  let url,confirmedFrames=0;
  const startLength=batch.length;
  const verified=typeof captureProof01Active!=='undefined'&&captureProof01Active;
  const owner=verified?captureProofOwner():null,ownerDB=db;
  const assertVideoLease=()=>{
-  if(epoch!==captureOperationEpoch||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB||document.hidden))
+  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||
+     importToken!==videoImportSerial||document.hidden||
+     verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))
    throw Error('Video import was interrupted by backgrounding or an account change. Only committed frames are saved.');
  };
  try{
@@ -1188,7 +1197,8 @@ async function upload(file){
  }catch(error){
   // A revoked video-import lease must not navigate or populate messages in
   // the next account's review screen, even after some older frames committed.
-  if(epoch!==captureOperationEpoch||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
+  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||
+      importToken!==videoImportSerial||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
   render();
   if(verified){
    const problem=String(error?.message||error);
@@ -1206,7 +1216,9 @@ async function upload(file){
  }finally{
   // An old video may finish after the next owner has started another capture.
   // Revoke its own blob but never reset the next owner's video/controls.
-  if(epoch===captureOperationEpoch){
+  if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&
+     importToken===videoImportSerial){
+   videoImportActive=false;
    busy=false;controls(false);
    video.removeAttribute('src');video.load();
    $('captureState').textContent='Ready for another batch';
@@ -1304,7 +1316,7 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    return;
   }
   if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
-window.addEventListener('pagehide',stopCamera);window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});document.addEventListener('visibilitychange',()=>{if(document.hidden&&(stream||cameraOpening)){stopCamera();message('Camera stopped while the app was in the background. Your photos are ready to review.');}});
+window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
  const auth=window.closetAuth,owner=auth?.user?.id,epoch=captureOperationEpoch;
@@ -1562,12 +1574,14 @@ $('retryRecognition').onclick=recognizeBatch;
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
- stopCamera();const epoch=captureOperationEpoch;busy=true;controls(true);session=0;
+ stopCamera();const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch,
+  importToken=++photoImportSerial;photoImportActive=true;busy=true;controls(true);session=0;
  try{
   const proofMode=(typeof captureProof01Active!=='undefined'&&captureProof01Active)||
    (typeof mobileCameraToCloset75Active!=='undefined'&&mobileCameraToCloset75Active);
   const owner=proofMode?captureProofOwner():null,ownerDB=db;
   const sameImportLease=()=>epoch===captureOperationEpoch&&
+   lifecycle===mediaLifecycleEpoch&&importToken===photoImportSerial&&!document.hidden&&
    (!proofMode||owner&&captureProofOwner()===owner&&db===ownerDB);
   if(proofMode&&!owner)throw Error('Please sign in before importing photos.');
   const decode=proofMode?file=>captureProofFromFile(file,owner):photoToJPEG;
@@ -1583,7 +1597,8 @@ async function importClothingPhotos(files){
   if(typeof render==='function')render();
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
- }finally{if(epoch===captureOperationEpoch){busy=false;controls(false);}}
+ }finally{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&
+     importToken===photoImportSerial){photoImportActive=false;busy=false;controls(false);}}
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
 $('singleCameraCapture').onchange=event=>{
@@ -1654,10 +1669,35 @@ async function reviewRecognitionMemory(){
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
 function pauseCameraOnInterruption(){
- if(!cameraOpening&&!stream)return false;
- stopCamera();
- $('captureState').textContent='Camera paused while the app was in the background · captured photos remain available to review';
- message('Camera paused while the app was in the background. Your captured photos remain available. Tap Start camera to continue.');
+ // Invalidate even a brief hidden->visible or BFCache transition.
+ ++mediaLifecycleEpoch;
+ const cameraWasActive=!!(cameraOpening||stream),videoWasActive=videoImportActive,
+  photosWereActive=photoImportActive;
+ if(cameraWasActive)stopCamera();
+ if(videoWasActive){
+  ++videoImportSerial;videoImportActive=false;
+  const source=video.getAttribute('src');
+  if(source?.startsWith('blob:')){
+   try{video.pause();}catch{}
+   video.removeAttribute('src');video.load();
+   URL.revokeObjectURL(source);
+  }
+  busy=false;controls(false);
+ }
+ if(photosWereActive){
+  ++photoImportSerial;photoImportActive=false;
+  busy=false;controls(false);
+ }
+ if(!cameraWasActive&&!videoWasActive&&!photosWereActive)return false;
+ $('captureState').textContent=videoWasActive?
+  'Video import interrupted · committed photos remain in Photo results':
+  photosWereActive?'Photo import paused · confirmed photos remain in Photo results':
+  'Camera paused · captured photos remain available to review';
+ message(videoWasActive?
+  'Video import stopped while the app was in the background. Only photos confirmed saved on this device are recoverable. Select the video again to continue.':
+  photosWereActive?'Photo import paused while the app was in the background. Confirmed photos remain saved for review. Select the remaining photos again to continue.':
+  'Camera paused while the app was in the background. Your committed photos remain available. Tap Start camera to continue.');
+ if(batch.length)render();
  return true;
 }
 document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCameraOnInterruption();});

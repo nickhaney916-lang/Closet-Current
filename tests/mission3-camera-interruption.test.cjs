@@ -28,9 +28,11 @@ function harness(grants=[]){
  const window={addEventListener:(name,fn)=>listeners.window.set(name,fn)};
  const navigator={mediaDevices:{getUserMedia(){const next=grants.shift();if(!next)throw Error('unexpected camera request');return next.promise;}}};
  const context={$,video,document,window,navigator,stream:null,timer:null,busy:false,cameraOpening:false,cameraRequest:0,
-  cameraMode:null,session:0,captureOperationEpoch:0,captureProofTaking:false,captureProof01Active:true,mobileCameraToCloset75Active:false,
+  cameraMode:null,session:0,captureOperationEpoch:0,mediaLifecycleEpoch:0,
+  videoImportSerial:0,videoImportActive:false,photoImportSerial:0,photoImportActive:false,
+  captureProofTaking:false,captureProof01Active:true,mobileCameraToCloset75Active:false,
   canvas:{},audio:null,stable:0,cadence:null,items:[{id:'private-saved'}],batch:[{id:'private-draft'}],
-  message:value=>messages.push(value),controls:value=>controls.push(value),
+  message:value=>messages.push(value),controls:value=>controls.push(value),render(){},
   crypto:{},Date,Number,Math,Error,clearInterval,setInterval};
  function $(id){return get(id);}
  vm.createContext(context);
