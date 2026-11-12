@@ -2,7 +2,7 @@
 
 ## Scope and immutable baseline
 - Exact compatible parent: draft PR #886, `213261a06510a4e00c781f2547b1492b629c2e45`, independent no-deploy signed two-owner baseline.
-- This isolated draft changes only `public/app.js`, `tests/mission3-camera-startup-session-lease.test.cjs`, this report and a dedicated NO DEPLOY workflow. No merge, deployment, hosted Supabase change, owner-data operation or protected-branch modification.
+- This isolated draft changes only `public/app.js`, the new source regression, one inherited `tests/capture.test.cjs` fixture, this report and a dedicated NO DEPLOY workflow. No merge, deployment, hosted Supabase change, owner-data operation or protected-branch modification.
 
 ## Identified defect in actual source
 - `startCamera()` awaited `video.play()`, then reset `session`, `sessionCount` and the last-capture image *before* checking whether a new account replaced the request.
@@ -20,8 +20,8 @@
 ## Reproducible independent verification
 - New source-extracted Node test executes the exact application `startCamera()` in a restricted VM.
 - Four cases: old `video.play()` resolution after owner switch; late old `getUserMedia()` finalizer during newer busy capture; deferred `AudioContext.resume()` after sign-out; ordinary successful same-owner manual camera start.
-- Dedicated CI uses the exact pinned P886 parent as EXPECT_BASELINE=1 and the patched app as current; guard refuses modifications outside the four scoped paths. It additionally runs inherited serial Node, local signed-JWT disposable PostgreSQL RLS and Chromium/WebKit synthetic mobile browser suites.
-- **Verification status: awaiting exact-head CI completion. Do not claim acceptance from source inspection or successful commit alone.**
+- Dedicated CI uses the exact pinned P886 parent as EXPECT_BASELINE=1 and the patched app as current; guard refuses modifications outside the five scoped paths. It additionally runs inherited serial Node, local signed-JWT disposable PostgreSQL RLS and Chromium/WebKit synthetic mobile browser suites.
+- **Verification status: awaiting exact-head CI completion.** Prior candidate revealed ten inherited source-extracted camera cases using an older VM context missing `captureOperationEpoch`. The fixture now declares the same neutral epoch zero as the real controller. No additional runtime changes were required. Do not claim acceptance from source inspection or successful commit alone.
 
 ## Remaining external release gates
 Physical Android Chrome and iPhone Safari camera lifecycle/memory; authorized hosted two-account Supabase sandbox; real garment recognition and photograph-to-3D integration. No real-owner cloud, staging or production was touched.
