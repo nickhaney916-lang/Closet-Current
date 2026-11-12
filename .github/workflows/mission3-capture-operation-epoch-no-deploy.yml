@@ -24,7 +24,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/photo-import.test.cjs|tests/mission3-video-private-draft-lease.test.cjs|tests/mission3-camera-interruption.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|tests/mission3-capture-operation-epoch.test.cjs|scripts/test-mission3-video-epoch-controls-browser.mjs|research/mission3-capture-operation-epoch/REPORT.md|.github/workflows/mission3-capture-operation-epoch-no-deploy.yml) ;;
+              public/app.js|tests/photo-import.test.cjs|tests/capture-proof-01.test.mjs|tests/mission3-video-private-draft-lease.test.cjs|tests/mission3-camera-interruption.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|tests/mission3-capture-operation-epoch.test.cjs|scripts/test-mission3-video-epoch-controls-browser.mjs|research/mission3-capture-operation-epoch/REPORT.md|.github/workflows/mission3-capture-operation-epoch-no-deploy.yml) ;;
               *) echo "Offline owner capacity gate refuses changed path: $p"; exit 1 ;;
             esac
           done
@@ -118,7 +118,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/photo-import.test.cjs|tests/mission3-video-private-draft-lease.test.cjs|tests/mission3-camera-interruption.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|tests/mission3-capture-operation-epoch.test.cjs|scripts/test-mission3-video-epoch-controls-browser.mjs|research/mission3-capture-operation-epoch/REPORT.md|.github/workflows/mission3-capture-operation-epoch-no-deploy.yml) ;;
+              public/app.js|tests/photo-import.test.cjs|tests/capture-proof-01.test.mjs|tests/mission3-video-private-draft-lease.test.cjs|tests/mission3-camera-interruption.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|tests/mission3-capture-operation-epoch.test.cjs|scripts/test-mission3-video-epoch-controls-browser.mjs|research/mission3-capture-operation-epoch/REPORT.md|.github/workflows/mission3-capture-operation-epoch-no-deploy.yml) ;;
               *) echo "Mission 3 refused unapproved changed path: $p"; exit 1 ;;
             esac
           done
