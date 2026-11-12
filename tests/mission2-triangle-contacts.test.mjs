@@ -637,7 +637,7 @@ test('real 163-bone source shell and two cap stages pinpoint collapsed faces wit
  assert.equal(JSON.stringify(delta).includes('indices'),false);
  assert.equal(JSON.stringify(delta).includes('originalVertex'),false);
  // Ephemeral audit flags are NOT allowed to be published as count-only source receipts.
- assert.equal(JSON.stringify(first).includes('indices'),true);
+ assert.equal(first.witnesses[0].indices instanceof Uint32Array,true);
  const tampered={...photo,witnesses:photo.witnesses.map((w,i)=>
   i? w:{...w,indices:w.indices.slice()})};
  tampered.witnesses[0].indices[0]=5;
