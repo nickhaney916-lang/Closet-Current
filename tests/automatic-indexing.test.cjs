@@ -42,7 +42,7 @@ test('new capture during an IndexedDB save is preserved',async()=>{
 test('model failure preserves all photos and retry processes the backlog',async()=>{
  const {c}=setup({request:async()=>{throw Error('model unavailable');}});c.candidate('one');c.candidate('two');await done(c);
  assert.equal(c.items.length,0);assert.equal(c.batch.length,2);assert.equal(c.localPending.size,0);
- c.localRequest=async()=>({strong:true,choices:[choice],details:{}});await c.recognizeBatch();await done(c);assert.equal(c.items.length,2);
+ c.localRequest=async()=>({strong:true,choices:[choice],details:{}});await c.recognizeBatch();await done(c);assert.equal(c.items.length,0,'missing color must not auto-save after retry');assert.equal(c.batch.length,2,'both recovered source drafts survive');assert.ok(c.batch.every(item=>item.localAnalyzed&&item.category==='Tops'&&item.requiresOwnershipConfirmation),'retry analyzes both; owner must confirm missing color');
 });
 test('photo checks reject uniform frames and preserve visible structure',()=>{
  const c={};vm.createContext(c);vm.runInContext(fs.readFileSync('public/photo-check.js','utf8'),c);
