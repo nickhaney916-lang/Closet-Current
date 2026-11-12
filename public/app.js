@@ -184,7 +184,7 @@ function renderPhotoResults(grid,results){
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
-  const hint73=photoQualityHints73.get(item.id);
+  const hint73=typeof photoQualityHints73==='undefined'?null:photoQualityHints73.get(item.id);
   if(hint73&&window.PhotoQualityResearch?.enabled()&&hint73.item===item&&
      hint73.source===(item.recognitionPhoto?.image||item.image)&&
      hint73.owner===window.closetAuth?.user?.id&&!saved){
