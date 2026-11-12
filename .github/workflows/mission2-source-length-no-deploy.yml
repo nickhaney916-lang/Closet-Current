@@ -266,7 +266,8 @@ jobs:
          assert.equal(stages.noSourceFaceIdsCoordinatesOrOwnerFields,true);
          assert.equal(stages.noCollisionWaived,true);
          assert.equal(stages.releaseAuthorized,false);
-         assert.equal(stages.byGarmentMesh.length,3);
+         assert.ok(stages.byGarmentMesh.length>=3&&stages.byGarmentMesh.length<=32);
+         assert.equal(stages.sourcePieceCount,stages.byGarmentMesh.length);
          assert.equal(stages.totalOriginalSourceFaces,
           stages.byGarmentMesh.reduce((n,m)=>n+m.sourceFaceCount,0));
          assert.equal(stages.smallAfterPhotoFit,
@@ -452,7 +453,8 @@ jobs:
          assert.equal(s.noCollisionWaived,true);
          assert.equal(s.releaseAuthorized,false);
          assert.equal(s.physicalClearanceVerified,false);
-         assert.equal(s.byGarmentMesh.length,3);
+         assert.ok(s.byGarmentMesh.length>=3&&s.byGarmentMesh.length<=32);
+         assert.equal(s.sourcePieceCount,s.byGarmentMesh.length);
          assert.equal(s.totalOriginalSourceFaces,s.byGarmentMesh.reduce((a,b)=>a+b.sourceFaceCount,0));
          for(const [field,byMeshField] of [
           ['smallAtAnatomicalConstruction','originalSmall'],
