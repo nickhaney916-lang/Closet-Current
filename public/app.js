@@ -68,11 +68,23 @@ let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,
 const closetPageSize136=48;
 let closetRendered136=closetPageSize136,closetQueryKey136='';
 let cameraMode=null,cameraOpening=false,cameraRequest=0,captureProofTaking=false;
+// A logout invalidates every pre-existing asynchronous capture operation,
+// even if the same owner later signs back in with an identical user ID.
+let captureOperationEpoch=0;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 window.addEventListener('closet:session-locked',()=>{
+ ++captureOperationEpoch;
  // AUTH36: immediately revoke all owner-visible local photo state. Supabase
  // signed RLS remains authoritative server-side; this protects stale tabs.
  stopCamera();
+ // Capture/video imports may still be awaiting a video seek or device write.
+ // Their stale finalizers are now fenced by captureOperationEpoch; release
+ // the controls and memory for the next owner immediately at session lock.
+ busy=false;captureProofTaking=false;controls(false);
+ const staleVideoSource=video.getAttribute('src');
+ if(staleVideoSource?.startsWith('blob:')){
+  video.removeAttribute('src');video.load();URL.revokeObjectURL(staleVideoSource);
+ }
  for(const job of localJobs.values()){
   clearTimeout(job.timer);job.reject(Error('Authenticated account session ended'));
  }
@@ -874,24 +886,26 @@ function captureTick(now=Date.now()){
   else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
- try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){captureProofPhoto().then(accepted=>{if(accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(reportCaptureCommitFailure);return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
+ try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){const epoch=captureOperationEpoch;captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(error=>reportCaptureCommitFailure(error,epoch));return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
 async function captureProofPhoto(){
  if(captureProofTaking||!stream||!cameraMode)return false;
- const owner=captureProofOwner(),request=cameraRequest;
+ const owner=captureProofOwner(),request=cameraRequest,epoch=captureOperationEpoch;
  if(!owner){message('Sign in again before adding a photo.');return false;}
  captureProofTaking=true;
  try{
   const width=video.videoWidth,height=video.videoHeight,image=snap();
   const proof=await captureProofFromJPEG(image,{width,height,origin:'camera'},owner);
-  if(request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
+  if(epoch!==captureOperationEpoch||request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
   const durable=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true});
-  return durable&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
- }finally{captureProofTaking=false;}
+  return durable&&epoch===captureOperationEpoch&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
+ }finally{if(epoch===captureOperationEpoch)captureProofTaking=false;}
 }
-function reportCaptureCommitFailure(error){
+function reportCaptureCommitFailure(error,epoch=captureOperationEpoch){
+ // Old owner camera promises are forbidden from updating new owner UI.
+ if(epoch!==captureOperationEpoch)return;
  if(typeof render==='function')render();
  if(error?.code==='CAPTURE_STORAGE_FAILED'){
   $('captureState').textContent='Photo in review · device storage not confirmed';
@@ -901,8 +915,9 @@ function reportCaptureCommitFailure(error){
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
-  captureProofPhoto().then(accepted=>{if(accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
-  .catch(reportCaptureCommitFailure);return;
+  const epoch=captureOperationEpoch;
+  captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
+  .catch(error=>reportCaptureCommitFailure(error,epoch));return;
  }
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
@@ -968,13 +983,13 @@ function waitEvent(target,event,timeout=15000){return new Promise((resolve,rejec
 async function upload(file){
  if(!file||busy)return;
  if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
- stopCamera();busy=true;controls(true);
+ stopCamera();const epoch=captureOperationEpoch;busy=true;controls(true);
  let url,confirmedFrames=0;
  const startLength=batch.length;
  const verified=typeof captureProof01Active!=='undefined'&&captureProof01Active;
  const owner=verified?captureProofOwner():null,ownerDB=db;
  const assertVideoLease=()=>{
-  if(verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB||document.hidden))
+  if(epoch!==captureOperationEpoch||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB||document.hidden))
    throw Error('Video import was interrupted by backgrounding or an account change. Only committed frames are saved.');
  };
  try{
@@ -1012,7 +1027,7 @@ async function upload(file){
  }catch(error){
   // A revoked video-import lease must not navigate or populate messages in
   // the next account's review screen, even after some older frames committed.
-  if(verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
+  if(epoch!==captureOperationEpoch||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
   render();
   if(verified){
    const problem=String(error?.message||error);
@@ -1028,10 +1043,14 @@ async function upload(file){
    switchView('review');
   }else message(error.message);
  }finally{
-  busy=false;controls(false);
-  video.removeAttribute('src');video.load();
+  // An old video may finish after the next owner has started another capture.
+  // Revoke its own blob but never reset the next owner's video/controls.
+  if(epoch===captureOperationEpoch){
+   busy=false;controls(false);
+   video.removeAttribute('src');video.load();
+   $('captureState').textContent='Ready for another batch';
+  }
   if(url)URL.revokeObjectURL(url);
-  $('captureState').textContent='Ready for another batch';
  }
 }
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
@@ -1277,25 +1296,28 @@ $('retryRecognition').onclick=recognizeBatch;
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
- stopCamera();busy=true;controls(true);session=0;
+ stopCamera();const epoch=captureOperationEpoch;busy=true;controls(true);session=0;
  try{
   const proofMode=(typeof captureProof01Active!=='undefined'&&captureProof01Active)||
    (typeof mobileCameraToCloset75Active!=='undefined'&&mobileCameraToCloset75Active);
-  const owner=proofMode?captureProofOwner():null;
+  const owner=proofMode?captureProofOwner():null,ownerDB=db;
+  const sameImportLease=()=>epoch===captureOperationEpoch&&
+   (!proofMode||owner&&captureProofOwner()===owner&&db===ownerDB);
   if(proofMode&&!owner)throw Error('Please sign in before importing photos.');
   const decode=proofMode?file=>captureProofFromFile(file,owner):photoToJPEG;
   const result=await readPhotoBatch(files,decode,async(decoded,file)=>{
-   if(proofMode&&captureProofOwner()!==owner)return false;
+   if(!sameImportLease())return false;
    const proof=proofMode?decoded:null;
    const accepted=await candidate(proof?proof.image:decoded,
      proof?{sourceProof:proof,requireDraftCommit:true,importFilename:file.name}:{importFilename:file.name});
-    return accepted;
+    return sameImportLease()&&accepted;
   });
+  if(!sameImportLease())return;
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
   if(typeof render==='function')render();
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
- }finally{busy=false;controls(false);}
+ }finally{if(epoch===captureOperationEpoch){busy=false;controls(false);}}
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
 $('singleCameraCapture').onchange=event=>{

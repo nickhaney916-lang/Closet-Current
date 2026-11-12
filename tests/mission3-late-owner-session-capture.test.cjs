@@ -111,7 +111,7 @@ function videoFixture(){
  };
  let owner=ownerA,processed=0;
  const ctx={
-  busy:false,db:ownerDB,batch:[],session:0,captureProof01Active:true,
+  busy:false,db:ownerDB,batch:[],session:0,captureOperationEpoch:0,captureProof01Active:true,
   document:{hidden:false},captureProofOwner:()=>owner,
   $:elem,stopCamera(){calls.push('stop')},controls:x=>calls.push('controls:'+x),
   video:{duration:11,videoWidth:320,videoHeight:240,src:'',
