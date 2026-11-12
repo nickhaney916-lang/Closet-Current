@@ -152,7 +152,31 @@ async function nativeIndex07Refresh(){
  catch(error){const status=$('boardSaveStatus');if(status)
   status.textContent='New clothing saved; outfit builder needs a safe reload. '+String(error.message||error);}
 }
-function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');for(const v of values)tx.objectStore('items').put(v);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).then(async value=>{await nativeIndex07Refresh();return value;});}
+function ownerWardrobeMutationLease(){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
+ const assertLease=()=>{
+  auth?.assertCurrent?.();
+  if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||
+     epoch!==captureOperationEpoch||db!==ownerDB||
+     ownerDB?.name!=='closet-current-user-'+owner)
+   throw Error('Private wardrobe changed accounts; reopen My Closet');
+ };
+ assertLease();
+ return {ownerDB,assertLease};
+}
+function writeAll(values){
+ const {ownerDB,assertLease}=ownerWardrobeMutationLease();
+ return queued(()=>new Promise((resolve,reject)=>{
+  try{
+   assertLease();
+   const tx=ownerDB.transaction('items','readwrite');
+   for(const value of values)tx.objectStore('items').put(value);
+   tx.oncomplete=()=>{try{assertLease();resolve();}catch(error){reject(error);}};
+   tx.onerror=()=>reject(tx.error);
+   tx.onabort=()=>reject(tx.error||Error('Private wardrobe update interrupted'));
+  }catch(error){reject(error);}
+ })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
+}
 // Compare the persisted garment inside the same transaction that saves it.
 // A stale editor must not resurrect a deleted piece or overwrite another tab.
 function saveEditedGarment(updated,expected){
@@ -169,7 +193,19 @@ function saveEditedGarment(updated,expected){
   tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Changes were not saved'));
  })).then(nativeIndex07Refresh);
 }
-function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);})).then(async value=>{await nativeIndex07Refresh();return value;});}
+function removeItem(id){
+ const {ownerDB,assertLease}=ownerWardrobeMutationLease();
+ return queued(()=>new Promise((resolve,reject)=>{
+  try{
+   assertLease();
+   const tx=ownerDB.transaction('items','readwrite');
+   tx.objectStore('items').delete(id);
+   tx.oncomplete=()=>{try{assertLease();resolve();}catch(error){reject(error);}};
+   tx.onerror=()=>reject(tx.error);
+   tx.onabort=()=>reject(tx.error||Error('Private garment removal interrupted'));
+  }catch(error){reject(error);}
+ })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
+}
 function persistDraft({required=false}={}){
  const owner=window.closetAuth?.user?.id,ownerDB=db;
  if(!ownerDB){
