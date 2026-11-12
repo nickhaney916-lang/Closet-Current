@@ -164,6 +164,7 @@ test('session lock revokes old blob and releases controls before the new owner b
   automaticQueue:[],localPending:new Set(),automaticRunning:false,
   localBatch:false,localLoadPromise:null,localReady:false,recognitionUnavailable:false,
   recognitionState:{phase:'idle',percent:null,activeId:null},sessionCapturedIds:new Set(),
+  memoryReviewTimer:null,memoryReviewRunning:false,
   db:{close(){calls.push('db.close')}},items:[{id:'former'}],batch:[{id:'former'}],
   failedDraftCaptures:new Set(['former']),
   URL:{revokeObjectURL:x=>calls.push('revoke:'+x)},

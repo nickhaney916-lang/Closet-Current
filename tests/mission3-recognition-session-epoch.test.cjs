@@ -105,7 +105,7 @@ test('session lock clears previous scanner jobs, queue and loading state before 
   automaticRunning:true,localBatch:true,localLoadPromise:Promise.resolve(),
   localReady:true,recognitionUnavailable:true,
   recognitionState:{phase:'loading',percent:64,activeId:old.id},
-  sessionCapturedIds:new Set([old.id]),
+  sessionCapturedIds:new Set([old.id]),memoryReviewTimer:null,memoryReviewRunning:false,
   localJobs:new Map(),localWorker:worker,
   stopCamera:()=>events.push('camera stop'),busy:true,captureProofTaking:true,
   controls:()=>{},video:{getAttribute:()=>null},
