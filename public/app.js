@@ -96,6 +96,10 @@ window.addEventListener('closet:session-locked',()=>{
  localBatch=false;localLoadPromise=null;localReady=false;recognitionUnavailable=false;
  recognitionState.phase='idle';recognitionState.percent=null;recognitionState.activeId=null;
  sessionCapturedIds.clear();
+ // Cancel the former owner's scheduled weekly model refresh immediately;
+ // its already-running async continuation uses an epoch/DB owner lease.
+ if(memoryReviewTimer!==null){clearTimeout(memoryReviewTimer);memoryReviewTimer=null;}
+ memoryReviewRunning=false;
  try{db?.close();}catch{}
  db=null;items=[];batch=[];failedDraftCaptures.clear();
  for(const image of document.querySelectorAll('#appShell img, dialog img')){
@@ -1353,24 +1357,61 @@ $('singleCameraCapture').onchange=event=>{
 $('singleCameraCapture').addEventListener('cancel',()=>{}); // Native picker cancel is intentionally a no-op.
 
 let memoryReviewTimer=null,memoryReviewRunning=false;
+// A weekly refresh is an asynchronous owner-private read and write, not an
+// account-independent scanner task. Re-login to the same user still revokes
+// the preceding session's lease through captureOperationEpoch.
+function memoryReviewOwnerLease(){
+ const epoch=captureOperationEpoch,ownerDB=db,owner=window.closetAuth?.user?.id;
+ const current=()=>epoch===captureOperationEpoch&&!!owner&&db===ownerDB&&
+  ownerDB?.name==='closet-current-user-'+owner&&window.closetAuth?.user?.id===owner;
+ return {epoch,ownerDB,owner,current};
+}
 function scheduleMemoryReview(){
  if(typeof ClothingMemory==='undefined'||memoryReviewTimer||memoryReviewRunning)return;
- memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},1500);
+ const lease=memoryReviewOwnerLease();
+ if(!lease.current())return;
+ const timer=setTimeout(()=>{
+  if(memoryReviewTimer!==timer||!lease.current())return;
+  memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});
+ },1500);
+ memoryReviewTimer=timer;
 }
 async function reviewRecognitionMemory(){
  if(typeof ClothingMemory==='undefined'||!db||memoryReviewRunning||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))return;
+ const lease=memoryReviewOwnerLease();
+ if(!lease.current())return;
  const week=ClothingMemory.week(),targets=items.filter(x=>(x.confirmedDetails||ClothingMemory.valid(x.recognitionMemory))&&(x.learningReviewedWeek!==week||!ClothingMemory.valid(x.recognitionMemory))).slice(0,8);
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
- try{if(!localReady)await enableLocal();for(const target of targets){
-  if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
-  const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
-  try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
-  const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
-  if(!ClothingMemory.valid(result.recognitionMemory))continue;
-  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+ try{
+  if(!localReady)await enableLocal();
+  if(!lease.current())return;
+  for(const target of targets){
+   if(!lease.current()||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
+   const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
+   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
+   // A different owner can import a backup with exactly the same row id and
+   // source JPEG. Row comparison is not an account/session attestation.
+   if(!lease.current())break;
+   const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
+   if(!ClothingMemory.valid(result.recognitionMemory))continue;
+   const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}
+   const saved=await saveMemoryReview(value);
+   if(!lease.current())break;
+   if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+  }
+ }finally{
+  if(lease.current()){
+   memoryReviewRunning=false;render();
+   if(completed===8&&!memoryReviewTimer){
+    const timer=setTimeout(()=>{
+     if(memoryReviewTimer!==timer||!lease.current())return;
+     memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});
+    },20000);
+    memoryReviewTimer=timer;
+   }
+  }
  }
- }finally{memoryReviewRunning=false;render();if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);}
 }
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
@@ -1385,13 +1426,25 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)pauseCamera
 window.addEventListener('pagehide',pauseCameraOnInterruption);
 
 
-function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
- let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
- read.onsuccess=()=>{const current=read.result;if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
- saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
- if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
- };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-}));}
+function saveMemoryReview(value){
+ const lease=memoryReviewOwnerLease();
+ if(!lease.current())return Promise.resolve(null);
+ return queued(()=>new Promise((resolve,reject)=>{
+  if(!lease.current())return resolve(null);
+  let saved=null;
+  const tx=lease.ownerDB.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
+  read.onsuccess=()=>{
+   if(!lease.current()){tx.abort();return;}
+   const current=read.result;
+   if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
+   saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
+   if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;
+   store.put(saved);
+  };
+  tx.oncomplete=()=>resolve(lease.current()?saved:null);
+  tx.onerror=tx.onabort=()=>lease.current()?reject(tx.error||Error('Weekly memory write aborted')):resolve(null);
+ })).then(saved=>lease.current()?saved:null);
+}
 
 setInterval(scheduleMemoryReview,60*60*1000);
 
