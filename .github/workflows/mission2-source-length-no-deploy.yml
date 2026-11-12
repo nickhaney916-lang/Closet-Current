@@ -26,6 +26,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-short-edge-stage-uv-skin-20261111-HOLD
     - research/mission2-counterfactual-short-edge-depth-20261111-HOLD
     - research/mission2-neighborhood-depth-relaxation-20261111-HOLD
+    - research/mission2-one-ring-weight-sweep-20261112-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -476,6 +477,38 @@ jobs:
          assert.ok(Number.isSafeInteger(n[metric])&&n[metric]>=0);
         assert.equal(n.heldNewSelfContacts,cf.depthHoldNewSelfContacts);
         assert.equal(n.originNewSelfContacts,cf.originalProposalNewSelfContacts);
+        assert.equal(cf.predeclaredOneRingWeightsOnly,true);
+        assert.equal(cf.noAutomaticSweepWinner,true);
+        assert.deepEqual(cf.oneRingSweep.map(x=>x.oneRingPropagationWeight),[.25,.5,.75]);
+        assert.deepEqual(cf.oneRingSweep[1],n);
+        for(const x of cf.oneRingSweep){
+         assert.equal(x.originalShortEdgeAnchors,cf.actuallyChangedDepthVertices);
+         assert.equal(x.photoXYSilhouetteBitIdentical,true);
+         assert.equal(x.originalSourceIndexedAdjacencyOnly,true);
+         assert.equal(x.nonIndexedVerticesNeverReconnected,true);
+         assert.equal(x.noCrossSeamInference,true);
+         assert.equal(x.noUVSkinWeightOrOriginalPhotoMutation,true);
+         assert.equal(x.comparisonOriginalSourceFaceKeysNeverSerialized,true);
+         assert.equal(x.unchangedCollisionAdmissionPolicy,true);
+         assert.equal(x.notAdmissibleFor3DOrRelease,true);
+         assert.equal(x.releaseAuthorized,false);
+         assert.ok(Number.isSafeInteger(x.residualUniqueOriginalSourceFaces));
+         assert.equal(x.residualUniqueSourceFacesByMesh.reduce((s,v)=>s+v,0),
+          x.residualUniqueOriginalSourceFaces);
+         assert.equal(x.retainedOriginalProposalNewSelfPairs+
+          x.newlyIntroducedVersusOriginalProposalSelfPairs,x.featherNewSelfContacts);
+         for(const metric of ['featherNewBodyContacts','featherNewPanelContacts',
+          'featherNewSelfContacts'])
+          assert.ok(Number.isSafeInteger(x[metric])&&x[metric]>=0);
+        }
+        const sweep=(k)=>cf.oneRingSweep.map(v=>v[k]).join(',');
+        console.log('M2_ONE_RING_SWEEP_CONTACT_COUNTS_ONLY',
+         engine+'-weights[25,50,75]-self['+sweep('featherNewSelfContacts')+
+         ']-body['+sweep('featherNewBodyContacts')+
+         ']-panel['+sweep('featherNewPanelContacts')+
+         ']-uniqueFaces['+sweep('residualUniqueOriginalSourceFaces')+
+         ']-retained['+sweep('retainedOriginalProposalNewSelfPairs')+
+         ']-newPairs['+sweep('newlyIntroducedVersusOriginalProposalSelfPairs')+']');
         console.log('M2_ONE_RING_FEATHER_CONTACT_COUNTS_ONLY',
          engine+'-anchors['+n.originalShortEdgeAnchors+
          ']-neighbors['+n.oneRingVerticesMoved+
