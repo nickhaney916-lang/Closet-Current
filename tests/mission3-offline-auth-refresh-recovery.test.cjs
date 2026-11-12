@@ -19,7 +19,7 @@ function fixture(kind='offline'){
   });
   return els.get(id);
  };
- $('appShell');$('authGate');$('authStatus');
+ $('appShell');$('authGate');$('authStatus');$('authEmail');$('authPassword');
  const location={hash:'',search:'',pathname:'/',reloadCount:0,reload(){this.reloadCount++;}};
  const state={kind};
  const fetch=async(path)=>{
