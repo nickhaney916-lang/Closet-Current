@@ -30,7 +30,7 @@ jobs:
           test "$(wc -l </tmp/p67-02-files)" -eq 6
           while IFS= read -r p; do
             case "$p" in
-              scripts/parallel67-independent-siglip-scoring.mjs|scripts/parallel67-run-siglip-real16.mjs|scripts/parallel67-compare-fashion-real16.mjs|tests/parallel67-independent-siglip-evidence.test.mjs|research/parallel67-fashion-siglip-real-model-02/REPORT.md|.github/workflows/parallel67-fashion-siglip-real-model-02-no-deploy.yml) ;;
+              scripts/parallel67-independent-siglip-scoring.mjs|scripts/parallel67-run-fashion-split-onnx-real16.mjs|scripts/parallel67-compare-fashion-real16.mjs|tests/parallel67-independent-siglip-evidence.test.mjs|research/parallel67-fashion-siglip-real-model-02/REPORT.md|.github/workflows/parallel67-fashion-siglip-real-model-02-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED OWNER, ML, PRODUCTION, CLOUD OR RELEASE MODIFICATION $p"; exit 1 ;;
             esac
           done </tmp/p67-02-files
@@ -42,7 +42,7 @@ jobs:
       - name: Actual native application regression, independent score and compare adversarial tests
         run: |
           set -euo pipefail
-          node --check scripts/parallel67-run-siglip-real16.mjs
+          node --check scripts/parallel67-run-fashion-split-onnx-real16.mjs
           node --check scripts/parallel67-compare-fashion-real16.mjs
           node --test tests/parallel67-independent-siglip-evidence.test.mjs
           node scripts/build.mjs
@@ -74,7 +74,7 @@ jobs:
       - name: Actually run quantized Marqo fashion model on sixteen locally decoded real originals
         run: |
           set -euo pipefail
-          node scripts/parallel67-run-siglip-real16.mjs benchmark/p67-fashion-real16 fashion-siglip
+          node scripts/parallel67-run-fashion-split-onnx-real16.mjs benchmark/p67-fashion-real16
       - name: Upload source-ID/numeric-only garment-category evidence, not any model weights or private original JPEG
         uses: actions/upload-artifact@v4
         if: success()
