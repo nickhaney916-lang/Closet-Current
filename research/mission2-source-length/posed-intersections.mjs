@@ -1,6 +1,7 @@
 /** Real posed triangle intersection diagnostic. Does not prove signed clearance or swept collision. */
 import * as THREE from 'three';
 import {MeshBVH} from '../../node_modules/three-mesh-bvh/build/index.module.js';
+import {preparePhotoUVSplitEdgeWitness} from './split-edge-continuity.mjs';
 function posedGeometry(mesh,override){
  const p=mesh.geometry?.getAttribute('position');
  if(!p||p.count<3||!mesh.geometry.index&&p.count%3)throw Error('M2 indexed posed triangle surface required');
@@ -1334,6 +1335,9 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
   try{return g.getAttribute('position').array.slice();}
   finally{g.dispose();}
  });
+ // P2-C28 source UV split-edge identity is captured ONCE in the real
+ // original neutral garment. Never export correspondence or weld panels.
+ const photoSplitEdgeWitness=preparePhotoUVSplitEdgeWitness(meshes,reference);
  try{
   for(const pose of poseCases){
    restore();
@@ -1364,6 +1368,7 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
     throw Error('M2 C26 named original shoulder/torso bones failed to move actual photographed garment');
    const sourceUVSurfaceBaseline=auditSourcePhotoUVSurfaceAtPose(
     root,meshes,reference,posedBaselines);
+   const sourceUVSplitEdgeBaseline=photoSplitEdgeWitness.measure(root,posedBaselines);
    const baselineBody=measurePosedTriangleContacts(root,meshes,new Map(),{maxContacts:maxNewContacts});
    const baselinePanel=measurePosedGarmentPartContacts(root,meshes,new Map(),{maxContacts:maxNewContacts});
    const sourceSelf=measureChangedFaceSelfContactDelta(root,meshes,new Map());
@@ -1390,9 +1395,15 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
        uvSurface.uvMappedFaces!==sourceUVSurfaceBaseline.uvMappedFaces||
        uvSurface.uvDegenerateFaces!==sourceUVSurfaceBaseline.uvDegenerateFaces)
      throw Error('M2 C27 source UV/face identity diverged during candidate pose');
+    const split=photoSplitEdgeWitness.measure(root,posedBaselines,trial.overrides);
+    if(split.sourcePhotoSplitUVEdgePairs!==sourceUVSplitEdgeBaseline.sourcePhotoSplitUVEdgePairs||
+       split.originalAlreadyOpenPairs!==sourceUVSplitEdgeBaseline.originalAlreadyOpenPairs||
+       split.releaseAuthorized!==false||split.noOriginalSourceMutation!==true)
+     throw Error('M2 C28 source split UV edge identity or source pose baseline changed');
     poseOut.push(Object.freeze({
      candidate:trial.name,
      sourcePhotoUVSurfaceAudit:uvSurface,
+     sourcePhotoSplitEdgeAudit:split,
      newBody:body.newlyIntersecting,newSeparatePanel:panels.newlyIntersecting,
      newSelf:self.newlyIntersecting,
      originalPoseBodyContactCount:baselineBody.triangleContactCount,
@@ -1412,6 +1423,8 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
     torsoDegrees:pose.torsoY,
     actualSkinnedGarmentVerticesMoved:poseMoved,
     sourcePhotoUVSurfaceBaseline:sourceUVSurfaceBaseline,
+    sourcePhotoSplitEdgeBaseline,
+    sourcePhotoSplitEdgeSourceSummary:photoSplitEdgeWitness.sourceSummary,
     trials:Object.freeze(poseOut),
     original163BoneSourcePose:true,
     sampledPoseOnly:true,
