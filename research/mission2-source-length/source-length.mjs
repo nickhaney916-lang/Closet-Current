@@ -48,6 +48,15 @@ export function classifySourceLengthContactAttempt(v){
 }
 export const classifySourceLengthCandidateException=e=>{
  const message=String(e?.message||'');
+ if(message.includes('M2 C26 exactly one shared original anatomical'))return 'multipose-unshared-original-rig';
+ if(message.includes('M2 C26 missing unambiguous original source shoulder and torso'))return 'multipose-anatomical-bones-missing';
+ if(message.includes('M2 C26 source original pose bones must be attached'))return 'multipose-bones-not-in-figure';
+ if(message.includes('M2 C26 named original shoulder/torso bones failed to move'))return 'multipose-no-source-garment-vertex-motion';
+ if(message.includes('M2 C26 original 163-bone source-pose self-contact witness incomplete'))return 'multipose-rest-source-self-witness';
+ if(message.includes('M2 C26 exact new skinned pose source-face delta missing'))return 'multipose-source-face-witness';
+ if(message.includes('M2 C26 original source mesh silently mutated'))return 'multipose-original-geometry-mutated';
+ if(message.includes('M2 C26 body/garment source skeleton bone quaternions not restored'))return 'multipose-bone-restoration';
+ if(message.includes('M2 C26'))return 'multipose-preflight-failed';
  if(message.includes('new posed body intersection pairs'))return 'coarse-body-pair-regression';
  if(message.includes('M2 triangle audit exceeds bounded contact budget'))return 'body-contact-budget';
  if(message.includes('M2 garment part audit exceeds bounded contact budget'))return 'panel-contact-budget';
