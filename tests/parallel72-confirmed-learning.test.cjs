@@ -10,7 +10,7 @@ const garment=(id,idx,extra={})=>({id,image:photo(idx),category:'Tops',
  itemType:'Polo',color:'Blue',pattern:'Striped',sleeveLength:'Short sleeve',
  fit:'Regular',recognitionMemory:mem(),...extra});
 const learning=async(scope,g)=>{
- const token=await M.begin72(g,scope);
+ const token=await M.begin72(g,scope,{reviewedKeys:['category','itemType','pattern','sleeveLength','fit']});
  assert.ok(token,'original + model required for review');
  const learned=await M.accept72(g,token,scope,{ownerChecked:true});
  assert.ok(learned?.correctionReceipt72);
@@ -147,4 +147,24 @@ test('P72 old proposal cannot change a different source, crop, owner or model',a
  assert.equal((await M.apply72(q,s,b,{ownerChecked:true})).itemType,'Unknown');
  M.close72(a);assert.equal((await M.apply72(q,s,a,{ownerChecked:true})).itemType,'Unknown');
  M.close72(b);
+});
+
+test('P72 merely checking category/type never certifies untouched AI pattern, sleeves or fit',async()=>{
+ const a=M.open72({ownerId:'private-A',sessionId:'session-0010'});
+ const refs=[];
+ for(const [id,n] of [['one',1],['two',2]]){
+  const garmentCandidate=garment(id,n,{pattern:'Striped',sleeveLength:'Short sleeve',fit:'Regular'});
+  const token=await M.begin72(garmentCandidate,a);
+  const accepted=await M.accept72(garmentCandidate,token,a,{ownerChecked:true});
+  assert.deepEqual(Object.keys(accepted.confirmedDetails).sort(),['category','itemType']);
+  refs.push(accepted);
+ }
+ const query=garment('new',3,{itemType:'Unknown',pattern:'Unknown',sleeveLength:'Unknown',fit:'Unknown'});
+ const proposal=await M.suggest72(query,refs,a);
+ assert.equal(proposal.fields.itemType,'Polo');
+ assert.equal(proposal.fields.pattern,undefined);
+ assert.equal(proposal.fields.sleeveLength,undefined);
+ assert.equal(proposal.fields.fit,undefined);
+ assert.equal(proposal.fields.color,undefined);
+ M.close72(a);
 });
