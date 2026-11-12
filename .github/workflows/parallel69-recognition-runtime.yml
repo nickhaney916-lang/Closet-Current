@@ -1,0 +1,85 @@
+name: Parallel 69 recognition runtime NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/local-worker.mjs'
+      - 'public/outfit-worker.mjs'
+      - 'public/benchmark-runner.mjs'
+      - 'tests/recognition-worker.test.mjs'
+      - 'tests/outfit-worker.test.mjs'
+      - 'scripts/summarize-recognition-runtime.mjs'
+      - '.github/workflows/parallel69-recognition-runtime.yml'
+      - 'docs/parallel69-runtime-report.md'
+permissions:
+  contents: read
+jobs:
+  regression-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact checked-out commit
+        run: |
+          git rev-parse HEAD
+          git status --porcelain
+      - name: Verify source syntax
+        run: |
+          node --check public/local-worker.mjs
+          node --check public/outfit-worker.mjs
+          node --check public/benchmark-runner.mjs
+          node --check scripts/summarize-recognition-runtime.mjs
+      - name: Static application build only, never deploy
+        run: node scripts/build.mjs
+      - name: All Node regressions
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+
+  paired-real-chromium-no-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Record machine and exact head
+        run: |
+          git rev-parse HEAD
+          uname -a
+          node --version
+      - name: Install headless browser, no deployments
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Download 11 legally verified locked sources
+        run: node scripts/download-reviewed-photos.mjs benchmark/manifest-fresh-11.json
+      - name: Build identical website and alternate baseline/candidate worker
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          mkdir -p benchmark/parallel69
+          git show 8c3355350303399e9edc2e98beaf9de15d601282:public/local-worker.mjs > dist/local-worker.mjs
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/parallel69/baseline-A
+          cp public/local-worker.mjs dist/local-worker.mjs
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/parallel69/candidate-A
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/parallel69/candidate-B
+          git show 8c3355350303399e9edc2e98beaf9de15d601282:public/local-worker.mjs > dist/local-worker.mjs
+          node scripts/run-browser-photo-benchmark.mjs benchmark/manifest-fresh-11.json benchmark/parallel69/baseline-B
+      - name: Verify output parity and summarize wall-clock distributions
+        run: |
+          node scripts/summarize-recognition-runtime.mjs benchmark/parallel69/baseline-A/results.json benchmark/parallel69/candidate-A/results.json | tee benchmark/parallel69/paired-A.json
+          node scripts/summarize-recognition-runtime.mjs benchmark/parallel69/baseline-B/results.json benchmark/parallel69/candidate-B/results.json | tee benchmark/parallel69/paired-B.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel69-paired-real-inference
+          path: benchmark/parallel69/
+          retention-days: 14
