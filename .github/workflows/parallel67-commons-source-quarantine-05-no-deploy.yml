@@ -1,0 +1,76 @@
+name: PARALLEL 67 quarantine licensed hard-confusion original-photo candidates — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel67-hard-confusion-source-quarantine-05-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel67-hard-confusion-quarantine-05-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  exact-fashion-parent-and-native-source-safety-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact green fashion-based source parent and FOUR new research-only files
+        run: |
+          set -euo pipefail
+          BASE=42dd05cb3378fdb103d16408d4751460054d35e9
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p67-05-paths
+          cat /tmp/p67-05-paths
+          test "$(wc -l </tmp/p67-05-paths)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/parallel67-commons-source-intake-05.mjs|tests/parallel67-commons-source-intake-05.test.mjs|research/parallel67-hard-confusion-source-quarantine-05/REPORT.md|.github/workflows/parallel67-commons-source-quarantine-05-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED PHOTO MODEL/OWNER/CLOUD/DEPLOY CHANGE $p"; exit 1 ;;
+            esac
+          done </tmp/p67-05-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel67-hard-confusion-source-quarantine-05/REPORT.md
+          echo P67_05_EXACT_PARENT_FOUR_RESEARCH_PATHS_ZERO_AUTOLABELS
+      - name: Install only ephemeral original app regression dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Verify no auto label or training promotion and run all original Node app regressions
+        run: |
+          set -euo pipefail
+          node --check scripts/parallel67-commons-source-intake-05.mjs
+          node --test tests/parallel67-commons-source-intake-05.test.mjs
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-Wikimedia-licensed-candidate-metadata-NOT-training-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Query real Commons imageinfo rights metadata without requesting image pixels or labeling from filenames
+        run: |
+          set -euo pipefail
+          node scripts/parallel67-commons-source-intake-05.mjs benchmark/p67-hard-confusion-unreviewed
+          node -e '
+            const x=require("./benchmark/p67-hard-confusion-unreviewed/unreviewed-candidates.json");
+            if(x.schema!=="closet-current-parallel67-unlabeled-public-source-quarantine/v1"||!x.requiresIndependentHumanClothingLabels||x.dataForTraining||x.candidates.some(y=>y.originalGarmentLabel!==null||y.sourcePixelsSha256!==null||y.reviewerA!==null||y.status!=="quarantine_not_training_ground_truth"))process.exit(1);
+            console.log("P67_05_SOURCE_DISCOVERY_CANDIDATES",x.candidateCount,JSON.stringify(x.bySearch));
+            if(x.candidateCount<10)throw Error("Insufficient real licensed source candidates for meaningful review; do not fabricate dataset.");
+          '
+      - name: Preserve only verifiable Commons source URL/license metadata, no personal images or claimed labels
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: P67-05-UNLABELED-LICENSE-SCREENED-CANDIDATE-METADATA-NOT-TRAINING-HOLD
+          path: benchmark/p67-hard-confusion-unreviewed/unreviewed-candidates.json
+          retention-days: 14
+          if-no-files-found: error
