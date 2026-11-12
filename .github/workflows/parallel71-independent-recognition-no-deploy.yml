@@ -1,0 +1,146 @@
+name: Parallel 71 independent recognition evidence and duplicate-save guard — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel71-independent-recognition-acceptance-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel71-HOLD-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-source-provenance-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P841 parent; only six permitted no-deploy paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=899f1962d53546ec15ff62e8af3a1bcbf937dbdb
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p71-changed
+          cat /tmp/p71-changed
+          test "$(wc -l < /tmp/p71-changed)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              public/app.js|scripts/parallel71-evidence.mjs|scripts/test-parallel71-repeat-submit.mjs|tests/parallel71-evidence.test.mjs|research/parallel71-independent-recognition/REPORT.md|.github/workflows/parallel71-independent-recognition-no-deploy.yml) ;;
+              *) echo "P71 OUT OF SCOPE $p"; exit 1 ;;
+            esac
+          done < /tmp/p71-changed
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/outfit-worker.mjs public/recognition-engine.mjs public/recognition-vectors.bin public/recognition-vectors.json benchmark supabase)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel71-independent-recognition/REPORT.md
+          grep -Fq "get('recognitionAcceptance71')==='1'" public/app.js
+          echo P71_P841_PINNED_NO_DEPLOY
+      - name: Ephemeral node dependencies (no lockfile changes)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Evidence source validation and synthetic tamper tests
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check scripts/parallel71-evidence.mjs
+          node --check scripts/test-parallel71-repeat-submit.mjs
+          node scripts/parallel71-evidence.mjs --manifest-only
+          node --test tests/parallel71-evidence.test.mjs
+      - name: Full native regression and static no-account research build
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  actual-source-browser-save-race-HOLD:
+    needs: [native-source-provenance-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual browser engines (not physical phones)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Baseline duplicate write reproduced, candidate blocked at 320 390 430
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel71-repeat-submit.mjs parent
+          node scripts/test-parallel71-repeat-submit.mjs candidate
+          node scripts/test-m1-owner-review-editor-839.mjs
+  genuine-previously-exposed-originals-HOLD:
+    needs: [native-source-provenance-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        half: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original SHA-verified permitted publisher photos; no private wardrobe
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          IDS=$(node -e 'const m=require("./benchmark/manifest-holdout-16.json");const h=process.argv[1];process.stdout.write(m.filter((_,i)=>i%2===(h==="a"?0:1)).map(x=>x.id).join(","))' "${{ matrix.half }}")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+      - name: Actual pinned unchanged FashionCLIP browser worker, eight genuine originals
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node scripts/run-m1-real-16-originals-834.mjs ${{ matrix.browser }} ${{ matrix.half }} benchmark/parallel71-real16/p71-${{ matrix.browser }}-${{ matrix.half }}
+      - name: Upload numeric source-ID receipts only — absolutely no JPEG originals
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: p71-${{ matrix.browser }}-${{ matrix.half }}
+          path: |
+            benchmark/parallel71-real16/p71-${{ matrix.browser }}-${{ matrix.half }}/audit.json
+            benchmark/parallel71-real16/p71-${{ matrix.browser }}-${{ matrix.half }}/source-receipt.json
+          retention-days: 14
+          if-no-files-found: error
+  verified-historical-ledger-HOLD:
+    needs: [genuine-previously-exposed-originals-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Download all four required genuine photo source-ID receipts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: p71-*
+          merge-multiple: false
+          path: benchmark/parallel71-real16
+      - name: Reject missing or forged original source, license, count or partition
+        run: node scripts/parallel71-evidence.mjs benchmark/parallel71-real16
+      - name: Preserve only numeric ledger, SHA manifest and explicitly unknown fields
+        uses: actions/upload-artifact@v4
+        with:
+          name: parallel71-historical-real-photo-numeric-ledger-HOLD
+          path: benchmark/parallel71-real16/parallel71-evidence.json
+          retention-days: 14
+          if-no-files-found: error
