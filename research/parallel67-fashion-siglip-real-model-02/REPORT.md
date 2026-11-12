@@ -1,0 +1,23 @@
+# Closet Current Parallel #67 — Milestone 2: independent fashion-specialized SigLIP (research, NOT RELEASE)
+
+**FAMILY ALPHA HOLD #255. Draft and unmerged, no production/staging, no private owner photos, no family-account or user-facing recognition change.** Parent: [P67-01 PR #895](https://github.com/nickhaney916-lang/Closet-Current/pull/895), exact independently verified source `e1d64de88bb27b46f01bd42ddc9d4bd432d355dd`, [Actions #43149987612](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43149987612) **2/2 green** with 267 native Node tests and actual 16 original SHA-approved public Commons photos.
+
+## Evidence-backed reason for second candidate
+The genuine independent generic [Google SigLIP](https://huggingface.co/google/siglip-base-patch16-224) run ranked broad category correctly on **10/13** historically used garments, subtypes on **4/13**, and non-clothing **0/3**. Still got T-shirt→Sweatshirt, both blouse→Tunic and one sneakers→Ankle boots; both dresses incorrect. Sigmoid top1 is **not** acceptance or certainty; automatically saving the raw top-ranked guess is forbidden.
+
+This new candidate is [Marqo/marqo-fashionSigLIP](https://huggingface.co/Marqo/marqo-fashionSigLIP) (Apache-2.0; ONNX Transformers.js format), **fine-tuned for fashion e-commerce categories, materials, style and details**, not merely another crop of the same model. Exact model revision `782eaf7a0b95411ac96893d2300d1a61a2bcb757`, published **after** ONNX browser support was added. Quantized `q8` CPU, actual local original JPEG inference, no hosted image recognition and no cloud writes. Model weights downloaded from Hugging Face, excluded from GitHub artifacts.
+
+## Actual implementation
+- Extend research runner to choose only **two explicitly pinned models**, `base-siglip` or `fashion-siglip`. The original code and original model source remain unchanged, and no live closet uses either. Both models score the **same exact 46? (derived from actual catalog)** text labels and 16 SHA-verified historical public JPEGs in the same order.
+- Extend fail-closed scoring to include the model ID and immutable 40-char revision. All result filenames, image bytes, owner accounts, tokens, wardrobes, cloud APIs are absent from published receipts.
+- `scripts/parallel67-compare-fashion-real16.mjs` checks that both exact-model numeric artifacts contain all 16 identical source IDs, exact same frozen human category/subtype annotation and no runtime failures. It compares **forced top1 rankings vs forced top1 rankings**, not the unrelated original FashionCLIP acceptance metrics. Reports new correct labels AND previously correct labels made wrong, category, subtype and negative-control coverage.
+- Eight adversarial tests including exact-model allowlist, missing originals, numeric inflation, changed source label, aborted result and forbidden auto acceptance.
+- Dedicated **no-deploy 3-job CI**: exact P67-01 parent with six allowlisted research/test/report/CI paths, full Node/native regression, actual fresh Marqo pretrained model inference on public original JPEG files with SHA before call, and an aggregate job that downloads the exact already successful P67-01 generic original model artifact from run **#43149987612** for a true sourcewise comparison.
+
+## Acceptance decisions
+This is still a **development-exposed 16-original dataset** chosen before this experiment, not a blinded new-photo acceptance set. Only improvements in ranking can be identified; neither SigLIP candidate has calibrated error probabilities, actual saved-closet auto-save safety evidence, color truth, or separate segmentation capacity. **The model remains research-only even if it beats generic SigLIP**.
+
+If promising, next #67 milestone is independently human annotated ≥200 previously unseen real clothing photos and physical mobile inference costs; only after sealed evaluation consider user-facing classifier path and per-class confidence gating. Any model that misclassifies pet/wall/blank images is unsafe for automated closet save, regardless of other scores. Protect Family Alpha HOLD #255, leave both models unintegrated until owner acceptance.
+
+## Final status
+Do not say verified/improved until exact-final-head 3/3 jobs green and actual numeric comparison from both archived models is available.
