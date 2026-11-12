@@ -53,3 +53,23 @@ test('P840 isolated footwear segmentation is disabled by default and enabled onl
  disabled.c.startOutfitSplit('data:image/jpeg;base64,AAAA');
  assert.equal(disabled.c.worker.request.instanceReview840,undefined,'incorrect flag value not enabled');
 });
+
+test('P841 connected footwear evidence survives actual capture adapter without auto-save',()=>{
+ const h=setup({href:'https://example.test/closet?outfitInstances840=1'});
+ const photo='data:image/jpeg;base64,AAAB';h.c.startOutfitSplit(photo,'source-footwear');
+ assert.equal(h.c.worker.request.instanceReview840,true);
+ h.emit({type:'piece',piece:{
+  label:'Shoes',image:'data:image/jpeg;base64,AABC',
+  hint:{categories:['Shoes'],types:[],clipped:false,confidence:.94,
+   instanceMethod:'connected_footwear_component',instanceIndex:2,requiresReview:true,requiresPairReview:true},
+  cropBounds:{x:.1,y:.7,width:.12,height:.1}
+ }});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.batch[0].outfitSourceId,'source-footwear');
+ assert.equal(h.c.batch[0].originalPhoto.image,photo);
+ assert.equal(h.c.batch[0].segmentHint.instanceMethod,'connected_footwear_component');
+ assert.equal(h.c.batch[0].segmentHint.requiresPairReview,true);
+ assert.equal(h.c.batch[0].requiresOwnershipConfirmation,true);
+});
