@@ -50,7 +50,15 @@ async function runCase(engine,width){
    }
    window.workerRecord.onmessage({data:{id:window.workerRecord.request.id,type:'done',count:2}});
   },[sha(11),sha(12),sha(222)]);
-  await page.getByRole('button',{name:'Confirm matching pair',exact:true}).waitFor({timeout:15000});
+  await page.waitForTimeout(750);
+  console.log('BROWSER70_DEBUG '+JSON.stringify(await page.evaluate(()=>({
+    flags:{instanceReview840:window.workerRecord?.request?.instanceReview840,units70:window.workerRecord?.request?.instanceReview70},
+    draftCount:batch.length,sourceIds:batch.map(x=>x.outfitSourceId),statuses:batch.map(x=>x.reconciliation70Status),
+    reviewHidden:document.getElementById('outfitPieceActions').hidden,panelHidden:document.getElementById('outfitUnitReview70').hidden,
+    panelText:document.getElementById('outfitUnitReview70').textContent.slice(0,350),
+    scripts:[...document.scripts].map(x=>x.src)
+  })),errors));
+  await page.getByRole('button',{name:'Confirm matching pair',exact:true}).waitFor({timeout:7000});
   let state=await page.evaluate(()=>({drafts:batch.length,closet:items.length,statuses:batch.map(x=>x.reconciliation70Status),flag:window.workerRecord.request.instanceReview70}));
   assert.equal(state.drafts,2);assert.equal(state.closet,0);assert.equal(state.flag,true);
   await page.getByRole('button',{name:'Confirm matching pair',exact:true}).click();
