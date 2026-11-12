@@ -634,6 +634,135 @@ export function summarizeChangedFaceSelfContactRegions(root,meshes,overrides,sel
  * returned. Neither class nor geometric seam evidence changes admission:
  * EVERY new triangle intersection is still rejected by the source fitter.
  */
+
+/** P2-C20. Count-only donor-local trace of short edges actually implicated
+ * in NEW exact source-face self contacts; never serialize inputs or face keys.
+ * Source snapshots must be captured before P62, after P62 and after P190.
+ * Identical UVs are NOT certified source seams, equal skin weights do NOT
+ * certify anatomical fit and no tiny/short face is automatically repaired.
+ */
+function traceContactLinkedNearEdges(meshes,contactFaceKeys,sourceAreaStages){
+ if(sourceAreaStages!==null&&(!Array.isArray(sourceAreaStages)||
+    sourceAreaStages.length!==3||sourceAreaStages.some(s=>
+     s?.transientPrivateSourceFaceIds!==true||s.neverSerialize!==true||
+     !Array.isArray(s.witnesses)||s.witnesses.length!==meshes.length)))
+  throw Error('M2 C20 complete private original three-stage witnesses required');
+ const stageNames=['anatomical','afterPhoto62','afterOwner190'],
+  shapes=['regularNotTiny','pointMicro','nearCoincidentEdge','thinSliver','smallButWellShaped'];
+ const stages=sourceAreaStages?stageNames.map(stage=>({stage,
+  counts:Object.fromEntries(shapes.map(name=>[name,0]))})):null;
+ const origins={anatomical:0,photoFit:0,ownerFit:0};
+ const uvStatus={unavailable:0,nearSameUV:0,differentUV:0};
+ const skinStatus={same:0,different:0};
+ const shapeAt=(idx,xyz)=>{
+  const sq=(i,j)=>{
+   const x=xyz[i*3]-xyz[j*3],y=xyz[i*3+1]-xyz[j*3+1],
+    z=xyz[i*3+2]-xyz[j*3+2];return x*x+y*y+z*z;
+  };
+  const pairs=[[idx[0],idx[1]],[idx[1],idx[2]],[idx[2],idx[0]]],
+   edges=pairs.map(([a,b])=>sq(a,b)),edgeSum=edges.reduce((a,b)=>a+b,0),
+   [a,b,c]=idx;
+  const ux=xyz[b*3]-xyz[a*3],uy=xyz[b*3+1]-xyz[a*3+1],uz=xyz[b*3+2]-xyz[a*3+2],
+   vx=xyz[c*3]-xyz[a*3],vy=xyz[c*3+1]-xyz[a*3+1],vz=xyz[c*3+2]-xyz[a*3+2],
+   cx=uy*vz-uz*vy,cy=uz*vx-ux*vz,cz=ux*vy-uy*vx,
+   crossSq=cx*cx+cy*cy+cz*cz,
+   min=Math.min(...edges),max=Math.max(...edges),
+   ratio=edgeSum?2*Math.sqrt(3)*Math.sqrt(crossSq)/edgeSum:0;
+  if(![...edges,crossSq].every(Number.isFinite))
+   throw Error('M2 C20 nonfinite private original source face');
+  return {shape:crossSq>=1e-10?'regularNotTiny':
+   max<1e-8?'pointMicro':min<1e-8?'nearCoincidentEdge':
+   ratio<.05?'thinSliver':'smallButWellShaped',
+   shortPair:pairs[edges.indexOf(min)]};
+ };
+ const influences=(g,v)=>{
+  const weights=g.getAttribute('skinWeight'),bones=g.getAttribute('skinIndex');
+  if(!weights||!bones||weights.itemSize!==4||bones.itemSize!==4||
+     weights.count!==g.getAttribute('position').count||
+     bones.count!==g.getAttribute('position').count)
+   throw Error('M2 C20 source 163-bone influence attributes required');
+  let total=0;const vec=new Float64Array(163);
+  for(let k=0;k<4;k++){
+   const idx=bones.getComponent(v,k),w=weights.getComponent(v,k);
+   if(!Number.isSafeInteger(idx)||idx<0||idx>=163||!Number.isFinite(w)||w<0||w>1)
+    throw Error('M2 C20 invalid actual source skin influence');
+   vec[idx]+=w;total+=w;
+  }
+  if(!Number.isFinite(total)||total<.00001)
+   throw Error('M2 C20 missing source skin normalization');
+  return vec.map(value=>value/total);
+ };
+ let shortCount=0;
+ for(const sourceKey of contactFaceKeys){
+  const [m,f]=sourceKey.split(':').map(Number),g=meshes[m]?.geometry,
+   p=g?.getAttribute('position'),ix=g?.index?.array,
+   count=ix?ix.length/3:p?.count/3;
+  if(!p?.isBufferAttribute||p.itemSize!==3||p.isInterleavedBufferAttribute||
+     !Number.isSafeInteger(count)||!Number.isSafeInteger(f)||f<0||f>=count||
+     !p.array.every(Number.isFinite))
+   throw Error('M2 C20 canonical source face must be bounded and finite');
+  const idx=[0,1,2].map(k=>ix?ix[f*3+k]:f*3+k);
+  if(idx.some(v=>!Number.isSafeInteger(v)||v<0||v>=p.count))
+   throw Error('M2 C20 original source face index out of range');
+  const current=shapeAt(idx,p.array);
+  if(current.shape!=='nearCoincidentEdge')continue;
+  shortCount++;
+  if(stages){
+   const traced=sourceAreaStages.map((snap,stage)=>{
+    const w=snap.witnesses[m];
+    if(w?.mesh!==meshes[m]||w.faceCount!==count||
+       !(w.indices instanceof Uint32Array)||w.indices.length!==3*count||
+       !(w.localXYZ instanceof Float32Array)||w.localXYZ.length!==p.array.length||
+       !w.localXYZ.every(Number.isFinite)||
+       idx.some((v,k)=>w.indices[f*3+k]!==v))
+     throw Error('M2 C20 original three-stage face identity mismatch');
+    const evidence=shapeAt(idx,w.localXYZ);
+    stages[stage].counts[evidence.shape]++;
+    return evidence.shape;
+   });
+   if(traced[2]!==current.shape||idx.some(v=>[0,1,2].some(axis=>
+     p.array[v*3+axis]!==sourceAreaStages[2].witnesses[m].localXYZ[v*3+axis])))
+    throw Error('M2 C20 original owner stage changed before depth trial');
+   origins[traced[0]==='nearCoincidentEdge'?'anatomical':
+    traced[1]==='nearCoincidentEdge'?'photoFit':'ownerFit']++;
+  }
+  const [u,v]=current.shortPair,uv=g.getAttribute('uv');
+  if(!uv)uvStatus.unavailable++;
+  else {
+   if(!uv.isBufferAttribute||uv.isInterleavedBufferAttribute||uv.itemSize<2||
+      uv.count!==p.count||
+      ![uv.getX(u),uv.getY(u),uv.getX(v),uv.getY(v)].every(Number.isFinite))
+    throw Error('M2 C20 actual UV source evidence invalid');
+   const du=uv.getX(u)-uv.getX(v),dv=uv.getY(u)-uv.getY(v);
+   if(du*du+dv*dv<1e-10)uvStatus.nearSameUV++;
+   else uvStatus.differentUV++;
+  }
+  const x=influences(g,u),y=influences(g,v);
+  const disagreement=x.reduce((n,w,k)=>n+Math.abs(w-y[k]),0);
+  if(disagreement>.02)skinStatus.different++;
+  else skinStatus.same++;
+ }
+ const total=v=>Object.values(v).reduce((a,n)=>a+n,0);
+ if(total(uvStatus)!==shortCount||total(skinStatus)!==shortCount||
+    (stages&&(total(origins)!==shortCount||
+      stages.some(s=>total(s.counts)!==shortCount))))
+  throw Error('M2 C20 contact-linked short-edge lineage totals incomplete');
+ return Object.freeze({
+  nearCoincidentAffectedFaces:shortCount,
+  stageSourceEvidenceComplete:stages!==null,
+  shortEdgeShapeBySourceStage:stages?Object.freeze(stages.map(s=>
+   Object.freeze({stage:s.stage,counts:Object.freeze({...s.counts})}))):null,
+  nearEdgeFirstObservedStage:stages?Object.freeze(origins):null,
+  shortEdgeUVEndpointEvidence:Object.freeze(uvStatus),
+  shortEdge163BoneInfluenceEvidence:Object.freeze(skinStatus),
+  uvSamenessIsNotProofOfSewnSeams:true,
+  skinDisagreementIsNotProofOfRigDefect:true,
+  onlyOneSourcePoseAndOneLicensedBlouse:true,
+  sourcePositionsUVsFaceKeysAndBonesPrivate:true,
+  noGeometryEdited:true,noContactWaived:true,releaseAuthorized:false
+ });
+}
+
 export function classifyNewSourceSelfContactTypes(root,meshes,overrides,selfDelta,
  {maxPairs=4096}={}){
  if(!root||typeof root.updateMatrixWorld!=='function'||
