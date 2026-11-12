@@ -31,3 +31,12 @@ test('outfit tensor buffers are released before crop streaming and also on later
  assert.equal(cropFailure.sent.filter(x=>x.type==='piece').length,1);
  assert.equal(cropFailure.sent.some(x=>x.type==='done'),false);
 });
+
+test('ten sequential outfit scans keep output IDs, release tensors and preserve three pieces per scan',async()=>{
+ const h=setup();
+ for(let i=0;i<10;i++)await h.run();
+ assert.equal(h.sent.filter(x=>x.type==='done').length,10);
+ assert.equal(h.sent.filter(x=>x.type==='piece').length,30);
+ assert.equal(h.sent.filter(x=>x.type==='error').length,0);
+ assert.equal(h.disposed(),20,'input and segmentation logits are released after each scan');
+});

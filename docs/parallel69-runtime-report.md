@@ -48,3 +48,18 @@ Candidate hosted Linux Chromium wall-clock worker samples:
 Browser-level elapsed p50/p95 was 670/2587 ms (reviewed), 610/1356 (holdout), 594/1462 (fresh), versus 432/1691, 385/928, 372/856 on the prior main run. **These are separate hosted machines/dates, so the apparent slowdown is only an uncontrolled observation, NOT a justified before/after speed claim.** The new paired 11-photo A–B–B–A headless Chromium workflow compares the exact same baseline and candidate workers on one runner, sharing verified images/model version and app content, and fails on output parity differences. It is still desktop CI, NOT mobile device acceptance.
 
 Software-level zero recognition-output changes is not proof of 10/10 garment accuracy. Pending genuinely paired browser results, memory peak instrumentation, Android/iPhone hardware stress.
+
+## Matched same-run benchmark: verified, no warm speedup claimed
+
+At exact HEAD `463545e4f5f87b66cd5ffcd460c4a328f3aa2748`, [NO DEPLOY Actions #43265346890](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43265346890), the paired-real Chromium job ran SHA-verified fresh11 photos in **A–B–B–A order**: baseline `8c335535...` worker, candidate worker twice, then baseline again, with the same checked-out app, source files, labels/model weights and Linux hosted runner. All four sessions were actual FashionCLIP inference; all 44 scans completed with zero errors.
+
+| Run | Baseline elapsed p50/p95 (ms) | Candidate elapsed p50/p95 (ms) | Baseline/candidate cold wall load (ms) | Prediction/review changes |
+| --- | ---: | ---: | ---: | ---: |
+| Pair A (11 photos each) | 612 / 1280 | 586 / 1296 | 2520 / 2657 | 0 |
+| Pair B (11 photos each) | 589 / 1413 | 601 / 1218 | 2814 / 2625 | 0 |
+
+Both pairs passed `scripts/summarize-recognition-runtime.mjs` fail-closed output comparisons. Matched per-photo elapsed differences averaged -9.3 ms and -12.1 ms (candidate minus baseline); median paired differences -10 ms and +4 ms, respectively. **These small mixed results are not strong evidence of actual speedup**, and cannot be generalized to mobile CPUs or downloads. Candidate model worker inference p50/p95 469/971 ms (pair A), 480/994 ms (pair B). Chromium uses a separate runner process from actual phones; no model peak memory measurement yet.
+
+[Paired artifact #13965647098](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43265346890/artifacts/13965647098) ZIP SHA-256 `ee725f53aff4be1272b1fab4700bc2b76a2b9b83a768a723b4102d641e0cc66c`, verified by independent downloaded archive checksum. Both `paired-A.json` and `paired-B.json` record parity=true, missing=0, changedOutputIds=[] for all 11 matching original photo IDs. No garment/photo bytes or accounts were included in this report.
+
+**Result:** worker input/resource hardening, instrumented reproducible latency and output parity are verified. Normal-traffic recognition speed is **not demonstrated to improve**, and physical mobile and peak-RSS gates stay OPEN. Do not merge based solely on these tests.

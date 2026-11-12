@@ -57,3 +57,17 @@ test('worker includes numeric request-scoped timing without changing recognition
  assert.ok(['loadMs','decodeMs','inferenceMs','totalMs'].every(key=>Number.isFinite(result.runtimeMetrics[key])&&result.runtimeMetrics[key]>=0));
  assert.equal(h.loads.length,2,'one vision model and one processor loaded');
 });
+
+test('thirty queued recognition requests reuse one model and recover after a bad request',async()=>{
+ const h=setup();
+ h.c.self.onmessage({data:{id:'invalid-first',type:'classify',image:'data:image/png;base64,AAAA'}});
+ for(let i=0;i<30;i++)h.c.self.onmessage({data:{id:'queued-'+i,type:'classify',image:'data:image/jpeg;base64,AAAA'}});
+ await vm.runInContext('chain',h.c);
+ assert.equal(h.sent.filter(x=>x.type==='error').length,1);
+ assert.equal(h.sent.find(x=>x.type==='error').id,'invalid-first');
+ const results=h.sent.filter(x=>x.type==='result');
+ assert.equal(results.length,30);
+ assert.deepEqual(results.map(x=>x.id),Array.from({length:30},(_,i)=>'queued-'+i));
+ assert.ok(results.every(x=>x.strong===true&&x.choices[0].itemType==='T-shirt'));
+ assert.equal(h.loads.length,2,'model and processor are initialized only once');
+});
