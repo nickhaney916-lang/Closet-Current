@@ -973,7 +973,7 @@ async function startCamera(mode){
   // An older, cancelled getUserMedia() request must not unlock controls
   // while a newer request is still opening or streaming.
   if(epoch===captureOperationEpoch&&request===cameraRequest){
-   busy=false;if(!stream)controls(false;
+   busy=false;if(!stream)controls(false);
   }
  }
 }
