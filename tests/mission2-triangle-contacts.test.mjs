@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,auditSourcePhotoMicroMultiPose,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,auditSourcePhotoMicroMultiPose,auditSourcePhotoUVSurfaceAtPose,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -1401,4 +1401,87 @@ test('P2-C26 two real named shoulder/torso 163-bone source poses re-audit actual
   {name:'half-mm-separate',overrides:new Map([[garment,new Float32Array(3)]])}]),
   /finite original-photograph staged source vertices/);
  assert.deepEqual(garment.geometry.getAttribute('position').array,originalMesh);
+});
+
+
+test('P2-C27 source-photo UV and posed face continuity audits unchanged original mesh, unmapped UV, distortion and orientation WITHOUT 3D approval',()=>{
+ const {root,garment,bones}=simplePose(),geometry=garment.geometry,
+  position=geometry.getAttribute('position').array.slice();
+ geometry.setAttribute('uv',new THREE.Float32BufferAttribute([
+  0,0,1,0,0,1, 0,0,1,0,0,1
+ ],2));
+ const originalUV=geometry.getAttribute('uv').array.slice();
+ const capture=()=>{
+  root.updateMatrixWorld(true);
+  garment.skeleton.update();
+  const p=geometry.getAttribute('position'),v=new THREE.Vector3();
+  const out=new Float32Array(p.count*3);
+  for(let i=0;i<p.count;i++){
+   v.fromBufferAttribute(p,i);
+   garment.applyBoneTransform(i,v);v.applyMatrix4(garment.matrixWorld);
+   v.toArray(out,i*3);
+  }
+  return out;
+ };
+ const neutral=[capture()];
+ bones[0].rotation.z=Math.PI/12;
+ const posed=[capture()];
+ const noChange=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed);
+ assert.equal(noChange.triangleCount,2);
+ assert.equal(noChange.uvMappedFaces,2);
+ assert.equal(noChange.meshesWithoutUV,0);
+ assert.equal(noChange.uvDegenerateFaces,0);
+ assert.equal(noChange.newCollapsedCandidateFaces,0);
+ assert.equal(noChange.candidateAreaOver25PercentFaces,0);
+ assert.equal(noChange.newCandidateInvertedNormals,0);
+ assert.equal(noChange.sourcePhotoHumanReviewed,false);
+ assert.equal(noChange.seamContinuityNotVerified,true);
+ assert.equal(noChange.texturePixelsNotInspected,true);
+ assert.equal(noChange.continuousMotionNotVerified,true);
+ assert.equal(noChange.releaseAuthorized,false);
+ const micro=position.slice();
+ for(let v=0;v<3;v++)micro[v*3+2]+=.0005;
+ const small=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed,
+  new Map([[garment,micro]]));
+ assert.equal(small.newCollapsedCandidateFaces,0);
+ assert.equal(small.candidateAreaOver25PercentFaces,0);
+ const collapsed=position.slice();
+ for(let v=1;v<3;v++)
+  for(let axis=0;axis<3;axis++)collapsed[v*3+axis]=collapsed[axis];
+ const unsafe=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed,
+  new Map([[garment,collapsed]]));
+ assert.ok(unsafe.newCollapsedCandidateFaces>=1);
+ const reversed=position.slice();
+ for(let axis=0;axis<3;axis++){
+  const temp=reversed[3+axis];reversed[3+axis]=reversed[6+axis];
+  reversed[6+axis]=temp;
+ }
+ const inverted=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed,
+  new Map([[garment,reversed]]));
+ assert.ok(inverted.newCandidateInvertedNormals>=1);
+ const uv=geometry.getAttribute('uv');
+ for(let j=6;j<12;j++)uv.array[j]=0;
+ const malformed=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed);
+ assert.equal(malformed.uvDegenerateFaces,1);
+ uv.array.set(originalUV);
+ geometry.deleteAttribute('uv');
+ const missing=auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed);
+ assert.equal(missing.meshesWithoutUV,1);
+ assert.equal(missing.uvMappedFaces,0);
+ assert.equal(missing.missingUVIsNotPhotoValidation,true);
+ geometry.setAttribute('uv',uv);
+ uv.array[0]=Number.NaN;
+ assert.throws(()=>auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed),
+  /malformed or nonfinite original source photo UV/);
+ uv.array.set(originalUV);
+ assert.throws(()=>auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,
+  [new Float32Array(3)]),/complete finite neutral and actual posed vertex evidence/);
+ assert.throws(()=>auditSourcePhotoUVSurfaceAtPose(root,[garment],neutral,posed,
+  new Map([[garment,new Float32Array(3)]])),/finite disposable source candidate/);
+ assert.deepEqual(geometry.getAttribute('position').array,position);
+ assert.deepEqual(geometry.getAttribute('uv').array,originalUV);
+ const exported=JSON.stringify(small);
+ for(const secret of ['sourceSHA256','ownerId','localXYZ','posedXYZ',
+  '"sourceUV"','"faceKey"','"sourceFaceIds"','"texturePixels"'])
+  assert.equal(exported.includes(secret),false);
 });

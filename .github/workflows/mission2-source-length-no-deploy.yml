@@ -30,6 +30,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-persistent-contact-depth-direction-20261112-HOLD
     - research/mission2-single-pair-microdepth-20261112-HOLD
     - research/mission2-multipose-source-collision-20261112-HOLD
+    - research/mission2-photo-uv-surface-pose-20261112-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
