@@ -19,7 +19,8 @@ function fixture(){
  const records=[],listeners={};
  const auth={user:{id:A},assertCurrent(){}};
  const ctx={
-  captureOperationEpoch:0,db:oldDB,writes:Promise.resolve(),
+  captureOperationEpoch:0,videoImportSerial:0,videoImportActive:false,
+  photoImportSerial:0,photoImportActive:false,db:oldDB,writes:Promise.resolve(),
   window:{
    closetAuth:auth,
    closetCloud:{
