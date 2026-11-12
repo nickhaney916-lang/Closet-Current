@@ -4,6 +4,8 @@
  * This exposed diagnostic set is NOT prospective human-blind evidence.
  */
 import {readFile,writeFile} from 'node:fs/promises';
+import {pathToFileURL} from 'node:url';
+import {resolve} from 'node:path';
 import {corroborateAmbiguousType} from '../public/recognition-confusion-guard.mjs';
 
 export async function compareEmpirical838(baseline,candidate){
@@ -66,7 +68,7 @@ export async function compareEmpirical838(baseline,candidate){
  }
  return verdict;
 }
-if(process.argv[1]&&import.meta.url===new URL('file://'+process.argv[1]).href){
+if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
  if(process.argv.length!==5)throw Error('usage: node compare-m1-empirical-838.mjs baseline.json candidate.json result.json');
  const a=JSON.parse(await readFile(process.argv[2],'utf8')),b=JSON.parse(await readFile(process.argv[3],'utf8'));
  const result=await compareEmpirical838(a,b);
