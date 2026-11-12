@@ -224,7 +224,21 @@ function renderPhotoResults(grid,results){
   card.append(image,body);grid.append(card);
  }
 }
+// P845: ephemeral quality hints may hold a reference to a source image.
+// Drop stale entries on save/remove/crop/owner switch, never carrying another
+// owner's photo advice through a long-lived in-browser session.
+function purgePhotoQualityHints845(){
+ if(typeof photoQualityHints73==='undefined'||!photoQualityHints73.size)return;
+ const owner=window.closetAuth?.user?.id;
+ for(const [id,hint] of photoQualityHints73){
+  const current=batch.find(x=>x.id===id);
+  if(!current||current!==hint.item||hint.owner!==owner||
+     hint.source!==(current.recognitionPhoto?.image||current.image))
+   photoQualityHints73.delete(id);
+ }
+}
 function render(){
+ purgePhotoQualityHints845();
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
  renderRecognitionNotice();
  const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
