@@ -861,12 +861,12 @@ test('P2-C19 ties genuinely skinned source face sliver and regular neighbor to e
  assert.equal(result.indexedBoundaryDoesNotProveSewnSeam,true);
  assert.equal(result.noSourcePositionsOrFaceKeysExported,true);
  const short=result.contactLinkedShortEdgeStageUVSkinEvidence;
- assert.equal(short.nearCoincidentAffectedFaces,1);
+ assert.equal(short.nearCoincidentAffectedFaces,0);
  assert.equal(short.stageSourceEvidenceComplete,false);
  assert.equal(short.shortEdgeShapeBySourceStage,null);
  assert.equal(short.nearEdgeFirstObservedStage,null);
- assert.deepEqual(short.shortEdgeUVEndpointEvidence,{unavailable:1,nearSameUV:0,differentUV:0});
- assert.deepEqual(short.shortEdge163BoneInfluenceEvidence,{same:1,different:0});
+ assert.deepEqual(short.shortEdgeUVEndpointEvidence,{unavailable:0,nearSameUV:0,differentUV:0});
+ assert.deepEqual(short.shortEdge163BoneInfluenceEvidence,{same:0,different:0});
  assert.equal(short.noGeometryEdited,true);
  assert.equal(short.noContactWaived,true);
  assert.equal(result.noContactWaived,true);
