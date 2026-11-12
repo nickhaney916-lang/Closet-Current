@@ -12,15 +12,15 @@ import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 
 export const P67_05_SEARCHES=Object.freeze([
- {target:'T-shirt',query:'t-shirt garment'},
- {target:'Sweatshirt',query:'sweatshirt clothing'},
- {target:'Blouse',query:'blouse clothing'},
- {target:'Tunic',query:'tunic clothing'},
- {target:'Sneakers',query:'sneakers shoes'},
- {target:'Boots',query:'ankle boots footwear'},
- {target:'Dress',query:'dress garment'},
- {target:'Skirt',query:'skirt garment'},
- {target:'nonclothing',query:'empty room interior'}
+ {target:'T-shirt',query:'t-shirt'},
+ {target:'Sweatshirt',query:'sweatshirt'},
+ {target:'Blouse',query:'blouse'},
+ {target:'Tunic',query:'tunic'},
+ {target:'Sneakers',query:'sneakers'},
+ {target:'Boots',query:'boots'},
+ {target:'Dress',query:'dress'},
+ {target:'Skirt',query:'skirt'},
+ {target:'nonclothing',query:'empty room'}
 ]);
 const IMAGE_MIMES=new Set(['image/jpeg','image/png','image/webp']);
 const licensedShortNames=/^(?:CC0(?: 1\.0)?|CC BY(?:-SA)? [234]\.0)$/i;
@@ -114,7 +114,7 @@ export function combineSourceCandidates05(items,originals){
 }
 
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
-export async function searchCommonsCandidates05(search,{fetchImpl=fetch,limit=14,maxAttempts=4}={}){
+export async function searchCommonsCandidates05(search,{fetchImpl=fetch,limit=20,maxAttempts=4}={}){
  if(!P67_05_SEARCHES.some(x=>x.target===search?.target&&x.query===search.query)||
     !Number.isInteger(limit)||limit<1||limit>20||
     !Number.isInteger(maxAttempts)||maxAttempts<1||maxAttempts>5)
