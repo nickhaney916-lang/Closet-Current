@@ -179,3 +179,47 @@ test('P838 empirically risky subtype without verified color still requires owner
  assert.equal(c.batch[0].itemType,'Unknown');
  assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
 });
+
+test('P839 outfit strong classifier results remain original-photo drafts, never auto-admitted',async()=>{
+ const {c,stored}=setup({result:{strong:true,choices:[choice],details:{color:'Blue',pattern:'Solid'}}});
+ c.reviewFirst836=false;
+ c.candidate('outfit-top',{outfitSourceId:'outfit-original-sha',segmentHint:{clipped:false,categories:['Tops'],types:['T-shirt']},
+  recognitionPhoto:{image:'photo-texture'},originalPhoto:{image:'original-outfit'},
+  cropBounds:{x:.1,y:.1,width:.4,height:.45}});
+ await done(c);
+ assert.equal(stored.length,0);
+ assert.equal(c.items.length,0);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(c.batch[0].category,'Tops');
+ assert.equal(c.batch[0].itemType,'T-shirt');
+ assert.equal(c.batch[0].originalPhoto.image,'original-outfit');
+ assert.equal(c.batch[0].recognitionPhoto.image,'photo-texture');
+ assert.match(c.batch[0].localStatus,/Tap Adjust to confirm/);
+});
+test('P839 outfit confirmed category and estimated color never bypass the draft-review gate',async()=>{
+ const result={strong:false,categoryConfirmed:true,categoryOnly:true,
+  choices:[{category:'Dresses',itemType:'Unknown',label:'Dresses',sleeveLength:'Unknown'}],details:{}};
+ const {c,stored}=setup({result,quality:async()=>({blank:false,signature:[1,2,3],aspect:1,
+  colorEstimate:{color:'Purple'}})});
+ c.reviewFirst836=false;c.candidate('outfit-dress',{outfitSourceId:'outfit-whole',
+  segmentHint:{categories:['Dresses'],types:[],clipped:false}});await done(c);
+ assert.equal(stored.length,0);assert.equal(c.items.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Dresses');assert.equal(c.batch[0].itemType,'Unknown');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(c.batch[0].color,'Purple');
+ assert.match(c.batch[0].localStatus,/Tap Adjust to confirm/);
+});
+test('P839 changed single photo auto-index policy only for outfit pieces',async()=>{
+ const {c,stored}=setup();
+ c.reviewFirst836=false;c.candidate('isolated-shirt');await done(c);
+ assert.equal(stored.length,1);assert.equal(c.items.length,1);assert.equal(c.batch.length,0);
+ assert.equal(c.items[0].itemType,'T-shirt');
+});
+test('P839 unsupported outfit segmentation remains quarantined and never reaches closet',async()=>{
+ const {c,stored}=setup();c.candidate('outfit-clip',{outfitSourceId:'whole',
+  segmentHint:{categories:['Tops'],types:['T-shirt'],clipped:true}});await done(c);
+ assert.equal(stored.length,0);assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].category,'Uncategorized');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+});
