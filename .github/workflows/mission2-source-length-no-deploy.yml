@@ -23,6 +23,7 @@ name: Mission2 source-proportion physical length and posed body intersections NO
     - research/mission2-original-triangle-skin-provenance-20261111-HOLD
     - research/mission2-source-topology-triage-20261111-HOLD
     - research/mission2-contact-linked-source-shape-20261111-HOLD
+    - research/mission2-short-edge-stage-uv-skin-20261111-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
@@ -400,7 +401,40 @@ jobs:
          assert.equal(t.sourceLocalMorphologyAtOwnerFitNotUntouchedAnatomy,true);
          assert.equal(t.noSourcePositionsOrFaceKeysExported,true);
          assert.equal(t.indexedBoundaryDoesNotProveSewnSeam,true);
+         const e=t.contactLinkedShortEdgeStageUVSkinEvidence;
+         assert.equal(e.nearCoincidentAffectedFaces,
+          t.byPhotoOwnerFittedSourceLocalShape.nearCoincidentEdge);
+         assert.equal(e.stageSourceEvidenceComplete,true);
+         assert.deepEqual(e.shortEdgeShapeBySourceStage.map(x=>x.stage),
+          ['anatomical','afterPhoto62','afterOwner190']);
+         for(const stage of e.shortEdgeShapeBySourceStage)
+          assert.equal(Object.values(stage.counts).reduce((n,v)=>n+v,0),
+           e.nearCoincidentAffectedFaces);
+         assert.equal(e.shortEdgeShapeBySourceStage[2].counts.nearCoincidentEdge,
+          e.nearCoincidentAffectedFaces);
+         assert.equal(Object.values(e.nearEdgeFirstObservedStage).reduce((n,v)=>n+v,0),
+          e.nearCoincidentAffectedFaces);
+         assert.equal(Object.values(e.shortEdgeUVEndpointEvidence).reduce((n,v)=>n+v,0),
+          e.nearCoincidentAffectedFaces);
+         assert.equal(Object.values(e.shortEdge163BoneInfluenceEvidence).reduce((n,v)=>n+v,0),
+          e.nearCoincidentAffectedFaces);
+         assert.equal(e.noGeometryEdited,true);
+         assert.equal(e.noContactWaived,true);
+         assert.equal(e.releaseAuthorized,false);
+         assert.equal(e.uvSamenessIsNotProofOfSewnSeams,true);
+         assert.equal(e.skinDisagreementIsNotProofOfRigDefect,true);
+         assert.equal(e.sourcePositionsUVsFaceKeysAndBonesPrivate,true);
         }
+        const lineage=k=>active.map(a=>
+         a.selfContactTypes?.contactLinkedShortEdgeStageUVSkinEvidence?.[k]??null);
+        const lineageCount=(k,v)=>lineage(k).map(x=>x?.[v]??'x').join(',');
+        console.log('M2_SHORT_EDGE_SOURCE_STAGE_UV_SKIN_COUNTS_ONLY',
+         engine+'-bornAnatomy['+lineageCount('nearEdgeFirstObservedStage','anatomical')+
+         ']-bornPhoto['+lineageCount('nearEdgeFirstObservedStage','photoFit')+
+         ']-bornOwner['+lineageCount('nearEdgeFirstObservedStage','ownerFit')+
+         ']-uvAbsent['+lineageCount('shortEdgeUVEndpointEvidence','unavailable')+
+         ']-uvDiff['+lineageCount('shortEdgeUVEndpointEvidence','differentUV')+
+         ']-skinDiff['+lineageCount('shortEdge163BoneInfluenceEvidence','different')+']');
         const shape=k=>active.map(a=>a.selfContactTypes?.byPhotoOwnerFittedSourceLocalShape?.[k]??'x').join(',');
         const safeShape=engine+'-sliver['+shape('thinSliver')+
          ']-nearEdge['+shape('nearCoincidentEdge')+
