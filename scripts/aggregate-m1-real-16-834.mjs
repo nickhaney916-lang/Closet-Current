@@ -56,7 +56,7 @@ export function aggregateReal16Audit834(manifest,parts){
     if(!negative&&x.categoryMatch!==(
       x.predictedCategory===x.expectedCategory&&(x.strong||x.categoryConfirmed)))
      fail('Category-match status not supported by actual acceptance '+x.id);
-    if(negative&&x.categoryMatch!==(!x.predictedCategory&&!x.strong&&!x.categoryConfirmed))
+    if(negative&&x.categoryMatch!==(!x.error&&!x.predictedCategory&&!x.strong&&!x.categoryConfirmed))
      fail('Non-clothing rejection not supported by raw abstention '+x.id);
     const exactMatch=exactLabelSupported?
       x.categoryMatch&&x.predictedType===x.expectedType:null;
