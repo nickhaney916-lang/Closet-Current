@@ -31,6 +31,7 @@ jobs:
       - run: node scripts/parallel67-build-vectors.mjs marqo
       - run: node scripts/parallel67-build-vectors.mjs marqoclip
       - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - run: node --test research/parallel67/bundle.test.mjs
   actual-browser-model:
     runs-on: ubuntu-24.04
     timeout-minutes: 40

@@ -38,7 +38,7 @@ node scripts/parallel67-build-vectors.mjs marqo
 node scripts/parallel67-build-vectors.mjs marqoclip
 node scripts/parallel67-warm-model.mjs baseline
 node scripts/parallel67-warm-model.mjs marqo
-node --test tests/parallel67-independent.test.mjs tests/parallel67-color.test.mjs
+node --test research/parallel67/bundle.test.mjs tests/parallel67-color.test.mjs
 node scripts/parallel67-browser-batches.mjs chromium baseline
 node scripts/parallel67-browser-batches.mjs chromium marqo
 node scripts/parallel67-browser-batches.mjs webkit baseline
