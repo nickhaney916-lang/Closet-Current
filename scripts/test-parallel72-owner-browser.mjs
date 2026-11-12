@@ -35,7 +35,7 @@ const harness=[
 " const original=jpeg72(hex);const value={id,image:original,recognitionPhoto:{image:original},",
 " name:'Synthetic garment',category:'Tops',itemType:kind,color:'Blue',pattern:'Striped',",
 " sleeveLength:'Short sleeve',fit:'Regular',seasons:[],userAdjusted:false,",
-" recognitionMemory:{version:1,modelKey:'synthetic-model-72',features:Array.from({length:512},(_,i)=>i===0?1:0)}};",
+" recognitionMemory:{version:1,modelKey:'synthetic-model-72',features:Array.from({length:512},(_,i)=>{const tilt=id==='a1'?-0.08:id==='a2'?0.08:0;return i===0?Math.sqrt(1-tilt*tilt):i===1?tilt:0;})}};",
 " batch=[value];adjustPhoto(value);",
 "}",
 "window.owner72=(id,session)=>{window.__closetCurrentOwnerScope72=ClothingMemory.open72({ownerId:id,sessionId:session});};",
