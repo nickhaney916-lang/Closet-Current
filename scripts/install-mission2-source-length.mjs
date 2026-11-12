@@ -8,8 +8,26 @@ await mkdir(join(donor,'research/mission2-source-length'),{recursive:true});
 for(const name of ['source-length.mjs','posed-intersections.mjs','source-projection.mjs'])await copyFile('research/mission2-source-length/'+name,join(donor,'research/mission2-source-length/'+name));
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',"import {fitOwnerAlphaToSkinnedBlouse190}","import {fitSourceLength,applyNoNewContactSourceLength} from '../mission2-source-length/source-length.mjs';\nimport {fitOwnerAlphaToSkinnedBlouse190}");
 await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
+ "import {fitOwnerAlphaToSkinnedBlouse190}",
+ "import {capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages} from '../mission2-source-length/posed-intersections.mjs';\nimport {fitOwnerAlphaToSkinnedBlouse190}");
+await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
+ "   if(built.shirt?.stats?.sourceSHA256==='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24')built.shirt=fitReviewedUpperPhoto62(built.shirt,root,candidate.silhouette62,{naturalShoulder185:true});",
+ `   let __m2PhotoStageAreas=null;
+   if(built.shirt?.stats?.sourceSHA256==='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24'){
+    if(new URLSearchParams(globalThis.location?.search||'').get('photoSourceStageAudit')==='research')
+     __m2PhotoStageAreas=[capturePhotoConstructionFaceAreas(root,built.shirt)];
+    built.shirt=fitReviewedUpperPhoto62(built.shirt,root,candidate.silhouette62,{naturalShoulder185:true});
+    if(__m2PhotoStageAreas)__m2PhotoStageAreas.push(capturePhotoConstructionFaceAreas(root,built.shirt));
+   }`);
+await patch('research/dress-mobile-01/dress-outfit-controller.mjs',
  'built.shirt=fitOwnerAlphaToSkinnedBlouse190(built.shirt,root,candidate.ownerMaskGeometryProfile190);',
  `built.shirt=fitOwnerAlphaToSkinnedBlouse190(built.shirt,root,candidate.ownerMaskGeometryProfile190);
+   if(__m2PhotoStageAreas){
+    if(built.shirt?.stats?.ownerAlphaMaskBasedPhysicalGeometry190!==true||__m2PhotoStageAreas.length!==2)
+     throw Error('M2 source stage provenance requires actual P190 source fit');
+    __m2PhotoStageAreas.push(capturePhotoConstructionFaceAreas(root,built.shirt));
+    console.info('M2_PHOTO_STAGE_AREAS:'+JSON.stringify(comparePhotoConstructionAreaStages(...__m2PhotoStageAreas)));
+   }
    if(built.shirt?.stats?.sourceSHA256==='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24'&&candidate?.silhouette62&&
       new URLSearchParams(globalThis.location?.search||'').get('photoSourceLength')==='research')
     built.shirt=(new URLSearchParams(globalThis.location?.search||'').get('photoSourceTrianglePolicy')==='adaptive'
