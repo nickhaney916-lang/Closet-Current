@@ -310,7 +310,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
        const initialKeys=new Set(selfDelta.newlyIntersectingSourceKeys);
        let retainedInitial=0;
        for(const key of pairs.newlyIntersectingSourceKeys){
-        if(typeof key!=='string'||!/^(?:0|[1-9]\\d*):(?:0|[1-9]\\d*):(?:0|[1-9]\\d*)$/.test(key))
+        if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
          fail('M2 C24 directed original pair key invalid');
         const [m,a,b]=key.split(':').map(Number);
         const g=targets[m]?.geometry,sourceFaces=g?
