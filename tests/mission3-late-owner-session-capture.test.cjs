@@ -29,7 +29,7 @@ function deferred(){
 }
 function candidateFixture({existing=false}={}){
  const deferredCommit=deferred(),batch=[],items=[],failedDraftCaptures=new Set();
- const db={name:'closet-current-user-'+ownerA};
+ const db={name:'closet-current-user-'+ownerA},session={owner:ownerA};
  const ctx={
   nativeCanonical167Active:true,captureProof01Active:true,
   batch,items,failedDraftCaptures,sessionCapturedIds:new Set(),
@@ -37,7 +37,7 @@ function candidateFixture({existing=false}={}){
   $:()=>({textContent:'',hidden:false,src:''}),message(){},
   normalizeClothing:x=>({...x}),recordDeviceEvent(){},
   queueAutomatic(){},persistDraft(){return deferredCommit.promise;},
-  captureProofOwner(){return this.currentOwner;},currentOwner:ownerA
+  captureProofOwner:()=>session.owner
  };
  vm.createContext(ctx);vm.runInContext(candidateCode,ctx);
  if(existing){
@@ -47,7 +47,7 @@ function candidateFixture({existing=false}={}){
  }
  return {ctx,db,batch,items,failedDraftCaptures,commit:deferredCommit,
   logout(){
-   ctx.currentOwner=ownerB;ctx.db={name:'closet-current-user-'+ownerB};
+   session.owner=ownerB;ctx.db={name:'closet-current-user-'+ownerB};
    ctx.batch=[];failedDraftCaptures.clear();
   }
  };
