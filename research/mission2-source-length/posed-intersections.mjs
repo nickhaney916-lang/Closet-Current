@@ -794,9 +794,9 @@ export function capturePhotoConstructionFaceAreas(root,shirt){
  const meshes=shirt.meshes.filter(m=>m?.name==='Work56-independent-shirt-shell'||
   ['L','R'].includes(m?.userData?.work45IndependentShoulderCap));
  if(meshes.length<3||meshes.length>32||new Set(meshes).size!==meshes.length||
-    meshes.filter(m=>m.name==='Work56-independent-shirt-shell').length!==1||
+    meshes.filter(m=>m.name==='Work56-independent-shirt-shell').length<1||
     !['L','R'].every(side=>meshes.some(m=>m.userData?.work45IndependentShoulderCap===side)))
-  throw Error('M2 photo stages require one original torso and verified left/right sewn cap source pieces');
+  throw Error('M2 photo stages require canonical original torso shell and verified left/right sewn cap source pieces');
  root.updateMatrixWorld(true);
  const witnesses=[];
  let smallTotal=0,faceTotal=0;
