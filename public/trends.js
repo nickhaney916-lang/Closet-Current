@@ -58,4 +58,13 @@ const inspirationReady=(async()=>{await closetReady;if(db){try{const state=await
 
 $('referenceToCloset').onclick=()=>{if(!lookImage)return;candidate(lookImage);switchView('review');message('Image added as a separate clothing entry. Its category fields are below the photo.');};
 
-async function reloadCloudLooks(){const state=await new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('looks');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});inspirationLooks=(state?.looks||[]).map(validLook);renderSavedLooks();}
+async function reloadCloudLooks({ownerDB=db,assertLease=()=>{}}={}){
+ assertLease();
+ const state=await new Promise((resolve,reject)=>{
+  const r=ownerDB.transaction('state').objectStore('state').get('looks');
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+ });
+ assertLease();
+ inspirationLooks=(state?.looks||[]).map(validLook);
+ assertLease();renderSavedLooks();
+}
