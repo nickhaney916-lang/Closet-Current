@@ -576,7 +576,7 @@ test('area provenance identifies newly collapsed versus already tiny source face
 });
 
 
-test('real 163-bone source shell and two cap stages pinpoint collapsed faces without mutating original source identity',()=>{
+test('real 163-bone source shell with multiple left/right cap meshes pinpoints face collapse without mutation',()=>{
  const {root,garment}=simplePose(),meshes=[];
  const input=[
   0,0,0, 1,0,0, 0,1,0,
@@ -585,7 +585,8 @@ test('real 163-bone source shell and two cap stages pinpoint collapsed faces wit
  for(const [n,side] of [
   ['Work56-independent-shirt-shell',null],
   ['Left-actual-independent-cap','L'],
-  ['Right-actual-independent-cap','R']
+  ['Right-actual-independent-cap','R'],
+  ['Second-left-source-cap','L']
  ]){
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(input,3));
@@ -601,7 +602,7 @@ test('real 163-bone source shell and two cap stages pinpoint collapsed faces wit
  const shirt={meshes};
  const before=meshes.map(m=>m.geometry.getAttribute('position').array.slice());
  const first=capturePhotoConstructionFaceAreas(root,shirt);
- assert.equal(first.faceTotal,6);
+ assert.equal(first.faceTotal,8);
  assert.equal(first.smallTotal,0);
  assert.equal(first.transientPrivateSourceFaceIds,true);
  const shell=meshes[0].geometry.getAttribute('position');
@@ -616,7 +617,7 @@ test('real 163-bone source shell and two cap stages pinpoint collapsed faces wit
  const delta=comparePhotoConstructionAreaStages(first,photo,owner);
  assert.deepEqual(delta.stages,[
   'anatomicalBeforePhoto','afterP62P185Photo','afterP190P195Owner']);
- assert.equal(delta.totalOriginalSourceFaces,6);
+ assert.equal(delta.totalOriginalSourceFaces,8);
  assert.equal(delta.smallAtAnatomicalConstruction,0);
  assert.equal(delta.smallAfterPhotoFit,1);
  assert.equal(delta.smallAfterOwnerMaskFit,1);
@@ -630,9 +631,10 @@ test('real 163-bone source shell and two cap stages pinpoint collapsed faces wit
  assert.equal(delta.noCollisionWaived,true);
  assert.equal(delta.releaseAuthorized,false);
  assert.equal(delta.physicalClearanceVerified,false);
- assert.deepEqual(delta.byGarmentMesh.map(m=>m.sourceFaceCount),[2,2,2]);
- assert.deepEqual(delta.byGarmentMesh.map(m=>m.photoFitNewSmall),[1,0,0]);
- assert.deepEqual(delta.byGarmentMesh.map(m=>m.ownerFitNewSmall),[0,1,0]);
+ assert.equal(delta.sourcePieceCount,4);
+ assert.deepEqual(delta.byGarmentMesh.map(m=>m.sourceFaceCount),[2,2,2,2]);
+ assert.deepEqual(delta.byGarmentMesh.map(m=>m.photoFitNewSmall),[1,0,0,0]);
+ assert.deepEqual(delta.byGarmentMesh.map(m=>m.ownerFitNewSmall),[0,1,0,0]);
  assert.equal(JSON.stringify(delta).includes('sourceSHA256'),false);
  assert.equal(JSON.stringify(delta).includes('indices'),false);
  assert.equal(JSON.stringify(delta).includes('originalVertex'),false);
@@ -644,7 +646,7 @@ test('real 163-bone source shell and two cap stages pinpoint collapsed faces wit
  assert.throws(()=>comparePhotoConstructionAreaStages(first,tampered,owner),
   /source triangle identity changed/);
  assert.throws(()=>capturePhotoConstructionFaceAreas(root,{meshes:[meshes[0]]}),
-  /exactly original torso and two sewn cap/);
+  /one original torso and verified left\/right sewn cap/);
  // Original vertices have been changed in this test fixture only; no source
  // photographed JPEG or persistent account record was ever used or changed.
  assert.deepEqual(meshes[2].geometry.getAttribute('position').array,before[2]);
