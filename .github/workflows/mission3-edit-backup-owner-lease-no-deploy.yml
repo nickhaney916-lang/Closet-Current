@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and five-path no-deploy allowlist
+      - name: Exact parent and eight-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-edit-backup-owner-browser.mjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
+              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/confirmed-edit-memory-44.test.cjs|tests/review-color-provenance-23.test.cjs|tests/family-reliability-edit.test.cjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -34,6 +34,9 @@ jobs:
           node --check public/app.js
           node --check tests/mission3-edit-backup-owner-lease.test.cjs
           node --check scripts/test-mission3-edit-backup-owner-browser.mjs
+          node --check tests/confirmed-edit-memory-44.test.cjs
+          node --check tests/review-color-provenance-23.test.cjs
+          node --check tests/family-reliability-edit.test.cjs
           node --test tests/mission3-edit-backup-owner-lease.test.cjs
           node --test tests/mission3-photo-crop-owner-session-lease.test.cjs
 
@@ -81,7 +84,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-edit-backup-owner-browser.mjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
+              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-edit-backup-owner-browser.mjs|tests/confirmed-edit-memory-44.test.cjs|tests/review-color-provenance-23.test.cjs|tests/family-reliability-edit.test.cjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -93,6 +96,8 @@ jobs:
           node scripts/test-signed-jwt-postgres-147.mjs
       - name: Exact source owner-leased saved edit / backup import regression
         run: node --test tests/mission3-edit-backup-owner-lease.test.cjs
+      - name: Reverify original saved-editor color and stale-CAS source fixtures
+        run: node --test tests/confirmed-edit-memory-44.test.cjs tests/review-color-provenance-23.test.cjs tests/family-reliability-edit.test.cjs
       - name: Build current application before PWA and full Node validation (NO DEPLOY)
         run: node scripts/build.mjs
       - name: Reverify Chromium WebKit 320 390 430 owner private crop and JPEG evidence
