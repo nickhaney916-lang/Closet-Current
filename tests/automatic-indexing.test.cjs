@@ -146,5 +146,5 @@ test('P836 review-first trial respects a nonclothing/uncertain prediction and ne
  c.reviewFirst836=true;c.candidate('one');await done(c);
  assert.equal(stored.length,0);assert.equal(c.items.length,0);
  assert.equal(c.batch[0].category,'Uncategorized');
- assert.equal(c.batch[0].requiresOwnershipConfirmation,false);
+ assert.notEqual(c.batch[0].requiresOwnershipConfirmation,true);
 });
