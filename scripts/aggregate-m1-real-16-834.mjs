@@ -95,8 +95,9 @@ export function aggregateReal16Audit834(manifest,parts){
  }
  const chrome=output.browsers.chromium.rows,webkit=output.browsers.webkit.rows;
  output.crossBrowser={
-  categoryAgreement:chrome.filter((x,i)=>x.predictedCategory===webkit[i].predictedCategory).length,
-  subtypeAgreement:chrome.filter((x,i)=>x.predictedType===webkit[i].predictedType).length,
+  samePredictionCategoryIncludingAbstentions:chrome.filter((x,i)=>x.predictedCategory===webkit[i].predictedCategory).length,
+  bothBrowsersAbstainedCategory:chrome.filter((x,i)=>!x.predictedCategory&&!webkit[i].predictedCategory).length,
+  samePredictionSubtypeIncludingAbstentions:chrome.filter((x,i)=>x.predictedType===webkit[i].predictedType).length,
   bothBrowsersCategoryMatched:chrome.filter((x,i)=>x.categoryMatch&&webkit[i].categoryMatch&&x.expectedCategory!=='Uncategorized').map(x=>x.id),
   wrongAutomaticEitherBrowser:chrome.filter((x,i)=>
    x.expectedCategory!=='Uncategorized'&&
