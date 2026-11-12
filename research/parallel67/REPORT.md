@@ -55,4 +55,6 @@ The dedicated workflow has read-only repository permissions, an exact P834 ances
 3. Independently verified color and garment-instance masks, actual instance inference/IoU and multi-garment recall.
 4. Physical Android Chrome/iPhone Safari startup, latency, peak memory, camera-to-review-to-private-closet validation; current desktop-browser results cannot substitute.
 
+A first remote run encountered Wikimedia HTTP 429 before inference. The recovery script respects bounded backoff and CI serializes browser jobs rather than bypassing publisher rate limits. A failed source download is a failed verification, not an accuracy result.
+
 Main controller retains integration authority. Exact branch head, draft PR and CI status must accompany handoff; green tests alone cannot change the NO PROMOTION decision or complete this mission.

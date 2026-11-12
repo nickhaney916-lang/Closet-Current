@@ -37,6 +37,7 @@ jobs:
     timeout-minutes: 40
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         browser: [chromium, webkit]
         model: [baseline, marqo]
