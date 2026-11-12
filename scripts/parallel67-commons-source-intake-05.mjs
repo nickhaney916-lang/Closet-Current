@@ -13,14 +13,25 @@ import {createHash} from 'node:crypto';
 
 export const P67_05_SEARCHES=Object.freeze([
  {target:'T-shirt',query:'t-shirt'},
+ {target:'T-shirt',query:'tee shirt'},
  {target:'Sweatshirt',query:'sweatshirt'},
+ {target:'Sweatshirt',query:'hoodie'},
  {target:'Blouse',query:'blouse'},
+ {target:'Blouse',query:'bodice blouse'},
  {target:'Tunic',query:'tunic'},
+ {target:'Tunic',query:'tunics'},
  {target:'Sneakers',query:'sneakers'},
+ {target:'Sneakers',query:'tennis shoes'},
+ {target:'Sneakers',query:'trainers shoes'},
  {target:'Boots',query:'boots'},
+ {target:'Boots',query:'leather boots'},
  {target:'Dress',query:'dress'},
+ {target:'Dress',query:'evening dress'},
  {target:'Skirt',query:'skirt'},
- {target:'nonclothing',query:'empty room'}
+ {target:'Skirt',query:'miniskirt'},
+ {target:'nonclothing',query:'empty room'},
+ {target:'nonclothing',query:'empty corridor'},
+ {target:'nonclothing',query:'blank wall'}
 ]);
 const IMAGE_MIMES=new Set(['image/jpeg','image/png','image/webp']);
 const licensedShortNames=/^(?:CC0(?: 1\.0)?|CC BY(?:-SA)? [234]\.0)$/i;
@@ -152,7 +163,7 @@ export async function buildQuarantinedSourcePool05({
  const candidates=[],counts={};
  for(const search of P67_05_SEARCHES){
   const results=await searchCommonsCandidates05(search,{fetchImpl});
-  counts[search.target]=results.length;
+  counts[search.target]=(counts[search.target]||0)+results.length;
   candidates.push(...results);
  }
  const distinct=combineSourceCandidates05(candidates,current);
@@ -162,7 +173,7 @@ export async function buildQuarantinedSourcePool05({
   requiresSeparateCommercialImageRightsReview:true,
   dataForTraining:false,notBlindTest:true,
   canClaimAnyAccuracyImprovement:false,
-  searchTerms:P67_05_SEARCHES.map(x=>x.target),
+  searchTerms:[...new Set(P67_05_SEARCHES.map(x=>x.target))],
   candidateCount:distinct.length,bySearch:counts,
   sourceCorpusSha256:createHash('sha256').update(await readFile('benchmark/locked-photo-sources.json')).digest('hex'),
   candidates:distinct
