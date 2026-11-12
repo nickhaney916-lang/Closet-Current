@@ -867,6 +867,35 @@ try{
          assert.equal(mp.originalBoneRotationsAndGarmentPositionsRestored,true);
          assert.equal(mp.originalPhotoUVOwnerSourceUntouched,true);
          assert.equal(mp.noClothDynamicsSweptOrHumanVisualAcceptance,true);
+         // P2-C27 is an actual source UV/surface check, not photographic
+         // texture approval. Missing UV / degenerate source faces are counted.
+         for(const pose of mp.poses){
+          const uv=pose.sourcePhotoUVSurfaceBaseline;
+          assert.ok(uv&&Number.isSafeInteger(uv.sourceFaces)&&uv.sourceFaces>0);
+          for(const field of ['uvMappedFaces','meshesWithoutUV','uvDegenerateFaces',
+           'uvMirroredFaces','poseAreaOverTwofoldFaces','newCollapsedCandidateFaces',
+           'candidateAreaOver25PercentFaces','newCandidateInvertedNormals'])
+           assert.ok(Number.isSafeInteger(uv[field])&&uv[field]>=0);
+          assert.ok(uv.uvMappedFaces<=uv.sourceFaces);
+          assert.equal(uv.newCollapsedCandidateFaces,0);
+          assert.equal(uv.candidateAreaOver25PercentFaces,0);
+          assert.equal(uv.newCandidateInvertedNormals,0);
+          assert.equal(uv.texturePixelsNotInspected,true);
+          assert.equal(uv.seamContinuityNotVerified,true);
+          assert.equal(uv.releaseAuthorized,false);
+          for(const candidate of pose.trials){
+           const audit=candidate.sourcePhotoUVSurfaceAudit;
+           assert.equal(audit.sourceFaces,uv.sourceFaces);
+           assert.equal(audit.uvMappedFaces,uv.uvMappedFaces);
+           assert.equal(audit.uvDegenerateFaces,uv.uvDegenerateFaces);
+           assert.ok(Number.isSafeInteger(audit.newCollapsedCandidateFaces));
+           assert.ok(Number.isSafeInteger(audit.newCandidateInvertedNormals));
+           assert.ok(Number.isSafeInteger(audit.candidateAreaOver25PercentFaces));
+           assert.equal(audit.texturePixelsNotInspected,true);
+           assert.equal(audit.seamContinuityNotVerified,true);
+           assert.equal(audit.releaseAuthorized,false);
+          }
+         }
          assert.equal(mp.noAbsoluteZeroContactCertificate,true);
          assert.equal(mp.distinctBilateralShoulderAndTorsoMotion,true);
          assert.equal(mp.allThreeIndependentCollisionTypesMeasured,true);
