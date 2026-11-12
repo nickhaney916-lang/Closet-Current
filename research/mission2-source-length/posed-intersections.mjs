@@ -1300,6 +1300,8 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
    throw Error('M2 C26 complete finite original mesh positions required');
   return [m,p.array.slice()];
  }));
+ const originalUVBuffers=new Map(meshes.map(m=>[m,
+  m.geometry.getAttribute('uv')?.array?.slice()??null]));
  const names=new Set(),checks=[];
  for(const trial of trials){
   if(typeof trial?.name!=='string'||!/^(half-mm-separate|half-mm-reverse|one-mm-reverse)$/.test(trial.name)||
@@ -1344,20 +1346,24 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
    }
    root.updateMatrixWorld(true);
    root.traverse(o=>{if(o.isSkinnedMesh)o.skeleton?.update();});
-   const poseMoved=meshes.reduce((acc,m,i)=>{
+   const posedBaselines=meshes.map(m=>{
     const g=posedGeometry(m);
-    try{
-     const a=g.getAttribute('position').array,b=reference[i];
-     if(a.length!==b.length)throw Error('M2 C26 actual source skinned pose vertices changed identity');
-     for(let j=0;j<a.length;j+=3){
-      const dx=a[j]-b[j],dy=a[j+1]-b[j+1],dz=a[j+2]-b[j+2];
-      if(dx*dx+dy*dy+dz*dz>1e-8)acc++;
-     }
-     return acc;
-    }finally{g.dispose();}
+    try{return g.getAttribute('position').array.slice();}
+    finally{g.dispose();}
+   });
+   const poseMoved=posedBaselines.reduce((acc,a,i)=>{
+    const b=reference[i];
+    if(a.length!==b.length)throw Error('M2 C26 actual source skinned pose vertices changed identity');
+    for(let j=0;j<a.length;j+=3){
+     const dx=a[j]-b[j],dy=a[j+1]-b[j+1],dz=a[j+2]-b[j+2];
+     if(dx*dx+dy*dy+dz*dz>1e-8)acc++;
+    }
+    return acc;
    },0);
    if(poseMoved<1)
     throw Error('M2 C26 named original shoulder/torso bones failed to move actual photographed garment');
+   const sourceUVSurfaceBaseline=auditSourcePhotoUVSurfaceAtPose(
+    root,meshes,reference,posedBaselines);
    const baselineBody=measurePosedTriangleContacts(root,meshes,new Map(),{maxContacts:maxNewContacts});
    const baselinePanel=measurePosedGarmentPartContacts(root,meshes,new Map(),{maxContacts:maxNewContacts});
    const sourceSelf=measureChangedFaceSelfContactDelta(root,meshes,new Map());
@@ -1378,8 +1384,15 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
        !Array.isArray(self.newlyIntersectingSourceKeys)||
        self.newlyIntersectingSourceKeys.length!==self.newlyIntersecting)
      throw Error('M2 C26 exact new skinned pose source-face delta missing');
+    const uvSurface=auditSourcePhotoUVSurfaceAtPose(
+     root,meshes,reference,posedBaselines,trial.overrides);
+    if(uvSurface.sourceFaces!==sourceUVSurfaceBaseline.sourceFaces||
+       uvSurface.uvMappedFaces!==sourceUVSurfaceBaseline.uvMappedFaces||
+       uvSurface.uvDegenerateFaces!==sourceUVSurfaceBaseline.uvDegenerateFaces)
+     throw Error('M2 C27 source UV/face identity diverged during candidate pose');
     poseOut.push(Object.freeze({
      candidate:trial.name,
+     sourcePhotoUVSurfaceAudit:uvSurface,
      newBody:body.newlyIntersecting,newSeparatePanel:panels.newlyIntersecting,
      newSelf:self.newlyIntersecting,
      originalPoseBodyContactCount:baselineBody.triangleContactCount,
@@ -1398,6 +1411,7 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
     shoulderRightDegrees:pose.shoulderRightZ,
     torsoDegrees:pose.torsoY,
     actualSkinnedGarmentVerticesMoved:poseMoved,
+    sourcePhotoUVSurfaceBaseline,
     trials:Object.freeze(poseOut),
     original163BoneSourcePose:true,
     sampledPoseOnly:true,
@@ -1410,6 +1424,12 @@ export function auditSourcePhotoMicroMultiPose(root,meshes,trials,
    const a=mesh.geometry.getAttribute('position').array;
    if(a.length!==saved.length||a.some((v,i)=>v!==saved[i]))
     throw Error('M2 C26 original source mesh silently mutated during pose trial');
+   const originalUV=originalUVBuffers.get(mesh),
+    currentUV=mesh.geometry.getAttribute('uv')?.array??null;
+   if((originalUV===null)!==(currentUV===null)||
+      (originalUV!==null&&(originalUV.length!==currentUV.length||
+       originalUV.some((v,i)=>v!==currentUV[i]))))
+    throw Error('M2 C27 original photograph UV data changed during private pose trial');
   }
  }
  // Original source GLB quaternions are not guaranteed mathematically unit
