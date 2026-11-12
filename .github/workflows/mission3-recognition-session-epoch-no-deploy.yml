@@ -24,7 +24,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-recognition-session-epoch.test.cjs|research/mission3-recognition-session-epoch/REPORT.md|.github/workflows/mission3-recognition-session-epoch-no-deploy.yml) ;;
+              public/app.js|tests/mission3-capture-operation-epoch.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|research/mission3-recognition-session-epoch/REPORT.md|.github/workflows/mission3-recognition-session-epoch-no-deploy.yml) ;;
               *) echo "Offline owner capacity gate refuses changed path: $p"; exit 1 ;;
             esac
           done
@@ -34,6 +34,7 @@ jobs:
           node --check public/app.js
           node --check tests/capture.test.cjs
           node --check tests/mission3-recognition-session-epoch.test.cjs
+          node --check tests/mission3-capture-operation-epoch.test.cjs
           node --check public/cloud-backup.js
           node --check tests/mission3-stale-cloud-413-capacity.test.cjs
           node --check tests/mission3-stale-413-offline.test.cjs
@@ -130,7 +131,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/photo-import.js public/cloud-backup-engine.js supabase research/signed-two-owner-transport-147 research/two-owner-cloud-rls-recovery-128 package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-recognition-session-epoch.test.cjs|research/mission3-recognition-session-epoch/REPORT.md|.github/workflows/mission3-recognition-session-epoch-no-deploy.yml) ;;
+              public/app.js|tests/mission3-capture-operation-epoch.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|research/mission3-recognition-session-epoch/REPORT.md|.github/workflows/mission3-recognition-session-epoch-no-deploy.yml) ;;
               *) echo "Mission 3 refused unapproved changed path: $p"; exit 1 ;;
             esac
           done
