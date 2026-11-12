@@ -2,8 +2,6 @@ name: Mission 1 P838 empirically unsafe garment subtype review — NO DEPLOY
 on:
   push:
     branches: [research/mission1-empirical-confusion-guard-modern-port-838-HOLD]
-  pull_request:
-    branches: [research/mission1-preliminary-identification-review-fence-837-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
@@ -23,17 +21,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exact P837 parent and only nine allowlisted research/worker files
+      - name: Exact P837 parent and only eleven allowlisted research/worker files
         run: |
           set -euo pipefail
           BASE=4af7e2d88b7089e1832bf78e3319bb0219de987f
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD >/tmp/changed-p838
           cat /tmp/changed-p838
-          test "$(wc -l </tmp/changed-p838)" -eq 9
+          test "$(wc -l </tmp/changed-p838)" -eq 11
           while IFS= read -r path; do
             case "$path" in
-              .github/workflows/mission1-empirical-confusion-guard-838-no-deploy.yml|public/local-worker.mjs|public/recognition-confusion-guard.mjs|scripts/build-m1-no-account-trial-831.mjs|scripts/test-m1-no-account-trial-831.mjs|tests/recognition-worker.test.mjs|tests/mission1-empirical-confusion-modern-port-838.test.mjs|scripts/compare-m1-empirical-838.mjs|research/mission1-empirical-confusion-guard-838/REPORT.md) ;;
+              .github/workflows/mission1-empirical-confusion-guard-838-no-deploy.yml|public/app.js|public/local-worker.mjs|public/recognition-confusion-guard.mjs|scripts/build-m1-no-account-trial-831.mjs|scripts/test-m1-no-account-trial-831.mjs|tests/recognition-worker.test.mjs|tests/automatic-indexing.test.cjs|tests/mission1-empirical-confusion-modern-port-838.test.mjs|scripts/compare-m1-empirical-838.mjs|research/mission1-empirical-confusion-guard-838/REPORT.md) ;;
               *) echo "P838 UNAUTHORIZED CODE: $path"; exit 1 ;;
             esac
           done </tmp/changed-p838
