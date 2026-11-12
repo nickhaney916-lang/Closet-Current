@@ -80,12 +80,19 @@ function adjustPhoto(item){
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  // P839: opening Adjust and pressing Save is not evidence the owner checked
  // an unreliable model suggestion. Require active photo-based acknowledgement.
- const explicitReview=Boolean(item.requiresOwnershipConfirmation||item.outfitSourceId||
+ // P841: every still-unsaved captured photo needs real owner category/color
+ // confirmation before it becomes a wardrobe item, including single-photo
+ // model failures without a high-risk subtype diagnostic.
+ const pendingDraft=batch.some(x=>x.id===item.id)&&!items.some(x=>x.id===item.id);
+ const explicitReview=Boolean(pendingDraft||item.requiresOwnershipConfirmation||item.outfitSourceId||
   item.recognitionDiagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired);
  let confirmReview=null,save=null,reviewStatus=null;
  const form=node('form'),draft=structuredClone(item);
- const reviewedCore=()=>draft.category!=='Uncategorized'&&
-  Boolean(draft.color&&String(draft.color).trim()&&draft.color!=='Unknown');
+ const reviewedCore=()=>{
+  const color=String(draft.color||'').trim();
+  return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
+   Boolean(color)&&color.toLowerCase()!=='unknown';
+ };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
   const valid=Boolean(confirmReview?.checked&&reviewedCore());
