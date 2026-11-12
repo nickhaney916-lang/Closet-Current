@@ -102,7 +102,9 @@ try{
   const categoryMatch=scored.categoryMatch===true;
   const recognized=scored.prediction?.category||null;
   const type=scored.prediction?.type||null;
-  const typeVerified=photoTypes(row.expectedCategory).includes(row.expectedType);
+  // Not-clothing controls are NEVER clothing subtype examples; the local
+  // catalog's Uncategorized/Unknown sentinel cannot enter a type denominator.
+  const typeVerified=row.expectedCategory!=='Uncategorized'&&photoTypes(row.expectedCategory).includes(row.expectedType);
   const accepted=row.acceptedTypes||[row.expectedType];
   const acceptedTypeMatch=categoryMatch&&type!==null&&accepted.includes(type);
   return {id:row.id,expectedCategory:row.expectedCategory,
@@ -111,7 +113,7 @@ try{
    predictedCategory:recognized,predictedType:type,
    strong:scored.strong===true,categoryConfirmed:scored.categoryConfirmed===true,
    categoryMatch,exactTypeMatch:typeVerified?scored.typeMatch===true:null,
-   acceptedTypeMatch:typeVerified||!!row.acceptedTypes?acceptedTypeMatch:null,
+   acceptedTypeMatch:row.expectedCategory==='Uncategorized'?null:typeVerified||!!row.acceptedTypes?acceptedTypeMatch:null,
    negativeRejected:row.expectedCategory==='Uncategorized'?categoryMatch:null,
    reason:scored.reason||null,error:scored.error||null,
    elapsedMs:scored.elapsedMs};
