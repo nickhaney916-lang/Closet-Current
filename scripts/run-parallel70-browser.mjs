@@ -73,7 +73,12 @@ async function runCase(engine,width){
   await page.waitForFunction(()=>batch.length===2&&batch.every(x=>x.reconciliation70Status==='separate_confirmed'));
   assert.equal(await page.evaluate(()=>items.length),0);
   await page.screenshot({path:join(output,engine.name()+'-'+width+'.png'),fullPage:true});
-  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+2),true,'No horizontal mobile overflow');
+  const overflow=await page.evaluate(()=>({viewport:innerWidth,scrollWidth:document.documentElement.scrollWidth,
+   offenders:[...document.querySelectorAll('*')].filter(e=>e.getBoundingClientRect().right>innerWidth+2)
+    .slice(0,12).map(e=>({tag:e.tagName,id:e.id,klass:e.className?.toString().slice(0,60),
+    right:Math.round(e.getBoundingClientRect().right),width:Math.round(e.getBoundingClientRect().width)}))}));
+  console.log('BROWSER70_LAYOUT '+JSON.stringify(overflow));
+  assert.ok(overflow.scrollWidth<=overflow.viewport+2,'No horizontal mobile overflow');
   assert.deepEqual(errors,[],'No browser JavaScript exceptions');
   return {engine:engine.name(),viewportWidth:width,paired:true,separated:true,originalSourcePreserved:true,closetWrites:0};
  }finally{await browser.close();}
