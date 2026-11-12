@@ -21,7 +21,11 @@ test('AUTH36 login epoch and cross-tab invalidation must predate owner-private D
 });
 
 test('AUTH36 app checks owner epoch around asynchronous preflight and closes owner-private IDB',()=>{
- assert.match(app,/window\.closetAuth\?\.assertCurrent\?\.\(\);await window\.closetCloud\?\.beforeWrite\(db\);window\.closetAuth\?\.assertCurrent\?\.\(\)/);
+ // AUTH36 now verifies the stricter enqueue-time signed owner/DB/epoch lease,
+ // not the original mutable-global `beforeWrite(db)` around two auth checks.
+ assert.match(app,/const auth=window\.closetAuth,owner=auth\?\.user\?\.id,ownerDB=db,epoch=captureOperationEpoch/);
+ assert.match(app,/const result=writes\.then\(async\(\)=>\{[\s\S]*?assertQueueLease\(\);[\s\S]*?await window\.closetCloud\?\.beforeWrite\(ownerDB\);[\s\S]*?assertQueueLease\(\)/);
+ assert.match(app,/writes=Promise\.resolve\(\)/);
  assert.match(app,/window\.addEventListener\('closet:session-locked'/);
  assert.match(app,/try\{db\?\.close\(\);\}catch\{\}/);
  assert.match(app,/db=null;items=\[\];batch=\[\];/);
