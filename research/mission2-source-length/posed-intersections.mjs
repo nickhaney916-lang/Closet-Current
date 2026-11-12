@@ -1148,6 +1148,113 @@ export function buildResidualSourcePairZDirectionTrial(
 }
 
 
+
+/**
+ * P2-C27 research-only original-photo UV and 3D surface continuity evidence.
+ * Compare the SAME source faces in neutral, articulated baseline, and a
+ * disposable candidate at an actual posed 163-bone rig. Never emit UVs,
+ * coordinates, source identities, textures, or per-face correspondence.
+ *
+ * Missing UVs, degenerate photographic mappings, inverted posed faces and
+ * stretched surfaces remain visible as COUNTS; they are never waived.
+ * Face area is not fabric strain, actual sewn-seam integrity, photographic
+ * texture quality, continuous cloth movement, or signed penetration.
+ */
+export function auditSourcePhotoUVSurfaceAtPose(root,meshes,neutralWorld,posedBaselineWorld,
+ overrides=new Map(),{maxFaces=300000,collapseArea=1e-12}={}){
+ if(!root?.isObject3D||!Array.isArray(meshes)||meshes.length<1||
+    meshes.length>8||new Set(meshes).size!==meshes.length||
+    !Array.isArray(neutralWorld)||neutralWorld.length!==meshes.length||
+    !Array.isArray(posedBaselineWorld)||posedBaselineWorld.length!==meshes.length||
+    !(overrides instanceof Map)||[...overrides.keys()].some(m=>!meshes.includes(m))||
+    !Number.isSafeInteger(maxFaces)||maxFaces<1||maxFaces>3000000||
+    !Number.isFinite(collapseArea)||collapseArea<=0||collapseArea>1e-6)
+  throw Error('M2 C27 bounded original-photo UV and posed source-face evidence required');
+ let sourceFaces=0,uvMappedFaces=0,meshesWithoutUV=0,uvDegenerateFaces=0;
+ let uvMirroredFaces=0,poseAreaOverTwofoldFaces=0,newCollapsedCandidateFaces=0;
+ let candidateAreaOver25PercentFaces=0,newCandidateInvertedNormals=0;
+ const faceCross=(a,i,j,k)=>{
+  const ux=a[j*3]-a[i*3],uy=a[j*3+1]-a[i*3+1],uz=a[j*3+2]-a[i*3+2];
+  const vx=a[k*3]-a[i*3],vy=a[k*3+1]-a[i*3+1],vz=a[k*3+2]-a[i*3+2];
+  return [uy*vz-uz*vy,uz*vx-ux*vz,ux*vy-uy*vx];
+ };
+ const norm=v=>Math.hypot(v[0],v[1],v[2]);
+ root.updateMatrixWorld(true);
+ for(let meshIndex=0;meshIndex<meshes.length;meshIndex++){
+  const mesh=meshes[meshIndex];
+  if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163)
+   throw Error('M2 C27 actual original 163-bone skinned garment required');
+  const geometry=mesh.geometry,p=geometry?.getAttribute('position'),uv=geometry?.getAttribute('uv');
+  const neutral=neutralWorld[meshIndex],baseline=posedBaselineWorld[meshIndex];
+  const n=p?.count*3;
+  if(!p?.isBufferAttribute||p.itemSize!==3||
+     !(neutral instanceof Float32Array||neutral instanceof Float64Array)||
+     !(baseline instanceof Float32Array||baseline instanceof Float64Array)||
+     neutral.length!==n||baseline.length!==n||
+     !neutral.every(Number.isFinite)||!baseline.every(Number.isFinite))
+   throw Error('M2 C27 complete finite neutral and actual posed vertex evidence required');
+  const override=overrides.get(mesh);
+  if(override&&(!(override instanceof Float32Array||override instanceof Float64Array)||
+       override.length!==n||!override.every(Number.isFinite)))
+   throw Error('M2 C27 finite disposable source candidate required');
+  if(uv&&(!uv.isBufferAttribute||uv.itemSize!==2||uv.count!==p.count||
+          uv.isInterleavedBufferAttribute||!uv.array?.every(Number.isFinite)))
+   throw Error('M2 C27 malformed or nonfinite original source photo UV required');
+  if(!uv)meshesWithoutUV++;
+  const index=geometry.index?.array;
+  const faces=index?index.length/3:p.count/3;
+  if(!Number.isSafeInteger(faces)||faces<1||faces>maxFaces||
+     sourceFaces+faces>maxFaces)
+   throw Error('M2 C27 bounded complete triangular source faces required');
+  sourceFaces+=faces;
+  const staged=posedGeometry(mesh,override);
+  try{
+   const after=staged.getAttribute('position').array;
+   for(let face=0;face<faces;face++){
+    const i=index?index[face*3]:face*3,
+      j=index?index[face*3+1]:face*3+1,
+      k=index?index[face*3+2]:face*3+2;
+    if(i>=p.count||j>=p.count||k>=p.count)
+     throw Error('M2 C27 original source triangle index outside positions');
+    if(uv){
+     uvMappedFaces++;
+     const u=uv.array,ux=u[j*2]-u[i*2],uy=u[j*2+1]-u[i*2+1],
+       vx=u[k*2]-u[i*2],vy=u[k*2+1]-u[i*2+1],
+       signed=ux*vy-uy*vx;
+     if(Math.abs(signed)<=1e-12)uvDegenerateFaces++;
+     if(signed< -1e-12)uvMirroredFaces++;
+    }
+    const neutralCross=faceCross(neutral,i,j,k),
+      baselineCross=faceCross(baseline,i,j,k),afterCross=faceCross(after,i,j,k);
+    const neutralArea=norm(neutralCross),baselineArea=norm(baselineCross),
+      afterArea=norm(afterCross);
+    if(neutralArea>collapseArea&&baselineArea>collapseArea&&
+       (baselineArea>neutralArea*2||baselineArea*2<neutralArea))
+     poseAreaOverTwofoldFaces++;
+    if(baselineArea>collapseArea&&afterArea<=collapseArea)
+     newCollapsedCandidateFaces++;
+    if(baselineArea>collapseArea&&afterArea>collapseArea&&
+       (afterArea>baselineArea*1.25||afterArea*1.25<baselineArea))
+     candidateAreaOver25PercentFaces++;
+    if(baselineArea>collapseArea&&afterArea>collapseArea&&
+       baselineCross[0]*afterCross[0]+baselineCross[1]*afterCross[1]+
+       baselineCross[2]*afterCross[2]<0)
+     newCandidateInvertedNormals++;
+   }
+  }finally{staged.dispose();}
+ }
+ return Object.freeze({
+  sourceFaces,uvMappedFaces,meshesWithoutUV,uvDegenerateFaces,uvMirroredFaces,
+  poseAreaOverTwofoldFaces,newCollapsedCandidateFaces,
+  candidateAreaOver25PercentFaces,newCandidateInvertedNormals,
+  originalSourceFaceIdentity:true,currentPoseOnly:true,
+  missingUVIsNotPhotoValidation:true,mirroredUVNotAutomaticallyRejected:true,
+  seamContinuityNotVerified:true,texturePixelsNotInspected:true,
+  continuousMotionNotVerified:true,clothDrapeNotCertified:true,
+  sourcePhotoHumanReviewed:false,releaseAuthorized:false
+ });
+}
+
 /**
  * P2-C26. Measure disposable, still-unapproved photographic-source garment
  * candidates on real DIFFERENT 163-bone articulated source shoulder/torso poses.
