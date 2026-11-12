@@ -872,7 +872,9 @@ async function drainAutomatic(){
 }
 function stopCamera(){
  const wasOpening=cameraOpening;
- cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
+ // A stopped camera's pending SHA/JPEG conversion cannot own the next
+ // camera's capture-in-progress flag. Its finally is request-fenced below.
+ cameraRequest++;cameraOpening=false;captureProofTaking=false;clearInterval(timer);timer=null;
  if(wasOpening)busy=false;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
@@ -912,7 +914,11 @@ async function captureProofPhoto(){
   if(epoch!==captureOperationEpoch||request!==cameraRequest||!stream||captureProofOwner()!==owner||document.hidden)return false;
   const durable=await candidate(proof.image,{sourceProof:proof,requireDraftCommit:true});
   return durable&&epoch===captureOperationEpoch&&request===cameraRequest&&!!stream&&captureProofOwner()===owner&&!document.hidden;
- }finally{if(epoch===captureOperationEpoch)captureProofTaking=false;}
+ }finally{
+  // An old in-flight frame must not reset a newer camera's busy flag after
+  // Stop/Done, backgrounding, track-ended recovery, or facing-mode switch.
+  if(epoch===captureOperationEpoch&&request===cameraRequest)captureProofTaking=false;
+ }
 }
 function reportCaptureCommitFailure(error,epoch=captureOperationEpoch){
  // Old owner camera promises are forbidden from updating new owner UI.
@@ -950,6 +956,10 @@ async function startCamera(mode){
   catch(error){
    if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
       ['OverconstrainedError','NotFoundError','NotReadableError'].includes(error.name)))throw error;
+   // A preferred-camera failure may arrive after Stop, sign-out or app hide.
+   // Never request a *second* camera stream for a revoked old session.
+   if(epoch!==captureOperationEpoch||request!==cameraRequest||
+      (typeof document!=='undefined'&&document.hidden))return;
    // On unsupported devices relax preference only; permission denial never bypassed.
    acquired=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
   }
