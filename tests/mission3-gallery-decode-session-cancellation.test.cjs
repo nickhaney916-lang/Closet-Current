@@ -73,7 +73,8 @@ function galleryFixture({onFirst='switch',sameUser=false}={}){
  let owner='owner-a';const dbA={name:'closet-current-user-owner-a'},dbB={name:'closet-current-user-'+(sameUser?'owner-a':'owner-b')};
  const decoded=[],candidates=[],events=[],window={__lastPhotoImportResult:'new-owner-import'};
  const ctx={
-  captureOperationEpoch:0,busy:false,session:0,db:dbA,batch:[],
+  captureOperationEpoch:0,mediaLifecycleEpoch:0,photoImportSerial:0,photoImportActive:false,
+  document:{hidden:false},busy:false,session:0,db:dbA,batch:[],
   captureProof01Active:true,mobileCameraToCloset75Active:false,
   captureProofOwner:()=>owner,
   captureProofFromFile:async file=>{decoded.push(file.name);return {image:file.name,originalPhoto:{image:file.name}};},
