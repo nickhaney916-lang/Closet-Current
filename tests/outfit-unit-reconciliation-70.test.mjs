@@ -66,3 +66,22 @@ test('explicit keep separate, combine actual same-category fragments, reject mis
  assert.equal(merged.length,1);assert.ok(merged[0].combinedFragments70.confirmedByOwner);
  assert.throws(()=>confirmWardrobePair70([tops[0],piece('B',{category:'Outerwear',maskId:34})],'A','B',owner,{fragments:true}));
 });
+
+test('saved matching-pair companion also blocks a second closet entry using the same masked region',()=>{
+ const [a,b]=shoes();
+ const combined=confirmWardrobePair70([a,b],'A','B',owner)[0];
+ const newB=piece('newB',{maskId:12,x:.4,status:'separate_confirmed'});
+ assert.equal(ownerMaySaveUnit70(newB,[combined]),false);
+ assert.ok(reconcileWardrobeUnits70([newB],[combined]).suspectedDuplicateIds.includes('newB'));
+ const combinedAgain=confirmWardrobePair70([
+   piece('newA',{maskId:13,x:.15}),piece('newC',{maskId:12,x:.4})
+ ],'newA','newC',owner)[0];
+ assert.equal(ownerMaySaveUnit70(combinedAgain,[combined]),false,'new unit companion must not reuse already-owned mask');
+});
+test('saved fragment companion receipt is protected just like paired footwear',()=>{
+ const fragments=confirmWardrobePair70([
+  piece('A',{category:'Tops',maskId:57}),
+  piece('B',{category:'Tops',maskId:58})
+ ],'A','B',owner,{fragments:true})[0];
+ assert.equal(ownerMaySaveUnit70(piece('C',{category:'Tops',maskId:58,status:'separate_confirmed'}),[fragments]),false);
+});

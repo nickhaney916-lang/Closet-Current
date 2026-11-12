@@ -75,6 +75,15 @@ function cropClothingPhoto(item){
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
 function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||!!item.shoePair||!!item.combinedFragments70;button.onclick=()=>cropClothingPhoto(item);return button;}
+function unit70Receipts(item){
+ const pieces=[item?.reconciliation70,item?.shoePair?.companion?.reconciliation70,item?.combinedFragments70?.companion?.reconciliation70];
+ return pieces.filter(x=>typeof x?.sourceSha256==='string'&&typeof x?.maskSha256==='string');
+}
+function duplicateUnit70InCloset(item,closet){
+ const parts=unit70Receipts(item);
+ return parts.length>0&&closet.some(saved=>saved.id!==item.id&&
+  unit70Receipts(saved).some(m=>parts.some(n=>m.sourceSha256===n.sourceSha256&&m.maskSha256===n.maskSha256)));
+}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
@@ -88,9 +97,7 @@ function adjustPhoto(item){
   Boolean(draft.color&&String(draft.color).trim()&&draft.color!=='Unknown')&&
   item.reconciliation70Status!=='unresolved'&&
   (!item.shoePair||draft.category==='Shoes')&&
-  !(item.reconciliation70?.sourceSha256&&item.reconciliation70?.maskSha256&&items.some(saved=>
-    saved.id!==item.id&&saved.reconciliation70?.sourceSha256===item.reconciliation70.sourceSha256&&
-    saved.reconciliation70?.maskSha256===item.reconciliation70.maskSha256));
+  !duplicateUnit70InCloset(item,items);
  const canSaveReview=()=>{
   if(!explicitReview)return true;
   const valid=Boolean(confirmReview?.checked&&reviewedCore());
@@ -143,10 +150,7 @@ function adjustPhoto(item){
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();
-  if((item.reconciliation70?.sourceSha256&&item.reconciliation70?.maskSha256&&items.some(saved=>
-      saved.id!==item.id&&saved.reconciliation70?.sourceSha256===item.reconciliation70.sourceSha256&&
-      saved.reconciliation70?.maskSha256===item.reconciliation70.maskSha256))||
-    item.reconciliation70Status==='unresolved'){message('Resolve grouping or duplicate source before saving.');return;}
+  if(duplicateUnit70InCloset(item,items)||item.reconciliation70Status==='unresolved'){message('Resolve grouping or duplicate source before saving.');return;}
   if(explicitReview&&!canSaveReview()){
    message('Confirm the garment category and color against the photo, then check the review box before saving.');
    return;

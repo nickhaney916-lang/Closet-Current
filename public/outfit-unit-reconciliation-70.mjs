@@ -25,10 +25,10 @@ export function reconcileWardrobeUnits70(drafts,existing=[],sourceId=null){
  const current=drafts.filter(d=>d&&d.outfitSourceId&&(sourceId===null||d.outfitSourceId===sourceId));
  const unresolved=current.filter(d=>d.reconciliation70Status==='unresolved'&&!d.shoePair&&!d.combinedFragments70);
  const shoes=unresolved.filter(shoe),duplicates=[],pairs=[];
- const previous=[...existing,...current].filter(x=>x?.reconciliation70?.maskSha256&&x?.reconciliation70?.sourceSha256);
+ const previous=[...existing,...current].filter(x=>unit70SourceMaskReceipts(x).length);
  for(const d of current){
   const m=d.reconciliation70;if(!m?.sourceSha256||!m?.maskSha256)continue;
-  if(previous.some(x=>x!==d&&x.reconciliation70?.sourceSha256===m.sourceSha256&&x.reconciliation70?.maskSha256===m.maskSha256))duplicates.push(d.id);
+  if(previous.some(x=>x!==d&&unit70SourceMaskReceipts(x).some(n=>n.sourceSha256===m.sourceSha256&&n.maskSha256===m.maskSha256)))duplicates.push(d.id);
  }
  const edges=new Map(shoes.map(x=>[x.id,[]]));
  for(let i=0;i<shoes.length;i++)for(let j=i+1;j<shoes.length;j++)if(canSuggestShoePair70(shoes[i],shoes[j])){
@@ -86,9 +86,15 @@ export function unpairComponents70(drafts,id,ownerId){
 }
 export function ownerMaySaveUnit70(item,closet){
  if(item?.reconciliation70Status==='unresolved')return false;
- const m=item?.reconciliation70;if(!m?.sourceSha256||!m?.maskSha256)return !m;
- return !(closet||[]).some(x=>x.id!==item.id&&x.reconciliation70?.sourceSha256===m.sourceSha256&&
- x.reconciliation70?.maskSha256===m.maskSha256);
+ const masks=unit70SourceMaskReceipts(item);
+ if(!masks.length)return !item?.reconciliation70;
+ return !(closet||[]).some(x=>x.id!==item.id&&unit70SourceMaskReceipts(x).some(
+  m=>masks.some(n=>n.sourceSha256===m.sourceSha256&&n.maskSha256===m.maskSha256)));
+}
+function unit70SourceMaskReceipts(item){
+ return [item?.reconciliation70,item?.shoePair?.companion?.reconciliation70,
+  item?.combinedFragments70?.companion?.reconciliation70].filter(m=>
+  typeof m?.sourceSha256==='string'&&typeof m?.maskSha256==='string');
 }
 function el(doc,tag,content,klass){const node=doc.createElement(tag);if(content!==undefined&&content!==null)node.textContent=content;if(klass)node.className=klass;return node;}
 export function renderUnitReview70(root,{drafts,existing,sourceId,onPair,onKeep,onDiscard,onUnpair,onCombine}){

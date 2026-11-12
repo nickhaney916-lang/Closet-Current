@@ -40,3 +40,7 @@ At exact research SHA `0827547def622e76e2c81b98202ec4379e0cc884`, [Actions #4328
 **Crucial qualification:** the images in the browser review test are locally synthesized JPEG graphics, and the segmentation worker messages are simulated; they are NOT actual model-found shoes or human annotated footwear pairs. P68 upstream reports real-image mask-level segmentation diagnostics, but separate human pair ownership labels do not exist in these fixtures. Therefore measured pair accuracy, wrong pair merges/splits, independent holdout ownership count accuracy, real camera→classifier→pair→private storage acceptance, real account-switched workflow and physical phone gates are **not** satisfied. This work is an operational owner-review safety trial, not completed ML acceptance.
 
 No production or staging changes, no cloud or private accounts, no inference architecture changes. **FAMILY ALPHA HOLD #255 remains mandatory.**
+
+## Additional source-receipt collision protection
+
+The duplicate gate checks the whole candidate's source-mask set, **including both primary and owner-combined companion masks**, against the saved wardrobe's primary and companion masks. A saved pair cannot be reintroduced as a second entry by reusing its secondary shoe mask, and likewise for confirmed non-shoe fragments. This rejects source-identical duplicates while still allowing two genuinely separate physical garments from the same original JPEG when their mask SHA-256 values differ. Additional adversarial tests cover this exact exploit. Neither the source JPEG nor mask data is logged.
