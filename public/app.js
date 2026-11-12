@@ -129,7 +129,7 @@ function renderPhotoResults(grid,results){
   const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id),known=item.category!=='Uncategorized';
   const title=item.name||(known&&item.itemType&&item.itemType!=='Unknown'?item.itemType:known?item.category:'Clothing photo');
   const state=pending?'checking':saved?'saved':item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
-  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?(reviewFirst836?'Confirm before adding':'Ready to add'):known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
+  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?(reviewFirst836||item.recognitionDiagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired?'Confirm before adding':'Ready to add'):known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
   if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
   else if(!pending)body.append(node('p',item.color?'Color: '+item.color+' · confirm the garment category.':item.scanFailed?'Try again, or add the details with Adjust.':'Retake this item, or add its details with Adjust.','fine'));
@@ -357,6 +357,13 @@ async function recognizeItem(item){
   if(corePartial){
    if(item.userAdjusted||!segmentationAllows(item,result.choices[0])){item.localStatus=item.userAdjusted?'Your adjustments are preserved. Save this piece when ready.':'The clothing checks disagree. Use Adjust or take a clearer photo.';return true;}
    applyLocalChoice(item,result.choices[0]);item.name=[item.color,result.choices[0].category].filter(Boolean).join(' ');
+   // P838: the empirically unsafe subtype guard is an OWNER REVIEW order,
+   // not permission to auto-save a category+estimated color as a substitute.
+   if(result.diagnostics?.mission1SubtypeSafety?.ownerSubtypeReviewRequired===true){
+    item.requiresOwnershipConfirmation=true;
+    item.localStatus='This clothing type is easy to misidentify. Tap Adjust to confirm the category, type and color before saving.';
+    return true;
+   }
    if(!item.color||item.color==='Unknown'){item.localStatus='Garment category recognized. Confirm the specific type and color in Adjust; optional details can stay blank.';return true;}
   }
   if(!result.strong&&!corePartial){if(typeof recordDeviceEvent==='function')recordDeviceEvent('not_recognized',{durationMs:Date.now()-scanStarted});item.localStatus=(item.possibleDuplicate?'Possible duplicate. ':'')+(item.color?'Color kept. Confirm the garment category and type in Adjust.':'Garment identity needs confirmation. Choose a color and category in Adjust.');return true;}

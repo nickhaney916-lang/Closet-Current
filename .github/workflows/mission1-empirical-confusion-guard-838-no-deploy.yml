@@ -1,0 +1,128 @@
+name: Mission 1 P838 empirically unsafe garment subtype review — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-empirical-confusion-guard-modern-port-838-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: m1-p838-empirical-no-deploy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  native-scope-and-regression-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P837 parent and only eleven allowlisted research/worker files
+        run: |
+          set -euo pipefail
+          BASE=4af7e2d88b7089e1832bf78e3319bb0219de987f
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/changed-p838
+          cat /tmp/changed-p838
+          test "$(wc -l </tmp/changed-p838)" -eq 11
+          while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/mission1-empirical-confusion-guard-838-no-deploy.yml|public/app.js|public/local-worker.mjs|public/recognition-confusion-guard.mjs|scripts/build-m1-no-account-trial-831.mjs|scripts/test-m1-no-account-trial-831.mjs|tests/recognition-worker.test.mjs|tests/automatic-indexing.test.cjs|tests/mission1-empirical-confusion-modern-port-838.test.mjs|scripts/compare-m1-empirical-838.mjs|research/mission1-empirical-confusion-guard-838/REPORT.md) ;;
+              *) echo "P838 UNAUTHORIZED CODE: $path"; exit 1 ;;
+            esac
+          done </tmp/changed-p838
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/recognition-engine.mjs public/recognition-vectors.bin public/recognition-vectors.json supabase benchmark)"
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/mission1-empirical-confusion-guard-838/REPORT.md
+          echo M1_P838_NO_DEPLOY_MODEL_UNCHANGED
+      - name: Install ephemeral complete native dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Verify exact native worker/bundle with all full original regressions
+        run: |
+          set -euo pipefail
+          node --check public/local-worker.mjs
+          node --check scripts/compare-m1-empirical-838.mjs
+          node --test tests/mission1-empirical-confusion-modern-port-838.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test scripts/test-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-public-photo-both-browsers-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+        half: [a, b]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original SHA-pinned 8 source JPEGs (no owner photos)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps ${{ matrix.browser }}
+          IDS=$(node -e 'const rows=require("./benchmark/manifest-holdout-16.json");const h=process.argv[1];process.stdout.write(rows.filter((_,i)=>i%2===(h==="a"?0:1)).map(x=>x.id).join(","))' "${{ matrix.half }}")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+      - name: Real unchanged FashionCLIP weights plus P838 admission guard against eight originals
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node scripts/run-m1-real-16-originals-834.mjs ${{ matrix.browser }} ${{ matrix.half }} benchmark/m1-real16-partition
+      - name: Archive source-ID-only numeric output, absolutely no JPEGs
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-p834-${{ matrix.browser }}-${{ matrix.half }}
+          path: |
+            benchmark/m1-real16-partition/audit.json
+            benchmark/m1-real16-partition/source-receipt.json
+          if-no-files-found: error
+          retention-days: 14
+  four-parts-exact-source-baseline-compare-HOLD:
+    needs: [native-scope-and-regression-HOLD,real-public-photo-both-browsers-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collect sourcewise P838 exact 16 originals in 4 partitions
+        uses: actions/download-artifact@v4
+        with:
+          pattern: m1-p834-*
+          path: benchmark/m1-real16-p838
+          merge-multiple: false
+      - name: Strict no-drop aggregate and compare to exact original P834 previously green
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-real-16-audit-834.test.mjs
+          node scripts/aggregate-m1-real-16-834.mjs benchmark/m1-real16-p838
+          mkdir -p benchmark/m1-p834-baseline
+          test "$(gh api repos/${{ github.repository }}/actions/runs/43144750475 --jq .head_sha)" = "beb7f27b18f70faa32c94ca2ac5d4260e83f0f0f"
+          gh run download 43144750475 -n m1-p834-16-original-public-garments-both-browsers-AGGREGATED-NUMERIC-HOLD -D benchmark/m1-p834-baseline
+          node scripts/compare-m1-empirical-838.mjs benchmark/m1-p834-baseline/aggregate.json benchmark/m1-real16-p838/aggregate.json benchmark/m1-real16-p838/comparison.json
+      - name: Publish no-photo numbers only
+        uses: actions/upload-artifact@v4
+        with:
+          name: m1-p838-sourcewise-guarded-16-originals-numeric-HOLD
+          path: |
+            benchmark/m1-real16-p838/aggregate.json
+            benchmark/m1-real16-p838/comparison.json
+          if-no-files-found: error
+          retention-days: 14

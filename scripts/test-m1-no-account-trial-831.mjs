@@ -19,7 +19,7 @@ test('P831 copies ONLY genuine built local model trial dependencies and byte-ver
  assert.match(manifest.recognitionIndex,/^[a-f0-9]{64}$/);
  const files=(await readdir(directory)).sort();
  assert.deepEqual(files,[...TRIAL_FILES_831,'bundle-manifest.json','TRIAL_README.txt'].sort());
- assert.equal(Object.keys(manifest.files).length,14);
+ assert.equal(Object.keys(manifest.files).length,15);
  assert.equal(TRIAL_FILES_831.length,new Set(TRIAL_FILES_831).size);
  for(const file of TRIAL_FILES_831){
   const bytes=await readFile(join(directory,file));
@@ -34,6 +34,7 @@ test('P831 copies ONLY genuine built local model trial dependencies and byte-ver
  assert.doesNotMatch(html,/photo-import\.js/,'old non-cancelable import must not run in the trial');
  assert.ok(files.includes('phone-photo-prep-832.mjs'));
  assert.ok(files.includes('phone-photo-run-recovery-833.mjs'),'bounded worker recovery is shipped with isolated trial');
+ assert.ok(files.includes('recognition-confusion-guard.mjs'),'source-independent owner-review module must ship with worker');
  assert.match(await readFile(join(directory,'phone-photo-check.mjs'),'utf8'),/phone-photo-run-recovery-833\.mjs/);
  assert.ok(!files.includes('photo-import.js'));
  assert.match(await readFile(join(directory,'phone-photo-check.mjs'),'utf8'),/phone-photo-prep-832\.mjs/);
