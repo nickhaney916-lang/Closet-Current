@@ -20,17 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict verified P838 parent and six-file allowlist
+      - name: Strict verified P838 parent and seven-file allowlist
         run: |
           set -euo pipefail
           BASE=4774d4a6cfd719ed59e168be8aa1d14d6e35ec6a
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD >/tmp/p839-files
           cat /tmp/p839-files
-          test "$(wc -l </tmp/p839-files)" -eq 6
+          test "$(wc -l </tmp/p839-files)" -eq 7
           while IFS= read -r p; do
             case "$p" in
-              public/app.js|public/outfit-capture.js|tests/automatic-indexing.test.cjs|scripts/test-m1-owner-review-editor-839.mjs|research/mission1-owner-verified-outfit-admission-839/REPORT.md|.github/workflows/mission1-owner-verified-outfit-admission-839-no-deploy.yml) ;;
+              public/app.js|public/outfit-capture.js|tests/automatic-indexing.test.cjs|tests/outfit-capture.test.cjs|scripts/test-m1-owner-review-editor-839.mjs|research/mission1-owner-verified-outfit-admission-839/REPORT.md|.github/workflows/mission1-owner-verified-outfit-admission-839-no-deploy.yml) ;;
               *) echo "P839_UNAUTHORIZED_FILE: $p"; exit 1 ;;
             esac
           done </tmp/p839-files
