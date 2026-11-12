@@ -366,9 +366,14 @@ function applyLocalChoice(item,choice,overwrite=false){
 // recognition mistakenly calls the persistence path, fail closed.
 function automaticAdmissionCore842(item){
  const color=String(item?.color||'').trim();
- return Boolean(item?.image&&categories.includes(item.category)&&item.category!=='Uncategorized'&&
-  color&&color.toLowerCase()!=='unknown'&&!item.possibleDuplicate&&
-  !item.requiresOwnershipConfirmation&&!item.outfitSourceId&&!item.segmentHint?.clipped);
+ // The taxonomy is the canonical category authority. VM-integrated scanner
+ // tests also load this taxonomy independently from the full app shell.
+ const knownCategory=typeof clothingSchema!=='undefined'&&clothingSchema?.types?
+  Object.hasOwn(clothingSchema.types,item?.category):
+  (typeof categories!=='undefined'&&categories.includes(item?.category)&&item.category!=='Uncategorized');
+ return Boolean(item?.image&&knownCategory&&color&&color.toLowerCase()!=='unknown'&&
+  !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
+  !item.outfitSourceId&&!item.segmentHint?.clipped);
 }
 async function saveIndexed(item){
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
