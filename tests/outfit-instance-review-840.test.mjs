@@ -86,5 +86,32 @@ test('P840 real outfit worker source retains default behavior and enables instan
  assert.ok(flagged.every(x=>x.piece.requiresReview===true));
  assert.ok(flagged.every(x=>x.piece.image.startsWith('data:image/jpeg;base64,')&&x.piece.recognitionPhoto.image.startsWith('data:image/jpeg;base64,')));
  assert.equal(flagged.filter(x=>x.piece.instanceMethod==='connected_footwear_component').length,2);
+ // P841: same provenance must reach the actual pending closet review queue.
+ assert.ok(flagged.every(x=>x.piece.hint.requiresReview===true));
+ assert.ok(flagged.filter(x=>x.piece.label==='Shoes').every(x=>
+  x.piece.hint.requiresPairReview===true&&
+  x.piece.hint.instanceMethod==='connected_footwear_component'&&
+  Number.isInteger(x.piece.hint.instanceIndex)));
+ assert.ok(unflagged.every(x=>x.piece.hint.requiresPairReview===undefined));
+
  assert.equal(sent.filter(x=>x.type==='error').length,0);
+});
+
+test('P841 small disconnected footwear fragments survive as unresolved owner-review evidence, no source pixels lost',()=>{
+ const l=sourceMap(),{data,dims}=l,area=dims[2]*dims[3],width=dims[3];
+ // Separate third 2x3 genuine accepted pixel island: legacy includes it,
+ // old P840 incorrectly dropped it because component size is below 12.
+ for(let y=29;y<32;y++)for(let x=36;x<38;x++){
+  const i=y*width+x;for(let c=0;c<18;c++)data[c*area+i]=c===9?10:-10;
+ }
+ const map=segmentation.clothingLabelMap(data,dims);
+ const before=segmentation.clothingMaskGroups(map).find(g=>g.id===9);
+ const after=trial.clothingReviewInstances840(map).filter(g=>g.id===9);
+ assert.equal(after.length,3,'two sufficient shoes plus one unresolved fragment review group');
+ assert.deepEqual(after.map(g=>g.count),[25,25,6]);
+ assert.equal(after[2].instanceMethod,'unresolved_footwear_fragments');
+ assert.ok(after.every(g=>g.requiresReview===true));
+ for(let i=0;i<before.selected.length;i++){
+  assert.equal(after.reduce((sum,g)=>sum+g.selected[i],0),before.selected[i],'P841 pixel coverage '+i);
+ }
 });
