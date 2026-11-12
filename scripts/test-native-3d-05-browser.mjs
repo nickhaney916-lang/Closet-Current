@@ -466,6 +466,26 @@ try{
     }else{
      const sanitized=[openProof.error,openProof.nativeStatus,openProof.viewerStatus].join(' ');
      const reason=sanitized.match(/M2 source length adaptive-geometry-refused\[([a-z-]+)\]: original-photo\/2D fallback required/i);
+     if(sourceStageAudit&&!reason){
+      // Bounded CATEGORY ONLY: never log actual browser errors, JWTs, owner
+      // metadata, JPEG hashes, source triangle identities or private URLs.
+      const raw=[sanitized,...errors.map(e=>e.message||'')].join(' ');
+      const kinds=[
+       ['piece-count',/exactly original torso and two sewn cap/i],
+       ['bone-weight',/genuine 163-bone original garment/i],
+       ['source-topology',/source face identity|canonical source face/i],
+       ['stage-capture',/M2 photo stages|capturePhotoConstructionFaceAreas/i],
+       ['stage-owner',/source stage provenance requires actual P190/i],
+       ['stage-variable',/__m2PhotoStageAreas|not defined|ReferenceError/i],
+       ['stage-parser',/SyntaxError|Unexpected token/i],
+       ['source-stage',/M2 photo stage/i]
+      ];
+      const category=kinds.find(([,pattern])=>pattern.test(raw))?.[0]||'other';
+      console.log('M2_STAGE_AUDIT_BOUNDED_ERROR_CLASS',JSON.stringify({
+       category,stageReports:safeStageAreaProvenance.length,
+       browserErrorCount:errors.length,openProofOk:openProof.ok===true
+      }));
+     }
      assert.ok(reason,'Adaptive 3D must return a bounded explicit geometry refusal code, not a private error');
      refusalReason=reason[1];
      assert.ok(['coarse-body-pair-regression','new-body-contacts','body-contact-count-regression',
