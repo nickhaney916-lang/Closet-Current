@@ -273,3 +273,20 @@ For the original torso shell and both genuine shoulder caps, count exact origina
 ### P2-C18 exact-head verification
 
 Pending complete exact-final-HEAD no-deploy Node and real Chromium/WebKit 320/390/430 source-photo privacy, SHA screenshots, and count-only native morphology output. Do not claim passing values until verified.
+
+
+## P2-C19 — Link new photographed garment self-intersections to source-local face type
+
+**Verified parent:** [PR #893](https://github.com/nickhaney916-lang/Closet-Current/pull/893), HEAD 6dfdd79b957ddca4c751ee13e06c45a8347d9b07, [exact-head no-deploy Actions #43149732604](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43149732604) 8/8 success, 1,546/1,546 Node tests, actual Chromium/WebKit 320/390/430 and 44 SHA screenshots plus 36 pixel comparisons per browser. In the original licensed blouse, among 2,275 source-local tiny faces, 2,170 are small but well-shaped, 95 are thin slivers, 10 have near-coincident edges and 0 are point micro. Of the tiny faces 2,261 touch indexed source boundaries, only 14 are purely interior. No unsafe 3D fit was admitted; original photo/2D fallback remained protected.
+
+**Why another step:** Tiny-area alone demonstrably mislabels the majority of original source triangles. To prioritize actual geometry defects without damaging legitimate seams, only evaluate the original source-face IDs *directly involved in exact new self-contact pairs* after an immutable proposed length/depth trial. Those IDs were already independently established by the unchanged 163-bone changed-face contact gate; no candidate is accepted or waived on shape labels.
+
+**New experiment:** For each deduplicated source face in a real NEW within-panel contact, classify source-*local* triangle morphology against the actual P62/P185 + P190/P195 **owner-aligned pre-length/depth garment**: not-tiny, microscopic, short-edge, thin-sliver or tiny-but-well-shaped at the same P2-C18 metric thresholds. Independently classify original indexed one-sided boundary versus interior status, including nonmanifold edge overlap, and count unique affected faces by source mesh. Count every distinct original face once across pairs. Reconcile all shape and boundary totals to the previous proven unique original-face contact witness. Unchanged source faces without new contacts are not implicated and are not modified.
+
+**Critical source-stage distinction:** This receipt is measured *after* photographed silhouette and owner-alpha fitting. It is NOT the pristine anatomical source from P2-C18 and cannot prove that a tiny/sliver face was created in anatomy versus P62/P190. Indexed boundaries do not prove an actual sewn seam. Original photo/2D cutout and private owner evidence still have synthetic-review limitations. All original source IDs, vertex XYZ, face-to-contact association, owner image/hash/token and wardrobe fields remain inside disposable donor memory. Only anonymous integer counts and explicit no-certification flags leave the donor.
+
+**Nonclaims / gate:** The actual pictured fabric, all local source positions, original face IDs, owner session, UVs, skin weights, existing body/panel/self collision veto and original-photo 2D fallback remain UNCHANGED. This provides a narrow source repair shortlist for later reversible geometry experiments, not repaired fabric, independent sewn topology, actual cloth physics, real phone or human visual acceptance. No merge, deploy, production/staging/cloud modification or family pilot. Family Alpha HOLD #255.
+
+### P2-C19 exact-head verification
+
+Pending isolated no-deploy real Chromium/WebKit 320/390/430, full Node regression, source privacy counts and screenshot SHA on this exact final HEAD. Do not claim that new geometry or fit passed.
