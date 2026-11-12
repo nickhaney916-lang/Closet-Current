@@ -60,7 +60,37 @@ let saving=false;const sessionCapturedIds=new Set(),failedDraftCaptures=new Set(
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
 const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
-function queued(work){const result=writes.then(async()=>{window.closetAuth?.assertCurrent?.();await window.closetCloud?.beforeWrite(db);window.closetAuth?.assertCurrent?.();return work();});writes=result.catch(()=>{});result.catch(error=>{if(error?.name==='QuotaExceededError'||error?.cause?.name==='QuotaExceededError')message('Browser storage is full. Your existing closet and saved outfits remain in place. Free space and try again.');});result.then(()=>window.closetCloud?.changed()).catch(()=>{});result.then(()=>window.closetIndex02?.refresh()).catch(()=>{});return result;}
+function queued(work){
+ // Queue ownership is established at ENQUEUE time, not after awaiting an
+ // earlier operation or cloud revision. An old signed owner may never dirty
+ // the next owner's cloud marker or refresh their wardrobe index.
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
+ const current=()=>!!owner&&window.closetAuth===auth&&auth.user?.id===owner&&
+  db===ownerDB&&ownerDB?.name==='closet-current-user-'+owner&&
+  epoch===captureOperationEpoch;
+ const assertQueueLease=()=>{
+  auth?.assertCurrent?.();
+  if(!current())throw Error('Private wardrobe write cancelled: account session changed');
+ };
+ const result=writes.then(async()=>{
+  assertQueueLease();
+  await window.closetCloud?.beforeWrite(ownerDB);
+  assertQueueLease();
+  const value=await work();
+  assertQueueLease();
+  return value;
+ });
+ writes=result.catch(()=>{});
+ // Rejected writes and delayed successful finalizers must NOT update a
+ // different owner's warning, cloud dirty indicator, or local outfit index.
+ result.catch(error=>{
+  if(current()&&(error?.name==='QuotaExceededError'||error?.cause?.name==='QuotaExceededError'))
+   message('Browser storage is full. Your existing closet and saved outfits remain in place. Free space and try again.');
+ });
+ result.then(()=>{if(current())window.closetCloud?.changed();}).catch(()=>{});
+ result.then(()=>{if(current())window.closetIndex02?.refresh();}).catch(()=>{});
+ return result;
+}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
 // STORAGE136: all saved records remain available to search, outfits and
 // backup; only the visible closet-card window is bounded. This changes DOM
@@ -77,6 +107,9 @@ let mediaLifecycleEpoch=0,videoImportSerial=0,videoImportActive=false,
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 window.addEventListener('closet:session-locked',()=>{
  ++captureOperationEpoch;
+ // Revoke the former session's pending write tail immediately. A new signed
+ // owner must not wait on an abandoned cloud request or blocked old device.
+ writes=Promise.resolve();
  ++videoImportSerial;videoImportActive=false;
  ++photoImportSerial;photoImportActive=false;
  // AUTH36: immediately revoke all owner-visible local photo state. Supabase
