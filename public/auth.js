@@ -33,7 +33,7 @@
   if(session&&!stillCurrent())lockAccount();
  });
  // A temporary offline/5xx refresh is NOT a revoked session. Keep the
- // previous credential encrypted only by the browser's origin storage, and
+ // previous credential in the browser's origin-scoped storage, and
  // keep the private wardrobe LOCKED until a real verified refresh succeeds.
  // An online transition may retry only if no other tab changed that session.
  window.addEventListener('online',()=>{
