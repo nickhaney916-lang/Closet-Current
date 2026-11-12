@@ -77,12 +77,42 @@ try{
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'horizontal overflow at '+width);
  }
  await page.setViewportSize({width:390,height:844});
+ // The actual no-account browser must prove a canceled original image
+ // cannot later create a JPEG even when a stalled decoder eventually resolves.
+ const abortProof=await page.evaluate(async()=>{
+  const {prepareTrialPhotoJPEG832}=await import('./phone-photo-prep-832.mjs');
+  const originalDecode=HTMLImageElement.prototype.decode;
+  const originalEncode=HTMLCanvasElement.prototype.toDataURL;
+  let resolveStalled=null,encodes=0;
+  HTMLImageElement.prototype.decode=function(){
+   return new Promise(resolve=>{resolveStalled=resolve;});
+  };
+  HTMLCanvasElement.prototype.toDataURL=function(){encodes++;return originalEncode.apply(this,arguments);};
+  try{
+   const controller=new AbortController();
+   const file=new Blob(['NOT_A_PHOTO'],{type:'image/jpeg'});
+   const pending=prepareTrialPhotoJPEG832(file,{signal:controller.signal});
+   await Promise.resolve();
+   if(typeof resolveStalled!=='function')throw Error('No true image decode pending');
+   controller.abort();
+   let code='missing';
+   try{await pending;}catch(e){code=e.code;}
+   resolveStalled();
+   await Promise.resolve();
+   await Promise.resolve();
+   return {code,encodes};
+  }finally{
+   HTMLImageElement.prototype.decode=originalDecode;
+   HTMLCanvasElement.prototype.toDataURL=originalEncode;
+  }
+ });
+ assert.deepEqual(abortProof,{code:'cancelled',encodes:0},'a restarted photo may never encode a late private JPEG');
  await page.screenshot({path:join(output,'phone-photo-flow.png'),fullPage:true});
  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
  await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
  await page.waitForTimeout(150);assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#status').innerText(),'Choose your photos to begin.');assert.deepEqual(pageErrors,[]);
  assert.deepEqual(wireViolations,[],'no source JPEG, private file identity or upload on the wire');
  assert.ok(networkMethods.has('GET'),'real model and static files must load through real GET requests');
- await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,engine,realWorker:true,fixturePhotos:2,viewports:[320,390,430],lockedLabels:true,visibleHonestVerdicts:true,reportPrivacy:true,noPhotoNetworkUpload:true,cancellation:true,pageErrors},null,2));
+ await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,engine,realWorker:true,fixturePhotos:2,viewports:[320,390,430],lockedLabels:true,visibleHonestVerdicts:true,reportPrivacy:true,noPhotoNetworkUpload:true,cancellation:true,noLateDecodeJPEG:true,pageErrors},null,2));
  console.log('Phone photo-check '+engine+' flow passed with real recognition, per-item blind verdicts and private filenames excluded.');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
