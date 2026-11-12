@@ -21,7 +21,7 @@ const ownerA='owner-a',ownerB='owner-b';
 const original={id:'same-id-after-restore',image:'identical-source-jpeg',category:'Tops',itemType:'Polo',color:'Blue',confirmedDetails:{itemType:'Polo'},learningReviewedWeek:''};
 const memory=()=>({version:1,modelKey:'owner-A-private-features',features:Array(512).fill(0).map((_,i)=>i===0?1:0)});
 function fakeDb(owner,record,{deferRead=false}={}){
- const data=new Map([[record.id,structuredClone(record)]),pending=[];
+ const data=new Map([[record.id,structuredClone(record)]]),pending=[];
  let transactions=0,puts=0,aborts=0;
  const db={name:'closet-current-user-'+owner,
   transaction(){
