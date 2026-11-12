@@ -72,11 +72,13 @@ let cameraMode=null,cameraOpening=false,cameraRequest=0,captureProofTaking=false
 // even if the same owner later signs back in with an identical user ID.
 let captureOperationEpoch=0;
 // A rapid background/foreground transition invalidates pending media work.
-let mediaLifecycleEpoch=0,videoImportSerial=0,videoImportActive=false;
+let mediaLifecycleEpoch=0,videoImportSerial=0,videoImportActive=false,
+ photoImportSerial=0,photoImportActive=false;
 const video=$('video'),canvas=document.createElement('canvas'),tiny=document.createElement('canvas');tiny.width=32;tiny.height=32;
 window.addEventListener('closet:session-locked',()=>{
  ++captureOperationEpoch;
  ++videoImportSerial;videoImportActive=false;
+ ++photoImportSerial;photoImportActive=false;
  // AUTH36: immediately revoke all owner-visible local photo state. Supabase
  // signed RLS remains authoritative server-side; this protects stale tabs.
  stopCamera();
@@ -1029,7 +1031,7 @@ function captureTick(now=Date.now()){
   else $('captureState').textContent=`Next photo in ${Math.max(1,Math.ceil((cadence.intervalMs-(now-cadence.last))/1000))} seconds · hold the garment still`;
   return;
  }
- try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){const epoch=captureOperationEpoch;captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(error=>reportCaptureCommitFailure(error,epoch));return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
+ try{if(typeof captureProof01Active!=='undefined'&&captureProof01Active){const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch;captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&accepted){cadence.captured(Date.now());beep();$('captureState').textContent=session+' images captured · show the next piece';if(session>=60)finishScan();}}).catch(error=>reportCaptureCommitFailure(error,epoch,lifecycle));return;}candidate(snap());cadence.captured(now);beep();$('captureState').textContent=`${session} images captured · show the next piece`;
  if(session>=60){finishScan();message('60 images collected. Review this batch before continuing.');}}
  catch(e){$('captureState').textContent='Waiting for a usable camera frame…';}
 }
@@ -1051,9 +1053,9 @@ async function captureProofPhoto(){
   if(epoch===captureOperationEpoch&&request===cameraRequest)captureProofTaking=false;
  }
 }
-function reportCaptureCommitFailure(error,epoch=captureOperationEpoch){
- // Old owner camera promises are forbidden from updating new owner UI.
- if(epoch!==captureOperationEpoch)return;
+function reportCaptureCommitFailure(error,epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch){
+ // Old owner or interrupted camera promises cannot update the resumed UI.
+ if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch)return;
  if(typeof render==='function')render();
  if(error?.code==='CAPTURE_STORAGE_FAILED'){
   $('captureState').textContent='Photo in review · device storage not confirmed';
@@ -1063,9 +1065,9 @@ function reportCaptureCommitFailure(error,epoch=captureOperationEpoch){
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
  if(typeof captureProof01Active!=='undefined'&&captureProof01Active){
-  const epoch=captureOperationEpoch;
-  captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
-  .catch(error=>reportCaptureCommitFailure(error,epoch));return;
+  const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch;
+  captureProofPhoto().then(accepted=>{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&accepted){beep();$('captureState').textContent=session+' photos taken · ready for the next piece';if(session>=60)finishScan();}})
+  .catch(error=>reportCaptureCommitFailure(error,epoch,lifecycle));return;
  }
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
@@ -1573,13 +1575,14 @@ $('retryRecognition').onclick=recognizeBatch;
 async function importClothingPhotos(files){
  if(busy||!files.length)return;
  if(files.length>20)return message('Choose up to 20 clothing photos per batch.');
- stopCamera();const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch;busy=true;controls(true);session=0;
+ stopCamera();const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch,
+  importToken=++photoImportSerial;photoImportActive=true;busy=true;controls(true);session=0;
  try{
   const proofMode=(typeof captureProof01Active!=='undefined'&&captureProof01Active)||
    (typeof mobileCameraToCloset75Active!=='undefined'&&mobileCameraToCloset75Active);
   const owner=proofMode?captureProofOwner():null,ownerDB=db;
   const sameImportLease=()=>epoch===captureOperationEpoch&&
-   lifecycle===mediaLifecycleEpoch&&!document.hidden&&
+   lifecycle===mediaLifecycleEpoch&&importToken===photoImportSerial&&!document.hidden&&
    (!proofMode||owner&&captureProofOwner()===owner&&db===ownerDB);
   if(proofMode&&!owner)throw Error('Please sign in before importing photos.');
   const decode=proofMode?file=>captureProofFromFile(file,owner):photoToJPEG;
@@ -1595,7 +1598,8 @@ async function importClothingPhotos(files){
   if(typeof render==='function')render();
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
- }finally{if(epoch===captureOperationEpoch){busy=false;controls(false);}}
+ }finally{if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&
+     importToken===photoImportSerial){photoImportActive=false;busy=false;controls(false);}}
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
 $('singleCameraCapture').onchange=event=>{
@@ -1668,7 +1672,8 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMe
 function pauseCameraOnInterruption(){
  // Invalidate even a brief hidden->visible or BFCache transition.
  ++mediaLifecycleEpoch;
- const cameraWasActive=!!(cameraOpening||stream),videoWasActive=videoImportActive;
+ const cameraWasActive=!!(cameraOpening||stream),videoWasActive=videoImportActive,
+  photosWereActive=photoImportActive;
  if(cameraWasActive)stopCamera();
  if(videoWasActive){
   ++videoImportSerial;videoImportActive=false;
@@ -1680,12 +1685,18 @@ function pauseCameraOnInterruption(){
   }
   busy=false;controls(false);
  }
- if(!cameraWasActive&&!videoWasActive)return false;
+ if(photosWereActive){
+  ++photoImportSerial;photoImportActive=false;
+  busy=false;controls(false);
+ }
+ if(!cameraWasActive&&!videoWasActive&&!photosWereActive)return false;
  $('captureState').textContent=videoWasActive?
   'Video import interrupted · committed photos remain in Photo results':
+  photosWereActive?'Photo import paused · confirmed photos remain in Photo results':
   'Camera paused · captured photos remain available to review';
  message(videoWasActive?
   'Video import stopped while the app was in the background. Only photos confirmed saved on this device are recoverable. Select the video again to continue.':
+  photosWereActive?'Photo import paused while the app was in the background. Confirmed photos remain saved for review. Select the remaining photos again to continue.':
   'Camera paused while the app was in the background. Your committed photos remain available. Tap Start camera to continue.');
  if(batch.length)render();
  return true;
