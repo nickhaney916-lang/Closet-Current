@@ -24,7 +24,7 @@ Four additional native end-to-end automatic-indexing regressions cover strong ou
 
 Actual app.js clothingFields and adjustPhoto functions execute in *genuine Chromium and WebKit DOM* at 320/390/430 CSS widths with photo-free synthetic fixtures to prove unauthorized submission cannot save, mandatory category/color, change revocation, risk/outfit flags and unchanged legacy editor. These are actual browser interaction tests, NOT true model inference, source-image accuracy, or physical mobile devices.
 
-Strict six-file direct-parent check and no deploy; no photographs leave CI. Report exact-green status only when all jobs pass.
+Strict seven-file direct-parent check and no deploy, including the updated outfit-capture test (250 synthetic distinct cutouts require review and preserve original source identity); no photographs leave CI. Report exact-green status only when all jobs pass.
 
 ## Remaining mission-level blockers
 
