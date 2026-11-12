@@ -694,6 +694,14 @@ try{
       '"newlyIntersectingSourceKeys"','"sourceUV"'])
      assert.equal(sanitizedJSON.includes(secret),false);
     const sourceShortEdgeSamples=safeDiagnostic.attempts.filter(a=>a.shortEdgeCounterfactual);
+    if(sourceMultiPose26&&sourceShortEdgeSamples.length!==1){
+     const diagnostic=safeDiagnostic.attempts.find(x=>
+      x.scale===.25&&x.depthClearance===.008&&x.depthEasingExponent===2);
+     // Fixed, enumerated failure-reason tag only: no original JPEG, source
+     // face keys, owner tokens, actual skeleton IDs or vertex positions.
+     console.log('M2_P26_MULTIPOSE_REFUSAL_REASON_COUNTS_ONLY',
+      diagnostic?.reason||'candidate-not-reached');
+    }
     if(sourceShortEdgeTrial){
      assert.equal(sourceShortEdgeSamples.length,1,
       'One complete bounded short-edge depth counterfactual must run and stay uncommitted');
