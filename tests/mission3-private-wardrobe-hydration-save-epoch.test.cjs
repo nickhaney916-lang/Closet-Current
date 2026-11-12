@@ -174,7 +174,9 @@ test('old startup after draft read begins cannot reassign shared items or draft 
  const f=readyFixture({draftHold:true});
  await f.initial.draftGate.promise;f.switchOwner();f.initial.releaseDraft();
  await f.ctx.closetReady;
- assert.equal(f.ctx.items[0].ownerId,baseline?a:b);
+ // The next owner already replaced the visible items array. The old code
+ // revives only the prior owner's *draft* after its pending IDB read settles.
+ assert.equal(f.ctx.items[0].ownerId,b);
  assert.equal(f.ctx.batch[0].ownerId,baseline?a:b);
  assert.equal(f.initial.closes,baseline?0:1);
 });
