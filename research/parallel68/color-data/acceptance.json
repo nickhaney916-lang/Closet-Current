@@ -1,0 +1,298 @@
+{
+  "schema": "closet-current-parallel68-human-validated-color-object-reference/v1",
+  "sourceRepository": "https://github.com/datable-be/AI4_C_datasets",
+  "sourceRevision": "767169b2b053485ee7b909fd19b96e98f6be0453",
+  "sourceAnnotationPath": "color_detection_dataset/AI4C_Fashion_Color_Dataset_2024-06-01_0.json",
+  "annotationFileSha256": "178e15455e82f5e2fd1d916ae896d0b68dd4a78abba9a57918c5cfd5b4b3aada",
+  "annotationDatasetLicense": "CC0-1.0; image rights separate",
+  "humanValidationProvenance": "Dataset publisher README: prepredicted colors approved, corrected or rejected by a human validator. Per-record adjudication action/timestamp are NOT supplied; release filename 2024-06-01 is not an individual annotation timestamp.",
+  "splitPolicy": "Development MoMu/Antwerp; acceptance other institutions. No shared landing page, source image SHA or metadata identity. Metadata/title/license screening only, no pixel algorithm or inference on acceptance before freeze.",
+  "unseenToOurAlgorithm": true,
+  "notSealedAgainstFoundationPretraining": true,
+  "fineCategoryTruth": false,
+  "perInstanceMaskTruth": false,
+  "offWhiteTruthAvailable": false,
+  "archives": {
+    "col1.tar.gz": {
+      "url": "https://raw.githubusercontent.com/datable-be/AI4_C_datasets/767169b2b053485ee7b909fd19b96e98f6be0453/color_detection_dataset/col1.tar.gz",
+      "sha256": "031dea7683f3620991155aba191f1ec61e7851827f89466550befc0c0b029512"
+    },
+    "col2.tar.gz": {
+      "url": "https://raw.githubusercontent.com/datable-be/AI4_C_datasets/767169b2b053485ee7b909fd19b96e98f6be0453/color_detection_dataset/col2.tar.gz",
+      "sha256": "2fb777ee771f8d3e403f39cc485171994b8c21999238d0018df5cd46f2350628"
+    },
+    "col3.tar.gz": {
+      "url": "https://raw.githubusercontent.com/datable-be/AI4_C_datasets/767169b2b053485ee7b909fd19b96e98f6be0453/color_detection_dataset/col3.tar.gz",
+      "sha256": "9c376e7f56681300c3902821ddff2395c312606037521c04a11cdefa4493fff1"
+    }
+  },
+  "split": "acceptance",
+  "rows": [
+    {
+      "id": "1350340c91496b3475ea1459e99d80dc",
+      "file_name": "A8F0uD6lPYT5GK9l304OZlj-BTU2-NV4FW_0qN1Erf1_wSanVIXtkDQDn5zKQBXIQmsvlBTtU7zuhP6eIC92OTEFjKNLHuXyrLKZTHzF=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1973_577_A",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1973_577_A.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-1350340c91496b3475ea1459e99d80dc.jpg",
+      "sha256": "4ba6b7795db38a004ca475a7638a9ed03b550129846a55a0a911e259a0e2bb9a",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/A8F0uD6lPYT5GK9l304OZlj-BTU2-NV4FW_0qN1Erf1_wSanVIXtkDQDn5zKQBXIQmsvlBTtU7zuhP6eIC92OTEFjKNLHuXyrLKZTHzF=s0.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "042c13d33d12c75a6d6c1677d01d39ba",
+          "image_id": "1350340c91496b3475ea1459e99d80dc",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Lijfje van een Empire-kinderjurk \"lange jurk\"",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "a02375680388a0a237ffa8d5fc5af430fd2b8fc4e33454c7fb70498faed98f01",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "1383dfb0392360a00a31140befaadad8",
+      "file_name": "bm525fOvkcSsXVs5kzS5ZU-tUsQkTvjyzDdLDh5yt2LmI6pvxQe4nxPPOSC_xB0C7EkFK9VNYjVz7cQ0KxILKGjEyNTXb3x6kM9kEcdp=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1982_46_B",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1982_46_B.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-1383dfb0392360a00a31140befaadad8.jpg",
+      "sha256": "de7257d89a80bacfb491d11ab9c3f4ef041dcdeaa43f9abaaaafd6ef9029b459",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/bm525fOvkcSsXVs5kzS5ZU-tUsQkTvjyzDdLDh5yt2LmI6pvxQe4nxPPOSC_xB0C7EkFK9VNYjVz7cQ0KxILKGjEyNTXb3x6kM9kEcdp=s0.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "58a080c4a3ef26aa9a0878701f7701ad",
+          "image_id": "1383dfb0392360a00a31140befaadad8",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Wit linnen hemd met een gefestonneerde gegolfde hals en armsgaten, afgezet met een strookje machinale kant",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "62860dffd0416cb9d0f08c2700a0a84da4146a3aca516e4e3f3ec94516318adf",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "15368fbc48b9c52de09b6d71a34423a1",
+      "file_name": "6d8ToF4orMQZNvVKenemjs8nDdOIpy0oGl92vrJUJRwthcEC1x2dlXtFVAuXfgMaAxFKdmAdNrjuqiRYIoL8pOF80Vs2M91zg3-fpF0=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1973_312_18",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1973_312_18.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-15368fbc48b9c52de09b6d71a34423a1.jpg",
+      "sha256": "ab7da2dad2a1a1570e429aebf51bb0c8b2d35e235efde21f85fc82147329ac0d",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/6d8ToF4orMQZNvVKenemjs8nDdOIpy0oGl92vrJUJRwthcEC1x2dlXtFVAuXfgMaAxFKdmAdNrjuqiRYIoL8pOF80Vs2M91zg3-fpF0=s0.jpg",
+      "humanColor": "white",
+      "humanAnnotations": [
+        {
+          "id": "8605f846f31b592d1ae12ff867fc55c0",
+          "image_id": "15368fbc48b9c52de09b6d71a34423a1",
+          "category_id": "d508fe45cecaf653904a0e774084bb5c"
+        }
+      ],
+      "primaryTitle": "Broek van piqu\u00e9, met lange pijpen en met banden",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "c8e30797f0f8c11619a382c22688085f5aa3895310864dad62369552ac8648ee",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "4039cb652875d139e43199f7e65644bb",
+      "file_name": "_wMOtYXyGiYSUmi5sJKE9K3QkkzkxZzdaPAz0UwluIPxuhE1MaQc5N6cVqTixRkr6JAj9WiXrpAyD7RXxfN4muwJ_Kg=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1973_384_C",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_1973_384_C.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-4039cb652875d139e43199f7e65644bb.jpg",
+      "sha256": "465c1c018dde5a81aa040d179af2606944a15dff9187c126c276864887050a8f",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/_wMOtYXyGiYSUmi5sJKE9K3QkkzkxZzdaPAz0UwluIPxuhE1MaQc5N6cVqTixRkr6JAj9WiXrpAyD7RXxfN4muwJ_Kg=s0.jpg",
+      "humanColor": "black",
+      "humanAnnotations": [
+        {
+          "id": "d210fd947503a9329a5af3997ff48cdd",
+          "image_id": "4039cb652875d139e43199f7e65644bb",
+          "category_id": "1ffd9e753c8054cc61456ac7fac1ac89"
+        }
+      ],
+      "primaryTitle": "Vest van zwart laken met rug van witte katoen met negen zilveren knopen met gekroonde W",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "b6ac54b2fe888303b053788b32b15536a517a63323630f080f7468c73b5f1c51",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "158ebe567c542616495ee5d0c02e0c42",
+      "file_name": "hr1fOtDlElwAnwltvM7XSJ1YQ0Tb29CXBIdDVxDwx3q5uOZ_SCjyErMvLTLAp5DK37RC3tWVGYpgkmgTX0TF36Vtqu8=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_NM_3387",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_NM_3387.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-158ebe567c542616495ee5d0c02e0c42.jpg",
+      "sha256": "12b39180b49c077970f2ec0887cca567fdf915e74ff411bdfc9597842cfdd1ff",
+      "archive": "col2.tar.gz",
+      "archiveMember": "col2/hr1fOtDlElwAnwltvM7XSJ1YQ0Tb29CXBIdDVxDwx3q5uOZ_SCjyErMvLTLAp5DK37RC3tWVGYpgkmgTX0TF36Vtqu8=s0.jpg",
+      "humanColor": "red",
+      "humanAnnotations": [
+        {
+          "id": "34e8389667c3da7fe6ceafa185d76868",
+          "image_id": "158ebe567c542616495ee5d0c02e0c42",
+          "category_id": "bda9643ac6601722a28f238714274da4"
+        }
+      ],
+      "primaryTitle": "Boy\u2019s Coat",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "09fcb4a8eb3221577ee54893da578b31b5da6331120fe56656a5e4130cd1afe8",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "87687132497ce4ec364af30785fb4e1f",
+      "file_name": "-0VQVQefbmPIAkD19lXhjmIRkvviWsbnGc_iqmA4d0QD6HGi_5irFl_lJYJYev_g7LYxWZRQk1gV5oFpPPVSZOFALA=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_NM_14105",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_BK_NM_14105.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-87687132497ce4ec364af30785fb4e1f.jpg",
+      "sha256": "32f003b3cf6cd864ad69e7681bad0bc81f5d10526cbac731846ab9ab75ffadac",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/-0VQVQefbmPIAkD19lXhjmIRkvviWsbnGc_iqmA4d0QD6HGi_5irFl_lJYJYev_g7LYxWZRQk1gV5oFpPPVSZOFALA=s0.jpg",
+      "humanColor": "yellow",
+      "humanAnnotations": [
+        {
+          "id": "cef5277a39b84422f717dbf42573dc80",
+          "image_id": "87687132497ce4ec364af30785fb4e1f",
+          "category_id": "d487dd0b55dfcacdd920ccbdaeafa351"
+        }
+      ],
+      "primaryTitle": "Ball Dress of Blonde Lace",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "8bdc055421bbfea038b61c9bd8a4e547aee77b17051e99be3b80bac913a75118",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "551465bca8d872a839bf3c31fc185557",
+      "file_name": "EunKD0nGIn-5kdYLZC0eiyrjvlOZTfiBpts1H5T8SNfUgT-iTbbmg2HbUELCxW-IWv78_RieLnMPmq2EbNsZ2rtyD44=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_AK_RAK_2009_3_17",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_AK_RAK_2009_3_17.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-551465bca8d872a839bf3c31fc185557.jpg",
+      "sha256": "e64a63c60692914ea680158feebcd6a3157a833d1ec86f350ab8f5734cf363aa",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/EunKD0nGIn-5kdYLZC0eiyrjvlOZTfiBpts1H5T8SNfUgT-iTbbmg2HbUELCxW-IWv78_RieLnMPmq2EbNsZ2rtyD44=s0.jpg",
+      "humanColor": "orange",
+      "humanAnnotations": [
+        {
+          "id": "61f40998c44ed718379f32908e2b64f5",
+          "image_id": "551465bca8d872a839bf3c31fc185557",
+          "category_id": "fe01d67a002dfa0f3ac084298142eccd"
+        }
+      ],
+      "primaryTitle": "Visiting kimono",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "3b0ba6de1e2933dbe930ffa9247e35fb35b16e41a2d84c6ee187ec53384c01ff",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "02a8ca517395d6650dbba55a0fea0c95",
+      "file_name": "BgPVKsvyIIcxs1trXdBpYBlpSNo9E5xD9682zT28TlJiHTiuWPhZgu0fCbEilG6T5m3lEP1WfUR4bGXC5IT-oL63L-E=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_AK_RAK_2009_3_83",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_AK_RAK_2009_3_83.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-02a8ca517395d6650dbba55a0fea0c95.jpg",
+      "sha256": "8971cda93d3e7046e4e23dd1f6fabf3604ba4ae80f2506b3c68a384cb3430e44",
+      "archive": "col1.tar.gz",
+      "archiveMember": "col1/BgPVKsvyIIcxs1trXdBpYBlpSNo9E5xD9682zT28TlJiHTiuWPhZgu0fCbEilG6T5m3lEP1WfUR4bGXC5IT-oL63L-E=s0.jpg",
+      "humanColor": "purple",
+      "humanAnnotations": [
+        {
+          "id": "dbf0739ed151603d8996c3a07393bfd4",
+          "image_id": "02a8ca517395d6650dbba55a0fea0c95",
+          "category_id": "bb7aedfa61007447dd6efaf9f37641e3"
+        }
+      ],
+      "primaryTitle": "Meisjes miyamairi kimono met anjelieren en water",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "d76425bcf5926d3c34810e535f3daa3cd472345ec2df7ad40aea9de6f1fdd291",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    },
+    {
+      "id": "9a8cc245f1a1d0f55d332c2a090cde13",
+      "file_name": "n0MwOcgZ6RL3yGyUfrQVUuf1W02zryjO9qIEXo3ZZqrY9g_Un5OkRDLBxzn3Z2CoBE21OE5hOn0jvPxG5J-mZn3NEQ=s0.jpg",
+      "license": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "landing_page": "https://www.europeana.eu/en/item/739/europeana_fashion_AK_RAK_2009_3_81",
+      "url": "https://www.europeana.eu/en/item/739/europeana_fashion_AK_RAK_2009_3_81.json",
+      "source": "Rijksmuseum",
+      "image": "ai4culture-9a8cc245f1a1d0f55d332c2a090cde13.jpg",
+      "sha256": "2396753459207a93c0298f5679e424fbd94abee680769f50b7f75b7f3a330e69",
+      "archive": "col3.tar.gz",
+      "archiveMember": "col3/n0MwOcgZ6RL3yGyUfrQVUuf1W02zryjO9qIEXo3ZZqrY9g_Un5OkRDLBxzn3Z2CoBE21OE5hOn0jvPxG5J-mZn3NEQ=s0.jpg",
+      "humanColor": "purple",
+      "humanAnnotations": [
+        {
+          "id": "5f14f5f3a0e75cfd71147ded3e7986a4",
+          "image_id": "9a8cc245f1a1d0f55d332c2a090cde13",
+          "category_id": "bb7aedfa61007447dd6efaf9f37641e3"
+        }
+      ],
+      "primaryTitle": "Meisjes miyamairi kimono met bloeiende herfstplanten",
+      "primaryLicense": "http://creativecommons.org/publicdomain/mark/1.0/",
+      "primaryPageSha256": "a5a94743d55f85bee74e6ece97d0974de65b9f0d69f61195e222f0cd9d3fdce3",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "humanValidated": true,
+      "split": "acceptance",
+      "labelModified": false,
+      "photoPixelReviewedByUs": false,
+      "providedDatasetJPEGNotCameraOriginal": true
+    }
+  ],
+  "frozenAtUTC": "2026-11-12T15:26:08.220126+00:00",
+  "estimatorAtFreezeSha256": "10dee3bd647ee8b5daf23e74358adf03a4d858a5748f0fddda86e84bfa123484",
+  "individualAnnotationTimeAvailable": false,
+  "releaseCommitDate": "2024-07-22T08:55:01+02:00",
+  "actualPixelAlgorithmEvaluationBeforeFreeze": false
+}

@@ -1,0 +1,44 @@
+[
+  {
+    "id": "14615844a15fe346d5deda8aa5e4d733",
+    "split": "acceptance",
+    "reason": "First explicitly publisher-named material color conflicts with source human single-color label; requires independent adjudication, not relabeling",
+    "primaryTitle": "Broek van lichtblauw laken, onderdeel van een ambtskostuum, met lange pijpen en schuine steekzakken",
+    "sourceHumanColor": "white"
+  },
+  {
+    "id": "1d7220fd57759de8edf893512360e670",
+    "split": "acceptance",
+    "reason": "Publisher title indicates fragment or compound ensemble; primary-object scope uncertain",
+    "primaryTitle": "Fragment van een mantel van cisel\u00e9fluweel met kloskant, volgens overlevering afkomstig van Hugo de Groot",
+    "sourceHumanColor": "black"
+  },
+  {
+    "id": "8485338129bfe9640a2e532ddb192441",
+    "split": "acceptance",
+    "reason": "Publisher title indicates fragment or compound ensemble; primary-object scope uncertain",
+    "primaryTitle": "Fragment van een mantel van cisel\u00e9fluweel met kloskant, volgens overlevering afkomstig van Hugo de Groot",
+    "sourceHumanColor": "grey"
+  },
+  {
+    "id": "9e3d55058c6f20845575adf1e0304767",
+    "split": "acceptance",
+    "reason": "First explicitly publisher-named material color conflicts with source human single-color label; requires independent adjudication, not relabeling",
+    "primaryTitle": "Rok van bruine wol met geruite bies en gitten",
+    "sourceHumanColor": "grey"
+  },
+  {
+    "id": "67a124929d82431ec176578af1e6c492",
+    "split": "acceptance",
+    "reason": "Publisher title indicates fragment or compound ensemble; primary-object scope uncertain",
+    "primaryTitle": "Japon van blauwe wol bestaande uit een lijf, een mouwloos lijf en een rok",
+    "sourceHumanColor": "blue"
+  },
+  {
+    "id": "27ade603f2f5fa7ffeca7125ad363be9",
+    "split": "acceptance",
+    "reason": "First explicitly publisher-named material color conflicts with source human single-color label; requires independent adjudication, not relabeling",
+    "primaryTitle": "Jas, groen met wit gestreept, van dunne, soepele stof",
+    "sourceHumanColor": "brown"
+  }
+]

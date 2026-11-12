@@ -1,0 +1,33 @@
+{
+  "schema": "closet-current-parallel68-prospective-acceptance-lock/v1",
+  "scope": "mask",
+  "status": "FROZEN_BEFORE_ACCEPTANCE_INFERENCE",
+  "frozenAtUTC": "2026-11-12T15:37:03.255Z",
+  "primaryCandidate": "Florence/SAM2 with visible-footwear instance repair; fast semantic repair reported separately",
+  "manifests": {
+    "research/parallel68/data/acceptance-manifest.json": "3d63b51d91549d550c5bd7a53c5181925c83a21ee72c76674af6fa1d4cbce3ae"
+  },
+  "codeSha256": {
+    "research/parallel68/semantic-instances.mjs": "efd991ae9870997a23ba94feb1db984ec43866d1706a4cc5794a3a3b5a12dded",
+    "research/parallel68/footwear.mjs": "364302b8333a447152bb94db2708faee45f754f2a751b8ec3551f3bfd3043465",
+    "scripts/parallel68-semantic.mjs": "97a811d805bd7415ca8239c19f765cabd2cfe98299f536cb3fd2f1b02d043d31",
+    "scripts/parallel68-reference.mjs": "a44b5af9d7893e117e3aaac609deda5e520a2ae2603a9796b81a166abada779a",
+    "scripts/parallel68-evaluate.py": "48704296cd2aadc43b75b5b9325e0a161190d2fb7ad1abbc7655569c582c32fe",
+    "research/parallel67-reference/florence-grounder.mjs": "a05670d435e633664b0fe953361ea41ef1d780418f3e6e8d1bdafafac46da257",
+    "research/parallel67-reference/sam2-mask.mjs": "c761f6d80f5118343028e20e84f78863380d9ea926c605efb631c8d011e32b77",
+    "public/outfit-segmentation.mjs": "17a6c39d72043ca7bd379aef7f11f828746dbbed7e413d7f18d5ee220671e150",
+    "research/parallel68/acceptance-guard.mjs": "b52815158d7c5761e23b2569aa141b483a14b3daf97d9de0b8002caa355e122e"
+  },
+  "automaticSaveAllowed": false,
+  "thresholds": {
+    "maskMatchingIoU": 0.5,
+    "duplicateMaskIoU": 0.85,
+    "footwearMajorFraction": 0.1
+  },
+  "knownLimits": [
+    "Public source dataset pretraining exposure unknown",
+    "No physical-device acceptance",
+    "No automatic confidence calibration",
+    "Do not count abstention as correct"
+  ]
+}

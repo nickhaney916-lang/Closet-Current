@@ -1,0 +1,1442 @@
+{
+  "schema": "closet-current-parallel68-real-instance-inference/v1",
+  "split": "development",
+  "manifestSha256": "cfb7734271c0b14a95e0a826a33230eb05b67867999bf0d500763a64a19874d8",
+  "detector": {
+    "model": "onnx-community/grounding-dino-tiny-ONNX",
+    "revision": "ff690b0a8050566c290287545bd059350f3e9096",
+    "dtype": "q8",
+    "modelBytes": 203824675,
+    "modelSha256": "70bf2d3310d1ae73769c96a71e00cbf2861eb33a1f4d97d84a108a7bf02c03c9"
+  },
+  "sam2": {
+    "model": "onnx-community/sam2.1-hiera-tiny-ONNX",
+    "revision": "814a066640debee5a91e70aa401fb8e17e030503",
+    "dtype": "q8",
+    "device": "cpu"
+  },
+  "queries": [
+    "shirt",
+    "top",
+    "sweater",
+    "jacket",
+    "coat",
+    "vest",
+    "cardigan",
+    "pants",
+    "shorts",
+    "skirt",
+    "dress",
+    "jumpsuit",
+    "shoe",
+    "sock",
+    "hat",
+    "glasses",
+    "tie",
+    "glove",
+    "watch",
+    "belt",
+    "bag",
+    "scarf",
+    "umbrella"
+  ],
+  "strategy": "factored",
+  "boxThreshold": 0.3,
+  "textThreshold": 0.3,
+  "maskDedupIoU": 0.85,
+  "automaticSave": false,
+  "rows": [
+    {
+      "id": "fashionpedia-val-8519",
+      "sha256": "b47313cc53ce2a923a1c56eced55565958ab6b24e29eb91b70cd57fd1140fc74",
+      "width": 682,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.4912186563014984,
+          0.414957731962204
+        ],
+        "boxes": [
+          [
+            255.6814838051796,
+            224.5556640625,
+            459.74067944288254,
+            969.0609130859375
+          ],
+          [
+            248.8806772828102,
+            223.979248046875,
+            456.93718618154526,
+            969.2742919921875
+          ]
+        ],
+        "labels": [
+          "shirt",
+          "jacket"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.4912186563014984
+            ],
+            "boxes": [
+              [
+                255.6814838051796,
+                224.5556640625,
+                459.74067944288254,
+                969.0609130859375
+              ]
+            ],
+            "labels": [
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.414957731962204
+            ],
+            "boxes": [
+              [
+                248.8806772828102,
+                223.979248046875,
+                456.93718618154526,
+                969.2742919921875
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "shirt",
+          "box": [
+            255.6814838051796,
+            224.5556640625,
+            459.74067944288254,
+            969.0609130859375
+          ],
+          "originalBox": [
+            255.6814838051796,
+            224.5556640625,
+            459.74067944288254,
+            969.0609130859375
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "score": 0.4912186563014984,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                255.6814838051796,
+                224.5556640625,
+                459.74067944288254,
+                969.0609130859375
+              ],
+              "score": 0.4912186563014984
+            },
+            {
+              "label": "jacket",
+              "box": [
+                248.8806772828102,
+                223.979248046875,
+                456.93718618154526,
+                969.2742919921875
+              ],
+              "score": 0.414957731962204
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.9510998725891113,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-8519-0.bin.gz",
+          "maskSha256": "285adf5b5f91b305efa84f74bed9dba7f37ff26467fe1f06bc5ef7b50c3c9ff2",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 28552.630577
+    },
+    {
+      "id": "fashionpedia-val-9711",
+      "sha256": "dca18f24b06b38673a3502489607a056fdcd7a56dc622ea1425b1911b922e55a",
+      "width": 683,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.44631028175354004,
+          0.36451250314712524
+        ],
+        "boxes": [
+          [
+            363.48499312996864,
+            432.00523376464844,
+            573.1154186427593,
+            898.0138092041016
+          ],
+          [
+            363.9992822110653,
+            431.64366149902344,
+            572.2863600552082,
+            895.6805572509766
+          ]
+        ],
+        "labels": [
+          "shirt",
+          "jacket"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.44631028175354004
+            ],
+            "boxes": [
+              [
+                363.48499312996864,
+                432.00523376464844,
+                573.1154186427593,
+                898.0138092041016
+              ]
+            ],
+            "labels": [
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.36451250314712524
+            ],
+            "boxes": [
+              [
+                363.9992822110653,
+                431.64366149902344,
+                572.2863600552082,
+                895.6805572509766
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "shirt",
+          "box": [
+            363.48499312996864,
+            432.00523376464844,
+            573.1154186427593,
+            898.0138092041016
+          ],
+          "originalBox": [
+            363.48499312996864,
+            432.00523376464844,
+            573.1154186427593,
+            898.0138092041016
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "score": 0.44631028175354004,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                363.48499312996864,
+                432.00523376464844,
+                573.1154186427593,
+                898.0138092041016
+              ],
+              "score": 0.44631028175354004
+            },
+            {
+              "label": "jacket",
+              "box": [
+                363.9992822110653,
+                431.64366149902344,
+                572.2863600552082,
+                895.6805572509766
+              ],
+              "score": 0.36451250314712524
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.9820317029953003,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-9711-0.bin.gz",
+          "maskSha256": "c3cfce2e49ee606f21d980e8e9068d108d2c93a35d70669233b4ca54ee6f6831",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 37591.671204000006
+    },
+    {
+      "id": "fashionpedia-val-10216",
+      "sha256": "43e8d91b902670a2a7a120eea6582e3757544222da4e4b8e5bfe6b73066d3ad4",
+      "width": 1024,
+      "height": 683,
+      "rawDetections": {
+        "scores": [
+          0.3613658547401428,
+          0.30340978503227234,
+          0.45873236656188965
+        ],
+        "boxes": [
+          [
+            731.2020874023438,
+            344.9581187814474,
+            881.4270629882812,
+            564.5526560693979
+          ],
+          [
+            681.5019989013672,
+            212.90220457315445,
+            910.8964385986328,
+            401.684523999691
+          ],
+          [
+            678.5417175292969,
+            214.12333072721958,
+            929.3934631347656,
+            403.3905669897795
+          ]
+        ],
+        "labels": [
+          "pants",
+          "shirt",
+          "jacket"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.3613658547401428,
+              0.30340978503227234
+            ],
+            "boxes": [
+              [
+                731.2020874023438,
+                344.9581187814474,
+                881.4270629882812,
+                564.5526560693979
+              ],
+              [
+                681.5019989013672,
+                212.90220457315445,
+                910.8964385986328,
+                401.684523999691
+              ]
+            ],
+            "labels": [
+              "pants",
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.45873236656188965
+            ],
+            "boxes": [
+              [
+                678.5417175292969,
+                214.12333072721958,
+                929.3934631347656,
+                403.3905669897795
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "jacket",
+          "box": [
+            678.5417175292969,
+            214.12333072721958,
+            929.3934631347656,
+            403.3905669897795
+          ],
+          "originalBox": [
+            678.5417175292969,
+            214.12333072721958,
+            929.3934631347656,
+            403.3905669897795
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Outerwear",
+            "Tops"
+          ],
+          "score": 0.45873236656188965,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "jacket",
+              "box": [
+                678.5417175292969,
+                214.12333072721958,
+                929.3934631347656,
+                403.3905669897795
+              ],
+              "score": 0.45873236656188965
+            },
+            {
+              "label": "shirt",
+              "box": [
+                681.5019989013672,
+                212.90220457315445,
+                910.8964385986328,
+                401.684523999691
+              ],
+              "score": 0.30340978503227234
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.764910876750946,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10216-0.bin.gz",
+          "maskSha256": "e913de1ea4a56655b2ee88606e27460dab27f2d358d83552bf1e10e56a7a566c",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "pants",
+          "box": [
+            731.2020874023438,
+            344.9581187814474,
+            881.4270629882812,
+            564.5526560693979
+          ],
+          "originalBox": [
+            731.2020874023438,
+            344.9581187814474,
+            881.4270629882812,
+            564.5526560693979
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.3613658547401428,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants",
+              "box": [
+                731.2020874023438,
+                344.9581187814474,
+                881.4270629882812,
+                564.5526560693979
+              ],
+              "score": 0.3613658547401428
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9418329000473022,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10216-1.bin.gz",
+          "maskSha256": "2b8688b702d6e57d737f6c0e90e1f705ce77116e66eb8f8db2951d1ddaafc227",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 31169.697157000002
+    },
+    {
+      "id": "fashionpedia-val-10382",
+      "sha256": "b93cb3ffd8df362a48cf95cce274d26e59d7e24dd9ad802c547e111e044a798a",
+      "width": 682,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.4447280168533325,
+          0.3583984971046448,
+          0.7846434116363525,
+          0.30587148666381836
+        ],
+        "boxes": [
+          [
+            54.59686866402626,
+            149.77261352539062,
+            234.2403355538845,
+            478.2361145019531
+          ],
+          [
+            54.80978512763977,
+            155.03750610351562,
+            234.20924818515778,
+            481.4471130371094
+          ],
+          [
+            97.26973447203636,
+            7.20648193359375,
+            253.96562162041664,
+            106.63433837890625
+          ],
+          [
+            43.02213376760483,
+            439.4927062988281,
+            229.21976107358932,
+            570.2566223144531
+          ]
+        ],
+        "labels": [
+          "shirt",
+          "jacket",
+          "hat",
+          "belt"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.4447280168533325
+            ],
+            "boxes": [
+              [
+                54.59686866402626,
+                149.77261352539062,
+                234.2403355538845,
+                478.2361145019531
+              ]
+            ],
+            "labels": [
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.3583984971046448
+            ],
+            "boxes": [
+              [
+                54.80978512763977,
+                155.03750610351562,
+                234.20924818515778,
+                481.4471130371094
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [
+              0.7846434116363525,
+              0.30587148666381836
+            ],
+            "boxes": [
+              [
+                97.26973447203636,
+                7.20648193359375,
+                253.96562162041664,
+                106.63433837890625
+              ],
+              [
+                43.02213376760483,
+                439.4927062988281,
+                229.21976107358932,
+                570.2566223144531
+              ]
+            ],
+            "labels": [
+              "hat",
+              "belt"
+            ]
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "hat",
+          "box": [
+            97.26973447203636,
+            7.20648193359375,
+            253.96562162041664,
+            106.63433837890625
+          ],
+          "originalBox": [
+            97.26973447203636,
+            7.20648193359375,
+            253.96562162041664,
+            106.63433837890625
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Accessories"
+          ],
+          "score": 0.7846434116363525,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "hat",
+              "box": [
+                97.26973447203636,
+                7.20648193359375,
+                253.96562162041664,
+                106.63433837890625
+              ],
+              "score": 0.7846434116363525
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9501559734344482,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10382-0.bin.gz",
+          "maskSha256": "e1f553bb92b8475726716283e45eb09501c0080b2052df22d29fa4cfcabf7100",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "shirt",
+          "box": [
+            54.59686866402626,
+            149.77261352539062,
+            234.2403355538845,
+            478.2361145019531
+          ],
+          "originalBox": [
+            54.59686866402626,
+            149.77261352539062,
+            234.2403355538845,
+            478.2361145019531
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "score": 0.4447280168533325,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                54.59686866402626,
+                149.77261352539062,
+                234.2403355538845,
+                478.2361145019531
+              ],
+              "score": 0.4447280168533325
+            },
+            {
+              "label": "jacket",
+              "box": [
+                54.80978512763977,
+                155.03750610351562,
+                234.20924818515778,
+                481.4471130371094
+              ],
+              "score": 0.3583984971046448
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.9701802134513855,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10382-1.bin.gz",
+          "maskSha256": "11e953761f3cef20a0a0ddccbdf8295d434a8b80ac0fddb4e401d6dc7e823826",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "belt",
+          "box": [
+            43.02213376760483,
+            439.4927062988281,
+            229.21976107358932,
+            570.2566223144531
+          ],
+          "originalBox": [
+            43.02213376760483,
+            439.4927062988281,
+            229.21976107358932,
+            570.2566223144531
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Accessories"
+          ],
+          "score": 0.30587148666381836,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "belt",
+              "box": [
+                43.02213376760483,
+                439.4927062988281,
+                229.21976107358932,
+                570.2566223144531
+              ],
+              "score": 0.30587148666381836
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9733144044876099,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10382-2.bin.gz",
+          "maskSha256": "6a8a5a1d24fd84a4990547b7bf6fd6aaeedb6b5bb479500724ddbf1322f83968",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 28726.975259
+    },
+    {
+      "id": "fashionpedia-val-10776",
+      "sha256": "fa83ce0d296c61e81e464e7d3c5fb790217f68bb2e52789f170c3012fe3dd368",
+      "width": 1024,
+      "height": 682,
+      "rawDetections": {
+        "scores": [
+          0.6698168516159058,
+          0.611901581287384
+        ],
+        "boxes": [
+          [
+            405.48455810546875,
+            209.21593868732452,
+            588.11572265625,
+            480.0633226633072
+          ],
+          [
+            407.5848388671875,
+            209.56506437063217,
+            590.1600341796875,
+            479.944115459919
+          ]
+        ],
+        "labels": [
+          "shirt",
+          "jacket"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.6698168516159058
+            ],
+            "boxes": [
+              [
+                405.48455810546875,
+                209.21593868732452,
+                588.11572265625,
+                480.0633226633072
+              ]
+            ],
+            "labels": [
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.611901581287384
+            ],
+            "boxes": [
+              [
+                407.5848388671875,
+                209.56506437063217,
+                590.1600341796875,
+                479.944115459919
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "shirt",
+          "box": [
+            405.48455810546875,
+            209.21593868732452,
+            588.11572265625,
+            480.0633226633072
+          ],
+          "originalBox": [
+            405.48455810546875,
+            209.21593868732452,
+            588.11572265625,
+            480.0633226633072
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops",
+            "Outerwear"
+          ],
+          "score": 0.6698168516159058,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                405.48455810546875,
+                209.21593868732452,
+                588.11572265625,
+                480.0633226633072
+              ],
+              "score": 0.6698168516159058
+            },
+            {
+              "label": "jacket",
+              "box": [
+                407.5848388671875,
+                209.56506437063217,
+                590.1600341796875,
+                479.944115459919
+              ],
+              "score": 0.611901581287384
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.970139741897583,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10776-0.bin.gz",
+          "maskSha256": "83e5c53491353dfc04e30c822f661f737c02e6417ed29cc6fd5815ba8de83e76",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 31750.022236000004
+    },
+    {
+      "id": "fashionpedia-val-10898",
+      "sha256": "84e3048106fbf4be3781a11c8c0aad60f72c0f399819dfc5e298de82b85afad2",
+      "width": 1011,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.34052473306655884,
+          0.5752434730529785
+        ],
+        "boxes": [
+          [
+            596.2766972333193,
+            587.5258331298828,
+            764.0729674547911,
+            818.1210174560547
+          ],
+          [
+            709.9776162207127,
+            377.20855712890625,
+            974.0585404336452,
+            764.2161254882812
+          ]
+        ],
+        "labels": [
+          "pants",
+          "jacket"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.34052473306655884
+            ],
+            "boxes": [
+              [
+                596.2766972333193,
+                587.5258331298828,
+                764.0729674547911,
+                818.1210174560547
+              ]
+            ],
+            "labels": [
+              "pants"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.5752434730529785
+            ],
+            "boxes": [
+              [
+                709.9776162207127,
+                377.20855712890625,
+                974.0585404336452,
+                764.2161254882812
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "jacket",
+          "box": [
+            709.9776162207127,
+            377.20855712890625,
+            974.0585404336452,
+            764.2161254882812
+          ],
+          "originalBox": [
+            709.9776162207127,
+            377.20855712890625,
+            974.0585404336452,
+            764.2161254882812
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Outerwear"
+          ],
+          "score": 0.5752434730529785,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "jacket",
+              "box": [
+                709.9776162207127,
+                377.20855712890625,
+                974.0585404336452,
+                764.2161254882812
+              ],
+              "score": 0.5752434730529785
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.8999463319778442,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10898-0.bin.gz",
+          "maskSha256": "14cc65a46da25aa8b42f7b00fa60d267a6f74fb4a20281cd474446fe747f6b1f",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "pants",
+          "box": [
+            596.2766972333193,
+            587.5258331298828,
+            764.0729674547911,
+            818.1210174560547
+          ],
+          "originalBox": [
+            596.2766972333193,
+            587.5258331298828,
+            764.0729674547911,
+            818.1210174560547
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.34052473306655884,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants",
+              "box": [
+                596.2766972333193,
+                587.5258331298828,
+                764.0729674547911,
+                818.1210174560547
+              ],
+              "score": 0.34052473306655884
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9428310394287109,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10898-1.bin.gz",
+          "maskSha256": "6ec73d5d7a0b4335033d724ab6cbc4f980d0088dd785707a3d568019ace9beb0",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 34146.81086200001
+    },
+    {
+      "id": "fashionpedia-val-10905",
+      "sha256": "1c08eb3d7bc8d6e7046842c518407de105ba48ae15421644fb24c21e2091d16e",
+      "width": 768,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.37275710701942444,
+          0.30435678362846375,
+          0.7230101227760315
+        ],
+        "boxes": [
+          [
+            315.07670974731445,
+            551.5357666015625,
+            466.72431564331055,
+            851.7657470703125
+          ],
+          [
+            278.08432388305664,
+            312.9764099121094,
+            488.9447135925293,
+            585.3227844238281
+          ],
+          [
+            277.36351776123047,
+            314.22071838378906,
+            489.52173614501953,
+            587.9538421630859
+          ]
+        ],
+        "labels": [
+          "pants",
+          "shirt",
+          "jacket"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.37275710701942444,
+              0.30435678362846375
+            ],
+            "boxes": [
+              [
+                315.07670974731445,
+                551.5357666015625,
+                466.72431564331055,
+                851.7657470703125
+              ],
+              [
+                278.08432388305664,
+                312.9764099121094,
+                488.9447135925293,
+                585.3227844238281
+              ]
+            ],
+            "labels": [
+              "pants",
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [
+              0.7230101227760315
+            ],
+            "boxes": [
+              [
+                277.36351776123047,
+                314.22071838378906,
+                489.52173614501953,
+                587.9538421630859
+              ]
+            ],
+            "labels": [
+              "jacket"
+            ]
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "jacket",
+          "box": [
+            277.36351776123047,
+            314.22071838378906,
+            489.52173614501953,
+            587.9538421630859
+          ],
+          "originalBox": [
+            277.36351776123047,
+            314.22071838378906,
+            489.52173614501953,
+            587.9538421630859
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Outerwear",
+            "Tops"
+          ],
+          "score": 0.7230101227760315,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "jacket",
+              "box": [
+                277.36351776123047,
+                314.22071838378906,
+                489.52173614501953,
+                587.9538421630859
+              ],
+              "score": 0.7230101227760315
+            },
+            {
+              "label": "shirt",
+              "box": [
+                278.08432388305664,
+                312.9764099121094,
+                488.9447135925293,
+                585.3227844238281
+              ],
+              "score": 0.30435678362846375
+            }
+          ],
+          "categoryAmbiguous": true,
+          "predictedMaskIoU": 0.9502801895141602,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10905-0.bin.gz",
+          "maskSha256": "e6ec998c09f1ab365c4f0577be09dcac8c9a8aa48552b2a3f4fbcc52d34ce06f",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "pants",
+          "box": [
+            315.07670974731445,
+            551.5357666015625,
+            466.72431564331055,
+            851.7657470703125
+          ],
+          "originalBox": [
+            315.07670974731445,
+            551.5357666015625,
+            466.72431564331055,
+            851.7657470703125
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.37275710701942444,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants",
+              "box": [
+                315.07670974731445,
+                551.5357666015625,
+                466.72431564331055,
+                851.7657470703125
+              ],
+              "score": 0.37275710701942444
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9568057060241699,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10905-1.bin.gz",
+          "maskSha256": "5e36e01dce3c644c0c6f80e70e1d4ab404e44fb67e903d2868253bf462b24bbd",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 27890.884227000002
+    },
+    {
+      "id": "fashionpedia-val-10994",
+      "sha256": "17f57c98fe599191d0ba4fcee466ace14054a7cee53cf39a10807c2456aedbd4",
+      "width": 682,
+      "height": 1024,
+      "rawDetections": {
+        "scores": [
+          0.4362914264202118,
+          0.4069904088973999
+        ],
+        "boxes": [
+          [
+            137.59934031963348,
+            433.5958251953125,
+            584.1713534593582,
+            999.7281494140625
+          ],
+          [
+            283.24951645731926,
+            231.0237274169922,
+            535.4222231209278,
+            505.52565002441406
+          ]
+        ],
+        "labels": [
+          "pants",
+          "shirt"
+        ]
+      },
+      "queryResults": [
+        {
+          "query": "shirt. pants. dress. shoe.",
+          "result": {
+            "scores": [
+              0.4362914264202118,
+              0.4069904088973999
+            ],
+            "boxes": [
+              [
+                137.59934031963348,
+                433.5958251953125,
+                584.1713534593582,
+                999.7281494140625
+              ],
+              [
+                283.24951645731926,
+                231.0237274169922,
+                535.4222231209278,
+                505.52565002441406
+              ]
+            ],
+            "labels": [
+              "pants",
+              "shirt"
+            ]
+          }
+        },
+        {
+          "query": "jacket. coat.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        },
+        {
+          "query": "hat. bag. glasses. belt. scarf.",
+          "result": {
+            "scores": [],
+            "boxes": [],
+            "labels": []
+          }
+        }
+      ],
+      "regions": [
+        {
+          "label": "pants",
+          "box": [
+            137.59934031963348,
+            433.5958251953125,
+            584.1713534593582,
+            999.7281494140625
+          ],
+          "originalBox": [
+            137.59934031963348,
+            433.5958251953125,
+            584.1713534593582,
+            999.7281494140625
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Bottoms"
+          ],
+          "score": 0.4362914264202118,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "pants",
+              "box": [
+                137.59934031963348,
+                433.5958251953125,
+                584.1713534593582,
+                999.7281494140625
+              ],
+              "score": 0.4362914264202118
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9704644680023193,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10994-0.bin.gz",
+          "maskSha256": "6431621575beee43c980773114f5ecb478f6b689b152ab37f18f1042294e438a",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        },
+        {
+          "label": "shirt",
+          "box": [
+            283.24951645731926,
+            231.0237274169922,
+            535.4222231209278,
+            505.52565002441406
+          ],
+          "originalBox": [
+            283.24951645731926,
+            231.0237274169922,
+            535.4222231209278,
+            505.52565002441406
+          ],
+          "edgeClipped": false,
+          "categories": [
+            "Tops"
+          ],
+          "score": 0.4069904088973999,
+          "scoreCalibrated": false,
+          "itemType": "Unknown",
+          "requiresReview": true,
+          "strong": false,
+          "evidence": [
+            {
+              "label": "shirt",
+              "box": [
+                283.24951645731926,
+                231.0237274169922,
+                535.4222231209278,
+                505.52565002441406
+              ],
+              "score": 0.4069904088973999
+            }
+          ],
+          "categoryAmbiguous": false,
+          "predictedMaskIoU": 0.9791320562362671,
+          "maskFile": "benchmark/parallel68-masks/factored-q8-development-fashionpedia-val-10994-1.bin.gz",
+          "maskSha256": "283bdea956180ba15cc1f7fee788dcb7476db5c975d372a9d078b8accc227f84",
+          "maskQualityVerified": false,
+          "colorVerified": false
+        }
+      ],
+      "requiresReview": true,
+      "automaticSave": false,
+      "reviewReason": "owner_confirmation_required",
+      "elapsedMs": 24140.023003999988
+    }
+  ],
+  "loadMs": 3836.7328359999997,
+  "processPeakResidentBytes": 5249187840
+}

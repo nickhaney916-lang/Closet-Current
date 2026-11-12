@@ -1,0 +1,2447 @@
+{
+  "schema": "closet-current-parallel68-color-foreground-comparison/v1",
+  "split": "development",
+  "manifestSha256": "6ace53ea9f881633c117022d25411e098b284309d9156a5db307ce756e3a7065",
+  "scope": "human-validated predominant-object image colors; no human per-instance masks",
+  "baseline": {
+    "correct": 1,
+    "total": 9,
+    "proposed": 9,
+    "wrongProposed": 8,
+    "unreported": 0
+  },
+  "maskSelectionWithExistingEstimator": {
+    "correct": 2,
+    "total": 9,
+    "proposed": 7,
+    "wrongProposed": 5,
+    "unreported": 2
+  },
+  "maskSelectionWithNewEstimator": {
+    "correct": 1,
+    "total": 9,
+    "proposed": 2,
+    "wrongProposed": 1,
+    "unreported": 7
+  },
+  "automaticColorSaveAllowed": false,
+  "rows": [
+    {
+      "id": "03998294de6d88e280af849eb9131eb4",
+      "sha256": "7c13d8772b57b8e0fbc322cbb03aab5535ef16b10a2ca14d7384d7c46f0b29d5",
+      "width": 398,
+      "height": 500,
+      "expectedColor": "White",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9898204003290376
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.010179599670962434
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "7c13d8772b57b8e0fbc322cbb03aab5535ef16b10a2ca14d7384d7c46f0b29d5",
+        "foregroundPixels": 87528,
+        "coverage": 0.4398391959798995,
+        "corePixels": 83543,
+        "samplePixels": 27848,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 27583,
+            "fraction": 0.9904840563056593
+          },
+          {
+            "color": "Gray",
+            "pixels": 265,
+            "fraction": 0.009515943694340707
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 28880,
+            "fraction": 0.9898546750754045
+          },
+          {
+            "color": "Gray",
+            "pixels": 296,
+            "fraction": 0.010145324924595559
+          }
+        ],
+        "boundaryPaletteDistance": 0.0006293812302548257,
+        "dominance": 0.9904840563056593,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.054761562769319164,
+        "offWhiteShadeFraction": 0.00010772766446423441,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": true,
+      "improvedCorrect": true,
+      "maskFile": "benchmark/parallel68-masks/color-development-03998294de6d88e280af849eb9131eb4.bin.gz",
+      "maskSha256": "6c2bfbbf609ce0383af9a95fcdcdc87aff9eaaa705a7bc4cf5ca81cc71b404c3",
+      "maskPredictedIoU": 0.9370985627174377,
+      "maskHumanVerified": false,
+      "elapsedMs": 1968.7552109999997,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": false,
+        "status": "review",
+        "reason": "mask_polarity_not_established",
+        "diagnostics": {
+          "borderBandPixels": 9,
+          "borderSamples": 7920,
+          "backgroundMedianRGB": [
+            240,
+            240,
+            240
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 0.9994949494949495,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 0.9977666108319375,
+            "left": 1,
+            "right": 1
+          },
+          "rawCoverage": 0.4398391959798995,
+          "invertedCoverage": 0.5601608040201005,
+          "rawBorderCoverage": 0.8056818181818182,
+          "invertedBorderCoverage": 0.19431818181818183,
+          "rawBackgroundAgreement": 0.9955557078877616,
+          "rawContrastFraction": 0.0044442921122383695,
+          "invertedContrastFraction": 0.06645615042342472
+        }
+      },
+      "selectedMaskFile": null,
+      "selectedMaskSha256": null,
+      "selectedProposal": {
+        "color": null,
+        "requiresReview": true,
+        "verified": false,
+        "reason": "mask_polarity_not_established"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "color": null,
+        "requiresReview": true,
+        "verified": false,
+        "reason": "mask_polarity_not_established"
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "15497e28250cc5bcfa1aca808181905c",
+      "sha256": "ba6542b6ae881a1842e9949779355b8553b76df586d67f0fcb6ecb4ac09d5278",
+      "width": 357,
+      "height": 500,
+      "expectedColor": "Black",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9499533914019666
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.05004660859803342
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "ba6542b6ae881a1842e9949779355b8553b76df586d67f0fcb6ecb4ac09d5278",
+        "foregroundPixels": 99767,
+        "coverage": 0.5589187675070028,
+        "corePixels": 96836,
+        "samplePixels": 32279,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 30705,
+            "fraction": 0.9512376467672481
+          },
+          {
+            "color": "Gray",
+            "pixels": 1574,
+            "fraction": 0.048762353232751944
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 23698,
+            "fraction": 0.9501242883489696
+          },
+          {
+            "color": "Gray",
+            "pixels": 1244,
+            "fraction": 0.04987571165103039
+          }
+        ],
+        "boundaryPaletteDistance": 0.00111335841827849,
+        "dominance": 0.9512376467672481,
+        "clippedFraction": 0.0010842962917066825,
+        "neutralBoundaryFraction": 0.12466309365221971,
+        "offWhiteShadeFraction": 0,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-15497e28250cc5bcfa1aca808181905c.bin.gz",
+      "maskSha256": "85acca48ef5e4ffa3d2bcaef7256caf25705479a02c39ab7b434efc099125f68",
+      "maskPredictedIoU": 0.9787135124206543,
+      "maskHumanVerified": false,
+      "elapsedMs": 2238.912704,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 8,
+          "borderSamples": 6728,
+          "backgroundMedianRGB": [
+            239,
+            238,
+            242
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 0.9317776456599287,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 0.7492997198879552,
+            "left": 0.9555,
+            "right": 0.989
+          },
+          "rawCoverage": 0.5589187675070028,
+          "invertedCoverage": 0.4410812324929972,
+          "rawBorderCoverage": 0.8579815695600476,
+          "invertedBorderCoverage": 0.14201843043995244,
+          "rawBackgroundAgreement": 0.9767057243377069,
+          "rawContrastFraction": 0.023294275662293144,
+          "invertedContrastFraction": 0.9609566509595723,
+          "exteriorBackgroundPixels": 100496,
+          "removedExteriorPixels": 3053,
+          "cleanedCoverage": 0.4239775910364146,
+          "componentCount": 10,
+          "largestComponentShare": 0.9978197674418605,
+          "selectedCoverage": 0.4230532212885154,
+          "selectedBounds": {
+            "left": 58,
+            "top": 30,
+            "right": 299,
+            "bottom": 500
+          },
+          "boundingBoxFill": 0.6666813807716077,
+          "touchesImageEdge": true
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-15497e28250cc5bcfa1aca808181905c.bin.gz",
+      "selectedMaskSha256": "a83c67ea0a5e5d9ffd1c7870919515a4af95ba02dbcc9eceb00f713aa673f2ce",
+      "selectedProposal": {
+        "color": "Multicolor",
+        "palette": [
+          {
+            "color": "Blue",
+            "fraction": 0.5646825134079322
+          },
+          {
+            "color": "Black",
+            "fraction": 0.36443090776666887
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.0679335231410978
+          },
+          {
+            "color": "Purple",
+            "fraction": 0.0016553002714692446
+          },
+          {
+            "color": "Brown",
+            "fraction": 0.0004899688803548964
+          },
+          {
+            "color": "White",
+            "fraction": 0.0004105144673243726
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.000291332847778587
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.00006621201085876978
+          },
+          {
+            "color": "Green",
+            "fraction": 0.00003972720651526187
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "ba6542b6ae881a1842e9949779355b8553b76df586d67f0fcb6ecb4ac09d5278",
+        "status": "review",
+        "color": null,
+        "reason": "neutral_family_boundary_requires_review",
+        "foregroundPixels": 75515,
+        "coverage": 0.4230532212885154,
+        "corePixels": 74184,
+        "samplePixels": 24728,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Black",
+            "pixels": 21131,
+            "fraction": 0.8545373665480427
+          },
+          {
+            "color": "Gray",
+            "pixels": 2918,
+            "fraction": 0.11800388223875768
+          },
+          {
+            "color": "Blue",
+            "pixels": 619,
+            "fraction": 0.025032351989647362
+          },
+          {
+            "color": "Beige",
+            "pixels": 28,
+            "fraction": 0.001132319637657716
+          },
+          {
+            "color": "White",
+            "pixels": 27,
+            "fraction": 0.0010918796505985117
+          },
+          {
+            "color": "Purple",
+            "pixels": 5,
+            "fraction": 0.0002021999352960207
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Black",
+            "pixels": 21119,
+            "fraction": 0.8389877641824249
+          },
+          {
+            "color": "Gray",
+            "pixels": 3344,
+            "fraction": 0.13284601938662005
+          },
+          {
+            "color": "Blue",
+            "pixels": 642,
+            "fraction": 0.02550452884157
+          },
+          {
+            "color": "White",
+            "pixels": 35,
+            "fraction": 0.0013904338153503894
+          },
+          {
+            "color": "Beige",
+            "pixels": 28,
+            "fraction": 0.0011123470522803114
+          },
+          {
+            "color": "Purple",
+            "pixels": 3,
+            "fraction": 0.00011918004131574765
+          },
+          {
+            "color": "Brown",
+            "pixels": 1,
+            "fraction": 0.00003972668043858255
+          }
+        ],
+        "boundaryPaletteDistance": 0.01565259484497545,
+        "dominance": 0.8545373665480427,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.43994661921708184,
+        "offWhiteShadeFraction": 0.0009301197023616953
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "1c6b2c592d79ad6699bee7089b230cda",
+      "sha256": "14153fef58d9ae2455d55c3301e8a8b460402ba35ef4b1b1379e5d71fb8f4632",
+      "width": 357,
+      "height": 500,
+      "expectedColor": "Black",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.997394746751066
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.0026052532489339833
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "14153fef58d9ae2455d55c3301e8a8b460402ba35ef4b1b1379e5d71fb8f4632",
+        "foregroundPixels": 98263,
+        "coverage": 0.5504929971988796,
+        "corePixels": 95036,
+        "samplePixels": 31679,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 31652,
+            "fraction": 0.9991477003693299
+          },
+          {
+            "color": "Gray",
+            "pixels": 27,
+            "fraction": 0.00085229963067016
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 32676,
+            "fraction": 0.9975881544802321
+          },
+          {
+            "color": "Gray",
+            "pixels": 79,
+            "fraction": 0.0024118455197679745
+          }
+        ],
+        "boundaryPaletteDistance": 0.0015595458890978026,
+        "dominance": 0.9991477003693299,
+        "clippedFraction": 0.002588465544998264,
+        "neutralBoundaryFraction": 0.01038542883298084,
+        "offWhiteShadeFraction": 0.000031566652987783707,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-1c6b2c592d79ad6699bee7089b230cda.bin.gz",
+      "maskSha256": "d3261b357e808f936b7b3aeedea25a2b991a68b04242ffe75bef23ed81617cb3",
+      "maskPredictedIoU": 0.9893797039985657,
+      "maskHumanVerified": false,
+      "elapsedMs": 1620.01195,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 8,
+          "borderSamples": 6728,
+          "backgroundMedianRGB": [
+            243,
+            243,
+            243
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 1,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 1,
+            "left": 1,
+            "right": 1
+          },
+          "rawCoverage": 0.5504929971988796,
+          "invertedCoverage": 0.44950700280112044,
+          "rawBorderCoverage": 0.8626634958382877,
+          "invertedBorderCoverage": 0.13733650416171228,
+          "rawBackgroundAgreement": 0.997598282161139,
+          "rawContrastFraction": 0.0024017178388610156,
+          "invertedContrastFraction": 0.9667609706245248,
+          "exteriorBackgroundPixels": 100690,
+          "removedExteriorPixels": 2664,
+          "cleanedCoverage": 0.4345826330532213,
+          "componentCount": 3,
+          "largestComponentShare": 0.9999226535005736,
+          "selectedCoverage": 0.43454901960784315,
+          "selectedBounds": {
+            "left": 24,
+            "top": 29,
+            "right": 328,
+            "bottom": 450
+          },
+          "boundingBoxFill": 0.6060679459932492,
+          "touchesImageEdge": false
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-1c6b2c592d79ad6699bee7089b230cda.bin.gz",
+      "selectedMaskSha256": "228e2cdc5b745abca3f68b936f67515a8c5905d46ae444c553adfda8f85b1d0b",
+      "selectedProposal": {
+        "color": "Multicolor",
+        "palette": [
+          {
+            "color": "Gray",
+            "fraction": 0.6794126368172032
+          },
+          {
+            "color": "Blue",
+            "fraction": 0.28911779493856926
+          },
+          {
+            "color": "Brown",
+            "fraction": 0.00968195237665502
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.008702154266634007
+          },
+          {
+            "color": "Purple",
+            "fraction": 0.007606327433057873
+          },
+          {
+            "color": "Black",
+            "fraction": 0.002887826008482989
+          },
+          {
+            "color": "Red",
+            "fraction": 0.0018693516572769347
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.000451222813825467
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.00014181288434514678
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.000051568321580053376
+          },
+          {
+            "color": "Green",
+            "fraction": 0.000051568321580053376
+          },
+          {
+            "color": "White",
+            "fraction": 0.000025784160790026688
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "14153fef58d9ae2455d55c3301e8a8b460402ba35ef4b1b1379e5d71fb8f4632",
+        "status": "review",
+        "color": null,
+        "reason": "neutral_family_boundary_requires_review",
+        "foregroundPixels": 77567,
+        "coverage": 0.43454901960784315,
+        "corePixels": 76051,
+        "samplePixels": 25351,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Gray",
+            "pixels": 18006,
+            "fraction": 0.7102678395329572
+          },
+          {
+            "color": "Black",
+            "pixels": 6422,
+            "fraction": 0.2533233403021577
+          },
+          {
+            "color": "Blue",
+            "pixels": 860,
+            "fraction": 0.03392371109620922
+          },
+          {
+            "color": "Brown",
+            "pixels": 27,
+            "fraction": 0.0010650467437181965
+          },
+          {
+            "color": "Purple",
+            "pixels": 22,
+            "fraction": 0.0008678158652518638
+          },
+          {
+            "color": "Beige",
+            "pixels": 8,
+            "fraction": 0.0003155694055461323
+          },
+          {
+            "color": "White",
+            "pixels": 5,
+            "fraction": 0.0001972308784663327
+          },
+          {
+            "color": "Orange",
+            "pixels": 1,
+            "fraction": 0.00003944617569326654
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Gray",
+            "pixels": 18473,
+            "fraction": 0.7144569925742574
+          },
+          {
+            "color": "Black",
+            "pixels": 6445,
+            "fraction": 0.2492651608910891
+          },
+          {
+            "color": "Blue",
+            "pixels": 870,
+            "fraction": 0.03364789603960396
+          },
+          {
+            "color": "Brown",
+            "pixels": 24,
+            "fraction": 0.0009282178217821782
+          },
+          {
+            "color": "Purple",
+            "pixels": 23,
+            "fraction": 0.0008895420792079208
+          },
+          {
+            "color": "Beige",
+            "pixels": 11,
+            "fraction": 0.0004254331683168317
+          },
+          {
+            "color": "White",
+            "pixels": 6,
+            "fraction": 0.00023205445544554454
+          },
+          {
+            "color": "Red",
+            "pixels": 1,
+            "fraction": 0.000038675742574257426
+          },
+          {
+            "color": "Pink",
+            "pixels": 1,
+            "fraction": 0.000038675742574257426
+          },
+          {
+            "color": "Yellow",
+            "pixels": 1,
+            "fraction": 0.000038675742574257426
+          },
+          {
+            "color": "Orange",
+            "pixels": 1,
+            "fraction": 0.000038675742574257426
+          }
+        ],
+        "boundaryPaletteDistance": 0.004471593822728903,
+        "dominance": 0.7102678395329572,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.6120074158810304,
+        "offWhiteShadeFraction": 0.0001972308784663327
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "9b80a4fec8fc64c6e1c38bf5c1a734ee",
+      "sha256": "a693f0b4af929de9ea034193424f41cc1e5d7a78f47af238977c993e994219b2",
+      "width": 334,
+      "height": 500,
+      "expectedColor": "Gray",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9998999929995099
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.0001000070004900343
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "a693f0b4af929de9ea034193424f41cc1e5d7a78f47af238977c993e994219b2",
+        "foregroundPixels": 99993,
+        "coverage": 0.5987604790419162,
+        "corePixels": 97015,
+        "samplePixels": 32339,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 32339,
+            "fraction": 1
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 24996,
+            "fraction": 0.999879995199808
+          },
+          {
+            "color": "Gray",
+            "pixels": 3,
+            "fraction": 0.00012000480019200768
+          }
+        ],
+        "boundaryPaletteDistance": 0.00012000480019201916,
+        "dominance": 1,
+        "clippedFraction": 0.0016698104455920096,
+        "neutralBoundaryFraction": 0.00043291381922755807,
+        "offWhiteShadeFraction": 0.0005256810662048919,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-9b80a4fec8fc64c6e1c38bf5c1a734ee.bin.gz",
+      "maskSha256": "416d6d68c12cdb8d478b21e5a23d94eb4efeff194cdbc5d5735d5cd397c3bd81",
+      "maskPredictedIoU": 0.9848318099975586,
+      "maskHumanVerified": false,
+      "elapsedMs": 1570.305007,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 8,
+          "borderSamples": 6544,
+          "backgroundMedianRGB": [
+            247,
+            247,
+            247
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 0.9862469437652812,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 0.9326347305389222,
+            "left": 1,
+            "right": 1
+          },
+          "rawCoverage": 0.5987604790419162,
+          "invertedCoverage": 0.40123952095808385,
+          "rawBorderCoverage": 0.8707212713936431,
+          "invertedBorderCoverage": 0.12927872860635692,
+          "rawBackgroundAgreement": 0.999849989499265,
+          "rawContrastFraction": 0.00015001050073505144,
+          "invertedContrastFraction": 0.9403196680943782,
+          "exteriorBackgroundPixels": 103718,
+          "removedExteriorPixels": 3858,
+          "cleanedCoverage": 0.3781377245508982,
+          "componentCount": 3,
+          "largestComponentShare": 0.9999366577459659,
+          "selectedCoverage": 0.3781137724550898,
+          "selectedBounds": {
+            "left": 53,
+            "top": 35,
+            "right": 278,
+            "bottom": 500
+          },
+          "boundingBoxFill": 0.6035364396654719,
+          "touchesImageEdge": true
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-9b80a4fec8fc64c6e1c38bf5c1a734ee.bin.gz",
+      "selectedMaskSha256": "32908e9ef674f72d6fdd5aab6daece7d69ea6e55a340686dbaffefb9bb8cd31a",
+      "selectedProposal": {
+        "color": "Brown",
+        "palette": [
+          {
+            "color": "Brown",
+            "fraction": 0.8237548499485312
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.07295906247525537
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.061857629265975135
+          },
+          {
+            "color": "Black",
+            "fraction": 0.015757383799192334
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.013302715971177449
+          },
+          {
+            "color": "White",
+            "fraction": 0.006952252751603452
+          },
+          {
+            "color": "Red",
+            "fraction": 0.004624277456647399
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.0005701163987647479
+          },
+          {
+            "color": "Green",
+            "fraction": 0.00017420223295589517
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.000015836566632354104
+          },
+          {
+            "color": "Blue",
+            "fraction": 0.000015836566632354104
+          },
+          {
+            "color": "Purple",
+            "fraction": 0.000015836566632354104
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "a693f0b4af929de9ea034193424f41cc1e5d7a78f47af238977c993e994219b2",
+        "status": "review",
+        "color": null,
+        "reason": "mixed_or_shaded_foreground_requires_review",
+        "foregroundPixels": 63145,
+        "coverage": 0.3781137724550898,
+        "corePixels": 61538,
+        "samplePixels": 30769,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Brown",
+            "pixels": 22066,
+            "fraction": 0.7171503786278397
+          },
+          {
+            "color": "Gray",
+            "pixels": 4901,
+            "fraction": 0.15928369462770972
+          },
+          {
+            "color": "Orange",
+            "pixels": 1385,
+            "fraction": 0.045012837596281975
+          },
+          {
+            "color": "Beige",
+            "pixels": 1064,
+            "fraction": 0.03458025935194514
+          },
+          {
+            "color": "Black",
+            "pixels": 1034,
+            "fraction": 0.0336052520393903
+          },
+          {
+            "color": "White",
+            "pixels": 304,
+            "fraction": 0.009880074100555754
+          },
+          {
+            "color": "Yellow",
+            "pixels": 9,
+            "fraction": 0.0002925021937664532
+          },
+          {
+            "color": "Red",
+            "pixels": 6,
+            "fraction": 0.00019500146251096883
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Brown",
+            "pixels": 22105,
+            "fraction": 0.700123523263548
+          },
+          {
+            "color": "Gray",
+            "pixels": 5473,
+            "fraction": 0.17334431317898205
+          },
+          {
+            "color": "Orange",
+            "pixels": 1342,
+            "fraction": 0.04250467171317265
+          },
+          {
+            "color": "Beige",
+            "pixels": 1103,
+            "fraction": 0.03493491274189973
+          },
+          {
+            "color": "Black",
+            "pixels": 1028,
+            "fraction": 0.03255946536597726
+          },
+          {
+            "color": "White",
+            "pixels": 502,
+            "fraction": 0.015899661102841037
+          },
+          {
+            "color": "Yellow",
+            "pixels": 11,
+            "fraction": 0.00034839894846862827
+          },
+          {
+            "color": "Red",
+            "pixels": 9,
+            "fraction": 0.00028505368511069583
+          }
+        ],
+        "boundaryPaletteDistance": 0.02058080792081409,
+        "dominance": 0.7171503786278397,
+        "clippedFraction": 0.00003250024375182814,
+        "neutralBoundaryFraction": 0.03253274399557997,
+        "offWhiteShadeFraction": 0.009197568981767363
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "0293f9b6c15dfcad06c5f5d96f27c8d6",
+      "sha256": "5c9ade8562184c665d8e4c550a8a9b40de2cae239b00fc13bb2433400a24e019",
+      "width": 455,
+      "height": 500,
+      "expectedColor": "Red",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9857890690778636
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.013010213420214519
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.0010982172273675734
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.00008053593000695537
+          },
+          {
+            "color": "Green",
+            "fraction": 0.000021964344547351467
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "5c9ade8562184c665d8e4c550a8a9b40de2cae239b00fc13bb2433400a24e019",
+        "foregroundPixels": 136585,
+        "coverage": 0.6003736263736263,
+        "corePixels": 133553,
+        "samplePixels": 26711,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 26463,
+            "fraction": 0.9907154355883344
+          },
+          {
+            "color": "Gray",
+            "pixels": 239,
+            "fraction": 0.008947624574145482
+          },
+          {
+            "color": "Blue",
+            "pixels": 3,
+            "fraction": 0.00011231327917337427
+          },
+          {
+            "color": "Pink",
+            "pixels": 3,
+            "fraction": 0.00011231327917337427
+          },
+          {
+            "color": "Purple",
+            "pixels": 2,
+            "fraction": 0.00007487551944891618
+          },
+          {
+            "color": "Green",
+            "pixels": 1,
+            "fraction": 0.00003743775972445809
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 27017,
+            "fraction": 0.9890178277263243
+          },
+          {
+            "color": "Gray",
+            "pixels": 276,
+            "fraction": 0.010103598491781675
+          },
+          {
+            "color": "Pink",
+            "pixels": 9,
+            "fraction": 0.00032946516821027197
+          },
+          {
+            "color": "Beige",
+            "pixels": 5,
+            "fraction": 0.00018303620456126222
+          },
+          {
+            "color": "Blue",
+            "pixels": 5,
+            "fraction": 0.00018303620456126222
+          },
+          {
+            "color": "Purple",
+            "pixels": 4,
+            "fraction": 0.00014642896364900978
+          },
+          {
+            "color": "Green",
+            "pixels": 1,
+            "fraction": 0.000036607240912252445
+          }
+        ],
+        "boundaryPaletteDistance": 0.0016984383808223294,
+        "dominance": 0.9907154355883344,
+        "clippedFraction": 0.003069896297405563,
+        "neutralBoundaryFraction": 0.05623151510613605,
+        "offWhiteShadeFraction": 0.00606491707536221,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-0293f9b6c15dfcad06c5f5d96f27c8d6.bin.gz",
+      "maskSha256": "ac12b66c32cd61bc7e7f075b37cfa944ea658076e21afb88da543786403bbbe2",
+      "maskPredictedIoU": 0.9866713285446167,
+      "maskHumanVerified": false,
+      "elapsedMs": 1598.6508709999998,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 11,
+          "borderSamples": 6842,
+          "backgroundMedianRGB": [
+            243,
+            243,
+            243
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 1,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 1,
+            "left": 1,
+            "right": 1
+          },
+          "rawCoverage": 0.6003736263736263,
+          "invertedCoverage": 0.3996263736263736,
+          "rawBorderCoverage": 0.8860469648250999,
+          "invertedBorderCoverage": 0.11395303517490007,
+          "rawBackgroundAgreement": 0.9866163927224805,
+          "rawContrastFraction": 0.013383607277519494,
+          "invertedContrastFraction": 0.9706759060661057,
+          "exteriorBackgroundPixels": 137282,
+          "removedExteriorPixels": 2580,
+          "cleanedCoverage": 0.3882857142857143,
+          "componentCount": 4,
+          "largestComponentShare": 0.9999660383766344,
+          "selectedCoverage": 0.3882725274725275,
+          "selectedBounds": {
+            "left": 81,
+            "top": 57,
+            "right": 370,
+            "bottom": 436
+          },
+          "boundingBoxFill": 0.8064566195871489,
+          "touchesImageEdge": false
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-0293f9b6c15dfcad06c5f5d96f27c8d6.bin.gz",
+      "selectedMaskSha256": "7d4c2fe9dc928b8b69db7131227f8bef948541e64d721af411d59943fa8d121d",
+      "selectedProposal": {
+        "color": "Red",
+        "palette": [
+          {
+            "color": "Red",
+            "fraction": 0.8382692568944436
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.04094778789113798
+          },
+          {
+            "color": "Brown",
+            "fraction": 0.04054023456957841
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.038264728524204136
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.0168568582167278
+          },
+          {
+            "color": "Black",
+            "fraction": 0.009713354163836434
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.009147307883892586
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.004403840057963139
+          },
+          {
+            "color": "White",
+            "fraction": 0.0010981297830910655
+          },
+          {
+            "color": "Green",
+            "fraction": 0.0007585020151247566
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": true,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "5c9ade8562184c665d8e4c550a8a9b40de2cae239b00fc13bb2433400a24e019",
+        "foregroundPixels": 88332,
+        "coverage": 0.3882725274725275,
+        "corePixels": 87191,
+        "samplePixels": 29064,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Red",
+            "pixels": 24891,
+            "fraction": 0.856420313790256
+          },
+          {
+            "color": "Orange",
+            "pixels": 1124,
+            "fraction": 0.03867327277731902
+          },
+          {
+            "color": "Brown",
+            "pixels": 1117,
+            "fraction": 0.038432424993118636
+          },
+          {
+            "color": "Beige",
+            "pixels": 847,
+            "fraction": 0.02914258188824663
+          },
+          {
+            "color": "White",
+            "pixels": 563,
+            "fraction": 0.019371043214973852
+          },
+          {
+            "color": "Yellow",
+            "pixels": 242,
+            "fraction": 0.008326451968070464
+          },
+          {
+            "color": "Gray",
+            "pixels": 114,
+            "fraction": 0.003922378199834847
+          },
+          {
+            "color": "Pink",
+            "pixels": 69,
+            "fraction": 0.002374071015689513
+          },
+          {
+            "color": "Black",
+            "pixels": 60,
+            "fraction": 0.002064409578860446
+          },
+          {
+            "color": "Green",
+            "pixels": 37,
+            "fraction": 0.0012730525736306083
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Red",
+            "pixels": 24894,
+            "fraction": 0.8454693655753295
+          },
+          {
+            "color": "Orange",
+            "pixels": 1155,
+            "fraction": 0.03922700720010868
+          },
+          {
+            "color": "Brown",
+            "pixels": 1100,
+            "fraction": 0.03735905447629398
+          },
+          {
+            "color": "Beige",
+            "pixels": 939,
+            "fraction": 0.03189104741203641
+          },
+          {
+            "color": "White",
+            "pixels": 696,
+            "fraction": 0.023638092650455102
+          },
+          {
+            "color": "Yellow",
+            "pixels": 240,
+            "fraction": 0.008151066431191414
+          },
+          {
+            "color": "Gray",
+            "pixels": 223,
+            "fraction": 0.007573699225648689
+          },
+          {
+            "color": "Pink",
+            "pixels": 95,
+            "fraction": 0.003226463795679935
+          },
+          {
+            "color": "Black",
+            "pixels": 64,
+            "fraction": 0.002173617714984377
+          },
+          {
+            "color": "Green",
+            "pixels": 38,
+            "fraction": 0.0012905855182719739
+          }
+        ],
+        "boundaryPaletteDistance": 0.012199704268630221,
+        "dominance": 0.856420313790256,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.004851362510322048,
+        "offWhiteShadeFraction": 0.019267822736030827,
+        "status": "proposal",
+        "color": "Red",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "selectedNewEstimatorCorrect": true
+    },
+    {
+      "id": "03de8a72670a391ad5ff80a6e0b38f36",
+      "sha256": "993cb24569be81068df67f5dcb957dd2bd47793f7029fb32162cb783b887ae9e",
+      "width": 500,
+      "height": 340,
+      "expectedColor": "Brown",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9949940429110642
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.00456543286510948
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.0004305123096484817
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.000010011914177871667
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "993cb24569be81068df67f5dcb957dd2bd47793f7029fb32162cb783b887ae9e",
+        "foregroundPixels": 99881,
+        "coverage": 0.587535294117647,
+        "corePixels": 96930,
+        "samplePixels": 32310,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 32240,
+            "fraction": 0.9978334880841845
+          },
+          {
+            "color": "Gray",
+            "pixels": 70,
+            "fraction": 0.002166511915815537
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 24888,
+            "fraction": 0.9966761443274198
+          },
+          {
+            "color": "Gray",
+            "pixels": 79,
+            "fraction": 0.00316366985703416
+          },
+          {
+            "color": "Beige",
+            "pixels": 4,
+            "fraction": 0.0001601858155460334
+          }
+        ],
+        "boundaryPaletteDistance": 0.00115734375676467,
+        "dominance": 0.9978334880841845,
+        "clippedFraction": 0.000030950170225936245,
+        "neutralBoundaryFraction": 0.019622407923243577,
+        "offWhiteShadeFraction": 0.008016094088517486,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-03de8a72670a391ad5ff80a6e0b38f36.bin.gz",
+      "maskSha256": "bb0a847e81f064566a90bd396e5a6803dfff68e887a465b04a68a5eaf783d2dc",
+      "maskPredictedIoU": 0.9826706647872925,
+      "maskHumanVerified": false,
+      "elapsedMs": 1642.4240740000005,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 8,
+          "borderSamples": 6592,
+          "backgroundMedianRGB": [
+            242,
+            243,
+            239
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 1,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 1,
+            "left": 1,
+            "right": 1
+          },
+          "rawCoverage": 0.587535294117647,
+          "invertedCoverage": 0.41246470588235296,
+          "rawBorderCoverage": 0.8999544902912622,
+          "invertedBorderCoverage": 0.10004550970873782,
+          "rawBackgroundAgreement": 0.9957649603027603,
+          "rawContrastFraction": 0.004235039697239715,
+          "invertedContrastFraction": 0.963533421754446,
+          "exteriorBackgroundPixels": 101952,
+          "removedExteriorPixels": 2506,
+          "cleanedCoverage": 0.3977235294117647,
+          "componentCount": 8,
+          "largestComponentShare": 0.9998225193379972,
+          "selectedCoverage": 0.3976529411764706,
+          "selectedBounds": {
+            "left": 54,
+            "top": 38,
+            "right": 439,
+            "bottom": 310
+          },
+          "boundingBoxFill": 0.6455404889228419,
+          "touchesImageEdge": false
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-03de8a72670a391ad5ff80a6e0b38f36.bin.gz",
+      "selectedMaskSha256": "382d93836d8c60b579c2a3e774ad8b16c8772ea708364054a2e5c8c5d5b54aae",
+      "selectedProposal": {
+        "color": "Multicolor",
+        "palette": [
+          {
+            "color": "Beige",
+            "fraction": 0.6394432035029067
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.17856244730107543
+          },
+          {
+            "color": "Brown",
+            "fraction": 0.09758731379713317
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.033120811822310324
+          },
+          {
+            "color": "Black",
+            "fraction": 0.032558689960207686
+          },
+          {
+            "color": "Red",
+            "fraction": 0.013653644176861289
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.0026330971435333797
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.0009467315572254849
+          },
+          {
+            "color": "White",
+            "fraction": 0.0007248413485007618
+          },
+          {
+            "color": "Green",
+            "fraction": 0.0006360852650108726
+          },
+          {
+            "color": "Blue",
+            "fraction": 0.0001331341252348338
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "993cb24569be81068df67f5dcb957dd2bd47793f7029fb32162cb783b887ae9e",
+        "foregroundPixels": 67601,
+        "coverage": 0.3976529411764706,
+        "corePixels": 66323,
+        "samplePixels": 22108,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Beige",
+            "pixels": 17086,
+            "fraction": 0.7728424099873349
+          },
+          {
+            "color": "Brown",
+            "pixels": 1871,
+            "fraction": 0.0846299981907002
+          },
+          {
+            "color": "Black",
+            "pixels": 1355,
+            "fraction": 0.061290030758096616
+          },
+          {
+            "color": "Orange",
+            "pixels": 1094,
+            "fraction": 0.04948434955672155
+          },
+          {
+            "color": "Gray",
+            "pixels": 385,
+            "fraction": 0.017414510584403835
+          },
+          {
+            "color": "Red",
+            "pixels": 175,
+            "fraction": 0.007915686629274471
+          },
+          {
+            "color": "White",
+            "pixels": 100,
+            "fraction": 0.004523249502442555
+          },
+          {
+            "color": "Pink",
+            "pixels": 20,
+            "fraction": 0.0009046499004885109
+          },
+          {
+            "color": "Yellow",
+            "pixels": 18,
+            "fraction": 0.0008141849104396599
+          },
+          {
+            "color": "Green",
+            "pixels": 4,
+            "fraction": 0.0001809299800977022
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Beige",
+            "pixels": 17241,
+            "fraction": 0.7651104996893583
+          },
+          {
+            "color": "Brown",
+            "pixels": 1865,
+            "fraction": 0.0827638235555161
+          },
+          {
+            "color": "Black",
+            "pixels": 1368,
+            "fraction": 0.06070826306913996
+          },
+          {
+            "color": "Orange",
+            "pixels": 1055,
+            "fraction": 0.04681814147510429
+          },
+          {
+            "color": "Gray",
+            "pixels": 536,
+            "fraction": 0.023786278512470047
+          },
+          {
+            "color": "White",
+            "pixels": 254,
+            "fraction": 0.011271855862252596
+          },
+          {
+            "color": "Red",
+            "pixels": 173,
+            "fraction": 0.007677287654211414
+          },
+          {
+            "color": "Pink",
+            "pixels": 22,
+            "fraction": 0.0009763024762580989
+          },
+          {
+            "color": "Yellow",
+            "pixels": 17,
+            "fraction": 0.0007544155498358037
+          },
+          {
+            "color": "Green",
+            "pixels": 3,
+            "fraction": 0.00013313215585337713
+          }
+        ],
+        "boundaryPaletteDistance": 0.013192026863645841,
+        "dominance": 0.7728424099873349,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.02560159218382486,
+        "offWhiteShadeFraction": 0.004387552017369278,
+        "status": "proposal",
+        "color": "Beige",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "065b6d3aa8ab29fa1475d05d4cc1db87",
+      "sha256": "153d3a5fb3ecc851fe073f74ce6a5fcaf0389c18129ad091b28cf1cdd05a4afa",
+      "width": 349,
+      "height": 500,
+      "expectedColor": "Yellow",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9171047342218374
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.08205262995145181
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.0008117134110516714
+          },
+          {
+            "color": "Green",
+            "fraction": 0.000023191811744333466
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.000007730603914777822
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "153d3a5fb3ecc851fe073f74ce6a5fcaf0389c18129ad091b28cf1cdd05a4afa",
+        "foregroundPixels": 129356,
+        "coverage": 0.7412951289398281,
+        "corePixels": 126223,
+        "samplePixels": 31556,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 28984,
+            "fraction": 0.9184941057168209
+          },
+          {
+            "color": "Gray",
+            "pixels": 2557,
+            "fraction": 0.08103054886550894
+          },
+          {
+            "color": "Purple",
+            "pixels": 9,
+            "fraction": 0.0002852072506021042
+          },
+          {
+            "color": "Blue",
+            "pixels": 6,
+            "fraction": 0.00019013816706806946
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 29642,
+            "fraction": 0.9166022449673769
+          },
+          {
+            "color": "Gray",
+            "pixels": 2663,
+            "fraction": 0.08234639290021337
+          },
+          {
+            "color": "Purple",
+            "pixels": 17,
+            "fraction": 0.0005256810662048919
+          },
+          {
+            "color": "Beige",
+            "pixels": 13,
+            "fraction": 0.00040199140356844676
+          },
+          {
+            "color": "Blue",
+            "pixels": 4,
+            "fraction": 0.00012368966263644516
+          }
+        ],
+        "boundaryPaletteDistance": 0.0019583092538756593,
+        "dominance": 0.9184941057168209,
+        "clippedFraction": 0.000697173279249588,
+        "neutralBoundaryFraction": 0.27940803650652807,
+        "offWhiteShadeFraction": 0.006337938902268982,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-065b6d3aa8ab29fa1475d05d4cc1db87.bin.gz",
+      "maskSha256": "d77302adc04d14bce8a309bfd95569dd6a7c26a3d59ccd438528b185d6037cf0",
+      "maskPredictedIoU": 0.9847860336303711,
+      "maskHumanVerified": false,
+      "elapsedMs": 1628.9938199999997,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 8,
+          "borderSamples": 6664,
+          "backgroundMedianRGB": [
+            232,
+            231,
+            236
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 0.9921968787515006,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 1,
+            "left": 0.974,
+            "right": 1
+          },
+          "rawCoverage": 0.7412951289398281,
+          "invertedCoverage": 0.2587048710601719,
+          "rawBorderCoverage": 0.84093637454982,
+          "invertedBorderCoverage": 0.15906362545018005,
+          "rawBackgroundAgreement": 0.9906691610748631,
+          "rawContrastFraction": 0.009330838925136831,
+          "invertedContrastFraction": 0.9191697678539784,
+          "exteriorBackgroundPixels": 131637,
+          "removedExteriorPixels": 3582,
+          "cleanedCoverage": 0.23817765042979944,
+          "componentCount": 3,
+          "largestComponentShare": 0.999687214282277,
+          "selectedCoverage": 0.2381031518624642,
+          "selectedBounds": {
+            "left": 102,
+            "top": 51,
+            "right": 260,
+            "bottom": 482
+          },
+          "boundingBoxFill": 0.6101353931099298,
+          "touchesImageEdge": false
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-065b6d3aa8ab29fa1475d05d4cc1db87.bin.gz",
+      "selectedMaskSha256": "2390a82bca2741538e72f6a92e4184999856460aecc6a3dfd060b263299a7c9e",
+      "selectedProposal": {
+        "color": "Multicolor",
+        "palette": [
+          {
+            "color": "Brown",
+            "fraction": 0.6811716286793906
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.1371152133625358
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.12368528725119739
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.02575272569736937
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.020385568846422297
+          },
+          {
+            "color": "Black",
+            "fraction": 0.008568196587162145
+          },
+          {
+            "color": "Red",
+            "fraction": 0.0013959421406050687
+          },
+          {
+            "color": "White",
+            "fraction": 0.0010830585573660017
+          },
+          {
+            "color": "Purple",
+            "fraction": 0.0004332234229464006
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.00031288358323906714
+          },
+          {
+            "color": "Blue",
+            "fraction": 0.00009627187176586681
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "153d3a5fb3ecc851fe073f74ce6a5fcaf0389c18129ad091b28cf1cdd05a4afa",
+        "status": "review",
+        "color": null,
+        "reason": "mixed_or_shaded_foreground_requires_review",
+        "foregroundPixels": 41549,
+        "coverage": 0.2381031518624642,
+        "corePixels": 39977,
+        "samplePixels": 19989,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Brown",
+            "pixels": 14089,
+            "fraction": 0.7048376607133924
+          },
+          {
+            "color": "Orange",
+            "pixels": 2716,
+            "fraction": 0.13587473110210616
+          },
+          {
+            "color": "Yellow",
+            "pixels": 2538,
+            "fraction": 0.12696983340837462
+          },
+          {
+            "color": "Gray",
+            "pixels": 262,
+            "fraction": 0.013107208964930712
+          },
+          {
+            "color": "Black",
+            "pixels": 225,
+            "fraction": 0.01125619090499775
+          },
+          {
+            "color": "Beige",
+            "pixels": 111,
+            "fraction": 0.005553054179798889
+          },
+          {
+            "color": "Red",
+            "pixels": 30,
+            "fraction": 0.0015008254539997
+          },
+          {
+            "color": "White",
+            "pixels": 14,
+            "fraction": 0.0007003852118665266
+          },
+          {
+            "color": "Purple",
+            "pixels": 4,
+            "fraction": 0.0002001100605332933
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Brown",
+            "pixels": 14227,
+            "fraction": 0.6848134777376654
+          },
+          {
+            "color": "Orange",
+            "pixels": 2772,
+            "fraction": 0.13342960288808664
+          },
+          {
+            "color": "Yellow",
+            "pixels": 2575,
+            "fraction": 0.12394705174488568
+          },
+          {
+            "color": "Beige",
+            "pixels": 456,
+            "fraction": 0.021949458483754514
+          },
+          {
+            "color": "Gray",
+            "pixels": 413,
+            "fraction": 0.019879663056558364
+          },
+          {
+            "color": "Black",
+            "pixels": 230,
+            "fraction": 0.011070998796630566
+          },
+          {
+            "color": "White",
+            "pixels": 57,
+            "fraction": 0.002743682310469314
+          },
+          {
+            "color": "Red",
+            "pixels": 33,
+            "fraction": 0.001588447653429603
+          },
+          {
+            "color": "Pink",
+            "pixels": 5,
+            "fraction": 0.00024067388688327315
+          },
+          {
+            "color": "Purple",
+            "pixels": 4,
+            "fraction": 0.00019253910950661854
+          },
+          {
+            "color": "Blue",
+            "pixels": 3,
+            "fraction": 0.0001444043321299639
+          }
+        ],
+        "boundaryPaletteDistance": 0.025684855912629225,
+        "dominance": 0.7048376607133924,
+        "clippedFraction": 0.00005002751513332333,
+        "neutralBoundaryFraction": 0.008154484966731702,
+        "offWhiteShadeFraction": 0.00010005503026664665
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "531620274919cd53c0ccebbbde565a6f",
+      "sha256": "1060c6484fc5427a492e21f54216c160458f733a364914a05dd166df84746156",
+      "width": 426,
+      "height": 500,
+      "expectedColor": "Orange",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "Multicolor",
+        "palette": [
+          {
+            "color": "Gray",
+            "fraction": 0.5834385229241993
+          },
+          {
+            "color": "White",
+            "fraction": 0.41647589910357075
+          },
+          {
+            "color": "Beige",
+            "fraction": 0.000042788986114974004
+          },
+          {
+            "color": "Green",
+            "fraction": 0.0000320917395862305
+          },
+          {
+            "color": "Blue",
+            "fraction": 0.000010697246528743501
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "1060c6484fc5427a492e21f54216c160458f733a364914a05dd166df84746156",
+        "status": "review",
+        "color": null,
+        "reason": "neutral_family_boundary_requires_review",
+        "foregroundPixels": 93482,
+        "coverage": 0.4388826291079812,
+        "corePixels": 89579,
+        "samplePixels": 29860,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "Gray",
+            "pixels": 17511,
+            "fraction": 0.5864367046215673
+          },
+          {
+            "color": "White",
+            "pixels": 12343,
+            "fraction": 0.41336235766912255
+          },
+          {
+            "color": "Green",
+            "pixels": 3,
+            "fraction": 0.00010046885465505693
+          },
+          {
+            "color": "Purple",
+            "pixels": 3,
+            "fraction": 0.00010046885465505693
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "Gray",
+            "pixels": 18002,
+            "fraction": 0.5777093161323449
+          },
+          {
+            "color": "White",
+            "pixels": 13152,
+            "fraction": 0.4220660440935785
+          },
+          {
+            "color": "Green",
+            "pixels": 4,
+            "fraction": 0.00012836558518661146
+          },
+          {
+            "color": "Purple",
+            "pixels": 3,
+            "fraction": 0.0000962741888899586
+          }
+        ],
+        "boundaryPaletteDistance": 0.0087315831549875,
+        "dominance": 0.5864367046215673,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.3940053583389149,
+        "offWhiteShadeFraction": 0.007032819825853985
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-531620274919cd53c0ccebbbde565a6f.bin.gz",
+      "maskSha256": "a2c8beaeeb56fd02c2858a4ee65fe7b7c6ce80a05f64313e644bb203795842b9",
+      "maskPredictedIoU": 0.975164532661438,
+      "maskHumanVerified": false,
+      "elapsedMs": 1633.0310759999993,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": false,
+        "status": "review",
+        "reason": "uniform_background_not_established",
+        "diagnostics": {
+          "borderBandPixels": 10,
+          "borderSamples": 6040,
+          "backgroundMedianRGB": [
+            219,
+            219,
+            219
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 0.7248344370860927,
+          "borderSideUniformFractions": {
+            "top": 0.31690140845070425,
+            "bottom": 0.8288732394366197,
+            "left": 0.7416666666666667,
+            "right": 0.9487951807228916
+          },
+          "rawCoverage": 0.4388826291079812,
+          "invertedCoverage": 0.5611173708920187,
+          "rawBorderCoverage": 0.8183774834437086,
+          "invertedBorderCoverage": 0.18162251655629136,
+          "rawBackgroundAgreement": 0.8203825335358679,
+          "rawContrastFraction": 0.17961746646413213,
+          "invertedContrastFraction": 0.8022640941113472
+        }
+      },
+      "selectedMaskFile": null,
+      "selectedMaskSha256": null,
+      "selectedProposal": {
+        "color": null,
+        "requiresReview": true,
+        "verified": false,
+        "reason": "uniform_background_not_established"
+      },
+      "selectedProposalCorrect": false,
+      "selectedNewEstimator": {
+        "color": null,
+        "requiresReview": true,
+        "verified": false,
+        "reason": "uniform_background_not_established"
+      },
+      "selectedNewEstimatorCorrect": false
+    },
+    {
+      "id": "139e6afe4c004dfba0f87b1ce7532c48",
+      "sha256": "a7a676f230262ad607913726cba2649d64ae163fcd4e4217d994c92b3433be92",
+      "width": 341,
+      "height": 500,
+      "expectedColor": "Beige",
+      "annotationScope": "human-validated color(s) of predominant depicted object; NOT per-instance boundaries or ranked multi-color truth",
+      "baseline": {
+        "color": "White",
+        "palette": [
+          {
+            "color": "White",
+            "fraction": 0.9973976662344879
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.002602333765512132
+          }
+        ],
+        "verified": false
+      },
+      "improved": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "a7a676f230262ad607913726cba2649d64ae163fcd4e4217d994c92b3433be92",
+        "foregroundPixels": 107980,
+        "coverage": 0.6333137829912023,
+        "corePixels": 104878,
+        "samplePixels": 26220,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 26179,
+            "fraction": 0.9984363081617086
+          },
+          {
+            "color": "Gray",
+            "pixels": 40,
+            "fraction": 0.0015255530129672007
+          },
+          {
+            "color": "Purple",
+            "pixels": 1,
+            "fraction": 0.00003813882532418002
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 26915,
+            "fraction": 0.9970364882385627
+          },
+          {
+            "color": "Gray",
+            "pixels": 79,
+            "fraction": 0.0029264678644193368
+          },
+          {
+            "color": "Purple",
+            "pixels": 1,
+            "fraction": 0.00003704389701796629
+          }
+        ],
+        "boundaryPaletteDistance": 0.0014009148514521057,
+        "dominance": 0.9984363081617086,
+        "clippedFraction": 0.02288329519450801,
+        "neutralBoundaryFraction": 0.05564454614797864,
+        "offWhiteShadeFraction": 0.0004958047292143402,
+        "status": "proposal",
+        "color": "White",
+        "shade": null,
+        "reason": "masked_pixel_dominance_unverified"
+      },
+      "baselineCorrect": false,
+      "improvedCorrect": false,
+      "maskFile": "benchmark/parallel68-masks/color-development-139e6afe4c004dfba0f87b1ce7532c48.bin.gz",
+      "maskSha256": "ee1e04a9916d950675f01511c3392432ca9a0a5647dbb02e71fedb0f0cc9cf7f",
+      "maskPredictedIoU": 0.9792801141738892,
+      "maskHumanVerified": false,
+      "elapsedMs": 1592.6280889999998,
+      "foregroundSelection": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "method": "uniform-border-polarity-and-exterior-background-check",
+        "inverted": true,
+        "status": "selected",
+        "reason": "model_background_mask_inverted_with_uniform_border_evidence",
+        "diagnostics": {
+          "borderBandPixels": 8,
+          "borderSamples": 6600,
+          "backgroundMedianRGB": [
+            240,
+            239,
+            243
+          ],
+          "backgroundDistanceThreshold": 40,
+          "borderUniformFraction": 0.9651515151515152,
+          "borderSideUniformFractions": {
+            "top": 1,
+            "bottom": 0.8313782991202346,
+            "left": 0.994,
+            "right": 1
+          },
+          "rawCoverage": 0.6333137829912023,
+          "invertedCoverage": 0.36668621700879767,
+          "rawBorderCoverage": 0.8191666666666667,
+          "invertedBorderCoverage": 0.1808333333333333,
+          "rawBackgroundAgreement": 0.9997036488238563,
+          "rawContrastFraction": 0.00029635117614373033,
+          "invertedContrastFraction": 0.7814779270633397,
+          "exteriorBackgroundPixels": 115836,
+          "removedExteriorPixels": 7888,
+          "cleanedCoverage": 0.3204222873900293,
+          "componentCount": 31,
+          "largestComponentShare": 0.9970347049348367,
+          "selectedCoverage": 0.31947214076246333,
+          "selectedBounds": {
+            "left": 76,
+            "top": 13,
+            "right": 251,
+            "bottom": 500
+          },
+          "boundingBoxFill": 0.6391317101789381,
+          "touchesImageEdge": true
+        }
+      },
+      "selectedMaskFile": "benchmark/parallel68-masks/color-selected-development-139e6afe4c004dfba0f87b1ce7532c48.bin.gz",
+      "selectedMaskSha256": "d7eb5ee892fe03c03cae44228aef926824074881e3265135a5a90b95d001589f",
+      "selectedProposal": {
+        "color": "Beige",
+        "palette": [
+          {
+            "color": "Beige",
+            "fraction": 0.8400954653937948
+          },
+          {
+            "color": "Brown",
+            "fraction": 0.06275013769047182
+          },
+          {
+            "color": "Orange",
+            "fraction": 0.03708463374334496
+          },
+          {
+            "color": "White",
+            "fraction": 0.03587295759133468
+          },
+          {
+            "color": "Gray",
+            "fraction": 0.02375619607123187
+          },
+          {
+            "color": "Red",
+            "fraction": 0.0002753809436387002
+          },
+          {
+            "color": "Pink",
+            "fraction": 0.00014686983660730678
+          },
+          {
+            "color": "Yellow",
+            "fraction": 0.000018358729575913347
+          }
+        ],
+        "requiresReview": true,
+        "verified": false,
+        "reason": "selected_object_pixel_proposal_unverified"
+      },
+      "selectedProposalCorrect": true,
+      "selectedNewEstimator": {
+        "version": 68,
+        "verified": false,
+        "requiresReview": true,
+        "automaticColorSaveAllowed": false,
+        "maskStatus": "model-proposed",
+        "sourceSha256": "a7a676f230262ad607913726cba2649d64ae163fcd4e4217d994c92b3433be92",
+        "status": "review",
+        "color": null,
+        "reason": "mixed_or_shaded_foreground_requires_review",
+        "foregroundPixels": 54470,
+        "coverage": 0.31947214076246333,
+        "corePixels": 52318,
+        "samplePixels": 26159,
+        "usedInteriorCore": true,
+        "palette": [
+          {
+            "color": "White",
+            "pixels": 14733,
+            "fraction": 0.5632096028135632
+          },
+          {
+            "color": "Beige",
+            "pixels": 8942,
+            "fraction": 0.34183263886234183
+          },
+          {
+            "color": "Brown",
+            "pixels": 1677,
+            "fraction": 0.06410795519706411
+          },
+          {
+            "color": "Orange",
+            "pixels": 627,
+            "fraction": 0.023968806147023968
+          },
+          {
+            "color": "Gray",
+            "pixels": 169,
+            "fraction": 0.00646049160900646
+          },
+          {
+            "color": "Red",
+            "pixels": 8,
+            "fraction": 0.0003058220880003058
+          },
+          {
+            "color": "Pink",
+            "pixels": 3,
+            "fraction": 0.00011468328300011469
+          }
+        ],
+        "fullMaskPalette": [
+          {
+            "color": "White",
+            "pixels": 15371,
+            "fraction": 0.564384064622728
+          },
+          {
+            "color": "Beige",
+            "pixels": 9182,
+            "fraction": 0.3371397099320727
+          },
+          {
+            "color": "Brown",
+            "pixels": 1683,
+            "fraction": 0.061795483752524326
+          },
+          {
+            "color": "Orange",
+            "pixels": 659,
+            "fraction": 0.02419680558105379
+          },
+          {
+            "color": "Gray",
+            "pixels": 330,
+            "fraction": 0.012116761520102808
+          },
+          {
+            "color": "Red",
+            "pixels": 7,
+            "fraction": 0.00025702221406278684
+          },
+          {
+            "color": "Pink",
+            "pixels": 3,
+            "fraction": 0.00011015237745548008
+          }
+        ],
+        "boundaryPaletteDistance": 0.007058731154291019,
+        "dominance": 0.5632096028135632,
+        "clippedFraction": 0,
+        "neutralBoundaryFraction": 0.01490882679001491,
+        "offWhiteShadeFraction": 0.5628273252035628
+      },
+      "selectedNewEstimatorCorrect": false
+    }
+  ]
+}

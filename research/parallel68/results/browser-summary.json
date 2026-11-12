@@ -1,0 +1,185 @@
+{
+  "format": "closet-current-parallel68-real-browser-dev-summary/v1",
+  "model": "Xenova/segformer_b0_clothes",
+  "revision": "a2489ea8e7ec1ee912190546bad31a4906ccca76",
+  "dtype": "fp32",
+  "moduleSha256": "efd991ae9870997a23ba94feb1db984ec43866d1706a4cc5794a3a3b5a12dded",
+  "developmentManifestSha256": "cfb7734271c0b14a95e0a826a33230eb05b67867999bf0d500763a64a19874d8",
+  "engines": {
+    "chromium": {
+      "browserVersion": "141.0.7390.37",
+      "actualInferences": 24,
+      "sources": 8,
+      "viewportWidths": [
+        320,
+        390,
+        430
+      ],
+      "loadMs": [
+        {
+          "width": 320,
+          "loadMs": 1860.6000000000931
+        },
+        {
+          "width": 390,
+          "loadMs": 1369.7999999998137
+        },
+        {
+          "width": 430,
+          "loadMs": 1941.5
+        }
+      ],
+      "inferenceMs": {
+        "median": 1086.9499999999534,
+        "p95": 1418.1000000000931
+      },
+      "perOriginal": {
+        "fashionpedia-val-8519": {
+          "baselineInstances": 1,
+          "candidateInstances": 1,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-9711": {
+          "baselineInstances": 1,
+          "candidateInstances": 1,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10216": {
+          "baselineInstances": 2,
+          "candidateInstances": 2,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10382": {
+          "baselineInstances": 4,
+          "candidateInstances": 4,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10776": {
+          "baselineInstances": 0,
+          "candidateInstances": 0,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10898": {
+          "baselineInstances": 4,
+          "candidateInstances": 5,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10905": {
+          "baselineInstances": 3,
+          "candidateInstances": 3,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10994": {
+          "baselineInstances": 4,
+          "candidateInstances": 4,
+          "maskHashesStableAcrossViewportContexts": true
+        }
+      },
+      "instancesPerViewport": {
+        "baseline": 19,
+        "candidate": 20
+      },
+      "networkViolations": 0,
+      "pageErrors": 0
+    },
+    "webkit": {
+      "browserVersion": "26.0",
+      "actualInferences": 24,
+      "sources": 8,
+      "viewportWidths": [
+        320,
+        390,
+        430
+      ],
+      "loadMs": [
+        {
+          "width": 320,
+          "loadMs": 4869.000000000001
+        },
+        {
+          "width": 390,
+          "loadMs": 5986
+        },
+        {
+          "width": 430,
+          "loadMs": 7240
+        }
+      ],
+      "inferenceMs": {
+        "median": 2195,
+        "p95": 3974
+      },
+      "perOriginal": {
+        "fashionpedia-val-8519": {
+          "baselineInstances": 1,
+          "candidateInstances": 1,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-9711": {
+          "baselineInstances": 1,
+          "candidateInstances": 1,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10216": {
+          "baselineInstances": 2,
+          "candidateInstances": 2,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10382": {
+          "baselineInstances": 4,
+          "candidateInstances": 4,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10776": {
+          "baselineInstances": 0,
+          "candidateInstances": 0,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10898": {
+          "baselineInstances": 4,
+          "candidateInstances": 5,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10905": {
+          "baselineInstances": 3,
+          "candidateInstances": 3,
+          "maskHashesStableAcrossViewportContexts": true
+        },
+        "fashionpedia-val-10994": {
+          "baselineInstances": 4,
+          "candidateInstances": 4,
+          "maskHashesStableAcrossViewportContexts": true
+        }
+      },
+      "instancesPerViewport": {
+        "baseline": 19,
+        "candidate": 20
+      },
+      "networkViolations": 0,
+      "pageErrors": 0
+    }
+  },
+  "totalActualInferences": 48,
+  "physicalDeviceTests": false,
+  "validationOrSealedAcceptanceRead": false,
+  "notFlorenceSam2BrowserAcceptance": true,
+  "notFullApplicationOrPrivateClosetAcceptance": true,
+  "notAnnotationAccuracyMeasurement": true,
+  "modelCorrectnessCannotBeInferredFromCounts": true,
+  "browserPeakMemoryMeasured": false,
+  "remoteColdNetworkStartupMeasured": false,
+  "sourceImageUploads": false,
+  "automaticSave": false,
+  "allResultsRequireReview": true,
+  "modelSha256": "02e6f1545475bc549184b6710487555b4b73eb08354cc3a480fb4fab1473a9d3",
+  "modelBytes": 15199746,
+  "crossEngineOriginalResolutionMaskHashParitySources": [
+    "fashionpedia-val-10776"
+  ],
+  "rootlessLocalWebkitLaunch": {
+    "systemPackagesChanged": false,
+    "wrapper": "/tmp/p68-webkit-wrapper.sh",
+    "extractedLibraries": "/tmp/p68-webkit-deps/usr/lib/x86_64-linux-gnu",
+    "note": "Local Debian13 accommodation only; standard Playwright install --with-deps is preferred on CI hosts."
+  }
+}

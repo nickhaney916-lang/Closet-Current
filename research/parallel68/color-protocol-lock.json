@@ -1,0 +1,29 @@
+{
+  "schema": "closet-current-parallel68-prospective-acceptance-lock/v1",
+  "scope": "color",
+  "status": "FROZEN_BEFORE_ACCEPTANCE_INFERENCE",
+  "frozenAtUTC": "2026-11-12T15:37:03.382Z",
+  "primaryCandidate": "model foreground selection + conservative masked color estimator; existing palette retained as comparison",
+  "manifests": {
+    "research/parallel68/color-data/acceptance.json": "1c8495dbbde75784e1d6a2bacefc8ac11cef546cd9e0f52caff1b6ba0edc5c1f"
+  },
+  "codeSha256": {
+    "research/parallel68/color.mjs": "10dee3bd647ee8b5daf23e74358adf03a4d858a5748f0fddda86e84bfa123484",
+    "research/parallel68/color-mask.mjs": "7f55f915032ac97d5cb8c89aacce3ebb241a15ef8900a3bf9c0e6977017810dc",
+    "scripts/parallel68-color-run.mjs": "489afc051db5aea07a794e7767b80cd88927fbf9513c7a761ae718118bc508d6",
+    "scripts/parallel68-color-select.mjs": "2071f5d6f481ab57ba25a36f22d9184ec49f8941827dbe7538e0be598b4736af",
+    "research/parallel67/color.mjs": "54ac587853564b7e5dfba3bbde82ce804df27e68d8703a52138f498eeda0539d",
+    "research/parallel67-reference/sam2-mask.mjs": "c761f6d80f5118343028e20e84f78863380d9ea926c605efb631c8d011e32b77",
+    "research/parallel68/acceptance-guard.mjs": "b52815158d7c5761e23b2569aa141b483a14b3daf97d9de0b8002caa355e122e"
+  },
+  "automaticSaveAllowed": false,
+  "thresholds": {
+    "estimatorFrozenSeparately": true
+  },
+  "knownLimits": [
+    "Public source dataset pretraining exposure unknown",
+    "No physical-device acceptance",
+    "No automatic confidence calibration",
+    "Do not count abstention as correct"
+  ]
+}
