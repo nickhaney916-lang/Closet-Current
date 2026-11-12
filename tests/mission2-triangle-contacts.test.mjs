@@ -1349,7 +1349,48 @@ test('P2-C26 two real named shoulder/torso 163-bone source poses re-audit actual
   ['bilateral-shoulder-8-torso-3','asymmetric-shoulder-12-torso-5']);
  assert.deepEqual(report.poses.map(p=>[p.shoulderLeftDegrees,p.shoulderRightDegrees,p.torsoDegrees]),
   [[8,-8,3],[-12,6,-5]]);
- assert.equal(report.onlyTwoPredeclaredArticulatedPoseSamples,true);
+ assert.equal(report.twoPrescribedEndpointsAndSixIntermediateSamples,true);
+ assert.deepEqual(report.intermediateFractions,[.25,.5,.75]);
+ assert.equal(report.transitionPoseSamples.length,6);
+ assert.equal(report.sampledTransitionCollisionAndUVOnly,true);
+ assert.equal(report.noContinuousSweptVolumeCertificate,true);
+ assert.equal(report.originalSourceGlbNotModifiedByIntermediateAudit,true);
+ const between=report.transitionPoseSamples;
+ assert.deepEqual(between.map(p=>[p.sourceEndpointPose,
+  p.sourceJointInterpolationFraction]),[
+  ['bilateral-shoulder-8-torso-3',.25],
+  ['bilateral-shoulder-8-torso-3',.5],
+  ['bilateral-shoulder-8-torso-3',.75],
+  ['asymmetric-shoulder-12-torso-5',.25],
+  ['asymmetric-shoulder-12-torso-5',.5],
+  ['asymmetric-shoulder-12-torso-5',.75]
+ ]);
+ for(const sample of between){
+  assert.equal(sample.interpolationUsesActualNamed163BoneJoints,true);
+  assert.equal(sample.intermediateSampleOnly,true);
+  assert.equal(sample.sweptBetweenSamplesNotTested,true);
+  assert.ok(Number.isSafeInteger(sample.actualSkinnedGarmentVerticesMoved)&&
+   sample.actualSkinnedGarmentVerticesMoved>0);
+  const end=report.poses.find(p=>p.pose===sample.sourceEndpointPose);
+  assert.ok(end);
+  assert.ok(Math.abs(sample.shoulderLeftDegrees-
+   end.shoulderLeftDegrees*sample.sourceJointInterpolationFraction)<1e-9);
+  assert.ok(Math.abs(sample.shoulderRightDegrees-
+   end.shoulderRightDegrees*sample.sourceJointInterpolationFraction)<1e-9);
+  assert.ok(Math.abs(sample.torsoDegrees-
+   end.torsoDegrees*sample.sourceJointInterpolationFraction)<1e-9);
+  assert.equal(sample.trials.length,3);
+  assert.equal(sample.sourcePhotoUVSurfaceBaseline.releaseAuthorized,false);
+  assert.equal(sample.sourcePhotoSplitEdgeBaseline.releaseAuthorized,false);
+  for(const trial of sample.trials){
+   for(const field of ['newBody','newSeparatePanel','newSelf'])
+    assert.ok(Number.isSafeInteger(trial[field])&&trial[field]>=0);
+   assert.equal(trial.noAutomaticAdmission,true);
+   assert.equal(trial.continuousCollisionUnverified,true);
+   assert.equal(trial.sourcePhotoUVSurfaceAudit.releaseAuthorized,false);
+   assert.equal(trial.sourcePhotoSplitEdgeAudit.releaseAuthorized,false);
+  }
+ }
  assert.equal(report.originalBoneRotationsAndGarmentPositionsRestored,true);
  assert.equal(report.originalPhotoUVOwnerSourceUntouched,true);
  assert.equal(report.noClothDynamicsSweptOrHumanVisualAcceptance,true);
