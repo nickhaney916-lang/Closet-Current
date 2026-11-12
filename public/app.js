@@ -129,7 +129,8 @@ function switchView(view){
 }
 document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>switchView(b.dataset.view));
 function openDB(){return new Promise((resolve,reject)=>{const r=indexedDB.open('closet-current-user-'+window.closetAuth.user.id,2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('items'))r.result.createObjectStore('items',{keyPath:'id'});if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state',{keyPath:'id'});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
-function readAll(ownerDB=db){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
+function readAll(){return readAllFrom(db);}
+function readAllFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 // NATIVE-INDEX-07 opt-in only: refresh the original native outfit controller
 // after a committed saved-item mutation, not on every draft/photo write.
 // Owner/session/CAS attestation is performed by the controller itself.
@@ -199,7 +200,8 @@ function persistDraft({required=false}={}){
   });
  });
 }
-function readDraft(ownerDB=db){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
+function readDraft(){return readDraftFrom(db);}
+function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 async function captureProofVerifyBeforeSave(value){
  if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active))return;
  const owner=captureProofOwner();
@@ -1151,9 +1153,9 @@ const closetReady=(async()=>{
   auth.assertCurrent?.();
   // Keep both asynchronous reads on the initiating account's DB. Do not
   // publish either owner's photos until the entire local roster loads.
-  const loadedItems=await readAll(connection);
+  const loadedItems=await readAllFrom(connection);
   if(!current()){connection.close();return;}
-  const loadedDraft=await readDraft(connection);
+  const loadedDraft=await readDraftFrom(connection);
   if(!current()){connection.close();return;}
   auth.assertCurrent?.();
   if(db&&db!==connection){connection.close();return;}
