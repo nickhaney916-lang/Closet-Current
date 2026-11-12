@@ -20,13 +20,14 @@ for(const row of selected){
  const sha=createHash('sha256').update(bytes).digest('hex');
  if(sha!==row.sha256)throw Error('Source SHA mismatch: '+row.id);
  const metadata=await sharp(bytes).metadata();
+ const oriented=quality.orientedDimensions(metadata.width,metadata.height,metadata.orientation||1);
  const rotated=sharp(bytes).rotate();
  const current=await rotated.clone().resize(256,256,{fit:'inside',withoutEnlargement:true}).ensureAlpha().raw().toBuffer({resolveWithObject:true});
  const legacy=await sharp(bytes).rotate().resize(16,16,{fit:'fill'}).ensureAlpha().raw().toBuffer({resolveWithObject:true});
  const old=context.photoQuality(legacy.data);
- const now=quality.analyzePixels(current.data,current.info.width,current.info.height,metadata.width,metadata.height);
+ const now=quality.analyzePixels(current.data,current.info.width,current.info.height,oriented.width,oriented.height);
  outcomes.push({id:row.id,sourceSha256:sha,sourceLicense:row.attribution.license,
- sourcePage:row.attribution.source,sourceWidth:metadata.width,sourceHeight:metadata.height,
+ sourcePage:row.attribution.source,sourceWidth:oriented.width,sourceHeight:oriented.height,
  exifOrientation:metadata.orientation||1,legacy16x16Blank:old.blank,
  advisoryCodes:now.advice.map(a=>a.code),metrics:now.metrics});
 }
