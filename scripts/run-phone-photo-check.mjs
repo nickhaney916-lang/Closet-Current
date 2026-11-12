@@ -107,12 +107,50 @@ try{
   }
  });
  assert.deepEqual(abortProof,{code:'cancelled',encodes:0},'a restarted photo may never encode a late private JPEG');
+ // This does NOT simulate an independent model accuracy result. It proves
+ // in a real browser that the shipped wrapper preserves a failed photo and
+ // uses one new worker only for a subsequent photo after a simulated crash.
+ const recoveryProbe=await page.evaluate(async()=>{
+  const {createTrialRecoverySession833}=await import('./phone-photo-run-recovery-833.mjs');
+  const seen=[],closed=[];
+  let instances=0;
+  const trial=createTrialRecoverySession833({makeSession:()=>{
+   const instance=++instances;
+   return {
+    async call(payload){
+     seen.push({instance,type:payload.type});
+     if(payload.type==='load')return {type:'ready'};
+     if(instance===1)throw Object.assign(Error('PRIVATE_ORIGINAL_JPEG'),{code:'runtime'});
+     return {type:'result',strong:true,choices:[{category:'Tops',itemType:'T-shirt'}]};
+    },
+    close(){closed.push(instance);}
+   };
+  }});
+  await trial.load();
+  let first='unexpected-success';
+  try{await trial.classify('PRIVATE_PHOTO_FIRST');}catch(e){first=e.code;}
+  const later=await trial.classify('PRIVATE_PHOTO_SECOND');
+  const summary={first,laterCategory:later.choices?.[0]?.category,
+   restartCount:trial.restartCount,instances,seen,closedBeforeFinal:[...closed]};
+  trial.close();
+  return summary;
+ });
+ assert.equal(recoveryProbe.first,'runtime');
+ assert.equal(recoveryProbe.laterCategory,'Tops');
+ assert.equal(recoveryProbe.restartCount,1);
+ assert.equal(recoveryProbe.instances,2);
+ assert.deepEqual(recoveryProbe.seen,[
+  {instance:1,type:'load'},{instance:1,type:'classify'},
+  {instance:2,type:'load'},{instance:2,type:'classify'}
+ ]);
+ assert.deepEqual(recoveryProbe.closedBeforeFinal,[1]);
+ assert.ok(!JSON.stringify(recoveryProbe).includes('PRIVATE_'),'no original JPEG in recovery receipts');
  await page.screenshot({path:join(output,'phone-photo-flow.png'),fullPage:true});
  await page.locator('#restart').click();assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#photos').isDisabled(),false);assert.equal(await page.locator('#download').isVisible(),false);
  await page.locator('#photos').setInputFiles({name:'PRIVATE_PHONE_RETRY.jpg',mimeType:'image/jpeg',buffer:await readFile('benchmark/photos/commons-0001.jpg')});await page.locator('#category-0').selectOption('Tops');await page.locator('#run').click();await page.locator('#restart').click();
  await page.waitForTimeout(150);assert.equal(await page.locator('.photo').count(),0);assert.equal(await page.locator('#status').innerText(),'Choose your photos to begin.');assert.deepEqual(pageErrors,[]);
  assert.deepEqual(wireViolations,[],'no source JPEG, private file identity or upload on the wire');
  assert.ok(networkMethods.has('GET'),'real model and static files must load through real GET requests');
- await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,engine,realWorker:true,fixturePhotos:2,viewports:[320,390,430],lockedLabels:true,visibleHonestVerdicts:true,reportPrivacy:true,noPhotoNetworkUpload:true,cancellation:true,noLateDecodeJPEG:true,pageErrors},null,2));
+ await writeFile(join(output,'summary.json'),JSON.stringify({passed:true,engine,realWorker:true,fixturePhotos:2,viewports:[320,390,430],lockedLabels:true,visibleHonestVerdicts:true,reportPrivacy:true,noPhotoNetworkUpload:true,cancellation:true,noLateDecodeJPEG:true,boundedWorkerRecoverySimulated:true,pageErrors},null,2));
  console.log('Phone photo-check '+engine+' flow passed with real recognition, per-item blind verdicts and private filenames excluded.');
 }finally{await browser?.close();await new Promise(r=>server.close(r));}
