@@ -471,9 +471,16 @@ try{
       // metadata, JPEG hashes, source triangle identities or private URLs.
       const raw=[sanitized,...errors.map(e=>e.message||'')].join(' ');
       const kinds=[
-       ['piece-count',/exactly original torso and two sewn cap/i],
+       ['scene',/actual existing owner garment/i],
+       ['piece-count',/canonical original torso shell and verified left\/right/i],
        ['bone-weight',/genuine 163-bone original garment/i],
-       ['source-topology',/source face identity|canonical source face/i],
+       ['face-count',/bounded original source face identity/i],
+       ['face-index',/out-of-range canonical source face/i],
+       ['face-area',/nonfinite posed source triangle area/i],
+       ['stage-evidence',/complete ephemeral original-face witnesses/i],
+       ['stage-mesh-count',/original source panel count changed/i],
+       ['stage-face-identity',/original source triangle identity changed/i],
+       ['stage-area-total',/small source-face tally mismatch|complete aggregate witness mismatch/i],
        ['stage-capture',/M2 photo stages|capturePhotoConstructionFaceAreas/i],
        ['stage-owner',/source stage provenance requires actual P190/i],
        ['stage-variable',/__m2PhotoStageAreas|not defined|ReferenceError/i],
