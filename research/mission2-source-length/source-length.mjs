@@ -188,7 +188,7 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   if(heldSelf.completedUniqueAffectedPairComparison!==true||
      heldSelf.originalSourceFaceIdentity!==true||
      heldSelf.sampledPoseOnly!==true||
-     !heldSelf.noContactWaived)
+     heldSelf.collisionCertified!==false||heldSelf.releaseAuthorized!==false)
    fail('M2 C21 bounded counterfactual exact source-face self audit incomplete');
   shortEdgeCounterfactual=Object.freeze({
    ...counter.countOnly,
