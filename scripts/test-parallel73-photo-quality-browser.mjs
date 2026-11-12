@@ -31,20 +31,33 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.setContent('<!doctype html><html><body><label><input type="checkbox" id="photoQualityResearch73">Research photo tips</label><button id="start">Camera</button><div id="grid"></div></body></html>');
    await page.addScriptTag({content:quality});await page.addScriptTag({content:check});
+   await page.evaluate(()=>{
+    window.__p73Decodes=0;
+    const decode=Image.prototype.decode;
+    Image.prototype.decode=function(...args){window.__p73Decodes++;return decode.apply(this,args);};
+   });
    const baseline=await page.evaluate(async()=>{
      const c=document.createElement('canvas');c.width=960;c.height=720;
      const ctx=c.getContext('2d');ctx.fillStyle='#111';ctx.fillRect(0,0,960,720);
-     const image=c.toDataURL('image/jpeg',.94),q=await checkPhoto(image);
-     return {image,hasTips:!!q.captureGuidance};
+     const image=c.toDataURL('image/jpeg',.94),before=window.__p73Decodes;
+     const start=performance.now(),q=await checkPhoto(image);
+     return {image,hasTips:!!q.captureGuidance,decodeCalls:window.__p73Decodes-before,
+      elapsedMs:Math.round((performance.now()-start)*100)/100};
    });
    assert.equal(baseline.hasTips,false,'off by default');
+   assert.equal(baseline.decodeCalls,1,'one decode only when research OFF');
    assert.equal(await page.locator('#photoQualityResearch73').isChecked(),false);
    await page.locator('#photoQualityResearch73').check();
    const result=await page.evaluate(async image=>{
+      const before=window.__p73Decodes,start=performance.now();
       const q=await checkPhoto(image);
-      return {advice:q.captureGuidance?.advice,metrics:q.captureGuidance?.metrics};
+      return {advice:q.captureGuidance?.advice,metrics:q.captureGuidance?.metrics,
+       decodeCalls:window.__p73Decodes-before,elapsedMs:Math.round((performance.now()-start)*100)/100};
    },baseline.image);
    assert.ok(result.metrics?.sampledWidth<=256);
+   assert.ok(result.metrics?.sampledWidth*result.metrics?.sampledHeight*4<=256*256*4,
+    'opt-in preview never exceeds 256 KiB of RGBA pixel data');
+   assert.equal(result.decodeCalls,1,'opt-in analysis must reuse the existing Image decode');
    assert.ok(result.advice?.some(a=>a.code==='low-light'));
    await page.addScriptTag({content:harness+'\n'+app.slice(start,end)});
    await page.evaluate(({photo,advice})=>window.init73(photo,advice),{photo:baseline.image,advice:result.advice});
@@ -63,7 +76,7 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    assert.equal((await page.evaluate(()=>window.changeOwner73('owner-B'))).visible,false);
    await page.locator('#photoQualityResearch73').uncheck();
    assert.equal(errors.length,0,errors.join('; '));
-   console.log('P73_BROWSER_NO_DEPLOY '+JSON.stringify({browser:name,width,offByDefault:true,retakeKeepsOriginal:true,sourceFence:true,ownerFence:true,itemIdentityFence:true,pageErrors:0}));
+   console.log('P73_BROWSER_NO_DEPLOY '+JSON.stringify({browser:name,width,offByDefault:true,retakeKeepsOriginal:true,sourceFence:true,ownerFence:true,itemIdentityFence:true,sourceDecodeOff:baseline.decodeCalls,sourceDecodeOn:result.decodeCalls,offMs:baseline.elapsedMs,onMs:result.elapsedMs,pageErrors:0}));
    await page.close();
  }}finally{await browser.close();}
 }
