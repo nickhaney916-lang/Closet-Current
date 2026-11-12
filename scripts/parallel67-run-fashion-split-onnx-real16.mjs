@@ -44,6 +44,15 @@ const texts=P67_LABELS.map(label=>'a photo of '+label);
 const textInputs=tokenizer(texts,{padding:'max_length',truncation:true});
 const outputText=await textModel(textInputs);
 const textVectors=outputText.pooler_output?.data;
+console.log('P67_TEXT_OUTPUT_SHAPE_DIAGNOSTIC',JSON.stringify({
+ labels:P67_LABELS.length,
+ keys:Object.keys(outputText),
+ tensors:Object.fromEntries(Object.entries(outputText).map(([key,t])=>[key,{
+  dims:t?.dims||null,type:t?.type||null,
+  elementType:t?.data?.constructor?.name||null,elementCount:t?.data?.length??null
+ }])),
+ tokenDims:textInputs?.input_ids?.dims||null
+}));
 if(!(textVectors instanceof Float32Array)||
     textVectors.length%P67_LABELS.length!==0)
  throw Error('P67: actual fashion text encoder did not return aligned source-pinned embeddings');
