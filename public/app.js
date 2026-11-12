@@ -495,9 +495,10 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
 // never create another review item, and never cross a signed-owner session.
 async function retryUncommittedCapture(item){
  const owner=captureProofOwner(),ownerDB=db;
- const valid=()=>owner&&ownerDB===db&&
+ const sameOwner=()=>owner&&ownerDB===db&&
   ownerDB?.name==='closet-current-user-'+owner&&
-  captureProofOwner()===owner&&
+  captureProofOwner()===owner;
+ const valid=()=>sameOwner()&&
   batch.includes(item)&&!items.some(x=>x.id===item.id)&&
   failedDraftCaptures.has(item.id)&&
   !localPending.has(item.id)&&
@@ -513,8 +514,8 @@ async function retryUncommittedCapture(item){
  if(!valid()||!await mod.verifyStoredCanonical(proof)||!valid())
   throw Error('Original photo integrity or signed-in account could not be verified.');
  const saved=await candidate(item.image,{sourceProof:proof,requireDraftCommit:true});
- if(!saved||!valid()&&failedDraftCaptures.has(item.id))
-  throw Error('The photograph was not saved. Keep this page open and try again.');
+ if(!saved||!sameOwner()||!batch.includes(item)||failedDraftCaptures.has(item.id))
+  throw Error('The photograph or signed-in account changed before private saving completed.');
  render();
  message('Original photograph saved privately on this device. Review the garment details before adding it to your closet.');
  return true;
