@@ -9,7 +9,7 @@ const html='<!doctype html><html><head><meta name="viewport" content="width=devi
 const server=createServer(async(req,res)=>{
  try{
   const path=new URL(req.url,'http://localhost').pathname;
-  if(path==='/trial70.html'){res.writeHead(200,{'Content-Type':'text/html'});res.end(html);return;}
+  if(path==='/trial70.html'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);return;}
   const file=resolve(root,'.'+decodeURIComponent(path));if(!file.startsWith(root+'/'))throw Error('Path');
   const data=await readFile(file);res.writeHead(200,{'Content-Type':types[extname(file)]||'application/octet-stream'});res.end(data);
  }catch{res.writeHead(404);res.end('missing');}
