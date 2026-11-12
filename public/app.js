@@ -1116,7 +1116,7 @@ async function startCamera(mode){
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
   await video.play();
   // play() can resolve after sign-out and a different owner begins another capture.
-  if(epoch!==captureOperationEpoch||request!==cameraRequest)return;
+  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||request!==cameraRequest)return;
   session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
@@ -1128,12 +1128,12 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(epoch===captureOperationEpoch&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
  }
  finally{
   // An older, cancelled getUserMedia() request must not unlock controls
   // while a newer request is still opening or streaming.
-  if(epoch===captureOperationEpoch&&request===cameraRequest){
+  if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&request===cameraRequest){
    busy=false;if(!stream)controls(false);
   }
  }
@@ -1148,13 +1148,17 @@ function waitEvent(target,event,timeout=15000){return new Promise((resolve,rejec
 async function upload(file){
  if(!file||busy)return;
  if(file.size>150*1024*1024)return message('Choose a video smaller than 150 MB. Short batches work best.');
- stopCamera();const epoch=captureOperationEpoch;busy=true;controls(true);
+ stopCamera();const epoch=captureOperationEpoch,lifecycle=mediaLifecycleEpoch,
+  importToken=++videoImportSerial;
+ videoImportActive=true;busy=true;controls(true);
  let url,confirmedFrames=0;
  const startLength=batch.length;
  const verified=typeof captureProof01Active!=='undefined'&&captureProof01Active;
  const owner=verified?captureProofOwner():null,ownerDB=db;
  const assertVideoLease=()=>{
-  if(epoch!==captureOperationEpoch||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB||document.hidden))
+  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||
+     importToken!==videoImportSerial||document.hidden||
+     verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))
    throw Error('Video import was interrupted by backgrounding or an account change. Only committed frames are saved.');
  };
  try{
@@ -1192,7 +1196,8 @@ async function upload(file){
  }catch(error){
   // A revoked video-import lease must not navigate or populate messages in
   // the next account's review screen, even after some older frames committed.
-  if(epoch!==captureOperationEpoch||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
+  if(epoch!==captureOperationEpoch||lifecycle!==mediaLifecycleEpoch||
+      importToken!==videoImportSerial||verified&&(!owner||captureProofOwner()!==owner||db!==ownerDB))return;
   render();
   if(verified){
    const problem=String(error?.message||error);
@@ -1210,7 +1215,9 @@ async function upload(file){
  }finally{
   // An old video may finish after the next owner has started another capture.
   // Revoke its own blob but never reset the next owner's video/controls.
-  if(epoch===captureOperationEpoch){
+  if(epoch===captureOperationEpoch&&lifecycle===mediaLifecycleEpoch&&
+     importToken===videoImportSerial){
+   videoImportActive=false;
    busy=false;controls(false);
    video.removeAttribute('src');video.load();
    $('captureState').textContent='Ready for another batch';
