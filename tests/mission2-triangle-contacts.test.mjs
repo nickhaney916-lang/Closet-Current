@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {
- createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
+ createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,capturePhotoConstructionFaceAreas,comparePhotoConstructionAreaStages,summarizeCanonicalSourceFaceQuality,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions
 } from '../research/mission2-source-length/posed-intersections.mjs';
 
 function simplePose(){
@@ -1172,4 +1172,85 @@ test('P2-C23 predeclared 25/50/75 one-ring source-only Z sweep is bounded, monot
   'predeclared local Z neighbor adjustments increase without changing the anchors');
  assert.throws(()=>buildOneRingShortEdgeDepthFeather([mesh],input,held,
    {neighborWeight:.8}),/complete private immutable original short-edge trial/);
+});
+
+
+test('P2-C24 true 163-bone original source residual face pairs get two opposite <=3mm local Z hypotheses, neither saving or welding the photographed garment',()=>{
+ const {root,garment}=simplePose();
+ const input=[
+  0,0,0, 1,0,0, 0,1,0,
+  0,0,.002, 1,0,.002, 0,1,.002
+ ];
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.Float32BufferAttribute(input,3));
+ const weights=new Float32Array(24);
+ for(let i=0;i<6;i++)weights[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.BufferAttribute(new Uint16Array(24),4));
+ g.setAttribute('skinWeight',new THREE.BufferAttribute(weights,4));
+ const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());
+ m.userData.work56Garment=true;m.bind(garment.skeleton);root.add(m);
+ const untouched=g.getAttribute('position').array.slice();
+ const after=untouched.slice(),saved=after.slice();
+ const proposed=new Map([[m,after]]);
+ const witness={
+  originalSourceFaceIdentity:true,completedUniqueAffectedPairComparison:true,
+  sampledPoseOnly:true,newlyIntersecting:1,newlyIntersectingSourceKeys:['0:0:1']
+ };
+ const apart=buildResidualSourcePairZDirectionTrial([m],proposed,witness);
+ const reverse=buildResidualSourcePairZDirectionTrial([m],proposed,witness,
+  {direction:'reverse'});
+ const receipts=[apart,reverse].map(x=>x.countOnly);
+ assert.deepEqual(receipts.map(x=>x.directionHypothesis),['separate','reverse']);
+ for(const x of receipts){
+  assert.equal(x.residualOriginalSelfContactPairs,1);
+  assert.deepEqual(x.distinctOriginalSourceFacesByMesh,[2]);
+  assert.equal(x.distinctOriginalSourceFaces,2);
+  assert.equal(x.nearEqualLocalDepthResidualPairs,0);
+  assert.equal(x.differentLocalDepthResidualPairs,1);
+  assert.equal(x.votedOriginalSourceVertices,6);
+  assert.equal(x.movedOriginalSourceVertices,6);
+  assert.equal(x.maximumDepthMeters,.003);
+  assert.ok(x.maximumAppliedLocalZMeters<=.003000001);
+  assert.equal(x.bothOppositeSignHypothesesRequired,true);
+  assert.equal(x.noPhysicalSewingOrDepthClaim,true);
+  assert.equal(x.sourceOriginalAndStagedArraysUnchanged,true);
+  assert.equal(x.sourcePhotoXYBitIdentical,true);
+  assert.equal(x.noUVSkinWeightOrSourcePhotoMutation,true);
+  assert.equal(x.residualOriginalFaceKeysNeverExported,true);
+  assert.equal(x.noGeometryApplied,true);
+  assert.equal(x.independentFullBodyPanelSelfAuditMandatory,true);
+  assert.equal(x.noContactWaived,true);
+  assert.equal(x.notAdmissibleFor3DOrRelease,true);
+  assert.equal(x.releaseAuthorized,false);
+  assert.equal(Object.hasOwn(x,'privateOverrides'),false);
+  for(const key of ['localXYZ','newlyIntersectingSourceKeys','originalSourceFaceKeys',
+   'ownerId','sourceSHA256','skinIndex','skinWeight','sourceUV'])
+   assert.equal(JSON.stringify(x).includes('"'+key+'"'),false);
+ }
+ const a=apart.privateOverrides.get(m),b=reverse.privateOverrides.get(m);
+ assert.notEqual(a,b);
+ for(let v=0;v<6;v++){
+  const k=v*3+2,expectedSign=v<3?-1:1;
+  assert.ok(Math.abs(a[k]-(after[k]+expectedSign*.003))<1e-8);
+  assert.ok(Math.abs(b[k]-(after[k]-expectedSign*.003))<1e-8);
+  for(const offset of [0,1]){
+   assert.equal(a[v*3+offset],saved[v*3+offset]);
+   assert.equal(b[v*3+offset],saved[v*3+offset]);
+  }
+ }
+ assert.deepEqual(g.getAttribute('position').array,untouched);
+ assert.deepEqual(after,saved);
+ const forged={...witness,newlyIntersectingSourceKeys:['0:0:999']};
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],proposed,forged),
+  /original residual source face pair out of bounds/);
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],proposed,witness,
+  {maxDepthMeters:.008}),/complete bounded exact residual original-face pair evidence/);
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],proposed,witness,
+  {maxVertices:2}),/narrow original source vertex budget/);
+ const malformed=new Float32Array(after);malformed[6]=NaN;
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],
+  new Map([[m,malformed]]),witness),/full finite 163-bone original source/);
+ const sameFace={...witness,newlyIntersectingSourceKeys:['0:0:0']};
+ assert.throws(()=>buildResidualSourcePairZDirectionTrial([m],proposed,sameFace),
+  /original residual source face pair out of bounds/);
 });

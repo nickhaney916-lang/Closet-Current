@@ -1,6 +1,6 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
 import {prepareSourceProjection} from './source-projection.mjs';
-import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
+import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
@@ -65,7 +65,7 @@ export const classifySourceLengthCandidateException=e=>{
 
 export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,traceTriangleContacts=false,
  strictTriangleContacts=false,traceGarmentPartContacts=false,strictGarmentPartContacts=false,traceSelfContacts=false,strictSelfContacts=false,extensionScale=1,depthClearance=0,depthEasingExponent=1,previewOnly=false,sourceAreaStages=null,
- counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false}={}){
+ counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false}={}){
  if(!Number.isFinite(extensionScale)||extensionScale<.25||extensionScale>1||
    (previewOnly&&projectSourceRGB))fail('finite bounded extension scale and no projection in dry-run required');
  // Experimental *depth-only* offset is never inferred from a single front
@@ -79,6 +79,8 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
  if(strictSelfContacts&&!traceSelfContacts)fail('strict self-contact gate requires measured intersections');
  if(neighborDepthRelaxationTrial&&!counterfactualShortEdgeDepthTrial)
   fail('M2 C22 neighbor relaxation requires original bounded short-edge trial');
+ if(residualPairDirectionTrial&&!neighborDepthRelaxationTrial)
+  fail('M2 C24 persistent source-face trial requires complete neighbor original-pair evidence');
  if(counterfactualShortEdgeDepthTrial&&
    (!previewOnly||!traceTriangleContacts||!traceGarmentPartContacts||!traceSelfContacts))
   fail('M2 C21 counterfactual requires disposable preview and complete independent collision measurements');
@@ -198,6 +200,8 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
   // rest-pose body/panel/self witnesses. No alternative may be committed or
   // used to approve 3D regardless of its scores.
   const oneRingSweep=[];
+  const residualPairDirectionSweep=[];
+  let residualGeometryClassification=null;
   if(neighborDepthRelaxationTrial){
    const referenceSelfKeys=new Set(selfDelta.newlyIntersectingSourceKeys);
    if(referenceSelfKeys.size!==selfDelta.newlyIntersecting||
@@ -263,7 +267,85 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
      releaseAuthorized:false
     });
     oneRingSweep.push(result);
-    if(neighborWeight===.5)neighborCounterfactual=result;
+    if(neighborWeight===.5){
+     neighborCounterfactual=result;
+     if(residualPairDirectionTrial){
+      const referenceKeys=new Set(neighborSelf.newlyIntersectingSourceKeys);
+      if(referenceKeys.size!==neighborSelf.newlyIntersecting)
+       fail('M2 C24 original residual self pairs were not completely captured');
+      const residualTypes=classifyNewSourceSelfContactTypes(
+       root,targets,feathered,neighborSelf);
+      if(residualTypes.newSelfContactCount!==neighborSelf.newlyIntersecting||
+         Object.values(residualTypes.byContactGeometry).reduce((a,b)=>a+b,0)!==
+          neighborSelf.newlyIntersecting||
+         residualTypes.noContactWaived!==true)
+       fail('M2 C24 residual actual posed geometry classification incomplete');
+      residualGeometryClassification=Object.freeze({
+       byContactGeometry:Object.freeze({...residualTypes.byContactGeometry}),
+       byStagedCoincidentCorners:Object.freeze([...residualTypes.byStagedCoincidentCorners]),
+       byOriginalCoincidentCorners:Object.freeze([...residualTypes.byOriginalCoincidentCorners]),
+       residualOriginalSourceFaceCount:residualTypes.uniqueAffectedSourceFaceCount,
+       sampledPoseOnly:true,
+       noSewnSeamOrPhysicalPenetrationInference:true,
+       noContactWaived:true,releaseAuthorized:false
+      });
+      for(const direction of ['separate','reverse']){
+       const directed=buildResidualSourcePairZDirectionTrial(
+        targets,feathered,neighborSelf,{direction,maxDepthMeters:.003,maxPairs:128,maxVertices:256});
+       const proposed=directed.privateOverrides;
+       const body=comparePosedTriangleContacts(baselineBody,
+        measurePosedTriangleContacts(root,targets,proposed));
+       const panels=comparePosedTriangleContacts(baselinePanels,
+        measurePosedGarmentPartContacts(root,targets,proposed));
+       const pairs=measureChangedFaceSelfContactDelta(root,targets,proposed);
+       if(pairs.completedUniqueAffectedPairComparison!==true||
+          pairs.originalSourceFaceIdentity!==true||
+          pairs.sampledPoseOnly!==true||
+          pairs.collisionCertified!==false||pairs.releaseAuthorized!==false||
+          !Array.isArray(pairs.newlyIntersectingSourceKeys)||
+          pairs.newlyIntersectingSourceKeys.length!==pairs.newlyIntersecting)
+        fail('M2 C24 physically complete private directed pair contact re-audit required');
+       let retained=0,introduced=0;
+       const faces=targets.map(()=>new Set());
+       const initialKeys=new Set(selfDelta.newlyIntersectingSourceKeys);
+       let retainedInitial=0;
+       for(const key of pairs.newlyIntersectingSourceKeys){
+        if(typeof key!=='string'||!/^(?:0|[1-9]\d*):(?:0|[1-9]\d*):(?:0|[1-9]\d*)$/.test(key))
+         fail('M2 C24 directed original pair key invalid');
+        const [m,a,b]=key.split(':').map(Number);
+        const g=targets[m]?.geometry,sourceFaces=g?
+         (g.index?g.index.count/3:g.getAttribute('position')?.count/3):null;
+        if(!Number.isSafeInteger(m)||m<0||m>=targets.length||
+           !Number.isSafeInteger(a)||!Number.isSafeInteger(b)||
+           a>=b||a<0||b>=sourceFaces)
+         fail('M2 C24 residual directed pair not grounded in original source');
+        faces[m].add(a);faces[m].add(b);
+        if(referenceKeys.has(key))retained++;else introduced++;
+        if(initialKeys.has(key))retainedInitial++;
+       }
+       if(retained+introduced!==pairs.newlyIntersecting)
+        fail('M2 C24 directed residual pair totals do not reconcile');
+       residualPairDirectionSweep.push(Object.freeze({
+        ...directed.countOnly,
+        originalProposalNewSelfPairs:selfDelta.newlyIntersecting,
+        oneRing50NewSelfPairs:neighborSelf.newlyIntersecting,
+        adjustedNewSelfPairs:pairs.newlyIntersecting,
+        adjustedNewBodyPairs:body.newlyIntersecting,
+        adjustedNewSeparatePanelPairs:panels.newlyIntersecting,
+        residualOriginalSourceFacesByMesh:Object.freeze(faces.map(s=>s.size)),
+        residualOriginalSourceFaces:faces.reduce((a,s)=>a+s.size,0),
+        retainedOneRingOriginalPairKeys:retained,
+        newVersusOneRingPairKeys:introduced,
+        retainedInitialOriginalPairKeys:retainedInitial,
+        originalSourcePairIdentityComparedPrivately:true,
+        noAutomaticDirectionSelection:true,
+        unchangedFullBodyPanelSelfCollisionVeto:true,
+        counterfactualNeverApplied:true,
+        releaseAuthorized:false
+       }));
+      }
+     }
+    }
    }
   }
   shortEdgeCounterfactual=Object.freeze({
@@ -277,6 +359,10 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    depthHoldSourcePoseOnly:true,
    neighborCounterfactual,
    oneRingSweep:Object.freeze(oneRingSweep),
+   residualPairDirectionSweep:Object.freeze(residualPairDirectionSweep),
+   residualGeometryClassification,
+   predeclaredDirectionVariantsOnly:true,
+   noAutomaticDirectionSelection:true,
    predeclaredOneRingWeightsOnly:true,
    noAutomaticSweepWinner:true,
    cannotCertifySourceUVOrPhysicalDrape:true,
@@ -338,12 +424,14 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
  * A candidate is only eligible when it creates NO new body/garment triangle
  * intersections at this sampled pose. Existing intersections remain unapproved.
  */
-export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false}={}){
+export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false}={}){
  if(typeof experimentalDepthTrial!=='boolean'||
     typeof counterfactualShortEdgeDepthTrial!=='boolean'||
     typeof neighborDepthRelaxationTrial!=='boolean'||
+    typeof residualPairDirectionTrial!=='boolean'||
     (counterfactualShortEdgeDepthTrial&&!experimentalDepthTrial)||
-    (neighborDepthRelaxationTrial&&!counterfactualShortEdgeDepthTrial))
+    (neighborDepthRelaxationTrial&&!counterfactualShortEdgeDepthTrial)||
+    (residualPairDirectionTrial&&!neighborDepthRelaxationTrial))
   fail('bounded depth experiment opt-in or short-edge counterfactual requires explicit research opt-in');
  const attempts=[];
  // Keep the established original four-candidate search unchanged.
@@ -364,6 +452,8 @@ export function planNoNewContactSourceLength(shirt,root,profile,{experimentalDep
     counterfactualShortEdgeDepthTrial:counterfactualShortEdgeDepthTrial&&
       scale===.25&&depthClearance===.008&&depthEasingExponent===2,
     neighborDepthRelaxationTrial:neighborDepthRelaxationTrial&&
+      scale===.25&&depthClearance===.008&&depthEasingExponent===2,
+    residualPairDirectionTrial:residualPairDirectionTrial&&
       scale===.25&&depthClearance===.008&&depthEasingExponent===2});
    const v=result.stats;
    const classification=classifySourceLengthContactAttempt(v);
@@ -414,7 +504,13 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
      Object.freeze({...a.shortEdgeCounterfactual.neighborCounterfactual}):null,
     oneRingSweep:Object.freeze((a.shortEdgeCounterfactual.oneRingSweep||[])
      .map(entry=>Object.freeze({...entry,
-      residualUniqueSourceFacesByMesh:Object.freeze([...entry.residualUniqueSourceFacesByMesh])})))}):null,
+      residualUniqueSourceFacesByMesh:Object.freeze([...entry.residualUniqueSourceFacesByMesh])}))),
+    residualPairDirectionSweep:Object.freeze((a.shortEdgeCounterfactual.residualPairDirectionSweep||[])
+     .map(entry=>Object.freeze({...entry,
+      distinctOriginalSourceFacesByMesh:Object.freeze([...entry.distinctOriginalSourceFacesByMesh]),
+      residualOriginalSourceFacesByMesh:Object.freeze([...entry.residualOriginalSourceFacesByMesh])}))),
+    residualGeometryClassification:a.shortEdgeCounterfactual.residualGeometryClassification?
+     Object.freeze({...a.shortEdgeCounterfactual.residualGeometryClassification}):null}):null,
   selfContactTypes:a.selfContactTypes?Object.freeze({
    newSelfContactCount:a.selfContactTypes.newSelfContactCount,
    uniqueAffectedSourceFaceCount:a.selfContactTypes.uniqueAffectedSourceFaceCount,
@@ -469,10 +565,10 @@ export function safeAdaptiveBodyContactDiagnostic(decision){
   attempts:Object.freeze(attempts),sourcePoseOnly:true,
   noPhotoOrOwnerFields:true,releaseAuthorized:false});
 }
-export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false,onResearchDiagnostic=null,experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false}={}){
+export function applyNoNewContactSourceLength(shirt,root,profile,{projectSourceRGB=false,onResearchDiagnostic=null,experimentalDepthTrial=false,sourceAreaStages=null,counterfactualShortEdgeDepthTrial=false,neighborDepthRelaxationTrial=false,residualPairDirectionTrial=false}={}){
  if(onResearchDiagnostic!==null&&typeof onResearchDiagnostic!=='function')
   fail('bounded research diagnostic callback required');
- const decision=planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial,sourceAreaStages,counterfactualShortEdgeDepthTrial,neighborDepthRelaxationTrial});
+ const decision=planNoNewContactSourceLength(shirt,root,profile,{experimentalDepthTrial,sourceAreaStages,counterfactualShortEdgeDepthTrial,neighborDepthRelaxationTrial,residualPairDirectionTrial});
  if(onResearchDiagnostic)onResearchDiagnostic(safeAdaptiveBodyContactDiagnostic(decision));
  if(!decision.accepted)
   fail('adaptive-geometry-refused['+decision.refusalReason+']: original-photo/2D fallback required; no garment geometry committed (body, garment part or intrapanel)');

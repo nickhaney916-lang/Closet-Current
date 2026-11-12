@@ -31,6 +31,9 @@ const sourceDepthExperiment=process.env.PHOTO_DEPTH_EXPERIMENT==='1';
 const sourceStageAudit=process.env.PHOTO_STAGE_AREA_AUDIT==='1';
 const sourceShortEdgeTrial=process.env.PHOTO_SHORT_EDGE_TRIAL==='1';
 const sourceNeighborRelaxation=process.env.PHOTO_NEIGHBOR_RELAXATION==='1';
+const sourceResidualDirection=process.env.PHOTO_RESIDUAL_DIRECTION_TRIAL==='1';
+if(sourceResidualDirection&&!sourceNeighborRelaxation)
+ throw Error('M2 C24 two-direction residual source trial requires complete 50-percent one-ring original-face proof');
 if(sourceNeighborRelaxation&&!sourceShortEdgeTrial)
  throw Error('M2 C22 one-ring neighbor must remain nested in private exact-source short-edge research trial');
 if(sourceShortEdgeTrial&&(!sourceAdaptiveMode||!sourceDepthExperiment||!sourceStageAudit))
@@ -394,7 +397,8 @@ try{
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
   await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
-    (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':''),
+    (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
+    (sourceResidualDirection?'&photoSourceResidualPairDirection=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -766,6 +770,63 @@ try{
         assert.ok(Number.isSafeInteger(variant[field])&&variant[field]>=0);
       }
       assert.equal(q.oneRingSweep.some(v=>v.releaseAuthorized===true),false);
+      if(sourceResidualDirection){
+       assert.equal(q.predeclaredDirectionVariantsOnly,true);
+       assert.equal(q.noAutomaticDirectionSelection,true);
+       assert.ok(q.residualGeometryClassification);
+       const g=q.residualGeometryClassification;
+       assert.equal(Object.values(g.byContactGeometry).reduce((sum,x)=>sum+x,0),
+        n.featherNewSelfContacts);
+       assert.equal(g.byStagedCoincidentCorners.reduce((sum,x)=>sum+x,0),
+        n.featherNewSelfContacts);
+       assert.equal(g.byOriginalCoincidentCorners.reduce((sum,x)=>sum+x,0),
+        n.featherNewSelfContacts);
+       assert.equal(g.residualOriginalSourceFaceCount,n.residualUniqueOriginalSourceFaces);
+       assert.equal(g.noSewnSeamOrPhysicalPenetrationInference,true);
+       assert.equal(g.noContactWaived,true);
+       assert.equal(g.releaseAuthorized,false);
+       assert.equal(q.residualPairDirectionSweep.length,2);
+       assert.deepEqual(q.residualPairDirectionSweep.map(x=>x.directionHypothesis),
+        ['separate','reverse']);
+       for(const trial of q.residualPairDirectionSweep){
+        assert.equal(trial.residualOriginalSelfContactPairs,n.featherNewSelfContacts);
+        assert.equal(trial.oneRing50NewSelfPairs,n.featherNewSelfContacts);
+        assert.equal(trial.originalProposalNewSelfPairs,n.originNewSelfContacts);
+        assert.equal(trial.maximumDepthMeters,.003);
+        assert.ok(trial.maximumAppliedLocalZMeters<=.00300001);
+        assert.ok(Number.isSafeInteger(trial.votedOriginalSourceVertices)&&
+         trial.votedOriginalSourceVertices>=trial.movedOriginalSourceVertices);
+        assert.ok(trial.distinctOriginalSourceFaces>=2);
+        assert.equal(trial.distinctOriginalSourceFacesByMesh.length,
+         n.residualUniqueSourceFacesByMesh.length);
+        assert.equal(trial.distinctOriginalSourceFacesByMesh.reduce((sum,x)=>sum+x,0),
+         trial.distinctOriginalSourceFaces);
+        assert.equal(trial.nearEqualLocalDepthResidualPairs+
+         trial.differentLocalDepthResidualPairs,trial.residualOriginalSelfContactPairs);
+        assert.equal(trial.retainedOneRingOriginalPairKeys+
+         trial.newVersusOneRingPairKeys,trial.adjustedNewSelfPairs);
+        assert.ok(trial.retainedOneRingOriginalPairKeys<=trial.oneRing50NewSelfPairs);
+        assert.equal(trial.residualOriginalSourceFacesByMesh.reduce((sum,x)=>sum+x,0),
+         trial.residualOriginalSourceFaces);
+        for(const key of ['adjustedNewBodyPairs','adjustedNewSeparatePanelPairs',
+         'adjustedNewSelfPairs','retainedInitialOriginalPairKeys'])
+         assert.ok(Number.isSafeInteger(trial[key])&&trial[key]>=0);
+        assert.equal(trial.originalSourcePairIdentityComparedPrivately,true);
+        assert.equal(trial.sourcePhotoXYBitIdentical,true);
+        assert.equal(trial.noUVSkinWeightOrSourcePhotoMutation,true);
+        assert.equal(trial.residualOriginalFaceKeysNeverExported,true);
+        assert.equal(trial.counterfactualNeverApplied,true);
+        assert.equal(trial.noAutomaticDirectionSelection,true);
+        assert.equal(trial.unchangedFullBodyPanelSelfCollisionVeto,true);
+        assert.equal(trial.notAdmissibleFor3DOrRelease,true);
+        assert.equal(trial.noContactWaived,true);
+        assert.equal(trial.releaseAuthorized,false);
+       }
+       assert.equal(a.accepted,false);
+      }else{
+       assert.equal(q.residualPairDirectionSweep.length,0);
+       assert.equal(q.residualGeometryClassification,null);
+      }
       assert.equal(n.originNewSelfContacts,q.originalProposalNewSelfContacts);
       assert.equal(n.heldNewSelfContacts,q.depthHoldNewSelfContacts);
       assert.equal(n.originNewBodyContacts,q.originalProposalNewBodyContacts);
