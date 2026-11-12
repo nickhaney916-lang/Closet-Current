@@ -13,8 +13,8 @@ const cohort='existing-publisher-labeled-development-exposed-holdout16';
 const model='UNCHANGED-existing-closet-current-FashionCLIP-worker';
 function partition(browser,half,overrides={}){
  const rows=truth.filter((_,i)=>i%2===(half==='a'?0:1)).map(row=>{
-  const known=photoTypes(row.expectedCategory).includes(row.expectedType);
   const negative=row.expectedCategory==='Uncategorized';
+  const known=!negative&&photoTypes(row.expectedCategory).includes(row.expectedType);
   const label=row.id==='commons-0003'&&browser==='chromium';
   return {id:row.id,expectedCategory:row.expectedCategory,expectedType:row.expectedType,
    acceptedTypes:row.acceptedTypes||[row.expectedType],
@@ -22,7 +22,7 @@ function partition(browser,half,overrides={}){
    predictedCategory:label?'Tops':null,predictedType:label?'T-shirt':null,
    strong:label,categoryConfirmed:false,categoryMatch:negative||label,
    exactTypeMatch:known?label:null,
-   acceptedTypeMatch:known||row.acceptedTypes?label:null,
+   acceptedTypeMatch:negative?null:known||row.acceptedTypes?label:null,
    negativeRejected:negative?true:null,reason:null,error:null,elapsedMs:9};
  });
  const summary={
@@ -48,6 +48,7 @@ test('P834 deterministic all-original comparison merges interleaved 16 sources w
  assert.equal(result.sourceCount,16);
  assert.equal(result.browsers.chromium.garments,13);
  assert.equal(result.browsers.chromium.negatives,3);
+ assert.equal(result.browsers.chromium.broadTypeCount,13,'three non-clothing Unknown controls must not inflate subtype denominator');
  assert.equal(result.browsers.chromium.categoryMatches,1);
  assert.equal(result.browsers.webkit.categoryMatches,0);
  assert.deepEqual(result.sourceIds,truth.map(x=>x.id));
