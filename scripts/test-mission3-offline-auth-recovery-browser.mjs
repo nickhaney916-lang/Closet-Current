@@ -14,6 +14,10 @@ const photoBytes=await sharp({create:{width:80,height:64,channels:3,
  background:{r:85,g:130,b:201}}}).jpeg({quality:91}).toBuffer();
 const photo='data:image/jpeg;base64,'+photoBytes.toString('base64'),
  sha=createHash('sha256').update(photoBytes).digest('hex');
+const draftBytes=await sharp({create:{width:80,height:64,channels:3,
+ background:{r:190,g:95,b:122}}}).jpeg({quality:91}).toBuffer();
+const draftPhoto='data:image/jpeg;base64,'+draftBytes.toString('base64'),
+ draftSHA=createHash('sha256').update(draftBytes).digest('hex');
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json',
  '.svg':'image/svg+xml','.css':'text/css'};
 const server=createServer(async(req,res)=>{
@@ -77,7 +81,7 @@ try{
     // Direct native IndexedDB seed uses a synthetic owner and original JPEG.
     // No auth bypass: the private app shell is never opened until the signed
     // mocked refresh actually verifies the account on subsequent page load.
-    await page.evaluate(async({owner,photo,sha,STORE,originalSession})=>{
+    await page.evaluate(async({owner,photo,sha,draftPhoto,draftSHA,STORE,originalSession})=>{
      const base=await new Promise((resolve,reject)=>{
       const req=indexedDB.open('closet-current-user-'+owner,2);
       req.onupgradeneeded=()=>{
@@ -95,12 +99,21 @@ try{
      await new Promise((resolve,reject)=>{
       const tx=base.transaction(['items','state'],'readwrite');
       tx.objectStore('items').put(item);
-      tx.objectStore('state').put({id:'draft',batch:[{...item,id:'synthetic-unsaved-owner-draft'}]});
+      // A distinct, already analyzed owner-review draft must NOT be
+      // mistaken for an exact duplicate of the saved garment or
+      // automatically promoted into the saved closet on app startup.
+      tx.objectStore('state').put({id:'draft',batch:[{
+       ...item,id:'synthetic-unsaved-owner-draft',
+       name:'Awaiting human confirmation',image:draftPhoto,
+       originalPhoto:{image:draftPhoto,sha256:draftSHA,width:80,height:64,origin:'photo-file'},
+       sourceSHA256:draftSHA,
+       localAnalyzed:true,requiresOwnershipConfirmation:true,needsReview:true
+      }]});
       tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
      });
      base.close();
      localStorage.setItem(STORE,originalSession);
-    },{owner,photo,sha,STORE,originalSession});
+    },{owner,photo,sha,draftPhoto,draftSHA,STORE,originalSession});
     await page.reload({waitUntil:'domcontentloaded'});
     await page.waitForFunction(()=>document.querySelector('#authStatus')?.textContent.includes('Cannot verify'),
      null,{timeout:15000});
@@ -131,7 +144,8 @@ try{
     assert.equal(restored.pieces[0].sha,sha);
     assert.equal(restored.pieces[0].originalHash,sha);
     assert.equal(restored.pieces[0].photo,photo);
-    assert.ok(restored.drafts.some(x=>x.id==='synthetic-unsaved-owner-draft'&&x.ownerId===owner));
+    assert.ok(restored.drafts.some(x=>x.id==='synthetic-unsaved-owner-draft'&&
+     x.ownerId===owner&&x.sha===draftSHA),'distinct owner-confirmation draft persisted');
     assert.equal(JSON.parse(restored.session).refresh_token,'rotated-synthetic');
     // A changed/removed snapshot must disable automatic restore after an
     // offline page load, even if another tab signs out before reconnect.
