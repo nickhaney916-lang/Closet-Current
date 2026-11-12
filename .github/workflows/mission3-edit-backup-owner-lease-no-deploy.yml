@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and four-path no-deploy allowlist
+      - name: Exact parent and five-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
+              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-edit-backup-owner-browser.mjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -33,6 +33,7 @@ jobs:
           set -euo pipefail
           node --check public/app.js
           node --check tests/mission3-edit-backup-owner-lease.test.cjs
+          node --check scripts/test-mission3-edit-backup-owner-browser.mjs
           node --test tests/mission3-edit-backup-owner-lease.test.cjs
           node --test tests/mission3-photo-crop-owner-session-lease.test.cjs
 
@@ -80,7 +81,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
+              public/app.js|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-edit-backup-owner-browser.mjs|research/mission3-edit-backup-owner-lease/REPORT.md|.github/workflows/mission3-edit-backup-owner-lease-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -96,6 +97,8 @@ jobs:
         run: node scripts/build.mjs
       - name: Reverify Chromium WebKit 320 390 430 owner private crop and JPEG evidence
         run: node scripts/test-mission3-crop-owner-lease-browser.mjs benchmark/mission3-crop-owner-browser
+      - name: Real Chromium WebKit 320 390 430 delayed owner backup import with native IndexedDB
+        run: node scripts/test-mission3-edit-backup-owner-browser.mjs benchmark/mission3-edit-backup-owner-browser
       - name: Exact full serial Node regression
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Reverify native Chromium WebKit saved garment mutation isolation
@@ -111,7 +114,7 @@ jobs:
         shell: bash
         run: |
           set -eu
-          for p in mission3-crop-owner-browser mission3-private-mutation-browser native-canonical-closet-style-167 mission3-native-signed-postgres-browser mission3-review-draft-retry-browser; do
+          for p in mission3-edit-backup-owner-browser mission3-crop-owner-browser mission3-private-mutation-browser native-canonical-closet-style-167 mission3-native-signed-postgres-browser mission3-review-draft-retry-browser; do
             test -s "benchmark/$p/results.json"
           done
           echo 'FAMILY ALPHA HOLD #255. NO DEPLOY.'
@@ -121,6 +124,7 @@ jobs:
         with:
           name: mission3-edit-backup-owner-mobile-rls-HOLD
           path: |
+            benchmark/mission3-edit-backup-owner-browser/
             benchmark/mission3-crop-owner-browser/
             benchmark/mission3-private-mutation-browser/
             benchmark/native-canonical-closet-style-167/
