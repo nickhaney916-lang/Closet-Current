@@ -490,6 +490,35 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
   originalSHA256Verified:panel.status().sourceSHA256Verified===true,
   familyAlpha:'HOLD',releaseAuthorized:false});
 }
+// Only a verified original with a failed *required* IndexedDB commit may be
+// recovered by this action. Re-hash its preserved original before retrying,
+// never create another review item, and never cross a signed-owner session.
+async function retryUncommittedCapture(item){
+ const owner=captureProofOwner(),ownerDB=db;
+ const valid=()=>owner&&ownerDB===db&&
+  ownerDB?.name==='closet-current-user-'+owner&&
+  captureProofOwner()===owner&&
+  batch.includes(item)&&!items.some(x=>x.id===item.id)&&
+  failedDraftCaptures.has(item.id)&&
+  !localPending.has(item.id)&&
+  item.ownerId===owner&&item.sourceHashVerified===true&&
+  item.originalPhoto?.image===item.image&&
+  item.originalPhoto?.sha256===item.sourceSHA256;
+ if(!valid())throw Error('The unsaved photograph or signed-in account changed. Nothing was saved.');
+ const proof={
+  image:item.image,originalPhoto:item.originalPhoto,
+  sourceSHA256:item.sourceSHA256,sourceHashVerified:true
+ };
+ const mod=await captureProof01Module();
+ if(!valid()||!await mod.verifyStoredCanonical(proof)||!valid())
+  throw Error('Original photo integrity or signed-in account could not be verified.');
+ const saved=await candidate(item.image,{sourceProof:proof,requireDraftCommit:true});
+ if(!saved||!valid()&&failedDraftCaptures.has(item.id))
+  throw Error('The photograph was not saved. Keep this page open and try again.');
+ render();
+ message('Original photograph saved privately on this device. Review the garment details before adding it to your closet.');
+ return true;
+}
 function renderPhotoResults(grid,results){
  grid.replaceChildren();
  if(!results.length){const box=node('div',null,'empty');box.append(node('h3','Your photos appear here'),node('p','Take a photo to add your first piece.'));grid.append(box);return;}
@@ -497,14 +526,30 @@ function renderPhotoResults(grid,results){
   const card=node('article',null,'card photo-result'),image=node('img');image.src=item.image;image.alt=item.name||'Clothing photo';
   const body=node('div',null,'card-body'),pending=localPending.has(item.id),saved=items.some(x=>x.id===item.id),known=item.category!=='Uncategorized';
   const title=item.name||(known&&item.itemType&&item.itemType!=='Unknown'?item.itemType:known?item.category:'Clothing photo');
-  const state=pending?'checking':saved?'saved':item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
-  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
+  const needsDraftRetry=!saved&&batch.includes(item)&&failedDraftCaptures.has(item.id);
+  const state=pending?'checking':saved?'saved':needsDraftRetry||item.saveFailed||item.scanFailed?'error':item.possibleDuplicate?'review':known&&item.localAnalyzed&&item.requiresOwnershipConfirmation?'ready':'review';
+  const label=pending?(recognitionState.activeId===item.id&&localReady?'Checking…':'Waiting…'):saved?(item.itemType==='Unknown'&&item.color?'Saved · refine type':'Saved'):needsDraftRetry?'Photo not saved on this device':item.saveFailed?'Not saved':item.scanFailed?'Scanner unavailable':item.possibleDuplicate?'Check duplicate':state==='ready'?'Ready to add':known?'Needs review':item.color?'Color found · confirm garment':'Needs a clearer photo';
   body.append(node('span',label,'photo-status '+state),node('h3',title));
   if(known)body.append(node('p',[item.category,item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · '),'photo-category'));
   else if(!pending)body.append(node('p',item.color?'Color: '+item.color+' · confirm the garment category.':item.scanFailed?'Try again, or add the details with Adjust.':'Retake this item, or add its details with Adjust.','fine'));
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
+  if(needsDraftRetry&&item.ownerId===captureProofOwner()&&
+     item.sourceHashVerified===true&&item.originalPhoto?.image===item.image&&
+     item.originalPhoto?.sha256===item.sourceSHA256){
+   body.append(node('p','Device storage did not confirm this photo. Free space, then retry saving before leaving this page.','fine'));
+   const retry=node('button','Retry saving photo','secondary retry-private-draft');
+   retry.type='button';retry.dataset.itemId=item.id;
+   retry.setAttribute('aria-label','Retry saving this unsaved original photograph privately');
+   retry.onclick=async()=>{
+    retry.disabled=true;
+    try{await retryUncommittedCapture(item);}
+    catch(error){message('Photo is still not saved. '+String(error.message||error));render();}
+    finally{retry.disabled=false;}
+   };
+   body.append(retry);
+  }
   const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
   // Only a successfully saved, exact owner-reviewed camera original receives
   // the single-tap three-owned-outfits shortcut on the REAL Photo results card.
@@ -831,6 +876,7 @@ async function captureProofPhoto(){
  }finally{captureProofTaking=false;}
 }
 function reportCaptureCommitFailure(error){
+ render();
  if(error?.code==='CAPTURE_STORAGE_FAILED'){
   $('captureState').textContent='Photo in review · device storage not confirmed';
   message('Your photo remains visible in this review, but it was not saved on this device. Free space or export it before leaving this page.');
@@ -1227,6 +1273,7 @@ async function importClothingPhotos(files){
     return accepted;
   });
   if(typeof window!=='undefined')window.__lastPhotoImportResult=result;
+  render();
   if(result.added){switchView('review');message(result.errors.length?result.errors.join('; '):'');}
   else message(result.errors.length?'No photos could be imported. '+result.errors.join('; '):'Exact duplicate photos were skipped; they are already in your closet or review batch.');
  }finally{busy=false;controls(false);}
