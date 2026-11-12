@@ -6,9 +6,12 @@ const photo=n=>'data:image/jpeg;base64,'+Buffer.from([255,216,n,n+1,n+2,255,217]
 const mem=(axis=0,key='fashion-clip/whole-v1/pinned')=>({
  version:1,modelKey:key,features:Array.from({length:512},(_,i)=>i===axis?1:0)
 });
+const variedMemory=n=>{const tilt=((n%10)-4)*.018;
+ return {...mem(),features:Array.from({length:512},(_,i)=>i===0?
+  Math.sqrt(1-tilt*tilt):i===1?tilt:0)};};
 const garment=(id,idx,extra={})=>({id,image:photo(idx),category:'Tops',
  itemType:'Polo',color:'Blue',pattern:'Striped',sleeveLength:'Short sleeve',
- fit:'Regular',recognitionMemory:mem(),...extra});
+ fit:'Regular',recognitionMemory:variedMemory(idx),...extra});
 const learning=async(scope,g)=>{
  const token=await M.begin72(g,scope,{reviewedKeys:['category','itemType','pattern','sleeveLength','fit']});
  assert.ok(token,'original + model required for review');
@@ -182,4 +185,14 @@ test('P72 same authenticated owner can reopen a persisted receipt without replay
  restored.image=photo(90);
  assert.equal(await M.verified72(restored,newScope),false,'replaced photo must relearn via new owner confirmation');
  M.close72(newScope);M.close72(other);
+});
+
+test('P72 near-identical feature clones with distinct JPEG bytes never act as two independent lessons',async()=>{
+ const scope=M.open72({ownerId:'private-A',sessionId:'session-0014'});
+ const first=await learning(scope,garment('clone1',11,{recognitionMemory:mem()}));
+ const second=await learning(scope,garment('clone2',12,{recognitionMemory:mem()}));
+ const query=garment('query',14,{itemType:'Unknown',recognitionMemory:mem()});
+ assert.equal(await M.suggest72(query,[first,second],scope),null,
+  'clone crops cannot increase apparent independent support');
+ M.close72(scope);
 });
