@@ -668,6 +668,9 @@ try{
     assert.equal(sanitizedJSON.includes('sourceFace'),false);
     assert.equal(sanitizedJSON.includes('ownerId'),false);
     assert.equal(sanitizedJSON.includes('sourceSHA256'),false);
+    for(const secret of ['"localXYZ"','"posedXYZ"','"skinWeight"','"skinIndex"',
+      '"newlyIntersectingSourceKeys"','"sourceUV"'])
+     assert.equal(sanitizedJSON.includes(secret),false);
     for(const a of safeDiagnostic.attempts){
      if(a.selfContactTypes){
       const t=a.selfContactTypes;
@@ -708,6 +711,31 @@ try{
       assert.equal(t.indexedBoundaryDoesNotProveSewnSeam,true);
       assert.equal(t.noSourcePositionsOrFaceKeysExported,true);
       assert.equal(t.sourceAreaCrossSquaredThreshold,1e-10);
+      const lineage=t.contactLinkedShortEdgeStageUVSkinEvidence;
+      assert.equal(lineage.nearCoincidentAffectedFaces,
+       t.byPhotoOwnerFittedSourceLocalShape.nearCoincidentEdge);
+      assert.equal(lineage.stageSourceEvidenceComplete,sourceStageAudit);
+      assert.equal(lineage.noGeometryEdited,true);
+      assert.equal(lineage.noContactWaived,true);
+      assert.equal(lineage.releaseAuthorized,false);
+      assert.equal(lineage.uvSamenessIsNotProofOfSewnSeams,true);
+      assert.equal(lineage.skinDisagreementIsNotProofOfRigDefect,true);
+      assert.equal(lineage.sourcePositionsUVsFaceKeysAndBonesPrivate,true);
+      assert.equal(Object.values(lineage.shortEdgeUVEndpointEvidence).reduce((n,v)=>n+v,0),
+       lineage.nearCoincidentAffectedFaces);
+      assert.equal(Object.values(lineage.shortEdge163BoneInfluenceEvidence).reduce((n,v)=>n+v,0),
+       lineage.nearCoincidentAffectedFaces);
+      if(sourceStageAudit){
+       assert.deepEqual(lineage.shortEdgeShapeBySourceStage.map(x=>x.stage),
+        ['anatomical','afterPhoto62','afterOwner190']);
+       for(const info of lineage.shortEdgeShapeBySourceStage)
+        assert.equal(Object.values(info.counts).reduce((n,v)=>n+v,0),
+         lineage.nearCoincidentAffectedFaces);
+       assert.equal(Object.values(lineage.nearEdgeFirstObservedStage).reduce((n,v)=>n+v,0),
+        lineage.nearCoincidentAffectedFaces);
+       assert.equal(lineage.shortEdgeShapeBySourceStage[2].counts.nearCoincidentEdge,
+        lineage.nearCoincidentAffectedFaces);
+      }
       if(a.newSelfContacts>0)assert.equal(a.accepted,false,
        'No source seam classification may waive any new self contact');
      }
