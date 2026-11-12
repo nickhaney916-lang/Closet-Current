@@ -94,7 +94,8 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    const use=page.getByRole('button',{name:'Use owner-confirmed suggestion'});
    await use.waitFor({state:'visible',timeout:10000});
    assert.equal(await page.getByLabel('Item type').inputValue(),'Unknown');
-   await use.click();assert.equal(await page.getByLabel('Item type').inputValue(),'Polo');
+   await use.click();await page.waitForFunction(()=>document.querySelector('select[aria-label="Item type"]')?.value==='Polo');
+   assert.equal(await page.getByLabel('Item type').inputValue(),'Polo');
    assert.equal(await learn().isChecked(),false,'suggestion is never new owner learning');
    assert.equal(await review().isChecked(),false,'proposal invalidates prior photo review');
    await page.getByRole('button',{name:'Cancel'}).click();
