@@ -509,6 +509,8 @@ if(process.env.PHOTO_DRESS_CONTACT58==='1'){
    a.originalSelfStrictTransverseCrossingsAcrossSamples,
   originalBodySourceTrianglesTestedAcrossBothArmSamples:
    a.originalBodyTrianglesInspectedAcrossSamples,
+  originalBodySpatialIndexComparisonsAcrossTwoSamples:
+   a.originalBodyComparisonsAcrossSamples,
   fullAnatomicalBodyContactSweepsCompleted:a.completeBodyPoseSweeps,
   originalBodyBoxCandidatePairsAcrossTwoSamples:
    a.originalBodyBoxPairsAcrossSamples,
