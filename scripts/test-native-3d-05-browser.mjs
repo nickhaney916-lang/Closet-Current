@@ -1807,9 +1807,19 @@ try{
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
   await page.locator('#native3D05Preview').click();
-  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
-   window.native3D05Bridge.state().viewerMode==='dress'&&
-   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+  try{
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+    window.native3D05Bridge.state().viewerMode==='dress'&&
+    window.native3D05Bridge.state().bones===163,null,{timeout:75000});
+  }catch(error){
+   const detail=await page.evaluate(()=>({
+    status:document.getElementById('native3D05Status')?.textContent||'no-status',
+    bridgeState:window.native3D05Bridge?.state?.()||null,
+    previewDisabled:document.getElementById('native3D05Preview')?.disabled||false
+   }));
+   throw Error('M2 C36 genuine source dress native WebGL failed readiness: '+
+    JSON.stringify(detail).slice(0,1800)+'; cause='+String(error?.message||error));
+  }
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
   if(photoFit171){
