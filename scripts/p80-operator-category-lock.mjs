@@ -10,9 +10,17 @@ import {CATEGORIES, canonical, sha256, isHex64} from "./p75-dataset-core.mjs";
 
 export const CATEGORY_LOCK80 = "p80-independent-operator-category-lock-v1";
 const COMMIT = /^[a-f0-9]{40}$/;
-const time = (x) =>
-  typeof x === "string" && /^\d{4}-\d{2}-\d{2}T/.test(x) &&
-  Number.isFinite(Date.parse(x)) ? Date.parse(x) : NaN;
+/**
+ * Evidence custody uses one canonical, unambiguous UTC clock representation.
+ * Date.parse alone normalizes impossible calendar dates (e.g. February 31)
+ * and accepts timezone-ambiguous strings. Neither may certify chronology.
+ */
+export function strictUtcInstant80(x){
+  if(typeof x!=="string" ||
+     !/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d:[0-5]\d\.\d{3}Z$/.test(x))return NaN;
+  const ms=Date.parse(x);
+  return Number.isFinite(ms) && new Date(ms).toISOString()===x ? ms : NaN;
+}
 const ownsExactly = (v, expected) =>
   v && typeof v === "object" && !Array.isArray(v) &&
   Object.keys(v).length === expected.length &&
@@ -51,10 +59,10 @@ export function verifyOperatorCategoryLock80(
       trusted.targetCommit !== lock.targetCommit ||
       trusted.modelSha256 !== lock.modelSha256 ||
       !Number.isFinite(now) ||
-      !(time(trusted.approvedAt) < time(lock.recordedAt) &&
-        time(lock.recordedAt) < time(scoredAt) &&
-        time(scoredAt) <= now &&
-        now-time(lock.recordedAt) <= 30*86400000)) return false;
+      !(strictUtcInstant80(trusted.approvedAt) < strictUtcInstant80(lock.recordedAt) &&
+        strictUtcInstant80(lock.recordedAt) < strictUtcInstant80(scoredAt) &&
+        strictUtcInstant80(scoredAt) <= now &&
+        now-strictUtcInstant80(lock.recordedAt) <= 30*86400000)) return false;
 
   const rowsBySha=new Map();
   for(const entry of lock.rows){
@@ -96,9 +104,9 @@ export function verifyOperatorCategoryLock80(
 export function blindTemporalOrder80(approvedAt, categoryAt, scoredAt, reviewTimes, now=Date.now()){
   if(!Array.isArray(reviewTimes) || reviewTimes.length<2 ||
      !Number.isFinite(now))return false;
-  const a=time(approvedAt), c=time(categoryAt), s=time(scoredAt);
+  const a=strictUtcInstant80(approvedAt), c=strictUtcInstant80(categoryAt), s=strictUtcInstant80(scoredAt);
   return Number.isFinite(a) && Number.isFinite(c) && Number.isFinite(s) &&
     a<c && c<s && s<=now &&
-    reviewTimes.every(r=>Number.isFinite(time(r)) && s<time(r) &&
-      time(r)<=now);
+    reviewTimes.every(r=>Number.isFinite(strictUtcInstant80(r)) && s<strictUtcInstant80(r) &&
+      strictUtcInstant80(r)<=now);
 }

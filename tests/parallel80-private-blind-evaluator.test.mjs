@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync,sign,createPublicKey } from "node:crypto";
 import { fixture } from "../scripts/p79-synthetic-fixtures.mjs";
 import { canonical,sha256 } from "../scripts/p75-dataset-core.mjs";
-import {CATEGORY_LOCK80, verifyOperatorCategoryLock80, blindTemporalOrder80} from "../scripts/p80-operator-category-lock.mjs";
+import {CATEGORY_LOCK80, verifyOperatorCategoryLock80, blindTemporalOrder80, strictUtcInstant80} from "../scripts/p80-operator-category-lock.mjs";
 import { 
   SCHEMA80, SEAL80, validCandidatePrediction80,
   summarizeConditionalCandidates80, evaluatePrivateBlind80,
@@ -37,7 +37,7 @@ const label = (patch={}) => ({
   quality:{lighting:"ok",focus:"ok",framing:"ok",background:"ok"},
   ...patch,
 });
-function syntheticSeal(rows){
+function syntheticSeal(rows, scoredAt=new Date().toISOString()){
   const kp=generateKeyPairSync("ed25519");
   const payload={
     schema:SEAL80,
@@ -45,7 +45,7 @@ function syntheticSeal(rows){
     modelSha256:HASH,
     predictionsSha256:sha256(canonical(rows)),
     sourceCount:rows.length,
-    scoredAt:new Date().toISOString(),
+    scoredAt,
   };
   return {
     ...payload,
@@ -366,4 +366,59 @@ test("evaluator rejects unsigned/unpinned operator lock even with valid syntheti
     assert.equal(result.independentlyVerifiedSubtypeAccuracy,null);
     assert.equal(result.shouldLiftFamilyAlphaHold,false);
   }
+});
+
+test("P80 custody chronology demands canonical UTC and rejects Date.parse rollover (GENERATED SYNTHETIC)",()=>{
+  const leap="2024-02-29T15:30:22.123Z";
+  assert.equal(strictUtcInstant80(leap),Date.parse(leap));
+  const invalid=[
+    "2026-02-31T12:00:00.000Z",
+    "2026-02-29T12:00:00.000Z",
+    "2026-03-03T12:00:00",
+    "2026-03-03T12:00:00+00:00",
+    "2026-03-03T12:00:00Z",
+    "2026-03-03T25:00:00.000Z",
+    "2026-03-03T12:61:00.000Z",
+    "2026-03-03T12:00:60.000Z",
+    "2026-03-03T12:00:00.000Zextra",
+  ];
+  for(const s of invalid)assert.ok(Number.isNaN(strictUtcInstant80(s)),s);
+  const now=Date.parse("2026-03-05T00:00:00.000Z");
+  const approved="2026-03-01T00:00:00.000Z";
+  const scored="2026-03-04T12:00:00.000Z";
+  const reviewed=["2026-03-04T13:00:00.000Z","2026-03-04T14:00:00.000Z"];
+  for(const s of invalid){
+    assert.equal(blindTemporalOrder80(s,"2026-03-04T00:00:00.000Z",scored,reviewed,now),false);
+    assert.equal(blindTemporalOrder80(approved,s,scored,reviewed,now),false);
+    assert.equal(blindTemporalOrder80(approved,"2026-03-04T00:00:00.000Z",s,reviewed,now),false);
+    assert.equal(blindTemporalOrder80(approved,"2026-03-04T00:00:00.000Z",scored,[s,reviewed[1]],now),false);
+  }
+  const preds=Array.from({length:60},(_,i)=>prediction({
+    sourceSha256:i.toString(16).padStart(64,"0"),status:"abstain",alternatives:[]
+  }));
+  const forgedCategory=fakeOperatorLock80(preds,{
+    recordedAt:"2026-02-31T12:00:00.000Z"
+  });
+  assert.equal(verifyOperatorCategoryLock80(forgedCategory.lock,preds,{
+    ...forgedCategory.trusted,approvedAt:approved
+  },scored,now),false,
+  "A correctly signed category receipt cannot pass with normalized February 31");
+  const validCategory=fakeOperatorLock80(preds,{
+    recordedAt:"2026-03-04T00:00:00.000Z"
+  });
+  assert.equal(verifyOperatorCategoryLock80(validCategory.lock,preds,{
+    ...validCategory.trusted,approvedAt:approved
+  },scored,now),true);
+  assert.equal(verifyOperatorCategoryLock80(validCategory.lock,preds,{
+    ...validCategory.trusted,approvedAt:"2026-02-31T12:00:00.000Z"
+  },scored,now),false,
+  "An invalid owner approval timestamp cannot be silently normalized");
+  const single=[prediction()];
+  for(const badTime of ["2026-02-31T12:00:00.000Z","2026-03-03T12:00:00+00:00"]){
+    const {fingerprint,...seal}=syntheticSeal(single,badTime);
+    assert.equal(verifyScorerSeal80(single,seal,fingerprint,now),false,
+      "Even a cryptographically valid signature must not bless noncanonical scoring time");
+  }
+  const {fingerprint,...validSeal}=syntheticSeal(single,"2026-03-03T12:00:00.000Z");
+  assert.equal(verifyScorerSeal80(single,validSeal,fingerprint,now),true);
 });
