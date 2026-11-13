@@ -41,10 +41,12 @@ The worker receives the captured original-photo string, not an image source read
 - wrong owner DB before starting -> no photo scan;
 - inherited P843–P853 private review/consent protections remain intact.
 
-The first four old-code boundaries lacked these checks; all tests use synthetic bytes/labels **and are not independently validated recognition accuracy**. There are no real human-approved photo labels, no actual model precision/recall claim and no physical phone witnesses from this work.
+The first four old-code boundaries lacked these checks; all tests use synthetic bytes/labels **and are not independently validated recognition accuracy**.
+
+**Browser harness compatibility:** The inherited P843 Chromium/WebKit scanner harness previously omitted both an authenticated owner and the user-specific IndexedDB name, even though it executes source in a genuine browser. P854 adjusts that test-only fixture to provide an explicit **synthetic** owner object and matching database name, so it can exercise the *real* browser security fence without lowering the app's signed-owner requirement. Older Node VM tests without `window.document` remain headless-only and are never real-account acceptance. No test fixture is a real authorized signed account. There are no real human-approved photo labels, no actual model precision/recall claim and no physical phone witnesses from this work.
 
 ## Engineering verification and release decisions
 
-Dedicated strict immutable-P853-parent **4-path NO DEPLOY** workflow includes these source-executed lease race tests, full 472+ native regressions, both app builds, P853 annotation workstation and inherited P852–P843 actual Chromium/WebKit synthetic-user browser tests at mobile CSS widths, and 11 legally sourced original-public JPEG SHA checks. The P851 independent evidence release contract must remain **BLOCKED**. **CI PENDING.**
+Dedicated strict immutable-P853-parent **5-path NO DEPLOY** workflow includes these source-executed lease race tests, full 472+ native regressions, both app builds, P853 annotation workstation and inherited P852–P843 actual Chromium/WebKit synthetic-user browser tests at mobile CSS widths, and 11 legally sourced original-public JPEG SHA checks. The P851 independent evidence release contract must remain **BLOCKED**. **CI PENDING.**
 
 **Still blocking full Mission 1 release:** actual independent source-disjoint double-human-labeled clothing/photo/instance/shoe-pair accuracy via #75/#79/#71; actual witnessed physical Android Chrome and iPhone Safari via #78; real authorized signed two-owner cloud isolation/recovery acceptance via Mission 3. Do not lift HOLD #255, merge/deploy or claim a 10/10 recognition result.
