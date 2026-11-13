@@ -1825,7 +1825,7 @@ function applyLocalChoice(item,choice,overwrite=false){
  if(!item.name?.trim())item.name=choice.label.replace(/^a |^an /,'').replace(/^./,c=>c.toUpperCase());
  Object.assign(item,normalizeClothing(item));item.localStatus='Local suggestion applied. Confirm the category, sleeves, and seasons before saving.';
 }
-async function saveIndexed(item,index04ApprovedOwner=null){
+async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=null){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
  const epoch=captureOperationEpoch,ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
  if(!owner||!ownerDB||ownerDB.name!=='closet-current-user-'+owner)return false;
@@ -1871,6 +1871,15 @@ async function saveIndexed(item,index04ApprovedOwner=null){
       const matches=rows.filter(row=>row?.id===value.id);
       if(matches.length!==1)throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
       const draft=matches[0];
+      // Immutable photo identity alone cannot prove no concurrent review edit.
+      // Require the ENTIRE original row we started recognizing, including
+      // color, garment type, size, notes and owner choices, to still match
+      // exactly inside this same native IDB transaction. A newer same-owner
+      // tab's change always wins; never overwrite it with a stale model.
+      if(!expectedDraftForIndex||
+         JSON.stringify(normalizeClothing(draft))!==
+          JSON.stringify(normalizeClothing(expectedDraftForIndex)))
+       throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
       if((draft.ownerId||null)!==expected.ownerId||
          draft.image!==expected.image||
          (draft.sourceSHA256||null)!==expected.sourceSHA256||
@@ -1994,7 +2003,7 @@ async function recognizeItem(item){
   if(item.requiresOwnershipConfirmation){item.localStatus='Identified. Add this piece only if it belongs in your closet.';return true;}
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
-  const wasSaved=await saveIndexed(item,index04ApprovedOwner);
+  const wasSaved=await saveIndexed(item,index04ApprovedOwner,expectedDraftForRecognition);
   if(epoch!==captureOperationEpoch)return false;
   if(!wasSaved){
    // A refused automatic index is NOT an acknowledged closet save.
@@ -2014,7 +2023,12 @@ async function recognizeItem(item){
  }catch(error){
   if(epoch!==captureOperationEpoch)return false;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
-  if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
+  if(savingIndexed){
+   recognitionState.phase='save-failed';
+   item.localStatus=String(error?.message||error).includes('CLOSET_AUTO_INDEX_STALE_REVIEW')
+    ?'Another tab changed this garment while recognition was running. Your original photo and newer edits were kept. Refresh Photo results before reviewing or saving.'
+    :'Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';
+  }
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;

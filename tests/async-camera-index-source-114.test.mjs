@@ -143,5 +143,5 @@ test('PHOTO114 source code proof remains research-only and original app opt-in s
  assert.doesNotMatch(source,/fetch\s*\(|XMLHttpRequest|localStorage|indexedDB\.open|postMessage|new Worker/);
  assert.ok(app.includes("get('index04')==='after'"));
  assert.ok(app.includes('if(!decision.autoSaveSafe)'));
- assert.ok(app.includes('const wasSaved=await saveIndexed(item,index04ApprovedOwner)'));
+ assert.ok(app.includes('const wasSaved=await saveIndexed(item,index04ApprovedOwner,expectedDraftForRecognition)'));
 });
