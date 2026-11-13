@@ -58,7 +58,7 @@ const addition=[
 "   });",
 "}",
 "if(globalThis.location?.hostname==='127.0.0.1'&&",
-"   new URLSearchParams(globalThis.location.search).get('parallel84Layers')==='research'){
+"   new URLSearchParams(globalThis.location.search).get('parallel84Layers')==='research'){",
 "  globalThis.__parallel84LayerEvidence=null;",
 "  if(next==='shirt-pants'&&built.shirt&&built.pants){",
 "   // The existing P69 source-verifier checks each original JPEG, mask and",
