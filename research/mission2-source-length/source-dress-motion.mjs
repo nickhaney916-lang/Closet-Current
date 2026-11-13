@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null,sweptSelfContactAudit44=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null,sweptSelfContactAudit44=null,sweptFastSelfContactAudit45=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -135,7 +135,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function')||
     (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function')||
     (sweptHighCadenceAudit43!==null&&typeof sweptHighCadenceAudit43!=='function')||
-    (sweptSelfContactAudit44!==null&&typeof sweptSelfContactAudit44!=='function'))
+    (sweptSelfContactAudit44!==null&&typeof sweptSelfContactAudit44!=='function')||
+    (sweptFastSelfContactAudit45!==null&&typeof sweptFastSelfContactAudit45!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -418,6 +419,34 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state);
   selfContactAuditObserved44=true;
  }
+ // C45 option: an early first-contact witness is a hard BLOCK, not a green
+ // partial scan. Only a completely inspected non-contact source mesh can
+ // proceed in research. No contact is ever silently exempted as a UV seam.
+ let fastSelfContactObserved45=false;
+ if(sweptFastSelfContactAudit45!==null){
+  const receipt=sweptFastSelfContactAudit45({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-first-contact-veto-v1'||
+     receipt.originalSourceAndSkinVerified!==true||
+     receipt.actual163BoneSkinnedPose!==true||
+     receipt.topologicalNeighborsExcluded!==true||
+     receipt.disconnectedSeamsRemainUnresolved!==true||
+     receipt.originalPhotoAndSkinPreserved!==true||
+     !Number.isSafeInteger(receipt.originalFaceCount)||
+     receipt.originalFaceCount<1||
+     receipt.checkedOriginalFaces!==receipt.originalFaceCount||
+     receipt.completeSourceSelfContactAudit!==true||
+     receipt.stoppedEarlyToRefuse!==false||
+     receipt.firstUnresolvedContactKind!==null||
+     receipt.unresolvedPairs!==0||
+     receipt.actualContinuousSelfContactCertified!==false||
+     receipt.sewnSeamsHumanVerified!==false||
+     receipt.clothPhysicsCertified!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C45 incomplete or unresolved source self-contact refuses research motion');
+  checkProvenance(mesh,state);
+  fastSelfContactObserved45=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -454,6 +483,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionHighFrequencyBoneMotionCertified43:false,
   sourceDressMotionSelfContactAuditObserved44:selfContactAuditObserved44,
   sourceDressMotionContinuousSelfContactCertified44:false,
+  sourceDressMotionFirstContactVetoObserved45:fastSelfContactObserved45,
+  sourceDressMotionContinuousSelfContactCertified45:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
