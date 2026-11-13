@@ -198,6 +198,33 @@ test('session revoked during async owner confirmation fails before any source er
   assert.deepEqual(await stored(f.db),before);
  }finally{f.close();}
 });
+test('new camera action after native transaction completion cannot turn a COMMITTED v4 restore into false failure',async()=>{
+ const f=await fixture();
+ try{
+  const data=(await f.export()).data;
+  let cameraStartedAfterCommit=false;
+  const ownerDB={name:f.db.name,
+   transaction(stores,mode){
+    const tx=f.db.transaction(stores,mode);
+    if(mode==='readwrite')tx.addEventListener('complete',()=>{
+     cameraStartedAfterCommit=true;
+    });
+    return tx;
+   }
+  };
+  const result=await restoreLosslessV4M3({
+   ownerDB,ownerId:f.owner,assertLease:()=>{},
+   assertIdle:()=>{if(cameraStartedAfterCommit)
+    throw Error('A new camera capture has begun after the transaction committed');},
+   data,confirm:()=>true
+  });
+  assert.equal(cameraStartedAfterCommit,true);
+  assert.equal(result.restored,true);
+  const snap=await stored(f.db);
+  assert.equal(snap.items[0].originalPhoto.image,savedImage);
+  assert.equal(snap.state.find(x=>x.id==='draft').batch[0].originalPhoto.image,draftImage);
+ }finally{f.close();}
+});
 test('invalid or unowned legacy v3 input is not silently upgraded into a v4 whole-wardrobe replacement',async()=>{
  const f=await fixture();
  try{
