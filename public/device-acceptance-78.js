@@ -219,7 +219,7 @@
    $('p78private').onclick=()=>{try{if(!session)error('SESSION_REQUIRED');
     download(privateReport(session),'parallel78-PRIVATE-evidence.json');say('Private receipt exported. Do NOT post to a public issue.');
    }catch{say('Start a session first.');}};
-   $('p78close').onclick=()=>{session=null;panel.remove();say=()=>{};};
+   $('p78close').onclick=()=>{session=null;started=null;elapsed=null;originalSha256=null;evidenceSha256=null;panel.remove();};
   };
   return true;
  }
