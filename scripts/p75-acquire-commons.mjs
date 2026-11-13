@@ -14,7 +14,7 @@ const filenames=['benchmark/locked-photo-sources.json','benchmark/manifest-holdo
  'benchmark/manifest-reviewed-32.json','benchmark/manifest-fresh-11.json'];
 const manifests=Object.fromEntries(await Promise.all(filenames.map(async name=>[name,JSON.parse(await readFile(name,'utf8'))])));
 const exposed=priorExposures(manifests),already=new Set(exposed.map(x=>sourceKey(x.sourcePage)).filter(Boolean));
-const maxDownloads=Number(process.env.P75_MAX_ORIGINALS||18);
+const maxDownloads=Number(process.env.P75_MAX_ORIGINALS||36);
 if(!Number.isInteger(maxDownloads)||maxDownloads<1||maxDownloads>48)throw Error('Unsafe maximum original count');
 const maxPerQuery=Math.min(4,Number(plan.maxOriginalsPerQuery||3));
 const seen=new Set(),discovered=[],failures={},requests={attempts:0,success:0};
@@ -64,10 +64,21 @@ for(const task of plan.searches){
   seen.add(srcKey);
   let bytes;
   try{
-   const res=await fetch(original,{headers,signal:AbortSignal.timeout(30000)});
-   if(!res.ok||!originalURL(res.url)||res.headers.get('content-length')&&Number(res.headers.get('content-length'))>12*1024*1024)throw Error('Original unavailable/oversize');
+   let res;
+   for(let attempt=0;attempt<3;attempt++){
+    res=await fetch(original,{headers,signal:AbortSignal.timeout(30000)});
+    if((res.status===429||res.status===503)&&attempt<2){
+     const suggested=Number(res.headers.get('retry-after'));
+     const backoff=Number.isFinite(suggested)&&suggested>0?Math.min(6000,suggested*1000):1200*(attempt+1);
+     await new Promise(resolve=>setTimeout(resolve,backoff));continue;
+    }
+    break;
+   }
+   if(!res.ok)throw Error('DOWNLOAD-HTTP-'+res.status);
+   if(!originalURL(res.url))throw Error('DOWNLOAD-REDIRECT');
+   if(res.headers.get('content-length')&&Number(res.headers.get('content-length'))>12*1024*1024)throw Error('DOWNLOAD-OVERSIZE');
    bytes=Buffer.from(await res.arrayBuffer());
-   if(bytes.length!==info.size||bytes.length>12*1024*1024||createHash('sha1').update(bytes).digest('hex')!==info.sha1)throw Error('Publisher SHA1/length changed');
+   if(bytes.length!==info.size||bytes.length>12*1024*1024||createHash('sha1').update(bytes).digest('hex')!==info.sha1)throw Error('DOWNLOAD-HASH-OR-LENGTH-MISMATCH');
    const decoded=await sharp(bytes,{limitInputPixels:40_000_000}).metadata();
    if(!decoded.width||!decoded.height||decoded.width<100||decoded.height<100||!['jpeg','png','webp'].includes(decoded.format))throw Error('Unsupported decoded photo');
    const row={schema:SCHEMA,id:'p75-candidate-'+String(discovered.length+1).padStart(4,'0'),
@@ -83,7 +94,15 @@ for(const task of plan.searches){
    const issues=verifiedSource(row);if(issues.length)throw Error('Source verification invalid: '+issues.join(','));
    row.overlapFlags=checkOverlap(row,exposed,discovered);
    discovered.push(row);taken++;
-  }catch(e){count('download-or-decoder-verification-failed');}
+  }catch(e){
+   const message=String(e?.message||'');
+   count(/^DOWNLOAD-HTTP-(429|403|404|503)$/.test(message)?message.toLowerCase():
+    message.startsWith('DOWNLOAD-HASH-OR-LENGTH')?'original-hash-or-size-mismatch':
+    message.startsWith('DOWNLOAD-REDIRECT')?'untrusted-redirect':
+    message.startsWith('DOWNLOAD-OVERSIZE')?'oversize-original':
+    'download-or-decoder-verification-failed');
+  }
+  await new Promise(resolve=>setTimeout(resolve,300));
   // Deliberately do not retain or upload the original JPEG bytes.
   bytes=null;
  }
@@ -94,7 +113,7 @@ const summary={schema:'p75-audit-summary-v1',queryCount:plan.searches.length,his
  ...numeric,rateLimitSafeSearchCalls:requests.attempts,searchSuccesses:requests.success,
  rejectedByReason:failures,
  humanGarmentTruth:0,humanColorTruth:0,humanSubtypeTruth:0,instanceMasksHumanTruth:0,shoePairHumanTruth:0,
- plannedTarget:240,planningGap:Math.max(0,240-discovered.length),
+ plannedTarget:240,planningGap:Math.max(0,240-discovered.length),uniquePhysicalGarmentGroupsHumanVerified:0,
  train:0,development:0,sealedBlind:0,
  originalBytesCommitted:0,originalBytesPublished:0,blindLabelsPublished:0,
  disclosure:'ALL source URLs are development-exposed candidates and may NEVER become independent sealed blind without a new hidden acquisition protocol.'};
@@ -102,5 +121,8 @@ await mkdir('research/parallel75',{recursive:true});
 await writeFile('research/parallel75/runtime-candidates-UNLABELED-EXPOSED.json',JSON.stringify(discovered,null,2)+'\n');
 await writeFile('research/parallel75/runtime-summary-PUBLIC.json',JSON.stringify(summary,null,2)+'\n');
 console.log('P75_ORIGINAL_BYTES_PROVENANCE_AUDIT '+JSON.stringify(summary));
+// Public train/dev-research-only source receipts, no photo bytes/annotations/sealed data.
+// This permits immutable pinning to a new manifest after exact source hashes pass.
+console.log('P75_PUBLIC_UNLABELED_PROVENANCE_RECORDS '+JSON.stringify(discovered));
 // Missing Commons access is a truthful acquisition blocker, not a passing acquisition.
 if(!requests.success)process.exitCode=2;
