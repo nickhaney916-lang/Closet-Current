@@ -200,7 +200,7 @@ test('default no-argument persistence refuses silent whole draft rewrite',async(
  const owner=randomUUID(),db=await open(owner);
  try{
   const f=harness(db,owner);await f.open(first);
-  await assert.rejects(f.ctx.persistDraft(),/no rejection|./);
+  assert.equal(await f.ctx.persistDraft(),false,'unsupported whole-batch save must fail closed');
   assert.equal((await read(db)).length,1);
  }finally{db.close();}
 });
