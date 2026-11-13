@@ -18,13 +18,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Lock verified original P2-C45 and exactly 4 research/test/CI paths
+      - name: Lock verified original P2-C46 and exactly 5 scoped research/test/CI paths
         shell: bash
         run: |
           set -eu
           BASE=a5336c49b9b8e95458bcd676192a3014ae2ad130
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
-          git diff --name-only "$BASE" HEAD >/tmp/p2-c46-files
+          git diff --name-only "$BASE" HEAD >/tmp/p2-c47-files
           while IFS= read -r path; do
             case "$path" in
               research/mission2-source-length/source-dress-motion.mjs|research/mission2-source-length/source-dress-moving-surface.mjs|scripts/install-mission2-source-dress-motion.mjs|tests/mission2-moving-dress-body-surfaces.test.mjs|.github/workflows/mission2-source-dress-receipt-lock-no-deploy.yml)
@@ -34,14 +34,13 @@ jobs:
                 exit 1
                 ;;
             esac
-          done </tmp/p2-c46-files
-          test "$(wc -l </tmp/p2-c46-files)" -eq 5
+          done </tmp/p2-c47-files
+          test "$(wc -l </tmp/p2-c47-files)" -eq 5
           git diff --exit-code "$BASE" HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json package.json package-lock.json
           node --check scripts/install-mission2-source-dress-motion.mjs
           node --check research/mission2-source-length/source-dress-motion.mjs
           node --check research/mission2-source-length/source-dress-moving-surface.mjs
           node --check tests/mission2-moving-dress-body-surfaces.test.mjs
-          node --check scripts/install-mission2-source-dress-motion.mjs
           node --check scripts/test-native-3d-05-browser.mjs
           node --check scripts/audit-mission2-source-dress-motion.mjs
       - name: Install pinned verification dependencies only
