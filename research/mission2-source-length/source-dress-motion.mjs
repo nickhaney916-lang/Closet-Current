@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -129,7 +129,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
     dress.stats?.skinIndicesAndWeightsPreserved61!==true||
     dress.stats?.releaseAuthorized!==false||
     dress.stats?.collisionValidated!==false||
-    !Number.isFinite(phase)||phase<0||phase>1)
+    !Number.isFinite(phase)||phase<0||phase>1||
+    (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -258,6 +259,29 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
   if(!newNormals.every(Number.isFinite)||staticNormalsPreserved<100)
    fail('original photo static normals not safely retained');
  }finally{scratch.dispose();}
+ // C39 opt-in RESEARCH gate: inspect the proposed segment sweep against
+ // real 163-bone posed body triangles BEFORE changing the live garment.
+ // Missing evidence never passes when explicitly requested. No receipt ever
+ // approves physics, continuous swept fabric triangles or Family Alpha.
+ let sweptVertexAuditObserved39=false;
+ if(sweptBodyAudit39!==null){
+  const evidence=sweptBodyAudit39({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  // Caller may supply the pinned auditSourceDressSweptBody39; the receipt
+  // is a refusal diagnostic, NOT a user-supplied release certificate.
+  if(evidence?.schema!=='M2-source-dress-swept-vertex-body-v1'||
+     evidence.sourceVerified!==true||
+     evidence.completeBoundedSweep!==true||
+     !Number.isSafeInteger(evidence.bodyMeshCount)||evidence.bodyMeshCount<1||
+     !Number.isSafeInteger(evidence.crossedSegments)||
+     evidence.crossedSegments!==0||
+     evidence.staticBodyPoseOnly!==true||
+     evidence.continuousCollisionCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C39 incomplete or intersecting swept source garment refused');
+  checkProvenance(mesh,state); // guard callback must not mutate original source
+  sweptVertexAuditObserved39=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -282,6 +306,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
   sourceDressMotionGarmentLocalFront38:true,
   sourceDressMotionGarmentLocalRadialRelief38:true,
   sourceDressMotionSweptContinuityCertified38:false,
+  sourceDressMotionSweptVertexAuditObserved39:sweptVertexAuditObserved39,
+  sourceDressMotionSweptWholeFabricCertified39:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
