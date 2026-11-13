@@ -142,7 +142,7 @@ export function auditActualSkinnedOutfitLayers84({
    }
   }
   if(!Number.isSafeInteger(fullSourceFaces)||fullSourceFaces>300000||
-    meshCount>16)throw Error('source-face-budget');
+    meshCount>16||meshCount>maxFaces)throw Error('source-face-budget');
   let stride=1;
   const budgetAt=s=>items.reduce((n,item)=>n+item.meshes.reduce(
     (v,mesh)=>v+Math.ceil(
