@@ -19,6 +19,7 @@ import {
 } from "./p75-dataset-core.mjs";
 import { loadSession, reviewHandoff, externalPath } from "./p79-workstation-core.mjs";
 import {verifyOperatorCategoryLock80, blindTemporalOrder80} from "./p80-operator-category-lock.mjs";
+import {validateFullScoreProofs80} from "./p80-full-score-transcript.mjs";
 
 export const SCHEMA80 = "p80-private-candidate-eval-v1";
 export const SEAL80 = "p80-private-scorer-seal-v1";
@@ -131,10 +132,13 @@ export function summarizeConditionalCandidates80(verifiedPairs) {
     shouldLiftFamilyAlphaHold: false,
   };
 }
-export function verifyScorerSeal80(predictions, seal, pinnedScorer, now) {
+export function verifyScorerSeal80(predictions, seal, pinnedScorer, now, proofs) {
   if (!Array.isArray(predictions) || !predictions.length || predictions.length > MAX_SOURCES ||
       !seal || seal.schema !== SEAL80 || !SHA40.test(seal.targetCommit || "") ||
       !isHex64(seal.modelSha256) || !isHex64(seal.predictionsSha256) ||
+      !Array.isArray(proofs) || proofs.length!==predictions.length ||
+      !isHex64(seal.proofsSha256) ||
+      seal.proofsSha256 !== sha256(canonical(proofs)) ||
       seal.predictionsSha256 !== sha256(canonical(predictions)) ||
       seal.sourceCount !== predictions.length ||
       !(finiteDate(seal.scoredAt) <= now) ||
@@ -147,8 +151,8 @@ export function verifyScorerSeal80(predictions, seal, pinnedScorer, now) {
     if (key.asymmetricKeyType !== "ed25519" ||
         sha256(key.export({type:"spki",format:"der"})) !== pinnedScorer) return false;
     const {signature, publicKey, ...payload} = seal;
-    if (Object.keys(payload).length !== 6 ||
-        !["schema","targetCommit","modelSha256","predictionsSha256","sourceCount","scoredAt"]
+    if (Object.keys(payload).length !== 7 ||
+        !["schema","targetCommit","modelSha256","predictionsSha256","proofsSha256","sourceCount","scoredAt"]
           .every(k=>Object.hasOwn(payload,k)))return false;
     return verifySignature(null,Buffer.from(canonical(payload)),key,Buffer.from(signature,"base64"));
   } catch { return false; }
@@ -161,7 +165,7 @@ export function verifyScorerSeal80(predictions, seal, pinnedScorer, now) {
  *
  * Success is PRIVATE_RESEARCH_ONLY (never real-life accuracy/release approval).
  */
-export async function evaluatePrivateBlind80({bundle, receipts, operatorLock, predictions, seal, trusted, now=Date.now()}={}) {
+export async function evaluatePrivateBlind80({bundle, receipts, operatorLock, predictions, proofs, seal, trusted, now=Date.now()}={}) {
   if (!Number.isFinite(now) || process.env.CI || process.env.GITHUB_ACTIONS)
     return bad("private evidence cannot be scored in CI");
   if (!bundle || bundle.authorization?.access !== "blind" ||
@@ -174,8 +178,12 @@ export async function evaluatePrivateBlind80({bundle, receipts, operatorLock, pr
       seal?.targetCommit !== trusted.targetCommit ||
       seal?.modelSha256 !== trusted.modelSha256 ||
       !(finiteDate(trusted.approvedAt) < finiteDate(seal?.scoredAt)) ||
-      !verifyScorerSeal80(predictions,seal,trusted.scorerFingerprint,now) ||
-      !verifyOperatorCategoryLock80(operatorLock,predictions,trusted,seal?.scoredAt,now))
+      !isHex64(trusted.vectorsSha256) ||
+      !isHex64(trusted.workerSourceCodeSha256) ||
+      !/^[a-f0-9]{40}$/.test(trusted.modelRevision || "") ||
+      !verifyScorerSeal80(predictions,seal,trusted.scorerFingerprint,now,proofs) ||
+      !verifyOperatorCategoryLock80(operatorLock,predictions,trusted,seal?.scoredAt,now) ||
+      !validateFullScoreProofs80(proofs,predictions,trusted,seal,operatorLock))
     return bad("missing independently pinned blind source/reviewer/scoring custody");
   let loaded;
   try {
@@ -242,7 +250,7 @@ async function main() {
     console.log("P80_PRIVATE_BLIND_SCORING "+JSON.stringify(bad("no trusted external evidence supplied")));
     return;
   }
-  if (paths.length!==6) throw Error("Usage: p80-private-blind-evaluator.mjs ABS_SOURCE_BUNDLE ABS_REVIEW_RECEIPTS ABS_OPERATOR_CATEGORY_LOCK ABS_PREDICTIONS ABS_SCORER_SEAL ABS_TRUSTED_FINGERPRINTS");
+  if (paths.length!==7) throw Error("Usage: p80-private-blind-evaluator.mjs ABS_SOURCE_BUNDLE ABS_REVIEW_RECEIPTS ABS_OPERATOR_CATEGORY_LOCK ABS_PREDICTIONS ABS_FULL_SCORE_PROOFS ABS_SCORER_SEAL ABS_TRUSTED_FINGERPRINTS");
   const data=[];
   for(const p of paths){
     // Requires existing non-symlink-resolved paths genuinely outside checkout.
@@ -253,7 +261,7 @@ async function main() {
   }
   const report=await evaluatePrivateBlind80({
     bundle:data[0], receipts:data[1], operatorLock:data[2],
-    predictions:data[3], seal:data[4], trusted:data[5],
+    predictions:data[3], proofs:data[4], seal:data[5], trusted:data[6],
   });
   console.log("P80_PRIVATE_BLIND_SCORING "+JSON.stringify(report));
   if(report.status==="BLOCKED")process.exitCode=3;

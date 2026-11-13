@@ -37,6 +37,8 @@ const label = (patch={}) => ({
   quality:{lighting:"ok",focus:"ok",framing:"ok",background:"ok"},
   ...patch,
 });
+// Synthetic-only placeholder bytes test SIGNATURE MECHANICS, not worker proof.
+const dummyProofs=rows=>rows.map(x=>({sourceSha256:x.sourceSha256,syntheticOnly:true}));
 function syntheticSeal(rows){
   const kp=generateKeyPairSync("ed25519");
   const payload={
@@ -44,6 +46,7 @@ function syntheticSeal(rows){
     targetCommit:"c".repeat(40),
     modelSha256:HASH,
     predictionsSha256:sha256(canonical(rows)),
+    proofsSha256:sha256(canonical(dummyProofs(rows))),
     sourceCount:rows.length,
     scoredAt:new Date().toISOString(),
   };
@@ -230,14 +233,14 @@ test("scorer Ed25519 seal is mechanically verified only with exact independently
   const rows=[prediction()],
     result=syntheticSeal(rows),
     {fingerprint,...seal}=result;
-  assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now()),true);
-  assert.equal(verifyScorerSeal80(rows,seal,"0".repeat(64),Date.now()),false);
-  assert.equal(verifyScorerSeal80(rows,{...seal,modelSha256:"d".repeat(64)},fingerprint,Date.now()),false);
-  assert.equal(verifyScorerSeal80(rows,{...seal,targetCommit:"d".repeat(40)},fingerprint,Date.now()),false);
-  assert.equal(verifyScorerSeal80(rows,{...seal,sourceCount:2},fingerprint,Date.now()),false);
-  assert.equal(verifyScorerSeal80(rows,{...seal,signature:"AAAA"},fingerprint,Date.now()),false);
-  assert.equal(verifyScorerSeal80([prediction({status:"abstain",alternatives:[]})],seal,fingerprint,Date.now()),false);
-  assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now()+31*86400000),false);
+  assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now(),dummyProofs(rows)),true);
+  assert.equal(verifyScorerSeal80(rows,seal,"0".repeat(64),Date.now(),dummyProofs(rows)),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,modelSha256:"d".repeat(64)},fingerprint,Date.now(),dummyProofs(rows)),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,targetCommit:"d".repeat(40)},fingerprint,Date.now(),dummyProofs(rows)),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,sourceCount:2},fingerprint,Date.now(),dummyProofs(rows)),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,signature:"AAAA"},fingerprint,Date.now(),dummyProofs(rows)),false);
+  assert.equal(verifyScorerSeal80([prediction({status:"abstain",alternatives:[]})],seal,fingerprint,Date.now(),dummyProofs(rows)),false);
+  assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now()+31*86400000,dummyProofs(rows)),false);
 });
 
 
