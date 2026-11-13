@@ -425,6 +425,81 @@ function persistDraft({required=false,mode=null,record=null,expected=null,retry=
 }
 function readDraft(){return readDraftFrom(db);}
 function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
+
+// Read only the owner-private draft store, not every saved full-size JPEG.
+// This is a read-only reconciliation of review cards; it never writes remote
+// cloud revisions or silently drops an uncommitted original from memory.
+async function refreshOwnerDraftFromDevice(){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch,pendingWrites=writes;
+ const check=()=>{
+  auth?.assertCurrent?.();
+  if(!owner||window.closetAuth!==auth||auth?.user?.id!==owner||
+     db!==ownerDB||ownerDB?.name!=='closet-current-user-'+owner||
+     captureOperationEpoch!==epoch)
+   throw Error('CLOSET_DRAFT_REFRESH_OWNER_CHANGED');
+ };
+ const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
+  !photoImportActive&&!videoImportActive&&!automaticRunning&&
+  !automaticQueue.length&&!localPending.size&&!failedDraftCaptures.size&&
+  !document.querySelector('dialog[open]');
+ try{
+  check();
+  if(!idle())throw Error('CLOSET_DRAFT_REFRESH_HAS_UNSAVED_WORK');
+  const snapshot=batch.map(row=>({ref:row,
+   serial:JSON.stringify(normalizeClothing(row))}));
+  // Do not run a read while this tab has any queued uncommitted write.
+  await pendingWrites;
+  check();
+  if(!idle()||writes!==pendingWrites)throw Error('CLOSET_DRAFT_REFRESH_HAS_UNSAVED_WORK');
+  const durable=await readDraftFrom(ownerDB);
+  check();
+  if(!idle()||writes!==pendingWrites||batch.length!==snapshot.length||
+     snapshot.some((x,i)=>batch[i]!==x.ref||
+       JSON.stringify(normalizeClothing(x.ref))!==x.serial))
+   throw Error('CLOSET_DRAFT_REFRESH_HAS_UNSAVED_WORK');
+  if(!Array.isArray(durable))throw Error('CLOSET_DRAFT_REFRESH_INVALID_STATE');
+  const byId=new Map(),seen=new Set();
+  for(const row of durable){
+   if(!row||typeof row.id!=='string'||!row.id||seen.has(row.id)||
+      row.ownerId&&row.ownerId!==owner)
+    throw Error('CLOSET_DRAFT_REFRESH_INVALID_STATE');
+   seen.add(row.id);byId.set(row.id,row);
+  }
+  // The current tab might hold a photo whose *required* initial write
+  // failed, or another tab may have deleted a reviewed source. Never hide
+  // a visible local original merely because it is absent from IndexedDB.
+  for(const x of snapshot){
+   const latest=byId.get(x.ref.id);
+   if(!latest)throw Error('CLOSET_DRAFT_REFRESH_LOCAL_PHOTO_MISSING');
+   const identity=row=>JSON.stringify([row.ownerId||null,
+    row.sourceSHA256||null,row.originalPhoto?.sha256||null,
+    row.originalPhoto?.image||null]);
+   if(identity(latest)!==identity(x.ref))
+    throw Error('CLOSET_DRAFT_REFRESH_ORIGINAL_CHANGED');
+  }
+  const changed=durable.length!==snapshot.length||
+   durable.some((row,i)=>!snapshot[i]||
+     JSON.stringify(normalizeClothing(row))!==snapshot[i].serial);
+  if(changed){batch=durable.map(normalizeClothing);render();}
+  message(changed?'Photo results refreshed from private device storage. Your original photos were preserved.':
+   'Photo results are already up to date on this device.');
+  return {changed,count:durable.length};
+ }catch(error){
+  // A delayed read must never display old-owner photo status to new owner.
+  try{check();}catch{throw error;}
+  const code=error?.message||'';
+  if(code==='CLOSET_DRAFT_REFRESH_HAS_UNSAVED_WORK')
+   message('Finish the current scan, photo edit or failed photo save before refreshing. Unfinished originals remain visible.');
+  else if(code==='CLOSET_DRAFT_REFRESH_LOCAL_PHOTO_MISSING')
+   message('An original visible in this tab is missing from private device storage. No photos were hidden. Finish saving it or review the other tab before reloading.');
+  else if(code==='CLOSET_DRAFT_REFRESH_ORIGINAL_CHANGED')
+   message('Another tab changed an original photograph. No photos were replaced. Keep this tab open and review the other tab before reloading.');
+  else message('Could not refresh Photo results. Your visible photos have not been changed.');
+  throw error;
+ }
+}
+
 async function captureProofVerifyBeforeSave(value){
  if(!(typeof captureProof01Active!=='undefined'&&captureProof01Active))return;
  const owner=captureProofOwner();
@@ -1482,6 +1557,12 @@ async function upload(file){
  }
 }
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
+$('refreshReview').onclick=async()=>{
+ const button=$('refreshReview');button.disabled=true;
+ try{await refreshOwnerDraftFromDevice();}
+ catch{}
+ finally{button.disabled=false;}
+};
 $('discard').onclick=async()=>{
  if(!batch.length)return;
  if(localPending.size||automaticRunning)return message('Finish the current photo checks before discarding unfinished photographs.');
