@@ -1,0 +1,94 @@
+name: Parallel 80 subtype evidence and abstention — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel80-subtype-HOLD
+  cancel-in-progress: true
+jobs:
+  exact-parent-native-builds:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable verified P853 and strict scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=29d1905172ab21a277021ac40333174e70879a0d
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p80-paths
+          test "$(wc -l < /tmp/p80-paths)" -eq 12
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|tests/parallel80-subtype.test.mjs|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
+              *) echo "P80 OUT OF SCOPE $path"; exit 1 ;;
+            esac
+          done < /tmp/p80-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase benchmark public/taxonomy.js public/recognition-engine.mjs public/recognition-confusion-guard.mjs public/vector-scorer.mjs public/outfit-capture.js scripts/p75-dataset-core.mjs scripts/p75-review-offline.mjs scripts/p79-workstation-core.mjs)"
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/parallel80/REPORT.md
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Full native regressions, both builds, frozen synthetic comparison, blocked release
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/local-worker.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/p80-synthetic-evaluation.mjs
+          node scripts/p80-challenge.mjs
+          node scripts/m1-release-evidence-851.mjs
+  desktop-owner-review-not-physical-phones:
+    needs: exact-parent-native-builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Actual Adjust + subtype modules, synthetic model callback only
+        run: node scripts/test-parallel80-subtype-browser.mjs
+      - name: Existing owner save, pair, duplicates, learning, color and batch boundaries
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-save-lifecycle-844.mjs candidate
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-owner-learning-integration-847.mjs
+          node scripts/test-parallel76-color-browser.mjs
+          node scripts/test-parallel77-cross-capture-browser.mjs
+          node scripts/test-m1-batch-review-850.mjs
+  public-original-sha-not-accuracy:
+    needs: exact-parent-native-builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: P75 frozen public quarantine sources, bytes/metadata only, no blind labels
+        run: node scripts/p80-challenge.mjs --recheck 3
