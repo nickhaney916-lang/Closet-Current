@@ -87,6 +87,7 @@ try{
     assert.equal(await capture(a,sources[0]),true);
     assert.equal(await capture(b,sources[1]),true);
     assert.equal(await a.evaluate(()=>batch.length),1);
+    await a.evaluate(()=>switchView('review'));
     // The visible button must reflect a real control after page readiness.
     await a.getByRole('button',{name:'Refresh photo results'}).click();
     assert.equal(await a.evaluate(()=>batch.length),2);
@@ -136,6 +137,7 @@ try{
      p.on('pageerror',e=>pageErrors.push(String(e)));
      await p.goto(url+'/',{waitUntil:'domcontentloaded'});
      await p.evaluate(()=>closetReady);
+     await p.evaluate(()=>switchView('review'));
      await p.getByRole('button',{name:'Refresh photo results'}).click();
      assert.equal(await p.evaluate(()=>batch.length),0);
     }finally{await foreign.close();}
