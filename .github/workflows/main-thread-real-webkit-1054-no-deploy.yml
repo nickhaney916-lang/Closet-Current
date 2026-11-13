@@ -1,0 +1,116 @@
+name: "MAIN1054 M7 genuine dual-model WebKit continuous-session diagnostic — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-real-webkit-repeat-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m7-webkit-real-repeat-hold
+  cancel-in-progress: true
+jobs:
+  native-privacy-and-policy-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact verified M6 parent, three research-only files, no app or hosted mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=aaec65d11edd65a09be124b62fd1d0131755564b
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 3
+          while IFS= read -r f; do
+            case "$f" in
+              scripts/test-main1054-real-webkit-repeat.mjs|\
+              research/main-thread-integration-1054/MILESTONE7.md|\
+              .github/workflows/main-thread-real-webkit-1054-no-deploy.yml) ;;
+              *) echo "NOT_RESEARCH_ONLY $f" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json benchmark/locked-photo-sources.json
+          grep -q "sourceSHA256" scripts/test-main1054-real-webkit-repeat.mjs
+          grep -q "BROWSER_DISCONNECTED" scripts/test-main1054-real-webkit-repeat.mjs
+          grep -q "familyAlpha:'HOLD'" scripts/test-main1054-real-webkit-repeat.mjs
+          grep -q "memoryUsedJSHeapBytes" scripts/test-main1054-real-webkit-repeat.mjs
+          node --check scripts/test-main1054-real-webkit-repeat.mjs
+      - name: Pinned no-deploy Node and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install controlled native Chromium and WebKit policy runtimes
+        run: npx playwright install --with-deps chromium webkit
+      - name: Offline native PWA
+        run: node scripts/build.mjs
+      - name: SHA-bound original photo owner-source tests
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Preserve 48 native Chromium/WebKit M6 owner-consent risk review browser cases
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Preserve 12 real native original-JPEG 2D private owner photo scenarios
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Preserve full independent recognition, privacy, backup and original clothing 2D suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Confirm no deployment work performed
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "RESEARCH ONLY. NO MERGE NO DEPLOY NO LIVE SUPABASE FAMILY ALPHA HOLD ISSUE 255"
+  actual-WebKit-and-Chromium-source-locked-pretrained-diagnostic-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Strict immutable integrated native P876 branch and no production changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=aaec65d11edd65a09be124b62fd1d0131755564b
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 3
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json
+          node --check scripts/test-main1054-real-webkit-repeat.mjs
+      - name: Install original q8 pinned model download tools only in ephemeral runner
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - name: Install real desktop Chromium and WebKit test engines
+        run: npx playwright install --with-deps chromium webkit
+      - name: Verify original source JPEGs and fixed pretrained model/ONNX/WASM integrity
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+      - name: Real 16-photo continuous WebKit one-browser repeated genuine dual-family model stress
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "16"
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-real-webkit-repeat.mjs webkit | tee /tmp/main1054-real-webkit
+          node -e "const r=require('./benchmark/main1054-real-webkit-repeat/webkit-16-diagnostic.json'); if(r.engine!=='webkit'||r.photoAttemptsTarget!==16||r.blindAccuracy!==null||r.sourceHashesVerified!==true||r.familyAlpha!=='HOLD'||r.persistedPrivateWardrobeWrites!==0||r.acceptanceForRelease!==false||r.completedPhotos<0||r.completedPhotos>16||!['COMPLETE_OBSERVED','BLOCKED_INCOMPLETE'].includes(r.status))process.exit(1);console.log('WEBKIT_RESEARCH_DIAGNOSIS',JSON.stringify({completed:r.completedPhotos,attempted:16,status:r.status,failures:r.failures,releaseReady:false}));"
+      - name: Independent real Chromium four-photo same-source control
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "4"
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-real-webkit-repeat.mjs chromium | tee /tmp/main1054-real-chromium-control
+          node -e "const r=require('./benchmark/main1054-real-webkit-repeat/chromium-4-diagnostic.json'); if(r.engine!=='chromium'||r.photoAttemptsTarget!==4||r.blindAccuracy!==null||r.sourceHashesVerified!==true||r.persistedPrivateWardrobeWrites!==0||r.acceptanceForRelease!==false)process.exit(1);console.log('CHROMIUM_SAME_SOURCE_CONTROL',JSON.stringify({completed:r.completedPhotos,attempted:4,status:r.status,releaseReady:false}));"
+      - name: Preserve numeric-only diagnostic checkpoints, never model assets, original photos or private data
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main1054-m7-real-webkit-diagnostic-public-numeric-only
+          path: benchmark/main1054-real-webkit-repeat/*.json
+          if-no-files-found: warn
+          retention-days: 7
