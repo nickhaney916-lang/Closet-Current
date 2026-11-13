@@ -167,12 +167,12 @@ test('synthetic dual Ed25519 test can verify mechanics, NOT actual human existen
  const row=record(),{registry,fingerprint,review}=signedFixture();
  const a=review(0),b=review(1);
  const ok=independentAgreement(row,[a,b],registry,fingerprint);
- assert.equal(ok.eligible,true);assert.deepEqual(ok.agreement,{equal:11,total:11,ratio:1});
+ assert.equal(ok.eligible,true);assert.deepEqual(ok.agreement,{equal:12,total:12,ratio:1});
  assert.equal(independentAgreement(row,[a,a],registry,fingerprint).eligible,false);
  const different=review(1,{...goodLabel(),primaryColor:'Red',subtype:'Blouse'});
  const disagreement=independentAgreement(row,[a,different],registry,fingerprint);
  assert.equal(disagreement.eligible,false);
- assert.deepEqual(disagreement.agreement,{equal:9,total:11,ratio:9/11});
+ assert.deepEqual(disagreement.agreement,{equal:10,total:12,ratio:10/12});
 });
 test('structural independent-human signatures cannot be edited without invalidation',()=>{
  const row=record(),{registry,fingerprint,review}=signedFixture();
