@@ -1056,14 +1056,57 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
   originalSHA256Verified:panel.status().sourceSHA256Verified===true,
   familyAlpha:'HOLD',releaseAuthorized:false});
 }
+// The visible photo-retry callback must never update a new signed-in
+// account, including a new session with the same owner ID.
+function ownerFailedPhotoRetryLease(item){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch;
+ const current=()=>{
+  if(typeof owner!=='string'||!owner||window.closetAuth!==auth||
+     auth.user?.id!==owner||ownerDB!==db||
+     ownerDB?.name!=='closet-current-user-'+owner||
+     captureOperationEpoch!==epoch||!batch.includes(item)||
+     item.ownerId!==owner||$('authGate')?.hidden!==true||
+     $('appShell')?.hidden!==false)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
+ const assert=()=>{if(!current())throw Error('Previous signed-owner photo retry cancelled');};
+ assert();
+ return {current,assert};
+}
+async function retryFailedPhotoFromCard(item,button){
+ let lease;
+ try{lease=ownerFailedPhotoRetryLease(item);}catch{return;}
+ if(!button.isConnected)return;
+ button.disabled=true;
+ try{
+  lease.assert();
+  await retryUncommittedCapture(item);
+  lease.assert();
+ }catch{
+  // A browser exception may contain original JPEG details. Show no raw text.
+  // The required private commit remains UNSAVED until independently confirmed.
+  if(lease.current()&&button.isConnected){
+   message('Photo is still not saved. Check device storage, then retry from Photo results. Keep this page open to retain the photo.');
+   render();
+  }
+ }finally{
+  if(lease.current()&&button.isConnected)button.disabled=false;
+ }
+}
 // Only a verified original with a failed *required* IndexedDB commit may be
 // recovered by this action. Re-hash its preserved original before retrying,
 // never create another review item, and never cross a signed-owner session.
 async function retryUncommittedCapture(item){
- const owner=captureProofOwner(),ownerDB=db;
- const sameOwner=()=>owner&&ownerDB===db&&
-  ownerDB?.name==='closet-current-user-'+owner&&
-  captureProofOwner()===owner;
+ // Pin the exact initiating auth object and epoch, not just the owner ID.
+ const auth=window.closetAuth,owner=captureProofOwner(),ownerDB=db,
+  epoch=captureOperationEpoch;
+ const sameOwner=()=>{
+  if(!owner||window.closetAuth!==auth||auth?.user?.id!==owner||
+     ownerDB!==db||ownerDB?.name!=='closet-current-user-'+owner||
+     captureOperationEpoch!==epoch||captureProofOwner()!==owner)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
  const valid=()=>sameOwner()&&
   batch.includes(item)&&!items.some(x=>x.id===item.id)&&
   failedDraftCaptures.has(item.id)&&
@@ -1110,16 +1153,7 @@ function renderPhotoResults(grid,results){
    const retry=node('button','Retry saving photo','secondary retry-private-draft');
    retry.type='button';retry.dataset.itemId=item.id;
    retry.setAttribute('aria-label','Retry saving this unsaved original photograph privately');
-   retry.onclick=async()=>{
-    retry.disabled=true;
-    try{await retryUncommittedCapture(item);}
-    catch(error){
-     if(item.ownerId===captureProofOwner()&&batch.includes(item)){
-      message('Photo is still not saved. '+String(error.message||error));render();
-     }
-    }
-    finally{retry.disabled=false;}
-   };
+   retry.onclick=()=>retryFailedPhotoFromCard(item,retry);
    body.append(retry);
   }
   const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
