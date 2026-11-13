@@ -158,3 +158,25 @@ test('P84 missing pantsRest, malformed shirt panels, bad denim UV and unsupporte
  const unknown=scene();unknown.items[1].sourceId='private-owner-unknown';
  assert.equal(audit(unknown).status,'ORIGINAL_PHOTO_2D_FALLBACK');
 });
+
+
+test('P84 deterministic cross-garment face sampling spans both meshes, counts omitted source faces, never grants clearance',()=>{
+ const f=scene();
+ const repeated=Array.from({length:10},()=>[0,1,2]).flat();
+ f.shirt.mesh.geometry.setIndex(repeated);
+ f.jeans.mesh.geometry.setIndex(repeated);
+ const savedShirt=f.shirt.mesh.geometry.index.array.slice();
+ const savedJeans=f.jeans.mesh.geometry.index.array.slice();
+ const x=audit(f,{maxFaces:2});
+ assert.equal(x.fullOriginalSourceFaceCount,20);
+ assert.equal(x.sampledSourceFaceCount,2);
+ assert.equal(x.sourceFaceSamplingStride,10);
+ assert.equal(x.originalFacesOmittedByBudget,18);
+ assert.equal(x.sourceFaceCoverageComplete,false);
+ assert.equal(x.sampledPoseIsNotWholeGarmentClearance,true);
+ assert.equal(x.status,'STRICT_CROSSING_VETO');
+ assert.equal(x.actualSkinnedPoseSampled,true);
+ assert.equal(x.releaseAuthorized,false);
+ assert.deepEqual(f.shirt.mesh.geometry.index.array,savedShirt);
+ assert.deepEqual(f.jeans.mesh.geometry.index.array,savedJeans);
+});
