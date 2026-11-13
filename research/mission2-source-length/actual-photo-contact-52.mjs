@@ -586,6 +586,199 @@ function sourceBoundaryComponents56(graph,{maxBoundaryEdges56,
  return receipt(state,true);
 }
 
+
+/**
+ * P2-C57: compare original SHA-pinned source boundary loops with actual
+ * anatomical 163-bone landmarks already used in P61 (neck01, spine04,
+ * upperarm01L/R). This is geometric research, NOT independently reviewed
+ * garment opening labels. The only returned information is aggregate loop
+ * positions and anonymous candidate counts, never owner photograph, source
+ * XYZ, face IDs, vertex groups, or skeleton pose matrices.
+ *
+ * Two separately articulated REAL 163-bone temporary research poses are
+ * sampled in try/finally and every joint quaternion is restored before
+ * returning. No original source garment mesh, UV, rest, skin, or JPEG edits.
+ */
+function anatomicalSourceLoops57(graph,root,mesh,boundary56,{
+ maxLoopVertices57,maxPoseSamples57
+}){
+ const edges=[];
+ for(const list of graph.edgeUses.values())
+  if(list.length===1)edges.push(list[0]);
+ const adjacent=new Map();
+ for(let i=0;i<edges.length;i++)
+  for(const v of [edges[i].from,edges[i].to]){
+   const a=adjacent.get(v)??[];
+   a.push(i);adjacent.set(v,a);
+  }
+ const blocked=(reason)=>Object.freeze({
+  schema:'M2-original-photograph-anatomical-loop-landmarks-C57',
+  sourceOpenBoundaryEdges:edges.length,
+  trueOriginalBoundaryLoopCount:boundary56.closedDirectedLoopComponents,
+  landmarkBoneNamesFound:0,
+  anatomicalCandidateMappingPossible:false,
+  landmarkMissingOrBoundaryAmbiguous:true,
+  sourceLoopComponentVerticesChecked:0,
+  originalLoopHeightOrderComparisons:0,
+  candidateLowestGeometricOpening:0,
+  candidateNeckProximityOpening:0,
+  candidateLeftUpperArmProximityOpening:0,
+  candidateRightUpperArmProximityOpening:0,
+  twoDistinct163BonePoseSamplesCompleted:0,
+  boneSamplesWithActualBoundaryDisplacement:0,
+  sampledLoopBoundaryVerticesChanged:0,
+  sampledBoundaryLoopsMoved:0,
+  posedOriginalLoopConnectivityRetained:false,
+  poseRestorationVerified:false,
+  sourceReadOnlyAuditRefusedReason:reason,
+  noHumanPhotoOpeningsAnnotated:true,
+  noSemanticCollarSleeveHemCertification:true,
+  noPoseCollisionOrContinuousPhysicsCertificate:true,
+  noBoneUVSkinRestOrOriginalPhotoMutated:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ if(!boundary56.boundaryComponentAuditComplete||
+    boundary56.connectedBoundaryComponents!==
+     boundary56.closedDirectedLoopComponents||
+    boundary56.closedDirectedLoopComponents!==4)
+  return blocked('not-four-original-consistent-closed-loops');
+ if(adjacent.size>maxLoopVertices57)
+  return blocked('original-source-vertex-budget-exceeded');
+ const visited=new Uint8Array(edges.length),components=[];
+ for(let i=0;i<edges.length;i++){
+  if(visited[i])continue;
+  const q=[i],verts=new Set();visited[i]=1;
+  for(let head=0;head<q.length;head++){
+   const e=edges[q[head]];
+   for(const v of [e.from,e.to]){
+    if(verts.has(v))continue;
+    verts.add(v);
+    for(const next of adjacent.get(v)??[])
+     if(!visited[next]){visited[next]=1;q.push(next);}
+   }
+  }
+  if(verts.size!==q.length||
+     [...verts].some(v=>adjacent.get(v).length!==2))
+   return blocked('non-simple-boundary-component');
+  components.push([...verts]);
+ }
+ if(components.length!==4||
+    components.reduce((n,a)=>n+a.length,0)!==edges.length)
+  return blocked('source-boundary-component-accounting-refused');
+ // Use exact anatomical names already verified in P61, taken from the
+ // photograph-fitting garment's own actual 163-bone skeleton.
+ const landmarkNames=['neck01','spine04','upperarm01L','upperarm01R'];
+ const byName=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
+ if(landmarkNames.some(name=>!byName.get(name)?.isBone))
+  return blocked('source-163-bone-anatomical-names-unavailable');
+ root.updateMatrixWorld(true);
+ const worldNames=Object.fromEntries(landmarkNames.map(name=>
+  [name,byName.get(name).getWorldPosition(new THREE.Vector3())]));
+ if(Object.values(worldNames).some(p=>!finite(p.toArray())))
+  return blocked('nonfinite-original-anatomical-source-landmark');
+ const p=mesh.geometry.getAttribute('position'),point=new THREE.Vector3();
+ const sample=(g)=>{
+  const idx=graph.reps[g];
+  if(idx===undefined)fail('C57 genuine source original vertex representative missing');
+  point.fromBufferAttribute(p,idx);
+  mesh.applyBoneTransform(idx,point);
+  point.applyMatrix4(mesh.matrixWorld);
+  if(!finite(point.toArray()))fail('C57 skinned licensed source vertex not finite');
+  return point.clone();
+ };
+ const basePoints=components.map(ids=>ids.map(sample));
+ const centers=basePoints.map(points=>
+  points.reduce((sum,v)=>sum.add(v),new THREE.Vector3())
+   .multiplyScalar(1/points.length));
+ if(centers.some(v=>!finite(v.toArray())))
+  fail('C57 invalid original photographed garment geometric loop centroid');
+ // Anonymous geometric associations: lowest opening is hem-LIKE only.
+ // No confidence score, sew/neckline semantics or human annotation.
+ const lowest=centers.map((p,i)=>({i,y:p.y})).sort((a,b)=>a.y-b.y)[0].i;
+ const others=[0,1,2,3].filter(i=>i!==lowest);
+ const nearest=(candidates,landmark)=>
+  candidates.map(i=>({i,d:centers[i].distanceTo(worldNames[landmark])}))
+   .sort((a,b)=>a.d-b.d)[0].i;
+ const neck=nearest(others,'neck01');
+ const arms=others.filter(i=>i!==neck);
+ const l=nearest(arms,'upperarm01L'),rt=arms.find(i=>i!==l);
+ const candidates=[lowest,neck,l,rt];
+ if(new Set(candidates).size!==4)
+  fail('C57 source anatomical loop candidate rank assignment duplicated');
+ const bones=['upperarm01L','upperarm01R'].map(n=>byName.get(n));
+ const offsets=[.12,-.12];
+ let completed=0,samplesWithMotion=0,changed=0,movedLoops=0;
+ const savedBones=bones.map(b=>b.quaternion.clone());
+ const sampleSourcePosition=(comp,i)=>basePoints[comp][i];
+ try{
+  for(let t=0;t<maxPoseSamples57;t++){
+   const bone=bones[t],old=bone.quaternion.clone();
+   const axis=t===0?new THREE.Vector3(0,0,1):
+    new THREE.Vector3(1,0,0);
+   const delta=new THREE.Quaternion().setFromAxisAngle(axis,offsets[t]);
+   try{
+    bone.quaternion.multiply(delta);
+    root.updateMatrixWorld(true);
+    mesh.skeleton.update();
+    let moved=0,movedParts=0;
+    for(let ci=0;ci<components.length;ci++){
+     let any=false;
+     for(let k=0;k<components[ci].length;k++){
+      const pos=sample(components[ci][k]);
+      if(pos.distanceTo(sampleSourcePosition(ci,k))>1e-5){
+       moved++;any=true;
+      }
+     }
+     if(any)movedParts++;
+    }
+    changed+=moved;movedLoops+=movedParts;
+    if(moved>0)samplesWithMotion++;
+    completed++;
+   }finally{
+    bone.quaternion.copy(old);
+    root.updateMatrixWorld(true);
+    mesh.skeleton.update();
+   }
+  }
+ }finally{
+  for(let i=0;i<bones.length;i++)
+   bones[i].quaternion.copy(savedBones[i]);
+  root.updateMatrixWorld(true);
+  mesh.skeleton.update();
+ }
+ const restored=bones.every((b,i)=>b.quaternion.equals(savedBones[i]))&&
+  components.every((ids,c)=>ids.every((id,k)=>
+   sample(id).distanceTo(basePoints[c][k])<=1e-6));
+ if(!restored)fail('C57 failed to restore real 163-bone source pose');
+ return Object.freeze({
+  schema:'M2-original-photograph-anatomical-loop-landmarks-C57',
+  sourceOpenBoundaryEdges:edges.length,
+  trueOriginalBoundaryLoopCount:components.length,
+  landmarkBoneNamesFound:4,
+  anatomicalCandidateMappingPossible:true,
+  landmarkMissingOrBoundaryAmbiguous:false,
+  sourceLoopComponentVerticesChecked:
+   components.reduce((n,v)=>n+v.length,0),
+  originalLoopHeightOrderComparisons:4,
+  candidateLowestGeometricOpening:1,
+  candidateNeckProximityOpening:1,
+  candidateLeftUpperArmProximityOpening:1,
+  candidateRightUpperArmProximityOpening:1,
+  twoDistinct163BonePoseSamplesCompleted:completed,
+  boneSamplesWithActualBoundaryDisplacement:samplesWithMotion,
+  sampledLoopBoundaryVerticesChanged:changed,
+  sampledBoundaryLoopsMoved:movedLoops,
+  posedOriginalLoopConnectivityRetained:true,
+  poseRestorationVerified:restored,
+  sourceReadOnlyAuditRefusedReason:null,
+  noHumanPhotoOpeningsAnnotated:true,
+  noSemanticCollarSleeveHemCertification:true,
+  noPoseCollisionOrContinuousPhysicsCertificate:true,
+  noBoneUVSkinRestOrOriginalPhotoMutated:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
 function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null){
  const list=[];
  const v=(j)=>new THREE.Vector3(
@@ -703,7 +896,9 @@ export function auditActualPhotographedDressSurfaces52({
  refineSourceTopology54=false,maxZeroDistanceTopologyPairs54=100000,
  refineEdgeWinding55=false,maxEdgePairs55=100000,
  refineBoundaryComponents56=false,maxBoundaryEdges56=20000,
- maxBoundaryVertexGroups56=20000
+ maxBoundaryVertexGroups56=20000,
+ refineAnatomicalLoopLandmarks57=false,maxLoopVertices57=50000,
+ maxPoseSamples57=2
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
@@ -743,7 +938,13 @@ export function auditActualPhotographedDressSurfaces52({
     !Number.isSafeInteger(maxBoundaryEdges56)||
     maxBoundaryEdges56<1||maxBoundaryEdges56>200000||
     !Number.isSafeInteger(maxBoundaryVertexGroups56)||
-    maxBoundaryVertexGroups56<1||maxBoundaryVertexGroups56>200000)
+    maxBoundaryVertexGroups56<1||maxBoundaryVertexGroups56>200000||
+    typeof refineAnatomicalLoopLandmarks57!=='boolean'||
+    (refineAnatomicalLoopLandmarks57&&!refineBoundaryComponents56)||
+    !Number.isSafeInteger(maxLoopVertices57)||
+    maxLoopVertices57<1||maxLoopVertices57>100000||
+    !Number.isSafeInteger(maxPoseSamples57)||
+    maxPoseSamples57<1||maxPoseSamples57>2)
   fail('real original licensed SHA-pinned 163-bone P61 dress required');
  const p=g?.getAttribute('position'),rest=g?.getAttribute('dressRest'),
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
@@ -796,6 +997,10 @@ export function auditActualPhotographedDressSurfaces52({
  const boundary56=refineBoundaryComponents56?
   sourceBoundaryComponents56(context.edgeGraph55,{
    maxBoundaryEdges56,maxBoundaryVertexGroups56
+  }):null;
+ const anatomical57=refineAnatomicalLoopLandmarks57?
+  anatomicalSourceLoops57(context.edgeGraph55,root,mesh,boundary56,{
+   maxLoopVertices57,maxPoseSamples57
   }):null;
  const original=analyze52(source,indices,triangles,toleranceMeters,budget,context),
   posed=analyze52(skinned,indices,triangles,toleranceMeters,budget,context);
@@ -871,6 +1076,18 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    allOpenSourceBoundaryCandidatesRemainUnverified56:true,
    noAutomaticSourceBoundaryRepairPermitted56:true
+  }:{}),
+  ...(refineAnatomicalLoopLandmarks57?{
+   originalAnatomicalLoopCandidates57:anatomical57,
+   sourceAnatomicalLoopEvidenceComplete57:
+    anatomical57.anatomicalCandidateMappingPossible&&
+    anatomical57.poseRestorationVerified&&
+    anatomical57.twoDistinct163BonePoseSamplesCompleted===2&&
+    boundary56.boundaryComponentAuditComplete&&
+    original.edge55.sourceEdgeAuditComplete&&
+    posed.edge55.sourceEdgeAuditComplete,
+   anatomicalSourceLoopNamesNotHumanVerified57:true,
+   realSkinPoseSamplingNotCollisionApproval57:true
   }:{}),
   anyStrictSourceCrossing:original.firstStrict,
   anyStrictPosedCrossing:posed.firstStrict,
