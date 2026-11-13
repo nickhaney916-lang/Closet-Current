@@ -10,7 +10,7 @@ const app=readFileSync((process.env.CAMERA_SOURCE_ROOT||'.')+'/public/app.js','u
 const baseline=process.env.EXPECT_BASELINE==='1';
 function section(a,b){const i=app.indexOf(a),j=app.indexOf(b,i);assert.ok(i>=0&&j>i,'application section '+a);return app.slice(i,j);}
 const recognizeSource=section('async function recognizeItem(item){','async function recognizeBatch(){');
-const saveSource=section('async function saveIndexed(item,index04ApprovedOwner=null){','async function recognizeItem(item){');
+const saveSource=section('async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=null){','async function recognizeItem(item){');
 const setupSource=section('async function enableLocal(){','function segmentationAllows(');
 const queueSource=section('async function drainAutomatic(){','function stopCamera(){');
 const lockSource=section("window.addEventListener('closet:session-locked',()=>{",'function message(t){');
@@ -75,7 +75,7 @@ test('old successful private IndexedDB save must not add prior owner garment to 
   normalizeClothing:item=>item,queued:()=>hold.promise,
   persistDraft(){},nativeIndex07Refresh:async()=>{},structuredClone});
  vm.runInContext(saveSource,ctx);
- const pending=ctx.saveIndexed(old);
+ const pending=ctx.saveIndexed(old,null,structuredClone(old));
  ctx.captureOperationEpoch=1;ctx.db=newDB;ctx.batch=[next];ctx.items=[];ctx.window.closetAuth.user.id='owner-b';
  hold.resolve(true);const returned=await pending;
  assert.equal(returned,baseline);
@@ -91,7 +91,7 @@ test('current owner saved recognition still updates private in-memory roster aft
   normalizeClothing:item=>item,queued:async()=>true,
   persistDraft:()=>events.push('persist'),nativeIndex07Refresh:async()=>events.push('index'),structuredClone});
  vm.runInContext(saveSource,ctx);
- const saved=await ctx.saveIndexed(old);
+ const saved=await ctx.saveIndexed(old,null,structuredClone(old));
  assert.equal(saved,true);assert.equal(ctx.items.length,1);
  assert.equal(ctx.items[0].id,old.id);assert.equal(ctx.batch.length,0);
  // The verified transaction already removed just this persisted draft.
