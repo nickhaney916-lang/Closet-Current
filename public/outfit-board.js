@@ -407,34 +407,6 @@ async function refreshTrendLibrary(force=false){
 })();
 window.addEventListener('focus',()=>refreshTrendLibrary());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshTrendLibrary();});setInterval(()=>refreshTrendLibrary(),3600000);
 
-async function reloadCloudBoard({ownerDB=db,assertLease=()=>{}}={}){
- assertLease();
- if(nativeLossless04Active){
-  if(!nativeLossless04)throw Error('Private lossless reload unavailable');
-  await nativeLossless04.load();
-  assertLease();
-  currentBoard=nativeLossless04.view();
-  savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
-  syncBoardInputs();renderOutfitBoard();return;
- }
- const auth=window.closetAuth,owner=auth?.user?.id;
- assertLease();
- const state=await new Promise((resolve,reject)=>{
-  const r=ownerDB.transaction('state').objectStore('state').get('outfit-board');
-  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
- });
- assertLease();
- if(db!==ownerDB||window.closetAuth!==auth||auth?.user?.id!==owner)throw Error('Owner changed while reloading outfit draft');
- const loaded=cleanOutfitBoard(state?.current||{},items),stored=JSON.stringify(state?.current??null);
- if(boardHasUnsavedDraft()&&JSON.stringify(currentBoard)!==JSON.stringify(loaded)){
-  savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));renderSavedOutfitBoards();
-  if(stored!==boardExpectedStoredDraft){cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft={ownerDB,auth,owner,stored};boardDraftStatus('Another tab changed this outfit draft. Your changes are still here. Load latest replaces your unsaved changes, or choose Save my draft instead.');}
-  return;
- }
- currentBoard=loaded;savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));
- boardExpectedStoredDraft=stored;boardConflictDraft=null;boardCommittedDraft=JSON.stringify(currentBoard);
- syncBoardInputs();renderOutfitBoard();
-}
 
 /**
  * MAIN1054: opt-in read-only research preview using the genuine native
@@ -494,4 +466,33 @@ if(mission4Preview1054Active){
    // No UI or photo disclosure if the isolated research mount is unavailable.
   }
  })();
+}
+
+async function reloadCloudBoard({ownerDB=db,assertLease=()=>{}}={}){
+ assertLease();
+ if(nativeLossless04Active){
+  if(!nativeLossless04)throw Error('Private lossless reload unavailable');
+  await nativeLossless04.load();
+  assertLease();
+  currentBoard=nativeLossless04.view();
+  savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
+  syncBoardInputs();renderOutfitBoard();return;
+ }
+ const auth=window.closetAuth,owner=auth?.user?.id;
+ assertLease();
+ const state=await new Promise((resolve,reject)=>{
+  const r=ownerDB.transaction('state').objectStore('state').get('outfit-board');
+  r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+ });
+ assertLease();
+ if(db!==ownerDB||window.closetAuth!==auth||auth?.user?.id!==owner)throw Error('Owner changed while reloading outfit draft');
+ const loaded=cleanOutfitBoard(state?.current||{},items),stored=JSON.stringify(state?.current??null);
+ if(boardHasUnsavedDraft()&&JSON.stringify(currentBoard)!==JSON.stringify(loaded)){
+  savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));renderSavedOutfitBoards();
+  if(stored!==boardExpectedStoredDraft){cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft={ownerDB,auth,owner,stored};boardDraftStatus('Another tab changed this outfit draft. Your changes are still here. Load latest replaces your unsaved changes, or choose Save my draft instead.');}
+  return;
+ }
+ currentBoard=loaded;savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));
+ boardExpectedStoredDraft=stored;boardConflictDraft=null;boardCommittedDraft=JSON.stringify(currentBoard);
+ syncBoardInputs();renderOutfitBoard();
 }
