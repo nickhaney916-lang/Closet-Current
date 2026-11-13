@@ -14,7 +14,7 @@ if(!process.argv[2]||donor===base||donor==='/'||
  throw Error('P84 disposable separate donor directory required');
 const entry='research/parallel84-real-photo-layers';
 for(const name of ['layer-contact84.mjs','actual-skinned-layers84.mjs',
- 'source-bone-yoke-trial84.mjs']){
+ 'source-bone-yoke-trial84.mjs','source-denim-side-trial84.mjs']){
  await mkdir(join(donor,entry),{recursive:true});
  await copyFile(join(base,entry,name),join(donor,entry,name));
 }
@@ -25,7 +25,8 @@ assert.equal(source.split(importAnchor).length,2,
  'P84 pinned P541 photographed two-piece controller import anchor changed');
 source=source.replace(importAnchor,importAnchor+
  "\nimport {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';"+
- "\nimport {trialSourceBoneShoulderYoke84} from '../parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';");
+ "\nimport {trialSourceBoneShoulderYoke84} from '../parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';"+
+ "\nimport {trialSourceMeasuredDenimSide84} from '../parallel84-real-photo-layers/source-denim-side-trial84.mjs';");
 const end="contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();";
 assert.equal(source.split(end).length,2,
  'P84 genuine P541 garments completed anchor missing');
@@ -43,8 +44,21 @@ const addition=[
 "    requestedDropMeters:.010,outwardClearanceMeters:.015",
 "   });",
 "}",
+"if(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'){",
+"  const denimMode=new URLSearchParams(globalThis.location.search).get('parallel84Denim');",
+"  if(denimMode==='baseline')globalThis.__parallel84DenimResult=Object.freeze({",
+"   schema:'P84-original-denim-source-neutral-side-AB/v1',",
+"   status:'BASELINE_UNMODIFIED',trialApplied:false,releaseAuthorized:false",
+"  });",
+"  if(denimMode==='trial')globalThis.__parallel84DenimResult=",
+"   trialSourceMeasuredDenimSide84({",
+"    root,pants:built.pants,shirt:built.shirt,",
+"    avatar:globalThis.document?.getElementById('model')?.value,",
+"    sideEaseMeters:.018,rearEaseMeters:.009",
+"   });",
+"}",
 "if(globalThis.location?.hostname==='127.0.0.1'&&",
-"   new URLSearchParams(globalThis.location.search).get('parallel84Layers')==='research'){",
+"   new URLSearchParams(globalThis.location.search).get('parallel84Layers')==='research'){
 "  globalThis.__parallel84LayerEvidence=null;",
 "  if(next==='shirt-pants'&&built.shirt&&built.pants){",
 "   // The existing P69 source-verifier checks each original JPEG, mask and",
