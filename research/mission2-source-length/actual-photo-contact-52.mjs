@@ -122,10 +122,9 @@ export function auditActualPhotographedDressSurfaces52({
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
  if(!p?.isBufferAttribute||p.itemSize!==3||p.count<3||
     !rest||rest.count!==p.count||!si||!sw||
-    si.count!==p.count||sw.count!==p.count||
-    !g.getAttribute('dressCustomPhotoProjection'))
+    si.count!==p.count||sw.count!==p.count)
   fail('original full photo dress/UV/rest/skin surface required');
- const indices=g.index?.array??null,
+ // P61's original photographic shader projects the authenticated image\n // directly from dressRest; it does NOT require a fabricated UV or custom\n // photoProjection BufferAttribute. Snapshot and verify all actual fields.\n const indices=g.index?.array??null,
   triangles=(indices?.length??p.count)/3;
  if(!Number.isSafeInteger(triangles)||triangles<1||
     triangles>maxSourceFaces||
