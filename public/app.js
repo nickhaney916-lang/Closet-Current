@@ -232,16 +232,32 @@ function saveEditedGarment(updated,expected){
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Changes were not saved'));
  })).then(async value=>{assertOwner();await nativeIndex07Refresh();assertOwner();return value;});
 }
-function removeItem(id){
+function removeItem(id,expected){
  const {ownerDB,assertLease}=ownerWardrobeMutationLease();
+ // A delete is destructive: the owner must have reviewed the *exact* saved
+ // row. Never delete merely by ID if another tab changed the garment.
+ const reviewed=expected?structuredClone(expected):null;
+ if(!reviewed||reviewed.id!==id)
+  return Promise.reject(Error('CLOSET_STALE_DELETE_REOPEN_EDITOR'));
  return queued(()=>new Promise((resolve,reject)=>{
   try{
    assertLease();
-   const tx=ownerDB.transaction('items','readwrite');
-   tx.objectStore('items').delete(id);
+   const tx=ownerDB.transaction('items','readwrite'),store=tx.objectStore('items');
+   let failure;
+   const request=store.get(id);
+   request.onsuccess=()=>{
+    try{
+     assertLease();
+     if(!request.result||
+        JSON.stringify(normalizeClothing(request.result))!==
+        JSON.stringify(normalizeClothing(reviewed)))
+      throw Error('CLOSET_STALE_DELETE_REOPEN_EDITOR');
+     store.delete(id);
+    }catch(error){failure=error;try{tx.abort();}catch{}}
+   };
    tx.oncomplete=()=>{try{assertLease();resolve();}catch(error){reject(error);}};
-   tx.onerror=()=>reject(tx.error);
-   tx.onabort=()=>reject(tx.error||Error('Private garment removal interrupted'));
+   tx.onerror=tx.onabort=()=>reject(failure||tx.error||
+    Error('Private garment removal interrupted'));
   }catch(error){reject(error);}
  })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
 }
@@ -504,7 +520,7 @@ function adjustPhoto(item){
  const expectedSavedRow=correction10&&items.some(x=>x.id===item.id)?structuredClone(item):null;
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
  if(!correction10)item.userAdjusted=true;
- remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
+ remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before removing it.':'Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
@@ -868,7 +884,7 @@ function render(){
  try{assertEditor();}catch{return;}
  const restoreFocus=()=>{if($('closet').hidden||$('appShell').hidden||document.querySelector('dialog[open]'))return;const card=[...document.querySelectorAll('#closetGrid .card')].find(card=>card.dataset.itemId===item.id);(card?.querySelector('[data-action=edit-clothing]')||$('search')).focus({preventScroll:true});};
  restoreFocus();requestAnimationFrame(()=>{if(document.activeElement===document.body)restoreFocus();});
- };dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id);items=items.filter(x=>x.id!==item.id);render();}catch{message('Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+ };dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before deleting it.':'Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
  const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
   reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
   item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
