@@ -2023,7 +2023,12 @@ async function recognizeItem(item){
  }catch(error){
   if(epoch!==captureOperationEpoch)return false;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
-  if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
+  if(savingIndexed){
+   recognitionState.phase='save-failed';
+   item.localStatus=String(error?.message||error).includes('CLOSET_AUTO_INDEX_STALE_REVIEW')
+    ?'Another tab changed this garment while recognition was running. Your original photo and newer edits were kept. Refresh Photo results before reviewing or saving.'
+    :'Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';
+  }
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
