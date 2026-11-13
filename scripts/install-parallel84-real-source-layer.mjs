@@ -40,7 +40,7 @@ const addition=[
 "   trialSourceBoneShoulderYoke84({",
 "    root,shirt:built.shirt,pants:built.pants,",
 "    avatar:globalThis.document?.getElementById('model')?.value,",
-"    requestedDropMeters:.014",
+"    requestedDropMeters:.010,outwardClearanceMeters:.015",
 "   });",
 "}",
 "if(globalThis.location?.hostname==='127.0.0.1'&&",
