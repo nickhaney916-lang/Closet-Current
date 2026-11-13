@@ -244,6 +244,39 @@ async function withOwnerStyleCardAction(item,button,work){
   if(lease.current()&&button.isConnected)button.disabled=false;
  }
 }
+// The general "Get three outfit ideas" card predates the reviewed-photo
+// shortcuts. It must not select a different signed owner's matching item ID
+// from a stale My Closet button or surface raw owner-private style errors.
+function focusSavedClosetCardOwnerSafe(item,button){
+ let lease;
+ try{lease=ownerStyleCardActionLease(item);}catch{return;}
+ if(!button?.isConnected)return;
+ try{
+  lease.assert();
+  if(typeof refreshStylistFocusItems!=='function')
+   throw Error('Owner-private outfit selection unavailable');
+  refreshStylistFocusItems();
+  lease.assert();
+  if(!button.isConnected)return;
+  const select=$('stylistFocusItem'),form=$('styleCollectionForm');
+  if(!select||!form||typeof form.requestSubmit!=='function'||
+     ![...select.options].some(option=>option.value===item.id))
+   throw Error('Saved clothing not eligible for outfit styling');
+  lease.assert();
+  // switchView('stylist') calls render(), which intentionally REPLACES the
+  // original My Closet card and disconnects its button. This is normal, not
+  // an account change. Fence the exact owner and garment after rendering;
+  // do not incorrectly require that now-hidden prior card to remain attached.
+  switchView('stylist');
+  lease.assert();
+  select.value=item.id;
+  lease.assert();
+  form.requestSubmit();
+ }catch{
+  if(lease.current())
+   message('Could not safely style this saved piece. Reopen My Closet and review its garment details. Your saved clothing and outfits are unchanged.');
+ }
+}
 function ownerWardrobeMutationLease(){
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
  const assertLease=()=>{
@@ -1192,7 +1225,7 @@ function render(){
  const visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
  const page=visible.length<=100?visible:visible.slice(0,closetRendered136);
- for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>{try{const auth=window.closetAuth,owner=auth?.user?.id;auth?.assertCurrent?.();if(!owner||db?.name!=='closet-current-user-'+owner||!items.some(saved=>saved.id===item.id))throw Error('This saved item is no longer available in your signed-in closet.');if(typeof refreshStylistFocusItems!=='function')throw Error('Style My New Clothes is not ready yet.');refreshStylistFocusItems();const select=$('stylistFocusItem');if(![...select.options].some(option=>option.value===item.id))throw Error('Review and save this clothing category before styling it.');switchView('stylist');select.value=item.id;$('styleCollectionForm').requestSubmit();}catch(error){message(error.message||'Could not start styling this saved item.');}};edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
+ for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>focusSavedClosetCardOwnerSafe(item,styleFocus);edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
  const assertEditor=()=>{editorLease.assertLease();if(!items.includes(item))throw Error('This saved garment is no longer in the signed-owner wardrobe');};
  const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
  {
