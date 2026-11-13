@@ -15,7 +15,7 @@ const extract=(a,b)=>{
  return source.slice(start,end);
 };
 const candidateCode=extract('function candidate(image,options={}){','function queueAutomatic(item){');
-const persistCode=extract('function persistDraft({required=false}={}){','function readDraft(){');
+const persistCode=extract('function persistDraft({required=false,mode=null','function readDraft(){');
 const uploadCode=extract('async function upload(file){',"$('upload').onchange");
 const img='data:image/jpeg;base64,/9j/',sha='a'.repeat(64);
 const ownerA='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -84,7 +84,7 @@ test('old delayed private transaction failure does not display warning in next o
  const ctx={db:previous,batch:[],structuredClone,window:{closetAuth:currentOwner},
   queued:()=>hold.promise,message:text=>messages.push(text)};
  vm.createContext(ctx);vm.runInContext(persistCode,ctx);
- const result=ctx.persistDraft({required:true});
+ const result=ctx.persistDraft({required:true,mode:'insert',record:{id:'test-old-photo',ownerId:ownerA,image:img,sourceSHA256:sha,originalPhoto:proof.originalPhoto}});
  currentOwner.user={id:ownerB};ctx.db={name:'closet-current-user-'+ownerB};
  hold.reject(Error('old queue failed after user signed out'));
  await assert.rejects(result,/Capture photo is in review but not saved/);
@@ -96,7 +96,7 @@ test('current signed-in owner retains actionable device-storage warning',async()
  const ctx={db:previous,batch:[],structuredClone,window:{closetAuth:currentOwner},
   queued:()=>hold.promise,message:text=>messages.push(text)};
  vm.createContext(ctx);vm.runInContext(persistCode,ctx);
- const result=ctx.persistDraft({required:true});
+ const result=ctx.persistDraft({required:true,mode:'insert',record:{id:'test-old-photo',ownerId:ownerA,image:img,sourceSHA256:sha,originalPhoto:proof.originalPhoto}});
  hold.reject(Error('device storage full'));
  await assert.rejects(result,/Capture photo is in review but not saved/);
  assert.equal(messages.length,1);
