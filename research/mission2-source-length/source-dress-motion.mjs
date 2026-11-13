@@ -10,7 +10,7 @@
  * cloth simulation or swept collision proof and CANNOT approve release.
  */
 import * as THREE from 'three';
-import {requireSourceDressTemporalReceipt47} from './source-dress-moving-surface.mjs';
+import {requireSourceDressTemporalReceipt47} from './source-dress-receipt-lock.mjs';
 
 const DRESS_SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const MAX_OUTWARD=.012,MAX_DROP=.0025,MAX_DISPLACEMENT=.01235;
