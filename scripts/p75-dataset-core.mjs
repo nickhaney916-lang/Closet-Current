@@ -215,9 +215,20 @@ export function independentAgreement(row,receipts,registry,approvedRegistrarFing
  const issues=[],reviewers=new Set();
  for(const receipt of receipts){issues.push(...verifyHumanReceipt(row,receipt,registry,approvedRegistrarFingerprint));reviewers.add(receipt.reviewerId);}
  if(reviewers.size<2)issues.push('same human twice');
- const fields=['presence','category','subtype','primaryColor','secondaryColor','multicolor','instanceCount','wardrobeUnit'];
- const agreeing=fields.filter(k=>receipts.every(r=>r.labels?.[k]===receipts[0].labels?.[k]));
- if(agreeing.length!==fields.length)issues.push('independent disagreement requires blinded third-party adjudication');
+ // P854: a disagreement in the actual human-observed annotation must never
+ // be treated as consensus merely because 8 coarse classifier fields match.
+ // Original-instance geometry, masks, clipping, occlusion, per-region detail,
+ // lighting, framing, focus, background and color cast are all human truth.
+ // Canonical encoding is stable across key order and compares nested content.
+ const fields=['presence','category','subtype','primaryColor','secondaryColor','multicolor',
+  'colorCast','instanceCount','instances','wardrobeUnit','quality'];
+ const firstLabel=canonical(receipts[0]?.labels);
+ const agreeing=fields.filter(k=>receipts.every(r=>
+  canonical(r?.labels?.[k])===canonical(receipts[0]?.labels?.[k])));
+ // Even unrecognized signed extensions must not be silently omitted from
+ // consensus. Future annotators may add fields before this gate is upgraded.
+ if(!receipts.every(r=>canonical(r?.labels)===firstLabel))
+  issues.push('independent full-label disagreement requires blinded third-party adjudication');
  return {eligible:issues.length===0,agreement:{equal:agreeing.length,total:fields.length,ratio:agreeing.length/fields.length},issues:[...new Set(issues)]};
 }
 export function publicAuditReport(rows,old){
