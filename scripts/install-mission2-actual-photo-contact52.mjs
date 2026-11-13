@@ -1,0 +1,40 @@
+/** P2-C52 ONLY: install a read-only original photographed dress 163-bone
+ * diagnostic into a DISPOSABLE exact P541+P175+C36 research browser donor.
+ * Main app, public/, owner JPEG/wardrobes, production and staged source are
+ * never edited. The browser probe exposes only non-identifying numbers.
+ */
+import assert from 'node:assert/strict';
+import {readFile,writeFile,copyFile,mkdir} from 'node:fs/promises';
+import {resolve,join,dirname} from 'node:path';
+const donorArg=process.argv[2];
+if(!donorArg)throw Error('C52 disposable donor required');
+const donor=resolve(donorArg),cwd=resolve('.');
+if(donor==='/'||donor===cwd||cwd.startsWith(donor+'/')||
+   donor.startsWith(cwd+'/public')||donor.startsWith(cwd+'/supabase'))
+ throw Error('C52 refuses production, current or private wardrobe tree');
+const src='research/mission2-source-length/actual-photo-contact-52.mjs';
+const dest=join(donor,src);
+await mkdir(dirname(dest),{recursive:true});
+await copyFile(src,dest);
+const controllerPath=join(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
+let controller=await readFile(controllerPath,'utf8');
+const importAnchor="import {sampleSourceDressMotion36} from '../mission2-source-length/source-dress-motion.mjs';";
+assert.equal(controller.split(importAnchor).length,2,
+ 'C52 requires exact actual original photographed P175+C36 donor');
+controller=controller.replace(importAnchor,
+ importAnchor+"\nimport {auditActualPhotographedDressSurfaces52} from '../mission2-source-length/actual-photo-contact-52.mjs';");
+const anchor="       fitted=refinePhotographedDress61(fitted,root);";
+assert.equal(controller.split(anchor).length,2,
+ 'C52 original P61 garment fit stage missing or changed');
+controller=controller.replace(anchor,anchor+
+ "\n       // C52: never write any SOURCE fabric. Only this exact SHA-pinned "+
+ "Commons 0053 experimental browser query may run the contact probe.\n"+
+ "       if(new URLSearchParams(globalThis.location?.search||'').get('photoDressContact52')==='research'){\n"+
+ "        const evidence52=auditActualPhotographedDressSurfaces52({root,dress:fitted});\n"+
+ "        if(evidence52.schema!=='M2-real-original-photo-surface-diagnostic-C52'||\n"+
+ "           evidence52.authenticOriginalLicensedDress!==true||\n"+
+ "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
+ "        globalThis.__M2C52LicensedResearchReceipt=evidence52;\n"+
+ "       }");
+await writeFile(controllerPath,controller);
+console.log('M2_C52_DISPOSABLE_ACTUAL_LICENSED_163_BONE_DRESS_AUDIT_INSTALLED_HOLD');
