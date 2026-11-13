@@ -354,7 +354,7 @@ test('P2-C34 genuine 163-bone source fabric normals weld only skinned coincident
  assert.ok(smooth.evidence.compatibleSeamClusters>=1);
  assert.ok(smooth.evidence.maxNormalDeltaDegrees>0);
  assert.equal(smooth.evidence.originalSourcePositionsPhotoUVAndSkinUntouched,true);
- assert.equal(smooth.evidence.alignedSkinningInfluencesOnly,true);
+ assert.equal(smooth.evidence.compatibleOriginalSkinWeightsOnly,true);
  assert.equal(smooth.evidence.hardOrOpposingNormalsNotMerged,true);
  assert.equal(smooth.evidence.releaseAuthorized,false);
  const n1=new THREE.Vector3().fromArray(smooth.normals,3),
