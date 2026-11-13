@@ -158,3 +158,14 @@ test('removed live owned item or deleted pending draft invalidates its outstandi
  await assert.rejects(C.decide(second,scope,{action:'different',candidateId:'saved',acknowledged:true}),/STALE_PROPOSAL/);
  C.close(scope);
 });
+
+test('foreign userId and accountId aliases are excluded before top-k and fail source evidence',async()=>{
+ const {scope}=owner(),incoming=item('incoming-alias',50),saved=item('local-alias',51);
+ const foreignUser=item('aaa-user',52,{ownerId:undefined,userId:'owner-B'});
+ const foreignAccount=item('aab-account',53,{ownerId:undefined,accountId:'owner-B'});
+ const proposal=await C.propose(incoming,[foreignUser,foreignAccount,saved],scope,{topK:1});
+ assert.deepEqual(proposal.candidates.map(x=>x.id),['local-alias']);
+ assert.equal(proposal.scanned,1);
+ for(const foreign of [foreignUser,foreignAccount])
+  await assert.rejects(C.evidence(foreign,scope),/OWNER_OR_ITEM_CHANGED/);
+});
