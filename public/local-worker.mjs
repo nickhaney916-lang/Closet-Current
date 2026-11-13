@@ -85,9 +85,12 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    onStage:stage=>{scannerStage=stage;},
    onIdentified:choice=>{tentativelyIdentified=choice;}
   });
-  // Adopt ONLY the previously real-original A/B-verified P766 type-review rule;
-  // never rely on extra FashionCLIP views agreeing on a wrong subtype.
-  if(!request.hint&&result.strong){
+  // P862: the same four known high-risk predicted subtypes must require
+  // owner review EVEN for a segmented/cropped garment with a mask hint.
+  // A segmentation hint is NOT independently labeled subtype ground truth.
+  // The rule remains source-independent; do not restore auto-save for any
+  // historically exposed boot photo or weaken unhinted behavior.
+  if(result.strong){
    const {corroborateAmbiguousType}=await import('./recognition-confusion-guard.mjs'+new URL(import.meta.url).search);
    result=await corroborateAmbiguousType(result);
   }
