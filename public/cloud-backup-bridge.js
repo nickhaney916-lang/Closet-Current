@@ -3,17 +3,61 @@
 // exact IndexedDB connection and capture/session epoch, even after relogin.
 async function mission3ReloadOwnerCloudView({ownerDB,assertLease},{queueUnreviewed=false}={}){
  assertLease();
- const saved=await readAllFrom(ownerDB);assertLease();
- const draft=await readDraftFrom(ownerDB);assertLease();
- // Publish both collections together only while this exact session is live.
+ // A cloud restore may commit before its asynchronous UI rehydration finishes.
+ // A freshly captured JPEG can be appended to the SAME tab's in-memory batch
+ // between the items and draft reads. Never publish an older list over that
+ // live original even when the owner/session lease is still valid.
+ const initialItems=items,initialBatch=batch,initialWrites=writes;
+ const smallStamp=row=>JSON.stringify(row,(key,value)=>
+  typeof value==='string'&&value.startsWith('data:image/')
+   ?{photoBytes:value.length,tail:value.slice(-12)}:value);
+ const freeze=rows=>rows.map(row=>({
+  row,signature:smallStamp(row),source:row?.image,
+  original:row?.originalPhoto?.image
+ }));
+ const initialSaved=freeze(initialItems),initialDraft=freeze(initialBatch);
+ const error=()=>Object.assign(Error('CLOSET_CLOUD_RELOAD_LOCAL_PHOTO_CHANGED'),{
+  code:'CLOSET_CLOUD_RELOAD_LOCAL_PHOTO_CHANGED'
+ });
+ const safe=()=>!busy&&!automaticRunning&&!memoryReviewRunning&&
+  mission3CloudRestoreReviewIdle()&&
+  !document.querySelector('dialog[open]')&&nativeLossless04RestoreSafe();
+ const unchanged=(rows,initial,frozen)=>rows===initial&&rows.length===frozen.length&&
+  frozen.every((saved,i)=>rows[i]===saved.row&&
+   rows[i]?.image===saved.source&&
+   rows[i]?.originalPhoto?.image===saved.original&&
+   smallStamp(rows[i])===saved.signature);
+ const beforePublish=()=>{
+  assertLease();
+  if(!safe()||writes!==initialWrites||
+     !unchanged(items,initialItems,initialSaved)||
+     !unchanged(batch,initialBatch,initialDraft))
+   throw error();
+ };
+ const afterPublish=()=>{
+  assertLease();
+  if(!safe()||writes!==initialWrites)throw error();
+ };
+ beforePublish();
+ const saved=await readAllFrom(ownerDB);beforePublish();
+ const draft=await readDraftFrom(ownerDB);beforePublish();
  const nextItems=saved.map(normalizeClothing),nextBatch=draft.map(normalizeClothing);
- assertLease();items=nextItems;batch=nextBatch;
- await reloadCloudLooks({ownerDB,assertLease});assertLease();
- await reloadCloudBoard({ownerDB,assertLease});assertLease();
+ beforePublish();
+ // No asynchronous operation occurs between the final source check and
+ // publication. The next local capture remains visible and will be queued.
+ items=nextItems;batch=nextBatch;
+ await reloadCloudLooks({ownerDB,assertLease});afterPublish();
+ await reloadCloudBoard({ownerDB,assertLease});afterPublish();
  render();assertLease();
  window.closetIndex02?.refresh().catch(()=>{});
  if(queueUnreviewed){
-  for(const item of nextBatch){assertLease();if(!item.localAnalyzed)queueAutomatic(item);}
+  // Queueing the first review intentionally flips automaticRunning. Recheck
+  // once before that deliberate transition; the queue owns later work.
+  afterPublish();
+  for(const item of nextBatch){
+   assertLease();
+   if(!item.localAnalyzed)queueAutomatic(item);
+  }
  }
 }
 // Never replace private wardrobe and draft rows while a canonical original
