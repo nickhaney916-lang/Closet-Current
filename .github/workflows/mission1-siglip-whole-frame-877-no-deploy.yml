@@ -1,0 +1,112 @@
+name: Mission 1 P877 original vs full-frame genuine SigLIP research — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-siglip-whole-frame-877-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p877-siglip-whole-frame-HOLD
+  cancel-in-progress: true
+jobs:
+  owner-review-and-native-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parent P876 exact SHA, six scoped research-only files, release HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f7c37c309b722a06020c837a0d47fe0f376de554
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p877-paths
+          test "$(wc -l </tmp/p877-paths)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              public/dual-worker-82.mjs|scripts/p82-real-browser.mjs|scripts/p877-siglip-full-frame-audit.mjs|tests/mission1-siglip-frame-877.test.mjs|research/mission1-siglip-whole-frame-877/REPORT.md|.github/workflows/mission1-siglip-whole-frame-877-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p877-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/dual-core-82.mjs public/dual-panel-82.mjs public/recognition-confusion-guard.mjs public/local-worker.mjs public/recognition-engine.mjs public/model-arbitration-81.mjs public/dual-model-lock-82.mjs public/cloud-backup.js supabase)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-siglip-whole-frame-877/REPORT.md
+          grep -Fq "researchFrame877==='whole-224-v1'" public/dual-worker-82.mjs
+          echo P877_SCOPE_NO_DEPLOY_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Both local builds, all native tests including six custody regressions, release BLOCKED
+        run: |
+          set -euo pipefail
+          node --check public/dual-worker-82.mjs
+          node --check scripts/p82-real-browser.mjs
+          node --check scripts/p877-siglip-full-frame-audit.mjs
+          node --check tests/mission1-siglip-frame-877.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p877-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p877-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p877-release
+      - name: Unchanged default owner review, original SHA, durable deletion, paired shoes
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs | tee /tmp/p877-default-browser
+          test "$(grep -c '^P876_EMPIRICAL_CONFUSION_GUARD_DUAL ' /tmp/p877-default-browser)" -eq 6
+          test "$(grep -c '^P875_SHARED_CATEGORY_RANK_ONLY ' /tmp/p877-default-browser)" -eq 6
+          grep -Fq 'P870_REAL_EDITOR_PROGRAMMATIC_FILL_REVOKES_CONSENT' /tmp/p877-default-browser
+          node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+  genuine-48-public-SigLIP-dual-view-not-blind-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen original photos, model weights, complete vocabulary, no private assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f7c37c309b722a06020c837a0d47fe0f376de554
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 6
+          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark/locked-photo-sources.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json public/recognition-vectors.bin public/dual-model-lock-82.mjs public/local-catalog.mjs public/model-arbitration-81.mjs)"
+          grep -Fq "research877:process.env.P877_FULL_FRAME==='1'" scripts/p82-real-browser.mjs
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium
+      - name: Verify all 48 licensed original public JPEG SHA and pinned q8 model assets
+        run: |
+          set -euo pipefail
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          test "$(printf '%s\n' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Actual full-48 Chromium two-model original and additional SigLIP full-frame view
+        env:
+          P877_FULL_FRAME: '1'
+        run: |
+          set -euo pipefail
+          node scripts/p82-real-browser.mjs chromium benchmark/p877-real-chromium | tee /tmp/p877-actual-models
+          test "$(grep -c '^P82_REAL_BROWSER_ROW chromium ' /tmp/p877-actual-models)" -eq 48
+          node scripts/p877-siglip-full-frame-audit.mjs benchmark/p877-real-chromium/results.json benchmark/p877-real-chromium/whole-frame-audit.json | tee /tmp/p877-audit
+          grep -Fq '"photos":48' /tmp/p877-audit
+          grep -Fq '"modelPromoted":false' /tmp/p877-audit
+          grep -Fq '"blindAccuracy":null' /tmp/p877-audit
+          grep -Fq '"releaseReady":false' /tmp/p877-audit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p877-public-exposed-development-numeric-frame-comparison-only
+          path: benchmark/p877-real-chromium/whole-frame-audit.json
+          if-no-files-found: error
