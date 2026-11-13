@@ -1,0 +1,140 @@
+name: Mission 1 P857 real boot-regression evidence + immutable subtype decisions — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-real-worker-legacy-audit-857-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p857-real-worker-legacy-audit-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-native-regression-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable verified P856 parent, scoped thirteen paths and exact donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5651a28a970f72c48845aaa8c49735c31d47e8d4
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/m1-p857-files
+          cat /tmp/m1-p857-files
+          test "$(wc -l </tmp/m1-p857-files)" -eq 13
+          while IFS= read -r p; do
+            case "$p" in
+              public/subtype-panel-80.mjs|public/subtype-review-80.mjs|public/subtype-worker-80.mjs|scripts/test-parallel80-real-worker.mjs|tests/parallel80-subtype.test.mjs|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|scripts/p80-legacy-regression-triage.mjs|tests/parallel80-legacy-triage.test.mjs|research/mission1-real-worker-legacy-audit-857/observed-32-results.mjs|tests/mission1-real-worker-legacy-audit-857.test.mjs|research/mission1-real-worker-legacy-audit-857/REPORT.md|.github/workflows/mission1-real-worker-legacy-audit-857-no-deploy.yml) ;;
+              *) echo "P857 OUT-OF-SCOPE PATH: $p"; exit 1 ;;
+            esac
+          done </tmp/m1-p857-files
+          test "$(git hash-object public/app.js)" = 14471515e788ef6a7e7305d157611f9a18393de9
+          test "$(git hash-object public/local-worker.mjs)" = 92adfe537d2b1fe0abb5d13a707a57d8d0e0ae04
+          test "$(git hash-object public/subtype-panel-80.mjs)" = 610c1e1ed373eb936ab3a35ef16cbea1ad9f0295
+          test "$(git hash-object public/subtype-review-80.mjs)" = 2201f1d137d32146028fc7b0bdcfb3f055c470cf
+          test "$(git hash-object public/subtype-worker-80.mjs)" = 904ee36f0d599f5f0a3001bf73eb119435bd02ec
+          test "$(git hash-object scripts/test-parallel80-real-worker.mjs)" = 625115423ed425f4e69bef1ce0dd2ec07e24ba42
+          test "$(git hash-object tests/parallel80-subtype.test.mjs)" = cb6c7a4c4abfa6e32e768d0e401cddc063950861
+          test "$(git hash-object research/parallel80/REPORT.md)" = e437afd803983bd1f81c55313ee5a167bfb4cfc2
+          test "$(git hash-object research/parallel80/OPERATOR.md)" = c24ef7d48199d0e36b2bc61b13e4ea83e689681f
+          test "$(git hash-object scripts/p80-legacy-regression-triage.mjs)" = 5096d270cdd4f32ded3cc20a82bffe5812d1e17e
+          test "$(git hash-object tests/parallel80-legacy-triage.test.mjs)" = 185532b8066497e5fed0c81d874f49a89dfebc44
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/local-worker.mjs public/recognition-engine.mjs public/clothing-memory.js public/recognition-confusion-guard.mjs public/taxonomy.js scripts/check-recognition-regressions.mjs scripts/p75-dataset-core.mjs scripts/p75-review-offline.mjs scripts/p79-workstation-core.mjs scripts/m1-release-evidence-851.mjs benchmark supabase)"
+          grep -Fq "087e5fe823adc8a04e5cb98e4e06182c9ee9e3a6b1896f64302319406983b8fb" research/mission1-real-worker-legacy-audit-857/observed-32-results.mjs
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-real-worker-legacy-audit-857/REPORT.md
+          grep -Fq 'const live854=()=>sameOwner854()' public/app.js
+          grep -Fq 'completeSignedLabel' scripts/p75-dataset-core.mjs
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          echo M1_P857_IMMUTABLE_P856_13_SCOPE_AND_RESEARCH_DONORS_PASS
+      - name: Temporary no-lockfile test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual historical 32-public-photo failures remain FAIL, research diagnostics cannot waive
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/local-worker.mjs
+          node --test tests/mission1-real-worker-legacy-audit-857.test.mjs tests/parallel80-legacy-triage.test.mjs tests/parallel80-subtype.test.mjs tests/mission1-optin-subtype-integration-856.test.mjs tests/mission1-stale-photo-recognition-lease-854.test.cjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p857-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p857-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p857-release
+      - name: Full native tests and two unchanged research builds
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  public-originals-NOT-human-truth:
+    needs: pinned-native-regression-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      P73_PHOTO_IDS: commons-0003,commons-0014,commons-0021,commons-0033,commons-0049,commons-0060,commons-0077,commons-0082,commons-0094,validation-0001,validation-0019
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Source hash exact original public JPEG bytes, not blind accuracy
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P73_PHOTO_IDS"
+          node scripts/evaluate-parallel73-real-photo.mjs
+  desktop-owner-review-NOT-physical-phones:
+    needs: pinned-native-regression-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: P80 actual desktop Chromium/WebKit signed owner subtype editor using synthetic model callbacks
+        run: node scripts/test-parallel80-subtype-browser.mjs
+      - name: P79 synthetic offline human annotation workstation and source-preserving 48 orientation cases
+        run: node scripts/test-p79-workstation-browser.mjs
+      - name: P78 operator recorder, DESKTOP simulated only
+        run: node scripts/test-parallel78-device-browser.mjs
+      - name: Inherited owner-review batch, shoe pairing, duplicates, color, consent, safe retries and editing
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-m1-batch-review-850.mjs
+          node scripts/test-parallel77-cross-capture-browser.mjs
+          node scripts/test-parallel76-color-browser.mjs
+          node scripts/test-m1-owner-learning-integration-847.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-save-lifecycle-844.mjs candidate
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+  actual-FashionCLIP-generated-JPEG-NOT-accuracy:
+    needs: pinned-native-regression-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Original full FashionCLIP weights on a generated geometric JPEG, 0 genuine garment labels
+        run: node scripts/test-parallel80-real-worker.mjs

@@ -247,3 +247,123 @@ test("public source HTTP retry is bounded and never bypasses unavailable origina
   );
   assert.equal(calls, 3);
 });
+test("review decisions are immutable, cannot be reconstructed or rebound, and reject invalid clocks", async () => {
+  const x = input80(),
+    decision = decide80(x);
+  assert.ok(Object.isFrozen(decision));
+  assert.ok(Object.isFrozen(decision.alternatives));
+  assert.ok(Object.isFrozen(decision.evidence));
+  assert.throws(() => {
+    decision.receiptCreatedAt = NaN;
+  }, TypeError);
+  assert.throws(() => {
+    decision.alternatives.push({ itemType: "Coat" });
+  }, TypeError);
+  assert.throws(
+    () =>
+      createReview80({
+        decision: structuredClone(decision),
+        evidence: x.evidence,
+        live: async () => x.current,
+      }),
+    /UNISSUED/,
+  );
+  assert.throws(
+    () =>
+      createReview80({
+        decision,
+        evidence: { ...x.evidence, ownerId: "OTHER" },
+        live: async () => x.current,
+      }),
+    /UNISSUED/,
+  );
+  for (const now of [
+    () => NaN,
+    () => decision.receiptCreatedAt - 1,
+    () => decision.receiptCreatedAt + 60001,
+  ]) {
+    const review = createReview80({
+      decision,
+      evidence: x.evidence,
+      live: async () => x.current,
+      now,
+    });
+    await assert.rejects(
+      review.choose("Shorts", { acknowledged: true }),
+      /REVOKED/,
+    );
+  }
+  const original = structuredClone(x.current),
+    review = createReview80({
+      decision,
+      evidence: x.evidence,
+      live: async () => original,
+    });
+  x.evidence.ownerId = "MUTATED";
+  const chosen = await review.choose("Shorts", { acknowledged: true });
+  assert.equal(chosen.evidence.ownerId, original.ownerId);
+  assert.ok(Object.isFrozen(chosen.evidence));
+});
+test("recognition source fetches have explicit deadlines and enforce byte limits before accumulation", async () => {
+  const { sourceCodeHash80, SOURCE_FILES80 } = await import(
+    "../public/subtype-worker-80.mjs"
+  );
+  let calls = 0;
+  const good = await sourceCodeHash80(async (_, options) => {
+    calls++;
+    assert.equal(options.cache, "no-store");
+    assert.ok(options.signal instanceof AbortSignal);
+    return new Response("synthetic source");
+  });
+  assert.match(good, /^[a-f0-9]{64}$/);
+  assert.equal(calls, SOURCE_FILES80.length);
+  let canceled = false;
+  await assert.rejects(
+    sourceCodeHash80(
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(c) {
+              c.enqueue(new Uint8Array(250001));
+            },
+            cancel() {
+              canceled = true;
+            },
+          }),
+        ),
+    ),
+    /SOURCE_CODE_LIMIT/,
+  );
+  assert.equal(canceled, true);
+  await assert.rejects(
+    sourceCodeHash80(async () => new Response(new Uint8Array([255]))),
+    /encoded data|encoding/i,
+  );
+});
+
+test("one issued decision cannot be replayed through separate handles and close revokes all handles", async () => {
+  const x = input80(),
+    decision = decide80(x),
+    args = { decision, evidence: x.evidence, live: async () => x.current };
+  const a = createReview80(args),
+    b = createReview80(args);
+  const results = await Promise.allSettled([
+    a.choose("Shorts", { acknowledged: true }),
+    b.choose("Skirt", { acknowledged: true }),
+  ]);
+  assert.equal(results.filter((r) => r.status === "fulfilled").length, 1);
+  const y = input80(),
+    other = decide80(y),
+    c = createReview80({
+      decision: other,
+      evidence: y.evidence,
+      live: async () => y.current,
+    }),
+    d = createReview80({
+      decision: other,
+      evidence: y.evidence,
+      live: async () => y.current,
+    });
+  c.close();
+  await assert.rejects(d.choose("Unknown", { acknowledged: true }));
+});

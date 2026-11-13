@@ -38,7 +38,19 @@ Native source execution covers all families, taxonomy/unknowns, full vocabulary,
 
 Actual desktop Chromium/WebKit execute the real Adjust source and the real P80 evidence/worker-adapter/panel modules with an explicitly **synthetic scorer callback**, at CSS **320/390/430** (six browser/width cases). They test no-consent rejection, explicit choice acknowledgment, no implicit type edit/save, ordinary owner confirmation, rapid repeat-submit single-save behavior, six stale async attacks (owner object, in-place owner ID, crop, mask, consent, category), owner replacement across the final asynchronous save boundary, default-off/guest/saved-item exclusion and one owner-confirmed synthetic shoe pair producing exactly one saved item with original/pair evidence preserved. Zero detected axe violations in tested dialog states. No external requests in the synthetic harness: its copy of inherited CSS omits the pre-existing Google Fonts import; production CSS is untouched. **This is not real FashionCLIP inference and not physical Android/iPhone testing.**
 
-The strict dedicated NO DEPLOY workflow pins P853 ancestry and a 12-path allowlist, full native regression/both builds, six subtype browser cases plus inherited photo review/save/pair/learning/color/duplicate/batch browser smoke, and a separate three-public-original integrity job. No deployment, account login, hosted Supabase, private input, photo/answer artifact upload or workflow permission escalation is included.
+The strict dedicated NO DEPLOY workflow pins P853 ancestry and a 13-path allowlist, full native regression/both builds, six subtype browser cases plus inherited photo review/save/pair/learning/color/duplicate/batch browser smoke, and a separate three-public-original integrity job. No deployment, account login, hosted Supabase, private input, photo/answer artifact upload or workflow permission escalation is included.
+
+## Continuation — immutable review capabilities and bounded setup
+
+Continued from exact prior P80 head `f589ae287e68a4c1df90b19ce7f8aa9840ece8d1` on the same isolated draft branch. A direct source-executed **synthetic API** comparison found that the previous returned decision object could be mutated to add an incompatible subtype and that two separate review handles could each approve the same issued decision. This was an API integrity gap, not evidence of a real wardrobe exploit or model error. Before/after replay: incompatible injected choice accepted **true → false**; cross-handle concurrent approvals **2 → 1**. No garments were saved in this comparison.
+
+Decisions are now deep-cloned/frozen and registered in a module-private WeakMap; JSON reconstruction cannot create a live review capability. Every handle shares consumption/revocation for that issued decision. Approval binds the immutable original evidence, rejects missing/invalid/future/expired clock values, and cannot be rebound by mutating a caller's evidence object. Closing any handle revokes its peers. Serializable diagnostic records remain usable for private #71 analysis, but they are not portable owner-approval capabilities.
+
+Recognition-source fetches now use explicit five-second AbortSignals and streaming **250,000-byte limits per file** before accumulation, with strict UTF-8 decoding. Eight finite source files remain the maximum. The model manifest also has a five-second deadline; local photo decode has a five-second timeout and clears the image source on expiry. These are individual operation limits, not a claim that first-use model setup completes in five seconds. Existing model-load/inference bounds and owner/cancellation guards remain intact. Runtime memory and responsiveness on physical phones are still unverified.
+
+Three additional native test groups cover mutation/reconstruction/rebinding, invalid clocks, shared-handle replay/revocation, fetch deadlines/stream overflow/cancellation and malformed UTF-8. Local continuation full suite: **485/485 PASS, zero failures/skips**; both builds and all **6/6** actual desktop editor/browser cases pass.
+
+A new **fourth NO DEPLOY CI job** executes the actual existing worker and pinned FashionCLIP weights on one generated geometric JPEG (no clothing truth, real owner, private source or photographic labels). It checks consent rejection before setup, full vocabulary in both actual model views, source/model/vector bindings, unchanged generated JPEG bytes, Unknown/no certificate on the deliberately non-evaluable input, wrong-input rejection and no network uploads. The local run was **BLOCKED by runtime network access**; the connected CI run must be observed before claiming an actual opt-in inference pass. Its exact-head outcome and measured inference latency are recorded in the PR evidence receipt. This smoke is execution/provenance evidence only, never recognition accuracy or a real-phone test.
 
 ## Other observed CI failures
 
@@ -52,7 +64,7 @@ The first dedicated live-original job could not obtain a Commons response; a des
 | Approved real subtype labels / independent correct-instance masks | **0 / 0** |
 | Independent real-photo top-one accuracy / candidate-set coverage | **UNKNOWN / UNKNOWN** |
 | Real-photo abstention / confident-wrong rate / class confusion | **UNKNOWN; no eligible denominator** |
-| Actual opt-in subtype-80 inference executions | **0; source adapter exercised with synthetic callbacks** |
+| Actual opt-in subtype-80 inference | **Initial delivery: 0; continuation adds real-worker/generated-image CI smoke, reported separately in the exact-head receipt. Approved photographic evaluations remain 0.** |
 | Separately triggered inherited default-path inference | **32 actual cases, 0 runtime errors; legacy subtype/auto-indexing regression checker FAILS** |
 | Public original byte/decoder checks | **3 verified; no truth/rights approval implied** |
 | Independent blind runs / physical phones | **0 / 0** |
