@@ -71,7 +71,7 @@ node scripts/test-parallel80-subtype-browser.mjs
 node scripts/p81-real-model-comparison.mjs
 ```
 
-The dedicated workflow enforces exact parent ancestry and a research-path allowlist, runs native/build, real desktop Chromium/WebKit policy scenarios, inherited owner/pair/duplicate browser scenarios and actual CPU models. Numeric output only is uploaded; no JPEGs, weights, private sources, blind labels or account data. Final observed results and exact commit are in the PR receipt. Synthetic policy tests are not recognition accuracy.
+The dedicated workflow enforces exact parent ancestry and a research-path allowlist, runs native/build, real desktop Chromium/WebKit policy scenarios, inherited owner/pair/duplicate browser scenarios and actual CPU models. Numeric output only is uploaded; no JPEGs, weights, private sources, blind labels or account data. Local verification: **570/570 native tests**, both builds, **6/6** arbitration browser cases, **6/6** inherited subtype editor cases, **6/6** pair admission cases and **6/6** cross-capture duplicate editor cases passed under actual desktop Chromium/WebKit at 320/390/430 CSS widths. The duplicate browser fixture initially failed while loading an external Google Fonts import; its injected test CSS now omits external imports, matching the existing offline subtype harness. Shipped CSS is unchanged. Local WebKit required extracted Debian runtime libraries and an adjusted local browser launcher library search path; CI uses Playwright's normal dependency installation. These setup changes are not product modifications or phone evidence. Final observed CI results and exact commit are in the PR receipt. Synthetic policy tests are not recognition accuracy.
 
 ## Recommendation to Mission 1 controller
 

@@ -24,7 +24,7 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
             case "$p" in
-              public/model-arbitration-81.mjs|scripts/p81-real-model-comparison.mjs|scripts/test-p81-arbitration-browser.mjs|tests/parallel81-arbitration.test.mjs|research/parallel81/*|.github/workflows/parallel81-arbitration-no-deploy.yml) ;;
+              scripts/test-parallel77-cross-capture-browser.mjs|public/model-arbitration-81.mjs|scripts/p81-real-model-comparison.mjs|scripts/test-p81-arbitration-browser.mjs|tests/parallel81-arbitration.test.mjs|research/parallel81/*|.github/workflows/parallel81-arbitration-no-deploy.yml) ;;
               *) echo "Unscoped path: $p"; exit 1;;
             esac
           done
