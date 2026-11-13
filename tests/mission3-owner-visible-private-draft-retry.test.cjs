@@ -24,6 +24,8 @@ function fixture(){
  let owner=ownerA,mode='quota',integrity=true,hold=null;
  const context={db,batch,items,failedDraftCaptures,sessionCapturedIds,
   nativeCanonical167Active:true,captureProof01Active:true,session:0,localPending:pending,
+  captureOperationEpoch:0,
+  window:{closetAuth:{user:{id:ownerA},assertCurrent(){}}},
   crypto:{randomUUID},structuredClone,normalizeClothing:x=>({...x}),
   captureProofOwner:()=>owner,
   message:text=>messages.push(text),recordDeviceEvent:()=>{},$:(id)=>({textContent:'',hidden:false,src:''}),
@@ -41,7 +43,9 @@ function fixture(){
  vm.runInContext(source.slice(candidateStart,candidateEnd),context);
  vm.runInContext(source.slice(retryStart,retryEnd),context);
  return {context,db,batch,items,calls,messages,queued,failedDraftCaptures,
-  setMode:x=>mode=x,setOwner:x=>owner=x,setIntegrity:x=>integrity=x,setHold:x=>hold=x};
+  setMode:x=>mode=x,setOwner:x=>{owner=x;context.captureOperationEpoch++;
+   context.window.closetAuth={user:{id:x},assertCurrent(){}};},
+  setIntegrity:x=>integrity=x,setHold:x=>hold=x};
 }
 if(baseline){
  test('green parent has no visible owner-private draft retry control',()=>{

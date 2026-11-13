@@ -139,13 +139,15 @@ test('PHOTO123 reloaded original reviewed garment can pin three previously owned
 }));
 test('PHOTO123 unsupported unreviewed/cutout source is excluded from shortcut; existing Style this piece path retained',()=>{
  const code=app.slice(app.indexOf("if(new URLSearchParams(location.search).get('styleOwned03')==='research'){\n const reviewedStored123"),
-  app.indexOf("actions.append(edit,cropButton(item),del);"));
+  app.indexOf("}actions.append(styleFocus,edit,cropButton(item),del);"));
  assert.ok(code.includes("item.singleGarmentVerified===true"));
  assert.ok(code.includes("item.reviewProvenance==="));
- assert.ok(code.includes("else{\n    switchView('stylist');"));
- assert.ok(code.includes('await window.styleOwnedLive03Bridge.selectGarment(item.id)'));
- assert.ok(code.includes('styleNew.disabled=true'));
- assert.ok(code.includes('finally{styleNew.disabled=false;}'));
+ // The public fallback remains, but the signed-owner wrapper now owns
+ // the async button state instead of the old unleased inline handler.
+ assert.match(code,/styleNew\.onclick=\(\)=>withOwnerStyleCardAction\(item,styleNew,async assertOwner=>/);
+ assert.match(code,/else\{\s*assertOwner\(\);[\s\S]*?switchView\('stylist'\);[\s\S]*?await stylePanel\.selectGarment\(item\.id\);/);
+ assert.ok(app.includes('button.disabled=true;'));
+ assert.ok(app.includes('if(lease.current()&&button.isConnected)button.disabled=false;'));
 });
 test('PHOTO123 owner account switch or SHA/correction mutation is rejected before styling; shortage stays honest',()=>{
  const code=app.slice(app.indexOf('async function styleJustReviewedPhoto122('),app.indexOf('function renderPhotoResults('));
