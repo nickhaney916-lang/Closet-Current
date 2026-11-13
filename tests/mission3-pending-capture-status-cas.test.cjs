@@ -17,6 +17,7 @@ const cas=part('function commitReviewedDraftCAS(', 'function persistDraft(');
 const writer=part('function persistDraft(', 'function readDraft(');
 const candidate=part('function candidate(image,options={}){','function queueAutomatic(item){');
 const recognition=part('async function recognizeItem(item){','async function recognizeBatch(){');
+const autoIndex=part('async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=null){','async function recognizeItem(item){');
 const first='data:image/jpeg;base64,/9j/AAA=',second='data:image/jpeg;base64,/9j/BBB=';
 const sha='a'.repeat(64);
 async function open(owner){
@@ -426,4 +427,87 @@ test('source requires a pending status CAS when an automatic closet save is refu
  assert.match(recognition,/if\(!wasSaved\)\{[\s\S]*?savingIndexed=false;/);
  assert.match(recognition,/Recognized but NOT saved to your closet/);
  assert.doesNotMatch(recognition,/if\(!wasSaved&&index04Active\)/);
+});
+
+async function readSaved(db){
+ return new Promise((ok,fail)=>{
+  const request=db.transaction('items').objectStore('items').getAll();
+  request.onsuccess=()=>ok(request.result);
+  request.onerror=()=>fail(request.error);
+ });
+}
+function activateExactSourceAutoIndex(f){
+ // Compile the real live automatic-index handler into the signed owner's
+ // source-executed context. All photographs and classifications are synthetic.
+ vm.runInContext(autoIndex,f.ctx);
+ f.ctx.captureProof01Active=false;
+ f.ctx.ClothingDetails.fill=item=>({...item});
+ f.ctx.applyLocalChoice=(item,choice)=>{
+  item.category=choice.category;item.itemType=choice.itemType;
+ };
+ f.ctx.nativeIndex07Refresh=async()=>{};
+ f.ctx.localRequest=async()=>({
+  strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'a shirt'}],details:{}
+ });
+}
+test('exact initial review snapshot permits a legitimate save and preserves another tab photo',async()=>{
+ const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
+ try{
+  const a=harness(aDB,owner),b=harness(bDB,owner);
+  await a.open(first);await b.open(second);
+  activateExactSourceAutoIndex(a);
+  assert.equal(await a.ctx.recognizeItem(a.ctx.batch[0]),true);
+  const saved=await readSaved(aDB),pending=await read(bDB);
+  assert.equal(saved.length,1);
+  assert.equal(saved[0].originalPhoto.image,first);
+  assert.equal(saved[0].sourceSHA256,sha);
+  assert.equal(saved[0].itemType,'Shirt');
+  assert.deepEqual(pending.map(r=>r.image),[second]);
+  assert.equal(pending[0].originalPhoto.image,second);
+ }finally{aDB.close();bDB.close();}
+});
+test('same-owner note and size corrected mid-recognition cannot be overwritten by a stale auto-index',async()=>{
+ const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
+ try{
+  const a=harness(aDB,owner),b=harness(bDB,owner);
+  await a.open(first);await b.open(second);
+  activateExactSourceAutoIndex(a);
+  let release,entered;
+  const started=new Promise(ok=>entered=ok);
+  a.ctx.checkPhoto=()=>{entered();return new Promise(ok=>release=ok);};
+  const scan=a.ctx.recognizeItem(a.ctx.batch[0]);
+  await started;
+  const initial=(await read(bDB))[0];
+  const edited={...initial,notes:'Owner wrote from another tab',size:'Medium'};
+  assert.equal(edited.userAdjusted,initial.userAdjusted);
+  assert.equal(edited.colorSource,initial.colorSource);
+  await b.ctx.commitReviewedDraftCAS([{before:initial,after:edited}]);
+  release({blank:false,signature:'synthetic',aspect:1,colorEstimate:null});
+  assert.equal(await scan,false);
+  const saved=await readSaved(aDB),pending=await read(aDB);
+  assert.equal(saved.length,0,'no stale model-created saved garment');
+  assert.equal(pending.length,2,'both photographs remain pending');
+  assert.equal(pending[0].notes,'Owner wrote from another tab');
+  assert.equal(pending[0].size,'Medium');
+  assert.equal(pending[0].originalPhoto.image,first);
+  assert.equal(pending[1].originalPhoto.image,second);
+  assert.match(a.ctx.batch[0].localStatus,/Another tab changed this garment/);
+  assert.equal(a.ctx.batch[0].scanFailed,true);
+ }finally{aDB.close();bDB.close();}
+});
+test('automatic index refuses to save if exact starting review proof was not supplied',async()=>{
+ const owner=randomUUID(),db=await open(owner);
+ try{
+  const f=harness(db,owner);
+  await f.open(first);
+  activateExactSourceAutoIndex(f);
+  await assert.rejects(f.ctx.saveIndexed(f.ctx.batch[0],null,null),/CLOSET_AUTO_INDEX_STALE_REVIEW/);
+  assert.deepEqual(await readSaved(db),[]);
+  assert.equal((await read(db))[0].originalPhoto.image,first);
+ }finally{db.close();}
+});
+test('production automatic index compares the entire initiating draft, not only the original-photo identity',()=>{
+ assert.match(autoIndex,/JSON\.stringify\(normalizeClothing\(draft\)\)/);
+ assert.match(autoIndex,/JSON\.stringify\(normalizeClothing\(expectedDraftForIndex\)\)/);
+ assert.match(recognition,/saveIndexed\(item,index04ApprovedOwner,expectedDraftForRecognition\)/);
 });
