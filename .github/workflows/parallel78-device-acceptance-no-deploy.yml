@@ -1,0 +1,119 @@
+name: Parallel 78 independent physical-device QA tooling — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel78-physical-mobile-photo-acceptance-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel78-device-qa-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-P850-native-no-deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P850 parent, exact seven-path allowlist and Family Alpha HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=9ee284f501aff50c810a05caf69fc103bc0393b4
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD >/tmp/p78-paths
+          cat /tmp/p78-paths
+          test "$(wc -l </tmp/p78-paths)" -eq 7
+          while IFS= read -r path; do
+            case "$path" in
+              public/device-acceptance-78.js|public/index.html|tests/parallel78-device-acceptance.test.cjs|scripts/test-parallel78-device-browser.mjs|research/parallel78-physical-device/OPERATOR-PROTOCOL.md|research/parallel78-physical-device/REPORT.md|.github/workflows/parallel78-device-acceptance-no-deploy.yml) ;;
+              *) echo "P78 UNSCOPED FILE $path"; exit 1 ;;
+            esac
+          done </tmp/p78-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase public/app.js public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/local-worker.mjs public/outfit-capture.js public/outfit-worker.mjs public/photo-check.js public/phone-photo-check.mjs public/review-queue-850.js public/clothing-memory.js benchmark)"
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'let saveInFlight=false;' public/app.js
+          grep -Fq 'P849_CHANGED_CANDIDATE_OR_OWNER' public/app.js
+          grep -Fq 'function learningScope72()' public/app.js
+          grep -Fq "const outfitColor76=outfitUnits70" public/outfit-capture.js
+          grep -Fq 'ReviewQueue850.create()' public/app.js
+          grep -Fq 'device-acceptance-78.js' public/index.html
+          grep -Fq "deviceLab78" public/device-acceptance-78.js
+          grep -Fq "independentlyVerifiedPhysicalRuns:0" public/device-acceptance-78.js
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/parallel78-physical-device/REPORT.md
+          grep -Fq 'PHYSICAL ACCEPTANCE BLOCKED' research/parallel78-physical-device/REPORT.md
+          echo P78_PINNED_P850_SEVEN_PATH_NO_DEPLOY_FENCE_PASS
+      - name: Temporary no-save test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Physical-proof validator, full native tests and both builds
+        run: |
+          set -euo pipefail
+          node --check public/device-acceptance-78.js
+          node --check scripts/test-parallel78-device-browser.mjs
+          node --test tests/parallel78-device-acceptance.test.cjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          echo P78_FULL_NATIVE_AND_BUILDS_PASS_BUT_REAL_DEVICE_BLOCKED
+  desktop-browser-simulation-only:
+    needs: [pinned-P850-native-no-deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real desktop Chromium/WebKit engines, NOT physical phones
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Parallel 78 desktop simulated diagnostics and opt-in privacy
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel78-device-browser.mjs
+      - name: Inherited actual P850–P843 source-executed desktop review safety gates
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-m1-batch-review-850.mjs
+          node scripts/test-parallel77-cross-capture-browser.mjs
+          node scripts/test-parallel76-color-browser.mjs
+          node scripts/test-m1-owner-learning-integration-847.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-save-lifecycle-844.mjs candidate
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+          node scripts/test-parallel73-photo-quality-browser.mjs
+          echo P78_DESKTOP_320_390_430_INHERITED_OWNER_GATES_PASS_NO_PHONE_CLAIM
+  lawful-source-receipts-not-accuracy:
+    needs: [pinned-P850-native-no-deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      P73_PHOTO_IDS: commons-0003,commons-0014,commons-0021,commons-0033,commons-0049,commons-0060,commons-0077,commons-0082,commons-0094,validation-0001,validation-0019
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Decoder for lawful source SHA only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Verify public source hashes, not device execution or human truth
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P73_PHOTO_IDS"
+          node scripts/evaluate-parallel73-real-photo.mjs
+          echo P78_LAWFUL_SOURCE_HASH_DIAGNOSTIC_ONLY_PASS_ZERO_REAL_PHONE_RUNS
