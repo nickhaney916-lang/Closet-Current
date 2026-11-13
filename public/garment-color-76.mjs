@@ -99,7 +99,7 @@ export function analyzeColor76(sample,binding){
   if(a<224)continue;
   const name=family76(r,g,b),v=Math.max(r,g,b)/255,s=v?(Math.max(r,g,b)-Math.min(r,g,b))/255/v:0;
   rawCounts.set(name,(rawCounts.get(name)||0)+1);lightness.push(v);
-  if(v<.14&&s<.22)black++;
+  if(v<.14&&s<.32)black++;
   if(v>.96&&s<.10)white++;
   valid++;
  }
@@ -120,7 +120,7 @@ export function analyzeColor76(sample,binding){
   if(a<224)continue;
   const name=family76(r,g,b),v=Math.max(r,g,b)/255,s=v?(Math.max(r,g,b)-Math.min(r,g,b))/255/v:0;
   let w=1;
-  if(attenuateDark&&v<.14&&s<.22)w=.25;
+  if(attenuateDark&&v<.14&&s<.32)w=.25;
   if(attenuateGlare&&v>.96&&s<.10)w=.25;
   counts.set(name,(counts.get(name)||0)+w);weight+=w;
  }
