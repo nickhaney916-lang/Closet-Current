@@ -67,7 +67,7 @@ function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={})
  // real default module transactions are exercised separately with IndexedDB.
  vm.runInContext(lease+'\n'+backup.replace(
   "await import('./native-default-atomic-import-m3.mjs')",
-  'Promise.resolve(window.__nativeAtomicModule)'
+  'Promise.resolve(__nativeAtomicModule)'
  ),ctx);
  const file={size:20,text:()=>holdFile?readGate.promise:Promise.resolve(JSON.stringify(
   withLooks?{...backupData,looks:[],outfitBoard:{saved:[]}}:backupData))};
