@@ -105,7 +105,44 @@ async function runCase(engine,width){
   console.log('BROWSER76_LAYOUT '+JSON.stringify(overflow));
   assert.ok(overflow.scrollWidth<=overflow.viewport+2,'No horizontal mobile overflow');
   assert.deepEqual(errors,[],'No browser JavaScript exceptions');
-  return {engine:engine.name(),viewportWidth:width,paired:true,separated:true,originalSourcePreserved:true,closetWrites:0};
+  // A worker's own color receipt and source receipt may agree yet both
+  // describe a different JPEG. Rehash the actual queued original in browser.
+  await page.evaluate(({photos,staleSource,mask})=>{
+   batch.length=0;items.length=0;
+   window.startOutfitSplit(photos.scene,'stale-source-76');
+   const request=window.workerRecord.request;
+   window.workerRecord.onmessage({data:{id:request.id,type:'piece',piece:{
+    image:photos.a,hint:{categories:['Shoes'],types:[],clipped:false},
+    colorResearch76:{method:'mask-aware-color-v1',status:'review',ownerId:'owner-70',requestId:request.id,
+     sourceSha256:staleSource,maskSha256:mask,proposedPrimary:'Blue'},
+    reconciliation70:{sourceSha256:staleSource,maskSha256:mask}
+   }}});
+   window.workerRecord.onmessage({data:{id:request.id,type:'done',count:1}});
+  },{photos,staleSource:sha(99),mask:sha(13)});
+  await page.waitForFunction(()=>document.getElementById('outfitSaveStatus').textContent.includes('color needs manual review'));
+  assert.doesNotMatch(await page.locator('#outfitSaveStatus').textContent(),/Shoes: Blue/,
+    'Self-consistent but wrong source hashes must not be accepted as current color evidence');
+  assert.equal(await page.evaluate(()=>items.length),0);
+  // A correct image hash cannot authorize a proposal for another owner.
+  await page.evaluate(({photos,mask})=>{
+   batch.length=0;items.length=0;
+   window.startOutfitSplit(photos.scene,'cross-owner-76');
+   const request=window.workerRecord.request;
+   window.workerRecord.onmessage({data:{id:request.id,type:'piece',piece:{
+    image:photos.a,hint:{categories:['Shoes'],types:[],clipped:false},
+    colorResearch76:{method:'mask-aware-color-v1',status:'review',ownerId:'other-owner',requestId:request.id,
+     sourceSha256:photos.sourceSha256,maskSha256:mask,proposedPrimary:'Blue'},
+    reconciliation70:{sourceSha256:photos.sourceSha256,maskSha256:mask}
+   }}});
+   window.workerRecord.onmessage({data:{id:request.id,type:'done',count:1}});
+  },{photos,mask:sha(14)});
+  await page.waitForFunction(()=>document.getElementById('outfitSaveStatus').textContent.includes('color needs manual review'));
+  assert.doesNotMatch(await page.locator('#outfitSaveStatus').textContent(),/Shoes: Blue/,
+    'Cross-owner research color must never be displayed as a verified proposal');
+  assert.equal(await page.evaluate(()=>items.length),0);
+  assert.deepEqual(errors,[],'No browser JavaScript exceptions after source and owner tampering');
+  return {engine:engine.name(),viewportWidth:width,paired:true,separated:true,
+   sourceHashMismatchBlocked:true,crossOwnerColorBlocked:true,originalSourcePreserved:true,closetWrites:0};
  }finally{await browser.close();}
 }
 try{
