@@ -158,39 +158,76 @@ try{
   deviceScaleFactor:1,isMobile:true,hasTouch:true,serviceWorkers:'block'});
  for(const figure of figures)for(const denim of denims){
   const base=await visit(context,figure,denim,'baseline');
+  // High-ease (historical 18/9 mm request) is a REFERENCE with this same
+  // continuous original-source station interpolation, not a literal replay of
+  // the earlier non-interpolated code. Never misstate it as the old renderer.
+  const high=await visit(context,figure,denim,'legacy');
   const trial=await visit(context,figure,denim,'trial');
-  assert.equal(base.shots.length,3);assert.equal(trial.shots.length,3);
-  const differences=[];
-  for(let i=0;i<base.shots.length;i++){
-   const p=await sharp(base.shots[i].png).removeAlpha().raw().toBuffer({resolveWithObject:true});
-   const q=await sharp(trial.shots[i].png).removeAlpha().raw().toBuffer({resolveWithObject:true});
-   assert.deepEqual({w:p.info.width,h:p.info.height,c:p.info.channels},
-    {w:q.info.width,h:q.info.height,c:q.info.channels});
-   differences.push({angle:views[i],...perceptualDifference(p.data,q.data)});
+  assert.equal(base.shots.length,3);
+  assert.equal(high.shots.length,3);
+  assert.equal(trial.shots.length,3);
+  async function compare(a,b){
+   const differences=[];
+   for(let i=0;i<a.shots.length;i++){
+    const p=await sharp(a.shots[i].png).removeAlpha().raw().toBuffer({resolveWithObject:true});
+    const q=await sharp(b.shots[i].png).removeAlpha().raw().toBuffer({resolveWithObject:true});
+    assert.deepEqual({w:p.info.width,h:p.info.height,c:p.info.channels},
+     {w:q.info.width,h:q.info.height,c:q.info.channels});
+    differences.push({angle:views[i],...perceptualDifference(p.data,q.data)});
+   }
+   return differences;
   }
-  if(trial.shape.trialApplied){
-   // Actual source-panel geometry differences are NOT human realism proof.
-   assert.ok(differences.some(d=>d.changedChannelsAbove12>250),
-    'Accepted original-source denim rear/side geometry must change genuine WebGL pixels');
-  }else{
-   // Even rejected experiments MUST restore the existing original photo fit.
-   assert.ok(differences.every(d=>d.changedChannelsAbove12<50),
-    'Rejected original-source denim change leaked into WebGL screenshot');
+  const differences=await compare(base,trial);
+  const highSourceDifferences=await compare(base,high);
+  const moderateAgainstHigh=await compare(high,trial);
+  for(const [candidate,changed] of [[trial,differences],[high,highSourceDifferences]]){
+   if(candidate.shape.trialApplied){
+    assert.equal(candidate.shape.continuousInterpolatedOriginalDenimStations,true);
+    assert.equal(candidate.shape.measuredSourceOnlyNoArtificialRearPhoto,true);
+    assert.equal(candidate.shape.newlyIntroducedBodyTrianglePairs,0);
+    assert.equal(candidate.shape.newlyIntroducedShirtTrianglePairs,0);
+    assert.ok(changed.some(d=>d.changedChannelsAbove12>250),
+     'Accepted actual original-source denim must change genuine WebGL pixels');
+   }else{
+    assert.ok(changed.every(d=>d.changedChannelsAbove12<50),
+     'Rejected original-source denim leaked into visible WebGL pixels');
+   }
+  }
+  if(trial.shape.trialApplied&&high.shape.trialApplied){
+   assert.ok(trial.shape.maxAppliedWorldShiftMeters<
+    high.shape.maxAppliedWorldShiftMeters*.79,
+    'Refined original-photo jeans must actually reduce the excessive 3D movement');
+   assert.ok(moderateAgainstHigh.some(d=>d.changedChannelsAbove12>250),
+    'A genuine refined denim side silhouette must differ from excessive high-ease candidate');
   }
   experiments.push({width,figure,denim,
-   baselineMs:base.elapsed,trialMs:trial.elapsed,
+   baselineMs:base.elapsed,trialMs:trial.elapsed,highEaseMs:high.elapsed,
    variant:trial.shape.status,
-   ...trial.shape,visualDifferences:differences,
+   ...trial.shape,
+   highEaseReferenceStatus:high.shape.status,
+   highEaseReferenceApplied:high.shape.trialApplied,
+   highEaseReferenceMaxShiftMeters:high.shape.maxAppliedWorldShiftMeters||0,
+   highEaseReferenceRequestedSideMeters:.018,
+   highEaseReferenceRequestedRearMeters:.009,
+   comparedToHighEaseWithSameInterpolatedSourceStations:true,
+   highEaseReferenceIsNotExactPreviousAlgorithm:true,
+   baselineToHighEasePixelDifferences:highSourceDifferences,
+   highEaseToRefinedPixelDifferences:moderateAgainstHigh,
+   visualDifferences:differences,
    visualChangedNotEquivalentToImprovedRealism:true});
  }
  assert.deepEqual(offsite,[]);
  assert.deepEqual(errors,[]);
- assert.equal(captures.length,24);
+ assert.equal(captures.length,36);
  assert.equal(experiments.length,4);
  const report={schema:'P84-actual-licensed-denim-side-163-bone-visual-ab-v1',
   browser:engine,width,sourceOriginalSHA256:source,
   sampleDescriptions:'P541 source-tied 163-bone skinned garment, not real owner wardrobe',
   fullScreenshotCount:captures.length,matchedBaselineTrialPairs:experiments.length,
+  threeGenuineRendererVariants:['unmodified','higher-ease-comparator','refined-original-source-station-interpolation'],
+  actualSourceHighEaseNotExactOldAlgorithm:true,
+  refinedReferenceFullAmplitudeSideMeters:.011,
+  refinedReferenceFullAmplitudeRearMeters:.004,
   sourceHeadWasDetached:true,photoPixelBytesAndUVUnmodified:true,
   existingCollisionChecksNotWaived:true,
   continuousGarmentContactCertified:false,realClothDynamicsValidated:false,
