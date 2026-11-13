@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
-import {trialSourceMeasuredDenimSide84} from '../research/parallel84-real-photo-layers/source-denim-side-trial84.mjs';
+import {trialSourceMeasuredDenimSide84,interpolateOriginalDenimStation84} from '../research/parallel84-real-photo-layers/source-denim-side-trial84.mjs';
 
 // SYNTHETIC source-like garment topology + *real THREE* SkinnedMesh with 163
 // bone influences. This fixture is never represented as a genuine garment
@@ -131,4 +131,48 @@ test('P84 missing genuine original photo projection and 163-source bones fail cl
  const g=setup();
  g.mesh.skeleton.bones.pop();
  assert.equal(run(g).trialApplied,false);
+});
+
+
+test('P84 photo-backed denim posterior source cross-sections interpolate continuously at intermediate mesh rows, not snapped 45mm stripes',()=>{
+ const stations=[{y:.50,outer:.08,rear:-.12},{y:.55,outer:.10,rear:-.14},
+  {y:.60,outer:.09,rear:-.16}];
+ assert.deepEqual(interpolateOriginalDenimStation84(stations,.475),{outer:.08,rear:-.12});
+ assert.deepEqual(interpolateOriginalDenimStation84(stations,.625),{outer:.09,rear:-.16});
+ const half=interpolateOriginalDenimStation84(stations,.525);
+ assert.ok(Math.abs(half.outer-.09)<1e-10&&Math.abs(half.rear+.13)<1e-10);
+ const justBefore=interpolateOriginalDenimStation84(stations,.55-1e-6);
+ const justAfter=interpolateOriginalDenimStation84(stations,.55+1e-6);
+ assert.ok(Math.abs(justBefore.outer-justAfter.outer)<1e-5);
+ assert.ok(Math.abs(justBefore.rear-justAfter.rear)<1e-5);
+ for(const bad of [[{y:1,outer:1,rear:0}],[
+  {y:.5,outer:1,rear:0},{y:.5,outer:2,rear:0}],[
+  {y:.3,outer:NaN,rear:0},{y:.5,outer:1,rear:0}]]){
+  assert.throws(()=>interpolateOriginalDenimStation84(bad,.45));
+ }
+ assert.throws(()=>interpolateOriginalDenimStation84(stations,NaN));
+});
+
+test('P84 measured SOURCE-neutral refined denim has less exaggerated movement than high-ease research comparison, with original photo/skin identical and zero new posed contacts',()=>{
+ const mild=setup(),high=setup();
+ const originalPhotoFront=mild.mesh.geometry.getAttribute('pantsSourceFront').array.slice();
+ const originalUV=mild.mesh.geometry.getAttribute('pantsSourceUV').array.slice();
+ const moderate=run(mild,{sideEaseMeters:.011,rearEaseMeters:.004});
+ const large=run(high,{sideEaseMeters:.018,rearEaseMeters:.009});
+ assert.equal(moderate.status,'SAMPLED_SOURCE_PANEL_CONTACT_NONWORSENING_ONLY');
+ assert.equal(large.status,'SAMPLED_SOURCE_PANEL_CONTACT_NONWORSENING_ONLY');
+ assert.equal(moderate.continuousInterpolatedOriginalDenimStations,true);
+ assert.equal(large.continuousInterpolatedOriginalDenimStations,true);
+ assert.ok(moderate.maxAppliedWorldShiftMeters>0);
+ assert.ok(moderate.maxAppliedWorldShiftMeters<large.maxAppliedWorldShiftMeters*.79);
+ assert.ok(moderate.maxAcceptedLateralEaseMeters<large.maxAcceptedLateralEaseMeters);
+ assert.ok(moderate.maxAcceptedPosteriorEaseMeters<large.maxAcceptedPosteriorEaseMeters);
+ for(const result of [moderate,large]){
+  assert.equal(result.newlyIntroducedBodyTrianglePairs,0);
+  assert.equal(result.newlyIntroducedShirtTrianglePairs,0);
+  assert.equal(result.photoReverseInvented,false);
+  assert.equal(result.releaseAuthorized,false);
+ }
+ assert.deepEqual(mild.mesh.geometry.getAttribute('pantsSourceFront').array,originalPhotoFront);
+ assert.deepEqual(mild.mesh.geometry.getAttribute('pantsSourceUV').array,originalUV);
 });
