@@ -75,11 +75,19 @@ test('P838 non-strong or ambiguous original results cannot be made falsely stron
  const h=workerFor({category:'Tops',itemType:'Sweatshirt',strong:false});
  const r=await h.scan();assert.equal(r.strong,false);assert.equal(h.sent.some(x=>x.type==='identified'),false);
 });
-test('P838 leaves historically unvalidated outfit hints unchanged, avoids inventing a measurement',async()=>{
- const h=workerFor({category:'Shoes',itemType:'Ankle boots',hint:{categories:['Shoes'],types:[],clipped:false}});
- const r=await h.scan();assert.equal(r.strong,true);
- assert.equal(r.choices[0].itemType,'Ankle boots');
- assert.equal(h.sent.some(x=>x.type==='identified'),true);
+test('P862 high-risk segmented hints now get owner review, without claiming better type accuracy',async()=>{
+ for(const [category,itemType] of [
+  ['Shoes','Ankle boots'],['Tops','Sweatshirt'],['Tops','Tunic'],['Outerwear','Blazer']
+ ]){
+  const h=workerFor({category,itemType,hint:{categories:[category],types:[],confidence:.98,clipped:false}});
+  const r=await h.scan();assert.equal(r.strong,false);
+  assert.equal(r.categoryConfirmed,true);
+  assert.equal(r.categoryOnly,true);
+  assert.equal(r.choices[0].itemType,'Unknown');
+  assert.equal(r.choices[0].category,category);
+  assert.equal(r.diagnostics.mission1SubtypeSafety.ownerSubtypeReviewRequired,true);
+  assert.equal(h.sent.some(x=>x.type==='identified'),false);
+ }
 });
 test('P838 never copies owner source bytes when downgrading risk class',async()=>{
  const source={strong:true,choices:[{category:'Tops',itemType:'Tunic',score:.98}],details:{color:'Red'},image:'PRIVATE_OWNER_JPEG',owner:'PRIVATE_OWNER'};

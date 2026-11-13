@@ -4,7 +4,7 @@ const image={width:50,height:50};
 const uncertain=async()=>[{label:'a blouse',score:.3},{label:'a casual dress',score:.3},{label:'a blurry image with no identifiable garment',score:.4}];
 const hint={categories:['Bottoms'],types:[],confidence:.96,clipped:false};
 test('a complete high-confidence mask retains only its broad category when details are uncertain',async()=>{
- const r=await classifyIsolatedGarment(uncertain,image,{hint});assert.equal(r.strong,true);assert.equal(r.categoryOnly,true);assert.equal(r.choices[0].category,'Bottoms');assert.equal(r.choices[0].itemType,'Unknown');assert.deepEqual(r.details,{});
+ const identified=[];const r=await classifyIsolatedGarment(uncertain,image,{hint,onIdentified:choice=>identified.push(choice)});assert.equal(r.strong,false);assert.equal(r.categoryConfirmed,true);assert.equal(r.categoryOnly,true);assert.equal(r.reason,'mask_category_type_review');assert.equal(r.choices[0].category,'Bottoms');assert.equal(r.choices[0].itemType,'Unknown');assert.deepEqual(r.details,{});assert.deepEqual(identified,[]);
 });
 test('a confident classifier contradiction requires review',async()=>{
  const r=await classifyIsolatedGarment(async()=>[{label:'a T-shirt',score:.9},{label:'a blurry image with no identifiable garment',score:.1}],image,{hint});assert.equal(r.strong,false);
@@ -19,7 +19,8 @@ test('an upper-clothes mask cannot choose between a top and outerwear without ev
 test('negative-only scores do not crash a high-confidence mask fallback',async()=>{
  const negatives=async()=>[{label:'a blank wall',score:.9},{label:'a dog or cat',score:.1}];
  const result=await classifyIsolatedGarment(negatives,image,{hint});
- assert.equal(result.strong,true);
+ assert.equal(result.strong,false);
+ assert.equal(result.categoryConfirmed,true);
  assert.equal(result.categoryOnly,true);
  assert.equal(result.choices[0].category,'Bottoms');
  assert.equal(result.choices[0].score,0);

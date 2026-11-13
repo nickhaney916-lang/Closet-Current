@@ -394,6 +394,18 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  const category=agreed?a[0].category:hint.categories[0];
  const first=clothingChoices(whole)[0],confirmation=clothingChoices(close),sameType=agreed&&strongMatch(clothingChoices(whole))&&confirmation[0]?.category===first.category&&confirmation[0]?.itemType===first.itemType&&confirmation[0].score>=.35&&confirmation[0].score-(confirmation[1]?.score||0)>=.1&&(!hint.types.length||hint.types.includes(first.itemType));
  const choice=sameType?{...first}:{label:category,category,itemType:'Unknown',sleeveLength:['Bottoms','Shoes','Accessories'].includes(category)?'Not applicable':'Unknown',score:Math.min(a[0]?.score??0,b[0]?.score??0)};
- onIdentified(choice);const details=sameType?await readVerifiedDetails(model,confirmationModel,image,choice,onStage):{};
- return {strong:true,categoryOnly:!sameType,choices:[{...choice,sleeveLength:details.sleeveLength||choice.sleeveLength}],details};
+ // P862: a high-confidence semantic mask proves neither the photographed
+ // garment subtype nor safe indexing. Unknown must be an explicit broad-
+ // category review, NOT a strong garment identity. Never stream a provisional
+ // identified callback for an unverified subtype.
+ if(sameType)onIdentified(choice);
+ const details=sameType?await readVerifiedDetails(model,confirmationModel,image,choice,onStage):{};
+ return {
+  strong:Boolean(sameType),
+  categoryConfirmed:!sameType,
+  categoryOnly:!sameType,
+  choices:[{...choice,sleeveLength:details.sleeveLength||choice.sleeveLength}],
+  details,
+  ...(!sameType?{reason:'mask_category_type_review'}:{})
+ };
 }
