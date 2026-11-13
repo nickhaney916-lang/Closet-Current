@@ -14,7 +14,7 @@ const get=(from,to)=>{
 };
 const header=baseline?'':get('function ownerWardrobeMutationLease(){','function writeAll(values){');
 const write=get('function writeAll(values){','// Compare the persisted garment inside the same transaction');
-const remove=get('function removeItem(id){','function persistDraft(');
+const remove=get(baseline?'function removeItem(id){':'function removeItem(id,expected){','function persistDraft(');
 const mutators=header+write+'\n'+remove;
 const oldId='garment-shared-id';
 function deferred(){
@@ -30,25 +30,38 @@ function privateDB(owner,{holdCommit=false}={}){
  const db={name:'closet-current-user-'+owner,transaction(store,mode){
   assert.equal(store,'items');assert.equal(mode,'readwrite');
   const pending=[];
-  const tx={
-   oncomplete:null,onerror:null,onabort:null,error:null,
-   objectStore(name){
-    assert.equal(name,'items');
-    return {
-     put(value){pending.push({op:'put',value:structuredClone(value)});actions.push('put:'+value.id);},
-     delete(id){pending.push({op:'delete',id});actions.push('delete:'+id);}
-    };
-   }
-  };
-  queueMicrotask(async()=>{
+  let aborted=false,scheduled=false;
+  const commit=async()=>{
    if(holdCommit)await txGate.promise;
+   if(aborted)return;
    for(const w of pending){
     if(w.op==='put')rows.set(w.value.id,w.value);
     else rows.delete(w.id);
    }
-   events.push('commit');
-   tx.oncomplete?.();
-  });
+   events.push('commit');tx.oncomplete?.();
+  };
+  const schedule=()=>{if(scheduled||aborted)return;scheduled=true;queueMicrotask(commit);};
+  const tx={
+   oncomplete:null,onerror:null,onabort:null,error:null,
+   abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},
+   objectStore(name){
+    assert.equal(name,'items');
+    return {
+     get(id){
+      const request={result:null,onsuccess:null};
+      queueMicrotask(()=>{
+       if(aborted)return;
+       request.result=structuredClone(rows.get(id));
+       request.onsuccess?.();
+       if(!aborted&&!scheduled)schedule();
+      });
+      return request;
+     },
+     put(value){pending.push({op:'put',value:structuredClone(value)});actions.push('put:'+value.id);schedule();},
+     delete(id){pending.push({op:'delete',id});actions.push('delete:'+id);schedule();}
+    };
+   }
+  };
   return tx;
  }};
  return {db,rows,actions,events,releaseCommit:()=>txGate.resolve()};
@@ -74,7 +87,7 @@ const status=promise=>promise.then(()=> 'resolved',()=> 'rejected');
 
 test('queued old owner delete must not remove same ID in newly signed in owner B',async()=>{
  const f=fixture({holdQueue:true});
- const promise=status(f.ctx.removeItem(oldId));
+ const promise=status(f.ctx.removeItem(oldId,{...f.a.rows.get(oldId)}));
  f.switchOwner();f.releaseQueue();
  assert.equal(await promise,baseline?'resolved':'rejected');
  assert.equal(f.b.rows.has(oldId),!baseline);
@@ -91,7 +104,7 @@ test('queued old owner photo correction bulk write cannot overwrite owner B matc
 });
 test('same-owner logout and re-login epoch revokes previously queued delete',async()=>{
  const f=fixture({holdQueue:true});
- const promise=status(f.ctx.removeItem(oldId));
+ const promise=status(f.ctx.removeItem(oldId,{...f.a.rows.get(oldId)}));
  f.switchOwner({sameOwner:true});f.releaseQueue();
  assert.equal(await promise,baseline?'resolved':'rejected');
  assert.equal(f.a.rows.has(oldId),!baseline);
@@ -105,7 +118,8 @@ test('same-owner logout and re-login epoch revokes previously queued bulk write'
 });
 test('old owner delete completed after different owner login cannot report success or refresh their index',async()=>{
  const f=fixture({holdCommit:true});
- const p=status(f.ctx.removeItem(oldId));
+ const p=status(f.ctx.removeItem(oldId,{...f.a.rows.get(oldId)}));
+ for(let n=0;n<8&&f.a.actions.length===0;n++)await Promise.resolve();
  assert.equal(f.a.actions.length,1);
  f.switchOwner();f.a.releaseCommit();
  assert.equal(await p,baseline?'resolved':'rejected');
@@ -115,6 +129,7 @@ test('old owner delete completed after different owner login cannot report succe
 test('old owner bulk update completed after different owner login cannot refresh new owner UI',async()=>{
  const f=fixture({holdCommit:true});
  const p=status(f.ctx.writeAll([newRow]));
+ for(let n=0;n<8&&f.a.actions.length===0;n++)await Promise.resolve();
  assert.equal(f.a.actions.length,1);
  f.switchOwner();f.a.releaseCommit();
  assert.equal(await p,baseline?'resolved':'rejected');
@@ -122,7 +137,7 @@ test('old owner bulk update completed after different owner login cannot refresh
  assert.equal(f.b.rows.get(oldId).color,'Red');
 });
 test('previous owner native index refresh completion cannot turn into successful new-owner deletion',async()=>{
- const f=fixture({holdRefresh:true}),p=status(f.ctx.removeItem(oldId));
+ const f=fixture({holdRefresh:true}),p=status(f.ctx.removeItem(oldId,{...f.a.rows.get(oldId)}));
  for(let k=0;k<12&&f.actions.length===0;k++)await Promise.resolve();
  assert.deepEqual(f.actions,['refresh:owner-A']);
  f.switchOwner();f.releaseRefresh();
@@ -131,7 +146,7 @@ test('previous owner native index refresh completion cannot turn into successful
 });
 test('same signed in owner deletion retains prior stored behavior',async()=>{
  const f=fixture();
- await f.ctx.removeItem(oldId);
+ await f.ctx.removeItem(oldId,{...f.a.rows.get(oldId)});
  assert.equal(f.a.rows.has(oldId),false);
  assert.deepEqual(f.actions,['refresh:owner-A']);
  assert.equal(f.b.rows.has(oldId),true);
