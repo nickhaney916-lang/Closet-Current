@@ -878,10 +878,10 @@ test('C45: spoofed partial or release-certified source contact report fails befo
 });
 
 
-const sampledCloth46=(f,{angles=null,count=17,stagedEnd=null}={})=>{
+const sampledCloth46=(f,{angles=null,count=17,stagedEnd=null,boneIndex=1}={})=>{
  const tokens=[];
  for(let i=0;i<count;i++){
-  f.dress.mesh.skeleton.bones[1].rotation.z=
+  f.dress.mesh.skeleton.bones[boneIndex].rotation.z=
    angles?.[i]??.04*Math.sin(2*Math.PI*i/(count-1));
   tokens.push(capture(f,i===count-1?stagedEnd:null,i/(count-1)));
  }
@@ -984,7 +984,7 @@ test('C46: source photographed full dress refuses at existing unresolved seam be
  const callback=({startPositions,endPositions})=>{
   const tokens=sampledCloth46(f,{
    angles:Array.from({length:17},(_,i)=>.02*Math.sin(Math.PI*i/16)),
-   stagedEnd:endPositions
+   stagedEnd:endPositions,boneIndex:0
   });
   return auditSourceDressTemporalSelfContact46({
    root:f.root,dress:f.dress,poseTokens:tokens,
