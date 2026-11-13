@@ -22,7 +22,7 @@ function fixture(){
  const ctx={
   owner:'owner-a',session:'original',epoch:0,db:{name:'closet-current-user-owner-a'},
   items:[item], confirmResult:true,confirmCount:0,
-  confirm(){this.confirmCount++;return this.confirmResult;},
+  confirm(){ctx.confirmCount++;return ctx.confirmResult;},
   removeItem(id,expected){events.push('delete:'+id);assert.equal(expected,item);return Promise.resolve();},
   render(){events.push('render');},
   message(value){events.push('message:'+value);},
