@@ -149,6 +149,7 @@ try{
    const decision=validateResponse82(output,request);
    const choices=sharedRankChoices82(decision,output.observations);
    return {decisionStatus:decision.status,reasons:decision.reasons,
+    rawModelHypotheses:decision.hypotheses.map(h=>({category:h.category,type:h.itemType})),
     modelKeys:output.observations.map(o=>o.modelKey),
     topRankings:output.observations.map(o=>({model:o.modelKey,
      category:o.ranking[0]?.category,type:o.ranking[0]?.itemType,count:o.ranking.length})),
@@ -167,6 +168,14 @@ try{
   assert.equal(receipt.userConfirmed,false);assert.equal(receipt.writes,0);
   assert.equal(receipt.savedItem,'Unknown');
   assert.equal(receipt.visibleOptions,receipt.actionable.length);
+  assert.ok(receipt.actionable.every(x=>!['Sweatshirt','Tunic','Blazer','Ankle boots'].includes(x.type)),
+   photo.id+': known confusion classes must require manual Adjust, even if both models propose them');
+  if(photo.id==='commons-0078'){
+   assert.ok(receipt.rawModelHypotheses.some(x=>x.type==='Ankle boots'),
+    'real public sneaker confusion should remain visible as RAW model evidence only');
+   assert.equal(receipt.actionable.some(x=>x.type==='Ankle boots'),false,
+    'actual native owner panel must never offer high-risk Ankle boots Use shortcut');
+  }
   const button=page.locator('[data-dual82] button').filter({hasText:/^Use /}).first();
   if(receipt.actionable.length){
    await button.click();
@@ -181,6 +190,7 @@ try{
   }
   results.push({id:photo.id,sourceSHA256:photo.sourceSHA256,license:photo.license,
    decisionStatus:receipt.decisionStatus,reasons:receipt.reasons,modelKeys:receipt.modelKeys,
+   rawHighRiskEvidence:receipt.rawModelHypotheses.filter(x=>['Sweatshirt','Tunic','Blazer','Ankle boots'].includes(x.type)),
    topRankings:receipt.topRankings,actionable:receipt.actionable,
    autoAdmissions:0,privateWrites:0,humanConfirmed:false,
    madeUnsavedSuggestion:receipt.actionable.length>0,
