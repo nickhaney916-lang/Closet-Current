@@ -14,7 +14,8 @@ if(!process.argv[2]||donor===base||donor==='/'||
  throw Error('P84 disposable separate donor directory required');
 const entry='research/parallel84-real-photo-layers';
 for(const name of ['layer-contact84.mjs','actual-skinned-layers84.mjs',
- 'source-bone-yoke-trial84.mjs','source-denim-side-trial84.mjs']){
+ 'source-bone-yoke-trial84.mjs','source-denim-side-trial84.mjs',
+ 'source-pose-sweep84.mjs']){
  await mkdir(join(donor,entry),{recursive:true});
  await copyFile(join(base,entry,name),join(donor,entry,name));
 }
@@ -26,7 +27,8 @@ assert.equal(source.split(importAnchor).length,2,
 source=source.replace(importAnchor,importAnchor+
  "\nimport {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';"+
  "\nimport {trialSourceBoneShoulderYoke84} from '../parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';"+
- "\nimport {trialSourceMeasuredDenimSide84} from '../parallel84-real-photo-layers/source-denim-side-trial84.mjs';");
+ "\nimport {trialSourceMeasuredDenimSide84} from '../parallel84-real-photo-layers/source-denim-side-trial84.mjs';"+
+ "\nimport {auditRealSourceGarmentArmPoses84} from '../parallel84-real-photo-layers/source-pose-sweep84.mjs';");
 const end="contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();";
 assert.equal(source.split(end).length,2,
  'P84 genuine P541 garments completed anchor missing');
@@ -57,6 +59,20 @@ const addition=[
 "    sideEaseMeters:denimMode==='legacy'?.018:.011,",
 "    rearEaseMeters:denimMode==='legacy'?.009:.004",
 "   });",
+"}",
+"if(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'&&",
+"   new URLSearchParams(globalThis.location.search).get('parallel84Poses')==='audit'){",
+"  // No edits to stored wardrobes, source photos, production or shipped app.",
+"  globalThis.__parallel84PoseResult=auditRealSourceGarmentArmPoses84({",
+"   root,shirt:built.shirt,pants:built.pants,",
+"   avatar:globalThis.document?.getElementById('model')?.value,",
+"   applyPose:researchPose=>setResearchPose(root,researchPose)",
+"  });",
+"  // Research-only static skinning snapshots: NO per-pose cloth re-fitting.",
+"  globalThis.__parallel84SetStaticPose=name=>{",
+"   if(!['source','blend-50','relaxed'].includes(name))throw Error('Invalid P84 research pose');",
+"   return setResearchPose(root,name);",
+"  };",
 "}",
 "if(globalThis.location?.hostname==='127.0.0.1'&&",
 "   new URLSearchParams(globalThis.location.search).get('parallel84Layers')==='research'){",
