@@ -102,13 +102,13 @@ async function visit(context,figure,denim,variant){
   assert.equal(shape.status,'BASELINE_UNMODIFIED');
   assert.equal(shape.trialApplied,false);
  }else{
-  assert.ok(['SAMPLED_CONTACT_NONWORSENING_ONLY','REFUSED_NEW_CONTACT','REFUSED_UNCHANGED'].includes(shape.status),
+  assert.ok(['SAMPLED_SOURCE_PANEL_CONTACT_NONWORSENING_ONLY','REFUSED_NEW_CONTACT','REFUSED_UNCHANGED'].includes(shape.status),
    'Unsafe source trial must never be silently admitted: '+JSON.stringify(shape));
   assert.equal(shape.humanRealismApproved,false);
   assert.equal(shape.original163BoneSkinUnchanged,true);
   assert.equal(shape.photoAndSourceAttributesUnchanged,true);
   if(shape.trialApplied){
-   assert.equal(shape.status,'SAMPLED_CONTACT_NONWORSENING_ONLY');
+   assert.equal(shape.status,'SAMPLED_SOURCE_PANEL_CONTACT_NONWORSENING_ONLY');
    assert.equal(shape.newlyIntroducedBodyTrianglePairs,0);
    assert.equal(shape.newlyIntroducedShirtTrianglePairs,0);
    assert.ok(shape.maxAppliedWorldShiftMeters>0);
