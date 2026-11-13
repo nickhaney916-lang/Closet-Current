@@ -32,6 +32,20 @@ export function sourceKey(url){
   return decodeURIComponent(u.pathname.slice('/wiki/'.length)).replace(/_/g,' ').normalize('NFKC').toLowerCase();
  }catch{return null;}
 }
+/** Suspected same publisher/object/photo gallery; NOT a human garment identity. */
+export function sourceSeriesHint(url){
+ const source=sourceKey(url);if(!source)return null;
+ const filename=source.replace(/^file:/,'').replace(/\.(?:jpe?g|png|webp)$/i,'');
+ let m=filename.match(/\bmet[ _]+((?:ci)?\d+(?:\.\d+)+)\b/i);
+ if(m)return 'met-accession:'+m[1].toLowerCase();
+ m=filename.match(/\b(?:objectnr|object no|object number)[ _]+(\d+(?:-\d+)+)\b/i);
+ if(m)return 'catalog-accession:'+m[1];
+ m=filename.match(/\blacma[ _]+m\.(\d+(?:\.\d+){2,})\b/i);
+ if(m)return 'lacma-accession:'+m[1];
+ m=filename.match(/^(.*?)[ _]*\((?:\d{2,}|\d+[ _]+of[ _]+\d+)\)$/i);
+ if(m&&m[1].trim().length>=12)return 'file-photo-series:'+m[1].trim().replace(/[_ ]+/g,' ');
+ return null;
+}
 export function canonicalOriginalURL(url){
  try{
   const u=new URL(url);
@@ -97,8 +111,9 @@ export function priorExposures(manifests){
  for(const [filename,contents] of Object.entries(manifests)){
   if(!Array.isArray(contents))throw Error('Invalid historical manifest: '+filename);
   for(const item of contents){
-   const row={id:item.id,sha256:item.sha256,sourcePage:item.sourcePage||item.source||item.attribution?.source,
-    from:filename,objectKey:item.objectKey||null,seriesKey:item.seriesKey||null};
+   const src=item.sourcePage||item.source||item.attribution?.source;
+   const row={id:item.id,sha256:item.sha256,sourcePage:src,
+    from:filename,objectKey:item.objectKey||null,seriesKey:item.seriesKey||sourceSeriesHint(src)};
    const key=(row.sha256||'')+'|'+(sourceKey(row.sourcePage)||'');
    if(seen.has(key))continue;seen.add(key);rows.push(row);
   }
