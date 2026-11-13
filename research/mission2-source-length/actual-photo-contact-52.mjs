@@ -863,18 +863,56 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
    minY:box.min.y,maxY:box.max.y,
    minZ:box.min.z,maxZ:box.max.z});
  }
- clothes.sort((a,b)=>a.minX-b.minX);
+ // The real 163-bone body contains >100,000 source triangles. Scanning
+ // them for each dress face is unnecessarily quadratic. Spatially index
+ // body face AABBs in source-WORLD Y/Z cells before the exact three-axis
+ // overlap test. A large face enters the global fallback set rather than
+ // being dropped; every possible original source hit is still considered.
+ const CELL=.06,buckets=new Map(),overflow=[],faces=body.out;
+ const span=b=>({
+  y0:Math.floor((b.minY-tolerance)/CELL),
+  y1:Math.floor((b.maxY+tolerance)/CELL),
+  z0:Math.floor((b.minZ-tolerance)/CELL),
+  z1:Math.floor((b.maxZ+tolerance)/CELL)
+ });
+ const bin=(y,z)=>y+':'+z;
+ let memberships=0;
+ for(let j=0;j<faces.length;j++){
+  const t=span(faces[j]),
+   n=(t.y1-t.y0+1)*(t.z1-t.z0+1);
+  if(!Number.isSafeInteger(n)||n<1)
+   fail('C58 nonfinite original skinned body grid cell membership');
+  if(n>256){overflow.push(j);continue;}
+  memberships+=n;
+  if(memberships>2500000)
+   return {complete:false,bodyMeshes:body.bodyMeshes,faces:body.faces,
+    invalid:body.invalid,compared:0,candidates:0,
+    strict:0,near:0,positive:0};
+  for(let y=t.y0;y<=t.y1;y++)
+   for(let z=t.z0;z<=t.z1;z++){
+    const key=bin(y,z),ids=buckets.get(key)??[];
+    ids.push(j);buckets.set(key,ids);
+   }
+ }
  let compared=0,candidates=0,strict=0,near=0,positive=0,
-  start=0,complete=true;
- const faces=body.out;
+  complete=true;
  outer:for(const c of clothes){
-  while(start<faces.length&&
-        faces[start].maxX+tolerance<c.minX)start++;
-  for(let j=start;j<faces.length;j++){
+  const t=span(c),
+   n=(t.y1-t.y0+1)*(t.z1-t.z0+1);
+  if(!Number.isSafeInteger(n)||n<1||n>4096){
+   complete=false;break;
+  }
+  const candidatesByYZ=new Set(overflow);
+  for(let y=t.y0;y<=t.y1;y++)
+   for(let z=t.z0;z<=t.z1;z++)
+    for(const i of buckets.get(bin(y,z))??[])
+     candidatesByYZ.add(i);
+  for(const j of candidatesByYZ){
+   if(++compared>maxBodyComparisons58){
+    complete=false;break outer;
+   }
    const b=faces[j];
-   if(b.minX>c.maxX+tolerance)break;
-   if(++compared>maxBodyComparisons58){complete=false;break outer;}
-   if(b.maxX+tolerance<c.minX||
+   if(b.maxX+tolerance<c.minX||c.maxX+tolerance<b.minX||
       b.maxY+tolerance<c.minY||c.maxY+tolerance<b.minY||
       b.maxZ+tolerance<c.minZ||c.maxZ+tolerance<b.minZ)
     continue;
@@ -1177,7 +1215,7 @@ export function auditActualPhotographedDressSurfaces52({
  refineArticulatedContacts58=false,
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
- maxDistancePairs58=100000,maxBodyFaces58=100000,
+ maxDistancePairs58=100000,maxBodyFaces58=160000,
  maxBodyComparisons58=2500000,maxBodyCandidatePairs58=80000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
