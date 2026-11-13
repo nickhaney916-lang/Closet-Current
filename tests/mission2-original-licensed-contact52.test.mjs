@@ -374,3 +374,143 @@ test('C54: forged original-source topology configuration is rejected without cha
  }
  assert.deepEqual(original(f),before);
 });
+
+const audit55=(f,opts={})=>auditActualPhotographedDressSurfaces52({
+ root:f.root,dress:f.dress,
+ refineTriangleDistances53:true,refineSourceTopology54:true,
+ refineEdgeWinding55:true,...opts
+});
+test('C55: actual SOURCE UV-split opposite-winding two-face edge yields an audit CANDIDATE, not welded cloth',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]),before=original(f),report=audit55(f);
+ const a=report.originalSourceEdgeWinding55,
+  b=report.posedSourceEdgeWinding55;
+ assert.equal(report.fullOriginalSourceEdgeWindingAuditCompleted55,true);
+ assert.equal(a.sourceEdgePairsClassified,1);
+ assert.equal(a.sourceTwoFaceOppositeWindingCandidates,1);
+ assert.equal(a.sourceTwoFaceSameWindingCandidates,0);
+ assert.equal(a.originalTwoIncidentEdgeGroups,1);
+ assert.equal(a.originalBoundarySingleIncidentEdgeGroups,4);
+ assert.equal(a.originalNonmanifoldThreePlusIncidentEdgeGroups,0);
+ assert.deepEqual(b,a);
+ assert.equal(a.sourceEdgeWindingOnlyCandidateNotSewnSeam,true);
+ assert.equal(a.oppositeWindingCannotAuthorizeWelding,true);
+ assert.equal(report.trueSourceSeamSewingEvidenceMissing55,true);
+ assert.equal(report.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C55: same-winding source-coincident edge is NOT silently accepted as a seam',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,1,0,0,1,-1,0
+ ]),report=audit55(f);
+ const w=report.posedSourceEdgeWinding55;
+ assert.equal(w.sourceEdgePairsClassified,1);
+ assert.equal(w.sourceTwoFaceSameWindingCandidates,1);
+ assert.equal(w.sourceTwoFaceOppositeWindingCandidates,0);
+ assert.equal(w.originalTwoIncidentEdgeGroups,1);
+ assert.equal(w.releaseAuthorized,false);
+});
+test('C55: 3 original disconnected faces incident on same source edge are NON-MANIFOLD, no repair',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0,
+  0,0,0,1,0,0,0,0,1
+ ]),originalState=original(f),r=audit55(f);
+ const a=r.posedSourceEdgeWinding55;
+ assert.equal(a.sourceEdgePairsClassified,3);
+ assert.equal(a.sourceThreePlusIncidentFaceNonmanifoldCandidates,3);
+ assert.ok(a.originalNonmanifoldThreePlusIncidentEdgeGroups>=1);
+ assert.equal(a.sourceTwoFaceOppositeWindingCandidates,0);
+ assert.equal(a.sourceTwoFaceSameWindingCandidates,0);
+ assert.equal(r.noEdgeWindingCollisionExemption55,true);
+ assert.deepEqual(original(f),originalState);
+});
+test('C55: source INDEX-connected actual two-face mesh is counted in global edge incidence but not double-audited',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,1,1,0
+ ],[0,1,2,1,3,2]),before=original(f),r=audit55(f);
+ const w=r.posedSourceEdgeWinding55;
+ assert.equal(w.sourceEdgePairsClassified,0);
+ assert.equal(w.originalTwoIncidentEdgeGroups,1);
+ assert.equal(w.originalBoundarySingleIncidentEdgeGroups,4);
+ assert.ok(r.posedSourceTopology54.sourceIndexSharedPairsExcludedBeforeDistance>=1);
+ assert.deepEqual(original(f),before);
+});
+test('C55: matching source SINGLE POINT cannot be fabricated into an original source edge seam',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,-1,0,0,0,-1,0
+ ]),r=audit55(f);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentSinglePointCandidates,1);
+ assert.equal(r.posedSourceEdgeWinding55.sourceEdgePairsClassified,0);
+ assert.equal(r.trueSourceSeamSewingEvidenceMissing55,true);
+});
+test('C55: full duplicated triangle must never be counted as an accepted opposite-winding edge',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,0,1,0,1,0,0
+ ]),r=audit55(f);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentFaceCandidates,1);
+ assert.equal(r.posedSourceEdgeWinding55.sourceEdgePairsClassified,0);
+ assert.ok(r.posedSourceEdgeWinding55.originalTwoIncidentEdgeGroups>=3);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C55: original 163-bone skin mismatch on same source edge remains UNSAFE before edge winding classification',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]);
+ f.dress.mesh.geometry.getAttribute('skinIndex').setX(3,1);
+ const state=original(f),r=audit55(f);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentButUnsafeSkinRestOrPose,1);
+ assert.equal(r.posedSourceEdgeWinding55.sourceEdgePairsClassified,0);
+ assert.ok(r.posedSourceEdgeWinding55.originalAmbiguousOrSkinMismatchedGroups>=1);
+ assert.equal(r.noEdgeWindingCollisionExemption55,true);
+ assert.deepEqual(original(f),state);
+});
+test('C55: genuine 163-bone different pose makes mismatched UV endpoints unsafe rather than sewing them together',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]);
+ for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ f.bones[1].position.x=.02;
+ const before=original(f),r=audit55(f);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentButUnsafeSkinRestOrPose,1);
+ assert.equal(r.posedSourceEdgeWinding55.sourceEdgePairsClassified,0);
+ assert.equal(r.posedSourceEdgeWinding55.sourceManifoldEstimateNotPhysicalFabricCertificate,true);
+ assert.deepEqual(original(f),before);
+});
+test('C55: incomplete source-edge budget NEVER certifies original photographed garment edge topology',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0,
+  0,0,0,1,0,0,0,0,1
+ ]),r=audit55(f,{maxEdgePairs55:1});
+ assert.equal(r.fullOriginalSourceEdgeWindingAuditCompleted55,false);
+ assert.equal(r.posedSourceEdgeWinding55.sourceEdgeAuditComplete,false);
+ assert.equal(r.posedSourceEdgeWinding55.sourceEdgePairsClassified,1);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C55: source-owned real original photograph parser rejects unverified or incomplete edge research flags',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]),state=original(f);
+ for(const invalid of [
+  {refineEdgeWinding55:true},
+  {refineTriangleDistances53:true,refineEdgeWinding55:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:'enabled'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,maxEdgePairs55:0},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,maxEdgePairs55:200001}
+ ])assert.throws(()=>auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,...invalid
+ }),/M2 C52 original-photo diagnostic/);
+ assert.deepEqual(original(f),state);
+});

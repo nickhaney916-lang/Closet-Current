@@ -33,7 +33,8 @@ controller=controller.replace(anchor,anchor+
  "        const query52=new URLSearchParams(globalThis.location?.search||\x27\x27);\n"+
  "        const evidence52=auditActualPhotographedDressSurfaces52({root,dress:fitted,\n"+
  "         refineTriangleDistances53:query52.get(\x27photoDressDistance53\x27)===\x27research\x27,\n"+
- "         refineSourceTopology54:query52.get(\x27photoDressTopology54\x27)===\x27research\x27});\n"+
+ "         refineSourceTopology54:query52.get(\x27photoDressTopology54\x27)===\x27research\x27,\n"+
+ "         refineEdgeWinding55:query52.get(\x27photoDressEdges55\x27)===\x27research\x27});\n"+
  "        if(evidence52.schema!=='M2-real-original-photo-surface-diagnostic-C52'||\n"+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+

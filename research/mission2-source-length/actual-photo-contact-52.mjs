@@ -218,6 +218,174 @@ function topologyReceipt54(state,complete,sharedIndexExcluded){
  });
 }
 
+
+/**
+ * P2-C55 — inspect the ORIGINAL photographer-source edge graph independently
+ * of triangle-to-triangle proximity. Two duplicated XYZ endpoints do not by
+ * themselves prove a sewn boundary. This source-coordinate edge index is
+ * private to the browser audit, and NEVER exports vertex groups/IDs/positions.
+ *
+ * Discrete source vertices are clustered with a bounded 2 micron tolerance,
+ * validating the source shader-rest/skin and true 163-bone posed positions.
+ * A non-transitive/ambiguous coordinate grouping is always unsafe; it cannot
+ * be treated as a physical edge or a collision exemption.
+ */
+const C55_KEYS=Object.freeze([
+ 'sourceTwoFaceOppositeWindingCandidates',
+ 'sourceTwoFaceSameWindingCandidates',
+ 'sourceThreePlusIncidentFaceNonmanifoldCandidates',
+ 'sourceUnsafeOrAmbiguousCoordinateGroupCandidates',
+ 'sourceEdgeUnpairedOrUnresolvedCandidates'
+]);
+function sourceEdgeGraph55(context,indices,faceCount){
+ const {source,skinned,rest,skinIndex,skinWeight}=context;
+ const n=source.length/3,cell=SOURCE_TWIN_EPS54;
+ const bins=new Map(),reps=[],vertexGroup=new Int32Array(n),
+  groupGood=[],groupAmbiguous=[];
+ const sourceDistance=(i,j)=>Math.hypot(
+  source[3*i]-source[3*j],source[3*i+1]-source[3*j+1],
+  source[3*i+2]-source[3*j+2]);
+ const consistent=(i,j)=>{
+  if(Math.hypot(skinned[3*i]-skinned[3*j],
+   skinned[3*i+1]-skinned[3*j+1],
+   skinned[3*i+2]-skinned[3*j+2])>SOURCE_TWIN_EPS54)return false;
+  for(let k=0;k<3;k++)
+   if(Math.abs(rest.getComponent(i,k)-rest.getComponent(j,k))>
+      SOURCE_TWIN_EPS54)return false;
+  for(let k=0;k<4;k++)
+   if(skinIndex.getComponent(i,k)!==skinIndex.getComponent(j,k)||
+      Math.abs(skinWeight.getComponent(i,k)-
+       skinWeight.getComponent(j,k))>1e-6)return false;
+  return true;
+ };
+ const bin=(x,y,z)=>x+':'+y+':'+z;
+ for(let i=0;i<n;i++){
+  const x=Math.floor(source[3*i]/cell),
+   y=Math.floor(source[3*i+1]/cell),
+   z=Math.floor(source[3*i+2]/cell);
+  const matches=[];
+  for(let dx=-1;dx<=1;dx++)
+   for(let dy=-1;dy<=1;dy++)
+    for(let dz=-1;dz<=1;dz++)
+     for(const g of bins.get(bin(x+dx,y+dy,z+dz))??[])
+      if(sourceDistance(i,reps[g])<=cell)matches.push(g);
+  if(!matches.length){
+   const g=reps.length;reps.push(i);
+   vertexGroup[i]=g;groupGood.push(true);groupAmbiguous.push(false);
+   const k=bin(x,y,z),list=bins.get(k)??[];
+   list.push(g);bins.set(k,list);
+  }else{
+   const group=matches[0];vertexGroup[i]=group;
+   if(matches.length!==1){
+    for(const g of matches){groupAmbiguous[g]=true;groupGood[g]=false;}
+   }
+   if(!consistent(i,reps[group]))groupGood[group]=false;
+  }
+ }
+ const edgeUses=new Map(),faceGroup=new Array(faceCount);
+ const key=(a,b)=>a<b?a+':'+b:b+':'+a;
+ for(let f=0;f<faceCount;f++){
+  const ids=[0,1,2].map(c=>indices?indices[3*f+c]:3*f+c);
+  const groups=ids.map(i=>vertexGroup[i]);faceGroup[f]=groups;
+  for(let k=0;k<3;k++){
+   const a=groups[k],b=groups[(k+1)%3];
+   const ek=key(a,b),list=edgeUses.get(ek)??[];
+   list.push({f,from:a,to:b});
+   edgeUses.set(ek,list);
+  }
+ }
+ let single=0,two=0,multiple=0;
+ for(const list of edgeUses.values()){
+  if(list.length===1)single++;
+  else if(list.length===2)two++;
+  else multiple++;
+ }
+ return {source,vertexGroup,groupGood,groupAmbiguous,
+  faceGroup,edgeUses,key,uniqueOriginalSourceEdgeGroups:edgeUses.size,
+  originalSingleIncidentEdgeGroups:single,
+  originalTwoIncidentEdgeGroups:two,
+  originalThreePlusIncidentEdgeGroups:multiple,
+  originalCoordinateGroups:reps.length,
+  originalAmbiguousOrSkinMismatchedGroups:
+   groupGood.filter(x=>!x).length};
+}
+function sourceMatchingEdgeWinding55(a,b,graph){
+ const near=(i,j)=>Math.hypot(
+  graph.source[3*i]-graph.source[3*j],
+  graph.source[3*i+1]-graph.source[3*j+1],
+  graph.source[3*i+2]-graph.source[3*j+2])<=SOURCE_TWIN_EPS54;
+ const matches=[],seen=new Set();
+ for(const i of a.ids){
+  const twins=b.ids.filter(j=>near(i,j));
+  if(twins.length>1)return C55_KEYS[3];
+  if(twins.length){
+   if(seen.has(twins[0]))return C55_KEYS[3];
+   seen.add(twins[0]);matches.push([i,twins[0]]);
+  }
+ }
+ if(matches.length!==2)return C55_KEYS[4];
+ const [i,j]=matches.map(p=>graph.vertexGroup[p[0]]);
+ if(i===j||matches.some(([x,y])=>
+  graph.vertexGroup[x]!==graph.vertexGroup[y]||
+  !graph.groupGood[graph.vertexGroup[x]]||
+  graph.groupAmbiguous[graph.vertexGroup[x]]))
+  return C55_KEYS[3];
+ const edge=graph.edgeUses.get(graph.key(i,j));
+ if(!edge||edge.length<2||
+    !edge.some(use=>use.f===a.f)||
+    !edge.some(use=>use.f===b.f))
+  return C55_KEYS[4];
+ if(edge.length>2)return C55_KEYS[2];
+ const winding=t=>{
+  const groups=graph.faceGroup[t.f];
+  for(let k=0;k<3;k++){
+   if(groups[k]===i&&groups[(k+1)%3]===j)return 1;
+   if(groups[k]===j&&groups[(k+1)%3]===i)return -1;
+  }
+  return 0;
+ };
+ const wa=winding(a),wb=winding(b);
+ if(!wa||!wb)return C55_KEYS[3];
+ return wa===wb?C55_KEYS[1]:C55_KEYS[0];
+}
+function edgeWindingReceipt55(state,graph,complete){
+ const count=C55_KEYS.reduce((n,key)=>n+state[key],0);
+ if(count!==state.sourceEdgePairsClassified)
+  fail('C55 source edge winding / incident face classification count inconsistent');
+ return Object.freeze({
+  schema:'M2-original-photograph-source-edge-winding-C55',
+  sourceEdgePairsClassified:state.sourceEdgePairsClassified,
+  sourceTwoFaceOppositeWindingCandidates:
+   state.sourceTwoFaceOppositeWindingCandidates,
+  sourceTwoFaceSameWindingCandidates:
+   state.sourceTwoFaceSameWindingCandidates,
+  sourceThreePlusIncidentFaceNonmanifoldCandidates:
+   state.sourceThreePlusIncidentFaceNonmanifoldCandidates,
+  sourceUnsafeOrAmbiguousCoordinateGroupCandidates:
+   state.sourceUnsafeOrAmbiguousCoordinateGroupCandidates,
+  sourceEdgeUnpairedOrUnresolvedCandidates:
+   state.sourceEdgeUnpairedOrUnresolvedCandidates,
+  originalSourceEdgeGroupCount:graph.uniqueOriginalSourceEdgeGroups,
+  originalBoundarySingleIncidentEdgeGroups:
+   graph.originalSingleIncidentEdgeGroups,
+  originalTwoIncidentEdgeGroups:graph.originalTwoIncidentEdgeGroups,
+  originalNonmanifoldThreePlusIncidentEdgeGroups:
+   graph.originalThreePlusIncidentEdgeGroups,
+  originalCoordinateGroups:graph.originalCoordinateGroups,
+  originalAmbiguousOrSkinMismatchedGroups:
+   graph.originalAmbiguousOrSkinMismatchedGroups,
+  sourceEdgeAuditComplete:complete,
+  sourceEdgeWindingOnlyCandidateNotSewnSeam:true,
+  oppositeWindingCannotAuthorizeWelding:true,
+  sourceManifoldEstimateNotPhysicalFabricCertificate:true,
+  changingPoseAndContinuousClothNotCertified:true,
+  ownerPhotoOrVertexLocationsExposed:false,
+  originalSourceFaceIdsExposed:false,
+  photoUVSkinAndSourceMeshUnchanged:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
 function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null){
  const list=[];
  const v=(j)=>new THREE.Vector3(
@@ -230,7 +398,7 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null)
    tri[2].clone().sub(tri[0])).length();
   if(area<1e-10)fail('degenerate authentic garment face');
   const box=new THREE.Box3().setFromPoints(tri);
-  list.push({ids,tri,minX:box.min.x,maxX:box.max.x,
+  list.push({f,ids,tri,minX:box.min.x,maxX:box.max.x,
    minY:box.min.y,maxY:box.max.y,minZ:box.min.z,maxZ:box.max.z});
  }
  list.sort((a,b)=>a.minX-b.minX);
@@ -240,6 +408,14 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null)
   geometricZeroOrOverlapUnresolved:0,
   positiveGapWithinToleranceUnresolved:0,
   positiveGapBeyondToleranceAtThisPose:0};
+ const edge55={
+  sourceEdgePairsClassified:0,
+  sourceTwoFaceOppositeWindingCandidates:0,
+  sourceTwoFaceSameWindingCandidates:0,
+  sourceThreePlusIncidentFaceNonmanifoldCandidates:0,
+  sourceUnsafeOrAmbiguousCoordinateGroupCandidates:0,
+  sourceEdgeUnpairedOrUnresolvedCandidates:0
+ };
  const topology54={
   zeroDistancePairsClassified:0,
   sourceCoincidentFaceCandidates:0,
@@ -285,6 +461,18 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null)
       const kind=zeroSourceTopologyClass54(other,candidate,context);
       if(!C54_KEYS.includes(kind))fail('C54 unknown original source topology');
       topology54[kind]++;topology54.zeroDistancePairsClassified++;
+      if(budgets.refineEdgeWinding55&&
+         kind==='sourceCoincidentEdgeCandidates'){
+       if(edge55.sourceEdgePairsClassified>=budgets.maxEdgePairs55){
+        complete=false;break outer;
+       }
+       const result55=sourceMatchingEdgeWinding55(
+        other,candidate,context.edgeGraph55);
+       if(!C55_KEYS.includes(result55))
+        fail('C55 original photographed edge category unknown');
+       edge55[result55]++;
+       edge55.sourceEdgePairsClassified++;
+      }
      }
     }else if(distance<=tolerance)
      distance53.positiveGapWithinToleranceUnresolved++;
@@ -303,14 +491,17 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null)
   distance53:budgets.refineTriangleDistances53?
    refinedDistanceReceipt53(distance53,complete):null,
   topology54:budgets.refineSourceTopology54?
-   topologyReceipt54(topology54,complete,sharedIndexExcluded):null};
+   topologyReceipt54(topology54,complete,sharedIndexExcluded):null,
+  edge55:budgets.refineEdgeWinding55?
+   edgeWindingReceipt55(edge55,context.edgeGraph55,complete):null};
 }
 export function auditActualPhotographedDressSurfaces52({
  root,dress,toleranceMeters=.00002,
  maxSourceFaces=100000,maxComparisons=800000,
  maxCandidatePairs=100000,maxStrictCrossings=64,
  refineTriangleDistances53=false,maxDistanceCandidates53=100000,
- refineSourceTopology54=false,maxZeroDistanceTopologyPairs54=100000
+ refineSourceTopology54=false,maxZeroDistanceTopologyPairs54=100000,
+ refineEdgeWinding55=false,maxEdgePairs55=100000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
@@ -340,7 +531,11 @@ export function auditActualPhotographedDressSurfaces52({
     (refineSourceTopology54&&!refineTriangleDistances53)||
     !Number.isSafeInteger(maxZeroDistanceTopologyPairs54)||
     maxZeroDistanceTopologyPairs54<1||
-    maxZeroDistanceTopologyPairs54>200000)
+    maxZeroDistanceTopologyPairs54>200000||
+    typeof refineEdgeWinding55!=='boolean'||
+    (refineEdgeWinding55&&!refineSourceTopology54)||
+    !Number.isSafeInteger(maxEdgePairs55)||maxEdgePairs55<1||
+    maxEdgePairs55>200000)
   fail('real original licensed SHA-pinned 163-bone P61 dress required');
  const p=g?.getAttribute('position'),rest=g?.getAttribute('dressRest'),
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
@@ -379,10 +574,13 @@ export function auditActualPhotographedDressSurfaces52({
  }
  const budget={maxComparisons,maxCandidatePairs,maxStrictCrossings,
   refineTriangleDistances53,maxDistanceCandidates53,
-  refineSourceTopology54,maxZeroDistanceTopologyPairs54};
+  refineSourceTopology54,maxZeroDistanceTopologyPairs54,
+  refineEdgeWinding55,maxEdgePairs55};
  const context=refineSourceTopology54?{
   source,skinned,rest,skinIndex:si,skinWeight:sw
  }:null;
+ if(refineEdgeWinding55)context.edgeGraph55=
+  sourceEdgeGraph55(context,indices,triangles);
  const original=analyze52(source,indices,triangles,toleranceMeters,budget,context),
   posed=analyze52(skinned,indices,triangles,toleranceMeters,budget,context);
  for(const [name,attr,bytes] of immutable)
@@ -434,6 +632,20 @@ export function auditActualPhotographedDressSurfaces52({
    originalPhotoAndSkinnedSkinBindingPreserved54:true,
    allZeroSourcePairsRemainContactUnresolved54:true,
    actualPhysicalSewingSeamsCertified54:false
+  }:{}),
+  ...(refineEdgeWinding55?{
+   originalSourceEdgeWinding55:original.edge55,
+   posedSourceEdgeWinding55:posed.edge55,
+   fullOriginalSourceEdgeWindingAuditCompleted55:
+    original.edge55.sourceEdgeAuditComplete&&
+    posed.edge55.sourceEdgeAuditComplete&&
+    original.topology54.classificationComplete&&
+    posed.topology54.classificationComplete&&
+    original.distance53.distanceRefinementComplete&&
+    posed.distance53.distanceRefinementComplete,
+   noEdgeWindingCollisionExemption55:true,
+   trueSourceSeamSewingEvidenceMissing55:true,
+   ownerSourceAndShaderPhotoProjectionPreserved55:true
   }:{}),
   anyStrictSourceCrossing:original.firstStrict,
   anyStrictPosedCrossing:posed.firstStrict,

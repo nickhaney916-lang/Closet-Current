@@ -201,3 +201,83 @@ if(process.env.PHOTO_DRESS_TOPOLOGY54==='1'){
   JSON.stringify(output54,null,2)+'\n');
  console.log('M2_C54_REAL_LICENSED_SOURCE_TOPOLOGY_SAFE_SUMMARY',JSON.stringify(output54));
 }
+
+if(process.env.PHOTO_DRESS_EDGES55==='1'){
+ assert.equal(process.env.PHOTO_DRESS_TOPOLOGY54,'1',
+  'C55 actual licensed photograph edge audit requires all C54 original seam candidates');
+ const keys=[
+  'sourceTwoFaceOppositeWindingCandidates',
+  'sourceTwoFaceSameWindingCandidates',
+  'sourceThreePlusIncidentFaceNonmanifoldCandidates',
+  'sourceUnsafeOrAmbiguousCoordinateGroupCandidates',
+  'sourceEdgeUnpairedOrUnresolvedCandidates'
+ ];
+ const witnesses=receipts.map(r=>({
+  original:r.originalSourceEdgeWinding55,
+  posed:r.posedSourceEdgeWinding55,
+  complete:r.fullOriginalSourceEdgeWindingAuditCompleted55,
+  originalExpected:r.originalSourceTopology54.sourceCoincidentEdgeCandidates,
+  posedExpected:r.posedSourceTopology54.sourceCoincidentEdgeCandidates
+ }));
+ for(const w of witnesses){
+  assert.equal(w.complete,true);
+  for(const [name,t,expected] of [
+   ['original',w.original,w.originalExpected],
+   ['posed',w.posed,w.posedExpected]]){
+   assert.equal(t?.schema,'M2-original-photograph-source-edge-winding-C55');
+   assert.equal(t.sourceEdgeAuditComplete,true);
+   assert.equal(t.sourceEdgePairsClassified,expected,
+    'C55 original photo '+name+' edge pairs must precisely match C54');
+   assert.equal(keys.reduce((n,k)=>n+t[k],0),expected);
+   assert.equal(t.originalSourceEdgeGroupCount,
+    t.originalBoundarySingleIncidentEdgeGroups+
+    t.originalTwoIncidentEdgeGroups+
+    t.originalNonmanifoldThreePlusIncidentEdgeGroups);
+   assert.equal(t.sourceEdgeWindingOnlyCandidateNotSewnSeam,true);
+   assert.equal(t.oppositeWindingCannotAuthorizeWelding,true);
+   assert.equal(t.sourceManifoldEstimateNotPhysicalFabricCertificate,true);
+   assert.equal(t.changingPoseAndContinuousClothNotCertified,true);
+   assert.equal(t.ownerPhotoOrVertexLocationsExposed,false);
+   assert.equal(t.originalSourceFaceIdsExposed,false);
+   assert.equal(t.photoUVSkinAndSourceMeshUnchanged,true);
+   assert.equal(t.releaseAuthorized,false);
+   assert.equal(t.familyAlpha,'HOLD');
+  }
+ }
+ for(const w of witnesses.slice(1))
+  assert.deepEqual(w,witnesses[0],
+   'C55 source and posed real source/manifold graph counts must be viewport independent for identical signed source and pose');
+ const w=witnesses[0];
+ const output55={
+  schema:'M2-P2-C55-original-licensed-photo-edge-incidence-and-winding',
+  realPhotographedDressTriangles:first.originalSourceFaces,
+  licensedOriginal163BoneViewportRuns:3,
+  originalSourceEdgeCandidatesFromC54:w.originalExpected,
+  posedSourceEdgeCandidatesFromC54:w.posedExpected,
+  sourceEdgeWindingClasses:Object.fromEntries(keys.map(k=>[k,w.original[k]])),
+  posedEdgeWindingClasses:Object.fromEntries(keys.map(k=>[k,w.posed[k]])),
+  sourceEdgeIncidenceGroups:{
+   unique:w.original.originalSourceEdgeGroupCount,
+   singleIncident:w.original.originalBoundarySingleIncidentEdgeGroups,
+   exactlyTwoIncident:w.original.originalTwoIncidentEdgeGroups,
+   threeOrMoreIncident:w.original.originalNonmanifoldThreePlusIncidentEdgeGroups
+  },
+  sourceCoordinateGroupCounts:{
+   originalUniqueGroups:w.original.originalCoordinateGroups,
+   unsafeOrAmbiguousGroups:w.original.originalAmbiguousOrSkinMismatchedGroups
+  },
+  sourceFaceIdsAndVertexCoordinatesNeverExported:true,
+  originalPhotoUVRestAndSkinImmutable:true,
+  originalJPEGAndMaterialUntouched:true,
+  genuineSewingSemanticsNOTProven:true,
+  allGeometricSourceContactsStillUnresolved:true,
+  noWeldOrCollisionExemptionAuthorized:true,
+  continuousFabricPhysicsNotCertified:true,
+  independentHumanRealismNotCertified:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-edges55.json',
+  JSON.stringify(output55,null,2)+'\n');
+ console.log('M2_C55_REAL_LICENSED_SOURCE_EDGE_WINDING_SAFE_SUMMARY',
+  JSON.stringify(output55));
+}
