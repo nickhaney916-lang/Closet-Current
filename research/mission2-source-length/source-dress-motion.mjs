@@ -19,7 +19,12 @@ const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
 const equal=(a,b)=>a?.length===b?.length&&a.every((v,i)=>v===b[i]);
 const getSource=mesh=>{
- const g=mesh.geometry,attrs=['position','normal','dressRest','skinIndex','skinWeight','uv'];
+ const g=mesh.geometry;
+ // Exact original P61 fabric source may deliberately use dressRest/custom
+ // photo coordinates WITHOUT conventional THREE 'uv'. Never synthesize one.
+ const attrs=['position','normal','dressRest','skinIndex','skinWeight'];
+ for(const key of Object.keys(g.attributes))
+  if(!attrs.includes(key))attrs.push(key);
  const buffers=new Map();
  const sourceWeights=g.getAttribute('skinWeight'),sourceBoneIDs=g.getAttribute('skinIndex');
  if(!sourceWeights?.isBufferAttribute||!sourceBoneIDs?.isBufferAttribute||
@@ -51,10 +56,17 @@ const checkProvenance=(mesh,state)=>{
  if(g!==state.geometry||mesh.material!==state.material||
     mesh.skeleton?.bones.length!==163)
   fail('original signed garment rig/source material replaced');
- for(const a of ['dressRest','skinIndex','skinWeight','uv']){
-  const current=g.getAttribute(a),expected=state.attributes.get(a);
+ // All initially present source attributes (including nonstandard dress
+ // photo mapping) must remain byte-identical; no missing UV is fabricated.
+ const names=Object.keys(g.attributes);
+ if(names.length!==state.attributes.size||
+    names.some(name=>!state.attributes.has(name)))
+  fail('original source photo attribute schema changed or invented UV');
+ for(const [name,expected] of state.attributes){
+  if(name==='position'||name==='normal')continue;
+  const current=g.getAttribute(name);
   if(current!==expected.field||!equal(current.array,expected.values))
-   fail('original source photograph projection or anatomical skin changed: '+a);
+   fail('original source photograph projection or anatomical skin changed: '+name);
  }
  if(!equal(g.getAttribute('position').array,state.last)||
     !equal(g.getAttribute('normal').array,state.lastNormals))
