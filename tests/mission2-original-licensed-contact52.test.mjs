@@ -938,3 +938,20 @@ test('C58: malicious or undersized actual-source photograph self/body workload r
  }
  assert.deepEqual(original(f),before);
 });
+
+test('C58: oversized original anatomical body face spans many Y/Z cells and is never silently omitted from contact checks',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ const a=f.body.geometry.getAttribute('position');
+ a.array.set([0,-3,-3,0,3,-3,0,0,3]);
+ a.needsUpdate=true;
+ const immutable=original(f),r=audit58(f),
+  report=r.originalArticulatedContactReceipt58;
+ assert.equal(report.originalNeutralBodyAuditComplete,true);
+ assert.equal(report.completeBodyPoseSweeps,2);
+ assert.ok(report.originalNeutralBodyBoxPairs>0);
+ assert.ok(report.originalNeutralBodyNearOrZeroUnresolved>0);
+ assert.equal(report.originalBodyIndependentClothFitCertified,false);
+ assert.equal(report.allTemporaryBoneQuaternionsRestored,true);
+ assert.equal(report.releaseAuthorized,false);
+ assert.deepEqual(original(f),immutable);
+});
