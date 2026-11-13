@@ -7,7 +7,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync('public/app.js','utf8');
-const start=source.indexOf('async function saveIndexed(item,index04ApprovedOwner=null){');
+const start=source.indexOf('async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=null){');
 const end=source.indexOf('async function recognizeItem(item){',start);
 assert.ok(start>=0&&end>start,'Missing actual auto-index implementation');
 const implementation=source.slice(start,end);
@@ -84,7 +84,7 @@ function fixture({draft=[row,foreignDraft],savedItems=[],holdQueue=false}={}){
   get ownerId(){return ownerId;},
   setOwner(v){ownerId=v;ctx.window.closetAuth.user.id=v;},
   setEpoch(v){ctx.captureOperationEpoch=v;},
-  index:()=>ctx.saveIndexed(ctx.batch[0],owner)
+  index:()=>ctx.saveIndexed(ctx.batch[0],owner,structuredClone(row))
  };
 }
 test('eligible auto-index adds exactly one garment and preserves other tab original draft',async()=>{
