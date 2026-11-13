@@ -44,7 +44,7 @@ test('P2-C33 controlled photographic RGB regression measures real PNG pixels, no
  assert.equal(same.meanAbsoluteChannelError,0);
  assert.equal(same.noOriginalPhotoPixelsReturned,true);
  assert.equal(same.humanAppearanceImprovementNotEstablished,true);
- const inCrop=base.slice();
+ const inCrop=Buffer.from(base);
  for(let y=150;y<175;y++)for(let x=130;x<146;x++){
   const i=(y*width+x)*3;
   inCrop[i]=155;inCrop[i+1]=155;inCrop[i+2]=155;
@@ -58,7 +58,7 @@ test('P2-C33 controlled photographic RGB regression measures real PNG pixels, no
  assert.ok(change.fractionChangedOver2>0&&change.fractionChangedOver2<.01);
  // Changes outside the documented photographed cloth viewing crop must not
  // be presented as garment pixel evidence, even when PNG bytes change.
- const away=base.slice();
+ const away=Buffer.from(base);
  for(let i=0;i<150;i++)away[i]=255;
  const uiOnly=await measuredIdenticalScenePixelDelta(source,await make(away),width);
  assert.equal(uiOnly.changedOver2,0);
