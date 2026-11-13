@@ -16,37 +16,56 @@ function get(source,a,b){
 }
 const ownerLease=get(app,'function ownerWardrobeMutationLease(){','function writeAll(values){');
 const cropCode=get(app,'function cropClothingPhoto(item){','function cropButton(item){');
+const draftCasCode=get(app,'function commitReviewedDraftCAS(', 'function persistDraft(');
 const jpeg='data:image/jpeg;base64,/9j/';
 function deferred(){let resolve,reject;const promise=new Promise((a,b)=>{resolve=a;reject=b;});promise.catch(()=>{});return {promise,resolve,reject};}
-function dbFixture(owner,{holdCommit=false}={}){
- const txGate=deferred(),writes=[];
- let commits=0;
- const db={
-  name:'closet-current-user-'+owner,
-  transaction(store,mode){
-   assert.equal(store,'state');assert.equal(mode,'readwrite');
-   const tx={oncomplete:null,onerror:null,onabort:null,error:null,objectStore(name){
-    assert.equal(name,'state');
-    return {put(value){writes.push(structuredClone(value));}};
-   }};
-   queueMicrotask(async()=>{
-    if(holdCommit)await txGate.promise;
-    commits++;tx.oncomplete?.();
-   });
-   return tx;
-  }
- };
- return {db,writes,releaseCommit:()=>txGate.resolve(),get commits(){return commits;}};
+function dbFixture(owner,{holdCommit=false,initialRow=null}={}){
+ const txGate=deferred(),writes=[];let commits=0;
+ let rows=initialRow?[structuredClone(initialRow)]:[];
+ const db={name:'closet-current-user-'+owner,transaction(store,mode){
+  assert.equal(store,'state');assert.equal(mode,'readwrite');
+  let aborted=false,scheduled=false;const staged=[];
+  const tx={oncomplete:null,onerror:null,onabort:null,error:null,
+   abort(){aborted=true;queueMicrotask(()=>tx.onabort?.());},
+   objectStore(name){
+    assert.equal(name,'state');return {
+     get(id){
+      assert.equal(id,'draft');
+      const request={result:null,onsuccess:null,onerror:null};
+      queueMicrotask(()=>{if(aborted)return;
+       request.result={id:'draft',batch:structuredClone(rows)};
+       request.onsuccess?.();
+      });return request;
+     },
+     put(value){
+      if(aborted)throw Error('Aborted private draft transaction');
+      writes.push(structuredClone(value));staged.push(structuredClone(value));
+      if(scheduled)return;scheduled=true;
+      queueMicrotask(async()=>{
+       if(holdCommit)await txGate.promise;
+       if(aborted)return;
+       rows=structuredClone(staged.at(-1).batch);
+       commits++;tx.oncomplete?.();
+      });
+     }
+    };
+   }
+  };return tx;
+ }};
+ return {db,writes,releaseCommit:()=>txGate.resolve(),
+  get rows(){return structuredClone(rows);},get commits(){return commits;}};
 }
 const row=(owner,extra={})=>({id:'same-id',ownerId:owner,category:'Tops',itemType:'T-shirt',
  color:owner==='A'?'Blue':'Red',colorSource:'user',image:jpeg,originalPhoto:{image:jpeg,sha256:'a'.repeat(64)},...extra});
 function fixture({holdPhoto=false,holdQueue=false,holdCommit=false,holdLocal=false,saved=false}={}){
- const first=dbFixture('A',{holdCommit}),second=dbFixture('B'),photo=deferred(),queue=deferred(),local=deferred(),events=[];
- const old=row('A'),next=row('B'),auth={user:{id:'A'},assertCurrent(){}};
+ const old=row('A'),next=row('B');
+ const first=dbFixture('A',{holdCommit,initialRow:old}),second=dbFixture('B',{initialRow:next}),
+  photo=deferred(),queue=deferred(),local=deferred(),events=[];
+ const auth={user:{id:'A'},assertCurrent(){}};
  let handler;
  const ctx={
   window:{closetAuth:auth},db:first.db,captureOperationEpoch:0,localPending:new Set(),busy:false,stream:null,cameraOpening:false,
-  items:saved?[old]:[],batch:saved?[]:[old],structuredClone,
+  items:saved?[old]:[],batch:saved?[]:[old],structuredClone,normalizeClothing:x=>x,
   openPhotoCrop:(_item,opts)=>{handler=opts;return Promise.resolve();},
   checkPhoto:()=>holdPhoto?photo.promise:Promise.resolve({colorEstimate:{color:'Blue'},signature:'sig-a',aspect:1}),
   queued:fn=>holdQueue?queue.promise.then(fn):fn(),
@@ -57,7 +76,7 @@ function fixture({holdPhoto=false,holdQueue=false,holdCommit=false,holdLocal=fal
   render:()=>events.push('render:'+auth.user.id),message:v=>events.push('message:'+auth.user.id+':'+v)
  };
  vm.createContext(ctx);
- vm.runInContext(ownerLease+'\n'+cropCode,ctx);
+ vm.runInContext(ownerLease+'\n'+draftCasCode+'\n'+cropCode,ctx);
  ctx.cropClothingPhoto(old);
  assert.ok(handler,'Actual app must call crop editor with callbacks');
  return {ctx,old,next,first,second,photo,queue,local,events,get handler(){return handler;},
