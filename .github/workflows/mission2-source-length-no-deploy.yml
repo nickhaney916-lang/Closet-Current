@@ -162,6 +162,17 @@ jobs:
         node scripts/test-native-3d-05-browser.mjs
         cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/mission2-source-length/control-${{ matrix.engine }}
         node scripts/check-mission2-visual-delta.mjs ${{ matrix.engine }} edge-guard
+    - name: P2-C34 controlled 163-bone source garment seam-normal shading pixels (NO DEPLOY)
+      env:
+        PHOTO_SOURCE_LENGTH: '1'
+        PHOTO_SOURCE_PROJECTION: '1'
+        PHOTO_TRIANGLE_CONTACTS: '1'
+        PHOTO_SOURCE_SEAM_NORMAL_ABLATION_CONTROL: '1'
+        MISSION2_PERFORMANCE: '0'
+      run: |
+        node scripts/test-native-3d-05-browser.mjs
+        cp -a benchmark/user-photo-to-anatomical-3d-62/${{ matrix.engine }} benchmark/mission2-source-length/seam-control-${{ matrix.engine }}
+        node scripts/check-mission2-visual-delta.mjs ${{ matrix.engine }} seam-normal
     - name: Genuine signed-fixture owner original-photo fallback if source geometry adds triangle contacts
       env:
         PHOTO_SOURCE_LENGTH: '1'
