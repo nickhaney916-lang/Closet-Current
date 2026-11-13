@@ -582,12 +582,34 @@ export function fitSourceLength(shirt,root,profile,{projectSourceRGB=false,trace
    releaseAuthorized:false
   });
  }
+ let seamShading=null;
  if(!previewOnly){
-  for(const {mesh,p,next} of staged){p.array.set(next);p.needsUpdate=true;
-   mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();}
+  // Stage ALL source-normal buffers before changing the FIRST original
+  // garment: malformed UV-adjacent skinning must not partially commit.
+  const prepared=staged.map(({mesh,next})=>stageSourceFabricSeamNormals(mesh,next));
+  seamShading=Object.freeze({
+   checkedGarmentMeshes:prepared.length,
+   coincidentSeamVertices:prepared.reduce((n,a)=>n+a.evidence.coincidentSeamVertices,0),
+   smoothedVertices:prepared.reduce((n,a)=>n+a.evidence.smoothedVertices,0),
+   compatibleSeamClusters:prepared.reduce((n,a)=>n+a.evidence.compatibleSeamClusters,0),
+   maxNormalDeltaDegrees:Math.max(0,...prepared.map(x=>x.evidence.maxNormalDeltaDegrees)),
+   positionsPhotoPixelsUVIndicesAndSkinPreservedByShading:true,
+   humanVisualImprovementNotEstablished:true,
+   dynamicsOrCollisionReleaseNotCertified:true,
+   releaseAuthorized:false
+  });
+  for(let i=0;i<staged.length;i++){
+   const {mesh,p,next}=staged[i];
+   p.array.set(next);p.needsUpdate=true;
+   mesh.geometry.setAttribute('normal',new THREE.BufferAttribute(prepared[i].normals,3));
+   mesh.geometry.computeBoundingBox();mesh.geometry.computeBoundingSphere();
+  }
   sourceProjection?.commit();
  }
- return {...shirt,stats:{...shirt.stats,sourceProjectionRGB:sourceProjection!==null,
+ return {...shirt,stats:{...shirt.stats,
+  sourceLengthSeamShadingEvidence:seamShading,
+  sourceLengthSeamShadingApplied:seamShading!==null,
+  sourceProjectionRGB:sourceProjection!==null,
   sourceProjectionMaterialCount:sourceProjection?.materialCount||0,sourceProjectionRuntime:sourceProjection?.runtime||null,sourceProjectionRearPhotographed:false,sourceLengthFit:!previewOnly,sourceLengthDryRun:previewOnly,sourceLengthExtensionScale:extensionScale,
   sourceLengthSHA256:SOURCE,
   sourceLengthMovedVertices:moved,sourceLengthOldHemY:minY,sourceLengthNewHemY:lowest,
