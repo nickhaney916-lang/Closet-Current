@@ -33,4 +33,15 @@
 
 **NO-GO** to merge/deploy or lift Family Alpha HOLD. No percent or 10/10 claim.
 
-**P846 CI STATUS: PENDING executable-head verification**.
+## Verified P846 executable-head acceptance — November 12, 2026 Pacific
+
+**Executable SHA:** `ad48cc2ab9fc6ae6cd8d8f192b2db8834d556d22`. Exact-head [Mission 1 P846 NO DEPLOY Actions #43334052062](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43334052062) **3/3 JOBS SUCCESS**. Strict P845 immutable ancestry, 13 changed paths only, preserved default review-first/P844 save lock/P845 photo-quality cleanup. **17/17 focused native tests** plus **350/350 full Node tests** passed, zero fail/skip, both research builds passed.
+
+Actual Chromium+WebKit CSS widths **320, 390 and 430**:
+- P846 actual P844 Adjust form **6/6**: unresolved unit blocked, different owner blocked, duplicate companion mask blocked, owner-approved pair yields exactly **1** wardrobe item from **2** original garment-region receipts, double submit blocked, no JS errors.
+- Parallel #70 original real browser *synthetic* mask and owner pairing controls passed all six engine/width scenarios, plus inherited P845 optional photo advice, P843 no-auto-save, P844 baseline-vs-guard and owner approved editor checks passed.
+- **11/11 SHA-verified original lawful public photo bytes** passed inherited P845 descriptive quality diagnostics; 1/11 low-resolution advisory, no independent human-verified real pair/mask or recognition improvement evidence, therefore **PAIR RECALL/PRECISION and TRUE RECOGNITION GAIN remain UNKNOWN**.
+
+**Document-only follow-up:** report update does not change executable code; a fresh exact-final-HEAD no-deploy run must pass before signing off on final documentation SHA.
+
+**Release state: NO-GO, FAMILY ALPHA HOLD #255 OPEN, do not merge/deploy.**
