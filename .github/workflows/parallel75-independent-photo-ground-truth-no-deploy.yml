@@ -1,0 +1,99 @@
+name: Parallel 75 independent ground truth provenance — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel75-independent-blind-photo-ground-truth-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel75-ground-truth-HOLD
+  cancel-in-progress: true
+jobs:
+  native-integrity-and-full-app-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P845 parent, exact dataset-only change allowlist, private evidence absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=6aad19ae0705aa42e75b80583720210ce9d7e1ef
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p75-paths
+          cat /tmp/p75-paths
+          test "$(wc -l </tmp/p75-paths)" -eq 9
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/p75-dataset-core.mjs|scripts/p75-acquire-commons.mjs|scripts/p75-review-offline.mjs|tests/parallel75-independent-ground-truth.test.mjs|research/parallel75/queries.json|research/parallel75/CODEBOOK.md|research/parallel75/annotation-template.json|research/parallel75/REPORT.md|.github/workflows/parallel75-independent-photo-ground-truth-no-deploy.yml) ;;
+              *) echo "P75 OUT OF SCOPE: $path"; exit 1 ;;
+            esac
+          done </tmp/p75-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/ benchmark/ supabase/ .github/workflows/pages.yml .github/workflows/cloudflare-pages.yml)"
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel75/REPORT.md
+          test "$(git ls-files 'research/parallel75/*' | grep -E '\.(jpg|jpeg|png|webp|pem|key)$' | wc -l)" -eq 0
+          echo P75_PINNED_PARENT_EXACT_9_PATH_NO_DEPLOY
+      - name: Temporary test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Dataset guards, independent signature adversarial scenarios and no-secret CI refusal
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/p75-dataset-core.mjs
+          node --check scripts/p75-acquire-commons.mjs
+          node --check scripts/p75-review-offline.mjs
+          node --test tests/parallel75-independent-ground-truth.test.mjs
+          set +e
+          output=$(CI=true node scripts/p75-review-offline.mjs audit /tmp/nonexistent /tmp/registry 2>&1)
+          code=$?
+          set -e
+          test "$code" -ne 0
+          grep -Fq 'not permitted inside CI' <<<"$output"
+          echo P75_HUMAN_AND_PRIVATE_BLIND_CI_LOCKED_OUT
+      - name: Full parent source build and serial native regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          echo P75_FULL_PARENT_NATIVE_REGRESSIONS_PASS
+  source-byte-provenance-audit-HOLD:
+    needs: [native-integrity-and-full-app-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      P75_MAX_ORIGINALS: '18'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Temporary image decoder; no app deploy or private keys
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Commons current license/original-byte metadata and 18-image bounded download, UNLABELED
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/p75-acquire-commons.mjs
+          test -s research/parallel75/runtime-summary-PUBLIC.json
+          test -s research/parallel75/runtime-candidates-UNLABELED-EXPOSED.json
+          echo P75_SOURCE_AUDIT_NO_PHOTOS_NO_HUMAN_LABELS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: parallel75-public-train-dev-candidate-provenance-NO-PHOTOS-NO-BLIND
+          path: |
+            research/parallel75/runtime-summary-PUBLIC.json
+            research/parallel75/runtime-candidates-UNLABELED-EXPOSED.json
+          if-no-files-found: ignore
+          retention-days: 14
