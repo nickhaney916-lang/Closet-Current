@@ -5,6 +5,8 @@ const recognitionAssetVersion=new URL(document.currentScript?.src||location.href
 // camera + gallery source fidelity with no query flags on this isolated build.
 // Release HOLD #255 remains absolute, no production or staging writes.
 const nativeCanonical167Active=true;
+// MAIN1054: research-only and never auto-run/save FashionCLIP or FashionSigLIP.
+const mission4Dual82Active=new URLSearchParams(location.search).get('mission4Dual82')==='research';
 const captureProof01Active=nativeCanonical167Active||
  new URLSearchParams(location.search).get('captureProof01')==='after';
 const mobileCameraToCloset75Active=new URLSearchParams(location.search).get('cameraCloset75')==='after';
@@ -960,6 +962,28 @@ function adjustPhoto(item){
  }};
  dialog.onclose=()=>{if(editorSession.current()&&batch.includes(item)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+ // An explicit research URL can mount the original M1 comparison policy in
+ // the genuine native owner Photo Results editor. Its output only changes
+ // UNSAVED select fields. M3 canonical JPEG/owner-review/IDB CAS remains writer.
+ if(mission4Dual82Active){
+  const status=node('p','Optional two-model comparison is loading. Nothing is automatically saved.','fine');
+  form.prepend(status);
+  import('./m4-dual-review-1054.mjs').then(({mountMission4DualReview1054})=>
+   mountMission4DualReview1054({
+    form,dialog,item,draft,editorSession,
+    getItems:()=>items,getBatch:()=>batch,
+    getDb:()=>db,getEpoch:()=>captureOperationEpoch,
+    getAuth:()=>window.closetAuth,getSchema:()=>clothingSchema,
+    saving:()=>save.disabled
+   })
+  ).then(()=>{
+   if(dialog.open&&editorSession.current())
+    status.textContent='Optional local two-model research. You must still inspect the original photo and explicitly confirm before saving.';
+  }).catch(()=>{
+   if(dialog.open&&editorSession.current())
+    status.textContent='Two-model research unavailable for this private photo. Use the normal manual Adjust fields; nothing was changed or saved.';
+  });
+ }
 }
 function renderRecognitionNotice(){
  const notice=$('recognitionNotice');if(!notice)return;
