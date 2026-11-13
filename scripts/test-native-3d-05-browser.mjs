@@ -1266,6 +1266,13 @@ try{
      assert.equal(evidence.sourceRGBValuesNeverReported,true);
      assert.equal(evidence.allOriginalSourcePixelsStayPrivate,true);
      assert.equal(evidence.colorAccuracyNotVerified,true);
+     // P2-C32: actual signed licensed source garment material compiled
+     // with an explicit UV-domain feather on the RGB blend. The source
+     // photo itself and inferred neutral rear are not changed.
+     assert.equal(evidence.sourcePhotoUVEdgeBleedGuardApplied,true);
+     assert.equal(evidence.originalPhotographicRGBNeverRepeatedBeyondSource,true);
+     assert.equal(evidence.edgeFeatherSourceDomainPercent,1.2);
+     assert.equal(evidence.photoFrontAlphaAndNeutralRearStillRequired,true);
      assert.equal(evidence.photorealismNotVerified,true);
      assert.equal(evidence.releaseAuthorized,false);
      // P2-C31 checks the actual GLSL source projection on complete
