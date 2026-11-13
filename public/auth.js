@@ -66,7 +66,7 @@
       if(!snapshot||storedSession!==snapshot||localStorage.getItem(STORE)!==snapshot)
        throw Error('Session replaced during refresh');
       if(data.user?.id!==expected||!data.access_token||!data.refresh_token){
-       lockAccount();throw Error('Verified refresh account or credentials changed');
+       lockAccount();throw Error('Session account changed or required refresh credentials missing');
       }
       showUser(data);
      }).catch(error=>{
