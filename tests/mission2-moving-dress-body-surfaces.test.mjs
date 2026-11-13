@@ -1186,3 +1186,117 @@ test('C48: moving skinned source cloth carries first unresolved diagnostic but k
   /real intermediate cloth fold or unverified seam refused/);
  assert.deepEqual(snap(f.dress.mesh),original);
 });
+
+
+test('C49: genuine 163-bone source triangles with a strict interior transverse crossing remain BLOCKED',()=>{
+ const f=clothed44([
+  -.15,-.10,0,.15,-.10,0,0,.15,0,
+  0,-.07,-.10,0,-.07,.10,0,.10,0
+ ]);
+ const original=snap(f.dress.mesh),receipt=fast45(f),cross=receipt.firstSourceCrossing49;
+ assert.equal(cross.schema,'M2-first-source-contact-geometry-C49');
+ assert.equal(cross.originalSourcePhotoShaContractChecked,true);
+ assert.equal(cross.originalSourceFaceCount,2);
+ assert.equal(cross.originalSourceContactClass,'strict-interior-transverse-face-crossing');
+ assert.equal(cross.posedContactClass,'strict-interior-transverse-face-crossing');
+ assert.ok(cross.originalStrictInteriorCrossings>=1);
+ assert.ok(cross.posedStrictInteriorCrossings>=1);
+ assert.equal(cross.crossingAppearsOnlyInSkinnedPose,false);
+ assert.equal(cross.firstContactRemainsHardVeto,true);
+ assert.equal(cross.repairCandidateStatus,'not-proposed-without-independent-source-review');
+ assert.throws(()=>assertSourceDressFastSelfContact45(receipt),
+  /source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C49: valid source UV-split edge contact is NOT a strict transverse crossing or an approved repair',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ const orig=snap(f.dress.mesh),receipt=fast45(f),cross=receipt.firstSourceCrossing49;
+ assert.equal(cross.originalSourceContactClass,'parallel-coplanar-possible-overlap');
+ assert.equal(cross.posedContactClass,'parallel-coplanar-possible-overlap');
+ assert.equal(cross.originalStrictInteriorCrossings,0);
+ assert.equal(cross.posedStrictInteriorCrossings,0);
+ assert.equal(cross.sourceNormalsParallel,true);
+ assert.equal(cross.posedNormalsParallel,true);
+ assert.equal(cross.originalGeometryMutation,false);
+ assert.equal(cross.releaseAuthorized,false);
+ assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),orig);
+});
+test('C49: 8 micron parallel near-miss is uncertainty, not fabricated penetration or release',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  .15,.15,.000008,.7,.15,.000008,.15,.7,.000008
+ ]);
+ const orig=snap(f.dress.mesh),receipt=fast45(f);
+ const cross=receipt.firstSourceCrossing49;
+ assert.equal(receipt.unresolvedPairs,1);
+ assert.equal(cross.posedContactClass,'parallel-near-contact');
+ assert.equal(cross.originalStrictInteriorCrossings,0);
+ assert.equal(cross.posedStrictInteriorCrossings,0);
+ assert.equal(cross.borderlineContactStillUnresolved,true);
+ assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),orig);
+});
+test('C49: source-clear triangle becomes a REAL skinned-bone crossing, not a source seam',()=>{
+ const f=clothed44([
+  -.15,-.10,0,.15,-.10,0,0,.15,0,
+  0,-.07,.30,0,-.07,.50,0,.10,.40
+ ]);
+ for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ const original=snap(f.dress.mesh);
+ f.dress.mesh.skeleton.bones[1].position.z=-.4;
+ const receipt=fast45(f),cross=receipt.firstSourceCrossing49;
+ assert.equal(receipt.unresolvedPairs,1);
+ assert.equal(cross.originalStrictInteriorCrossings,0);
+ assert.ok(cross.posedStrictInteriorCrossings>=1);
+ assert.equal(cross.posedContactClass,'strict-interior-transverse-face-crossing');
+ assert.equal(cross.crossingAppearsOnlyInSkinnedPose,true);
+ assert.equal(cross.humanSeamVerified,false);
+ assert.equal(cross.unsampledContinuousClothCertified,false);
+ assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C49: original full P61-style skinned source dress provides bounded first contact class but no geometry edits',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const receipt=fast45(f),cross=receipt.firstSourceCrossing49;
+ assert.equal(receipt.unresolvedPairs,1);
+ assert.equal(receipt.completeSourceSelfContactAudit,false);
+ assert.equal(cross.originalSourceFaceCount,2);
+ assert.ok(['strict-interior-transverse-face-crossing',
+  'parallel-coplanar-possible-overlap','parallel-near-contact',
+  'oblique-or-uncertain-proximity'].includes(cross.posedContactClass));
+ assert.equal(cross.firstContactRemainsHardVeto,true);
+ assert.equal(cross.originalGeometryMutation,false);
+ assert.equal(cross.repairCandidateStatus,'not-proposed-without-independent-source-review');
+ console.log('C49_ORIGINAL_SOURCE_FIRST_INTERSECTION_SAFE_SUMMARY',JSON.stringify({
+  original:cross.originalSourceContactClass,posed:cross.posedContactClass,
+  originalStrict:cross.originalStrictInteriorCrossings,
+  posedStrict:cross.posedStrictInteriorCrossings,
+  inducedOnlyByPose:cross.crossingAppearsOnlyInSkinnedPose,
+  approved:false,originalChanged:false
+ }));
+ assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C49: moving 17-pose skinned dress carries FIRST contact geometry witness only; refuses collision clearance',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ const orig=snap(f.dress.mesh);
+ const tokens=sampledCloth46(f,{angles:Array.from({length:17},(_,i)=>
+  .02*Math.sin(Math.PI*i/16))});
+ const receipt=temporal46(f,tokens),w=receipt.firstUnresolvedCrossing49;
+ assert.equal(receipt.firstUnresolvedSampleIndex,0);
+ assert.equal(w.schema,'M2-first-source-contact-geometry-C49');
+ assert.equal(w.firstContactRemainsHardVeto,true);
+ assert.equal(receipt.fullSequenceAudited,false);
+ assert.equal(receipt.posesChecked,1);
+ assert.throws(()=>assertSourceDressTemporalSelfContact46(receipt),
+  /real intermediate cloth fold or unverified seam refused/);
+ assert.deepEqual(snap(f.dress.mesh),orig);
+});
