@@ -20,17 +20,17 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: P874 immutable base and EXACT five-file source isolation
+      - name: P874 immutable base and EXACT six-file source isolation
         shell: bash
         run: |
           set -euo pipefail
           BASE=ad60fa300146f0ed469c1367180e75c4fc55b20c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/p875-paths
-          test "$(wc -l </tmp/p875-paths)" -eq 5
+          test "$(wc -l </tmp/p875-paths)" -eq 6
           while IFS= read -r p; do
             case "$p" in
-              public/dual-panel-82.mjs|scripts/test-p82-review-browser.mjs|scripts/p875-public-shared-rank-audit.mjs|research/mission1-shared-rank-photo-audit-875/REPORT.md|.github/workflows/mission1-shared-rank-photo-audit-875-no-deploy.yml) ;;
+              public/dual-panel-82.mjs|scripts/test-p82-review-browser.mjs|scripts/p82-real-browser.mjs|scripts/p875-public-shared-rank-audit.mjs|research/mission1-shared-rank-photo-audit-875/REPORT.md|.github/workflows/mission1-shared-rank-photo-audit-875-no-deploy.yml) ;;
               *) echo "UNAUTHORIZED_PATH $p"; exit 1;;
             esac
           done </tmp/p875-paths
@@ -75,13 +75,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict five-file pinned immutable source
+      - name: Strict six-file pinned immutable source
         shell: bash
         run: |
           set -euo pipefail
           BASE=ad60fa300146f0ed469c1367180e75c4fc55b20c
           git merge-base --is-ancestor "$BASE" HEAD
-          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 5
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 6
           test -z "$(git diff --name-only "$BASE" HEAD -- public/dual-worker-82.mjs public/model-arbitration-81.mjs benchmark/locked-photo-sources.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json)"
       - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
       - run: npx playwright install --with-deps chromium
