@@ -33,7 +33,7 @@ function sample84(mesh,maxFaces){
   (attr.isBufferAttribute&&attr.itemSize===size&&attr.count===position.count);
 
  if(si.count!==position.count||sw.count!==position.count||
-    !mapped||!sourceOriginalRest||
+    !mapped||!(sourceOriginalRest||uv)||
     !validSourceAttribute(uv,2)||
     !validSourceAttribute(rest,3)||
     !validSourceAttribute(shirtPanel,3)||
