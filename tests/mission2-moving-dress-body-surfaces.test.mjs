@@ -643,7 +643,7 @@ test('C44: two NONADJACENT real 163-bone skinned cloth triangles intersect in 3D
  assert.equal(report.actual163BoneSkinnedPose,true);
  assert.equal(report.actualContinuousSelfContactCertified,false);
  assert.throws(()=>assertSourceDressSelfContact44(report),
-  /possibly self-intersecting original source garment/);
+  /potentially self-intersecting original source garment/);
  assert.deepEqual(snap(f.dress.mesh),original);
  assert.deepEqual(Object.keys(token),[]);
 });
@@ -662,7 +662,7 @@ test('C44: real topological shared-edge neighbors are excluded, but disconnected
  const seamResult=self44(seam);
  assert.ok(seamResult.unresolvedPairs>0,
   'two disconnected source faces meeting across source UV seam need confirmation');
- assert.throws(()=>assertSourceDressSelfContact44(seamResult),/possibly self-intersecting/);
+ assert.throws(()=>assertSourceDressSelfContact44(seamResult),/potentially self-intersecting/);
 });
 test('C44: nonadjacent well separated triangles pass a research-only source-self-contact veto',()=>{
  const f=clothed44([
@@ -712,11 +712,21 @@ test('C44: opt-in source-dress callback rejects actual unresolved self-contact b
  // Native original cylinder seam topology may contain touching disconnected
  // source pieces, or its deformed skirt may self-intersect. Either is a
  // conservative veto; never fabricate a ground-truth "seam safe" label.
- const receipt=callback({endPositions:original.position.slice()});
- if(receipt.unresolvedPairs){
+ // The native original dress has thousands of source faces and UV-split
+ // seam boundaries. A bounded scan may conservatively reject before
+ // finishing; incomplete scanning MUST NOT authorize original-photo edits.
+ let receipt=null,incomplete=false;
+ try{receipt=callback({endPositions:original.position.slice()});}
+ catch(error){
+  assert.match(error.message,/C44 self-contact evidence incomplete/);
+  incomplete=true;
+ }
+ if(incomplete||receipt.unresolvedPairs){
   assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
    phase:.25,sweptSelfContactAudit44:callback
-  }),/C44 incomplete or possibly self-contacting/);
+  }),/C44 self-contact evidence incomplete|C44 incomplete or possibly self-contacting/);
+  assert.deepEqual(snap(f.dress.mesh),original,
+   'over-budget original source garment must be byte-preserved');
  }else{
   const result=sampleSourceDressMotion36(f.dress,f.root,{
    phase:.25,sweptSelfContactAudit44:callback
