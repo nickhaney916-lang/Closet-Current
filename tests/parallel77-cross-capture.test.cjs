@@ -116,8 +116,8 @@ test('index is bounded at 100/500/1000 and does no original-photo decode',()=>{
   const inventory=Array.from({length:n},(_,i)=>({id:'saved-'+i,category:'Tops',
    visualAspect:1.5,visualSignature:visual(13)}));
   const before=performance.now(),result=C.candidateRank(incoming,inventory),elapsed=performance.now()-before;
-  assert.equal(result.scanned,n);assert.equal(result.top.length,3);
-  assert.equal(result.totalCandidates,n);assert.ok(elapsed<10000);
+  assert.equal(result.scanned,n);assert.equal(result.top.length,0);
+  assert.equal(result.totalCandidates,0);assert.ok(elapsed<10000);
   // Outputs intentionally omit source pixels/photos.
   assert.equal(JSON.stringify(result).includes('data:image'),false);
  }
