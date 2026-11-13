@@ -61,12 +61,14 @@ jobs:
           IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
           node scripts/p82-prepare-models.mjs --check
-      - name: Real browser inference, full 48 Chromium; isolated WebKit hard cases only
+      - name: Real Chromium inference on all 48 public development photos
         run: |
           node scripts/p82-real-browser.mjs chromium
           node scripts/p82-summarize.mjs benchmark/p82-chromium/results.json benchmark/p82-chromium
-          P82_ISOLATED=1 P82_IDS=commons-0035,commons-0078,commons-0003,commons-0059 node scripts/p82-real-browser.mjs webkit benchmark/p82-webkit-hard4
-          node scripts/test-p82-real-review.mjs
+      - name: Isolated WebKit diagnostics, NOT continuous or owner-enabled acceptance
+        run: P82_ISOLATED=1 P82_IDS=commons-0035,commons-0078,commons-0003,commons-0059 node scripts/p82-real-browser.mjs webkit benchmark/p82-webkit-hard4
+      - name: Actual models through owner review and offline/corrupt asset fallback
+        run: node scripts/test-p82-real-review.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: p82-public-browser-numeric-only
