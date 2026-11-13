@@ -243,3 +243,134 @@ test('C53: original SHA, all source rest/skin/UV fields and duplicate source ind
    root:f.root,dress:f.dress,...invalid
   }),/M2 C52 original-photo diagnostic/);
 });
+
+const audit54=f=>auditActualPhotographedDressSurfaces52({
+ root:f.root,dress:f.dress,
+ refineTriangleDistances53:true,refineSourceTopology54:true
+});
+test('C54: indexed-disconnected duplicate UV boundary has TWO same-source vertices, not an approved sewn seam',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]),snapshot=original(f),r=audit54(f);
+ const w=r.posedSourceTopology54;
+ assert.equal(w.schema,'M2-original-source-zero-contact-topology-C54');
+ assert.equal(w.zeroDistancePairsClassified,1);
+ assert.equal(w.sourceCoincidentEdgeCandidates,1);
+ assert.equal(w.sourceCoincidentFaceCandidates,0);
+ assert.equal(w.sourceIndependentZeroDistancePairs,0);
+ assert.equal(w.classificationComplete,true);
+ assert.equal(w.sourceCoincidenceNotAHumanVerifiedSewingSeam,true);
+ assert.equal(w.sourceCoordinateDuplicateNotPermissionToWeld,true);
+ assert.equal(r.actualPhysicalSewingSeamsCertified54,false);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),snapshot);
+});
+test('C54: exact duplicated original source triangle is a full-face candidate, never automatic source cleanup',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,0,1,0,1,0,0
+ ]),r=audit54(f);
+ assert.equal(r.originalSourceTopology54.zeroDistancePairsClassified,1);
+ assert.equal(r.originalSourceTopology54.sourceCoincidentFaceCandidates,1);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentFaceCandidates,1);
+ assert.equal(r.originalPhotoAndSkinnedSkinBindingPreserved54,true);
+ assert.equal(r.allZeroSourcePairsRemainContactUnresolved54,true);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C54: a touching original source point is a junction candidate, NOT proven sewn UV edge',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,-1,0,0,0,-1,0
+ ]),r=audit54(f);
+ const w=r.posedSourceTopology54;
+ assert.equal(w.zeroDistancePairsClassified,1);
+ assert.equal(w.sourceCoincidentSinglePointCandidates,1);
+ assert.equal(w.sourceCoincidentEdgeCandidates,0);
+ assert.equal(w.sourceIndependentZeroDistancePairs,0);
+ assert.equal(w.sourceCoincidenceNotAHumanVerifiedSewingSeam,true);
+});
+test('C54: actual source-authentic crossing with NO original coincident vertices remains independent geometry',()=>{
+ const f=fixture52(cross),r=audit54(f);
+ assert.equal(r.originalSourceStrictCrossings,1);
+ assert.equal(r.posedSourceTopology54.zeroDistancePairsClassified,1);
+ assert.equal(r.posedSourceTopology54.sourceIndependentZeroDistancePairs,1);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentEdgeCandidates,0);
+ assert.equal(r.allZeroSourcePairsRemainContactUnresolved54,true);
+});
+test('C54: copied source UV endpoints with INCOMPATIBLE original bone identities remain unsafe to reunite',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]);
+ f.dress.mesh.geometry.getAttribute('skinIndex').setX(3,1);
+ const old=original(f),r=audit54(f);
+ assert.equal(r.originalSourceTopology54.zeroDistancePairsClassified,1);
+ assert.equal(r.originalSourceTopology54.sourceCoincidentButUnsafeSkinRestOrPose,1);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentButUnsafeSkinRestOrPose,1);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentEdgeCandidates,0);
+ assert.equal(r.posedSourceTopology54.sourceCoordinateDuplicateNotPermissionToWeld,true);
+ assert.deepEqual(original(f),old);
+});
+test('C54: original shader rest texture source coordinates must agree before any UV boundary is even considered',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]);
+ f.dress.mesh.geometry.getAttribute('dressRest').setX(3,1.02);
+ const originalState=original(f),r=audit54(f);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentButUnsafeSkinRestOrPose,1);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentEdgeCandidates,0);
+ assert.deepEqual(original(f),originalState);
+});
+test('C54: original index-connected adjacent garment faces stay outside disconnected zero-contact classification',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,1,1,0
+ ],[0,1,2,1,3,2]),r=audit54(f);
+ assert.equal(r.posedSourceTopology54.zeroDistancePairsClassified,0);
+ assert.ok(r.posedSourceTopology54.sourceIndexSharedPairsExcludedBeforeDistance>=1);
+ assert.equal(r.posedSourceTopology54.sourceIndependentZeroDistancePairs,0);
+ assert.equal(r.fullOriginalSourceTopologyAuditCompleted54,true);
+});
+test('C54: 8-micron separated unconnected cloth is not mislabeled as a UV seam or zero-contact',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  .15,.15,.000008,.7,.15,.000008,.15,.7,.000008
+ ]),r=audit54(f);
+ assert.equal(r.refinedPosedDistance53.positiveGapWithinToleranceUnresolved,1);
+ assert.equal(r.posedSourceTopology54.zeroDistancePairsClassified,0);
+ assert.equal(r.posedSourceTopology54.sourceCoincidentFaceCandidates,0);
+ assert.equal(r.posedSourceTopology54.sourceIndependentZeroDistancePairs,0);
+});
+test('C54: bounded topology-classification budget cannot falsely declare full 3D source audit complete',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  .1,.1,0,.6,.1,0,.1,.6,0,
+  .2,.2,0,.7,.2,0,.2,.7,0
+ ]);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,
+  refineTriangleDistances53:true,refineSourceTopology54:true,
+  maxZeroDistanceTopologyPairs54:1
+ });
+ assert.equal(r.fullOriginalSourceTopologyAuditCompleted54,false);
+ assert.equal(r.posedSourceTopology54.classificationComplete,false);
+ assert.equal(r.sourceAndPosedDistanceRefinementCompleted53,false);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C54: forged original-source topology configuration is rejected without changing photo source',()=>{
+ const f=fixture52(cross),before=original(f);
+ for(const invalid of [
+  {refineSourceTopology54:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:'true'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   maxZeroDistanceTopologyPairs54:0},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   maxZeroDistanceTopologyPairs54:999999}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...invalid
+  }),/C52 original-photo diagnostic/);
+ }
+ assert.deepEqual(original(f),before);
+});
