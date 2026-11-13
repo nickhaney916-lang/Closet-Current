@@ -1,0 +1,65 @@
+name: "MAIN1054 native original-photo outfit preview — NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/main-thread-native-preview-1054-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-signed-photos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact ancestor and narrow research-only source allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=d27afa641eb0fabd2ade28504c8f5975d27abe9a
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test -n "$CHANGED"
+          while IFS= read -r path; do
+            case "$path" in
+              research/main-thread-integration-1054/source-to-outfit.mjs|\
+              research/main-thread-integration-1054/source-to-outfit.test.mjs|\
+              research/main-thread-integration-1054/native-2d-preview.mjs|\
+              research/main-thread-integration-1054/MILESTONE2.md|\
+              scripts/test-main1054-native-preview-browser.mjs|\
+              public/outfit-board.js|\
+              .github/workflows/main-thread-native-preview-1054-no-deploy.yml) ;;
+              *) echo "Unapproved changed path: $path" >&2; exit 1;;
+            esac
+          done <<< "$CHANGED"
+          grep -q "mission4Preview')==='research'" public/outfit-board.js
+          grep -q "renderAuthorized3D:false" research/main-thread-integration-1054/native-2d-preview.mjs
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/app.js public/index.html public/cloud-backup.js
+      - name: Install same pinned Mission 3 no-deploy test packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install offline test browser runtimes
+        run: npx playwright install --with-deps chromium webkit
+      - name: Native opaque-epoch plus original source-to-outfit tests
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Offline PWA build before native regression
+        run: node scripts/build.mjs
+      - name: Genuine native app synthetic JWT fixture and JPEG render (2D only)
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Inherited full native serial regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Scope/no-deploy final check
+        run: |
+          test -d dist
+          test -f benchmark/main1054-native-preview/results.json
+          echo "No prod, staging, hosted cloud, real owner photo or 3D deployment."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main1054-native-2d-research-proof
+          path: benchmark/main1054-native-preview/
+          retention-days: 7

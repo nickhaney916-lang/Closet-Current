@@ -170,3 +170,18 @@ test('owner-reviewed cutout source changes between snapshots must be rejected',a
   }
  })),/saved garment changed/);
 });
+
+test('native auth stores opaque string epoch, and it is accepted only while unchanged',async()=>{
+ const items=set(),epoch='9d319ca3-0bf4-4558-9b73-423095bf296c';
+ const options=opts(items,undefined,{getSession:()=>({...session(),epoch})});
+ const result=await preflightOwnedOutfit1054(options);
+ assert.equal(result.sessionEpoch,epoch);
+ let latest=epoch;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),epoch:latest}),
+  readOwnerItems:async()=>{latest='4f8a66fe-06a0-4d62-91f7-4da457984f14';return structuredClone(items);}
+ })),/owner session changed/);
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),epoch:'x'})
+ })),/signed owner session/);
+});
