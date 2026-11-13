@@ -117,11 +117,16 @@
    const sim=cosine(embedding,normFeatures(saved.recognitionMemory));
    const old=baseline(incoming,saved);
    const shape=structural(incoming.duplicateDescriptor77,saved.duplicateDescriptor77);
-   // Generous retrieval thresholds, not proof of same physical item.
-   if(!(sim!==null&&sim>=.88)&&!old&&!(shape!==null&&shape>=.90))continue;
-   const score=Math.max(sim===null?0:sim,old?.96:0,shape===null?0:shape*.95);
+   const range=signature=>Array.isArray(signature)&&signature.length===768?
+    Math.max(...signature)-Math.min(...signature):0;
+   // Flat/featureless RGB matches are cheap but unsafe. A contrary compatible
+   // embedding also suppresses RGB-only matching (lookalike clothes).
+   const supportedLegacy=old&&sim===null&&range(incoming.visualSignature)>=12&&range(saved.visualSignature)>=12;
+   if(!(sim!==null&&sim>=.88)&&!supportedLegacy&&!(shape!==null&&shape>=.90))continue;
+   const score=Math.max(sim!==null&&sim>=.88?sim:0,supportedLegacy?.87:0,
+    shape!==null&&shape>=.90?shape*.95:0);
    out.push({id:saved.id,score:Number(score.toFixed(5)),
-    signal:sim!==null&&sim>=.88?'same-model-embedding':shape!==null&&shape>=.90?'structural':'legacy-rgb'});
+    signal:sim!==null&&sim>=.88?'same-model-embedding':shape!==null&&shape>=.90?'structural':'legacy-rgb-review-only'});
   }
   out.sort((a,b)=>b.score-a.score||a.id.localeCompare(b.id));
   return {scanned:closet.length,top:out.slice(0,topK),totalCandidates:out.length,abstained:out.length===0,
