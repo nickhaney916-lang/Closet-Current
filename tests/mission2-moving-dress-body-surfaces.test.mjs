@@ -180,3 +180,19 @@ test('C40: clear, full original dress opt-in sample stays research-only, with ph
  for(const name of ['dressRest','dressCustomPhotoProjection','skinIndex','skinWeight'])
   assert.deepEqual(snap(f.dress.mesh)[name],original[name]);
 });
+
+test('C40: a changed photographed projection, skin weight, or body-scene roster invalidates captured evidence',()=>{
+ for(const change of ['photo','skin','missing-body']){
+  const f=fixture({fullDress:true,bodyZ:-2});
+  const start=capture(f),end=capture(f);
+  const before=structuredClone(snap(f.dress.mesh));
+  if(change==='photo')
+   f.dress.mesh.geometry.getAttribute('dressCustomPhotoProjection').setX(1,42);
+  if(change==='skin')
+   f.dress.mesh.geometry.getAttribute('skinWeight').setX(2,.5);
+  if(change==='missing-body')f.body.userData.work56Garment=true;
+  assert.throws(()=>audit(f,start,end),/M2 C40/,
+   'stale owner/source/body capture cannot silently approve research movement');
+  if(change==='missing-body')assert.deepEqual(snap(f.dress.mesh),before);
+ }
+});
