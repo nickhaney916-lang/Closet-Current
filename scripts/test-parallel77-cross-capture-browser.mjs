@@ -42,6 +42,17 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      shortlist:typeof CrossCaptureDuplicate77!=='undefined'?CrossCaptureDuplicate77.candidateRank(batch[0],items):null,
      scopeReady:!!window.closetAuth?.user,dbName:db?.name
     }))));
+    console.log('P77_SYNTHETIC_SOURCE_DIAGNOSTIC',JSON.stringify(await page.evaluate(async()=>{
+     const C=CrossCaptureDuplicate77,scope=C.open({ownerId:'owner-A',sessionId:'synthetic-debug-scope',
+      live:()=>window.closetAuth?.user?.id}),out={};
+     for(const [name,value] of [['draft',batch[0]],['saved',items[0]]]){
+      try{const e=await C.evidence(value,scope);out[name]={sha:e.sourceSha256.length,revision:e.revisionSha256.length};}
+      catch(e){out[name]={error:e.message};}
+     }
+     try{const p=await C.propose(batch[0],items,scope);out.proposal={count:p.candidates.length};}
+     catch(e){out.proposal={error:e.message,stack:e.stack?.slice(0,240)};}
+     C.close(scope);return out;
+    })));
     throw error;
    }
    assert.equal(await page.getByAltText('New unsaved clothing photograph').count(),1);
