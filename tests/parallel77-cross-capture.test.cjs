@@ -24,6 +24,10 @@ test('lighting changes can break the RGB heuristic while same-model retrieval pr
  const r=C.candidateRank(incoming,[saved]);
  assert.equal(r.top[0].id,'old');assert.equal(r.top[0].signal,'same-model-embedding');
 });
+test('duplicate wardrobe IDs cannot designate an unambiguous old physical item',()=>{
+ const a=item('new',7),b=item('same-id',8),c=item('same-id',9);
+ assert.throws(()=>C.candidateRank(a,[b,c]),/AMBIGUOUS_WARDROBE_ID/);
+});
 test('mismatched 512-feature model is not comparable, and abstention is available',()=>{
  const incoming=item('new',3,{visualSignature:visual(40)}),saved=item('old',4,{
   visualSignature:visual(10),recognitionMemory:{modelKey:'different-model',features:vec().features}});
@@ -61,6 +65,8 @@ test('source-bound explicit same-item decision remains unlinked, unsaved and one
  await assert.rejects(C.decide(proposal,scope,{action:'same-pending',candidateId:'old'}),/ACK_REQUIRED/);
  const receipt=await C.decide(proposal,scope,{action:'same-pending',candidateId:'old',acknowledged:true});
  assert.equal(receipt.linked,false);assert.equal(receipt.persisted,false);assert.equal(receipt.needsAtomicAdapter,true);
+ assert.match(receipt.incomingRevisionSha256,/^[a-f0-9]{64}$/);
+ assert.match(receipt.incomingCropSha256,/^[a-f0-9]{64}$/);
  assert.equal(incoming.image,jpeg(10));assert.equal(saved.image,jpeg(11));
  assert.equal(saved.alternateViews77,undefined);
  await assert.rejects(C.decide(proposal,scope,{action:'different',candidateId:'old',acknowledged:true}),/STALE_PROPOSAL/);
