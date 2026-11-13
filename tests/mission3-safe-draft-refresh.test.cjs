@@ -164,6 +164,8 @@ test('refresh button is wired, visible and source-executed, not an inert control
  assert.match(app,/\$\('refreshReview'\)\.onclick=async\(\)=>\{/);
  assert.match(app,/await refreshOwnerDraftFromDevice\(\)/);
  assert.match(implementation,/readDraftFrom\(ownerDB\)/);
- assert.doesNotMatch(implementation,/\.put\(|\.add\(|\.delete\(/);
+ assert.doesNotMatch(implementation,/\.put\(|\.delete\(|objectStore\(|\.transaction\(/);
+ // In-memory Set.add() tracks duplicate IDs; it is not a database write.
+ assert.match(implementation,/seen\.add\(row\.id\)/);
  assert.doesNotMatch(implementation,/window\.closetCloud\?\.changed/);
 });
