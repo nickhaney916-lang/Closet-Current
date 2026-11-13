@@ -13,7 +13,8 @@ if(!process.argv[2]||donor===base||donor==='/'||
    donor.startsWith(base+'/supabase'))
  throw Error('P84 disposable separate donor directory required');
 const entry='research/parallel84-real-photo-layers';
-for(const name of ['layer-contact84.mjs','actual-skinned-layers84.mjs']){
+for(const name of ['layer-contact84.mjs','actual-skinned-layers84.mjs',
+ 'source-bone-yoke-trial84.mjs']){
  await mkdir(join(donor,entry),{recursive:true});
  await copyFile(join(base,entry,name),join(donor,entry,name));
 }
@@ -23,11 +24,25 @@ const importAnchor="import {tailorSourceDress74} from './source-true-dress-tailo
 assert.equal(source.split(importAnchor).length,2,
  'P84 pinned P541 photographed two-piece controller import anchor changed');
 source=source.replace(importAnchor,importAnchor+
- "\nimport {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';");
+ "\nimport {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';"+
+ "\nimport {trialSourceBoneShoulderYoke84} from '../parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';");
 const end="contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();";
 assert.equal(source.split(end).length,2,
  'P84 genuine P541 garments completed anchor missing');
 const addition=[
+"if(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'){",
+"  const p84Mode=new URLSearchParams(globalThis.location.search).get('parallel84Shape');",
+"  if(p84Mode==='baseline')globalThis.__parallel84ShapeResult=Object.freeze({",
+"   schema:'parallel84-source-bone-shoulder-yoke/v1',",
+"   status:'BASELINE_UNMODIFIED',trialApplied:false,releaseAuthorized:false",
+"  });",
+"  if(p84Mode==='trial')globalThis.__parallel84ShapeResult=",
+"   trialSourceBoneShoulderYoke84({",
+"    root,shirt:built.shirt,pants:built.pants,",
+"    avatar:globalThis.document?.getElementById('model')?.value,",
+"    requestedDropMeters:.014",
+"   });",
+"}",
 "if(globalThis.location?.hostname==='127.0.0.1'&&",
 "   new URLSearchParams(globalThis.location.search).get('parallel84Layers')==='research'){",
 "  globalThis.__parallel84LayerEvidence=null;",
