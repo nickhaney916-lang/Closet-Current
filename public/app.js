@@ -188,6 +188,9 @@ function adjustPhoto(item){
  // owner-review path and also fence Cancel/Remove/Escape and field edits while
  // the private write is pending. This research branch is NOT deployed.
  let saveInFlight=false;
+ // #77 OFF by default. Comparison may ONLY inspect this owner's loaded
+ // local wardrobe. "Same" creates an unpersisted intent, never a second item.
+ let cross77Pending=false,cross77Proposal=null,cross77Decision=null,cross77Scope=null;
  let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null;
  const reviewedKeys72=new Set(['category','itemType']);
  const form=node('form'),draft=structuredClone(item);
@@ -201,7 +204,7 @@ function adjustPhoto(item){
  };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
-  const valid=Boolean(confirmReview?.checked&&reviewedCore());
+  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
   if(save)save.disabled=saveInFlight||!valid;
   if(reviewStatus)reviewStatus.textContent=reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
@@ -250,6 +253,42 @@ function adjustPhoto(item){
   form.append(approval,reviewStatus);canSaveReview();
  }
  learningCheck72=attachLearningConsent72(form,learningScope72());
+ // The experimental flow requires a deliberate URL opt-in and a live, exact
+ // signed-user object + IndexedDB owner binding. No global closet scan/decode.
+ const cross77Mode=typeof CrossCaptureDuplicate77!=='undefined'&&
+  new URLSearchParams(location.search).get('crossCapture77')==='1'&&pendingDraft;
+ if(cross77Mode){
+  const user=window.closetAuth?.user,owner=user?.id;
+  if(owner&&db?.name==='closet-current-user-'+owner){
+   cross77Scope=CrossCaptureDuplicate77.open({ownerId:owner,sessionId:crypto.randomUUID(),
+    live:()=>window.closetAuth?.user===user&&db?.name==='closet-current-user-'+owner?owner:null});
+   cross77Pending=true;canSaveReview();
+   const panel=node('section',null,'duplicate-review-77');
+   panel.setAttribute('aria-label','Possible previously owned garment comparison');
+   panel.append(node('p','Checking possible previously owned garments. Original photos stay in your private closet.','fine'));
+   form.prepend(panel);
+   // P849: start evidence hashing only AFTER Adjust finishes synchronous draft
+   // setup (including item.userAdjusted=true). Otherwise evidence() detects
+   // our own setup mutation as P77_STALE_SOURCE and suppresses all candidates.
+   Promise.resolve().then(()=>CrossCaptureDuplicate77.propose(item,items,cross77Scope,{topK:1})).then(proposal=>{
+    if(!dialog.open||!CrossCaptureDuplicate77.valid(cross77Scope)||
+     !batch.some(x=>x===item))return;
+    cross77Pending=false;
+    if(proposal.abstained){panel.replaceChildren();panel.hidden=true;canSaveReview();return;}
+    cross77Proposal=proposal;
+    CrossCaptureDuplicate77.render(panel,proposal,{scope:cross77Scope,onDecision:receipt=>{
+     cross77Decision=receipt;
+     canSaveReview();
+     if(receipt.action==='remove-unsaved')remove.click();
+    }});
+    canSaveReview();
+   }).catch(()=>{
+    cross77Pending=false;cross77Proposal=null;
+    panel.replaceChildren(node('p','Duplicate research check unavailable. Continue with regular photo review; no link was made.','fine'));
+    canSaveReview();
+   });
+  }
+ }
  cancel.type=remove.type='button';cancel.onclick=()=>{if(!saveInFlight)dialog.close();};
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
  remove.onclick=async()=>{if(saveInFlight){message('This photo is currently being saved.');return;}try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
@@ -262,6 +301,11 @@ function adjustPhoto(item){
    ((item.reconciliation70||item.reconciliation70Status)&&!unit70OwnerEvidenceValid({...item,category:draft.category}))||
    (item.reconciliation70&&duplicateUnit70InCloset(item,items))){
    message('Resolve garment grouping, source ownership, or duplicate source before saving.');return;
+  }
+  if((cross77Scope&&!CrossCaptureDuplicate77.valid(cross77Scope))||
+     cross77Pending||(cross77Proposal&&cross77Decision?.action!=='different')){
+   message('Resolve the possible owned-garment comparison for this signed owner first, or keep the original unsaved.');
+   return;
   }
   if(explicitReview&&!canSaveReview()){
    message('Confirm the garment category and color against the photo, then check the review box before saving.');
@@ -279,12 +323,49 @@ function adjustPhoto(item){
   const source72=item.image,origin72=item.recognitionPhoto?.image,unit72=item.reconciliation70?.maskSha256;
   // Keeping the P844 transaction lock while hashing source/owner evidence
   // prevents a duplicate save or a late learning acknowledgement.
+  // A decision from another photo, item revision, owner or session is void.
+  // This verifies BOTH current JPEG sources before the existing P844 save lock.
+  if(cross77Proposal){
+   const old=items.find(x=>x.id===cross77Decision?.candidateItemId);
+   if(!old||!CrossCaptureDuplicate77.valid(cross77Scope))throw Error('P77_STALE_OWNER');
+   const [incomingEvidence,savedEvidence]=await Promise.all([
+    CrossCaptureDuplicate77.evidence(item,cross77Scope),
+    CrossCaptureDuplicate77.evidence(old,cross77Scope)
+   ]);
+   if(cross77Decision.action!=='different'||
+    incomingEvidence.sourceSha256!==cross77Decision.incomingSourceSha256||
+    savedEvidence.sourceSha256!==cross77Decision.candidateSourceSha256||
+    savedEvidence.revisionSha256!==cross77Decision.candidateRevisionSha256)
+    throw Error('P77_STALE_DECISION');
+  }
   const reviewed72=await confirmedLearningValue72(value,consent72,scope72,[...reviewedKeys72]);
   if(learningMode72()&&(!dialog.open||scope72!==learningScope72()||
     source72!==item.image||origin72!==item.recognitionPhoto?.image||
     unit72!==item.reconciliation70?.maskSha256||
     !batch.some(x=>x===item)||(!item.reconciliation70&&!unit72?false:!unit70OwnerEvidenceValid({...item,category:value.category}))))
    throw Error('P847_STALE_LEARNING_OR_SOURCE');
+  // P849: learning hashes can await; reverify the exact owner, draft image,
+  // same candidate/physical unit revision immediately before owner storage.
+  // This remains a local research fence, NOT a cross-tab/cloud CAS proof.
+  if(cross77Scope){
+   if(!dialog.open||!CrossCaptureDuplicate77.valid(cross77Scope)||
+      source72!==item.image||origin72!==item.recognitionPhoto?.image||
+      unit72!==item.reconciliation70?.maskSha256||!batch.some(x=>x===item))
+    throw Error('P849_STALE_SOURCE_OR_OWNER');
+   if(cross77Proposal){
+    const old=items.find(x=>x.id===cross77Decision?.candidateItemId);
+    if(!old||cross77Decision?.action!=='different')throw Error('P849_STALE_DUPLICATE_DECISION');
+    const [newSource,oldSource]=await Promise.all([
+     CrossCaptureDuplicate77.evidence(item,cross77Scope),
+     CrossCaptureDuplicate77.evidence(old,cross77Scope)
+    ]);
+    if(!CrossCaptureDuplicate77.valid(cross77Scope)||
+       newSource.sourceSha256!==cross77Decision.incomingSourceSha256||
+       oldSource.sourceSha256!==cross77Decision.candidateSourceSha256||
+       oldSource.revisionSha256!==cross77Decision.candidateRevisionSha256)
+     throw Error('P849_CHANGED_CANDIDATE_OR_OWNER');
+   }
+  }
   await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
@@ -298,7 +379,7 @@ function adjustPhoto(item){
   message('Could not save changes. Try again.');
  }};
  dialog.oncancel=event=>{if(saveInFlight)event.preventDefault();};
- dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
+ dialog.onclose=()=>{if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
 function renderRecognitionNotice(){
