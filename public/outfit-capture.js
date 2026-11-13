@@ -6,6 +6,7 @@ const outfitInstances840=typeof location!=='undefined'&&new URL(location.href).s
 const outfitUnits70=outfitInstances840&&typeof location!=='undefined'&&new URL(location.href).searchParams.get('outfitUnits70')==='1';
 // #76 only exists alongside #70 owner and exact original/mask SHA receipts.
 const outfitColor76=outfitUnits70&&typeof location!=='undefined'&&new URL(location.href).searchParams.get('color76')==='1';
+const approvedColorNames76=new Set(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']);
 const unit70Api=outfitUnits70?import('./outfit-unit-reconciliation-70.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:'')):null;
 let outfitUnit70Error='';
 // Prove the original JPEG hash in the browser instead of trusting two
@@ -105,7 +106,8 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
        /^[a-f0-9]{64}$/.test(color.maskSha256||'')&&
        sourceProof===p.reconciliation70?.sourceSha256&&sourceProof===color.sourceSha256&&
        color.maskSha256===p.reconciliation70?.maskSha256;
-     verifiedColor76=Boolean(valid&&color.status==='review'&&color.proposedPrimary);
+     verifiedColor76=Boolean(valid&&color.status==='review'&&approvedColorNames76.has(color.proposedPrimary)&&
+       (!color.proposedSecondary||(approvedColorNames76.has(color.proposedSecondary)&&color.proposedSecondary!==color.proposedPrimary)));
      colorNote76=verifiedColor76?
        p.label+': '+color.proposedPrimary+(color.proposedSecondary?' / '+color.proposedSecondary:'')+(color.multicolor?' (multicolor)':''):
        p.label+': color needs manual review';
