@@ -101,7 +101,6 @@ test('P84 out-of-budget comparisons explicitly INCOMPLETE not zero-contact succe
 });
 test('P84 face budget, degenerate, nonfinite and malformed buffer all reject without source mutation',()=>{
  const bad=[new Float32Array([]),new Float64Array([1,2,3]),
-  new Float64Array([0,0,0,1,0,0,2,0,0]),
   new Float64Array([0,0,0,1,0,0,0,NaN,0])];
  for(const triangles of bad){
   const items=input();items[0].triangles=triangles;
@@ -147,4 +146,16 @@ test('P84 independently rehashes TWO genuine repo licensed ORIGINAL JPEG sources
  }
  // This tests genuine source bytes + recorded licensing, NOT image-to-3D
  // accuracy, a second-person legal audit, or source-to-mesh texture mapping.
+});
+
+test('P84 unresolved degenerate garment faces are counted but never misrepresented as clearance',()=>{
+ const items=input();
+ items[0].triangles=new Float64Array([0,0,0,1,0,0,2,0,0]);
+ const x=run(items);
+ assert.equal(x.status,'SOURCE_FACE_DEFECTS_UNRESOLVED');
+ assert.equal(x.originalSourceFaceCount,2);
+ assert.equal(x.nondegenerateFacesAudited,1);
+ assert.equal(x.sourceDegenerateFacesExcluded,1);
+ assert.equal(x.safe3D,false);
+ assert.equal(x.contactClearanceProved,false);
 });
