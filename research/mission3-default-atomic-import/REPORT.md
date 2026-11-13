@@ -28,9 +28,10 @@ An isolated research implementation `research/mission3-legacy-atomic-import/lega
 
 ## Test plan and evidence
 
+- `tests/mission3-edit-backup-owner-lease.test.cjs` retains same-owner and different-owner stale import cancellation and updates its default-import fixture to expect one acknowledged native transaction, not the former partial writes.
 - `tests/mission3-default-atomic-backup-source-guard.test.mjs`: genuine synthetic JPEG header, native fake-indexeddb, exact production taxonomy and outfit cleaner, atomic success/rollback/transaction races, source proof, foreign owner, prototype rejection, invalid outfit references, same-ID different-original rejection, same-original metadata update, missing legacy ownerId becomes signed owner only.
 - `scripts/test-mission3-default-atomic-import-browser.mjs`: actual public app with **default URL** (no special flag), real Chromium/WebKit 320/390/430 and native private IndexedDB, synthetic owner photos/garments, ordinary file input and confirmation, merged clothes+looks+outfits+cloud revision in one commit; invalid photo collision, duplicate ID, foreign account, unsaved canonical original, and real IDB staged outfit-write exception all leave full snapshot unchanged; cancel and revocation protect original wardrobe. No off-host writes.
-- Exact parent six-file no-deploy GitHub workflow runs inherited Node, mobile browser, owner/privacy, original photo, recognition, cloud restore, signed disposable PostgreSQL Storage RLS and photo outfit styling regressions.
+- Exact parent seven-file no-deploy GitHub workflow runs inherited Node, mobile browser, owner/privacy, original photo, recognition, cloud restore, signed disposable PostgreSQL Storage RLS and photo outfit styling regressions.
 
 **Verification pending exact HEAD full green CI; do not represent the code as released or claim physical-device/human photo accuracy.**
 
