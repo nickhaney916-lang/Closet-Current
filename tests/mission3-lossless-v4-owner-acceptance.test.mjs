@@ -210,7 +210,8 @@ test('invalid or unowned legacy v3 input is not silently upgraded into a v4 whol
 test('v4 acceptance requires original research flag in app handlers and preserves existing default v3 paths',()=>{
  const s=readFileSync('public/app.js','utf8');
  const ex=s.slice(s.indexOf("$('export').onclick=async()=>"),s.indexOf("$('import').onchange=async"));
- const im=s.slice(s.indexOf("$('import').onchange=async"),s.indexOf("window.addEventListener('beforeunload'"));
+ const importStart=s.indexOf("$('import').onchange=async");
+ const im=s.slice(importStart,s.indexOf("window.addEventListener('beforeunload'",importStart));
  assert.match(ex,/losslessV4M3.*research/);
  assert.match(im,/losslessV4M3.*research/);
  assert.match(ex,/exportLosslessV4M3/);
