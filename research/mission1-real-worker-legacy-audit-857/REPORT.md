@@ -1,6 +1,6 @@
 # Mission 1 P857 — exact real public 32-photo regression triage + independently verified subtype decision hardening
 
-**Family Alpha HOLD #255 OPEN. Mission 1 RELEASE NO-GO.** Isolated draft unmerged undeployed research only. Never modify production/staging, hosted Supabase, private wardrobes/photos/accounts, protected main, other mission or parallel-branch HEADs. No real owner data accessed.
+**FAMILY ALPHA HOLD #255 OPEN. MISSION 1 RELEASE NO-GO.** Isolated draft unmerged undeployed research only. Never modify production/staging, hosted Supabase, private wardrobes/photos/accounts, protected main, other mission or parallel-branch HEADs. No real owner data accessed.
 
 ## Verified exact source lineage
 
