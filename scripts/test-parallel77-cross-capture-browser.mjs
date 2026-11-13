@@ -34,7 +34,16 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    const approval=page.getByRole('checkbox',{name:/I checked the clothing photo/});
    const submit=page.getByRole('button',{name:'Save changes'});
    await page.evaluate(()=>setup77());
-   await same.waitFor({state:'visible',timeout:15000});
+   try{await same.waitFor({state:'visible',timeout:15000});}catch(error){
+    console.log('P77_BROWSER_PROPOSAL_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({
+     secure:window.isSecureContext,module:typeof CrossCaptureDuplicate77,
+     dialogCount:document.querySelectorAll('dialog').length,
+     panel:document.querySelector('.duplicate-review-77')?.textContent?.slice(0,500),
+     shortlist:typeof CrossCaptureDuplicate77!=='undefined'?CrossCaptureDuplicate77.candidateRank(batch[0],items):null,
+     scopeReady:!!window.closetAuth?.user,dbName:db?.name
+    }))));
+    throw error;
+   }
    assert.equal(await page.getByAltText('New unsaved clothing photograph').count(),1);
    assert.equal(await page.getByAltText(/Existing owned item/).count(),1);
    assert.equal(await submit.isDisabled(),true);
