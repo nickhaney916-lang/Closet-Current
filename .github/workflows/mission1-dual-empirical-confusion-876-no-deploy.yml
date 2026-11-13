@@ -91,7 +91,7 @@ jobs:
         run: |
           set -euo pipefail
           IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
-          test "$(printf '%s' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
+          test "$(printf '%s\n' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
           node scripts/p82-prepare-models.mjs --check
       - name: Genuine FashionCLIP + FashionSigLIP Chromium 48 original-photo candidate coverage (NOT blind accuracy)
