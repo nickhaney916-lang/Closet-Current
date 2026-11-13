@@ -167,6 +167,20 @@ test('unreviewed candidate cannot be promoted to train, dev or blind by split na
  for(const split of ['train','development','blind'])assert.ok(validatePartition([record({split})],[]).length>0,split);
  assert.deepEqual(validatePartition([record()],[]),[]);
 });
+test('frozen genuine-image receipts are publicly exposed, source-verified but not garment ground truth',async()=>{
+ const pin=JSON.parse(await readFile('research/parallel75/pinned-public-training-development-candidates.json','utf8'));
+ assert.equal(pin.schema,'p75-public-candidates-pin-v1');
+ assert.equal(pin.blinded,false);assert.equal(pin.eligibleForBlind,false);
+ assert.equal(pin.rows.length,32,'pin must remain exact source set until a deliberate reseal');
+ assert.equal(new Set(pin.rows.map(x=>x.sha256)).size,32);
+ for(const row of pin.rows){
+  assert.deepEqual(verifiedSource(row),[]);
+  assert.equal(row.photoContent,'unreviewed');assert.equal(row.sourceGroupApproved,false);
+  assert.equal(row.garmentHumanVerified,false);assert.equal(row.split,'quarantine');
+  for(const key of ['expectedCategory','expectedType','blindAnswers','humanLabels'])
+   assert.equal(Object.hasOwn(row,key),false,'public source receipts never include answer keys');
+ }
+});
 test('public audit never fabricates reviewer counts or blind eligibility',()=>{
  const v=publicAuditReport([record()],[]);
  assert.equal(v.candidates,1);assert.equal(v.humanLabeled,0);assert.equal(v.doubleHumanVerified,0);
