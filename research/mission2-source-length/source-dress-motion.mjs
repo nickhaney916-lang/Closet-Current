@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -132,7 +132,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     !Number.isFinite(phase)||phase<0||phase>1||
     (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function')||
     (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function')||
-    (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function'))
+    (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function')||
+    (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -333,6 +334,30 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state);
   sweptIntervalAuditObserved41=true;
  }
+ // P2-C42 research-only multi-snapshot actual skeletal rotation veto.
+ // Caller must supply genuine sampled middle-body poses using the original
+ // immutable photographed garment, never a linearized end-pose guess.
+ let sweptArticulatedAuditObserved42=false;
+ if(sweptArticulatedAudit42!==null){
+  const evidence=sweptArticulatedAudit42({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(evidence?.schema!=='M2-source-dress-articulated-pose-samples-v1'||
+     evidence.genuineIntermediateBodyRotationsObserved!==true||
+     evidence.fullProvidedPoseSequenceChecked!==true||
+     evidence.matchedOriginalPhotoSourceStartEnd!==true||
+     evidence.allSampledPairsAccounted!==true||
+     !Number.isSafeInteger(evidence.poseSamples)||evidence.poseSamples<5||
+     evidence.sampledIntervals!==evidence.poseSamples-1||
+     !Number.isSafeInteger(evidence.unresolvedPairs)||evidence.unresolvedPairs!==0||
+     !Number.isSafeInteger(evidence.provenSeparatedPairs)||
+     evidence.broadphasePotentialPairs!==evidence.provenSeparatedPairs||
+     evidence.actualNonlinearMotionBetweenSamplesCertified!==false||
+     evidence.collisionFreeContinuousRotationCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C42 incomplete or unsafe real intermediate skeletal samples refused');
+  checkProvenance(mesh,state);
+  sweptArticulatedAuditObserved42=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -363,6 +388,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionSweptWholeFabricCertified40:false,
   sourceDressMotionLinearIntervalGuardObserved41:sweptIntervalAuditObserved41,
   sourceDressMotionExactContinuousCollisionCertified41:false,
+  sourceDressMotionArticulatedSamplesObserved42:sweptArticulatedAuditObserved42,
+  sourceDressMotionContinuousBoneRotationCertified42:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
