@@ -1,0 +1,109 @@
+name: Parallel 77 cross-capture owner-confirmed candidate review — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel77-owner-verified-cross-capture-duplicate-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel77-cross-capture-HOLD
+  cancel-in-progress: true
+jobs:
+  exact-parent-native-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P847 ancestry, eight-path allowlist and no-deploy fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=bb524ab4b52437f97db30ba9030c69fbcf0f4835
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p77-paths
+          cat /tmp/p77-paths
+          test "$(wc -l < /tmp/p77-paths)" -eq 8
+          while IFS= read -r path; do
+            case "$path" in
+              public/cross-capture-duplicate-77.js|public/app.js|public/index.html|tests/parallel77-cross-capture.test.cjs|scripts/test-parallel77-cross-capture-browser.mjs|scripts/benchmark-parallel77-cross-capture.mjs|research/parallel77-cross-capture/REPORT.md|.github/workflows/parallel77-cross-capture-no-deploy.yml) ;;
+              *) echo "P77 UNSCOPED FILE $path"; exit 1;;
+            esac
+          done </tmp/p77-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase public/auth.js public/outfit-unit-reconciliation-70.mjs public/outfit-capture.js public/local-worker.mjs public/recognition-engine.mjs public/clothing-memory.js public/cloud-backup-engine.js benchmark)"
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'let saveInFlight=false;' public/app.js
+          grep -Fq 'function learningScope72()' public/app.js
+          grep -Fq "const outfitUnits70=outfitInstances840" public/outfit-capture.js
+          grep -Fq 'needsAtomicAdapter' public/cross-capture-duplicate-77.js
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/parallel77-cross-capture/REPORT.md
+          ! grep -Eq '(^|[^a-z])(deploy|wrangler publish|supabase db push)( |$)' .github/workflows/parallel77-cross-capture-no-deploy.yml
+          echo P77_EXACT_PARENT_EIGHT_PATH_NO_DEPLOY_PASS
+      - name: No-save test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Syntax, source/owner tests, full Node and both research builds
+        run: |
+          set -euo pipefail
+          node --check public/cross-capture-duplicate-77.js
+          node --check public/app.js
+          node --check scripts/benchmark-parallel77-cross-capture.mjs
+          node --check scripts/test-parallel77-cross-capture-browser.mjs
+          node --test tests/parallel77-cross-capture.test.cjs
+          node scripts/benchmark-parallel77-cross-capture.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          echo P77_FULL_NATIVE_BUILDS_AND_SYNTHETIC_BENCH_PASS
+  chromium-webkit-HOLD:
+    needs: [exact-parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real desktop browser engines only
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Parallel 77 opt-in, owner decision, no-merge and stale-photo browser tests
+        run: |
+          set -euo pipefail
+          node scripts/test-parallel77-cross-capture-browser.mjs
+      - name: Inherited P847/P846/P844/P843 owner gates and shoe pairing
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-owner-learning-integration-847.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-first-default-843.mjs
+          echo P77_CHROMIUM_WEBKIT_OWNER_SAFETY_PASS
+  licensed-source-controls-HOLD:
+    needs: [exact-parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      P73_PHOTO_IDS: commons-0003,commons-0014,commons-0021,commons-0033,commons-0049,commons-0060,commons-0077,commons-0082,commons-0094,validation-0001,validation-0019
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Decoder for source SHA checks only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Retained lawful-source SHA receipts; NOT same-physical-item truth
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P73_PHOTO_IDS"
+          node scripts/evaluate-parallel73-real-photo.mjs
+          echo P77_LICENSED_SOURCE_HASH_DIAGNOSTIC_ONLY_PASS
