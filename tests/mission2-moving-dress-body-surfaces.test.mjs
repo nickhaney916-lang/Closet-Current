@@ -8,9 +8,10 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43,
  auditSourceDressSelfContact44,assertSourceDressSelfContact44,
  auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45,
- auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46,
- requireSourceDressTemporalReceipt47}
+ auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
+import {requireSourceDressTemporalReceipt47}
+ from '../research/mission2-source-length/source-dress-receipt-lock.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
 import {sampleSourceDressMotion36}
