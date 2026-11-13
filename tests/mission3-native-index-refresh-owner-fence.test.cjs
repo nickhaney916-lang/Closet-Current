@@ -85,9 +85,14 @@ test('normal same-owner failure gives actionable generic message without raw exc
 });
 test('session revoked during owned-style refresh cannot run any subsequent new owner work',async()=>{
  const f=fixture(),pending=deferred();
- f.ctx.window.styleOwnedLive03Bridge.refresh=()=>{f.events.push('style:old-start');return pending.promise;};
+ let entered;const enteredStyle=new Promise(resolve=>entered=resolve);
+ f.ctx.window.styleOwnedLive03Bridge.refresh=()=>{
+  f.events.push('style:old-start');entered();return pending.promise;
+ };
  const running=f.ctx.nativeIndex07Refresh();
- await Promise.resolve();
+ // Wait until the old style refresh has ACTUALLY begun before revocation.
+ // A single arbitrary microtask may resume before the bridge await resolves.
+ await enteredStyle;
  f.replaceOwner();
  pending.resolve();
  await running;
