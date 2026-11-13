@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and four-path no-deploy allowlist
+      - name: Exact parent and five-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-auto-index-source-cas.test.cjs|research/mission3-auto-index-source-cas/REPORT.md|.github/workflows/mission3-auto-index-source-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|research/mission3-auto-index-source-cas/REPORT.md|.github/workflows/mission3-auto-index-source-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -77,7 +77,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict four-path same-parent diff gate
+      - name: Strict five-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -86,7 +86,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-auto-index-source-cas.test.cjs|research/mission3-auto-index-source-cas/REPORT.md|.github/workflows/mission3-auto-index-source-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|research/mission3-auto-index-source-cas/REPORT.md|.github/workflows/mission3-auto-index-source-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
