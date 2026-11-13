@@ -40,7 +40,12 @@ export function hamming64(a,b){
  let x=BigInt('0x'+a)^BigInt('0x'+b),n=0;
  while(x){n++;x&=x-1n;}return n;
 }
-export function verifiedSource(row){
+export function verifyOriginalBytes(row,bytes){
+ if(!Buffer.isBuffer(bytes)&&!(bytes instanceof Uint8Array))return false;
+ return bytes.length===row.byteLength&&sha256(bytes)===row.sha256&&
+  createHash('sha1').update(bytes).digest('hex')===row.commonsSha1;
+}
+export function verifiedSource(row,{now=new Date(),maxAgeDays=90}={}){
  const issues=[];
  if(!row||typeof row!=='object')return ['source row missing'];
  if(row.schema!==SCHEMA)issues.push('schema');
@@ -53,7 +58,8 @@ export function verifiedSource(row){
  if(!Number.isInteger(row.width)||row.width<100||!Number.isInteger(row.height)||row.height<100)issues.push('dimensions');
  if(!Number.isInteger(row.orientation)||row.orientation<1||row.orientation>8)issues.push('EXIF orientation');
  if(!/^(image\/jpeg|image\/png|image\/webp)$/.test(row.mime||''))issues.push('image MIME');
- if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/.test(row.acquiredAt||''))issues.push('collection date');
+ if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/.test(row.acquiredAt||'')||!Number.isFinite(Date.parse(row.acquiredAt)))issues.push('collection date');
+ else if(new Date(row.acquiredAt).getTime()>now.getTime()+86400000||now.getTime()-new Date(row.acquiredAt).getTime()>maxAgeDays*86400000)issues.push('stale original/rights metadata');
  if(row.verification!=='bytes-verified'||!['unreviewed','human-reviewed'].includes(row.photoContent)||!['manual-review-required','curator-approved'].includes(row.rightsReview))issues.push('unfounded verification');
  if(typeof row.sourceGroupApproved!=='boolean'||typeof row.garmentHumanVerified!=='boolean')issues.push('group and human flags not explicit');
  if(!/^[a-f0-9]{16}$/.test(row.dhash64||''))issues.push('perceptual hash');
