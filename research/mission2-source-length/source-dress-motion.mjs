@@ -471,6 +471,12 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
      receipt.checkedOriginalFaces!==receipt.poseSamples*receipt.originalSourceFaces||
      !Number.isSafeInteger(receipt.sampledClothMoveIntervals)||
      receipt.sampledClothMoveIntervals<1||
+     receipt.sampledClothMoveIntervals>=receipt.poseSamples||
+     !Number.isFinite(receipt.maxObservedVertexStepMeters)||
+     !Number.isFinite(receipt.maxAllowedVertexStepMeters)||
+     receipt.maxObservedVertexStepMeters<0||
+     receipt.maxAllowedVertexStepMeters<=0||
+     receipt.maxAllowedVertexStepMeters>.1||
      receipt.maxObservedVertexStepMeters>receipt.maxAllowedVertexStepMeters+1e-7||
      receipt.disconnectedSeamsRemainUnresolved!==true||
      receipt.noOriginalPhotographOrSkinChanges!==true||
