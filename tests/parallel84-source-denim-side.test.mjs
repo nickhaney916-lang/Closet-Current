@@ -91,6 +91,13 @@ test('P84 indexed independent denim 163-bone SOURCE-NEUTRAL side shaping does no
  assert.equal(result.humanRealismApproved,false);
  assert.equal(result.releaseAuthorized,false);
  assert.notDeepEqual(f.mesh.geometry.getAttribute('position').array,was.position);
+ const finalPosition=f.mesh.geometry.getAttribute('position');
+ for(let i=0;i<finalPosition.count;i++){
+  if(was.pantsSourceFront[i]<.18)continue;
+  for(let component=0;component<3;component++)
+   assert.equal(finalPosition.array[i*3+component],was.position[i*3+component],
+    'One original photographed-front coordinate was silently displaced');
+ }
  for(const name of ['pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWeight','uv'])
   assert.deepEqual(f.mesh.geometry.getAttribute(name).array,was[name]);
  assert.deepEqual(f.mesh.geometry.index.array,beforeFaces);
