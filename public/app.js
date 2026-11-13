@@ -406,9 +406,16 @@ function adjustPhoto(item){
     unitAllowed:()=>unit70OwnerEvidenceValid({...item,category:draft.category}),
     onChoose:choice=>{
      const category=form.querySelector('select[aria-label="Main category"]');
-     if(category&&category.value!==choice.category){category.value=choice.category;category.dispatchEvent(new Event('input',{bubbles:true}));}
      const type=form.querySelector('select[aria-label="Item type"]');
-     if(type&&[...type.options].some(o=>o.value===choice.itemType)){type.value=choice.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));}
+     // P872: reject unknown/inconsistent model labels before altering a reviewed draft.
+     if(!category||!type||!Object.hasOwn(clothingSchema.types,choice.category)||
+        !clothingSchema.types[choice.category].includes(choice.itemType)||
+        ![...category.options].some(o=>o.value===choice.category))return false;
+     if(category.value!==choice.category){category.value=choice.category;category.dispatchEvent(new Event('input',{bubbles:true}));}
+     if(![...type.options].some(o=>o.value===choice.itemType))return false;
+     if(type.value!==choice.itemType){type.value=choice.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));}
+     return category.value===choice.category&&type.value===choice.itemType&&
+       draft.category===choice.category&&draft.itemType===choice.itemType;
     }
    });
   }).catch(()=>{});
