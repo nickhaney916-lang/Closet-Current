@@ -180,3 +180,13 @@ test('P84 deterministic cross-garment face sampling spans both meshes, counts om
  assert.deepEqual(f.shirt.mesh.geometry.index.array,savedShirt);
  assert.deepEqual(f.jeans.mesh.geometry.index.array,savedJeans);
 });
+
+
+test('P84 impossible face cap smaller than count of independent sourced panels fails without a sampling loop',()=>{
+ const f=scene(),another=skinned(f.root,top);
+ f.items[0].meshes.push(another.mesh);
+ const x=audit(f,{maxFaces:2});
+ assert.equal(x.status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ assert.equal(x.reason,'source-face-budget');
+ assert.equal(x.safe3D,false);
+});
