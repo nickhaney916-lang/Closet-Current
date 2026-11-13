@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {deriveSourceLength,fitSourceLength} from '../research/mission2-source-length/source-length.mjs';
+import {deriveSourceLength,fitSourceLength,stageSourceFabricSeamNormals} from '../research/mission2-source-length/source-length.mjs';
 import {createPosedBodyIntersectionAudit} from '../research/mission2-source-length/posed-intersections.mjs';
 const SHA='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const profile={accepted:true,sourceSHA256:SHA,cutoutSHA256:'a'.repeat(64),inferredBack:true,releaseAuthorized:false,
@@ -43,6 +43,10 @@ test('real 163-bone physical lower shell extends while panel/photo coordinates a
  assert.equal(after.stats.sourceLengthIntersectionPairsBefore,0);
  assert.equal(after.stats.sourceLengthIntersectionPairsAfter,0);
  assert.equal(after.stats.sourceLengthCollisionCertified,false);
+ assert.equal(after.stats.sourceLengthSeamShadingApplied,true);
+ assert.equal(after.stats.sourceLengthSeamShadingEvidence.checkedGarmentMeshes,3);
+ assert.equal(after.stats.sourceLengthSeamShadingEvidence.positionsPhotoPixelsUVIndicesAndSkinPreservedByShading,true);
+ assert.equal(after.stats.sourceLengthSeamShadingEvidence.releaseAuthorized,false);
  assert.equal(after.stats.sourceLengthPhysicalSizeMeasured,false);
  shirt.meshes.forEach((m,i)=>{
   assert.deepEqual(m.geometry.getAttribute('panelPosition').array,before[i].panel);
@@ -318,4 +322,69 @@ test('P2-C32 preserve original photo RGB only inside registered front UV and fad
  assert.ok(shader.uniforms.uM2SourceProjection.value.isVector4);
  shirt.meshes.forEach((mesh,i)=>assert.deepEqual(
   mesh.geometry.getAttribute('position').array,original[i]));
+});
+
+
+test('P2-C34 genuine 163-bone source fabric normals weld only skinned coincident soft folds, preserving source photo geometry',()=>{
+ const root=new THREE.Group(),bones=Array.from({length:163},()=>new THREE.Bone());
+ root.add(...bones);const skeleton=new THREE.Skeleton(bones);
+ const values=new Float32Array([
+  0,0,0, 1,0,0, 0,1,0,
+  1,0,0, 1,1,.2, 0,1,0
+ ]);
+ const make=()=>{const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(values.slice(),3));
+  g.setAttribute('normal',new THREE.BufferAttribute(new Float32Array(values.length),3));
+  const skin=new Uint16Array(24),weight=new Float32Array(24);
+  for(let i=0;i<6;i++)weight[4*i]=1;
+  g.setAttribute('skinIndex',new THREE.BufferAttribute(skin,4));
+  g.setAttribute('skinWeight',new THREE.BufferAttribute(weight,4));
+  const m=new THREE.SkinnedMesh(g,new THREE.MeshStandardMaterial());m.bind(skeleton);
+  return m;
+ };
+ const m=make(),g=m.geometry;
+ const originalPosition=g.getAttribute('position').array.slice(),
+  originalWeights=g.getAttribute('skinWeight').array.slice(),
+  originalSkin=g.getAttribute('skinIndex').array.slice(),
+  originalNormal=g.getAttribute('normal').array.slice();
+ const smooth=stageSourceFabricSeamNormals(m,originalPosition.slice());
+ assert.equal(smooth.evidence.sourceVertices,6);
+ assert.equal(smooth.evidence.coincidentSeamVertices,4);
+ assert.ok(smooth.evidence.smoothedVertices>=2);
+ assert.ok(smooth.evidence.compatibleSeamClusters>=1);
+ assert.ok(smooth.evidence.maxNormalDeltaDegrees>0);
+ assert.equal(smooth.evidence.originalSourcePositionsPhotoUVAndSkinUntouched,true);
+ assert.equal(smooth.evidence.alignedSkinningInfluencesOnly,true);
+ assert.equal(smooth.evidence.hardOrOpposingNormalsNotMerged,true);
+ assert.equal(smooth.evidence.releaseAuthorized,false);
+ const n1=new THREE.Vector3().fromArray(smooth.normals,3),
+  n3=new THREE.Vector3().fromArray(smooth.normals,9);
+ assert.ok(n1.distanceTo(n3)<1e-6,'same physical joined source must have same lighting normal');
+ assert.deepEqual(g.getAttribute('position').array,originalPosition);
+ assert.deepEqual(g.getAttribute('skinWeight').array,originalWeights);
+ assert.deepEqual(g.getAttribute('skinIndex').array,originalSkin);
+ assert.deepEqual(g.getAttribute('normal').array,originalNormal);
+ // A truly folded right-angle seam is deliberately NOT welded together:
+ // its normals have incompatible directions at the exact same position.
+ const hard=new Float32Array([
+  0,0,0, 0,1,0, 1,0,0,
+  0,0,0, 0,1,0, 0,0,1
+ ]);
+ const sharp=stageSourceFabricSeamNormals(make(),hard);
+ assert.equal(sharp.evidence.smoothedVertices,0);
+ assert.equal(sharp.evidence.compatibleSeamClusters,0);
+ // Unrelated original bone weights never get smoothed across a spatial join.
+ const other=make();other.geometry.getAttribute('skinIndex').setX(3,2);
+ const isolated=stageSourceFabricSeamNormals(other,originalPosition.slice());
+ const nAfterA=new THREE.Vector3().fromArray(isolated.normals,3),
+  nAfterB=new THREE.Vector3().fromArray(isolated.normals,9);
+ assert.ok(nAfterA.distanceTo(nAfterB)>1e-3);
+ assert.throws(()=>stageSourceFabricSeamNormals(m,new Float32Array([1,2,3])),
+  /M2 C34 exact source rig/);
+ const nonfinite=originalPosition.slice();nonfinite[0]=NaN;
+ assert.throws(()=>stageSourceFabricSeamNormals(m,nonfinite),
+  /M2 C34 exact source rig/);
+ const serialized=JSON.stringify(smooth.evidence);
+ for(const privateName of ['ownerId','sourceSHA256','pixelRGB','photoJPEG','sourceUV'])
+  assert.equal(serialized.includes(privateName),false);
 });
