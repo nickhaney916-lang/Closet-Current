@@ -29,10 +29,10 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD >/tmp/p854-paths
           cat /tmp/p854-paths
-          test "$(wc -l </tmp/p854-paths)" -eq 4
+          test "$(wc -l </tmp/p854-paths)" -eq 5
           while IFS= read -r p; do
             case "$p" in
-              public/app.js|tests/mission1-stale-photo-recognition-lease-854.test.cjs|research/mission1-stale-photo-recognition-lease-854/REPORT.md|.github/workflows/mission1-stale-photo-recognition-lease-854-no-deploy.yml) ;;
+              public/app.js|scripts/test-m1-review-first-default-843.mjs|tests/mission1-stale-photo-recognition-lease-854.test.cjs|research/mission1-stale-photo-recognition-lease-854/REPORT.md|.github/workflows/mission1-stale-photo-recognition-lease-854-no-deploy.yml) ;;
               *) echo "P854 OUT OF SCOPE: $p"; exit 1 ;;
             esac
           done </tmp/p854-paths
