@@ -135,13 +135,17 @@ export function auditDistinctPhotoLayers84({
          ...preparedFaces(b.triangles,1,maxFaces,counter)];
  }catch(e){return fail(String(e.message).replace(/[^a-z-]/g,''));}
  faces.sort((x,y)=>x.lo[0]-y.lo[0]);
- const active=[];
+ // Cross-garment only: the older single active list repeatedly scanned
+ // every shirt face against other SHIRT faces even though these are not the
+ // distinct-layer pairs being measured. Keeping separate active source sets
+ // bounds work by the explicit opposing-garment comparison budget.
+ const activeByPart=[[],[]];
  let comparisons=0,candidates=0,crossings=0,uncertain=0,complete=true;
  outer:for(const candidate of faces){
-  for(let k=active.length-1;k>=0;k--)
-   if(active[k].hi[0]+toleranceMeters<candidate.lo[0])active.splice(k,1);
-  for(const previous of active){
-   if(previous.part===candidate.part)continue;
+  const opposing=activeByPart[1-candidate.part];
+  for(let k=opposing.length-1;k>=0;k--)
+   if(opposing[k].hi[0]+toleranceMeters<candidate.lo[0])opposing.splice(k,1);
+  for(const previous of opposing){
    if(++comparisons>maxComparisons){complete=false;break outer;}
    if(previous.hi[1]+toleranceMeters<candidate.lo[1]||
       candidate.hi[1]+toleranceMeters<previous.lo[1]||
@@ -151,7 +155,7 @@ export function auditDistinctPhotoLayers84({
    if(strictTransverseCrossing(previous.tri,candidate.tri))crossings++;
    else uncertain++;
   }
-  active.push(candidate);
+  activeByPart[candidate.part].push(candidate);
  }
  const status=!complete?'INCOMPLETE_BUDGET':
    crossings?'STRICT_CROSSING_VETO':
