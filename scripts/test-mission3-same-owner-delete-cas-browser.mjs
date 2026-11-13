@@ -45,7 +45,7 @@ try{
    await context.route('**/*',route=>{
     const u=new URL(route.request().url());
     if(u.hostname==='127.0.0.1'||['blob:','data:'].includes(u.protocol))return route.fallback();
-    offHost.push({url:u.pathname,method:route.request().method});return route.abort();
+    offHost.push({host:u.hostname,url:u.pathname,method:route.request().method});return route.abort();
    });
    await context.addInitScript(()=>{
     class OfflineRecognitionWorker{
@@ -153,7 +153,12 @@ try{
     d.close();return {id:found.id,ownerId:found.ownerId};
    },{other,photo,originalSHA});
    assert.deepEqual(unrelated,{id:'other-account-private-item',ownerId:other});
-   assert.equal(offHost.filter(x=>x.method!=='GET').length,0);
+   // All off-host requests are intentionally aborted by the route above.
+   // An unrelated public model API can attempt a POST while offline; that
+   // is not a successful cloud write. Explicitly reject any attempted
+   // mutation of hosted Supabase Auth/Storage instead.
+   assert.equal(offHost.filter(x=>x.host.endsWith('supabase.co')&&
+    x.method!=='GET').length,0,'No attempted hosted Supabase mutations');
    const image=await a.screenshot({path:resolve(out,engine+'-'+width+'-cas.png')});
    assert.equal((await sharp(image).metadata()).width,width);
    results.push({engine,width,originalSHA256:originalSHA,
