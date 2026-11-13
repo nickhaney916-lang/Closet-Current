@@ -54,5 +54,5 @@ export function mountDual82({form,item,getOwner,isLive,unitAllowed,onChoose,getD
   finally{if(ticket===epoch){pending=false;check.disabled=false;cancel.hidden=true;controller=null;}}
  };
  if(!supported){consent.disabled=detail.disabled=check.disabled=true;status.textContent='Two-model research is not ready in this browser. Keep the original and use manual Adjust.';}
- return {valid,close(){active=false;revoke();form.removeEventListener('input',input);panel.remove();}};
+ return {valid,invalidate(){if(active)invalidated();},close(){active=false;revoke();form.removeEventListener('input',input);panel.remove();}};
 }
