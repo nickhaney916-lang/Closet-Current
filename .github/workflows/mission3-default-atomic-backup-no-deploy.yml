@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and six-path no-deploy allowlist
+      - name: Exact parent and seven-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|research/mission3-default-atomic-import/REPORT.md|.github/workflows/mission3-default-atomic-backup-no-deploy.yml) ;;
+              public/app.js|public/native-default-atomic-import-m3.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|research/mission3-default-atomic-import/REPORT.md|.github/workflows/mission3-default-atomic-backup-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -109,7 +109,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict six-path same-parent diff gate
+      - name: Strict seven-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -118,7 +118,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|public/native-default-atomic-import-m3.mjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|research/mission3-default-atomic-import/REPORT.md|.github/workflows/mission3-default-atomic-backup-no-deploy.yml) ;;
+              public/app.js|public/native-default-atomic-import-m3.mjs|tests/mission3-edit-backup-owner-lease.test.cjs|tests/mission3-default-atomic-backup-source-guard.test.mjs|scripts/test-mission3-default-atomic-import-browser.mjs|research/mission3-default-atomic-import/REPORT.md|.github/workflows/mission3-default-atomic-backup-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
