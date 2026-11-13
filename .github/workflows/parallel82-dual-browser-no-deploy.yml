@@ -1,0 +1,78 @@
+name: Parallel 82 opt-in dual browser review — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel82-dual-browser-review-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: p82-dual-browser-review-HOLD
+  cancel-in-progress: true
+jobs:
+  native-and-owner-review-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P864 parent, unchanged default model and donor blob
+        run: |
+          set -eu
+          BASE=bdb1b535fba9ec8b0177b9020b9dc657c2f945a8
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
+            case "$p" in
+              public/app.js|public/dual-*-82.mjs|public/model-arbitration-81.mjs|scripts/p82-*.mjs|scripts/test-p82-*.mjs|scripts/parallel67-independent-siglip-scoring.mjs|scripts/parallel67-precompute-fashion-text-03.mjs|tests/parallel82-*.mjs|research/parallel82/*|.github/workflows/parallel82-dual-browser-no-deploy.yml) ;;
+              *) echo "UNSCOPED $p"; exit 1;;
+            esac
+          done
+          test "$(git hash-object public/model-arbitration-81.mjs)" = "$(git rev-parse cdd8efd0f52d32fe55cdc0922a9934b7e66ffef3:public/model-arbitration-81.mjs)"
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/recognition-engine.mjs public/outfit-worker.mjs public/recognition-vectors.json public/recognition-vectors.bin supabase)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - run: |
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/test-p82-review-browser.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+  actual-browser-models-NOT-blind-or-physical:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Recover only locked public photo bytes and fixed local pretrained model assets
+        run: |
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Real Chromium inference on all 48 public development photos
+        run: |
+          node scripts/p82-real-browser.mjs chromium
+          node scripts/p82-summarize.mjs benchmark/p82-chromium/results.json benchmark/p82-chromium
+      - name: Isolated WebKit diagnostics, NOT continuous or owner-enabled acceptance
+        run: P82_ISOLATED=1 P82_IDS=commons-0035,commons-0078,commons-0003,commons-0059 node scripts/p82-real-browser.mjs webkit benchmark/p82-webkit-hard4
+      - name: Actual models through owner review and offline/corrupt asset fallback
+        run: node scripts/test-p82-real-review.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p82-public-browser-numeric-only
+          path: |
+            benchmark/p82-chromium/*.json
+            benchmark/p82-webkit-hard4/results.json
+          if-no-files-found: error
