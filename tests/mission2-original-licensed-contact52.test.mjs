@@ -814,3 +814,160 @@ test('C57: invalid artifact provenance, detached 163-bone pose flags and out-of-
  }
  assert.deepEqual(original(f),originalBytes);
 });
+
+const audit58=(f,more={})=>auditActualPhotographedDressSurfaces52({
+ root:f.root,dress:f.dress,
+ refineTriangleDistances53:true,refineSourceTopology54:true,
+ refineEdgeWinding55:true,refineBoundaryComponents56:true,
+ refineAnatomicalLoopLandmarks57:true,refineArticulatedContacts58:true,
+ ...more
+});
+test('C58: two REAL original-source 163-bone articulated samples measure neutral/self/body without permitting collision waiver',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),before=original(f),
+  qs=f.bones.map(b=>b.quaternion.clone()),r=audit58(f),
+  c=r.originalArticulatedContactReceipt58;
+ assert.equal(c.schema,'M2-licensed-original-163bone-articulated-contact-C58');
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.equal(c.poseSampleCount,2);
+ assert.equal(c.completeSelfPoseSweeps,2);
+ assert.equal(c.originalNeutralBodyAuditComplete,true);
+ assert.equal(c.completeBodyPoseSweeps,2);
+ assert.equal(c.sourceFaceCount,4);
+ assert.equal(c.originalNeutralSelfStrictCrossings,0);
+ assert.equal(c.originalSelfStrictTransverseCrossingsAcrossSamples,0);
+ assert.equal(c.originalBodyStrictTransverseCrossingsAcrossSamples,0);
+ assert.equal(c.originalBodyIndependentClothFitCertified,false);
+ assert.equal(c.allTemporaryBoneQuaternionsRestored,true);
+ assert.equal(c.exactNeutralWorldSkinnedDressRestored,true);
+ assert.equal(c.sampledPoseIntersectionNotContinuousPhysics,true);
+ assert.equal(c.allGeometricZerosStillUnresolved,true);
+ assert.equal(c.noSkinOrOriginalPhotoOrOwnerFieldsExposed,true);
+ assert.equal(r.noGenuineArticulatedPhotoCollisionSafetyCertificate58,true);
+ assert.equal(r.noOriginalPhotographedGarmentSewingOrBodyCollisionWaiver58,true);
+ assert.equal(r.releaseAuthorized,false);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(qs[i])));
+ assert.deepEqual(original(f),before);
+});
+test('C58: original weighted shoulder vertices physically move in both articulated samples and all skin bones are restored',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ for(let i=6;i<9;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,7);
+ for(let i=9;i<12;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,8);
+ const before=original(f),qs=f.bones.map(b=>b.quaternion.clone()),
+  r=audit58(f),c=r.originalArticulatedContactReceipt58;
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.equal(c.poseSampleCount,2);
+ assert.ok(c.actuallyDisplacedClothVerticesAcrossSamples>=6);
+ assert.equal(c.completeSelfPoseSweeps,2);
+ assert.equal(c.completeBodyPoseSweeps,2);
+ assert.equal(c.allTemporaryBoneQuaternionsRestored,true);
+ assert.equal(c.exactNeutralWorldSkinnedDressRestored,true);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(qs[i])));
+});
+test('C58: genuine source THREE body-vs-fabric overlapping coplanar triangles are unresolved in neutral and both articulated poses',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ const a=f.body.geometry.getAttribute('position');
+ a.array.set([0,.9,0,.3,.9,0,0,1.2,0]);
+ a.needsUpdate=true;
+ const snapshot=original(f),r=audit58(f),c=r.originalArticulatedContactReceipt58;
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.ok(c.originalNeutralBodyBoxPairs>=1);
+ assert.ok(c.originalNeutralBodyNearOrZeroUnresolved>=1);
+ assert.ok(c.originalBodyBoxPairsAcrossSamples>=2);
+ assert.ok(c.originalBodyNearOrZeroUnresolvedAcrossSamples>=2);
+ assert.equal(c.originalBodyIndependentClothFitCertified,false);
+ assert.equal(r.anyContactMustRemainBlocked,true);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),snapshot);
+});
+test('C58: insufficient body triangle candidate budget must FAIL CLOSED, not invent cloth clearance',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ const a=f.body.geometry.getAttribute('position');
+ a.array.set([-10,-10,0,10,-10,0,0,10,0]);
+ a.needsUpdate=true;
+ const r=audit58(f,{maxBodyCandidatePairs58:1}),
+  c=r.originalArticulatedContactReceipt58;
+ assert.equal(c.poseSampleCount,2);
+ assert.equal(c.originalNeutralBodyAuditComplete,false);
+ assert.equal(c.completeBodyPoseSweeps,0);
+ assert.equal(c.originalBodyPairSampleBudgetExhausted,true);
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,false);
+ assert.equal(r.noGenuineArticulatedPhotoCollisionSafetyCertificate58,true);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C58: one true skinned arm-pose sample never claims two articulated poses',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),
+  r=audit58(f,{maxPoseSamples58:1}),c=r.originalArticulatedContactReceipt58;
+ assert.equal(c.poseSampleCount,1);
+ assert.equal(c.completeSelfPoseSweeps,1);
+ assert.equal(c.completeBodyPoseSweeps,1);
+ assert.equal(c.allTemporaryBoneQuaternionsRestored,true);
+ assert.equal(c.exactNeutralWorldSkinnedDressRestored,true);
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,false);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C58: missing P61 anatomical original photo landmarks blocks fake bone/body pose claims',()=>{
+ const f=fixture52(fourLoops57),before=original(f),
+  r=audit58(f),c=r.originalArticulatedContactReceipt58;
+ assert.equal(r.sourceAnatomicalLoopEvidenceComplete57,false);
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,false);
+ assert.equal(c.poseSampleCount,0);
+ assert.equal(c.sourceReadOnlySampleRefusedReason,
+  'C57-anatomical-source-pose-evidence-incomplete');
+ assert.equal(c.originalBodyIndependentClothFitCertified,false);
+ assert.equal(c.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C58: malicious or undersized actual-source photograph self/body workload refuses collision evidence without owner mutations',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),before=original(f);
+ for(const invalid of [
+  {refineArticulatedContacts58:true},
+  {refineTriangleDistances53:true,refineArticulatedContacts58:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineArticulatedContacts58:true},
+  {maxPoseSamples58:3},{maxComparisons58:0},
+  {maxCandidatePairs58:0},{maxDistancePairs58:0},
+  {maxBodyFaces58:0},{maxBodyComparisons58:0},
+  {maxBodyCandidatePairs58:0},{refineArticulatedContacts58:'true'}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...invalid
+  }),/M2 C52 original-photo diagnostic/);
+ }
+ assert.deepEqual(original(f),before);
+});
+
+test('C58: oversized original anatomical body face spans many Y/Z cells and is never silently omitted from contact checks',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ const a=f.body.geometry.getAttribute('position');
+ a.array.set([0,-3,-3,0,3,-3,0,0,3]);
+ a.needsUpdate=true;
+ const immutable=original(f),r=audit58(f),
+  report=r.originalArticulatedContactReceipt58;
+ assert.equal(report.originalNeutralBodyAuditComplete,true);
+ assert.equal(report.completeBodyPoseSweeps,2);
+ assert.ok(report.originalNeutralBodyBoxPairs>0);
+ assert.ok(report.originalNeutralBodyNearOrZeroUnresolved>0);
+ assert.equal(report.originalBodyIndependentClothFitCertified,false);
+ assert.equal(report.allTemporaryBoneQuaternionsRestored,true);
+ assert.equal(report.releaseAuthorized,false);
+ assert.deepEqual(original(f),immutable);
+});
+
+test('C58: original 163-bone anatomy comparison budget exhaustion refuses partial contact clearance',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ const p=f.body.geometry.getAttribute('position');
+ p.array.set([0,-3,-3,0,3,-3,0,0,3]);
+ p.needsUpdate=true;
+ const originalSource=original(f),r=audit58(f,{
+  maxBodyComparisons58:1
+ }),a=r.originalArticulatedContactReceipt58;
+ assert.equal(a.originalNeutralBodyAuditComplete,false);
+ assert.equal(a.originalBodyPairSampleBudgetExhausted,true);
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,false);
+ assert.equal(a.originalBodyIndependentClothFitCertified,false);
+ assert.equal(a.releaseAuthorized,false);
+ assert.deepEqual(original(f),originalSource);
+});

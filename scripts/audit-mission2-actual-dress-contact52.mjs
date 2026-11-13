@@ -435,3 +435,101 @@ if(process.env.PHOTO_DRESS_LANDMARKS57==='1'){
  console.log('M2_C57_REAL_LICENSED_ANATOMICAL_OPENINGS_SAFE_SUMMARY',
   JSON.stringify(output57));
 }
+
+if(process.env.PHOTO_DRESS_CONTACT58==='1'){
+ assert.equal(process.env.PHOTO_DRESS_LANDMARKS57,'1',
+  'C58 two skinned source-verified articulated poses require C57 original landmarks');
+ const evidence=receipts.map(r=>({
+  a:r.originalArticulatedContactReceipt58,
+  complete:r.originalPhotoArticulatedPoseEvidenceComplete58,
+  originalSelfAABB:r.posedBoxPairs,
+  originalSelfStrict:r.posedStrictCrossings
+ }));
+ for(const {a,complete,originalSelfAABB,originalSelfStrict} of evidence){
+  assert.equal(a.schema,'M2-licensed-original-163bone-articulated-contact-C58');
+  assert.equal(complete,true,
+   'C58 actual authenticated photographed dress source/body contact sweep must be complete');
+  assert.equal(a.sourceFaceCount,first.originalSourceFaces);
+  assert.equal(a.originalNeutralSelfBoxPairs,originalSelfAABB);
+  assert.equal(a.originalNeutralSelfStrictCrossings,originalSelfStrict);
+  assert.equal(a.originalNeutralBodyAuditComplete,true);
+  assert.ok(a.originalNeutralBodyTriangleCount>0);
+  assert.equal(a.poseSampleCount,2);
+  assert.equal(a.completeSelfPoseSweeps,2);
+  assert.equal(a.completeBodyPoseSweeps,2);
+  assert.ok(a.originalBodyTrianglesInspectedAcrossSamples>=
+   a.originalNeutralBodyTriangleCount);
+  assert.ok(a.actuallyDisplacedClothVerticesAcrossSamples>=0);
+  assert.ok(a.originalSelfBoxPairsAcrossSamples>=0);
+  assert.ok(a.originalSelfGeometricZeroUnresolvedAcrossSamples>=0);
+  assert.ok(a.originalSelfPositiveGapAtSampledPoseAcrossSamples>=0);
+  assert.ok(a.originalSelfStrictTransverseCrossingsAcrossSamples>=0);
+  assert.ok(a.originalNeutralBodyBoxPairs>=0);
+  assert.ok(a.originalNeutralBodyNearOrZeroUnresolved>=0);
+  assert.ok(a.originalNeutralBodyStrictCrossings>=0);
+  assert.ok(a.originalBodyBoxPairsAcrossSamples>=0);
+  assert.ok(a.originalBodyNearOrZeroUnresolvedAcrossSamples>=0);
+  assert.ok(a.originalBodyStrictTransverseCrossingsAcrossSamples>=0);
+  assert.equal(a.originalSelfPairSampleBudgetExhausted,false);
+  assert.equal(a.originalBodyPairSampleBudgetExhausted,false);
+  assert.equal(a.originalBodyIndependentClothFitCertified,false);
+  assert.equal(a.allTemporaryBoneQuaternionsRestored,true);
+  assert.equal(a.exactNeutralWorldSkinnedDressRestored,true);
+  assert.equal(a.sourceReadOnlySampleRefusedReason,null);
+  assert.equal(a.allGeometricZerosStillUnresolved,true);
+  assert.equal(a.sampledPoseIntersectionNotContinuousPhysics,true);
+  assert.equal(a.noSkinOrOriginalPhotoOrOwnerFieldsExposed,true);
+  assert.equal(a.noSourceGeometryEdited,true);
+  assert.equal(a.sampledPoseContactNotReleaseApproval,true);
+  assert.equal(a.releaseAuthorized,false);
+  assert.equal(a.familyAlpha,'HOLD');
+ }
+ for(const w of evidence.slice(1))assert.deepEqual(w,evidence[0],
+  'Original licensed 163-bone P61/P175 articulated contact outcome must be invariant across browser widths at same source and articulations');
+ const a=evidence[0].a;
+ const report={
+  schema:'M2-P2-C58-real-licensed-photo-articulated-garment-body-contact',
+  genuinePhotographedSourceFaces:a.sourceFaceCount,
+  originalNeutralSelfBoxPairs:a.originalNeutralSelfBoxPairs,
+  originalNeutralSelfStrictCrossings:a.originalNeutralSelfStrictCrossings,
+  originalNeutralAnatomicalBodyTriangles:a.originalNeutralBodyTriangleCount,
+  originalNeutralBodyBoxPairs:a.originalNeutralBodyBoxPairs,
+  originalNeutralBodyNearOrZeroUnresolved:a.originalNeutralBodyNearOrZeroUnresolved,
+  originalNeutralBodyStrictCrossings:a.originalNeutralBodyStrictCrossings,
+  separateGenuine163BoneArticulatedArmPoseSamples:a.poseSampleCount,
+  sourceDressVerticesMovedAcrossTwoArmSamples:a.actuallyDisplacedClothVerticesAcrossSamples,
+  fullSourceSelfContactSweepsCompleted:a.completeSelfPoseSweeps,
+  originalSourceSelfAABBCandidatePairsAcrossTwoArmSamples:
+   a.originalSelfBoxPairsAcrossSamples,
+  originalSelfGeometricZeroOrOverlapStillUnresolvedAcrossSamples:
+   a.originalSelfGeometricZeroUnresolvedAcrossSamples,
+  originalSelfPositiveGapAtSampledPoseAcrossSamples:
+   a.originalSelfPositiveGapAtSampledPoseAcrossSamples,
+  originalSelfStrictTransverseCrossingWitnessesAcrossSamples:
+   a.originalSelfStrictTransverseCrossingsAcrossSamples,
+  originalBodySourceTrianglesTestedAcrossBothArmSamples:
+   a.originalBodyTrianglesInspectedAcrossSamples,
+  originalBodySpatialIndexComparisonsAcrossTwoSamples:
+   a.originalBodyComparisonsAcrossSamples,
+  fullAnatomicalBodyContactSweepsCompleted:a.completeBodyPoseSweeps,
+  originalBodyBoxCandidatePairsAcrossTwoSamples:
+   a.originalBodyBoxPairsAcrossSamples,
+  originalBodyNearOrZeroUnresolvedAcrossTwoSamples:
+   a.originalBodyNearOrZeroUnresolvedAcrossSamples,
+  originalBodyStrictTransverseCrossingWitnessesAcrossTwoSamples:
+   a.originalBodyStrictTransverseCrossingsAcrossSamples,
+  originalBoneQuaternionsRestored:true,
+  originalNeutralSkinnedWorldPositionsRestored:true,
+  originalPhotoUVSkinSourceVertexPositionsAndIndexUntouched:true,
+  noBodyOrSelfCollisionExceptionGranted:true,
+  noContinuousMotionPhysicsCertification:true,
+  noHumanPhotoOrOwnerAnatomicalSemanticsVerified:true,
+  noOwnerImageOrSourceTriangleCoordinatesExported:true,
+  noReleaseOrProductionWrite:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-articulated-contact58.json',
+  JSON.stringify(report,null,2)+'\n');
+ console.log('M2_C58_REAL_LICENSED_ARTICULATED_CONTACT_SAFE_SUMMARY',
+  JSON.stringify(report));
+}
