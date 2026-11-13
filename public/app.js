@@ -401,6 +401,10 @@ function cropClothingPhoto(item){
    throw Error('This clothing photo is no longer in the active private wardrobe');
  };
  assertCrop();
+ // A saved crop is an edit of exactly the row the user opened, never a
+ // free-standing upsert. Snapshot BEFORE image decoding and model work so
+ // another same-owner tab cannot be overwritten by the delayed crop.
+ const expectedSavedCropRow=items.includes(item)?structuredClone(item):null;
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
   isCurrent:()=>{
@@ -437,9 +441,10 @@ function cropClothingPhoto(item){
     value.indexedAt=new Date().toISOString();
    }
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
-   // A saved garment uses the existing signed-owner writeAll lease.
-   // An unsaved photo stays a draft, pinned to the same original owner DB.
-   if(items.includes(item))await writeAll([value]);
+   // Saved garments require the same native IndexedDB row CAS as Adjust:
+   // another tab may have edited/deleted the row while this crop was open.
+   // Unsaved captures remain drafts in their original owner's private DB.
+   if(expectedSavedCropRow)await saveEditedGarment(value,expectedSavedCropRow);
    else await queued(()=>new Promise((resolve,reject)=>{
     try{
      assertCrop();
@@ -459,9 +464,12 @@ function cropClothingPhoto(item){
     if(!(key in value))delete item[key];
    render();
   }
- }).catch(()=>{
+ }).catch(error=>{
   // A revoked editor cannot display errors on a different signed-in owner.
-  try{assertCrop();message('Could not open this photo for cropping. Your saved photo is kept.');}catch{}
+  try{assertCrop();message(String(error?.message||error).includes(
+   'CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR')
+   ?'Another tab changed this saved garment. Your crop was not saved. Reload My Closet, then reopen Crop photo.'
+   :'Could not complete this crop. Your saved photo is kept.');}catch{}
  });
 }
 function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id);button.onclick=()=>cropClothingPhoto(item);return button;}
