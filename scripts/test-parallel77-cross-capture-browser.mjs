@@ -28,6 +28,18 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    await page.addStyleTag({content:styles});
    for(const source of [taxonomy,details,cross,harness,editor])
     await page.addScriptTag({content:source});
+   await page.addScriptTag({content:`window.p77Stages=[];
+   const origP77=CrossCaptureDuplicate77.propose,origR77=CrossCaptureDuplicate77.render;
+   CrossCaptureDuplicate77.propose=async function(...args){
+    window.p77Stages.push('propose valid='+CrossCaptureDuplicate77.valid(args[2]));
+    try{const result=await origP77(...args);window.p77Stages.push('propose ok '+result.candidates.length);return result;}
+    catch(e){window.p77Stages.push('propose error '+e.message);throw e;}
+   };
+   CrossCaptureDuplicate77.render=function(...args){
+    window.p77Stages.push('render valid='+CrossCaptureDuplicate77.valid(args[2]?.scope));
+    try{const result=origR77(...args);window.p77Stages.push('render ok');return result;}
+    catch(e){window.p77Stages.push('render error '+e.message);throw e;}
+   };`});
    const same=page.getByRole('button',{name:/Same owned garment/});
    const different=page.getByRole('button',{name:/Different garment/});
    const acknowledgement=page.getByRole('checkbox',{name:/I compared both photos/});
@@ -38,7 +50,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     console.log('P77_BROWSER_PROPOSAL_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({
      secure:window.isSecureContext,module:typeof CrossCaptureDuplicate77,
      dialogCount:document.querySelectorAll('dialog').length,
-     panel:document.querySelector('.duplicate-review-77')?.textContent?.slice(0,500),
+     panel:document.querySelector('.duplicate-review-77')?.textContent?.slice(0,500),stages:window.p77Stages,
      shortlist:typeof CrossCaptureDuplicate77!=='undefined'?CrossCaptureDuplicate77.candidateRank(batch[0],items):null,
      scopeReady:!!window.closetAuth?.user,dbName:db?.name
     }))));
