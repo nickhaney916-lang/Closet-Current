@@ -9,7 +9,8 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  auditSourceDressSelfContact44,assertSourceDressSelfContact44,
  auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45,
  auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46,
- proposeSourceDressStagedRepair50,captureSourceDressRepairPreview50}
+ proposeSourceDressStagedRepair50,captureSourceDressRepairPreview50,
+ proposeSourceDressConnectedPatch51,captureSourceDressConnectedPatchPreview51}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {requireSourceDressTemporalReceipt47}
  from '../research/mission2-source-length/source-dress-receipt-lock.mjs';
@@ -1433,4 +1434,143 @@ test('C50: stale owner source, changed bone pose, replayed and invented private 
  assert.throws(()=>repair50(f,token),
   /original source\/photo\/skin data changed|stale or altered original/);
  assert.deepEqual(snap(f.dress.mesh).skinWeight,original.skinWeight);
+});
+
+
+// C51: REAL index-connected fabric. Triangle A is stationary at z=0;
+// crossing B is index-welded to neighbor C at vertex 3. A cautious nudge
+// must move that vertex for BOTH original indexed fabric faces atomically.
+const connectedPatch51=()=>clothed44([
+ 0,0,0, 1,0,0, 0,1,0,
+ .2,.2,-.00004, .3,.2,.00004, .2,.3,.00004,
+ 2,2,.1, 2.2,2,.1
+],[0,1,2,3,4,5,3,6,7]);
+const patch51=(f,token=null,more={})=>proposeSourceDressConnectedPatch51({
+ root:f.root,dress:f.dress,poseToken:token??capture(f),...more
+});
+test('C51: actual source-index-connected cloth crossing receives a whole-surface-safe staged preview with NO weld tears',()=>{
+ const f=connectedPatch51(),original=snap(f.dress.mesh);
+ const contact=fast45(f);
+ assert.equal(contact.firstSourceCrossing49.posedContactClass,
+  'strict-interior-transverse-face-crossing');
+ const old=repair50(f);
+ assert.equal(old.status,'source-connected-fabric-cannot-move-single-triangle');
+ const report=patch51(f);
+ assert.equal(report.schema,'M2-source-dress-connected-patch-C51');
+ assert.equal(report.status,'staged-connected-patch-preview-only');
+ assert.equal(report.patchVertexCount,3);
+ assert.equal(report.affectedSourceFaces,2);
+ assert.equal(report.allOriginalPhotoSourceTrianglesAudited,true);
+ assert.equal(report.sourceFaceCountAudited,3);
+ assert.equal(report.allOriginal163BoneBodyFacesBroadphaseChecked,true);
+ assert.equal(report.remainingSelfContactPairs,0);
+ assert.equal(report.bodySweptPotentialPairs,0);
+ assert.equal(report.completeClothAndBodyClearance,true);
+ assert.equal(report.photoUVRestSkeletonPreserved,true);
+ assert.equal(report.repairCommitted,false);
+ assert.equal(report.releaseAuthorized,false);
+ assert.ok(report.maximumSourceShiftMeters<=.002);
+ assert.ok(report.maximumAffectedFaceNormalTurnDegrees<=12);
+ assert.ok(report.maximumAffectedEdgeStretchRatio<=.05);
+ assert.ok(report.maximumAffectedFaceAreaChangeRatio<=.05);
+ assert.deepEqual(Object.keys(report.proposalToken),[]);
+ const preview=captureSourceDressConnectedPatchPreview51({
+  root:f.root,dress:f.dress,proposalToken:report.proposalToken
+ });
+ const audited=auditSourceDressSelfContact44({
+  root:f.root,dress:f.dress,poseToken:preview
+ });
+ assert.equal(audited.unresolvedPairs,0);
+ assert.equal(audited.checkedOriginalFaces,3);
+ assert.throws(()=>captureSourceDressConnectedPatchPreview51({
+  root:f.root,dress:f.dress,proposalToken:report.proposalToken
+ }),/one-time staged repair proposal missing or reused/);
+ assert.deepEqual(snap(f.dress.mesh),original,
+  'exact indexed connected source geometry, UV, normals, skeleton and original photo must remain unchanged');
+});
+test('C51: not enough room to move connected source patch returns explicit refusal, never opens silhouette',()=>{
+ const f=connectedPatch51(),original=snap(f.dress.mesh);
+ const r=patch51(f,null,{maxShiftMeters:.00005});
+ assert.equal(r.status,'bounded-connected-patch-not-cleared');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.attemptedCandidates,2);
+ assert.equal(r.completeClothAndBodyClearance,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C51: full 163-bone anatomical body sweep vetoes an otherwise cloth-cleared connected patch',()=>{
+ const f=connectedPatch51(),original=snap(f.dress.mesh);
+ const b=f.body.geometry.getAttribute('position');
+ b.setXYZ(0,.15,.15,0);b.setXYZ(1,.35,.15,0);b.setXYZ(2,.15,.35,0);
+ const r=patch51(f);
+ assert.equal(r.status,'bounded-connected-patch-not-cleared');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.completeClothAndBodyClearance,false);
+ assert.equal(r.repairCommitted,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C51: C50 isolated triangle repair cannot silently split coincident original UV source endpoints',()=>{
+ const f=clothed44([
+  0,0,0, 1,0,0, 0,1,0,
+  .2,.2,-.00004, .3,.2,.00004, .2,.3,.00004,
+  .2,.2,-.00004, 2,2,.1, 2.2,2,.1
+ ]),original=snap(f.dress.mesh);
+ const first=fast45(f);
+ assert.equal(first.firstSourceCrossing49.posedContactClass,'strict-interior-transverse-face-crossing');
+ const r=repair50(f);
+ assert.equal(r.status,'coincident-source-uv-vertices-cannot-move-alone');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.repairCommitted,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C51: duplicate indexed seam source XYZ but different 163-bone skin identity must refuse connected patch',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  .2,.2,-.00004,.3,.2,.00004,.2,.3,.00004,
+  2,2,.1,2.2,2,.1,
+  .2,.2,-.00004, 3,3,.1, 3.2,3,.1
+ ],[0,1,2,3,4,5,3,6,7,8,9,10]);
+ const g=f.dress.mesh.geometry;
+ g.setAttribute('dressRest',g.getAttribute('position').clone());
+ g.getAttribute('skinIndex').setX(8,1);
+ const original=snap(f.dress.mesh);
+ const r=patch51(f);
+ assert.equal(r.status,'source-uv-twins-disagree-on-rest-or-skin');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.completeClothAndBodyClearance,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C51: real P61-style full original source remains vetoed when first pair is oblique uncertain',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const r=patch51(f);
+ assert.equal(r.status,'unverified-contact-no-connected-patch');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.attemptedCandidates,0);
+ assert.equal(r.realOriginalSourceAndSkinChecked,true);
+ assert.equal(r.repairCommitted,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C51: stale signed owner-photo capture and moved weighted bone prevent both proposal and preview',()=>{
+ const f=connectedPatch51(),original=snap(f.dress.mesh);
+ const token=capture(f),p=patch51(f,token);
+ assert.equal(p.status,'staged-connected-patch-preview-only');
+ for(const invalid of [{maxShiftMeters:0},{maxPatchVertices:2},
+  {maxPatchFaces:1},{maxEdgeStretchRatio:0},{maxNormalTurnDegrees:18},
+  {maxSourceFaces:2},{maxTriangleCandidates:0},{maxBodyFaces:0}]){
+  assert.throws(()=>patch51(f,token,invalid),/M2 C40/);
+ }
+ assert.throws(()=>patch51(f,{}),/M2 C40/);
+ assert.throws(()=>captureSourceDressConnectedPatchPreview51({
+  root:f.root,dress:f.dress,proposalToken:{}
+ }),/one-time staged repair proposal missing or reused/);
+ f.dress.mesh.skeleton.bones[0].position.z=.02;
+ assert.throws(()=>patch51(f,token),/true skeletal pose changed/);
+ assert.throws(()=>captureSourceDressConnectedPatchPreview51({
+  root:f.root,dress:f.dress,proposalToken:p.proposalToken
+ }),/pose changed/);
+ f.dress.mesh.skeleton.bones[0].position.z=0;
+ const stagedToken=captureSourceDressConnectedPatchPreview51({
+  root:f.root,dress:f.dress,proposalToken:p.proposalToken
+ });
+ assert.deepEqual(Object.keys(stagedToken),[]);
+ assert.deepEqual(snap(f.dress.mesh),original);
 });

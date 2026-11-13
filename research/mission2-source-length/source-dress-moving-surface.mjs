@@ -1316,6 +1316,44 @@ export function assertSourceDressFastSelfContact45(receipt){
 
 
 
+
+/**
+ * P2-C51: find all duplicated original source coordinates before permitting
+ * any source-only motion. Disconnected UV vertices are NOT necessarily sewn
+ * seams. If a proposed edit would move a duplicate in isolation, do not
+ * silently crack a visible photo seam. World/source/IDs stay private.
+ */
+const SOURCE_TWIN_EPS51=.000002;
+function sourceTwinVertices51(shot,vertex){
+ const src=shot.source,i3=vertex*3,out=[];
+ for(let j=0;j<src.length/3;j++){
+  if(j===vertex)continue;
+  const k=3*j;
+  if(Math.abs(src[k]-src[i3])<=SOURCE_TWIN_EPS51&&
+     Math.abs(src[k+1]-src[i3+1])<=SOURCE_TWIN_EPS51&&
+     Math.abs(src[k+2]-src[i3+2])<=SOURCE_TWIN_EPS51&&
+     Math.hypot(src[k]-src[i3],src[k+1]-src[i3+1],
+      src[k+2]-src[i3+2])<=SOURCE_TWIN_EPS51)out.push(j);
+ }
+ return out;
+}
+function sourceTwinsHaveSameSkinAndRest51(shot,i,j){
+ const geom=shot.mesh.geometry,rest=geom.getAttribute('dressRest');
+ const si=geom.getAttribute('skinIndex'),sw=geom.getAttribute('skinWeight');
+ if(!rest||rest.itemSize<3||!si||!sw||
+    si.itemSize!==4||sw.itemSize!==4)return false;
+ for(let k=0;k<3;k++){
+  if(Math.abs(rest.getComponent(i,k)-rest.getComponent(j,k))>SOURCE_TWIN_EPS51)
+   return false;
+ }
+ for(let k=0;k<4;k++)
+  if(si.getComponent(i,k)!==si.getComponent(j,k)||
+     Math.abs(sw.getComponent(i,k)-sw.getComponent(j,k))>1e-6)
+   return false;
+ return Math.hypot(...[0,1,2].map(k=>
+  shot.clothWorld[3*i+k]-shot.clothWorld[3*j+k]))<=SOURCE_TWIN_EPS51;
+}
+
 /**
  * Mission 2 P2-C50 — reversible, staged-only, full-surface repair EXPLORATION.
  *
@@ -1395,6 +1433,11 @@ export function proposeSourceDressStagedRepair50({
    counts[at(geom.indices,face,corner)]++;
  if(ids.some(v=>counts[v]!==1))
   return refusal('source-connected-fabric-cannot-move-single-triangle');
+ // C50 previously assumed separate index IDs were separate physical cloth.
+ // A duplicate original source XYZ can be a UV split: a single-face nudge
+ // would invisibly open a photo seam. C51 fails closed instead.
+ if(ids.some(v=>sourceTwinVertices51(shot,v).length))
+  return refusal('coincident-source-uv-vertices-cannot-move-alone');
  const tri=ids.map(i=>new THREE.Vector3().fromArray(shot.source,3*i));
  const normal=new THREE.Vector3().subVectors(tri[1],tri[0])
   .cross(new THREE.Vector3().subVectors(tri[2],tri[0]));
@@ -1495,6 +1538,252 @@ export function captureSourceDressRepairPreview50({root,dress,proposalToken}={})
  lease.used=true; // consume before invoking capture; failure must not replay
  return captureSourceDressBodyPose40({root,dress,
   stagedPositions:lease.staged.slice()});
+}
+
+
+/**
+ * Mission 2 P2-C51 — connected cloth patch, staged ONLY.
+ *
+ * The first real C49 transverse crossing may be investigated on a connected
+ * 1-ring source mesh: move all three target-face vertices together and let
+ * indexed neighbor triangles follow those shared vertex identities (the
+ * target face remains welded, unlike isolated-face mutation). No UV twin may
+ * move alone: any duplicate source XYZ must have matching rest/skin/pose and
+ * receive the exact SAME local displacement.
+ *
+ * A full face-wise check vetoes flipped/overstretched triangles. C44 then
+ * checks ALL original source cloth faces; C40 checks the full swept cloth
+ * against ALL original 163-bone body faces. These are strict necessary
+ * gates, NOT a physics or continuous self-contact certificate.
+ * No original geometry, normals, skin, UV, photo pixels or JPEG ever changes.
+ */
+export function proposeSourceDressConnectedPatch51({
+ root,dress,poseToken,maxShiftMeters=.002,
+ maxPatchVertices=48,maxPatchFaces=160,
+ maxEdgeStretchRatio=.05,maxNormalTurnDegrees=12,
+ toleranceMeters=.00002,maxSourceFaces=100000,
+ maxTriangleCandidates=300000,maxBodyFaces=500000
+}={}){
+ const mesh=validateRootDress(root,dress),shot=captures.get(poseToken);
+ if(!shot||shot.root!==root||shot.mesh!==mesh||
+    !Number.isFinite(maxShiftMeters)||maxShiftMeters<.00005||
+    maxShiftMeters>.002||
+    !Number.isSafeInteger(maxPatchVertices)||maxPatchVertices<3||
+    maxPatchVertices>256||
+    !Number.isSafeInteger(maxPatchFaces)||maxPatchFaces<2||
+    maxPatchFaces>1000||
+    !Number.isFinite(maxEdgeStretchRatio)||maxEdgeStretchRatio<=0||
+    maxEdgeStretchRatio>.08||
+    !Number.isFinite(maxNormalTurnDegrees)||maxNormalTurnDegrees<=0||
+    maxNormalTurnDegrees>15||
+    !Number.isFinite(toleranceMeters)||toleranceMeters<0||
+    toleranceMeters>.002||
+    !Number.isSafeInteger(maxSourceFaces)||maxSourceFaces<1||
+    maxSourceFaces>200000||
+    !Number.isSafeInteger(maxTriangleCandidates)||maxTriangleCandidates<1||
+    maxTriangleCandidates>2000000||
+    !Number.isSafeInteger(maxBodyFaces)||maxBodyFaces<1||
+    maxBodyFaces>500000)
+  fail('C51 genuine connected source capture and bounded patch audit required');
+ checkTopology(shot);
+ root.updateMatrixWorld(true);
+ if(!same(shot.clothSource,shot.source)||
+    !same(sourcePose(mesh,shot.source),shot.clothWorld)||
+    shot.bodies.some(b=>!same(sourcePose(b.mesh,b.sourceBody),b.world)))
+  fail('C51 original photo, skin or true skeletal pose changed');
+ const contact=auditSourceDressFastSelfContact45({
+  root,dress,poseToken,maxSourceFaces,maxTriangleCandidates,
+  toleranceMeters
+ });
+ const refuse=(status,attempted=0)=>Object.freeze({
+  schema:'M2-source-dress-connected-patch-C51',status,
+  attemptedCandidates:attempted,proposalToken:null,
+  patchVertexCount:0,affectedSourceFaces:0,
+  realOriginalSourceAndSkinChecked:true,
+  completeClothAndBodyClearance:false,
+  photoUVRestSkeletonPreserved:true,
+  repairCommitted:false,independentSourceSeamReviewed:false,
+  actualContinuousClothCertified:false,
+  previewOnly:true,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ if(!contact.unresolvedPairs)return refuse('no-contact-no-patch-required');
+ const saved=firstContactPairs50.get(contact);
+ if(!saved||saved.shot!==shot||saved.root!==root||saved.mesh!==mesh)
+  fail('C51 first original face source provenance absent');
+ if(contact.firstSourceCrossing49?.posedContactClass!==
+    'strict-interior-transverse-face-crossing')
+  return refuse('unverified-contact-no-connected-patch');
+ const indices=shot.geo.indices,faceCount=shot.geo.faceCount,
+  count=shot.geo.p.count;
+ const seedFace=saved.faces[1];
+ const seed=[0,1,2].map(c=>at(indices,seedFace,c));
+ if(new Set(seed).size!==3)
+  return refuse('source-face-degenerate-or-not-triangular');
+ // Determine indexed 1-ring and all faces whose geometry would change,
+ // INCLUDING faces attached by duplicated rest/skin-coincident source XYZ.
+ const usedBy=Array.from({length:count},()=>[]);
+ for(let face=0;face<faceCount;face++)
+  for(let c=0;c<3;c++)usedBy[at(indices,face,c)].push(face);
+ if(seed.every(v=>usedBy[v].length===1))
+  return refuse('isolated-face-use-source-only-C50');
+ const moved=new Set(seed);
+ for(const v of seed){
+  const twins=sourceTwinVertices51(shot,v);
+  if(twins.length>maxPatchVertices)
+   return refuse('source-uv-twin-evidence-exceeds-budget');
+  for(const j of twins){
+   if(!sourceTwinsHaveSameSkinAndRest51(shot,v,j))
+    return refuse('source-uv-twins-disagree-on-rest-or-skin');
+   moved.add(j);
+  }
+ }
+ if(moved.size>maxPatchVertices)
+  return refuse('connected-patch-exceeds-vertex-budget');
+ const facesToCheck=new Set();
+ for(const v of moved)for(const face of usedBy[v])facesToCheck.add(face);
+ if(facesToCheck.size>maxPatchFaces)
+  return refuse('connected-patch-exceeds-face-budget');
+ // If a twin moved because a seed matched, and itself has a further
+ // source-coincident vertex, require transitive closure; NEVER leave a
+ // duplicate boundary behind (even with non-transitive floating tolerances).
+ for(const v of moved)for(const twin of sourceTwinVertices51(shot,v))
+  if(!moved.has(twin))
+   return refuse('nonclosed-source-uv-twin-group');
+ const baseline=seed.map(v=>new THREE.Vector3().fromArray(shot.source,3*v));
+ const normal=new THREE.Vector3().subVectors(baseline[1],baseline[0])
+  .cross(new THREE.Vector3().subVectors(baseline[2],baseline[0]));
+ if(!Number.isFinite(normal.length())||normal.length()<1e-10)
+  fail('C51 degenerate source patch normal');
+ normal.normalize();
+ const original=shot.source;
+ const getTri=(face,coords)=>[0,1,2].map(k=>
+  new THREE.Vector3().fromArray(coords,3*at(indices,face,k)));
+ const quality=(coords)=>{
+  let maximumEdgeStretch=0,maximumNormalTurn=0,maximumAreaChange=0;
+  for(const face of facesToCheck){
+   const b=getTri(face,original),a=getTri(face,coords);
+   const cross=t=>new THREE.Vector3().subVectors(t[1],t[0])
+    .cross(new THREE.Vector3().subVectors(t[2],t[0]));
+   const n0=cross(b),n1=cross(a);
+   const originalArea=n0.length(),changedArea=n1.length();
+   if(!Number.isFinite(changedArea)||originalArea<1e-10||
+      changedArea<1e-10)return null;
+   const turn=n0.angleTo(n1)*180/Math.PI;
+   const areaChange=Math.abs(changedArea/originalArea-1);
+   if(!Number.isFinite(turn)||!Number.isFinite(areaChange)||
+      areaChange>maxEdgeStretchRatio)return null;
+   maximumNormalTurn=Math.max(maximumNormalTurn,turn);
+   maximumAreaChange=Math.max(maximumAreaChange,areaChange);
+   for(const [i,j] of [[0,1],[1,2],[2,0]]){
+    const orig=b[i].distanceTo(b[j]),next=a[i].distanceTo(a[j]);
+    if(orig<1e-10||!Number.isFinite(next))return null;
+    const ratio=Math.abs(next/orig-1);
+    maximumEdgeStretch=Math.max(maximumEdgeStretch,ratio);
+    if(ratio>maxEdgeStretchRatio)return null;
+   }
+  }
+  if(maximumNormalTurn>maxNormalTurnDegrees)return null;
+  return {maximumNormalTurn,maximumEdgeStretch,maximumAreaChange};
+ };
+ let attempted=0;
+ for(const offset of [.00005,.0001,.00025,.0005,.001,.002]){
+  if(offset>maxShiftMeters+1e-12)continue;
+  for(const direction of [1,-1]){
+   attempted++;
+   const staged=original.slice();
+   for(const v of moved){
+    staged[3*v]+=normal.x*offset*direction;
+    staged[3*v+1]+=normal.y*offset*direction;
+    staged[3*v+2]+=normal.z*offset*direction;
+   }
+   const metrics=quality(staged);
+   if(!metrics)continue;
+   // Require exact twin coherence in BOTH source-local and actual skinned
+   // world pose, not merely a pair of similar original photos.
+   const trial=captureSourceDressBodyPose40({
+    root,dress,stagedPositions:staged
+   }),candidate=captures.get(trial);
+   if(!candidate)fail('C51 missing staged source-verified capture');
+   let maximumWorldShift=0;
+   for(let j=0;j<candidate.clothWorld.length;j+=3)
+    maximumWorldShift=Math.max(maximumWorldShift,Math.hypot(
+     candidate.clothWorld[j]-shot.clothWorld[j],
+     candidate.clothWorld[j+1]-shot.clothWorld[j+1],
+     candidate.clothWorld[j+2]-shot.clothWorld[j+2]));
+   if(!Number.isFinite(maximumWorldShift)||
+      maximumWorldShift>maxShiftMeters+1e-7)continue;
+   let twinsPreserved=true;
+   for(const v of moved){
+    for(const twin of sourceTwinVertices51(shot,v)){
+     const ia=3*v,ib=3*twin;
+     if(Math.hypot(staged[ia]-staged[ib],
+      staged[ia+1]-staged[ib+1],
+      staged[ia+2]-staged[ib+2])>SOURCE_TWIN_EPS51||
+      Math.hypot(candidate.clothWorld[ia]-candidate.clothWorld[ib],
+       candidate.clothWorld[ia+1]-candidate.clothWorld[ib+1],
+       candidate.clothWorld[ia+2]-candidate.clothWorld[ib+2])
+       >SOURCE_TWIN_EPS51)twinsPreserved=false;
+    }
+   }
+   if(!twinsPreserved)continue;
+   let self,body;
+   try{
+    self=auditSourceDressSelfContact44({root,dress,poseToken:trial,
+     maxSourceFaces,maxTriangleCandidates,toleranceMeters});
+    if(!self.completeNonadjacentFaceAudit||
+       self.checkedOriginalFaces!==self.originalFaceCount||
+       self.unresolvedPairs!==0)continue;
+    body=auditMovingSourceDressBodySurfaces40({
+     root,dress,startPose:poseToken,endPose:trial,
+     maxClothFaces:maxSourceFaces,maxBodyFaces,
+     maxTriangleCandidates,maxClothShiftMeters:.025,
+     paddingMeters:toleranceMeters
+    });
+    if(!body.wholeGarmentFacesExamined||
+       !body.fullBodyFacesExamined||body.potentialPairs!==0)continue;
+   }catch{
+    continue; // a resource, geometric, or pose failure is always a veto
+   }
+   checkTopology(shot);
+   root.updateMatrixWorld(true);
+   if(!same(sourcePose(mesh,shot.source),shot.clothWorld))
+    fail('C51 original source pose changed during connected patch audit');
+   const proposalToken=Object.freeze({});
+   stagedProposals50.set(proposalToken,{root,mesh,shot,staged,used:false});
+   return Object.freeze({
+    schema:'M2-source-dress-connected-patch-C51',
+    status:'staged-connected-patch-preview-only',
+    attemptedCandidates:attempted,proposalToken,
+    patchVertexCount:moved.size,affectedSourceFaces:facesToCheck.size,
+    sourceFaceCountAudited:self.checkedOriginalFaces,
+    bodyFaceCountAudited:body.bodyFaces,
+    originalSourcePhotoMappingAndSkinImmutable:true,
+    realOriginalSourceAndSkinChecked:true,
+    maximumSourceShiftMeters:offset,
+    maximumWorldShiftMeters:maximumWorldShift,
+    maximumAffectedFaceNormalTurnDegrees:metrics.maximumNormalTurn,
+    maximumAffectedEdgeStretchRatio:metrics.maximumEdgeStretch,
+    maximumAffectedFaceAreaChangeRatio:metrics.maximumAreaChange,
+    maxAllowedEdgeStretchRatio:maxEdgeStretchRatio,
+    maxAllowedNormalTurnDegrees:maxNormalTurnDegrees,
+    allOriginalPhotoSourceTrianglesAudited:true,
+    allOriginal163BoneBodyFacesBroadphaseChecked:true,
+    remainingSelfContactPairs:0,bodySweptPotentialPairs:0,
+    coincidentSourceUVVerticesMovedTogether:true,
+    completeClothAndBodyClearance:true,
+    photoUVRestSkeletonPreserved:true,
+    repairCommitted:false,independentSourceSeamReviewed:false,
+    actualContinuousClothCertified:false,
+    previewOnly:true,releaseAuthorized:false,familyAlpha:'HOLD'
+   });
+  }
+ }
+ return refuse('bounded-connected-patch-not-cleared',attempted);
+}
+
+/** Shares the same one-shot private source-bound capture as P2-C50. */
+export function captureSourceDressConnectedPatchPreview51(args={}){
+ return captureSourceDressRepairPreview50(args);
 }
 
 /**
