@@ -1,0 +1,112 @@
+name: Mission 1 P855 source lease and signed consensus — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-source-lease-consensus-integration-855-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p855-source-lease-consensus-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-two-source-native-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P854 full-annotation parent, source-lease blob pins, six scoped files and HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=bdb6a35c0d7818a306aa4147be55254592a1113c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p855-files
+          cat /tmp/p855-files
+          test "$(wc -l </tmp/p855-files)" -eq 6
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|scripts/test-m1-review-first-default-843.mjs|tests/mission1-stale-photo-recognition-lease-854.test.cjs|tests/mission1-source-lease-consensus-integration-855.test.mjs|research/mission1-source-lease-consensus-integration-855/REPORT.md|.github/workflows/mission1-source-lease-consensus-integration-855-no-deploy.yml) ;;
+              *) echo "P855 OUT OF SCOPE: $path"; exit 1 ;;
+            esac
+          done </tmp/p855-files
+          test "$(git hash-object public/app.js)" = a31e9e47d6331ad83cf4b075a1d184b09e2e1a1c
+          test "$(git hash-object tests/mission1-stale-photo-recognition-lease-854.test.cjs)" = 272a0724ede6165fb29273041cd3ff79cd18544f
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/local-worker.mjs public/recognition-engine.mjs public/outfit-capture.js public/garment-color-76.mjs public/photo-color.js public/review-queue-850.js public/device-acceptance-78.js scripts/p75-dataset-core.mjs scripts/p79-workstation-core.mjs scripts/m1-release-evidence-851.mjs supabase benchmark)"
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'const live854=()=>sameOwner854()' public/app.js
+          grep -Fq 'completeSignedLabel' scripts/p75-dataset-core.mjs
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-source-lease-consensus-integration-855/REPORT.md
+          echo M1_P855_PINNED_TWO_SOURCE_SIX_PATH_NO_DEPLOY_PASS
+      - name: Temporary test dependencies without lockfile or deployed package changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual scanner source lease plus full-label signed-consensus cross-tests
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --test tests/mission1-stale-photo-recognition-lease-854.test.cjs tests/mission1-source-lease-consensus-integration-855.test.mjs tests/mission1-full-label-consensus-854.test.mjs tests/parallel79-workstation.test.mjs tests/parallel75-independent-ground-truth.test.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p855-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p855-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p855-release
+      - name: Both unchanged app research builds, complete native regression
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  desktop-Chromium-WebKit-NOT-physical-phones:
+    needs: pinned-two-source-native-HOLD
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: P79 local-only independent annotation desktop-engine synthetic browser tests
+        run: node scripts/test-p79-workstation-browser.mjs
+      - name: P78 physical operator recorder DESKTOP simulation, not hardware witness
+        run: node scripts/test-parallel78-device-browser.mjs
+      - name: Inherited photo capture, safe owner recognition, duplicate, color, learning and footwear gates
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-m1-batch-review-850.mjs
+          node scripts/test-parallel77-cross-capture-browser.mjs
+          node scripts/test-parallel76-color-browser.mjs
+          node scripts/test-m1-owner-learning-integration-847.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-save-lifecycle-844.mjs candidate
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+  public-original-photo-hashes-NOT-human-accuracy:
+    needs: pinned-two-source-native-HOLD
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    env:
+      P73_PHOTO_IDS: commons-0003,commons-0014,commons-0021,commons-0033,commons-0049,commons-0060,commons-0077,commons-0082,commons-0094,validation-0001,validation-0019
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Check legally sourced JPEG original bytes and SHA, not blind recognition accuracy
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P73_PHOTO_IDS"
+          node scripts/evaluate-parallel73-real-photo.mjs
