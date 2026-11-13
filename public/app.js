@@ -204,7 +204,7 @@ function adjustPhoto(item){
  };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
-  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&!cross77Pending&&(!cross77Proposal||cross77Decision?.action==='different'));
+  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
   if(save)save.disabled=saveInFlight||!valid;
   if(reviewStatus)reviewStatus.textContent=reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
@@ -267,7 +267,10 @@ function adjustPhoto(item){
    panel.setAttribute('aria-label','Possible previously owned garment comparison');
    panel.append(node('p','Checking possible previously owned garments. Original photos stay in your private closet.','fine'));
    form.prepend(panel);
-   CrossCaptureDuplicate77.propose(item,items,cross77Scope,{topK:1}).then(proposal=>{
+   // P849: start evidence hashing only AFTER Adjust finishes synchronous draft
+   // setup (including item.userAdjusted=true). Otherwise evidence() detects
+   // our own setup mutation as P77_STALE_SOURCE and suppresses all candidates.
+   Promise.resolve().then(()=>CrossCaptureDuplicate77.propose(item,items,cross77Scope,{topK:1})).then(proposal=>{
     if(!dialog.open||!CrossCaptureDuplicate77.valid(cross77Scope)||
      !batch.some(x=>x===item))return;
     cross77Pending=false;
@@ -299,8 +302,9 @@ function adjustPhoto(item){
    (item.reconciliation70&&duplicateUnit70InCloset(item,items))){
    message('Resolve garment grouping, source ownership, or duplicate source before saving.');return;
   }
-  if(cross77Pending||cross77Proposal&&cross77Decision?.action!=='different'){
-   message('Resolve the possible owned-garment comparison first, or keep this original unsaved for later.');
+  if((cross77Scope&&!CrossCaptureDuplicate77.valid(cross77Scope))||
+     cross77Pending||(cross77Proposal&&cross77Decision?.action!=='different')){
+   message('Resolve the possible owned-garment comparison for this signed owner first, or keep the original unsaved.');
    return;
   }
   if(explicitReview&&!canSaveReview()){
@@ -340,6 +344,28 @@ function adjustPhoto(item){
     unit72!==item.reconciliation70?.maskSha256||
     !batch.some(x=>x===item)||(!item.reconciliation70&&!unit72?false:!unit70OwnerEvidenceValid({...item,category:value.category}))))
    throw Error('P847_STALE_LEARNING_OR_SOURCE');
+  // P849: learning hashes can await; reverify the exact owner, draft image,
+  // same candidate/physical unit revision immediately before owner storage.
+  // This remains a local research fence, NOT a cross-tab/cloud CAS proof.
+  if(cross77Scope){
+   if(!dialog.open||!CrossCaptureDuplicate77.valid(cross77Scope)||
+      source72!==item.image||origin72!==item.recognitionPhoto?.image||
+      unit72!==item.reconciliation70?.maskSha256||!batch.some(x=>x===item))
+    throw Error('P849_STALE_SOURCE_OR_OWNER');
+   if(cross77Proposal){
+    const old=items.find(x=>x.id===cross77Decision?.candidateItemId);
+    if(!old||cross77Decision?.action!=='different')throw Error('P849_STALE_DUPLICATE_DECISION');
+    const [newSource,oldSource]=await Promise.all([
+     CrossCaptureDuplicate77.evidence(item,cross77Scope),
+     CrossCaptureDuplicate77.evidence(old,cross77Scope)
+    ]);
+    if(!CrossCaptureDuplicate77.valid(cross77Scope)||
+       newSource.sourceSha256!==cross77Decision.incomingSourceSha256||
+       oldSource.sourceSha256!==cross77Decision.candidateSourceSha256||
+       oldSource.revisionSha256!==cross77Decision.candidateRevisionSha256)
+     throw Error('P849_CHANGED_CANDIDATE_OR_OWNER');
+   }
+  }
   await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
