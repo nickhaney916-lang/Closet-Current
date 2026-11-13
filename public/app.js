@@ -1232,7 +1232,9 @@ function render(){
   assertCard();
   await removeItem(item.id,expected);
   assertCard();
-  items=items.filter(x=>x!==item);
+  // Preserve the original same-owner ID semantics: discard any redundant
+  // visible copies of the one durable row whose ID was CAS-deleted.
+  items=items.filter(x=>x.id!==item.id);
   render();
  }catch(error){
   // A revoked (including same-ID re-login) operation has no authority to
