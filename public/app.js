@@ -1995,9 +1995,20 @@ async function recognizeItem(item){
   item.localStatus='Recognized. Saving to your closet…';
   savingIndexed=true;
   const wasSaved=await saveIndexed(item,index04ApprovedOwner);
-  if(epoch!==captureOperationEpoch)return;
-  if(wasSaved&&typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
-  if(!wasSaved&&index04Active){item.localStatus='Owner changed or confirmation is needed. Your photo remains unsaved for review.';return true;}
+  if(epoch!==captureOperationEpoch)return false;
+  if(!wasSaved){
+   // A refused automatic index is NOT an acknowledged closet save.
+   // Restore the pending-review status path so finally awaits its exact
+   // source-CAS transaction. Do not erase the original or another tab's edit.
+   savingIndexed=false;
+   item.saveFailed=true;
+   recognitionState.phase='save-failed';
+   item.localStatus=index04Active
+    ?'Automatic save needs owner confirmation or current source verification. Original photo kept; review in Adjust.'
+    :'Recognized but NOT saved to your closet. Original photo kept; review in Adjust before saving.';
+   return false;
+  }
+  if(typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
