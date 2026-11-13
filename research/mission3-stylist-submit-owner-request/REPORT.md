@@ -21,6 +21,10 @@ The normal `public/closet-stylist.js` `styleCollectionForm.onsubmit` callback aw
 - Strict exact-parent **five-file** no-deploy GitHub Actions job with focused tests plus inherited real Chromium/WebKit full-app original-photo styling integration, synthetic two-owner PostgreSQL, full serial Node, storage/RLS, owner review and recovery tests.
 - Verify the **final head** workflow results before claiming passed tests. Do not infer real-image recognition accuracy or genuine 3D reconstruction from synthetic pass counts.
 
+## First CI failure and browser test correction
+
+The first exact-head run [#43511738618](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43511738618) passed the pinned source-level tests but did not execute the new 84 browser scenarios: the browser harness initially loaded the extracted production code on an empty HTML document before the required `styleCollectionForm` existed, so its `onsubmit` binding threw at script initialization. This is a **test harness setup failure**, not a proven product regression. The harness now bootstraps the expected form before injecting the production callback and rebinds that original callback when each synthetic case recreates the page. Run fresh exact-head CI; **do not claim 84/84 until the browser receipts and full jobs pass**.
+
 ## Next release blockers
 
 Physical Android Chrome and iPhone Safari acceptance, authorized hosted private-cloud two-owner Auth/RLS/Storage backup/restore, safe real garment photo recognition and human review, Mission 2 photo-derived 3D fitting and drape, final independent end-to-end Missions 1/2/3 integration, explicit owner acceptance. Keep #255 OPEN.
