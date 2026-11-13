@@ -25,8 +25,11 @@ test('BOARD04 source refuses native lossy persistence and cloud restore on dirty
  const cloud=readFileSync('public/cloud-backup-bridge.js','utf8');
  const state=readFileSync('research/native-consumer-board-04/consumer-board-controller.mjs','utf8');
  assert.ok(native.includes('Unsafe native outfit write blocked'));
- assert.ok(native.includes('nativeLossless04.persist({asNew:false})'));
- assert.ok(native.includes('nativeLossless04.persist({asNew:true})'));
+ // Research-only writes must use the exact controller captured at click time,
+ // not the mutable global which could be replaced on another owner's login.
+ assert.match(native,/addControl\('native04SaveChanges','Save changes',consumer=>consumer\.persist\(\{asNew:false\}\)\)/);
+ assert.match(native,/const lease=beginOwnerBoardUiLease\(\),consumer=nativeLossless04;[\s\S]*?await consumer\.persist\(\{asNew:true\}\)/);
+ assert.ok(native.includes('nativeLossless04===consumer'));
  assert.ok(native.includes('nativeLossless04.selectSaved(index)'));
  assert.ok(native.includes('Missing saved clothing'));
  assert.ok(app.includes('Import blocked in lossless research mode BEFORE any wardrobe write'));
