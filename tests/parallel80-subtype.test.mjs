@@ -367,3 +367,113 @@ test("one issued decision cannot be replayed through separate handles and close 
   c.close();
   await assert.rejects(d.choose("Unknown", { acknowledged: true }));
 });
+test("strict evidence capsules reject omissions, raw fields, wrong primitive types and accessors", async () => {
+  const { validEvidence80, validateSubtypeRequest80, photoDetailIssue80 } =
+    await import("../public/subtype-review-80.mjs");
+  const x = input80();
+  assert.equal(validEvidence80(x.evidence), true);
+  const mutations = [
+    (e) => delete e.sessionId,
+    (e) => (e.privatePhoto = "data:image/jpeg;base64,PRIVATE"),
+    (e) => (e.ownerId = 4),
+    (e) => (e.ownerId = " "),
+    (e) => (e.unitId = "x".repeat(129)),
+    (e) => (e.sourceSha256 = { toString: () => "a".repeat(64) }),
+    (e) => (e.segmented = "false"),
+    (e) => (e.maskSha256 = "a".repeat(64)),
+    (e) => (e.unitStatus = "paired_confirmed"),
+    (e) => {
+      e.segmented = true;
+      e.unitStatus = "separate_confirmed";
+      e.maskSha256 = null;
+    },
+    (e) =>
+      Object.defineProperty(e, "ownerId", {
+        enumerable: true,
+        get: () => "SYNTHETIC",
+      }),
+  ];
+  for (const change of mutations) {
+    const evidence = structuredClone(x.evidence);
+    change(evidence);
+    assert.equal(validEvidence80(evidence), false);
+    assert.equal(
+      decide80({
+        ...x,
+        evidence,
+        current: evidence,
+        receipt: { ...x.receipt, evidence },
+      }).status,
+      "abstain",
+    );
+    await assert.rejects(
+      validateSubtypeRequest80({
+        image: "not decoded",
+        subtype80: {
+          schema: VERSION,
+          enabled: true,
+          consent: true,
+          categoryOwnerReviewed: true,
+          evidence,
+        },
+      }),
+      /SOURCE_REQUIRED/,
+    );
+  }
+  assert.equal(photoDetailIssue80(x.quality), null);
+  for (const patch of [
+    { minimumSide: 96 },
+    { lowLight: true },
+    { detailVisible: false },
+    { soft: true },
+    { occluded: true },
+    { overlapping: true },
+  ])
+    assert.equal(
+      photoDetailIssue80({ ...x.quality, ...patch }),
+      "insufficient-visible-photo-detail",
+    );
+});
+test("worker validates and snapshots the complete capsule before any scorer call", async () => {
+  const bytes = await readFile("benchmark/fixtures/commons-0003.jpg"),
+    image = "data:image/jpeg;base64," + bytes.toString("base64"),
+    x = input80();
+  x.evidence.inputSha256 = await hash80(bytes);
+  let calls = 0;
+  const request = {
+    image,
+    subtype80: {
+      schema: VERSION,
+      enabled: true,
+      consent: true,
+      categoryOwnerReviewed: true,
+      evidence: structuredClone(x.evidence),
+    },
+  };
+  const options = {
+    request,
+    image: {},
+    whole: async () => {
+      calls++;
+      request.subtype80.evidence.ownerId = "MUTATED";
+      return x.views.whole;
+    },
+    confirmation: async () => {
+      calls++;
+      return x.views.confirmation;
+    },
+    metadata: {
+      model: x.model.name,
+      revision: x.model.revision,
+      sha256: x.model.vectorsSha256,
+    },
+    sourceCodeSha256: x.model.sourceCodeSha256,
+  };
+  const result = await subtypeModel80(options);
+  assert.equal(result.subtype80.receipt.evidence.ownerId, x.evidence.ownerId);
+  assert.equal(calls, 2);
+  calls = 0;
+  request.subtype80.evidence.privatePhoto = image;
+  await assert.rejects(subtypeModel80(options), /SOURCE_REQUIRED/);
+  assert.equal(calls, 0);
+});

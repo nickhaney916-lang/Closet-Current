@@ -5,6 +5,7 @@ import {
   createReview80,
   binding80,
   revision80,
+  photoDetailIssue80,
 } from "./subtype-review-80.mjs";
 import { sourceCodeHash80 } from "./subtype-worker-80.mjs";
 const el = (tag, text) => {
@@ -154,8 +155,20 @@ export function mountSubtype80({
       const initialRevision = revision80(item),
         category = getCategory(),
         scope = { ownerId: owner.id, sessionId, live },
-        before = await evidence80(item, scope),
-        quality = await inspect(),
+        quality = await inspect();
+      if (
+        !live() ||
+        ticket !== epoch ||
+        category !== getCategory() ||
+        initialRevision !== revision80(item)
+      )
+        throw Error("P80_REVOKED");
+      if (photoDetailIssue80(quality)) {
+        status.textContent =
+          "Unknown / Needs owner review. There is not enough visible detail for a subtype check. No model comparison was requested. You can keep this photo and choose Unknown manually.";
+        return;
+      }
+      const before = await evidence80(item, scope),
         sourceCodeSha256 = await sourceCodeHash80();
       const metadataResponse = await fetch(
         new URL("./recognition-vectors.json", import.meta.url),
