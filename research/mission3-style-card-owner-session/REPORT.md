@@ -19,7 +19,7 @@ The underlying SHA-256 / owner-reviewed garment validation and style controller 
 
 `tests/mission3-style-card-owner-session-lease.test.cjs` executes the actual source of both lease functions against **synthetic signed sessions**. Thirteen cases check current completion, safe generic failures, delayed success and rejection after owner switch, same-ID re-login success/failure, auth assertion revocation, same-ID rehydration, wrong DB or signed-out user, removed button, and source-level wiring/no-sensitive-error strings.
 
-A strict four-file exact-parent **NO DEPLOY** workflow includes the source regression suite in both pinned offline and full native jobs and inherits the PR #1036 Node, real Chromium/WebKit **desktop-emulated mobile viewport** checks, original-photo preservation/restore, and signed disposable two-owner PostgreSQL tests. **Verify the exact-final-head CI run and logs before claiming success.**
+A strict five-file exact-parent **NO DEPLOY** workflow runs the source regression suite in both offline and native jobs, plus `scripts/test-mission3-style-card-owner-session-browser.mjs`: 48 synthetic callback/browser cases across Chromium and WebKit at mobile-sized 320/390/430 CSS-pixel widths. The browser harness runs the production callback source with synthetic accounts and DOM controls; it is **not** a physical phone or complete hosted app test. Existing serial Node, private original recovery and disposable two-owner PostgreSQL tests remain inherited. **Verify the exact-final-head CI run and logs before claiming success.**
 
 ## Remaining blockers
 
