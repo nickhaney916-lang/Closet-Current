@@ -21,6 +21,22 @@ const equal=(a,b)=>a?.length===b?.length&&a.every((v,i)=>v===b[i]);
 const getSource=mesh=>{
  const g=mesh.geometry,attrs=['position','normal','dressRest','skinIndex','skinWeight','uv'];
  const buffers=new Map();
+ const sourceWeights=g.getAttribute('skinWeight'),sourceBoneIDs=g.getAttribute('skinIndex');
+ if(!sourceWeights?.isBufferAttribute||!sourceBoneIDs?.isBufferAttribute||
+    sourceWeights.itemSize!==4||sourceBoneIDs.itemSize!==4)
+  fail('original source has no four bone skin channels');
+ for(let i=0;i<g.getAttribute('position').count;i++){
+  let weight=0;
+  for(let j=0;j<4;j++){
+   const value=sourceWeights.getComponent(i,j),bone=sourceBoneIDs.getComponent(i,j);
+   if(!Number.isFinite(value)||value<0||value>1||
+      !Number.isSafeInteger(bone)||bone<0||bone>=163)
+    fail('original anatomical dress bone fields invalid');
+   weight+=value;
+  }
+  if(Math.abs(weight-1)>.005)
+   fail('original anatomical dress skin weights not normalized');
+ }
  for(const a of attrs){
   const f=g.getAttribute(a);
   if(!f?.isBufferAttribute||f.count!==g.getAttribute('position').count||
@@ -122,8 +138,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
     fail('source photographed front RGB silhouette cannot be distorted');
   }
   if(delta.outward===0&&delta.drop===0)continue;
-  moved.set(world.x+delta.outward*dx/r,world.y-delta.drop,
-   world.z+delta.outward*dz/r).applyMatrix4(inv);
+  moved.set(world.x+delta.outward*dx/radius,world.y-delta.drop,
+   world.z+delta.outward*dz/radius).applyMatrix4(inv);
   const distance=world.distanceTo(moved.clone().applyMatrix4(mesh.matrixWorld));
   if(![moved.x,moved.y,moved.z].every(Number.isFinite)||
      distance>MAX_DISPLACEMENT+1e-7)
