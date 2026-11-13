@@ -44,11 +44,15 @@ function fixture(){
  const click=id=>buttons[id].onclick();
  return {ctx,events,form,buttons,ownerController,save,click,
   swap(){
+   // Real BOARD04 status() consults the pinned native auth epoch and becomes
+   // inactive after either an account switch or same-ID re-login.
+   active=false;
    ctx.window.closetAuth={user:{id:'owner-b'},assertCurrent(){}};
    ctx.db={name:'closet-current-user-owner-b'};
    ctx.captureOperationEpoch++;
   },
-  relogin(){ctx.window.closetAuth={user:{id:'owner-a'},assertCurrent(){}};
+  relogin(){active=false;
+   ctx.window.closetAuth={user:{id:'owner-a'},assertCurrent(){}};
    ctx.db={name:'closet-current-user-owner-a'};ctx.captureOperationEpoch++;},
   revoke(){revoked=true},
   inactive(){active=false},
