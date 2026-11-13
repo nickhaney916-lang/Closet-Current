@@ -955,3 +955,19 @@ test('C58: oversized original anatomical body face spans many Y/Z cells and is n
  assert.equal(report.releaseAuthorized,false);
  assert.deepEqual(original(f),immutable);
 });
+
+test('C58: original 163-bone anatomy comparison budget exhaustion refuses partial contact clearance',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ const p=f.body.geometry.getAttribute('position');
+ p.array.set([0,-3,-3,0,3,-3,0,0,3]);
+ p.needsUpdate=true;
+ const originalSource=original(f),r=audit58(f,{
+  maxBodyComparisons58:1
+ }),a=r.originalArticulatedContactReceipt58;
+ assert.equal(a.originalNeutralBodyAuditComplete,false);
+ assert.equal(a.originalBodyPairSampleBudgetExhausted,true);
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,false);
+ assert.equal(a.originalBodyIndependentClothFitCertified,false);
+ assert.equal(a.releaseAuthorized,false);
+ assert.deepEqual(original(f),originalSource);
+});
