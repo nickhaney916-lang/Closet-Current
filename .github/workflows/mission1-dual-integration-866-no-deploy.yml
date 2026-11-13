@@ -29,27 +29,27 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           if ! git cat-file -e "$DONOR^{commit}" 2>/dev/null; then git fetch --no-tags origin "$DONOR"; fi
           cat >/tmp/p866-donor-paths <<'P866_DONOR'
-.github/workflows/parallel82-dual-browser-no-deploy.yml
-public/app.js
-public/dual-core-82.mjs
-public/dual-model-lock-82.mjs
-public/dual-panel-82.mjs
-public/dual-worker-82.mjs
-public/model-arbitration-81.mjs
-research/parallel82/REPORT.md
-research/parallel82/frozen-text-82.json
-research/parallel82/summary.json
-scripts/p82-browser-server.mjs
-scripts/p82-prepare-models.mjs
-scripts/p82-real-browser.mjs
-scripts/p82-summarize.mjs
-scripts/parallel67-independent-siglip-scoring.mjs
-scripts/parallel67-precompute-fashion-text-03.mjs
-scripts/test-p82-real-review.mjs
-scripts/test-p82-review-browser.mjs
-tests/parallel82-default-scope.test.mjs
-tests/parallel82-evidence.test.mjs
-P866_DONOR
+          .github/workflows/parallel82-dual-browser-no-deploy.yml
+          public/app.js
+          public/dual-core-82.mjs
+          public/dual-model-lock-82.mjs
+          public/dual-panel-82.mjs
+          public/dual-worker-82.mjs
+          public/model-arbitration-81.mjs
+          research/parallel82/REPORT.md
+          research/parallel82/frozen-text-82.json
+          research/parallel82/summary.json
+          scripts/p82-browser-server.mjs
+          scripts/p82-prepare-models.mjs
+          scripts/p82-real-browser.mjs
+          scripts/p82-summarize.mjs
+          scripts/parallel67-independent-siglip-scoring.mjs
+          scripts/parallel67-precompute-fashion-text-03.mjs
+          scripts/test-p82-real-review.mjs
+          scripts/test-p82-review-browser.mjs
+          tests/parallel82-default-scope.test.mjs
+          tests/parallel82-evidence.test.mjs
+          P866_DONOR
           git diff --name-only "$BASE" HEAD >/tmp/p866-changes
           cat /tmp/p866-changes
           test "$(wc -l </tmp/p866-changes)" -eq 23
