@@ -90,6 +90,7 @@ try{
    await page.evaluate(({STORE,seed})=>localStorage.setItem(STORE,seed),{STORE,seed});
    await page.reload({waitUntil:'domcontentloaded'});
    await page.waitForFunction(owner=>window.closetAuth?.user?.id===owner,owner);
+   await page.waitForFunction(()=>typeof closetReady!=='undefined',null,{timeout:15000});
    await page.evaluate(()=>closetReady);
    await page.evaluate(async({owner,jpeg,sha})=>{
     const row={id:'M3-CAS-native-original',ownerId:owner,image:jpeg,category:'Tops',
