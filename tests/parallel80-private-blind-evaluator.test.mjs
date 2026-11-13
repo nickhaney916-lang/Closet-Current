@@ -7,6 +7,7 @@ import { canonical,sha256 } from "../scripts/p75-dataset-core.mjs";
 import { 
   SCHEMA80, SEAL80, validCandidatePrediction80,
   summarizeConditionalCandidates80, evaluatePrivateBlind80,
+  verifyScorerSeal80,
 } from "../scripts/p80-private-blind-evaluator.mjs";
 const HASH = "a".repeat(64);
 const photoSha = "b".repeat(64);
@@ -80,6 +81,10 @@ test("P80 strict candidate capsule rejects wrong subtypes, rank, category, score
     {alternatives:[{category:"Bottoms",itemType:"Shorts",rank:1,relativeScore:1.1}]},
     {alternatives:[{category:"Bottoms",itemType:"Shorts",rank:1,relativeScore:NaN}]},
     {alternatives:[
+      {category:"Bottoms",itemType:"Shorts",rank:1,relativeScore:.1},
+      {category:"Bottoms",itemType:"Skirt",rank:2,relativeScore:.5},
+    ]},
+    {alternatives:[
       {category:"Bottoms",itemType:"Shorts",rank:1,relativeScore:.7},
       {category:"Bottoms",itemType:"Shorts",rank:2,relativeScore:.2},
     ]},
@@ -142,7 +147,9 @@ test("P79 generated registrar/reviewer signatures are NOT a real blind cohort an
         bundle:f.bundle,
         receipts:{[rows[0].sourceSha256]:[f.receipt(0,label()),f.receipt(1,label())]},
         predictions:rows, seal,
-        trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:fingerprint},
+        trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:fingerprint,
+        targetCommit:seal.targetCommit,modelSha256:seal.modelSha256,
+        approvedAt:new Date(Date.now()-3600000).toISOString()},
       });
     assert.equal(report.status,"BLOCKED","development-fixture cannot become blind accuracy");
     assert.equal(report.scoredSources,0);
@@ -158,7 +165,9 @@ test("P80 synthetic scorer signature cannot bypass explicitly untrusted scoring 
     const report=await evaluatePrivateBlind80({
       bundle:{...f.bundle,authorization:{...f.bundle.authorization,access:"blind"}},
       predictions:rows,seal,
-      trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:"0".repeat(64)},
+      trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:"0".repeat(64),
+        targetCommit:seal.targetCommit,modelSha256:seal.modelSha256,
+        approvedAt:new Date(Date.now()-3600000).toISOString()},
       receipts:{[rows[0].sourceSha256]:[f.receipt(0,label()),f.receipt(1,label())]},
     });
     assert.equal(report.status,"BLOCKED");
@@ -173,7 +182,9 @@ test("P80 never scores forged blind flags, revoked rights or incomplete human re
     const rows=[prediction({sourceSha256:f.bundle.sources[0].source.sha256})],
       s=syntheticSeal(rows),
       {fingerprint,...seal}=s,
-      trusted={registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:fingerprint};
+      trusted={registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:fingerprint,
+        targetCommit:seal.targetCommit,modelSha256:seal.modelSha256,
+        approvedAt:new Date(Date.now()-3600000).toISOString()};
     for(const mutate of [
       b=>{b.synthetic=true;},
       b=>{b.sources[0].source.split="blind";},
@@ -199,7 +210,9 @@ test("PRIVATE evaluator and native module do not turn synthetic test fixtures in
         bundle:f.bundle,
         predictions:rows,
         seal:{...s,signature:"AAAA"},
-        trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:s.fingerprint},
+        trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:s.fingerprint,
+          targetCommit:seal.targetCommit,modelSha256:seal.modelSha256,
+          approvedAt:new Date(Date.now()-3600000).toISOString()},
         receipts:{[rows[0].sourceSha256]:[f.receipt(0,label()),f.receipt(1,label())]},
       });
     assert.equal(report.status,"BLOCKED");
@@ -208,4 +221,18 @@ test("PRIVATE evaluator and native module do not turn synthetic test fixtures in
     assert.ok(!JSON.stringify(report).includes(rows[0].sourceSha256));
     assert.ok(!JSON.stringify(report).includes("SYNTHETIC"));
   }finally{await f.cleanup()}
+});
+
+test("scorer Ed25519 seal is mechanically verified only with exact independently pinned key and immutable prediction digest (SYNTHETIC)",()=>{
+  const rows=[prediction()],
+    result=syntheticSeal(rows),
+    {fingerprint,...seal}=result;
+  assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now()),true);
+  assert.equal(verifyScorerSeal80(rows,seal,"0".repeat(64),Date.now()),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,modelSha256:"d".repeat(64)},fingerprint,Date.now()),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,targetCommit:"d".repeat(40)},fingerprint,Date.now()),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,sourceCount:2},fingerprint,Date.now()),false);
+  assert.equal(verifyScorerSeal80(rows,{...seal,signature:"AAAA"},fingerprint,Date.now()),false);
+  assert.equal(verifyScorerSeal80([prediction({status:"abstain",alternatives:[]})],seal,fingerprint,Date.now()),false);
+  assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now()+31*86400000),false);
 });
