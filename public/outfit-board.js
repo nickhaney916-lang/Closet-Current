@@ -456,7 +456,7 @@ const outfitBoardReady=(async()=>{
     try{
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
      window.native3D05Bridge=await mountNative3D05({consumer:nativeLossless04,
-      onStatus:value=>$('boardSaveStatus').textContent=value});
+      onStatus:callbacks.onStatus});
     }catch(error){nativeLossless04Notify(error);}
    }
    // NATIVE-PHOTO-08: attach only after actual owner Outfit Builder controls
@@ -467,7 +467,7 @@ const outfitBoardReady=(async()=>{
      const {mountNativeReadiness08}=await import('../research/native-photo-readiness-08/native-readiness-panel.mjs');
      window.nativePhotoReadiness08Bridge=await mountNativeReadiness08({
       board:nativeLossless04,db,
-      onStatus:value=>$('boardSaveStatus').textContent=value
+      onStatus:callbacks.onStatus
      });
     }catch(error){nativeLossless04Notify(error);}
    }
