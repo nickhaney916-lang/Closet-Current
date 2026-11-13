@@ -49,7 +49,7 @@ function syntheticSeal(rows){
     ...payload,
     publicKey:kp.publicKey.export({type:"spki",format:"pem"}).toString(),
     signature:sign(null,Buffer.from(canonical(payload)),kp.privateKey).toString("base64"),
-    fingerprint:sha256(createPublicKey(kp.publicKey).export({type:"spki",format:"der"})),
+    fingerprint:sha256(kp.publicKey.export({type:"spki",format:"der"})),
   };
 }
 test("P80 refuses to describe private-scoring readiness with no sources, labels or scores", async()=>{
