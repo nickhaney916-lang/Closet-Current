@@ -253,6 +253,7 @@ function adjustPhoto(item){
   form.append(approval,reviewStatus);canSaveReview();
  }
  learningCheck72=attachLearningConsent72(form,learningScope72());
+ const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
  // The experimental flow requires a deliberate URL opt-in and a live, exact
  // signed-user object + IndexedDB owner binding. No global closet scan/decode.
  const cross77Mode=typeof CrossCaptureDuplicate77!=='undefined'&&
@@ -280,14 +281,13 @@ function adjustPhoto(item){
     }});
     canSaveReview();
    }).catch(()=>{
-    cross77Pending=false;cross77Proposal=null;
-    panel.replaceChildren(node('p','Duplicate research check unavailable. Continue with regular photo review; no link was made.','fine'));
+    cross77Pending=true;cross77Proposal=null;
+    panel.replaceChildren(node('p','Duplicate research verification failed. Nothing was linked. Return without the optional research flag to use ordinary photo review.','fine'));
     canSaveReview();
    });
   }
  }
  cancel.type=remove.type='button';cancel.onclick=()=>{if(!saveInFlight)dialog.close();};
- const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
  remove.onclick=async()=>{if(saveInFlight){message('This photo is currently being saved.');return;}try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
  form.onsubmit=async event=>{
   event.preventDefault();
@@ -330,6 +330,9 @@ function adjustPhoto(item){
    ]);
    if(cross77Decision.action!=='different'||
     incomingEvidence.sourceSha256!==cross77Decision.incomingSourceSha256||
+    incomingEvidence.revisionSha256!==cross77Decision.incomingRevisionSha256||
+    incomingEvidence.cropSha256!==cross77Decision.incomingCropSha256||
+    incomingEvidence.maskSha256!==cross77Decision.maskSha256||
     savedEvidence.sourceSha256!==cross77Decision.candidateSourceSha256||
     savedEvidence.revisionSha256!==cross77Decision.candidateRevisionSha256)
     throw Error('P77_STALE_DECISION');
