@@ -59,7 +59,7 @@ try{
      const old=normalizeClothing({id:'same-source-id',ownerId:ownerA,category:'Tops',itemType:'T-shirt',
       color:'Blue',colorSource:'user',image:jpeg,originalPhoto:{image:jpeg,sha256:'a'.repeat(64)}});
      batch=[old];items=[];
-     await persistDraft({required:true});
+     await persistDraft({required:true,mode:'insert',record:old});
      window.cropOld=old;
      window.cropOldColorCheck=false;
      let accept;
@@ -78,7 +78,7 @@ try{
      const row=normalizeClothing({id:'same-source-id',ownerId:ownerB,category:'Shoes',itemType:'Sneakers',
       color:'Red',colorSource:'user',image:jpeg,originalPhoto:{image:jpeg,sha256:'b'.repeat(64)}});
      batch=[row];items=[];
-     await persistDraft({required:true});
+     await persistDraft({required:true,mode:'insert',record:row});
      const read=()=>new Promise((resolve,reject)=>{
       const request=db.transaction('state','readonly').objectStore('state').get('draft');
       request.onsuccess=()=>resolve(request.result?.batch||[]);request.onerror=()=>reject(request.error);
