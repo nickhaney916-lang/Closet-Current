@@ -134,3 +134,27 @@ test('session close prevents later approvals; source bytes are never mutated',as
  await assert.rejects(C.decide(p,scope,{action:'same-pending',candidateId:'old',acknowledged:true}),/STALE_PROPOSAL/);
  assert.equal(saved.image,jpeg(26));
 });
+
+test('foreign-owner descriptor cannot crowd out eligible owner top-one candidate',async()=>{
+ const {scope}=owner();
+ const incoming=item('incoming',40),foreign=item('aaa-foreign',41,{ownerId:'owner-B'});
+ const local=item('zzz-owned',42);
+ const proposal=await C.propose(incoming,[foreign,local],scope,{topK:1});
+ assert.equal(proposal.candidates.length,1);
+ assert.equal(proposal.candidates[0].id,'zzz-owned');
+ assert.equal(JSON.stringify(proposal).includes('aaa-foreign'),false);
+ assert.equal(proposal.scanned,1);
+});
+test('removed live owned item or deleted pending draft invalidates its outstanding proposal',async()=>{
+ let savedPresent=true,draftPresent=true;
+ const session={user:'owner-A'},scope=C.open({ownerId:'owner-A',
+  sessionId:'deleted-item-test-session',live:()=>session.user,
+  hasOwned:()=>savedPresent,hasDraft:()=>draftPresent});
+ const incoming=item('draft',43),saved=item('saved',44);
+ const first=await C.propose(incoming,[saved],scope);savedPresent=false;
+ await assert.rejects(C.decide(first,scope,{action:'same-pending',candidateId:'saved',acknowledged:true}),/STALE_PROPOSAL/);
+ savedPresent=true;
+ const second=await C.propose(incoming,[saved],scope);draftPresent=false;
+ await assert.rejects(C.decide(second,scope,{action:'different',candidateId:'saved',acknowledged:true}),/STALE_PROPOSAL/);
+ C.close(scope);
+});
