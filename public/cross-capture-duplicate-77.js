@@ -30,6 +30,10 @@
   return bytes;
  }
  const original=item=>item?.originalPhoto?.image||item?.recognitionPhoto?.image||item?.image;
+ // Legacy saved records sometimes omit an owner field; only an exact live
+ // owner-scoped database may supply those. All explicit owner aliases must agree.
+ const belongsToOwner=(item,ownerId)=>['ownerId','userId','accountId'].every(key=>
+  item?.[key]===undefined||item[key]===ownerId);
  function unitIdentity(item){
   return item?.reconciliation70?{
    sourceSha256:item.reconciliation70.sourceSha256||null,
@@ -40,7 +44,7 @@
   }:null;
  }
  async function evidence(item,scope){
-  if(!valid(scope)||!item||typeof item.id!=='string'||!item.id||item.ownerId&&item.ownerId!==scope.ownerId)fail('OWNER_OR_ITEM_CHANGED');
+  if(!valid(scope)||!item||typeof item.id!=='string'||!item.id||!belongsToOwner(item,scope.ownerId))fail('OWNER_OR_ITEM_CHANGED');
   // No file-name, photo contents, or account identifier ever enters a shortlist.
   const before=JSON.stringify(item);
   const photo=jpegBytes(original(item));
@@ -140,7 +144,7 @@
   if(!Array.isArray(closet)||closet.length>MAX_SCAN)fail('UNBOUNDED_INDEX');
   // The pure ranker has no authority over account ownership. Restrict records
   // BEFORE ranking/top-k so foreign scores cannot displace a real owned match.
-  const ownedCloset=closet.filter(x=>x&&!x.ownerId||x?.ownerId===scope.ownerId);
+  const ownedCloset=closet.filter(x=>x&&belongsToOwner(x,scope.ownerId));
   if(scope.hasDraft&&scope.hasDraft(incoming)!==true)fail('STALE_SOURCE');
   const snapshot=await evidence(incoming,scope),rank=candidateRank(incoming,ownedCloset,{topK});
   const found=[];
