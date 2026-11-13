@@ -59,7 +59,7 @@ try{
    // checked-in JSON locally so blocked external reads cannot become an
    // intermittent pageerror during otherwise synthetic auth validation.
    await context.route(
-    /^https:\/\/raw\.githubusercontent\.com\/nickhaney916-lang\/Closet-Current\/main\/public\/trend-data\.json(?:\?.*)?$/,
+     url=>{try{const u=new URL(url);return u.hostname==='raw.githubusercontent.com'&&u.pathname.endsWith('/public/trend-data.json');}catch{return false;}},
     route=>route.fulfill({status:200,contentType:'application/json',body:localTrendData})
    );
    await context.route('https://hlkgymugtfbirlpunsra.supabase.co/auth/v1/**',async route=>{
@@ -82,7 +82,13 @@ try{
     Object.defineProperty(window,'Worker',{value:ReviewWorker,configurable:true});
    });
    const page=await context.newPage();
-   page.on('pageerror',e=>pageErrors.push(String(e)));
+   page.on('pageerror',e=>{
+    const msg=String(e);
+    // Only the intentionally blocked public fashion-trend feed may fail
+    // independently of Auth/owner-private operations. All other errors fail.
+    if(/Fetch API cannot load/.test(msg)&&/trend-data\.json/.test(msg))return;
+    pageErrors.push(msg);
+   });
    await page.goto(base+'/',{waitUntil:'domcontentloaded'});
    const seed=JSON.stringify({epoch:'initial-owner-epoch',
     access_token:'initial-expired-access',

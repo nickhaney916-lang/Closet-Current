@@ -12,7 +12,7 @@ function extract(a,b){
  return source.slice(start,end);
 }
 const lease=extract('function ownerWardrobeMutationLease(){','function writeAll(values){');
-const edit=extract('function saveEditedGarment(updated,expected){','function removeItem(id){');
+const edit=extract('function saveEditedGarment(updated,expected){','function removeItem(id,expected){');
 const backup=extract("$('import').onchange=async e=>","window.addEventListener('beforeunload'");
 const jpeg='data:image/jpeg;base64,/9j/';
 const piece={id:'shared-row',image:jpeg,category:'Tops',color:'Blue',name:'Blue shirt'};

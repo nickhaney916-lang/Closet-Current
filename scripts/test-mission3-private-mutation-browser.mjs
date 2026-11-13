@@ -85,7 +85,7 @@ try{
      let release;
      const held=new Promise(yes=>release=yes);
      queued=fn=>held.then(fn);
-     const deleting=removeItem(delId).then(()=> 'resolved',()=> 'rejected');
+     const deleting=removeItem(delId,await get(dbA,delId)).then(()=> 'resolved',()=> 'rejected');
      const bulk=writeAll([{id:bulkId,ownerId:ownerA,category:'Tops',color:'Purple',image:'data:image/jpeg;base64,/9j/'}]).then(()=> 'resolved',()=> 'rejected');
      window.dispatchEvent(new Event('closet:session-locked'));
      window.closetAuth.user={id:ownerB};db=dbB;items=rows(ownerB);batch=[];
@@ -95,7 +95,7 @@ try{
      queued=fn=>Promise.resolve().then(fn);
      await writeAll([{id:newId,ownerId:ownerB,category:'Shoes',color:'Brown',image:'data:image/jpeg;base64,/9j/'}]);
      const saveRow=await get(dbB,newId);
-     await removeItem(newId);
+     await removeItem(newId,saveRow);
      const afterRemoval=await get(dbB,newId);
      queued=savedQueued;
      dbB.close();
