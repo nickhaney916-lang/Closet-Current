@@ -192,3 +192,92 @@ test('P2-C30 original source photo texel coverage counts real skinned source ver
   '"sourceFace"','"sourceImage"','"texelRGB"','"localXYZ"'])
   assert.equal(exported.includes(secret),false);
 });
+
+
+import {auditOriginalPhotoProjectedTriangles} from '../research/mission2-source-length/source-texel-audit.mjs';
+test('P2-C31 original shader projected fabric triangle area finds collapsed and off-photo faces even when vertices are individually finite',()=>{
+ const {root,shirt}=fixture();
+ root.updateMatrixWorld(true);
+ const original=shirt.meshes.map(mesh=>mesh.geometry.getAttribute('position').array.slice());
+ const attributes=shirt.meshes.map(mesh=>{
+  const p=mesh.geometry.getAttribute('position'),coords=new Float32Array(p.count*3),v=new THREE.Vector3();
+  for(let i=0;i<p.count;i++)
+   v.fromBufferAttribute(p,i).applyMatrix4(mesh.matrixWorld).toArray(coords,i*3);
+  return {mesh,coords};
+ });
+ const projection=[0,.98,.95,.7];
+ const report=auditOriginalPhotoProjectedTriangles(attributes,projection);
+ assert.ok(report.sourceTriangles>100);
+ assert.equal(report.sourceTriangles,
+  shirt.meshes.reduce((n,m)=>n+(m.geometry.index?
+   m.geometry.index.count/3:m.geometry.getAttribute('position').count/3),0));
+ assert.ok(report.sourceTrianglesWithMappedPhotoCentroid>0);
+ assert.equal(report.sourcePhotoGridCellsTotal,256);
+ assert.ok(report.sourcePhotoGridCellsWithMappedFaceCentroids>=1);
+ assert.ok(report.sourcePhotoGridCellsWithMappedFaceCentroids<=256);
+ assert.ok(report.projectedDegenerateTriangles>=0);
+ assert.ok(report.projectionPartiallyOutsideTriangles>=0);
+ assert.ok(report.projectionFullyOutsideTriangles>=0);
+ assert.equal(report.actualSourceShaderProjectionUsed,true);
+ assert.equal(report.original163BoneGeometryTrianglesObserved,true);
+ assert.equal(report.planarSideFacesMayBeIntentionallyDegenerate,true);
+ assert.equal(report.sourcePhotoColorMatchNotMeasured,true);
+ assert.equal(report.fabricDrapeNotCertified,true);
+ assert.equal(report.humanPhotorealismNotCertified,true);
+ assert.equal(report.physicalPhoneNotTested,true);
+ assert.equal(report.releaseAuthorized,false);
+ // Every source vertex can be finite and within photo bounds, while all
+ // triangles lose projected area after a bad planar mapping: vertex
+ // validation alone cannot detect this failure.
+ const flattened=attributes.map(({mesh,coords})=>({mesh,coords:coords.slice()}));
+ for(const item of flattened)for(let i=0;i<item.coords.length;i+=3)
+  item.coords[i]=0;
+ const degenerate=auditOriginalPhotoProjectedTriangles(flattened,projection);
+ assert.equal(degenerate.sourceTriangles,report.sourceTriangles);
+ assert.equal(degenerate.projectedDegenerateTriangles,report.sourceTriangles);
+ assert.equal(degenerate.sourceTrianglesWithMappedPhotoCentroid,0);
+ const outside=attributes.map(({mesh,coords})=>({mesh,coords:coords.slice()}));
+ for(const item of outside)for(let i=0;i<item.coords.length;i+=3)
+  item.coords[i]+=3;
+ const far=auditOriginalPhotoProjectedTriangles(outside,projection);
+ assert.equal(far.projectionFullyOutsideTriangles,far.sourceTriangles);
+ assert.equal(far.sourceTrianglesWithMappedPhotoCentroid,0);
+ const invalid=attributes.map(({mesh,coords})=>({mesh,coords:coords.slice()}));
+ invalid[0].coords[0]=NaN;
+ assert.throws(()=>auditOriginalPhotoProjectedTriangles(invalid,projection),
+  /full finite original 163-bone indexed source triangles required/);
+ assert.throws(()=>auditOriginalPhotoProjectedTriangles(attributes,
+  [0,-1,.95,.7]),/complete bounded original source triangle surface evidence/);
+ assert.throws(()=>auditOriginalPhotoProjectedTriangles(attributes,projection,
+  {maxTriangles:1}),/complete bounded original photographic source triangle count required/);
+ for(let i=0;i<shirt.meshes.length;i++)
+  assert.deepEqual(shirt.meshes[i].geometry.getAttribute('position').array,original[i]);
+ const publicReport=JSON.stringify(report);
+ for(const secret of ['"ownerId"','"sourceSHA256"','"sourceFace"','"sourceUV"',
+  '"localXYZ"','"photoRGBA"','"texelRGB"','"triangleIndices"'])
+  assert.equal(publicReport.includes(secret),false);
+});
+
+
+test('P2-C31 projection entirely outside actual original photograph fails closed BEFORE donor mesh mutation',()=>{
+ const {shirt}=fixture();
+ const originals=shirt.meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ const material=shirt.meshes[0].material;
+ material.onBeforeCompile=function(shader){
+  shader.fragmentShader=sourceShader().fragmentShader;
+  shader.uniforms.uPhoto={value:new THREE.Texture()};
+ };
+ const priorCompile=material.onBeforeCompile;
+ const staged=shirt.meshes.map(mesh=>{
+  const next=mesh.geometry.getAttribute('position').array.slice();
+  for(let i=0;i<next.length;i+=3)next[i]+=4;
+  return {mesh,next};
+ });
+ assert.throws(()=>prepareSourceProjection(shirt,staged,[0,.98,.95,.7]),
+  /no usable original photo triangles: preserve original photo and 2D fallback/);
+ shirt.meshes.forEach((mesh,i)=>{
+  assert.deepEqual(mesh.geometry.getAttribute('position').array,originals[i]);
+  assert.equal(mesh.geometry.hasAttribute('sourceProjectionPosition'),false);
+ });
+ assert.equal(material.onBeforeCompile,priorCompile);
+});

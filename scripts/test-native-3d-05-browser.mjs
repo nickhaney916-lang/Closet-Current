@@ -1268,6 +1268,31 @@ try{
      assert.equal(evidence.colorAccuracyNotVerified,true);
      assert.equal(evidence.photorealismNotVerified,true);
      assert.equal(evidence.releaseAuthorized,false);
+     // P2-C31 checks the actual GLSL source projection on complete
+     // photographed source TRIANGLES, not just UVs of individual vertices.
+     const surface=evidence.triangleProjectionAudit;
+     assert.ok(surface,'real original-shader face coverage audit required');
+     for(const k of ['sourceTriangles','sourceTrianglesWithMappedPhotoCentroid',
+      'projectedDegenerateTriangles','sourceWorldDegenerateTriangles',
+      'projectionPartiallyOutsideTriangles','projectionFullyOutsideTriangles',
+      'planarProjectionSeverelyForeshortenedTriangles',
+      'sourcePhotoGridCellsWithMappedFaceCentroids','sourcePhotoGridCellsTotal'])
+      assert.ok(Number.isSafeInteger(surface[k])&&surface[k]>=0);
+     assert.ok(surface.sourceTriangles>0);
+     assert.ok(surface.sourceTrianglesWithMappedPhotoCentroid>0);
+     assert.ok(surface.sourceTrianglesWithMappedPhotoCentroid<=surface.sourceTriangles);
+     assert.equal(surface.sourcePhotoGridCellsTotal,256);
+     assert.ok(surface.sourcePhotoGridCellsWithMappedFaceCentroids<=256);
+     assert.equal(surface.actualSourceShaderProjectionUsed,true);
+     assert.equal(surface.original163BoneGeometryTrianglesObserved,true);
+     assert.equal(surface.planarSideFacesMayBeIntentionallyDegenerate,true);
+     assert.equal(surface.originalSourcePhotoAndGeometryUntouched,true);
+     assert.equal(surface.noFaceIndicesUVOrPixelDataExported,true);
+     assert.equal(surface.noOwnerDataExported,true);
+     assert.equal(surface.sourcePhotoColorMatchNotMeasured,true);
+     assert.equal(surface.fabricDrapeNotCertified,true);
+     assert.equal(surface.humanPhotorealismNotCertified,true);
+     assert.equal(surface.releaseAuthorized,false);
      const sanitized=JSON.stringify(evidence);
      for(const forbidden of ['ownerId','sourceSHA256','sourceFace','sourceUV',
        'localXYZ','sourceImage','texelRGB','data:image'])
