@@ -45,8 +45,10 @@ export async function mountMission4DualReview1054({
  if(typeof sourceData!=='string'||!sourceData.startsWith('data:image/jpeg;base64,')||
     typeof inputData!=='string'||!inputData.startsWith('data:image/jpeg;base64,')||
     !SHA.test(item.sourceSHA256||''))refuse('original source JPEG receipt unavailable');
+ const stampBeforeDigest=sourceStamp(item),receiptBeforeDigest=item.sourceSHA256;
  const originalDigest=await digestBytes(jpegBytes(sourceData));
- if(originalDigest!==item.sourceSHA256||
+ if(sourceStamp(item)!==stampBeforeDigest||item.sourceSHA256!==receiptBeforeDigest||
+    originalDigest!==item.sourceSHA256||
     item.originalPhoto?.sha256&&item.originalPhoto.sha256!==originalDigest)
   refuse('original JPEG SHA-256 receipt mismatch');
  const atStart=sourceStamp(item);
@@ -103,11 +105,24 @@ export async function mountMission4DualReview1054({
  if(typeof supported==='boolean')args.supported=supported;
  else args.supported=dualBrowserAvailable82();
  const panel=mountDual82(args);
- dialog.addEventListener('close',()=>panel.close(),{once:true});
- if(!current()){panel.close();refuse('owner review was revoked while mounting');}
+ let disposed=false;
+ const cleanup=()=>{
+  if(disposed)return;disposed=true;panel.close();
+  globalThis.window?.removeEventListener?.('closet:session-locked',cleanup);
+  globalThis.window?.removeEventListener?.('pagehide',cleanup);
+  globalThis.window?.removeEventListener?.('focus',checkLive);
+  globalThis.document?.removeEventListener?.('visibilitychange',checkLive);
+ };
+ const checkLive=()=>{if(globalThis.document?.hidden||!current())cleanup();};
+ dialog.addEventListener('close',cleanup,{once:true});
+ globalThis.window?.addEventListener?.('closet:session-locked',cleanup);
+ globalThis.window?.addEventListener?.('pagehide',cleanup);
+ globalThis.window?.addEventListener?.('focus',checkLive);
+ globalThis.document?.addEventListener?.('visibilitychange',checkLive);
+ if(!current()){cleanup();refuse('owner review was revoked while mounting');}
  return Object.freeze({
   active:current,
-  close:()=>panel.close(),
+  close:cleanup,
   get status(){return Object.freeze({
    ownerVerified:current(),originalShaVerified:true,
    autoSaved:false,sourcePhotoModified:false,renderAuthorized3D:false,
