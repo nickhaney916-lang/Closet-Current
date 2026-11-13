@@ -695,3 +695,122 @@ test('C56: actual avatar world scale and root rotation MUST NOT be fabricated in
  assert.equal(b.releaseAuthorized,false);
  assert.deepEqual(original(f),before);
 });
+
+function annotatedBones57(f){
+ for(const [i,name,pos] of [
+  [5,'neck01',[0,1.1,0]],
+  [6,'spine04',[0,0,0]],
+  [7,'upperarm01L',[-.8,.5,0]],
+  [8,'upperarm01R',[.8,.5,0]]
+ ]){f.bones[i].name=name;f.bones[i].position.set(...pos);}
+ return f;
+}
+const fourLoops57=[
+ 0,-1.1,0,.6,-1.1,0,0,-.6,0,
+ 0,.9,0,.3,.9,0,0,1.2,0,
+ -.95,.2,0,-.6,.2,0,-.95,.55,0,
+ .95,.2,0,1.3,.2,0,.95,.55,0
+];
+const audit57=(f,more={})=>auditActualPhotographedDressSurfaces52({
+ root:f.root,dress:f.dress,
+ refineTriangleDistances53:true,refineSourceTopology54:true,
+ refineEdgeWinding55:true,refineBoundaryComponents56:true,
+ refineAnatomicalLoopLandmarks57:true,...more
+});
+test('C57: four genuinely distinct source-boundary loops rank relative to P61 actual 163-bone neck/arms/spine, no human labels',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),before=original(f),
+  r=audit57(f),a=r.originalAnatomicalLoopCandidates57;
+ assert.equal(a.schema,'M2-original-photograph-anatomical-loop-landmarks-C57');
+ assert.equal(r.sourceAnatomicalLoopEvidenceComplete57,true);
+ assert.equal(a.trueOriginalBoundaryLoopCount,4);
+ assert.equal(a.sourceOpenBoundaryEdges,12);
+ assert.equal(a.sourceLoopComponentVerticesChecked,12);
+ assert.equal(a.landmarkBoneNamesFound,4);
+ assert.equal(a.anatomicalCandidateMappingPossible,true);
+ assert.equal(a.candidateLowestGeometricOpening,1);
+ assert.equal(a.candidateNeckProximityOpening,1);
+ assert.equal(a.candidateLeftUpperArmProximityOpening,1);
+ assert.equal(a.candidateRightUpperArmProximityOpening,1);
+ assert.equal(a.twoDistinct163BonePoseSamplesCompleted,2);
+ assert.equal(a.boneSamplesWithActualBoundaryDisplacement,0);
+ assert.equal(a.poseRestorationVerified,true);
+ assert.equal(a.noHumanPhotoOpeningsAnnotated,true);
+ assert.equal(a.noSemanticCollarSleeveHemCertification,true);
+ assert.equal(a.noPoseCollisionOrContinuousPhysicsCertificate,true);
+ assert.equal(a.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C57: articulated real left/right bone rotations physically move source-skinned garment boundary samples and restore bones',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ for(let i=6;i<9;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,7);
+ for(let i=9;i<12;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,8);
+ const q=[f.bones[7].quaternion.clone(),f.bones[8].quaternion.clone()],
+  before=original(f),r=audit57(f),a=r.originalAnatomicalLoopCandidates57;
+ assert.equal(a.twoDistinct163BonePoseSamplesCompleted,2);
+ assert.equal(a.boneSamplesWithActualBoundaryDisplacement,2);
+ assert.ok(a.sampledLoopBoundaryVerticesChanged>=2);
+ assert.ok(a.sampledBoundaryLoopsMoved>=2);
+ assert.equal(a.posedOriginalLoopConnectivityRetained,true);
+ assert.equal(a.poseRestorationVerified,true);
+ assert.ok(f.bones[7].quaternion.equals(q[0]));
+ assert.ok(f.bones[8].quaternion.equals(q[1]));
+ assert.deepEqual(original(f),before);
+ assert.equal(r.anyContactMustRemainBlocked,true);
+});
+test('C57: absent signed anatomical bone names BLOCKS fake neckline and sleeves',()=>{
+ const f=fixture52(fourLoops57),r=audit57(f),a=r.originalAnatomicalLoopCandidates57;
+ assert.equal(r.sourceAnatomicalLoopEvidenceComplete57,false);
+ assert.equal(a.landmarkMissingOrBoundaryAmbiguous,true);
+ assert.equal(a.anatomicalCandidateMappingPossible,false);
+ assert.equal(a.sourceReadOnlyAuditRefusedReason,'source-163-bone-anatomical-names-unavailable');
+ assert.equal(a.candidateNeckProximityOpening,0);
+ assert.equal(a.twoDistinct163BonePoseSamplesCompleted,0);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C57: only THREE legitimate source boundary loops cannot be force-labeled as four body openings',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57.slice(0,27))),
+  r=audit57(f),a=r.originalAnatomicalLoopCandidates57;
+ assert.equal(a.trueOriginalBoundaryLoopCount,3);
+ assert.equal(a.anatomicalCandidateMappingPossible,false);
+ assert.equal(a.sourceReadOnlyAuditRefusedReason,'not-four-original-consistent-closed-loops');
+ assert.equal(a.candidateLowestGeometricOpening,0);
+ assert.equal(r.sourceAnatomicalLoopEvidenceComplete57,false);
+});
+test('C57: small source boundary vertex budget FAILS CLOSED rather than returning fake collar/hem positions',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),
+  r=audit57(f,{maxLoopVertices57:6}),a=r.originalAnatomicalLoopCandidates57;
+ assert.equal(a.anatomicalCandidateMappingPossible,false);
+ assert.equal(a.sourceReadOnlyAuditRefusedReason,'original-source-vertex-budget-exceeded');
+ assert.equal(a.noSemanticCollarSleeveHemCertification,true);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C57: only ONE genuine arm articulation sample is truthful and is NOT two-pose validation',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),
+  r=audit57(f,{maxPoseSamples57:1}),a=r.originalAnatomicalLoopCandidates57;
+ assert.equal(a.anatomicalCandidateMappingPossible,true);
+ assert.equal(a.twoDistinct163BonePoseSamplesCompleted,1);
+ assert.equal(r.sourceAnatomicalLoopEvidenceComplete57,false);
+ assert.equal(a.poseRestorationVerified,true);
+});
+test('C57: invalid artifact provenance, detached 163-bone pose flags and out-of-bounds samples are refused',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),originalBytes=original(f);
+ for(const invalid of [
+  {refineAnatomicalLoopLandmarks57:true},
+  {refineTriangleDistances53:true,refineAnatomicalLoopLandmarks57:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineAnatomicalLoopLandmarks57:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineAnatomicalLoopLandmarks57:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineAnatomicalLoopLandmarks57:true,maxLoopVertices57:0},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineAnatomicalLoopLandmarks57:true,maxPoseSamples57:3}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...invalid
+  }),/M2 C52 original-photo diagnostic/);
+ }
+ assert.deepEqual(original(f),originalBytes);
+});
