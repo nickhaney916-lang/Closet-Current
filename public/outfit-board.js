@@ -1,7 +1,7 @@
 'use strict';
 const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('nativeLossless04')==='research';
 let nativeLossless04=null;
-const mission4Preview1054Active=new URLSearchParams(location.search).get('mission4Preview')==='research';
+const mission4Preview1054Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('mission4Preview')==='research';
 let mission4Preview1054Viewer=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
