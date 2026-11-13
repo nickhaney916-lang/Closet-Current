@@ -18,7 +18,7 @@ function fixture({qualityStage=false,blank=false}={}){
  const owner={id:'owner-A'},database={name:'closet-current-user-owner-A'},quality=deferred(),model=deferred(),
   enteredQuality=deferred(),enteredModel=deferred(),logs={render:0,persist:0,requests:[],saves:0,messages:[]};
  const scope={
-  window:{closetAuth:{user:owner}},db:database,batch:[item],items:[],recognitionState:{phase:'idle',activeId:null},
+  window:{document:{},closetAuth:{user:owner}},db:database,batch:[item],items:[],recognitionState:{phase:'idle',activeId:null},
   photoQualityHints73:new Map(),localPending:new Set([item.id]),localReady:true,recognitionUnavailable:false,
   ClothingDetails:{fillColor(v,color){return {color:color?'Blue':'Unknown'};},fill(v){return {};}},recordDeviceEvent(){},
   checkPhoto(image){logs.requests.push(['photo',image]);enteredQuality.resolve();return quality.promise;},
