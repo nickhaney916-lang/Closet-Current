@@ -42,8 +42,10 @@ jobs:
           test -f public/native-canonical-photo-source-167.mjs
       - name: Genuine source imports and real board engine against synthetic owner fixtures
         run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
-      - name: Inherited full native regression suite
-        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Install exact already-used Mission 3 test dependencies (no deploy)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Inherited full serial native regression suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Offline consumer build verification
         run: node scripts/build.mjs
       - name: Assert no release or deployment
