@@ -45,6 +45,8 @@ export function prepareSourceProjection(shirt,staged,projection){
  // Actual GLSL photo projection is defined by SOURCE positions, not
  // standard mesh UVs. Face-level coverage is captured read-only, once.
  const triangleProjectionAudit=auditOriginalPhotoProjectedTriangles(attributes,projection);
+ if(triangleProjectionAudit.sourceTrianglesWithMappedPhotoCentroid<1)
+  fail('no usable original photo triangles: preserve original photo and 2D fallback');
  const recheck=()=>Object.freeze({...auditOriginalPhotoTexelRegistration(
   attributes,projection,photos),triangleProjectionAudit});
  // This is source texture registration evidence, not independent pixel match
