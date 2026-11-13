@@ -19,6 +19,9 @@ let refreshStylistFocusItems,refreshTrendLibrary,styleOwnedCollection,renderStyl
 function $(id){return document.getElementById(id);}
 ${actual}
 window.__scenario=async mode=>{
+ // The real production script binds its handler at parse time. Preserve that
+ // source-owned handler while rebuilding this test's synthetic page per case.
+ const productionSubmit=$('styleCollectionForm').onsubmit;
  document.body.innerHTML='<div id="authGate" hidden></div><div id="appShell">'+
   '<form id="styleCollectionForm"><button id="createCollectionOutfits" type="submit">Create outfits</button></form>'+
   '<p id="stylistStatus">Idle</p>'+
@@ -27,6 +30,7 @@ window.__scenario=async mode=>{
   '<select id="stylistSeason"><option>Fall</option><option>Spring</option></select>'+
   '<select id="stylistFocusItem"><option value="same-id">Original A</option>'+
    '<option value="other-id">Other</option></select></div>';
+ $('styleCollectionForm').onsubmit=productionSubmit;
  styledCollectionResults=[];styledCollectionRequestSerial=0;captureOperationEpoch++;
  events=[];
  const a={id:'same-id',ownerId:'owner-a',image:'synthetic-original-JPEG-A'};
@@ -102,7 +106,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
    try{
     const page=await context.newPage(),errors=[];
     page.on('pageerror',err=>errors.push(String(err)));
-    await page.setContent('<!doctype html><html><body></body></html>');
+    await page.setContent('<!doctype html><html><body><form id="styleCollectionForm"></form></body></html>');
     await page.addScriptTag({content:js});
     for(const mode of modes){
      const x=await page.evaluate(m=>window.__scenario(m),mode);
