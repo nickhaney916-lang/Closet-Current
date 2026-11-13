@@ -1,6 +1,7 @@
 /** Existing Adjust screen extension; opt-in, ephemeral and owner-confirmed only. */
 import {VERSION82,bind82,codeHash82,browserRequest82,validateResponse82} from './dual-core-82.mjs';
 import {evidence80,binding80,revision80} from './subtype-review-80.mjs';
+import {subtypeNeedsManualReview} from './recognition-confusion-guard.mjs';
 // P875: a top-four fused rank is not proof that *both* models support it.
 // Retain only candidates in the same agreed category and each family's top five.
 // This narrows optional hints; never confers accuracy, certainty or auto-save.
@@ -15,7 +16,7 @@ export function sharedRankChoices82(decision,observations){
  if(!agreedCategory||agreedCategory==='Uncategorized'||agreedCategory!==b.ranking[0]?.category)return [];
  const inA=new Set(a.ranking.slice(0,5).map(x=>x.label));
  const inB=new Set(b.ranking.slice(0,5).map(x=>x.label));
- return decision.hypotheses.filter(h=>h.category===agreedCategory&&inA.has(h.label)&&inB.has(h.label));
+ return decision.hypotheses.filter(h=>h.category===agreedCategory&&inA.has(h.label)&&inB.has(h.label)&&!subtypeNeedsManualReview(h.category,h.itemType));
 }
 export const dualBrowserAvailable82=(ua=globalThis.navigator?.userAgent||'')=>/(?:Chrome|Chromium|Edg)\//.test(ua)&&!/(?:iPhone|iPad|iPod)/.test(ua);
 const el=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
@@ -58,7 +59,7 @@ export function mountDual82({form,item,getOwner,isLive,unitAllowed,onChoose,getD
    if(decision.reasons.includes('category_disagreement')){status.textContent='The two models disagree about the main clothing category. No AI category or subtype suggestion can be applied; compare the original photo and choose the category manually.';return;}
    status.textContent=decision.status==='abstain'?'The models disagree or cannot identify this garment. Unknown is retained; compare the alternatives with your original.':'The models suggest these possibilities. Agreement does not establish that a subtype is correct.';
    const commonChoices=sharedRankChoices82(decision,output.observations);
-   if(!commonChoices.length){status.textContent='Neither model supports the same clothing subtype among its top five. Keep Unknown or choose a type manually after reviewing the original photo.';return;}
+   if(!commonChoices.length){status.textContent='No jointly supported low-risk subtype is available. Keep Unknown or choose the correct type manually after reviewing the original photo.';return;}
    const ack=el('input');ack.type='checkbox';const label=el('label');label.append(ack,document.createTextNode(' I compared the original photo and want to apply this possibility to my unsaved draft.'));results.append(label);
    let used=false;
    for(const h of commonChoices){
