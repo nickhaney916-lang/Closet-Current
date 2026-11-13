@@ -81,7 +81,36 @@ function cropClothingPhoto(item){
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
-function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id);button.onclick=()=>cropClothingPhoto(item);return button;}
+function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||!!item.shoePair||!!item.combinedFragments70;button.onclick=()=>cropClothingPhoto(item);return button;}
+// P846: owner's two confirmed photo regions may represent one physical item;
+// never infer that source/mask evidence or a machine suggestion is ownership.
+function unit70Receipts(item){
+ const pieces=[item?.reconciliation70,item?.shoePair?.companion?.reconciliation70,item?.combinedFragments70?.companion?.reconciliation70];
+ return pieces.filter(x=>typeof x?.sourceSha256==='string'&&typeof x?.maskSha256==='string');
+}
+function duplicateUnit70InCloset(item,closet){
+ const parts=unit70Receipts(item);
+ return parts.length>0&&closet.some(saved=>saved.id!==item.id&&
+  unit70Receipts(saved).some(m=>parts.some(n=>m.sourceSha256===n.sourceSha256&&m.maskSha256===n.maskSha256)));
+}
+function unit70OwnerEvidenceValid(item){
+ if(!item?.reconciliation70&&!item?.reconciliation70Status&&!item?.shoePair&&!item?.combinedFragments70)return true;
+ const owner=window.closetAuth?.user?.id;
+ const main=item.reconciliation70;
+ const statuses=['paired_confirmed','fragments_confirmed','separate_confirmed'];
+ const sha=/^[a-f0-9]{64}$/;
+ if(!owner||!main||main.ownerId!==owner||!statuses.includes(item.reconciliation70Status)||
+  !sha.test(main.sourceSha256)||!sha.test(main.maskSha256))return false;
+ const companion=item.shoePair?.companion||item.combinedFragments70?.companion;
+ if(item.reconciliation70Status==='paired_confirmed'&&(!item.shoePair?.confirmedByOwner||item.category!=='Shoes'))return false;
+ if(item.reconciliation70Status==='fragments_confirmed'&&!item.combinedFragments70?.confirmedByOwner)return false;
+ if(companion&&(!sha.test(companion.reconciliation70?.maskSha256)||
+  companion.reconciliation70?.ownerId!==owner||
+  companion.reconciliation70?.sourceSha256!==main.sourceSha256||
+  companion.reconciliation70?.maskSha256===main.maskSha256))return false;
+ if((item.reconciliation70Status==='paired_confirmed'||item.reconciliation70Status==='fragments_confirmed')&&!companion)return false;
+ return true;
+}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
@@ -102,7 +131,9 @@ function adjustPhoto(item){
  const reviewedCore=()=>{
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
-   Boolean(color)&&color.toLowerCase()!=='unknown';
+   Boolean(color)&&color.toLowerCase()!=='unknown'&&
+   item.reconciliation70Status!=='unresolved'&&unit70OwnerEvidenceValid({...item,category:draft.category})&&
+   !duplicateUnit70InCloset(item,items);
  };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
@@ -110,7 +141,7 @@ function adjustPhoto(item){
   if(save)save.disabled=saveInFlight||!valid;
   if(reviewStatus)reviewStatus.textContent=reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
-   'Choose a garment category and color from the photo before confirming.';
+   'Choose a garment category and color, and resolve any garment pairing or duplicate warning, before confirming.';
   return valid;
  };
  const collect=clothingFields(form,draft,()=>{
@@ -132,6 +163,14 @@ function adjustPhoto(item){
   };
   suggestion.append(use);form.prepend(suggestion);
  }
+ if(item.shoePair?.companion?.image||item.combinedFragments70?.companion?.image){
+  const proof=node('figure',null,'clothing-reference'),second=node('img');
+  second.src=item.shoePair?.companion?.image||item.combinedFragments70.companion.image;
+  second.alt='Second original garment region confirmed by the owner as one wardrobe item';
+  proof.append(second,node('figcaption','Second source region · owner grouping confirmed'));
+  form.prepend(proof);
+ }
+ if(item.reconciliation70Status==='unresolved')form.prepend(node('p','Resolve shoe pairing or garment fragments under Your outfit pieces before saving.','fine'));
  save=node('button','Save changes','primary');
  const cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
  if(explicitReview){
@@ -151,6 +190,9 @@ function adjustPhoto(item){
   // A disabled submit button is not a transaction lock: a scripted event or a
   // second mobile submit can enter again while IndexedDB/cloud work is pending.
   if(saveInFlight){message('This photo is already being saved.');return;}
+  if(item.reconciliation70Status==='unresolved'||!unit70OwnerEvidenceValid({...item,category:draft.category})||duplicateUnit70InCloset(item,items)){
+   message('Resolve garment grouping, source ownership, or duplicate source before saving.');return;
+  }
   if(explicitReview&&!canSaveReview()){
    message('Confirm the garment category and color against the photo, then check the review box before saving.');
    return;
@@ -205,6 +247,8 @@ function renderPhotoResults(grid,results){
   const extra=[item.pattern,item.sleeveLength,item.fit,...(item.seasons||[])].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable');
   if(extra.length){const details=node('details',null,'photo-extra');details.append(node('summary','More details'),node('p',extra.join(' · ')));body.append(details);}
   if(!pending&&!saved&&item.possibleDuplicate)body.append(node('p','Compare with your closet before adding.','fine'));
+  if(item.shoePair?.confirmedByOwner)body.append(node('p','Matching shoe pair confirmed · one draft. Both shoe photos are kept; review category and color in Adjust.','fine'));
+  if(item.combinedFragments70?.confirmedByOwner)body.append(node('p','Garment fragments combined by owner · one draft.','fine'));
   const hint73=typeof photoQualityHints73==='undefined'?null:photoQualityHints73.get(item.id);
   if(hint73&&window.PhotoQualityResearch?.enabled()&&hint73.item===item&&
      hint73.source===(item.recognitionPhoto?.image||item.image)&&
@@ -260,7 +304,7 @@ function candidate(image,options={}){
  if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
  const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
- if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
+ if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.reconciliation70){item.reconciliation70=options.reconciliation70;item.reconciliation70Status=options.reconciliation70Status||'unresolved';}if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  queueAutomatic(item);return true;
 }
@@ -430,13 +474,14 @@ function automaticAdmissionCore842(item){
   (typeof categories!=='undefined'&&categories.includes(item?.category)&&item.category!=='Uncategorized');
  return Boolean(item?.image&&knownCategory&&color&&color.toLowerCase()!=='unknown'&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
-  !item.outfitSourceId&&!item.segmentHint?.clipped);
+  !item.outfitSourceId&&!item.reconciliation70Status&&!item.segmentHint?.clipped);
 }
 async function saveIndexed(item){
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
   if(!batch.some(x=>x.id===item.id)||item.userAdjusted||
+   item.reconciliation70Status==='unresolved'||duplicateUnit70InCloset(item,items)||
    !automaticAdmissionCore842(item)||!automaticAdmissionCore842(value)||
    (typeof reviewFirst836!=='undefined'&&reviewFirst836))return resolve(false);
   const tx=db.transaction(['items','state'],'readwrite');
