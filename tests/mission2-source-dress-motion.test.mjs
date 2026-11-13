@@ -116,3 +116,24 @@ test('P2-C36 corrupt SHA, unsupported owner garment, stale source bone or change
  assert.throws(()=>sampleSourceDressMotion36(frame2,state2.root,{phase:.5}),
   /stale source dress geometry/);
 });
+
+
+test('P2-C36 real P61 photographic rest coordinates remain intact when no conventional UV exists',()=>{
+ const {root,dress}=fixture(),g=dress.mesh.geometry;
+ g.deleteAttribute('uv');
+ const sourceProjection=g.getAttribute('dressRest').clone();
+ g.setAttribute('dressCustomPhotoProjection',sourceProjection);
+ const first=sourceProjection.array.slice();
+ const from=sampleSourceDressMotion36(dress,root,{phase:.25});
+ assert.equal(g.hasAttribute('uv'),false,
+  'Missing original UV must not be replaced with invented source photo coordinates');
+ assert.equal(from.stats.sourceDressMotion36,true);
+ assert.ok(from.stats.sourceDressMotionMovedVertices36>100);
+ assert.deepEqual(g.getAttribute('dressCustomPhotoProjection').array,first);
+ const second=sampleSourceDressMotion36(from,root,{phase:.75});
+ assert.ok(second.stats.sourceDressMotionMaxMeters36<=.01235);
+ assert.deepEqual(g.getAttribute('dressCustomPhotoProjection').array,first);
+ g.getAttribute('dressCustomPhotoProjection').setX(4,99);
+ assert.throws(()=>sampleSourceDressMotion36(second,root,{phase:.1}),
+  /original source photograph projection or anatomical skin changed/);
+});
