@@ -8,7 +8,8 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43,
  auditSourceDressSelfContact44,assertSourceDressSelfContact44,
  auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45,
- auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46}
+ auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46,
+ proposeSourceDressStagedRepair50,captureSourceDressRepairPreview50}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {requireSourceDressTemporalReceipt47}
  from '../research/mission2-source-length/source-dress-receipt-lock.mjs';
@@ -1305,4 +1306,129 @@ test('C49: moving 17-pose skinned dress carries FIRST contact geometry witness o
  assert.throws(()=>assertSourceDressTemporalSelfContact46(receipt),
   /real intermediate cloth fold or unverified seam refused/);
  assert.deepEqual(snap(f.dress.mesh),orig);
+});
+
+
+// C50: compact physically posed source-only crossing, with 0.1mm clearance
+// available to a disconnected triangle without modifying the real mesh.
+const tinyCrossing50=()=>clothed44([
+ 0,0,0,1,0,0,0,1,0,
+ .2,.2,-.00004,.3,.2,.00004,.2,.3,.00004
+]);
+const repair50=(f,token=null,extra={})=>proposeSourceDressStagedRepair50({
+ root:f.root,dress:f.dress,poseToken:token??capture(f),...extra
+});
+test('C50: physically posed source TRUE shallow crossing has reversible 0.1mm staged fix with full cloth and body scans',()=>{
+ const f=tinyCrossing50(),original=snap(f.dress.mesh);
+ const first=fast45(f);
+ assert.equal(first.firstSourceCrossing49.posedContactClass,
+  'strict-interior-transverse-face-crossing');
+ const proposal=repair50(f);
+ assert.equal(proposal.schema,'M2-source-dress-reversible-repair-C50');
+ assert.equal(proposal.status,'staged-full-surface-clear-preview-only');
+ assert.equal(proposal.firstSourceContactVerified,true);
+ assert.equal(proposal.sourceIndependentTriangleOnly,true);
+ assert.equal(proposal.movedSourceVertexCount,3);
+ assert.ok(proposal.maximumSourceShiftMeters<=.002);
+ assert.ok(proposal.maximumPosedShiftMeters<=.002+1e-7);
+ assert.ok(proposal.attemptedCandidates>=1);
+ assert.equal(proposal.completeSourceContactAudited,true);
+ assert.equal(proposal.originalSourceFacesChecked,2);
+ assert.equal(proposal.unresolvedSourceContactPairs,0);
+ assert.ok(proposal.bodyFacesAudited>=1);
+ assert.equal(proposal.sweptWholeGarmentBodyPotentialPairs,0);
+ assert.equal(proposal.fullOriginalGeometryImmutable,true);
+ assert.equal(proposal.repairCommitted,false);
+ assert.equal(proposal.previewOnly,true);
+ assert.equal(proposal.releaseAuthorized,false);
+ assert.deepEqual(Object.keys(proposal.proposalToken),[]);
+ const stagedToken=captureSourceDressRepairPreview50({
+  root:f.root,dress:f.dress,proposalToken:proposal.proposalToken
+ });
+ const verified=auditSourceDressSelfContact44({
+  root:f.root,dress:f.dress,poseToken:stagedToken
+ });
+ assert.equal(verified.unresolvedPairs,0);
+ assert.equal(verified.checkedOriginalFaces,2);
+ assert.equal(verified.completeNonadjacentFaceAudit,true);
+ assert.throws(()=>captureSourceDressRepairPreview50({
+  root:f.root,dress:f.dress,proposalToken:proposal.proposalToken
+ }),/one-time staged repair proposal missing or reused/);
+ assert.deepEqual(snap(f.dress.mesh),original,
+  'neither repair candidate nor preview may touch original source photo/skin/XYZ');
+});
+test('C50: same shallow actual crossing refuses a zero-budget repair',()=>{
+ const f=tinyCrossing50(),original=snap(f.dress.mesh);
+ const r=repair50(f,null,{maxShiftMeters:.00005});
+ assert.equal(r.status,'bounded-candidates-cannot-clear-whole-surfaces');
+ assert.equal(r.attemptedCandidates,2);
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.repairCommitted,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C50: moving an ORIGINAL source-shared seam vertex is forbidden even for real crossing',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  .2,.2,-.00004,.3,.2,.00004,.2,.3,.00004,
+  2,2,.1,2.2,2,.1
+ ],[0,1,2,3,4,5,3,6,7]);
+ const original=snap(f.dress.mesh),r=repair50(f);
+ assert.equal(r.status,'source-connected-fabric-cannot-move-single-triangle');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.repairCommitted,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C50: whole swept garment/body test prevents approving tiny cloth repair over real nearby body',()=>{
+ const f=tinyCrossing50();
+ const original=snap(f.dress.mesh);
+ // Original body at z=0 overlaps original source face, and is unchanged by
+ // moving the isolated crossing triangle: no candidate can clear the body.
+ const g=f.body.geometry.getAttribute('position');
+ g.setXYZ(0,.15,.15,0);g.setXYZ(1,.35,.15,0);g.setXYZ(2,.15,.35,0);
+ const report=repair50(f);
+ assert.equal(report.status,'bounded-candidates-cannot-clear-whole-surfaces');
+ assert.equal(report.proposalToken,null);
+ assert.ok(report.attemptedCandidates>0);
+ assert.equal(report.wholeBodySweptClearanceClaim,false);
+ assert.equal(report.releaseAuthorized,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C50: uncertain full original dress contact is NOT used as a false-positive geometric correction',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const r=repair50(f);
+ assert.equal(r.status,'unverified-contact-no-geometry-correction');
+ assert.equal(r.proposalToken,null);
+ assert.equal(r.attemptedCandidates,0);
+ assert.equal(r.firstSourceContactVerified,true);
+ assert.equal(r.repairCommitted,false);
+ assert.equal(r.fullOriginalGeometryImmutable,true);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C50: stale owner source, changed bone pose, replayed and invented private preview tokens all refuse',()=>{
+ const f=tinyCrossing50(),original=snap(f.dress.mesh),token=capture(f);
+ assert.throws(()=>repair50(f,{}),/M2 C40/);
+ for(const invalid of [{maxShiftMeters:.01},{maxShiftMeters:0},
+  {maxSourceFaces:1},{maxTriangleCandidates:0},
+  {toleranceMeters:NaN},{maxBodyFaces:0}]){
+  assert.throws(()=>repair50(f,token,invalid),/M2 C40/);
+ }
+ const proposal=repair50(f,token);
+ assert.equal(proposal.status,'staged-full-surface-clear-preview-only');
+ assert.throws(()=>captureSourceDressRepairPreview50({
+  root:f.root,dress:f.dress,proposalToken:{}
+ }),/one-time staged repair proposal missing or reused/);
+ f.dress.mesh.skeleton.bones[1].position.x=.01;
+ assert.throws(()=>captureSourceDressRepairPreview50({
+  root:f.root,dress:f.dress,proposalToken:proposal.proposalToken
+ }),/pose changed/);
+ f.dress.mesh.skeleton.bones[1].position.x=0;
+ const stagedToken=captureSourceDressRepairPreview50({
+  root:f.root,dress:f.dress,proposalToken:proposal.proposalToken
+ });
+ assert.deepEqual(Object.keys(stagedToken),[]);
+ const position=f.dress.mesh.geometry.getAttribute('position');
+ position.setX(0,.001);
+ assert.throws(()=>repair50(f,token),
+  /original source\/photo\/skin data changed|stale or altered original/);
+ assert.deepEqual(snap(f.dress.mesh).skinWeight,original.skinWeight);
 });
