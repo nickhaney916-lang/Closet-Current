@@ -136,3 +136,34 @@ test('C38: singular and mirrored garment transforms fail closed without partial 
  assert.equal(again.stats.sourceDressMotionGarmentLocalFront38,true);
  assert.ok(maxCoordinateDifference(copy(mesh).position,frozen.position)<1e-6);
 });
+
+test('C38: real meter cap survives non-unit rig scaling without reassigning original photo-facing front',()=>{
+ const {root,dress}=fixture(),mesh=dress.mesh;
+ const original=copy(mesh);
+ let live=dress;
+ for(const [sx,sy,sz] of [[2,2,2],[.5,.5,.5],[2.5,1.4,.75],[1,1,1]]){
+  root.scale.set(sx,sy,sz);
+  live=sampleSourceDressMotion36(live,root,{phase:.25});
+  const now=copy(mesh),m=mesh.matrixWorld,at=new THREE.Vector3(),shifted=new THREE.Vector3();
+  let maximum=0;
+  for(let i=0;i<original.position.length;i+=3){
+   at.fromArray(original.position,i).applyMatrix4(m);
+   shifted.fromArray(now.position,i).applyMatrix4(m);
+   const traveled=at.distanceTo(shifted);
+   maximum=Math.max(maximum,traveled);
+   assert.ok(traveled<=.01235+1e-6,
+    'real 3D source-cloth displacement must be capped in physical world meters');
+   const theta=Math.atan2(original.position[i],original.position[i+2]);
+   if(Math.cos(theta)>=.68){
+    for(let k=0;k<3;k++)
+     assert.equal(now.position[i+k],original.position[i+k],
+      'photographed front must stay byte-identical under scaled 163-bone rig');
+   }
+  }
+  assert.ok(maximum>.0002);
+  assert.ok(live.stats.sourceDressMotionMaxMeters36<=.01235+1e-6);
+  for(const key of ['dressRest','sourceProjection','skinIndex','skinWeight'])
+   assert.deepEqual(now[key],original[key]);
+ }
+ assert.equal(live.stats.releaseAuthorized,false);
+});
