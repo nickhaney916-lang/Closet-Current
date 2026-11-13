@@ -442,12 +442,96 @@ function purgePhotoQualityHints845(){
    photoQualityHints73.delete(id);
  }
 }
+// P850 opt-in, per-photo review navigation. All state is ephemeral and
+// source-bound to the live signed-in browser owner; no learning/save/merge API.
+const reviewQueue850=typeof ReviewQueue850!=='undefined'?ReviewQueue850.create():null;
+function activeReviewQueue850(){
+ const toggle=$('reviewQueue850'),user=window.closetAuth?.user;
+ return Boolean(reviewQueue850&&toggle?.checked&&user?.id&&
+  db?.name==='closet-current-user-'+user.id);
+}
+function reviewQueueSelected850(){
+ if(!activeReviewQueue850())return null;
+ return reviewQueue850.reconcile(batch,window.closetAuth.user).current;
+}
+function renderReviewQueue850(){
+ const toggle=$('reviewQueue850'),panel=$('reviewQueuePanel850'),grid=$('reviewGrid');
+ if(!toggle||!panel||!grid||!reviewQueue850)return false;
+ const owner=window.closetAuth?.user,
+  allowed=Boolean(owner?.id&&db?.name==='closet-current-user-'+owner.id);
+ const status=reviewQueue850.reconcile(allowed?batch:[],allowed?owner:null);
+ if(status.ownerChanged){toggle.checked=false;reviewQueue850.clear();}
+ toggle.disabled=!allowed;
+ if(!allowed)toggle.checked=false;
+ const active=Boolean(toggle.checked&&allowed);
+ panel.hidden=!active;grid.hidden=active;
+ if(!active)return false;
+ const current=status.current;
+ const label=$('reviewQueueStatus850'),progress=$('reviewQueueProgress850'),
+  image=$('reviewQueueImage850'),details=$('reviewQueueDetails850'),notice=$('reviewQueueNotice850');
+ label.textContent=status.count?
+  'Photo '+status.position+' of '+status.count+' · '+status.count+' unfinished · '+
+    status.deferredCount+' kept for later':
+  'No unfinished photos. Every new wardrobe item still needs an individual owner-approved save.';
+ progress.max=Math.max(1,status.count);progress.value=status.position||0;
+ image.hidden=!current;
+ if(current){image.src=current.image;image.alt='Unfinished clothing photo '+status.position+' of '+status.count;}
+ else image.removeAttribute('src');
+ details.textContent=current?
+  [current.category,current.itemType,current.color].filter(x=>x&&x!=='Unknown'&&x!=='Uncategorized').join(' · ')||
+   'Category, type and color still need checking':'';
+ notice.textContent=!current?'Capture another garment to start a new review.':
+  localPending.has(current.id)?'Recognition is still checking this photo. Your original is safe.':
+  current.reconciliation70Status==='unresolved'?'Resolve this garment or shoe pairing in Your outfit pieces before saving.':
+  current.possibleDuplicate?'Compare this photo with your existing closet before saving.':
+  status.isDeferred?'Kept for later. You can still open Adjust and confirm this photograph.':
+  'Review the original, correct any guessed category, type or color, and individually confirm in Adjust.';
+ $('reviewQueueAdjust850').disabled=!current||localPending.has(current.id);
+ $('reviewQueueCrop850').disabled=!current||localPending.has(current.id)||!!current.shoePair||!!current.combinedFragments70;
+ $('reviewQueueKeep850').disabled=!current||status.count===1;
+ $('reviewQueuePrevious850').disabled=status.count<2;
+ $('reviewQueueNext850').disabled=status.count<2;
+ return true;
+}
+if($('reviewQueue850'))$('reviewQueue850').onchange=()=>{
+ if(!$('reviewQueue850').checked)reviewQueue850?.clear();
+ render();
+};
+if($('reviewQueueAdjust850'))$('reviewQueueAdjust850').onclick=()=>{
+ const item=reviewQueueSelected850();
+ if(item&&!localPending.has(item.id))adjustPhoto(item);
+};
+if($('reviewQueueCrop850'))$('reviewQueueCrop850').onclick=()=>{
+ const item=reviewQueueSelected850();
+ if(item&&!localPending.has(item.id)&&!item.shoePair&&!item.combinedFragments70)cropClothingPhoto(item);
+};
+if($('reviewQueueKeep850'))$('reviewQueueKeep850').onclick=()=>{
+ if(!activeReviewQueue850())return;
+ reviewQueue850.keepForLater(batch,window.closetAuth.user);render();
+};
+if($('reviewQueuePrevious850'))$('reviewQueuePrevious850').onclick=()=>{
+ if(!activeReviewQueue850())return;
+ reviewQueue850.move(-1,batch,window.closetAuth.user);render();
+};
+if($('reviewQueueNext850'))$('reviewQueueNext850').onclick=()=>{
+ if(!activeReviewQueue850())return;
+ reviewQueue850.move(1,batch,window.closetAuth.user);render();
+};
+if($('reviewQueueRetake850'))$('reviewQueueRetake850').onclick=()=>{
+ if(activeReviewQueue850())switchView('scan');
+};
+if($('reviewQueueAll850'))$('reviewQueueAll850').onclick=()=>{
+ $('reviewQueue850').checked=false;reviewQueue850?.clear();render();
+};
 function render(){
  purgePhotoQualityHints845();
  $('reviewCount').textContent=batch.length;$('closetCount').textContent=items.length;$('sessionCount').textContent=session;
  renderRecognitionNotice();
  const results=[...batch,...items.filter(item=>sessionCapturedIds.has(item.id))];
- renderPhotoResults($('reviewGrid'),results);
+ // Keep the existing full card grid as fallback; avoid building an additional
+ // 25-image review grid while the owner is using one-at-a-time mode.
+ if(!renderReviewQueue850())renderPhotoResults($('reviewGrid'),results);
+ else $('reviewGrid').replaceChildren();
  renderPhotoResults($('scanResults'),results);
  const cg=$('closetGrid');cg.replaceChildren();const query=$('search').value.toLowerCase(),filter=$('filter').value,visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
