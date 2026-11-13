@@ -678,3 +678,150 @@ export function assertSourceDressArticulatedPoseSamples42(receipt){
  return Object.freeze({researchSampleOnly:true,allSampledIntervalsSeparated:true,
   unsampledNonlinearMotionNotCertified:true,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
+
+/**
+ * P2-C43 — higher-cadence real-joint sampling with physical-motion limits.
+ *
+ * C42 can legitimately pass five widely spaced poses even when an observed
+ * excursion at phase 1/16 intersects the source dress. C43 REQUIRES a
+ * complete 17- or 33-pose uniform grid of actual posed 163-bone vertices
+ * and quaternions, checks MAXIMUM joint angle and per-vertex movement in
+ * EVERY adjacent interval, and then runs C42's complete source-verified
+ * triangle-interval check over all those adjacent poses.
+ *
+ * No certificate of arbitrary nonlinear behavior BETWEEN sampled frames,
+ * live devices, cloth drape, self/layer contact, realism or release.
+ * A forged or incomplete timeline must never become a "safe" receipt.
+ */
+export function auditSourceDressHighCadencePose43({
+ root,dress,poseTokens,startPositions,endPositions,
+ maxJointStepDegrees=12,maxBodyVertexStepMeters=.06,
+ maxDepth=10,maxTemporalNodesPerInterval=80000
+}={}){
+ validateRootDress(root,dress);
+ const n=poseTokens?.length;
+ if(!Array.isArray(poseTokens)||(n!==17&&n!==33)||
+    new Set(poseTokens).size!==n||
+    !Number.isFinite(maxJointStepDegrees)||
+    maxJointStepDegrees<=0||maxJointStepDegrees>12||
+    !Number.isFinite(maxBodyVertexStepMeters)||
+    maxBodyVertexStepMeters<=0||maxBodyVertexStepMeters>.08||
+    !Number.isSafeInteger(maxDepth)||maxDepth<0||maxDepth>15||
+    !Number.isSafeInteger(maxTemporalNodesPerInterval)||
+    maxTemporalNodesPerInterval<1||maxTemporalNodesPerInterval>500000)
+  fail('C43 complete 17/33 sampled phase grid and bounded motion budgets required');
+ const captured=poseTokens.map(t=>captures.get(t));
+ const phaseStep=1/(n-1);
+ for(let i=0;i<n;i++){
+  const shot=captured[i];
+  if(!shot||shot.root!==root||shot.mesh!==dress.mesh||
+     !Number.isFinite(shot.poseFraction)||
+     Math.abs(shot.poseFraction-i*phaseStep)>1e-10)
+   fail('C43 missing or nonuniform authentic intermediate joint pose');
+ }
+ let maxObservedJointStepDegrees=0,maxObservedBodyStepMeters=0,
+  rotatedIntervals=0,movingBodyVertices=0,verifiedBodyBoneComparisons=0;
+ for(let i=0;i<n-1;i++){
+  const a=captured[i],b=captured[i+1];
+  if(!a.bodies.length||a.bodies.length!==b.bodies.length)
+   fail('C43 missing independent 163-bone anatomy');
+  let rotated=false;
+  for(let k=0;k<a.bodies.length;k++){
+   const x=a.bodies[k],y=b.bodies[k];
+   if(x.mesh!==y.mesh||x.boneRotations.length!==163||
+      y.boneRotations.length!==163||x.world.length!==y.world.length)
+    fail('C43 source body rig/topology/pose identity changed');
+   for(let j=0;j<163;j++){
+    const q=x.boneRotations[j],r=y.boneRotations[j];
+    const dot=Math.abs(q[0]*r[0]+q[1]*r[1]+q[2]*r[2]+q[3]*r[3]);
+    if(!Number.isFinite(dot)||dot>1.00001)
+     fail('C43 invalid real joint world orientation');
+    const angle=2*Math.acos(Math.min(1,dot))*180/Math.PI;
+    maxObservedJointStepDegrees=Math.max(maxObservedJointStepDegrees,angle);
+    verifiedBodyBoneComparisons++;
+    if(angle>maxJointStepDegrees+1e-6)
+     fail('C43 undersampled excessive real bone rotation step');
+    if(angle>1e-3)rotated=true;
+   }
+   for(let j=0;j<x.world.length;j+=3){
+    const d=Math.hypot(y.world[j]-x.world[j],
+     y.world[j+1]-x.world[j+1],y.world[j+2]-x.world[j+2]);
+    if(!Number.isFinite(d)||d>maxBodyVertexStepMeters+1e-6)
+     fail('C43 undersampled excessive skinned body surface displacement');
+    maxObservedBodyStepMeters=Math.max(maxObservedBodyStepMeters,d);
+    if(d>1e-6)movingBodyVertices++;
+   }
+  }
+  if(rotated)rotatedIntervals++;
+ }
+ if(!rotatedIntervals||!movingBodyVertices)
+  fail('C43 no genuinely moving skinned body surface observed');
+ // C42 recomputes the P41 time-interval pair analysis for EVERY subframe.
+ // All source/photo/skin and body-roster custody validations are repeated.
+ const evidence=auditSourceDressArticulatedPoseSamples42({
+  root,dress,poseTokens,startPositions,endPositions,maxPoseSamples:n,
+  maxTimeGap:phaseStep,maxDepth,maxTemporalNodesPerInterval,
+  maxBodyShiftMeters:maxBodyVertexStepMeters
+ });
+ if(evidence.poseSamples!==n||evidence.sampledIntervals!==n-1||
+    evidence.maximumObservedPoseFractionGap>phaseStep+1e-10||
+    !evidence.fullProvidedPoseSequenceChecked||
+    !evidence.allSampledPairsAccounted)
+  fail('C43 incomplete original source high-cadence body-contact accounting');
+ return Object.freeze({
+  schema:'M2-source-dress-high-cadence-joint-guard-v1',
+  originalSourceAndSkinVerified:true,
+  completeUniformPoseGrid:true,
+  independentlyCaptured163BoneBody:true,
+  fullProvidedPoseSequenceChecked:true,
+  poseSamples:n,sampledIntervals:n-1,
+  maxObservedPhaseGap:evidence.maximumObservedPoseFractionGap,
+  maxAllowedPhaseGap:phaseStep,
+  maxObservedJointStepDegrees,maxAllowedJointStepDegrees:maxJointStepDegrees,
+  maxObservedBodyStepMeters,maxAllowedBodyStepMeters:maxBodyVertexStepMeters,
+  rotatedIntervals,movingBodyVertices,verifiedBodyBoneComparisons,
+  broadphasePotentialPairs:evidence.broadphasePotentialPairs,
+  provenSeparatedPairs:evidence.provenSeparatedPairs,
+  unresolvedPairs:evidence.unresolvedPairs,
+  allSampledPairsAccounted:evidence.allSampledPairsAccounted,
+  actualMotionBetweenSamplesCertified:false,
+  continuousNonlinearBoneRotationCertified:false,
+  selfLayerCollisionCertified:false,realClothPhysics:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+/** Clear sampled research evidence is NOT physically continuous clearance. */
+export function assertSourceDressHighCadencePose43(receipt){
+ if(receipt?.schema!=='M2-source-dress-high-cadence-joint-guard-v1'||
+    receipt.originalSourceAndSkinVerified!==true||
+    receipt.completeUniformPoseGrid!==true||
+    receipt.independentlyCaptured163BoneBody!==true||
+    receipt.fullProvidedPoseSequenceChecked!==true||
+    (receipt.poseSamples!==17&&receipt.poseSamples!==33)||
+    receipt.sampledIntervals!==receipt.poseSamples-1||
+    !Number.isSafeInteger(receipt.verifiedBodyBoneComparisons)||
+    receipt.verifiedBodyBoneComparisons<receipt.sampledIntervals*163||
+    !Number.isSafeInteger(receipt.rotatedIntervals)||receipt.rotatedIntervals<1||
+    !Number.isSafeInteger(receipt.movingBodyVertices)||receipt.movingBodyVertices<1||
+    !Number.isFinite(receipt.maxObservedJointStepDegrees)||
+    !Number.isFinite(receipt.maxAllowedJointStepDegrees)||
+    receipt.maxObservedJointStepDegrees>receipt.maxAllowedJointStepDegrees+1e-6||
+    !Number.isFinite(receipt.maxObservedBodyStepMeters)||
+    !Number.isFinite(receipt.maxAllowedBodyStepMeters)||
+    receipt.maxObservedBodyStepMeters>receipt.maxAllowedBodyStepMeters+1e-6||
+    !Number.isSafeInteger(receipt.unresolvedPairs)||receipt.unresolvedPairs<0||
+    !Number.isSafeInteger(receipt.provenSeparatedPairs)||receipt.provenSeparatedPairs<0||
+    receipt.broadphasePotentialPairs!==receipt.unresolvedPairs+receipt.provenSeparatedPairs||
+    receipt.allSampledPairsAccounted!==true||
+    receipt.actualMotionBetweenSamplesCertified!==false||
+    receipt.continuousNonlinearBoneRotationCertified!==false||
+    receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+  fail('C43 incomplete, fabricated or unsupported motion research receipt');
+ if(receipt.unresolvedPairs>0)
+  fail('C43 unresolved genuinely sampled body/garment intersection refused');
+ return Object.freeze({
+  researchSampleOnly:true,allCapturedSubframeIntervalsSeparated:true,
+  unobservedHighFrequencyMotionNotCertified:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}

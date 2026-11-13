@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -133,7 +133,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function')||
     (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function')||
     (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function')||
-    (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function'))
+    (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function')||
+    (sweptHighCadenceAudit43!==null&&typeof sweptHighCadenceAudit43!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -358,6 +359,39 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state);
   sweptArticulatedAuditObserved42=true;
  }
+ // P2-C43 opt-in 17/33 independent original-source pose sequence veto.
+ // A zero-overlap result checks sampled phases only; cannot certify
+ // arbitrary high-frequency nonlinear movement between them or release.
+ let sweptHighCadenceAuditObserved43=false;
+ if(sweptHighCadenceAudit43!==null){
+  const receipt=sweptHighCadenceAudit43({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-high-cadence-joint-guard-v1'||
+     receipt.originalSourceAndSkinVerified!==true||
+     receipt.completeUniformPoseGrid!==true||
+     receipt.independentlyCaptured163BoneBody!==true||
+     receipt.fullProvidedPoseSequenceChecked!==true||
+     (receipt.poseSamples!==17&&receipt.poseSamples!==33)||
+     receipt.sampledIntervals!==receipt.poseSamples-1||
+     !Number.isSafeInteger(receipt.rotatedIntervals)||receipt.rotatedIntervals<1||
+     !Number.isSafeInteger(receipt.movingBodyVertices)||receipt.movingBodyVertices<1||
+     !Number.isFinite(receipt.maxObservedJointStepDegrees)||
+     !Number.isFinite(receipt.maxAllowedJointStepDegrees)||
+     receipt.maxObservedJointStepDegrees>receipt.maxAllowedJointStepDegrees+1e-6||
+     !Number.isFinite(receipt.maxObservedBodyStepMeters)||
+     !Number.isFinite(receipt.maxAllowedBodyStepMeters)||
+     receipt.maxObservedBodyStepMeters>receipt.maxAllowedBodyStepMeters+1e-6||
+     receipt.allSampledPairsAccounted!==true||
+     !Number.isSafeInteger(receipt.unresolvedPairs)||receipt.unresolvedPairs!==0||
+     !Number.isSafeInteger(receipt.provenSeparatedPairs)||
+     receipt.broadphasePotentialPairs!==receipt.provenSeparatedPairs||
+     receipt.actualMotionBetweenSamplesCertified!==false||
+     receipt.continuousNonlinearBoneRotationCertified!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C43 incomplete or unsafe high-cadence skinned body sample refused');
+  checkProvenance(mesh,state);
+  sweptHighCadenceAuditObserved43=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -390,6 +424,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionExactContinuousCollisionCertified41:false,
   sourceDressMotionArticulatedSamplesObserved42:sweptArticulatedAuditObserved42,
   sourceDressMotionContinuousBoneRotationCertified42:false,
+  sourceDressMotionHighCadenceObserved43:sweptHighCadenceAuditObserved43,
+  sourceDressMotionHighFrequencyBoneMotionCertified43:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
