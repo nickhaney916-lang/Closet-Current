@@ -97,7 +97,9 @@ test('registered front shader uses actual extended geometry while retaining orig
  const shader=sourceShader();patchSourceProjectionShader(shader,[0,.98,.95,.7]);
  assert.ok(shader.vertexShader.includes('vSourceProjectionPosition=sourceProjectionPosition'));
  assert.ok(shader.fragmentShader.includes('uM2SourceProjection'));
- assert.ok(shader.fragmentShader.includes('front*chest*necklineInterior'));
+ assert.ok(shader.fragmentShader.includes('front*chest*m2SourcePhotoEdgeWeight*necklineInterior'));
+ assert.ok(shader.fragmentShader.includes('smoothstep(0.0,0.012,panel.x)'));
+ assert.ok(shader.fragmentShader.includes('1.0-smoothstep(0.988,1.0,panel.y)'));
  assert.ok(shader.fragmentShader.includes('vec3 rear=uFabric'));
  assert.ok(shader.fragmentShader.includes('smoothstep(.95,.975,interiorAlpha)'));
  assert.deepEqual(shader.uniforms.uM2SourceProjection.value.toArray(),[0,.98,.95,.7]);
@@ -280,4 +282,40 @@ test('P2-C31 projection entirely outside actual original photograph fails closed
   assert.equal(mesh.geometry.hasAttribute('sourceProjectionPosition'),false);
  });
  assert.equal(material.onBeforeCompile,priorCompile);
+});
+
+
+import {originalPhotoDomainEdgeWeight} from '../research/mission2-source-length/source-projection.mjs';
+test('P2-C32 preserve original photo RGB only inside registered front UV and fade off-photo edge bleed',()=>{
+ const near=(a,b,tol=1e-9)=>assert.ok(Math.abs(a-b)<tol,
+  'Expected '+a+' to equal '+b+' within '+tol);
+ const weight=originalPhotoDomainEdgeWeight;
+ near(weight(.5,.5),1);
+ near(weight(.1,.9),1);
+ near(weight(.012,.012),1);
+ near(weight(.99,.5),.9259259259259259,1e-7);
+ near(weight(0,.5),0);
+ near(weight(1,.5),0);
+ near(weight(-.01,.5),0);
+ near(weight(1.01,.5),0);
+ near(weight(.5,-.25),0);
+ near(weight(.5,1.2),0);
+ assert.ok(weight(.006,.5)>.49&&weight(.006,.5)<.51);
+ assert.ok(weight(.5,.994)>.49&&weight(.5,.994)<.51);
+ assert.throws(()=>weight(NaN,.5),/source photo edge finite UV/);
+ assert.throws(()=>weight(.5,Infinity),/source photo edge finite UV/);
+ const shader=sourceShader();
+ patchSourceProjectionShader(shader,[0,.98,.95,.7]);
+ const glsl=shader.fragmentShader;
+ assert.match(glsl,/m2SourcePhotoEdgeWeight/);
+ assert.match(glsl,/front\*chest\*m2SourcePhotoEdgeWeight\*necklineInterior/);
+ assert.match(glsl,/photo\.a\*smoothstep\(\.95,\.975,interiorAlpha\)/);
+ assert.match(glsl,/vec3 rear=uFabric/);
+ assert.ok(glsl.includes('vec2 panel=vec2(.5+'));
+ assert.ok(!glsl.includes('front*chest*necklineInterior'));
+ const {shirt}=fixture();
+ const original=shirt.meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ assert.ok(shader.uniforms.uM2SourceProjection.value.isVector4);
+ shirt.meshes.forEach((mesh,i)=>assert.deepEqual(
+  mesh.geometry.getAttribute('position').array,original[i]));
 });
