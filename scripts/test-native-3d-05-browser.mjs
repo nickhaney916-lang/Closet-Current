@@ -2047,6 +2047,18 @@ try{
     assert.equal(a.sourceFaceCount,witness.originalSourceFaces);
     assert.equal(a.originalNeutralSelfBoxPairs,witness.posedBoxPairs);
     assert.equal(a.originalNeutralSelfStrictCrossings,witness.posedStrictCrossings);
+    console.log('M2_C58_ANONYMOUS_SOURCE_BODY_BUDGET',JSON.stringify({
+     neutralComplete:a.originalNeutralBodyAuditComplete,
+     neutralBodyMeshes:a.originalNeutralBodyMeshes,
+     neutralBodyFaces:a.originalNeutralBodyTriangleCount,
+     neutralInvalidFaces:a.originalNeutralBodyInvalidFaces,
+     neutralBodyCompared:a.originalNeutralBodyComparisons,
+     neutralBodyCandidates:a.originalNeutralBodyBoxPairs,
+     poseCount:a.poseSampleCount,
+     selfPoseSweepsComplete:a.completeSelfPoseSweeps,
+     bodyPoseSweepsComplete:a.completeBodyPoseSweeps,
+     photoOrWorldCoordinatesExposed:false
+    }));
     assert.equal(a.originalNeutralBodyAuditComplete,true,
      'C58 genuine source anatomical body neutral pose must be fully audited');
     assert.equal(a.poseSampleCount,2);
