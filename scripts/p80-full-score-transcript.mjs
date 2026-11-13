@@ -115,7 +115,10 @@ export function validateFullScoreProofs80(proofs,predictions,trusted,seal,catego
   for(const prediction of predictions){
     const sha=prediction?.sourceSha256;
     if(!isHex64(sha)||seen.has(sha)||!bySource.has(sha)||
-       !categories.has(sha))return false;
+       !categories.has(sha)||
+       prediction.operatorCategory!==categories.get(sha)||
+       prediction.operatorCategoryProvenance!=="blind-operator-before-truth-reveal"||
+       prediction.modelSha256!==trusted.modelSha256)return false;
     seen.add(sha);
     const result=deriveConditionalCandidates80(bySource.get(sha),
       categories.get(sha),trusted,seal.scoredAt,categoryLock.recordedAt);
