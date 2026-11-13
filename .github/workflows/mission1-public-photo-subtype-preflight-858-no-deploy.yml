@@ -1,0 +1,146 @@
+name: Mission 1 P858 real public-photo subtype preflight — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-public-photo-subtype-preflight-858-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p858-public-photo-preflight-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-native-safe-recognition-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable verified P857 parent, 16-path source scope, exact licensed P80 research donors
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=5f9e8f67e2b0e4cac33179845764eb2755b6b48c
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/p858-paths
+          cat /tmp/p858-paths
+          test "$(wc -l </tmp/p858-paths)" -eq 16
+          while IFS= read -r p; do
+            case "$p" in
+              public/local-worker.mjs|public/subtype-panel-80.mjs|public/subtype-review-80.mjs|public/subtype-worker-80.mjs|tests/parallel80-subtype.test.mjs|scripts/test-parallel80-real-worker.mjs|scripts/test-parallel80-subtype-browser.mjs|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|scripts/test-p80-public-dev-worker.mjs|scripts/test-p80-real-photo-panel-preflight.mjs|research/parallel80-photo-revision-robustness/REPORT.md|research/parallel80-real-photo-ui-preflight/REPORT.md|tests/mission1-public-photo-subtype-preflight-858.test.mjs|research/mission1-public-photo-subtype-preflight-858/REPORT.md|.github/workflows/mission1-public-photo-subtype-preflight-858-no-deploy.yml) ;;
+              *) echo "P858 OUT-OF-SCOPE PATH $p"; exit 1 ;;
+            esac
+          done </tmp/p858-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/recognition-engine.mjs public/clothing-memory.js public/taxonomy.js public/recognition-confusion-guard.mjs public/outfit-capture.js scripts/check-recognition-regressions.mjs scripts/p75-dataset-core.mjs scripts/p79-workstation-core.mjs scripts/m1-release-evidence-851.mjs benchmark supabase)"
+          test "$(git hash-object public/app.js)" = 14471515e788ef6a7e7305d157611f9a18393de9
+          test "$(git hash-object public/local-worker.mjs)" = 6e591b17b78458bac0febc1369a10330f75de4c1
+          test "$(git hash-object public/subtype-panel-80.mjs)" = 462cf8878f55c62d2005076f4cc1b9e0467715a2
+          test "$(git hash-object public/subtype-review-80.mjs)" = e34bd7559f2678fa19bba881dc0c717a018e3192
+          test "$(git hash-object public/subtype-worker-80.mjs)" = fd19b5c2c48e5cce283dca016a6d243fa3596108
+          test "$(git hash-object tests/parallel80-subtype.test.mjs)" = edbe6f88b9d87eac044a8fd07a595c1301cbb4f8
+          test "$(git hash-object scripts/test-parallel80-real-worker.mjs)" = 30ee863c11dfc014179b6fe68959f4646260f317
+          test "$(git hash-object scripts/test-parallel80-subtype-browser.mjs)" = e73746131a1e865ba0686f8775fc8262dccd0f42
+          test "$(git hash-object research/parallel80/REPORT.md)" = 596d7d5ec2ebe5519d9460d46272b5fc581f100e
+          test "$(git hash-object research/parallel80/OPERATOR.md)" = 90fa932d47ef6fed55bc426c315e710164b93ca9
+          test "$(git hash-object scripts/test-p80-public-dev-worker.mjs)" = 17206a07718ad406b0f64d2bb7ba395b3c44f212
+          test "$(git hash-object scripts/test-p80-real-photo-panel-preflight.mjs)" = 8591a7b86e7fe732951861c4ac6c6950378a90cc
+          test "$(git hash-object research/parallel80-photo-revision-robustness/REPORT.md)" = 2db7ad88ed9581f4702adac67f07ad840ea3922d
+          test "$(git hash-object research/parallel80-real-photo-ui-preflight/REPORT.md)" = c18845bbfbe353d5decd18a2331de472a684ad0b
+          grep -Fqx 'const reviewFirst836=true;' <(grep '^const reviewFirst836=' public/app.js)
+          grep -Fq 'const live854=()=>sameOwner854()' public/app.js
+          grep -Fq 'completeSignedLabel' scripts/p75-dataset-core.mjs
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-public-photo-subtype-preflight-858/REPORT.md
+          echo P858_PINNED_P857_16_SCOPE_AND_P80_EXACT_DONOR_BLOBS_PASS
+      - name: Temporary test dependencies, no package change, no deployment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Actual source capsule and early quality guard, public boot FAIL persists, release BLOCKED
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check public/local-worker.mjs
+          node --test tests/mission1-public-photo-subtype-preflight-858.test.mjs tests/parallel80-subtype.test.mjs tests/mission1-real-worker-legacy-audit-857.test.mjs tests/mission1-stale-photo-recognition-lease-854.test.cjs tests/mission1-full-label-consensus-854.test.mjs
+          node scripts/p80-synthetic-evaluation.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p858-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p858-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p858-release
+      - name: Two unchanged research app builds and ALL inherited native regression tests
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  original-model-generated-JPEG-NOT-human-accuracy:
+    needs: pinned-native-safe-recognition-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Genuine pinned FashionCLIP worker only on generated test geometry
+        run: node scripts/test-parallel80-real-worker.mjs
+  desktop-Chromium-WebKit-owner-safety-NOT-physical-phones:
+    needs: pinned-native-safe-recognition-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Actual optional subtype panel, poor-quality pre-inference abstention, original/owner saves
+        run: node scripts/test-parallel80-subtype-browser.mjs
+      - name: Human annotation workstation DESKTOP simulated and 48 source orientation checks
+        run: node scripts/test-p79-workstation-browser.mjs
+      - name: Device recorder DESKTOP simulator only, not a witnessed Android/iPhone
+        run: node scripts/test-parallel78-device-browser.mjs
+      - name: Inherited owner confirmation, color, shoe pairing, duplicate, saves, retries
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-m1-batch-review-850.mjs
+          node scripts/test-parallel77-cross-capture-browser.mjs
+          node scripts/test-parallel76-color-browser.mjs
+          node scripts/test-m1-owner-learning-integration-847.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-m1-review-save-lifecycle-844.mjs parent
+          node scripts/test-m1-review-save-lifecycle-844.mjs candidate
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+  actual-public-development-FashionCLIP-and-real-photo-preflight-NOT-accuracy:
+    needs: pinned-native-safe-recognition-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Download exactly verified originals, source SHA integrity (NOT blind human truth)
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0033,commons-0041,commons-0088
+          echo P858_ORIGINAL_PUBLIC_DEVELOPMENT_BYTES_SOURCE_VERIFIED_NOT_LABELED
+      - name: P80 actual FashionCLIP source-bound original/dim/crop photo changes with stale lease rejection
+        run: node scripts/test-p80-public-dev-worker.mjs
+      - name: P80 actual Chromium+WebKit low light/small/clipped preflight, NO model call and Unknown
+        run: node scripts/test-p80-real-photo-panel-preflight.mjs
