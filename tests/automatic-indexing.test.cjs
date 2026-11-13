@@ -18,11 +18,30 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
   similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),
   localRequest:request||(async()=>result),
   queued(work){const promise=tail.then(work);tail=promise.catch(()=>{});return promise;},
-  // This legacy orchestration test uses a tiny fake writer. A successful
-  // source CAS in the real app ACKs true after the transaction commits.
-  persistDraft(){const snapshot=structuredClone(c.batch);return c.queued(()=>{
-   draftRows=structuredClone(snapshot);return true;
-  });},
+  // Mirror the production per-ID CAS writer, not a blanket batch snapshot.
+  // A fake whole-batch rewrite can overwrite a newer review row and invent
+  // conflicts that the real source-protected writer never permits.
+  persistDraft({mode,record,expected}={}){
+   const next=record&&structuredClone(record);
+   const previous=expected&&structuredClone(expected);
+   return c.queued(()=>{
+    if(mode==='insert'){
+     if(!next||draftRows.some(r=>r.id===next.id))return false;
+     draftRows=[...draftRows,next];return true;
+    }
+    if(mode==='update'){
+     const i=draftRows.findIndex(r=>r.id===previous?.id);
+     if(i<0||JSON.stringify(draftRows[i])!==JSON.stringify(previous))return false;
+     draftRows=draftRows.map((r,j)=>i===j?next:r);return true;
+    }
+    if(mode==='remove'){
+     const i=draftRows.findIndex(r=>r.id===previous?.id);
+     if(i<0||JSON.stringify(draftRows[i])!==JSON.stringify(previous))return false;
+     draftRows=draftRows.filter((r,j)=>i!==j);return true;
+    }
+    return false;
+   });
+  },
   db:{name:'closet-current-user-owner-synthetic',transaction(names){
    const pending=[];let aborted=false,scheduled=false;
    const tx={error:null,oncomplete:null,onerror:null,onabort:null,
@@ -112,12 +131,15 @@ test('photo checks reject uniform frames and preserve visible structure',()=>{
  assert.equal(c.similarPhotos([10,20,30],[10,21,30]),true);assert.equal(c.similarPhotos([10,20,30],[200,200,200]),false);
 });
 
-test('a failed closet write remains retryable without losing the photo',async()=>{
- const {c}=setup();const good=c.db.transaction;let fail=true;
+test('a failed closet write remains retryable after refreshing the preserved device review',async()=>{
+ const h=setup(),{c}=h;const good=c.db.transaction;let fail=true;
  c.db.transaction=()=>{if(!fail)return good();const tx={objectStore:()=>({put(){}}),error:Error('Storage write failed')};setImmediate(()=>tx.onabort?.());return tx;};
  c.candidate('one');await done(c);
  assert.equal(c.items.length,0);assert.equal(c.batch.length,1);assert.equal(c.batch[0].scanFailed,true);
- fail=false;await c.recognizeBatch();await done(c);
+ // A previous failed scan may have unsaved in-memory error fields. Refresh
+ // the original persisted review, never bypass the new full-row source CAS.
+ fail=false;c.batch=h.persistedDraft;
+ await c.recognizeBatch();await done(c);
  assert.equal(c.items.length,1);assert.equal(c.batch.length,0);
 });
 
