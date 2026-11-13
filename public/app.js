@@ -793,10 +793,14 @@ async function saveIndexed(item){
 async function recognizeItem(item){
  // P854: worker results are only valid for their exact original/crop/mask,
  // live signed owner, IDB connection and draft object (not merely the ID).
- const owner854=typeof window==='undefined'?null:window.closetAuth?.user,
+ // The standalone source-executing Node scanner fixtures have no DOM or
+ // browser Window. Real camera/browser paths ALWAYS have window.document and
+ // must supply a matching signed owner and per-owner IndexedDB connection.
+ const browser854=typeof window!=='undefined'&&Boolean(window.document);
+ const owner854=browser854?window.closetAuth?.user:null,
   db854=db,source854=item.image,original854=item.recognitionPhoto?.image,
   mask854=JSON.stringify(item.segmentHint??null);
- const sameOwner854=()=>Boolean(owner854?.id&&
+ const sameOwner854=()=>!browser854||Boolean(owner854?.id&&
   window.closetAuth?.user===owner854&&db===db854&&
   db854?.name==='closet-current-user-'+owner854.id);
  const live854=()=>sameOwner854()&&batch.some(x=>x===item)&&
@@ -805,7 +809,7 @@ async function recognizeItem(item){
  if(!live854())return false;
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
-  const source73=original854||source854,owner73=owner854.id;
+  const source73=original854||source854,owner73=owner854?.id??null;
   const quality=await checkPhoto(source73);
   if(!live854())return false;
   if(quality.captureGuidance&&source73===(item.recognitionPhoto?.image||item.image)&&
