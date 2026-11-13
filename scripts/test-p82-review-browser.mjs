@@ -37,10 +37,10 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   await page.evaluate(async()=>{
    const {mountDual82}=await import('/dual-panel-82.mjs'),{VERSION82,MODEL_ASSETS82}=await import('/dual-core-82.mjs'),{localCandidates}=await import('/local-catalog.mjs'),{observation81}=await import('/model-arbitration-81.mjs');
    window.mountSynthetic82=()=>{
-    window.syntheticPanel82?.close();document.querySelector('[data-dual82]')?.remove();window.calls82=0;window.hold82=false;window.apply82=0;
+    window.syntheticPanel82?.close();document.querySelector('[data-dual82]')?.remove();window.calls82=0;window.hold82=false;window.apply82=0;window.negative82=false;
     const form=document.querySelector('dialog form');window.syntheticPanel82=mountDual82({supported:true,form,item:window.current82,getOwner:()=>window.closetAuth.user,isLive:()=>!!document.querySelector('dialog')?.open,unitAllowed:()=>!window.current82.segmentHint,onChoose:c=>{window.apply82++;window.applied82=c;const type=form.querySelector('select[aria-label="Item type"]');type.value=c.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));},request:async(r,{signal})=>{
      window.calls82++;window.lastRequest82=r;while(window.hold82&&!signal.aborted)await new Promise(x=>setTimeout(x,10));if(signal.aborted)throw Error('cancelled');
-     return {schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,createdAt:Date.now(),sourceCodeSha256:r.sourceCodeSha256,observations:['fashionclip','fashionSiglip'].map((modelKey,i)=>observation81({modelKey,binding:r.binding,workerSourceSha256:r.sourceCodeSha256,vectorSha256:MODEL_ASSETS82[modelKey].vectorsSha256,latencyMs:2,scores:localCandidates.map((c,j)=>({label:c.label,score:c.itemType===(i?'Skirt':'Shorts')?1:j/1000}))}))};
+     return {schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,createdAt:Date.now(),sourceCodeSha256:r.sourceCodeSha256,observations:['fashionclip','fashionSiglip'].map((modelKey,i)=>observation81({modelKey,binding:r.binding,workerSourceSha256:r.sourceCodeSha256,vectorSha256:MODEL_ASSETS82[modelKey].vectorsSha256,latencyMs:2,scores:localCandidates.map((c,j)=>({label:c.label,score:(window.negative82?c.label==='a blank wall':c.itemType===(i?'Skirt':'Shorts'))?1:j/1000}))}))};
     }});
    };window.mountSynthetic82();
   });
@@ -55,6 +55,7 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
    await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});await consent().check();await visible().check();await check().click();await page.waitForFunction(()=>window.calls82===1);await page.evaluate(k=>{window.mutate82(k);window.hold82=false;},attack);await page.waitForTimeout(120);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   }
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});await consent().check();await visible().check();await check().click();await page.getByRole('button',{name:'Cancel comparison'}).click();await page.evaluate(()=>window.hold82=false);assert.equal(await page.evaluate(()=>window.apply82),0);
+  await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.negative82=true;});await consent().check();await visible().check();await check().click();await page.getByText(/At least one model sees non-clothing/).waitFor();assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   const transport=await page.evaluate(async()=>{
    const Native=window.Worker;let killed=0;window.Worker=class{postMessage(){}terminate(){killed++;}};
    const {browserRequest82}=await import('/dual-core-82.mjs');const r={requestId:'synthetic-deadline'};let busy=false,timeout=false,cancelled=false,allocation=false;

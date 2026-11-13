@@ -30,6 +30,7 @@ export function mountDual82({form,item,getOwner,isLive,unitAllowed,onChoose,requ
    const current=await evidence80(item,scope);
    if(!scopeLive()||ticket!==epoch||signal.aborted||!binding80(before,current)||!consent.checked||!detail.checked)throw Error('P82_REVOKED');
    const decision=validateResponse82(output,requestData); // never trust an externally supplied decision/status
+   if(decision.reasons.includes('nonclothing_evidence')){status.textContent='At least one model sees non-clothing. No clothing suggestions were applied. Keep the original and use manual Adjust.';return;}
    status.textContent=decision.status==='abstain'?'The models disagree or cannot identify this garment. Unknown is retained; compare the alternatives with your original.':'The models suggest these possibilities. Agreement does not establish that a subtype is correct.';
    const ack=el('input');ack.type='checkbox';const label=el('label');label.append(ack,document.createTextNode(' I compared the original photo and want to apply this possibility to my unsaved draft.'));results.append(label);
    let used=false;
