@@ -5,7 +5,8 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  assertMovingSourceDressBodySurfaces40,
  auditMovingSourceDressBodyIntervals41,assertMovingSourceDressBodyIntervals41,
  auditSourceDressArticulatedPoseSamples42,assertSourceDressArticulatedPoseSamples42,
- auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43}
+ auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43,
+ auditSourceDressSelfContact44,assertSourceDressSelfContact44}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
@@ -610,5 +611,137 @@ test('C43: incomplete/forged sampled motion refuses BEFORE photographed XYZ and 
    releaseAuthorized:false,familyAlpha:'HOLD'
   })
  }),/C43 incomplete or unsafe/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+const clothed44=(positions,index=null)=>{
+ const f=fixture({bodyZ:2}),g=f.dress.mesh.geometry;
+ const count=positions.length/3;
+ g.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));
+ const ids=new Uint16Array(count*4),weights=new Float32Array(count*4);
+ for(let i=0;i<count;i++)weights[i*4]=1;
+ g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(ids,4));
+ g.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));
+ if(index)g.setIndex(index);
+ return f;
+};
+const self44=(f,poseToken=null,options={})=>
+ auditSourceDressSelfContact44({
+  root:f.root,dress:f.dress,poseToken:poseToken??capture(f),...options
+ });
+test('C44: two NONADJACENT real 163-bone skinned cloth triangles intersect in 3D and veto research',()=>{
+ const f=clothed44([
+  -.15,-.10,0,.15,-.10,0,0,.15,0,
+  0,-.07,-.10,0,-.07,.10,0,.10,0
+ ]);
+ const original=snap(f.dress.mesh),token=capture(f);
+ const report=self44(f,token);
+ assert.equal(report.schema,'M2-source-dress-self-contact-v1');
+ assert.equal(report.originalFaceCount,2);
+ assert.equal(report.checkedOriginalFaces,2);
+ assert.ok(report.unresolvedPairs>0);
+ assert.equal(report.actual163BoneSkinnedPose,true);
+ assert.equal(report.actualContinuousSelfContactCertified,false);
+ assert.throws(()=>assertSourceDressSelfContact44(report),
+  /possibly self-intersecting original source garment/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+ assert.deepEqual(Object.keys(token),[]);
+});
+test('C44: real topological shared-edge neighbors are excluded, but disconnected matching seam is not assumed safe',()=>{
+ const joined=clothed44([
+  0,0,0,1,0,0,0,1,0,1,1,0
+ ],[0,1,2,1,3,2]);
+ const joinedResult=self44(joined);
+ assert.equal(joinedResult.unresolvedPairs,0);
+ assert.ok(joinedResult.adjacentPairsExcluded>=1);
+ assert.equal(assertSourceDressSelfContact44(joinedResult).releaseAuthorized,false);
+ const seam=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ const seamResult=self44(seam);
+ assert.ok(seamResult.unresolvedPairs>0,
+  'two disconnected source faces meeting across source UV seam need confirmation');
+ assert.throws(()=>assertSourceDressSelfContact44(seamResult),/possibly self-intersecting/);
+});
+test('C44: nonadjacent well separated triangles pass a research-only source-self-contact veto',()=>{
+ const f=clothed44([
+  0,0,0,.1,0,0,0,.1,0,
+  .3,.3,0,.4,.3,0,.3,.4,0
+ ]);
+ const original=snap(f.dress.mesh),proof=self44(f);
+ assert.equal(proof.unresolvedPairs,0);
+ assert.equal(proof.checkedOriginalFaces,2);
+ assert.equal(proof.completeNonadjacentFaceAudit,true);
+ assert.equal(proof.releaseAuthorized,false);
+ const verdict=assertSourceDressSelfContact44(proof);
+ assert.equal(verdict.sampledSourceSelfContactVetoPassed,true);
+ assert.equal(verdict.completeClothContactNotCertified,true);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C44: invalid bounds, stale original source and changing body roster fail closed',()=>{
+ const f=clothed44([
+  0,0,0,.1,0,0,0,.1,0,
+  .3,.3,0,.4,.3,0,.3,.4,0
+ ]),original=snap(f.dress.mesh),token=capture(f);
+ for(const other of [
+  {poseToken:{}},{maxSourceFaces:1},{maxTriangleCandidates:0},
+  {maxUnresolvedPairs:0},{toleranceMeters:.003},
+  {toleranceMeters:NaN}
+ ])assert.throws(()=>self44(f,token,other),/M2 C40/);
+ const damaged={schema:'M2-source-dress-self-contact-v1',
+  originalSourceAndSkinVerified:true,actual163BoneSkinnedPose:true,
+  completeNonadjacentFaceAudit:true,originalFaceCount:2,checkedOriginalFaces:1,
+  candidateTriangles:1,unresolvedPairs:0,
+  topologicalNeighborsExcluded:true,
+  disconnectedSeamCollisionsUnresolved:true,
+  actualContinuousSelfContactCertified:false,
+  selfContactPhysicsCertified:false,
+  releaseAuthorized:true,familyAlpha:'HOLD'};
+ assert.throws(()=>assertSourceDressSelfContact44(damaged),/M2 C40/);
+ f.dress.mesh.geometry.getAttribute('skinWeight').setX(0,.5);
+ assert.throws(()=>self44(f,token),/original source\/photo\/skin data/);
+ f.dress.mesh.geometry.getAttribute('skinWeight').setX(0,1);
+ f.body.userData.work56Garment=true;
+ assert.throws(()=>self44(f,token),/body roster altered/);
+ assert.deepEqual(snap(f.dress.mesh).position,original.position);
+});
+test('C44: opt-in source-dress callback rejects actual unresolved self-contact before writing source normals or photographs',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const callback=({endPositions})=>self44(f,capture(f,endPositions));
+ // Native original cylinder seam topology may contain touching disconnected
+ // source pieces, or its deformed skirt may self-intersect. Either is a
+ // conservative veto; never fabricate a ground-truth "seam safe" label.
+ const receipt=callback({endPositions:original.position.slice()});
+ if(receipt.unresolvedPairs){
+  assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+   phase:.25,sweptSelfContactAudit44:callback
+  }),/C44 incomplete or possibly self-contacting/);
+ }else{
+  const result=sampleSourceDressMotion36(f.dress,f.root,{
+   phase:.25,sweptSelfContactAudit44:callback
+  });
+  assert.equal(result.stats.sourceDressMotionSelfContactAuditObserved44,true);
+  assert.equal(result.stats.sourceDressMotionContinuousSelfContactCertified44,false);
+  assert.equal(result.stats.releaseAuthorized,false);
+ }
+ for(const name of ['dressRest','dressCustomPhotoProjection','skinIndex','skinWeight'])
+  assert.deepEqual(snap(f.dress.mesh)[name],original[name]);
+});
+test('C44: fabricated green self-contact evidence may not report full cloth physics or authorize original-photo release',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptSelfContactAudit44:()=>({
+   schema:'M2-source-dress-self-contact-v1',
+   originalSourceAndSkinVerified:true,actual163BoneSkinnedPose:true,
+   completeNonadjacentFaceAudit:true,originalFaceCount:2,
+   checkedOriginalFaces:2,unresolvedPairs:1,
+   topologicalNeighborsExcluded:true,
+   disconnectedSeamCollisionsUnresolved:true,
+   actualContinuousSelfContactCertified:false,
+   selfContactPhysicsCertified:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  })
+ }),/C44 incomplete or possibly self-contacting/);
  assert.deepEqual(snap(f.dress.mesh),original);
 });
