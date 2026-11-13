@@ -160,8 +160,17 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
  const waistLocal=waist.clone().applyMatrix4(inv);
  if(!waistLocal.toArray().every(Number.isFinite))
   fail('original source waist unavailable in garment local frame');
+ // C38: source garment geometry can be authored in centimeters or another
+ // non-unit scale, so all phase displacements MUST be expressed in WORLD
+ // meters. Transform garment-local directions, normalize them, displace in
+ // world meters, then convert back. The photographed front selection always
+ // stays garment-local. A 163-bone rig scale must never multiply the 12mm cap.
+ const downWorld=new THREE.Vector3(0,-1,0).transformDirection(transform);
+ if(!downWorld.toArray().every(Number.isFinite))
+  fail('source anatomical down axis invalid');
  const target=original.slice(),baseWorld=new THREE.Vector3(),
-  movedWorld=new THREE.Vector3(),movedLocal=new THREE.Vector3();
+  movedWorld=new THREE.Vector3(),movedLocal=new THREE.Vector3(),
+  radialWorld=new THREE.Vector3();
  let moving=0,protectedFront=0,skirtVertices=0,maximum=0;
  // P61 source-fitting state already contains bodice/shoulder moves; only
  // front-protected, lower skirt positions can be altered here.
@@ -182,11 +191,14 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
     fail('source photographed front RGB silhouette cannot be distorted');
   }
   if(delta.outward===0&&delta.drop===0)continue;
-  movedLocal.set(original[j]+delta.outward*dx/radius,
-   original[j+1]-delta.drop,
-   original[j+2]+delta.outward*dz/radius);
+  radialWorld.set(dx/radius,0,dz/radius).transformDirection(transform);
+  if(!radialWorld.toArray().every(Number.isFinite))
+   fail('source dress radial world direction invalid');
   baseWorld.fromArray(original,j).applyMatrix4(transform);
-  movedWorld.copy(movedLocal).applyMatrix4(transform);
+  movedWorld.copy(baseWorld)
+   .addScaledVector(radialWorld,delta.outward)
+   .addScaledVector(downWorld,delta.drop);
+  movedLocal.copy(movedWorld).applyMatrix4(inv);
   const distance=baseWorld.distanceTo(movedWorld);
   if(!movedLocal.toArray().every(Number.isFinite)||
      !Number.isFinite(distance)||distance>MAX_DISPLACEMENT+1e-7)
