@@ -4,7 +4,7 @@ import {createHash,generateKeyPairSync,sign,createPublicKey} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {
  SCHEMA,sha256,isHex64,rightsOK,sourceKey,originalURL,hamming64,
- verifiedSource,verifyOriginalBytes,canonicalOriginalURL,checkOverlap,priorExposures,validatePartition,
+ verifiedSource,verifyOriginalBytes,canonicalOriginalURL,sourceSeriesHint,checkOverlap,priorExposures,validatePartition,
  canonical,validateLabel,verifyHumanReceipt,independentAgreement,publicAuditReport
 } from '../scripts/p75-dataset-core.mjs';
 const now='2026-11-12T20:00:00.000Z';
@@ -79,6 +79,16 @@ test('an edited JPEG, reencoded thumbnail or changed publisher bytes fail SHA1 a
  assert.equal(verifyOriginalBytes(record(),changed),false);
  assert.equal(verifyOriginalBytes(record(),original.subarray(0,14000)),false);
  assert.equal(verifyOriginalBytes(record({commonsSha1:'1'.repeat(40)}),original),false);
+});
+test('museum accession and numbered scene/gallery variants are conservative source-series suspects',()=>{
+ const commons='https://commons.wikimedia.org/wiki/File:';
+ const same=(a,b)=>assert.equal(sourceSeriesHint(commons+a),sourceSeriesHint(commons+b));
+ same('Blouse_MET_41.64_F.jpg','Blouse_MET_41.64_B.jpg');
+ same('Dana_and_Jassi_in_latex_shorts_and_leggings_(4615).jpg','Dana_and_Jassi_in_latex_shorts_and_leggings_(4623).jpg');
+ assert.equal(sourceSeriesHint(commons+'Unrelated_test_garment.jpg'),null);
+ const first=record({sourcePage:commons+'Dana_and_Jassi_in_latex_shorts_and_leggings_(4615).jpg',seriesKey:sourceSeriesHint(commons+'Dana_and_Jassi_in_latex_shorts_and_leggings_(4615).jpg')});
+ const old={sourcePage:commons+'Dana_and_Jassi_in_latex_shorts_and_leggings_(4623).jpg',seriesKey:sourceSeriesHint(commons+'Dana_and_Jassi_in_latex_shorts_and_leggings_(4623).jpg')};
+ assert.ok(checkOverlap(first,[old]).includes('same-publisher-series'));
 });
 test('source, SHA, accession/series and perceptual duplicates all flag as exposure',()=>{
  const row=record({objectKey:'MET:49.22',seriesKey:'museum:garment:42'});
