@@ -114,13 +114,16 @@ const newPairs=(before,after)=>{
  return newly;
 };
 export function trialSourceBoneShoulderYoke84({
- shirt,pants,root,avatar,requestedDropMeters=.014,enabled=true
+ shirt,pants,root,avatar,requestedDropMeters=.014,
+ outwardClearanceMeters=.0025,enabled=true
 }={}){
  if(!enabled)return code('opt-out');
  const initial=code('source-or-geometry-unverified');
  if(!['male','female'].includes(avatar)||!root?.isObject3D||
     !finite(requestedDropMeters)||requestedDropMeters<.003||
     requestedDropMeters>.025||
+    !finite(outwardClearanceMeters)||outwardClearanceMeters<0||
+    outwardClearanceMeters>.022||
     shirt?.stats?.sourceSHA256!==SHA||
     shirt.stats?.trueSourceShoulderTopSlope!==true||
     shirt.stats?.sourceRigNaturalShoulderFall!==true||
@@ -229,7 +232,7 @@ export function trialSourceBoneShoulderYoke84({
    // component avoids collapsing material into the deltoid. No fictive
    // reverse-photo color is added. All shared seam vertices move jointly.
    const drop=requestedDropMeters*(.55+.45*smooth(dy,-.10,.10))*weight;
-   const outward=.0025*weight;
+   const outward=outwardClearanceMeters*weight;
    const delta=new T.Vector3(Math.sign(q.x)*outward,-drop,0);
    const magnitude=delta.length();
    if(magnitude<.0004)continue;
@@ -287,7 +290,7 @@ export function trialSourceBoneShoulderYoke84({
   const introducedLayer=newPairs(oldLayer,newLayer);
   const base=Object.freeze({
    schema:'parallel84-source-bone-shoulder-yoke/v1',
-   avatar,requestedDropMeters,
+   avatar,requestedDropMeters,outwardClearanceMeters,
    movedOriginalRenderedVertices:sampleCandidate,
    maxShoulderWorldDisplacementMeters:maximum,
    protectedFrontCenterOriginalVertices:protectedPrintedChest,
