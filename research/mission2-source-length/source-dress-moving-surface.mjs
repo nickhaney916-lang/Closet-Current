@@ -555,3 +555,126 @@ export function assertMovingSourceDressBodyIntervals41(receipt){
   actualSkinnedAnimationCertified:false,fullClothPhysicsCertified:false,
   releaseAuthorized:false,familyAlpha:'HOLD'});
 }
+
+/**
+ * M2 P2-C42 — independently captured real bone poses at bounded phase steps.
+ * Audit every successive pair using the complete original-photo C41 temporal
+ * separating-axis gate, rather than trusting a straight endpoint chord.
+ *
+ * A hidden intermediate rotation can create a collision with two IDENTICAL
+ * endpoint poses. This check catches observed samples, but cannot certify
+ * unsampled nonlinear joint motion, high-frequency animations or cloth physics.
+ * No posed vertices, owner IDs or bone quaternions leave the private WeakMap.
+ */
+export function auditSourceDressArticulatedPoseSamples42({
+ root,dress,poseTokens,startPositions,endPositions,
+ maxPoseSamples=17,maxTimeGap=.25,
+ maxDepth=10,maxTemporalNodesPerInterval=80000,
+ maxClothShiftMeters=.1,maxBodyShiftMeters=.25
+}={}){
+ validateRootDress(root,dress);
+ if(!Array.isArray(poseTokens)||poseTokens.length<5||
+    new Set(poseTokens).size!==poseTokens.length||
+    !Number.isSafeInteger(maxPoseSamples)||maxPoseSamples<5||
+    maxPoseSamples>33||poseTokens.length>maxPoseSamples||
+    !Number.isFinite(maxTimeGap)||maxTimeGap<=0||maxTimeGap>.25||
+    !Number.isSafeInteger(maxDepth)||maxDepth<0||maxDepth>15||
+    !Number.isSafeInteger(maxTemporalNodesPerInterval)||
+    maxTemporalNodesPerInterval<1||maxTemporalNodesPerInterval>500000||
+    !Number.isFinite(maxClothShiftMeters)||maxClothShiftMeters<=0||
+    maxClothShiftMeters>.1||
+    !Number.isFinite(maxBodyShiftMeters)||maxBodyShiftMeters<=0||
+    maxBodyShiftMeters>.25||
+    !(startPositions instanceof Float32Array||
+      startPositions instanceof Float64Array)||
+    !(endPositions instanceof Float32Array||
+      endPositions instanceof Float64Array)||
+    !finite(startPositions)||!finite(endPositions))
+  fail('C42 bounded original independent articulated pose sequence required');
+ const first=captures.get(poseTokens[0]),last=captures.get(poseTokens.at(-1));
+ if(!first||!last||first.poseFraction!==0||last.poseFraction!==1||
+    !same(first.clothSource,startPositions)||!same(last.clothSource,endPositions))
+  fail('C42 original authenticated garment source phase endpoints required');
+ let rotatedBodyJointIntervals=0,rotatedBodyJoints=0,
+  sampledIntervals=0,potentialPairs=0,provenSeparatedPairs=0,
+  unresolvedPairs=0,temporalNodes=0,maximumObservedGap=0;
+ for(let i=0;i<poseTokens.length-1;i++){
+  const a=captures.get(poseTokens[i]),b=captures.get(poseTokens[i+1]);
+  if(!a||!b||a.root!==root||b.root!==root||
+     !Number.isFinite(a.poseFraction)||!Number.isFinite(b.poseFraction)||
+     b.poseFraction<=a.poseFraction)
+   fail('C42 missing, unordered or mismatched anatomical pose samples');
+  const gap=b.poseFraction-a.poseFraction;
+  if(gap>maxTimeGap+1e-10)
+   fail('C42 unsampled intermediate bone rotation time gap');
+  maximumObservedGap=Math.max(maximumObservedGap,gap);
+  if(a.bodies.length!==b.bodies.length)
+   fail('C42 original anatomical body roster changed');
+  let joints=0;
+  for(let k=0;k<a.bodies.length;k++){
+   if(a.bodies[k].mesh!==b.bodies[k].mesh||
+      a.bodies[k].boneRotations.length!==b.bodies[k].boneRotations.length)
+    fail('C42 original skeleton identities changed');
+   for(let j=0;j<a.bodies[k].boneRotations.length;j++){
+    const q=a.bodies[k].boneRotations[j],
+     r=b.bodies[k].boneRotations[j];
+    const dot=Math.abs(q[0]*r[0]+q[1]*r[1]+q[2]*r[2]+q[3]*r[3]);
+    if(!Number.isFinite(dot)||dot>1.00001)
+     fail('C42 genuine sampled body quaternion invalid');
+    if(dot<.999999)joints++;
+   }
+  }
+  if(joints){rotatedBodyJointIntervals++;rotatedBodyJoints+=joints;}
+  const result=auditMovingSourceDressBodyIntervals41({
+   root,dress,startPose:poseTokens[i],endPose:poseTokens[i+1],
+   maxDepth,maxTemporalNodes:maxTemporalNodesPerInterval,
+   maxClothShiftMeters,maxBodyShiftMeters
+  });
+  sampledIntervals++;
+  potentialPairs+=result.broadphasePotentialPairs;
+  provenSeparatedPairs+=result.provenSeparatedPairs;
+  unresolvedPairs+=result.unresolvedPairs;
+  temporalNodes+=result.temporalNodes;
+ }
+ if(!rotatedBodyJointIntervals||!rotatedBodyJoints||
+    !Number.isFinite(potentialPairs)||sampledIntervals!==poseTokens.length-1)
+  fail('C42 real articulated body rotation not evidenced');
+ return Object.freeze({
+  schema:'M2-source-dress-articulated-pose-samples-v1',
+  genuineIntermediateBodyRotationsObserved:true,
+  fullProvidedPoseSequenceChecked:true,
+  matchedOriginalPhotoSourceStartEnd:true,
+  poseSamples:poseTokens.length,sampledIntervals,
+  maximumObservedPoseFractionGap:maximumObservedGap,
+  rotatedBodyJointIntervals,rotatedBodyJoints,
+  broadphasePotentialPairs:potentialPairs,
+  provenSeparatedPairs,unresolvedPairs,temporalNodes,
+  allSampledPairsAccounted:potentialPairs===provenSeparatedPairs+unresolvedPairs,
+  originalPhotoAndSkinUnchanged:true,
+  actualIntermediateBodyPosePositionsSampled:true,
+  actualNonlinearMotionBetweenSamplesCertified:false,
+  collisionFreeContinuousRotationCertified:false,
+  realClothPhysics:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+export function assertSourceDressArticulatedPoseSamples42(receipt){
+ if(receipt?.schema!=='M2-source-dress-articulated-pose-samples-v1'||
+    receipt.fullProvidedPoseSequenceChecked!==true||
+    receipt.genuineIntermediateBodyRotationsObserved!==true||
+    receipt.matchedOriginalPhotoSourceStartEnd!==true||
+    receipt.allSampledPairsAccounted!==true||
+    !Number.isSafeInteger(receipt.poseSamples)||receipt.poseSamples<5||
+    !Number.isSafeInteger(receipt.sampledIntervals)||
+    receipt.sampledIntervals!==receipt.poseSamples-1||
+    !Number.isSafeInteger(receipt.unresolvedPairs)||receipt.unresolvedPairs<0||
+    !Number.isSafeInteger(receipt.provenSeparatedPairs)||receipt.provenSeparatedPairs<0||
+    receipt.broadphasePotentialPairs!==receipt.unresolvedPairs+receipt.provenSeparatedPairs||
+    receipt.actualNonlinearMotionBetweenSamplesCertified!==false||
+    receipt.collisionFreeContinuousRotationCertified!==false||
+    receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+  fail('C42 invalid or partial sampled articulated pose evidence');
+ if(receipt.unresolvedPairs)
+  fail('C42 genuine intermediate 163-bone pose may cross original dress');
+ return Object.freeze({researchSampleOnly:true,allSampledIntervalsSeparated:true,
+  unsampledNonlinearMotionNotCertified:true,releaseAuthorized:false,familyAlpha:'HOLD'});
+}
