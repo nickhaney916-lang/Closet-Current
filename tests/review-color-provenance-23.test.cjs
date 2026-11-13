@@ -24,6 +24,9 @@ async function newPhotoSubmit(source){
   form:{},save:{disabled:false},item,draft:clone(source),collect:()=>N(clone(source)),
   batch:[{id:source.id}],items:[],captureProof01Active:false,
   expectedSavedRow:null,expectedDraftRow:clone(source),correction10:false,
+  // This isolated handler executes without the surrounding Adjust dialog.
+  // Bind the same-owner lease supplied by the actual editor constructor.
+  editorSession:{assertCurrent(){return true;},current(){return true;}},
   ClothingMemory:M,
   savePiece:async val=>{persisted=clone(val);},
   persistDraft:async()=>{},scheduleMemoryReview:()=>{},render:()=>{},

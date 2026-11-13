@@ -726,10 +726,29 @@ function cropClothingPhoto(item){
  });
 }
 function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id);button.onclick=()=>cropClothingPhoto(item);return button;}
+// A photo editor belongs to one exact signed session and IndexedDB handle.
+// Reusing the same user ID after logout does NOT grant an old dialog access
+// to the newly signed-in UI, wardrobe or success/error notices.
+function photoEditorSessionLease(){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch;
+ const assertCurrent=()=>{
+  auth?.assertCurrent?.();
+  if(!owner||window.closetAuth!==auth||auth.user?.id!==owner||
+     captureOperationEpoch!==epoch||db!==ownerDB||
+     ownerDB?.name!=='closet-current-user-'+owner)
+   throw Error('CLOSET_PHOTO_EDITOR_SESSION_CHANGED');
+  return true;
+ };
+ return {auth,owner,ownerDB,assertCurrent,current(){
+  try{return assertCurrent();}catch{return false;}
+ }};
+}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
  const form=node('form'),draft=structuredClone(item),collect=clothingFields(form,draft);
+ const editorSession=photoEditorSessionLease();
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -785,16 +804,20 @@ function adjustPhoto(item){
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
  if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{
+   editorSession.assertCurrent();
    if(expectedSavedRow)await removeItem(item.id,expectedSavedRow);
    else if(expectedDraftRow)await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
    else throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+   editorSession.assertCurrent();
    items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);
    sessionCapturedIds.delete(item.id);failedDraftCaptures.delete(item.id);
    dialog.close();render();
-  }catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
+  }catch(error){if(!editorSession.current())return;
+   message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
    'This clothing piece changed in another tab. Reload My Closet before removing it.':
    'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
+  editorSession.assertCurrent();
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
      (!captureProofOwner()||item.ownerId&&item.ownerId!==captureProofOwner()))
@@ -805,8 +828,8 @@ function adjustPhoto(item){
   if(typeof reviewedCapture120!=='undefined'&&reviewedCapture120){
    if(!reviewConfirmed120?.checked||!garmentConfirmed120?.checked)
     throw Error('Confirm the photographed garment and its category, type and color.');
-   const owner=window.closetAuth?.user?.id,auth=window.closetAuth;
-   if(!owner||!auth||db?.name!=='closet-current-user-'+owner||
+   const {owner,auth,ownerDB}=editorSession;
+   if(!owner||!auth||!editorSession.current()||
       $('authGate')?.hidden!==true||$('appShell')?.hidden!==false||
       !batch.includes(item))
     throw Error('The private camera draft or signed-in account changed.');
@@ -822,8 +845,8 @@ function adjustPhoto(item){
    // It independently re-hashes original JPEG (+ cutout JPEG for multi),
    // rechecks the actual saved owner draft and wardrobe *inside* the IDB
    // transaction, and atomically inserts the reviewed item/removes its draft.
-   const liveOwner=()=>window.closetAuth===auth&&auth.user?.id===owner&&
-     db?.name==='closet-current-user-'+owner&&
+   const liveOwner=()=>editorSession.current()&&
+     ownerDB?.name==='closet-current-user-'+owner&&
      $('authGate')?.hidden===true&&$('appShell')?.hidden===false?owner:null;
    const assertLease=()=>{
     auth.assertCurrent?.();
@@ -834,32 +857,40 @@ function adjustPhoto(item){
    const {commitHumanReviewedPhoto119}=await (nativeCanonical167Active
     ?import('./native-reviewed-private-save-167.mjs')
     :import('../research/manual-reviewed-private-save-119/reviewed-source-commit.mjs'));
+   editorSession.assertCurrent();
    const result=await queued(()=>commitHumanReviewedPhoto119({
-    db,ownerId:owner,currentOwner:liveOwner,record:item,review,assertLease
+    db:ownerDB,ownerId:owner,currentOwner:liveOwner,record:item,review,assertLease
    }));
+   editorSession.assertCurrent();
    if(!result.saved)throw Error('Original photograph or garment review could not be verified; nothing was saved.');
    // Do not duplicate or overwrite P119's already-atomic owner draft update.
    // Reload the actual committed wardrobe entry, not local AI proposals.
    const stored=await new Promise((resolve,reject)=>{
-    const request=db.transaction('items','readonly').objectStore('items').get(item.id);
+    const request=ownerDB.transaction('items','readonly').objectStore('items').get(item.id);
     request.onsuccess=()=>resolve(request.result);
     request.onerror=()=>reject(request.error);
    });
+   editorSession.assertCurrent();
    if(!stored||stored.ownerId!==owner||stored.sourceSHA256!==item.sourceSHA256)
     throw Error('Saved garment needs a safe wardrobe reload.');
    if(!items.some(x=>x.id===item.id))items.push(normalizeClothing(stored));
    batch=batch.filter(x=>x.id!==item.id);
    await nativeIndex07Refresh();
+   editorSession.assertCurrent();
    dialog.close();render();scheduleMemoryReview();
    message('Reviewed '+stored.itemType+' · '+stored.color+' saved to your private closet. Original photograph preserved.');
    return;
   }
   await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow,expectedDraftRow});
+  editorSession.assertCurrent();
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
   // savePiece already atomically removed only the reviewed persisted draft.
   // NEVER follow it with a blind whole-batch persistDraft rewrite.
   batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
  }catch(error){
+  // This editor cannot report a late old-owner failure to a newly signed
+  // account, even if its native transaction committed before revocation.
+  if(!editorSession.current())return;
   save.disabled=false;
   message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
    ' Your original photo remains available for review.':
@@ -873,7 +904,7 @@ function adjustPhoto(item){
     'This photo was already saved in another tab. Reload My Closet and review the existing piece.':
    'Could not save changes. Try again.');
  }};
- dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
+ dialog.onclose=()=>{if(editorSession.current()&&batch.includes(item)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
 }
 function renderRecognitionNotice(){

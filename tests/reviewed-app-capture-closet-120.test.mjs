@@ -44,7 +44,7 @@ test('PHOTO120 after real atomic IDB commit, only actual saved row informs wardr
  const finish=app.indexOf('  await savePiece(value,batch.filter',start);
  assert.ok(start>0&&finish>start);
  const branch=app.slice(start,finish);
- assert.ok(branch.includes("db.transaction('items','readonly').objectStore('items').get(item.id)"));
+ assert.ok(branch.includes("ownerDB.transaction('items','readonly').objectStore('items').get(item.id)"));
  assert.ok(branch.includes('items.push(normalizeClothing(stored))'));
  assert.ok(branch.includes('batch=batch.filter(x=>x.id!==item.id)'));
  assert.ok(branch.includes('await nativeIndex07Refresh()'));
