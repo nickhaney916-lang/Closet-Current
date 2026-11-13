@@ -77,7 +77,13 @@ try{
      await page.evaluate(()=>closetReady);
      await page.evaluate(()=>{queueAutomatic=()=>{};});
     }
-    async function capture(page,source){
+    async function clickRefresh(page){
+    await page.getByRole('button',{name:'Refresh photo results'}).click();
+    // The action awaits a native IndexedDB read; a Playwright click only
+    // awaits the DOM event, not the async handler's completed rehydration.
+    await page.waitForFunction(()=>!document.getElementById('refreshReview').disabled);
+   }
+   async function capture(page,source){
      return page.evaluate(async({image,sha})=>candidate(image,{
       sourceProof:{image,sourceSHA256:sha,sourceHashVerified:true,
        originalPhoto:{image,sha256:sha,width:96,height:72}},
@@ -89,7 +95,7 @@ try{
     assert.equal(await a.evaluate(()=>batch.length),1);
     await a.evaluate(()=>switchView('review'));
     // The visible button must reflect a real control after page readiness.
-    await a.getByRole('button',{name:'Refresh photo results'}).click();
+    await clickRefresh(a);
     assert.equal(await a.evaluate(()=>batch.length),2);
     assert.equal(await a.evaluate(()=>batch[1].originalPhoto.image),sources[1].image);
     assert.equal(await a.evaluate(()=>batch[1].originalPhoto.sha256),sources[1].sha);
@@ -105,12 +111,12 @@ try{
      await commitReviewedDraftCAS([{before:current,after:{...current,
       color:'Owner-confirmed teal',colorSource:'user',userAdjusted:true}}]);
     });
-    await a.getByRole('button',{name:'Refresh photo results'}).click();
+    await clickRefresh(a);
     assert.equal(await a.evaluate(()=>batch[1].color),'Owner-confirmed teal');
     assert.equal(await a.evaluate(()=>batch[1].originalPhoto.image),sources[1].image);
     // Simulate a failed required capture still present on this screen.
     await a.evaluate(()=>failedDraftCaptures.add(batch[0].id));
-    await a.getByRole('button',{name:'Refresh photo results'}).click();
+    await clickRefresh(a);
     assert.match(await a.locator('#message').innerText(),/Finish the current scan/);
     assert.equal(await a.evaluate(()=>batch.length),2);
     await a.evaluate(()=>failedDraftCaptures.clear());
@@ -123,7 +129,7 @@ try{
      });
      await commitReviewedDraftCAS([{before:first,after:null}]);
     });
-    await a.getByRole('button',{name:'Refresh photo results'}).click();
+    await clickRefresh(a);
     assert.match(await a.locator('#message').innerText(),/No photos were hidden/);
     assert.equal(await a.evaluate(()=>batch.length),2);
     assert.equal(await a.evaluate(()=>batch[0].originalPhoto.image),sources[0].image);
@@ -138,7 +144,7 @@ try{
      await p.goto(url+'/',{waitUntil:'domcontentloaded'});
      await p.evaluate(()=>closetReady);
      await p.evaluate(()=>switchView('review'));
-     await p.getByRole('button',{name:'Refresh photo results'}).click();
+     await clickRefresh(p);
      assert.equal(await p.evaluate(()=>batch.length),0);
     }finally{await foreign.close();}
     assert.deepEqual(pageErrors,[]);
