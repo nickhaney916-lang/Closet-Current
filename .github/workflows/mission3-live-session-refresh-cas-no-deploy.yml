@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and six-path no-deploy allowlist
+      - name: Exact parent and seven-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/auth.js|tests/auth.test.cjs|tests/mission3-live-session-refresh-cas.test.cjs|scripts/test-mission3-live-session-refresh-cas-browser.mjs|research/mission3-live-session-refresh-cas/REPORT.md|.github/workflows/mission3-live-session-refresh-cas-no-deploy.yml) ;;
+              public/auth.js|tests/auth.test.cjs|tests/mission3-live-session-refresh-cas.test.cjs|scripts/test-mission3-live-session-refresh-cas-browser.mjs|scripts/test-mission3-offline-auth-recovery-browser.mjs|research/mission3-live-session-refresh-cas/REPORT.md|.github/workflows/mission3-live-session-refresh-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -80,7 +80,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/auth.js|tests/auth.test.cjs|tests/mission3-live-session-refresh-cas.test.cjs|scripts/test-mission3-live-session-refresh-cas-browser.mjs|research/mission3-live-session-refresh-cas/REPORT.md|.github/workflows/mission3-live-session-refresh-cas-no-deploy.yml) ;;
+              public/auth.js|tests/auth.test.cjs|tests/mission3-live-session-refresh-cas.test.cjs|scripts/test-mission3-live-session-refresh-cas-browser.mjs|scripts/test-mission3-offline-auth-recovery-browser.mjs|research/mission3-live-session-refresh-cas/REPORT.md|.github/workflows/mission3-live-session-refresh-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
