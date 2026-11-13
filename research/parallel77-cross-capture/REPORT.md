@@ -50,6 +50,34 @@ The deterministic synthetic benchmark uses 20 **artificial** queries at each clo
 
 Independent real-photo same-physical-garment accuracy: **UNKNOWN — 0 independently labeled blind paired views**. Existing 11 publicly licensed source SHA controls establish photograph provenance only, NOT physical-item pair identity. Physical Android Chrome / iPhone Safari devices tested: **0**. Hosted signed two-owner cloud, cross-tab atomic writes, reversible multi-view persistence and restore safety: **not proven**.
 
+## Follow-up hardening audit — owner scope and stale-item protection
+
+The initial draft sorted all candidate descriptors before verifying individual
+owner aliases; with top-k=1 a cross-owner vector could displace the rightful
+owner's candidate. The revised source filters **before** ranking and accepts
+explicit ownerId, userId and accountId aliases only if every populated identity
+agrees with the exact live scoped owner. Older records without explicit owner
+fields remain eligible **only** through the currently authenticated
+`closet-current-user-<owner>` local database/collection; a mixed-owner database
+is not an authorized source. Foreign record IDs, photographs and scores cannot
+enter a source-verified proposal, even indirectly via shortlist displacement.
+
+The live Adjust adapter additionally supplies callbacks to confirm that both
+the saved candidate *object* and the pending draft still exist in their current
+owner-scoped arrays. Removal/replacement between proposal and decision now
+invalidates the one-shot receipt. The comparison's two images are sourced from
+the original JPEG preference instead of a possibly cropped display image.
+Additional deterministic tests cover top-one foreign-descriptor crowding,
+foreign userId/accountId aliases, and removed-item or removed-draft decisions.
+No sibling branches, photo bytes, cloud records or deployment configuration
+were changed.
+
+This is a conservative research safeguard, **not** cross-tab/restore
+atomicity: imported clones of old records, browser tab races, revoked signed
+leases, and real cloud merges still require an authoritative atomic adapter
+and independent verification before saving an extra view. No new genuine
+human-labeled physical-item photographs were introduced by this audit.
+
 ## Integration boundaries and recommendation
 
 Assignments #67–#76 keep ownership of classifier, segmentation, workers, within-photo shoe units, blind recognition accuracy, learning, quality, batch review, human labels and colors. Their branches and hosted/private data are untouched. The comparison reads only existing optional compatible metadata and tests against P847's known baseline.
