@@ -1,4 +1,4 @@
-name: Parallel #84 REAL licensed two-garment 163-bone WebGL NO DEPLOY
+name: 'Parallel #84 REAL licensed two-garment 163-bone WebGL NO DEPLOY'
 'on':
   push:
     branches:
