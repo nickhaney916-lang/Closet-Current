@@ -20,7 +20,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Exact verified P854 full-annotation parent, source-lease blob pins, five scoped files and HOLD
+      - name: Exact verified P854 full-annotation parent, source-lease blob pins, six scoped files and HOLD
         shell: bash
         run: |
           set -euo pipefail
@@ -29,10 +29,10 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD > /tmp/p855-files
           cat /tmp/p855-files
-          test "$(wc -l </tmp/p855-files)" -eq 5
+          test "$(wc -l </tmp/p855-files)" -eq 6
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|tests/mission1-stale-photo-recognition-lease-854.test.cjs|tests/mission1-source-lease-consensus-integration-855.test.mjs|research/mission1-source-lease-consensus-integration-855/REPORT.md|.github/workflows/mission1-source-lease-consensus-integration-855-no-deploy.yml) ;;
+              public/app.js|scripts/test-m1-review-first-default-843.mjs|tests/mission1-stale-photo-recognition-lease-854.test.cjs|tests/mission1-source-lease-consensus-integration-855.test.mjs|research/mission1-source-lease-consensus-integration-855/REPORT.md|.github/workflows/mission1-source-lease-consensus-integration-855-no-deploy.yml) ;;
               *) echo "P855 OUT OF SCOPE: $path"; exit 1 ;;
             esac
           done </tmp/p855-files
@@ -43,7 +43,7 @@ jobs:
           grep -Fq 'const live854=()=>sameOwner854()' public/app.js
           grep -Fq 'completeSignedLabel' scripts/p75-dataset-core.mjs
           grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-source-lease-consensus-integration-855/REPORT.md
-          echo M1_P855_PINNED_TWO_SOURCE_FIVE_PATH_NO_DEPLOY_PASS
+          echo M1_P855_PINNED_TWO_SOURCE_SIX_PATH_NO_DEPLOY_PASS
       - name: Temporary test dependencies without lockfile or deployed package changes
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
       - name: Actual scanner source lease plus full-label signed-consensus cross-tests
