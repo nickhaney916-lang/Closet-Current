@@ -89,8 +89,9 @@ window.__exercise=async mode=>{
   db={name:'closet-current-user-owner-a'};
   items=[{...item,image:'new-session-photo'}];
  };
- let continueJob,jobStarted;
- const gate=new Promise(yes=>continueJob=yes);
+ let continueJob,failJob,jobStarted;
+ const gate=new Promise((yes,no)=>{continueJob=yes;failJob=no;});
+ gate.catch(()=>{});
  const started=new Promise(yes=>jobStarted=yes);
  const pending=()=>{jobStarted();return gate};
  if(mode==='save-before-switch'||mode==='edit-before-switch'||
@@ -131,10 +132,9 @@ window.__exercise=async mode=>{
   await started;
   if(mode==='edit-user-left')$('stylist').hidden=true;
   else change();
-  if(mode==='save-inflight-reject'||mode==='refresh-old-owner'){
-   // Reject via a second independently controlled Promise below.
-  }
-  continueJob();
+  if(mode==='save-inflight-reject'||mode==='refresh-old-owner')
+   failJob(Error('PRIVATE old owner signed-in error after await'));
+  else continueJob();
  }
  await run;
  return {mode,events,status:buttons.status.textContent,phase:savedState(),
