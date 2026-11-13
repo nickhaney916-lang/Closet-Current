@@ -1,6 +1,6 @@
 # Mission 1 P852 — integrate offline physical-device QA with independent release evidence
 
-**Family Alpha HOLD #255 OPEN. Release NO-GO.** This is an isolated DRAFT, UNMERGED, UNDEPLOYED research integration. No main, staging, production, hosted Supabase, private wardrobes, actual users, family photos or sibling branches were modified.
+**FAMILY ALPHA HOLD #255 OPEN. RELEASE NO-GO.** This is an isolated DRAFT, UNMERGED, UNDEPLOYED research integration. No main, staging, production, hosted Supabase, private wardrobes, actual users, family photos or sibling branches were modified.
 
 ## Compatible verified sources
 
