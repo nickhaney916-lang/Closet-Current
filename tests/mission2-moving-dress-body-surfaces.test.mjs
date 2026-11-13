@@ -4,7 +4,8 @@ import * as THREE from 'three';
 import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  assertMovingSourceDressBodySurfaces40,
  auditMovingSourceDressBodyIntervals41,assertMovingSourceDressBodyIntervals41,
- auditSourceDressArticulatedPoseSamples42,assertSourceDressArticulatedPoseSamples42}
+ auditSourceDressArticulatedPoseSamples42,assertSourceDressArticulatedPoseSamples42,
+ auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
@@ -446,4 +447,168 @@ test('C42: explicit incomplete or forged articulated receipt refuses source dres
   })
  }),/C42 incomplete or unsafe/);
  assert.deepEqual(snap(f.dress.mesh),pristine);
+});
+
+const captureHighCadence43=(f,{angles=null,stagedEnd=null,
+ count=17}={})=>{
+ const tokens=[];
+ for(let i=0;i<count;i++){
+  const phase=i/(count-1);
+  f.bodyBones[0].rotation.z=angles?.[i]??.12*Math.sin(2*Math.PI*phase);
+  tokens.push(capture(f,i===count-1?stagedEnd:null,phase));
+ }
+ return tokens;
+};
+const highAudit43=(f,tokens,other={})=>auditSourceDressHighCadencePose43({
+ root:f.root,dress:f.dress,poseTokens:tokens,
+ startPositions:f.dress.mesh.geometry.getAttribute('position').array.slice(),
+ endPositions:f.dress.mesh.geometry.getAttribute('position').array.slice(),
+ ...other
+});
+
+test('C43: 17 REAL body poses reveal short 1/16-phase collision missed by valid five-pose C42 schedule',()=>{
+ const f=fixture(),cloth=f.dress.mesh.geometry.getAttribute('position'),
+  body=f.body.geometry.getAttribute('position');
+ // At 0° body stays around Y=-.015 to .015; at +10° the moving
+ // tiny anatomical face sweeps into the photograph-cloth triangle.
+ cloth.setXYZ(0,.225,.035,0);
+ cloth.setXYZ(1,.237,.037,0);
+ cloth.setXYZ(2,.223,.049,0);
+ body.setXYZ(0,.24,-.015,0);
+ body.setXYZ(1,.26,-.015,0);
+ body.setXYZ(2,.24,.015,0);
+ const original=snap(f.dress.mesh);
+ const angles=Array.from({length:17},(_,i)=>i===1?10*Math.PI/180:
+   .02*Math.sin(Math.PI*i/16));
+ const tokens=captureHighCadence43(f,{angles});
+ const quarter=[tokens[0],tokens[4],tokens[8],tokens[12],tokens[16]];
+ const coarse=sampled42(f,quarter);
+ assert.equal(coarse.unresolvedPairs,0,
+  'C42 quarter-phase samples miss the narrow but genuine intervening swing');
+ assert.equal(assertSourceDressArticulatedPoseSamples42(coarse).releaseAuthorized,false);
+ const fine=highAudit43(f,tokens);
+ assert.equal(fine.poseSamples,17);
+ assert.equal(fine.sampledIntervals,16);
+ assert.ok(fine.broadphasePotentialPairs>0);
+ assert.ok(fine.unresolvedPairs>0,
+  'actual 1/16-phase body triangle collision must not receive permission');
+ assert.ok(fine.maxObservedJointStepDegrees<12);
+ assert.throws(()=>assertSourceDressHighCadencePose43(fine),
+  /unresolved genuinely sampled body/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+test('C43: distant actual 163-bone 17-sample moving rig passes research-only bounded motion',()=>{
+ const f=fixture({bodyZ:2}),original=snap(f.dress.mesh);
+ const tokens=captureHighCadence43(f);
+ const proof=highAudit43(f,tokens);
+ assert.equal(proof.completeUniformPoseGrid,true);
+ assert.equal(proof.sampledIntervals,16);
+ assert.equal(proof.verifiedBodyBoneComparisons,16*163);
+ assert.ok(proof.rotatedIntervals>0);
+ assert.ok(proof.movingBodyVertices>0);
+ assert.ok(proof.maxObservedJointStepDegrees<12);
+ assert.ok(proof.maxObservedBodyStepMeters<.06);
+ assert.equal(proof.unresolvedPairs,0);
+ assert.equal(proof.actualMotionBetweenSamplesCertified,false);
+ const decision=assertSourceDressHighCadencePose43(proof);
+ assert.equal(decision.allCapturedSubframeIntervalsSeparated,true);
+ assert.equal(decision.unobservedHighFrequencyMotionNotCertified,true);
+ assert.equal(decision.releaseAuthorized,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+ assert.deepEqual(Object.keys(tokens[8]),[],
+  'opaque body pose must not expose source XYZ or user data');
+});
+
+test('C43: intentionally undersampled large anatomical rotation is rejected although source body is far away',()=>{
+ const f=fixture({bodyZ:2}),angles=Array(17).fill(0);
+ angles[1]=.7;
+ const tokens=captureHighCadence43(f,{angles}),original=snap(f.dress.mesh);
+ assert.throws(()=>highAudit43(f,tokens),
+  /C43 undersampled excessive real bone rotation step/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+test('C43: invalid phase grid, missing frames, duplicate samples and shifted body pose fail closed',()=>{
+ const f=fixture({bodyZ:2}),tokens=captureHighCadence43(f),original=snap(f.dress.mesh);
+ const irregular=capture(f,null,.33);
+ for(const values of [
+  tokens.slice(0,16),
+  [tokens[0],tokens[0],...tokens.slice(2)],
+  [tokens[0],irregular,...tokens.slice(2)],
+  [tokens[0],tokens[2],tokens[1],...tokens.slice(3)],
+  [...tokens,irregular]
+ ])assert.throws(()=>highAudit43(f,values),/M2 C40/);
+ for(const options of [
+  {maxJointStepDegrees:0},{maxJointStepDegrees:13},
+  {maxBodyVertexStepMeters:0},{maxBodyVertexStepMeters:.1},
+  {maxTemporalNodesPerInterval:0},
+  {startPositions:new Float32Array(3)}
+ ])assert.throws(()=>highAudit43(f,tokens,options),/M2 C40/);
+ assert.throws(()=>assertSourceDressHighCadencePose43({
+  schema:'M2-source-dress-high-cadence-joint-guard-v1',
+  originalSourceAndSkinVerified:true,completeUniformPoseGrid:true,
+  independentlyCaptured163BoneBody:true,fullProvidedPoseSequenceChecked:true,
+  poseSamples:17,sampledIntervals:16,
+  verifiedBodyBoneComparisons:2608,rotatedIntervals:8,movingBodyVertices:8,
+  maxObservedJointStepDegrees:1,maxAllowedJointStepDegrees:12,
+  maxObservedBodyStepMeters:.002,maxAllowedBodyStepMeters:.06,
+  broadphasePotentialPairs:0,provenSeparatedPairs:0,unresolvedPairs:0,
+  allSampledPairsAccounted:true,actualMotionBetweenSamplesCertified:true,
+  continuousNonlinearBoneRotationCertified:true,releaseAuthorized:true,
+  familyAlpha:'HOLD'
+ }),/M2 C40/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+test('C43: real body surface jump beyond physical subframe limit refuses even small joint angle',()=>{
+ const f=fixture({bodyZ:2});
+ const tokens=[];
+ for(let i=0;i<17;i++){
+  f.bodyBones[0].rotation.z=.01*Math.sin(Math.PI*i/16);
+  f.bodyBones[0].position.z=i===1?.12:0;
+  tokens.push(capture(f,null,i/16));
+ }
+ assert.throws(()=>highAudit43(f,tokens),
+  /C43 undersampled excessive skinned body surface displacement/);
+});
+
+test('C43: full source photographed dress passes only an opt-in safe REAL sampled high-cadence guard',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const callback=({startPositions,endPositions})=>{
+  const tokens=captureHighCadence43(f,{stagedEnd:endPositions});
+  return auditSourceDressHighCadencePose43({
+   root:f.root,dress:f.dress,poseTokens:tokens,startPositions,endPositions
+  });
+ };
+ const result=sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptHighCadenceAudit43:callback
+ });
+ assert.equal(result.stats.sourceDressMotionHighCadenceObserved43,true);
+ assert.equal(result.stats.sourceDressMotionHighFrequencyBoneMotionCertified43,false);
+ assert.equal(result.stats.sourceDressMotionRealClothPhysics,false);
+ assert.equal(result.stats.releaseAuthorized,false);
+ assert.notDeepEqual(snap(f.dress.mesh).position,original.position);
+ for(const key of ['dressRest','dressCustomPhotoProjection','skinIndex','skinWeight'])
+  assert.deepEqual(snap(f.dress.mesh)[key],original[key]);
+});
+
+test('C43: incomplete/forged sampled motion refuses BEFORE photographed XYZ and normals are written',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptHighCadenceAudit43:()=>({
+   schema:'M2-source-dress-high-cadence-joint-guard-v1',
+   originalSourceAndSkinVerified:true,completeUniformPoseGrid:true,
+   independentlyCaptured163BoneBody:true,fullProvidedPoseSequenceChecked:true,
+   poseSamples:17,sampledIntervals:16,
+   rotatedIntervals:4,movingBodyVertices:4,
+   maxObservedJointStepDegrees:2,maxAllowedJointStepDegrees:12,
+   maxObservedBodyStepMeters:.003,maxAllowedBodyStepMeters:.06,
+   broadphasePotentialPairs:1,provenSeparatedPairs:0,unresolvedPairs:1,
+   allSampledPairsAccounted:true,actualMotionBetweenSamplesCertified:false,
+   continuousNonlinearBoneRotationCertified:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  })
+ }),/C43 incomplete or unsafe/);
+ assert.deepEqual(snap(f.dress.mesh),original);
 });
