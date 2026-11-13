@@ -31,7 +31,7 @@ function scores(category="Bottoms",order=false){
   const others=(1-.68-.1)/(localCandidates.length-2);
   const rows=localCandidates.map(r=>({
     label:r.label,
-    score:r.label===winner?.68:r.label===runner?.1:others,
+    score:r.label===winner ? 0.68 : r.label===runner ? 0.1 : others,
   }));
   return order?rows.reverse():rows;
 }
@@ -158,7 +158,9 @@ test("SYNTHETIC: conflicting same-model views, weak margins or unknown categorie
   for(const view of [weak.views.whole,weak.views.confirmation]){
     const first=view.find(x=>x.label==="a pair of shorts"),
       second=view.find(x=>x.label==="a skirt");
-    first.score=.25;second.score=.53;
+    first.score=0.34;second.score=0.28;
+    for(const row of view)if(row!==first&&row!==second)
+      row.score=0.38/(localCandidates.length-2);
   }
   assert.deepEqual(deriveConditionalCandidates80(weak,"Bottoms",trusted,sealedAt,lockAt),
     {status:"abstain",alternatives:[]});
