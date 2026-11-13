@@ -798,7 +798,7 @@ async function recognizeItem(item){
  // must supply a matching signed owner and per-owner IndexedDB connection.
  const browser854=typeof window!=='undefined'&&Boolean(window.document);
  const owner854=browser854?window.closetAuth?.user:null,
-  db854=db,source854=item.image,original854=item.recognitionPhoto?.image,
+  db854=typeof db==='undefined'?null:db,source854=item.image,original854=item.recognitionPhoto?.image,
   mask854=JSON.stringify(item.segmentHint??null);
  const sameOwner854=()=>!browser854||Boolean(owner854?.id&&
   window.closetAuth?.user===owner854&&db===db854&&
