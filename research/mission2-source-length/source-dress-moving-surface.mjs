@@ -13,7 +13,7 @@
  * data / photos / world vertices are ever emitted from the public receipt.
  */
 import * as THREE from 'three';
-import {MeshBVH} from 'three-mesh-bvh';
+import {MeshBVH,ExtendedTriangle} from 'three-mesh-bvh';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const captures=new WeakMap();
 const fail=m=>{throw Error('M2 C40 source surface sweep '+m);};
@@ -823,5 +823,147 @@ export function assertSourceDressHighCadencePose43(receipt){
   researchSampleOnly:true,allCapturedSubframeIntervalsSeparated:true,
   unobservedHighFrequencyMotionNotCertified:true,
   releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
+/**
+ * P2-C44: original photographed garment SELF-contact at one genuinely
+ * captured, skinned 163-bone pose. Compare all nonadjacent original
+ * cloth triangles, not only garment-vs-body. Topological neighbors sharing
+ * an original vertex are intentional mesh joins and are excluded, but
+ * disconnected geometry touching within source-meter tolerance remains
+ * UNRESOLVED and vetoes motion (no fabricated seam labels).
+ *
+ * This detects one sampled-pose concern; not a continuous cloth, layered
+ * garment, joint-motion or time-of-impact certificate. No actual photos,
+ * original vertices, UV or owner details leave the internal WeakMap receipt.
+ */
+export function auditSourceDressSelfContact44({
+ root,dress,poseToken,
+ maxSourceFaces=100000,maxTriangleCandidates=300000,
+ maxUnresolvedPairs=20000,toleranceMeters=.00002
+}={}){
+ const mesh=validateRootDress(root,dress),shot=captures.get(poseToken);
+ if(!shot||shot.root!==root||shot.mesh!==mesh||
+    !Number.isSafeInteger(maxSourceFaces)||maxSourceFaces<1||
+    maxSourceFaces>200000||
+    !Number.isSafeInteger(maxTriangleCandidates)||maxTriangleCandidates<1||
+    maxTriangleCandidates>2000000||
+    !Number.isSafeInteger(maxUnresolvedPairs)||maxUnresolvedPairs<1||
+    maxUnresolvedPairs>50000||
+    !Number.isFinite(toleranceMeters)||toleranceMeters<0||
+    toleranceMeters>.002)
+  fail('C44 complete source-verified, bounded self-contact audit required');
+ checkTopology(shot);
+ const bodies=[];
+ root.traverse(o=>{
+  if(o!==mesh&&o.isSkinnedMesh&&!o.userData?.work56Garment&&
+     o.skeleton?.bones?.length===163)bodies.push(o);
+ });
+ if(bodies.length!==shot.bodies.length||
+    bodies.some((b,i)=>b!==shot.bodies[i].mesh))
+  fail('C44 original anatomical body roster altered after capture');
+ const faceCount=shot.geo.faceCount;
+ if(!Number.isSafeInteger(faceCount)||faceCount<1||
+    faceCount>maxSourceFaces)
+  fail('C44 source garment triangle audit budget exceeded');
+ const g=new THREE.BufferGeometry();
+ g.setAttribute('position',new THREE.BufferAttribute(shot.clothWorld.slice(),3));
+ if(shot.geo.indices)g.setIndex(
+  new THREE.BufferAttribute(shot.geo.indices.slice(),1));
+ let checkedOriginalFaces=0,adjacentPairsExcluded=0,
+  candidateTriangles=0,unresolvedPairs=0,minDistanceMeters=null;
+ try{
+  const bvh=new MeshBVH(g,{indirect:true});
+  const start=new ExtendedTriangle(),box=new THREE.Box3(),hitLine=new THREE.Line3();
+  for(let i=0;i<faceCount;i++){
+   checkedOriginalFaces++;
+   const indices=Array.from({length:3},(_,c)=>at(shot.geo.indices,i,c));
+   const xyz=indices.map(idx=>new THREE.Vector3().fromArray(shot.clothWorld,idx*3));
+   start.a.copy(xyz[0]);start.b.copy(xyz[1]);start.c.copy(xyz[2]);
+   start.needsUpdate=true;
+   if(start.getArea()<1e-12)
+    fail('C44 nonfinite or degenerate source fabric face');
+   box.makeEmpty();
+   for(const v of xyz)box.expandByPoint(v);
+   box.expandByScalar(toleranceMeters);
+   let overflow=false;
+   bvh.shapecast({
+    intersectsBounds:bounds=>box.intersectsBox(bounds),
+    intersectsTriangle:(tri,idx)=>{
+     const j=bvh.resolveTriangleIndex(idx);
+     if(j<=i)return false;
+     candidateTriangles++;
+     if(candidateTriangles>maxTriangleCandidates){
+      overflow=true;return true;
+     }
+     const other=Array.from({length:3},(_,c)=>at(shot.geo.indices,j,c));
+     if(other.some(v=>indices.includes(v))){
+      adjacentPairsExcluded++;
+      return false;
+     }
+     tri.needsUpdate=true;
+     // Closest distance catches both crossing triangles and coincident
+     // disconnected seam faces (including coplanar contacts). A zero
+     // distance is NOT assumed to be a physically penetrative event.
+     const distance=start.distanceToTriangle(tri);
+     if(!Number.isFinite(distance)||distance<0){
+      overflow=true;return true;
+     }
+     if(distance<=toleranceMeters+1e-9){
+      unresolvedPairs++;
+      minDistanceMeters=minDistanceMeters===null?distance:
+       Math.min(minDistanceMeters,distance);
+      if(unresolvedPairs>=maxUnresolvedPairs){
+       overflow=true;return true;
+      }
+     }
+     return false;
+    }
+   });
+   if(overflow)
+    fail('C44 self-contact evidence incomplete; candidate or geometric budget exceeded');
+  }
+  return Object.freeze({
+   schema:'M2-source-dress-self-contact-v1',
+   originalSourceAndSkinVerified:true,
+   actual163BoneSkinnedPose:true,
+   completeNonadjacentFaceAudit:true,
+   originalFaceCount:faceCount,checkedOriginalFaces,
+   candidateTriangles,adjacentPairsExcluded,
+   unresolvedPairs,minDistanceMeters,
+   topologicalNeighborsExcluded:true,
+   disconnectedSeamCollisionsUnresolved:true,
+   actualContinuousSelfContactCertified:false,
+   garmentLayerCollisionCertified:false,
+   selfContactPhysicsCertified:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  });
+ }finally{g.dispose();}
+}
+export function assertSourceDressSelfContact44(receipt){
+ if(receipt?.schema!=='M2-source-dress-self-contact-v1'||
+    receipt.originalSourceAndSkinVerified!==true||
+    receipt.actual163BoneSkinnedPose!==true||
+    receipt.completeNonadjacentFaceAudit!==true||
+    !Number.isSafeInteger(receipt.originalFaceCount)||
+    receipt.originalFaceCount<1||
+    receipt.checkedOriginalFaces!==receipt.originalFaceCount||
+    !Number.isSafeInteger(receipt.candidateTriangles)||
+    receipt.candidateTriangles<0||
+    !Number.isSafeInteger(receipt.unresolvedPairs)||
+    receipt.unresolvedPairs<0||
+    receipt.topologicalNeighborsExcluded!==true||
+    receipt.disconnectedSeamCollisionsUnresolved!==true||
+    receipt.actualContinuousSelfContactCertified!==false||
+    receipt.selfContactPhysicsCertified!==false||
+    receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+  fail('C44 incomplete or forged photographed garment self-contact receipt');
+ if(receipt.unresolvedPairs>0)
+  fail('C44 potentially self-intersecting original source garment refused');
+ return Object.freeze({
+  sampledSourceSelfContactVetoPassed:true,
+  completeClothContactNotCertified:true,
+  researchOnly:true,releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
