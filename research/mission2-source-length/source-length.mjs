@@ -1,7 +1,102 @@
 /** Source-proportion rest-pose extension, not inferred garment measurements or cloth simulation. */
+import * as THREE from 'three';
 import {prepareSourceProjection} from './source-projection.mjs';
 import {createPosedBodyIntersectionAudit,measurePosedTriangleContacts,comparePosedTriangleContacts,measurePosedGarmentPartContacts,measurePosedGarmentSelfContacts,measureChangedFaceSelfContactDelta,summarizeChangedFaceSelfContactRegions,classifyNewSourceSelfContactTypes,buildContactLinkedShortEdgeDepthCounterfactual,buildOneRingShortEdgeDepthFeather,buildResidualSourcePairZDirectionTrial,auditSourcePhotoMicroMultiPose,summarizePosedBodyContactDistribution,summarizeNewPosedBodyContactRegions} from './posed-intersections.mjs';
 import {validatePhotoGarmentTargets} from '../user-photo-to-anatomical-3d-62/silhouette-fit.mjs';
+
+/**
+ * P2-C34 donor-only source fabric shading: weld face normals ONLY at
+ * coincident skinned positions with identical original bone weights and
+ * compatible directions. Unlike computeVertexNormals on nonindexed fabric
+ * triangles, this avoids artificial flat-shaded facets across splits.
+ * Stage everything before live original garment positions are committed.
+ * No photo, UV, original source identity, bone weights or mesh geometry
+ * positions are changed by this function. No cloth-physics approval.
+ */
+export function stageSourceFabricSeamNormals(mesh,positions,
+ {tolerance=.00001,cosine=.65,maxVertices=150000}={}){
+ const g=mesh?.geometry,p=g?.getAttribute('position'),n=g?.getAttribute('normal'),
+  skin=g?.getAttribute('skinIndex'),weights=g?.getAttribute('skinWeight');
+ if(!mesh?.isSkinnedMesh||mesh.skeleton?.bones?.length!==163||
+    !p?.isBufferAttribute||p.itemSize!==3||p.isInterleavedBufferAttribute||
+    !n?.isBufferAttribute||n.count!==p.count||n.itemSize!==3||
+    !skin?.isBufferAttribute||skin.count!==p.count||skin.itemSize!==4||
+    !weights?.isBufferAttribute||weights.count!==p.count||weights.itemSize!==4||
+    !ArrayBuffer.isView(positions)||positions.length!==p.count*3||
+    !positions.every(Number.isFinite)||
+    !Number.isSafeInteger(maxVertices)||maxVertices<3||maxVertices>150000||
+    p.count>maxVertices||p.count<3||
+    (g.index?g.index.count%3!==0:p.count%3!==0)||
+    !Number.isFinite(tolerance)||tolerance<.000001||tolerance>.00005||
+    !Number.isFinite(cosine)||cosine<.5||cosine>.95)
+  throw Error('M2 C34 exact source rig, staged positions and bounded triangles required');
+ const temp=new THREE.BufferGeometry();
+ try{
+  temp.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  if(g.index)temp.setIndex(g.index);
+  temp.computeVertexNormals();
+  const face=temp.getAttribute('normal')?.array;
+  if(!face||face.length!==positions.length||!face.every(Number.isFinite))
+   throw Error('M2 C34 finite staged source normals required');
+  const normals=face.slice(),buckets=new Map();
+  for(let i=0;i<p.count;i++){
+   const keyParts=[Math.round(positions[3*i]/tolerance),
+    Math.round(positions[3*i+1]/tolerance),Math.round(positions[3*i+2]/tolerance)];
+   for(let j=0;j<4;j++){
+    const bone=skin.getComponent(i,j),w=weights.getComponent(i,j);
+    if(!Number.isSafeInteger(bone)||bone<0||bone>=163||
+       !Number.isFinite(w)||w<0||w>1)
+     throw Error('M2 C34 original source skin weights invalid');
+    keyParts.push(bone,Math.round(w*100000));
+   }
+   const k=keyParts.join(':');
+   if(!buckets.has(k))buckets.set(k,[]);
+   const bucket=buckets.get(k);
+   if(bucket.length>=64)throw Error('M2 C34 excessive coincident source skin vertices');
+   bucket.push(i);
+  }
+  let duplicateVertices=0,changedVertices=0,groups=0,maxAngleDegrees=0;
+  for(const bucket of buckets.values()){
+   if(bucket.length<2)continue;
+   duplicateVertices+=bucket.length;
+   const clusters=[];
+   for(const id of bucket){
+    const v=new THREE.Vector3().fromArray(face,3*id);
+    if(v.lengthSq()<1e-10)continue;
+    v.normalize();
+    let found=clusters.find(c=>c.every(entry=>entry.v.dot(v)>=cosine));
+    if(!found){found=[];clusters.push(found);}
+    found.push({id,v});
+   }
+   for(const cluster of clusters){
+    if(cluster.length<2)continue;
+    groups++;
+    const mean=new THREE.Vector3();
+    for(const entry of cluster)mean.add(entry.v);
+    mean.normalize();
+    for(const entry of cluster){
+     const angle=Math.acos(Math.max(-1,Math.min(1,entry.v.dot(mean))))*180/Math.PI;
+     if(angle<=.0001)continue;
+     maxAngleDegrees=Math.max(maxAngleDegrees,angle);
+     mean.toArray(normals,3*entry.id);changedVertices++;
+    }
+   }
+  }
+  return Object.freeze({normals,evidence:Object.freeze({
+   sourceVertices:p.count,coincidentSeamVertices:duplicateVertices,
+   smoothedVertices:changedVertices,compatibleSeamClusters:groups,
+   maxNormalDeltaDegrees:maxAngleDegrees,
+   originalSourcePositionsPhotoUVAndSkinUntouched:true,
+   compatibleOriginalSkinWeightsOnly:true,
+   hardOrOpposingNormalsNotMerged:true,
+   stagedBeforeAllGarmentCommits:true,
+   humanPhotorealismNotVerified:true,
+   dynamicClothPhysicsNotVerified:true,
+   releaseAuthorized:false
+  })});
+ }finally{temp.dispose();}
+}
+
 const SOURCE='e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24';
 const fail=m=>{throw Error('M2 source length '+m);};
 const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
