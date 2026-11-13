@@ -18,14 +18,17 @@ try{
  for(const row of rows){
   if(process.env.P82_ISOLATED==='1'){await browser.close();browser=await ({chromium,webkit}[engineName]).launch({headless:true,args:engineName==='chromium'?['--no-sandbox']:[]});page=await browser.newPage({viewport:{width:390,height:844}});page.setDefaultTimeout(300000);page.on('request',r=>network.push({local:new URL(r.url()).origin===origin||r.url()==='about:blank',scheme:new URL(r.url()).protocol,origin:new URL(r.url()).origin,method:r.method()}));await page.goto(origin);}
   const receipt=index.find(x=>x.id===row.id),bytes=await readFile('benchmark/photos/'+row.image),sha=createHash('sha256').update(bytes).digest('hex');assert.equal(sha,receipt.sha256);assert.ok(receipt.verified&&row.verified&&receipt.image===row.image);assert.ok(['CC0','Public domain','CC BY 2.0','CC BY 4.0','CC BY-SA 2.0','CC BY-SA 3.0','CC BY-SA 4.0'].includes(receipt.attribution?.license));assert.ok(receipt.attribution?.source?.startsWith('https://commons.wikimedia.org/wiki/File:'));
-  const result=await page.evaluate(async({image,id})=>{
+  const result=await page.evaluate(async({image,id,research877})=>{
    const {evidence80}=await import('/subtype-review-80.mjs');const {bind82,VERSION82,codeHash82,browserRequest82,validateResponse82}=await import('/dual-core-82.mjs');
    const item={id,image,ownerId:'public-synthetic-owner'},evidence=await evidence80(item,{ownerId:item.ownerId,sessionId:crypto.randomUUID(),live:()=>true});
-   const request={schema:VERSION82,requestId:crypto.randomUUID(),enabled:true,consent:true,detailVisible:true,evidence,binding:bind82(evidence),original:image,image,sourceCodeSha256:await codeHash82()};
+   const request={schema:VERSION82,requestId:crypto.randomUUID(),enabled:true,consent:true,detailVisible:true,evidence,binding:bind82(evidence),original:image,image,sourceCodeSha256:await codeHash82(),...(research877?{researchFrame877:'whole-224-v1'}:{})};
    const output=await browserRequest82(request,{onProgress:s=>console.log('P82_STAGE',id,s)}),decision=validateResponse82(output,request);
    return {output,decision};
-  },{id:row.id,image:'data:image/jpeg;base64,'+bytes.toString('base64')});
-  assert.equal(result.output.automaticAdmissions,0);assert.equal(createHash('sha256').update(await readFile('benchmark/photos/'+row.image)).digest('hex'),sha);
+  },{id:row.id,image:'data:image/jpeg;base64,'+bytes.toString('base64'),research877:process.env.P877_FULL_FRAME==='1'});
+  assert.equal(result.output.automaticAdmissions,0);
+  if(process.env.P877_FULL_FRAME==='1')assert.equal(result.output.experiment877?.schema,'p877-optional-full-frame-v1');
+  else assert.equal(result.output.experiment877,null);
+  assert.equal(createHash('sha256').update(await readFile('benchmark/photos/'+row.image)).digest('hex'),sha);
   const receiptRow={id:row.id,sourceSha256:sha,historicalExpectation:{category:row.expectedCategory,itemType:row.expectedType},...result};results.push(receiptRow);console.log('P82_REAL_BROWSER_ROW',engineName,row.id,result.decision.status,result.decision.hypotheses[0]?.itemType,Math.round(result.output.totalMs));
  }
  if(!network.every(x=>x.local&&x.method==='GET'))console.error('P82_UNEXPECTED_REQUEST_METADATA',JSON.stringify(network.filter(x=>!x.local||x.method!=='GET')));
