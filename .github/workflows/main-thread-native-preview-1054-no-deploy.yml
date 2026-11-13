@@ -48,10 +48,10 @@ jobs:
         run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
       - name: Offline PWA build before native regression
         run: node scripts/build.mjs
-      - name: Inherited full native serial regressions
-        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Genuine native app synthetic JWT fixture and JPEG render (2D only)
         run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Inherited full native serial regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Scope/no-deploy final check
         run: |
           test -d dist
