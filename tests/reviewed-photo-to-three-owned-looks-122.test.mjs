@@ -160,7 +160,11 @@ test('PHOTO122 fallback never presents fabricated 3D reconstruction and manual l
  assert.ok(app.includes("if(count<3)message('Your saved photo is pinned."));
  assert.ok(app.includes("originalSHA256Verified:panel.status().sourceSHA256Verified===true"));
  assert.ok(app.includes("familyAlpha:'HOLD',releaseAuthorized:false"));
- assert.ok(app.includes("Could not style that saved photo safely."));
- assert.ok(app.includes("Your closet and saved outfits are unchanged."));
+ // Owner-only action wrapper intentionally avoids interpolating private
+ // controller errors into a new account's Style status.
+ assert.ok(app.includes("Could not safely style this saved piece."));
+ assert.ok(app.includes("Your saved clothing and outfits are unchanged."));
+ assert.ok(app.includes("style.onclick=()=>withOwnerStyleCardAction(item,style,async assertOwner=>"));
+ assert.doesNotMatch(app,/message\('Could not style that saved photo safely\. '\+String\(error/);
  assert.ok(!app.includes('window.location.href='));
 });
