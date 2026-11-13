@@ -374,3 +374,6 @@ export function trialSourceBoneShoulderYoke84({
   bodyPose?.g.dispose();originalShirt?.g.dispose();originalPants?.g.dispose();
  }
 }
+
+// Read-only reuse by independent P84 source-photographed jeans fit trial.
+export {posedGeometry as posedSource84, contactCount as countSourceContacts84};
