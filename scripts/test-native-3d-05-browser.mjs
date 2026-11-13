@@ -54,12 +54,30 @@ const sourceProjectionMode=process.env.PHOTO_SOURCE_PROJECTION==='1';
 // P2-C33: strictly test-only optical control. Browser request substitution
 // never changes the real source module, original owner photo or garment.
 const sourceEdgeAblation=process.env.PHOTO_SOURCE_EDGE_ABLATION_CONTROL==='1';
+// P2-C34: separate in-memory control for identical sourced garment geometry,
+// original photo, screen and view angle; only normal smoothing is disabled.
+const seamNormalAblation=process.env.PHOTO_SOURCE_SEAM_NORMAL_ABLATION_CONTROL==='1';
+if(seamNormalAblation&&(!sourceProjectionMode||sourceAdaptiveMode||
+   mission2Performance||sourceEdgeAblation))
+ throw Error('M2 C34 no-deploy skin-consistent seam-normal ablation requires one bounded original photo renderer');
 if(sourceEdgeAblation&&(!sourceProjectionMode||sourceAdaptiveMode||mission2Performance))
  throw Error('M2 C33 isolated original-photo edge control requires standard full source projection');
 if(sourceProjectionMode&&!sourceLengthMode)throw Error('Source projection requires source length shape');
 const sourceLengthEvidence=[];
 function requireSourceLength(state,width){
  assert.equal(state.sourceLengthFit,true);
+ assert.equal(state.sourceLengthSeamShadingApplied,true,
+  'P2-C34 full source photo must use fully staged garment seam lighting');
+ const shading=state.sourceLengthSeamShadingEvidence;
+ assert.ok(shading&&shading.checkedGarmentMeshes>=3&&
+  shading.checkedGarmentMeshes<=8);
+ for(const field of ['coincidentSeamVertices','smoothedVertices',
+  'compatibleSeamClusters','maxNormalDeltaDegrees'])
+  assert.ok(Number.isFinite(shading[field])&&shading[field]>=0);
+ assert.ok(shading.smoothedVertices<=shading.coincidentSeamVertices);
+ assert.equal(shading.positionsPhotoPixelsUVIndicesAndSkinPreservedByShading,true);
+ assert.equal(shading.humanVisualImprovementNotEstablished,true);
+ assert.equal(shading.releaseAuthorized,false);
  if(sourceProjectionMode){assert.equal(state.sourceProjectionRGB,true);assert.ok(state.sourceProjectionMaterialCount>=1);assert.ok(state.sourceProjectionCompiledMaterialCount>=1);assert.equal(state.sourceProjectionRearPhotographed,false);}
  assert.equal(state.sourceLengthSHA256,'e0510f06c475fa048585e6ff437359cb4255ce3a425e40a69dc54cc337f5ab24');
  assert.ok(state.sourceLengthMovedVertices>=100);
@@ -86,7 +104,9 @@ function requireSourceLength(state,width){
  assert.ok(state.sourceLengthIntersectionPairsAfter<=state.sourceLengthIntersectionPairsBefore);
  sourceLengthEvidence.push({width,figure:state.figure,oldHemY:state.sourceLengthOldHemY,newHemY:state.sourceLengthNewHemY,
   movedVertices:state.sourceLengthMovedVertices,extension:state.sourceLengthExtension,flare:state.sourceLengthFlare,
-  sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,constructionMs:state.sourceLengthConstructionMs,
+  sourceProjectionRGB:state.sourceProjectionRGB,sourceProjectionMaterialCount:state.sourceProjectionMaterialCount,sourceProjectionCompiledMaterialCount:state.sourceProjectionCompiledMaterialCount,sourceSHA256:state.sourceLengthSHA256,
+  sourceLengthSeamShadingApplied:state.sourceLengthSeamShadingApplied,
+  sourceLengthSeamShadingEvidence:state.sourceLengthSeamShadingEvidence,intersectionPairsBefore:state.sourceLengthIntersectionPairsBefore,intersectionPairsAfter:state.sourceLengthIntersectionPairsAfter,testedPairs:state.sourceLengthTestedPairs,constructionMs:state.sourceLengthConstructionMs,
   triangleAudit:state.sourceLengthTriangleContactAudit,triangleContactsBefore:state.sourceLengthTriangleContactBefore,triangleContactsAfter:state.sourceLengthTriangleContactAfter,newTriangleContacts:state.sourceLengthNewTriangleContacts,
   bodyContactDistribution:state.sourceLengthBodyContactDistribution,collisionCertified:false});
 }
@@ -361,6 +381,7 @@ function authHttp(route){
  external.push({kind:'unrecognized-auth',method:req.method()});return route.abort();
 }
 let interceptedOpticalControlModules=0;
+let interceptedSeamNormalControlModules=0;
 try{
  for(const width of [320,390,430]){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
@@ -383,6 +404,20 @@ try{
    return route.abort();
   });
   const page=await ctx.newPage();
+  if(seamNormalAblation){
+   await page.route('**/research/mission2-source-length/source-length.mjs',async route=>{
+    const response=await route.fetch(),source=await response.text();
+    // Exact donor-only research module patch, never update source or production:
+    // baseline THREE face normals are computed, but source split-edge
+    // reconciliation is disabled. Same bones, positions, skin and UVs.
+    const exact='if(angle<=.0001)continue;';
+    assert.equal(source.split(exact).length,2,
+     'P2-C34 must ablate precisely one source fabric smoothing site');
+    const changed=source.replace(exact,'if(true)continue;');
+    await route.fulfill({response,body:changed,contentType:'text/javascript'});
+    interceptedSeamNormalControlModules++;
+   });
+  }
   if(sourceEdgeAblation){
    await page.route('**/research/mission2-source-length/source-projection.mjs',async route=>{
     // Fetch ONLY the donor's module, then override the 1.2% edge weight
@@ -2198,6 +2233,9 @@ try{
   await page.close();await ctx.close();
   await browser.close();browser=null;
  }
+ if(seamNormalAblation)assert.ok(interceptedSeamNormalControlModules>=3&&
+  interceptedSeamNormalControlModules<=24,
+  'P2-C34 exact donor shader normal control required for every viewport');
  if(sourceEdgeAblation)assert.ok(interceptedOpticalControlModules>=3&&
   interceptedOpticalControlModules<=24,
   'P2-C33 must override the donor source module on all measured viewports');
@@ -2223,7 +2261,8 @@ try{
   evidence:cases,screens,errors,external,
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
   ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence,
-   sourceEdgeAblationControl:sourceEdgeAblation,sourceEdgeAblationModuleRequests:interceptedOpticalControlModules}:{}),
+   sourceEdgeAblationControl:sourceEdgeAblation,sourceEdgeAblationModuleRequests:interceptedOpticalControlModules,
+   seamNormalAblationControl:seamNormalAblation,seamNormalAblationModuleRequests:interceptedSeamNormalControlModules}:{}),
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,

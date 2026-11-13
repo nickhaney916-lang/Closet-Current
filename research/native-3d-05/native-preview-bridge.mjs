@@ -762,6 +762,8 @@ export async function mountNative3D05({
    sourceProjectionCompiledMaterialCount:active?data.fitReceipts171?.shirt?.silhouette62?.sourceProjectionCompiledMaterialCount:0,
    sourceProjectionRearPhotographed:false,
    sourceLengthFit:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthFit===true,
+   sourceLengthSeamShadingApplied:active&&data.fitReceipts171?.shirt?.silhouette62?.sourceLengthSeamShadingApplied===true,
+   sourceLengthSeamShadingEvidence:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthSeamShadingEvidence||null:null,
    sourceLengthSHA256:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthSHA256:null,
    sourceLengthMovedVertices:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthMovedVertices:0,
    sourceLengthOldHemY:active?data.fitReceipts171?.shirt?.silhouette62?.sourceLengthOldHemY:null,
