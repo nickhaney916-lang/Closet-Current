@@ -38,7 +38,7 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
    const {mountDual82}=await import('/dual-panel-82.mjs'),{VERSION82,MODEL_ASSETS82}=await import('/dual-core-82.mjs'),{localCandidates}=await import('/local-catalog.mjs'),{observation81}=await import('/model-arbitration-81.mjs');
    window.mountSynthetic82=()=>{
     window.syntheticPanel82?.close();document.querySelector('[data-dual82]')?.remove();window.calls82=0;window.hold82=false;window.apply82=0;window.negative82=false;
-    const form=document.querySelector('dialog form');window.syntheticPanel82=mountDual82({supported:true,form,item:window.current82,getOwner:()=>window.closetAuth.user,isLive:()=>!!document.querySelector('dialog')?.open,unitAllowed:()=>!window.current82.segmentHint,onChoose:c=>{window.apply82++;window.applied82=c;const type=form.querySelector('select[aria-label="Item type"]');type.value=c.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));},request:async(r,{signal})=>{
+    const form=document.querySelector('dialog form');window.syntheticPanel82=mountDual82({supported:true,form,item:window.current82,getOwner:()=>window.closetAuth.user,getDraftRevision:()=>JSON.stringify([form.querySelector('select[aria-label="Main category"]')?.value,form.querySelector('select[aria-label="Item type"]')?.value,form.querySelector('input[aria-label="Color"]')?.value]),isLive:()=>!!document.querySelector('dialog')?.open,unitAllowed:()=>!window.current82.segmentHint,onChoose:c=>{window.apply82++;window.applied82=c;const type=form.querySelector('select[aria-label="Item type"]');type.value=c.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));},request:async(r,{signal})=>{
      window.calls82++;window.lastRequest82=r;while(window.hold82&&!signal.aborted)await new Promise(x=>setTimeout(x,10));if(signal.aborted)throw Error('cancelled');
      return {schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,createdAt:Date.now(),sourceCodeSha256:r.sourceCodeSha256,observations:['fashionclip','fashionSiglip'].map((modelKey,i)=>observation81({modelKey,binding:r.binding,workerSourceSha256:r.sourceCodeSha256,vectorSha256:MODEL_ASSETS82[modelKey].vectorsSha256,latencyMs:2,scores:localCandidates.map((c,j)=>({label:c.label,score:(window.negative82?c.label==='a blank wall':c.itemType===(i?'Skirt':'Shorts'))?1:j/1000}))}))};
     }});
@@ -54,6 +54,18 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   for(const attack of ['owner','same-owner','owner-id','crop','image','mask','unit']){
    await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});await consent().check();await visible().check();await check().click();await page.waitForFunction(()=>window.calls82===1);await page.evaluate(k=>{window.mutate82(k);window.hold82=false;},attack);await page.waitForTimeout(120);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   }
+  // P869: non-evented automatic photo-fill changes must invalidate a running or displayed comparison.
+  await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});
+  await consent().check();await visible().check();await check().click();await page.waitForFunction(()=>window.calls82===1);
+  await page.evaluate(()=>{const color=document.querySelector('dialog input[aria-label="Color"]');if(!color)throw Error('Missing color field');color.value='Red';window.hold82=false;});
+  await page.waitForTimeout(120);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
+  assert.equal(await page.getByRole('button',{name:/^Use Shorts/}).count(),0);
+  await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=false;});
+  await consent().check();await visible().check();await check().click();await page.getByRole('button',{name:/Use Shorts/}).waitFor();
+  await page.getByRole('checkbox',{name:/I compared the original photo/}).check();
+  await page.evaluate(()=>{const type=document.querySelector('dialog select[aria-label="Item type"]');if(!type)throw Error('Missing type field');type.value='Skirt';});
+  await page.getByRole('button',{name:/Use Shorts/}).click();
+  assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});await consent().check();await visible().check();await check().click();await page.getByRole('button',{name:'Cancel comparison'}).click();await page.evaluate(()=>window.hold82=false);assert.equal(await page.evaluate(()=>window.apply82),0);
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.negative82=true;});await consent().check();await visible().check();await check().click();await page.getByText(/At least one model sees non-clothing/).waitFor();assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   const transport=await page.evaluate(async()=>{
@@ -64,6 +76,6 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
     window.Worker=class{constructor(){throw Error('synthetic allocation failure');}};try{await browserRequest82(r);}catch(e){allocation=e.message==='P82_WORKER_UNAVAILABLE';}
    }finally{window.Worker=Native;}return {busy,timeout,cancelled,allocation,killed};
   });assert.deepEqual(transport,{busy:true,timeout:true,cancelled:true,allocation:true,killed:2});
-  assert.deepEqual(errors,[]);console.log('P82_DESKTOP_POLICY_PASS',name,width,'7-stale-attacks+consent+one-explicit-save+cancel');await page.close();
+  assert.deepEqual(errors,[]);console.log('P82_DESKTOP_POLICY_PASS',name,width,'7-stale-attacks+silent-photo-fill-drift+consent+one-explicit-save+cancel');await page.close();
  }}finally{await browser.close();browser=null;}
 }}finally{await browser?.close();server.close();}
