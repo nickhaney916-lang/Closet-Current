@@ -779,6 +779,261 @@ function anatomicalSourceLoops57(graph,root,mesh,boundary56,{
  });
 }
 
+
+/**
+ * P2-C58: genuinely articulated 163-bone photographic source garment
+ * versus itself AND original skinned anatomical body surfaces.
+ *
+ * Each temporary arm pose is independently sampled; the original photo
+ * mesh XYZ, UV/rest, skin weights/indexes and all bone quaternions are
+ * restored, and the old fitted neutral pose is checked byte-for-byte.
+ * Body AABB pairs and strict transverse crossings are NOT body fit
+ * certification, and C53 geometric-zero source pairs stay unresolved.
+ */
+function skinnedWorldBuffer58(mesh){
+ const positions=mesh.geometry.getAttribute('position');
+ const output=new Float32Array(positions.count*3),v=new THREE.Vector3();
+ mesh.updateWorldMatrix(true,false);
+ mesh.skeleton.update();
+ for(let i=0;i<positions.count;i++){
+  v.fromBufferAttribute(positions,i);
+  mesh.applyBoneTransform(i,v);
+  v.applyMatrix4(mesh.matrixWorld);
+  if(!finite(v.toArray()))
+   fail('C58 nonfinite original licensed skinned mesh pose');
+  output[3*i]=v.x;output[3*i+1]=v.y;output[3*i+2]=v.z;
+ }
+ return output;
+}
+function bodyFaces58(root,cloth,maxBodyFaces){
+ let faces=0,invalid=0,bodyMeshes=0;
+ const out=[];
+ root.updateMatrixWorld(true);
+ root.traverse(m=>{
+  if(m===cloth||!m.isSkinnedMesh||
+     m.userData?.work56Garment||m.skeleton?.bones?.length!==163)return;
+  bodyMeshes++;
+  const p=m.geometry?.getAttribute('position');
+  if(!p?.isBufferAttribute||p.itemSize!==3){
+   invalid++;return;
+  }
+  const n=m.geometry.index?.count??p.count;
+  if(n%3!==0){invalid++;return;}
+  faces+=n/3;
+  if(faces>maxBodyFaces)return;
+  const world=skinnedWorldBuffer58(m),indices=m.geometry.index?.array;
+  for(let j=0;j<n;j+=3){
+   const tri=[0,1,2].map(k=>{
+    const v=indices?indices[j+k]:j+k;
+    if(!Number.isSafeInteger(v)||v>=p.count||v<0)
+     fail('C58 malformed 163-bone anatomical body triangle source');
+    return new THREE.Vector3().fromArray(world,3*v);
+   });
+   if(tri.some(v=>!finite(v.toArray()))){
+    invalid++;continue;
+   }
+   const box=new THREE.Box3().setFromPoints(tri);
+   const area=tri[1].clone().sub(tri[0])
+    .cross(tri[2].clone().sub(tri[0])).length();
+   if(area<=1e-12){invalid++;continue;}
+   out.push({tri,minX:box.min.x,maxX:box.max.x,
+    minY:box.min.y,maxY:box.max.y,
+    minZ:box.min.z,maxZ:box.max.z});
+  }
+ });
+ if(bodyMeshes<1||bodyMeshes>16||invalid>0||
+    faces>maxBodyFaces)
+  return {complete:false,bodyMeshes,faces,invalid,
+   candidates:0,strict:0,near:0,positive:0,compared:0};
+ out.sort((a,b)=>a.minX-b.minX);
+ return {complete:true,bodyMeshes,faces,invalid,out};
+}
+function bodyClothContact58(body,clothWorld,indices,tolerance,{
+ maxBodyComparisons58,maxBodyCandidatePairs58
+}){
+ if(!body.complete)return {...body};
+ const clothes=[];
+ for(let i=0;i<(indices?.length??clothWorld.length/3);i+=3){
+  const tri=[0,1,2].map(j=>{
+   const id=indices?indices[i+j]:i+j;
+   return new THREE.Vector3().fromArray(clothWorld,3*id);
+  });
+  const box=new THREE.Box3().setFromPoints(tri);
+  clothes.push({tri,minX:box.min.x,maxX:box.max.x,
+   minY:box.min.y,maxY:box.max.y,
+   minZ:box.min.z,maxZ:box.max.z});
+ }
+ clothes.sort((a,b)=>a.minX-b.minX);
+ let compared=0,candidates=0,strict=0,near=0,positive=0,
+  start=0,complete=true;
+ const faces=body.out;
+ outer:for(const c of clothes){
+  while(start<faces.length&&
+        faces[start].maxX+tolerance<c.minX)start++;
+  for(let j=start;j<faces.length;j++){
+   const b=faces[j];
+   if(b.minX>c.maxX+tolerance)break;
+   if(++compared>maxBodyComparisons58){complete=false;break outer;}
+   if(b.maxX+tolerance<c.minX||
+      b.maxY+tolerance<c.minY||c.maxY+tolerance<b.minY||
+      b.maxZ+tolerance<c.minZ||c.maxZ+tolerance<b.minZ)
+    continue;
+   if(++candidates>maxBodyCandidatePairs58){
+    complete=false;break outer;
+   }
+   if(strictFaceCrossing52(c.tri,b.tri,1e-7))strict++;
+   const d=triangleDistance53(c.tri,b.tri);
+   if(!Number.isFinite(d)||d<0)
+    fail('C58 invalid original photograph garment-body separation');
+   if(d<=tolerance)near++;else positive++;
+  }
+ }
+ return {complete,bodyMeshes:body.bodyMeshes,faces:body.faces,
+  invalid:body.invalid,compared,candidates,strict,near,positive};
+}
+function articulatedContact58(root,mesh,source,indices,triangles,
+ neutralWorld,neutral,anatomical57,tolerance,{
+ maxComparisons58,maxCandidatePairs58,maxDistancePairs58,
+ maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
+ maxPoseSamples58
+}){
+ const refused=(reason)=>Object.freeze({
+  schema:'M2-licensed-original-163bone-articulated-contact-C58',
+  sourceFaceCount:triangles,
+  originalNeutralSelfBoxPairs:neutral.boundsOverlaps,
+  originalNeutralSelfStrictCrossings:neutral.strictCrossings,
+  poseSampleCount:0,completeSelfPoseSweeps:0,
+  completeBodyPoseSweeps:0,actuallyDisplacedClothVerticesAcrossSamples:0,
+  originalSelfBoxPairsAcrossSamples:0,
+  originalSelfGeometricZeroUnresolvedAcrossSamples:0,
+  originalSelfPositiveGapAtSampledPoseAcrossSamples:0,
+  originalSelfStrictTransverseCrossingsAcrossSamples:0,
+  originalSelfPairSampleBudgetExhausted:true,
+  originalBodyTrianglesInspectedAcrossSamples:0,
+  originalBodyBoxPairsAcrossSamples:0,
+  originalBodyNearOrZeroUnresolvedAcrossSamples:0,
+  originalBodyStrictTransverseCrossingsAcrossSamples:0,
+  originalBodyPairSampleBudgetExhausted:true,
+  originalBodyIndependentClothFitCertified:false,
+  allTemporaryBoneQuaternionsRestored:false,
+  exactNeutralWorldSkinnedDressRestored:false,
+  sourceReadOnlySampleRefusedReason:reason,
+  allGeometricZerosStillUnresolved:true,
+  sampledPoseIntersectionNotContinuousPhysics:true,
+  noSkinOrOriginalPhotoOrOwnerFieldsExposed:true,
+  noSourceGeometryEdited:true,
+  sampledPoseContactNotReleaseApproval:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ if(!anatomical57?.anatomicalCandidateMappingPossible||
+    !anatomical57.poseRestorationVerified||
+    anatomical57.twoDistinct163BonePoseSamplesCompleted!==2)
+  return refused('C57-anatomical-source-pose-evidence-incomplete');
+ const byName=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
+ const arms=['upperarm01L','upperarm01R'].map(name=>byName.get(name));
+ if(arms.some(b=>!b?.isBone))
+  return refused('original-163-bone-anatomical-arms-not-found');
+ const quaternions=mesh.skeleton.bones.map(b=>b.quaternion.clone());
+ const signedPositions=mesh.geometry.getAttribute('position').array.slice();
+ const poseBudget={maxComparisons:maxComparisons58,
+  maxCandidatePairs:maxCandidatePairs58,
+  maxStrictCrossings:1024,
+  refineTriangleDistances53:true,maxDistanceCandidates53:maxDistancePairs58,
+  refineSourceTopology54:false,refineEdgeWinding55:false};
+ let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
+  selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
+  bodyFacesCount=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
+ try{
+  for(let pose=0;pose<maxPoseSamples58;pose++){
+   const arm=arms[pose],original=arm.quaternion.clone();
+   const axis=pose===0?new THREE.Vector3(0,0,1):
+    new THREE.Vector3(1,0,0);
+   const rotation=new THREE.Quaternion()
+    .setFromAxisAngle(axis,pose===0?.12:-.12);
+   try{
+    arm.quaternion.multiply(rotation);
+    root.updateMatrixWorld(true);
+    mesh.skeleton.update();
+    const world=skinnedWorldBuffer58(mesh);
+    const changed=world.reduce((n,val,i)=>
+     n+(i%3===0&&Math.hypot(
+       world[i]-neutralWorld[i],
+       world[i+1]-neutralWorld[i+1],
+       world[i+2]-neutralWorld[i+2])>1e-5?1:0),0);
+    displacements+=changed;
+    // Use the very same proven C52 strict face witness and C53 exact
+    // triangle distance path, not a new synthetic 3D collision solver.
+    const self=analyze52(world,indices,triangles,tolerance,
+     poseBudget);
+    selfBoxPairs+=self.boundsOverlaps;
+    selfStrict+=self.strictCrossings;
+    selfZeros+=self.distance53.geometricZeroOrOverlapUnresolved;
+    selfSeparated+=self.distance53.positiveGapBeyondToleranceAtThisPose;
+    if(self.complete&&self.distance53.distanceRefinementComplete)
+     selfComplete++;
+    const body=bodyFaces58(root,mesh,maxBodyFaces58);
+    const bodyCheck=bodyClothContact58(body,world,indices,tolerance,{
+     maxBodyComparisons58,maxBodyCandidatePairs58
+    });
+    bodyFacesCount+=bodyCheck.faces;
+    bodyPairs+=bodyCheck.candidates;
+    bodyNear+=bodyCheck.near;
+    bodyStrict+=bodyCheck.strict;
+    if(bodyCheck.complete)bodyComplete++;
+    samples++;
+   }finally{
+    arm.quaternion.copy(original);
+    root.updateMatrixWorld(true);
+    mesh.skeleton.update();
+   }
+  }
+ }finally{
+  for(let i=0;i<mesh.skeleton.bones.length;i++)
+   mesh.skeleton.bones[i].quaternion.copy(quaternions[i]);
+  root.updateMatrixWorld(true);
+  mesh.skeleton.update();
+ }
+ const restored=mesh.skeleton.bones.every((b,i)=>
+  b.quaternion.equals(quaternions[i]));
+ const neutralAgain=skinnedWorldBuffer58(mesh);
+ const sourceIntact=signedPositions.every((v,i)=>
+  mesh.geometry.getAttribute('position').array[i]===v);
+ const worldRestored=neutralAgain.every((v,i)=>
+  Math.abs(v-neutralWorld[i])<=1e-6);
+ if(!restored||!worldRestored||!sourceIntact)
+  fail('C58 cannot restore authenticated 163-bone photographic source');
+ return Object.freeze({
+  schema:'M2-licensed-original-163bone-articulated-contact-C58',
+  sourceFaceCount:triangles,
+  originalNeutralSelfBoxPairs:neutral.boundsOverlaps,
+  originalNeutralSelfStrictCrossings:neutral.strictCrossings,
+  poseSampleCount:samples,
+  completeSelfPoseSweeps:selfComplete,
+  completeBodyPoseSweeps:bodyComplete,
+  actuallyDisplacedClothVerticesAcrossSamples:displacements,
+  originalSelfBoxPairsAcrossSamples:selfBoxPairs,
+  originalSelfGeometricZeroUnresolvedAcrossSamples:selfZeros,
+  originalSelfPositiveGapAtSampledPoseAcrossSamples:selfSeparated,
+  originalSelfStrictTransverseCrossingsAcrossSamples:selfStrict,
+  originalSelfPairSampleBudgetExhausted:selfComplete!==samples,
+  originalBodyTrianglesInspectedAcrossSamples:bodyFacesCount,
+  originalBodyBoxPairsAcrossSamples:bodyPairs,
+  originalBodyNearOrZeroUnresolvedAcrossSamples:bodyNear,
+  originalBodyStrictTransverseCrossingsAcrossSamples:bodyStrict,
+  originalBodyPairSampleBudgetExhausted:bodyComplete!==samples,
+  originalBodyIndependentClothFitCertified:false,
+  allTemporaryBoneQuaternionsRestored:restored,
+  exactNeutralWorldSkinnedDressRestored:worldRestored,
+  sourceReadOnlySampleRefusedReason:null,
+  allGeometricZerosStillUnresolved:true,
+  sampledPoseIntersectionNotContinuousPhysics:true,
+  noSkinOrOriginalPhotoOrOwnerFieldsExposed:true,
+  noSourceGeometryEdited:true,
+  sampledPoseContactNotReleaseApproval:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
 function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null){
  const list=[];
  const v=(j)=>new THREE.Vector3(
@@ -898,7 +1153,12 @@ export function auditActualPhotographedDressSurfaces52({
  refineBoundaryComponents56=false,maxBoundaryEdges56=20000,
  maxBoundaryVertexGroups56=20000,
  refineAnatomicalLoopLandmarks57=false,maxLoopVertices57=50000,
- maxPoseSamples57=2
+ maxPoseSamples57=2,
+ refineArticulatedContacts58=false,
+ maxPoseSamples58=2,
+ maxComparisons58=800000,maxCandidatePairs58=100000,
+ maxDistancePairs58=100000,maxBodyFaces58=100000,
+ maxBodyComparisons58=2500000,maxBodyCandidatePairs58=80000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
@@ -944,7 +1204,23 @@ export function auditActualPhotographedDressSurfaces52({
     !Number.isSafeInteger(maxLoopVertices57)||
     maxLoopVertices57<1||maxLoopVertices57>100000||
     !Number.isSafeInteger(maxPoseSamples57)||
-    maxPoseSamples57<1||maxPoseSamples57>2)
+    maxPoseSamples57<1||maxPoseSamples57>2||
+    typeof refineArticulatedContacts58!=='boolean'||
+    (refineArticulatedContacts58&&!refineAnatomicalLoopLandmarks57)||
+    !Number.isSafeInteger(maxPoseSamples58)||maxPoseSamples58<1||
+    maxPoseSamples58>2||
+    !Number.isSafeInteger(maxComparisons58)||maxComparisons58<1||
+    maxComparisons58>3000000||
+    !Number.isSafeInteger(maxCandidatePairs58)||maxCandidatePairs58<1||
+    maxCandidatePairs58>500000||
+    !Number.isSafeInteger(maxDistancePairs58)||maxDistancePairs58<1||
+    maxDistancePairs58>500000||
+    !Number.isSafeInteger(maxBodyFaces58)||maxBodyFaces58<1||
+    maxBodyFaces58>300000||
+    !Number.isSafeInteger(maxBodyComparisons58)||maxBodyComparisons58<1||
+    maxBodyComparisons58>20000000||
+    !Number.isSafeInteger(maxBodyCandidatePairs58)||
+    maxBodyCandidatePairs58<1||maxBodyCandidatePairs58>500000)
   fail('real original licensed SHA-pinned 163-bone P61 dress required');
  const p=g?.getAttribute('position'),rest=g?.getAttribute('dressRest'),
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
@@ -1004,6 +1280,13 @@ export function auditActualPhotographedDressSurfaces52({
   }):null;
  const original=analyze52(source,indices,triangles,toleranceMeters,budget,context),
   posed=analyze52(skinned,indices,triangles,toleranceMeters,budget,context);
+ const articulated58=refineArticulatedContacts58?
+  articulatedContact58(root,mesh,source,indices,triangles,
+   skinned,posed,anatomical57,toleranceMeters,{
+    maxComparisons58,maxCandidatePairs58,maxDistancePairs58,
+    maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
+    maxPoseSamples58
+   }):null;
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
      attr.array.length!==bytes.length||
@@ -1088,6 +1371,17 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    anatomicalSourceLoopNamesNotHumanVerified57:true,
    realSkinPoseSamplingNotCollisionApproval57:true
+  }:{}),
+  ...(refineArticulatedContacts58?{
+   originalArticulatedContactReceipt58:articulated58,
+   originalPhotoArticulatedPoseEvidenceComplete58:
+    articulated58.poseSampleCount===2&&
+    articulated58.completeSelfPoseSweeps===2&&
+    articulated58.completeBodyPoseSweeps===2&&
+    articulated58.allTemporaryBoneQuaternionsRestored&&
+    articulated58.exactNeutralWorldSkinnedDressRestored,
+   noGenuineArticulatedPhotoCollisionSafetyCertificate58:true,
+   noOriginalPhotographedGarmentSewingOrBodyCollisionWaiver58:true
   }:{}),
   anyStrictSourceCrossing:original.firstStrict,
   anyStrictPosedCrossing:posed.firstStrict,
