@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-pending-capture-status-cas.test.cjs|scripts/test-mission3-recognition-durable-status-ack-browser.mjs|research/mission3-recognition-durable-ack/REPORT.md|.github/workflows/mission3-recognition-durable-ack-no-deploy.yml) ;;
+              public/app.js|tests/automatic-indexing.test.cjs|tests/mission3-pending-capture-status-cas.test.cjs|scripts/test-mission3-recognition-durable-status-ack-browser.mjs|research/mission3-recognition-durable-ack/REPORT.md|.github/workflows/mission3-recognition-durable-ack-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -115,7 +115,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-pending-capture-status-cas.test.cjs|scripts/test-mission3-recognition-durable-status-ack-browser.mjs|research/mission3-recognition-durable-ack/REPORT.md|.github/workflows/mission3-recognition-durable-ack-no-deploy.yml) ;;
+              public/app.js|tests/automatic-indexing.test.cjs|tests/mission3-pending-capture-status-cas.test.cjs|scripts/test-mission3-recognition-durable-status-ack-browser.mjs|research/mission3-recognition-durable-ack/REPORT.md|.github/workflows/mission3-recognition-durable-ack-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
