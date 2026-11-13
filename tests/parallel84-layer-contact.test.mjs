@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
 import {auditDistinctPhotoLayers84,PARALLEL84_SOURCE_REGISTRY as R}
  from '../research/parallel84-real-photo-layers/layer-contact84.mjs';
 
@@ -127,4 +129,22 @@ test('P84 audit is read-only, emits aggregate counts only, no raw identity/XYZ/U
   R['licensed-shirt'].sha,'sourceSHA256','triangles','uv','coordinates'])
   assert.equal(publicReceipt.includes(privateField),false,privateField);
  assert.equal(x.originalGarmentGeometryEdited,false);
+});
+
+test('P84 independently rehashes TWO genuine repo licensed ORIGINAL JPEG sources without exporting pixels',async()=>{
+ const sources=JSON.parse(await readFile(
+  new URL('../benchmark/locked-photo-sources.json',import.meta.url),'utf8'));
+ for(const id of ['commons-0016','commons-0053']){
+  const record=sources.find(x=>x.id===id);
+  assert.ok(record&&record.verified===true&&
+   record.image===id+'.jpg'&&record.attribution?.source?.startsWith('https://commons.wikimedia.org/wiki/File:'));
+  assert.equal(record.sha256,R[id].sha);
+  assert.ok(['CC0','CC BY 4.0'].includes(record.attribution.license));
+  const original=await readFile(new URL('../benchmark/fixtures/'+id+'.jpg',import.meta.url));
+  assert.equal(createHash('sha256').update(original).digest('hex'),record.sha256);
+  assert.equal(original[0],0xff);
+  assert.equal(original[1],0xd8);
+ }
+ // This tests genuine source bytes + recorded licensing, NOT image-to-3D
+ // accuracy, a second-person legal audit, or source-to-mesh texture mapping.
 });
