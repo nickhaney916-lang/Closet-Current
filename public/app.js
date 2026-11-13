@@ -965,7 +965,7 @@ function adjustPhoto(item){
  // An explicit research URL can mount the original M1 comparison policy in
  // the genuine native owner Photo Results editor. Its output only changes
  // UNSAVED select fields. M3 canonical JPEG/owner-review/IDB CAS remains writer.
- if(mission4Dual82Active){
+ if(typeof mission4Dual82Active!=='undefined'&&mission4Dual82Active){
   const status=node('p','Optional two-model comparison is loading. Nothing is automatically saved.','fine');
   form.prepend(status);
   import('./m4-dual-review-1054.mjs').then(({mountMission4DualReview1054})=>
