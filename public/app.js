@@ -1592,7 +1592,58 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
    message('Private lossless backup exported. Store this file securely.');
   }catch(e){message(e.message||'Private backup failed; no data changed.');}
   return;
- }if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
+ }
+ // A default v3 download must reflect one committed, owner-private snapshot.
+ // Reading in-memory card arrays could miss a second tab's correction, and
+ // v3 cannot restore unfinished Photo results originals. Refuse a misleading
+ // 'backup complete' claim while ANY review JPEG or outfit edit is pending.
+ let exportLease;
+ try{exportLease=ownerWardrobeMutationLease();}
+ catch{return message('Sign in to export your private closet.');}
+ const assertExport=()=>exportLease.assertLease();
+ const pendingWrites=writes;
+ const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
+  !photoImportActive&&!videoImportActive&&!automaticRunning&&
+  !automaticQueue.length&&!localPending.size&&!failedDraftCaptures.size&&
+  !batch.length&&!stream&&!document.querySelector('dialog[open]')&&
+  !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())&&
+  writes===pendingWrites;
+ const report=value=>{try{assertExport();message(value);}catch{}};
+ try{
+  assertExport();
+  if(!idle())throw Error('Save or review all unfinished Photo results and outfit edits before exporting. A v3 backup cannot restore them.');
+  await pendingWrites;
+  assertExport();
+  if(!idle())throw Error('Your closet changed while preparing the backup. Finish saving and try again.');
+  const {exportDurableOwnerBackupM3}=
+   await import('./native-default-verified-backup-export-m3.mjs');
+  assertExport();
+  const result=await exportDurableOwnerBackupM3({
+   ownerDB:exportLease.ownerDB,
+   ownerId:window.closetAuth.user.id,
+   assertLease:assertExport,
+   assertIdle:()=>{
+    if(!idle())throw Error('The owner's original photo or outfit changed during backup export. Retry after saving.');
+   }
+  });
+  assertExport();
+  const blob=new Blob([result.json],{type:'application/json'});
+  if(blob.size>100*1024*1024)
+   throw Error('This backup exceeds the 100 MB import limit. No incomplete backup was downloaded.');
+  const url=URL.createObjectURL(blob),a=node('a');
+  a.href=url;a.download='closet-current-backup.json';
+  document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  report('Saved clothing, inspiration and outfits downloaded from verified private storage. This v3 backup cannot restore unfinished Photo results; review them before your next export.');
+ }catch(error){
+  report(error?.message?.startsWith('M3_EXPORT_UNFINISHED_PHOTOS')?
+   'Unfinished photos are on this device but missing from v3 backups. Save or review every Photo result first; no partial backup was downloaded.':
+   error?.message?.startsWith('M3_EXPORT_')?
+    'Backup not downloaded: private photos or outfit data could not be verified ('+
+    error.message+'). Your originals remain unchanged.':
+    error.message||'Private backup was not downloaded. Your original photos remain unchanged.');
+ }
+};
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
  // A backup selected by one account can never be restored into the next.
