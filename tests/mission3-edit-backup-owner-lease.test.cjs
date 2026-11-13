@@ -37,11 +37,38 @@ function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={})
   readAllFrom:async()=>writes.flat(),
   writeAll:async values=>{writes.push(values);},importLooks:async values=>looks.push(values),
   importBoardBackup:async value=>boards.push(value),render(){},
+  // The normal handler now waits for idle review state before any import.
+  busy:false,saving:false,captureProofTaking:false,cameraOpening:false,
+  photoImportActive:false,videoImportActive:false,automaticRunning:false,
+  automaticQueue:[],localPending:new Set(),failedDraftCaptures:new Set(),
+  stream:null,document:{querySelector:()=>null},boardHasUnsavedDraft:()=>false,
+  writes:Promise.resolve(),mission3ReloadOwnerCloudView:async()=>{},
+  cleanOutfitBoard:x=>x,
+  __nativeAtomicModule:{
+   async prepareDefaultAtomicM3({data,ownerDB,ownerId,assertLease}){
+    assertLease();assert.equal(ownerDB.name,'closet-current-user-'+ownerId);
+    return {data,ownerId,counts:{garments:data.items.length,
+     looks:data.looks?.length||0,savedOutfits:data.outfitBoard?.saved?.length||0}};
+   },
+   async commitDefaultAtomicM3({prepared,ownerDB,ownerId,assertLease,confirmed}){
+    assert.equal(confirmed,true);assertLease();
+    assert.equal(ownerDB.name,'closet-current-user-'+ownerId);
+    writes.push(prepared.data.items);
+    if(prepared.data.looks)looks.push(prepared.data.looks);
+    if(prepared.data.outfitBoard)boards.push(prepared.data.outfitBoard);
+    return {committed:true};
+   }
+  },
   confirm:()=>{confirmed++;if(typeof approve==='function')return approve(result);return approve;},
   message:value=>messages.push(String(value))
  };
  vm.createContext(ctx);
- vm.runInContext(lease+'\n'+backup,ctx);
+ // Substitute only the module loader in this isolated VM harness;
+ // real default module transactions are exercised separately with IndexedDB.
+ vm.runInContext(lease+'\n'+backup.replace(
+  "await import('./native-default-atomic-import-m3.mjs')",
+  'await Promise.resolve(__nativeAtomicModule)'
+ ),ctx);
  const file={size:20,text:()=>holdFile?readGate.promise:Promise.resolve(JSON.stringify(
   withLooks?{...backupData,looks:[],outfitBoard:{saved:[]}}:backupData))};
  result.ctx=ctx;
@@ -78,7 +105,12 @@ test('current owner can still import clothing, looks and outfit references',asyn
  assert.equal(f.writes.length,1);
  assert.equal(f.writes[0][0].id,'shared-row');
  assert.equal(f.looks.length,1);assert.equal(f.boards.length,1);
- assert.equal(f.messages.at(-1),'Backup imported.');
+ assert.match(f.messages.at(-1),/Backup imported atomically/);
+});
+test('default legacy backup handler must use an atomic owner-private transaction instead of independent writes',()=>{
+ assert.match(backup,/prepareDefaultAtomicM3/);
+ assert.match(backup,/commitDefaultAtomicM3/);
+ assert.doesNotMatch(backup,/await writeAll\(valid\)|await importLooks\(data\.looks\)/);
 });
 test('stale native atomic-import file read cannot call restore bridge',async()=>{
  const f=backupHarness({mode:'?restoreAtomic01=research&nativeLossless04=research',holdFile:true});
