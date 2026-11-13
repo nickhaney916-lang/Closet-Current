@@ -14,8 +14,12 @@
  */
 import * as THREE from 'three';
 import {MeshBVH,ExtendedTriangle} from 'three-mesh-bvh';
+import {registerSourceDressTemporalReceipt46,
+ isAuthenticSourceDressTemporalReceipt46} from './source-dress-receipt-lock.mjs';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const captures=new WeakMap();
+// Actual C46 audit results are private, one-shot motion leases, not user-supplied flags.
+// Receipts live in the dependency-free source-dress-receipt-lock.mjs.
 const fail=m=>{throw Error('M2 C40 source surface sweep '+m);};
 const finite=a=>a.every(Number.isFinite);
 const same=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
@@ -1192,7 +1196,7 @@ export function auditSourceDressTemporalSelfContact46({
  }
  if(completeSequence&&posesChecked!==n)
   fail('C46 missing original garment motion frame');
- return Object.freeze({
+ const receipt=Object.freeze({
   schema:'M2-source-dress-temporal-self-contact-v1',
   originalSourceAndSkinVerified:true,
   independentSkinnedClothPoseGrid:true,
@@ -1214,8 +1218,13 @@ export function auditSourceDressTemporalSelfContact46({
   realClothPhysics:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
+ registerSourceDressTemporalReceipt46({receipt,root,mesh,
+  startPositions,endPositions});
+ return receipt;
 }
 export function assertSourceDressTemporalSelfContact46(receipt){
+ if(!isAuthenticSourceDressTemporalReceipt46(receipt))
+  fail('C46 cloned or invented garment contact evidence is not authentic');
  if(receipt?.schema!=='M2-source-dress-temporal-self-contact-v1'||
     receipt.originalSourceAndSkinVerified!==true||
     receipt.independentSkinnedClothPoseGrid!==true||
@@ -1271,3 +1280,4 @@ export function assertSourceDressTemporalSelfContact46(receipt){
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
+

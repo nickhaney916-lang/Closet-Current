@@ -10,6 +10,7 @@
  * cloth simulation or swept collision proof and CANNOT approve release.
  */
 import * as THREE from 'three';
+import {requireSourceDressTemporalReceipt47} from './source-dress-receipt-lock.mjs';
 
 const DRESS_SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const MAX_OUTWARD=.012,MAX_DROP=.0025,MAX_DISPLACEMENT=.01235;
@@ -486,6 +487,10 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
      receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
    fail('C46 incomplete or unresolved intermediate garment self-contact refused');
   checkProvenance(mesh,state);
+  // Not just matching JSON fields: genuine C46 scan, same garment and exact
+  // staged source XYZ, and a once-only lease are mandatory before mutation.
+  requireSourceDressTemporalReceipt47({receipt,root,dress,
+   startPositions:state.last,endPositions:target});
   temporalSelfContactObserved46=true;
  }
  // Live change intentionally occurs only after every source/skin/geometry
