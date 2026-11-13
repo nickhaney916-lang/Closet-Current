@@ -57,7 +57,7 @@ export function validPair878(pair,targetCommit){
  const keys=['schema','sourceSha256','inputSha256','targetCommit','modelKey',
   'modelRevision','vectorSha256','workerSourceCodeSha256','baseline','alternate',
   'sameModelNotIndependent','automaticAdmissions'];
- return exact(pair,keys)&&pair.schema===PAIR_SCHEMA878&&isHex64(pair.sourceSha256)&&
+ return hex40(targetCommit)&&exact(pair,keys)&&pair.schema===PAIR_SCHEMA878&&isHex64(pair.sourceSha256)&&
   pair.inputSha256===pair.sourceSha256&&pair.targetCommit===targetCommit&&
   pair.modelKey==='fashionSiglip'&&pair.modelRevision===MODELS81.fashionSiglip.revision&&
   pair.vectorSha256===MODEL_ASSETS82.fashionSiglip.vectorsSha256&&
