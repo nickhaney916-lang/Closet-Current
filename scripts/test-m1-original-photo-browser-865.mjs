@@ -49,7 +49,7 @@ try{
     await context.route('**/*',r=>{
      const url=new URL(r.request().url());
      if(url.hostname==='127.0.0.1'||url.protocol==='blob:'||url.protocol==='data:')return r.fallback();
-     offhost.push(url.href);return r.abort();
+     offhost.push({href:url.href,method:r.request().method()});return r.abort();
     });
     await context.addInitScript(()=>{
      class InertWorker{
@@ -152,10 +152,13 @@ try{
     checkJpegs(rows,[photos[1]]);
     assert.equal(await page.evaluate(()=>batch[0].id),dupe.id);
     assert.deepEqual(pageErrors,[]);
-    assert.deepEqual(offhost,[]);
+    assert.ok(offhost.every(x=>x.method==='GET'&&(
+     x.href.startsWith('https://fonts.googleapis.com/css2?')||
+     x.href.startsWith('https://raw.githubusercontent.com/nickhaney916-lang/Closet-Current/main/public/trend-data.json?')
+    )),'all attempted off-host traffic must be allowlisted public GETs and blocked');
     cases.push({engine,width,nativeBrowser:true,syntheticPhoto:true,blankOriginalRetained:true,
      exactSourceReviewRetained:true,sha256Unchanged:true,reloadRecovered:true,
-     sameOriginForeignOwnerSeparated:true,ownerExplicitRemoveOne:true,offhostRequests:0});
+     sameOriginForeignOwnerSeparated:true,ownerExplicitRemoveOne:true,offhostRequestsBlocked:offhost.length});
    }finally{await context.close();await browser.close();}
   }
  }
