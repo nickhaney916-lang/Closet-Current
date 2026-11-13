@@ -10,6 +10,9 @@ const recognitionAssetVersion=new URL(document.currentScript?.src||location.href
 const reviewFirst836=true;
 let saving=false;const sessionCapturedIds=new Set();
 let localWorker,localReady=false,localBatch=false,localLoadPromise=null,recognitionUnavailable=false;const automaticQueue=[];let automaticRunning=false;const localJobs=new Map(),localPending=new Set();
+// P859 in-memory scanner lease ties queued JPEG work to the exact draft object.
+// Nothing here is saved to a private wardrobe or owner record.
+const pendingScanLease859=new Map();
 const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(async()=>{await window.closetCloud?.beforeWrite(db);return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});return result;}
@@ -623,13 +626,29 @@ function candidate(image,options={}){
  queueAutomatic(item);return true;
 }
 function queueAutomatic(item){
- if(localPending.has(item.id)||!batch.some(x=>x.id===item.id))return;
+ // An older queued photo may have been replaced by another object with this
+ // ID. Never allow the old job to block or clean up the replacement.
+ if(!batch.some(x=>x===item))return;
+ const prior=pendingScanLease859.get(item.id);
+ if(localPending.has(item.id)&&prior?.item===item)return;
+ if(localPending.has(item.id)&&prior?.item&&batch.some(x=>x===prior.item))return;
+ pendingScanLease859.set(item.id,{item,owner:window.closetAuth?.user,db});
  localPending.add(item.id);automaticQueue.push(item);drainAutomatic();
 }
 async function drainAutomatic(){
  if(automaticRunning)return;automaticRunning=true;
- try{while(automaticQueue.length){const item=automaticQueue.shift();if(batch.some(x=>x.id===item.id))await recognizeItem(item);else localPending.delete(item.id);}}
- finally{automaticRunning=false;render();scheduleMemoryReview();}
+ try{while(automaticQueue.length){
+  const item=automaticQueue.shift(),lease=pendingScanLease859.get(item.id);
+  if(!lease||lease.item!==item)continue;
+  if(batch.some(x=>x===item))await recognizeItem(item);
+  // A queued stale object and an early owner/DB mismatch still release their
+  // OWN pending lease, never any newer same-ID draft's scan.
+  if(pendingScanLease859.get(item.id)===lease){
+   pendingScanLease859.delete(item.id);localPending.delete(item.id);
+   const current=batch.find(x=>x.id===item.id);
+   if(current&&current!==item&&!current.localAnalyzed&&!current.userAdjusted)queueAutomatic(current);
+  }
+ }}finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
 function stopCamera(){
  cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
@@ -824,6 +843,10 @@ async function recognizeItem(item){
   item.image===source854&&item.recognitionPhoto?.image===original854&&
   JSON.stringify(item.segmentHint??null)===mask854;
  if(!live854())return false;
+ // Only this exact same-ID scanner lease may finalize the current pending
+ // state. P854 source-executed synthetic fixtures have no app queue map.
+ const lease859=typeof pendingScanLease859==='undefined'?null:pendingScanLease859.get(item.id);
+ if(lease859&&lease859.item!==item)return false;
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const source73=original854||source854,owner73=owner854?.id??null;
@@ -905,11 +928,18 @@ async function recognizeItem(item){
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
  }finally{
-  // Never persist an old owner's snapshot to a newly connected private DB.
-  if(sameOwner854()){
+  // Never clear a new owner's or newer same-ID scanner lease. P854 still
+  // forbids old-owner persistence, even if the new owner's item IDs collide.
+  if(sameOwner854()&&(!lease859||pendingScanLease859.get(item.id)===lease859)){
+   if(lease859)pendingScanLease859.delete(item.id);
    localPending.delete(item.id);
    if(recognitionState.activeId===item.id)recognitionState.activeId=null;
    persistDraft();render();
+   // If this exact owner replaced/cropped the photo during async inference,
+   // refresh the still-unreviewed current draft rather than strand it.
+   const current=batch.find(x=>x.id===item.id);
+   if(current&&!current.localAnalyzed&&!current.userAdjusted&&!live854()&&typeof queueAutomatic==='function')
+    queueAutomatic(current);
   }
  }
 }
