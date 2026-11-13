@@ -264,6 +264,108 @@ test('source identity and original bytes cannot be changed by draft status write
   assert.equal((await read(db))[0].originalPhoto.image,first);
  }finally{db.close();}
 });
+
+test('recognition does not acknowledge a quality-review status until the exact IDB commit completes',async()=>{
+ const owner=randomUUID(),db=await open(owner);
+ try{
+  const f=harness(db,owner);
+  assert.equal(await f.open(first),true);
+  let release,entered;
+  const reached=new Promise(resolve=>{entered=resolve});
+  const queue=f.ctx.queued;
+  f.ctx.queued=work=>new Promise((resolve,reject)=>{
+   release=()=>queue(work).then(resolve,reject);
+   entered();
+  });
+  f.ctx.checkPhoto=async()=>({blank:true});
+  let settled=false;
+  const result=f.ctx.recognizeItem(f.ctx.batch[0]).then(value=>{
+   settled=true;return value;
+  });
+  await reached;
+  assert.equal(settled,false,'cannot ACK source review before the native CAS commits');
+  const before=(await read(db))[0];
+  assert.equal(before.originalPhoto.image,first);
+  assert.doesNotMatch(before.localStatus||'',/Original photo kept/);
+  release();
+  assert.equal(await result,true);
+  const after=(await read(db))[0];
+  assert.equal(after.originalPhoto.image,first);
+  assert.equal(after.sourceSHA256,sha);
+  assert.match(after.localStatus,/Original photo kept/);
+  assert.equal(after.localAnalyzed,true);
+ }finally{db.close();}
+});
+test('failed reviewed-status write returns non-success and explicitly warns while original stays durable',async()=>{
+ const owner=randomUUID(),db=await open(owner);
+ try{
+  const f=harness(db,owner);
+  await f.open(first);
+  const prior=(await read(db))[0];
+  f.ctx.queued=()=>Promise.reject(Error('Synthetic quota failure'));
+  f.ctx.checkPhoto=async()=>({blank:true});
+  const result=await f.ctx.recognizeItem(f.ctx.batch[0]);
+  assert.equal(result,false,'a failed status CAS must not report successful recognition');
+  const saved=(await read(db))[0];
+  assert.equal(saved.image,first);
+  assert.deepEqual(saved.originalPhoto,prior.originalPhoto);
+  assert.equal(f.ctx.batch.length,1);
+  assert.equal(f.ctx.batch[0].scanFailed,true);
+  assert.equal(f.ctx.batch[0].localAnalyzed,false);
+  assert.match(f.ctx.batch[0].localStatus,/not saved on this device/);
+  assert.match(f.ctx.messages.join(' '),/Original photograph kept/);
+ }finally{db.close();}
+});
+test('same-owner concurrent correction wins against a late automatic blank-status save with a visible warning',async()=>{
+ const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
+ try{
+  const a=harness(aDB,owner),b=harness(bDB,owner);
+  await a.open(first);
+  let release,started;
+  const reached=new Promise(resolve=>started=resolve);
+  a.ctx.checkPhoto=()=>{started();return new Promise(resolve=>release=resolve);};
+  const pending=a.ctx.recognizeItem(a.ctx.batch[0]);
+  await reached;
+  const original=(await read(bDB))[0];
+  const updated={...original,color:'Owner verified turquoise',userAdjusted:true};
+  await b.ctx.commitReviewedDraftCAS([{before:original,after:updated}]);
+  release({blank:true});
+  const ack=await pending;
+  assert.equal(ack,false);
+  const persisted=(await read(aDB))[0];
+  assert.equal(persisted.color,'Owner verified turquoise');
+  assert.equal(persisted.userAdjusted,true);
+  assert.equal(persisted.originalPhoto.image,first);
+  assert.match(a.ctx.batch[0].localStatus,/not saved on this device/);
+  assert.equal(a.ctx.batch[0].scanFailed,true);
+ }finally{aDB.close();bDB.close();}
+});
+test('revoked owner before final source status CAS must not leak private warning into the next account',async()=>{
+ const owner=randomUUID(),db=await open(owner);
+ try{
+  const f=harness(db,owner);
+  await f.open(first);
+  const start=f.ctx.messages.length,oldRow=f.ctx.batch[0];
+  let release,entered;
+  const reached=new Promise(resolve=>entered=resolve);
+  const queued=f.ctx.queued;
+  f.ctx.queued=work=>new Promise((resolve,reject)=>{
+   release=()=>queued(work).then(resolve,reject);
+   entered();
+  });
+  f.ctx.checkPhoto=async()=>({blank:true});
+  const pending=f.ctx.recognizeItem(oldRow);
+  await reached;f.revoke();release();
+  await pending;
+  assert.deepEqual((await read(db)).map(x=>x.image),[first]);
+  assert.equal(f.ctx.messages.length,start);
+ }finally{db.close();}
+});
+test('production recognizes only after an awaited required CAS and reports a failed review commit',()=>{
+ assert.match(recognition,/await persistDraft\(\{\s*required:true,mode:'update'/);
+ assert.match(recognition,/if\(persistenceFailed\)return false;/);
+ assert.doesNotMatch(recognition,/void persistDraft\(/);
+});
 test('app contains no old unscoped persistDraft calls or whole-batch write',()=>{
  const sourceCalls=source.match(/persistDraft\([^)]*\)/g)||[];
  assert.ok(sourceCalls.length>=5);

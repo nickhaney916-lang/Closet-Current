@@ -2011,13 +2011,35 @@ async function recognizeItem(item){
   if(epoch===captureOperationEpoch){
    localPending.delete(item.id);
    if(recognitionState.activeId===item.id)recognitionState.activeId=null;
-   // Another tab may already have saved or removed this draft. Update only
-   // the exact initiating row; never rewrite the full visible batch.
+   let persistenceFailed=false;
+   // A recognition status is NOT durable just because a queued CAS was
+   // started. Await its exact owner-private IndexedDB transaction, so the
+   // scanner never finishes with a misleading “ready” label after quota,
+   // account revocation or another tab's user-confirmed correction.
    if(!savingIndexed&&batch.includes(item)){
     const outcome=structuredClone(item);
-    void persistDraft({mode:'update',expected:expectedDraftForRecognition,record:outcome});
+    try{
+     const committed=await persistDraft({
+      required:true,mode:'update',expected:expectedDraftForRecognition,record:outcome
+     });
+     if(!committed)throw Error('Recognition review status was not committed');
+    }catch(error){
+     // A failed per-row CAS NEVER deletes or rewrites the original source.
+     // Later same-owner edits win; keep the visible JPEG for deliberate
+     // Refresh photo results / Adjust, not an implicit retry or merge.
+     if(epoch===captureOperationEpoch&&batch.includes(item)){
+      item.localAnalyzed=false;
+      item.scanFailed=true;
+      persistenceFailed=true;
+      item.localStatus='Recognition results were not saved on this device. Your original photo is kept. Check storage or another tab, then refresh Photo results and review the garment.';
+      message('Recognition results could not be saved. Original photograph kept; refresh Photo results before continuing.');
+     }
+    }
    }
-   render();
+   if(epoch===captureOperationEpoch)render();
+   // A failed status CAS is not a successful recognition review, even if
+   // classification ran. A caller may only ACK the scan after disk commit.
+   if(persistenceFailed)return false;
   }
  }
 }
