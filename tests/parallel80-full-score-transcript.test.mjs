@@ -107,6 +107,8 @@ test("SYNTHETIC: full scores cannot support invented, wrong-ranked, withheld or 
     {...predictions[0],alternatives:[{...predictions[0].alternatives[0],relativeScore:.01},predictions[0].alternatives[1]]},
     {...predictions[0],alternatives:predictions[0].alternatives.toReversed()},
     {...predictions[0],operatorCategory:"Shoes"},
+    {...predictions[0],modelSha256:"f".repeat(64)},
+    {...predictions[0],operatorCategoryProvenance:"self-declared"},
     {...predictions[0],automaticallyCertified:true},
   ];
   for(const candidate of alteredPred)assert.equal(
