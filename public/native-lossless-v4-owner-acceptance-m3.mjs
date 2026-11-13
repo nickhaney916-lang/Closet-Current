@@ -123,8 +123,13 @@ export async function restoreLosslessV4M3({
  // Confirmation can be async. A Promise is truthy even if it resolves false.
  if(yes!==true)return {cancelled:true,unchanged:true,releaseAuthorized:false};
  const result=await restoreOwner01({
-  db:ownerDB,assertLease:check,backup:target,ownerId,
-  expectedFingerprint:before.fingerprint,confirmed:true,onStage
+  // Source safety/idle is rechecked within the open transaction BEFORE it
+  // can commit. After the transaction has committed, only authentication
+  // lease validity is relevant to its truthful acknowledgement: a new
+  // camera action cannot retroactively roll back already committed bytes.
+  db:ownerDB,assertLease,backup:target,ownerId,
+  expectedFingerprint:before.fingerprint,confirmed:true,
+  onStage:()=>{check();onStage?.();}
  });
  // The native transaction has ALREADY completed. A new camera action after
  // commit may make the live view unsafe to refresh, but it cannot turn a
