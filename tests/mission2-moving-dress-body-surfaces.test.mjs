@@ -8,7 +8,8 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43,
  auditSourceDressSelfContact44,assertSourceDressSelfContact44,
  auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45,
- auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46}
+ auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46,
+ requireSourceDressTemporalReceipt47}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
@@ -1016,5 +1017,62 @@ test('C46: forged complete self-contact results do not authorize original dress 
    releaseAuthorized:true,familyAlpha:'HOLD'
   })
  }),/C46 incomplete or unresolved intermediate garment self-contact refused/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+
+test('C47: full green-looking copied receipt cannot be asserted or accepted for motion',()=>{
+ const f=clothTwoPieces46({far:true});
+ const proof=temporal46(f,sampledCloth46(f));
+ assert.equal(assertSourceDressTemporalSelfContact46(proof).researchOnly,true);
+ const copy=Object.freeze({...proof});
+ assert.throws(()=>assertSourceDressTemporalSelfContact46(copy),
+  /C46 cloned or invented garment contact evidence is not authentic/);
+ const positions=f.dress.mesh.geometry.getAttribute('position').array.slice();
+ assert.throws(()=>requireSourceDressTemporalReceipt47({
+  receipt:copy,root:f.root,dress:f.dress,startPositions:positions,endPositions:positions
+ }),/C47 missing, reused or mismatched authentic garment\/contact lease/);
+});
+test('C47: exact motion-source and individual original garment lock, with single-use admission',()=>{
+ const f=clothTwoPieces46({far:true});
+ const original=snap(f.dress.mesh);
+ const tokens=sampledCloth46(f),receipt=temporal46(f,tokens);
+ const start=f.dress.mesh.geometry.getAttribute('position').array.slice();
+ const another=clothTwoPieces46({far:true});
+ assert.throws(()=>requireSourceDressTemporalReceipt47({
+  receipt,root:another.root,dress:another.dress,startPositions:start,endPositions:start
+ }),/C47 missing, reused or mismatched/);
+ const differentEnd=start.slice();differentEnd[0]+=.005;
+ assert.throws(()=>requireSourceDressTemporalReceipt47({
+  receipt,root:f.root,dress:f.dress,startPositions:start,endPositions:differentEnd
+ }),/C47 missing, reused or mismatched/);
+ const lease=requireSourceDressTemporalReceipt47({
+  receipt,root:f.root,dress:f.dress,startPositions:start,endPositions:start
+ });
+ assert.equal(lease.sourceBoundSingleUseReceipt,true);
+ assert.equal(lease.releaseAuthorized,false);
+ assert.throws(()=>requireSourceDressTemporalReceipt47({
+  receipt,root:f.root,dress:f.dress,startPositions:start,endPositions:start
+ }),/C47 missing, reused or mismatched/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C47: structurally plausible forged full-clear source receipt cannot move the original dress',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const forged=Object.freeze({
+  schema:'M2-source-dress-temporal-self-contact-v1',
+  originalSourceAndSkinVerified:true,independentSkinnedClothPoseGrid:true,
+  completeUniformPoseGrid:true,poseSamples:17,posesChecked:17,
+  fullSequenceAudited:true,stoppedAtFirstUnresolvedContact:false,
+  unresolvedContacts:0,firstUnresolvedSampleIndex:null,unresolvedKind:null,
+  sampledClothMoveIntervals:16,maxObservedVertexStepMeters:.001,
+  maxAllowedVertexStepMeters:.08,originalSourceFaces:2,
+  checkedOriginalFaces:34,disconnectedSeamsRemainUnresolved:true,
+  noOriginalPhotographOrSkinChanges:true,
+  actualContinuousSelfContactCertified:false,inferredRearHumanVerified:false,
+  realClothPhysics:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptTemporalSelfContactAudit46:()=>forged
+ }),/C47 missing, reused or mismatched authentic garment\/contact lease/);
  assert.deepEqual(snap(f.dress.mesh),original);
 });
