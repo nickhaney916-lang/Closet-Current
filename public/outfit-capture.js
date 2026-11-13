@@ -8,6 +8,17 @@ const outfitUnits70=outfitInstances840&&typeof location!=='undefined'&&new URL(l
 const outfitColor76=outfitUnits70&&typeof location!=='undefined'&&new URL(location.href).searchParams.get('color76')==='1';
 const unit70Api=outfitUnits70?import('./outfit-unit-reconciliation-70.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:'')):null;
 let outfitUnit70Error='';
+// Prove the original JPEG hash in the browser instead of trusting two
+// self-consistent fields from one worker response. Research mode only.
+async function originalSha256ForColor76(image){
+ try{
+  if(typeof image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image)||image.length>12000000||!crypto?.subtle)return null;
+  const encoded=image.slice('data:image/jpeg;base64,'.length),decoded=atob(encoded),bytes=new Uint8Array(decoded.length);
+  for(let i=0;i<decoded.length;i++)bytes[i]=decoded.charCodeAt(i);
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(v=>v.toString(16).padStart(2,'0')).join('');
+ }catch{return null;}
+}
 function unit70Owner(){return typeof window!=='undefined'?window.closetAuth?.user?.id:null;}
 async function updateUnit70(decision,ids){
  if(!outfitUnits70)return;
@@ -65,13 +76,15 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
  stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
- const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[]};outfitSplitJob=job;
+ const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();
  $('outfitSplitStatus').textContent='Preparing…';
  try{
   const version=recognitionAssetVersion?'?v='+recognitionAssetVersion:'';job.worker=new Worker('outfit-worker.mjs'+version,{type:'module'});
   job.worker.onmessage=event=>{
+   // Serialize piece/done even while a one-time WebCrypto source check runs.
+   job.messageQueue=job.messageQueue.then(async()=>{
    if(job!==outfitSplitJob)return;const data=event.data;if(!data||data.id!==job.id)return;
    if(outfitUnits70&&job.ownerId!==unit70Owner()){finishOutfitSplit(job,'Owner session changed. No pieces were added.',true);return;}
    if(data.type==='progress'){
@@ -85,8 +98,12 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
     if(outfitUnits70&&(!p.reconciliation70||!job.ownerId||!p.reconciliation70.sourceSha256||!p.reconciliation70.maskSha256)){outfitUnit70Error='A garment mask has no verifiable source identity. Please retry.';return;}
     if(outfitColor76){
-     const color=p.colorResearch76,valid=color&&color.ownerId===job.ownerId&&color.requestId===job.id&&
-       color.sourceSha256===p.reconciliation70?.sourceSha256&&color.maskSha256===p.reconciliation70?.maskSha256;
+     const sourceProof=await job.sourceDigest;
+     if(job!==outfitSplitJob||job.ownerId!==unit70Owner())return;
+     const color=p.colorResearch76,valid=sourceProof&&color&&color.ownerId===job.ownerId&&color.requestId===job.id&&
+       /^[a-f0-9]{64}$/.test(color.maskSha256||'')&&
+       sourceProof===p.reconciliation70?.sourceSha256&&sourceProof===color.sourceSha256&&
+       color.maskSha256===p.reconciliation70?.maskSha256;
      const summary=valid&&color.status==='review'&&color.proposedPrimary?
        p.label+': '+color.proposedPrimary+(color.proposedSecondary?' / '+color.proposedSecondary:'')+(color.multicolor?' (multicolor)':''):
        p.label+': color needs manual review';
@@ -99,6 +116,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
+   }).catch(()=>finishOutfitSplit(job,'Research verification interrupted. Your original and already separated photos remain for manual review.',true));
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
   job.worker.postMessage({id:job.id,image,...(outfitInstances840?{instanceReview840:true}:{}),...(outfitUnits70?{instanceReview70:true}:{}),...(outfitColor76?{color76:true,ownerId:job.ownerId}:{})});
