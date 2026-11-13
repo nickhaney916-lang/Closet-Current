@@ -1704,28 +1704,57 @@ async function upload(file){
 }
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
 $('refreshReview').onclick=async()=>{
+ // The native read protects its own source; the button's async finalizer
+ // must also belong to the exact original signed account and login epoch.
+ let lease;
+ try{lease=ownerWardrobeMutationLease();}catch{return;}
  const button=$('refreshReview');button.disabled=true;
- try{await refreshOwnerDraftFromDevice();}
+ try{lease.assertLease();await refreshOwnerDraftFromDevice();}
  catch{}
- finally{button.disabled=false;}
+ finally{
+  try{lease.assertLease();if(button.isConnected)button.disabled=false;}catch{}
+ }
 };
 $('discard').onclick=async()=>{
+ // Confirmed destructive review is authorized for exactly one owner/auth/DB
+ // and capture epoch. An IDB CAS protects the source, but cannot by itself
+ // prevent a completed old-session callback from clearing the next UI.
+ let lease;
+ try{lease=ownerWardrobeMutationLease();}catch{return;}
  if(!batch.length)return;
  if(localPending.size||automaticRunning)return message('Finish the current photo checks before discarding unfinished photographs.');
  const reviewed=batch.map(row=>({row,before:structuredClone(row)}));
+ const ids=new Set(reviewed.map(x=>x.before.id));
+ if(ids.size!==reviewed.length)
+  return message('Photo results contain duplicate IDs. Reload Photo results before discarding.');
+ const stillReviewing=()=>!localPending.size&&!automaticRunning&&
+  batch.length===reviewed.length&&reviewed.every((x,i)=>
+   batch[i]===x.row&&JSON.stringify(normalizeClothing(x.row))===
+    JSON.stringify(normalizeClothing(x.before)));
  if(!confirm('Discard these '+reviewed.length+' unfinished photographs? Other tabs will not be affected.'))return;
+ try{lease.assertLease();}catch{return;}
+ if(!stillReviewing())
+  return message('Photo results changed during confirmation. Nothing was discarded by this action. Review the photos and try again.');
  try{
   await commitReviewedDraftCAS(reviewed.map(x=>({before:x.before,after:null})),()=>{
-   if(localPending.size||automaticRunning||reviewed.some(x=>
-      !batch.includes(x.row)||JSON.stringify(normalizeClothing(x.row))!==
-       JSON.stringify(normalizeClothing(x.before))))
-    throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+   lease.assertLease();
+   if(!stillReviewing())throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
   });
-  const ids=new Set(reviewed.map(x=>x.before.id));
+  lease.assertLease();
+  // The delete has committed, but another capture or edit may now be
+  // visible. Never replay an obsolete deletion over newer in-memory photos.
+  if(!stillReviewing())
+   return message('Selected photos were discarded from private device storage, but Photo results changed. Refresh Photo results before continuing.');
   batch=batch.filter(row=>!ids.has(row.id));
   for(const id of ids){sessionCapturedIds.delete(id);failedDraftCaptures.delete(id);}
   session=0;render();
- }catch(error){message('Unfinished photographs changed or could not be discarded. Your photos were preserved. Reload Photo results before trying again.');}
+ }catch{
+  // A late lease rejection is not proof of a transaction rollback. Suppress
+  // old-login feedback; keep the current owner's original visible and ask
+  // them to reconcile the exact private draft before attempting a retry.
+  try{lease.assertLease();}catch{return;}
+  message('Could not confirm whether those unfinished photos were discarded. Review and refresh Photo results from private device storage before retrying.');
+ }
 };
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
   try{
