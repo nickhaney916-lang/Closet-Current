@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { generateKeyPairSync,sign,createPublicKey } from "node:crypto";
 import { fixture } from "../scripts/p79-synthetic-fixtures.mjs";
 import { canonical,sha256 } from "../scripts/p75-dataset-core.mjs";
+import {CATEGORY_LOCK80, verifyOperatorCategoryLock80, blindTemporalOrder80} from "../scripts/p80-operator-category-lock.mjs";
 import { 
   SCHEMA80, SEAL80, validCandidatePrediction80,
   summarizeConditionalCandidates80, evaluatePrivateBlind80,
@@ -69,6 +70,8 @@ test("P80 strict candidate capsule rejects wrong subtypes, rank, category, score
     {itemType:"Shorts"},
     {status:"identified"},
     {status:"hypotheses",alternatives:[]},
+    {status:"abstain"}, // an abstention cannot quietly contribute candidate hits
+
     {requiresOwnerConfirmation:false},
     {automaticallyCertified:true},
     {operatorCategoryProvenance:"from-human-truth"},
@@ -235,4 +238,132 @@ test("scorer Ed25519 seal is mechanically verified only with exact independently
   assert.equal(verifyScorerSeal80(rows,{...seal,signature:"AAAA"},fingerprint,Date.now()),false);
   assert.equal(verifyScorerSeal80([prediction({status:"abstain",alternatives:[]})],seal,fingerprint,Date.now()),false);
   assert.equal(verifyScorerSeal80(rows,seal,fingerprint,Date.now()+31*86400000),false);
+});
+
+
+/**
+ * SYNTHETIC LOCK ONLY. The 60 rows below are fabricated hashes/categories
+ * for cryptographic mechanics, never photographs, people or accuracy.
+ */
+function fakeOperatorLock80(predictions, params={}) {
+  const kp=generateKeyPairSync("ed25519");
+  const rows=predictions.map(p=>({
+    sourceSha256:p.sourceSha256,operatorCategory:p.operatorCategory,
+    predictionsHidden:true,blindLabelsHidden:true,
+  }));
+  const recordedAt=params.recordedAt||new Date(Date.now()-80000).toISOString();
+  const payload={
+    schema:CATEGORY_LOCK80,
+    targetCommit:"c".repeat(40),
+    modelSha256:HASH,
+    sourceSetSha256:sha256(canonical(rows.map(r=>r.sourceSha256).sort())),
+    recordedAt,
+    rows,
+  };
+  const lock={
+    ...payload,
+    publicKey:kp.publicKey.export({type:"spki",format:"pem"}).toString(),
+    signature:sign(null,Buffer.from(canonical(payload)),kp.privateKey).toString("base64"),
+  };
+  const trusted={
+    registrarFingerprint:"d".repeat(64),
+    scorerFingerprint:"e".repeat(64),
+    operatorFingerprint:sha256(kp.publicKey.export({type:"spki",format:"der"})),
+    targetCommit:payload.targetCommit,
+    modelSha256:payload.modelSha256,
+    approvedAt:new Date(Date.now()-100000).toISOString(),
+  };
+  return {lock,trusted};
+}
+test("independent operator-lock signature mechanically protects ALL 60 synthetic source->category mappings",()=>{
+  const now=Date.now();
+  const predicted=Array.from({length:60},(_,i)=>prediction({
+    sourceSha256:i.toString(16).padStart(64,"0"),
+    operatorCategory:i%2?"Shoes":"Bottoms",
+    alternatives:[],
+    status:"abstain",
+  }));
+  const {lock,trusted}=fakeOperatorLock80(predicted);
+  const scoringTime=new Date(now-60000).toISOString();
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,trusted,scoringTime,now),true);
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,{
+    ...trusted,operatorFingerprint:trusted.scorerFingerprint
+  },scoringTime,now),false,"Operator key may not be scorer key");
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,{
+    ...trusted,operatorFingerprint:"a".repeat(64)
+  },scoringTime,now),false,"Operator key needs a separate external pin");
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,{
+    ...trusted,approvedAt:new Date(now-70000).toISOString()
+  },scoringTime,now),false,"Owner approvals must predate category lock");
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,trusted,
+    new Date(now-90000).toISOString(),now),false,
+    "Model may not be scored before locked operator categories");
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,trusted,
+    new Date(now+100000).toISOString(),now),false,
+    "Future scoring claim prohibited");
+  for(const changed of [
+    {...lock,rows:[...lock.rows.slice(0,59)]},
+    {...lock,rows:lock.rows.map((x,i)=>i?x:{...x,operatorCategory:"Dresses"})},
+    {...lock,rows:lock.rows.map((x,i)=>i?x:{...x,blindLabelsHidden:false})},
+    {...lock,rows:lock.rows.map((x,i)=>i?x:{...x,predictionsHidden:false})},
+    {...lock,sourceSetSha256:"f".repeat(64)},
+    {...lock,modelSha256:"f".repeat(64)},
+    {...lock,signature:"AAAA"},
+    {...lock,untrustedExtra:"not permitted"},
+  ])assert.equal(verifyOperatorCategoryLock80(changed,predicted,trusted,scoringTime,now),
+      false,"Any changed category, photo set, label-visibility flag or signature must fail");
+  const swapped=predicted.map((p,i)=>i? p: {...p,operatorCategory:"Shoes"});
+  assert.equal(verifyOperatorCategoryLock80(lock,swapped,trusted,scoringTime,now),false,
+    "Operator signed category must exactly equal model request category");
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted.slice(1),trusted,scoringTime,now),false);
+  const duplicate=predicted.map((p,i)=>i? p: {...p,sourceSha256:predicted[1].sourceSha256});
+  assert.equal(verifyOperatorCategoryLock80(lock,duplicate,trusted,scoringTime,now),false);
+  const flipped=predicted.map((p,i)=>i? p: {...p,operatorCategoryProvenance:"self-reported"});
+  assert.equal(verifyOperatorCategoryLock80(lock,flipped,trusted,scoringTime,now),false);
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted,trusted,scoringTime,
+      now+31*86400000),false,"stale category lock cannot revive on old signature");
+  assert.equal(verifyOperatorCategoryLock80(lock,predicted.slice(0,59),
+      trusted,scoringTime,now),false,"small-cohort disclosure must not pass");
+});
+test("P80 rejects label-before-scoring chronology and permits only pretruth scores (synthetic timestamps)",()=>{
+  const now=Date.now(), iso=n=>new Date(now+n).toISOString(),
+    a=iso(-100000),cat=iso(-80000),score=iso(-60000),
+    reviews=[iso(-40000),iso(-30000)];
+  assert.equal(blindTemporalOrder80(a,cat,score,reviews,now),true);
+  for(const [aa,cc,ss,rr] of [
+    [a,cat,score,[iso(-70000),iso(-30000)]],
+    [a,cat,score,[iso(-60000),iso(-30000)]],
+    [a,cat,score,[iso(10000),iso(20000)]],
+    [a,iso(-40000),score,reviews],
+    [iso(-70000),cat,score,reviews],
+    [a,cat,iso(10000),reviews],
+    [a,cat,score,[iso(-40000)]],
+    [a,cat,score,[]],
+    [a,cat,score,["invalid",iso(-30000)]],
+  ])assert.equal(blindTemporalOrder80(aa,cc,ss,rr,now),false);
+});
+test("evaluator rejects unsigned/unpinned operator lock even with valid synthetic scorer signer",async()=>{
+  const now=Date.now();
+  const rows=Array.from({length:60},(_,i)=>prediction({
+    sourceSha256:i.toString(16).padStart(64,"0"),status:"abstain",alternatives:[],
+  }));
+  const synthetic=syntheticSeal(rows);
+  const {fingerprint,...seal}=synthetic;
+  const {lock,trusted}=fakeOperatorLock80(rows);
+  const bundle={authorization:{access:"blind"},sources:rows.map(p=>({
+    source:{sha256:p.sourceSha256}
+  })),approvedFingerprint:trusted.registrarFingerprint};
+  for(const badLock of [null,{...lock,signature:"AAAA"},{...lock,
+    rows:lock.rows.map((r,i)=>i? r:{...r,operatorCategory:"Shoes"})}]) {
+    const result=await evaluatePrivateBlind80({
+      bundle,operatorLock:badLock,receipts:{},predictions:rows,
+      seal,trusted:{...trusted,scorerFingerprint:fingerprint,
+        approvedAt:new Date(now-180000).toISOString()},
+      now
+    });
+    assert.equal(result.status,"BLOCKED");
+    assert.equal(result.scoredSources,0);
+    assert.equal(result.independentlyVerifiedSubtypeAccuracy,null);
+    assert.equal(result.shouldLiftFamilyAlphaHold,false);
+  }
 });
