@@ -159,3 +159,16 @@ test('P84 unresolved degenerate garment faces are counted but never misrepresent
  assert.equal(x.safe3D,false);
  assert.equal(x.contactClearanceProved,false);
 });
+
+
+test('P84 thousands of within-shirt faces do not consume inter-garment contact budget',()=>{
+ const front=new Float64Array(6000*9);
+ for(let i=0;i<6000;i++)front.set(horizontal,i*9);
+ const items=input(far,front);
+ const x=run(items,{maxFaces:6100,maxComparisons:1,maxCandidatePairs:1});
+ assert.equal(x.status,'UNCERTAIN_NOT_CLEARANCE');
+ assert.equal(x.originalSourceFaceCount,6001);
+ assert.equal(x.bboxComparisonCount,0);
+ assert.equal(x.aabbCandidatePairs,0);
+ assert.equal(x.safe3D,false);
+});
