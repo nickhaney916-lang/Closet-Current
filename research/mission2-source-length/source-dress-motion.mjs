@@ -148,8 +148,20 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
  for(let i=0;i<rest.count;i++)hem=Math.min(hem,rest.getY(i));
  if(!Number.isFinite(hem)||hem<-.5||hem>1.3||p.count<2000)
   fail('authentic full length source dress and bounded rest skirt required');
- const transition=hem+.33,inv=mesh.matrixWorld.clone().invert();
- const target=original.slice(),world=new THREE.Vector3(),moved=new THREE.Vector3();
+ const transition=hem+.33;
+ // C38: source-photo front is defined in the GARMENT's local anatomical
+ // frame, never relative to world +Z or the viewer/camera. Moving/turning the
+ // humanoid must not reassign front protection to a different dress panel.
+ const transform=mesh.matrixWorld;
+ const det=transform.determinant();
+ if(!Number.isFinite(det)||det<=1e-10||!transform.elements.every(Number.isFinite))
+  fail('garment world transform singular, mirrored or nonfinite');
+ const inv=transform.clone().invert();
+ const waistLocal=waist.clone().applyMatrix4(inv);
+ if(!waistLocal.toArray().every(Number.isFinite))
+  fail('original source waist unavailable in garment local frame');
+ const target=original.slice(),baseWorld=new THREE.Vector3(),
+  movedWorld=new THREE.Vector3(),movedLocal=new THREE.Vector3();
  let moving=0,protectedFront=0,skirtVertices=0,maximum=0;
  // P61 source-fitting state already contains bodice/shoulder moves; only
  // front-protected, lower skirt positions can be altered here.
@@ -157,11 +169,11 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
   const y=rest.getY(i);
   if(y>=transition)continue;
   const t=clamp((transition-y)/.33,0,1);
-  world.fromArray(original,i*3).applyMatrix4(mesh.matrixWorld);
-  const dx=world.x-waist.x,dz=world.z-waist.z;
+  const j=i*3;
+  const dx=original[j]-waistLocal.x,dz=original[j+2]-waistLocal.z;
   const radius=Math.hypot(dx,dz);
   if(!Number.isFinite(radius)||radius<.05)
-   fail('original anatomical skirt radial position invalid');
+   fail('original anatomical skirt local radial position invalid');
   const theta=Math.atan2(dx,dz),delta=sourceDressSwayProfile({theta,t,phase});
   skirtVertices++;
   if(Math.cos(theta)>=.68){
@@ -170,13 +182,16 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
     fail('source photographed front RGB silhouette cannot be distorted');
   }
   if(delta.outward===0&&delta.drop===0)continue;
-  moved.set(world.x+delta.outward*dx/radius,world.y-delta.drop,
-   world.z+delta.outward*dz/radius).applyMatrix4(inv);
-  const distance=world.distanceTo(moved.clone().applyMatrix4(mesh.matrixWorld));
-  if(![moved.x,moved.y,moved.z].every(Number.isFinite)||
-     distance>MAX_DISPLACEMENT+1e-7)
+  movedLocal.set(original[j]+delta.outward*dx/radius,
+   original[j+1]-delta.drop,
+   original[j+2]+delta.outward*dz/radius);
+  baseWorld.fromArray(original,j).applyMatrix4(transform);
+  movedWorld.copy(movedLocal).applyMatrix4(transform);
+  const distance=baseWorld.distanceTo(movedWorld);
+  if(!movedLocal.toArray().every(Number.isFinite)||
+     !Number.isFinite(distance)||distance>MAX_DISPLACEMENT+1e-7)
    fail('real original photo skirt motion beyond bounded 12mm outward envelope');
-  target[i*3]=moved.x;target[i*3+1]=moved.y;target[i*3+2]=moved.z;
+  target[j]=movedLocal.x;target[j+1]=movedLocal.y;target[j+2]=movedLocal.z;
   moving++;maximum=Math.max(maximum,distance);
  }
  if(skirtVertices<100||protectedFront<100||moving<100||maximum<.0002)
@@ -252,6 +267,9 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
   sourceDressMotionMaxNormalTurnDegrees37:maxNormalTurnDeg,
   sourceDressMotionNormalTurnCapDegrees37:10,
   sourceDressMotionProtectsPhotoNormals37:true,
+  sourceDressMotionGarmentLocalFront38:true,
+  sourceDressMotionGarmentLocalRadialRelief38:true,
+  sourceDressMotionSweptContinuityCertified38:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
