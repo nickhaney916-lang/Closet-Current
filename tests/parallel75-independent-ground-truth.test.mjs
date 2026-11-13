@@ -5,7 +5,7 @@ import {readFile} from 'node:fs/promises';
 import {
  SCHEMA,sha256,isHex64,rightsOK,sourceKey,originalURL,hamming64,
  verifiedSource,verifyOriginalBytes,canonicalOriginalURL,sourceSeriesHint,checkOverlap,priorExposures,validatePartition,
- canonical,validateLabel,verifyHumanReceipt,independentAgreement,publicAuditReport
+ canonical,validateLabel,verifyHumanReceipt,verifyCuratorApproval,independentAgreement,publicAuditReport
 } from '../scripts/p75-dataset-core.mjs';
 const now='2026-11-12T20:00:00.000Z';
 const original=Buffer.alloc(14500,0x52);
@@ -44,7 +44,7 @@ function signedFixture(){
    method:'independent-human',predictionsExposed:false,reviewedAt:now,labels,...more};
   return {...unsigned,signature:sign(null,Buffer.from(canonical(unsigned)),reviewers[i].privateKey).toString('base64')};
  };
- return {registry,fingerprint,review};
+ return {registry,fingerprint,review,registrarPrivateKey:registrar.privateKey};
 }
 test('safe Commons-only original URL gate rejects thumbnails, redirects, arbitrary host',()=>{
  assert.equal(sourceKey(record().sourcePage),'file:unexposed test garment.jpg');
@@ -145,6 +145,23 @@ test('unsigned/AI-only/unregistered/false-attested reviewers cannot become truth
  assert.ok(verifyHumanReceipt(row,fake,registry,fingerprint).includes('unverified reviewer'));
  assert.ok(verifyHumanReceipt(row,review(0,goodLabel(),{method:'AI-only'}),registry,fingerprint).includes('untrusted label provenance'));
  assert.ok(verifyHumanReceipt(row,review(0,goodLabel(),{predictionsExposed:true}),registry,fingerprint).includes('untrusted label provenance'));
+});
+test('public Commons license alone never supplies human consent or physical source-group approval',()=>{
+ const {registry,fingerprint,registrarPrivateKey}=signedFixture();
+ const base=record({rightsReview:'curator-approved',photoContent:'human-reviewed',
+  sourceGroupId:'curator-physical-garment-group',sourceGroupApproved:true,garmentHumanVerified:true,
+  curatorReviewedAt:now,legalEvidenceSha256:'e'.repeat(64),consentStatus:'unverified'});
+ assert.equal(verifyCuratorApproval(base,registry,fingerprint),false,'consent must not be guessed from public metadata');
+ const good={...base,consentStatus:'product-only-license-vetted'};
+ const payload={sha256:good.sha256,sourceGroupId:good.sourceGroupId,rightsReview:good.rightsReview,
+  photoContent:good.photoContent,garmentHumanVerified:true,sourceGroupApproved:true,
+  legalEvidenceSha256:good.legalEvidenceSha256,consentStatus:good.consentStatus,curatorReviewedAt:good.curatorReviewedAt};
+ good.curatorApprovalSignature=sign(null,Buffer.from(canonical(payload)),registrarPrivateKey).toString('base64');
+ assert.equal(verifyCuratorApproval(good,registry,fingerprint),true,'synthetic signature mechanics test ONLY');
+ assert.equal(verifyCuratorApproval({...good,legalEvidenceSha256:'f'.repeat(64)},registry,fingerprint),false);
+ assert.equal(verifyCuratorApproval({...good,consentStatus:'undocumented-person'},registry,fingerprint),false);
+ assert.equal(verifyCuratorApproval({...good,sourceGroupId:'tampered-group'},registry,fingerprint),false);
+ assert.equal(verifyCuratorApproval(good,registry,'1'.repeat(64)),false);
 });
 test('synthetic dual Ed25519 test can verify mechanics, NOT actual human existence',()=>{
  const row=record(),{registry,fingerprint,review}=signedFixture();
