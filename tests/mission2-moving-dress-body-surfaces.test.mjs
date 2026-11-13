@@ -1202,6 +1202,8 @@ test('C49: genuine 163-bone source triangles with a strict interior transverse c
  assert.ok(cross.originalStrictInteriorCrossings>=1);
  assert.ok(cross.posedStrictInteriorCrossings>=1);
  assert.equal(cross.crossingAppearsOnlyInSkinnedPose,false);
+ assert.equal(cross.originalTrianglesSeparatedBeyondTolerance,false);
+ assert.equal(cross.originalSourceGapCategory,'original-source-touching-or-close');
  assert.equal(cross.firstContactRemainsHardVeto,true);
  assert.equal(cross.repairCandidateStatus,'not-proposed-without-independent-source-review');
  assert.throws(()=>assertSourceDressFastSelfContact45(receipt),
@@ -1220,6 +1222,7 @@ test('C49: valid source UV-split edge contact is NOT a strict transverse crossin
  assert.equal(cross.posedStrictInteriorCrossings,0);
  assert.equal(cross.sourceNormalsParallel,true);
  assert.equal(cross.posedNormalsParallel,true);
+ assert.equal(cross.originalTrianglesSeparatedBeyondTolerance,false);
  assert.equal(cross.originalGeometryMutation,false);
  assert.equal(cross.releaseAuthorized,false);
  assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
@@ -1237,6 +1240,7 @@ test('C49: 8 micron parallel near-miss is uncertainty, not fabricated penetratio
  assert.equal(cross.originalStrictInteriorCrossings,0);
  assert.equal(cross.posedStrictInteriorCrossings,0);
  assert.equal(cross.borderlineContactStillUnresolved,true);
+ assert.equal(cross.originalTrianglesSeparatedBeyondTolerance,false);
  assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
  assert.deepEqual(snap(f.dress.mesh),orig);
 });
@@ -1254,6 +1258,8 @@ test('C49: source-clear triangle becomes a REAL skinned-bone crossing, not a sou
  assert.ok(cross.posedStrictInteriorCrossings>=1);
  assert.equal(cross.posedContactClass,'strict-interior-transverse-face-crossing');
  assert.equal(cross.crossingAppearsOnlyInSkinnedPose,true);
+ assert.equal(cross.originalTrianglesSeparatedBeyondTolerance,true);
+ assert.equal(cross.originalSourceGapCategory,'original-source-separated');
  assert.equal(cross.humanSeamVerified,false);
  assert.equal(cross.unsampledContinuousClothCertified,false);
  assert.throws(()=>assertSourceDressFastSelfContact45(receipt),/source dress has unresolved contact/);
