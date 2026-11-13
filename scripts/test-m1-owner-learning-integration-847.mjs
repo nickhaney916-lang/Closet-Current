@@ -20,7 +20,7 @@ const src=between('function node(', 'function cropClothingPhoto(')+
  between('function adjustPhoto(', 'function renderRecognitionNotice(');
 // P847 source-executes the actual already-owned-item editor closure from render,
 // with no substituted save/consent handler.
-const savedStart=app.indexOf('edit.onclick=()=>{const dialog=');
+const savedStart=app.indexOf('edit.onclick=()=>{');
 const savedEnd=app.indexOf('del.onclick=async()=>',savedStart);
 if(savedStart<0||savedEnd<=savedStart)throw Error('P847_SAVED_EDITOR_SOURCE_MISSING');
 const savedEditor=app.slice(savedStart,savedEnd);
