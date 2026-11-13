@@ -890,6 +890,23 @@ export async function mountNative3D05({
    photoSourceTorso173:active&&verifiedPhotographicTorso173?.admitted===true,
    photoSourceShoulder174:active&&verifiedPhotographicShoulder174?.admitted===true,
    photoSourceDress175:active&&verifiedPhotographicDress175?.admitted===true,
+   // C36 is a read-only donor observation, NEVER a release or owner approval.
+   photoSourceDressMotion36:active&&verifiedPhotographicDress175?.admitted===true&&
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotion36===true,
+   photoSourceDressMotionPhase36:active?
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionPhase36:null,
+   photoSourceDressMotionMovedVertices36:active?
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionMovedVertices36||0:0,
+   photoSourceDressMotionFrontProtected36:active?
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionFrontProtected36||0:0,
+   photoSourceDressMotionMaxMeters36:active?
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionMaxMeters36||0:0,
+   photoSourceDressMotionSourceUnchanged36:active&&
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionRestAndUVUnchanged36===true&&
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionSkinAndJPEGUnchanged36===true&&
+    data.fitReceipts171?.dress?.dressDrape175?.sourceDressMotionNoAccumulation36===true,
+   photoSourceDressMotionSweptCollisionCertified36:false,
+   photoSourceDressMotionPhotorealismCertified36:false,
    physicalDressBodiceVertices175:active?verifiedPhotographicDress175?.bodiceMovedVertices||0:0,
    physicalDressSkirtVertices175:active?verifiedPhotographicDress175?.skirtMovedVertices||0:0,
    physicalDressMaxBodiceMeters175:active?verifiedPhotographicDress175?.maxBodiceMeters||0:0,

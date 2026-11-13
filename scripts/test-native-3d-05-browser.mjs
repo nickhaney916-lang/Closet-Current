@@ -248,6 +248,12 @@ const photoFit171=process.env.PHOTO_FIT171==='1';
 const photoTorso173=process.env.PHOTO_TORSO173==='1';
 const photoSleeve174=process.env.PHOTO_SLEEVE174==='1';
 const photoDress175=process.env.PHOTO_DRESS175==='1';
+const photoDressMotion36=process.env.PHOTO_DRESS_MOTION36==='1';
+const photoDressMotionPhase36=Number(process.env.PHOTO_DRESS_MOTION_PHASE36??'0.25');
+if(photoDressMotion36&&(!photoDress175||!photoFit171||
+    !Number.isFinite(photoDressMotionPhase36)||photoDressMotionPhase36<0||
+    photoDressMotionPhase36>1))
+ throw Error('M2 C36 native experiment requires original signed P175 dress source and bounded phase');
 const cloudStub="window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};";
 function fixture(owner){
  const item=(label,cat,subtype,pic)=>({
@@ -475,7 +481,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -1801,9 +1807,19 @@ try{
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
   await page.locator('#native3D05Preview').click();
-  await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
-   window.native3D05Bridge.state().viewerMode==='dress'&&
-   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+  try{
+   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
+    window.native3D05Bridge.state().viewerMode==='dress'&&
+    window.native3D05Bridge.state().bones===163,null,{timeout:75000});
+  }catch(error){
+   const detail=await page.evaluate(()=>({
+    status:document.getElementById('native3D05Status')?.textContent||'no-status',
+    bridgeState:window.native3D05Bridge?.state?.()||null,
+    previewDisabled:document.getElementById('native3D05Preview')?.disabled||false
+   }));
+   throw Error('M2 C36 genuine source dress native WebGL failed readiness: '+
+    JSON.stringify(detail).slice(0,1800)+'; cause='+String(error?.message||error));
+  }
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
   if(photoFit171){
@@ -1827,6 +1843,18 @@ try{
     document.getElementById('native3D05Status')?.textContent||'no status');
    assert.equal(state.photoSourceDress175,true,
     'P175 genuine original physical dress was not fitted in native saved 3D: '+originalDressStatus);
+   if(photoDressMotion36){
+    assert.equal(state.photoSourceDressMotion36,true,
+     'C36 must actually move P61 original source dress geometry on the 163 bone model');
+    assert.equal(state.photoSourceDressMotionPhase36,photoDressMotionPhase36);
+    assert.ok(state.photoSourceDressMotionMovedVertices36>=100);
+    assert.ok(state.photoSourceDressMotionFrontProtected36>=100);
+    assert.ok(state.photoSourceDressMotionMaxMeters36>.0002&&
+       state.photoSourceDressMotionMaxMeters36<=.01235);
+    assert.equal(state.photoSourceDressMotionSourceUnchanged36,true);
+    assert.equal(state.photoSourceDressMotionSweptCollisionCertified36,false);
+    assert.equal(state.photoSourceDressMotionPhotorealismCertified36,false);
+   }
    assert.equal(state.photoSourceFit171,true);
    assert.equal(state.viewerMode,'dress');
    assert.equal(state.bones,163);
@@ -2218,6 +2246,15 @@ try{
    ...(photoTorso173?{actualSignedOwnerSourceShirtPhysicallyContoured173:true}:{}),
    ...(photoSleeve174?{actualSignedOwnerBilateralShoulderSeamPhysicallyEased174:true}:{}),
    ...(photoDress175?{actualSignedOwnerPhotographedDressPhysicallyReshaped175:true}:{}),
+   ...(photoDressMotion36?{
+     originalSourceDressPhysicalPhaseDisplacement36:true,
+     originalSourceDressMotionPhase36:photoDressMotionPhase36,
+     originalSourceDressMotionVertices36:state.photoSourceDressMotionMovedVertices36,
+     originalSourceDressMotionFrontProtected36:state.photoSourceDressMotionFrontProtected36,
+     originalSourceDressMotionMaxMeters36:state.photoSourceDressMotionMaxMeters36,
+     originalSourceDressUnseenRearIsInferred36:true,
+     continuousClothPhysicsCertified36:false
+   }:{}),
    bones:163,renderedGenuineMeshes:state.meshCount,
    nonVettedCoatJacketShoesPhotoFallback:true,readOnlyDonorActions:true,
    noOutfitMutation:true,unsavedEditsBlocked:true,
