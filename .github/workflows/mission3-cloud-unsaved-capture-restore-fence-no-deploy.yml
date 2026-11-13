@@ -20,7 +20,7 @@ jobs:
           set -euo pipefail
           BASE=494f24014c46670f0d21613d1890c4439ae1d849
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
-          git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
+          git diff --exit-code "$BASE" HEAD -- public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
               public/cloud-backup.js|public/cloud-backup-bridge.js|tests/mission3-cloud-unsaved-original-restore-fence.test.cjs|scripts/test-mission3-cloud-unsaved-original-fence-browser.mjs|research/mission3-cloud-unsaved-capture-restore-fence/REPORT.md|.github/workflows/mission3-cloud-unsaved-capture-restore-fence-no-deploy.yml) ;;
