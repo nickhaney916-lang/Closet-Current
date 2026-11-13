@@ -97,6 +97,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     if(!p||typeof p.image!=='string'||p.image.length>8000000||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.image)||!Array.isArray(p.hint?.categories)||p.hint.categories.some(x=>!categories.includes(x))||!Array.isArray(p.hint.types)||p.hint.types.length>8)return;
     if(p.recognitionPhoto&&(!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.recognitionPhoto.image)||p.recognitionPhoto.image.length>8000000))return;
     if(outfitUnits70&&(!p.reconciliation70||!job.ownerId||!p.reconciliation70.sourceSha256||!p.reconciliation70.maskSha256)){outfitUnit70Error='A garment mask has no verifiable source identity. Please retry.';return;}
+    let verifiedColor76=!outfitColor76,colorNote76=null;
     if(outfitColor76){
      const sourceProof=await job.sourceDigest;
      if(job!==outfitSplitJob||job.ownerId!==unit70Owner())return;
@@ -104,14 +105,18 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
        /^[a-f0-9]{64}$/.test(color.maskSha256||'')&&
        sourceProof===p.reconciliation70?.sourceSha256&&sourceProof===color.sourceSha256&&
        color.maskSha256===p.reconciliation70?.maskSha256;
-     const summary=valid&&color.status==='review'&&color.proposedPrimary?
+     verifiedColor76=Boolean(valid&&color.status==='review'&&color.proposedPrimary);
+     colorNote76=verifiedColor76?
        p.label+': '+color.proposedPrimary+(color.proposedSecondary?' / '+color.proposedSecondary:'')+(color.multicolor?' (multicolor)':''):
        p.label+': color needs manual review';
-     // An unbound/stale cross-photo or cross-owner result is never used.
-     job.colorNotes.push(summary);
+     // An unbound/stale/cross-photo proposal must not let the older worker
+     // color slip through as a confident fallback. Keep the photo for Adjust.
     }
-    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:p.colorEstimate,
-      ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:p.colorEstimate||p.reconciliation70.colorEstimate||null},reconciliation70Status:'unresolved'}:{})}))job.added++;
+    const safeColorEstimate76=verifiedColor76?p.colorEstimate:null;
+    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:safeColorEstimate76,
+      ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:safeColorEstimate76||null},reconciliation70Status:'unresolved'}:{})})){
+      job.added++;if(colorNote76)job.colorNotes.push(colorNote76);
+    }
     renderOutfitCapture();return;
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
