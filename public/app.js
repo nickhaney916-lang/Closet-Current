@@ -208,6 +208,42 @@ async function nativeIndex07Refresh(){
    if(status)status.textContent='New clothing saved; outfit builder needs a safe reload.';
  }
 }
+// A saved-card Style click and its async result belong to one signed owner.
+// Capture the real auth/session/DB/epoch and exact displayed wardrobe object.
+// A previous login may never print errors or alter the new login's controls.
+function ownerStyleCardActionLease(item){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch;
+ const current=()=>{
+  if(typeof owner!=='string'||!owner||
+     window.closetAuth!==auth||auth.user?.id!==owner||
+     db!==ownerDB||ownerDB?.name!=='closet-current-user-'+owner||
+     captureOperationEpoch!==epoch||!items.includes(item)||
+     $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
+ const assert=()=>{if(!current())throw Error('Previous signed-owner style request cancelled');};
+ assert();
+ return {current,assert};
+}
+// Both Photo results and saved My Closet Style use one private completion gate.
+// Never print untrusted original-photo or controller exception text.
+async function withOwnerStyleCardAction(item,button,work){
+ let lease;
+ try{lease=ownerStyleCardActionLease(item);}catch{return;}
+ if(!button.isConnected)return;
+ button.disabled=true;
+ try{
+  lease.assert();
+  await work(lease.assert);
+  lease.assert();
+ }catch{
+  if(lease.current()&&button.isConnected)
+   message('Could not safely style this saved piece. Reopen My Closet and try again. Your saved clothing and outfits are unchanged.');
+ }finally{
+  if(lease.current()&&button.isConnected)button.disabled=false;
+ }
+}
 function ownerWardrobeMutationLease(){
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
  const assertLease=()=>{
@@ -1020,14 +1056,57 @@ async function styleJustReviewedPhoto122(itemId,expectedSHA,{fromCloset123=false
   originalSHA256Verified:panel.status().sourceSHA256Verified===true,
   familyAlpha:'HOLD',releaseAuthorized:false});
 }
+// The visible photo-retry callback must never update a new signed-in
+// account, including a new session with the same owner ID.
+function ownerFailedPhotoRetryLease(item){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch;
+ const current=()=>{
+  if(typeof owner!=='string'||!owner||window.closetAuth!==auth||
+     auth.user?.id!==owner||ownerDB!==db||
+     ownerDB?.name!=='closet-current-user-'+owner||
+     captureOperationEpoch!==epoch||!batch.includes(item)||
+     item.ownerId!==owner||$('authGate')?.hidden!==true||
+     $('appShell')?.hidden!==false)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
+ const assert=()=>{if(!current())throw Error('Previous signed-owner photo retry cancelled');};
+ assert();
+ return {current,assert};
+}
+async function retryFailedPhotoFromCard(item,button){
+ let lease;
+ try{lease=ownerFailedPhotoRetryLease(item);}catch{return;}
+ if(!button.isConnected)return;
+ button.disabled=true;
+ try{
+  lease.assert();
+  await retryUncommittedCapture(item);
+  lease.assert();
+ }catch{
+  // A browser exception may contain original JPEG details. Show no raw text.
+  // The required private commit remains UNSAVED until independently confirmed.
+  if(lease.current()&&button.isConnected){
+   message('Photo is still not saved. Check device storage, then retry from Photo results. Keep this page open to retain the photo.');
+   render();
+  }
+ }finally{
+  if(lease.current()&&button.isConnected)button.disabled=false;
+ }
+}
 // Only a verified original with a failed *required* IndexedDB commit may be
 // recovered by this action. Re-hash its preserved original before retrying,
 // never create another review item, and never cross a signed-owner session.
 async function retryUncommittedCapture(item){
- const owner=captureProofOwner(),ownerDB=db;
- const sameOwner=()=>owner&&ownerDB===db&&
-  ownerDB?.name==='closet-current-user-'+owner&&
-  captureProofOwner()===owner;
+ // Pin the exact initiating auth object and epoch, not just the owner ID.
+ const auth=window.closetAuth,owner=captureProofOwner(),ownerDB=db,
+  epoch=captureOperationEpoch;
+ const sameOwner=()=>{
+  if(!owner||window.closetAuth!==auth||auth?.user?.id!==owner||
+     ownerDB!==db||ownerDB?.name!=='closet-current-user-'+owner||
+     captureOperationEpoch!==epoch||captureProofOwner()!==owner)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
  const valid=()=>sameOwner()&&
   batch.includes(item)&&!items.some(x=>x.id===item.id)&&
   failedDraftCaptures.has(item.id)&&
@@ -1074,16 +1153,7 @@ function renderPhotoResults(grid,results){
    const retry=node('button','Retry saving photo','secondary retry-private-draft');
    retry.type='button';retry.dataset.itemId=item.id;
    retry.setAttribute('aria-label','Retry saving this unsaved original photograph privately');
-   retry.onclick=async()=>{
-    retry.disabled=true;
-    try{await retryUncommittedCapture(item);}
-    catch(error){
-     if(item.ownerId===captureProofOwner()&&batch.includes(item)){
-      message('Photo is still not saved. '+String(error.message||error));render();
-     }
-    }
-    finally{retry.disabled=false;}
-   };
+   retry.onclick=()=>retryFailedPhotoFromCard(item,retry);
    body.append(retry);
   }
   const adjust=node('button','Adjust','secondary');adjust.type='button';adjust.onclick=()=>adjustPhoto(item);body.append(adjust,cropButton(item));
@@ -1095,13 +1165,11 @@ function renderPhotoResults(grid,results){
    const style=node('button','Get 3 outfits with this piece','secondary');
    style.type='button';style.classList.add('reviewed-style122');
    style.dataset.savedItemId=item.id;
-   style.onclick=async()=>{
-    style.disabled=true;
-    try{await styleJustReviewedPhoto122(item.id,item.sourceSHA256);}
-    catch(error){message('Could not style that saved photo safely. '+String(error.message||error)+
-      '. Your closet and saved outfits are unchanged.');}
-    finally{style.disabled=false;}
-   };
+   style.onclick=()=>withOwnerStyleCardAction(item,style,async assertOwner=>{
+    assertOwner();
+    await styleJustReviewedPhoto122(item.id,item.sourceSHA256);
+    assertOwner();
+   });
    body.append(style);
   }
   card.append(image,body);grid.append(card);
@@ -1284,23 +1352,21 @@ function render(){
   if(reviewedCutoutStored124)styleNew.classList.add('reviewed-cutout124');
   styleNew.dataset.savedItemId=item.id;
  }
- styleNew.onclick=async()=>{
-  styleNew.disabled=true;
-  try{
-   if(reviewedCutoutStored124)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{
-    fromCloset123:true,cutout124:true
-   });
-   else if(reviewedStored123)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{fromCloset123:true});
-   else{
-    switchView('stylist');
-    if(!window.styleOwnedLive03Bridge?.selectGarment)
-     throw Error('Style My New Clothes is not ready');
-    await window.styleOwnedLive03Bridge.selectGarment(item.id);
-   }
-  }catch(error){message('Could not reopen saved clothing for private styling. '+
-    String(error.message||error)+'. Your closet and outfits are unchanged.');}
-  finally{styleNew.disabled=false;}
- };
+ styleNew.onclick=()=>withOwnerStyleCardAction(item,styleNew,async assertOwner=>{
+  assertOwner();
+  if(reviewedCutoutStored124)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{
+   fromCloset123:true,cutout124:true
+  });
+  else if(reviewedStored123)await styleJustReviewedPhoto122(item.id,item.sourceSHA256,{fromCloset123:true});
+  else{
+   assertOwner();
+   const stylePanel=window.styleOwnedLive03Bridge;
+   if(!stylePanel?.selectGarment)throw Error('Owner-private style viewer unavailable');
+   switchView('stylist');
+   await stylePanel.selectGarment(item.id);
+  }
+  assertOwner();
+ });
  actions.append(styleNew);
 }actions.append(styleFocus,edit,cropButton(item),del);body.append(actions);card.append(im,body);if(typeof enableClosetDrag==='function')enableClosetDrag(im,item);cg.append(card);}
  if(visible.length>page.length){
