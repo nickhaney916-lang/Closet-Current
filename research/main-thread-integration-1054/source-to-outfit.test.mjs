@@ -142,3 +142,31 @@ test('missing private account attestation or nonfunction board normalizer refuse
  await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{cleanBoard:null})),/adapter required/);
  await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{getSession:()=>null})),/signed owner session/);
 });
+
+test('new different-item duplicate saved during SHA verification blocks stale outfit',async()=>{
+ const items=set();let reads=0;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  readOwnerItems:async()=>{
+   const rows=structuredClone(items);
+   if(++reads===2)rows.push({...structuredClone(items[0]),id:'other-garment'});
+   return rows;
+  }
+ })),/new ambiguous or duplicate source/);
+});
+test('owner-reviewed cutout source changes between snapshots must be rejected',async()=>{
+ const items=set(),src=items[0].sourceSHA256;
+ items[0].singleGarmentVerified=false;
+ items[0].segmentHint={
+  cutoutSHA256:'a'.repeat(64),originalSHA256:src,
+  verified:true,ownerReviewedInstance:true,clipped:false
+ };
+ items[0].outfitSourceId='owner-outfit';
+ let reads=0;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  readOwnerItems:async()=>{
+   const rows=structuredClone(items);
+   if(++reads===2)rows[0].segmentHint.clipped=true;
+   return rows;
+  }
+ })),/saved garment changed/);
+});
