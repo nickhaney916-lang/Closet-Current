@@ -129,11 +129,11 @@ export async function measuredIdenticalScenePixelDelta(first,second,width){
   humanAppearanceImprovementNotEstablished:true});
 }
 export async function verifyMission2ControlledPhotoEdgePixels(engine,
- root='benchmark/mission2-source-length'){
+ root='benchmark/mission2-source-length',{seamNormal=false}={}){
  if(!['chromium','webkit'].includes(engine))throw Error('M2 C33 browser engine required');
  const dir=resolve(root);
  const stages={guarded:join(dir,'after-'+engine),
-  control:join(dir,'control-'+engine)};
+  control:join(dir,(seamNormal?'seam-control-':'control-')+engine)};
  const results={};
  for(const [stage,location] of Object.entries(stages)){
   results[stage]=JSON.parse(await readFile(join(location,'results.json'),'utf8'));
@@ -151,13 +151,21 @@ export async function verifyMission2ControlledPhotoEdgePixels(engine,
   assert.equal(r.actual3DWithHonestUnsupportedPhotoFallback,true);
   assert.equal(r.familyAlpha,'HOLD');
   assert.equal(r.releaseAuthorized,false);
-  if(stage==='control'){
+  if(stage==='control'&&seamNormal){
+   assert.equal(r.seamNormalAblationControl,true);
+   assert.ok(r.seamNormalAblationModuleRequests>=3&&
+    r.seamNormalAblationModuleRequests<=24);
+   assert.equal(r.sourceEdgeAblationControl,false);
+  }else if(stage==='control'){
    assert.equal(r.sourceEdgeAblationControl,true);
    assert.ok(r.sourceEdgeAblationModuleRequests>=3&&
     r.sourceEdgeAblationModuleRequests<=24);
+   assert.equal(r.seamNormalAblationControl,false);
   }else{
    assert.equal(r.sourceEdgeAblationControl,false);
    assert.equal(r.sourceEdgeAblationModuleRequests,0);
+   assert.equal(r.seamNormalAblationControl,false);
+   assert.equal(r.seamNormalAblationModuleRequests,0);
   }
  }
  // Same source, same skinned geometry and intersection gate on both figures.
@@ -200,7 +208,7 @@ export async function verifyMission2ControlledPhotoEdgePixels(engine,
  const changed=comparisons.filter(x=>x.changedOver2>0);
  const front=comparisons.filter(x=>x.view==='front');
  return Object.freeze({
-  engine,matchedOriginalPhotoScenes:18,
+  engine,comparisonKind:seamNormal?'fabric-seam-lighting':'source-photo-edge',matchedOriginalPhotoScenes:18,
   originalSourcePhotoAndGeometryControlled:true,
   guardAgainstNoControlInterception:true,
   guardedAndAblatedSameOriginal163BoneGarments:true,
@@ -220,9 +228,12 @@ export async function verifyMission2ControlledPhotoEdgePixels(engine,
 if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).href){
  const promise=process.argv[3]==='edge-guard'?
   verifyMission2ControlledPhotoEdgePixels(process.argv[2]):
+  process.argv[3]==='seam-normal'?
+  verifyMission2ControlledPhotoEdgePixels(process.argv[2],undefined,{seamNormal:true}):
   verifyMission2VisualDelta(process.argv[2]);
  promise.then(x=>{
-  if(process.argv[3]==='edge-guard')console.log('M2_CONTROLLED_SOURCE_EDGE_RENDER_PIXELS_'+x.engine+':'+JSON.stringify(x));
+  if(process.argv[3]==='seam-normal')console.log('M2_CONTROLLED_SOURCE_FABRIC_NORMAL_PIXELS_'+x.engine+':'+JSON.stringify(x));
+  else if(process.argv[3]==='edge-guard')console.log('M2_CONTROLLED_SOURCE_EDGE_RENDER_PIXELS_'+x.engine+':'+JSON.stringify(x));
   else console.log('M2_VISIBLE_DUAL_HUMANOID_'+x.engine+'_36_SHA_PIXEL_COMPARISONS_PASS');
   console.log(JSON.stringify({engine:x.engine,comparisons:x.comparisons,realScreensVerified:x.realScreensVerified,minChangedFraction:x.minChangedFraction,claim:x.claim}));
  }).catch(e=>{console.error(e);process.exitCode=1;});
