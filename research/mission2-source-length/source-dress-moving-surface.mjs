@@ -31,6 +31,30 @@ function faces(mesh){
   indexField:mesh.geometry.index??null};
 }
 function positionCopy(source){return source.array.slice();}
+function immutableSkinnedFields(mesh){
+ const values=new Map();
+ for(const [name,field] of Object.entries(mesh.geometry.attributes)){
+  if(!field?.isBufferAttribute||field.isInterleavedBufferAttribute||
+     !finite(field.array))fail('invalid source photo / skin buffer');
+  values.set(name,{field,values:field.array.slice()});
+ }
+ return {values,material:mesh.material,
+  bones:mesh.skeleton.bones.slice(),skeleton:mesh.skeleton};
+}
+function checkImmutableSkinnedFields(mesh,expected){
+ if(mesh.material!==expected.material||mesh.skeleton!==expected.skeleton||
+    mesh.skeleton.bones.length!==expected.bones.length||
+    mesh.skeleton.bones.some((bone,i)=>bone!==expected.bones[i]))
+  fail('signed original anatomy or garment material replaced');
+ const attrs=mesh.geometry.attributes;
+ if(Object.keys(attrs).length!==expected.values.size)
+  fail('original source/photo/skin attribute schema changed');
+ for(const [name,previous] of expected.values){
+  const current=attrs[name];
+  if(current!==previous.field||!same(current.array,previous.values))
+   fail('original source/photo/skin data changed after snapshot: '+name);
+ }
+}
 function sourcePose(mesh,positions){
  mesh.updateWorldMatrix(true,false);
  mesh.skeleton.update();
@@ -96,15 +120,18 @@ export function captureSourceDressBodyPose40({root,dress,stagedPositions=null,
   const sourceBody=positionCopy(b.p);
   if(!finite(sourceBody))fail('nonfinite original body mesh');
   capturesBody.push({mesh:body,...b,sourceBody,
+    immutable:immutableSkinnedFields(body),
     world:sourcePose(body,sourceBody)});
  }
  const token=Object.freeze({});
  captures.set(token,{root,mesh,geo,source,clothSource,clothWorld,
+  garmentImmutable:immutableSkinnedFields(mesh),
   bodies:capturesBody,clothIndex:geo.indices?.slice()??null});
  return token;
 }
 const checkTopology=(record)=>{
  const {mesh,geo,source,bodies}=record;
+ checkImmutableSkinnedFields(mesh,record.garmentImmutable);
  const p=mesh.geometry?.getAttribute('position');
  if(mesh.geometry!==geo.geometry||p!==geo.p||
     !same(p.array,source)||mesh.geometry.index!==geo.indexField||
@@ -112,6 +139,7 @@ const checkTopology=(record)=>{
     (!geo.indices&&mesh.geometry.index))
   fail('stale or altered original photographed source surface');
  for(const b of bodies){
+  checkImmutableSkinnedFields(b.mesh,b.immutable);
   const bp=b.mesh.geometry?.getAttribute('position');
   if(b.mesh.geometry!==b.geometry||bp!==b.p||
      !same(bp.array,b.sourceBody)||b.mesh.geometry.index!==b.indexField||
@@ -159,6 +187,16 @@ export function auditMovingSourceDressBodySurfaces40({
   fail('matching original poses and bounded swept-fabric parameters required');
  checkTopology(start);
  checkTopology(end);
+ // A late-added body or removed/reclassified original body is not part of
+ // either capture and therefore MUST invalidate any 'full body faces' claim.
+ const currentBodies=[];
+ root.traverse(o=>{
+  if(o!==mesh&&o.isSkinnedMesh&&!o.userData?.work56Garment&&
+     o.skeleton?.bones?.length===163)currentBodies.push(o);
+ });
+ if(currentBodies.length!==start.bodies.length||
+    currentBodies.some((body,i)=>body!==start.bodies[i].mesh))
+  fail('body scene roster changed after bounded pose capture');
  if(!same(start.source,end.source)||
     !same(start.source,mesh.geometry.getAttribute('position').array)||
     !same(start.clothSource,start.source)||
