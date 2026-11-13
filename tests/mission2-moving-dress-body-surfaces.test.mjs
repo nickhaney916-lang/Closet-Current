@@ -13,6 +13,12 @@ function fixture({fullDress=false,bodyZ=0}={}){
  const root=new THREE.Group(),bones=Array.from({length:163},()=>new THREE.Bone());
  bones[3].name='spine04';bones[3].position.y=1.01;root.add(...bones);
  const skeleton=new THREE.Skeleton(bones);
+ // Independent anatomical body bones let tests sample ACTUAL body skinning
+ // motion rather than assume changing a SkinnedMesh transform moves its skin.
+ const bodyBones=Array.from({length:163},()=>new THREE.Bone());
+ bodyBones[3].name='spine04';bodyBones[3].position.y=1.01;
+ root.add(...bodyBones);
+ const bodySkeleton=new THREE.Skeleton(bodyBones);
  const skinned=(geometry,garment)=>{
   const n=geometry.getAttribute('position').count;
   const ids=new Uint16Array(n*4),weights=new Float32Array(n*4);
@@ -20,7 +26,7 @@ function fixture({fullDress=false,bodyZ=0}={}){
   geometry.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(ids,4));
   geometry.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));
   const mesh=new THREE.SkinnedMesh(geometry,new THREE.MeshStandardMaterial());
-  mesh.bind(skeleton);mesh.userData.work56Garment=garment;root.add(mesh);
+  mesh.bind(garment?skeleton:bodySkeleton);mesh.userData.work56Garment=garment;root.add(mesh);
   return mesh;
  };
  const garment=new THREE.BufferGeometry();
@@ -46,9 +52,9 @@ function fixture({fullDress=false,bodyZ=0}={}){
   [-.6,.25,0, .6,.25,0, .6,.90,0, -.6,.90,0]:
   [-.1,-.1,0,.1,-.1,0,0,.1,0],3));
  if(fullDress)bodyGeo.setIndex([0,1,2,0,2,3]);
+ bodyGeo.translate(0,0,bodyZ); // true source body plane; no skinned-mesh transform cancellation
  const body=skinned(bodyGeo,false);
- body.position.z=bodyZ;
- return {root,dress,body};
+ return {root,dress,body,bodyBones};
 }
 const snap=mesh=>Object.fromEntries(
  Object.entries(mesh.geometry.attributes).map(([key,a])=>[key,a.array.slice()]));
@@ -81,9 +87,9 @@ test('C40: moving 163-bone BODY face across static source cloth triggers unresol
  const f=fixture(),g=f.dress.mesh.geometry.getAttribute('position');
  // Static cloth triangle in plane z=0; moving body face crosses it.
  for(let i=0;i<g.count;i++)g.setZ(i,0);
- f.body.position.z=-.012;
+ f.bodyBones[0].position.z=-.012;
  const start=capture(f);
- f.body.position.z=.012;
+ f.bodyBones[0].position.z=.012;
  const end=capture(f);
  const receipt=audit(f,start,end);
  assert.ok(receipt.potentialPairs>0);
@@ -96,7 +102,7 @@ test('C40: far-apart cloth and changing 163-bone body pose pass only conservativ
  const f=fixture({bodyZ:2}),original=snap(f.dress.mesh);
  const start=capture(f),next=f.dress.mesh.geometry.getAttribute('position').array.slice();
  for(let j=2;j<next.length;j+=3)next[j]=.012;
- f.body.position.z=2.02;
+ f.bodyBones[0].position.z=.02;
  const end=capture(f,next),receipt=audit(f,start,end);
  assert.equal(receipt.potentialPairs,0);
  assert.equal(receipt.bodyPoseMotionObserved,true);
@@ -135,7 +141,7 @@ test('C40: forged poses, unsafe budgets, changed source and bad body topology fa
 });
 test('C40: cap actual body movement and do not mislabel snapshots as nonlinear moving-bone physics',()=>{
  const f=fixture(),start=capture(f);
- f.body.position.z=.16;
+ f.bodyBones[0].position.z=.16;
  const end=capture(f);
  assert.throws(()=>audit(f,start,end),/moving body pose exceeds capped linear path/);
  const small=capture(f);
