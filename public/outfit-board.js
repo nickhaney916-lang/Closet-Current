@@ -182,7 +182,7 @@ function openBoardPicker(slotId){
 }
 function renderOutfitBoard(){
  // Research-only: any saved outfit change revokes already displayed private photos.
- if(mission4Preview1054Active)mission4Preview1054Viewer?.clear();
+ if(typeof mission4Preview1054Active!=='undefined'&&mission4Preview1054Active)mission4Preview1054Viewer?.clear();
  if(!boardInitialized)return;
  if(nativeLossless04Active){
   if(!nativeLossless04||!nativeLossless04.status().active){
