@@ -188,6 +188,9 @@ function adjustPhoto(item){
  // owner-review path and also fence Cancel/Remove/Escape and field edits while
  // the private write is pending. This research branch is NOT deployed.
  let saveInFlight=false;
+ let subtype80Panel=null;
+ const subtype80Owner=window.closetAuth?.user,subtype80OwnerId=subtype80Owner?.id;
+ const subtype80Enabled=Boolean(pendingDraft&&new URLSearchParams(location.search).get('subtype80')==='1'&&subtype80Owner?.id);
  // #77 OFF by default. Comparison may ONLY inspect this owner's loaded
  // local wardrobe. "Same" creates an unpersisted intent, never a second item.
  let cross77Pending=false,cross77Proposal=null,cross77Decision=null,cross77Scope=null;
@@ -297,6 +300,7 @@ function adjustPhoto(item){
   // A disabled submit button is not a transaction lock: a scripted event or a
   // second mobile submit can enter again while IndexedDB/cloud work is pending.
   if(saveInFlight){message('This photo is already being saved.');return;}
+  if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||subtype80Panel&&!subtype80Panel.valid())){message('This subtype review belongs to a different photo or signed session. Reopen Adjust.');return;}
   if(item.reconciliation70Status==='unresolved'||
    ((item.reconciliation70||item.reconciliation70Status)&&!unit70OwnerEvidenceValid({...item,category:draft.category}))||
    (item.reconciliation70&&duplicateUnit70InCloset(item,items))){
@@ -366,6 +370,7 @@ function adjustPhoto(item){
      throw Error('P849_CHANGED_CANDIDATE_OR_OWNER');
    }
   }
+  if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||!dialog.open||!batch.some(x=>x===item)||subtype80Panel&&!subtype80Panel.valid()))throw Error('P80_STALE_SAVE_SCOPE');
   await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
@@ -379,8 +384,20 @@ function adjustPhoto(item){
   message('Could not save changes. Try again.');
  }};
  dialog.oncancel=event=>{if(saveInFlight)event.preventDefault();};
- dialog.onclose=()=>{if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
+ dialog.onclose=()=>{subtype80Panel?.close();if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+ // #80 research is OFF by default, pending unsaved signed-owner drafts only.
+ if(subtype80Enabled){
+  import('./subtype-panel-80.mjs').then(({mountSubtype80})=>{
+   if(!dialog.open||!batch.some(x=>x===item)||(window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId))return;
+   subtype80Panel=mountSubtype80({form,item,getOwner:()=>window.closetAuth?.user,
+    isLive:()=>dialog.open&&!saveInFlight&&batch.some(x=>x===item),
+    getCategory:()=>draft.category,unitAllowed:()=>unit70OwnerEvidenceValid({...item,category:draft.category}),
+    onChoose:type=>{const input=form.querySelector('select[aria-label="Item type"]');if(input){input.value=type;input.dispatchEvent(new Event('input',{bubbles:true}));}},
+    request:async(image,context)=>{if(!localReady)await enableLocal();return localRequest('subtype-candidates80',image,null,null,context);}
+   });
+  }).catch(()=>{});
+ }
 }
 function renderRecognitionNotice(){
  const notice=$('recognitionNotice');if(!notice)return;
@@ -698,7 +715,7 @@ function stopRecognitionWorker(text,eventType='worker_start_failed'){
  for(const job of localJobs.values()){clearTimeout(job.timer);job.reject(Error(text));}
  localJobs.clear();if(localWorker)localWorker.terminate();localWorker=null;renderRecognitionNotice();
 }
-function localRequest(type,image,itemId,hint){
+function localRequest(type,image,itemId,hint,subtype80){
  return new Promise((resolve,reject)=>{
   try{
    if(!localWorker){
@@ -734,7 +751,7 @@ function localRequest(type,image,itemId,hint){
     const remaining=(type==='load'?300000:60000)-(Date.now()-started);
     job.timer=setTimeout(()=>stopRecognitionWorker('Recognition timed out. Your photos are kept. Try again or use Adjust.','timeout'),Math.max(0,Math.min(type==='load'?60000:remaining,remaining)));
    }};
-   localJobs.set(id,job);job.touch();localWorker.postMessage({type,id,image,hint});
+   localJobs.set(id,job);job.touch();localWorker.postMessage({type,id,image,hint,...(type==='subtype-candidates80'?{subtype80}:{})});
   }catch{stopRecognitionWorker('Recognition could not start. Try again or use Adjust.');reject(Error('Recognition could not start.'));}
  });
 }
