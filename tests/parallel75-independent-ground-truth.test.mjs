@@ -4,7 +4,7 @@ import {createHash,generateKeyPairSync,sign,createPublicKey} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {
  SCHEMA,sha256,isHex64,rightsOK,sourceKey,originalURL,hamming64,
- verifiedSource,verifyOriginalBytes,checkOverlap,priorExposures,validatePartition,
+ verifiedSource,verifyOriginalBytes,canonicalOriginalURL,checkOverlap,priorExposures,validatePartition,
  canonical,validateLabel,verifyHumanReceipt,independentAgreement,publicAuditReport
 } from '../scripts/p75-dataset-core.mjs';
 const now='2026-11-12T20:00:00.000Z';
@@ -49,6 +49,9 @@ function signedFixture(){
 test('safe Commons-only original URL gate rejects thumbnails, redirects, arbitrary host',()=>{
  assert.equal(sourceKey(record().sourcePage),'file:unexposed test garment.jpg');
  assert.equal(originalURL(record().originalURL),true);
+ const tracked=record().originalURL+'?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=original';
+ assert.equal(originalURL(tracked),true);
+ assert.equal(canonicalOriginalURL(tracked),record().originalURL);
  for(const url of [
   'https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/garment.jpg/100px-garment.jpg',
   'https://example.net/wikipedia/commons/a/aa/photo.jpg',
