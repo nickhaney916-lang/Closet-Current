@@ -514,3 +514,184 @@ test('C55: source-owned real original photograph parser rejects unverified or in
  }),/M2 C52 original-photo diagnostic/);
  assert.deepEqual(original(f),state);
 });
+
+const audit56=(f,more={})=>auditActualPhotographedDressSurfaces52({
+ root:f.root,dress:f.dress,
+ refineTriangleDistances53:true,refineSourceTopology54:true,
+ refineEdgeWinding55:true,refineBoundaryComponents56:true,
+ ...more
+});
+test('C56: original licensed-source one triangle makes one closed oriented boundary, never a hem label',()=>{
+ const f=fixture52([0,0,0,1,0,0,0,1,0]),before=original(f),
+  r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(r.originalAndSkinned163BoneBoundaryAuditComplete56,true);
+ assert.equal(b.schema,'M2-original-photograph-boundary-components-C56');
+ assert.equal(b.totalOriginalSingleIncidentEdgeGroups,3);
+ assert.equal(b.boundariesActuallyVisited,3);
+ assert.equal(b.boundaryVertexGroups,3);
+ assert.equal(b.boundaryVerticesDegreeTwo,3);
+ assert.equal(b.closedDirectedLoopComponents,1);
+ assert.equal(b.edgesInClosedDirectedLoops,3);
+ assert.equal(b.connectedBoundaryComponents,1);
+ assert.equal(b.openDirectedChainComponents,0);
+ assert.equal(b.windingConflictComponents,0);
+ assert.equal(b.branchedOrNonmanifoldComponents,0);
+ assert.equal(b.unsafeSourceSkinOrPoseComponents,0);
+ assert.equal(b.actualSkinnedPoseEdgesWithOverTenPercentLengthChange,0);
+ assert.equal(b.sourceBoundaryNotAnAnatomicallyApprovedHemOrOpening,true);
+ assert.equal(b.closedGeometricLoopNotProofOfSeamQuality,true);
+ assert.equal(b.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C56: two physically separate original source cloth triangles remain TWO boundary loops',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  3,0,0,4,0,0,3,1,0
+ ]),r=audit56(f);
+ const b=r.originalSourceBoundaryComponents56;
+ assert.equal(b.boundaryComponentAuditComplete,true);
+ assert.equal(b.connectedBoundaryComponents,2);
+ assert.equal(b.closedDirectedLoopComponents,2);
+ assert.equal(b.totalOriginalSingleIncidentEdgeGroups,6);
+ assert.equal(b.edgesInClosedDirectedLoops,6);
+ assert.equal(b.boundaryVerticesDegreeTwo,6);
+});
+test('C56: UV split with source-welded opposite-edge group makes one connected 4-edge loop without modifying garment',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]),before=original(f),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(r.posedSourceEdgeWinding55.sourceTwoFaceOppositeWindingCandidates,1);
+ assert.equal(b.totalOriginalSingleIncidentEdgeGroups,4);
+ assert.equal(b.boundaryVertexGroups,4);
+ assert.equal(b.closedDirectedLoopComponents,1);
+ assert.equal(b.edgesInClosedDirectedLoops,4);
+ assert.equal(b.unsafeSourceSkinOrPoseComponents,0);
+ assert.equal(r.noAutomaticSourceBoundaryRepairPermitted56,true);
+ assert.deepEqual(original(f),before);
+});
+test('C56: two originally same-direction incident faces have an unoriented boundary, NOT a safe loop',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,1,0,0,1,-1,0
+ ]),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(r.posedSourceEdgeWinding55.sourceTwoFaceSameWindingCandidates,1);
+ assert.equal(b.connectedBoundaryComponents,1);
+ assert.equal(b.closedDirectedLoopComponents,0);
+ assert.equal(b.windingConflictComponents,1);
+ assert.equal(b.edgesInWindingConflictComponents,4);
+ assert.equal(b.releaseAuthorized,false);
+});
+test('C56: three triangles on one original source edge induce branched non-manifold boundary components',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0,
+  0,0,0,1,0,0,0,0,1
+ ]),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.ok(r.posedSourceEdgeWinding55.originalNonmanifoldThreePlusIncidentEdgeGroups>=1);
+ assert.equal(b.boundaryVerticesDegreeThreePlus,2);
+ assert.equal(b.branchedOrNonmanifoldComponents,1);
+ assert.equal(b.edgesInBranchedOrNonmanifoldComponents,6);
+ assert.equal(b.closedDirectedLoopComponents,0);
+ assert.equal(b.releaseAuthorized,false);
+});
+test('C56: coordinate-only single point connection creates a branched junction, not two approved hems',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,-1,0,0,0,-1,0
+ ]),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(r.posedSourceTopology54.sourceCoincidentSinglePointCandidates,1);
+ assert.equal(b.boundaryVerticesDegreeThreePlus,1);
+ assert.equal(b.connectedBoundaryComponents,1);
+ assert.equal(b.branchedOrNonmanifoldComponents,1);
+ assert.equal(b.edgesInBranchedOrNonmanifoldComponents,6);
+ assert.equal(b.closedDirectedLoopComponents,0);
+});
+test('C56: real original dressRest/skin mismatch marks a coincident UV-boundary COMPONENT unsafe',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]);
+ f.dress.mesh.geometry.getAttribute('skinIndex').setX(3,1);
+ const before=original(f),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(b.boundaryComponentAuditComplete,true);
+ assert.equal(b.unsafeSourceSkinOrPoseComponents,1);
+ assert.equal(b.edgesInUnsafeSourceSkinOrPoseComponents,4);
+ assert.equal(b.closedDirectedLoopComponents,0);
+ assert.equal(b.openDirectedChainComponents,0);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C56: source-verified real moving 163-bone dress boundary stays oriented but reports pose edge stretch',()=>{
+ const f=fixture52([0,0,0,1,0,0,0,1,0]);
+ f.dress.mesh.geometry.getAttribute('skinIndex').setX(1,1);
+ // A 0.35m displacement changes a 1m edge length only ~6%;
+ // use an actual >10% skinned edge-length displacement.
+ f.bones[1].position.z=.7;
+ const before=original(f),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(b.boundaryComponentAuditComplete,true);
+ assert.equal(b.closedDirectedLoopComponents,1);
+ assert.ok(b.actualSkinnedPoseEdgesWithOverTenPercentLengthChange>=1);
+ assert.equal(b.bodyClearanceAndContinuousMotionNotCertified,true);
+ assert.equal(b.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C56: full duplicate original-source faces can have zero boundary edges, but never an approved cloth repair',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,0,1,0,1,0,0
+ ]),r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(b.totalOriginalSingleIncidentEdgeGroups,0);
+ assert.equal(b.connectedBoundaryComponents,0);
+ assert.equal(b.boundariesActuallyVisited,0);
+ assert.equal(b.boundaryComponentAuditComplete,true);
+ assert.equal(r.allOpenSourceBoundaryCandidatesRemainUnverified56,true);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C56: boundary analysis budget exhaustion blocks source topology claims without altering original JPEG coordinates',()=>{
+ const f=fixture52([0,0,0,1,0,0,0,1,0]),before=original(f);
+ for(const limit of [
+  {maxBoundaryEdges56:2},{maxBoundaryVertexGroups56:2}
+ ]){
+  const r=audit56(f,limit),b=r.originalSourceBoundaryComponents56;
+  assert.equal(b.totalOriginalSingleIncidentEdgeGroups,3);
+  assert.equal(b.boundaryComponentAuditComplete,false);
+  assert.equal(b.budgetExhausted,true);
+  assert.equal(r.originalAndSkinned163BoneBoundaryAuditComplete56,false);
+  assert.equal(b.releaseAuthorized,false);
+ }
+ assert.deepEqual(original(f),before);
+});
+test('C56: signed photograph source requires C55, C54, C53 prerequisites and safe bounded options',()=>{
+ const f=fixture52([0,0,0,1,0,0,0,1,0]),before=original(f);
+ for(const invalid of [
+  {refineBoundaryComponents56:true},
+  {refineTriangleDistances53:true,refineBoundaryComponents56:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineBoundaryComponents56:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:'yes'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   maxBoundaryEdges56:0},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   maxBoundaryVertexGroups56:200001}
+ ])assert.throws(()=>auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,...invalid
+ }),/M2 C52 original-photo diagnostic/);
+ assert.deepEqual(original(f),before);
+});
+
+test('C56: actual avatar world scale and root rotation MUST NOT be fabricated into clothing fabric-edge stretch',()=>{
+ const f=fixture52([0,0,0,1,0,0,0,1,0]),before=original(f);
+ f.root.scale.set(1.7,1.4,.8);
+ f.root.rotation.z=.31;
+ const r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(b.boundaryComponentAuditComplete,true);
+ assert.equal(b.closedDirectedLoopComponents,1);
+ assert.equal(b.actualSkinnedPoseEdgesWithOverTenPercentLengthChange,0,
+  'original source edge lengths must use the same mesh world frame as posed skinned world lengths');
+ assert.equal(b.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});

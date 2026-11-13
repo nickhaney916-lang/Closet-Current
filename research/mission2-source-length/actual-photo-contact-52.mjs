@@ -300,7 +300,8 @@ function sourceEdgeGraph55(context,indices,faceCount){
   else if(list.length===2)two++;
   else multiple++;
  }
- return {source,vertexGroup,groupGood,groupAmbiguous,
+ return {source,skinned,rest,skinIndex,skinWeight,reps,
+  vertexGroup,groupGood,groupAmbiguous,
   faceGroup,edgeUses,key,uniqueOriginalSourceEdgeGroups:edgeUses.size,
   originalSingleIncidentEdgeGroups:single,
   originalTwoIncidentEdgeGroups:two,
@@ -384,6 +385,205 @@ function edgeWindingReceipt55(state,graph,complete){
   photoUVSkinAndSourceMeshUnchanged:true,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
+}
+
+
+/**
+ * P2-C56: read-only connected-component analysis of ORIGINAL photographed
+ * garment boundary edge groups. A single-incident source edge is a surface
+ * boundary, NOT an independently identified hem, collar or sleeve opening.
+ * Never mutate UVs, source coordinates, skin weights, geometry, or the
+ * authentic licensed JPEG. No index, coordinate or vertex group is emitted.
+ */
+function sourceBoundaryComponents56(graph,{maxBoundaryEdges56,
+ maxBoundaryVertexGroups56}){
+ const boundaries=[];
+ for(const list of graph.edgeUses.values())
+  if(list.length===1)boundaries.push(list[0]);
+ const blank={
+  totalOriginalSingleIncidentEdgeGroups:boundaries.length,
+  boundariesActuallyVisited:0,connectedBoundaryComponents:0,
+  closedDirectedLoopComponents:0,openDirectedChainComponents:0,
+  windingConflictComponents:0,branchedOrNonmanifoldComponents:0,
+  unsafeSourceSkinOrPoseComponents:0,
+  edgesInClosedDirectedLoops:0,edgesInOpenDirectedChains:0,
+  edgesInWindingConflictComponents:0,
+  edgesInBranchedOrNonmanifoldComponents:0,
+  edgesInUnsafeSourceSkinOrPoseComponents:0,
+  boundaryVertexGroups:0,boundaryVerticesDegreeOne:0,
+  boundaryVerticesDegreeTwo:0,boundaryVerticesDegreeThreePlus:0,
+  actualSkinnedPoseEdgesWithOverTenPercentLengthChange:0,
+  budgetExhausted:false
+ };
+ const receipt=(state,complete)=>Object.freeze({
+  schema:'M2-original-photograph-boundary-components-C56',
+  ...state,
+  boundaryComponentAuditComplete:complete,
+  sourceCoordinateGroupsComparedAgainstOriginalPhotoRestAndSkin:true,
+  actual163BonePoseBoundaryLengthsChecked:complete,
+  sourceBoundaryNotAnAnatomicallyApprovedHemOrOpening:true,
+  closedGeometricLoopNotProofOfSeamQuality:true,
+  openBoundaryDoesNotAuthorizeAutomaticHoleRepair:true,
+  originalSourceVertexOrFaceIdentifiersExposed:false,
+  originalPhotoCoordinatesOrPixelsExposed:false,
+  bodyClearanceAndContinuousMotionNotCertified:true,
+  noUVOrGeometryEditsPermitted:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ if(boundaries.length>maxBoundaryEdges56)
+  return receipt({...blank,budgetExhausted:true},false);
+ const neighbors=new Map();
+ for(let e=0;e<boundaries.length;e++){
+  const {from,to}=boundaries[e];
+  for(const v of [from,to]){
+   const list=neighbors.get(v)??[];
+   list.push(e);neighbors.set(v,list);
+  }
+ }
+ if(neighbors.size>maxBoundaryVertexGroups56)
+  return receipt({...blank,budgetExhausted:true},false);
+ const state={...blank,boundaryVertexGroups:neighbors.size};
+ const members=new Map();
+ for(let i=0;i<graph.vertexGroup.length;i++){
+  const g=graph.vertexGroup[i];
+  if(!neighbors.has(g))continue;
+  const list=members.get(g)??[];
+  list.push(i);members.set(g,list);
+ }
+ // A tolerated spatial cluster is not an equivalence relation in general.
+ // Check EVERY endpoint pair against every member, not just C55's first
+ // representative; any non-transitive or inconsistent group stays unsafe.
+ const unsafe=new Set();
+ for(const [g,list] of members){
+  if(!graph.groupGood[g]||graph.groupAmbiguous[g])unsafe.add(g);
+  for(let i=0;i<list.length;i++)
+   for(let j=i+1;j<list.length;j++){
+    const a=list[i],b=list[j],d=3*a,k=3*b;
+    if(Math.hypot(graph.source[d]-graph.source[k],
+      graph.source[d+1]-graph.source[k+1],
+      graph.source[d+2]-graph.source[k+2])>SOURCE_TWIN_EPS54||
+      Math.hypot(graph.skinned[d]-graph.skinned[k],
+      graph.skinned[d+1]-graph.skinned[k+1],
+      graph.skinned[d+2]-graph.skinned[k+2])>SOURCE_TWIN_EPS54){
+     unsafe.add(g);continue;
+    }
+    for(let t=0;t<3;t++)
+     if(Math.abs(graph.rest.getComponent(a,t)-
+      graph.rest.getComponent(b,t))>SOURCE_TWIN_EPS54)
+      unsafe.add(g);
+    for(let t=0;t<4;t++)
+     if(graph.skinIndex.getComponent(a,t)!==
+         graph.skinIndex.getComponent(b,t)||
+        Math.abs(graph.skinWeight.getComponent(a,t)-
+          graph.skinWeight.getComponent(b,t))>1e-6)unsafe.add(g);
+   }
+ }
+ const move=graph.skinned,orig=graph.source;
+ for(const edge of boundaries){
+  const a=graph.reps[edge.from],b=graph.reps[edge.to];
+  if(a===undefined||b===undefined){unsafe.add(edge.from);unsafe.add(edge.to);continue;}
+  const start=3*a,end=3*b,
+   // The original source is mesh-local, but the actual 163-bone pose was
+   // captured in WORLD coordinates. Apply the unchanged mesh world-linear
+   // transform to the original edge; otherwise an ordinary avatar scale
+   // is falsely diagnosed as fabric stretch on every boundary edge.
+   sourceWorldEdge=new THREE.Vector3(
+    orig[start]-orig[end],
+    orig[start+1]-orig[end+1],
+    orig[start+2]-orig[end+2]).applyMatrix3(graph.sourceWorldLinear56),
+   oldLength=sourceWorldEdge.length(),
+   newLength=Math.hypot(move[start]-move[end],
+    move[start+1]-move[end+1],move[start+2]-move[end+2]);
+  if(!Number.isFinite(oldLength)||!Number.isFinite(newLength)||
+     oldLength<1e-8||newLength<1e-8){
+   unsafe.add(edge.from);unsafe.add(edge.to);continue;
+  }
+  if(Math.abs(newLength/oldLength-1)>.1)
+   state.actualSkinnedPoseEdgesWithOverTenPercentLengthChange++;
+ }
+ for(const edges of neighbors.values()){
+  if(edges.length===1)state.boundaryVerticesDegreeOne++;
+  else if(edges.length===2)state.boundaryVerticesDegreeTwo++;
+  else state.boundaryVerticesDegreeThreePlus++;
+ }
+ const visited=new Uint8Array(boundaries.length);
+ for(let e=0;e<boundaries.length;e++){
+  if(visited[e])continue;
+  const queue=[e],compEdges=[],compVertices=new Set();
+  visited[e]=1;
+  for(let head=0;head<queue.length;head++){
+   const id=queue[head],edge=boundaries[id];
+   compEdges.push(id);
+   for(const v of [edge.from,edge.to]){
+    if(compVertices.has(v))continue;
+    compVertices.add(v);
+    for(const adjacent of neighbors.get(v)??[])
+     if(!visited[adjacent]){
+      visited[adjacent]=1;queue.push(adjacent);
+     }
+   }
+  }
+  let degOne=0,allTwo=true,wellWound=true,branch=false,
+   endpointsStart=0,endpointsEnd=0,hasUnsafe=false;
+  for(const v of compVertices){
+   const count=neighbors.get(v).length;
+   let incoming=0,outgoing=0;
+   for(const idx of neighbors.get(v)){
+    const ed=boundaries[idx];
+    if(ed.to===v)incoming++;
+    if(ed.from===v)outgoing++;
+    if(ed.to===ed.from)hasUnsafe=true;
+   }
+   if(count===1){
+    degOne++;allTwo=false;
+    if(incoming===0&&outgoing===1)endpointsStart++;
+    else if(incoming===1&&outgoing===0)endpointsEnd++;
+    else wellWound=false;
+   }else if(count===2){
+    if(incoming!==1||outgoing!==1)wellWound=false;
+   }else{
+    allTwo=false;
+    if(count>2)branch=true;
+    else hasUnsafe=true;
+   }
+   if(unsafe.has(v))hasUnsafe=true;
+  }
+  const size=compEdges.length;
+  state.boundariesActuallyVisited+=size;
+  state.connectedBoundaryComponents++;
+  if(hasUnsafe){
+   state.unsafeSourceSkinOrPoseComponents++;
+   state.edgesInUnsafeSourceSkinOrPoseComponents+=size;
+  }else if(branch){
+   state.branchedOrNonmanifoldComponents++;
+   state.edgesInBranchedOrNonmanifoldComponents+=size;
+  }else if(wellWound&&allTwo&&size===compVertices.size){
+   state.closedDirectedLoopComponents++;
+   state.edgesInClosedDirectedLoops+=size;
+  }else if(wellWound&&degOne===2&&endpointsStart===1&&
+     endpointsEnd===1&&size===compVertices.size-1){
+   state.openDirectedChainComponents++;
+   state.edgesInOpenDirectedChains+=size;
+  }else{
+   state.windingConflictComponents++;
+   state.edgesInWindingConflictComponents+=size;
+  }
+ }
+ if(state.boundariesActuallyVisited!==boundaries.length||
+    state.connectedBoundaryComponents!==
+     state.closedDirectedLoopComponents+
+     state.openDirectedChainComponents+
+     state.windingConflictComponents+
+     state.branchedOrNonmanifoldComponents+
+     state.unsafeSourceSkinOrPoseComponents||
+    boundaries.length!==
+     state.edgesInClosedDirectedLoops+
+     state.edgesInOpenDirectedChains+
+     state.edgesInWindingConflictComponents+
+     state.edgesInBranchedOrNonmanifoldComponents+
+     state.edgesInUnsafeSourceSkinOrPoseComponents)
+  fail('C56 original photographed boundary source component partition mismatch');
+ return receipt(state,true);
 }
 
 function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null){
@@ -501,7 +701,9 @@ export function auditActualPhotographedDressSurfaces52({
  maxCandidatePairs=100000,maxStrictCrossings=64,
  refineTriangleDistances53=false,maxDistanceCandidates53=100000,
  refineSourceTopology54=false,maxZeroDistanceTopologyPairs54=100000,
- refineEdgeWinding55=false,maxEdgePairs55=100000
+ refineEdgeWinding55=false,maxEdgePairs55=100000,
+ refineBoundaryComponents56=false,maxBoundaryEdges56=20000,
+ maxBoundaryVertexGroups56=20000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
@@ -535,7 +737,13 @@ export function auditActualPhotographedDressSurfaces52({
     typeof refineEdgeWinding55!=='boolean'||
     (refineEdgeWinding55&&!refineSourceTopology54)||
     !Number.isSafeInteger(maxEdgePairs55)||maxEdgePairs55<1||
-    maxEdgePairs55>200000)
+    maxEdgePairs55>200000||
+    typeof refineBoundaryComponents56!=='boolean'||
+    (refineBoundaryComponents56&&!refineEdgeWinding55)||
+    !Number.isSafeInteger(maxBoundaryEdges56)||
+    maxBoundaryEdges56<1||maxBoundaryEdges56>200000||
+    !Number.isSafeInteger(maxBoundaryVertexGroups56)||
+    maxBoundaryVertexGroups56<1||maxBoundaryVertexGroups56>200000)
   fail('real original licensed SHA-pinned 163-bone P61 dress required');
  const p=g?.getAttribute('position'),rest=g?.getAttribute('dressRest'),
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
@@ -581,6 +789,14 @@ export function auditActualPhotographedDressSurfaces52({
  }:null;
  if(refineEdgeWinding55)context.edgeGraph55=
   sourceEdgeGraph55(context,indices,triangles);
+ // Set the common ORIGINAL-to-POSE WORLD reference frame before measuring
+ // any source-edge stretch. This is private, never part of public receipts.
+ if(refineBoundaryComponents56)context.edgeGraph55.sourceWorldLinear56=
+  new THREE.Matrix3().setFromMatrix4(mesh.matrixWorld);
+ const boundary56=refineBoundaryComponents56?
+  sourceBoundaryComponents56(context.edgeGraph55,{
+   maxBoundaryEdges56,maxBoundaryVertexGroups56
+  }):null;
  const original=analyze52(source,indices,triangles,toleranceMeters,budget,context),
   posed=analyze52(skinned,indices,triangles,toleranceMeters,budget,context);
  for(const [name,attr,bytes] of immutable)
@@ -646,6 +862,15 @@ export function auditActualPhotographedDressSurfaces52({
    noEdgeWindingCollisionExemption55:true,
    trueSourceSeamSewingEvidenceMissing55:true,
    ownerSourceAndShaderPhotoProjectionPreserved55:true
+  }:{}),
+  ...(refineBoundaryComponents56?{
+   originalSourceBoundaryComponents56:boundary56,
+   originalAndSkinned163BoneBoundaryAuditComplete56:
+    boundary56.boundaryComponentAuditComplete&&
+    original.edge55.sourceEdgeAuditComplete&&
+    posed.edge55.sourceEdgeAuditComplete,
+   allOpenSourceBoundaryCandidatesRemainUnverified56:true,
+   noAutomaticSourceBoundaryRepairPermitted56:true
   }:{}),
   anyStrictSourceCrossing:original.firstStrict,
   anyStrictPosedCrossing:posed.firstStrict,
