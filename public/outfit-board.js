@@ -332,8 +332,31 @@ $('saveBoard').onclick=async()=>{
   finally{$('saveBoard').disabled=false;}
   return;
  }
+ const lease=beginOwnerBoardUiLease();if(!lease)return;
  cancelBoardDraftTimer();++boardStatusSerial;$('retryBoardDraft').hidden=true;
- if(!Object.keys(currentBoard.slots).length)return $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';if(savedOutfitBoards.length>=50)return $('boardSaveStatus').textContent='You can save up to 50 outfits.';$('saveBoard').disabled=true;try{await saveOwnedOutfit(currentBoard);boardDraftStatus('Outfit saved with references to your clothing photos.'+(boardConflictDraft?' Another tab changed the working draft; choose how to resolve it below.':''));renderSavedOutfitBoards();}catch(error){$('boardSaveStatus').textContent=error?.code==='OUTFIT_WARDROBE_CHANGED'?'Could not save this outfit. '+error.message:'Could not save this outfit. Please try again.';$('refreshOutfitWardrobe').hidden=error?.code!=='OUTFIT_WARDROBE_CHANGED';}finally{$('saveBoard').disabled=false;}};
+ if(!Object.keys(currentBoard.slots).length){
+  $('boardSaveStatus').textContent='Choose at least one piece from your own closet first.';return;
+ }
+ if(savedOutfitBoards.length>=50){
+  $('boardSaveStatus').textContent='You can save up to 50 outfits.';return;
+ }
+ $('saveBoard').disabled=true;
+ try{
+  await saveOwnedOutfit(currentBoard);
+  if(!lease.current())return;
+  boardDraftStatus('Outfit saved with references to your clothing photos.'+
+   (boardConflictDraft?' Another tab changed the working draft; choose how to resolve it below.':''));
+  renderSavedOutfitBoards();
+ }catch(error){
+  if(!lease.current())return;
+  $('boardSaveStatus').textContent=error?.code==='OUTFIT_WARDROBE_CHANGED'?
+   'Could not save this outfit. Selected clothing changed. Refresh your closet and create this outfit again.':
+   'Could not save this outfit. Please try again.';
+  $('refreshOutfitWardrobe').hidden=error?.code!=='OUTFIT_WARDROBE_CHANGED';
+ }finally{
+  if(lease.current())$('saveBoard').disabled=false;
+ }
+};
 function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceChildren();for(const source of outfitTrendSources)grid.append(boardLink(source.title,source.url));}
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
