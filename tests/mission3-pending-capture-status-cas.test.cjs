@@ -131,7 +131,7 @@ test('recognition of a stale source never overwrites second-tab human correction
   assert.match(a.ctx.messages.join(' '),/could not be backed up/);
  }finally{aDB.close();bDB.close();}
 });
-test('recognition blank-photo removal deletes exact draft only and preserves other-tab JPEG',async()=>{
+test('blank-photo model heuristic never deletes either owner original or another-tab JPEG',async()=>{
  const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
  try{
   const a=harness(aDB,owner),b=harness(bDB,owner);
@@ -139,7 +139,45 @@ test('recognition blank-photo removal deletes exact draft only and preserves oth
   a.ctx.checkPhoto=async()=>({blank:true});
   await a.ctx.recognizeItem(a.ctx.batch[0]);await a.drain();
   const rows=await read(aDB);
-  assert.deepEqual(rows.map(x=>x.image),[second]);assert.equal(rows[0].originalPhoto.image,second);
+  assert.deepEqual(rows.map(x=>x.image),[first,second]);
+  assert.deepEqual(rows.map(x=>x.originalPhoto.image),[first,second]);
+  assert.deepEqual(rows.map(x=>x.originalPhoto.sha256),[sha,sha]);
+  assert.equal(rows[0].localAnalyzed,true);
+  assert.match(rows[0].localStatus,/Original photo kept/);
+  assert.equal(a.ctx.batch.length,1,'blank heuristic cannot hide the original');
+ }finally{aDB.close();bDB.close();}
+});
+test('exact-match model check flags review, never removes pending JPEG or other tab original',async()=>{
+ const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
+ try{
+  const a=harness(aDB,owner),b=harness(bDB,owner);
+  await a.open(first);await b.open(second);
+  // An exact match can exist in a saved garment while the review photo
+  // is still a distinct owner capture. Do not merge or delete without consent.
+  a.ctx.items.push({id:'previously-saved',ownerId:owner,image:first,
+   originalPhoto:{image:first,sha256:sha},sourceSHA256:sha});
+  a.ctx.checkPhoto=async()=>({blank:false,signature:'same',aspect:1});
+  await a.ctx.recognizeItem(a.ctx.batch[0]);await a.drain();
+  const rows=await read(bDB);
+  assert.deepEqual(rows.map(x=>x.image),[first,second]);
+  assert.equal(rows[0].possibleDuplicate,true);
+  assert.equal(rows[0].localAnalyzed,true);
+  assert.match(rows[0].localStatus,/Original photo kept/);
+  assert.equal(a.ctx.batch[0].image,first);
+ }finally{aDB.close();bDB.close();}
+});
+test('owner-initiated explicit draft removal still deletes exactly selected photograph',async()=>{
+ const owner=randomUUID(),aDB=await open(owner),bDB=await open(owner);
+ try{
+  const a=harness(aDB,owner),b=harness(bDB,owner);
+  await a.open(first);await b.open(second);
+  a.ctx.checkPhoto=async()=>({blank:true});
+  await a.ctx.recognizeItem(a.ctx.batch[0]);await a.drain();
+  const selected=(await read(aDB))[0];
+  await a.ctx.persistDraft({required:true,mode:'remove',expected:selected});
+  const rows=await read(bDB);
+  assert.deepEqual(rows.map(x=>x.image),[second]);
+  assert.equal(rows[0].originalPhoto.image,second);
  }finally{aDB.close();bDB.close();}
 });
 test('same-owner new ID collision cannot overwrite a saved garment',async()=>{
@@ -233,5 +271,5 @@ test('app contains no old unscoped persistDraft calls or whole-batch write',()=>
  assert.doesNotMatch(writer,/state'\)\.put\(\{id:'draft',batch:snapshot\}\)/);
  assert.match(candidate,/mode:'insert',record:item/);
  assert.match(recognition,/mode:'update',expected:expectedDraftForRecognition/);
- assert.match(recognition,/mode:'remove',expected:expectedDraftForRecognition/);
+ assert.doesNotMatch(recognition,/mode:'remove',expected:expectedDraftForRecognition/);
 });
