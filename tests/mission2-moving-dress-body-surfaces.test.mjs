@@ -783,7 +783,7 @@ test('C45: actual original P61-style source dress contact flood stops at FIRST u
 test('C45: actual crossing disconnected 163-bone source fabric reports partial BLOCK, never complete pass',()=>{
  const f=clothed44([
   -.15,-.10,0,.15,-.10,0,0,.15,0,
-  0,-.07,-.10,0,-.07,.10,0,0,.10,0
+  0,-.07,-.10,0,-.07,.10,0,.10,0
  ]),original=snap(f.dress.mesh),receipt=fast45(f);
  assert.equal(receipt.unresolvedPairs,1);
  assert.equal(receipt.firstUnresolvedContactKind,'unresolved-spatial-triangle-contact');
