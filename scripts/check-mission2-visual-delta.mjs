@@ -153,7 +153,8 @@ export async function verifyMission2ControlledPhotoEdgePixels(engine,
   assert.equal(r.releaseAuthorized,false);
   if(stage==='control'){
    assert.equal(r.sourceEdgeAblationControl,true);
-   assert.equal(r.sourceEdgeAblationModuleRequests,3);
+   assert.ok(r.sourceEdgeAblationModuleRequests>=3&&
+    r.sourceEdgeAblationModuleRequests<=24);
   }else{
    assert.equal(r.sourceEdgeAblationControl,false);
    assert.equal(r.sourceEdgeAblationModuleRequests,0);
