@@ -191,7 +191,9 @@ function adjustPhoto(item){
  // owner-review path and also fence Cancel/Remove/Escape and field edits while
  // the private write is pending. This research branch is NOT deployed.
  let saveInFlight=false;
- let subtype80Panel=null;
+ let subtype80Panel=null,dual82Panel=null;
+ const dual82Owner=window.closetAuth?.user,dual82OwnerId=dual82Owner?.id;
+ const dual82Enabled=Boolean(pendingDraft&&new URLSearchParams(location.search).get('dual82')==='1'&&dual82OwnerId);
  const subtype80Owner=window.closetAuth?.user,subtype80OwnerId=subtype80Owner?.id;
  const subtype80Enabled=Boolean(pendingDraft&&new URLSearchParams(location.search).get('subtype80')==='1'&&subtype80Owner?.id);
  // #77 OFF by default. Comparison may ONLY inspect this owner's loaded
@@ -303,6 +305,7 @@ function adjustPhoto(item){
   // A disabled submit button is not a transaction lock: a scripted event or a
   // second mobile submit can enter again while IndexedDB/cloud work is pending.
   if(saveInFlight){message('This photo is already being saved.');return;}
+  if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||dual82Panel&&!dual82Panel.valid())){message('This comparison belongs to a different photo or signed session. Reopen Adjust.');return;}
   if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||subtype80Panel&&!subtype80Panel.valid())){message('This subtype review belongs to a different photo or signed session. Reopen Adjust.');return;}
   if(item.reconciliation70Status==='unresolved'||
    ((item.reconciliation70||item.reconciliation70Status)&&!unit70OwnerEvidenceValid({...item,category:draft.category}))||
@@ -374,6 +377,7 @@ function adjustPhoto(item){
    }
   }
   if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||!dialog.open||!batch.some(x=>x===item)||subtype80Panel&&!subtype80Panel.valid()))throw Error('P80_STALE_SAVE_SCOPE');
+  if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||!dialog.open||!batch.some(x=>x===item)||dual82Panel&&!dual82Panel.valid()))throw Error('P82_STALE_SAVE_SCOPE');
   await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
@@ -387,8 +391,24 @@ function adjustPhoto(item){
   message('Could not save changes. Try again.');
  }};
  dialog.oncancel=event=>{if(saveInFlight)event.preventDefault();};
- dialog.onclose=()=>{subtype80Panel?.close();if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
+ dialog.onclose=()=>{dual82Panel?.close();subtype80Panel?.close();if(cross77Scope)CrossCaptureDuplicate77.close(cross77Scope);if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
  const actions=node('div',null,'actions');actions.append(save,cancel,remove);form.append(actions);dialog.append(form);document.body.append(dialog);dialog.showModal();
+ // #82 optional local dual-model comparison; no automatic admission or model mutation.
+ if(dual82Enabled){
+  import('./dual-panel-82.mjs').then(({mountDual82})=>{
+   if(!dialog.open||!batch.some(x=>x===item)||window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)return;
+   dual82Panel=mountDual82({form,item,getOwner:()=>window.closetAuth?.user,
+    isLive:()=>dialog.open&&!saveInFlight&&batch.some(x=>x===item),
+    unitAllowed:()=>unit70OwnerEvidenceValid({...item,category:draft.category}),
+    onChoose:choice=>{
+     const category=form.querySelector('select[aria-label="Main category"]');
+     if(category&&category.value!==choice.category){category.value=choice.category;category.dispatchEvent(new Event('input',{bubbles:true}));}
+     const type=form.querySelector('select[aria-label="Item type"]');
+     if(type&&[...type.options].some(o=>o.value===choice.itemType)){type.value=choice.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));}
+    }
+   });
+  }).catch(()=>{});
+ }
  // #80 research is OFF by default, pending unsaved signed-owner drafts only.
  if(subtype80Enabled){
   import('./subtype-panel-80.mjs').then(({mountSubtype80})=>{

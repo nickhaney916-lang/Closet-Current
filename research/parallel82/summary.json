@@ -1,0 +1,155 @@
+{
+  "engine": "chromium",
+  "physicalDevices": 0,
+  "independentlyHumanReviewedPhotos": 0,
+  "blindAccuracy": null,
+  "status": "PUBLIC_DEVELOPMENT_ONLY",
+  "photos": 48,
+  "rawTop1": {
+    "fashionclip": {
+      "categoryMatches": 43,
+      "exactSubtypeMatches": 27
+    },
+    "fashionSiglip": {
+      "categoryMatches": 44,
+      "exactSubtypeMatches": 28
+    }
+  },
+  "fusedExactSubtypeMatches": 30,
+  "abstentions": 12,
+  "baselineStrong": 26,
+  "automaticAdmissions": 0,
+  "peakMemoryBytes": null,
+  "nonGetOrExternalRequests": 0,
+  "denominator": 48,
+  "independentAccuracy": null,
+  "countsMeaning": "Exact historical strings; generic Boots/Dress are not fine-subtype truth. Exposed development data only.",
+  "gains": [
+    "commons-0035",
+    "commons-0045",
+    "commons-0062"
+  ],
+  "losses": [],
+  "latency": {
+    "perPhotoTotalP50Ms": 8568.699999999953,
+    "perPhotoTotalP95Ms": 12135.5,
+    "perModel": {
+      "fashionclip": {
+        "loadP50Ms": 3415,
+        "inferenceP50Ms": 1237.3000000000466
+      },
+      "fashionSiglip": {
+        "loadP50Ms": 1815.6000000000931,
+        "inferenceP50Ms": 1093.7999999998137
+      }
+    }
+  },
+  "memoryNote": "Weight asset bytes are not peak resident/JS/WASM memory; no physical-device measurement.",
+  "knownBoots": [
+    {
+      "id": "commons-0088",
+      "baselineType": "Unknown",
+      "baselineReason": "type_uncertain",
+      "hint": "Ankle boots",
+      "machineType": "Unknown"
+    },
+    {
+      "id": "commons-0089",
+      "baselineType": "Unknown",
+      "baselineReason": "type_uncertain",
+      "hint": "Ankle boots",
+      "machineType": "Unknown"
+    },
+    {
+      "id": "commons-0092",
+      "baselineType": "Unknown",
+      "baselineReason": "type_uncertain",
+      "hint": "Ankle boots",
+      "machineType": "Unknown"
+    },
+    {
+      "id": "commons-0093",
+      "baselineType": "Unknown",
+      "baselineReason": "type_uncertain",
+      "hint": "Ankle boots",
+      "machineType": "Unknown"
+    },
+    {
+      "id": "commons-0094",
+      "baselineType": "Unknown",
+      "baselineReason": "type_uncertain",
+      "hint": "Ankle boots",
+      "machineType": "Unknown"
+    }
+  ],
+  "negatives": [
+    {
+      "id": "commons-0046",
+      "clip": "Uncategorized",
+      "siglip": "Uncategorized",
+      "status": "abstain"
+    },
+    {
+      "id": "commons-0086",
+      "clip": "Accessories",
+      "siglip": "Tops",
+      "status": "abstain"
+    },
+    {
+      "id": "commons-0090",
+      "clip": "Uncategorized",
+      "siglip": "Tops",
+      "status": "abstain"
+    }
+  ],
+  "byHistoricalCategory": {
+    "Tops": {
+      "n": 5,
+      "clipCategory": 5,
+      "siglipCategory": 5,
+      "clipExact": 2,
+      "fusedExact": 2,
+      "abstentions": 1
+    },
+    "Bottoms": {
+      "n": 12,
+      "clipCategory": 11,
+      "siglipCategory": 12,
+      "clipExact": 10,
+      "fusedExact": 12,
+      "abstentions": 2
+    },
+    "Dresses": {
+      "n": 4,
+      "clipCategory": 4,
+      "siglipCategory": 2,
+      "clipExact": 0,
+      "fusedExact": 0,
+      "abstentions": 2
+    },
+    "Outerwear": {
+      "n": 8,
+      "clipCategory": 6,
+      "siglipCategory": 8,
+      "clipExact": 5,
+      "fusedExact": 6,
+      "abstentions": 3
+    },
+    "Shoes": {
+      "n": 16,
+      "clipCategory": 15,
+      "siglipCategory": 16,
+      "clipExact": 8,
+      "fusedExact": 8,
+      "abstentions": 1
+    },
+    "Uncategorized": {
+      "n": 3,
+      "clipCategory": 2,
+      "siglipCategory": 1,
+      "clipExact": 2,
+      "fusedExact": 2,
+      "abstentions": 3
+    }
+  }
+}
