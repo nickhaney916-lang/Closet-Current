@@ -22,11 +22,25 @@ function sample84(mesh,maxFaces){
    throw Error('source-163-bone-skinned-mesh-required');
  const g=mesh.geometry,position=g.getAttribute('position'),
   si=g.getAttribute('skinIndex'),sw=g.getAttribute('skinWeight');
- const uv=g.getAttribute('uv'),rest=g.getAttribute('dressRest');
+ const uv=g.getAttribute('uv'),rest=g.getAttribute('dressRest'),
+  shirtPanel=g.getAttribute('panelPosition'),
+  pantsUV=g.getAttribute('pantsSourceUV'),
+  pantsRest=g.getAttribute('pantsRest');
+ const photoProjection=uv||rest||shirtPanel||pantsUV;
+ const sourceOriginalRest=rest||shirtPanel||pantsRest;
+ const mapped=!!photoProjection;
+ const validSourceAttribute=(attr,size)=>!attr||
+  (attr.isBufferAttribute&&attr.itemSize===size&&attr.count===position.count);
+
  if(si.count!==position.count||sw.count!==position.count||
-    !(uv||rest)||
-    (uv&&(!uv.isBufferAttribute||uv.itemSize!==2||uv.count!==position.count))||
-    (rest&&(!rest.isBufferAttribute||rest.itemSize!==3||rest.count!==position.count))||
+    !mapped||!sourceOriginalRest||
+    !validSourceAttribute(uv,2)||
+    !validSourceAttribute(rest,3)||
+    !validSourceAttribute(shirtPanel,3)||
+    !validSourceAttribute(pantsUV,2)||
+    !validSourceAttribute(pantsRest,3)||
+    (pantsUV&&!pantsRest)||
+    (shirtPanel&&!g.getAttribute('panelNormal'))||
     (g.index&&g.index.count%3!==0)||
     (!g.index&&position.count%3!==0))
    throw Error('source-photo-projection-or-index-invalid');
@@ -36,7 +50,10 @@ function sample84(mesh,maxFaces){
  for(let i=0;i<position.count;i++){
   if(uv&&(!Number.isFinite(uv.getX(i))||!Number.isFinite(uv.getY(i))))
    throw Error('source-projection-nonfinite');
-  if(rest&&![rest.getX(i),rest.getY(i),rest.getZ(i)].every(Number.isFinite))
+  for(const xyz of [rest,shirtPanel,pantsRest])
+   if(xyz&&![xyz.getX(i),xyz.getY(i),xyz.getZ(i)].every(Number.isFinite))
+    throw Error('source-projection-nonfinite');
+  if(pantsUV&&![pantsUV.getX(i),pantsUV.getY(i)].every(Number.isFinite))
    throw Error('source-projection-nonfinite');
  }
  if(uv){
