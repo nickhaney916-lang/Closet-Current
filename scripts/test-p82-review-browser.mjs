@@ -48,6 +48,8 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
    await originalConsent.check();await originalIsolated.check();
    await page.evaluate(()=>{window.p870ExternalInputs=0;document.querySelector('dialog form').addEventListener('input',e=>{if(!e.target.closest('[data-dual82]'))window.p870ExternalInputs++;});});
    await page.getByRole('button',{name:'Fill missing details from photo'}).click();
+   await page.waitForTimeout(350);
+   console.log('P870_DIAGNOSTIC',JSON.stringify(await page.evaluate(()=>({type:document.querySelector('dialog select[aria-label="Item type"]')?.value,status:[...document.querySelectorAll('dialog p')].map(x=>x.textContent).filter(x=>/Garment|garment|Color|color|Checking|checking|comparison|Comparison/.test(x)).slice(0,8),originalConsent:document.querySelector('[data-dual82] input')?.checked,available:!!document.querySelector('[data-dual82]')}))));
    await page.waitForFunction(()=>document.querySelector('dialog select[aria-label="Item type"]')?.value==='Shorts');
    assert.equal(await originalConsent.isChecked(),false,'auto editor update must revoke prior comparison consent');
    assert.equal(await originalIsolated.isChecked(),false,'auto editor update must revoke visibility declaration');
