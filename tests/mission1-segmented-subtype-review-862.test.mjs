@@ -25,10 +25,9 @@ test('P862 actual hinted subtype vs mask-only Unknown have different review/stro
   {label:'a blank wall',score:.9},{label:'a blurry image with no identifiable garment',score:.1}
  ],image,{hint:hint('Shoes'),onIdentified:choice=>unknown.push(choice)});
  assert.equal(partial.strong,false,'mask alone cannot certify a subtype');
- assert.equal(partial.categoryConfirmed,true);
- assert.equal(partial.categoryOnly,true);
- assert.equal(partial.choices[0].itemType,'Unknown');
- assert.equal(partial.reason,'mask_category_type_review');
+ assert.equal(partial.categoryConfirmed===true,false,'negative-only model must not certify a category');
+ assert.equal(partial.choices.length,0);
+ assert.equal(partial.reason,'mask_category_disagrees');
  assert.deepEqual(unknown,[],'no provisional identified message');
 });
 test('P862 marked-high-risk class from actual isolated classifier must lose automatic admission',async()=>{
