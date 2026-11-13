@@ -15,7 +15,7 @@ In `public/app.js` the saved `My Closet` card's `Delete` callback awaited `remov
 
 ## Tests and evidence
 
-New `tests/mission3-saved-card-delete-session-cas.test.cjs` extracts the **real** saved-closet Delete callback and existing `ownerWardrobeMutationLease` function from `public/app.js`. Eleven synthetic, deterministic cases cover successful current-owner delete with immutable source, late success after owner switch, same-owner re-login, both late failures, same-owner CAS conflict, same-owner storage error, canceled confirmation, orphaned card, signed-out page, and source guard assertions.
+New `tests/mission3-saved-card-delete-session-cas.test.cjs` extracts the **real** saved-closet Delete callback and existing `ownerWardrobeMutationLease` function from `public/app.js`. Twelve synthetic, deterministic cases cover successful current-owner delete with immutable source, same-owner duplicate-ID roster reconciliation, late success after owner switch, same-owner re-login, both late failures, same-owner CAS conflict, same-owner storage error, canceled confirmation, orphaned card, signed-out page, and source guard assertions.
 
 **Do not claim CI success until the final exact-head strict-parent NO DEPLOY workflow passes** full serial Node, browser Chromium/WebKit mobile viewport tests, native local storage, private owner backup/recovery and signed two-owner disposable PostgreSQL checks.
 
