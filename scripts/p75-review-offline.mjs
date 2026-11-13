@@ -47,7 +47,7 @@ if(command==='sign'){
  // Old public cohorts do not yet have full perceptual image hashes. A signed
  // independently audited old-hash ledger is REQUIRED before accepting blind.
  const map=bundle.exposedPerceptualHashes||{};
- const oldUnfingerprinted=old.filter(r=>r.sha256&&!/^[a-f0-9]{16}$/.test(map[r.sha256]||'')).length;
+ const oldUnfingerprinted=old.filter(r=>!r.sha256||!/^[a-f0-9]{16}$/.test(map[r.sha256]||'')).length;
  const visualAuditPayload={oldManifestUniqueCount:old.length,
   exposedHashesSha256:sha256(canonical(Object.keys(map).sort().map(k=>[k,map[k]]))),verifiedAt:bundle.exposureAudit?.verifiedAt};
  let legacyLedgerOK=false;
