@@ -56,6 +56,9 @@ window.__exerciseFocus=(mode)=>{
  };
  switchView=view=>{
   events.push('switch:'+view);
+  // Real app switchView() calls render() and removes the old closet card.
+  // This is a valid same-owner navigation and must not cancel selection.
+  button.remove();
   if(mode==='switch-change')change();
   if(mode==='switch-relogin')relogin();
  };
@@ -99,6 +102,7 @@ for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
       !event.includes('should not display')),engineName+' '+width+' '+mode+' disclosure');
      if(mode==='valid'){
       assert.deepEqual(actual.events,['refresh','switch:stylist','submit:same-id']);
+      assert.equal(actual.buttonConnected,false,'real switchView rerenders and detaches old card');
      }else if(['old-owner','relogin','rehydrate','revoked','signed-out','wrong-db','detached'].includes(mode)){
       assert.deepEqual(actual.events,[],engineName+' '+width+' '+mode+' rejects stale intent');
      }else if(['no-category','no-form','refresh-error'].includes(mode)){
