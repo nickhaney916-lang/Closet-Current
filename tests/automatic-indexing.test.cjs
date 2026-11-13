@@ -59,6 +59,9 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
  };
  vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);
  vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
+ // Browser mode exposes the real API on window; the VM context also needs
+ // that same API as a global binding for extracted app.js functions.
+ c.ClothingDetails=c.window.ClothingDetails;
  vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function stopCamera(')),c);
  vm.runInContext(source.slice(source.indexOf('async function enableLocal('),source.indexOf('async function importClothingPhotos(')),c);
  return {c,stored,el,get persistedDraft(){return structuredClone(draftRows);}};
