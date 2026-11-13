@@ -1,0 +1,63 @@
+# Parallel Assignment 80 — fine-grained subtype evidence, ambiguity and abstention
+
+FAMILY ALPHA HOLD #255 OPEN. DRAFT / UNMERGED / UNDEPLOYED.
+
+Tracking [#983](https://github.com/nickhaney916-lang/Closet-Current/issues/983). Isolated branch `research/parallel80-subtype-ambiguity-and-abstention-HOLD`. Immutable parent **P853 `29d1905172ab21a277021ac40333174e70879a0d`**, [PR #982](https://github.com/nickhaney916-lang/Closet-Current/pull/982), independently rechecked [NO DEPLOY #43367280945](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43367280945) SUCCESS at that exact SHA. P852 was the previously accepted fallback; the now-green P853 preserves #79 and #78 integration.
+
+## Actual failure mechanisms found
+
+- `vector-scorer.mjs` normalizes scaled image/text dot products with softmax over the **requested vocabulary**. Its numeric scores are not calibrated probabilities. Restricting to a branch can make a wrong subtype appear stronger even without better visual evidence.
+- `recognition-engine.mjs` includes subtype-specific alternate-framing recovery for Bottoms, skirt/dress and coat/jacket conflicts. Multiple framings share the same model weights and can agree on a wrong type. The existing P766 guard protects four previously exposed risk labels (Sweatshirt/Tunic/Blazer/Ankle boots) but is not a general six-family subtype uncertainty interface.
+- `local-worker.mjs` normally returns only the selected recognition path/limited choices; these normal choices do not contain complete source/owner/mask/model provenance for a new reusable alternative-rank UI. Ordinary model scores cannot certify that pixels belong to the right physical garment mask.
+- P843–P850 already require explicit owner review and protect repeat writes, unit ownership, duplicates, learning and batching. This assignment preserves those protections and **does not claim the baseline automatically saved all strong predictions**.
+- Existing app taxonomy has no Skort or generic Boots subtype. Mapping those silently to Skirt/Ankle boots would manufacture specificity; unsupported labels instead abstain and manual Unknown/Other remain available.
+
+## Delivered solution
+
+Three narrowly scoped opt-in research modules, plus small integrations in `app.js` and `local-worker.mjs`. Default recognition engine, confusion guard, vector scorer, taxonomy, segmentation, shoe pairing, memory/correction learning, duplicate comparison, cloud/storage and all #67–#79 implementation branches remain unchanged.
+
+The real Adjust editor adds a panel **only** for a pending unsaved draft, current signed-owner object and `?subtype80=1`. Two deliberate photo/category/detail declarations precede a manual request. The worker reuses existing FashionCLIP with exactly two bounded full-vocabulary calls, including nonclothing controls. No new model, prompt catalog, weights, training, crop generator or automatic background job is introduced. First-use existing runtime/model downloads remain possible; image bytes are not uploaded by this adapter.
+
+Every proposal is tied to original JPEG SHA-256, actual recognition-input JPEG SHA-256, owner/session, item/unit ID, mask receipt and descriptor digest, complete source/crop/region/unit/companion revision, exact pinned model/vector metadata and eight-module recognition-source digest. Segmented inputs need the existing #70 owner/source/mask/unit receipt structure and confirmed grouping; a confirmed pair requires distinct same-source masks and companion ownership. Receipts verify identity/association, **not semantic segmentation correctness**. The main thread hashes actual bytes, the worker checks the input digest, and live owner/source/category/consent/revision checks reject stale async returns and stale choices. No photo bytes, paths or identifiers are logged by the modules.
+
+Six versioned confusion families cover shorts/skirt; dress/skirt/long shirt/tunic; jacket/coat/cardigan/hoodie/sweatshirt; sneakers/boots/sandals/flats; T-shirt/blouse/button-down/sweater; and jeans/trousers/leggings. At most three supported same-category alternatives survive a minimum relative-support floor. Close scores in **either** framing, conflicting categories/background, missing/full-vocabulary mismatches, bad numeric values, unsupported labels, weak detail, stale age and owner/mask/unit mismatch force Unknown / Needs review. The first test cycle found that taking the minimum of two scores could hide a close tie in one framing; this was corrected with an explicit per-framing margin fence. No threshold is presented as empirically calibrated.
+
+Every machine decision remains `itemType: Unknown`, `automaticallyCertified: false`, `requiresOwnerConfirmation: true`. Non-ambiguous score separation merely yields tentative hypotheses. The owner's explicit visual acknowledgment can put a displayed subtype into the **unsaved** field; the existing normal photo confirmation is cleared and remains required for Save changes. The single-use decision handles concurrent repeated clicks. Neither suggestions nor model evidence are persisted, treated as learning truth, merged into inventory or allowed to pair/split shoes. Missing evidence/model preserves the manual editor and Unknown. Owner learning consent stays independent in the existing #72 path.
+
+## Genuine photograph/source evidence
+
+The bounded challenge loader reuses unchanged #75 provenance, overlap and SHA validators on **32 frozen public unlabelled quarantine receipts**. Mechanical overlap filtering leaves **31** candidates, with **1** suspected intra-candidate relationship; this is not independent proof of 31 physical garments or source groups. Three actual Commons original byte streams were downloaded without redirects, SHA-1/SHA-256/length verified and independently decoded against pinned MIME/dimensions/orientation: **3/3 pass; 7,627,802 bytes verified**. No images are written by the loader and stdout is aggregate-only.
+
+All candidate receipts still lack curator rights/consent/source-group approvals, genuine independent subtype labels and approved region masks. They are public development-exposed sources, never new sealed blind. The loader therefore reports **BLOCKED** for independent accuracy, performs **0 subtype-80 model inference runs**, and does not derive subtype classes from source titles. Exact original integrity is verified; lawful training/evaluation eligibility and human truth are not fabricated. The private #75/#79/#71 handoff is documented in [OPERATOR.md](OPERATOR.md); no sealed truth was accessed.
+
+## Measurements and validation
+
+Frozen synthetic before/after comparison: six families × six modes (clear, tie, dim, clipped, wrong source and no consent) = **36** programming fixtures. Actual baseline `clothingChoices`/`strongMatch` plus existing P766 guard yields **30 strong-specific suggestions**. The new policy yields **6 hypothesis-status cases**, **30 policy abstentions**, **12 available candidate sets** including tied alternatives (**12/36 set availability**, not human coverage), and **0 automatic specific-type certificates**. All 36 require human review. These are differently defined, explicitly named proposal/policy counts; **neither side produces a real wardrobe save in this experiment**. They are not a measured reduction in wrong saves, confidence error or real-photo recognition error.
+
+Native source execution covers all families, taxonomy/unknowns, full vocabulary, numeric errors, per-framing ties, view/category conflicts, clipping/dim/soft/occluded/overlapping/small detail, source/mask/unit/model/owner revision mismatches, age, byte hashes, confirmed-pair association, concurrent decision replay, no-consent worker rejection and public-source truth quarantine. The integrated app and worker retain the normal defaults and existing mandatory owner confirmation. First full regression run: **481/481 pass**, both builds pass. Final exact-head results are recorded in the draft PR evidence receipt; no self-referential source commit SHA is invented here.
+
+Actual desktop Chromium/WebKit execute the real Adjust source and the real P80 evidence/worker-adapter/panel modules with an explicitly **synthetic scorer callback**, at CSS **320/390/430** (six browser/width cases). They test no-consent rejection, explicit choice acknowledgment, no implicit type edit/save, ordinary owner confirmation, rapid repeat-submit single-save behavior, six stale async attacks (owner object, in-place owner ID, crop, mask, consent, category), owner replacement across the final asynchronous save boundary, default-off/guest/saved-item exclusion and one owner-confirmed synthetic shoe pair producing exactly one saved item with original/pair evidence preserved. Zero detected axe violations in tested dialog states. No external requests in the synthetic harness: its copy of inherited CSS omits the pre-existing Google Fonts import; production CSS is untouched. **This is not real FashionCLIP inference and not physical Android/iPhone testing.**
+
+The strict dedicated NO DEPLOY workflow pins P853 ancestry and a 12-path allowlist, full native regression/both builds, six subtype browser cases plus inherited photo review/save/pair/learning/color/duplicate/batch browser smoke, and a separate three-public-original integrity job. No deployment, account login, hosted Supabase, private input, photo/answer artifact upload or workflow permission escalation is included.
+
+## Other observed CI failures
+
+The first dedicated live-original job could not obtain a Commons response; a descriptive source-audit user agent, bounded retries and explicit HTTP diagnostics were added, without relaxing original SHA or decoder checks. The separately auto-triggered inherited real-photo benchmark executed **32 actual default-path FashionCLIP cases with 0 runtime errors**, then failed legacy subtype/automatic-indexing expectations. Its current observations are public, historically development-exposed and do not exercise the opt-in P80 adapter or establish independent subtype accuracy. No claim is made that this assignment fixed that legacy benchmark or caused its mismatch; the existing P766 Unknown/owner-review policy is intentionally retained. Do not weaken subtype abstention or re-enable auto-indexing to manufacture a green legacy score. Exact final dedicated versus legacy outcomes are recorded separately in the PR evidence receipt.
+
+## Actual acceptance / limitations
+
+| Evidence | Result |
+| --- | --- |
+| Vetted real independent reviewers | **0** |
+| Approved real subtype labels / independent correct-instance masks | **0 / 0** |
+| Independent real-photo top-one accuracy / candidate-set coverage | **UNKNOWN / UNKNOWN** |
+| Real-photo abstention / confident-wrong rate / class confusion | **UNKNOWN; no eligible denominator** |
+| Actual opt-in subtype-80 inference executions | **0; source adapter exercised with synthetic callbacks** |
+| Separately triggered inherited default-path inference | **32 actual cases, 0 runtime errors; legacy subtype/auto-indexing regression checker FAILS** |
+| Public original byte/decoder checks | **3 verified; no truth/rights approval implied** |
+| Independent blind runs / physical phones | **0 / 0** |
+| Broader Mission 1 release gate | **BLOCKED; HOLD remains OPEN** |
+
+This is a completed subtype **safety/abstention research interface**, not demonstrated recognition-accuracy improvement. Owner statements about visible detail and permissive quality flags do not prove pose, focus, hem/ankle visibility or mask quality; same-model multi-view consensus is correlated. A wrong unknown garment can still score strongly in a closed vocabulary; this system refuses to certify it and still needs genuine owner inspection. Hashes prove bytes/revisions, not visual semantics or real personhood. A compromised browser/registrar/model supply chain is outside these local provenance checks. Device memory/latency, authenticated hosted account isolation, independently calibrated thresholds and true recognition gains remain unverified. No 10/10, real human annotation, physical pairing accuracy or spouse/family trial readiness is claimed.
+
+#67 retains model replacement; #68 segmentation/mask architecture; #69 mobile runtime; #70 physical pairing; #71 sealed scoring/calibration; #72 consented correction learning; #75/#79 lawful sources/independent human truth; #76 mask color; #77 cross-capture identity; #78 actual devices. P853 is integration authority and Mission 3 owns signed cloud privacy. No sibling branch was changed, no blind answer key was read, and Family Alpha #255 remains OPEN.
