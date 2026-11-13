@@ -100,7 +100,20 @@ export function mountSubtype80({
       item.originalPhoto?.image || item.recognitionPhoto?.image || item.image;
     const decoded = new Image();
     decoded.src = item.recognitionPhoto?.image || item.image;
-    await decoded.decode();
+    let timer;
+    try {
+      await Promise.race([
+        decoded.decode(),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => {
+            decoded.removeAttribute("src");
+            reject(Error("P80_PHOTO_DECODE_TIMEOUT"));
+          }, 5000);
+        }),
+      ]);
+    } finally {
+      clearTimeout(timer);
+    }
     const c = document.createElement("canvas");
     c.width = c.height = 32;
     const ctx = c.getContext("2d", { willReadFrequently: true });
@@ -146,7 +159,7 @@ export function mountSubtype80({
         sourceCodeSha256 = await sourceCodeHash80();
       const metadataResponse = await fetch(
         new URL("./recognition-vectors.json", import.meta.url),
-        { cache: "no-store" },
+        { cache: "no-store", signal: AbortSignal.timeout(5000) },
       );
       if (!metadataResponse.ok) throw Error("Model manifest unavailable");
       const metadata = await metadataResponse.json();
