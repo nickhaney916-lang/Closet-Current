@@ -16,6 +16,8 @@ import * as THREE from 'three';
 import {MeshBVH,ExtendedTriangle} from 'three-mesh-bvh';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const captures=new WeakMap();
+// Actual C46 audit results are private, one-shot motion leases, not user-supplied flags.
+const temporalReceipts46=new WeakMap();
 const fail=m=>{throw Error('M2 C40 source surface sweep '+m);};
 const finite=a=>a.every(Number.isFinite);
 const same=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
@@ -1192,7 +1194,7 @@ export function auditSourceDressTemporalSelfContact46({
  }
  if(completeSequence&&posesChecked!==n)
   fail('C46 missing original garment motion frame');
- return Object.freeze({
+ const receipt=Object.freeze({
   schema:'M2-source-dress-temporal-self-contact-v1',
   originalSourceAndSkinVerified:true,
   independentSkinnedClothPoseGrid:true,
@@ -1213,9 +1215,16 @@ export function auditSourceDressTemporalSelfContact46({
   inferredRearHumanVerified:false,
   realClothPhysics:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
+ })
+ temporalReceipts46.set(receipt,{
+  root,mesh,startPositions:startPositions.slice(),
+  endPositions:endPositions.slice(),usedForMotion:false
  });
+ return receipt;;
 }
 export function assertSourceDressTemporalSelfContact46(receipt){
+ if(!receipt||!temporalReceipts46.has(receipt))
+  fail('C46 cloned or invented garment contact evidence is not authentic');
  if(receipt?.schema!=='M2-source-dress-temporal-self-contact-v1'||
     receipt.originalSourceAndSkinVerified!==true||
     receipt.independentSkinnedClothPoseGrid!==true||
@@ -1268,6 +1277,33 @@ export function assertSourceDressTemporalSelfContact46(receipt){
   researchOnly:true,
   everySampledSourceGarmentPoseClear:true,
   noContinuousClothPhysicsCertificate:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
+
+/**
+ * P2-C47: hand an actual C46 sampled-geometry audit to the optional motion
+ * commit gate. A structurally plausible object, cloned receipt, prior garment
+ * receipt or old XYZ target cannot grant admission. A successful lease is
+ * consumed ONCE. Evidence remains research-only and proves no unsampled pose.
+ */
+export function requireSourceDressTemporalReceipt47({
+ receipt,root,dress,startPositions,endPositions
+}={}){
+ const source=receipt&&temporalReceipts46.get(receipt);
+ if(!source||source.usedForMotion||source.root!==root||
+    source.mesh!==dress?.mesh||
+    !(startPositions instanceof Float32Array||startPositions instanceof Float64Array)||
+    !(endPositions instanceof Float32Array||endPositions instanceof Float64Array)||
+    !same(source.startPositions,startPositions)||
+    !same(source.endPositions,endPositions))
+  fail('C47 missing, reused or mismatched authentic garment/contact lease');
+ assertSourceDressTemporalSelfContact46(receipt);
+ source.usedForMotion=true;
+ return Object.freeze({
+  sourceBoundSingleUseReceipt:true,researchOnly:true,
+  continuousSelfContactNotCertified:true,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
