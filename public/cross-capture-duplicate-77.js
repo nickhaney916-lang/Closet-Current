@@ -7,9 +7,10 @@
  const MAX_BYTES=8*1024*1024, MAX_SCAN=1200, MAX_K=3;
  const sessions=new WeakSet(), proposals=new WeakMap();
  const fail=(message)=>{throw Error('P77_'+message);};
- function open({ownerId,sessionId,live}={}){
-  if(typeof ownerId!=='string'||!ownerId||typeof sessionId!=='string'||sessionId.length<8||typeof live!=='function')fail('SCOPE_REQUIRED');
-  const scope={ownerId,sessionId,live,active:true};sessions.add(scope);return scope;
+ function open({ownerId,sessionId,live,hasOwned,hasDraft}={}){
+  if(typeof ownerId!=='string'||!ownerId||typeof sessionId!=='string'||sessionId.length<8||typeof live!=='function'||
+   (hasOwned!==undefined&&typeof hasOwned!=='function')||(hasDraft!==undefined&&typeof hasDraft!=='function'))fail('SCOPE_REQUIRED');
+  const scope={ownerId,sessionId,live,hasOwned,hasDraft,active:true};sessions.add(scope);return scope;
  }
  function close(scope){if(sessions.has(scope))scope.active=false;}
  function valid(scope){try{return !!(sessions.has(scope)&&scope.active&&scope.live()===scope.ownerId);}catch{return false;}}
@@ -137,19 +138,24 @@
  async function propose(incoming,closet,scope,{topK=MAX_K}={}){
   if(!valid(scope))fail('OWNER_CHANGED');
   if(!Array.isArray(closet)||closet.length>MAX_SCAN)fail('UNBOUNDED_INDEX');
-  const snapshot=await evidence(incoming,scope),rank=candidateRank(incoming,closet,{topK});
+  // The pure ranker has no authority over account ownership. Restrict records
+  // BEFORE ranking/top-k so foreign scores cannot displace a real owned match.
+  const ownedCloset=closet.filter(x=>x&&!x.ownerId||x?.ownerId===scope.ownerId);
+  if(scope.hasDraft&&scope.hasDraft(incoming)!==true)fail('STALE_SOURCE');
+  const snapshot=await evidence(incoming,scope),rank=candidateRank(incoming,ownedCloset,{topK});
   const found=[];
   for(const row of rank.top){
    if(!valid(scope))fail('OWNER_CHANGED');
-   const target=closet.find(x=>x.id===row.id);
-   if(!target||target.ownerId&&target.ownerId!==scope.ownerId)continue;
+   const target=ownedCloset.find(x=>x.id===row.id);
+   if(!target||(scope.hasOwned&&scope.hasOwned(target)!==true))continue;
    let proof;try{proof=await evidence(target,scope);}catch{continue;}
    if(proof.sourceSha256===snapshot.sourceSha256 &&
       proof.maskSha256!==snapshot.maskSha256)continue; // distinct regions of one outfit
    found.push({item:target,proof,score:row.score,signal:row.signal,
     exactSameSource:proof.sourceSha256===snapshot.sourceSha256});
   }
-  if(!valid(scope)|| (await evidence(incoming,scope)).revisionSha256!==snapshot.revisionSha256)fail('STALE_SOURCE');
+  if(!valid(scope)||(scope.hasDraft&&scope.hasDraft(incoming)!==true)||
+   (await evidence(incoming,scope)).revisionSha256!==snapshot.revisionSha256)fail('STALE_SOURCE');
   const proposal=Object.freeze({kind:'cross-capture-review',version:1,
    incomingId:incoming.id,candidates:found.map(x=>({id:x.item.id,score:x.score,signal:x.signal,
     exactSameSource:x.exactSameSource})),abstained:found.length===0,scanned:rank.scanned});
@@ -162,10 +168,13 @@
   if(!['same-pending','different','later','remove-unsaved'].includes(action))fail('INVALID_ACTION');
   const selected=state.found.find(x=>x.item.id===candidateId);
   if(!selected||!acknowledged)fail('EXPLICIT_ITEM_ACK_REQUIRED');
+  if((scope.hasOwned&&scope.hasOwned(selected.item)!==true)||
+   (scope.hasDraft&&scope.hasDraft(state.incoming)!==true))fail('STALE_PROPOSAL');
   const now=await evidence(state.incoming,scope),targetNow=await evidence(selected.item,scope);
   if(now.revisionSha256!==state.snapshot.revisionSha256||
-   targetNow.revisionSha256!==selected.proof.revisionSha256||
-   !valid(scope))fail('STALE_PROPOSAL');
+   targetNow.revisionSha256!==selected.proof.revisionSha256||!valid(scope)||
+   (scope.hasOwned&&scope.hasOwned(selected.item)!==true)||
+   (scope.hasDraft&&scope.hasDraft(state.incoming)!==true))fail('STALE_PROPOSAL');
   state.used=true;
   // Intent is ephemeral. In particular 'same-pending' MUST NOT write any record:
   // cross-tab owner-locked atomic alternate-view persistence is not yet proven.
@@ -187,8 +196,8 @@
    el('p','Similarity is only a suggestion. Compare each original photo; no clothing is merged automatically.'));
   for(const found of state.found){
    const section=el('section'),images=el('div'),first=el('img'),second=el('img');
-   images.className='unit70-photo-row';first.src=state.incoming.image;first.alt='New unsaved clothing photograph';
-   second.src=found.item.image;second.alt='Existing owned item: '+(found.item.name||'Closet piece');
+   images.className='unit70-photo-row';first.src=original(state.incoming);first.alt='New unsaved original clothing photograph';
+   second.src=original(found.item);second.alt='Existing owned original item: '+(found.item.name||'Closet piece');
    images.append(first,second);
    const name=el('p','Existing owned item: '+(found.item.name||'Closet piece'));
    const check=el('input');check.type='checkbox';check.setAttribute('aria-label','I compared both photos and identified '+(found.item.name||'this owned item'));
