@@ -14,7 +14,7 @@ test('old 16x16 RGB labels separate lookalike products as possible duplicates: n
  const a=item('shirt-A',1,{recognitionMemory:null}),b=item('shirt-B',2,{recognitionMemory:null});
  assert.equal(C.baseline(a,b),true);
  const rank=C.candidateRank(a,[b]);
- assert.equal(rank.totalCandidates,1);assert.equal(rank.top[0].signal,'legacy-rgb');
+ assert.equal(rank.totalCandidates,0);assert.equal(rank.abstained,true);
  assert.match(rank.evidenceType,/not-physical-identity/);
 });
 test('lighting changes can break the RGB heuristic while same-model retrieval provides a conservative candidate',()=>{
