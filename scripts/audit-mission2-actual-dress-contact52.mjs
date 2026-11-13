@@ -281,3 +281,84 @@ if(process.env.PHOTO_DRESS_EDGES55==='1'){
  console.log('M2_C55_REAL_LICENSED_SOURCE_EDGE_WINDING_SAFE_SUMMARY',
   JSON.stringify(output55));
 }
+
+if(process.env.PHOTO_DRESS_BOUNDARIES56==='1'){
+ assert.equal(process.env.PHOTO_DRESS_EDGES55,'1',
+  'C56 signed photographed dress boundary components require source C55 edge audit');
+ const rows=receipts.map(r=>({
+  receipt:r.originalSourceBoundaryComponents56,
+  complete:r.originalAndSkinned163BoneBoundaryAuditComplete56,
+  expected:r.originalSourceEdgeWinding55.originalBoundarySingleIncidentEdgeGroups
+ }));
+ for(const {receipt:b,complete,expected} of rows){
+  assert.equal(complete,true);
+  assert.equal(b.schema,'M2-original-photograph-boundary-components-C56');
+  assert.equal(b.boundaryComponentAuditComplete,true);
+  assert.equal(b.budgetExhausted,false);
+  assert.equal(b.totalOriginalSingleIncidentEdgeGroups,expected);
+  assert.equal(b.boundariesActuallyVisited,expected);
+  assert.equal(b.connectedBoundaryComponents,
+   b.closedDirectedLoopComponents+b.openDirectedChainComponents+
+   b.windingConflictComponents+b.branchedOrNonmanifoldComponents+
+   b.unsafeSourceSkinOrPoseComponents);
+  assert.equal(expected,b.edgesInClosedDirectedLoops+
+   b.edgesInOpenDirectedChains+b.edgesInWindingConflictComponents+
+   b.edgesInBranchedOrNonmanifoldComponents+
+   b.edgesInUnsafeSourceSkinOrPoseComponents);
+  assert.equal(b.boundaryVertexGroups,
+   b.boundaryVerticesDegreeOne+b.boundaryVerticesDegreeTwo+
+   b.boundaryVerticesDegreeThreePlus);
+  assert.equal(b.sourceCoordinateGroupsComparedAgainstOriginalPhotoRestAndSkin,true);
+  assert.equal(b.actual163BonePoseBoundaryLengthsChecked,true);
+  assert.equal(b.sourceBoundaryNotAnAnatomicallyApprovedHemOrOpening,true);
+  assert.equal(b.closedGeometricLoopNotProofOfSeamQuality,true);
+  assert.equal(b.openBoundaryDoesNotAuthorizeAutomaticHoleRepair,true);
+  assert.equal(b.originalSourceVertexOrFaceIdentifiersExposed,false);
+  assert.equal(b.originalPhotoCoordinatesOrPixelsExposed,false);
+  assert.equal(b.bodyClearanceAndContinuousMotionNotCertified,true);
+  assert.equal(b.noUVOrGeometryEditsPermitted,true);
+  assert.equal(b.releaseAuthorized,false);
+  assert.equal(b.familyAlpha,'HOLD');
+ }
+ for(const row of rows.slice(1))assert.deepEqual(row,rows[0],
+  'Original photograph source boundary components must be identical across all 3 viewports at same genuine bone pose');
+ const b=rows[0].receipt;
+ const output56={
+  schema:'M2-P2-C56-licensed-original-source-boundary-components',
+  realPhotographedSourceFaces:first.originalSourceFaces,
+  originalAuthenticated163BoneBrowserWidths:[320,390,430],
+  originalBoundaryEdgesAudited:b.boundariesActuallyVisited,
+  originalBoundaryVertexGroups:b.boundaryVertexGroups,
+  originalBoundaryComponents:b.connectedBoundaryComponents,
+  closedDirectedBoundaryLoopCandidates:b.closedDirectedLoopComponents,
+  openDirectedBoundaryChainCandidates:b.openDirectedChainComponents,
+  inconsistentWindingBoundaryComponents:b.windingConflictComponents,
+  branchedOrNonmanifoldBoundaryComponents:b.branchedOrNonmanifoldComponents,
+  unsafeSkinRestOrPoseBoundaryComponents:b.unsafeSourceSkinOrPoseComponents,
+  edgeAccounting:{
+   closed:b.edgesInClosedDirectedLoops,
+   open:b.edgesInOpenDirectedChains,
+   directionConflict:b.edgesInWindingConflictComponents,
+   branched:b.edgesInBranchedOrNonmanifoldComponents,
+   unsafe:b.edgesInUnsafeSourceSkinOrPoseComponents
+  },
+  boundaryVertexDegreeDistribution:{
+   degreeOne:b.boundaryVerticesDegreeOne,
+   degreeTwo:b.boundaryVerticesDegreeTwo,
+   degreeThreeOrMore:b.boundaryVerticesDegreeThreePlus
+  },
+  boundariesWithSkinnedPoseEdgeStretchOverTenPercent:
+   b.actualSkinnedPoseEdgesWithOverTenPercentLengthChange,
+  allBoundariesCheckedAgainstOriginalRestAnd163BoneSkin:true,
+  intactLicensedOriginalPhotoAndMesh:true,
+  noOriginalSourceXYZOrFaceIndicesExported:true,
+  noOriginalSourceHemCollarSleeveAnnotation:true,
+  noAutomaticHoleRepairOrSeamWelding:true,
+  noContinuousClothDynamicsCertificate:true,
+  realPhoneAcceptance:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-boundary56.json',
+  JSON.stringify(output56,null,2)+'\n');
+ console.log('M2_C56_REAL_LICENSED_BOUNDARY_COMPONENTS_SAFE_SUMMARY',
+  JSON.stringify(output56));
+}
