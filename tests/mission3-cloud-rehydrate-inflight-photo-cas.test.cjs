@@ -10,6 +10,10 @@ const start=code.indexOf('async function mission3ReloadOwnerCloudView(');
 const end=code.indexOf('// Never replace private wardrobe',start);
 assert.ok(start>=0&&end>start,'Source function not found');
 const actual=code.slice(start,end);
+const predStart=code.indexOf('function mission3CloudRestoreReviewIdle(){',end);
+const predEnd=code.indexOf('function nativeLossless04RestoreSafe(){',predStart);
+assert.ok(predStart>0&&predEnd>predStart);
+const actualPredicate=code.slice(predStart,predEnd);
 const jpg='data:image/jpeg;base64,/9j/AA==',jpg2='data:image/jpeg;base64,/9j/BB==';
 const row=(id,extra={})=>({id,ownerId:'owner-a',image:jpg,
  originalPhoto:{image:jpg,sha256:'a'.repeat(64)},
@@ -31,9 +35,6 @@ function fixture({stage='',fresh=[row('remote-saved')],pending=[row('remote-revi
   document:{querySelector:()=>null},
   location:{search:''},URLSearchParams,
   normalizeClothing:v=>({...v,originalPhoto:v.originalPhoto&&{...v.originalPhoto}}),
-  mission3CloudRestoreReviewIdle:()=>c.failedDraftCaptures.size===0&&
-   c.localPending.size===0&&c.automaticQueue.length===0&&!c.saving&&
-   !c.captureProofTaking&&!c.stream,
   nativeLossless04RestoreSafe:()=>true,
   readAllFrom:async()=>{if(stage==='readAll'){entered.resolve();await gate.promise;}
    return structuredClone(fresh);},
@@ -44,7 +45,7 @@ function fixture({stage='',fresh=[row('remote-saved')],pending=[row('remote-revi
   render:()=>{rendered++;},
   queueAutomatic:()=>{queued++;c.automaticRunning=true;},
  };
- vm.createContext(c);vm.runInContext(actual,c);
+ vm.createContext(c);vm.runInContext(actual+'\n'+actualPredicate,c);
  const lease={ownerDB,assertLease(){
   if(leaseEpoch!==4||c.db!==ownerDB||c.window.closetAuth!==auth)
    throw Error('Private wardrobe changed accounts');
