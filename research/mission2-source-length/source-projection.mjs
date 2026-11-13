@@ -28,6 +28,7 @@ export function patchSourceProjectionShader(shader,projection){
   .replace(UV,'vec2 panel=vec2(.5+(vSourceProjectionPosition.x-uM2SourceProjection.x)/uM2SourceProjection.y,(vSourceProjectionPosition.y-uM2SourceProjection.w)/uM2SourceProjection.z);\n'+PHOTO_EDGE_GLSL)
   .replace(CHEST,'float chest=1.; // Original source alpha/front guards still apply to photographed sleeves.')
   .replace('front*(1.-smoothstep(.115,.195,abs(vPanel.x)))*necklineInterior','front*chest*m2SourcePhotoEdgeWeight*necklineInterior')
+  .replace('front*chest*necklineInterior','front*chest*m2SourcePhotoEdgeWeight*necklineInterior')
   .replace('photo.a*smoothstep(.95,1.,interiorAlpha)','photo.a*smoothstep(.95,.975,interiorAlpha)');
  if(!shader.fragmentShader.includes(PHOTO_EDGE_GLSL)||
     !shader.fragmentShader.includes('front*chest*m2SourcePhotoEdgeWeight*necklineInterior'))
