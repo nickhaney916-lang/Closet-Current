@@ -1214,7 +1214,36 @@ function render(){
  try{assertEditor();}catch{return;}
  const restoreFocus=()=>{if($('closet').hidden||$('appShell').hidden||document.querySelector('dialog[open]'))return;const card=[...document.querySelectorAll('#closetGrid .card')].find(card=>card.dataset.itemId===item.id);(card?.querySelector('[data-action=edit-clothing]')||$('search')).focus({preventScroll:true});};
  restoreFocus();requestAnimationFrame(()=>{if(document.activeElement===document.body)restoreFocus();});
- };dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before deleting it.':'Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+ };dialog.showModal();};del.onclick=async()=>{
+ // This card belongs to one signed owner/session. The native delete CAS
+ // protects the durable row; ALSO fence its asynchronous success/error UI
+ // finalizers so a previous account cannot remove or warn in the next UI.
+ let lease;
+ try{
+  lease=ownerWardrobeMutationLease();
+  const assertCard=()=>{
+   lease.assertLease();
+   if(!items.includes(item))throw Error('CLOSET_STALE_DELETE_REOPEN_EDITOR');
+  };
+  assertCard();
+  // Confirm only the exact saved row originally displayed to this owner.
+  const expected=structuredClone(item);
+  if(!confirm('Delete this closet piece?'))return;
+  assertCard();
+  await removeItem(item.id,expected);
+  assertCard();
+  items=items.filter(x=>x!==item);
+  render();
+ }catch(error){
+  // A revoked (including same-ID re-login) operation has no authority to
+  // update the replacement account's message, image grid or deletion state.
+  try{lease?.assertLease();}catch{return;}
+  if(!lease)return;
+  message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
+   'This clothing piece changed in another tab. Reload My Closet before deleting it.':
+   'Could not delete the piece.');
+ }
+};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
  const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
   reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
   item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
