@@ -953,8 +953,9 @@ test('C46: real intermediate disconnected-source seam remains a BLOCK rather tha
  const f=clothed44([
   0,0,0,1,0,0,0,1,0,
   1,0,0,1,1,0,0,1,0
- ]),original=snap(f.dress.mesh);
+ ]);
  for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ const original=snap(f.dress.mesh);
  const tokens=sampledCloth46(f,{angles:Array.from({length:17},(_,i)=>.02*Math.sin(Math.PI*i/16))});
  const proof=temporal46(f,tokens);
  assert.equal(proof.firstUnresolvedSampleIndex,0);
