@@ -57,7 +57,7 @@ test('case status cannot be invented and time/range errors fail closed',()=>{
  assert.throws(()=>P.record(s,{caseId:'capture_camera',status:'PASS',evidenceSha256:SHA,
    observedAt:'1999-01-01T00:00:00Z'}),/DATE_OUT_OF_RANGE/);
  const x=P.record(s,{caseId:'capture_camera',status:'PASS',evidenceSha256:SHA,
-   durationMs:9999999,itemCountAfter:Infinity});
+   originalSha256:'a'.repeat(64),sourcePreserved:true,durationMs:9999999,itemCountAfter:Infinity});
  assert.equal(x.durationMs,null);assert.equal(x.itemCountAfter,null);
 });
 test('live session isolates photo bytes, EXIF and filename; hashing is explicit opt-in',async()=>{
@@ -90,4 +90,29 @@ test('baseline and P843–P850 tests are scenario-separated and all classificati
  assert.equal(P.publicReport(s).counts.BLOCKED,1);
  assert.equal(P.publicReport(s).counts.NOT_RUN,ids.length-1);
  assert.equal(P.releaseGate([P.publicReport(s)],{independentlyReviewedPairs:0,cloudOwnerIsolationVerified:false}).status,'BLOCKED');
+});
+
+test('PASS claims reject severity contradictions, missing source proof, and missing owner approval',()=>{
+ const s=start();
+ assert.throws(()=>P.record(s,{caseId:'gallery_import',status:'PASS',evidenceSha256:SHA}),/SOURCE_VERIFICATION_REQUIRED/);
+ assert.throws(()=>P.record(s,{caseId:'owner_review_843',status:'PASS',evidenceSha256:SHA}),/OWNER_GATE_REQUIRED/);
+ assert.throws(()=>P.record(s,{caseId:'owner_review_843',status:'PASS',evidenceSha256:SHA,ownerGate:false}),/CONTRADICTORY_PASS/);
+ assert.throws(()=>P.record(s,{caseId:'gallery_import',status:'PASS',evidenceSha256:SHA,
+  sourcePreserved:true,originalSha256:'a'.repeat(64),severity:'P0'}),/CONTRADICTORY_PASS/);
+ assert.throws(()=>P.record(s,{caseId:'capture_camera',status:'BLOCKED',severity:'DO-NOT-INJECT'}),/INVALID_SEVERITY/);
+ assert.equal(P.publicReport(s).counts.NOT_RUN,23);
+ const approved=P.record(s,{caseId:'owner_review_843',status:'PASS',ownerGate:true,
+  severity:'NONE',evidenceSha256:SHA,itemCountBefore:2,itemCountAfter:3});
+ assert.equal(approved.severity,'NONE');assert.equal(approved.itemCountAfter,3);
+ assert.equal(P.publicReport(s).counts.PASS,1);
+ assert.equal(P.publicReport(s).releaseStatus,'BLOCKED');
+});
+test('battery, charging, model cache and network remain private categorical metadata',()=>{
+ const s=start({battery:'21-50',charging:'not-charging',memoryTier:'low',network:'limited',cache:'cold'});
+ const p=P.privateReport(s);
+ assert.deepEqual([p.device.battery,p.device.charging,p.device.memoryTier,p.device.network,p.device.cache],
+  ['21-50','not-charging','low','limited','cold']);
+ const share=JSON.stringify(P.publicReport(s));
+ assert.ok(!share.includes('21-50'));assert.ok(!share.includes('not-charging'));
+ assert.ok(!share.includes('"limited"'));assert.ok(!share.includes('"cold"'));
 });
