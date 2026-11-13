@@ -52,7 +52,8 @@ for(const task of plan.searches){
   if(!info){count('no-image-info');continue;}
   const lic=clean(meta.LicenseShortName?.value),licURL=licenseURL(clean(meta.LicenseUrl?.value));
   const src=info.descriptionurl,srcKey=sourceKey(src);
-  if(!srcKey||!originalURL(info.url)){count('not-original-or-commons');continue;}
+  if(!srcKey){count('commons-page-url-not-recognized');continue;}
+  if(!originalURL(info.url)){count('commons-original-url-not-recognized');continue;}
   if(already.has(srcKey)||seen.has(srcKey)){count('historically-exposed-or-repeated');continue;}
   if(!rightsOK(lic,licURL)){count('rights-metadata-unacceptable');continue;}
   const artist=clean(meta.Artist?.value),title=clean(page.title);
