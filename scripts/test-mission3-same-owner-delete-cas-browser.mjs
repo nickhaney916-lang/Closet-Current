@@ -99,7 +99,8 @@ try{
     const row=items.find(x=>x.id==='same-owner-delete-cas-original');
     try{
      await savePiece({...structuredClone(row),color:'Green',
-      notes:'Older tab must not win'},[],{expectedSavedRow:expected?structuredClone(row):null});
+      notes:'Older tab must not win'},[],{expectedSavedRow:expected?structuredClone(row):null,
+      expectedDraftRow:expected?null:structuredClone(row)});
      return {status:'unexpected-overwrite'};
     }catch(error){return {status:'rejected',message:String(error?.message||error)};}
    },{expected});

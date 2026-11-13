@@ -58,6 +58,7 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
        });
        return req;
       },
+      add(value){return this.put(value);},
       put(value){
        if(aborted)throw Error('Aborted transaction may not write');
        const change={store:id,value:structuredClone(value)};
@@ -97,7 +98,7 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
 function saveFixture({holdProof=true,holdQueue=false,holdCommit=false}={}){
  // Saved-photo tests exercise genuinely new IDs; existing-row conflicts are
  // covered separately by mission3-saved-photo-insert-cas.test.cjs.
- const initial=fakeDB(a,{holdCommit,items:[],draft:[]}),next=fakeDB(b);
+ const initial=fakeDB(a,{holdCommit,items:[],draft:[structuredClone(oldRow)]}),next=fakeDB(b);
  const proof=deferred(),queue=deferred(),events=[];
  const auth={user:{id:a},assertCurrent(){}};
  const ctx={
@@ -106,7 +107,7 @@ function saveFixture({holdProof=true,holdQueue=false,holdCommit=false}={}){
   captureProofVerifyBeforeSave:()=>holdProof?proof.promise:Promise.resolve(),
   queued:fn=>holdQueue?queue.promise.then(fn):fn(),
   nativeIndex07Refresh:async()=>{events.push('refresh:'+ctx.window.closetAuth.user.id);},
-  URLSearchParams,location:{search:''},structuredClone
+  URLSearchParams,location:{search:''},structuredClone,normalizeClothing:value=>value
  };
  bind(ctx,saveSource);
  return {ctx,initial,next,events,proof,queue,switchOwner({sameOwner=false}={}){
@@ -116,7 +117,7 @@ function saveFixture({holdProof=true,holdQueue=false,holdCommit=false}={}){
 }
 function savedValue(){return {id:'same-id',ownerId:a,name:'Blue shirt',image:photo};}
 test('delayed owner-A source verification never inserts shirt or draft into owner-B wardrobe',async()=>{
- const f=saveFixture(),pending=f.ctx.savePiece(savedValue(),[oldRow]).then(()=> 'saved',()=> 'rejected');
+ const f=saveFixture(),pending=f.ctx.savePiece(savedValue(),[oldRow],{expectedDraftRow:oldRow}).then(()=> 'saved',()=> 'rejected');
  f.switchOwner();f.proof.resolve();
  assert.equal(await pending,baseline?'saved':'rejected');
  assert.equal(f.next.writes.length,baseline?2:0);
@@ -125,19 +126,19 @@ test('delayed owner-A source verification never inserts shirt or draft into owne
 });
 test('old queued garment save cannot open new owner DB after sign out before starting',async()=>{
  const f=saveFixture({holdProof:false,holdQueue:true});
- const pending=f.ctx.savePiece(savedValue(),[oldRow]).then(()=> 'saved',()=> 'rejected');
+ const pending=f.ctx.savePiece(savedValue(),[oldRow],{expectedDraftRow:oldRow}).then(()=> 'saved',()=> 'rejected');
  f.switchOwner();f.queue.resolve();
  assert.equal(await pending,baseline?'saved':'rejected');
  assert.equal(f.next.writes.length,baseline?2:0);
 });
 test('relogin as identical owner ID still revokes old async garment save',async()=>{
- const f=saveFixture(),pending=f.ctx.savePiece(savedValue(),[]).then(()=> 'saved',()=> 'rejected');
+ const f=saveFixture(),pending=f.ctx.savePiece(savedValue(),[],{expectedDraftRow:oldRow}).then(()=> 'saved',()=> 'rejected');
  f.switchOwner({sameOwner:true});f.proof.resolve();
  assert.equal(await pending,baseline?'saved':'rejected');
  assert.equal(f.initial.writes.length,baseline?2:0);
 });
 test('old pending IDB commit cannot report a saved garment to the next account',async()=>{
- const f=saveFixture({holdProof:false,holdCommit:true}),pending=f.ctx.savePiece(savedValue(),[]).then(()=> 'saved',()=> 'rejected');
+ const f=saveFixture({holdProof:false,holdCommit:true}),pending=f.ctx.savePiece(savedValue(),[],{expectedDraftRow:oldRow}).then(()=> 'saved',()=> 'rejected');
  // The queued async proof await must finish and open the transaction.
  for(let i=0;i<10&&!f.initial.writes.length;i++)await Promise.resolve();
  assert.equal(f.initial.writes.length,2,'Save reached original owner transaction before revocation');
@@ -148,7 +149,7 @@ test('old pending IDB commit cannot report a saved garment to the next account',
 });
 test('valid current-owner garment + draft save still commits atomically',async()=>{
  const f=saveFixture({holdProof:false});
- await f.ctx.savePiece(savedValue(),[]);
+ await f.ctx.savePiece(savedValue(),[],{expectedDraftRow:oldRow});
  assert.equal(f.initial.writes.length,2);
  assert.equal(f.initial.data.items[0].name,'Blue shirt');
  assert.equal(f.initial.data.draft.length,0);
@@ -156,7 +157,7 @@ test('valid current-owner garment + draft save still commits atomically',async()
 });
 test('same-owner verified source does not mutate garment before integrity promise succeeds',async()=>{
  const f=saveFixture();
- const pending=f.ctx.savePiece(savedValue(),[]);
+ const pending=f.ctx.savePiece(savedValue(),[],{expectedDraftRow:oldRow});
  assert.equal(f.initial.writes.length,0);
  f.proof.resolve();await pending;
  assert.equal(f.initial.writes.length,2);

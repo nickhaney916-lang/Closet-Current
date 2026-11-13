@@ -331,11 +331,15 @@ async function commitOwnerCorrection10(value,expectedSavedRow,nextBatch){
  return commitNativeCorrection10({db:ownerDB,ownerId:owner,before:expectedSavedRow,
   after:value,nextBatch,assertOwner});
 }
-function savePiece(value,nextBatch,{expectedSavedRow=null}={}){
- // Freeze the exact reviewed saved row before any async SHA verification.
+function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}={}){
+ // Freeze the owner's reviewed saved/draft row before asynchronous photo
+ // hashing. A draft insert MUST be bound to an existing persisted original.
  const expected=expectedSavedRow?structuredClone(expectedSavedRow):null;
+ const draftExpected=expectedDraftRow?structuredClone(expectedDraftRow):null;
  if(expected&&expected.id!==value.id)
   return Promise.reject(Error('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR'));
+ if((expected&&draftExpected)||(!expected&&(!draftExpected||draftExpected.id!==value.id)))
+  return Promise.reject(Error('CLOSET_STALE_DRAFT_REOPEN_EDITOR'));
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
  const current=()=>!!owner&&epoch===captureOperationEpoch&&window.closetAuth===auth&&
   auth.user?.id===owner&&db===ownerDB&&ownerDB?.name==='closet-current-user-'+owner;
@@ -371,8 +375,36 @@ function savePiece(value,nextBatch,{expectedSavedRow=null}={}){
        throw Error('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR');
      }else if(request.result)
       throw Error('CLOSET_ALREADY_SAVED_RELOAD_WARDROBE');
-     store.put(value);
-     tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+     if(expected){
+      // Editing a saved row never rewrites any pending photographs.
+      store.put(value);
+     }else{
+      const draftStore=tx.objectStore('state');
+      const draftRequest=draftStore.get('draft');
+      draftRequest.onsuccess=()=>{
+       try{
+        requireLease();
+        const rows=draftRequest.result?.batch;
+        const matching=Array.isArray(rows)?rows.filter(row=>row.id===value.id):[];
+        if(matching.length!==1||
+           JSON.stringify(normalizeClothing(matching[0]))!==
+           JSON.stringify(normalizeClothing(draftExpected)))
+         throw Error('CLOSET_STALE_DRAFT_REOPEN_EDITOR');
+        // Owner's human-reviewed details may change, but the source
+        // photograph and cryptographic source identity may not.
+        if(value.image!==draftExpected.image||
+           value.sourceSHA256!==draftExpected.sourceSHA256||
+           value.originalPhoto?.image!==draftExpected.originalPhoto?.image||
+           value.originalPhoto?.sha256!==draftExpected.originalPhoto?.sha256)
+         throw Error('CLOSET_STALE_DRAFT_REOPEN_EDITOR');
+        // Source row removal and new saved garment insertion commit
+        // together, preserving all other-tab pending originals as-is.
+        store.add(value);
+        draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+       }catch(error){failure=error;try{tx.abort();}catch{}}
+      };
+      draftRequest.onerror=()=>{failure=draftRequest.error||Error('Draft verification failed');try{tx.abort();}catch{}};
+     }
     }catch(error){failure=error;try{tx.abort();}catch{}}
    };
    tx.oncomplete=()=>{try{requireLease();resolve();}catch(error){reject(error);}};
@@ -547,6 +579,7 @@ function adjustPhoto(item){
  // Saved photos require the exact opening-row CAS even outside CORRECTION10
  // research mode. Never silently overwrite another tab's edited original.
  const expectedSavedRow=items.some(x=>x.id===item.id)?structuredClone(item):null;
+ const expectedDraftRow=!expectedSavedRow&&batch.some(x=>x.id===item.id)?structuredClone(item):null;
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
  if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before removing it.':'Could not remove this photo. Try again.');}};
@@ -610,15 +643,19 @@ function adjustPhoto(item){
    message('Reviewed '+stored.itemType+' · '+stored.color+' saved to your private closet. Original photograph preserved.');
    return;
   }
-  await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow});
+  await savePiece(value,batch.filter(x=>x.id!==item.id),{expectedSavedRow,expectedDraftRow});
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
-  batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
+  // savePiece already atomically removed only the reviewed persisted draft.
+  // NEVER follow it with a blind whole-batch persistDraft rewrite.
+  batch=batch.filter(x=>x.id!==item.id);dialog.close();render();scheduleMemoryReview();
  }catch(error){
   save.disabled=false;
   message(typeof reviewedCapture120!=='undefined'&&reviewedCapture120?'Reviewed garment was not saved. '+String(error.message||error)+
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
+   String(error?.message||error).includes('CLOSET_STALE_DRAFT_REOPEN_EDITOR')?
+    'This unfinished photo changed in another tab. Nothing was overwritten. Reload Photo results, then reopen Adjust.':
    String(error?.message||error).includes('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR')?
     'Another tab changed this garment. Your changes were not saved. Reload My Closet, then reopen Adjust details.':
    String(error?.message||error).includes('CLOSET_ALREADY_SAVED_RELOAD_WARDROBE')?
