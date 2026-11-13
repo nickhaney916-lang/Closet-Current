@@ -123,6 +123,8 @@ async function runCase(engine,width){
   assert.doesNotMatch(await page.locator('#outfitSaveStatus').textContent(),/Shoes: Blue/,
     'Self-consistent but wrong source hashes must not be accepted as current color evidence');
   assert.equal(await page.evaluate(()=>items.length),0);
+  assert.equal(await page.evaluate(()=>batch[0]?.colorEstimate||null),null,'wrong JPEG must not retain automatic legacy color');
+  assert.equal(await page.evaluate(()=>batch[0]?.reconciliation70?.colorEstimate||null),null,'wrong JPEG must not retain nested color estimate');
   // A correct image hash cannot authorize a proposal for another owner.
   await page.evaluate(({photos,mask})=>{
    batch.length=0;items.length=0;
@@ -140,6 +142,7 @@ async function runCase(engine,width){
   assert.doesNotMatch(await page.locator('#outfitSaveStatus').textContent(),/Shoes: Blue/,
     'Cross-owner research color must never be displayed as a verified proposal');
   assert.equal(await page.evaluate(()=>items.length),0);
+  assert.equal(await page.evaluate(()=>batch[0]?.colorEstimate||null),null,'cross-owner colors must not auto-populate');
   assert.deepEqual(errors,[],'No browser JavaScript exceptions after source and owner tampering');
   return {engine:engine.name(),viewportWidth:width,paired:true,separated:true,
    sourceHashMismatchBlocked:true,crossOwnerColorBlocked:true,originalSourcePreserved:true,closetWrites:0};
