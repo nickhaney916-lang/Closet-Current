@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Lock verified original P2-C46 and exactly 5 scoped research/test/CI paths
+      - name: Lock verified original P2-C46 and exactly 6 scoped research/test/CI paths
         shell: bash
         run: |
           set -eu
@@ -27,7 +27,7 @@ jobs:
           git diff --name-only "$BASE" HEAD >/tmp/p2-c47-files
           while IFS= read -r path; do
             case "$path" in
-              research/mission2-source-length/source-dress-motion.mjs|research/mission2-source-length/source-dress-moving-surface.mjs|scripts/install-mission2-source-dress-motion.mjs|tests/mission2-moving-dress-body-surfaces.test.mjs|.github/workflows/mission2-source-dress-receipt-lock-no-deploy.yml)
+              research/mission2-source-length/source-dress-motion.mjs|research/mission2-source-length/source-dress-moving-surface.mjs|research/mission2-source-length/source-dress-receipt-lock.mjs|scripts/install-mission2-source-dress-motion.mjs|tests/mission2-moving-dress-body-surfaces.test.mjs|.github/workflows/mission2-source-dress-receipt-lock-no-deploy.yml)
                 ;;
               *)
                 echo "C47 prohibited file: $path"
@@ -35,11 +35,12 @@ jobs:
                 ;;
             esac
           done </tmp/p2-c47-files
-          test "$(wc -l </tmp/p2-c47-files)" -eq 5
+          test "$(wc -l </tmp/p2-c47-files)" -eq 6
           git diff --exit-code "$BASE" HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json package.json package-lock.json
           node --check scripts/install-mission2-source-dress-motion.mjs
           node --check research/mission2-source-length/source-dress-motion.mjs
           node --check research/mission2-source-length/source-dress-moving-surface.mjs
+          node --check research/mission2-source-length/source-dress-receipt-lock.mjs
           node --check tests/mission2-moving-dress-body-surfaces.test.mjs
           node --check scripts/test-native-3d-05-browser.mjs
           node --check scripts/audit-mission2-source-dress-motion.mjs
