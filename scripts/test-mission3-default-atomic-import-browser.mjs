@@ -68,7 +68,7 @@ try{
     page.on('pageerror',e=>errors.push({engine,width,error:String(e)}));
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-    const result=await page.evaluate(async({ownerA,ownerB,jpeg})=>{
+    const result=await page.evaluate(async({ownerA,ownerB,jpeg,differentJPEG})=>{
      const idbRead=()=>new Promise((done,reject)=>{
       const tx=db.transaction(['items','state'],'readonly');
       const a=tx.objectStore('items').getAll(),b=tx.objectStore('state').getAll();
