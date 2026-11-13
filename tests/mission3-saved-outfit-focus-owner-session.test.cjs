@@ -22,7 +22,8 @@ function fixture(){
  const ctx={window:{closetAuth:originalAuth},db:{name:'closet-current-user-owner-a'},
   captureOperationEpoch:7,items:[item],$(id){return nodes[id];},
   refreshStylistFocusItems(){events.push('refresh');},
-  switchView(view){events.push('switch:'+view);},
+  // The real switchView('stylist') calls render(), replacing the old card.
+  switchView(view){events.push('switch:'+view);button.isConnected=false;},
   message(value){events.push('message:'+value);}
  };
  vm.createContext(ctx);vm.runInContext(production,ctx);
@@ -45,6 +46,13 @@ function fixture(){
 }
 test('currently signed original card selects exact saved item and submits one outfit request',()=>{
  const f=fixture();f.ctx.focusSavedClosetCardOwnerSafe(f.item,f.button);
+ assert.deepEqual(f.events,['refresh','switch:stylist','submit:same-id']);
+ assert.equal(f.nodes.stylistFocusItem.value,'same-id');
+});
+test('native switchView intentionally detaches the old card yet still submits owner-safe outfit focus',()=>{
+ const f=fixture();
+ f.ctx.focusSavedClosetCardOwnerSafe(f.item,f.button);
+ assert.equal(f.button.isConnected,false,'switchView rerender removes old closet button');
  assert.deepEqual(f.events,['refresh','switch:stylist','submit:same-id']);
  assert.equal(f.nodes.stylistFocusItem.value,'same-id');
 });
