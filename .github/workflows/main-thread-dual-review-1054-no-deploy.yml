@@ -1,0 +1,81 @@
+name: "MAIN1054 M4 native M1 dual-model review integration — NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/main-thread-dual-review-1054-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-dual-research:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Immutable M3 pass ancestor and opt-in original-source/owner guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=58c4fadeb8110f694a4c7c53a7c917035af7f434
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test -n "$CHANGED"
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/m4-dual-review-1054.mjs|\
+              public/dual-core-82.mjs|public/dual-panel-82.mjs|\
+              public/dual-worker-82.mjs|public/dual-model-lock-82.mjs|\
+              public/model-arbitration-81.mjs|public/subtype-review-80.mjs|\
+              public/recognition-confusion-guard.mjs|\
+              public/recognition-engine-dual82.mjs|\
+              scripts/test-main1054-dual-review-browser.mjs|\
+              research/main-thread-integration-1054/MILESTONE4.md|\
+              .github/workflows/main-thread-dual-review-1054-no-deploy.yml) ;;
+              *) echo "Unapproved research change: $path" >&2; exit 1;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/closet-stylist.js public/outfit-board.js public/cloud-backup.js public/index.html public/recognition-engine.mjs
+          git diff --exit-code "$BASE" HEAD -- public/native-canonical-photo-source-167.mjs public/native-reviewed-private-save-167.mjs public/native-owner-wardrobe-index-167.mjs
+          grep -q "mission4Dual82')==='research'" public/app.js
+          grep -q "mission4Dual82Active" public/app.js
+          grep -q "sourceStamp(item)" public/m4-dual-review-1054.mjs
+          grep -q "originalShaVerified:true" public/m4-dual-review-1054.mjs
+          grep -q "recognition-engine-dual82.mjs" public/dual-worker-82.mjs
+          grep -q "recognition-engine-dual82.mjs" public/dual-core-82.mjs
+          grep -q "category_disagreement" public/dual-panel-82.mjs
+          grep -q "sharedRankChoices82" public/dual-panel-82.mjs
+          grep -q "renderAuthorized3D:false" research/main-thread-integration-1054/native-2d-preview.mjs
+      - name: Pinned offline no-deploy dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install native-test browser runtimes
+        run: npx playwright install --with-deps chromium webkit
+      - name: Build offline native PWA
+        run: node scripts/build.mjs
+      - name: Verified M4/M3 existing original source and owner session tests
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Real native clothingFields with actual P875 two-model policy and synthetic response browser acceptance
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Existing owner-original 2D native outfit browser acceptance
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: All existing native tests (including 95 M3 owner-lease tests)
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Block output changes and release
+        shell: bash
+        run: |
+          test -f benchmark/main1054-dual-policy-browser/results.json
+          test -f benchmark/main1054-native-preview/results.json
+          test -d dist
+          echo "NO DEPLOY. Synthetic-only source-policy browser checks. No real FashionCLIP/SigLIP model inference, no private photos, no 3D release, Family Alpha HOLD."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main1054-m4-dual-owner-policy-research
+          path: |
+            benchmark/main1054-dual-policy-browser/
+            benchmark/main1054-native-preview/
+          retention-days: 7
