@@ -1,6 +1,7 @@
 'use strict';
 let styledCollectionResults=[];
 const styledCollectionSaveStates=new WeakMap();
+let styledCollectionRequestSerial=0;
 function refreshStylistFocusItems(){
  const select=$('stylistFocusItem');if(!select)return;
  const selected=select.value;select.replaceChildren(new Option('Use my whole closet',''));
@@ -15,6 +16,9 @@ function refreshStylistFocusItems(){
 closetReady.then(refreshStylistFocusItems).catch(()=>{});
 window.addEventListener('closet:style-owned-inventory-committed',refreshStylistFocusItems);
 window.addEventListener('closet:session-locked',()=>{
+ // A previous owner's trend fetch may resolve after sign-out. Revoke its UI lease.
+ styledCollectionRequestSerial++;
+ $('createCollectionOutfits').disabled=false;
  $('stylistFocusItem').replaceChildren(new Option('Use my whole closet',''));
  styledCollectionResults=[];renderStyledCollection();
 });
@@ -112,13 +116,81 @@ function renderStyledCollection(){
  }
  void mountOriginalPhotoPreview167();
 }
+// The Stylist form waits for trend research and closet readiness. Do not
+// publish an old owner's combination after those awaits, or let a superseded
+// request overwrite a newer result. Pin the exact private session, live
+// wardrobe objects, and four requested form inputs at submission.
+function beginOwnerStyledCollectionRequest(){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch,wardrobe=[...items];
+ const values={
+  stylistOccasion:$('stylistOccasion')?.value,
+  stylistAudience:$('stylistAudience')?.value,
+  stylistSeason:$('stylistSeason')?.value,
+  stylistFocusItem:$('stylistFocusItem')?.value
+ };
+ const ownsSession=()=>{
+  if(typeof owner!=='string'||!owner||window.closetAuth!==auth||
+     auth.user?.id!==owner||db!==ownerDB||
+     ownerDB?.name!=='closet-current-user-'+owner||
+     epoch!==captureOperationEpoch||
+     $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
+ if(!ownsSession())return null;
+ const serial=++styledCollectionRequestSerial;
+ const current=()=>serial===styledCollectionRequestSerial&&ownsSession()&&
+  items.length===wardrobe.length&&wardrobe.every((item,i)=>items[i]===item)&&
+  Object.entries(values).every(([id,value])=>$(id)?.value===value);
+ return {serial,current,ownsSession,values};
+}
 $('styleCollectionForm').onsubmit=async event=>{
- event.preventDefault();const button=$('createCollectionOutfits');button.disabled=true;$('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
- try{await closetReady;refreshStylistFocusItems();await refreshTrendLibrary(true);
-  styledCollectionResults=styleOwnedCollection(items,{request:$('stylistOccasion').value,audience:$('stylistAudience').value,season:$('stylistSeason').value,focusItemId:$('stylistFocusItem').value||undefined},activeTrendLibrary);
-  renderStyledCollection();$('stylistStatus').textContent=styledCollectionResults.length?'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':'Add clothing photos to My closet first, then create an outfit.';
- }catch{$('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';}finally{button.disabled=false;}
+ event.preventDefault();
+ const lease=beginOwnerStyledCollectionRequest();
+ if(!lease)return;
+ const button=$('createCollectionOutfits');
+ button.disabled=true;
+ $('stylistStatus').textContent='Matching your clothes with the latest verified trends…';
+ try{
+  await closetReady;
+  if(!lease.current())return;
+  refreshStylistFocusItems();
+  if(!lease.current())return;
+  await refreshTrendLibrary(true);
+  if(!lease.current())return;
+  const request={
+   request:lease.values.stylistOccasion,
+   audience:lease.values.stylistAudience,
+   season:lease.values.stylistSeason,
+   focusItemId:lease.values.stylistFocusItem||undefined
+  };
+  const created=styleOwnedCollection(items,request,activeTrendLibrary);
+  if(!lease.current())return;
+  styledCollectionResults=created;
+  renderStyledCollection();
+  if(!lease.current())return;
+  $('stylistStatus').textContent=styledCollectionResults.length?
+   'Here are '+styledCollectionResults.length+' outfit option'+(styledCollectionResults.length===1?'':'s')+' from your collection.':
+   items.length?'No suitable combination for this occasion yet. Add or adjust the clothing categories in My closet.':
+   'Add clothing photos to My closet first, then create an outfit.';
+ }catch{
+  if(lease.current())
+   $('stylistStatus').textContent='Could not create outfits. Your closet is unchanged; try again.';
+ }finally{
+  // Do not re-enable a newer owner's or a newer request's control from a
+  // previous asynchronous completion.
+  if(lease.ownsSession()&&lease.serial===styledCollectionRequestSerial)
+   button.disabled=false;
+ }
 };
-for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{styledCollectionResults=[];renderStyledCollection();$('stylistStatus').textContent='Create outfits for your new preferences.';};
+for(const id of ['stylistOccasion','stylistAudience','stylistSeason'])$(id).onchange=()=>{
+ // A preference edit explicitly replaces the earlier request, even if the
+ // user returns to the previous value before its trend fetch resolves.
+ styledCollectionRequestSerial++;
+ $('createCollectionOutfits').disabled=false;
+ styledCollectionResults=[];
+ renderStyledCollection();
+ $('stylistStatus').textContent='Create outfits for your new preferences.';
+};
 $('stylistSeason').value=['Winter','Winter','Spring','Spring','Spring','Summer','Summer','Summer','Fall','Fall','Fall','Winter'][new Date().getMonth()];
 $('stylistAddClothes').onclick=()=>switchView('scan');
