@@ -40,6 +40,7 @@ ${actions}
 ${save}
 window.__scenario=async mode=>{
  events=[];boardStatusSerial=0;captureOperationEpoch++;
+ $('boardName').focus=()=>events.push('focus');
  boardConflictDraft=null;boardExpectedStoredDraft='null';boardCommittedDraft='null';
  currentBoard={slots:{top:'same-id'},ideas:{}};
  savedOutfitBoards=[];items=[{id:'same-id',ownerId:'owner-a',image:'synthetic-JPEG-A'}];
