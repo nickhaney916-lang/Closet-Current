@@ -211,7 +211,7 @@ test("PRIVATE evaluator and native module do not turn synthetic test fixtures in
         predictions:rows,
         seal:{...s,signature:"AAAA"},
         trusted:{registrarFingerprint:f.bundle.approvedFingerprint,scorerFingerprint:s.fingerprint,
-          targetCommit:seal.targetCommit,modelSha256:seal.modelSha256,
+          targetCommit:s.targetCommit,modelSha256:s.modelSha256,
           approvedAt:new Date(Date.now()-3600000).toISOString()},
         receipts:{[rows[0].sourceSha256]:[f.receipt(0,label()),f.receipt(1,label())]},
       });
