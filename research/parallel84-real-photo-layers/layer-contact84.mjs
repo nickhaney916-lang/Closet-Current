@@ -134,7 +134,10 @@ export function auditDistinctPhotoLayers84({
   faces=[...preparedFaces(a.triangles,0,maxFaces,counter),
          ...preparedFaces(b.triangles,1,maxFaces,counter)];
  }catch(e){return fail(String(e.message).replace(/[^a-z-]/g,''));}
- faces.sort((x,y)=>x.lo[0]-y.lo[0]);
+ // The shirts and jeans share X around the torso, but overlap only near
+ // the waist in Y. Sorting and sweeping Y trims irrelevant full-leg/full-torso
+ // comparisons without skipping any Y-bounded original source triangle.
+ faces.sort((x,y)=>x.lo[1]-y.lo[1]);
  // Cross-garment only: the older single active list repeatedly scanned
  // every shirt face against other SHIRT faces even though these are not the
  // distinct-layer pairs being measured. Keeping separate active source sets
@@ -144,11 +147,11 @@ export function auditDistinctPhotoLayers84({
  outer:for(const candidate of faces){
   const opposing=activeByPart[1-candidate.part];
   for(let k=opposing.length-1;k>=0;k--)
-   if(opposing[k].hi[0]+toleranceMeters<candidate.lo[0])opposing.splice(k,1);
+   if(opposing[k].hi[1]+toleranceMeters<candidate.lo[1])opposing.splice(k,1);
   for(const previous of opposing){
    if(++comparisons>maxComparisons){complete=false;break outer;}
-   if(previous.hi[1]+toleranceMeters<candidate.lo[1]||
-      candidate.hi[1]+toleranceMeters<previous.lo[1]||
+   if(previous.hi[0]+toleranceMeters<candidate.lo[0]||
+      candidate.hi[0]+toleranceMeters<previous.lo[0]||
       previous.hi[2]+toleranceMeters<candidate.lo[2]||
       candidate.hi[2]+toleranceMeters<previous.lo[2])continue;
    if(++candidates>maxCandidatePairs){complete=false;break outer;}
