@@ -2,7 +2,7 @@
 
 **Family Alpha HOLD #255 OPEN. DRAFT ONLY: no merge, no production or staging deployment, no hosted Supabase and no private family wardrobe access.**
 
-Verified exact parent [Mission 3 PR #1006](https://github.com/nickhaney916-lang/Closet-Current/pull/1006), `aed074ba2f8a0d4713bb5a208d1722350fae5f38`. Change scoped to the live `public/app.js` `recognizeItem` final status update, source-backed tests, native browsers, strict exact-parent CI and report.
+Verified exact parent [Mission 3 PR #1006](https://github.com/nickhaney916-lang/Closet-Current/pull/1006), `aed074ba2f8a0d4713bb5a208d1722350fae5f38`. Change scoped to the live `public/app.js` `recognizeItem` final status update, source-backed tests, native browsers, strict exact-parent CI and report with one compatibility-fixture adjustment.
 
 ## Reproduced risk
 
@@ -25,7 +25,7 @@ The code did **not await** the native, owner-specific compare-and-swap transacti
 
 - Source-executed `tests/mission3-pending-capture-status-cas.test.cjs` with native-like fake IndexedDB: acknowledgement remains pending behind the queued owner-private write, then succeeds after actual commit; synthetic quota returns false with photo proof still durable; same-owner second-tab human color correction wins against stale recognition; revoked session suppresses cross-owner warning; direct source assertion bans prior `void persistDraft`.
 - Native Chromium and WebKit, CSS widths 320/390/430, actual signed synthetic owner and owner-private IndexedDB: hold real `beforeWrite` until release and prove not prematurely acknowledged, update human color from a second same-owner tab before CAS and prove stale failure, simulate quota, actual page reload rehydrates original JPEGs, check distinct signed-owner isolation, block off-host traffic. Synthetic SHA-proven photos; no physical device or hosted cloud claims.
-- Exact-parent **five-path NO DEPLOY** CI runs inherited full serial Node tests, cloud restore transaction/rehydration and no-auto-discard tests, native browser capture/save/restore, signed disposable PostgreSQL Storage RLS/two-owner browser and owner photo-based outfit integration smoke tests.
+- Exact-parent **six-path NO DEPLOY** CI runs inherited full serial Node tests, cloud restore transaction/rehydration and no-auto-discard tests, native browser capture/save/restore, signed disposable PostgreSQL Storage RLS/two-owner browser and owner photo-based outfit integration smoke tests.
 - CI **must** be verified against the final HEAD before reporting success. Any earlier failed test/check is superseded only by a final green run.
 
 ## Release blockers remain
