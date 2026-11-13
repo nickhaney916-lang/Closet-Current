@@ -1,0 +1,63 @@
+name: Mission 1 P868 final worker callback lifetime — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-dual-terminal-events-868-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p868-terminal-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-source-and-inherited-regressions-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact immutable P867 parent and four-file allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=8e56a4298a995492c04e1f1b028fb9e6f329c396
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p868-paths
+          test "$(wc -l </tmp/p868-paths)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              public/dual-core-82.mjs|tests/mission1-dual-terminal-events-868.test.mjs|research/mission1-dual-terminal-events-868/REPORT.md|.github/workflows/mission1-dual-terminal-events-868-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p868-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/dual-panel-82.mjs public/dual-worker-82.mjs public/local-worker.mjs public/recognition-engine.mjs public/cloud-backup.js supabase)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-dual-terminal-events-868/REPORT.md
+          echo P868_SCOPE_NO_DEPLOY_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Late event/cancel/timeout test and module syntax
+        run: |
+          set -euo pipefail
+          node --test tests/mission1-dual-terminal-events-868.test.mjs tests/mission1-dual-worker-transport-867.test.mjs
+          node --check public/dual-core-82.mjs
+      - name: Native suite, two builds and explicit blocked release
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p868-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p868-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p868-release
+      - name: Inherited native Chromium/WebKit evidence and dual opt-in safeguards
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
