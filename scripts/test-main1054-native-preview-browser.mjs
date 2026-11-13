@@ -157,10 +157,20 @@ try{
     results.push({engine:name,width,case:'native signed owner original photo preview',pass:true});
     // A changed JPEG digest cannot yield a new verified preview.
     await page.evaluate(()=>new Promise((resolve,reject)=>{
-     const tx=db.transaction('items','readwrite');
-     const store=tx.objectStore('items'),r=store.get('m4-A-shirt');
-     r.onsuccess=()=>{const item=r.result;item.originalPhoto.sha256='0'.repeat(64);store.put(item);};
-     tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+     const open=indexedDB.open('closet-current-user-m4-A',2);
+     open.onerror=()=>reject(open.error);
+     open.onsuccess=()=>{
+      const connection=open.result,tx=connection.transaction('items','readwrite');
+      const store=tx.objectStore('items'),r=store.get('m4-A-shirt');
+      r.onsuccess=()=>{
+       const item=r.result;
+       if(!item){connection.close();reject(Error('synthetic item missing'));return;}
+       item.originalPhoto.sha256='0'.repeat(64);store.put(item);
+      };
+      tx.oncomplete=()=>{connection.close();resolve();};
+      tx.onerror=tx.onabort=()=>{const error=tx.error||Error('synthetic mutation rejected');
+       connection.close();reject(error);};
+     };
     }));
     await page.reload({waitUntil:'domcontentloaded'});
     await page.evaluate(()=>switchView('builder'));
