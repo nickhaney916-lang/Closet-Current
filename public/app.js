@@ -262,7 +262,8 @@ function adjustPhoto(item){
   const user=window.closetAuth?.user,owner=user?.id;
   if(owner&&db?.name==='closet-current-user-'+owner){
    cross77Scope=CrossCaptureDuplicate77.open({ownerId:owner,sessionId:crypto.randomUUID(),
-    live:()=>window.closetAuth?.user===user&&db?.name==='closet-current-user-'+owner?owner:null});
+    live:()=>window.closetAuth?.user===user&&db?.name==='closet-current-user-'+owner?owner:null,
+    hasOwned:existing=>items.includes(existing),hasDraft:incoming=>batch.includes(incoming)});
    cross77Pending=true;canSaveReview();
    const panel=node('section',null,'duplicate-review-77');
    panel.setAttribute('aria-label','Possible previously owned garment comparison');
