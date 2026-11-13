@@ -67,8 +67,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     })));
     throw error;
    }
-   assert.equal(await page.getByAltText('New unsaved clothing photograph').count(),1);
-   assert.equal(await page.getByAltText(/Existing owned item/).count(),1);
+   assert.equal(await page.getByAltText('New unsaved original clothing photograph').count(),1);
+   assert.equal(await page.getByAltText(/Existing owned original item/).count(),1);
    assert.equal(await submit.isDisabled(),true);
    await same.click();
    assert.match(await page.locator('.duplicate-review-77 [role="status"]').innerText(),/not accepted/i);
