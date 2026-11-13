@@ -42,7 +42,7 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
 // original/mask binding. It never replaces the existing user-facing color.
 const color76=request.color76===true&&request.instanceReview70===true&&
  typeof request.ownerId==='string'&&request.ownerId.length>0?
- await import('./garment-color-76.mjs'+new URL(import.meta.url).search):null;
+ await import('./garment-color-76.mjs'):null;
   let count=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
