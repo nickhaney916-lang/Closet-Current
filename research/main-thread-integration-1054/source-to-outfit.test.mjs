@@ -90,7 +90,7 @@ test('changed JPEG bytes with unchanged claimed SHA is rejected',async()=>{
 test('missing original SHA, missing JPEG and legacy saved photo are blocked',async()=>{
  for(const change of [
   {sourceHashVerified:false},
-  {originalPhoto:{image:'data:image/jpeg;base64,AAAA'}},
+  {originalPhoto:null},
   {sourcePhotoOriginal:false}
  ]){
   const items=set();Object.assign(items[0],change);
