@@ -1,0 +1,26 @@
+# MAIN1054 Mission 4 Milestone 7 — continuous real-model WebKit research diagnostic
+
+## Scope and original provenance
+
+Exact source parent is fully verified [M6 draft #1082](https://github.com/nickhaney916-lang/Closet-Current/pull/1082) HEAD aaec65d11edd65a09be124b62fd1d0131755564b, [two-job green no-deploy Actions #43528488612](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43528488612). Its genuine q8 FashionCLIP and FashionSigLIP proof is for FOUR Commons-licensed immutable-source original photo checks in one desktop Chromium browser, using the actual native signed-owner photo editor and M1 P876 empirical subtype confusion veto. The product's WebKit/iPhone owner two-model compare remains **disabled** by default.
+
+[Parallel issue #1034, Work #83](https://github.com/nickhaney916-lang/Closet-Current/issues/1034) documents a concrete prior genuine WebKit two-model crash after the first photograph within the same browser. One-photo or fresh-browser-per-photo smoke checks do not demonstrate continuous-session reliability, and no physical iPhone was tested. The independent developer branch for that issue remains untouched by this research.
+
+This branch is an isolated, only THREE changed research paths: one new real-model repeat benchmark runner, one strict pinned-parent no-deploy GitHub Actions workflow and this report. No public application JavaScript, model weights, original-JPEG save/sha, signed owner IDB, cloud, backup, outfits, 2D fallback, production/staging Supabase, versioned package files, private owner data or sibling mission branches altered.
+
+## Real 2/4/8/16 evidence protocol
+
+- Recover exactly FOUR existing SHA-256-locked Wikimedia Commons licensed original development JPEGs: commons-0035, commons-0062, commons-0078, commons-0059. These are exposed **development** sources, never independently human-reviewed sealed/blind ground truth. Reuse the original M1 P82 pinned q8 model/ONNX/WASM asset hashes through model prepare --check on the disposable GitHub runner.
+- Run the actual source-executed native M4 clothingFields with original-JPEG/SHA owner lease and original M1 P876 shared rank and high-risk subtype veto, plus genuine two-model worker implementation. Synthetic signed owner only, local no-save private DB surrogate, never hosted auth or customer photos.
+- Use **one continuous desktop Playwright WebKit browser and one page**, preserving the same synthetic owner and test context while closing/reopening native per-photo editor and lifecycle-terminating a one-shot worker for each. Repeat four legally sourced original JPEGs up to 16 uses. Record checkpoints **2, 4, 8, 16** in the same continuous session, not four falsely independent fresh-browser tests. Run a separate desktop Chromium four-photo source-identical control, never confuse the two.
+- At each iteration record the number of fully successful *genuine* two-family outputs, verified local assets, original JPEG SHA, no unacknowledged saved garment, owner control, no automatic admissions, zero privacy/storage writes, model latency, observed browser page-crash and close events, worker created/closed event counts, explicit worker response failure, unexpected network, and page/console exceptions. Do not discard completed observations on browser disconnect/renderer crash: write a bounded numeric-only JSON checkpoint with exact denominator, first known failing iteration and classification.
+- **Never guess the root cause from a page crash.** If WebKit has no process RSS/peak memory telemetry, report this as not measured; JS heap metrics, if present, are not browser process RSS. An incomplete 16-photo attempt must be labeled BLOCKED_INCOMPLETE even if the diagnostic CI job successfully writes evidence. A successful diagnostic job does **not** authorize release, and a green 16/16 desktop WebKit would still be insufficient without verified physical iPhone Safari.
+- No owner photos or weight/model bytes in artifacts; only de-identified numerical metrics and public image IDs/SHAs. Network restricted to same-origin GET after model downloads.
+
+## No-deploy acceptance
+
+Two independent jobs:
+1. Pin the verified M6 exact parent and allow ONLY three research paths; offline PWA build, 17/17 source-verified original photo owner tests, 48/48 signed owner native M1 P876 high-risk Chromium/WebKit browser policy cases, 12/12 original JPEG 2D owner browser cases, and the full inherited 2,003/2,003 native Node tests.
+2. Pinned publicly licensed photo/real model preparation in ephemeral CI, genuine **WebKit 16 attempts** with 2/4/8/16 stage checkpoints and genuine **Chromium four** control, explicit failure categorization and diagnostic artifact.
+
+Milestone 7 must remain UNDER VERIFICATION until exact-head Actions provide outcomes. **No release-readiness claims, physical iOS readiness, completed model stability, recognition accuracy, 10/10, hosted two-owner Supabase privacy, arbitrary photographed clothing 3D or male/female safe drape are authorized.** Mission 2 still has genuine 163-bone photographed dress body/garment strict crossing witnesses, also blocking release. Family Alpha HOLD issue #255 remains OPEN; no deploy or merge.
