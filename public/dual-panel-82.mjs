@@ -37,6 +37,9 @@ export function mountDual82({form,item,getOwner,isLive,unitAllowed,onChoose,getD
    // P873: an exact equal top score is not an identified subtype. Even two
    // families choosing the same lexicographic tie winner cannot break it.
    if(decision.reasons.includes('top_rank_tied')){status.textContent='A model cannot distinguish its top clothing labels. No two-model suggestion can be applied; use manual Adjust and retain Unknown until you confirm the photo.';return;}
+   // P874: competing broad categories (e.g., dress vs bottoms) are not
+   // independently identified. They must not become actionable AI category edits.
+   if(decision.reasons.includes('category_disagreement')){status.textContent='The two models disagree about the main clothing category. No AI category or subtype suggestion can be applied; compare the original photo and choose the category manually.';return;}
    status.textContent=decision.status==='abstain'?'The models disagree or cannot identify this garment. Unknown is retained; compare the alternatives with your original.':'The models suggest these possibilities. Agreement does not establish that a subtype is correct.';
    const ack=el('input');ack.type='checkbox';const label=el('label');label.append(ack,document.createTextNode(' I compared the original photo and want to apply this possibility to my unsaved draft.'));results.append(label);
    let used=false;
