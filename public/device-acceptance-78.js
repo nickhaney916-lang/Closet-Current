@@ -81,6 +81,14 @@
    if(!session.operatorDeclaredPhysical||session.platform==='OTHER_UNVERIFIED'||!digestOk(evidenceSha256))
     error('UNVERIFIED_DEVICE_EVIDENCE');
   }
+  if(status==='PASS'){
+   if(['P0','P1'].includes(severity)||sourcePreserved===false||ownerGate===false)
+    error('CONTRADICTORY_PASS');
+   if(['capture_camera','gallery_import','source_sha'].includes(caseId)&&
+      (sourcePreserved!==true||!digestOk(originalSha256)))error('SOURCE_VERIFICATION_REQUIRED');
+   if(['batch_1','owner_review_843','repeat_save_844','shoe_pair_846','private_owner'].includes(caseId)&&
+      ownerGate!==true)error('OWNER_GATE_REQUIRED');
+  }
   const result={caseId,status,severity,observedAt,durationMs:number(durationMs,0,600000),
    originalSha256,evidenceSha256,sourcePreserved:sourcePreserved===true?true:sourcePreserved===false?false:null,
    ownerGate:ownerGate===true?true:ownerGate===false?false:null,
