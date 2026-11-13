@@ -19,6 +19,16 @@ export const PARALLEL84_SOURCE_REGISTRY = Object.freeze({
     sha:'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64',
     category:'shirt',slot:'top',provenance:'existing P110 public research source'
   }),
+  'commons-public-domain-jeans-2005': Object.freeze({
+    sha:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+    category:'jeans',slot:'bottom',
+    provenance:'P69 actual Commons Jeans.jpg original source, public domain'
+  }),
+  'commons-cc-by-sa-denimjeans2-2008': Object.freeze({
+    sha:'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a',
+    category:'jeans',slot:'bottom',
+    provenance:'P69 actual Commons Denimjeans2.JPG CC BY-SA original'
+  }),
   'licensed-jeans-1': Object.freeze({
     sha:'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
     category:'jeans',slot:'bottom',provenance:'existing P110 public research source'
