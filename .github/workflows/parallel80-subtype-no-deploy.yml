@@ -6,7 +6,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: parallel80-subtype-HOLD
+  group: parallel80-subtype-HOLD-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   exact-parent-native-builds:
