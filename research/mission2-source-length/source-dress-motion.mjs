@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -130,7 +130,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     dress.stats?.releaseAuthorized!==false||
     dress.stats?.collisionValidated!==false||
     !Number.isFinite(phase)||phase<0||phase>1||
-    (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function'))
+    (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function')||
+    (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -282,6 +283,30 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state); // guard callback must not mutate original source
   sweptVertexAuditObserved39=true;
  }
+ // C40 opt-in conservative whole-FACE moving-body broadphase. A callback
+ // must use pinned native source/body snapshots and return the bounded
+ // research receipt. Potential overlap (even unproven penetration) vetoes
+ // the staged sample. This remains non-shipping and never authorizes release.
+ let sweptSurfaceAuditObserved40=false;
+ if(sweptSurfaceAudit40!==null){
+  const evidence=sweptSurfaceAudit40({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(evidence?.schema!=='M2-source-dress-moving-face-body-v1'||
+     evidence.completeConservativeLinearBroadphase!==true||
+     evidence.genuine163BonePosePair!==true||
+     evidence.wholeGarmentFacesExamined!==true||
+     evidence.fullBodyFacesExamined!==true||
+     !Number.isSafeInteger(evidence.bodyFaces)||evidence.bodyFaces<1||
+     !Number.isSafeInteger(evidence.checkedClothFaces)||evidence.checkedClothFaces<1||
+     !Number.isSafeInteger(evidence.potentialPairs)||
+     evidence.potentialPairs!==0||
+     evidence.exactContinuousNarrowphasePerformed!==false||
+     evidence.continuousCollisionCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C40 incomplete or potentially intersecting moving source faces refused');
+  checkProvenance(mesh,state);
+  sweptSurfaceAuditObserved40=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -308,6 +333,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionSweptContinuityCertified38:false,
   sourceDressMotionSweptVertexAuditObserved39:sweptVertexAuditObserved39,
   sourceDressMotionSweptWholeFabricCertified39:false,
+  sourceDressMotionMovingSurfaceVetoObserved40:sweptSurfaceAuditObserved40,
+  sourceDressMotionSweptWholeFabricCertified40:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
