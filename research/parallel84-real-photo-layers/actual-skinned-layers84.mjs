@@ -6,7 +6,7 @@
  * No source XYZ, JPEG, indices, owner token or UV leaves the return value.
  */
 import * as THREE from 'three';
-import {auditDistinctPhotoLayers84} from './layer-contact84.mjs';
+import {auditDistinctPhotoLayers84,PARALLEL84_SOURCE_REGISTRY} from './layer-contact84.mjs';
 const fallback=reason=>Object.freeze({
  schema:'parallel84-distinct-source-layer-contact/v1',
  status:'ORIGINAL_PHOTO_2D_FALLBACK',reason,
@@ -67,7 +67,8 @@ export function auditActualSkinnedOutfitLayers84({
  maxComparisons=800000,maxCandidatePairs=100000,toleranceMeters=.00002
 }={}){
  try{
-  if(!root?.isObject3D||!Array.isArray(items)||items.length!==2)
+  if(!root?.isObject3D||!Array.isArray(items)||items.length!==2||
+     !Number.isSafeInteger(maxFaces)||maxFaces<2||maxFaces>60000)
    throw Error('real-disposable-anatomical-outfit-required');
   let bodies=0;
   root.updateMatrixWorld(true);
@@ -78,7 +79,11 @@ export function auditActualSkinnedOutfitLayers84({
   if(bodies<1||bodies>16)
    throw Error('real-anatomical-body-not-loaded');
   const meshes=new Set(),sourceItems=items.map(item=>{
-   if(!item||!Array.isArray(item.meshes)||item.meshes.length<1||
+   if(!item||!PARALLEL84_SOURCE_REGISTRY[item.sourceId]||
+      PARALLEL84_SOURCE_REGISTRY[item.sourceId].sha!==item.sourceSHA256||
+      PARALLEL84_SOURCE_REGISTRY[item.sourceId].slot!==item.slot||
+      item.rearViewPhotographed===true||
+      !Array.isArray(item.meshes)||item.meshes.length<1||
       item.meshes.length>8||item.originalPhotoSHA256Verified!==true||
       item.actualPhotoTexelsOnSkinnedMesh!==true||
       item.actual163BoneSourceMesh!==true||
@@ -119,6 +124,17 @@ export function auditActualSkinnedOutfitLayers84({
    anatomicalBodyMeshes:bodies,sourceBuffersPreserved:true});
  }catch(e){
   // Only fixed codes generated internally above; never echo owner or mesh data.
-  return fallback(String(e.message).replace(/[^a-z0-9-]/gi,'').slice(0,80));
+  const fixed=new Set(['real-disposable-anatomical-outfit-required',
+   'real-anatomical-body-not-loaded','source-photo-mesh-evidence-missing',
+   'duplicate-hidden-or-noncloth-source-mesh',
+   'source-163-bone-skinned-mesh-required',
+   'source-photo-projection-or-index-invalid',
+   'source-face-budget','source-parts-face-budget',
+   'singular-or-nonfinite-pose-world-matrix',
+   'nonfinite-posed-source-vertex',
+   'source-face-index-outside-vertex-range',
+   'source-geometry-attribute-changed',
+   'source-indices-or-material-changed']);
+  return fallback(fixed.has(e?.message)?e.message:'unverified-source-pose');
  }
 }
