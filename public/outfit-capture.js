@@ -83,9 +83,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  $('outfitSplitStatus').textContent='Preparing…';
  try{
   const version=recognitionAssetVersion?'?v='+recognitionAssetVersion:'';job.worker=new Worker('outfit-worker.mjs'+version,{type:'module'});
-  job.worker.onmessage=event=>{
-   // Serialize piece/done even while a one-time WebCrypto source check runs.
-   job.messageQueue=job.messageQueue.then(async()=>{
+  const handleOutfitMessage=async event=>{
    if(job!==outfitSplitJob)return;const data=event.data;if(!data||data.id!==job.id)return;
    if(outfitUnits70&&job.ownerId!==unit70Owner()){finishOutfitSplit(job,'Owner session changed. No pieces were added.',true);return;}
    if(data.type==='progress'){
@@ -123,7 +121,13 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
    }
    if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
-   }).catch(()=>finishOutfitSplit(job,'Research verification interrupted. Your original and already separated photos remain for manual review.',true));
+  };
+  job.worker.onmessage=event=>{
+   // Legacy behavior remains synchronous for the unflagged app and its
+   // camera tests. Only #76 queues messages while its source digest settles.
+   if(!outfitColor76){void handleOutfitMessage(event);return;}
+   job.messageQueue=job.messageQueue.then(()=>handleOutfitMessage(event)).catch(()=>
+    finishOutfitSplit(job,'Research verification interrupted. Your original and already separated photos remain for manual review.',true));
   };
   job.worker.onerror=()=>finishOutfitSplit(job,'Outfit separation could not start. Your existing photos are kept. Try again.',true);
   job.worker.postMessage({id:job.id,image,...(outfitInstances840?{instanceReview840:true}:{}),...(outfitUnits70?{instanceReview70:true}:{}),...(outfitColor76?{color76:true,ownerId:job.ownerId}:{})});
