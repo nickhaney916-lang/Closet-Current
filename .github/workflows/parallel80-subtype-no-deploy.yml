@@ -1,7 +1,7 @@
 name: Parallel 80 subtype evidence and abstention — NO DEPLOY
 on:
   push:
-    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD]
+    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD, research/parallel80-photo-revision-robustness-20261113-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,10 +28,10 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD > /tmp/p80-paths
-          test "$(wc -l < /tmp/p80-paths)" -eq 13
+          test "$(wc -l < /tmp/p80-paths)" -eq 15
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|scripts/test-parallel80-real-worker.mjs|tests/parallel80-subtype.test.mjs|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
+              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|scripts/test-parallel80-real-worker.mjs|scripts/test-p80-public-dev-worker.mjs|tests/parallel80-subtype.test.mjs|research/parallel80-photo-revision-robustness/REPORT.md|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
               *) echo "P80 OUT OF SCOPE $path"; exit 1 ;;
             esac
           done < /tmp/p80-paths
@@ -110,3 +110,21 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: Real unmodified FashionCLIP weights and actual subtype worker on a generated geometric JPEG
         run: node scripts/test-parallel80-real-worker.mjs
+
+  real-worker-public-photo-revision-revocation-not-accuracy:
+    needs: exact-parent-native-builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Download exact pinned public development photos only
+        run: node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0033,commons-0041,commons-0088
+      - name: Real FashionCLIP three unchanged originals and three transformed JPEG source lease attacks
+        run: node scripts/test-p80-public-dev-worker.mjs
