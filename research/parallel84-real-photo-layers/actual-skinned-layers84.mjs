@@ -22,11 +22,35 @@ function sample84(mesh,maxFaces){
    throw Error('source-163-bone-skinned-mesh-required');
  const g=mesh.geometry,position=g.getAttribute('position'),
   si=g.getAttribute('skinIndex'),sw=g.getAttribute('skinWeight');
+ const uv=g.getAttribute('uv'),rest=g.getAttribute('dressRest');
  if(si.count!==position.count||sw.count!==position.count||
-    !(g.getAttribute('uv')||g.getAttribute('dressRest'))||
+    !(uv||rest)||
+    (uv&&(!uv.isBufferAttribute||uv.itemSize!==2||uv.count!==position.count))||
+    (rest&&(!rest.isBufferAttribute||rest.itemSize!==3||rest.count!==position.count))||
     (g.index&&g.index.count%3!==0)||
     (!g.index&&position.count%3!==0))
    throw Error('source-photo-projection-or-index-invalid');
+ // P84 texture identity: a source garment's original UVs must be finite and
+ // noncollapsed where present. P61's direct shader uses dressRest instead.
+ // No inference about unphotographed backs or actual pixel pattern quality.
+ for(let i=0;i<position.count;i++){
+  if(uv&&(!Number.isFinite(uv.getX(i))||!Number.isFinite(uv.getY(i))))
+   throw Error('source-projection-nonfinite');
+  if(rest&&![rest.getX(i),rest.getY(i),rest.getZ(i)].every(Number.isFinite))
+   throw Error('source-projection-nonfinite');
+ }
+ if(uv){
+  const at=i=>g.index?g.index.getX(i):i;
+  for(let i=0;i<(g.index?.count??position.count);i+=3){
+   const a=at(i),b=at(i+1),d=at(i+2);
+   if(![a,b,d].every(j=>Number.isSafeInteger(j)&&j>=0&&j<position.count))
+    throw Error('source-face-index-outside-vertex-range');
+   const ux=uv.getX(b)-uv.getX(a),uy=uv.getY(b)-uv.getY(a);
+   const vx=uv.getX(d)-uv.getX(a),vy=uv.getY(d)-uv.getY(a);
+   if(Math.abs(ux*vy-uy*vx)<1e-12)
+    throw Error('source-UV-collapsed');
+  }
+ }
  const faceCount=(g.index?.count??position.count)/3;
  if(faceCount<1||faceCount>maxFaces)throw Error('source-face-budget');
  const original=Object.entries(g.attributes).map(([name,attr])=>
@@ -133,6 +157,7 @@ export function auditActualSkinnedOutfitLayers84({
    'singular-or-nonfinite-pose-world-matrix',
    'nonfinite-posed-source-vertex',
    'source-face-index-outside-vertex-range',
+   'source-projection-nonfinite','source-UV-collapsed',
    'source-geometry-attribute-changed',
    'source-indices-or-material-changed']);
   return fallback(fixed.has(e?.message)?e.message:'unverified-source-pose');
