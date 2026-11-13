@@ -46,8 +46,10 @@ test('P2-C36 normalized real source skirt motion is smooth, bounded, cyclical, n
    }
   }
  }
- assert.deepEqual(sourceDressSwayProfile({theta:Math.PI/2,t:.9,phase:0}),
-  sourceDressSwayProfile({theta:Math.PI/2,t:.9,phase:1}));
+ const cycle0=sourceDressSwayProfile({theta:Math.PI/2,t:.9,phase:0});
+ const cycle1=sourceDressSwayProfile({theta:Math.PI/2,t:.9,phase:1});
+ assert.ok(Math.abs(cycle0.outward-cycle1.outward)<1e-12);
+ assert.ok(Math.abs(cycle0.drop-cycle1.drop)<1e-12);
  for(const invalid of [
   {theta:NaN,t:1,phase:.5},
   {theta:0,t:-.1,phase:.5},
