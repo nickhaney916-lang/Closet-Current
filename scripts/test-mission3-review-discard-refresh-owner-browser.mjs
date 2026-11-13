@@ -32,7 +32,8 @@ function normalizeClothing(row){return row;}
 ${ownerLease}
 ${actions}
 window.__runDiscardRefresh=async(mode)=>{
- document.body.innerHTML='<section id="authGate" hidden></section><section id="appShell"></section><button id="discard"></button><button id="refreshReview"></button>';
+ // Preserve attached buttons across cases; the actual source installs handlers once.
+ $('refreshReview').disabled=false;
  captureOperationEpoch++;events=[];
  const row=(owner,id)=>({
   id,ownerId:owner,category:'Uncategorized',notes:'reviewed original',
@@ -101,7 +102,7 @@ for(const [browserName,engine] of [['Chromium',chromium],['WebKit',webkit]]){
    const page=await context.newPage(),errors=[];
    page.on('pageerror',error=>errors.push(String(error)));
    try{
-    await page.setContent('<body></body>');
+    await page.setContent('<section id="authGate" hidden></section><section id="appShell"></section><button id="discard"></button><button id="refreshReview"></button>');
     await page.addScriptTag({content:js});
     for(const mode of modes){
      const got=await page.evaluate(m=>window.__runDiscardRefresh(m),mode);
