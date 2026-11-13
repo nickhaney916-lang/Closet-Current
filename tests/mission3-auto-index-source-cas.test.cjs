@@ -141,11 +141,13 @@ test('second-tab draft records are removed only by their verified own transactio
  assert.match(implementation,/savedStore\.add\(value\)/);
  assert.match(implementation,/rows\.filter\(row=>row\.id!==value\.id\)/);
  assert.doesNotMatch(implementation,/persistDraft\(/);
- assert.match(source,/if\(!savingIndexed\)persistDraft\(\)/);
+ assert.match(source,/if\(!savingIndexed&&batch\.includes\(item\)\)/);
+ assert.match(source,/mode:'update',expected:expectedDraftForRecognition/);
 });
 
 test('rejected automatic indexing never triggers a whole-draft cleanup write',()=>{
  assert.match(source,/savingIndexed=true;\s*const wasSaved=await saveIndexed/);
- assert.match(source,/if\(!savingIndexed\)persistDraft\(\)/);
+ assert.match(source,/if\(!savingIndexed&&batch\.includes\(item\)\)/);
+ assert.match(source,/mode:'update',expected:expectedDraftForRecognition/);
  assert.doesNotMatch(implementation,/persistDraft\(/);
 });

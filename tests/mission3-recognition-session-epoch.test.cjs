@@ -17,7 +17,7 @@ const lockSource=section("window.addEventListener('closet:session-locked',()=>{"
 function deferred(){let resolve,reject;const promise=new Promise((yes,no)=>{resolve=yes;reject=no;});promise.catch(()=>{});return {promise,resolve,reject};}
 const old={id:'owner-a-garment',image:'data:image/jpeg;base64,old',name:'Old sweater',category:'Tops',color:'Blue'};
 const next={id:'owner-b-garment',image:'data:image/jpeg;base64,next',name:'New shirt',category:'Tops',color:'Red'};
-function context(obj){vm.createContext(obj);return obj;}
+function context(obj){obj.structuredClone??=structuredClone;vm.createContext(obj);return obj;}
 test('old photo quality completion cannot persist a new account draft or render old analysis',async()=>{
  const quality=deferred(),events=[],ctx=context({
   captureOperationEpoch:0,recognitionState:{activeId:null,phase:'idle'},batch:[old],items:[],
