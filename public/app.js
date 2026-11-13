@@ -1740,7 +1740,10 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
      check();return approved;
     }
    });
-   check();
+   // At this boundary the exact-owner transaction has completed (or the
+   // owner cancelled). Never convert a committed restore into a misleading
+   // failure because a new camera operation began after disk acknowledgement.
+   assertImport();
    if(restored.cancelled)return importMessage('Full v4 restore canceled. All original photographs were preserved.');
    // This commit has ALREADY succeeded. A failed asynchronous screen refresh
    // is NOT a failed transaction. Never claim an atomic restore was rolled back
@@ -1750,7 +1753,7 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
     if(typeof mission3ReloadOwnerCloudView!=='function')
      throw Error('Owner-private view refresh unavailable');
     await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
-    check();
+    assertImport();
     importMessage('Full owner-bound v4 backup restored atomically, including '+
      restored.pendingOriginals+' unfinished original photos. Review Photo results.');
    }catch(error){
