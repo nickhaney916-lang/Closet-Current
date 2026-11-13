@@ -164,7 +164,8 @@ test('P84 unresolved degenerate garment faces are counted but never misrepresent
 test('P84 thousands of within-shirt faces do not consume inter-garment contact budget',()=>{
  const front=new Float64Array(6000*9);
  for(let i=0;i<6000;i++)front.set(horizontal,i*9);
- const items=input(far,front);
+ const farRight=new Float64Array([5,5,5,6,5,5,5,6,5]);
+ const items=input(farRight,front);
  const x=run(items,{maxFaces:6100,maxComparisons:1,maxCandidatePairs:1});
  assert.equal(x.status,'UNCERTAIN_NOT_CLEARANCE');
  assert.equal(x.originalSourceFaceCount,6001);
