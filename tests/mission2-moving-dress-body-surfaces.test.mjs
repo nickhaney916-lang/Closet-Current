@@ -6,7 +6,8 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  auditMovingSourceDressBodyIntervals41,assertMovingSourceDressBodyIntervals41,
  auditSourceDressArticulatedPoseSamples42,assertSourceDressArticulatedPoseSamples42,
  auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43,
- auditSourceDressSelfContact44,assertSourceDressSelfContact44}
+ auditSourceDressSelfContact44,assertSourceDressSelfContact44,
+ auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
@@ -753,5 +754,124 @@ test('C44: fabricated green self-contact evidence may not report full cloth phys
    releaseAuthorized:false,familyAlpha:'HOLD'
   })
  }),/C44 incomplete or possibly self-contacting/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+const fast45=(f,poseToken=null,extra={})=>
+ auditSourceDressFastSelfContact45({
+  root:f.root,dress:f.dress,poseToken:poseToken??capture(f),...extra
+ });
+test('C45: actual original P61-style source dress contact flood stops at FIRST unresolved contact and retains photo bytes',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const pose=capture(f);
+ // C44 full enumeration can exceed its 20k-contact evidence budget.
+ assert.throws(()=>self44(f,pose),/C44 self-contact evidence incomplete/);
+ const proof=fast45(f,pose);
+ assert.equal(proof.schema,'M2-source-dress-first-contact-veto-v1');
+ assert.equal(proof.unresolvedPairs,1);
+ assert.equal(proof.stoppedEarlyToRefuse,true);
+ assert.equal(proof.completeSourceSelfContactAudit,false);
+ assert.ok(proof.checkedOriginalFaces<proof.originalFaceCount);
+ assert.ok(proof.candidateTriangles<300000);
+ assert.ok(['unresolved-coplanar-or-disconnected-seam',
+  'unresolved-spatial-triangle-contact'].includes(proof.firstUnresolvedContactKind));
+ assert.throws(()=>assertSourceDressFastSelfContact45(proof),
+  /C45 source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+ assert.deepEqual(Object.keys(pose),[]);
+});
+test('C45: actual crossing disconnected 163-bone source fabric reports partial BLOCK, never complete pass',()=>{
+ const f=clothed44([
+  -.15,-.10,0,.15,-.10,0,0,.15,0,
+  0,-.07,-.10,0,-.07,.10,0,.10,0
+ ]),original=snap(f.dress.mesh),receipt=fast45(f);
+ assert.equal(receipt.unresolvedPairs,1);
+ assert.equal(receipt.firstUnresolvedContactKind,'unresolved-spatial-triangle-contact');
+ assert.equal(receipt.completeSourceSelfContactAudit,false);
+ assert.equal(receipt.releaseAuthorized,false);
+ assert.throws(()=>assertSourceDressFastSelfContact45(receipt),
+  /source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C45: disconnected coplanar UV-split source seam remains UNRESOLVED and is not silently approved',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]),report=fast45(f);
+ assert.equal(report.firstUnresolvedContactKind,'unresolved-coplanar-or-disconnected-seam');
+ assert.equal(report.unresolvedPairs,1);
+ assert.equal(report.sewnSeamsHumanVerified,false);
+ assert.throws(()=>assertSourceDressFastSelfContact45(report),/source dress has unresolved contact/);
+});
+test('C45: actual shared-edge fabric and noncontact fragments require complete scan before research-only clear',()=>{
+ const joined=clothed44([
+  0,0,0,1,0,0,0,1,0,1,1,0
+ ],[0,1,2,1,3,2]);
+ const a=fast45(joined);
+ assert.equal(a.completeSourceSelfContactAudit,true);
+ assert.equal(a.checkedOriginalFaces,a.originalFaceCount);
+ assert.equal(a.stoppedEarlyToRefuse,false);
+ assert.equal(a.firstUnresolvedContactKind,null);
+ assert.equal(a.unresolvedPairs,0);
+ assert.equal(assertSourceDressFastSelfContact45(a).releaseAuthorized,false);
+ const disjoint=clothed44([
+  0,0,0,.1,0,0,0,.1,0,
+  .3,.3,0,.4,.3,0,.3,.4,0
+ ]),b=fast45(disjoint);
+ assert.equal(b.completeSourceSelfContactAudit,true);
+ assert.equal(b.checkedOriginalFaces,b.originalFaceCount);
+ assert.equal(assertSourceDressFastSelfContact45(b).completeSourceSelfAuditClear,true);
+});
+test('C45: source custodial change or incomplete resource budget cannot produce a green audit',()=>{
+ const f=clothed44([
+  0,0,0,.1,0,0,0,.1,0,
+  .3,.3,0,.4,.3,0,.3,.4,0
+ ]),pose=capture(f);
+ for(const limits of [
+  {poseToken:{}},{maxSourceFaces:1},{maxTriangleCandidates:0},
+  {toleranceMeters:-.001},{toleranceMeters:NaN}
+ ])assert.throws(()=>fast45(f,pose,limits),/M2 C40/);
+ const altered=f.dress.mesh.geometry.getAttribute('skinWeight');
+ altered.setX(0,.5);
+ assert.throws(()=>fast45(f,pose),/original source\/photo\/skin data/);
+ const fabricated={
+  schema:'M2-source-dress-first-contact-veto-v1',
+  originalSourceAndSkinVerified:true,actual163BoneSkinnedPose:true,
+  originalFaceCount:2,checkedOriginalFaces:1,candidateTriangles:0,
+  topologicalNeighborsExcluded:true,
+  disconnectedSeamsRemainUnresolved:true,firstUnresolvedContactKind:null,
+  unresolvedPairs:0,stoppedEarlyToRefuse:false,
+  completeSourceSelfContactAudit:true,
+  originalPhotoAndSkinPreserved:true,
+  actualContinuousSelfContactCertified:false,sewnSeamsHumanVerified:false,
+  clothPhysicsCertified:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ assert.throws(()=>assertSourceDressFastSelfContact45(fabricated),
+  /C45 missing full clear original source face scan/);
+});
+test('C45: original photographed full dress precommit early-stop contact is veto without source XYZ/UV/normals/skin changes',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const callback=({endPositions})=>fast45(f,capture(f,endPositions));
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptFastSelfContactAudit45:callback
+ }),/C45 incomplete or unresolved source self-contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C45: spoofed partial or release-certified source contact report fails before photograph movement',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptFastSelfContactAudit45:()=>({
+   schema:'M2-source-dress-first-contact-veto-v1',
+   originalSourceAndSkinVerified:true,actual163BoneSkinnedPose:true,
+   originalFaceCount:2,checkedOriginalFaces:2,candidateTriangles:1,
+   topologicalNeighborsExcluded:true,disconnectedSeamsRemainUnresolved:true,
+   firstUnresolvedContactKind:null,unresolvedPairs:0,
+   stoppedEarlyToRefuse:false,completeSourceSelfContactAudit:true,
+   originalPhotoAndSkinPreserved:true,
+   actualContinuousSelfContactCertified:true,
+   sewnSeamsHumanVerified:true,clothPhysicsCertified:true,
+   releaseAuthorized:true,familyAlpha:'HOLD'
+  })
+ }),/C45 incomplete or unresolved source self-contact/);
  assert.deepEqual(snap(f.dress.mesh),original);
 });

@@ -841,7 +841,8 @@ export function assertSourceDressHighCadencePose43(receipt){
 export function auditSourceDressSelfContact44({
  root,dress,poseToken,
  maxSourceFaces=100000,maxTriangleCandidates=300000,
- maxUnresolvedPairs=20000,toleranceMeters=.00002
+ maxUnresolvedPairs=20000,toleranceMeters=.00002,
+ stopAtFirstUnresolvedContact45=false
 }={}){
  const mesh=validateRootDress(root,dress),shot=captures.get(poseToken);
  if(!shot||shot.root!==root||shot.mesh!==mesh||
@@ -852,7 +853,7 @@ export function auditSourceDressSelfContact44({
     !Number.isSafeInteger(maxUnresolvedPairs)||maxUnresolvedPairs<1||
     maxUnresolvedPairs>50000||
     !Number.isFinite(toleranceMeters)||toleranceMeters<0||
-    toleranceMeters>.002)
+    toleranceMeters>.002||typeof stopAtFirstUnresolvedContact45!=='boolean')
   fail('C44 complete source-verified, bounded self-contact audit required');
  checkTopology(shot);
  const bodies=[];
@@ -873,9 +874,10 @@ export function auditSourceDressSelfContact44({
   new THREE.BufferAttribute(shot.geo.indices.slice(),1));
  let checkedOriginalFaces=0,adjacentPairsExcluded=0,
   candidateTriangles=0,unresolvedPairs=0,minDistanceMeters=null;
+ let firstUnresolvedContactKind45=null,earlyBlock45=false;
  try{
   const bvh=new MeshBVH(g,{indirect:true});
-  const start=new ExtendedTriangle(),box=new THREE.Box3(),hitLine=new THREE.Line3();
+  const start=new ExtendedTriangle(),box=new THREE.Box3();
   for(let i=0;i<faceCount;i++){
    checkedOriginalFaces++;
    const indices=Array.from({length:3},(_,c)=>at(shot.geo.indices,i,c));
@@ -914,6 +916,30 @@ export function auditSourceDressSelfContact44({
       unresolvedPairs++;
       minDistanceMeters=minDistanceMeters===null?distance:
        Math.min(minDistanceMeters,distance);
+      if(stopAtFirstUnresolvedContact45){
+       // Coplanar seam candidates are still unresolved, NEVER safe.
+       // Cross-plane surface proximity is equally fail-closed. A contact
+       // is a VETO, not a proof of geometrical penetration.
+       const n1=new THREE.Vector3().crossVectors(
+        new THREE.Vector3().subVectors(start.b,start.a),
+        new THREE.Vector3().subVectors(start.c,start.a));
+       const n2=new THREE.Vector3().crossVectors(
+        new THREE.Vector3().subVectors(tri.b,tri.a),
+        new THREE.Vector3().subVectors(tri.c,tri.a));
+       if(n1.lengthSq()<1e-24||n2.lengthSq()<1e-24){
+        overflow=true;return true;
+       }
+       n1.normalize();n2.normalize();
+       const coplanar=Math.abs(n1.dot(n2))>.9999&&
+        [tri.a,tri.b,tri.c].every(v=>
+         Math.abs(n1.dot(new THREE.Vector3().subVectors(v,start.a)))
+           <=toleranceMeters+1e-8);
+       firstUnresolvedContactKind45=coplanar?
+        'unresolved-coplanar-or-disconnected-seam':
+        'unresolved-spatial-triangle-contact';
+       earlyBlock45=true;
+       return true;
+      }
       if(unresolvedPairs>=maxUnresolvedPairs){
        overflow=true;return true;
       }
@@ -923,12 +949,17 @@ export function auditSourceDressSelfContact44({
    });
    if(overflow)
     fail('C44 self-contact evidence incomplete; candidate or geometric budget exceeded');
+   // Contact is already a sufficient negative admission witness; do not
+   // consume the entire owner's original photo mesh merely to say BLOCK.
+   if(earlyBlock45)break;
   }
   return Object.freeze({
    schema:'M2-source-dress-self-contact-v1',
    originalSourceAndSkinVerified:true,
    actual163BoneSkinnedPose:true,
-   completeNonadjacentFaceAudit:true,
+   completeNonadjacentFaceAudit:!earlyBlock45,
+   stoppedAtFirstUnresolvedContact45:earlyBlock45,
+   firstUnresolvedContactKind45,
    originalFaceCount:faceCount,checkedOriginalFaces,
    candidateTriangles,adjacentPairsExcluded,
    unresolvedPairs,minDistanceMeters,
@@ -965,5 +996,95 @@ export function assertSourceDressSelfContact44(receipt){
   sampledSourceSelfContactVetoPassed:true,
   completeClothContactNotCertified:true,
   researchOnly:true,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
+/**
+ * P2-C45: bounded early VETO for original-photo full-dress UV-split geometry.
+ *
+ * C44 attempts exhaustive contact counting and can exceed the safe contact
+ * budget on the genuine photographed dress because UV splits generate very
+ * many unresolved touches. A SINGLE source-confirmed, nonadjacent unresolved
+ * contact is sufficient to block release. Stopping early is legitimate only
+ * if the receipt is EXPLICITLY INCOMPLETE and can NEVER imply a full scan.
+ * For an actually clear mesh all original source faces must be examined.
+ */
+export function auditSourceDressFastSelfContact45({
+ root,dress,poseToken,
+ maxSourceFaces=100000,maxTriangleCandidates=300000,
+ toleranceMeters=.00002
+}={}){
+ const result=auditSourceDressSelfContact44({
+  root,dress,poseToken,maxSourceFaces,maxTriangleCandidates,
+  toleranceMeters,stopAtFirstUnresolvedContact45:true
+ });
+ const blocked=result.unresolvedPairs>0;
+ if(result.unresolvedPairs>1||
+    (blocked&&!result.stoppedAtFirstUnresolvedContact45)||
+    (!blocked&&(result.stoppedAtFirstUnresolvedContact45||
+       !result.completeNonadjacentFaceAudit||
+       result.checkedOriginalFaces!==result.originalFaceCount))||
+    (blocked&&result.completeNonadjacentFaceAudit)||
+    (blocked&&!result.firstUnresolvedContactKind45))
+  fail('C45 contradictory partial self-contact audit');
+ return Object.freeze({
+  schema:'M2-source-dress-first-contact-veto-v1',
+  originalSourceAndSkinVerified:result.originalSourceAndSkinVerified,
+  actual163BoneSkinnedPose:result.actual163BoneSkinnedPose,
+  originalFaceCount:result.originalFaceCount,
+  checkedOriginalFaces:result.checkedOriginalFaces,
+  candidateTriangles:result.candidateTriangles,
+  topologicalNeighborsExcluded:result.topologicalNeighborsExcluded,
+  disconnectedSeamsRemainUnresolved:true,
+  firstUnresolvedContactKind:result.firstUnresolvedContactKind45,
+  unresolvedPairs:result.unresolvedPairs,
+  stoppedEarlyToRefuse:blocked,
+  completeSourceSelfContactAudit:!blocked,
+  originalPhotoAndSkinPreserved:true,
+  actualContinuousSelfContactCertified:false,
+  sewnSeamsHumanVerified:false,
+  clothPhysicsCertified:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+export function assertSourceDressFastSelfContact45(receipt){
+ if(receipt?.schema!=='M2-source-dress-first-contact-veto-v1'||
+    receipt.originalSourceAndSkinVerified!==true||
+    receipt.actual163BoneSkinnedPose!==true||
+    receipt.topologicalNeighborsExcluded!==true||
+    receipt.disconnectedSeamsRemainUnresolved!==true||
+    receipt.originalPhotoAndSkinPreserved!==true||
+    !Number.isSafeInteger(receipt.originalFaceCount)||
+    receipt.originalFaceCount<1||
+    !Number.isSafeInteger(receipt.checkedOriginalFaces)||
+    receipt.checkedOriginalFaces<1||
+    receipt.checkedOriginalFaces>receipt.originalFaceCount||
+    !Number.isSafeInteger(receipt.candidateTriangles)||
+    receipt.candidateTriangles<0||
+    !Number.isSafeInteger(receipt.unresolvedPairs)||
+    receipt.unresolvedPairs<0||receipt.unresolvedPairs>1||
+    receipt.actualContinuousSelfContactCertified!==false||
+    receipt.sewnSeamsHumanVerified!==false||
+    receipt.clothPhysicsCertified!==false||
+    receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+  fail('C45 incomplete or forged owner-source self-contact result');
+ if(receipt.unresolvedPairs){
+  if(receipt.stoppedEarlyToRefuse!==true||
+     receipt.completeSourceSelfContactAudit!==false||
+     !['unresolved-coplanar-or-disconnected-seam',
+       'unresolved-spatial-triangle-contact']
+       .includes(receipt.firstUnresolvedContactKind))
+   fail('C45 inconsistent source contact classification');
+  fail('C45 source dress has unresolved contact; no garment admission');
+ }
+ if(receipt.stoppedEarlyToRefuse!==false||
+    receipt.completeSourceSelfContactAudit!==true||
+    receipt.checkedOriginalFaces!==receipt.originalFaceCount||
+    receipt.firstUnresolvedContactKind!==null)
+  fail('C45 missing full clear original source face scan');
+ return Object.freeze({
+  researchOnly:true,completeSourceSelfAuditClear:true,
+  noContinuousClothCertification:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
