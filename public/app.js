@@ -797,7 +797,7 @@ async function recognizeItem(item){
  // browser Window. Real camera/browser paths ALWAYS have window.document and
  // must supply a matching signed owner and per-owner IndexedDB connection.
  const browser854=typeof window!=='undefined'&&Boolean(window.document);
- const owner854=browser854?window.closetAuth?.user:null,
+ const owner854=typeof window==='undefined'?null:window.closetAuth?.user,
   db854=typeof db==='undefined'?null:db,source854=item.image,original854=item.recognitionPhoto?.image,
   mask854=JSON.stringify(item.segmentHint??null);
  const sameOwner854=()=>!browser854||Boolean(owner854?.id&&
