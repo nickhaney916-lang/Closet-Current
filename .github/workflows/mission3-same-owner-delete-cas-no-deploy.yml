@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and five-path no-deploy allowlist
+      - name: Exact parent and six-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-same-owner-delete-cas.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-same-owner-delete-cas/REPORT.md|.github/workflows/mission3-same-owner-delete-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-same-owner-delete-cas.test.cjs|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-same-owner-delete-cas/REPORT.md|.github/workflows/mission3-same-owner-delete-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -80,7 +80,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-same-owner-delete-cas.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-same-owner-delete-cas/REPORT.md|.github/workflows/mission3-same-owner-delete-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-same-owner-delete-cas.test.cjs|tests/mission3-edit-backup-owner-lease.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-same-owner-delete-cas/REPORT.md|.github/workflows/mission3-same-owner-delete-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
