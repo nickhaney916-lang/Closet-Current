@@ -130,7 +130,95 @@ function refinedDistanceReceipt53(state,complete){
  });
 }
 
-function analyze52(coordinates,indices,faceCount,tolerance,budgets){
+
+/**
+ * P2-C54: classify geometrically zero-distance ORIGINAL-source triangle
+ * pairs by immutable source vertex correspondence. The 163-bone skinned
+ * pose and the shader dressRest/skin weights must AGREE with any repeated
+ * coordinate; positional coincidence alone is never a sewn seam.
+ *
+ * No raw face IDs, source XYZ, photo pixels, garment images or per-owner
+ * vertex identifiers appear in public receipts. Source-index-sharing
+ * pairs were already excluded upstream; count those exclusions separately.
+ */
+const SOURCE_TWIN_EPS54=2e-6;
+const C54_KEYS=Object.freeze([
+ 'sourceCoincidentFaceCandidates',
+ 'sourceCoincidentEdgeCandidates',
+ 'sourceCoincidentSinglePointCandidates',
+ 'sourceCoincidentButUnsafeSkinRestOrPose',
+ 'sourceIndependentZeroDistancePairs'
+]);
+function zeroSourceTopologyClass54(a,b,context){
+ const {source,skinned,rest,skinIndex,skinWeight}=context;
+ const matches=[],used=new Set();
+ const nearSource=(i,j)=>{
+  const ia=3*i,ib=3*j;
+  return Math.hypot(source[ia]-source[ib],
+   source[ia+1]-source[ib+1],
+   source[ia+2]-source[ib+2])<=SOURCE_TWIN_EPS54;
+ };
+ // The original triangles are nondegenerate. Match unique IDs 1:1 and
+ // refuse ambiguous correspondences when endpoints are near-coincident.
+ for(const i of a.ids){
+  const possible=b.ids.filter(j=>nearSource(i,j));
+  if(possible.length>1)
+   return 'sourceCoincidentButUnsafeSkinRestOrPose';
+  if(possible.length){
+   const j=possible[0];
+   if(used.has(j))
+    return 'sourceCoincidentButUnsafeSkinRestOrPose';
+   used.add(j);matches.push([i,j]);
+  }
+ }
+ if(!matches.length)return 'sourceIndependentZeroDistancePairs';
+ const safe=matches.every(([i,j])=>{
+  const ai=3*i,aj=3*j;
+  if(Math.hypot(skinned[ai]-skinned[aj],
+   skinned[ai+1]-skinned[aj+1],
+   skinned[ai+2]-skinned[aj+2])>SOURCE_TWIN_EPS54)return false;
+  for(let k=0;k<3;k++)
+   if(Math.abs(rest.getComponent(i,k)-rest.getComponent(j,k))>
+      SOURCE_TWIN_EPS54)return false;
+  for(let k=0;k<4;k++)
+   if(skinIndex.getComponent(i,k)!==skinIndex.getComponent(j,k)||
+      Math.abs(skinWeight.getComponent(i,k)-
+       skinWeight.getComponent(j,k))>1e-6)return false;
+  return true;
+ });
+ if(!safe)return 'sourceCoincidentButUnsafeSkinRestOrPose';
+ return matches.length===3?'sourceCoincidentFaceCandidates':
+  matches.length===2?'sourceCoincidentEdgeCandidates':
+  'sourceCoincidentSinglePointCandidates';
+}
+function topologyReceipt54(state,complete,sharedIndexExcluded){
+ const classified=C54_KEYS.reduce((n,key)=>n+state[key],0);
+ if(classified!==state.zeroDistancePairsClassified)
+  fail('C54 invalid zero-distance pair topology classification accounting');
+ return Object.freeze({
+  schema:'M2-original-source-zero-contact-topology-C54',
+  zeroDistancePairsClassified:state.zeroDistancePairsClassified,
+  sourceCoincidentFaceCandidates:state.sourceCoincidentFaceCandidates,
+  sourceCoincidentEdgeCandidates:state.sourceCoincidentEdgeCandidates,
+  sourceCoincidentSinglePointCandidates:
+   state.sourceCoincidentSinglePointCandidates,
+  sourceCoincidentButUnsafeSkinRestOrPose:
+   state.sourceCoincidentButUnsafeSkinRestOrPose,
+  sourceIndependentZeroDistancePairs:state.sourceIndependentZeroDistancePairs,
+  sourceIndexSharedPairsExcludedBeforeDistance:sharedIndexExcluded,
+  classificationComplete:complete,
+  allSourceCorrespondencesCheckedAgainst163BonePose:true,
+  sourceCoincidenceNotAHumanVerifiedSewingSeam:true,
+  sourceDisconnectedFacesNotAutomaticallySeparated:true,
+  sourceCoordinateDuplicateNotPermissionToWeld:true,
+  realFabricPhysicsUnverified:true,
+  originalPhotoVertexCoordinatesExposed:false,
+  originalSourceFaceIdsExposed:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
+function analyze52(coordinates,indices,faceCount,tolerance,budgets,context=null){
  const list=[];
  const v=(j)=>new THREE.Vector3(
   coordinates[3*j],coordinates[3*j+1],coordinates[3*j+2]);
@@ -152,6 +240,14 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets){
   geometricZeroOrOverlapUnresolved:0,
   positiveGapWithinToleranceUnresolved:0,
   positiveGapBeyondToleranceAtThisPose:0};
+ const topology54={
+  zeroDistancePairsClassified:0,
+  sourceCoincidentFaceCandidates:0,
+  sourceCoincidentEdgeCandidates:0,
+  sourceCoincidentSinglePointCandidates:0,
+  sourceCoincidentButUnsafeSkinRestOrPose:0,
+  sourceIndependentZeroDistancePairs:0
+ };
  let complete=true;const active=[];
  outer:for(const candidate of list){
   for(let i=active.length-1;i>=0;i--)
@@ -179,8 +275,18 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets){
     if(strict&&distance>1e-6)
      fail('C53 strict original crossing disagrees with actual triangle distance');
     distance53.distancePairsMeasured++;
-    if(distance<=1e-7)distance53.geometricZeroOrOverlapUnresolved++;
-    else if(distance<=tolerance)
+    if(distance<=1e-7){
+     distance53.geometricZeroOrOverlapUnresolved++;
+     if(budgets.refineSourceTopology54){
+      if(topology54.zeroDistancePairsClassified>=
+         budgets.maxZeroDistanceTopologyPairs54){
+       complete=false;break outer;
+      }
+      const kind=zeroSourceTopologyClass54(other,candidate,context);
+      if(!C54_KEYS.includes(kind))fail('C54 unknown original source topology');
+      topology54[kind]++;topology54.zeroDistancePairsClassified++;
+     }
+    }else if(distance<=tolerance)
      distance53.positiveGapWithinToleranceUnresolved++;
     else distance53.positiveGapBeyondToleranceAtThisPose++;
    }
@@ -195,13 +301,16 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets){
  return {complete,compared,boundsOverlaps,strictCrossings,
   sharedIndexExcluded,firstStrict,firstUncertain,
   distance53:budgets.refineTriangleDistances53?
-   refinedDistanceReceipt53(distance53,complete):null};
+   refinedDistanceReceipt53(distance53,complete):null,
+  topology54:budgets.refineSourceTopology54?
+   topologyReceipt54(topology54,complete,sharedIndexExcluded):null};
 }
 export function auditActualPhotographedDressSurfaces52({
  root,dress,toleranceMeters=.00002,
  maxSourceFaces=100000,maxComparisons=800000,
  maxCandidatePairs=100000,maxStrictCrossings=64,
- refineTriangleDistances53=false,maxDistanceCandidates53=100000
+ refineTriangleDistances53=false,maxDistanceCandidates53=100000,
+ refineSourceTopology54=false,maxZeroDistanceTopologyPairs54=100000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
@@ -226,7 +335,12 @@ export function auditActualPhotographedDressSurfaces52({
     maxStrictCrossings>1024||
     typeof refineTriangleDistances53!=='boolean'||
     !Number.isSafeInteger(maxDistanceCandidates53)||
-    maxDistanceCandidates53<1||maxDistanceCandidates53>500000)
+    maxDistanceCandidates53<1||maxDistanceCandidates53>500000||
+    typeof refineSourceTopology54!=='boolean'||
+    (refineSourceTopology54&&!refineTriangleDistances53)||
+    !Number.isSafeInteger(maxZeroDistanceTopologyPairs54)||
+    maxZeroDistanceTopologyPairs54<1||
+    maxZeroDistanceTopologyPairs54>200000)
   fail('real original licensed SHA-pinned 163-bone P61 dress required');
  const p=g?.getAttribute('position'),rest=g?.getAttribute('dressRest'),
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
@@ -264,9 +378,13 @@ export function auditActualPhotographedDressSurfaces52({
   skinned[3*i]=v.x;skinned[3*i+1]=v.y;skinned[3*i+2]=v.z;
  }
  const budget={maxComparisons,maxCandidatePairs,maxStrictCrossings,
-  refineTriangleDistances53,maxDistanceCandidates53};
- const original=analyze52(source,indices,triangles,toleranceMeters,budget),
-  posed=analyze52(skinned,indices,triangles,toleranceMeters,budget);
+  refineTriangleDistances53,maxDistanceCandidates53,
+  refineSourceTopology54,maxZeroDistanceTopologyPairs54};
+ const context=refineSourceTopology54?{
+  source,skinned,rest,skinIndex:si,skinWeight:sw
+ }:null;
+ const original=analyze52(source,indices,triangles,toleranceMeters,budget,context),
+  posed=analyze52(skinned,indices,triangles,toleranceMeters,budget,context);
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
      attr.array.length!==bytes.length||
@@ -304,6 +422,18 @@ export function auditActualPhotographedDressSurfaces52({
    duplicateSourceSewingPermission53:false,
    allCapturedPhotoAttributesUnchanged53:true,
    noRealFabricPhysicsCertified53:true
+  }:{}),
+  ...(refineSourceTopology54?{
+   originalSourceTopology54:original.topology54,
+   posedSourceTopology54:posed.topology54,
+   fullOriginalSourceTopologyAuditCompleted54:
+    original.topology54.classificationComplete&&
+    posed.topology54.classificationComplete&&
+    original.distance53.distanceRefinementComplete&&
+    posed.distance53.distanceRefinementComplete,
+   originalPhotoAndSkinnedSkinBindingPreserved54:true,
+   allZeroSourcePairsRemainContactUnresolved54:true,
+   actualPhysicalSewingSeamsCertified54:false
   }:{}),
   anyStrictSourceCrossing:original.firstStrict,
   anyStrictPosedCrossing:posed.firstStrict,
