@@ -1077,3 +1077,112 @@ test('C47: structurally plausible forged full-clear source receipt cannot move t
  }),/C47 missing, reused or mismatched authentic garment\/contact lease/);
  assert.deepEqual(snap(f.dress.mesh),original);
 });
+
+
+test('C48: actual disconnected two-vertex dressRest source edge is identified ONLY as review-required candidate',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ const g=f.dress.mesh.geometry;
+ g.setAttribute('dressRest',g.getAttribute('position').clone());
+ g.setAttribute('dressCustomPhotoProjection',g.getAttribute('dressRest').clone());
+ const original=snap(f.dress.mesh),proof=fast45(f);
+ const witness=proof.firstSourceBoundary48;
+ assert.equal(witness.schema,'M2-first-source-contact-topology-C48');
+ assert.equal(witness.classification,'source-duplicate-boundary-candidate');
+ assert.equal(witness.sourceMatchedVertexPairs,2);
+ assert.equal(witness.sourceSkinAndPoseCompatiblePairs,2);
+ assert.equal(witness.originalDressRestPresent,true);
+ assert.equal(witness.sourcePhotoProjectionPresent,true);
+ assert.equal(witness.originalIndicesRemainDisconnected,true);
+ assert.equal(witness.independentSewnSeamIdentityVerified,false);
+ assert.equal(witness.allowedToExcludeFromCollision,false);
+ assert.equal(proof.unresolvedPairs,1);
+ assert.throws(()=>assertSourceDressFastSelfContact45(proof),/source dress has unresolved contact/);
+ assert.equal(JSON.stringify(witness).includes('sourceXYZ'),false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C48: intersecting cloth faces with no matching source boundary are not miscalled a seam',()=>{
+ const f=clothed44([
+  -.15,-.10,0,.15,-.10,0,0,.15,0,
+  0,-.07,-.10,0,-.07,.10,0,.10,0
+ ]);
+ f.dress.mesh.geometry.setAttribute('dressRest',
+  f.dress.mesh.geometry.getAttribute('position').clone());
+ const proof=fast45(f),witness=proof.firstSourceBoundary48;
+ assert.equal(witness.sourceMatchedVertexPairs,0);
+ assert.equal(witness.sourceDuplicateBoundaryCandidate,false);
+ assert.equal(witness.classification,'source-unmatched-or-crossing-contact');
+ assert.equal(proof.firstUnresolvedContactKind,'unresolved-spatial-triangle-contact');
+ assert.throws(()=>assertSourceDressFastSelfContact45(proof),/source dress has unresolved contact/);
+});
+test('C48: same XYZ but divergent original skin cannot become an approved seam',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ const g=f.dress.mesh.geometry;
+ g.setAttribute('dressRest',g.getAttribute('position').clone());
+ g.getAttribute('skinIndex').setX(3,1);
+ g.getAttribute('skinIndex').setX(5,1);
+ const original=snap(f.dress.mesh),proof=fast45(f),w=proof.firstSourceBoundary48;
+ assert.equal(w.sourceMatchedVertexPairs,2);
+ assert.ok(w.sourceSkinAndPoseCompatiblePairs<2);
+ assert.equal(w.sourceDuplicateBoundaryCandidate,false);
+ assert.equal(w.classification,'unverified-source-edge-contact');
+ assert.throws(()=>assertSourceDressFastSelfContact45(proof),/source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C48: a coincident duplicate whole triangle is not mistaken for one sewn edge',()=>{
+ const f=clothed44([
+  0,0,0,.2,0,0,0,.2,0,
+  0,0,0,.2,0,0,0,.2,0
+ ]);
+ f.dress.mesh.geometry.setAttribute('dressRest',
+  f.dress.mesh.geometry.getAttribute('position').clone());
+ const p=fast45(f),w=p.firstSourceBoundary48;
+ assert.equal(w.sourceMatchedVertexPairs,3);
+ assert.equal(w.classification,'source-duplicate-face-unresolved');
+ assert.equal(w.sourceDuplicateBoundaryCandidate,false);
+ assert.throws(()=>assertSourceDressFastSelfContact45(p),/source dress has unresolved contact/);
+});
+test('C48: actual full photographed source dress reports bounded first-contact evidence, never silently welds',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2});
+ const original=snap(f.dress.mesh),p=fast45(f),w=p.firstSourceBoundary48;
+ assert.equal(p.unresolvedPairs,1);
+ assert.equal(p.completeSourceSelfContactAudit,false);
+ assert.ok(w&&w.schema==='M2-first-source-contact-topology-C48');
+ assert.ok(w.sourceMatchedVertexPairs>=0&&w.sourceMatchedVertexPairs<=3);
+ assert.ok(w.sourceSkinAndPoseCompatiblePairs<=w.sourceMatchedVertexPairs);
+ assert.equal(w.allowedToExcludeFromCollision,false);
+ assert.equal(w.independentSewnSeamIdentityVerified,false);
+ assert.equal(p.releaseAuthorized,false);
+ console.log('C48_ORIGINAL_SOURCE_FIRST_CONTACT_SAFE_SUMMARY',JSON.stringify({
+  classification:w.classification,matchedSource:w.sourceMatchedVertexPairs,
+  matchingPoseAndSkin:w.sourceSkinAndPoseCompatiblePairs,
+  sourceRestPresent:w.originalDressRestPresent,
+  reviewedSeam:false,releaseAuthorized:false
+ }));
+ assert.throws(()=>assertSourceDressFastSelfContact45(p),/source dress has unresolved contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C48: moving skinned source cloth carries first unresolved diagnostic but keeps 17-pose BLOCK',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ f.dress.mesh.geometry.setAttribute('dressRest',
+  f.dress.mesh.geometry.getAttribute('position').clone());
+ for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ const original=snap(f.dress.mesh);
+ const tokens=sampledCloth46(f,{angles:Array.from({length:17},(_,i)=>
+  .02*Math.sin(Math.PI*i/16))});
+ const result=temporal46(f,tokens);
+ assert.equal(result.firstUnresolvedSampleIndex,0);
+ assert.equal(result.firstUnresolvedBoundary48?.schema,'M2-first-source-contact-topology-C48');
+ assert.equal(result.firstUnresolvedBoundary48?.allowedToExcludeFromCollision,false);
+ assert.throws(()=>assertSourceDressTemporalSelfContact46(result),
+  /real intermediate cloth fold or unverified seam refused/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});

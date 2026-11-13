@@ -830,6 +830,80 @@ export function assertSourceDressHighCadencePose43(receipt){
  });
 }
 
+
+/**
+ * P2-C48: inspect the FIRST genuine source-verified self-contact and return
+ * ONLY small, non-identifying topology diagnostics. Matching original XYZ
+ * does not prove sewn seams: both UV split edges and self-overlapping fabric
+ * can have identical vertices. No coordinates, vertex IDs or original photo
+ * mapping are exported, and NO outcome can waive the C45/C46 veto.
+ */
+function firstSourceBoundaryWitness48(shot,first,second,toleranceMeters){
+ const source=shot.source,world=shot.clothWorld;
+ const geom=shot.mesh.geometry;
+ const sk=geom.getAttribute('skinIndex'),sw=geom.getAttribute('skinWeight');
+ const rest=geom.getAttribute('dressRest');
+ const photo=geom.getAttribute('dressCustomPhotoProjection');
+ const restPresent=!!rest&&rest.itemSize>=3;
+ const photoMappingPresent=!!photo;
+ const distance=(data,i,j)=>Math.hypot(
+  data[3*i]-data[3*j],data[3*i+1]-data[3*j+1],
+  data[3*i+2]-data[3*j+2]);
+ const attrSame=(attr,i,j,eps,components)=>{
+  for(let k=0;k<components;k++)
+   if(Math.abs(attr.getComponent(i,k)-attr.getComponent(j,k))>eps)
+    return false;
+  return true;
+ };
+ const sourcePairs=[];
+ const taken=new Set();
+ for(const ai of first){
+  for(const bj of second){
+   if(taken.has(bj)||distance(source,ai,bj)>0.000002)continue;
+   sourcePairs.push([ai,bj]);taken.add(bj);break;
+  }
+ }
+ let compatiblePairs=0;
+ const compatible=[];
+ for(const [ai,bj] of sourcePairs){
+  const sameSk=sk&&sw&&sk.itemSize===4&&sw.itemSize===4&&
+   attrSame(sk,ai,bj,0,4)&&attrSame(sw,ai,bj,0.00001,4);
+  const sameRest=!restPresent||[0,1,2].every(k=>
+   Math.abs(rest.getComponent(ai,k)-rest.getComponent(bj,k))<=0.000002);
+  const samePose=distance(world,ai,bj)<=
+   Math.max(toleranceMeters+0.0000005,0.000002);
+  if(sameSk&&sameRest&&samePose){
+   compatiblePairs++;compatible.push([ai,bj]);
+  }
+ }
+ // More than two matching vertices means potentially overlapping triangles,
+ // NOT a single split boundary edge. An edge must have distinct nonzero
+ // original length, regardless of a possibly collapsed skinned pose.
+ const edgeLength=compatible.length===2?
+  Math.hypot(...[0,1,2].map(k=>
+   source[compatible[0][0]*3+k]-source[compatible[1][0]*3+k])):0;
+ const edgeCandidate=sourcePairs.length===2&&compatiblePairs===2&&
+  restPresent&&edgeLength>0.000002;
+ const classification=edgeCandidate?'source-duplicate-boundary-candidate':
+  sourcePairs.length===3?'source-duplicate-face-unresolved':
+  sourcePairs.length===2?'unverified-source-edge-contact':
+  'source-unmatched-or-crossing-contact';
+ return Object.freeze({
+  schema:'M2-first-source-contact-topology-C48',
+  classification,
+  sourceMatchedVertexPairs:sourcePairs.length,
+  sourceSkinAndPoseCompatiblePairs:compatiblePairs,
+  originalDressRestPresent:restPresent,
+  sourcePhotoProjectionPresent:photoMappingPresent,
+  originalIndicesRemainDisconnected:true,
+  sourceDuplicateBoundaryCandidate:edgeCandidate,
+  independentSewnSeamIdentityVerified:false,
+  allowedToExcludeFromCollision:false,
+  actualContinuousClothSelfContactCertified:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+
 /**
  * P2-C44: original photographed garment SELF-contact at one genuinely
  * captured, skinned 163-bone pose. Compare all nonadjacent original
@@ -878,7 +952,7 @@ export function auditSourceDressSelfContact44({
   new THREE.BufferAttribute(shot.geo.indices.slice(),1));
  let checkedOriginalFaces=0,adjacentPairsExcluded=0,
   candidateTriangles=0,unresolvedPairs=0,minDistanceMeters=null;
- let firstUnresolvedContactKind45=null,earlyBlock45=false;
+ let firstUnresolvedContactKind45=null,firstSourceBoundary48=null,earlyBlock45=false;
  try{
   const bvh=new MeshBVH(g,{indirect:true});
   const start=new ExtendedTriangle(),box=new THREE.Box3();
@@ -921,6 +995,8 @@ export function auditSourceDressSelfContact44({
       minDistanceMeters=minDistanceMeters===null?distance:
        Math.min(minDistanceMeters,distance);
       if(stopAtFirstUnresolvedContact45){
+       firstSourceBoundary48=firstSourceBoundaryWitness48(
+        shot,indices,other,toleranceMeters);
        // Coplanar seam candidates are still unresolved, NEVER safe.
        // Cross-plane surface proximity is equally fail-closed. A contact
        // is a VETO, not a proof of geometrical penetration.
@@ -963,7 +1039,7 @@ export function auditSourceDressSelfContact44({
    actual163BoneSkinnedPose:true,
    completeNonadjacentFaceAudit:!earlyBlock45,
    stoppedAtFirstUnresolvedContact45:earlyBlock45,
-   firstUnresolvedContactKind45,
+   firstUnresolvedContactKind45,firstSourceBoundary48,
    originalFaceCount:faceCount,checkedOriginalFaces,
    candidateTriangles,adjacentPairsExcluded,
    unresolvedPairs,minDistanceMeters,
@@ -1029,7 +1105,9 @@ export function auditSourceDressFastSelfContact45({
        !result.completeNonadjacentFaceAudit||
        result.checkedOriginalFaces!==result.originalFaceCount))||
     (blocked&&result.completeNonadjacentFaceAudit)||
-    (blocked&&!result.firstUnresolvedContactKind45))
+    (blocked&&(!result.firstUnresolvedContactKind45||
+       result.firstSourceBoundary48?.schema!=='M2-first-source-contact-topology-C48'))||
+    (!blocked&&result.firstSourceBoundary48!==null))
   fail('C45 contradictory partial self-contact audit');
  return Object.freeze({
   schema:'M2-source-dress-first-contact-veto-v1',
@@ -1041,6 +1119,7 @@ export function auditSourceDressFastSelfContact45({
   topologicalNeighborsExcluded:result.topologicalNeighborsExcluded,
   disconnectedSeamsRemainUnresolved:true,
   firstUnresolvedContactKind:result.firstUnresolvedContactKind45,
+  firstSourceBoundary48:result.firstSourceBoundary48,
   unresolvedPairs:result.unresolvedPairs,
   stoppedEarlyToRefuse:blocked,
   completeSourceSelfContactAudit:!blocked,
@@ -1074,6 +1153,9 @@ export function assertSourceDressFastSelfContact45(receipt){
   fail('C45 incomplete or forged owner-source self-contact result');
  if(receipt.unresolvedPairs){
   if(receipt.stoppedEarlyToRefuse!==true||
+     receipt.firstSourceBoundary48?.schema!=='M2-first-source-contact-topology-C48'||
+     receipt.firstSourceBoundary48?.allowedToExcludeFromCollision!==false||
+     receipt.firstSourceBoundary48?.independentSewnSeamIdentityVerified!==false||
      receipt.completeSourceSelfContactAudit!==false||
      !['unresolved-coplanar-or-disconnected-seam',
        'unresolved-spatial-triangle-contact']
@@ -1082,6 +1164,7 @@ export function assertSourceDressFastSelfContact45(receipt){
   fail('C45 source dress has unresolved contact; no garment admission');
  }
  if(receipt.stoppedEarlyToRefuse!==false||
+    receipt.firstSourceBoundary48!==null||
     receipt.completeSourceSelfContactAudit!==true||
     receipt.checkedOriginalFaces!==receipt.originalFaceCount||
     receipt.firstUnresolvedContactKind!==null)
@@ -1169,7 +1252,7 @@ export function auditSourceDressTemporalSelfContact46({
   fail('C46 genuine physically posed source garment motion required');
  let posesChecked=0,checkedOriginalFaces=0,
   candidateTriangles=0,firstUnresolvedSampleIndex=null,
-  unresolvedKind=null,completeSequence=true;
+  unresolvedKind=null,firstUnresolvedBoundary48=null,completeSequence=true;
  for(let i=0;i<n;i++){
   const r=auditSourceDressFastSelfContact45({
    root,dress,poseToken:poseTokens[i],
@@ -1186,6 +1269,7 @@ export function auditSourceDressTemporalSelfContact46({
     fail('C46 first observed seam/fold contact cannot be reported as clearance');
    firstUnresolvedSampleIndex=i;
    unresolvedKind=r.firstUnresolvedContactKind;
+   firstUnresolvedBoundary48=r.firstSourceBoundary48;
    completeSequence=false;
    break;
   }
@@ -1204,7 +1288,7 @@ export function auditSourceDressTemporalSelfContact46({
   poseSamples:n,posesChecked,
   fullSequenceAudited:completeSequence,
   stoppedAtFirstUnresolvedContact:!completeSequence,
-  firstUnresolvedSampleIndex,unresolvedKind,
+  firstUnresolvedSampleIndex,unresolvedKind,firstUnresolvedBoundary48,
   unresolvedContacts:completeSequence?0:1,
   sampledClothMoveIntervals,
   maxObservedVertexStepMeters,
@@ -1259,6 +1343,8 @@ export function assertSourceDressTemporalSelfContact46(receipt){
      !Number.isSafeInteger(receipt.firstUnresolvedSampleIndex)||
      receipt.firstUnresolvedSampleIndex<0||
      receipt.posesChecked!==receipt.firstUnresolvedSampleIndex+1||
+     receipt.firstUnresolvedBoundary48?.schema!=='M2-first-source-contact-topology-C48'||
+     receipt.firstUnresolvedBoundary48?.allowedToExcludeFromCollision!==false||
      !['unresolved-coplanar-or-disconnected-seam',
        'unresolved-spatial-triangle-contact'].includes(receipt.unresolvedKind))
    fail('C46 inconsistent original seam/fold refusal witness');
@@ -1271,6 +1357,7 @@ export function assertSourceDressTemporalSelfContact46(receipt){
     receipt.checkedOriginalFaces!==
       receipt.poseSamples*receipt.originalSourceFaces||
     receipt.firstUnresolvedSampleIndex!==null||
+    receipt.firstUnresolvedBoundary48!==null||
     receipt.unresolvedKind!==null)
   fail('C46 missing independently inspected original garment poses');
  return Object.freeze({
