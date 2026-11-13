@@ -33,6 +33,7 @@ function fingerprint(item){
   item?.userAdjusted,item?.sourcePhotoOriginal,item?.sourceHashVerified,
   item?.singleGarmentVerified,item?.sourceSHA256,item?.originalPhoto?.sha256,
   item?.originalPhoto?.image,item?.segmentHint?.cutoutSHA256,
+  item?.segmentHint?.originalSHA256,item?.segmentHint?.clipped,
   item?.segmentHint?.ownerReviewedInstance,item?.segmentHint?.verified,
   item?.outfitSourceId,item?.possibleDuplicate,item?.requiresOwnershipConfirmation
  ]);
@@ -102,6 +103,10 @@ export async function preflightOwnedOutfit1054({getSession,readOwnerItems,cleanB
  }
  const fresh=await readOwnerItems();
  assertLive(getSession,begin);
+ // Detect a different tab adding a lookalike/duplicate while SHA awaits.
+ const freshIndex=buildOwnerWardrobeIndex(begin.ownerId,fresh);
+ if(freshIndex.summary.sourcePairs.some(pair=>pair.ids.some(id=>chosen.has(id))))
+  issue('new ambiguous or duplicate source appeared during verification');
  const freshById=new Map(fresh.map(x=>[x.id,x]));
  for(const item of pinned)if(fingerprint(freshById.get(item.itemId))!==item.fingerprint)
   issue('saved garment changed during source verification');
