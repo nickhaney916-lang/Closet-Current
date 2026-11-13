@@ -1,0 +1,80 @@
+name: 'Parallel #84 real-shirt source-bone visual A/B NO DEPLOY'
+'on':
+  push:
+    branches:
+      - research/parallel84-real-photo-layer-audit-20261113-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  original-photographed-shirt-and-denim:
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, webkit]
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    timeout-minutes: 90
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P84_BROWSER: ${{ matrix.browser }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove exact parent, branch isolation and NO DEPLOY
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=fb61858068be1a775018c42da1dd33bcab5a0128
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json
+          git diff --name-only "$BASE" HEAD >/tmp/p84-files
+          while IFS= read -r path; do
+            case "$path" in
+              research/parallel84-real-photo-layers/layer-contact84.mjs|research/parallel84-real-photo-layers/actual-skinned-layers84.mjs|research/parallel84-real-photo-layers/REPORT.md|tests/parallel84-layer-contact.test.mjs|tests/parallel84-skinned-layer-adapter.test.mjs|scripts/install-parallel84-real-source-layer.mjs|scripts/test-parallel84-real-source-pair-browser.mjs|.github/workflows/parallel84-real-photo-layers-no-deploy.yml|.github/workflows/parallel84-source-pair-webgl-no-deploy.yml|.github/workflows/parallel84-source-yoke-visual-no-deploy.yml|research/parallel84-real-photo-layers/source-bone-yoke-trial84.mjs|scripts/test-parallel84-source-yoke-visual-browser.mjs|tests/parallel84-source-bone-yoke.test.mjs)
+                ;;
+              *) echo "P84 prohibited file: $path"; exit 1;;
+            esac
+          done </tmp/p84-files
+          node --check scripts/install-parallel84-real-source-layer.mjs
+          node --check scripts/test-parallel84-source-yoke-visual-browser.mjs
+          node --check research/parallel84-real-photo-layers/actual-skinned-layers84.mjs
+      - name: Install pinned test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Prepare immutable P541 anatomical photographed-shirt-and-denim research viewer
+        shell: bash
+        run: |
+          set -eu
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git fetch --no-tags origin "$P541"
+          git worktree add --detach .native84-donor-541 "$P541"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.native84-donor-541"
+          ln -s ../node_modules .native84-donor-541/node_modules
+          test "$(git -C .native84-donor-541 rev-parse HEAD)" = "$P541"
+          cd .native84-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Install P84 read-only actual two-photo 163-bone contact diagnostic in DISPOSABLE donor
+        run: |
+          node scripts/install-parallel84-real-source-layer.mjs .native84-donor-541
+          node --check .native84-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          git diff --exit-code fb61858068be1a775018c42da1dd33bcab5a0128 HEAD -- public supabase
+      - name: Genuine original-shirt bone-yoke baseline versus reversible trial on two dual-avatar source outfits
+        run: node scripts/test-parallel84-source-yoke-visual-browser.mjs .native84-donor-541
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P84-SOURCE-TRUE-yoke-reversible-visual-AB-${{ matrix.browser }}-HOLD
+          path: benchmark/parallel84-source-yoke-visual/${{ matrix.browser }}/
+          retention-days: 14
+          if-no-files-found: warn
