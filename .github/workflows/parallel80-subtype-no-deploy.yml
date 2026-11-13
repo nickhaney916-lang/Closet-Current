@@ -1,7 +1,7 @@
 name: Parallel 80 subtype evidence and abstention — NO DEPLOY
 on:
   push:
-    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD, research/parallel80-photo-revision-robustness-20261113-HOLD, research/parallel80-real-photo-ui-preflight-20261113-HOLD, research/parallel80-private-blind-score-gate-20261113-HOLD]
+    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD, research/parallel80-photo-revision-robustness-20261113-HOLD, research/parallel80-real-photo-ui-preflight-20261113-HOLD, research/parallel80-private-blind-score-gate-20261113-HOLD, research/parallel80-pretruth-category-lock-20261113-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
@@ -28,10 +28,10 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD > /tmp/p80-paths
-          test "$(wc -l < /tmp/p80-paths)" -eq 20
+          test "$(wc -l < /tmp/p80-paths)" -eq 21
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|scripts/test-parallel80-real-worker.mjs|scripts/test-p80-public-dev-worker.mjs|scripts/test-p80-real-photo-panel-preflight.mjs|scripts/p80-private-blind-evaluator.mjs|tests/parallel80-subtype.test.mjs|tests/parallel80-private-blind-evaluator.test.mjs|research/parallel80-private-blind-evaluator/REPORT.md|research/parallel80-real-photo-ui-preflight/REPORT.md|research/parallel80-photo-revision-robustness/REPORT.md|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
+              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|scripts/test-parallel80-real-worker.mjs|scripts/test-p80-public-dev-worker.mjs|scripts/test-p80-real-photo-panel-preflight.mjs|scripts/p80-private-blind-evaluator.mjs|scripts/p80-operator-category-lock.mjs|tests/parallel80-subtype.test.mjs|tests/parallel80-private-blind-evaluator.test.mjs|research/parallel80-private-blind-evaluator/REPORT.md|research/parallel80-real-photo-ui-preflight/REPORT.md|research/parallel80-photo-revision-robustness/REPORT.md|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
               *) echo "P80 OUT OF SCOPE $path"; exit 1 ;;
             esac
           done < /tmp/p80-paths
