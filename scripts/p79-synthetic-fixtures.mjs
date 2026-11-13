@@ -8,7 +8,37 @@ import {
 import { mkdtemp, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import sharp from "sharp";
+import { deflateSync } from "node:zlib";
+function syntheticPNG(raw) {
+  const chunk = (type, data) => {
+    const body = Buffer.concat([Buffer.from(type), data]),
+      out = Buffer.alloc(body.length + 8);
+    out.writeUInt32BE(data.length);
+    body.copy(out, 4);
+    let crc = 0xffffffff;
+    for (const value of body) {
+      crc ^= value;
+      for (let bit = 0; bit < 8; bit++)
+        crc = (crc >>> 1) ^ (crc & 1 ? 0xedb88320 : 0);
+    }
+    out.writeUInt32BE((crc ^ 0xffffffff) >>> 0, out.length - 4);
+    return out;
+  };
+  const header = Buffer.alloc(13);
+  header.writeUInt32BE(160, 0);
+  header.writeUInt32BE(120, 4);
+  header[8] = 8;
+  header[9] = 2;
+  const rows = Buffer.alloc(120 * (1 + 160 * 3));
+  for (let y = 0; y < 120; y++)
+    raw.copy(rows, y * 481 + 1, y * 480, (y + 1) * 480);
+  return Buffer.concat([
+    Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]),
+    chunk("IHDR", header),
+    chunk("IDAT", deflateSync(rows)),
+    chunk("IEND", Buffer.alloc(0)),
+  ]);
+}
 import { canonical, sha256 } from "./p75-dataset-core.mjs";
 export async function fixture(
   count = 1,
@@ -42,18 +72,21 @@ export async function fixture(
       seed ^= seed << 5;
       raw[i] = seed & 255;
     }
-    let image = sharp(raw, {
-      raw: { width: 160, height: 120, channels: 3 },
-    });
-    image =
-      format === "jpeg"
-        ? image.jpeg({ quality: 100, chromaSubsampling: "4:4:4" })
-        : format === "webp"
-          ? image.webp({ lossless: true })
-          : image.png();
-    if (orientation !== 1) image = image.withMetadata({ orientation });
-    const bytes = await image.toBuffer(),
-      path = join(dir, "synthetic-" + n + "." + format);
+    let bytes;
+    if (format === "png" && orientation === 1) bytes = syntheticPNG(raw);
+    else {
+      const { default: sharp } = await import("sharp");
+      let image = sharp(raw, { raw: { width: 160, height: 120, channels: 3 } });
+      image =
+        format === "jpeg"
+          ? image.jpeg({ quality: 100, chromaSubsampling: "4:4:4" })
+          : format === "webp"
+            ? image.webp({ lossless: true })
+            : image.png();
+      if (orientation !== 1) image = image.withMetadata({ orientation });
+      bytes = await image.toBuffer();
+    }
+    const path = join(dir, "synthetic-" + n + "." + format);
     await writeFile(path, bytes);
     const source = {
       schema: "p75-v1",

@@ -46,7 +46,7 @@ jobs:
           node --check research/parallel79/workstation/app.js
           node scripts/build.mjs
           node scripts/build-m1-no-account-trial-831.mjs
-          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
           node scripts/m1-release-evidence-851.mjs
   desktop-engines-synthetic-only:
     needs: native-and-scope
