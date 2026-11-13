@@ -18,8 +18,10 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
   similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),
   localRequest:request||(async()=>result),
   queued(work){const promise=tail.then(work);tail=promise.catch(()=>{});return promise;},
+  // This legacy orchestration test uses a tiny fake writer. A successful
+  // source CAS in the real app ACKs true after the transaction commits.
   persistDraft(){const snapshot=structuredClone(c.batch);return c.queued(()=>{
-   draftRows=structuredClone(snapshot);
+   draftRows=structuredClone(snapshot);return true;
   });},
   db:{name:'closet-current-user-owner-synthetic',transaction(names){
    const pending=[];let aborted=false,scheduled=false;
