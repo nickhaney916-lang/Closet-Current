@@ -75,9 +75,11 @@ test('uncertain labels stay uncategorized and are not autosaved',async()=>{
  const {c,stored}=setup({result:{strong:false,choices:[choice]}});c.candidate('one');await done(c);
  assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].color,'');assert.match(c.batch[0].localStatus,/Garment identity needs confirmation/);
 });
-test('flat frame is removed before contacting the model',async()=>{
+test('flat frame is preserved for owner review without contacting the model',async()=>{
  let calls=0;const {c}=setup({quality:async()=>({blank:true}),request:async()=>{calls++;}});c.candidate('blank');await done(c);
- assert.equal(c.batch.length,0);assert.equal(c.items.length,0);assert.equal(calls,0);assert.match(c.messageText,/Blank/);
+ assert.equal(c.batch.length,1);assert.equal(c.batch[0].image,'blank');
+ assert.equal(c.batch[0].localAnalyzed,true);assert.equal(c.items.length,0);
+ assert.equal(calls,0);assert.match(c.batch[0].localStatus,/Original photo kept/);
 });
 test('an exact duplicate of a saved or queued photo is skipped',async()=>{
  const {c}=setup();c.candidate('one');assert.equal(c.candidate('one'),false);await done(c);assert.equal(c.candidate('one'),false);assert.equal(c.items.length,1);

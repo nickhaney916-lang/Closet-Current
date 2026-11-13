@@ -1913,21 +1913,23 @@ async function recognizeItem(item){
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
   if(!sameRecognitionLease())return;
   if(quality.blank){
-   await persistDraft({required:true,mode:'remove',expected:expectedDraftForRecognition});
-   if(!sameRecognitionLease())return;
-   if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');
-   batch=batch.filter(x=>x.id!==item.id);
-   message('Blank or featureless photo skipped. Frame one garment and try again.');
+   // A visual-quality heuristic is not permission to delete an original.
+   // Keep the exact owner-private draft JPEG until the owner explicitly
+   // reviews/removes it. The final per-row CAS persists only the status.
+   item.localAnalyzed=true;
+   item.localStatus='This photo may be blank or featureless. Original photo kept. Review it in Adjust or remove it yourself.';
+   if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_review_required');
    return true;
   }
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
   if(matches.some(x=>x.image===item.image)){
-   await persistDraft({required:true,mode:'remove',expected:expectedDraftForRecognition});
-   if(!sameRecognitionLease())return;
-   if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');
-   batch=batch.filter(x=>x.id!==item.id);
-   message('Exact duplicate skipped.');
+   // An exact source match can be called a possible duplicate, but it is
+   // not authorization to discard an owner-private captured original.
+   // Never silently remove a pending JPEG or merge physical garments.
+   item.possibleDuplicate=true;item.localAnalyzed=true;
+   item.localStatus='Possible exact duplicate photograph. Original photo kept. Compare it in Photo results and remove it only if you choose.';
+   if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_review_required');
    return true;
   }
   item.possibleDuplicate=matches.some(x=>Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
