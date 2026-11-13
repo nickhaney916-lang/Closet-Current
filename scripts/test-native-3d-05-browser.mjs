@@ -24,6 +24,7 @@ const photoOwnerBilateral195=process.env.PHOTO_OWNER_BILATERAL195==='1';
 const photoPhysicalReadback196=process.env.PHOTO_PHYSICAL_READBACK196==='1';
 const mission2Performance=process.env.MISSION2_PERFORMANCE==='1';
 const performanceSamples=[];
+const licensedDressContact52=[];
 const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
 const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
 const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
@@ -248,6 +249,9 @@ const photoFit171=process.env.PHOTO_FIT171==='1';
 const photoTorso173=process.env.PHOTO_TORSO173==='1';
 const photoSleeve174=process.env.PHOTO_SLEEVE174==='1';
 const photoDress175=process.env.PHOTO_DRESS175==='1';
+const photoDressContact52=process.env.PHOTO_DRESS_CONTACT52==='1';
+if(photoDressContact52&&!photoDress175)
+ throw Error('C52 genuine photographed licensed P175 dress must be enabled');
 const photoDressMotion36=process.env.PHOTO_DRESS_MOTION36==='1';
 const photoDressMotionPhase36=Number(process.env.PHOTO_DRESS_MOTION_PHASE36??'0.25');
 if(photoDressMotion36&&(!photoDress175||!photoFit171||
@@ -481,7 +485,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -1838,6 +1842,30 @@ try{
     null,{timeout:30000});
   }
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
+  if(photoDressContact52){
+   const witness=await page.evaluate(()=>window.__M2C52LicensedResearchReceipt??null);
+   assert.ok(witness,'C52 actual P175 browser garment instrument must run');
+   assert.equal(witness.schema,'M2-real-original-photo-surface-diagnostic-C52');
+   assert.equal(witness.authenticOriginalLicensedDress,true);
+   assert.equal(witness.actuallySkinned163Bones,true);
+   assert.ok(witness.anatomicalBodyMeshes>=1);
+   assert.ok(witness.originalSourceFaces>=1000,
+    'C52 must diagnose actual dense pictured dress, not small synthetic cylinder');
+   assert.ok(witness.sourcePairComparisons>=0&&witness.posedPairComparisons>=0);
+   assert.ok(witness.originalSourceBoxPairs>=witness.originalSourceStrictCrossings);
+   assert.ok(witness.posedBoxPairs>=witness.posedStrictCrossings);
+   assert.equal(witness.originalSourcePhotoUVRestSkinAndIndicesUntouched,true);
+   assert.equal(witness.noRawGeometryOrPhotoExposed,true);
+   assert.equal(witness.boundingBoxOverlapNotProofOfContact,true);
+   assert.equal(witness.nonCrossingNotProofOfClearance,true);
+   assert.equal(witness.anyContactMustRemainBlocked,true);
+   assert.equal(witness.releaseAuthorized,false);
+   assert.equal(witness.familyAlpha,'HOLD');
+   const json=JSON.stringify(witness);
+   for(const forbidden of ['vertexIds','sourceCoordinates','ownerEmail','photoPixels','originalJPEG','skinIndexData'])
+    assert.equal(json.includes(forbidden),false,'C52 nonidentifying receipt required');
+   licensedDressContact52.push({width,...witness});
+  }
   if(photoDress175){
    const originalDressStatus=await page.evaluate(()=>
     document.getElementById('native3D05Status')?.textContent||'no status');
@@ -2285,6 +2313,7 @@ try{
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
  if(sourceLengthMode)assert.equal(sourceLengthEvidence.length,sourceAdaptiveMode?0:6);
+ if(photoDressContact52)assert.deepEqual(licensedDressContact52.map(x=>x.width),[320,390,430]);
  if(mission2Performance){assert.equal(performanceSamples.length,6);
   for(const width of [320,390,430])assert.deepEqual(performanceSamples.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);}
  const result={priority:photoPhysicalReadback196?'OWNER-163BONE-PHYSICAL-READBACK-196':photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
@@ -2296,6 +2325,7 @@ try{
   actual3DWithHonestUnsupportedPhotoFallback:true,
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
+  ...(photoDressContact52?{licensedDressContact52}:{}),
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
   ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence,
    sourceEdgeAblationControl:sourceEdgeAblation,sourceEdgeAblationModuleRequests:interceptedOpticalControlModules,
