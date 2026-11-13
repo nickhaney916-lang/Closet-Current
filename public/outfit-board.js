@@ -5,13 +5,17 @@ let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=f
 let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
 let boardExpectedStoredDraft='null',boardConflictDraft=null;
 function nativeLossless04Notify(error){
- const value=typeof error==='string'?error:String(error?.message||error);
+ // Raw storage/auth exceptions can contain private original-photo metadata.
+ const value=typeof error==='string'?error:
+  'The private outfit action could not finish. Reopen Outfit Builder and try again.';
  $('boardSaveStatus').textContent='Research safety: '+value;
 }
 function nativeLossless04Edit(call){
- if(!nativeLossless04||!nativeLossless04.status().active)
-  return nativeLossless04Notify('Signed-in private board not ready; no changes saved');
- try{call();}catch(error){nativeLossless04Notify(error);}
+ const lease=beginOwnerBoardUiLease(),consumer=nativeLossless04;
+ if(!lease||!consumer||!consumer.status().active)return;
+ try{call();}catch(error){
+  if(lease.current()&&nativeLossless04===consumer)nativeLossless04Notify(error);
+ }
 }
 function nativeLossless04ClearPreview(){
  $('boardSlots').replaceChildren();$('savedBoards').replaceChildren();
@@ -325,11 +329,14 @@ $('clearBoard').onclick=()=>{
 };
 $('saveBoard').onclick=async()=>{
  if(nativeLossless04Active){
-  if(!nativeLossless04||!nativeLossless04.status().active)return nativeLossless04Notify('Owner session required');
-  $('saveBoard').disabled=true;
-  try{await nativeLossless04.persist({asNew:true});}
-  catch(e){nativeLossless04Notify(e);}
-  finally{$('saveBoard').disabled=false;}
+  const lease=beginOwnerBoardUiLease(),consumer=nativeLossless04;
+  if(!lease||!consumer||!consumer.status().active)return;
+  const current=()=>lease.current()&&nativeLossless04===consumer&&consumer.status().active;
+  const button=$('saveBoard');
+  button.disabled=true;
+  try{await consumer.persist({asNew:true});}
+  catch(error){if(current())nativeLossless04Notify(error);}
+  finally{if(current())button.disabled=false;}
   return;
  }
  const lease=beginOwnerBoardUiLease();if(!lease)return;
@@ -385,19 +392,22 @@ const outfitBoardReady=(async()=>{
    function addControl(id,label,fn){
     const button=node('button',label,'secondary');button.type='button';button.id=id;
     button.onclick=async()=>{
+     const lease=beginOwnerBoardUiLease(),consumer=nativeLossless04;
+     if(!lease||!consumer||!consumer.status().active||!button.isConnected)return;
+     const current=()=>lease.current()&&nativeLossless04===consumer&&consumer.status().active;
      button.disabled=true;
-     try{await fn();}
-     catch(error){nativeLossless04Notify(error);}
-     finally{button.disabled=false;}
+     try{await fn(consumer);}
+     catch(error){if(current())nativeLossless04Notify(error);}
+     finally{if(current()&&button.isConnected)button.disabled=false;}
     };controls.append(button);
    }
-   addControl('native04SaveChanges','Save changes',()=>nativeLossless04.persist({asNew:false}));
-   addControl('native04CancelChanges','Cancel changes',()=>nativeLossless04.cancel());
-   addControl('native04DeleteOutfit','Delete saved outfit',async()=>{
-    const index=nativeLossless04.selected;
+   addControl('native04SaveChanges','Save changes',consumer=>consumer.persist({asNew:false}));
+   addControl('native04CancelChanges','Cancel changes',consumer=>consumer.cancel());
+   addControl('native04DeleteOutfit','Delete saved outfit',async consumer=>{
+    const index=consumer.selected;
     if(index===null)return nativeLossless04Notify('Open a saved outfit to delete it');
     if(!confirm('Delete ONLY this saved outfit? Your clothing photos stay in My Closet.'))return;
-    await nativeLossless04.remove(index,{confirmed:true});
+    await consumer.remove(index,{confirmed:true});
    });
    $('saveBoard').after(controls);
    if(typeof URLSearchParams==='function'&&
