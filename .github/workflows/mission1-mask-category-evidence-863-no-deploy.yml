@@ -1,0 +1,75 @@
+name: Mission 1 P863 mask/category dual-view evidence — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-mask-category-evidence-863-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p863-mask-category-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-native-owner-review-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact P862 parent and six-path source-only allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=e42cf5955a25df34837a16d71dfba17c39951a64
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p863-paths
+          cat /tmp/p863-paths
+          test "$(wc -l </tmp/p863-paths)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              public/recognition-engine.mjs|tests/isolated-recognition.test.mjs|tests/mission1-segmented-subtype-review-862.test.mjs|tests/mission1-mask-category-evidence-863.test.mjs|research/mission1-mask-category-evidence-863/REPORT.md|.github/workflows/mission1-mask-category-evidence-863-no-deploy.yml) ;;
+              *) echo "P863 UNAUTHORIZED PATH $p"; exit 1;;
+            esac
+          done </tmp/p863-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/local-worker.mjs public/outfit-worker.mjs public/recognition-confusion-guard.mjs public/local-catalog.mjs public/subtype-review-80.mjs public/clothing-memory.js scripts benchmark supabase)"
+          grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-mask-category-evidence-863/REPORT.md
+          grep -Fq 'supportsMaskCategory(a,whole)' public/recognition-engine.mjs
+          grep -Fq 'supportsMaskCategory(b,close)' public/recognition-engine.mjs
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          echo P863_SOURCE_SAFETY_SCOPE_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Focused source-executing software checks and all inherited native
+        run: |
+          set -euo pipefail
+          node --check public/recognition-engine.mjs
+          node --test tests/isolated-recognition.test.mjs tests/mission1-segmented-subtype-review-862.test.mjs tests/mission1-mask-category-evidence-863.test.mjs tests/mission1-empirical-confusion-modern-port-838.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p863-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p863-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p863-release
+  desktop-browser-operator-safety-NOT-physical-phones:
+    needs: pinned-native-owner-review-NO-DEPLOY
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Existing Chromium/WebKit real app review and mask/owner reconciliation
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs

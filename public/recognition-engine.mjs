@@ -387,9 +387,24 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  onStage('identify');const labels=localCandidates.map(x=>x.label),whole=await model(image,labels,options),close=await confirmationModel(image,labels,options),a=garmentCategoryTotals(whole),b=garmentCategoryTotals(close);
  const supported=ranked=>ranked[0]&&ranked[0].score>=.55&&ranked[0].score-(ranked[1]?.score||0)>=.15;
  const agreed=supported(a)&&supported(b)&&a[0].category===b[0].category&&hint.categories.includes(a[0].category);
- // A strong, complete mask can retain a single broad category when the
- // classifier is uncertain. Confident contradictions still require Adjust.
- const maskOnly=hint.categories.length===1&&Number.isFinite(hint.confidence)&&hint.confidence>=.9&&hint.confidence<=1&&[a,b].every(r=>!supported(r)||r[0].category===hint.categories[0]);
+ // P863: a confident segmentation MASK is not clothing evidence. The old
+ // fallback accepted even two 100%-nonclothing FashionCLIP responses because
+ // garmentCategoryTotals() omitted all Uncategorized labels. Keep a broad
+ // (never strong) category only if BOTH complete model views independently
+ // assign meaningful support to THAT same mask category, it leads garment
+ // categories, and nonclothing negatives do not outweigh that evidence.
+ const negativeLabels=new Set(localCandidates.filter(c=>c.category==='Uncategorized').map(c=>c.label));
+ const negativeTotal=rows=>rows.reduce((sum,row)=>sum+(
+  negativeLabels.has(row.label)&&Number.isFinite(row.score)&&row.score>=0&&row.score<=1?row.score:0
+ ),0);
+ const supportsMaskCategory=(categories,rows)=>{
+  const lead=categories[0];
+  return lead?.category===hint.categories[0]&&lead.score>=.25&&
+   lead.score>negativeTotal(rows);
+ };
+ const maskOnly=hint.categories.length===1&&Number.isFinite(hint.confidence)&&
+  hint.confidence>=.9&&hint.confidence<=1&&
+  supportsMaskCategory(a,whole)&&supportsMaskCategory(b,close);
  if(!agreed&&!maskOnly)return {strong:false,choices:[],details:{},reason:'mask_category_disagrees'};
  const category=agreed?a[0].category:hint.categories[0];
  const first=clothingChoices(whole)[0],confirmation=clothingChoices(close),sameType=agreed&&strongMatch(clothingChoices(whole))&&confirmation[0]?.category===first.category&&confirmation[0]?.itemType===first.itemType&&confirmation[0].score>=.35&&confirmation[0].score-(confirmation[1]?.score||0)>=.1&&(!hint.types.length||hint.types.includes(first.itemType));
