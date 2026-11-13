@@ -189,6 +189,27 @@ export function verifyHumanReceipt(row,receipt,registry,approvedRegistrarFingerp
  if(!signatureOK(unsigned,signature,entry.publicKey))issues.push('unsigned/edited review');
  return [...new Set(issues)];
 }
+/** Human-curated physical garment grouping + rights/consent evidence hash.
+ * No identity/consent may be assumed from Wikimedia's public metadata.
+ * The owner must independently pin/approve the registrar key outside Git.
+ */
+export function verifyCuratorApproval(source,registry,approvedFingerprint){
+ if(!source||source.rightsReview!=='curator-approved'||source.photoContent!=='human-reviewed'||
+ source.garmentHumanVerified!==true||source.sourceGroupApproved!==true||
+ !source.sourceGroupId||!isHex64(source.legalEvidenceSha256)||
+ !['product-only-license-vetted','documented-subject-release'].includes(source.consentStatus)||
+ !Number.isFinite(Date.parse(source.curatorReviewedAt||'')))return false;
+ try{
+  const registrar=createPublicKey(registry.registrarPublicKey);
+  if(sha256(registrar.export({type:'spki',format:'der'}))!==approvedFingerprint)return false;
+  const signed={sha256:source.sha256,sourceGroupId:source.sourceGroupId,
+   rightsReview:source.rightsReview,photoContent:source.photoContent,
+   garmentHumanVerified:true,sourceGroupApproved:true,
+   legalEvidenceSha256:source.legalEvidenceSha256,
+   consentStatus:source.consentStatus,curatorReviewedAt:source.curatorReviewedAt};
+  return signatureOK(signed,source.curatorApprovalSignature,registry.registrarPublicKey);
+ }catch{return false;}
+}
 export function independentAgreement(row,receipts,registry,approvedRegistrarFingerprint){
  if(!Array.isArray(receipts)||receipts.length<2)return {eligible:false,agreement:null,issues:['two independently attested human reviews required']};
  const issues=[],reviewers=new Set();
