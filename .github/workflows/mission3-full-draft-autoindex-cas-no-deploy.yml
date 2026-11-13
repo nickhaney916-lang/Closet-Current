@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact PR1013 parent and eight-path no-deploy allowlist
+      - name: Exact PR1013 parent and nine-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/automatic-indexing.test.cjs|tests/mission3-pending-capture-status-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|tests/index-04-saved-recognition.test.mjs|research/mission3-full-draft-autoindex-cas/REPORT.md|.github/workflows/mission3-full-draft-autoindex-cas-no-deploy.yml) ;;
+              public/app.js|tests/automatic-indexing.test.cjs|tests/mission3-pending-capture-status-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|tests/index-04-saved-recognition.test.mjs|tests/async-camera-index-source-114.test.mjs|research/mission3-full-draft-autoindex-cas/REPORT.md|.github/workflows/mission3-full-draft-autoindex-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -106,7 +106,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict PR1013 eight-path same-parent diff gate
+      - name: Strict PR1013 nine-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -115,7 +115,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/automatic-indexing.test.cjs|tests/mission3-pending-capture-status-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|tests/index-04-saved-recognition.test.mjs|research/mission3-full-draft-autoindex-cas/REPORT.md|.github/workflows/mission3-full-draft-autoindex-cas-no-deploy.yml) ;;
+              public/app.js|tests/automatic-indexing.test.cjs|tests/mission3-pending-capture-status-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|tests/index-04-saved-recognition.test.mjs|tests/async-camera-index-source-114.test.mjs|research/mission3-full-draft-autoindex-cas/REPORT.md|.github/workflows/mission3-full-draft-autoindex-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
