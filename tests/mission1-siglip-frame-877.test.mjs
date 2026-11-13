@@ -44,12 +44,13 @@ test('P877 keeps improvement on a real garment separate from a non-clothing abst
  assert.equal(summary.historicalGarmentRows,2);
  assert.equal(summary.historicalNegativeRows,1);
  assert.equal(summary.garmentSubtypeHistoricalMatchesBaseline,1);
- assert.equal(summary.garmentSubtypeHistoricalMatchesAlternate,2);
+ assert.equal(summary.garmentSubtypeHistoricalMatchesAlternate,1);
  assert.equal(summary.negativeClassHistoricalMatchesBaseline,0);
  assert.equal(summary.negativeClassHistoricalMatchesAlternate,1);
  assert.equal(summary.baselineExactHistoricalStrings,1);
- assert.equal(summary.alternateExactHistoricalStrings,3);
+ assert.equal(summary.alternateExactHistoricalStrings,2);
  assert.deepEqual(summary.gains,['commons-0035','commons-0090']);
+ assert.deepEqual(summary.losses,['commons-0078']);
  assert.equal(summary.blindAccuracy,null);
  assert.equal(summary.modelPromoted,false);
 });
