@@ -7,7 +7,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
-import {sha256,verifiedSource,checkOverlap,priorExposures,sourceKey,originalURL,canonicalOriginalURL,rightsOK,publicAuditReport,SCHEMA} from './p75-dataset-core.mjs';
+import {sha256,verifiedSource,checkOverlap,priorExposures,sourceKey,sourceSeriesHint,originalURL,canonicalOriginalURL,rightsOK,publicAuditReport,SCHEMA} from './p75-dataset-core.mjs';
 const plan=JSON.parse(await readFile('research/parallel75/queries.json','utf8'));
 if(plan.schema!=='p75-query-plan-v1'||!Array.isArray(plan.searches)||plan.searches.length>12)throw Error('Invalid bounded search plan.');
 const filenames=['benchmark/locked-photo-sources.json','benchmark/manifest-holdout-16.json',
@@ -80,7 +80,10 @@ for(const task of plan.searches){
    bytes=Buffer.from(await res.arrayBuffer());
    if(bytes.length!==info.size||bytes.length>12*1024*1024||createHash('sha1').update(bytes).digest('hex')!==info.sha1)throw Error('DOWNLOAD-HASH-OR-LENGTH-MISMATCH');
    const decoded=await sharp(bytes,{limitInputPixels:40_000_000}).metadata();
-   if(!decoded.width||!decoded.height||decoded.width<100||decoded.height<100||!['jpeg','png','webp'].includes(decoded.format))throw Error('Unsupported decoded photo');
+   if(!decoded.width||!decoded.height||decoded.width<100||decoded.height<100||
+      decoded.width!==info.width||decoded.height!==info.height||
+      decoded.format!==({'image/jpeg':'jpeg','image/png':'png','image/webp':'webp'}[info.mime]))
+     throw Error('Decoded MIME/dimensions inconsistent with Commons original metadata');
    const row={schema:SCHEMA,id:'p75-candidate-'+String(discovered.length+1).padStart(4,'0'),
     discoveryFamily:task.family,sourcePage:src,originalURL:original,
     license:lic,licenseURL:licURL,artist,title,
@@ -88,7 +91,7 @@ for(const task of plan.searches){
     width:decoded.width,height:decoded.height,orientation:decoded.orientation||1,
     mime:info.mime,acquiredAt:new Date().toISOString(),verification:'bytes-verified',
     photoContent:'unreviewed',rightsReview:'manual-review-required',sourceGroupApproved:false,garmentHumanVerified:false,
-    split:'quarantine',sourceGroupId:null,modelScored:false,labelsPublic:false};
+    split:'quarantine',sourceGroupId:null,seriesKey:sourceSeriesHint(src),modelScored:false,labelsPublic:false};
    // No garment name, category, subtype or color is assigned from metadata.
    row.dhash64=await dHash(bytes);
    const issues=verifiedSource(row);if(issues.length)throw Error('Source verification invalid: '+issues.join(','));
@@ -114,6 +117,7 @@ const summary={schema:'p75-audit-summary-v1',queryCount:plan.searches.length,his
  rejectedByReason:failures,
  humanGarmentTruth:0,humanColorTruth:0,humanSubtypeTruth:0,instanceMasksHumanTruth:0,shoePairHumanTruth:0,
  plannedTarget:240,planningGap:Math.max(0,240-discovered.length),uniquePhysicalGarmentGroupsHumanVerified:0,
+ flaggedSamePublisherSeries:discovered.filter(r=>r.overlapFlags?.includes('same-publisher-series')).length,
  train:0,development:0,sealedBlind:0,
  originalBytesCommitted:0,originalBytesPublished:0,blindLabelsPublished:0,
  disclosure:'ALL source URLs are development-exposed candidates and may NEVER become independent sealed blind without a new hidden acquisition protocol.'};
