@@ -12,7 +12,59 @@
  * not certify baseline collision freedom, continuing motion or appearance.
  */
 import * as T from 'three';
-import {posedGeometry,triangleContacts} from '../three-d-42/posed-contact.mjs';
+import {MeshBVH} from 'three-mesh-bvh';
+
+// Mirrors the original P541 P42 true skinned posed-triangle contact measurement
+// without importing or changing that other mission's code. Public package
+// THREE MeshBVH, original actual body and cloth triangle indices; no tokens,
+// garment pixels, real owner private coordinates, or raw face keys exported.
+function posedGeometry(meshes){
+ const pos=[],idx=[];
+ for(const mesh of meshes){
+  mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
+  const start=pos.length/3,geometry=mesh.geometry,
+   position=geometry.getAttribute('position');
+  if(!position||!mesh.isSkinnedMesh||mesh.skeleton.bones.length!==163)
+   throw Error('source-skinned-pose-required');
+  for(let i=0;i<position.count;i++){
+   const q=mesh.applyBoneTransform(i,
+    new T.Vector3().fromBufferAttribute(position,i))
+    .applyMatrix4(mesh.matrixWorld);
+   if(!q.toArray().every(finite))throw Error('nonfinite-source-pose');
+   pos.push(q.x,q.y,q.z);
+  }
+  const index=geometry.index;
+  for(let i=0;i<(index?.count??position.count);i++){
+   const v=index?index.getX(i):i;
+   if(!Number.isSafeInteger(v)||v<0||v>=position.count)
+    throw Error('invalid-original-source-face-index');
+   idx.push(start+v);
+  }
+ }
+ const geometry=new T.BufferGeometry();
+ geometry.setAttribute('position',new T.Float32BufferAttribute(pos,3));
+ geometry.setIndex(idx);
+ return {g:geometry};
+}
+function triangleContacts(left,right){
+ const ba=new MeshBVH(left),bb=new MeshBVH(right),
+  line=new T.Line3(),normal=new T.Vector3(),pairKeys=new Set();
+ let count=0,maxPlaneDepth=0;
+ ba.bvhcast(bb,new T.Matrix4(),{
+  intersectsTriangles:(ta,tb,i,j)=>{
+   if(ta.intersectsTriangle(tb,line)&&line.distance()>1e-5){
+    pairKeys.add(i+'|'+j);count++;
+    tb.getNormal(normal);
+    const depth=Math.max(0,...[ta.a,ta.b,ta.c].map(q=>
+     -q.clone().sub(tb.a).dot(normal)));
+    maxPlaneDepth=Math.max(maxPlaneDepth,depth);
+   }
+   return false;
+  }
+ });
+ return {count,pairs:pairKeys,maximumLocalOrientedFaceDepth:maxPlaneDepth};
+}
+
 import {smoothSurfaceNormals} from '../three-d-08/garment-fit-profile.mjs';
 const smooth=T.MathUtils.smoothstep;
 const SHA='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
