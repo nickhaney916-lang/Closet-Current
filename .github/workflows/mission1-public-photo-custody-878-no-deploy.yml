@@ -1,0 +1,103 @@
+name: Mission 1 P878 public original-to-model custody — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-public-photo-custody-878-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p878-custody-HOLD
+  cancel-in-progress: true
+jobs:
+  original-photo-owner-review-native-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified P877 parent and four added research-only paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c3558227017c0e3aa337afbb29cf4827dec0ff68
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p878-paths
+          test "$(wc -l </tmp/p878-paths)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/p878-public-photo-custody.mjs|tests/mission1-photo-custody-878.test.mjs|research/mission1-public-photo-custody-878/REPORT.md|.github/workflows/mission1-public-photo-custody-878-no-deploy.yml) ;;
+              *) echo "P878_UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p878-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public benchmark supabase)"
+          grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-public-photo-custody-878/REPORT.md
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          echo P878_STRICT_NO_DEPLOY_SCOPE_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Nine adversarial custody tests, native regression, original photo, two engines
+        run: |
+          set -euo pipefail
+          node --check scripts/p878-public-photo-custody.mjs
+          node --check tests/mission1-photo-custody-878.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p878-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p878-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p878-release
+  actual-48-public-originals-and-two-pinned-models-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P877 baseline and no changed production/benchmark or model bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c3558227017c0e3aa337afbb29cf4827dec0ff68
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark public supabase)"
+          grep -Fq "research877:process.env.P877_FULL_FRAME==='1'" scripts/p82-real-browser.mjs
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium
+      - name: Verify original public JPEG bytes and pinned real q8 weights
+        run: |
+          set -euo pipefail
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          test "$(printf '%s\n' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Real dual-model inference, same-family shadow view, verify one-to-one model-photo-original custody
+        env:
+          P877_FULL_FRAME: '1'
+        run: |
+          set -euo pipefail
+          node scripts/p82-real-browser.mjs chromium benchmark/p878-real-chromium | tee /tmp/p878-real
+          test "$(grep -c '^P82_REAL_BROWSER_ROW chromium ' /tmp/p878-real)" -eq 48
+          node scripts/p878-public-photo-custody.mjs benchmark/p878-real-chromium/results.json benchmark/locked-photo-sources.json benchmark/p878-real-chromium/custody-audit.json | tee /tmp/p878-custody
+          grep -Fq '"photos":48' /tmp/p878-custody
+          grep -Fq '"distinctPhotoDigests":48' /tmp/p878-custody
+          grep -Fq '"blindAccuracy":null' /tmp/p878-custody
+          grep -Fq '"releaseReady":false' /tmp/p878-custody
+          node scripts/p877-siglip-full-frame-audit.mjs benchmark/p878-real-chromium/results.json benchmark/p878-real-chromium/whole-frame-audit.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p878-public-development-source-model-custody-numeric-only
+          path: benchmark/p878-real-chromium/custody-audit.json
+          if-no-files-found: error
