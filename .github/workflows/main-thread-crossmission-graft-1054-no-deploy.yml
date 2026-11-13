@@ -1,0 +1,85 @@
+name: "MAIN1054 M3 signed-owner native convergence — NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/main-thread-crossmission-graft-1054-HOLD
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  signed-convergence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Pin verified M4 parent and restrict exact source edit scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=f704a3b00e6c5d47e8cafd0f0243c7494a0a86cc
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test -n "$CHANGED"
+          while IFS= read -r path; do
+            case "$path" in
+              public/app.js|public/outfit-board.js|public/closet-stylist.js|\
+              tests/mission3-review-discard-refresh-exact-session.test.cjs|\
+              tests/mission3-outfit-board-action-owner-session.test.cjs|\
+              tests/mission3-stylist-submit-owner-request-lease.test.cjs|\
+              tests/mission3-styled-outfit-card-save-adjust-owner-lease.test.cjs|\
+              tests/outfit-draft-conflicts.test.cjs|tests/outfit-draft-resilience.test.cjs|\
+              scripts/test-mission3-review-discard-refresh-owner-browser.mjs|\
+              scripts/test-mission3-outfit-board-action-owner-browser.mjs|\
+              research/main-thread-integration-1054/MILESTONE3.md|\
+              .github/workflows/main-thread-crossmission-graft-1054-no-deploy.yml) ;;
+              *) echo "Changed path not allowed in research: $path" >&2; exit 1;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/auth.js public/cloud-backup.js public/cloud-backup-engine.js public/index.html
+          git diff --exit-code "$BASE" HEAD -- public/native-canonical-photo-source-167.mjs public/native-owner-wardrobe-index-167.mjs
+          grep -q "mission4Preview')==='research'" public/outfit-board.js
+          grep -q "beginOwnerBoardUiLease" public/outfit-board.js
+          grep -q "styledCollectionRequestSerial" public/closet-stylist.js
+          grep -q "stillReviewing" public/app.js
+          grep -q "renderAuthorized3D:false" research/main-thread-integration-1054/native-2d-preview.mjs
+      - name: Install pinned no-deploy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install test-only Chromium and WebKit (no real phones)
+        run: npx playwright install --with-deps chromium webkit
+      - name: Build offline app before PWA tests
+        run: node scripts/build.mjs
+      - name: Pinned source-to-outfit and opaque-session tests
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Extracted exact-source owner-session tests
+        run: node --test --test-concurrency=1 tests/mission3-review-discard-refresh-exact-session.test.cjs tests/mission3-outfit-board-action-owner-session.test.cjs tests/mission3-stylist-submit-owner-request-lease.test.cjs tests/mission3-styled-outfit-card-save-adjust-owner-lease.test.cjs
+      - name: Original signed-owner native Outfit Builder browser preview
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Owner-bound source-executed pending Photo Review browser cases
+        run: node scripts/test-mission3-review-discard-refresh-owner-browser.mjs
+      - name: Owner-bound source-executed native Board actions browser cases
+        run: node scripts/test-mission3-outfit-board-action-owner-browser.mjs
+      - name: All inherited Node native tests with compatibility fixtures
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Never deploy or enable Family Alpha
+        run: |
+          test -d dist
+          test -f benchmark/main1054-native-preview/results.json
+          test -f benchmark/mission3-review-discard-refresh-exact-session/results.json
+          test -f benchmark/mission3-outfit-board-action-owner-browser/results.json
+          echo "Research only; NEVER deploy / merge / hosted cloud / Family Alpha."
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: main1054-m3-native-convergence
+          path: |
+            benchmark/main1054-native-preview/
+            benchmark/mission3-review-discard-refresh-exact-session/
+            benchmark/mission3-outfit-board-action-owner-browser/
+          retention-days: 7
