@@ -2011,6 +2011,7 @@ async function recognizeItem(item){
   if(epoch===captureOperationEpoch){
    localPending.delete(item.id);
    if(recognitionState.activeId===item.id)recognitionState.activeId=null;
+   let persistenceFailed=false;
    // A recognition status is NOT durable just because a queued CAS was
    // started. Await its exact owner-private IndexedDB transaction, so the
    // scanner never finishes with a misleading “ready” label after quota,
@@ -2029,12 +2030,16 @@ async function recognizeItem(item){
      if(epoch===captureOperationEpoch&&batch.includes(item)){
       item.localAnalyzed=false;
       item.scanFailed=true;
+      persistenceFailed=true;
       item.localStatus='Recognition results were not saved on this device. Your original photo is kept. Check storage or another tab, then refresh Photo results and review the garment.';
       message('Recognition results could not be saved. Original photograph kept; refresh Photo results before continuing.');
      }
     }
    }
    if(epoch===captureOperationEpoch)render();
+   // A failed status CAS is not a successful recognition review, even if
+   // classification ran. A caller may only ACK the scan after disk commit.
+   if(persistenceFailed)return false;
   }
  }
 }
