@@ -1,0 +1,52 @@
+name: "MAIN1054 source-to-outfit owner integration — NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/main-thread-integration-1054-HOLD
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preflight-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Verify pinned Mission 3 ancestor, research-only file scope and HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=12472bab696ca3ec006dc05a54f230982798b695
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test -n "$CHANGED"
+          while IFS= read -r path; do
+            case "$path" in
+              research/main-thread-integration-1054/source-to-outfit.mjs|\
+              research/main-thread-integration-1054/source-to-outfit.test.mjs|\
+              research/main-thread-integration-1054/REPORT.md|\
+              .github/workflows/main-thread-integration-1054-no-deploy.yml) ;;
+              *) echo "Unapproved changed path: $path" >&2; exit 1;;
+            esac
+          done <<< "$CHANGED"
+          grep -q "familyAlpha:'HOLD'" research/main-thread-integration-1054/source-to-outfit.mjs
+          test -f public/outfit-board-engine.js
+          test -f public/native-owner-wardrobe-index-167.mjs
+          test -f public/native-canonical-photo-source-167.mjs
+      - name: Genuine source imports and real board engine against synthetic owner fixtures
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Inherited full native regression suite
+        run: node --test tests/*.test.cjs tests/*.test.mjs
+      - name: Offline consumer build verification
+        run: node scripts/build.mjs
+      - name: Assert no release or deployment
+        run: |
+          test -d dist
+          echo "Research-only checks complete. No deployment and no Family Alpha release."
