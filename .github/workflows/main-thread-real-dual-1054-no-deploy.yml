@@ -65,7 +65,10 @@ jobs:
       - name: Full inherited native private wardrobe/backup/recognition regressions
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: No release or hosted cloud changes
-        run: echo "NO DEPLOY NO PROD NO STAGING NO HOSTED SUPABASE Family Alpha #255 HOLD"
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "NO DEPLOY NO PROD NO STAGING NO HOSTED SUPABASE Family Alpha HOLD issue 255"
   actual-public-JPEG-real-two-models-INTEGRATED-NO-DEPLOY:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
