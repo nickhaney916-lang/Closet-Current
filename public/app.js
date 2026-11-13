@@ -791,11 +791,23 @@ async function saveIndexed(item){
  batch=batch.filter(x=>x.id!==item.id);persistDraft();return true;
 }
 async function recognizeItem(item){
+ // P854: worker results are only valid for their exact original/crop/mask,
+ // live signed owner, IDB connection and draft object (not merely the ID).
+ const owner854=typeof window==='undefined'?null:window.closetAuth?.user,
+  db854=db,source854=item.image,original854=item.recognitionPhoto?.image,
+  mask854=JSON.stringify(item.segmentHint??null);
+ const sameOwner854=()=>Boolean(owner854?.id&&
+  window.closetAuth?.user===owner854&&db===db854&&
+  db854?.name==='closet-current-user-'+owner854.id);
+ const live854=()=>sameOwner854()&&batch.some(x=>x===item)&&
+  item.image===source854&&item.recognitionPhoto?.image===original854&&
+  JSON.stringify(item.segmentHint??null)===mask854;
+ if(!live854())return false;
  const scanStarted=Date.now();let savingIndexed=false;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
-  const source73=item.recognitionPhoto?.image||item.image,owner73=typeof window==='undefined'?null:window.closetAuth?.user?.id;
+  const source73=original854||source854,owner73=owner854.id;
   const quality=await checkPhoto(source73);
-  if(!batch.some(x=>x===item))return;
+  if(!live854())return false;
   if(quality.captureGuidance&&source73===(item.recognitionPhoto?.image||item.image)&&
      owner73===(typeof window==='undefined'?null:window.closetAuth?.user?.id)){
    photoQualityHints73.set(item.id,{item,source:source73,owner:owner73,advice:quality.captureGuidance.advice||[]});
@@ -810,9 +822,12 @@ async function recognizeItem(item){
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
   let result;
-  try{if(!localReady)await enableLocal();result=await localRequest('classify',item.recognitionPhoto?.image||item.image,item.id,item.segmentHint);}
-  catch(error){recognitionUnavailable=true;throw error;}
-  if(!batch.some(x=>x.id===item.id))return;
+  try{
+   if(!localReady)await enableLocal();
+   if(!live854())return false;
+   result=await localRequest('classify',source73,item.id,item.segmentHint);
+  }catch(error){if(!live854())return false;recognitionUnavailable=true;throw error;}
+  if(!live854())return false;
   if(typeof ClothingMemory!=='undefined'&&ClothingMemory.valid(result.recognitionMemory))item.recognitionMemory=result.recognitionMemory;
   item.localAnalyzed=true;item.localChoices=[];
   // Diagnostic evidence contains category/type scores only, never wardrobe images.
@@ -861,12 +876,21 @@ async function recognizeItem(item){
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
  }catch(error){
+  // An asynchronous old photo/owner error cannot become a new user's error.
+  if(!live854())return false;
   item.localAnalyzed=false;item.scanFailed=true;item.saveFailed=savingIndexed;if(!item.visualSignature&&typeof recordDeviceEvent==='function')recordDeviceEvent('photo_check_failed',{stage:'photo_check',durationMs:Date.now()-scanStarted});if(recognitionUnavailable)recognitionState.phase='failed';
   if(savingIndexed){recognitionState.phase='save-failed';item.localStatus='Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';}
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
- }finally{localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;persistDraft();render();}
+ }finally{
+  // Never persist an old owner's snapshot to a newly connected private DB.
+  if(sameOwner854()){
+   localPending.delete(item.id);
+   if(recognitionState.activeId===item.id)recognitionState.activeId=null;
+   persistDraft();render();
+  }
+ }
 }
 async function recognizeBatch(){
  if(localBatch)return;localBatch=true;recognitionUnavailable=false;
