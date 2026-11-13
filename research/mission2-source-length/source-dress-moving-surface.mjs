@@ -1215,12 +1215,12 @@ export function auditSourceDressTemporalSelfContact46({
   inferredRearHumanVerified:false,
   realClothPhysics:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
- })
+ });
  temporalReceipts46.set(receipt,{
   root,mesh,startPositions:startPositions.slice(),
   endPositions:endPositions.slice(),usedForMotion:false
  });
- return receipt;;
+ return receipt;
 }
 export function assertSourceDressTemporalSelfContact46(receipt){
  if(!receipt||!temporalReceipts46.has(receipt))
