@@ -69,7 +69,7 @@ try{
     // One reviewed draft loaded in the old tab.
     await a.evaluate(async({owner,dataA,shaA})=>{
      const row=normalizeClothing({id:'source-a',ownerId:owner,
-      image:dataA,category:'Uncategorized',color:'Blue',
+      image:dataA,category:'Uncategorized',color:'Blue',localAnalyzed:true,
       sourceSHA256:shaA,sourceHashVerified:true,
       originalPhoto:{image:dataA,sha256:shaA,width:96,height:72}});
      await new Promise((ok,fail)=>{
@@ -85,7 +85,7 @@ try{
     // A second same-owner tab captures a separate original JPEG.
     await b.evaluate(async({owner,dataB,shaB})=>{
      const extra=normalizeClothing({id:'source-b',ownerId:owner,image:dataB,
-      category:'Uncategorized',color:'Red',sourceSHA256:shaB,sourceHashVerified:true,
+      category:'Uncategorized',color:'Red',localAnalyzed:true,sourceSHA256:shaB,sourceHashVerified:true,
       originalPhoto:{image:dataB,sha256:shaB,width:96,height:72}});
      await new Promise((ok,fail)=>{
       const tx=db.transaction('state','readwrite'),store=tx.objectStore('state');
