@@ -117,7 +117,7 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
   for(const d of devices){
    if(!d||d.physical!==true||d.emulated===true||d.witnessedByIndependentOperator!==true||
       d.genuineOriginalPhotoUsed!==true||d.ownerConfirmedEachSave!==true||
-      d.noWrongSave===true&&d.privateDataIsolationVerified!==true||
+      d.noWrongSave!==true||d.privateDataIsolationVerified!==true||
       d.captureToPrivateClosetPass!==true||
       typeof d.osVersion!=='string'||!d.osVersion||
       typeof d.browserVersion!=='string'||!d.browserVersion||
