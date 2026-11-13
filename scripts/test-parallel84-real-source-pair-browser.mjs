@@ -198,7 +198,7 @@ try{
  await writeFile(join(dir,'results.json'),JSON.stringify(result,null,2)+'\n');
  console.log('P84_ACTUAL_LICENSED_TWO_GARMENT_163_BONE_SOURCE_BROWSER',JSON.stringify({
   engine,screenshots:captures.length,sourcePairPoseSamples:samples.length,
-  2DFallbacks:fallbacks.length,firstSourcePairs:samples.map(x=>x.layer.sourcePair),
+  originalPhotoFallbacks:fallbacks.length,firstSourcePairs:samples.map(x=>x.layer.sourcePair),
   statusCounts:Object.fromEntries([...new Set(samples.map(x=>x.layer.status))]
    .map(x=>[x,samples.filter(q=>q.layer.status===x).length])),
   photoOriginalAndRigVerified:true,photoRealismApproved:false,releaseAuthorized:false
