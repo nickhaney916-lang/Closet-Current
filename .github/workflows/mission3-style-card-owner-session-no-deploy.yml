@@ -127,6 +127,8 @@ jobs:
           done
       - name: Install pinned offline browser and database test packages
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Source-executed saved-photo Style card signed-owner session tests
+        run: node --test tests/mission3-style-card-owner-session-lease.test.cjs
       - name: Exact saved closet card source deletion owner/session cases
         run: node --test tests/mission3-saved-card-delete-session-cas.test.cjs
       - name: Exact reviewed photo editor same-owner, revoked owner and relogin source tests
