@@ -126,7 +126,10 @@ export async function restoreLosslessV4M3({
   db:ownerDB,assertLease:check,backup:target,ownerId,
   expectedFingerprint:before.fingerprint,confirmed:true,onStage
  });
- check();
+ // The native transaction has ALREADY completed. A new camera action after
+ // commit may make the live view unsafe to refresh, but it cannot turn a
+ // committed restore into a failed/uncommitted transaction.
+ assertLease();
  return {...result,receipt,pendingOriginals:target.state.draft?.batch.length||0,
   releaseAuthorized:false};
 }
