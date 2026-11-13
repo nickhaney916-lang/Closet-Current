@@ -18,7 +18,7 @@ import {
   isHex64,
 } from "./p75-dataset-core.mjs";
 import { loadSession, reviewHandoff, externalPath } from "./p79-workstation-core.mjs";
-import {verifyOperatorCategoryLock80, blindTemporalOrder80} from "./p80-operator-category-lock.mjs";
+import {verifyOperatorCategoryLock80, blindTemporalOrder80, strictUtcInstant80} from "./p80-operator-category-lock.mjs";
 
 export const SCHEMA80 = "p80-private-candidate-eval-v1";
 export const SEAL80 = "p80-private-scorer-seal-v1";
@@ -35,12 +35,7 @@ const bad = (reason) => ({
   releaseAuthorized: false,
   shouldLiftFamilyAlphaHold: false,
 });
-const finiteDate = (s) =>
-  typeof s === "string" &&
-  /^\d{4}-\d{2}-\d{2}T/.test(s) &&
-  Number.isFinite(Date.parse(s))
-    ? Date.parse(s)
-    : NaN;
+const finiteDate = strictUtcInstant80;
 
 export function validCandidatePrediction80(p) {
   if (!p || typeof p !== "object" || Array.isArray(p)) return false;

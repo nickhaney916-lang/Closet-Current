@@ -1,7 +1,7 @@
 name: Parallel 80 subtype evidence and abstention — NO DEPLOY
 on:
   push:
-    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD, research/parallel80-photo-revision-robustness-20261113-HOLD, research/parallel80-real-photo-ui-preflight-20261113-HOLD, research/parallel80-private-blind-score-gate-20261113-HOLD, research/parallel80-pretruth-category-lock-20261113-HOLD]
+    branches: [research/parallel80-subtype-ambiguity-and-abstention-HOLD, research/parallel80-photo-revision-robustness-20261113-HOLD, research/parallel80-real-photo-ui-preflight-20261113-HOLD, research/parallel80-private-blind-score-gate-20261113-HOLD, research/parallel80-pretruth-category-lock-20261113-HOLD, research/parallel80-strict-utc-custody-20261113-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
