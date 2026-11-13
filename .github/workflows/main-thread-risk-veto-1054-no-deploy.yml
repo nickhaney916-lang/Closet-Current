@@ -1,0 +1,114 @@
+name: "MAIN1054 M6 real-photo high-risk subtype manual review — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-risk-veto-p876-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m6-risk-veto-hold
+  cancel-in-progress: true
+jobs:
+  native-policy-and-original-private-source-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact M5 immutable source, six-file allowlist, protected native originals
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3178ea1ff579bf4d8e5348dd74a5495c0a3d5ec8
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              public/dual-panel-82.mjs|public/recognition-confusion-guard.mjs|\
+              scripts/test-main1054-dual-review-browser.mjs|\
+              scripts/test-main1054-real-dual-owned-editor.mjs|\
+              research/main-thread-integration-1054/MILESTONE6.md|\
+              .github/workflows/main-thread-risk-veto-1054-no-deploy.yml) ;;
+              *) echo "Unauthorized integration: $p" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/auth.js public/recognition-engine.mjs public/recognition-engine-dual82.mjs public/cloud-backup.js public/outfit-board.js public/closet-stylist.js public/native-canonical-photo-source-167.mjs public/native-reviewed-private-save-167.mjs public/dual-worker-82.mjs public/dual-core-82.mjs
+          git diff --exit-code "$BASE" HEAD -- supabase/ package.json package-lock.json benchmark/locked-photo-sources.json
+          grep -q "subtypeNeedsManualReview" public/dual-panel-82.mjs
+          grep -q "subtypeNeedsManualReview" public/recognition-confusion-guard.mjs
+          grep -q "MAIN1054 M6 48/48" scripts/test-main1054-dual-review-browser.mjs
+          grep -q "commons-0078" scripts/test-main1054-real-dual-owned-editor.mjs
+          echo "M6 SOURCE-VERIFIED REVIEW SHORTLIST HARDSAFETY, NO DEPLOY"
+      - name: Install pinned offline CI packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install test-only Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Build offline and check source-based scripts
+        run: |
+          node --check public/dual-panel-82.mjs
+          node --check public/recognition-confusion-guard.mjs
+          node --check scripts/test-main1054-real-dual-owned-editor.mjs
+          node scripts/build.mjs
+      - name: Original verified owner/session source checks
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: 48 genuine native-editor policy outcomes across Chromium/WebKit
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Signed-owner native original JPEG and 2D fallback browser
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: All inherited native privacy, original photo, backup and styling regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No deployment or hosted database contact
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "NO DEPLOY NO MERGE NO PRODUCTION NO HOSTED CLOUD Family Alpha HOLD issue 255"
+  authentic-public-photos-two-pretrained-models-P876-veto-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Four-file original public JPEG + TWO exact source policy changes only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=3178ea1ff579bf4d8e5348dd74a5495c0a3d5ec8
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 6
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/dual-worker-82.mjs public/dual-core-82.mjs public/cloud-backup.js public/outfit-board.js supabase/
+      - name: Install pinned pretrained model preparation tools in ephemeral CI ONLY
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - name: Install test-only desktop Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Recover four publicly licensed SHA locked real photos plus original model weights
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+      - name: Verify genuine dual-family model ranks with high-risk owner-veto in the integrated native Adjust
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-real-dual-owned-editor.mjs | tee /tmp/main1054-m6-genuine
+          test "$(grep -c '^MAIN1054_REAL_DUAL_NATIVE_ROW ' /tmp/main1054-m6-genuine)" -eq 4
+          grep -q '^MAIN1054_REAL_DUAL_NATIVE_SUMMARY ' /tmp/main1054-m6-genuine
+          node -e "const a=require('./benchmark/main1054-real-dual-owner-review/results.json');if(a.summary.photos!==4||a.summary.accuracy!==null||a.summary.privateWardrobeWrites!==0||a.rows.some(r=>r.actionable.some(x=>['Sweatshirt','Tunic','Blazer','Ankle boots'].includes(x.type))))process.exit(1)"
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: main1054-m6-genuine-photo-risk-veto-public-numeric-only
+          path: benchmark/main1054-real-dual-owner-review/results.json
+          retention-days: 7
+          if-no-files-found: error
