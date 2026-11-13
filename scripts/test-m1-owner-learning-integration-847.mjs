@@ -18,6 +18,13 @@ function between(start,end){
 }
 const src=between('function node(', 'function cropClothingPhoto(')+
  between('function adjustPhoto(', 'function renderRecognitionNotice(');
+// P847 source-executes the actual already-owned-item editor closure from render,
+// with no substituted save/consent handler.
+const savedStart=app.indexOf('edit.onclick=()=>{const dialog=');
+const savedEnd=app.indexOf('del.onclick=async()=>',savedStart);
+if(savedStart<0||savedEnd<=savedStart)throw Error('P847_SAVED_EDITOR_SOURCE_MISSING');
+const savedEditor=app.slice(savedStart,savedEnd);
+
 const harness=[
 "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
 "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=false;",
@@ -59,6 +66,10 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    }));
    await page.goto('http://127.0.0.1:27272/?confirmedLearning72=1');
    for(const input of [taxonomy,details,learning,harness,src])await page.addScriptTag({content:input});
+   await page.addScriptTag({content:
+     'window.writeAll=async function(values){window.privateWrites.push(structuredClone(values[0]));};'+
+     'window.openSaved847=function(item){const edit=document.createElement("button");'+savedEditor+'edit.onclick();};'
+   });
    await page.evaluate(()=>owner72('owner-A','owner-A-session-0001'));
    const review=()=>page.getByRole('checkbox',{name:/I checked the clothing photo/});
    const learn=()=>page.getByRole('checkbox',{name:/I explicitly authorize learning/});
@@ -106,7 +117,41 @@ for(const [name,engine] of Object.entries({chromium,webkit})){
    await page.evaluate(()=>fixture72('cross-owner','#102030','Unknown'));
    assert.equal(await page.getByRole('button',{name:'Use owner-confirmed suggestion'}).count(),0);
    await page.getByRole('button',{name:'Cancel'}).click();
+   // P847 also integrates saved-item corrections: two separate acknowledgements,
+   // no write from a checked learning box alone, and one write on double submit.
+   await page.evaluate(()=>{
+    closeOwner72();owner72('owner-A','owner-A-saved-editor-847');
+    clear72();fixture72('saved-847','#335577','Polo');
+    const original=batch[0];document.querySelector('dialog[open]').close();
+    items=[original];batch=[];openSaved847(original);
+   });
+   const savedLearn=page.getByRole('checkbox',{name:/I explicitly authorize learning/});
+   const savedPhotoReview=page.getByRole('checkbox',{name:/I reviewed this saved garment photograph for learning/});
+   await savedLearn.check();
+   await page.getByRole('button',{name:'Save changes'}).click();
+   assert.equal(await page.evaluate(()=>window.privateWrites.length),0,'saved editor cannot learn from unchecked photo');
+   assert.match(await page.evaluate(()=>window.lastMessage),/Review the garment photo/);
+   await savedPhotoReview.check();
+   await page.locator('dialog[open] form').evaluate(form=>{
+    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+    form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+   });
+   await page.waitForFunction(()=>window.privateWrites.length===1);
+   const savedReceipt=await page.evaluate(async()=>({
+    stored:window.privateWrites.length,
+    ownerConfirmed:await ClothingMemory.verified72(items[0],window.__closetCurrentOwnerScope72),
+    source:items[0].correctionReceipt72?.sourceSha256,
+    category:items[0].confirmedDetails?.category
+   }));
+   assert.equal(savedReceipt.stored,1);
+   assert.equal(savedReceipt.ownerConfirmed,true);
+   assert.equal(savedReceipt.category,'Tops');
+   assert.match(savedReceipt.source,/^[a-f0-9]{64}$/);
    assert.deepEqual(errors,[]);
+   console.log('M1_P847_SAVED_EDITOR_CONSENT',JSON.stringify({
+    engine:name,width,photoConsentRequired:true,separateLearningConsent:true,
+    repeatedSaveSingleWrite:true,sourceVerified:true,errors:errors.length
+   }));
    console.log('P72_ACTUAL_EDITOR_BROWSER_SYNTHETIC',JSON.stringify({
     engine:name,width,unconsentedWrites:1,approvedOwnerExamples:2,
     subsequentProposalReviewOnly:true,crossOwnerProposalBlocked:true,
