@@ -88,6 +88,13 @@ try{
    for(let n=0;n<100&&!heldRoute;n++)await new Promise(r=>setTimeout(r,20));
    assert.ok(heldRoute,'old live refresh must be held at synthetic HTTP');
    const secondTab=await context.newPage();
+   // Only the first tab is the live-auth subject. A second same-origin tab
+   // mutates localStorage without accidentally starting a second refresh that
+   // could consume the deliberately held first-tab route.
+   await secondTab.route('**/auth.js*',route=>route.fulfill({
+    contentType:'text/javascript',
+    body:'window.closetAuth={user:null,ready:new Promise(()=>{})};'
+   }));
    await secondTab.goto(origin+'/',{waitUntil:'domcontentloaded'});
    const newer=await secondTab.evaluate(({STORE})=>{
     const v=JSON.parse(localStorage.getItem(STORE));
