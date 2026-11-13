@@ -1,6 +1,6 @@
 # Closet Current — Mission 1 P877: genuine model full-frame comparison before any recognition change
 
-**FAMILY ALPHA HOLD #255 OPEN — RESEARCH DRAFT, UNMERGED, UNDEPLOYED. NO RECOGNITION MODEL PROMOTION.**
+**Family Alpha HOLD #255 OPEN — RESEARCH DRAFT, UNMERGED, UNDEPLOYED. NO RECOGNITION MODEL PROMOTION.**
 
 ## Baseline and motivation
 Exact immutable P876 parent [draft PR #1078](https://github.com/nickhaney916-lang/Closet-Current/pull/1078) at `f7c37c309b722a06020c837a0d47fe0f376de554`, [successful 2/2 no-deploy GitHub Actions #43521608559](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43521608559). P876 passed 584/584 native, six desktop Chromium/WebKit owner-policy profiles and genuine sequential FashionCLIP/FashionSigLIP q8 on 48 legally sourced, SHA-locked original public development JPEGs. The P876 classifier is **not 10/10**: its historically exposed strings yielded FashionCLIP 27/48, SigLIP 28/48, rank-fused first hint 30/48; 12 arbitration abstentions, no independently blind human accuracy.
