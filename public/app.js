@@ -279,6 +279,37 @@ function removeItem(id,expected){
   }catch(error){reject(error);}
  })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
 }
+// Bind a saved-card Delete click to the exact signed owner/session and the
+// displayed item object. A delayed IndexedDB write must never filter the next
+// owner's closet or report the old owner's result after logout/re-login.
+// removeItem still performs the authoritative persisted-row CAS transaction.
+async function deleteSavedClosetCardOwnerSafe(item){
+  let lease;
+  try{
+    lease=ownerWardrobeMutationLease();
+    lease.assertLease();
+    if(!items.includes(item))return;
+  }catch{return;}
+  if(!confirm('Delete this closet piece?'))return;
+  try{
+    lease.assertLease();
+    if(!items.includes(item))return;
+    await removeItem(item.id,item);
+    lease.assertLease();
+    // A new same-owner hydration may have replaced the displayed snapshot;
+    // never delete a newly loaded object just because its ID is identical.
+    if(!items.includes(item))return;
+    items=items.filter(row=>row!==item);
+    render();
+  }catch(error){
+    // Suppress late old-owner failures, including a same-ID new login.
+    try{lease.assertLease();}catch{return;}
+    if(!items.includes(item))return;
+    message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
+      'This clothing piece changed in another tab. Reload My Closet before deleting it.':
+      'Could not delete the piece.');
+  }
+}
 // Mutate only owner-reviewed pending photo rows against their actual durable
 // versions. Never replace the whole persisted batch with a stale tab snapshot.
 // A change is {before, after}; after=null means delete this exact reviewed row.
@@ -1214,7 +1245,7 @@ function render(){
  try{assertEditor();}catch{return;}
  const restoreFocus=()=>{if($('closet').hidden||$('appShell').hidden||document.querySelector('dialog[open]'))return;const card=[...document.querySelectorAll('#closetGrid .card')].find(card=>card.dataset.itemId===item.id);(card?.querySelector('[data-action=edit-clothing]')||$('search')).focus({preventScroll:true});};
  restoreFocus();requestAnimationFrame(()=>{if(document.activeElement===document.body)restoreFocus();});
- };dialog.showModal();};del.onclick=async()=>{if(!confirm('Delete this closet piece?'))return;try{await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before deleting it.':'Could not delete the piece.');}};if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
+ };dialog.showModal();};del.onclick=()=>deleteSavedClosetCardOwnerSafe(item);if(typeof closetWearButton==='function')actions.append(closetWearButton(item));if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
  const reviewedStored123=typeof reviewedCloset123Active!=='undefined'&&
   reviewedCloset123Active&&item.ownerReviewed===true&&item.userAdjusted===true&&
   item.sourceHashVerified===true&&item.sourcePhotoOriginal===true&&
