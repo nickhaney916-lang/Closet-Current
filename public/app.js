@@ -174,21 +174,39 @@ function readAllFrom(ownerDB){return new Promise((resolve,reject)=>{const r=owne
 // Owner/session/CAS attestation is performed by the controller itself.
 async function nativeIndex07Refresh(){
  if(new URLSearchParams(location.search).get('nativeIndex07')!=='research')return;
+ // A wardrobe index is a secondary UI after a *committed* owner-private save.
+ // It must never report a previous owner's error, refresh the next owner's
+ // style panel, or dispatch a stale inventory event after a session change.
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch;
+ const current=()=>!!owner&&window.closetAuth===auth&&
+  auth.user?.id===owner&&db===ownerDB&&
+  ownerDB?.name==='closet-current-user-'+owner&&
+  epoch===captureOperationEpoch;
+ if(!current())return;
  const bridge=window.nativeLossless04Bridge;
  if(!bridge?.refreshWardrobe)return;
  try{
    await bridge.refreshWardrobe();
+   if(!current())return;
    if(new URLSearchParams(location.search).get('styleOwned03')==='research'){
-    // A confirmed photo is not instantly selectable if this secondary source
-    // digest runs fire-and-forget. Await only the same signed-in native
-    // controller's new SHA-verified saved roster. Never write a second DB.
+    // The same signed owner must still own the live style controller after
+    // EVERY awaited native index operation. A new login must start its own
+    // index refresh, not inherit the old completed promise.
     const stylePanel=window.styleOwnedLive03Bridge;
-    if(stylePanel?.refresh)await stylePanel.refresh({quiet:true});
-    else window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
+    if(!current())return;
+    if(stylePanel?.refresh){
+     await stylePanel.refresh({quiet:true});
+     if(!current())return;
+    }else if(current())window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
    }
-  }
- catch(error){const status=$('boardSaveStatus');if(status)
-  status.textContent='New clothing saved; outfit builder needs a safe reload. '+String(error.message||error);}
+ }catch{
+   if(!current())return;
+   // Never print an asynchronous bridge exception into a newly signed
+   // account's interface or include potentially private exception details.
+   const status=$('boardSaveStatus');
+   if(status)status.textContent='New clothing saved; outfit builder needs a safe reload.';
+ }
 }
 function ownerWardrobeMutationLease(){
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
