@@ -7,7 +7,7 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
  // Real IDB applies the read/insert/draft-delete in one readwrite transaction.
  // Requests invoke onsuccess before writes commit, then oncomplete once only.
  const c={
-  captureOperationEpoch:0,scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},
+  captureOperationEpoch:0,scheduleMemoryReview(){},nativeIndex07Refresh:async()=>{},recognitionState:{phase:'idle',percent:null,activeId:null},
   renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,
   localPending:new Set(),automaticQueue:[],automaticRunning:false,
   localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,
