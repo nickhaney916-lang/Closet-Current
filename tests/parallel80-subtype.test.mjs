@@ -227,3 +227,23 @@ test("public challenge loader uses P75 quarantine/rights validators, never reads
   assert.equal(r.independentAccuracyAcceptance, "BLOCKED");
   await assert.rejects(challenge80({ recheck: 4 }));
 });
+test("public source HTTP retry is bounded and never bypasses unavailable originals", async () => {
+  let calls = 0;
+  await assert.rejects(
+    challenge80({
+      recheck: 1,
+      waiter: async () => {},
+      fetcher: async (url, options) => {
+        calls++;
+        assert.match(
+          options.headers["User-Agent"],
+          /ClosetCurrentP80SourceAudit/,
+        );
+        assert.equal(options.redirect, "error");
+        return new Response("unavailable", { status: 503 });
+      },
+    }),
+    /HTTP_503/,
+  );
+  assert.equal(calls, 3);
+});

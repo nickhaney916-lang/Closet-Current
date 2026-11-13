@@ -10,7 +10,11 @@ import {
   sourceSeriesHint,
 } from "./p75-dataset-core.mjs";
 const root = new URL("../", import.meta.url);
-export async function challenge80({ recheck = 0, fetcher = fetch } = {}) {
+export async function challenge80({
+  recheck = 0,
+  fetcher = fetch,
+  waiter = (ms) => new Promise((r) => setTimeout(r, ms)),
+} = {}) {
   const pin = JSON.parse(
     await readFile(
       new URL(
@@ -61,16 +65,29 @@ export async function challenge80({ recheck = 0, fetcher = fetch } = {}) {
     if (checkOverlap(s, exposed).length) previousOverlap++;
   }
   for (const s of accepted.slice(0, recheck)) {
-    const response = await fetcher(s.originalURL, {
-      signal: AbortSignal.timeout(30000),
-      redirect: "error",
-    });
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      response = await fetcher(s.originalURL, {
+        signal: AbortSignal.timeout(30000),
+        redirect: "error",
+        headers: {
+          "User-Agent":
+            "ClosetCurrentP80SourceAudit/1.0 (https://github.com/nickhaney916-lang/Closet-Current; no uploads)",
+          Accept: "image/jpeg,image/png,image/webp",
+        },
+      });
+      if (response.ok) break;
+      if (attempt < 2) {
+        await response.body?.cancel();
+        await waiter(1000 * (attempt + 1));
+      }
+    }
     if (
       !response.ok ||
       (response.headers.get("content-length") &&
         Number(response.headers.get("content-length")) > 12 * 1024 * 1024)
     )
-      throw Error("P80_ORIGINAL_UNAVAILABLE");
+      throw Error("P80_ORIGINAL_UNAVAILABLE_HTTP_" + response.status);
     const chunks = [];
     let n = 0;
     for await (const part of response.body) {

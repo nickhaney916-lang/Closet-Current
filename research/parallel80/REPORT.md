@@ -28,7 +28,7 @@ Every machine decision remains `itemType: Unknown`, `automaticallyCertified: fal
 
 The bounded challenge loader reuses unchanged #75 provenance, overlap and SHA validators on **32 frozen public unlabelled quarantine receipts**. Mechanical overlap filtering leaves **31** candidates, with **1** suspected intra-candidate relationship; this is not independent proof of 31 physical garments or source groups. Three actual Commons original byte streams were downloaded without redirects, SHA-1/SHA-256/length verified and independently decoded against pinned MIME/dimensions/orientation: **3/3 pass; 7,627,802 bytes verified**. No images are written by the loader and stdout is aggregate-only.
 
-All candidate receipts still lack curator rights/consent/source-group approvals, genuine independent subtype labels and approved region masks. They are public development-exposed sources, never new sealed blind. The loader therefore reports **BLOCKED** for independent accuracy, performs **0 model inference runs**, and does not derive subtype classes from source titles. Exact original integrity is verified; lawful training/evaluation eligibility and human truth are not fabricated. The private #75/#79/#71 handoff is documented in [OPERATOR.md](OPERATOR.md); no sealed truth was accessed.
+All candidate receipts still lack curator rights/consent/source-group approvals, genuine independent subtype labels and approved region masks. They are public development-exposed sources, never new sealed blind. The loader therefore reports **BLOCKED** for independent accuracy, performs **0 subtype-80 model inference runs**, and does not derive subtype classes from source titles. Exact original integrity is verified; lawful training/evaluation eligibility and human truth are not fabricated. The private #75/#79/#71 handoff is documented in [OPERATOR.md](OPERATOR.md); no sealed truth was accessed.
 
 ## Measurements and validation
 
@@ -40,6 +40,10 @@ Actual desktop Chromium/WebKit execute the real Adjust source and the real P80 e
 
 The strict dedicated NO DEPLOY workflow pins P853 ancestry and a 12-path allowlist, full native regression/both builds, six subtype browser cases plus inherited photo review/save/pair/learning/color/duplicate/batch browser smoke, and a separate three-public-original integrity job. No deployment, account login, hosted Supabase, private input, photo/answer artifact upload or workflow permission escalation is included.
 
+## Other observed CI failures
+
+The first dedicated live-original job could not obtain a Commons response; a descriptive source-audit user agent, bounded retries and explicit HTTP diagnostics were added, without relaxing original SHA or decoder checks. The separately auto-triggered inherited real-photo benchmark executed **32 actual default-path FashionCLIP cases with 0 runtime errors**, then failed legacy subtype/automatic-indexing expectations. Its current observations are public, historically development-exposed and do not exercise the opt-in P80 adapter or establish independent subtype accuracy. No claim is made that this assignment fixed that legacy benchmark or caused its mismatch; the existing P766 Unknown/owner-review policy is intentionally retained. Do not weaken subtype abstention or re-enable auto-indexing to manufacture a green legacy score. Exact final dedicated versus legacy outcomes are recorded separately in the PR evidence receipt.
+
 ## Actual acceptance / limitations
 
 | Evidence | Result |
@@ -48,7 +52,8 @@ The strict dedicated NO DEPLOY workflow pins P853 ancestry and a 12-path allowli
 | Approved real subtype labels / independent correct-instance masks | **0 / 0** |
 | Independent real-photo top-one accuracy / candidate-set coverage | **UNKNOWN / UNKNOWN** |
 | Real-photo abstention / confident-wrong rate / class confusion | **UNKNOWN; no eligible denominator** |
-| New actual FashionCLIP inference executions | **0; source adapter exercised with synthetic callbacks** |
+| Actual opt-in subtype-80 inference executions | **0; source adapter exercised with synthetic callbacks** |
+| Separately triggered inherited default-path inference | **32 actual cases, 0 runtime errors; legacy subtype/auto-indexing regression checker FAILS** |
 | Public original byte/decoder checks | **3 verified; no truth/rights approval implied** |
 | Independent blind runs / physical phones | **0 / 0** |
 | Broader Mission 1 release gate | **BLOCKED; HOLD remains OPEN** |
