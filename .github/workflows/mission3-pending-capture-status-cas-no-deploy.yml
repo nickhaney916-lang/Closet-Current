@@ -47,7 +47,6 @@ jobs:
           node --check tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs
           node --check scripts/test-mission3-offline-auth-recovery-browser.mjs
           node --check scripts/test-mission3-same-owner-delete-cas-browser.mjs
-          node --test tests/mission3-pending-capture-status-cas.test.cjs
           node --test tests/mission3-draft-row-cas.test.cjs tests/automatic-indexing.test.cjs tests/index-04-saved-recognition.test.mjs tests/mission3-recognition-session-epoch.test.cjs tests/mission3-auto-index-source-cas.test.cjs tests/mission3-saved-photo-insert-cas.test.cjs tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs tests/mission3-photo-crop-owner-session-lease.test.cjs tests/mission3-crop-saved-row-cas.test.cjs tests/mission3-private-mutation-epoch.test.cjs tests/mission3-same-owner-delete-cas.test.cjs tests/auth.test.cjs tests/mission3-live-session-refresh-cas.test.cjs tests/mission3-offline-auth-refresh-recovery.test.cjs tests/auth-review-session-36.test.mjs tests/wardrobe-index-02.test.mjs tests/mission3-private-write-queue-owner-lease.test.cjs tests/mission3-mobile-media-interruption.test.cjs tests/mission3-gallery-decode-session-cancellation.test.cjs tests/mission3-video-private-draft-lease.test.cjs tests/mission3-late-owner-session-capture.test.cjs tests/photo-import.test.cjs tests/mission3-capture-operation-epoch.test.cjs tests/mission3-recognition-session-epoch.test.cjs tests/mission3-camera-interruption.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs tests/capture.test.cjs tests/capture-proof-01.test.mjs
 
   native-signed-and-browser:
@@ -100,6 +99,8 @@ jobs:
           done
       - name: Install pinned offline browser and database test packages
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual source two-tab native-IDB capture and status CAS regressions
+        run: node --test tests/mission3-pending-capture-status-cas.test.cjs
       - name: Prove signed disposable two-owner PostgreSQL and private Storage RLS
         run: |
           node scripts/bootstrap-mission3-disposable-postgres.mjs
