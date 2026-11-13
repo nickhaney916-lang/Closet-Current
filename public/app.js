@@ -1819,22 +1819,41 @@ if(new URLSearchParams(location.search).get('index02')==='after'){
 
 for(const c of categories.slice(1))$('batchCategory').append(node('option',c));
 $('applyCategory').onclick=async()=>{
- const category=$('batchCategory').value;if(!category)return message('Choose a category for this batch.');
+ // A bulk review is bound to the exact signed account, DB and login epoch.
+ // Native IndexedDB CAS guards durable photographs; this extra lease guards
+ // the UI finalizer against signout and same-owner-ID relogin after commit.
+ let lease;
+ try{lease=ownerWardrobeMutationLease();}catch{return;}
+ const category=$('batchCategory').value;
+ if(!category)return message('Choose a category for this batch.');
  if(localPending.size||automaticRunning)return message('Finish current photo checks before changing a batch category.');
  const changed=batch.filter(item=>item.category==='Uncategorized').map(item=>({
   item,before:structuredClone(item),after:normalizeClothing({...structuredClone(item),category})
  }));
  if(!changed.length)return message('There are no uncategorized photographs to change.');
+ const stillReviewing=()=>!localPending.size&&!automaticRunning&&!changed.some(x=>
+  !batch.includes(x.item)||JSON.stringify(normalizeClothing(x.item))!==
+   JSON.stringify(normalizeClothing(x.before)));
  try{
   await commitReviewedDraftCAS(changed.map(x=>({before:x.before,after:x.after})),()=>{
-   if(localPending.size||automaticRunning||changed.some(x=>
-      !batch.includes(x.item)||JSON.stringify(normalizeClothing(x.item))!==
-       JSON.stringify(normalizeClothing(x.before))))
-    throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+   lease.assertLease();
+   if(!stillReviewing())throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
   });
+  // Commit may already be durable. Never paint an older owner's category
+  // into a replacement session, nor claim a committed write was lost.
+  lease.assertLease();
+  if(!stillReviewing()){
+   message('Categories saved in private device storage, but Photo results changed while saving. Refresh Photo results before reviewing.');
+   return;
+  }
   for(const x of changed)Object.assign(x.item,x.after);
   render();message(`Category applied to ${changed.length} uncategorized candidates.`);
- }catch(error){message('Another tab changed a pending photo. Your categories were not saved. Reload Photo results and try again.');}
+ }catch(error){
+  try{lease.assertLease();}catch{return;}
+  // A revoked operation may have committed before its callback rejected;
+  // fail closed about ACK rather than falsely declaring "not saved."
+  message('Could not confirm this category update. Original photos were not discarded. Refresh Photo results before reviewing or trying again.');
+ }
 };
 
 for(const season of clothingSchema.seasons.slice(0,4))$('seasonFilter').append(node('option',season));for(const sleeve of clothingSchema.sleeve)$('sleeveFilter').append(node('option',sleeve));$('seasonFilter').onchange=render;$('sleeveFilter').onchange=render;
