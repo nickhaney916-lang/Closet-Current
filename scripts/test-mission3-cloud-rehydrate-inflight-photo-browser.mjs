@@ -69,7 +69,7 @@ try{
     await page.waitForFunction(()=>!!window.__cloudCallbacks);
     await page.evaluate(async({owner,photo})=>{
      const saved=normalizeClothing({id:'saved-original',ownerId:owner,
-      name:'Saved top',category:'Tops',image:photo.image,
+      name:'Saved top',category:'Tops',localAnalyzed:true,image:photo.image,
       sourceSHA256:photo.sha,originalPhoto:{image:photo.image,sha256:photo.sha}});
      const pending=normalizeClothing({...saved,id:'previously-reviewed'});
      await new Promise((ok,fail)=>{
