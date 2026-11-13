@@ -12,6 +12,10 @@ const video=document.createElement('video'),canvas=document.createElement('canva
 const $=id=>{let e=document.getElementById(id);if(!e){e=document.createElement(id==='lastCaptureImage'?'img':'div');e.id=id;document.body.append(e);}return e;};
 window.closetAuth={user:{id:'synthetic-owner-82'}};window.writes=0;window.queued=0;window.lastMessage='';
 const queueAutomatic=()=>{window.queued++;};const checkPhoto=async()=>({colorEstimate:null});const enableLocal=async()=>true;
+// P870: source editor async Fill-photo path: mocks only the model candidate, never owner persistence.
+const segmentationAllows=()=>true;
+const applyLocalChoice=(item,choice)=>{item.category=choice.category;item.itemType=choice.itemType;};
+const localRequest=async()=>({strong:true,categoryConfirmed:true,choices:[{category:'Bottoms',itemType:'Shorts',sleeveLength:'Not applicable'}],details:{pattern:'Solid'}});
 const removeItem=async()=>{};const persistDraft=async()=>{};const render=()=>{};const scheduleMemoryReview=()=>{};const stopCamera=()=>{stream?.getTracks?.().forEach(t=>t.stop());stream=null;};const message=s=>window.lastMessage=s;
 const savePiece=async value=>{window.writes++;window.savedValue=structuredClone(value);await new Promise(r=>setTimeout(r,40));};
 window.fixture82=({flag=true,owner=true,saved=false,segmented=false}={})=>{
@@ -33,6 +37,25 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   // Full app flag, guest and already-owned exclusion. No inference without explicit action.
   for(const fixture of [{flag:false},{owner:false},{saved:true}]){await page.evaluate(x=>window.fixture82(x),fixture);await page.waitForTimeout(100);assert.equal(await page.locator('[data-dual82]').count(),0);}
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();assert.equal((await page.evaluate(()=>window.state82())).writes,0);if(name==='webkit')assert.equal(await page.getByRole('button',{name:'Compare with two models'}).isDisabled(),true);
+  // P870: run the actual extracted app.js editor's asynchronous Fill-photo path.
+  // This mutates draft fields programmatically WITHOUT dispatching an input event.
+  // The actual mounted dual panel must revoke consent and clear its stale state.
+  if(name==='chromium'&&width===390){
+   await page.evaluate(()=>window.fixture82());
+   await page.locator('[data-dual82]').waitFor();
+   const originalConsent=page.getByRole('checkbox',{name:/I consent to a local two-model/});
+   const originalIsolated=page.getByRole('checkbox',{name:/One garment is isolated/});
+   await originalConsent.check();await originalIsolated.check();
+   await page.evaluate(()=>{window.p870ExternalInputs=0;document.querySelector('dialog form').addEventListener('input',e=>{if(!e.target.closest('[data-dual82]'))window.p870ExternalInputs++;});});
+   await page.getByRole('button',{name:'Fill missing details from photo'}).click();
+   await page.waitForFunction(()=>document.querySelector('dialog select[aria-label="Item type"]')?.value==='Shorts');
+   assert.equal(await originalConsent.isChecked(),false,'auto editor update must revoke prior comparison consent');
+   assert.equal(await originalIsolated.isChecked(),false,'auto editor update must revoke visibility declaration');
+   assert.equal(await page.evaluate(()=>window.p870ExternalInputs),0,'this real app update has no form-input event');
+   assert.equal(await page.getByText(/Comparison cleared. Review the current photo/).count(),1);
+   assert.equal((await page.evaluate(()=>window.state82())).writes,0);
+   console.log('P870_REAL_EDITOR_PROGRAMMATIC_FILL_REVOKES_CONSENT chromium 390 no-form-input zero-writes');
+  }
   // Replace only the panel's request dependency for policy testing; real worker is tested separately.
   await page.evaluate(async()=>{
    const {mountDual82}=await import('/dual-panel-82.mjs'),{VERSION82,MODEL_ASSETS82}=await import('/dual-core-82.mjs'),{localCandidates}=await import('/local-catalog.mjs'),{observation81}=await import('/model-arbitration-81.mjs');
