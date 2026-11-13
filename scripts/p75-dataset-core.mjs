@@ -227,9 +227,14 @@ export function independentAgreement(row,receipts,registry,approvedRegistrarFing
   canonical(r?.labels?.[k])===canonical(receipts[0]?.labels?.[k])));
  // Even unrecognized signed extensions must not be silently omitted from
  // consensus. Future annotators may add fields before this gate is upgraded.
- if(!receipts.every(r=>canonical(r?.labels)===firstLabel))
+ const completeSignedLabel=receipts.every(r=>canonical(r?.labels)===firstLabel);
+ if(!completeSignedLabel)
   issues.push('independent full-label disagreement requires blinded third-party adjudication');
- return {eligible:issues.length===0,agreement:{equal:agreeing.length,total:fields.length,ratio:agreeing.length/fields.length},issues:[...new Set(issues)]};
+ // One additional agreement component captures unknown but signed annotation
+ // extensions. A 100% reported agreement therefore always requires exact
+ // complete-label consensus, not just agreement on current known fields.
+ const equal=agreeing.length+Number(completeSignedLabel),total=fields.length+1;
+ return {eligible:issues.length===0,agreement:{equal,total,ratio:equal/total},issues:[...new Set(issues)]};
 }
 export function publicAuditReport(rows,old){
  const counters={candidates:rows.length,uniqueSourceHashes:new Set(rows.map(r=>r.sha256).filter(isHex64)).size,
