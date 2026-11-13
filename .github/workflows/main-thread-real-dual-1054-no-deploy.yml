@@ -1,0 +1,119 @@
+name: "MAIN1054 M5 genuine pretrained dual models + native owner review — NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/main-thread-real-dual-inference-1054-HOLD
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-real-dual-research-hold
+  cancel-in-progress: true
+jobs:
+  native-policy-and-inherited-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact immutable M4 parent and seven-file research scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a838d4b5d5a25823b0b21631149c14d93babd127
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test -n "$CHANGED"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 7
+          while IFS= read -r path; do
+            case "$path" in
+              scripts/parallel67-independent-siglip-scoring.mjs|\
+              scripts/parallel67-precompute-fashion-text-03.mjs|\
+              scripts/p82-prepare-models.mjs|\
+              research/parallel82/frozen-text-82.json|\
+              scripts/test-main1054-real-dual-owned-editor.mjs|\
+              research/main-thread-integration-1054/MILESTONE5.md|\
+              .github/workflows/main-thread-real-dual-1054-no-deploy.yml) ;;
+              *) echo "RESEARCH_SCOPE_VIOLATION $path" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/ supabase/ package.json package-lock.json)"
+          grep -q "MAIN1054_REAL_DUAL_NATIVE_SUMMARY" scripts/test-main1054-real-dual-owned-editor.mjs
+          grep -q "browserRequest82(r,options)" scripts/test-main1054-real-dual-owned-editor.mjs
+          grep -q "accuracy:null" scripts/test-main1054-real-dual-owned-editor.mjs
+          grep -q "familyAlpha:'HOLD'" scripts/test-main1054-real-dual-owned-editor.mjs
+          echo "STRICT_PUBLIC_ONLY_NO_DEPLOY_SOURCE_PASS"
+      - name: Install test-only libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Test-only Chromium + WebKit
+        run: npx playwright install --with-deps chromium webkit
+      - name: Parse genuine runner and prepare pinned native build
+        run: |
+          node --check scripts/test-main1054-real-dual-owned-editor.mjs
+          node --check scripts/p82-prepare-models.mjs
+          node scripts/build.mjs
+      - name: Previously proven native policy source owner and browser gates
+        run: |
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+          node scripts/test-main1054-dual-review-browser.mjs
+          node scripts/test-main1054-native-preview-browser.mjs
+      - name: Full inherited native private wardrobe/backup/recognition regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No release or hosted cloud changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "NO DEPLOY NO PROD NO STAGING NO HOSTED SUPABASE Family Alpha HOLD issue 255"
+  actual-public-JPEG-real-two-models-INTEGRATED-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Strict immutable same parent, no production sources or package edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a838d4b5d5a25823b0b21631149c14d93babd127
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 7
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/ supabase/ package.json package-lock.json)"
+          grep -q "sourceSHA256" scripts/test-main1054-real-dual-owned-editor.mjs
+          grep -q "autoAdmissions:0" scripts/test-main1054-real-dual-owned-editor.mjs
+      - name: Install pinned pretrained model tooling for ephemeral CI ONLY
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - name: Install test-only desktop Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Retrieve FOUR source-SHA-verified Wikimedia Commons licensed JPEGs
+        run: |
+          set -euo pipefail
+          IDS=commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Real FashionCLIP + FashionSigLIP one continuous browser, genuine licensed JPEGs, actual M4 private Adjust fields
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-real-dual-owned-editor.mjs | tee /tmp/main1054-real-model-run
+          test "$(grep -c '^MAIN1054_REAL_DUAL_NATIVE_ROW ' /tmp/main1054-real-model-run)" -eq 4
+          grep -q '^MAIN1054_REAL_DUAL_NATIVE_SUMMARY ' /tmp/main1054-real-model-run
+          node -e "const r=require('./benchmark/main1054-real-dual-owner-review/results.json');if(r.summary.photos!==4||r.summary.accuracy!==null||r.summary.privateWardrobeWrites!==0||r.summary.physicalDevices!==0||r.rows.some(x=>x.modelKeys.length!==2||x.privateWrites!==0))process.exit(1)"
+      - name: Store only numeric deidentified public model receipt, never photographs or weights
+        uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: main1054-m5-real-pretrained-model-public-JPEG-numeric-only
+          path: benchmark/main1054-real-dual-owner-review/results.json
+          if-no-files-found: error
+          retention-days: 7
