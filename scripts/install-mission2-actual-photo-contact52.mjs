@@ -30,7 +30,9 @@ controller=controller.replace(anchor,anchor+
  "\n       // C52: never write any SOURCE fabric. Only this exact SHA-pinned "+
  "Commons 0053 experimental browser query may run the contact probe.\n"+
  "       if(new URLSearchParams(globalThis.location?.search||'').get('photoDressContact52')==='research'){\n"+
- "        const evidence52=auditActualPhotographedDressSurfaces52({root,dress:fitted});\n"+
+ "        const query52=new URLSearchParams(globalThis.location?.search||\x27\x27);\n"+
+ "        const evidence52=auditActualPhotographedDressSurfaces52({root,dress:fitted,\n"+
+ "         refineTriangleDistances53:query52.get(\x27photoDressDistance53\x27)===\x27research\x27});\n"+
  "        if(evidence52.schema!=='M2-real-original-photo-surface-diagnostic-C52'||\n"+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+

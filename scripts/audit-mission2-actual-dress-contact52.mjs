@@ -76,3 +76,62 @@ await mkdir('benchmark/mission2-source-dress-motion',{recursive:true});
 await writeFile('benchmark/mission2-source-dress-motion/live-source-contact52.json',
  JSON.stringify(output,null,2)+'\n');
 console.log('M2_C52_REAL_LICENSED_P175_CONTACT_SAFE_SUMMARY',JSON.stringify(output));
+
+if(process.env.PHOTO_DRESS_DISTANCE53==='1'){
+ const witnesses=receipts.map(r=>({
+  original:r.refinedOriginalDistance53,posed:r.refinedPosedDistance53,
+  complete:r.sourceAndPosedDistanceRefinementCompleted53,
+  boxes:[r.originalSourceBoxPairs,r.posedBoxPairs]
+ }));
+ for(const w of witnesses){
+  assert.equal(w.complete,true,
+   'C53 exhaustive exact original source and skinned pose refinement required');
+  for(const [n,entry] of [w.original,w.posed].entries()){
+   assert.equal(entry?.schema,'M2-source-posed-triangle-separation-C53');
+   assert.equal(entry.distanceRefinementComplete,true);
+   assert.equal(entry.triangleCandidatePairsMeasured,w.boxes[n]);
+   assert.equal(entry.triangleCandidatePairsMeasured,
+    entry.geometricZeroOrOverlapUnresolved+
+    entry.positiveGapWithinToleranceUnresolved+
+    entry.positiveGapBeyondToleranceAtThisPose);
+   assert.equal(entry.originalPhotoVertexCoordinatesExposed,false);
+   assert.equal(entry.exactSourceFaceIndicesExposed,false);
+   assert.equal(entry.zeroGapNotCertifiedAsPenetration,true);
+   assert.equal(entry.positiveGapNotContinuousClothClearance,true);
+   assert.equal(entry.noSourceRepairAuthorized,true);
+   assert.equal(entry.familyAlpha,'HOLD');
+  }
+ }
+ const base=JSON.stringify(witnesses[0]);
+ for(const witness of witnesses.slice(1))
+  assert.equal(JSON.stringify(witness),base,
+   'same source geometry and same skinned pose must give identical exact distances across viewport widths');
+ const output53={
+  schema:'M2-P2-C53-real-licensed-triangle-distance',
+  source:'actual-licensed-photographed-P61-P175-C53',
+  sourceFaces:first.originalSourceFaces,
+  authenticatedBrowserWidths:[320,390,430],
+  sourceOriginalBoundsPairs:witnesses[0].boxes[0],
+  posedBoundsPairs:witnesses[0].boxes[1],
+  sourceMeasuredExactTriangles:witnesses[0].original.triangleCandidatePairsMeasured,
+  posedMeasuredExactTriangles:witnesses[0].posed.triangleCandidatePairsMeasured,
+  sourceZeroOrOverlapUnresolved:witnesses[0].original.geometricZeroOrOverlapUnresolved,
+  sourceNearUnresolved:witnesses[0].original.positiveGapWithinToleranceUnresolved,
+  sourcePositiveGapAtSinglePose:witnesses[0].original.positiveGapBeyondToleranceAtThisPose,
+  posedZeroOrOverlapUnresolved:witnesses[0].posed.geometricZeroOrOverlapUnresolved,
+  posedNearUnresolved:witnesses[0].posed.positiveGapWithinToleranceUnresolved,
+  posedPositiveGapAtSinglePose:witnesses[0].posed.positiveGapBeyondToleranceAtThisPose,
+  genuineOriginalLicensedPhotoAnalyzed:true,
+  originalPhotoUVAndSkinPreserved:true,
+  originalGarmentMeshNeverRewritten:true,
+  originalPhotoBytesNeverExported:true,
+  noActualUVSeamAnnotation:true,
+  noGeometryCorrectionApproved:true,
+  noContinuousClothClearance:true,
+  noIndependentHumanPhotorealismAcceptance:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-distance53.json',
+  JSON.stringify(output53,null,2)+'\n');
+ console.log('M2_C53_REAL_LICENSED_P175_DISTANCE_SAFE_SUMMARY',JSON.stringify(output53));
+}

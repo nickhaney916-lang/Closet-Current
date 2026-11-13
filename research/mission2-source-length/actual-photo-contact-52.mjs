@@ -45,6 +45,91 @@ function strictFaceCrossing52(A,B,eps){
    if(test(a[i],a[j],b))return true;
  return false;
 }
+
+/**
+ * P2-C53 — independent triangle/triangle minimum Euclidean separation.
+ * AABB intersection is not contact: check all 6 point-to-face distances,
+ * all 9 finite edge/edge distances and 6 segment-plane interior crossings.
+ * Coplanar containment is handled by point/face, coplanar crossing by
+ * edge/edge. Exact-zero, near-distance and positive gap are NEVER
+ * treated as permission to sew source UV seams or release a garment.
+ */
+const clamp53=x=>Math.max(0,Math.min(1,x));
+function segmentSegmentSquared53(a,b,c,d){
+ const u=b.clone().sub(a),v=d.clone().sub(c),w=a.clone().sub(c);
+ const A=u.lengthSq(),E=v.lengthSq(),F=v.dot(w),EPS=1e-18;
+ let S=0,T=0;
+ if(A<=EPS&&E<=EPS)return a.distanceToSquared(c);
+ if(A<=EPS)T=clamp53(F/E);
+ else{
+  const C=u.dot(w);
+  if(E<=EPS)S=clamp53(-C/A);
+  else{
+   const B=u.dot(v),D=A*E-B*B;
+   if(D>EPS)S=clamp53((B*F-C*E)/D);
+   T=(B*S+F)/E;
+   if(T<0){T=0;S=clamp53(-C/A);}
+   else if(T>1){T=1;S=clamp53((B-C)/A);}
+  }
+ }
+ const p=a.clone().addScaledVector(u,S),q=c.clone().addScaledVector(v,T);
+ return p.distanceToSquared(q);
+}
+function segmentFaceCrosses53(a,b,face){
+ const normal=new THREE.Vector3().subVectors(face[1],face[0])
+  .cross(new THREE.Vector3().subVectors(face[2],face[0]));
+ const length=normal.length();
+ if(length<1e-12)return false;
+ const d0=normal.dot(a.clone().sub(face[0]))/length,
+  d1=normal.dot(b.clone().sub(face[0]))/length;
+ if(!Number.isFinite(d0)||!Number.isFinite(d1))fail('C53 nonfinite source face plane');
+ // Coplanar triangles are checked separately by vertex-to-triangle and
+ // all edge-edge distances; do not invent an interior piercing witness.
+ if(Math.abs(d0-d1)<=1e-12)return false;
+ const t=d0/(d0-d1);
+ if(t<0||t>1)return false;
+ const hit=a.clone().lerp(b,t);
+ return new THREE.Triangle(...face).containsPoint(hit);
+}
+function triangleDistance53(A,B){
+ const TA=new THREE.Triangle(...A),TB=new THREE.Triangle(...B),
+  closest=new THREE.Vector3();
+ let dSq=Infinity;
+ for(const v of A){
+  TB.closestPointToPoint(v,closest);
+  dSq=Math.min(dSq,v.distanceToSquared(closest));
+ }
+ for(const v of B){
+  TA.closestPointToPoint(v,closest);
+  dSq=Math.min(dSq,v.distanceToSquared(closest));
+ }
+ const edges=[[0,1],[1,2],[2,0]];
+ for(const [i,j] of edges){
+  if(segmentFaceCrosses53(A[i],A[j],B)||
+     segmentFaceCrosses53(B[i],B[j],A))return 0;
+  for(const [k,l] of edges)
+   dSq=Math.min(dSq,segmentSegmentSquared53(A[i],A[j],B[k],B[l]));
+ }
+ if(!Number.isFinite(dSq)||dSq<0)fail('C53 invalid genuine cloth triangle separation');
+ return Math.sqrt(dSq);
+}
+function refinedDistanceReceipt53(state,complete){
+ return Object.freeze({
+  schema:'M2-source-posed-triangle-separation-C53',
+  triangleCandidatePairsMeasured:state.distancePairsMeasured,
+  geometricZeroOrOverlapUnresolved:state.geometricZeroOrOverlapUnresolved,
+  positiveGapWithinToleranceUnresolved:state.positiveGapWithinToleranceUnresolved,
+  positiveGapBeyondToleranceAtThisPose:state.positiveGapBeyondToleranceAtThisPose,
+  distanceRefinementComplete:complete,
+  originalPhotoVertexCoordinatesExposed:false,
+  exactSourceFaceIndicesExposed:false,
+  zeroGapNotCertifiedAsPenetration:true,
+  positiveGapNotContinuousClothClearance:true,
+  noSourceRepairAuthorized:true,
+  familyAlpha:'HOLD'
+ });
+}
+
 function analyze52(coordinates,indices,faceCount,tolerance,budgets){
  const list=[];
  const v=(j)=>new THREE.Vector3(
@@ -63,6 +148,10 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets){
  list.sort((a,b)=>a.minX-b.minX);
  let boundsOverlaps=0,strictCrossings=0,compared=0,
   sharedIndexExcluded=0,firstStrict=false,firstUncertain=false;
+ const distance53={distancePairsMeasured:0,
+  geometricZeroOrOverlapUnresolved:0,
+  positiveGapWithinToleranceUnresolved:0,
+  positiveGapBeyondToleranceAtThisPose:0};
  let complete=true;const active=[];
  outer:for(const candidate of list){
   for(let i=active.length-1;i>=0;i--)
@@ -80,6 +169,21 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets){
     complete=false;break outer;
    }
    const strict=strictFaceCrossing52(other.tri,candidate.tri,1e-7);
+   if(budgets.refineTriangleDistances53){
+    if(distance53.distancePairsMeasured>=budgets.maxDistanceCandidates53){
+     complete=false;break outer;
+    }
+    const distance=triangleDistance53(other.tri,candidate.tri);
+    if(!Number.isFinite(distance)||distance<0)
+     fail('C53 invalid original source triangle distance');
+    if(strict&&distance>1e-6)
+     fail('C53 strict original crossing disagrees with actual triangle distance');
+    distance53.distancePairsMeasured++;
+    if(distance<=1e-7)distance53.geometricZeroOrOverlapUnresolved++;
+    else if(distance<=tolerance)
+     distance53.positiveGapWithinToleranceUnresolved++;
+    else distance53.positiveGapBeyondToleranceAtThisPose++;
+   }
    if(strict){strictCrossings++;firstStrict=true;}
    else firstUncertain=true;
    if(strictCrossings>=budgets.maxStrictCrossings){
@@ -89,12 +193,15 @@ function analyze52(coordinates,indices,faceCount,tolerance,budgets){
   active.push(candidate);
  }
  return {complete,compared,boundsOverlaps,strictCrossings,
-  sharedIndexExcluded,firstStrict,firstUncertain};
+  sharedIndexExcluded,firstStrict,firstUncertain,
+  distance53:budgets.refineTriangleDistances53?
+   refinedDistanceReceipt53(distance53,complete):null};
 }
 export function auditActualPhotographedDressSurfaces52({
  root,dress,toleranceMeters=.00002,
  maxSourceFaces=100000,maxComparisons=800000,
- maxCandidatePairs=100000,maxStrictCrossings=64
+ maxCandidatePairs=100000,maxStrictCrossings=64,
+ refineTriangleDistances53=false,maxDistanceCandidates53=100000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
@@ -116,7 +223,10 @@ export function auditActualPhotographedDressSurfaces52({
     !Number.isSafeInteger(maxCandidatePairs)||maxCandidatePairs<1||
     maxCandidatePairs>500000||
     !Number.isSafeInteger(maxStrictCrossings)||maxStrictCrossings<1||
-    maxStrictCrossings>1024)
+    maxStrictCrossings>1024||
+    typeof refineTriangleDistances53!=='boolean'||
+    !Number.isSafeInteger(maxDistanceCandidates53)||
+    maxDistanceCandidates53<1||maxDistanceCandidates53>500000)
   fail('real original licensed SHA-pinned 163-bone P61 dress required');
  const p=g?.getAttribute('position'),rest=g?.getAttribute('dressRest'),
   si=g?.getAttribute('skinIndex'),sw=g?.getAttribute('skinWeight');
@@ -153,7 +263,8 @@ export function auditActualPhotographedDressSurfaces52({
   if(!finite(v.toArray()))fail('invalid genuine source-skinned pose');
   skinned[3*i]=v.x;skinned[3*i+1]=v.y;skinned[3*i+2]=v.z;
  }
- const budget={maxComparisons,maxCandidatePairs,maxStrictCrossings};
+ const budget={maxComparisons,maxCandidatePairs,maxStrictCrossings,
+  refineTriangleDistances53,maxDistanceCandidates53};
  const original=analyze52(source,indices,triangles,toleranceMeters,budget),
   posed=analyze52(skinned,indices,triangles,toleranceMeters,budget);
  for(const [name,attr,bytes] of immutable)
@@ -184,6 +295,16 @@ export function auditActualPhotographedDressSurfaces52({
   posedPairComparisons:posed.compared,
   sourceSweepExhausted:!original.complete,
   posedSweepExhausted:!posed.complete,
+  ...(refineTriangleDistances53?{
+   refinedOriginalDistance53:original.distance53,
+   refinedPosedDistance53:posed.distance53,
+   sourceAndPosedDistanceRefinementCompleted53:
+    original.distance53.distanceRefinementComplete&&
+    posed.distance53.distanceRefinementComplete,
+   duplicateSourceSewingPermission53:false,
+   allCapturedPhotoAttributesUnchanged53:true,
+   noRealFabricPhysicsCertified53:true
+  }:{}),
   anyStrictSourceCrossing:original.firstStrict,
   anyStrictPosedCrossing:posed.firstStrict,
   originalSourcePhotoUVRestSkinAndIndicesUntouched:true,

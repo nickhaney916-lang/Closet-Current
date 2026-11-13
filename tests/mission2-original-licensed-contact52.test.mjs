@@ -133,3 +133,113 @@ test('C52: forged licensed identity, source editing, fake bone roster and bad bu
  }),/original full photo dress/);
  assert.deepEqual(original(f).position,before.position);
 });
+
+test('C53: real skinned transverse source crossing is zero-distance unresolved, NOT physical repair approval',()=>{
+ const f=fixture52(cross),source=original(f);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true
+ });
+ assert.equal(r.sourceAndPosedDistanceRefinementCompleted53,true);
+ assert.equal(r.refinedOriginalDistance53.triangleCandidatePairsMeasured,1);
+ assert.equal(r.refinedOriginalDistance53.geometricZeroOrOverlapUnresolved,1);
+ assert.equal(r.refinedPosedDistance53.geometricZeroOrOverlapUnresolved,1);
+ assert.equal(r.refinedPosedDistance53.positiveGapBeyondToleranceAtThisPose,0);
+ assert.equal(r.duplicateSourceSewingPermission53,false);
+ assert.equal(r.noRealFabricPhysicsCertified53,true);
+ assert.deepEqual(original(f),source);
+});
+test('C53: genuine near-parallel 8 micron separation is within tolerance but not claimed as penetration',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  .15,.15,.000008,.7,.15,.000008,.15,.7,.000008
+ ]),source=original(f);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true
+ });
+ assert.equal(r.refinedPosedDistance53.triangleCandidatePairsMeasured,1);
+ assert.equal(r.refinedPosedDistance53.geometricZeroOrOverlapUnresolved,0);
+ assert.equal(r.refinedPosedDistance53.positiveGapWithinToleranceUnresolved,1);
+ assert.equal(r.refinedPosedDistance53.zeroGapNotCertifiedAsPenetration,true);
+ assert.deepEqual(original(f),source);
+});
+test('C53: overlapping 3D bounding boxes can be definitively >tolerance apart as triangles',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  .8,.8,0,1.5,.8,0,.8,1.5,0
+ ]),source=original(f);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true
+ });
+ assert.equal(r.posedBoxPairs,1);
+ assert.equal(r.posedStrictCrossings,0);
+ assert.equal(r.refinedPosedDistance53.triangleCandidatePairsMeasured,1);
+ assert.equal(r.refinedPosedDistance53.positiveGapBeyondToleranceAtThisPose,1);
+ assert.equal(r.refinedPosedDistance53.positiveGapNotContinuousClothClearance,true);
+ assert.equal(r.anyContactMustRemainBlocked,true);
+ assert.deepEqual(original(f),source);
+});
+test('C53: coplanar original photo fabric faces nested in each other remain geometric zero, not fabricated source seam',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  .1,.1,0,.6,.1,0,.1,.6,0
+ ]);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true
+ });
+ assert.equal(r.posedStrictCrossings,0);
+ assert.equal(r.refinedPosedDistance53.geometricZeroOrOverlapUnresolved,1);
+ assert.equal(r.refinedPosedDistance53.positiveGapBeyondToleranceAtThisPose,0);
+ assert.equal(r.duplicateSourceSewingPermission53,false);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C53: a real 163-bone moved garment face produces posed zero distance even with source separated',()=>{
+ const f=fixture52([
+  -.15,-.10,0,.15,-.10,0,0,.15,0,
+  0,-.07,.30,0,-.07,.50,0,.10,.40
+ ]);
+ for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ f.bones[1].position.z=-.4;
+ const originalState=original(f);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true
+ });
+ assert.equal(r.originalSourceBoxPairs,0);
+ assert.equal(r.refinedPosedDistance53.geometricZeroOrOverlapUnresolved,1);
+ assert.equal(r.refinedPosedDistance53.distanceRefinementComplete,true);
+ assert.deepEqual(original(f),originalState);
+});
+test('C53: bounded original-photo triangle-distance workload fails closed, never counts unaudited AABB as safe',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  .1,.1,0,.6,.1,0,.1,.6,0,
+  .2,.2,0,.7,.2,0,.2,.7,0
+ ]);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true,
+  maxDistanceCandidates53:1
+ });
+ assert.equal(r.sourceAndPosedDistanceRefinementCompleted53,false);
+ assert.equal(r.sourceAndPosedFullPairSweepCompleted,false);
+ assert.equal(r.refinedOriginalDistance53.triangleCandidatePairsMeasured,1);
+ assert.equal(r.refinedPosedDistance53.triangleCandidatePairsMeasured,1);
+ assert.equal(r.refinedOriginalDistance53.distanceRefinementComplete,false);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C53: original SHA, all source rest/skin/UV fields and duplicate source index boundaries remain untouched',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,1,1,0
+ ],[0,1,2,1,3,2]),before=original(f);
+ const r=auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,refineTriangleDistances53:true
+ });
+ assert.equal(r.posedBoxPairs,0);
+ assert.equal(r.refinedPosedDistance53.triangleCandidatePairsMeasured,0);
+ assert.equal(r.allCapturedPhotoAttributesUnchanged53,true);
+ assert.equal(r.refinedPosedDistance53.exactSourceFaceIndicesExposed,false);
+ assert.deepEqual(original(f),before);
+ for(const invalid of [{maxDistanceCandidates53:0},
+  {maxDistanceCandidates53:1000001},{refineTriangleDistances53:'yes'}])
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...invalid
+  }),/M2 C52 original-photo diagnostic/);
+});
