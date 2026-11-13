@@ -36,6 +36,23 @@ test('P877 frozen alternate framing counts both a gain and a loss without promot
  assert.equal(summary.releaseReady,false);
  assert.equal(rows[1].samePinnedSiglipWeights,true);
 });
+test('P877 keeps improvement on a real garment separate from a non-clothing abstention',()=>{
+ const data=fixture();
+ data.rows.push(row('commons-0090','Unknown','T-shirt','Unknown'));
+ data.summary.photos=3;
+ const {summary}=analyzeFrame877(data,{expectedRows:3});
+ assert.equal(summary.historicalGarmentRows,2);
+ assert.equal(summary.historicalNegativeRows,1);
+ assert.equal(summary.garmentSubtypeHistoricalMatchesBaseline,1);
+ assert.equal(summary.garmentSubtypeHistoricalMatchesAlternate,2);
+ assert.equal(summary.negativeClassHistoricalMatchesBaseline,0);
+ assert.equal(summary.negativeClassHistoricalMatchesAlternate,1);
+ assert.equal(summary.baselineExactHistoricalStrings,1);
+ assert.equal(summary.alternateExactHistoricalStrings,3);
+ assert.deepEqual(summary.gains,['commons-0035','commons-0090']);
+ assert.equal(summary.blindAccuracy,null);
+ assert.equal(summary.modelPromoted,false);
+});
 test('P877 refuses a different source or stale alternate input hash',()=>{
  const data=fixture();data.rows[0].output.experiment877.inputSha256='0'.repeat(64);
  assert.throws(()=>analyzeFrame877(data,{expectedRows:2}),/P877_ALTERNATE_SOURCE_PROVENANCE/);
