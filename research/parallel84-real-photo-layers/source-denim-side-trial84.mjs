@@ -107,6 +107,12 @@ export function trialSourceMeasuredDenimSide84({
      !record.data.every((n,i)=>Object.is(now.array[i],n)))
     throw Error('immutable-original-denim-pixel-uv-rest-skin-mutation');
   }
+  const front=g.getAttribute('pantsSourceFront');
+  for(let i=0;i<p.count;i++){
+   if(front.getX(i)<.18)continue;
+   for(let k=0;k<3;k++)if(!Object.is(p.array[i*3+k],oldPosition[i*3+k]))
+    throw Error('photographed-original-front-vertex-position-mutation');
+  }
  };
  try{
   mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
