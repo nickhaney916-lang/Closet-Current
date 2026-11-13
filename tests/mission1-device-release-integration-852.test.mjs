@@ -51,7 +51,8 @@ test('P852 public reports contain no private photo hash, account IDs or exact pr
  assert.equal(serialized.includes(SHA),false);
  assert.equal(serialized.includes(SOURCE),false);
  assert.equal(serialized.includes('ownerId'),false);
- assert.equal(serialized.includes('"originalSha256"'),false);\n assert.equal(serialized.includes('"evidenceSha256"'),false);
+ assert.equal(serialized.includes('"originalSha256"'),false);
+ assert.equal(serialized.includes('"evidenceSha256"'),false);
 });
 test('P852 real main P851 owner-approved edit/queue/correction constraints are unchanged',()=>{
  assert.match(app,/^const reviewFirst836=true;$/m);
