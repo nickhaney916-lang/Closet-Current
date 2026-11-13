@@ -23,6 +23,7 @@ export const SCHEMA80 = "p80-private-candidate-eval-v1";
 export const SEAL80 = "p80-private-scorer-seal-v1";
 const SHA40 = /^[a-f0-9]{40}$/;
 const MAX_SOURCES = 500;
+const MIN_PRIVATE_COHORT = 60;
 const bad = (reason) => ({
   schema: SCHEMA80,
   status: "BLOCKED",
@@ -66,7 +67,8 @@ export function validCandidatePrediction80(p) {
         !CATEGORIES[a.category]?.includes(a.itemType) || a.itemType === "Other" ||
         types.has(a.itemType) || a.rank !== i + 1 ||
         !Number.isFinite(a.relativeScore) || a.relativeScore < 0 ||
-        a.relativeScore > 1) return false;
+        a.relativeScore > 1 ||
+        (i > 0 && a.relativeScore > p.alternatives[i-1].relativeScore)) return false;
     types.add(a.itemType);
   }
   return p.status === "hypotheses" ? p.alternatives.length >= 1 : true;
@@ -128,7 +130,7 @@ export function summarizeConditionalCandidates80(verifiedPairs) {
     shouldLiftFamilyAlphaHold: false,
   };
 }
-function signedScorerSeal80(predictions, seal, pinnedScorer, now) {
+export function verifyScorerSeal80(predictions, seal, pinnedScorer, now) {
   if (!Array.isArray(predictions) || !predictions.length || predictions.length > MAX_SOURCES ||
       !seal || seal.schema !== SEAL80 || !SHA40.test(seal.targetCommit || "") ||
       !isHex64(seal.modelSha256) || !isHex64(seal.predictionsSha256) ||
@@ -166,7 +168,12 @@ export async function evaluatePrivateBlind80({bundle, receipts, predictions, sea
       !Array.isArray(predictions) || !trusted ||
       !isHex64(trusted.registrarFingerprint) ||
       trusted.registrarFingerprint !== bundle.approvedFingerprint ||
-      !signedScorerSeal80(predictions,seal,trusted.scorerFingerprint,now))
+      !/^[a-f0-9]{40}$/.test(trusted.targetCommit || "") ||
+      !isHex64(trusted.modelSha256) ||
+      seal?.targetCommit !== trusted.targetCommit ||
+      seal?.modelSha256 !== trusted.modelSha256 ||
+      !(finiteDate(trusted.approvedAt) < finiteDate(seal?.scoredAt)) ||
+      !verifyScorerSeal80(predictions,seal,trusted.scorerFingerprint,now))
     return bad("missing independently pinned blind source/reviewer/scoring custody");
   let loaded;
   try {
@@ -174,6 +181,8 @@ export async function evaluatePrivateBlind80({bundle, receipts, predictions, sea
   } catch {
     return bad("private blind source/original/exposure gate failed");
   }
+  if (loaded.records.length < MIN_PRIVATE_COHORT)
+    return bad("private cohort too small for aggregate disclosure or release evidence");
   if (loaded.records.length !== predictions.length ||
       loaded.records.length > MAX_SOURCES ||
       !receipts || typeof receipts !== "object" || Array.isArray(receipts) ||
