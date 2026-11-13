@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and five-path no-deploy allowlist
+      - name: Exact parent and eight-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-pending-capture-status-cas.test.cjs|scripts/test-mission3-capture-status-cas-browser.mjs|research/mission3-pending-capture-status-cas/REPORT.md|.github/workflows/mission3-pending-capture-status-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-pending-capture-status-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|scripts/test-mission3-capture-status-cas-browser.mjs|research/mission3-pending-capture-status-cas/REPORT.md|.github/workflows/mission3-pending-capture-status-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -35,6 +35,9 @@ jobs:
           node --check tests/mission3-auto-index-source-cas.test.cjs
           node --check tests/mission3-saved-photo-insert-cas.test.cjs
           node --check tests/mission3-pending-capture-status-cas.test.cjs
+          node --check tests/mission3-auto-index-source-cas.test.cjs
+          node --check tests/mission3-late-owner-session-capture.test.cjs
+          node --check tests/mission3-recognition-session-epoch.test.cjs
           node --check scripts/test-mission3-capture-status-cas-browser.mjs
           node --check tests/mission3-draft-row-cas.test.cjs
           node --check scripts/test-mission3-draft-row-cas-browser.mjs
@@ -84,7 +87,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict five-path same-parent diff gate
+      - name: Strict eight-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -93,7 +96,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-pending-capture-status-cas.test.cjs|scripts/test-mission3-capture-status-cas-browser.mjs|research/mission3-pending-capture-status-cas/REPORT.md|.github/workflows/mission3-pending-capture-status-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-pending-capture-status-cas.test.cjs|tests/mission3-auto-index-source-cas.test.cjs|tests/mission3-late-owner-session-capture.test.cjs|tests/mission3-recognition-session-epoch.test.cjs|scripts/test-mission3-capture-status-cas-browser.mjs|research/mission3-pending-capture-status-cas/REPORT.md|.github/workflows/mission3-pending-capture-status-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
