@@ -59,9 +59,9 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   // Replace only the panel's request dependency for policy testing; real worker is tested separately.
   await page.evaluate(async()=>{
    const {mountDual82}=await import('/dual-panel-82.mjs'),{VERSION82,MODEL_ASSETS82}=await import('/dual-core-82.mjs'),{localCandidates}=await import('/local-catalog.mjs'),{observation81}=await import('/model-arbitration-81.mjs');
-   window.mountSynthetic82=()=>{
+   window.mountSynthetic82=({rejectApply=false}={})=>{
     window.syntheticPanel82?.close();document.querySelector('[data-dual82]')?.remove();window.calls82=0;window.hold82=false;window.apply82=0;window.negative82=false;
-    const form=document.querySelector('dialog form');window.syntheticPanel82=mountDual82({supported:true,form,item:window.current82,getOwner:()=>window.closetAuth.user,getDraftRevision:()=>JSON.stringify([form.querySelector('select[aria-label="Main category"]')?.value,form.querySelector('select[aria-label="Item type"]')?.value,form.querySelector('input[aria-label="Color"]')?.value]),isLive:()=>!!document.querySelector('dialog')?.open,unitAllowed:()=>!window.current82.segmentHint,onChoose:c=>{window.apply82++;window.applied82=c;const type=form.querySelector('select[aria-label="Item type"]');type.value=c.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));},request:async(r,{signal})=>{
+    const form=document.querySelector('dialog form');window.syntheticPanel82=mountDual82({supported:true,form,item:window.current82,getOwner:()=>window.closetAuth.user,getDraftRevision:()=>JSON.stringify([form.querySelector('select[aria-label="Main category"]')?.value,form.querySelector('select[aria-label="Item type"]')?.value,form.querySelector('input[aria-label="Color"]')?.value]),isLive:()=>!!document.querySelector('dialog')?.open,unitAllowed:()=>!window.current82.segmentHint,onChoose:c=>{if(rejectApply)return false;window.apply82++;window.applied82=c;const type=form.querySelector('select[aria-label="Item type"]');type.value=c.itemType;type.dispatchEvent(new Event('input',{bubbles:true}));return type.value===c.itemType;},request:async(r,{signal})=>{
      window.calls82++;window.lastRequest82=r;while(window.hold82&&!signal.aborted)await new Promise(x=>setTimeout(x,10));if(signal.aborted)throw Error('cancelled');
      return {schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,createdAt:Date.now(),sourceCodeSha256:r.sourceCodeSha256,observations:['fashionclip','fashionSiglip'].map((modelKey,i)=>observation81({modelKey,binding:r.binding,workerSourceSha256:r.sourceCodeSha256,vectorSha256:MODEL_ASSETS82[modelKey].vectorsSha256,latencyMs:2,scores:localCandidates.map((c,j)=>({label:c.label,score:(window.negative82?c.label==='a blank wall':c.itemType===(i?'Skirt':'Shorts'))?1:j/1000}))}))};
     }});
@@ -74,6 +74,19 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   await page.getByRole('checkbox',{name:/I compared the original photo/}).check();await page.getByRole('button',{name:/Use Shorts/}).click();assert.equal(await page.evaluate(()=>window.apply82),1);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   const normal=page.getByRole('checkbox',{name:/I checked the clothing photo/});assert.equal(await normal.isChecked(),false);
   await normal.check();await page.getByRole('button',{name:'Save changes',exact:true}).click();await page.waitForTimeout(100);assert.equal((await page.evaluate(()=>window.state82())).writes,1);
+  // P872: an owner-confirmed model suggestion must not announce success if the
+  // real editor rejects that precise category/subtype. Nothing may be saved.
+  await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();
+  await page.evaluate(()=>window.mountSynthetic82({rejectApply:true}));
+  await consent().check();await visible().check();await check().click();
+  await page.getByRole('button',{name:/Use Shorts/}).waitFor();
+  await page.getByRole('checkbox',{name:/I compared the original photo/}).check();
+  await page.getByRole('button',{name:/Use Shorts/}).click();
+  await page.getByText(/No suggestion applied. Request a fresh check/).waitFor();
+  assert.equal(await page.evaluate(()=>window.apply82),0);
+  assert.equal((await page.evaluate(()=>window.state82())).writes,0);
+  assert.equal(await page.getByText(/Your unsaved draft was updated/).count(),0);
+  console.log('P872_REJECTED_SUGGESTION_NO_FALSE_SUCCESS',name,width);
   for(const attack of ['owner','same-owner','owner-id','crop','image','mask','unit']){
    await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});await consent().check();await visible().check();await check().click();await page.waitForFunction(()=>window.calls82===1);await page.evaluate(k=>{window.mutate82(k);window.hold82=false;},attack);await page.waitForTimeout(120);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   }

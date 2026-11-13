@@ -46,7 +46,8 @@ export function mountDual82({form,item,getOwner,isLive,unitAllowed,onChoose,getD
      try{
       const fresh=await evidence80(item,scope);
       if(!scopeLive()||ticket!==epoch||!sameDraft()||!binding80(before,fresh)||!ack.checked||Date.now()-output.createdAt>60000)throw Error('P82_REVOKED');
-      onChoose({category:h.category,itemType:h.itemType});revoke();status.textContent='Your unsaved draft was updated. Check category and color, then confirm the normal photo review before saving.';
+      if(onChoose({category:h.category,itemType:h.itemType})!==true)throw Error('P82_CHOICE_NOT_APPLIED');
+      revoke();status.textContent='Your unsaved draft was updated. Check category and color, then confirm the normal photo review before saving.';
      }catch{revoke();status.textContent='No suggestion applied. Request a fresh check or adjust manually.';}
     };results.append(choose);
    }
