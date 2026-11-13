@@ -398,6 +398,7 @@ function adjustPhoto(item){
   import('./dual-panel-82.mjs').then(({mountDual82})=>{
    if(!dialog.open||!batch.some(x=>x===item)||window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)return;
    dual82Panel=mountDual82({form,item,getOwner:()=>window.closetAuth?.user,
+    getDraftRevision:()=>JSON.stringify([draft.category,draft.itemType,draft.color,draft.colorSource,draft.pattern,draft.sleeveLength,draft.fit]),
     isLive:()=>dialog.open&&!saveInFlight&&batch.some(x=>x===item),
     unitAllowed:()=>unit70OwnerEvidenceValid({...item,category:draft.category}),
     onChoose:choice=>{
