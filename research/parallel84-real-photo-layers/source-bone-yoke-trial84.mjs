@@ -262,50 +262,94 @@ export function trialSourceBoneShoulderYoke84({
   const oldLayer=contactCount(originalShirt.g,originalPants.g);
   // Actual full original-face, true skinned body+layer intersection sets,
   // not a made-up silhouette metric, drive bounded refusal/rollback.
-  for(const [item,target] of move){
-   for(const [m,i] of item.refs){
-    const local=target.clone().applyMatrix4(m.matrixWorld.clone().invert());
-    m.geometry.getAttribute('position').setXYZ(i,local.x,local.y,local.z);
+  // Try the actual original sewn-mesh shoulder change at full amplitude,
+  // then progressively smaller true ORIGINAL-source displacements. No
+  // exposure of any partially failing mesh to the research viewer. Every
+  // intermediate step restores the captured original source bytes first.
+  // Candidate ACCEPTANCE requires full intersecting-triangle BVH audits of
+  // both body and photographed jeans, original protected attributes, and
+  // cap-to-shell coincidence; no "nonzero is good enough" heuristic.
+  const trials=[],levels=[1,.5,.25,.125];
+  let chosen=null;
+  for(const amplitude of levels){
+   if(amplitude*maximum<.0029)break;
+   restore();
+   for(const [item,target] of move){
+    const scaled=item.world.clone().lerp(target,amplitude);
+    for(const [m,i] of item.refs){
+     const local=scaled.clone().applyMatrix4(m.matrixWorld.clone().invert());
+     m.geometry.getAttribute('position').setXYZ(i,local.x,local.y,local.z);
+    }
+   }
+   let largestGap=0;
+   for(const item of groups.values()){
+    if(new Set(item.refs.map(v=>v[0])).size<2)continue;
+    const [first,...others]=item.refs.map(([m,i])=>point84(m,i));
+    for(const current of others)
+     largestGap=Math.max(largestGap,first.distanceTo(current));
+   }
+   for(const m of meshes){
+    const g=m.geometry,p=g.getAttribute('position');
+    p.needsUpdate=true;g.computeVertexNormals();
+    smoothSurfaceNormals(g,p.count);
+    g.computeBoundingBox();g.computeBoundingSphere();
+   }
+   auditIntegrity();
+   if(!finite(largestGap)||largestGap>5e-5)
+    throw Error('original-shoulder-seam-not-coincident');
+   const candidate=posedGeometry(shirt.meshes);
+   let newBody,newLayer;
+   try{
+    newBody=contactCount(candidate.g,bodyPose.g);
+    newLayer=contactCount(candidate.g,originalPants.g);
+   }finally{candidate.g.dispose();}
+   const introducedBody=newPairs(oldBody,newBody),
+    introducedLayer=newPairs(oldLayer,newLayer);
+   const depthWorsened=!finite(newBody.maxDepth)||!finite(newLayer.maxDepth)||
+    newBody.maxDepth>oldBody.maxDepth+.0005||
+    newLayer.maxDepth>oldLayer.maxDepth+.0005;
+   const attempt=Object.freeze({amplitude,bodyCrossingPairsTrial:newBody.count,
+    layerCrossingPairsTrial:newLayer.count,
+    newlyIntroducedBodyTrianglePairs:introducedBody,
+    newlyIntroducedLayerTrianglePairs:introducedLayer,
+    localPlaneDepthWorsened:depthWorsened,
+    maxSeamGapMeters:largestGap});
+   trials.push(attempt);
+   if(!introducedBody&&!introducedLayer&&!depthWorsened){
+    chosen=attempt;break;
    }
   }
-  const seamGaps=[];
-  for(const item of groups.values()){
-   if(new Set(item.refs.map(v=>v[0])).size<2)continue;
-   const actual=item.refs.map(([m,i])=>point84(m,i));
-   for(const p of actual.slice(1))seamGaps.push(p.distanceTo(actual[0]));
-  }
-  const largestGap=seamGaps.length?Math.max(...seamGaps):0;
-  for(const m of meshes){
-   const g=m.geometry,p=g.getAttribute('position');
-   p.needsUpdate=true;g.computeVertexNormals();
-   smoothSurfaceNormals(g,p.count);
-   g.computeBoundingBox();g.computeBoundingSphere();
-  }
-  auditIntegrity();
-  if(!finite(largestGap)||largestGap>5e-5)
-   throw Error('original-shoulder-seam-not-coincident');
-  const candidate=posedGeometry(shirt.meshes);
-  let newBody,newLayer;
-  try{
-   newBody=contactCount(candidate.g,bodyPose.g);
-   newLayer=contactCount(candidate.g,originalPants.g);
-  }finally{candidate.g.dispose();}
-  const introducedBody=newPairs(oldBody,newBody);
-  const introducedLayer=newPairs(oldLayer,newLayer);
+  if(!chosen){restore();auditIntegrity();}
+  const report=chosen||trials[0]||{
+   amplitude:0,bodyCrossingPairsTrial:oldBody.count,
+   layerCrossingPairsTrial:oldLayer.count,
+   newlyIntroducedBodyTrianglePairs:0,
+   newlyIntroducedLayerTrianglePairs:0,
+   maxSeamGapMeters:0,localPlaneDepthWorsened:false
+  };
+  const accepted=!!chosen,observedMax=accepted?maximum*chosen.amplitude:0;
   const base=Object.freeze({
    schema:'parallel84-source-bone-shoulder-yoke/v1',
    avatar,requestedDropMeters,outwardClearanceMeters,
-   movedOriginalRenderedVertices:sampleCandidate,
-   maxShoulderWorldDisplacementMeters:maximum,
+   adaptiveOriginalSourceDisplacement:true,
+   candidateAmplitudesTested:trials.length,
+   fullSourceMagnitudeMeters:maximum,
+   acceptedTrialAmplitude:accepted?chosen.amplitude:0,
+   renderedDisplacementRetained:accepted,
+   movedOriginalRenderedVertices:accepted?sampleCandidate:0,
+   maxShoulderWorldDisplacementMeters:observedMax,
    protectedFrontCenterOriginalVertices:protectedPrintedChest,
-   actualSeamMaxWorldGapMeters:largestGap,
+   actualSeamMaxWorldGapMeters:report.maxSeamGapMeters,
    shoulderCounts:stats,seamSourceWitnesses:seamSource,
    bodyCrossingPairsBefore:oldBody.count,
-   bodyCrossingPairsTrial:newBody.count,
-   newlyIntroducedBodyTrianglePairs:introducedBody,
+   bodyCrossingPairsTrial:report.bodyCrossingPairsTrial,
+   newlyIntroducedBodyTrianglePairs:report.newlyIntroducedBodyTrianglePairs,
    layerCrossingPairsBefore:oldLayer.count,
-   layerCrossingPairsTrial:newLayer.count,
-   newlyIntroducedLayerTrianglePairs:introducedLayer,
+   layerCrossingPairsTrial:report.layerCrossingPairsTrial,
+   newlyIntroducedLayerTrianglePairs:report.newlyIntroducedLayerTrianglePairs,
+   firstFullAmplitudeBodyIntroduced:trials[0]?.newlyIntroducedBodyTrianglePairs??0,
+   firstFullAmplitudeLayerIntroduced:trials[0]?.newlyIntroducedLayerTrianglePairs??0,
+   triedCandidateAmplitudes:trials.map(t=>Object.freeze({...t})),
    sourcePhotoPreserved:true,sourceSkinUVPreserved:true,
    originalBodyUnchanged:true,originalGarmentMeshTopologyUnchanged:true,
    newBodyContactsNotAllowed:true,newLayerContactsNotAllowed:true,
@@ -314,15 +358,9 @@ export function trialSourceBoneShoulderYoke84({
    humanVisualRealismApproved:false,
    releaseAuthorized:false
   });
-  if(introducedBody||introducedLayer||
-     newBody.maxDepth>oldBody.maxDepth+.0005||
-     newLayer.maxDepth>oldLayer.maxDepth+.0005){
-   restore();auditIntegrity();
-   return Object.freeze({...base,status:'REFUSED_NEW_CONTACT',
-    trialApplied:false,sourceGeometryRestored:true});
-  }
-  return Object.freeze({...base,status:'SAMPLED_CONTACT_NONWORSENING_ONLY',
-   trialApplied:true,sourceGeometryRestored:false});
+  return Object.freeze({...base,
+   status:accepted?'SAMPLED_CONTACT_NONWORSENING_ONLY':'REFUSED_NEW_CONTACT',
+   trialApplied:accepted,sourceGeometryRestored:!accepted});
  }catch(e){
   restore();
   // Only vetted internal codes, never original owner tokens/face locations.
