@@ -28,4 +28,16 @@
 
 Dedicated exact-P848-parent strict 9-path allowlist no-deploy CI covers native full regression/builds, #77 focused source/identity safety, P849 source-executed race/fence tests, reproducible candidate-vs-old-signature diagnostic, actual Chromium and WebKit at CSS 320/390/430 for two-image comparison and owner decisions, inherited P848 masked-color/P847 separate learning/P846 footwear/P844 repeat-save/P843 default owner confirmation, and licensed original photo hash provenance (not paired physical item truth). CI stores numeric-only output; no original JPEG artifacts.
 
-**CI status: PENDING initial exact-executable-head proof.** A future report-only commit will require its own exact-final-head no-deploy recheck.
+## Verified P849 functional-head results — November 12, 2026 (Pacific)
+
+The exact functional SHA `8e95e8e1e2f4f8110e61f4d1ac4383db1b876484` passed [Mission 1 P849 NO DEPLOY GitHub Actions #43346761133](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43346761133) with **3/3 jobs SUCCESS**; strict immutable P848 ancestor and 9-path allowlist passed.
+
+- **20/20** focused actual-source native tests passed, including explicit P849 self-hash mutation race prevention, source/signed owner candidate revision checks, default-off bounded candidate top-one, no automatic merge, owner release and before-save integrity. **406/406** full native Node tests passed, zero failures, both app/research builds green.
+- **6/6 actual Chromium+WebKit** cross-capture user experiences at 320/390/430 CSS px: candidate visible after fixing the self-stale source race; comparing photos requires separate acknowledgment; choosing **same** leaves new draft UNSAVED and never creates a second closet unit; choosing **different** still requires P843 check before one owner save; old candidate edit/owner switch revokes saved action; zero page errors. This is actual browser *UI*, with **synthetic JPEG photo fixtures and in-memory storage**, not genuine same-item blind accuracy.
+- Inherited P848 source-hash/mask/owner-bound opt-in colors, P847 separate original+learning consent, P846 physical shoe-pair unit review, P844 double-submit/failure/retry, P843 default first-photo approval and P845 photo quality tests passed on the same engines. No original photograph deleted or changed in fixtures.
+- **11/11** immutable original licensed public JPEGs passed SHA/source provenance from inherited quality diagnostics: 1/11 limited-resolution advisory, 0 actual human same-owned-garment pairs and 0 new blind independent physical-duplicate labels. Consequently **REAL-PHOTO MATCHING RECALL, PRECISION, FALSE-MERGE RATE and recognition accuracy improvement remain UNKNOWN**.
+- Matching ~100/500/1000 inventory records uses bounded in-memory synthetic candidates, NOT measured physical phone memory, cloud or low-light real pairs.
+
+The initial P849 native run [#43346629494](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43346629494) failed due to a new assertion looking for a non-existent `searchParams` identifier instead of the actual `new URLSearchParams(location.search)` syntax. The test assertion was corrected without relaxing app owner constraints. The following exact-code run #43346761133 passed completely. Distinguish this test-harness fix from the real #77 async false-stale integration repair.
+
+**This documentation-only commit does not change tested executable code, but must pass its own exact-final-HEAD no-deploy workflow before final signoff. FAMILY ALPHA HOLD #255 remains OPEN. NO MERGE/DEPLOY.**
