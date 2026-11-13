@@ -1,7 +1,7 @@
 {
   "schema": "p75-query-plan-v1",
   "policy": "SEARCH TERMS ONLY — NO GROUND TRUTH",
-  "maxOriginalsPerQuery": 3,
+  "maxOriginalsPerQuery": 4,
   "searches": [
     {
       "family": "tops",
@@ -38,6 +38,18 @@
     {
       "family": "accessories",
       "query": "filetype:bitmap handbag belt clothing accessory"
+    },
+    {
+      "family": "outerwear",
+      "query": "filetype:bitmap denim jacket clothing"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap sandals footwear photograph"
+    },
+    {
+      "family": "accessories",
+      "query": "filetype:bitmap cap hat garment museum"
     }
   ],
   "blindCandidateDisclosure": "FORBIDDEN: Public query outputs and candidate metadata can be used for TRAIN/DEV discovery only."
