@@ -128,3 +128,33 @@ test('P84 original source identification cannot be an arbitrary private wardrobe
  assert.equal(trial(s).reason,'source-or-geometry-unverified');
  assert.deepEqual(s.left.geometry.getAttribute('position').array,old);
 });
+
+
+test('P84 searches smaller ORIGINAL-source yoke displacement when full source move first crosses a real posed skinned body triangle',()=>{
+ const s=scene();
+ // This synthetic, precisely located thin transverse skin sheet is 1.7mm
+ // beneath the original 1.30m low shirt row at the source yoke. It is not a
+ // genuine anatomical body shape. The full 14mm-request yoke moves this row
+ // across the sheet; at half the initial movement it should not touch.
+ const sourceBoneArray=s.body.skeleton.bones;
+ fabric(s.root,sourceBoneArray,[
+  .30,1.2983,-.24,
+  .52,1.2983,-.24,
+  .30,1.2983,.24,
+  .52,1.2983,.24
+ ],[0,1,2,1,3,2],{tag:'thin-contact-gate',garment:false});
+ const original=s.shell.geometry.getAttribute('position').array.slice();
+ const result=trial(s,{requestedDropMeters:.014,outwardClearanceMeters:.0025});
+ assert.equal(result.adaptiveOriginalSourceDisplacement,true);
+ assert.equal(result.firstFullAmplitudeBodyIntroduced>0,true,
+  'The source yoke MUST actually intersect the negative control sheet at full amplitude: '+JSON.stringify(result));
+ assert.equal(result.status,'SAMPLED_CONTACT_NONWORSENING_ONLY',
+  'A smaller original-source move is allowed only after exact full-posed-contact safety: '+JSON.stringify(result));
+ assert.ok(result.candidateAmplitudesTested>1);
+ assert.ok(result.acceptedTrialAmplitude<1&&result.acceptedTrialAmplitude>=.125);
+ assert.equal(result.newlyIntroducedBodyTrianglePairs,0);
+ assert.equal(result.newlyIntroducedLayerTrianglePairs,0);
+ assert.notDeepEqual(s.shell.geometry.getAttribute('position').array,original);
+ assert.equal(result.humanVisualRealismApproved,false);
+ assert.equal(result.releaseAuthorized,false);
+});
