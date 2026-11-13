@@ -682,3 +682,16 @@ test('C56: signed photograph source requires C55, C54, C53 prerequisites and saf
  }),/M2 C52 original-photo diagnostic/);
  assert.deepEqual(original(f),before);
 });
+
+test('C56: actual avatar world scale and root rotation MUST NOT be fabricated into clothing fabric-edge stretch',()=>{
+ const f=fixture52([0,0,0,1,0,0,0,1,0]),before=original(f);
+ f.root.scale.set(1.7,1.4,.8);
+ f.root.rotation.z=.31;
+ const r=audit56(f),b=r.originalSourceBoundaryComponents56;
+ assert.equal(b.boundaryComponentAuditComplete,true);
+ assert.equal(b.closedDirectedLoopComponents,1);
+ assert.equal(b.actualSkinnedPoseEdgesWithOverTenPercentLengthChange,0,
+  'original source edge lengths must use the same mesh world frame as posed skinned world lengths');
+ assert.equal(b.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
