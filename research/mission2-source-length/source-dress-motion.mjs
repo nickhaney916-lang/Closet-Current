@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null,sweptSelfContactAudit44=null,sweptFastSelfContactAudit45=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null,sweptSelfContactAudit44=null,sweptFastSelfContactAudit45=null,sweptTemporalSelfContactAudit46=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -136,7 +136,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function')||
     (sweptHighCadenceAudit43!==null&&typeof sweptHighCadenceAudit43!=='function')||
     (sweptSelfContactAudit44!==null&&typeof sweptSelfContactAudit44!=='function')||
-    (sweptFastSelfContactAudit45!==null&&typeof sweptFastSelfContactAudit45!=='function'))
+    (sweptFastSelfContactAudit45!==null&&typeof sweptFastSelfContactAudit45!=='function')||
+    (sweptTemporalSelfContactAudit46!==null&&typeof sweptTemporalSelfContactAudit46!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -447,6 +448,46 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state);
   fastSelfContactObserved45=true;
  }
+ // C46 opt-in actual skinned original-fabric sequence: any unsupervised
+ // seam or fold at ANY sampled pose is a veto, and no source buffer changes
+ // happen before all 17/33 poses produce complete unchanged-source receipts.
+ let temporalSelfContactObserved46=false;
+ if(sweptTemporalSelfContactAudit46!==null){
+  const receipt=sweptTemporalSelfContactAudit46({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-temporal-self-contact-v1'||
+     receipt.originalSourceAndSkinVerified!==true||
+     receipt.independentSkinnedClothPoseGrid!==true||
+     receipt.completeUniformPoseGrid!==true||
+     (receipt.poseSamples!==17&&receipt.poseSamples!==33)||
+     receipt.posesChecked!==receipt.poseSamples||
+     receipt.fullSequenceAudited!==true||
+     receipt.stoppedAtFirstUnresolvedContact!==false||
+     receipt.unresolvedContacts!==0||
+     receipt.firstUnresolvedSampleIndex!==null||
+     receipt.unresolvedKind!==null||
+     !Number.isSafeInteger(receipt.originalSourceFaces)||
+     receipt.originalSourceFaces<1||
+     receipt.checkedOriginalFaces!==receipt.poseSamples*receipt.originalSourceFaces||
+     !Number.isSafeInteger(receipt.sampledClothMoveIntervals)||
+     receipt.sampledClothMoveIntervals<1||
+     receipt.sampledClothMoveIntervals>=receipt.poseSamples||
+     !Number.isFinite(receipt.maxObservedVertexStepMeters)||
+     !Number.isFinite(receipt.maxAllowedVertexStepMeters)||
+     receipt.maxObservedVertexStepMeters<0||
+     receipt.maxAllowedVertexStepMeters<=0||
+     receipt.maxAllowedVertexStepMeters>.1||
+     receipt.maxObservedVertexStepMeters>receipt.maxAllowedVertexStepMeters+1e-7||
+     receipt.disconnectedSeamsRemainUnresolved!==true||
+     receipt.noOriginalPhotographOrSkinChanges!==true||
+     receipt.actualContinuousSelfContactCertified!==false||
+     receipt.inferredRearHumanVerified!==false||
+     receipt.realClothPhysics!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C46 incomplete or unresolved intermediate garment self-contact refused');
+  checkProvenance(mesh,state);
+  temporalSelfContactObserved46=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -485,6 +526,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionContinuousSelfContactCertified44:false,
   sourceDressMotionFirstContactVetoObserved45:fastSelfContactObserved45,
   sourceDressMotionContinuousSelfContactCertified45:false,
+  sourceDressMotionTemporalSelfContactObserved46:temporalSelfContactObserved46,
+  sourceDressMotionContinuousSelfContactCertified46:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,

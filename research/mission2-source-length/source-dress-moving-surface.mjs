@@ -1088,3 +1088,186 @@ export function assertSourceDressFastSelfContact45(receipt){
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
+
+
+/**
+ * Mission 2 P2-C46 — self-contact during REAL original-skinned cloth motion.
+ *
+ * C45 checks a single actual source garment pose; two safe endpoints do not
+ * rule out cloth-fold collisions at an intermediate garment-bone pose. This
+ * 17/33 grid independently audits each source-verified original garment pose
+ * and bounds observed garment WORLD vertex motion per sampled interval.
+ *
+ * A first ambiguous seam/crossing is sufficient for a NEGATIVE early veto:
+ * reported incomplete evidence is NEVER promoted to full acceptance. A
+ * positive research-only result requires every pose to have a COMPLETE C45
+ * scan, with no contact, with original source/photo/skin unchanged. No sampled
+ * sequence can certify unsampled nonlinear cloth dynamics or human seam IDs.
+ */
+export function auditSourceDressTemporalSelfContact46({
+ root,dress,poseTokens,startPositions,endPositions,
+ maxPoseSamples=33,maxVertexStepMeters=.08,
+ maxSourceFaces=100000,maxTriangleCandidatesPerPose=300000,
+ toleranceMeters=.00002
+}={}){
+ const mesh=validateRootDress(root,dress);
+ if(!Array.isArray(poseTokens)||(poseTokens.length!==17&&poseTokens.length!==33)||
+   !Number.isSafeInteger(maxPoseSamples)||maxPoseSamples<17||
+   maxPoseSamples>33||poseTokens.length>maxPoseSamples||
+   new Set(poseTokens).size!==poseTokens.length||
+   !Number.isFinite(maxVertexStepMeters)||
+   maxVertexStepMeters<=0||maxVertexStepMeters>.1||
+   !Number.isSafeInteger(maxSourceFaces)||maxSourceFaces<1||
+   maxSourceFaces>200000||
+   !Number.isSafeInteger(maxTriangleCandidatesPerPose)||
+   maxTriangleCandidatesPerPose<1||
+   maxTriangleCandidatesPerPose>2000000||
+   !Number.isFinite(toleranceMeters)||toleranceMeters<0||
+   toleranceMeters>.002||
+   !(startPositions instanceof Float32Array||startPositions instanceof Float64Array)||
+   !(endPositions instanceof Float32Array||endPositions instanceof Float64Array)||
+   !finite(startPositions)||!finite(endPositions))
+  fail('C46 complete 17/33 authentic garment poses and bounded contact checks required');
+ const frames=poseTokens.map(t=>captures.get(t));
+ const n=frames.length,step=1/(n-1);
+ const first=frames[0],last=frames.at(-1);
+ if(!first||!last||first.root!==root||last.root!==root||
+    !same(first.clothSource,startPositions)||
+    !same(last.clothSource,endPositions))
+  fail('C46 original photographed source XYZ endpoints not matched');
+ let sampledClothMoveIntervals=0,maxObservedVertexStepMeters=0;
+ for(let i=0;i<n;i++){
+  const current=frames[i];
+  if(!current||current.root!==root||current.mesh!==mesh||
+     !Number.isFinite(current.poseFraction)||
+     Math.abs(current.poseFraction-i*step)>1e-10||
+     !same(current.source,first.source)||
+     !same(current.clothIndex??[],first.clothIndex??[])||
+     current.clothWorld.length!==first.clothWorld.length||
+     current.bodies.length!==first.bodies.length||
+     current.bodies.some((b,j)=>b.mesh!==first.bodies[j].mesh))
+   fail('C46 missing uniform independent photo/skin/source cloth pose');
+  if(i){
+   let moved=false;
+   const before=frames[i-1].clothWorld,after=current.clothWorld;
+   for(let j=0;j<before.length;j+=3){
+    const shift=Math.hypot(after[j]-before[j],after[j+1]-before[j+1],
+     after[j+2]-before[j+2]);
+    if(!Number.isFinite(shift)||shift>maxVertexStepMeters+1e-7)
+     fail('C46 excessive undersampled actual fabric vertex displacement');
+    maxObservedVertexStepMeters=Math.max(maxObservedVertexStepMeters,shift);
+    if(shift>1e-6)moved=true;
+   }
+   if(moved)sampledClothMoveIntervals++;
+  }
+ }
+ if(!sampledClothMoveIntervals)
+  fail('C46 genuine physically posed source garment motion required');
+ let posesChecked=0,checkedOriginalFaces=0,
+  candidateTriangles=0,firstUnresolvedSampleIndex=null,
+  unresolvedKind=null,completeSequence=true;
+ for(let i=0;i<n;i++){
+  const r=auditSourceDressFastSelfContact45({
+   root,dress,poseToken:poseTokens[i],
+   maxSourceFaces,maxTriangleCandidates:maxTriangleCandidatesPerPose,
+   toleranceMeters
+  });
+  posesChecked++;
+  checkedOriginalFaces+=r.checkedOriginalFaces;
+  candidateTriangles+=r.candidateTriangles;
+  if(r.unresolvedPairs){
+   if(r.unresolvedPairs!==1||!r.stoppedEarlyToRefuse||
+      r.completeSourceSelfContactAudit||
+      !r.firstUnresolvedContactKind)
+    fail('C46 first observed seam/fold contact cannot be reported as clearance');
+   firstUnresolvedSampleIndex=i;
+   unresolvedKind=r.firstUnresolvedContactKind;
+   completeSequence=false;
+   break;
+  }
+  if(!r.completeSourceSelfContactAudit||
+     r.checkedOriginalFaces!==r.originalFaceCount||
+     r.unresolvedPairs!==0)
+   fail('C46 incomplete original garment self-contact phase');
+ }
+ if(completeSequence&&posesChecked!==n)
+  fail('C46 missing original garment motion frame');
+ return Object.freeze({
+  schema:'M2-source-dress-temporal-self-contact-v1',
+  originalSourceAndSkinVerified:true,
+  independentSkinnedClothPoseGrid:true,
+  completeUniformPoseGrid:true,
+  poseSamples:n,posesChecked,
+  fullSequenceAudited:completeSequence,
+  stoppedAtFirstUnresolvedContact:!completeSequence,
+  firstUnresolvedSampleIndex,unresolvedKind,
+  unresolvedContacts:completeSequence?0:1,
+  sampledClothMoveIntervals,
+  maxObservedVertexStepMeters,
+  maxAllowedVertexStepMeters:maxVertexStepMeters,
+  originalSourceFaces:first.geo.faceCount,
+  checkedOriginalFaces,candidateTriangles,
+  disconnectedSeamsRemainUnresolved:true,
+  noOriginalPhotographOrSkinChanges:true,
+  actualContinuousSelfContactCertified:false,
+  inferredRearHumanVerified:false,
+  realClothPhysics:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
+export function assertSourceDressTemporalSelfContact46(receipt){
+ if(receipt?.schema!=='M2-source-dress-temporal-self-contact-v1'||
+    receipt.originalSourceAndSkinVerified!==true||
+    receipt.independentSkinnedClothPoseGrid!==true||
+    receipt.completeUniformPoseGrid!==true||
+    (receipt.poseSamples!==17&&receipt.poseSamples!==33)||
+    !Number.isSafeInteger(receipt.posesChecked)||
+    receipt.posesChecked<1||receipt.posesChecked>receipt.poseSamples||
+    !Number.isSafeInteger(receipt.sampledClothMoveIntervals)||
+    receipt.sampledClothMoveIntervals<1||
+    receipt.sampledClothMoveIntervals>=receipt.poseSamples||
+    !Number.isFinite(receipt.maxObservedVertexStepMeters)||
+    !Number.isFinite(receipt.maxAllowedVertexStepMeters)||
+    receipt.maxObservedVertexStepMeters<0||
+    receipt.maxObservedVertexStepMeters>receipt.maxAllowedVertexStepMeters+1e-7||
+    !Number.isSafeInteger(receipt.originalSourceFaces)||
+    receipt.originalSourceFaces<1||
+    !Number.isSafeInteger(receipt.checkedOriginalFaces)||
+    receipt.checkedOriginalFaces<1||
+    !Number.isSafeInteger(receipt.candidateTriangles)||
+    receipt.candidateTriangles<0||
+    receipt.disconnectedSeamsRemainUnresolved!==true||
+    receipt.noOriginalPhotographOrSkinChanges!==true||
+    receipt.actualContinuousSelfContactCertified!==false||
+    receipt.inferredRearHumanVerified!==false||
+    receipt.realClothPhysics!==false||
+    receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+  fail('C46 invalid, partial or fabricated source cloth motion audit');
+ if(receipt.unresolvedContacts){
+  if(receipt.unresolvedContacts!==1||
+     receipt.fullSequenceAudited!==false||
+     receipt.stoppedAtFirstUnresolvedContact!==true||
+     !Number.isSafeInteger(receipt.firstUnresolvedSampleIndex)||
+     receipt.firstUnresolvedSampleIndex<0||
+     receipt.posesChecked!==receipt.firstUnresolvedSampleIndex+1||
+     !['unresolved-coplanar-or-disconnected-seam',
+       'unresolved-spatial-triangle-contact'].includes(receipt.unresolvedKind))
+   fail('C46 inconsistent original seam/fold refusal witness');
+  fail('C46 real intermediate cloth fold or unverified seam refused');
+ }
+ if(receipt.unresolvedContacts!==0||
+    receipt.fullSequenceAudited!==true||
+    receipt.stoppedAtFirstUnresolvedContact!==false||
+    receipt.posesChecked!==receipt.poseSamples||
+    receipt.checkedOriginalFaces!==
+      receipt.poseSamples*receipt.originalSourceFaces||
+    receipt.firstUnresolvedSampleIndex!==null||
+    receipt.unresolvedKind!==null)
+  fail('C46 missing independently inspected original garment poses');
+ return Object.freeze({
+  researchOnly:true,
+  everySampledSourceGarmentPoseClear:true,
+  noContinuousClothPhysicsCertificate:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}

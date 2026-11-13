@@ -7,7 +7,8 @@ import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  auditSourceDressArticulatedPoseSamples42,assertSourceDressArticulatedPoseSamples42,
  auditSourceDressHighCadencePose43,assertSourceDressHighCadencePose43,
  auditSourceDressSelfContact44,assertSourceDressSelfContact44,
- auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45}
+ auditSourceDressFastSelfContact45,assertSourceDressFastSelfContact45,
+ auditSourceDressTemporalSelfContact46,assertSourceDressTemporalSelfContact46}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
@@ -873,5 +874,147 @@ test('C45: spoofed partial or release-certified source contact report fails befo
    releaseAuthorized:true,familyAlpha:'HOLD'
   })
  }),/C45 incomplete or unresolved source self-contact/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+
+
+const sampledCloth46=(f,{angles=null,count=17,stagedEnd=null,boneIndex=1}={})=>{
+ const tokens=[];
+ for(let i=0;i<count;i++){
+  f.dress.mesh.skeleton.bones[boneIndex].rotation.z=
+   angles?.[i]??.04*Math.sin(2*Math.PI*i/(count-1));
+  tokens.push(capture(f,i===count-1?stagedEnd:null,i/(count-1)));
+ }
+ return tokens;
+};
+const temporal46=(f,tokens,opts={})=>
+ auditSourceDressTemporalSelfContact46({
+  root:f.root,dress:f.dress,poseTokens:tokens,
+  startPositions:f.dress.mesh.geometry.getAttribute('position').array.slice(),
+  endPositions:f.dress.mesh.geometry.getAttribute('position').array.slice(),
+  ...opts
+ });
+const clothTwoPieces46=({far=false}={})=>{
+ const f=clothed44(far?[
+  0,0,0,.05,0,0,0,.05,0,
+  .5,.4,0,.54,.4,0,.5,.46,0
+ ]:[
+  .225,.030,0,.25,.030,0,.225,.055,0,
+  .23,-.01,0,.26,-.01,0,.23,.012,0
+ ]);
+ const skin=g=>g.getAttribute('skinIndex');
+ const attr=skin(f.dress.mesh.geometry);
+ for(let i=3;i<6;i++)attr.setX(i,1);
+ return f;
+};
+test('C46: 17 real original garment-bone poses catch short cloth-SELF collision missed by 5 endpoint/quartile poses',()=>{
+ const f=clothTwoPieces46(),original=snap(f.dress.mesh);
+ const angles=Array(17).fill(0);
+ angles[1]=.157;
+ const tokens=sampledCloth46(f,{angles});
+ const sparse=[tokens[0],tokens[4],tokens[8],tokens[12],tokens[16]];
+ for(const t of sparse){
+  const receipt=fast45(f,t);
+  assert.equal(receipt.unresolvedPairs,0,'the five old sampled frames look clear');
+ }
+ const proof=temporal46(f,tokens);
+ assert.equal(proof.poseSamples,17);
+ assert.equal(proof.fullSequenceAudited,false);
+ assert.equal(proof.stoppedAtFirstUnresolvedContact,true);
+ assert.equal(proof.unresolvedContacts,1);
+ assert.equal(proof.firstUnresolvedSampleIndex,1);
+ assert.equal(proof.posesChecked,2);
+ assert.equal(proof.actualContinuousSelfContactCertified,false);
+ assert.equal(proof.noOriginalPhotographOrSkinChanges,true);
+ assert.throws(()=>assertSourceDressTemporalSelfContact46(proof),
+  /real intermediate cloth fold or unverified seam refused/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+ assert.deepEqual(Object.keys(tokens[1]),[]);
+});
+test('C46: 17 independently skinned distant garment-patch poses require all 17 COMPLETE self-contact scans',()=>{
+ const f=clothTwoPieces46({far:true}),original=snap(f.dress.mesh);
+ const tokens=sampledCloth46(f);
+ const proof=temporal46(f,tokens);
+ assert.equal(proof.poseSamples,17);
+ assert.equal(proof.posesChecked,17);
+ assert.equal(proof.fullSequenceAudited,true);
+ assert.equal(proof.stoppedAtFirstUnresolvedContact,false);
+ assert.equal(proof.checkedOriginalFaces,17*2);
+ assert.ok(proof.sampledClothMoveIntervals>0);
+ assert.ok(proof.maxObservedVertexStepMeters<.08);
+ assert.equal(proof.unresolvedContacts,0);
+ const verdict=assertSourceDressTemporalSelfContact46(proof);
+ assert.equal(verdict.everySampledSourceGarmentPoseClear,true);
+ assert.equal(verdict.noContinuousClothPhysicsCertificate,true);
+ assert.equal(verdict.releaseAuthorized,false);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C46: real intermediate disconnected-source seam remains a BLOCK rather than a fabricated reconciliation',()=>{
+ const f=clothed44([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,1,1,0,0,1,0
+ ]);
+ for(let i=3;i<6;i++)f.dress.mesh.geometry.getAttribute('skinIndex').setX(i,1);
+ const original=snap(f.dress.mesh);
+ const tokens=sampledCloth46(f,{angles:Array.from({length:17},(_,i)=>.02*Math.sin(Math.PI*i/16))});
+ const proof=temporal46(f,tokens);
+ assert.equal(proof.firstUnresolvedSampleIndex,0);
+ assert.equal(proof.unresolvedKind,'unresolved-coplanar-or-disconnected-seam');
+ assert.equal(proof.fullSequenceAudited,false);
+ assert.throws(()=>assertSourceDressTemporalSelfContact46(proof),/unverified seam refused/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C46: missing/skipped genuine cloth poses, unsupported sample displacement or corrupt source refuse',()=>{
+ const f=clothTwoPieces46({far:true}),original=snap(f.dress.mesh);
+ const tokens=sampledCloth46(f);
+ for(const overrides of [
+  {poseTokens:tokens.slice(0,16)},
+  {poseTokens:[tokens[0],tokens[0],...tokens.slice(2)]},
+  {poseTokens:[tokens[0],tokens[2],tokens[1],...tokens.slice(3)]},
+  {maxVertexStepMeters:0},
+  {maxSourceFaces:1},
+  {maxTriangleCandidatesPerPose:0},
+  {endPositions:new Float32Array(3)}
+ ])assert.throws(()=>temporal46(f,tokens,overrides),/M2 C40/);
+ f.dress.mesh.geometry.getAttribute('skinWeight').setX(5,.4);
+ assert.throws(()=>temporal46(f,tokens),/original source\/photo\/skin data/);
+ assert.deepEqual(snap(f.dress.mesh).position,original.position);
+});
+test('C46: source photographed full dress refuses at existing unresolved seam before changing owner source',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ const callback=({startPositions,endPositions})=>{
+  const tokens=sampledCloth46(f,{
+   angles:Array.from({length:17},(_,i)=>.02*Math.sin(Math.PI*i/16)),
+   stagedEnd:endPositions,boneIndex:0
+  });
+  return auditSourceDressTemporalSelfContact46({
+   root:f.root,dress:f.dress,poseTokens:tokens,
+   startPositions,endPositions
+  });
+ };
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptTemporalSelfContactAudit46:callback
+ }),/C46 incomplete or unresolved intermediate garment self-contact refused/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C46: forged complete self-contact results do not authorize original dress movement',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),original=snap(f.dress.mesh);
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptTemporalSelfContactAudit46:()=>({
+   schema:'M2-source-dress-temporal-self-contact-v1',
+   originalSourceAndSkinVerified:true,
+   independentSkinnedClothPoseGrid:true,
+   completeUniformPoseGrid:true,poseSamples:17,posesChecked:17,
+   fullSequenceAudited:true,stoppedAtFirstUnresolvedContact:false,
+   firstUnresolvedSampleIndex:null,unresolvedKind:null,unresolvedContacts:0,
+   sampledClothMoveIntervals:16,
+   originalSourceFaces:2,checkedOriginalFaces:34,
+   disconnectedSeamsRemainUnresolved:true,
+   noOriginalPhotographOrSkinChanges:true,
+   actualContinuousSelfContactCertified:true,
+   inferredRearHumanVerified:true,realClothPhysics:true,
+   releaseAuthorized:true,familyAlpha:'HOLD'
+  })
+ }),/C46 incomplete or unresolved intermediate garment self-contact refused/);
  assert.deepEqual(snap(f.dress.mesh),original);
 });
