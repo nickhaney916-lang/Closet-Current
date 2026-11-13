@@ -90,10 +90,20 @@ try{
      const original=URL.createObjectURL;
      URL.createObjectURL=function(blob){window.__countURLCalls++;return original.call(URL,blob);};
     },{image,sha,owner});
-    const button=page.locator('#export');
-    const downloaded=page.waitForEvent('download',{timeout:30000});
-    await button.click();
-    const file=await downloaded;
+    const pendingDownload=page.waitForEvent('download',{timeout:8000}).catch(()=>null);
+    // Exercise the exact production onclick and await its async owner-private
+    // snapshot. A refused export must surface its reason rather than spend
+    // 30 seconds waiting for a nonexistent browser download event.
+    const exportStatus=await page.evaluate(async()=>{
+     await $('export').onclick();
+     return {message:$('message').textContent,
+      created:window.__countURLCalls,
+      boardDirty:boardHasUnsavedDraft(),drafts:batch.length,
+      active:automaticRunning,failed:failedDraftCaptures.size};
+    });
+    assert.ok(exportStatus.created>0,'Default export refused: '+JSON.stringify(exportStatus));
+    const file=await pendingDownload;
+    assert.ok(file,'No browser download despite verified export: '+JSON.stringify(exportStatus));
     assert.match(file.suggestedFilename(),/closet-current-backup\.json/);
     const data=JSON.parse(await readFile(await file.path(),'utf8'));
     assert.deepEqual(data.items.map(x=>x.id),['source-blue']);
