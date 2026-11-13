@@ -51,6 +51,11 @@ if(sourceDepthExperiment&&!sourceAdaptiveMode)
 if(sourceAdaptiveMode&&!sourceLengthMode)throw Error('Adaptive contact gate requires genuine source 3D');
 if(sourceTriangleMode&&!sourceLengthMode)throw Error('Triangle contacts need actual source-length 3D');
 const sourceProjectionMode=process.env.PHOTO_SOURCE_PROJECTION==='1';
+// P2-C33: strictly test-only optical control. Browser request substitution
+// never changes the real source module, original owner photo or garment.
+const sourceEdgeAblation=process.env.PHOTO_SOURCE_EDGE_ABLATION_CONTROL==='1';
+if(sourceEdgeAblation&&(!sourceProjectionMode||sourceAdaptiveMode||mission2Performance))
+ throw Error('M2 C33 isolated original-photo edge control requires standard full source projection');
 if(sourceProjectionMode&&!sourceLengthMode)throw Error('Source projection requires source length shape');
 const sourceLengthEvidence=[];
 function requireSourceLength(state,width){
@@ -355,6 +360,7 @@ function authHttp(route){
  }
  external.push({kind:'unrecognized-auth',method:req.method()});return route.abort();
 }
+let interceptedOpticalControlModules=0;
 try{
  for(const width of [320,390,430]){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
@@ -377,6 +383,31 @@ try{
    return route.abort();
   });
   const page=await ctx.newPage();
+  if(sourceEdgeAblation){
+   await page.route('**/research/mission2-source-length/source-projection.mjs',async route=>{
+    // Fetch ONLY the donor's module, then override the 1.2% edge weight
+    // constant in memory to create a controlled, intentionally unsafe
+    // comparator. No file is written and no consumer route receives it.
+    const response=await route.fetch();
+    const source=await response.text();
+    const exact=`const PHOTO_EDGE_GLSL='float m2SourcePhotoEdgeWeight='+\n 'smoothstep(0.0,0.012,panel.x)*(1.0-smoothstep(0.988,1.0,panel.x))*'+\n 'smoothstep(0.0,0.012,panel.y)*(1.0-smoothstep(0.988,1.0,panel.y));';`;
+    assert.equal(source.split(exact).length,2,
+     'P2-C33 control must match precisely one original guarded photo GLSL anchor');
+    const changed=source.replace(exact,
+      "const PHOTO_EDGE_GLSL='float m2SourcePhotoEdgeWeight=1.0;';")
+     .replace('sourcePhotoUVEdgeBleedGuardApplied:true',
+      'sourcePhotoUVEdgeBleedGuardApplied:false')
+     .replace('originalPhotographicRGBNeverRepeatedBeyondSource:true',
+      'originalPhotographicRGBNeverRepeatedBeyondSource:false')
+     .replace('edgeFeatherSourceDomainPercent:1.2',
+      'edgeFeatherSourceDomainPercent:0');
+    assert.ok(!changed.includes(exact)&&changed.includes(
+      "const PHOTO_EDGE_GLSL='float m2SourcePhotoEdgeWeight=1.0;'"));
+    assert.equal(changed.includes('sourcePhotoUVEdgeBleedGuardApplied:false'),true);
+    await route.fulfill({response,body:changed,contentType:'text/javascript'});
+    interceptedOpticalControlModules++;
+   });
+  }
   const safeBodyLocality=[];
   const safeStageAreaProvenance=[];
   const safeSourcePhotoTexelAudit=[];
@@ -1269,9 +1300,9 @@ try{
      // P2-C32: actual signed licensed source garment material compiled
      // with an explicit UV-domain feather on the RGB blend. The source
      // photo itself and inferred neutral rear are not changed.
-     assert.equal(evidence.sourcePhotoUVEdgeBleedGuardApplied,true);
-     assert.equal(evidence.originalPhotographicRGBNeverRepeatedBeyondSource,true);
-     assert.equal(evidence.edgeFeatherSourceDomainPercent,1.2);
+     assert.equal(evidence.sourcePhotoUVEdgeBleedGuardApplied,!sourceEdgeAblation);
+     assert.equal(evidence.originalPhotographicRGBNeverRepeatedBeyondSource,!sourceEdgeAblation);
+     assert.equal(evidence.edgeFeatherSourceDomainPercent,sourceEdgeAblation?0:1.2);
      assert.equal(evidence.photoFrontAlphaAndNeutralRearStillRequired,true);
      assert.equal(evidence.photorealismNotVerified,true);
      assert.equal(evidence.releaseAuthorized,false);
@@ -2167,6 +2198,9 @@ try{
   await page.close();await ctx.close();
   await browser.close();browser=null;
  }
+ if(sourceEdgeAblation)assert.ok(interceptedOpticalControlModules>=3&&
+  interceptedOpticalControlModules<=24,
+  'P2-C33 must override the donor source module on all measured viewports');
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
  assert.equal(cases.length,3);
  if(sourceAdaptiveMode)assert.equal(screens.length,6);
@@ -2188,7 +2222,8 @@ try{
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
-  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence}:{}),
+  ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence,
+   sourceEdgeAblationControl:sourceEdgeAblation,sourceEdgeAblationModuleRequests:interceptedOpticalControlModules}:{}),
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,

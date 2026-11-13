@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import sharp from 'sharp';
-import {exactVisualName,visiblePixelDelta} from '../scripts/check-mission2-visual-delta.mjs';
+import {exactVisualName,visiblePixelDelta,measuredIdenticalScenePixelDelta} from '../scripts/check-mission2-visual-delta.mjs';
 
 test('M2 male PNG must not alias the female substring in exact source-length manifests',()=>{
  const female=exactVisualName('chromium',430,'female','front');
@@ -29,4 +29,38 @@ test('M2 unchanged viewport despite changed image metadata cannot pass the visua
  const a=await make(1),b=await make(9);
  assert.notDeepEqual(a,b,'different PNG bytes should still be same rendered pixels');
  assert.equal(await visiblePixelDelta(a,b,320),0);
+});
+
+
+test('P2-C33 controlled photographic RGB regression measures real PNG pixels, not just metadata or scene descriptions',async()=>{
+ const width=320,height=920,base=Buffer.alloc(width*height*3,127);
+ const make=async pixels=>sharp(pixels,{raw:{width,height,channels:3}}).png().toBuffer();
+ const source=await make(base);
+ const samePixelsDifferentEncoding=await sharp(source).png({compressionLevel:1}).toBuffer();
+ const same=await measuredIdenticalScenePixelDelta(source,samePixelsDifferentEncoding,width);
+ assert.equal(same.sampledPixels,(Math.floor(width*.85)-Math.floor(width*.15))*410);
+ assert.equal(same.changedOver2,0);
+ assert.equal(same.changedOver8,0);
+ assert.equal(same.meanAbsoluteChannelError,0);
+ assert.equal(same.noOriginalPhotoPixelsReturned,true);
+ assert.equal(same.humanAppearanceImprovementNotEstablished,true);
+ const inCrop=Buffer.from(base);
+ for(let y=150;y<175;y++)for(let x=130;x<146;x++){
+  const i=(y*width+x)*3;
+  inCrop[i]=155;inCrop[i+1]=155;inCrop[i+2]=155;
+ }
+ const change=await measuredIdenticalScenePixelDelta(source,await make(inCrop),width);
+ assert.equal(change.changedOver2,400);
+ assert.equal(change.changedOver8,400);
+ assert.equal(change.changedOver12,400);
+ assert.equal(change.maxChannelDiff,28);
+ assert.ok(change.meanAbsoluteChannelError>0);
+ assert.ok(change.fractionChangedOver2>0&&change.fractionChangedOver2<.01);
+ // Changes outside the documented photographed cloth viewing crop must not
+ // be presented as garment pixel evidence, even when PNG bytes change.
+ const away=Buffer.from(base);
+ for(let i=0;i<150;i++)away[i]=255;
+ const uiOnly=await measuredIdenticalScenePixelDelta(source,await make(away),width);
+ assert.equal(uiOnly.changedOver2,0);
+ assert.rejects(()=>measuredIdenticalScenePixelDelta(source,source,330),/validated screenshot width/);
 });
