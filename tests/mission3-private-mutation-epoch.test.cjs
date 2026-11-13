@@ -74,7 +74,7 @@ function fixture({holdQueue=false,holdCommit=false,holdRefresh=false}={}){
   db:current,captureOperationEpoch:epoch,window:{closetAuth:auth},
   queued:fn=>holdQueue?gate.promise.then(fn):fn(),
   nativeIndex07Refresh:()=>{actions.push('refresh:'+auth.user?.id);return holdRefresh?refresh.promise:Promise.resolve();},
-  structuredClone
+  structuredClone,normalizeClothing:x=>x
  };
  vm.createContext(ctx);vm.runInContext(mutators,ctx);
  return {ctx,a,b,actions,releaseQueue:()=>gate.resolve(),releaseRefresh:()=>refresh.resolve(),
