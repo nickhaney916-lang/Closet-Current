@@ -25,7 +25,13 @@ The older nativeLossless04 research-only branch of the Save button is unchanged.
 
 - `tests/mission3-outfit-board-action-owner-session.test.cjs`: **31 planned** source-executed synthetic cases for Save, queued draft store, refresh, retry, load/latest, keep-local, competing status, wrong DB, logout, same-ID relogin, epoch rotation, revoked auth and safe error messages.
 - `scripts/test-mission3-outfit-board-action-owner-browser.mjs`: **114 planned** source-executed Chromium/WebKit synthetic browser cases (19 modes × 2 engines × 3 CSS mobile viewport widths, 320/390/430). This is **not** physical Android or iPhone testing.
-- `.github/workflows/mission3-outfit-board-action-owner-session-no-deploy.yml`: five-path pinned-parent allowlist and syntax checks, focused cases, inherited full serial Node, real browser photographed-garment→private wardrobe→outfit Save/Adjust flow, disposable two-owner PostgreSQL/Storage RLS, evidence receipts. No deploy job.
+- `.github/workflows/mission3-outfit-board-action-owner-session-no-deploy.yml`: seven-path pinned-parent allowlist and syntax checks, focused cases, inherited full serial Node, real browser photographed-garment→private wardrobe→outfit Save/Adjust flow, disposable two-owner PostgreSQL/Storage RLS, evidence receipts. No deploy job.
+
+## Inherited regression failure and fixture reconciliation
+
+First run [#43515844389](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43515844389) caught a syntax mistake in the new synthetic test fixture before that test could run. Run [#43516099059](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43516099059) then passed all 31 focused source tests and all 114 Chromium/WebKit scenarios, **but** inherited full serial Node identified eight failures in `tests/outfit-draft-conflicts.test.cjs` and `tests/outfit-draft-resilience.test.cjs`. Those fixtures previously ran the owner-board code in isolated VM contexts with **no `captureOperationEpoch`**. The latter also had the wrong DB name, no visible auth gate or app shell, and expected a previous owner's timer to display a new-session warning (which is deliberately no longer safe).
+
+Both inherited fixtures are updated to model exact signed owner, actual private DB naming, operation epoch and visible UI, and to require silence from old-owner draft timers. The seven-path strict no-deploy workflow runs the updated legacy tests explicitly, in addition to the unchanged full serial regression. This is test fixture alignment, **not a relaxation of the production session fence**. New exact-head CI must pass before this stacked PR is considered validated.
 
 **Do not mark the final head green until both exact-head jobs pass.** No real-owner, production Supabase, physical phone, genuine photo ground-truth or reconstructed 3D garment acceptance is implied.
 
