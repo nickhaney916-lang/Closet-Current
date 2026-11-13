@@ -13,6 +13,9 @@ import * as THREE from 'three';
 
 const DRESS_SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const MAX_OUTWARD=.012,MAX_DROP=.0025,MAX_DISPLACEMENT=.01235;
+// Research safeguard: no sampled mesh normal may rotate >10 degrees away
+// from its P61 photographic source normal. This is not a realism rating.
+const MAX_NORMAL_TURN_RADIANS=10*Math.PI/180;
 const originals=new WeakMap();
 const fail=m=>{throw Error('M2 C36 source dress motion '+m);};
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
@@ -48,7 +51,21 @@ const getSource=mesh=>{
      f.isInterleavedBufferAttribute)fail('original P61 skinned photo/rest/UV/normal fields required: '+a);
   buffers.set(a,{field:f,values:f.array.slice()});
  }
+ // The original triangle index is part of source provenance: an external
+ // topology rewrite could otherwise change normals without changing UV/skin.
+ const indexField=g.index,indexValues=indexField?.array.slice()??null;
+ const base=new THREE.BufferGeometry();
+ let baseSurfaceNormals;
+ try{
+  base.setAttribute('position',new THREE.BufferAttribute(buffers.get('position').values.slice(),3));
+  if(indexField)base.setIndex(indexField);
+  base.computeVertexNormals();
+  baseSurfaceNormals=base.getAttribute('normal')?.array.slice();
+  if(!baseSurfaceNormals||!baseSurfaceNormals.every(Number.isFinite))
+   fail('source anatomical dress has invalid baseline face normals');
+ }finally{base.dispose();}
  return {geometry:g,attributes:buffers,material:mesh.material,
+  indexField,indexValues,baseSurfaceNormals,
   sourceSHA:DRESS_SHA,last:buffers.get('position').values.slice(),lastNormals:buffers.get('normal').values.slice()};
 };
 const checkProvenance=(mesh,state)=>{
@@ -56,6 +73,9 @@ const checkProvenance=(mesh,state)=>{
  if(g!==state.geometry||mesh.material!==state.material||
     mesh.skeleton?.bones.length!==163)
   fail('original signed garment rig/source material replaced');
+ if(g.index!==state.indexField||
+    (g.index&&!equal(g.index.array,state.indexValues)))
+  fail('original source dress triangle topology changed');
  // All initially present source attributes (including nonstandard dress
  // photo mapping) must remain byte-identical; no missing UV is fabricated.
  const names=Object.keys(g.attributes);
@@ -163,14 +183,53 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
   fail('genuine source dress lower skirt motion not evidenced');
  // Resolve normals from the staging buffer BEFORE committing new source.
  const scratch=new THREE.BufferGeometry();
- let newNormals;
+ let newNormals,maxNormalTurnDeg=0,staticNormalsPreserved=0;
  try{
   scratch.setAttribute('position',new THREE.BufferAttribute(target,3));
   if(g.index)scratch.setIndex(g.index);
   scratch.computeVertexNormals();
-  newNormals=scratch.getAttribute('normal').array.slice();
-  if(!newNormals.every(Number.isFinite))
+  const bentNormals=scratch.getAttribute('normal')?.array;
+  if(!bentNormals||!bentNormals.every(Number.isFinite))
    fail('photographed source cloth stage normals not finite');
+  // P2-C36 replaced the *entire* original source normal field with THREE
+  // computed normals. Even static photo-facing bodice/front vertices could
+  // consequently change shading and appear banded. P2-C37 instead applies
+  // only the geometric CHANGE in normal, preserving the original custom
+  // P61 normal on every untouched vertex (not just its XYZ/UV).
+  const originalNormals=state.attributes.get('normal').values;
+  const baseNormals=state.baseSurfaceNormals;
+  newNormals=originalNormals.slice();
+  const prior=new THREE.Vector3(),delta=new THREE.Vector3(),desired=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){
+   const j=i*3;
+   if(target[j]===original[j]&&target[j+1]===original[j+1]&&target[j+2]===original[j+2]){
+    staticNormalsPreserved++;
+    continue;
+   }
+   prior.fromArray(originalNormals,j);
+   const length=prior.length();
+   if(!Number.isFinite(length))fail('source photo normal invalid');
+   if(length<1e-8)continue; // Preserve zero-length source normals; do not invent directions.
+   prior.normalize();
+   delta.set(bentNormals[j]-baseNormals[j],
+    bentNormals[j+1]-baseNormals[j+1],bentNormals[j+2]-baseNormals[j+2]);
+   desired.copy(prior).addScaledVector(delta,.8);
+   if(![desired.x,desired.y,desired.z].every(Number.isFinite)||desired.lengthSq()<1e-12)
+    fail('unstable source photographed cloth normal change');
+   desired.normalize();
+   const angle=prior.angleTo(desired);
+   if(!Number.isFinite(angle))fail('unbounded source photo normal rotation');
+   if(angle>MAX_NORMAL_TURN_RADIANS){
+    desired.lerpVectors(prior,desired,MAX_NORMAL_TURN_RADIANS/angle).normalize();
+   }
+   const measured=prior.angleTo(desired);
+   if(measured>MAX_NORMAL_TURN_RADIANS+1e-5)
+    fail('normal exceeded photographed source cloth shading cap');
+   maxNormalTurnDeg=Math.max(maxNormalTurnDeg,measured*180/Math.PI);
+   newNormals[j]=desired.x;newNormals[j+1]=desired.y;newNormals[j+2]=desired.z;
+  }
+  if(!newNormals.every(Number.isFinite)||staticNormalsPreserved<100)
+   fail('original photo static normals not safely retained');
  }finally{scratch.dispose();}
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
@@ -189,6 +248,10 @@ export function sampleSourceDressMotion36(dress,root,{phase=0}={}){
   sourceDressMotionRestAndUVUnchanged36:true,
   sourceDressMotionSkinAndJPEGUnchanged36:true,
   sourceDressMotionNoAccumulation36:true,
+  sourceDressMotionStaticNormalsPreserved37:staticNormalsPreserved,
+  sourceDressMotionMaxNormalTurnDegrees37:maxNormalTurnDeg,
+  sourceDressMotionNormalTurnCapDegrees37:10,
+  sourceDressMotionProtectsPhotoNormals37:true,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
