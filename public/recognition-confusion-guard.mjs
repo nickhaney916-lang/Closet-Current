@@ -22,6 +22,12 @@ const manualSubtypeReview=Object.freeze(new Set([
  'Shoes:Ankle boots'
 ]));
 
+// Shared source-independent high-risk label policy. Also used by optional
+// dual-model UI; owner can still identify these types manually in Adjust.
+export function subtypeNeedsManualReview(category,itemType){
+ return typeof category==='string'&&typeof itemType==='string'&&manualSubtypeReview.has(category+':'+itemType);
+}
+
 function requireOwnerSubtypeReview(result){
  const first=result.choices?.[0],category=first.category;
  return {
@@ -49,6 +55,6 @@ function requireOwnerSubtypeReview(result){
 export async function corroborateAmbiguousType(result){
  if(!result?.strong||!Array.isArray(result.choices)||!result.choices.length)return result;
  const first=result.choices[0];
- if(!manualSubtypeReview.has(first.category+':'+first.itemType))return result;
+ if(!subtypeNeedsManualReview(first.category,first.itemType))return result;
  return requireOwnerSubtypeReview(result);
 }
