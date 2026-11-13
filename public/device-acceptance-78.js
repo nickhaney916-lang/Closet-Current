@@ -13,7 +13,7 @@
   api.mount(root.document);
 })(typeof globalThis==='object'?globalThis:this,function(root){
  const VERSION='parallel78-device-evidence-v1',SHA=/^[a-f0-9]{64}$/,COMMIT=/^[a-f0-9]{40}$/;
- const SOURCE_PARENT='9ee284f501aff50c810a05caf69fc103bc0393b4';
+ const SOURCE_PARENT='9b582710e1b406e0d8ee256940627b5297646500';
  const PLATFORMS=['ANDROID_CHROME','IPHONE_SAFARI','OTHER_UNVERIFIED'];
  const STATUS=['NOT_RUN','PASS','FAIL','BLOCKED'];
  const NETWORK=['wifi','limited','offline','unknown'];
@@ -184,6 +184,7 @@
     '<p><label>Memory <select id="p78memory"><option>unknown</option><option>low</option><option>medium</option><option>high</option></select></label> <label>Network <select id="p78network"><option>unknown</option><option>wifi</option><option>limited</option><option>offline</option></select></label></p>'+
     '<p><label>Model cache <select id="p78cache"><option>unknown</option><option>cold</option><option>warm</option></select></label> <label>Battery percent range <select id="p78battery"><option>unknown</option><option>0-20</option><option>21-50</option><option>51-80</option><option>81-100</option></select></label> <label>Power <select id="p78charging"><option>unknown</option><option>charging</option><option>not-charging</option></select></label></p>'+
     '<label><input id="p78physical" type="checkbox"> I am operating an actual physical phone, not a desktop emulator.</label>'+
+    '<p><label>Exact running app commit (40 hex, independently confirm in GitHub before use) <input id="p78commit" inputmode="text" maxlength="40" size="40" autocomplete="off" placeholder="Paste tested commit SHA, not parent"></label></p>'+
     '<p><button type="button" id="p78start">Start memory-only session</button></p>'+
     '<p><label>Test case <select id="p78case"></select></label></p>'+
     '<p><label>Observed result <select id="p78status"><option>NOT_RUN</option><option>BLOCKED</option><option>FAIL</option><option>PASS</option></select></label> <label>Severity <select id="p78severity"><option>UNKNOWN</option><option>NONE</option><option>P0</option><option>P1</option><option>P2</option><option>P3</option></select></label></p>'+
@@ -206,7 +207,12 @@
     const url=URL.createObjectURL(blob),a=document.createElement('a');
     a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
    };
-   $('p78start').onclick=()=>{session=create({
+   $('p78start').onclick=()=>{
+    // P852: a parent SHA is not the exact tested app. Operator must identify
+    // the actual build HEAD before any local device observation can begin.
+    const commit=$('p78commit').value.trim().toLowerCase();
+    if(!COMMIT.test(commit)){say('P78_COMMIT_REQUIRED: independently verify the exact running app commit before testing.');return;}
+    session=create({sourceCommit:commit,
     platform:$('p78platform').value,modelFamily:$('p78model').value,
     osVersion:$('p78os').value,browserVersion:$('p78browser').value,
     operatorDeclaredPhysical:$('p78physical').checked,
