@@ -118,3 +118,43 @@ test('P84 rejects collapsed and nonfinite source UVs but respects actual dressRe
  assert.equal(x.status,'STRICT_CROSSING_VETO');
  assert.equal(x.sourceBuffersPreserved,true);
 });
+
+
+test('P84 genuine donor shirt panelPosition and denim pantsRest/pantsSourceUV can be diagnosed read-only',()=>{
+ const f=scene();
+ const shirt=f.shirt.mesh.geometry;
+ shirt.setAttribute('panelPosition',shirt.getAttribute('position').clone());
+ shirt.setAttribute('panelNormal',new T.Float32BufferAttribute([
+  0,0,1,0,0,1,0,0,1
+ ],3));
+ shirt.deleteAttribute('uv');
+ const pants=f.jeans.mesh.geometry;
+ pants.setAttribute('pantsRest',pants.getAttribute('position').clone());
+ pants.setAttribute('pantsSourceUV',new T.Float32BufferAttribute([0,0,1,0,0,1],2));
+ pants.deleteAttribute('uv');
+ const before=Object.entries(pants.attributes).map(([k,a])=>[k,a.array.slice()]);
+ const result=audit(f);
+ assert.equal(result.status,'STRICT_CROSSING_VETO');
+ assert.equal(result.actualSkinnedPoseSampled,true);
+ assert.equal(result.sourceBuffersPreserved,true);
+ for(const [key,old] of before)
+  assert.deepEqual(pants.getAttribute(key).array,old);
+});
+test('P84 missing pantsRest, malformed shirt panels, bad denim UV and unsupported source ID refuse source 3D proof',()=>{
+ const bad=scene();bad.jeans.mesh.geometry.deleteAttribute('uv');
+ bad.jeans.mesh.geometry.setAttribute('pantsSourceUV',
+  new T.Float32BufferAttribute([0,0,1,0,0,1],2));
+ assert.equal(audit(bad).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ const shirt=scene();shirt.shirt.mesh.geometry.deleteAttribute('uv');
+ shirt.shirt.mesh.geometry.setAttribute('panelPosition',
+  new T.Float32BufferAttribute([0,0,1,0,0,1],2));
+ assert.equal(audit(shirt).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ const denim=scene();denim.jeans.mesh.geometry.deleteAttribute('uv');
+ denim.jeans.mesh.geometry.setAttribute('pantsRest',
+  denim.jeans.mesh.geometry.getAttribute('position').clone());
+ denim.jeans.mesh.geometry.setAttribute('pantsSourceUV',
+  new T.Float32BufferAttribute([0,0,1,0,NaN,1],2));
+ assert.equal(audit(denim).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ const unknown=scene();unknown.items[1].sourceId='private-owner-unknown';
+ assert.equal(audit(unknown).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+});
