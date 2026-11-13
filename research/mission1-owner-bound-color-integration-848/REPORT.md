@@ -33,4 +33,15 @@ Historic independent recognition results are not a release pass. Earlier #71 sou
 
 Dedicated exact-P847-parent **10-path allowlist**, full native tests+builds, actual headless Chromium and WebKit at 320/390/430 widths for #76 color binding and P847 signed-owner correction consent, P846 one-unit shoes and P844 review-save double-submit protections, and original lawful real-JPEG SHA receipt. Run frozen synthetic baseline/candidate comparison but never call it photographic accuracy.
 
-**P848 exact-head CI: PENDING**; after passing, document the final commit/run. This report is not a license for launch or any recognition accuracy claim.
+## Verified P848 executable-head findings — November 12, 2026 (Pacific)
+
+At functional exact HEAD `a8fd3ec5c9337532da39f3ac6925b450d56e79a5`, [Mission 1 P848 NO DEPLOY Actions #43343320840](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43343320840) **COMPLETED SUCCESS: all 3/3 jobs**, immutable P847 parent plus 10-path strict scope verified.
+
+- **17/17** focused actual-source color/owner tests; **386/386** full native Node tests passed, zero failures, two independent research builds passed.
+- The historical original versus candidate comparison exercised **12 constructed numeric RGB/mask fixtures**, including navy-vs-black, beige-vs-off-white, legitimate solid colors, two-tone garments, masked background and a tiny-region abstention. **Independent human image labels: 0**, so this does not measure photographic accuracy.
+- The opt-in masked-color + source SHA-256/owner/mask proof checks passed **6/6** actual browser-engine configurations: Chromium and WebKit at 320, 390 and 430 CSS widths. Every case correctly refused an invented-but-self-consistent worker source hash and another owner's color, kept the original source and had **zero** unintended closet writes.
+- **6/6** P847 first-photo consented correction scenarios and **6/6** separate saved-item learning + photo-consent acceptance scenarios passed across those same real browser engines, with zero page errors. Inherited P846 owner-approved paired shoe one-unit result, P844 failed-write/rapid-submit guard and P843 initial photo review also passed.
+- **4/4** publicly licensed, exact-SHA-verified original-photo bytes passed provenance audit. Independent instance masks and human per-garment primary/secondary color labels: **0**; therefore genuine garment color accuracy before/after is **UNKNOWN**, not a claimed gain.
+- All browser acceptance uses **controlled synthetic garment/worker fixtures**, not live SegFormer source-mask accuracy or real authenticated accounts. Desktop WebKit/Chromium are **not** physical iPhone Safari/Android Chrome.
+
+**Documentation-only final HEAD update:** This change changes no executable source; the report-only commit triggers an exact-final-HEAD no-deploy rerun that must independently pass. **Mission 1 remains a release NO-GO; Family Alpha HOLD #255 remains OPEN.**
