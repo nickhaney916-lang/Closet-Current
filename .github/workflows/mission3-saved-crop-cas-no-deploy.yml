@@ -1,0 +1,170 @@
+name: Mission 3 same-owner saved photo crop CAS — NO DEPLOY
+on:
+  push:
+    branches: [research/mission3-same-owner-crop-cas-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  pinned-parent-offline:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Exact parent and five-path no-deploy allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=9c49059414ca546d217ae317a27851124ed1b185
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/app.js|tests/mission3-crop-saved-row-cas.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-saved-crop-cas/REPORT.md|.github/workflows/mission3-saved-crop-cas-no-deploy.yml) ;;
+              *) echo "REFUSE path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Syntax, saved crop CAS and inherited deletion tests (no deploy)
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check public/app.js
+          node --check tests/mission3-same-owner-delete-cas.test.cjs
+          node --check tests/mission3-crop-saved-row-cas.test.cjs
+          node --check scripts/test-mission3-same-owner-delete-cas-browser.mjs
+          node --test tests/mission3-crop-saved-row-cas.test.cjs tests/mission3-private-mutation-epoch.test.cjs tests/mission3-same-owner-delete-cas.test.cjs tests/auth.test.cjs tests/mission3-live-session-refresh-cas.test.cjs tests/mission3-offline-auth-refresh-recovery.test.cjs tests/auth-review-session-36.test.mjs tests/wardrobe-index-02.test.mjs tests/mission3-private-write-queue-owner-lease.test.cjs tests/mission3-mobile-media-interruption.test.cjs tests/mission3-gallery-decode-session-cancellation.test.cjs tests/mission3-video-private-draft-lease.test.cjs tests/mission3-late-owner-session-capture.test.cjs tests/photo-import.test.cjs tests/mission3-capture-operation-epoch.test.cjs tests/mission3-recognition-session-epoch.test.cjs tests/mission3-camera-interruption.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs tests/capture.test.cjs tests/capture-proof-01.test.mjs
+
+  native-signed-and-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mission3-temporary-only
+          POSTGRES_DB: mission3_disposable
+        options: >-
+          --health-cmd "pg_isready -U postgres -d mission3_disposable"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PGHOST: postgres
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: mission3-temporary-only
+      PGDATABASE: mission3_disposable
+      M3_EPHEMERAL_POSTGRES_URL: postgresql://postgres:mission3-temporary-only@postgres:5432/mission3_disposable
+      P147_POSTGRES_URL: postgresql://postgres:mission3-temporary-only@postgres:5432/mission3_disposable
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict five-path same-parent diff gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=9c49059414ca546d217ae317a27851124ed1b185
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD | while read -r p; do
+            case "$p" in
+              public/app.js|tests/mission3-crop-saved-row-cas.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-saved-crop-cas/REPORT.md|.github/workflows/mission3-saved-crop-cas-no-deploy.yml) ;;
+              *) echo "REFUSE path: $p"; exit 1 ;;
+            esac
+          done
+      - name: Install pinned offline browser and database test packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Prove signed disposable two-owner PostgreSQL and private Storage RLS
+        run: |
+          node scripts/bootstrap-mission3-disposable-postgres.mjs
+          node scripts/test-signed-jwt-postgres-147.mjs
+      - name: Exact source same-owner saved crop and existing deletion CAS regression
+        run: node --test tests/mission3-crop-saved-row-cas.test.cjs tests/mission3-same-owner-delete-cas.test.cjs
+      - name: Actual source live Auth refresh token CAS and 401 revocation regression
+        run: node --test tests/mission3-live-session-refresh-cas.test.cjs
+      - name: Actual source offline Auth refresh and locked recovery regression
+        run: node --test tests/mission3-offline-auth-refresh-recovery.test.cjs
+      - name: Actual source queued private write owner and cloud notification lease regression
+        run: node --test tests/mission3-private-write-queue-owner-lease.test.cjs
+      - name: Actual source media lifecycle interruption and rapid foreground regression
+        run: node --test tests/mission3-mobile-media-interruption.test.cjs
+      - name: Atomic legacy multi-store transaction rollback and CAS regression
+        run: node --test tests/mission3-legacy-atomic-import.test.mjs
+      - name: Exact source cloud restore and inherited saved edit / backup lease regressions
+        run: node --test tests/mission3-cloud-restore-owner-lease.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs
+      - name: Reverify original saved-editor color and stale-CAS source fixtures
+        run: node --test tests/confirmed-edit-memory-44.test.cjs tests/review-color-provenance-23.test.cjs tests/family-reliability-edit.test.cjs
+      - name: Build current application before PWA and full Node validation (NO DEPLOY)
+        run: node scripts/build.mjs
+      - name: Reverify Chromium WebKit 320 390 430 owner private crop and JPEG evidence
+        run: node scripts/test-mission3-crop-owner-lease-browser.mjs benchmark/mission3-crop-owner-browser
+      - name: Real Chromium WebKit 320 390 430 delayed owner backup import with native IndexedDB
+        run: node scripts/test-mission3-edit-backup-owner-browser.mjs benchmark/mission3-edit-backup-owner-browser
+      - name: Real Chromium WebKit 320 390 430 revoked cloud restore refresh
+        run: node scripts/test-mission3-cloud-restore-owner-browser.mjs benchmark/mission3-cloud-restore-owner-browser
+      - name: Real Chromium WebKit six native legacy atomic multi-store imports and revoked accounts
+        run: node scripts/test-mission3-legacy-atomic-browser.mjs benchmark/mission3-legacy-atomic-browser
+      - name: Real Chromium WebKit mobile pagehide video and gallery recovery
+        run: node scripts/test-mission3-mobile-media-interruption-browser.mjs benchmark/mission3-mobile-media-interruption-browser
+      - name: Real Chromium WebKit 320 390 430 private write queue account and native IndexedDB isolation
+        run: node scripts/test-mission3-private-write-queue-owner-browser.mjs benchmark/mission3-private-queue-owner-browser
+      - name: Real Chromium WebKit 320 390 430 offline Auth reconnect and private original recovery
+        run: node scripts/test-mission3-offline-auth-recovery-browser.mjs benchmark/mission3-offline-auth-recovery-browser
+      - name: Real Chromium WebKit two-tab live Auth token rotation and private source JPEG CAS
+        run: node scripts/test-mission3-live-session-refresh-cas-browser.mjs benchmark/mission3-live-session-refresh-cas-browser
+      - name: Real Chromium WebKit same-owner two-tab crop + deletion CAS and original photo proof
+        run: node scripts/test-mission3-same-owner-delete-cas-browser.mjs benchmark/mission3-same-owner-delete-cas-browser
+      - name: Exact full serial Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Reverify native Chromium WebKit saved garment mutation isolation
+        run: node scripts/test-mission3-private-mutation-browser.mjs benchmark/mission3-private-mutation-browser
+      - name: Reverify native canonical photographed garment to private wardrobe styling
+        run: node scripts/test-native-canonical-original-167-browser.mjs
+      - name: Reverify actual signed two-owner PostgreSQL browser
+        run: node scripts/test-mission3-native-signed-postgres-browser.mjs benchmark/mission3-native-signed-postgres-browser
+      - name: Reverify private owner video draft retry and cloud recovery browser
+        run: node scripts/test-mission3-review-draft-retry-browser.mjs benchmark/mission3-review-draft-retry-browser
+      - name: Verify all checked browser result receipts
+        if: always()
+        shell: bash
+        run: |
+          set -eu
+          for p in mission3-same-owner-delete-cas-browser mission3-live-session-refresh-cas-browser mission3-offline-auth-recovery-browser mission3-private-queue-owner-browser mission3-mobile-media-interruption-browser mission3-legacy-atomic-browser mission3-cloud-restore-owner-browser mission3-edit-backup-owner-browser mission3-crop-owner-browser mission3-private-mutation-browser native-canonical-closet-style-167 mission3-native-signed-postgres-browser mission3-review-draft-retry-browser; do
+            test -s "benchmark/$p/results.json"
+          done
+          echo 'FAMILY ALPHA HOLD #255. NO DEPLOY.'
+      - name: Upload synthetic actual-browser crop and privacy evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mission3-saved-crop-cas-rls-HOLD
+          path: |
+            benchmark/mission3-same-owner-delete-cas-browser/
+            benchmark/mission3-live-session-refresh-cas-browser/
+            benchmark/mission3-offline-auth-recovery-browser/
+            benchmark/mission3-private-queue-owner-browser/
+            benchmark/mission3-mobile-media-interruption-browser/
+            benchmark/mission3-legacy-atomic-browser/
+            benchmark/mission3-cloud-restore-owner-browser/
+            benchmark/mission3-edit-backup-owner-browser/
+            benchmark/mission3-crop-owner-browser/
+            benchmark/mission3-private-mutation-browser/
+            benchmark/native-canonical-closet-style-167/
+            benchmark/mission3-native-signed-postgres-browser/
+            benchmark/mission3-review-draft-retry-browser/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 14
