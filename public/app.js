@@ -1623,7 +1623,7 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
    ownerId:window.closetAuth.user.id,
    assertLease:assertExport,
    assertIdle:()=>{
-    if(!idle())throw Error('The owner's original photo or outfit changed during backup export. Retry after saving.');
+    if(!idle())throw Error('An original photo or outfit changed during backup export. Retry after saving.');
    }
   });
   assertExport();
