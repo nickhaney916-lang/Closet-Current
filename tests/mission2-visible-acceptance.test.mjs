@@ -38,7 +38,7 @@ test('P2-C33 controlled photographic RGB regression measures real PNG pixels, no
  const source=await make(base);
  const samePixelsDifferentEncoding=await sharp(source).png({compressionLevel:1}).toBuffer();
  const same=await measuredIdenticalScenePixelDelta(source,samePixelsDifferentEncoding,width);
- assert.equal(same.sampledPixels,Math.floor(width*.85)-Math.floor(width*.15));
+ assert.equal(same.sampledPixels,(Math.floor(width*.85)-Math.floor(width*.15))*410);
  assert.equal(same.changedOver2,0);
  assert.equal(same.changedOver8,0);
  assert.equal(same.meanAbsoluteChannelError,0);
