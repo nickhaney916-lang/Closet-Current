@@ -134,10 +134,10 @@ test('C40: forged poses, unsafe budgets, changed source and bad body topology fa
   continuousCollisionCertified:true,releaseAuthorized:true,familyAlpha:'HOLD'};
  assert.throws(()=>assertMovingSourceDressBodySurfaces40(unsupported),/M2 C40/);
  f.dress.mesh.geometry.getAttribute('position').setX(0,99);
- assert.throws(()=>audit(f,start,end),/stale or altered original photographed/);
+ assert.throws(()=>audit(f,start,end),/original source\\/photo\\/skin data changed after snapshot: position/);
  f.dress.mesh.geometry.getAttribute('position').setX(0,-.5);
  f.body.geometry.getAttribute('position').setX(0,99);
- assert.throws(()=>audit(f,start,end),/body source topology/);
+ assert.throws(()=>audit(f,start,end),/original source\\/photo\\/skin data changed after snapshot: position/);
 });
 test('C40: cap actual body movement and do not mislabel snapshots as nonlinear moving-bone physics',()=>{
  const f=fixture(),start=capture(f);
