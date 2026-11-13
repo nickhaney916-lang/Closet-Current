@@ -73,7 +73,8 @@ window.stage1054=async({hash=true,segmented=false,owned=false,owner='owner-A',mo
     vectorSha256:MODEL_ASSETS82[modelKey].vectorsSha256,latencyMs:3,
     scores:localCandidates.map((c,j)=>{
      const k=c.itemType;let score=j/1000;
-     if(window.mode1054==='conflict')score=k===(i?'Casual dress':'Shorts')?1:score;
+     if(window.mode1054==='highrisk')score=k==='Ankle boots'?1:k==='Sneakers'?.96:score;
+     else if(window.mode1054==='conflict')score=k===(i?'Casual dress':'Shorts')?1:score;
      else if(window.mode1054==='tied')score=k==='Shorts'||k==='Skirt'?1:score;
      else if(window.mode1054==='one-sided'&&i)score=k==='Skirt'?1:k==='Jeans'?.96:k==='Trousers'?.95:k==='Leggings'?.94:k==='Joggers'?.93:score;
      else score=k===(i?'Skirt':'Shorts')?1:k===(i?'Shorts':'Skirt')?.96:score;
@@ -161,6 +162,18 @@ try{
      assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);
      assert.equal((await page.evaluate(()=>window.result1054())).draft,'Unknown');
      results.push({engine:engineName,width,case:'cross-category disagreement abstains, no write',pass:true});
+     // P876: two agreeing model families may still suggest the WRONG
+     // physical subtype. The historical public sneaker->Ankle boots confusion
+     // must be MANUAL ONLY, while jointly supported Sneakers remains optional.
+     f=await page.evaluate(()=>window.stage1054({mode:'highrisk'}));assert.equal(f.mounted,true);
+     await page.getByRole('checkbox',{name:/I consent to a local two-model/}).check();
+     await page.getByRole('checkbox',{name:/One garment is isolated/}).check();
+     await page.getByRole('button',{name:'Compare with two models'}).click();
+     await page.getByRole('button',{name:/Use Sneakers/}).waitFor({timeout:12000});
+     assert.equal(await page.getByRole('button',{name:/Use Ankle boots/}).count(),0);
+     assert.equal((await page.evaluate(()=>window.result1054())).draft,'Unknown');
+     assert.equal((await page.evaluate(()=>window.result1054())).writes,0);
+     results.push({engine:engineName,width,case:'P876 high-risk Ankle boots auto-choice veto; safe manual Sneakers review option remains',pass:true});
      // A source SHA mismatch, a segmented garment or already-saved record
      // cannot mount the dual-model runner.
      for(const [label,opt] of [['forged-original',{hash:false}],['segmented',{segmented:true}],['saved',{owned:true}]]){
@@ -182,12 +195,12 @@ try{
   }finally{await browser.close();}
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
- assert.equal(results.length,42); // six 7-scenario sets
+ assert.equal(results.length,48); // six 8-scenario sets
  assert.equal(screens.length,6);
  await writeFile(out+'/results.json',JSON.stringify({status:'PASS',total:results.length,results,screens,
   genuineModelsRun:false,modelBytesInstalled:false,realClothingPhotos:false,
   physicalPhones:false,hostedCloud:false,autoSaved:false,releaseAuthorized:false,
   familyAlpha:'HOLD'},null,2));
- console.log('MAIN1054 M4 42/42 synthetic native-editor two-model policy cases passed; 6 research panel screenshots; NO model inference or deploy');
+ console.log('MAIN1054 M6 48/48 native-editor two-model P876 high-risk policy cases passed; 6 synthetic screenshots; NO model inference or deploy');
 }catch(e){console.error('MAIN1054 M4 browser gate failed',String(e),JSON.stringify(errors));process.exitCode=1;}
 finally{await new Promise(done=>server.close(done));}
