@@ -1,0 +1,133 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  font:
+    17px system-ui,
+    sans-serif;
+  color: #172b38;
+  background: #f1f5f7;
+  margin: 0;
+}
+main {
+  max-width: 1000px;
+  padding: 16px;
+  margin: auto;
+}
+h1 {
+  font-size: 1.65rem;
+}
+button,
+input,
+select {
+  font: inherit;
+  min-height: 44px;
+  max-width: 100%;
+  border: 1px solid #526777;
+  border-radius: 4px;
+  padding: 7px;
+  background: white;
+  color: #172b38;
+}
+button {
+  cursor: pointer;
+  margin: 4px;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid #b64700;
+  outline-offset: 2px;
+}
+label {
+  display: block;
+  margin: 12px 0;
+}
+input[type="checkbox"] {
+  min-height: 24px;
+  width: 24px;
+  vertical-align: middle;
+}
+input[type="number"] {
+  width: 100%;
+}
+#fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+}
+#viewer {
+  max-height: 70vh;
+  overflow: auto;
+  background: #d9e1e6;
+  padding: 3px;
+}
+#scene {
+  position: relative;
+  width: 100%;
+  line-height: 0;
+}
+#photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-orientation: from-image;
+}
+#boxes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.box {
+  position: absolute;
+  border: 3px solid #d54200;
+  color: #fff;
+  background: #0001;
+  pointer-events: auto;
+  touch-action: none;
+}
+.handle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border: 3px solid #a32d00;
+  right: -8px;
+  bottom: -8px;
+  cursor: nwse-resize;
+}
+.box span {
+  background: #172b38;
+  line-height: 1.5;
+  display: inline-block;
+}
+.region {
+  border: 1px solid #526777;
+  padding: 12px;
+  margin: 12px 0;
+  background: #fff;
+}
+.coordinates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+#errors {
+  color: #8c2200;
+  white-space: pre-wrap;
+}
+#rights {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 430px) {
+  main {
+    padding: 10px;
+  }
+  #fields {
+    grid-template-columns: 1fr;
+  }
+  button {
+    margin: 3px;
+    max-width: 100%;
+  }
+}
