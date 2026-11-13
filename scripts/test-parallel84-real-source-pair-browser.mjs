@@ -69,7 +69,8 @@ function requireRealPair(a,b,figure,denim){
  assert.equal(b?.actualSkinnedPoseSampled,true,
   'P84 must inspect actual source-photo attached skinned 163-bone garments; no fake mesh acceptance: '+JSON.stringify(b));
  assert.equal(b.sourceBuffersPreserved,true);
- assert.ok(b.originalSourceFaceCount>=1000);
+ assert.ok(b.originalSourceFaceCount>=1000,
+  'Original real-photo posed face count unavailable, sanitized diagnostic='+JSON.stringify(b));
  assert.equal(b.distinctSourcePhotoMeshClaims,2);
  assert.equal(b.avatar,figure);
  assert.equal(b.pose,'relaxed');
