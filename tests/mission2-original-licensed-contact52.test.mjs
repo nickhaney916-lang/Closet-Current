@@ -625,7 +625,9 @@ test('C56: real original dressRest/skin mismatch marks a coincident UV-boundary 
 test('C56: source-verified real moving 163-bone dress boundary stays oriented but reports pose edge stretch',()=>{
  const f=fixture52([0,0,0,1,0,0,0,1,0]);
  f.dress.mesh.geometry.getAttribute('skinIndex').setX(1,1);
- f.bones[1].position.z=.35;
+ // A 0.35m displacement changes a 1m edge length only ~6%;
+ // use an actual >10% skinned edge-length displacement.
+ f.bones[1].position.z=.7;
  const before=original(f),r=audit56(f),b=r.originalSourceBoundaryComponents56;
  assert.equal(b.boundaryComponentAuditComplete,true);
  assert.equal(b.closedDirectedLoopComponents,1);
