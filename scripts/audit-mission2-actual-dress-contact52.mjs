@@ -362,3 +362,76 @@ if(process.env.PHOTO_DRESS_BOUNDARIES56==='1'){
  console.log('M2_C56_REAL_LICENSED_BOUNDARY_COMPONENTS_SAFE_SUMMARY',
   JSON.stringify(output56));
 }
+
+if(process.env.PHOTO_DRESS_LANDMARKS57==='1'){
+ assert.equal(process.env.PHOTO_DRESS_BOUNDARIES56,'1',
+  'C57 genuine licensed dress source 163-bone landmarks depend on C56 boundaries');
+ const rows=receipts.map(r=>({
+  a:r.originalAnatomicalLoopCandidates57,
+  complete:r.sourceAnatomicalLoopEvidenceComplete57,
+  verifiedSource:r.originalSourceBoundaryComponents56,
+  sourcePhoto:r.originalSourcePhotoUVRestSkinAndIndicesUntouched
+ }));
+ for(const {a,complete,verifiedSource,sourcePhoto} of rows){
+  assert.equal(complete,true,'actual 4-loop P61 source 163-bone anatomy must be source-verified');
+  assert.equal(a.schema,'M2-original-photograph-anatomical-loop-landmarks-C57');
+  assert.equal(a.sourceOpenBoundaryEdges,verifiedSource.totalOriginalSingleIncidentEdgeGroups);
+  assert.equal(a.trueOriginalBoundaryLoopCount,verifiedSource.closedDirectedLoopComponents);
+  assert.equal(a.sourceLoopComponentVerticesChecked,verifiedSource.boundaryVertexGroups);
+  assert.equal(a.landmarkBoneNamesFound,4);
+  assert.equal(a.anatomicalCandidateMappingPossible,true);
+  assert.equal(a.landmarkMissingOrBoundaryAmbiguous,false);
+  assert.equal(a.candidateLowestGeometricOpening,1);
+  assert.equal(a.candidateNeckProximityOpening,1);
+  assert.equal(a.candidateLeftUpperArmProximityOpening,1);
+  assert.equal(a.candidateRightUpperArmProximityOpening,1);
+  assert.equal(a.twoDistinct163BonePoseSamplesCompleted,2);
+  assert.ok(a.boneSamplesWithActualBoundaryDisplacement>=0&&
+   a.boneSamplesWithActualBoundaryDisplacement<=2);
+  assert.ok(a.sampledLoopBoundaryVerticesChanged>=0);
+  assert.equal(a.posedOriginalLoopConnectivityRetained,true);
+  assert.equal(a.poseRestorationVerified,true);
+  assert.equal(a.sourceReadOnlyAuditRefusedReason,null);
+  assert.equal(a.noHumanPhotoOpeningsAnnotated,true);
+  assert.equal(a.noSemanticCollarSleeveHemCertification,true);
+  assert.equal(a.noPoseCollisionOrContinuousPhysicsCertificate,true);
+  assert.equal(a.noBoneUVSkinRestOrOriginalPhotoMutated,true);
+  assert.equal(a.releaseAuthorized,false);
+  assert.equal(a.familyAlpha,'HOLD');
+  assert.equal(sourcePhoto,true);
+ }
+ for(const w of rows.slice(1))assert.deepEqual(w,rows[0],
+  'C57 signed original photo must have identical source loop associations and genuine bone test pose probes across viewport sizes');
+ const a=rows[0].a;
+ const output57={
+  schema:'M2-P2-C57-source-authentic-licensed-dress-four-anatomical-opening-candidates',
+  originalLicensedPhotographedDressSourceFaces:first.originalSourceFaces,
+  sourceOpenBoundaryEdges:a.sourceOpenBoundaryEdges,
+  verifiedClosedOriginalBoundaryLoops:a.trueOriginalBoundaryLoopCount,
+  genuineSourceAnatomical163BoneLandmarks:a.landmarkBoneNamesFound,
+  geometricLowHeightOpeningCandidates:a.candidateLowestGeometricOpening,
+  nearActualSkeletonNeckBoneCandidates:a.candidateNeckProximityOpening,
+  nearActualLeftUpperArmBoneCandidates:a.candidateLeftUpperArmProximityOpening,
+  nearActualRightUpperArmBoneCandidates:a.candidateRightUpperArmProximityOpening,
+  realTemporary163BonePoseArticulations:a.twoDistinct163BonePoseSamplesCompleted,
+  boneArticulationsActuallyMovingBoundaryVertices:
+   a.boneSamplesWithActualBoundaryDisplacement,
+  sourceBoundaryVerticesMovedAcrossBonePoseSamples:
+   a.sampledLoopBoundaryVerticesChanged,
+  boundaryLoopsActuallyMovingAcrossBonePoseSamples:
+   a.sampledBoundaryLoopsMoved,
+  allSourcePoseQuaternionsRestored:true,
+  sourceGeometryTopologyUnchanged:true,
+  sourceOriginalPhotoSkinUVRestUntouched:true,
+  noHumanVerifiedHemNecklineArmholeLabels:true,
+  noBoneSourcePhotoOrVertexPositionsExported:true,
+  noContinuousMotionCollisionOrFabricPhysicsProof:true,
+  onlyOneOriginalSourceAndTwoLimitedBoneArticulations:true,
+  physicalMobileAcceptance:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-anatomy57.json',
+  JSON.stringify(output57,null,2)+'\n');
+ console.log('M2_C57_REAL_LICENSED_ANATOMICAL_OPENINGS_SAFE_SUMMARY',
+  JSON.stringify(output57));
+}

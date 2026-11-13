@@ -254,6 +254,9 @@ const photoDressDistance53=process.env.PHOTO_DRESS_DISTANCE53==='1';
 const photoDressTopology54=process.env.PHOTO_DRESS_TOPOLOGY54==='1';
 const photoDressEdges55=process.env.PHOTO_DRESS_EDGES55==='1';
 const photoDressBoundaries56=process.env.PHOTO_DRESS_BOUNDARIES56==='1';
+const photoDressLandmarks57=process.env.PHOTO_DRESS_LANDMARKS57==='1';
+if(photoDressLandmarks57&&!photoDressBoundaries56)
+ throw Error('C57 actual P61 163-bone opening landmarks require verified C56 boundary source graph');
 if(photoDressBoundaries56&&!photoDressEdges55)
  throw Error('C56 source boundary loop research requires all source edge topology C55');
 if(photoDressEdges55&&!photoDressTopology54)
@@ -497,7 +500,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -1999,6 +2002,41 @@ try{
     assert.equal(b.noUVOrGeometryEditsPermitted,true);
     assert.equal(b.releaseAuthorized,false);
     assert.equal(b.familyAlpha,'HOLD');
+   }
+   if(photoDressLandmarks57){
+    const a=witness.originalAnatomicalLoopCandidates57;
+    assert.equal(a?.schema,
+     'M2-original-photograph-anatomical-loop-landmarks-C57');
+    assert.equal(witness.originalSourceBoundaryComponents56.closedDirectedLoopComponents,4);
+    assert.equal(witness.sourceAnatomicalLoopEvidenceComplete57,true,
+     'C57 actual original SHA-pinned dress must expose source-matched real neck, spine and shoulder bones');
+    assert.equal(a.anatomicalCandidateMappingPossible,true);
+    assert.equal(a.landmarkBoneNamesFound,4);
+    assert.equal(a.landmarkMissingOrBoundaryAmbiguous,false);
+    assert.equal(a.sourceOpenBoundaryEdges,
+     witness.originalSourceBoundaryComponents56.totalOriginalSingleIncidentEdgeGroups);
+    assert.equal(a.sourceLoopComponentVerticesChecked,
+     witness.originalSourceBoundaryComponents56.boundaryVertexGroups);
+    assert.equal(a.trueOriginalBoundaryLoopCount,4);
+    for(const key of ['candidateLowestGeometricOpening',
+     'candidateNeckProximityOpening',
+     'candidateLeftUpperArmProximityOpening',
+     'candidateRightUpperArmProximityOpening'])
+     assert.equal(a[key],1);
+    assert.equal(a.twoDistinct163BonePoseSamplesCompleted,2);
+    assert.ok(a.boneSamplesWithActualBoundaryDisplacement>=0&&
+     a.boneSamplesWithActualBoundaryDisplacement<=2);
+    assert.ok(a.sampledLoopBoundaryVerticesChanged>=0);
+    assert.equal(a.posedOriginalLoopConnectivityRetained,true);
+    assert.equal(a.poseRestorationVerified,true);
+    assert.equal(a.noHumanPhotoOpeningsAnnotated,true);
+    assert.equal(a.noSemanticCollarSleeveHemCertification,true);
+    assert.equal(a.noPoseCollisionOrContinuousPhysicsCertificate,true);
+    assert.equal(a.noBoneUVSkinRestOrOriginalPhotoMutated,true);
+    assert.equal(a.releaseAuthorized,false);
+    assert.equal(a.familyAlpha,'HOLD');
+    assert.equal(witness.anatomicalSourceLoopNamesNotHumanVerified57,true);
+    assert.equal(witness.realSkinPoseSamplingNotCollisionApproval57,true);
    }
    licensedDressContact52.push({width,...witness});
   }
