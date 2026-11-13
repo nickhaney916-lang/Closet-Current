@@ -38,11 +38,14 @@ export function browserRequest82(request,{signal,onProgress=()=>{},timeoutMs=240
   if(busy82)return reject(Error('P82_BUSY'));
   let worker;try{worker=new Worker(new URL('./dual-worker-82.mjs',import.meta.url),{type:'module'});}catch{return reject(Error('P82_WORKER_UNAVAILABLE'));}busy82=true;
   let finished=false;
-  const end=(error,value)=>{if(finished)return;finished=true;busy82=false;clearTimeout(timer);signal?.removeEventListener('abort',cancel);worker.terminate();error?reject(error):resolve(value);};
+  const end=(error,value)=>{if(finished)return;finished=true;busy82=false;clearTimeout(timer);signal?.removeEventListener('abort',cancel);try{worker.terminate();}catch{/* Transport teardown failure cannot keep a review request pending. */}error?reject(error):resolve(value);};
   const cancel=()=>end(Error('P82_CANCELLED')),timer=setTimeout(()=>end(Error('P82_TIMEOUT')),timeoutMs);
   signal?.addEventListener('abort',cancel,{once:true});
   worker.onerror=()=>end(Error('P82_WORKER_FAILURE'));
-  worker.onmessage=({data})=>{if(data?.requestId!==request.requestId)return;if(data.type==='progress')onProgress(data.stage);else if(data.type==='result'){try{validateResponse82(data.output,request);end(null,data.output);}catch(e){end(e);}}else if(data.type==='error')end(Error(/^P82_[A-Z_]+$/.test(data.code||'')?data.code:'P82_MODEL_UNAVAILABLE'));};
-  worker.postMessage(request);
+  worker.onmessage=({data})=>{if(data?.requestId!==request.requestId)return;if(data.type==='progress'){try{onProgress(data.stage);}catch{end(Error('P82_PROGRESS_FAILURE'));}}else if(data.type==='result'){try{validateResponse82(data.output,request);end(null,data.output);}catch(e){end(e);}}else if(data.type==='error')end(Error(/^P82_[A-Z_]+$/.test(data.code||'')?data.code:'P82_MODEL_UNAVAILABLE'));};
+  // P867: structured-clone errors happen synchronously and otherwise leave
+  // busy82 true until timeout, stranding the review scanner. Close every
+  // transport failure now, retaining original JPEG and manual Adjust.
+  try{worker.postMessage(request);}catch{end(Error('P82_REQUEST_UNDELIVERABLE'));}
  });
 }
