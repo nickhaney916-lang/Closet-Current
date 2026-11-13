@@ -375,3 +375,55 @@ test('app contains no old unscoped persistDraft calls or whole-batch write',()=>
  assert.match(recognition,/mode:'update',expected:expectedDraftForRecognition/);
  assert.doesNotMatch(recognition,/mode:'remove',expected:expectedDraftForRecognition/);
 });
+
+test('refused automatic index reports non-success and commits an honest pending-review outcome',async()=>{
+ const owner=randomUUID(),db=await open(owner);
+ try{
+  const f=harness(db,owner);
+  await f.open(first);
+  // Exercise the real strong-recognition path instead of the capture-proof
+  // manual-review shortcut; synthetic model results, no accuracy claims.
+  f.ctx.captureProof01Active=false;
+  f.ctx.ClothingDetails.fill=item=>({...item});
+  f.ctx.localRequest=async()=>({
+   strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'a shirt'}],details:{}
+  });
+  f.ctx.saveIndexed=async()=>false;
+  const result=await f.ctx.recognizeItem(f.ctx.batch[0]);
+  assert.equal(result,false,'no saved-item transaction means no successful index ACK');
+  const rows=await read(db);
+  assert.equal(rows.length,1,'unsaved original must remain in the review queue');
+  assert.equal(rows[0].saveFailed,true);
+  assert.match(rows[0].localStatus,/NOT saved to your closet/);
+  assert.equal(rows[0].originalPhoto.image,first);
+  assert.equal(rows[0].sourceSHA256,sha);
+  assert.deepEqual(f.ctx.items,[],'a refused save cannot fabricate closet ownership');
+ }finally{db.close();}
+});
+test('refused automatic index plus failed review CAS never returns success or deletes source',async()=>{
+ const owner=randomUUID(),db=await open(owner);
+ try{
+  const f=harness(db,owner);
+  await f.open(first);
+  f.ctx.captureProof01Active=false;
+  f.ctx.ClothingDetails.fill=item=>({...item});
+  f.ctx.localRequest=async()=>({
+   strong:true,choices:[{category:'Tops',itemType:'Shirt',label:'a shirt'}],details:{}
+  });
+  f.ctx.saveIndexed=async()=>false;
+  f.ctx.queued=()=>Promise.reject(Error('Synthetic review quota'));
+  const result=await f.ctx.recognizeItem(f.ctx.batch[0]);
+  assert.equal(result,false);
+  const rows=await read(db);
+  assert.equal(rows.length,1);
+  assert.equal(rows[0].originalPhoto.image,first);
+  assert.match(f.ctx.batch[0].localStatus,/not saved on this device/);
+  assert.equal(f.ctx.batch[0].scanFailed,true);
+  assert.match(f.ctx.messages.join(' '),/Original photograph kept/);
+ }finally{db.close();}
+});
+test('source requires a pending status CAS when an automatic closet save is refused',()=>{
+ assert.match(recognition,/if\(!wasSaved\)\{[\s\S]*?savingIndexed=false;/);
+ assert.match(recognition,/Recognized but NOT saved to your closet/);
+ assert.doesNotMatch(recognition,/if\(!wasSaved&&index04Active\)/);
+});
