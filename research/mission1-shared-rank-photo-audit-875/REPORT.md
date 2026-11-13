@@ -18,7 +18,32 @@ The new `sharedRankChoices82()` policy retains from the existing four hints **on
 3. `scripts/p875-public-shared-rank-audit.mjs` replays the numeric result transcript through the exact production candidate eligibility function. It reports number of old actionable vs jointly supported new hints and their reduction, with per-source photo SHA receipts. **Do not treat historical expected strings, exposure or same-source comparisons as blind accuracy**. No raw owner photos or private records are used. Summary includes `recognitionAccuracy:null`, independent sources zero, and `releaseReady:false`. This measurement requires the final exact-head CI to succeed; no values are invented in advance.
 
 ## Strict containment
-Research branch changes exactly 5 files: `public/dual-panel-82.mjs`, `scripts/test-p82-review-browser.mjs`, `scripts/p875-public-shared-rank-audit.mjs`, this report, its new NO DEPLOY workflow. `model-arbitration-81.mjs`, original recognition worker and weights, public label catalog, owners/cloud, source photos, P80/footwear, default 2D fallback, production, staging, hosted Supabase and all sibling branches are unchanged.
+Research branch changes exactly 6 files: `public/dual-panel-82.mjs`, `scripts/test-p82-review-browser.mjs`, `scripts/p875-public-shared-rank-audit.mjs`, `scripts/p82-real-browser.mjs` (correct source count in continuous-session receipt), this report, its new NO DEPLOY workflow. `model-arbitration-81.mjs`, original recognition worker and weights, public label catalog, owners/cloud, source photos, P80/footwear, default 2D fallback, production, staging, hosted Supabase and all sibling branches are unchanged.
 
 ## Unresolved release gates
 No independently human-adjudicated source-disjoint photo labels or 10/10 subtype result. This restricted proposal may lower coverage. Parallel #83 continues real WebKit continuous-session crash; desktop policy WebKit harness is NOT real continuous two-model WebKit acceptance. Zero genuine physical Android/iOS or signed two-owner live cloud tests. **Release HOLD #255 remains active.**
+
+
+## Measured genuine public photo result — original exact-head CI #43518686206
+
+The first genuine-model validation of this policy completed successfully in the independent no-deploy run [GitHub Actions #43518686206](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43518686206). Its source branch then received only a correction to the research runner's misleading hardcoded `one-browser-continuous-48-one-shot-workers` receipt, so the **final updated HEAD requires a new complete run**. This section distinguishes those receipts, not pooling evidence across commits.
+
+Eight public original source-SHA-verified JPEGs underwent genuine sequential pinned FashionCLIP + FashionSigLIP q8 local Chromium WASM inference, zero external/non-GET requests, zero automatic saves, one desktop browser session with **eight** separate model workers. Original developer-exposed cohort only, **not independent human-blind recognition**.
+
+| Public photo ID | Older actionable hints | Two-model shared-rank hints | Removed |
+|---|---:|---:|---:|
+| commons-0001 (T-shirt historical string) | 4 | 2 | 2 |
+| commons-0035 (Shorts) | 3 | 3 | 0 |
+| commons-0045 (Skirt) | 0 | 0 | 0 |
+| commons-0088 (generic Boots) | 4 | 4 | 0 |
+| commons-0094 (generic Boots) | 4 | 4 | 0 |
+| commons-0059 (generic Dress) | 4 | 1 | 3 |
+| commons-0062 (Jacket) | 0 | 0 | 0 |
+| commons-0078 (Sneakers) | 4 | 4 | 0 |
+| **TOTAL** | **23** | **18** | **5** |
+
+Six of eight photos retained at least one model-supported hint under the policy, two had no actionable machine suggestion even before filtering. Two displayed cross-category disagreement and manual review only. The measure is suggestion coverage, **NOT improved correctness**. A meaningful counterexample remains: historically exposed `commons-0078` has `Shoes/Sneakers` source expectation, yet both models' agreement yielded `Ankle boots`; the new shared-rank rule did not remove those four actionable choices. This is why `10/10` and release readiness remain **unproven**. Generic `Boots` and `Dress` strings are not fine-subtype human truth.
+
+The native/owner safety job in that first run passed **584/584 native tests, 0 failed**, both builds, and all six desktop Chromium/WebKit policies, including off-category shortlist suppression, unilateral top-rank suppression, P874 category conflict, P873 exact tied rank, P872 uncommitted choice refusal, original JPEG/IndexedDB and owner footwear tests. Those browser policy inputs were synthetic observations and do not establish WebKit real-model stability.
+
+**Source correction:** `scripts/p82-real-browser.mjs` previously labelled any continuous session as `48` even when `P82_IDS` selected eight. P875 makes that run receipt dynamically read `results.length`. No inference, image bytes, licenses or rank math are changed by this correction.
