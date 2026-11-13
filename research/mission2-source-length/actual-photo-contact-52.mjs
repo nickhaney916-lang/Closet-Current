@@ -956,6 +956,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   originalSelfStrictTransverseCrossingsAcrossSamples:0,
   originalSelfPairSampleBudgetExhausted:true,
   originalBodyTrianglesInspectedAcrossSamples:0,
+  originalBodyComparisonsAcrossSamples:0,
   originalBodyBoxPairsAcrossSamples:0,
   originalBodyNearOrZeroUnresolvedAcrossSamples:0,
   originalBodyStrictTransverseCrossingsAcrossSamples:0,
@@ -992,7 +993,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   });
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
-  bodyFacesCount=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
+  bodyFacesCount=0,bodyCompared=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
  try{
   for(let pose=0;pose<maxPoseSamples58;pose++){
    const arm=arms[pose],original=arm.quaternion.clone();
@@ -1026,6 +1027,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
      maxBodyComparisons58,maxBodyCandidatePairs58
     });
     bodyFacesCount+=bodyCheck.faces;
+    bodyCompared+=bodyCheck.compared;
     bodyPairs+=bodyCheck.candidates;
     bodyNear+=bodyCheck.near;
     bodyStrict+=bodyCheck.strict;
@@ -1075,6 +1077,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   originalSelfStrictTransverseCrossingsAcrossSamples:selfStrict,
   originalSelfPairSampleBudgetExhausted:selfComplete!==samples,
   originalBodyTrianglesInspectedAcrossSamples:bodyFacesCount,
+  originalBodyComparisonsAcrossSamples:bodyCompared,
   originalBodyBoxPairsAcrossSamples:bodyPairs,
   originalBodyNearOrZeroUnresolvedAcrossSamples:bodyNear,
   originalBodyStrictTransverseCrossingsAcrossSamples:bodyStrict,
@@ -1216,7 +1219,7 @@ export function auditActualPhotographedDressSurfaces52({
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
  maxDistancePairs58=100000,maxBodyFaces58=160000,
- maxBodyComparisons58=2500000,maxBodyCandidatePairs58=80000
+ maxBodyComparisons58=10000000,maxBodyCandidatePairs58=160000
 }={}){
  const mesh=dress?.mesh,g=mesh?.geometry;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||
