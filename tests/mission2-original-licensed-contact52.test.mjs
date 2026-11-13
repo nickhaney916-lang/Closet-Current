@@ -374,3 +374,98 @@ test('C54: forged original-source topology configuration is rejected without cha
  }
  assert.deepEqual(original(f),before);
 });
+
+const audit55=f=>auditActualPhotographedDressSurfaces52({
+ root:f.root,dress:f.dress,refineTriangleDistances53:true,
+ refineSourceTopology54:true,auditOriginalHalfEdges55:true
+});
+test('C55: source-disconnected matching edge has opposite winding but is NOT verified stitching',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]),old=original(f),r=audit55(f),e=r.originalSourceHalfEdge55;
+ assert.equal(e.schema,'M2-original-licensed-source-half-edge-winding-C55');
+ assert.equal(e.sourceHalfEdgesExamined,6);
+ assert.equal(e.distinctSourceCoordinateEdges,5);
+ assert.equal(e.boundarySourceEdges,4);
+ assert.equal(e.pairedOppositeWindingEdges,1);
+ assert.equal(e.splitIndexOppositeWindingEdgeCandidates,1);
+ assert.equal(e.indexedConnectedOppositeWindingEdges,0);
+ assert.equal(e.pairedSameWindingEdges,0);
+ assert.equal(e.nonmanifoldSourceEdges,0);
+ assert.equal(e.everyNoncollapsedHalfEdgeAccountedFor,true);
+ assert.equal(e.physicallySewnSeamsCertified,false);
+ assert.equal(r.actualSourceHalfEdgesCertifiedAsSewing55,false);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),old);
+});
+test('C55: same orientation across matching source edge remains unsafe and is not a seam',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  0,0,0,1,0,0,0,-1,0
+ ]),e=audit55(f).originalSourceHalfEdge55;
+ assert.equal(e.pairedSameWindingEdges,1);
+ assert.equal(e.pairedOppositeWindingEdges,0);
+ assert.equal(e.noAutomaticUVJoiningOrIndexWelding,true);
+});
+test('C55: non-manifold third face on same source edge refuses two-face winding candidate',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,0,-1,0,
+  0,0,0,1,0,0,0,0,1
+ ]),e=audit55(f).originalSourceHalfEdge55;
+ assert.equal(e.nonmanifoldSourceEdges,1);
+ assert.equal(e.pairedOppositeWindingEdges,0);
+ assert.equal(e.sourceHalfEdgesExamined,9);
+ assert.equal(e.everyNoncollapsedHalfEdgeAccountedFor,true);
+});
+test('C55: index-shared valid adjacent triangle still remains research-only',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,1,1,0
+ ],[0,1,2,1,3,2]),e=audit55(f).originalSourceHalfEdge55;
+ assert.equal(e.indexedConnectedOppositeWindingEdges,1);
+ assert.equal(e.splitIndexOppositeWindingEdgeCandidates,0);
+ assert.equal(e.boundarySourceEdges,4);
+ assert.equal(e.physicallySewnSeamsCertified,false);
+});
+test('C55: coincident source edge with different 163-bone binding cannot count as safe paired edge',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]);
+ f.dress.mesh.geometry.getAttribute('skinIndex').setX(3,1);
+ const before=original(f),e=audit55(f).originalSourceHalfEdge55;
+ assert.equal(e.pairedUnsafeRestSkinOrPoseEdges,1);
+ assert.equal(e.incompatibleSourceTwins,1);
+ assert.equal(e.splitIndexOppositeWindingEdgeCandidates,0);
+ assert.deepEqual(original(f),before);
+});
+test('C55: a crossing with independent source endpoints has only boundaries',()=>{
+ const f=fixture52(cross),e=audit55(f).originalSourceHalfEdge55;
+ assert.equal(e.boundarySourceEdges,6);
+ assert.equal(e.pairedOppositeWindingEdges,0);
+ assert.equal(e.distinctSourceCoordinateEdges,6);
+});
+test('C55: forged source-half-edge flag cannot bypass original photo and topology requirements',()=>{
+ const f=fixture52(cross),before=original(f);
+ for(const change of [
+  {auditOriginalHalfEdges55:true},
+  {refineTriangleDistances53:true,auditOriginalHalfEdges55:true},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   auditOriginalHalfEdges55:'research'}
+ ])assert.throws(()=>auditActualPhotographedDressSurfaces52({
+  root:f.root,dress:f.dress,...change
+ }),/C52 original-photo diagnostic/);
+ assert.deepEqual(original(f),before);
+});
+test('C55: topology receipt exposes counts only, no photo pixels or raw source coordinates',()=>{
+ const f=fixture52([
+  0,0,0,1,0,0,0,1,0,
+  1,0,0,0,0,0,1,-1,0
+ ]),e=audit55(f).originalSourceHalfEdge55;
+ assert.equal(e.aggregateOnlyNoRawCoordinatesOrFaceIndices,true);
+ assert.equal(e.originalPhotoAndGarmentMutated,false);
+ assert.equal(e.poseContinuousCollisionSafetyCertified,false);
+ assert.equal(e.familyAlpha,'HOLD');
+ assert.deepEqual(Object.keys(e).filter(k=>/vertexId|faceId|photoPixel|coordinateArray|sourceXYZ/i.test(k)),[]);
+});
