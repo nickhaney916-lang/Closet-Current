@@ -26,6 +26,14 @@
 
 ## Verification
 
-Dedicated strict **NO DEPLOY** GitHub Actions workflow checks immutable P851 parent, exactly eight changed research paths, no core app/worker/storage/model mutation, default BLOCKED device and P851 release-evidence status, focused P78/P852 tests, full native regression, both builds, true desktop Chromium/WebKit at 320/390/430 (P78 diagnostics and P850–P843 inherited owner workflow), and 11 lawfully sourced public original JPEG digest checks only. **CI PENDING at report creation.**
+Dedicated strict **NO DEPLOY** GitHub Actions workflow checks immutable P851 parent, exactly eight changed research paths, no core app/worker/storage/model mutation, default BLOCKED device and P851 release-evidence status, focused P78/P852 tests, full native regression, both builds, true desktop Chromium/WebKit at 320/390/430 (P78 diagnostics and P850–P843 inherited owner workflow), and 11 lawfully sourced public original JPEG digest checks only. **VERIFIED functional HEAD `6155e336ef18a016c9f188b2b46a7da9a5567367`:** [P852 strict NO DEPLOY GitHub Actions #43365058062](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43365058062), **3/3 jobs COMPLETED SUCCESS** on the same exact commit. Scope-verified immutable P851 parent and **8** changed paths; **15/15 focused #78/#852 native tests, 457/457 full native tests**, zero failures, both builds passed. `scripts/m1-release-evidence-851.mjs` returned **BLOCKED**, as required, even when synthetic report fixtures claimed 23/23 PASS on each platform.
+
+Real *desktop engine* Chromium and WebKit at **320/390/430 CSS px** passed **6/6** opt-in device-panel UI tests: default OFF, explicit Enable, source-commit entry required, no automatic PASS, shareable BLOCKED report without private photo bytes or source digests, no horizontal overflow or JavaScript errors. The inherited P850–P843 browser photo queue, P849 two-photo duplicate owner gate, P848 source/mask colors, P847 separate learning consent, P846 owner shoe pairing and P844 single-save/failure retry all passed. **No physical phones were used.**
+
+**11/11** original lawfully sourced JPEG SHA receipts passed source integrity checks, with one limited-resolution advisory, **0 human labels**, recognition gain **UNKNOWN**. No model or app private-save code changed.
+
+Debug trace: initial #43364712448 was stopped by a case-sensitive report HOLD safeguard; #43364878664 exposed two overly broad new test assertions; #43364981433 found a literal escaped newline in the test source. Those test/report-only errors were corrected without changing recognition, owner security or runtime code. Full executable-head run #43365058062 then passed all three jobs.
+
+**The next report-only commit triggers another exact-final-HEAD NO DEPLOY CI. Final evidence remains 0 verified physical phones and 0 verified independent blind original-photo labels. Never equate green code CI with completed Mission 1 release acceptance.**
 
 **Mission 1 release status stays BLOCKED, regardless of software-verification outcomes.**
