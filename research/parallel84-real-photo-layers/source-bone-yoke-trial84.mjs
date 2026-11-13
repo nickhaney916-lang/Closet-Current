@@ -85,8 +85,8 @@ const point84=(m,i)=>{
 };
 const key84=p=>p.toArray().map(x=>x.toFixed(5)).join('|');
 function contactCount(source,target){
- const audit=triangleContacts(source,target,{collect:true});
- return {count:audit.count,pairs:new Set(audit.pairs.map(p=>p.i+'|'+p.j)),
+ const audit=triangleContacts(source,target);
+ return {count:audit.count,pairs:audit.pairs,
   maxDepth:audit.maximumLocalOrientedFaceDepth};
 }
 const newPairs=(before,after)=>{
