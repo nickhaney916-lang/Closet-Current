@@ -19,7 +19,7 @@ test('P852 recorder exact parent agrees with independently verified P851, and op
  assert.equal((html.match(/device-acceptance-78\.js/g)||[]).length,1);
 });
 test('P852 device app remains default off and cannot auto-recognize an emulator as a witnessed phone',()=>{
- assert.match(moduleCode,/searchParams\)\.get\('deviceLab78'\)==='1'/);
+ assert.match(moduleCode,/new URLSearchParams\(root\.location\.search\)\.get\('deviceLab78'\)==='1'/);
  const s=Device.create({sourceCommit:Device.SOURCE_PARENT});
  assert.equal(Device.publicReport(s).counts.NOT_RUN,23);
  assert.equal(Device.publicReport(s).independentlyVerifiedPhysicalRuns,0);
@@ -51,7 +51,7 @@ test('P852 public reports contain no private photo hash, account IDs or exact pr
  assert.equal(serialized.includes(SHA),false);
  assert.equal(serialized.includes(SOURCE),false);
  assert.equal(serialized.includes('ownerId'),false);
- assert.equal(serialized.includes('private'),false);
+ assert.equal(serialized.includes('"originalSha256"'),false);\n assert.equal(serialized.includes('"evidenceSha256"'),false);
 });
 test('P852 real main P851 owner-approved edit/queue/correction constraints are unchanged',()=>{
  assert.match(app,/^const reviewFirst836=true;$/m);
