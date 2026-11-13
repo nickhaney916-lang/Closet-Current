@@ -1593,6 +1593,46 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
   }catch(e){message(e.message||'Private backup failed; no data changed.');}
   return;
  }
+ // M3 V4 acceptance only: carry saved JPEGs AND unfinished Photo results.
+ // This feature is disabled on normal URLs; never imply that the v3
+ // saved-only download includes source photographs awaiting owner review.
+ if(new URLSearchParams(location.search).get('losslessV4M3')==='research'){
+  let lease;
+  try{lease=ownerWardrobeMutationLease();}
+  catch{return message('Sign in to export your complete private backup.');}
+  const initialWrites=writes;
+  const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
+   !photoImportActive&&!videoImportActive&&!automaticRunning&&
+   !automaticQueue.length&&!localPending.size&&!failedDraftCaptures.size&&
+   !stream&&!document.querySelector('dialog[open]')&&
+   !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())&&
+   window.native3D05Bridge?.state?.().active!==true&&
+   writes===initialWrites;
+  const check=()=>{lease.assertLease();if(!idle())throw Error(
+   'Finish photographing, correcting and saving outfit edits before making a full backup. Unfinished originals stay on your device.');};
+  const report=value=>{try{lease.assertLease();message(value);}catch{}};
+  try{
+   check();await initialWrites;check();
+   const {exportLosslessV4M3}=await import('./native-lossless-v4-owner-acceptance-m3.mjs');
+   check();
+   const result=await exportLosslessV4M3({
+    ownerDB:lease.ownerDB,ownerId:window.closetAuth.user.id,
+    assertLease:lease.assertLease,assertIdle:check
+   });
+   check();
+   const blob=new Blob([result.json],{type:'application/json'});
+   if(blob.size>100*1024*1024)
+    throw Error('Full backup exceeds import size limit; no incomplete copy was downloaded.');
+   const url=URL.createObjectURL(blob),a=node('a');
+   a.href=url;a.download='closet-current-owner-backup-v4.json';
+   document.body.append(a);a.click();a.remove();
+   setTimeout(()=>URL.revokeObjectURL(url),1000);
+   report('Complete private v4 backup exported: '+result.savedCount+
+    ' saved items and '+result.pendingOriginals+
+    ' unfinished photographs, with original JPEGs intact. Store this file securely.');
+  }catch(error){report(error?.message||'Full private backup was not downloaded. Existing photos are unchanged.');}
+  return;
+ }
  // A default v3 download must reflect one committed, owner-private snapshot.
  // Reading in-memory card arrays could miss a second tab's correction, and
  // v3 cannot restore unfinished Photo results originals. Refuse a misleading
@@ -1667,6 +1707,56 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    assertImport();
    if(result.cancelled)return importMessage('Restore canceled. Your original closet is unchanged.');
    importMessage('All clothing photos, category corrections and outfits restored together.');
+   return;
+  }
+  // Separate opt-in v4 owner acceptance: validate EVERY saved and pending
+  // original before confirmation. One restore transaction replaces items,
+  // Photo results, inspiration, outfits and private cloud-dirty revision.
+  if(new URLSearchParams(location.search).get('losslessV4M3')==='research'&&data?.version===4){
+   const initialWrites=writes;
+   const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
+    !photoImportActive&&!videoImportActive&&!automaticRunning&&
+    !automaticQueue.length&&!localPending.size&&!failedDraftCaptures.size&&
+    !stream&&!document.querySelector('dialog[open]')&&
+    !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())&&
+    window.native3D05Bridge?.state?.().active!==true&&
+    writes===initialWrites;
+   const check=()=>{assertImport();if(!idle())throw Error(
+    'Finish unsaved photos, recognition and outfit edits before restoring. Your current originals are unchanged.');};
+   check();await initialWrites;check();
+   const {restoreLosslessV4M3}=
+    await import('./native-lossless-v4-owner-acceptance-m3.mjs');
+   check();
+   const restored=await restoreLosslessV4M3({
+    ownerDB:importLease.ownerDB,ownerId:window.closetAuth.user.id,
+    assertLease:assertImport,assertIdle:check,data,
+    confirm:({incoming,existing,existingDrafts,incomingDrafts})=>{
+     check();
+     const approved=confirm('Replace '+existing+' saved clothes and '+
+      existingDrafts+' unfinished photos with '+incoming.itemCount+
+      ' saved clothes and '+incomingDrafts+
+      ' unfinished photos from this owner-bound v4 backup? '+
+      'All outfits and corrections also change. Cancel preserves everything.');
+     check();return approved;
+    }
+   });
+   check();
+   if(restored.cancelled)return importMessage('Full v4 restore canceled. All original photographs were preserved.');
+   // This commit has ALREADY succeeded. A failed asynchronous screen refresh
+   // is NOT a failed transaction. Never claim an atomic restore was rolled back
+   // after the database has acknowledged the new draft and saved JPEGs.
+   window.closetCloud?.changed?.();
+   try{
+    if(typeof mission3ReloadOwnerCloudView!=='function')
+     throw Error('Owner-private view refresh unavailable');
+    await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
+    check();
+    importMessage('Full owner-bound v4 backup restored atomically, including '+
+     restored.pendingOriginals+' unfinished original photos. Review Photo results.');
+   }catch(error){
+    assertImport();
+    importMessage('Full v4 backup restored on this device. Reload My Closet and Photo results to view all original photographs.');
+   }
    return;
   }
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
