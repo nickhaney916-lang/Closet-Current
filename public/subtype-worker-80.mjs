@@ -3,9 +3,8 @@ import { localCandidates } from "./local-catalog.mjs";
 import {
   VERSION,
   hash80,
-  jpeg80,
   canonical,
-  SHA,
+  validateSubtypeRequest80,
 } from "./subtype-review-80.mjs";
 export const SOURCE_FILES80 = [
   "local-worker.mjs",
@@ -62,17 +61,7 @@ export async function subtypeModel80({
   metadata,
   sourceCodeSha256,
 }) {
-  const context = request.subtype80;
-  if (
-    context?.schema !== VERSION ||
-    context.enabled !== true ||
-    context.consent !== true ||
-    context.categoryOwnerReviewed !== true ||
-    !context.evidence?.ownerId ||
-    !SHA.test(context.evidence.sourceSha256 || "") ||
-    (await hash80(jpeg80(request.image))) !== context.evidence.inputSha256
-  )
-    throw Error("P80_OPT_IN_SOURCE_REQUIRED");
+  const evidence = await validateSubtypeRequest80(request);
   const model = {
     name: metadata.model,
     revision: metadata.revision,
@@ -90,7 +79,7 @@ export async function subtypeModel80({
       schema: VERSION,
       model,
       receipt: {
-        evidence: context.evidence,
+        evidence,
         modelKey: canonical(model),
         createdAt: Date.now(),
       },

@@ -65,7 +65,9 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 axe-core@4.10.3
       - run: npx playwright install --with-deps chromium webkit
       - name: Actual Adjust + subtype modules, synthetic model callback only
-        run: node scripts/test-parallel80-subtype-browser.mjs
+        run: |
+          P80_REPLAY_PANEL_BASELINE=1 node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
       - name: Existing owner save, pair, duplicates, learning, color and batch boundaries
         run: |
           set -euo pipefail

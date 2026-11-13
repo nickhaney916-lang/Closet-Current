@@ -50,6 +50,7 @@ let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
   if(request.type==='subtype-candidates80'&&(request.subtype80?.enabled!==true||request.subtype80?.consent!==true||request.subtype80?.categoryOwnerReviewed!==true))throw Error('Subtype research requires explicit opt-in.');
+  if(request.type==='subtype-candidates80'){const {validateSubtypeRequest80}=await import('./subtype-review-80.mjs'+new URL(import.meta.url).search);await validateSubtypeRequest80(request);}
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
   if(!['classify','features','benchmark-frames','subtype-candidates80'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');

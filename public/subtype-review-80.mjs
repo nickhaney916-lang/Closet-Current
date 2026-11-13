@@ -179,6 +179,88 @@ export async function evidence80(item, { ownerId, sessionId, live } = {}) {
     segmented,
   });
 }
+const EVIDENCE_KEYS80 = Object.freeze([
+  "schema",
+  "ownerId",
+  "sessionId",
+  "itemId",
+  "sourceSha256",
+  "inputSha256",
+  "revisionSha256",
+  "maskDescriptorSha256",
+  "maskSha256",
+  "unitId",
+  "unitStatus",
+  "segmented",
+]);
+export function validEvidence80(e) {
+  if (
+    !e ||
+    typeof e !== "object" ||
+    Array.isArray(e) ||
+    Object.keys(e).length !== EVIDENCE_KEYS80.length ||
+    !EVIDENCE_KEYS80.every(
+      (k) =>
+        Object.hasOwn(e, k) &&
+        Object.hasOwn(Object.getOwnPropertyDescriptor(e, k), "value"),
+    ) ||
+    e.schema !== VERSION
+  )
+    return false;
+  if (
+    ["ownerId", "sessionId", "itemId", "unitId"].some(
+      (k) => typeof e[k] !== "string" || e[k].length > 128 || !e[k].trim(),
+    )
+  )
+    return false;
+  if (
+    [
+      "sourceSha256",
+      "inputSha256",
+      "revisionSha256",
+      "maskDescriptorSha256",
+    ].some((k) => typeof e[k] !== "string" || !SHA.test(e[k])) ||
+    typeof e.segmented !== "boolean"
+  )
+    return false;
+  return e.segmented
+    ? typeof e.maskSha256 === "string" &&
+        SHA.test(e.maskSha256) &&
+        [
+          "paired_confirmed",
+          "separate_confirmed",
+          "fragments_confirmed",
+        ].includes(e.unitStatus)
+    : e.maskSha256 === null && e.unitStatus === "single-photo-owner-reviewed";
+}
+export async function validateSubtypeRequest80(request) {
+  const c = request?.subtype80;
+  if (
+    c?.schema !== VERSION ||
+    c.enabled !== true ||
+    c.consent !== true ||
+    c.categoryOwnerReviewed !== true ||
+    !validEvidence80(c.evidence)
+  )
+    throw Error("P80_OPT_IN_SOURCE_REQUIRED");
+  const evidence = Object.freeze({ ...c.evidence });
+  if ((await hash80(jpeg80(request.image))) !== evidence.inputSha256)
+    throw Error("P80_OPT_IN_SOURCE_REQUIRED");
+  return evidence;
+}
+export function photoDetailIssue80(quality) {
+  return !quality ||
+    quality.detailVisible !== true ||
+    quality.clipped ||
+    quality.occluded ||
+    quality.overlapping ||
+    quality.lowLight ||
+    quality.soft ||
+    quality.minimumSide < 224 ||
+    !Number.isFinite(quality.minimumSide)
+    ? "insufficient-visible-photo-detail"
+    : null;
+}
 export function binding80(a, b) {
   return !!a && !!b && canonical(a) === canonical(b);
 }
@@ -252,15 +334,9 @@ export function decide80({
   if (!consent || !categoryOwnerReviewed)
     return block("explicit-owner-consent-required");
   if (
-    !binding80(evidence, current) ||
-    !evidence?.ownerId ||
-    !SHA.test(evidence?.sourceSha256 || "") ||
-    !SHA.test(evidence?.inputSha256 || "") ||
-    !SHA.test(evidence?.revisionSha256 || "") ||
-    !SHA.test(evidence?.maskDescriptorSha256 || "") ||
-    evidence.schema !== VERSION ||
-    !evidence.unitId ||
-    (evidence.segmented && !SHA.test(evidence.maskSha256 || ""))
+    !validEvidence80(evidence) ||
+    !validEvidence80(current) ||
+    !binding80(evidence, current)
   )
     return block("source-mask-owner-unit-revision-mismatch");
   if (
@@ -283,18 +359,8 @@ export function decide80({
     )
   )
     return block("category-unknown");
-  if (
-    !quality ||
-    quality.detailVisible !== true ||
-    quality.clipped ||
-    quality.occluded ||
-    quality.overlapping ||
-    quality.lowLight ||
-    quality.soft ||
-    quality.minimumSide < 224 ||
-    !Number.isFinite(quality.minimumSide)
-  )
-    return block("insufficient-visible-photo-detail");
+  const detailIssue = photoDetailIssue80(quality);
+  if (detailIssue) return block(detailIssue);
   let a, b;
   try {
     a = rankedRows(views?.whole);

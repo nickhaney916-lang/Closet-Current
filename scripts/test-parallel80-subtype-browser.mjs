@@ -5,9 +5,17 @@ import { resolve, extname } from "node:path";
 import assert from "node:assert/strict";
 import { chromium, webkit } from "playwright";
 import { createRequire } from "node:module";
+import { execFileSync } from "node:child_process";
 const require = createRequire(import.meta.url),
   root = resolve("public"),
   app = await readFile("public/app.js", "utf8");
+const replayPriorPanel = process.env.P80_REPLAY_PANEL_BASELINE === "1";
+const priorPanel = replayPriorPanel
+  ? execFileSync("git", [
+      "show",
+      "83f51ea97c5129f6e226c1f68c51aee8ca5d6fcf:public/subtype-panel-80.mjs",
+    ])
+  : null;
 function between(a, b) {
   const i = app.indexOf(a),
     j = app.indexOf(b, i + a.length);
@@ -36,7 +44,10 @@ const server = createServer(async (req, res) => {
           ? "text/css"
           : "text/javascript",
     );
-    let content = await readFile(file);
+    let content =
+      priorPanel && path === "/subtype-panel-80.mjs"
+        ? priorPanel
+        : await readFile(file);
     if (extname(file) === ".css")
       content = content.toString().replace(/@import url\([^;]+;/g, "");
     res.end(content);
@@ -56,7 +67,7 @@ const checkPhoto=async()=>({colorEstimate:null});const enableLocal=async()=>true
 const removeItem=async()=>{};const persistDraft=async()=>{};const render=()=>{};const scheduleMemoryReview=()=>{};const stopCamera=()=>{};const queueAutomatic=()=>{};const message=s=>window.lastMessage=s;
 const savePiece=async(value,nextBatch)=>{window.savedCount++;await new Promise(r=>setTimeout(r,40));window.savedValue=value;};
 async function localRequest(type,image,_,hint,context){if(type!=='subtype-candidates80')throw Error('Only synthetic subtype callback allowed');window.requested80++;while(window.hold80)await new Promise(r=>setTimeout(r,10));const {subtypeModel80,sourceCodeHash80}=await import('/subtype-worker-80.mjs');const {localCandidates}=await import('/local-catalog.mjs');const meta=await(await fetch('/recognition-vectors.json')).json();const cat=window.current80.category,a=cat==='Shoes'?'Sneakers':'Shorts',b=cat==='Shoes'?'Ankle boots':'Skirt';const scores=localCandidates.map(c=>({label:c.label,score:c.category===cat&&c.itemType===a?.8:c.category===cat&&c.itemType===b?.1:.1/(localCandidates.length-2)}));return subtypeModel80({request:{image,subtype80:context},image:{},whole:async()=>scores,confirmation:async()=>scores,metadata:meta,sourceCodeSha256:await sourceCodeHash80()});}
-async function fixture80({pair=false,saved=false,owner=true,flag=true}={}){for(const d of document.querySelectorAll('dialog')){d.close();d.remove();}history.replaceState(null,'','/?'+(flag?'subtype80=1':''));window.closetAuth.user=owner?{id:'SYNTHETIC-owner-80'}:null;const canvas=document.createElement('canvas');canvas.width=360;canvas.height=480;const ctx=canvas.getContext('2d');ctx.fillStyle='#ddd';ctx.fillRect(0,0,360,480);ctx.fillStyle='#18559c';ctx.fillRect(45,45,260,390);ctx.fillStyle='#a5b6c7';for(let i=0;i<8;i++)ctx.fillRect(55,60+i*42,240,8);const image=canvas.toDataURL('image/jpeg',.9),value={id:'SYNTHETIC-item-80',image,name:'Synthetic garment',category:pair?'Shoes':'Bottoms',itemType:'Unknown',color:'Blue',colorSource:'user',pattern:'Unknown',sleeveLength:'Not applicable',fit:'Unknown',seasons:[],requiresOwnershipConfirmation:!saved,userAdjusted:false};
+async function fixture80({pair=false,saved=false,owner=true,flag=true,poor=null}={}){for(const d of document.querySelectorAll('dialog')){d.close();d.remove();}history.replaceState(null,'','/?'+(flag?'subtype80=1':''));window.closetAuth.user=owner?{id:'SYNTHETIC-owner-80'}:null;const canvas=document.createElement('canvas');canvas.width=poor==='small'?96:360;canvas.height=poor==='small'?128:480;const ctx=canvas.getContext('2d');ctx.fillStyle='#ddd';ctx.fillRect(0,0,360,480);ctx.fillStyle='#18559c';ctx.fillRect(45,45,260,390);ctx.fillStyle='#a5b6c7';for(let i=0;i<8;i++)ctx.fillRect(55,60+i*42,240,8);if(poor==='dim'){ctx.fillStyle='#020202';ctx.fillRect(0,0,canvas.width,canvas.height);}const image=canvas.toDataURL('image/jpeg',.9),value={id:'SYNTHETIC-item-80',image,name:'Synthetic garment',category:pair?'Shoes':'Bottoms',itemType:'Unknown',color:'Blue',colorSource:'user',pattern:'Unknown',sleeveLength:'Not applicable',fit:'Unknown',seasons:[],requiresOwnershipConfirmation:!saved,userAdjusted:false};
  if(pair){const {hash80,jpeg80}=await import('/subtype-review-80.mjs');const sourceSha256=await hash80(jpeg80(image));value.originalPhoto={image};value.outfitSourceId='SYNTHETIC-scene';value.reconciliation70={ownerId:'SYNTHETIC-owner-80',sourceSha256,maskSha256:'a'.repeat(64)};value.reconciliation70Status='paired_confirmed';value.shoePair={confirmedByOwner:true,companion:{image,reconciliation70:{ownerId:'SYNTHETIC-owner-80',sourceSha256,maskSha256:'b'.repeat(64)}}};}
  batch=saved?[]:[value];items=saved?[value]:[];window.current80=value;window.savedCount=0;window.savedValue=null;window.requested80=0;window.hold80=false;adjustPhoto(value);}
 `;
@@ -227,6 +238,44 @@ try {
           0,
           "owner change across final async save boundary rejected",
         );
+        for (const poor of ["dim", "small"]) {
+          await page.evaluate((poor) => fixture80({ poor }), poor);
+          await panel.waitFor();
+          await consent.check();
+          await visible.check();
+          await check.click();
+          await panel
+            .getByRole("status")
+            .filter({
+              hasText: replayPriorPanel
+                ? "The photograph does not show enough clear detail"
+                : "No model comparison was requested",
+            })
+            .waitFor();
+          assert.equal(
+            await page.evaluate(() => window.requested80),
+            replayPriorPanel ? 1 : 0,
+            "same poor-detail fixtures measure prior request versus early abstention",
+          );
+          assert.equal(
+            await page.getByLabel("Item type").inputValue(),
+            "Unknown",
+          );
+          assert.equal(await page.evaluate(() => window.savedCount), 0);
+          const original = await page.evaluate(() => window.current80.image);
+          await ownerAck.check();
+          await save.click();
+          await page.waitForFunction(() => window.savedValue !== null);
+          assert.equal(
+            await page.evaluate(() => window.savedValue.itemType),
+            "Unknown",
+          );
+          assert.equal(
+            await page.evaluate(() => window.savedValue.image),
+            original,
+            "early abstention preserves original and manual Unknown save",
+          );
+        }
         await page.evaluate(() => fixture80({ pair: true }));
         await panel.waitFor();
         await consent.check();
@@ -312,6 +361,11 @@ try {
           width,
           syntheticEditor: "PASS",
           staleAttacks: 6,
+          unusableDetailPreflightCases: 2,
+          unusableDetailModelRequests: replayPriorPanel ? 2 : 0,
+          panelSource: replayPriorPanel
+            ? "83f51ea-prior-panel-only"
+            : "current",
           oneConfirmedPairOneSave: true,
           axeViolations: 0,
           externalRequests: 0,
