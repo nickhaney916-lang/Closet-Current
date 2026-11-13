@@ -220,6 +220,9 @@ function adjustPhoto(item){
   return valid;
  };
  const collect=clothingFields(form,draft,key=>{
+  // P870: photo-fill and owner-confirmed suggestion paths mutate editor fields
+  // programmatically, so the optional model panel must clear immediately.
+  dual82Panel?.invalidate();
   if(confirmReview)confirmReview.checked=false;
   if(learningCheck72)learningCheck72.checked=false;
   if(['pattern','sleeveLength','fit'].includes(key))reviewedKeys72.add(key);
