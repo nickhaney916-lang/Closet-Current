@@ -1668,7 +1668,59 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    }
    return;
   }
-  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
+  // Default owner-private v1-v3 import must never partially write clothing,
+  // inspiration and outfit state, or overwrite a different original JPEG
+  // under a colliding garment ID. Exact-source validation happens BEFORE
+  // the explicit confirmation and the native transaction rechecks all
+  // previous records against a single owner-private snapshot.
+  const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
+   !photoImportActive&&!videoImportActive&&!automaticRunning&&
+   !automaticQueue.length&&!localPending.size&&!failedDraftCaptures.size&&
+   !stream&&!document.querySelector('dialog[open]')&&
+   !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft());
+  if(!idle())throw Error('Finish saving your photos and outfit changes before importing a backup.');
+  const {prepareDefaultAtomicM3,commitDefaultAtomicM3}=
+   await import('./native-default-atomic-import-m3.mjs');
+  assertImport();
+  const ownerId=window.closetAuth?.user?.id;
+  const prepared=await prepareDefaultAtomicM3({
+   data,ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+   normalizeClothing,validLook,cleanOutfitBoard
+  });
+  assertImport();
+  if(!idle())throw Error('Your photo or outfit changed during backup validation. Retry when it is saved.');
+  if(!confirm('Import '+prepared.counts.garments+' clothes, '+
+     prepared.counts.looks+' inspiration looks and '+
+     prepared.counts.savedOutfits+' outfits in one private transaction? '+
+     'Matching IDs update only if their original photos match. '+
+     'Cancel or any conflict leaves your current wardrobe unchanged.'))
+   return importMessage('Import canceled. Your original closet was preserved.');
+  assertImport();
+  const operation=writes.then(()=>{
+   assertImport();
+   if(!idle())throw Error('A photo or outfit changed during backup confirmation. Retry when it is saved.');
+   return commitDefaultAtomicM3({
+    ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+    prepared,confirmed:true
+   });
+  });
+  writes=operation.catch(()=>{});
+  await operation;
+  assertImport();
+  window.closetCloud?.changed?.();
+  try{
+   if(typeof mission3ReloadOwnerCloudView!=='function')
+    throw Error('Owner-private wardrobe refresh unavailable');
+   await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
+   assertImport();
+   importMessage('Backup imported atomically. All original photos and outfits were preserved.');
+  }catch(error){
+   // The atomic commit already succeeded; a stale UI refresh cannot undo
+   // the import and must not falsely claim nothing was saved on this device.
+   assertImport();
+   importMessage('Backup imported atomically. Reload My Closet to refresh the view.');
+  }
+ }catch(err){importMessage(err.message||'Import failed.');}};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
