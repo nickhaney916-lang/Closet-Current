@@ -2057,6 +2057,8 @@ try{
      poseCount:a.poseSampleCount,
      selfPoseSweepsComplete:a.completeSelfPoseSweeps,
      bodyPoseSweepsComplete:a.completeBodyPoseSweeps,
+     bodyComparisonsAcrossSamples:a.originalBodyComparisonsAcrossSamples,
+     bodyCandidatePairsAcrossSamples:a.originalBodyBoxPairsAcrossSamples,
      photoOrWorldCoordinatesExposed:false
     }));
     assert.equal(a.originalNeutralBodyAuditComplete,true,
