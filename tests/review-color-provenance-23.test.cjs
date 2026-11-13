@@ -23,7 +23,7 @@ async function newPhotoSubmit(source){
  const item=clone(source),sandbox={
   form:{},save:{disabled:false},item,draft:clone(source),collect:()=>N(clone(source)),
   batch:[{id:source.id}],items:[],captureProof01Active:false,
-  expectedSavedRow:null,correction10:false,
+  expectedSavedRow:null,expectedDraftRow:clone(source),correction10:false,
   ClothingMemory:M,
   savePiece:async val=>{persisted=clone(val);},
   persistDraft:async()=>{},scheduleMemoryReview:()=>{},render:()=>{},
