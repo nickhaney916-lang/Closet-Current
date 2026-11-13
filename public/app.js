@@ -1617,7 +1617,7 @@ async function recognizeItem(item){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
  const epoch=captureOperationEpoch;
  const sameRecognitionLease=()=>epoch===captureOperationEpoch&&batch.includes(item);
- const scanStarted=Date.now();let savingIndexed=false,autoSaveSucceeded=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
+ const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
   if(!sameRecognitionLease())return;
@@ -1689,8 +1689,7 @@ async function recognizeItem(item){
   savingIndexed=true;
   const wasSaved=await saveIndexed(item,index04ApprovedOwner);
   if(epoch!==captureOperationEpoch)return;
-  autoSaveSucceeded=wasSaved;
-   if(wasSaved&&typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
+  if(wasSaved&&typeof recordDeviceEvent==='function')recordDeviceEvent('recognized_saved',{durationMs:Date.now()-scanStarted});
   if(!wasSaved&&index04Active){item.localStatus='Owner changed or confirmation is needed. Your photo remains unsaved for review.';return true;}
   if(recognitionState.phase==='save-failed')recognitionState.phase='ready';
   return true;
@@ -1701,7 +1700,7 @@ async function recognizeItem(item){
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
- }finally{if(epoch===captureOperationEpoch){localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;if(!autoSaveSucceeded)persistDraft();render();}}
+ }finally{if(epoch===captureOperationEpoch){localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;if(!savingIndexed)persistDraft();render();}}
 }
 async function recognizeBatch(){
  if(localBatch)return;localBatch=true;recognitionUnavailable=false;
