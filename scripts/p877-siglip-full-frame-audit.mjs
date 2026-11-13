@@ -67,6 +67,13 @@ export function analyzeFrame877(data,{expectedRows=48,hardPhotoId='commons-0078'
    baselineExactHistoricalStrings:group.filter(r=>r.baselineExactHistoricalString).length,
    alternateExactHistoricalStrings:group.filter(r=>r.alternateExactHistoricalString).length}];
  }));
+ const garmentRows=rows.filter(x=>x.historicalCategory!=='Uncategorized');
+ const negativeRows=rows.filter(x=>x.historicalCategory==='Uncategorized');
+ const garmentStringMatches=(group,property)=>group.filter(x=>x[property]&&x[(property==='baselineExactHistoricalString'?'baselineCategory':'alternateCategory')]===x.historicalCategory).length;
+ const garmentBaseline=garmentStringMatches(garmentRows,'baselineExactHistoricalString');
+ const garmentAlt=garmentStringMatches(garmentRows,'alternateExactHistoricalString');
+ const negativeBaseline=negativeRows.filter(x=>x.baselineCategory==='Uncategorized').length;
+ const negativeAlt=negativeRows.filter(x=>x.alternateCategory==='Uncategorized').length;
  const hard=rows.find(x=>x.id===hardPhotoId)||null;
  const summary={schema:'mission1-siglip-full-frame-experiment-877-v1',cohort:'source-hash-locked-public-development-exposed-not-blind',
   photos:rows.length,model:'Marqo/marqo-fashionSigLIP',revision:MODELS81.fashionSiglip.revision,
@@ -74,6 +81,9 @@ export function analyzeFrame877(data,{expectedRows=48,hardPhotoId='commons-0078'
   baselineHistoricalCategoryStrings:sum(x=>x.baselineCategoryStringMatch),
   alternateHistoricalCategoryStrings:sum(x=>x.alternativeCategoryStringMatch),
   baselineExactHistoricalStrings:originalExact,alternateExactHistoricalStrings:alternateExact,
+  historicalGarmentRows:garmentRows.length,historicalNegativeRows:negativeRows.length,
+  garmentSubtypeHistoricalMatchesBaseline:garmentBaseline,garmentSubtypeHistoricalMatchesAlternate:garmentAlt,
+  negativeClassHistoricalMatchesBaseline:negativeBaseline,negativeClassHistoricalMatchesAlternate:negativeAlt,
   changedCategoryFirstRanks:sum(x=>x.categoryChanged),changedSubtypeFirstRanks:sum(x=>x.subtypeChanged),
   historicalExactStringGains:gains.length,historicalExactStringLosses:losses.length,
   gains,losses,hardCase:hard?{id:hard.id,historicalType:hard.historicalType,baselineType:hard.baselineSubtype,alternateType:hard.alternateSubtype}:null,
@@ -81,6 +91,9 @@ export function analyzeFrame877(data,{expectedRows=48,hardPhotoId='commons-0078'
   byHistoricalCategory:byCategory,
   independentHumanBlindSources:0,physicalDevices:0,blindAccuracy:null,
   automaticallyCertified:false,researchOnly:true,modelPromoted:false,releaseReady:false};
+ check(garmentRows.length+negativeRows.length===rows.length,'HISTORICAL_COHORT');
+ check(garmentBaseline+negativeRows.filter(x=>x.baselineExactHistoricalString).length===originalExact,'BASELINE_HISTORICAL_PARTITION');
+ check(garmentAlt+negativeRows.filter(x=>x.alternateExactHistoricalString).length===alternateExact,'ALTERNATE_HISTORICAL_PARTITION');
  check(summary.baselineExactHistoricalStrings+gains.length-losses.length===alternateExact,'ARITHMETIC');
  if(data.summary.rawTop1?.fashionSiglip?.exactSubtypeMatches!==undefined)
   check(data.summary.rawTop1.fashionSiglip.exactSubtypeMatches===originalExact,'ORIGINAL_RANK_MISMATCH');
