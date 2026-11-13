@@ -14,6 +14,9 @@ assert.ok(i>=0&&j>i,'actual P842 scanner/save source boundaries missing');
 const scanner=app.slice(i,j);
 const prepare=`
 const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];
+// P854: actual browser recognition requires a live owner + matching private DB.
+// This synthetic fixture is NOT real authentication or physical-device proof.
+window.closetAuth={user:{id:'synthetic-owner-843'}};
 const $=()=>({textContent:''});
 const recognitionState={phase:'ready',activeId:null};
 let batch=[],items=[],localReady=true,recognitionUnavailable=false;
@@ -29,7 +32,7 @@ const normalizeClothing=item=>({...item});
 const ClothingDetails={fillColor:item=>({...item}),fill:item=>({...item})};
 const applyLocalChoice=(item,choice)=>{item.category=choice.category;item.itemType=choice.itemType;};
 let writes=0;
-const db={transaction(){const tx={oncomplete:null,objectStore(){return {put(){writes++;}}}};
+const db={name:'closet-current-user-synthetic-owner-843',transaction(){const tx={oncomplete:null,objectStore(){return {put(){writes++;}}}};
  queueMicrotask(()=>tx.oncomplete?.());return tx;}};
 let mockResult;
 const localRequest=async()=>mockResult;
