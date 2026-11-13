@@ -12,7 +12,7 @@
  * not certify baseline collision freedom, continuing motion or appearance.
  */
 import * as T from 'three';
-import {MeshBVH} from 'three-mesh-bvh';
+import {MeshBVH} from '../../node_modules/three-mesh-bvh/build/index.module.js';
 
 // Mirrors the original P541 P42 true skinned posed-triangle contact measurement
 // without importing or changing that other mission's code. Public package
