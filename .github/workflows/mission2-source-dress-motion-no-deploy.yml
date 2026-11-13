@@ -1,0 +1,130 @@
+name: Mission 2 real original photographed dress motion 163-bone NO DEPLOY
+'on':
+  push:
+    branches:
+      - research/mission2-source-dress-responsive-motion-20261112-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  strict-original-photo-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Lock verified original P2-C35 and exactly 7 research/test/CI paths
+        shell: bash
+        run: |
+          set -eu
+          BASE=3669777b64cdc61b18c1af635c0a24534e28754f
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/p2-c36-files
+          while IFS= read -r path; do
+            case "$path" in
+              research/mission2-source-length/source-dress-motion.mjs|tests/mission2-source-dress-motion.test.mjs|scripts/install-mission2-source-dress-motion.mjs|research/native-3d-05/native-preview-bridge.mjs|scripts/test-native-3d-05-browser.mjs|scripts/audit-mission2-source-dress-motion.mjs|.github/workflows/mission2-source-dress-motion-no-deploy.yml)
+                ;;
+              *)
+                echo "C36 prohibited file: $path"
+                exit 1
+                ;;
+            esac
+          done </tmp/p2-c36-files
+          test "$(wc -l </tmp/p2-c36-files)" -eq 7
+          git diff --exit-code "$BASE" HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json package.json package-lock.json
+          node --check research/mission2-source-length/source-dress-motion.mjs
+          node --check scripts/install-mission2-source-dress-motion.mjs
+          node --check scripts/test-native-3d-05-browser.mjs
+          node --check scripts/audit-mission2-source-dress-motion.mjs
+      - name: Install pinned verification dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Verify original SHA and skinned source dress actual motion without physics claims
+        run: node --test tests/mission2-source-dress-motion.test.mjs tests/native-original-dress-drape-175.test.mjs
+      - name: Full inherited repository regression and unchanged consumer build
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  real-source-dress-moving-vertex-webgl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PHOTO_FIT171: '1'
+      PHOTO_TORSO173: '1'
+      PHOTO_SLEEVE174: '1'
+      PHOTO_DRESS175: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install real original source 3D photo screenshot dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Set up exact original licensed 163-bone P541+P60+P172 donor snapshots
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          P60=6fe5e46b91533a96f3c0d86950ea077cb355c459
+          P172=88d2fdb412f84b0498c86bfa17f4b391425e1958
+          git fetch --no-tags origin "$P541" "$P60" "$P172"
+          git worktree add --detach .native05-donor-541 "$P541"
+          git worktree add --detach .p173-p60 "$P60"
+          git worktree add --detach .p173-p172 "$P172"
+          for name in .native05-donor-541 .p173-p60 .p173-p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+          test "$(git -C .native05-donor-541 rev-parse HEAD)" = "$P541"
+      - name: Build immutable source humanoid models and licensed cloth
+        run: |
+          set -eu
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Integrate audited original dress P61 and source-only C36 motion in detached donor
+        run: |
+          set -eu
+          cd .p173-p60
+          node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541
+          cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
+          node scripts/install-native-photo-torso-173.mjs .native05-donor-541 .p173-p172
+          node scripts/install-source-shoulder-seam-174.mjs .native05-donor-541
+          node scripts/install-native-original-dress-drape-175.mjs .native05-donor-541
+          node scripts/install-mission2-source-dress-motion.mjs .native05-donor-541
+          grep -Fq 'sampleSourceDressMotion36(fitted,root' .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          grep -Fq 'refinePhotographedDress61(fitted,root)' .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          node --check .native05-donor-541/research/dress-mobile-01/dress-outfit-controller.mjs
+          node --check .native05-donor-541/research/mission2-source-length/source-dress-motion.mjs
+      - name: Actual owner-saved original licensed dress P175 baseline and P2-C36 phase-responsive 3D
+        run: |
+          set -eu
+          PHOTO_DRESS_MOTION36=0 node scripts/test-native-3d-05-browser.mjs
+          mkdir -p benchmark/mission2-source-dress-motion/baseline
+          cp benchmark/native-3d-05/*.png benchmark/mission2-source-dress-motion/baseline/
+          cp benchmark/native-3d-05/results.json benchmark/mission2-source-dress-motion/baseline/results.json
+          PHOTO_DRESS_MOTION36=1 PHOTO_DRESS_MOTION_PHASE36=0.25 node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-mission2-source-dress-motion.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M2-P2-C36-original-public-photo-dress-source-motion-before-after-3D-HOLD
+          path: |
+            benchmark/mission2-source-dress-motion/
+            benchmark/native-3d-05/
+          retention-days: 14
+          if-no-files-found: warn
