@@ -75,7 +75,14 @@ function requireRealPair(a,b,figure,denim){
  assert.equal(b.avatar,figure);
  assert.equal(b.pose,'relaxed');
  assert.equal(b.sourcePair,'top-bottom');
- assert.ok(['INCOMPLETE_BUDGET','STRICT_CROSSING_VETO','UNCERTAIN_NOT_CLEARANCE'].includes(b.status));
+ assert.ok(['INCOMPLETE_BUDGET','STRICT_CROSSING_VETO',
+  'SOURCE_FACE_DEFECTS_UNRESOLVED','UNCERTAIN_NOT_CLEARANCE'].includes(b.status));
+ assert.ok(b.fullOriginalSourceFaceCount>=b.sampledSourceFaceCount);
+ assert.ok(b.sourceFaceSamplingStride>=1);
+ assert.equal(b.originalFacesOmittedByBudget,
+  b.fullOriginalSourceFaceCount-b.sampledSourceFaceCount);
+ assert.equal(b.sampledPoseIsNotWholeGarmentClearance,true);
+ if(b.originalFacesOmittedByBudget>0)assert.equal(b.sourceFaceCoverageComplete,false);
  assert.equal(b.safe3D,false);assert.equal(b.contactClearanceProved,false);
  assert.equal(b.releaseAuthorized,false);assert.equal(b.humanRealismApproved,false);
  assert.equal(b.originalGarmentGeometryEdited,false);
