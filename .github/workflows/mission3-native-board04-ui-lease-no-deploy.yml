@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact PR1069 parent and five-path no-deploy allowlist
+      - name: Exact PR1069 parent and six-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/outfit-board.js|tests/mission3-native-board04-ui-lease.test.cjs|scripts/test-mission3-native-board04-ui-lease-browser.mjs|research/mission3-native-board04-ui-lease/REPORT.md|.github/workflows/mission3-native-board04-ui-lease-no-deploy.yml) ;;
+              public/outfit-board.js|tests/mission3-native-board04-ui-lease.test.cjs|tests/native-consumer-board-04.test.mjs|scripts/test-mission3-native-board04-ui-lease-browser.mjs|research/mission3-native-board04-ui-lease/REPORT.md|.github/workflows/mission3-native-board04-ui-lease-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -35,6 +35,8 @@ jobs:
           node --check public/closet-stylist.js
           node --check public/outfit-board.js
           node --check tests/mission3-native-board04-ui-lease.test.cjs
+          node --check tests/native-consumer-board-04.test.mjs
+          node --test tests/native-consumer-board-04.test.mjs
           node --check scripts/test-mission3-native-board04-ui-lease-browser.mjs
           node --test tests/mission3-native-board04-ui-lease.test.cjs
           node --check tests/mission3-outfit-board-action-owner-session.test.cjs
@@ -141,7 +143,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict PR1069 five-path same-parent diff gate
+      - name: Strict PR1069 six-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -150,7 +152,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/outfit-board.js|tests/mission3-native-board04-ui-lease.test.cjs|scripts/test-mission3-native-board04-ui-lease-browser.mjs|research/mission3-native-board04-ui-lease/REPORT.md|.github/workflows/mission3-native-board04-ui-lease-no-deploy.yml) ;;
+              public/outfit-board.js|tests/mission3-native-board04-ui-lease.test.cjs|tests/native-consumer-board-04.test.mjs|scripts/test-mission3-native-board04-ui-lease-browser.mjs|research/mission3-native-board04-ui-lease/REPORT.md|.github/workflows/mission3-native-board04-ui-lease-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -158,6 +160,8 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Production-source native BOARD04 Save Cancel Delete signed-session tests
         run: node --test tests/mission3-native-board04-ui-lease.test.cjs
+      - name: Confirm native BOARD04 source assertions pin owner-authenticated lossless writes
+        run: node --test tests/native-consumer-board-04.test.mjs
       - name: Production-source native Outfit Board actions exact signed-owner tests
         run: node --test tests/mission3-outfit-board-action-owner-session.test.cjs
       - name: Reverify real native private Outfit Board draft conflicts and stale timers
