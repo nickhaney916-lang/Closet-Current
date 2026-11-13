@@ -1,6 +1,8 @@
 'use strict';
 const nativeLossless04Active=typeof URLSearchParams==='function'&&typeof location!=='undefined'&&new URLSearchParams(location.search).get('nativeLossless04')==='research';
 let nativeLossless04=null;
+const mission4Preview1054Active=new URLSearchParams(location.search).get('mission4Preview')==='research';
+let mission4Preview1054Viewer=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
 let boardExpectedStoredDraft='null',boardConflictDraft=null;
@@ -179,6 +181,8 @@ function openBoardPicker(slotId){
  $('boardPicker').showModal();
 }
 function renderOutfitBoard(){
+ // Research-only: any saved outfit change revokes already displayed private photos.
+ if(mission4Preview1054Active)mission4Preview1054Viewer?.clear();
  if(!boardInitialized)return;
  if(nativeLossless04Active){
   if(!nativeLossless04||!nativeLossless04.status().active){
@@ -430,4 +434,64 @@ async function reloadCloudBoard({ownerDB=db,assertLease=()=>{}}={}){
  currentBoard=loaded;savedOutfitBoards=(state?.saved||[]).map(x=>cleanOutfitBoard(x,items));
  boardExpectedStoredDraft=stored;boardConflictDraft=null;boardCommittedDraft=JSON.stringify(currentBoard);
  syncBoardInputs();renderOutfitBoard();
+}
+
+/**
+ * MAIN1054: opt-in read-only research preview using the genuine native
+ * authenticated saved wardrobe, real slot IDs and original JPEG receipts.
+ * No deployment, no writes, no arbitrary private-photo 3D claims.
+ */
+if(mission4Preview1054Active){
+ (async()=>{
+  try{
+   await outfitBoardReady;
+   const builder=$('builder');
+   if(!builder)return;
+   const section=document.createElement('section');
+   section.id='mission4Preview1054Section';
+   section.dataset.researchOnly='true';
+   const button=document.createElement('button');
+   button.type='button';button.className='secondary';
+   button.textContent='Verify original clothing photos for this outfit (research)';
+   const status=document.createElement('p');
+   status.id='mission4Preview1054Status';status.setAttribute('role','status');
+   status.textContent='Private original-photo verification is off until requested.';
+   const photos=document.createElement('div');
+   photos.id='mission4Preview1054Photos';
+   section.append(button,status,photos);builder.append(section);
+   button.onclick=async()=>{
+    button.disabled=true;photos.replaceChildren();
+    status.textContent='Verifying the signed owner, source photographs and selected outfit…';
+    try{
+     if(typeof currentPhotoOwnerSession167!=='function'||
+        typeof signedOwnerSavedRows167!=='function')
+      throw Error('Native signed photo source unavailable');
+     const {mountOwnerOutfitPhotoPreview1054}=await import(
+      '../research/main-thread-integration-1054/native-2d-preview.mjs');
+     if(!mission4Preview1054Viewer)
+      mission4Preview1054Viewer=mountOwnerOutfitPhotoPreview1054({
+       target:photos,
+       getSession:currentPhotoOwnerSession167,
+       readOwnerItems:signedOwnerSavedRows167,
+       getBoard:()=>nativeLossless04Active
+        ?nativeLossless04?.view():structuredClone(currentBoard),
+       cleanBoard:cleanOutfitBoard,
+       events:window,doc:document
+      });
+     const result=await mission4Preview1054Viewer.refresh();
+     status.textContent=result.slotCount+
+      ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
+    }catch{
+     photos.replaceChildren();
+     status.textContent='Preview refused. Recheck the signed account, garment review, original photographs and outfit slots.';
+    }finally{button.disabled=false;}
+   };
+   window.addEventListener('closet:session-locked',()=>{
+    mission4Preview1054Viewer?.clear();photos.replaceChildren();
+    status.textContent='Private preview cleared on account-session change.';
+   });
+  }catch{
+   // No UI or photo disclosure if the isolated research mount is unavailable.
+  }
+ })();
 }
