@@ -18,6 +18,9 @@
  const STATUS=['NOT_RUN','PASS','FAIL','BLOCKED'];
  const NETWORK=['wifi','limited','offline','unknown'];
  const CACHE=['cold','warm','unknown'];
+ const BATTERY=['unknown','0-20','21-50','51-80','81-100'];
+ const CHARGING=['unknown','charging','not-charging'];
+ const SEVERITIES=['UNKNOWN','NONE','P0','P1','P2','P3'];
  const MODELS=['Samsung Galaxy','Google Pixel','iPhone','Other Android','Other iOS','Unknown'];
  const CASES=Object.freeze([
   ['capture_camera','Real camera photo, permission allow'],
@@ -51,7 +54,7 @@
  const number=(n,min,max)=>Number.isFinite(n)&&n>=min&&n<=max?Math.round(n):null;
  const fixed=(v,set,fallback)=>set.includes(v)?v:fallback;
  function create({platform='OTHER_UNVERIFIED',modelFamily='Unknown',osVersion='unknown',browserVersion='unknown',
-    viewportWidth=null,pixelRatio=null,memoryTier='unknown',network='unknown',cache='unknown',
+    viewportWidth=null,pixelRatio=null,memoryTier='unknown',network='unknown',cache='unknown',battery='unknown',charging='unknown',
     operatorDeclaredPhysical=false,sourceCommit=SOURCE_PARENT,createdAt=new Date().toISOString()}={}){
   if(!COMMIT.test(sourceCommit))error('COMMIT_REQUIRED');
   if(!Number.isFinite(Date.parse(createdAt))||!/\d{4}-\d\d-\d\dT/.test(createdAt))error('DATE_REQUIRED');
@@ -61,12 +64,14 @@
    viewportWidth:number(viewportWidth,200,1600),pixelRatio:number(pixelRatio*100,50,800)/100||null,
    memoryTier:fixed(memoryTier,['low','medium','high','unknown'],'unknown'),
    network:fixed(network,NETWORK,'unknown'),cache:fixed(cache,CACHE,'unknown'),
+   battery:fixed(battery,BATTERY,'unknown'),charging:fixed(charging,CHARGING,'unknown'),
    operatorDeclaredPhysical:operatorDeclaredPhysical===true,records:new Map()};
  }
  function record(session,{caseId,status='NOT_RUN',observedAt=new Date().toISOString(),durationMs=null,
-  originalSha256=null,evidenceSha256=null,sourcePreserved=null,ownerGate=null,itemCountBefore=null,itemCountAfter=null}={}){
+  originalSha256=null,evidenceSha256=null,sourcePreserved=null,ownerGate=null,itemCountBefore=null,itemCountAfter=null,severity='UNKNOWN'}={}){
   if(!session||session.version!==VERSION||!(session.records instanceof Map))error('SESSION_REQUIRED');
   if(!ALLOWED_CASES.has(caseId)||!STATUS.includes(status))error('INVALID_CASE');
+  if(!SEVERITIES.includes(severity))error('INVALID_SEVERITY');
   if(!Number.isFinite(Date.parse(observedAt))||!/\d{4}-\d\d-\d\dT/.test(observedAt))error('DATE_REQUIRED');
   if(Date.parse(observedAt)<Date.parse(session.createdAt)-60000||
      Date.parse(observedAt)>Date.now()+60000)error('DATE_OUT_OF_RANGE');
@@ -76,7 +81,7 @@
    if(!session.operatorDeclaredPhysical||session.platform==='OTHER_UNVERIFIED'||!digestOk(evidenceSha256))
     error('UNVERIFIED_DEVICE_EVIDENCE');
   }
-  const result={caseId,status,observedAt,durationMs:number(durationMs,0,600000),
+  const result={caseId,status,severity,observedAt,durationMs:number(durationMs,0,600000),
    originalSha256,evidenceSha256,sourcePreserved:sourcePreserved===true?true:sourcePreserved===false?false:null,
    ownerGate:ownerGate===true?true:ownerGate===false?false:null,
    itemCountBefore:number(itemCountBefore,0,20000),itemCountAfter:number(itemCountAfter,0,20000)};
@@ -88,7 +93,8 @@
   return {format:VERSION,sourceCommit:session.sourceCommit,createdAt:session.createdAt,
    device:{platform:session.platform,modelFamily:session.modelFamily,osVersion:session.osVersion,
     browserVersion:session.browserVersion,viewportWidth:session.viewportWidth,pixelRatio:session.pixelRatio,
-    memoryTier:session.memoryTier,network:session.network,cache:session.cache},
+    memoryTier:session.memoryTier,network:session.network,cache:session.cache,
+    battery:session.battery,charging:session.charging},
    operatorDeclaredPhysical:session.operatorDeclaredPhysical,
    evidenceClassification:'UNVERIFIED_OPERATOR_CLAIMS_NOT_INDEPENDENT_DEVICE_PROOF',
    cases:CASES.map(([id])=>session.records.get(id)||{caseId:id,status:'NOT_RUN'}),
@@ -167,10 +173,14 @@
     '<label>Device family <select id="p78platform"><option value="OTHER_UNVERIFIED">Unverified</option><option value="ANDROID_CHROME">Physical Android Chrome (operator claim)</option><option value="IPHONE_SAFARI">Physical iPhone Safari (operator claim)</option></select></label> '+
     '<label>Model family <select id="p78model"><option>Unknown</option><option>Samsung Galaxy</option><option>Google Pixel</option><option>iPhone</option><option>Other Android</option><option>Other iOS</option></select></label>'+
     '<p><label>OS version <input id="p78os" size="6" inputmode="decimal" placeholder="e.g. 17"></label> <label>Browser version <input id="p78browser" size="6" inputmode="decimal" placeholder="e.g. 130"></label></p>'+
+    '<p><label>Memory <select id="p78memory"><option>unknown</option><option>low</option><option>medium</option><option>high</option></select></label> <label>Network <select id="p78network"><option>unknown</option><option>wifi</option><option>limited</option><option>offline</option></select></label></p>'+
+    '<p><label>Model cache <select id="p78cache"><option>unknown</option><option>cold</option><option>warm</option></select></label> <label>Battery percent range <select id="p78battery"><option>unknown</option><option>0-20</option><option>21-50</option><option>51-80</option><option>81-100</option></select></label> <label>Power <select id="p78charging"><option>unknown</option><option>charging</option><option>not-charging</option></select></label></p>'+
     '<label><input id="p78physical" type="checkbox"> I am operating an actual physical phone, not a desktop emulator.</label>'+
     '<p><button type="button" id="p78start">Start memory-only session</button></p>'+
     '<p><label>Test case <select id="p78case"></select></label></p>'+
-    '<p><label>Observed result <select id="p78status"><option>NOT_RUN</option><option>BLOCKED</option><option>FAIL</option><option>PASS</option></select></label></p>'+
+    '<p><label>Observed result <select id="p78status"><option>NOT_RUN</option><option>BLOCKED</option><option>FAIL</option><option>PASS</option></select></label> <label>Severity <select id="p78severity"><option>UNKNOWN</option><option>NONE</option><option>P0</option><option>P1</option><option>P2</option><option>P3</option></select></label></p>'+
+    '<p><label>Original preserved? <select id="p78source"><option value="unknown">Unknown</option><option value="yes">Verified yes</option><option value="no">Verified no</option></select></label> <label>Owner review gate? <select id="p78owner"><option value="unknown">Unknown</option><option value="yes">Verified yes</option><option value="no">Verified no</option></select></label></p>'+
+    '<p><label>Owned count before <input id="p78before" type="number" min="0" max="20000" inputmode="numeric"></label> <label>After <input id="p78after" type="number" min="0" max="20000" inputmode="numeric"></label></p>'+
     '<p><label>Original JPEG (hash locally, never retain bytes) <input id="p78jpeg" type="file" accept="image/jpeg"></label></p>'+
     '<p><label>Private supporting artifact (hash locally, never retain bytes) <input id="p78proof" type="file"></label></p>'+
     '<p><button type="button" id="p78timer">Start timing</button> <button type="button" id="p78finish">End timing</button> <button type="button" id="p78mark">Record manual observation</button></p>'+
@@ -193,7 +203,8 @@
     osVersion:$('p78os').value,browserVersion:$('p78browser').value,
     operatorDeclaredPhysical:$('p78physical').checked,
     viewportWidth:root.innerWidth,pixelRatio:root.devicePixelRatio,
-    memoryTier:'unknown',network:'unknown',cache:'unknown'});
+    memoryTier:$('p78memory').value,network:$('p78network').value,cache:$('p78cache').value,
+    battery:$('p78battery').value,charging:$('p78charging').value});
     started=null;elapsed=null;originalSha256=null;evidenceSha256=null;
     say('Session started in memory. Manual observations do not prove physical acceptance.');};
    $('p78jpeg').onchange=async()=>{try{const file=$('p78jpeg').files?.[0];
@@ -210,7 +221,11 @@
     say('Manual stage interval recorded: '+elapsed+' ms. Not a model-only time.');};
    $('p78mark').onclick=()=>{try{if(!session)error('SESSION_REQUIRED');
     const c=record(session,{caseId:$('p78case').value,status:$('p78status').value,
-     durationMs:elapsed,originalSha256,evidenceSha256});
+     durationMs:elapsed,originalSha256,evidenceSha256,severity:$('p78severity').value,
+     sourcePreserved:$('p78source').value==='unknown'?null:$('p78source').value==='yes',
+     ownerGate:$('p78owner').value==='unknown'?null:$('p78owner').value==='yes',
+     itemCountBefore:$('p78before').value===''?null:Number($('p78before').value),
+     itemCountAfter:$('p78after').value===''?null:Number($('p78after').value)});
     say('Recorded '+c.caseId+' as '+c.status+' (operator claim only). Release remains BLOCKED.');
    }catch(e){say('Not recorded: '+e.message.replace(/^P78_/,'').slice(0,70));}};
    $('p78public').onclick=()=>{try{if(!session)error('SESSION_REQUIRED');
