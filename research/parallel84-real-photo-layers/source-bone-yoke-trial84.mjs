@@ -88,6 +88,10 @@ function smoothSurfaceNormals(geometry,surfaceVertices){
 }
 const smooth=T.MathUtils.smoothstep;
 const SHA='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
+const PHOTO_DENIM84=Object.freeze({
+ 'commons-public-domain-jeans-2005':'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+ 'commons-cc-by-sa-denimjeans2-2008':'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a'
+});
 const protectedAttributes=['panelPosition','panelNormal','skinIndex','skinWeight','uv'];
 const code=reason=>({
  schema:'parallel84-source-bone-shoulder-yoke/v1',status:'REFUSED_UNCHANGED',
@@ -130,8 +134,8 @@ export function trialSourceBoneShoulderYoke84({
     !Array.isArray(shirt?.meshes)||shirt.meshes.length<3||
     !Array.isArray(pants?.meshes)||pants.meshes.length!==1||
     pants.stats?.photoApplied!==true||
-    !pants.stats?.sourceSHA256||
-    !/^[a-f0-9]{64}$/.test(pants.stats.sourceSHA256)||
+    !Object.hasOwn(PHOTO_DENIM84,pants.stats?.sourceId)||
+    pants.stats?.sourceSHA256!==PHOTO_DENIM84[pants.stats.sourceId]||
     pants.meshes[0]?.skeleton?.bones?.length!==163)
   return initial;
  const meshes=shirt.meshes.filter(m=>m?.isSkinnedMesh&&
