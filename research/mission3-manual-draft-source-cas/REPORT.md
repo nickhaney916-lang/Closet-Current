@@ -4,7 +4,7 @@
 
 ## Parent and scope
 Exact parent: Mission 3 PR #974 HEAD `2c882d7f7b0a925ba78a5408b2481f1c5a762eb5`.
-Six changed paths only: `public/app.js`, three existing private save/color provenance regression test suites, this report, and no-deploy Actions workflow.
+Seven changed paths only: `public/app.js`, three existing private save/color provenance regression test suites, one native two-tab browser fixture, this report, and no-deploy Actions workflow.
 
 ## Data-loss hazard and fix
 Previously the ordinary Adjust → Save action could persist the current tab's stale whole pending-photo `nextBatch` after writing a garment. If another tab with the same signed owner captured a second original meanwhile, that original could disappear. Saved-row Adjust also unnecessarily replaced all draft rows.
@@ -24,3 +24,5 @@ This protects **manual Save**, not the other independent `persistDraft` call sit
 Never lift Family Alpha HOLD #255 or merge/deploy this branch without explicit owner acceptance.
 
 CI compatibility fix: inherited `review-color-provenance-23.test.cjs` now supplies an explicit opening-row draft snapshot to the isolated mock Adjust handler. The inherited test had mocked the save writer and did not provide this newly required input; color provenance assertions stay unchanged.
+
+CI browser compatibility fix: the real native same-owner browser collision probe now supplies an explicit would-be reviewed draft when testing an attempted new-item ID collision. This preserves the original collision test goal under the new required draft precondition.
