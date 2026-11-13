@@ -76,7 +76,18 @@ try{
      }
      Object.defineProperty(window,'Worker',{value:LocalReviewWorker,configurable:true});
     });
-    const page=await context.newPage();page.on('pageerror',e=>errors.push({engine,width,error:String(e)}));
+    const page=await context.newPage();
+    page.on('pageerror',e=>{
+     const error=String(e);
+     // This hermetic test intentionally blocks all off-host traffic. An
+     // optional PUBLIC trend-feed GET may be requested by unrelated startup
+     // code; a blocked feed cannot affect the signed-session or private
+     // photo assertions below. Do not suppress any auth/wardrobe errors.
+     if(/Fetch API cannot load/.test(error)&&
+        /raw\.githubusercontent\.com\/nickhaney916-lang\/Closet-Current\/main\/public\/trend-data\.json/.test(error))
+      return;
+     errors.push({engine,width,error});
+    });
     await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
     // Direct native IndexedDB seed uses a synthetic owner and original JPEG.
     // No auth bypass: the private app shell is never opened until the signed

@@ -93,6 +93,22 @@ try{
     });
     return {id:updated.id,color:updated.color,notes:updated.notes};
    });
+   // The ordinary Adjust-photo save must not overwrite the newer same-owner
+   // tab's revised garment or silently replace it as a "new" duplicate ID.
+   const saveAttempt=async expected=>a.evaluate(async({expected})=>{
+    const row=items.find(x=>x.id==='same-owner-delete-cas-original');
+    try{
+     await savePiece({...structuredClone(row),color:'Green',
+      notes:'Older tab must not win'},[],{expectedSavedRow:expected?structuredClone(row):null});
+     return {status:'unexpected-overwrite'};
+    }catch(error){return {status:'rejected',message:String(error?.message||error)};}
+   },{expected});
+   const staleSavedAdjust=await saveAttempt(true);
+   assert.equal(staleSavedAdjust.status,'rejected');
+   assert.match(staleSavedAdjust.message,/CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR/);
+   const collidingNewSave=await saveAttempt(false);
+   assert.equal(collidingNewSave.status,'rejected');
+   assert.match(collidingNewSave.message,/CLOSET_ALREADY_SAVED_RELOAD_WARDROBE/);
    // The still-open first tab has a stale BLUE saved-row snapshot. Exercise
    // the actual app.js crop callback against native same-owner IndexedDB:
    // the second tab's newer RED original must survive a stale image crop.
@@ -189,6 +205,7 @@ try{
    results.push({engine,width,originalSHA256:originalSHA,
     nativeIndexedDB:true,staleTwoTabDeleteRejected:true,
     staleTwoTabCropRejected:true,freshReviewedCropSucceeds:true,
+    staleSameOwnerPhotoSaveRejected:true,collidingNewPhotoSaveRejected:true,
     originalPreservedAfterConflict:true,reviewedLatestDeleteSucceeds:true,
     secondOwnerUntouched:true,hostedSupabase:false,physicalPhone:false,
     screenshotSHA256:createHash('sha256').update(image).digest('hex')});

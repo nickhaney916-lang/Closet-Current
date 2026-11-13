@@ -28,8 +28,10 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
  const db={name:'closet-current-user-'+owner,close(){closes++;},
   transaction(type){
    transactionCount++;
-   const storeName=Array.isArray(type)?null:type;
-   const transaction={oncomplete:null,onerror:null,onabort:null,
+   const storeName=Array.isArray(type)?null:type,pending=[];
+   let aborted=false,commitScheduled=false;
+   const transaction={oncomplete:null,onerror:null,onabort:null,error:null,
+    abort(){aborted=true;queueMicrotask(()=>transaction.onabort?.());},
     objectStore(store){
      const id=store||storeName;
      return {
@@ -42,28 +44,46 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
        });
        return req;
       },
-      get(){
+      get(key){
        const req={};
        queueMicrotask(async()=>{
-        draftGate.resolve();
-        if(holdDraft)await draftGate.release;
-        req.result={id:'draft',batch:structuredClone(data.draft)};req.onsuccess?.();
+        if(id==='state'){
+         draftGate.resolve();
+         if(holdDraft)await draftGate.release;
+         req.result={id:'draft',batch:structuredClone(data.draft)};
+        }else if(id==='items')
+         req.result=structuredClone(data.items.find(x=>x.id===key));
+        else throw Error('Unexpected private store '+id);
+        if(!aborted)req.onsuccess?.();
        });
        return req;
       },
-      put(value){writes.push({store:id,value:structuredClone(value)});}
+      put(value){
+       if(aborted)throw Error('Aborted transaction may not write');
+       const change={store:id,value:structuredClone(value)};
+       writes.push(change);pending.push(change);
+       // Match IndexedDB: a readwrite transaction remains active for the
+       // get() callback; its writes only commit after the CAS decision.
+       if(Array.isArray(type)&&!commitScheduled){
+        commitScheduled=true;
+        queueMicrotask(async()=>{
+         if(holdCommit)await commitGate.release;
+         if(aborted)return;
+         for(const w of pending){
+          if(w.store==='items'){
+           const i=data.items.findIndex(x=>x.id===w.value.id);
+           if(i<0)data.items.push(structuredClone(w.value));
+           else data.items[i]=structuredClone(w.value);
+          }
+          if(w.store==='state')data.draft=structuredClone(w.value.batch);
+         }
+         transaction.oncomplete?.();
+        });
+       }
+      }
      };
     }
    };
-   // readwrite tx completion in a later microtask; optionally postpone.
-   if(Array.isArray(type))queueMicrotask(async()=>{
-    if(holdCommit)await commitGate.release;
-    for(const w of writes){
-     if(w.store==='items')data.items=[w.value];
-     if(w.store==='state')data.draft=w.value.batch;
-    }
-    transaction.oncomplete?.();
-   });
    return transaction;
   }
  };
@@ -75,7 +95,9 @@ function fakeDB(owner,{items=[owner===a?oldRow:newRow],draft=[{...items[0],id:'d
  get closes(){return closes;},get transactionCount(){return transactionCount;}};
 }
 function saveFixture({holdProof=true,holdQueue=false,holdCommit=false}={}){
- const initial=fakeDB(a,{holdCommit}),next=fakeDB(b);
+ // Saved-photo tests exercise genuinely new IDs; existing-row conflicts are
+ // covered separately by mission3-saved-photo-insert-cas.test.cjs.
+ const initial=fakeDB(a,{holdCommit,items:[],draft:[]}),next=fakeDB(b);
  const proof=deferred(),queue=deferred(),events=[];
  const auth={user:{id:a},assertCurrent(){}};
  const ctx={
