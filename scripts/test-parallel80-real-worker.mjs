@@ -102,7 +102,6 @@ try {
       }
       if (!optInRejected || progress !== 0)
         throw Error("Consent gate started model setup");
-      await call({ type: "load" }, 240000);
       const canvas = document.createElement("canvas");
       canvas.width = 384;
       canvas.height = 512;
@@ -123,6 +122,65 @@ try {
         evidence = await evidence80(item, scope),
         sourceHash = await sourceCodeHash80(),
         metadata = await (await fetch("/recognition-vectors.json")).json();
+      const missingSession = { ...evidence };
+      delete missingSession.sessionId;
+      const malformed = [
+        missingSession,
+        { ...evidence, privatePhoto: image },
+        {
+          ...evidence,
+          segmented: true,
+          unitStatus: "separate_confirmed",
+          maskSha256: null,
+        },
+      ];
+      let malformedRejected = 0;
+      for (const invalidEvidence of malformed) {
+        let rejected = false;
+        try {
+          await call(
+            {
+              type: "subtype-candidates80",
+              image,
+              subtype80: {
+                schema: VERSION,
+                enabled: true,
+                consent: true,
+                categoryOwnerReviewed: true,
+                evidence: invalidEvidence,
+              },
+            },
+            10000,
+          );
+        } catch {
+          rejected = true;
+        }
+        if (!rejected || progress !== 0)
+          throw Error("Malformed evidence started model setup");
+        malformedRejected++;
+      }
+      let wrongInputBeforeSetup = false;
+      try {
+        await call(
+          {
+            type: "subtype-candidates80",
+            image,
+            subtype80: {
+              schema: VERSION,
+              enabled: true,
+              consent: true,
+              categoryOwnerReviewed: true,
+              evidence: { ...evidence, inputSha256: "0".repeat(64) },
+            },
+          },
+          10000,
+        );
+      } catch {
+        wrongInputBeforeSetup = true;
+      }
+      if (!wrongInputBeforeSetup || progress !== 0)
+        throw Error("Wrong input started model setup");
+      await call({ type: "load" }, 240000);
       const started = performance.now(),
         output = await call({
           type: "subtype-candidates80",
@@ -208,6 +266,8 @@ try {
         workerInferenceMs: ms,
         progressEvents: progress,
         optInRejectedBeforeSetup: optInRejected,
+        malformedEvidenceRejectedBeforeSetup: malformedRejected,
+        inputMismatchRejectedBeforeSetup: wrongInputBeforeSetup,
         inputMismatchRejected: mismatchRejected,
         originalBytesUnchanged: true,
         automaticSubtypeCertificates: 0,
