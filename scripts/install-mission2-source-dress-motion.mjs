@@ -14,10 +14,10 @@ if(donor===cwd||donor==='/'||cwd.startsWith(donor+'/')||
 const donorModule=join(donor,'research/mission2-source-length/source-dress-motion.mjs');
 await mkdir(dirname(donorModule),{recursive:true});
 await copyFile('research/mission2-source-length/source-dress-motion.mjs',donorModule);
-// The source-motion module now imports the immutable private C46/C47 receipt
-// validator: ship its exact research sibling into ONLY this disposable donor.
-await copyFile('research/mission2-source-length/source-dress-moving-surface.mjs',
- join(donor,'research/mission2-source-length/source-dress-moving-surface.mjs'));
+// The research-only source dress motion module needs a tiny, dependency-free
+// receipt verifier, never the full BVH collision library in the WebGL page.
+await copyFile('research/mission2-source-length/source-dress-receipt-lock.mjs',
+ join(donor,'research/mission2-source-length/source-dress-receipt-lock.mjs'));
 const patch=async(file,from,to)=>{
  const path=join(donor,file),text=await readFile(path,'utf8');
  assert.equal(text.split(from).length,2,'P2-C36 pinned genuine P175 donor changed: '+file);
