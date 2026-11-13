@@ -64,6 +64,11 @@ function attachLearningConsent72(form,scope){
 async function confirmedLearningValue72(value,consent,scope,reviewedKeys=['category','itemType']){
  if(typeof ClothingMemory==='undefined')return value;
  if(!learningMode72())return ClothingMemory.confirm(value);
+ // A two-region pair is owner grouped but not an independent source-labeled
+ // recognition correction. Do not mine pair/fragment decisions as class truth.
+ if(value.shoePair||value.combinedFragments70||value.reconciliation70Status){
+  delete value.confirmedDetails;delete value.correctionReceipt72;return value;
+ }
  // Never convert an automatic or unchecked save into reusable human truth.
  delete value.confirmedDetails;delete value.correctionReceipt72;
  if(!consent||!scope)return value;
@@ -183,7 +188,8 @@ function adjustPhoto(item){
  // owner-review path and also fence Cancel/Remove/Escape and field edits while
  // the private write is pending. This research branch is NOT deployed.
  let saveInFlight=false;
- let confirmReview=null,save=null,reviewStatus=null;
+ let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null;
+ const reviewedKeys72=new Set(['category','itemType']);
  const form=node('form'),draft=structuredClone(item);
  const reviewedCore=()=>{
   const color=String(draft.color||'').trim();
@@ -202,8 +208,11 @@ function adjustPhoto(item){
    'Choose a garment category and color, and resolve any garment pairing or duplicate warning, before confirming.';
   return valid;
  };
- const collect=clothingFields(form,draft,()=>{
-  if(confirmReview)confirmReview.checked=false;canSaveReview();
+ const collect=clothingFields(form,draft,key=>{
+  if(confirmReview)confirmReview.checked=false;
+  if(learningCheck72)learningCheck72.checked=false;
+  if(['pattern','sleeveLength','fit'].includes(key))reviewedKeys72.add(key);
+  canSaveReview();
  });
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
@@ -240,6 +249,7 @@ function adjustPhoto(item){
   confirmReview.onchange=canSaveReview;
   form.append(approval,reviewStatus);canSaveReview();
  }
+ learningCheck72=attachLearningConsent72(form,learningScope72());
  cancel.type=remove.type='button';cancel.onclick=()=>{if(!saveInFlight)dialog.close();};
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);item.userAdjusted=true;
  remove.onclick=async()=>{if(saveInFlight){message('This photo is currently being saved.');return;}try{if(items.some(x=>x.id===item.id))await removeItem(item.id);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch{message('Could not remove this photo. Try again.');}};
@@ -264,16 +274,26 @@ function adjustPhoto(item){
   for(const field of lockedFields)field.input.disabled=true;
   try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
-  if(typeof ClothingMemory!=='undefined')Object.assign(value,ClothingMemory.confirm(value));
   if(value.color&&value.colorSource==='photo-estimate')value.colorSource='user';
-  await savePiece(value,batch.filter(x=>x.id!==item.id));
-  const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,value);else items.push(value);
+  const scope72=learningScope72(),consent72=learningCheck72?.checked===true;
+  const source72=item.image,origin72=item.recognitionPhoto?.image,unit72=item.reconciliation70?.maskSha256;
+  // Keeping the P844 transaction lock while hashing source/owner evidence
+  // prevents a duplicate save or a late learning acknowledgement.
+  const reviewed72=await confirmedLearningValue72(value,consent72,scope72,[...reviewedKeys72]);
+  if(learningMode72()&&(!dialog.open||scope72!==learningScope72()||
+    source72!==item.image||origin72!==item.recognitionPhoto?.image||
+    unit72!==item.reconciliation70?.maskSha256||
+    !batch.some(x=>x===item)||(!item.reconciliation70&&!unit72?false:!unit70OwnerEvidenceValid({...item,category:value.category}))))
+   throw Error('P847_STALE_LEARNING_OR_SOURCE');
+  await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
+  const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
  }catch{
   saveInFlight=false;
   for(const field of lockedFields)field.input.disabled=field.disabled;
   cancel.disabled=false;remove.disabled=false;
   save.textContent='Save changes';
+  if(learningCheck72)learningCheck72.checked=false; // consent must be deliberate again after a failed write
   if(explicitReview)canSaveReview();else save.disabled=false;
   message('Could not save changes. Try again.');
  }};
