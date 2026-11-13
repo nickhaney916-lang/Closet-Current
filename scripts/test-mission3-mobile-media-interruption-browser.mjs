@@ -89,7 +89,7 @@ try{
      sourceSHA256:shaA,sourceHashVerified:true,
      singleGarmentVerified:false,localAnalyzed:false
     });
-    batch=[a];await persistDraft({required:true});
+    batch=[a];await persistDraft({required:true,mode:'insert',record:a});
     const initiallySaved=(await draft(db)).map(x=>x.id);
     // Hold the actual upload handler at the real video element's
     // loadedmetadata wait. The media itself is synthetic invalid bytes,
