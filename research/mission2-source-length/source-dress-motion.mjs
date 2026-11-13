@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null,sweptSelfContactAudit44=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -134,7 +134,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function')||
     (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function')||
     (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function')||
-    (sweptHighCadenceAudit43!==null&&typeof sweptHighCadenceAudit43!=='function'))
+    (sweptHighCadenceAudit43!==null&&typeof sweptHighCadenceAudit43!=='function')||
+    (sweptSelfContactAudit44!==null&&typeof sweptSelfContactAudit44!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -392,6 +393,31 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state);
   sweptHighCadenceAuditObserved43=true;
  }
+ // C44 opt-in actual photographed mesh self-contact at a staged pose.
+ // Shared original topology joins are ignored; disconnected face contacts
+ // remain unresolved and refuse any original source buffer commit.
+ let selfContactAuditObserved44=false;
+ if(sweptSelfContactAudit44!==null){
+  const evidence=sweptSelfContactAudit44({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(evidence?.schema!=='M2-source-dress-self-contact-v1'||
+     evidence.originalSourceAndSkinVerified!==true||
+     evidence.actual163BoneSkinnedPose!==true||
+     evidence.completeNonadjacentFaceAudit!==true||
+     !Number.isSafeInteger(evidence.originalFaceCount)||
+     evidence.originalFaceCount<1||
+     evidence.checkedOriginalFaces!==evidence.originalFaceCount||
+     !Number.isSafeInteger(evidence.unresolvedPairs)||
+     evidence.unresolvedPairs!==0||
+     evidence.topologicalNeighborsExcluded!==true||
+     evidence.disconnectedSeamCollisionsUnresolved!==true||
+     evidence.actualContinuousSelfContactCertified!==false||
+     evidence.selfContactPhysicsCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C44 incomplete or possibly self-contacting source fabric refused');
+  checkProvenance(mesh,state);
+  selfContactAuditObserved44=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -426,6 +452,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionContinuousBoneRotationCertified42:false,
   sourceDressMotionHighCadenceObserved43:sweptHighCadenceAuditObserved43,
   sourceDressMotionHighFrequencyBoneMotionCertified43:false,
+  sourceDressMotionSelfContactAuditObserved44:selfContactAuditObserved44,
+  sourceDressMotionContinuousSelfContactCertified44:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
