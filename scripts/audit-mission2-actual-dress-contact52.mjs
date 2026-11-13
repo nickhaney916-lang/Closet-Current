@@ -135,3 +135,69 @@ if(process.env.PHOTO_DRESS_DISTANCE53==='1'){
   JSON.stringify(output53,null,2)+'\n');
  console.log('M2_C53_REAL_LICENSED_P175_DISTANCE_SAFE_SUMMARY',JSON.stringify(output53));
 }
+
+if(process.env.PHOTO_DRESS_TOPOLOGY54==='1'){
+ assert.equal(process.env.PHOTO_DRESS_DISTANCE53,'1',
+  'C54 requires independent original and posed C53 contact-distance evidence');
+ const topologyNames=[
+  'sourceCoincidentFaceCandidates','sourceCoincidentEdgeCandidates',
+  'sourceCoincidentSinglePointCandidates',
+  'sourceCoincidentButUnsafeSkinRestOrPose',
+  'sourceIndependentZeroDistancePairs'
+ ];
+ const evidence=receipts.map(r=>({
+  source:r.originalSourceTopology54,posed:r.posedSourceTopology54,
+  complete:r.fullOriginalSourceTopologyAuditCompleted54,
+  zeroSource:r.refinedOriginalDistance53.geometricZeroOrOverlapUnresolved,
+  zeroPosed:r.refinedPosedDistance53.geometricZeroOrOverlapUnresolved
+ }));
+ for(const w of evidence){
+  assert.equal(w.complete,true);
+  for(const [kind,t,expected] of [['source',w.source,w.zeroSource],
+   ['posed',w.posed,w.zeroPosed]]){
+   assert.equal(t.schema,'M2-original-source-zero-contact-topology-C54');
+   assert.equal(t.classificationComplete,true);
+   assert.equal(t.zeroDistancePairsClassified,expected);
+   assert.equal(topologyNames.reduce((count,key)=>count+t[key],0),expected,
+    'C54 must classify EACH actual original triangle zero-distance pair exactly once: '+kind);
+   assert.ok(t.sourceIndexSharedPairsExcludedBeforeDistance>=0);
+   assert.equal(t.allSourceCorrespondencesCheckedAgainst163BonePose,true);
+   assert.equal(t.sourceCoincidenceNotAHumanVerifiedSewingSeam,true);
+   assert.equal(t.sourceDisconnectedFacesNotAutomaticallySeparated,true);
+   assert.equal(t.sourceCoordinateDuplicateNotPermissionToWeld,true);
+   assert.equal(t.originalPhotoVertexCoordinatesExposed,false);
+   assert.equal(t.originalSourceFaceIdsExposed,false);
+   assert.equal(t.releaseAuthorized,false);
+   assert.equal(t.familyAlpha,'HOLD');
+  }
+ }
+ for(const row of evidence.slice(1))
+  assert.deepEqual(row,evidence[0],
+   'source and actual posed topology distribution may not vary across same skinned P61 photograph viewport');
+ const first54=evidence[0];
+ const output54={
+  schema:'M2-P2-C54-licensed-original-163bone-source-topology',
+  originalPhotographedDressSourceFaces:first.originalSourceFaces,
+  actualLicensedDressViewportRuns:3,
+  sourceZeroDistanceCandidates:first54.zeroSource,
+  posedZeroDistanceCandidates:first54.zeroPosed,
+  sourceTopologyBins:Object.fromEntries(topologyNames.map(k=>[k,first54.source[k]])),
+  posedTopologyBins:Object.fromEntries(topologyNames.map(k=>[k,first54.posed[k]])),
+  indexedConnectedSourcePairsExcludedFromDistanceSweep:{
+   original:first54.source.sourceIndexSharedPairsExcludedBeforeDistance,
+   posed:first54.posed.sourceIndexSharedPairsExcludedBeforeDistance
+  },
+  signedOriginalPhotoSHAOnly:true,
+  actualSkinned163BoneSkinRestCompared:true,
+  originalSourceAndPhotoBytesImmutable:true,
+  allSourceGeometryIdentifiersWithheld:true,
+  allClassificationsAreCANDIDATESNotCertifiedSewingSeams:true,
+  noSourceUVWeldingOrGeometryEdit:true,
+  noFullContinuousClothSelfContactProof:true,
+  noHumanPhotoRealismApproval:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-topology54.json',
+  JSON.stringify(output54,null,2)+'\n');
+ console.log('M2_C54_REAL_LICENSED_SOURCE_TOPOLOGY_SAFE_SUMMARY',JSON.stringify(output54));
+}
