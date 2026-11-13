@@ -137,3 +137,50 @@ test('P2-C36 real P61 photographic rest coordinates remain intact when no conven
  assert.throws(()=>sampleSourceDressMotion36(second,root,{phase:.1}),
   /original source photograph projection or anatomical skin changed/);
 });
+
+test('P2-C37 genuine skinned dress preserves untouched source photo normals and caps moved-panel shading changes',()=>{
+ const {root,dress}=fixture(),mesh=dress.mesh;
+ const original=snapshot(mesh);
+ const first=sampleSourceDressMotion36(dress,root,{phase:.25});
+ const after=snapshot(mesh);
+ let staticCount=0,movingCount=0;
+ for(let i=0;i<after.position.length/3;i++){
+  const j=i*3;
+  const unchanged=[0,1,2].every(k=>original.position[j+k]===after.position[j+k]);
+  if(unchanged){
+   staticCount++;
+   for(let k=0;k<3;k++)assert.equal(after.normal[j+k],original.normal[j+k],
+    'unchanged photo-facing garment may not acquire synthetic recomputed normals');
+  }else{
+   movingCount++;
+   const a=new THREE.Vector3(...original.normal.slice(j,j+3)).normalize();
+   const b=new THREE.Vector3(...after.normal.slice(j,j+3)).normalize();
+   assert.ok(a.angleTo(b)<=10*Math.PI/180+1e-5,
+    'photographed dress surface may not acquire abrupt normal rotations');
+  }
+ }
+ assert.ok(staticCount>=100);
+ assert.ok(movingCount>=100);
+ assert.equal(first.stats.sourceDressMotionStaticNormalsPreserved37,staticCount);
+ assert.equal(first.stats.sourceDressMotionNormalTurnCapDegrees37,10);
+ assert.ok(first.stats.sourceDressMotionMaxNormalTurnDegrees37<=10.001);
+ assert.equal(first.stats.sourceDressMotionProtectsPhotoNormals37,true);
+ assert.equal(first.stats.sourceDressMotionHumanVisualAcceptance,false);
+ assert.equal(first.stats.releaseAuthorized,false);
+ const second=sampleSourceDressMotion36(first,root,{phase:.75});
+ const repeat=sampleSourceDressMotion36(second,root,{phase:.25});
+ assert.deepEqual(snapshot(mesh).normal,after.normal,
+  'repeatable source-cloth phase must preserve the same normal field exactly');
+ assert.equal(repeat.stats.sourceDressMotionProtectsPhotoNormals37,true);
+});
+test('P2-C37 changed original dress triangle topology fails closed without altering normals or photo',()=>{
+ const {root,dress}=fixture(),mesh=dress.mesh;
+ const first=sampleSourceDressMotion36(dress,root,{phase:.25});
+ const intact=snapshot(mesh);
+ const index=mesh.geometry.getIndex();
+ assert.ok(index,'genuine source dress triangle index is required in test');
+ index.array[0]=(index.array[0]+3)%mesh.geometry.getAttribute('position').count;
+ assert.throws(()=>sampleSourceDressMotion36(first,root,{phase:.5}),/triangle topology changed/);
+ assert.deepEqual(snapshot(mesh).position,intact.position);
+ assert.deepEqual(snapshot(mesh).normal,intact.normal);
+});
