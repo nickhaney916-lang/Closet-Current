@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and seven-path no-deploy allowlist
+      - name: Exact parent and eight-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-photo-crop-owner-session-lease.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-saved-photo-insert-cas/REPORT.md|.github/workflows/mission3-saved-photo-insert-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-photo-crop-owner-session-lease.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|scripts/test-mission3-offline-auth-recovery-browser.mjs|research/mission3-saved-photo-insert-cas/REPORT.md|.github/workflows/mission3-saved-photo-insert-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -37,6 +37,7 @@ jobs:
           node --check tests/mission3-saved-photo-insert-cas.test.cjs
           node --check tests/mission3-photo-crop-owner-session-lease.test.cjs
           node --check tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs
+          node --check scripts/test-mission3-offline-auth-recovery-browser.mjs
           node --check scripts/test-mission3-same-owner-delete-cas-browser.mjs
           node --test tests/mission3-saved-photo-insert-cas.test.cjs tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs tests/mission3-photo-crop-owner-session-lease.test.cjs tests/mission3-crop-saved-row-cas.test.cjs tests/mission3-private-mutation-epoch.test.cjs tests/mission3-same-owner-delete-cas.test.cjs tests/auth.test.cjs tests/mission3-live-session-refresh-cas.test.cjs tests/mission3-offline-auth-refresh-recovery.test.cjs tests/auth-review-session-36.test.mjs tests/wardrobe-index-02.test.mjs tests/mission3-private-write-queue-owner-lease.test.cjs tests/mission3-mobile-media-interruption.test.cjs tests/mission3-gallery-decode-session-cancellation.test.cjs tests/mission3-video-private-draft-lease.test.cjs tests/mission3-late-owner-session-capture.test.cjs tests/photo-import.test.cjs tests/mission3-capture-operation-epoch.test.cjs tests/mission3-recognition-session-epoch.test.cjs tests/mission3-camera-interruption.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs tests/capture.test.cjs tests/capture-proof-01.test.mjs
 
@@ -75,7 +76,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict seven-path same-parent diff gate
+      - name: Strict eight-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -84,7 +85,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-photo-crop-owner-session-lease.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-saved-photo-insert-cas/REPORT.md|.github/workflows/mission3-saved-photo-insert-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-photo-crop-owner-session-lease.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|scripts/test-mission3-offline-auth-recovery-browser.mjs|research/mission3-saved-photo-insert-cas/REPORT.md|.github/workflows/mission3-saved-photo-insert-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
