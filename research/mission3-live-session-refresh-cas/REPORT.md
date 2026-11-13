@@ -9,7 +9,7 @@ An authenticated owner can request a token through `closetAuth.getAccessToken({f
 ## Isolated runtime implementation
 
 - `stillCurrent()` now requires both the original login epoch and an **exact-match serialized credential snapshot** (`storedSession`) in same-origin localStorage. An externally rotated/replaced token, including one with an unchanged account ID and epoch, revokes the prior tab's authority at its next event/owner check; no stale refresh may mutate the newer tab's login.
-- At in-session refresh start, capture the exact expected owner ID, serialized credential and refresh token before awaiting the network. Once the request returns, reassert owner, auth object, and unchanged credential bytes before `showUser()`; accept only the verified original user and a new access and refresh token. No refresh result may overwrite a newer snapshot.
+- At in-session refresh start, capture the exact expected owner ID, serialized credential and refresh token before awaiting the network. Once the request returns, reassert owner and unchanged credential bytes before `showUser()`; accept only the verified original user and a new access and refresh token. No refresh result may overwrite a newer snapshot.
 - On confirmed invalid/revoked refresh (401 or explicit invalid grant/invalid refresh token), delete the credential **only if this tab still owns the unchanged exact snapshot**, lock the app shell and trigger existing owner-private cancellation/IndexedDB cleanup. A cross-tab credential mutation is protected from deletion.
 - On temporary network errors, preserve an existing verified in-memory owner and its unchanged credential, with no fabricated successful token update. Subsequent valid refresh may recover as normal.
 - Existing offline boot recovery from PR #949 remains fail-closed; no offline sign-in bypass and no hosting/production changes. Other tabs may require a fresh verified reload after token rotation, which is intentionally safer than sharing stale refresh tokens.
@@ -20,7 +20,9 @@ An authenticated owner can request a token through `closetAuth.getAccessToken({f
 
 `scripts/test-mission3-live-session-refresh-cas-browser.mjs` launches **actual Chromium and WebKit at 320/390/430 widths** and an origin-sharing second tab. It uses a native owner-private IndexedDB synthetic original JPEG whose SHA-256 remains stable while the first tab's held refresh response is overtaken by the second tab's same-epoch token rotation. It verifies no old overwrite, app shell lock, invalid 401 lock/removal, temporary network failure retained session and successful re-verification. Auth endpoint is route-stubbed locally; all other external requests are blocked. Screenshots and SHA receipts are synthetic, not physical device or live Supabase evidence.
 
-New **five-path exact-parent no-deploy CI** runs these tests, full serial Node suite and all inherited Mission 3 browser/RLS tests. **Do not claim this milestone complete until exact-head CI passes.**
+New **six-path exact-parent no-deploy CI** runs these tests, full serial Node suite and all inherited Mission 3 browser/RLS tests. **Do not claim this milestone complete until exact-head CI passes.**
+
+The existing `tests/auth.test.cjs` expected a verified refresh naming another user to leave the original wardrobe unlocked; this was explicitly changed to assert a locked app shell, null current user, and no deletion or replacement of the previous credential. The revised expectation preserves the stronger, fail-closed authorization model.
 
 ## Release blockers remain
 
