@@ -261,6 +261,69 @@ function removeItem(id,expected){
   }catch(error){reject(error);}
  })).then(async value=>{assertLease();await nativeIndex07Refresh();assertLease();return value;});
 }
+// Mutate only owner-reviewed pending photo rows against their actual durable
+// versions. Never replace the whole persisted batch with a stale tab snapshot.
+// A change is {before, after}; after=null means delete this exact reviewed row.
+function commitReviewedDraftCAS(changes,assertCurrent=()=>{}){
+ const {ownerDB,assertLease}=ownerWardrobeMutationLease();
+ const frozen=changes.map(change=>({
+  before:change.before?structuredClone(change.before):null,
+  after:change.after?structuredClone(change.after):null
+ }));
+ if(!frozen.length)return Promise.resolve(0);
+ const check=()=>{assertLease();assertCurrent();};
+ // Refuse ambiguous IDs before opening a readwrite transaction.
+ const requested=new Set();
+ for(const change of frozen){
+  const before=change.before,after=change.after;
+  if(!before||typeof before.id!=='string'||!before.id||requested.has(before.id)||
+     (after&&after.id!==before.id)||
+     (after&&(after.ownerId!==before.ownerId||
+       after.sourceSHA256!==before.sourceSHA256||
+       after.originalPhoto?.image!==before.originalPhoto?.image||
+       after.originalPhoto?.sha256!==before.originalPhoto?.sha256)))
+   return Promise.reject(Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS'));
+  requested.add(before.id);
+ }
+ return queued(()=>new Promise((resolve,reject)=>{
+  let failure;
+  try{
+   check();
+   const tx=ownerDB.transaction('state','readwrite'),store=tx.objectStore('state');
+   const request=store.get('draft');
+   const abort=error=>{failure=error;try{tx.abort();}catch{}};
+   request.onsuccess=()=>{
+    try{
+     check();
+     const rows=request.result?.batch;
+     if(!Array.isArray(rows))throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+     const changesById=new Map(frozen.map(change=>[change.before.id,change]));
+     const matches=new Map();
+     for(const row of rows)if(changesById.has(row.id)){
+      matches.set(row.id,(matches.get(row.id)||0)+1);
+      const before=changesById.get(row.id).before;
+      if(JSON.stringify(normalizeClothing(row))!==JSON.stringify(normalizeClothing(before)))
+       throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+     }
+     for(const id of requested)if(matches.get(id)!==1)
+      throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+     // Preserve all other pending original photographs, including records
+     // captured in another same-owner tab while this editor was open.
+     const next=[];
+     for(const row of rows){
+      const change=changesById.get(row.id);
+      if(!change)next.push(row);
+      else if(change.after)next.push(change.after);
+     }
+     store.put({id:'draft',batch:next});
+    }catch(error){abort(error);}
+   };
+   request.onerror=()=>abort(request.error||Error('Private draft read failed'));
+   tx.oncomplete=()=>{try{check();resolve(frozen.length);}catch(error){reject(error);}};
+   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Private draft update interrupted'));
+  }catch(error){reject(error);}
+ }));
+}
 function persistDraft({required=false}={}){
  const owner=window.closetAuth?.user?.id,ownerDB=db;
  if(!ownerDB){
@@ -456,6 +519,7 @@ function cropClothingPhoto(item){
  // free-standing upsert. Snapshot BEFORE image decoding and model work so
  // another same-owner tab cannot be overwritten by the delayed crop.
  const expectedSavedCropRow=items.includes(item)?structuredClone(item):null;
+ const expectedDraftCropRow=!expectedSavedCropRow&&batch.includes(item)?structuredClone(item):null;
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
   isCurrent:()=>{
@@ -496,17 +560,9 @@ function cropClothingPhoto(item){
    // another tab may have edited/deleted the row while this crop was open.
    // Unsaved captures remain drafts in their original owner's private DB.
    if(expectedSavedCropRow)await saveEditedGarment(value,expectedSavedCropRow);
-   else await queued(()=>new Promise((resolve,reject)=>{
-    try{
-     assertCrop();
-     const snapshot=batch.map(x=>x===item?value:x);
-     const tx=ownerDB.transaction('state','readwrite');
-     tx.objectStore('state').put({id:'draft',batch:snapshot});
-     tx.oncomplete=()=>{try{assertCrop();resolve();}catch(error){reject(error);}};
-     tx.onerror=()=>reject(tx.error);
-     tx.onabort=()=>reject(tx.error||Error('Crop draft transaction interrupted'));
-    }catch(error){reject(error);}
-   }));
+   else await commitReviewedDraftCAS([
+    {before:expectedDraftCropRow,after:value}
+   ],assertCrop);
    // An old transaction completion must never mutate a new owner's visible
    // photo, clear its recognition flags or render the wrong wardrobe.
    assertCrop();
@@ -520,6 +576,8 @@ function cropClothingPhoto(item){
   try{assertCrop();message(String(error?.message||error).includes(
    'CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR')
    ?'Another tab changed this saved garment. Your crop was not saved. Reload My Closet, then reopen Crop photo.'
+   :String(error?.message||error).includes('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS')
+   ?'Another tab changed this unfinished photograph. Nothing was overwritten. Reload Photo results and reopen Crop photo.'
    :'Could not complete this crop. Your saved photo is kept.');}catch{}
  });
 }
@@ -1346,7 +1404,24 @@ async function upload(file){
  }
 }
 $('upload').onchange=e=>{upload(e.target.files[0]);e.target.value='';};
-$('discard').onclick=()=>{if(batch.length&&confirm('Discard all unsaved images in this batch?')){batch=[];persistDraft();session=0;render();}};
+$('discard').onclick=async()=>{
+ if(!batch.length)return;
+ if(localPending.size||automaticRunning)return message('Finish the current photo checks before discarding unfinished photographs.');
+ const reviewed=batch.map(row=>({row,before:structuredClone(row)}));
+ if(!confirm('Discard these '+reviewed.length+' unfinished photographs? Other tabs will not be affected.'))return;
+ try{
+  await commitReviewedDraftCAS(reviewed.map(x=>({before:x.before,after:null})),()=>{
+   if(localPending.size||automaticRunning||reviewed.some(x=>
+      !batch.includes(x.row)||JSON.stringify(normalizeClothing(x.row))!==
+       JSON.stringify(normalizeClothing(x.before))))
+    throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+  });
+  const ids=new Set(reviewed.map(x=>x.before.id));
+  batch=batch.filter(row=>!ids.has(row.id));
+  for(const id of ids){sessionCapturedIds.delete(id);failedDraftCaptures.delete(id);}
+  session=0;render();
+ }catch(error){message('Unfinished photographs changed or could not be discarded. Your photos were preserved. Reload Photo results before trying again.');}
+};
 $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
   try{
    if(!window.restoreAtomic01Bridge)throw Error('Verified private recovery is not ready');
@@ -1504,7 +1579,24 @@ if(new URLSearchParams(location.search).get('index02')==='after'){
 
 
 for(const c of categories.slice(1))$('batchCategory').append(node('option',c));
-$('applyCategory').onclick=()=>{const category=$('batchCategory').value;if(!category)return message('Choose a category for this batch.');let count=0;for(const item of batch)if(item.category==='Uncategorized'){item.category=category;Object.assign(item,normalizeClothing(item));count++;}persistDraft();render();message(`Category applied to ${count} uncategorized candidates.`);};
+$('applyCategory').onclick=async()=>{
+ const category=$('batchCategory').value;if(!category)return message('Choose a category for this batch.');
+ if(localPending.size||automaticRunning)return message('Finish current photo checks before changing a batch category.');
+ const changed=batch.filter(item=>item.category==='Uncategorized').map(item=>({
+  item,before:structuredClone(item),after:normalizeClothing({...structuredClone(item),category})
+ }));
+ if(!changed.length)return message('There are no uncategorized photographs to change.');
+ try{
+  await commitReviewedDraftCAS(changed.map(x=>({before:x.before,after:x.after})),()=>{
+   if(localPending.size||automaticRunning||changed.some(x=>
+      !batch.includes(x.item)||JSON.stringify(normalizeClothing(x.item))!==
+       JSON.stringify(normalizeClothing(x.before))))
+    throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+  });
+  for(const x of changed)Object.assign(x.item,x.after);
+  render();message(`Category applied to ${changed.length} uncategorized candidates.`);
+ }catch(error){message('Another tab changed a pending photo. Your categories were not saved. Reload Photo results and try again.');}
+};
 
 for(const season of clothingSchema.seasons.slice(0,4))$('seasonFilter').append(node('option',season));for(const sleeve of clothingSchema.sleeve)$('sleeveFilter').append(node('option',sleeve));$('seasonFilter').onchange=render;$('sleeveFilter').onchange=render;
 
