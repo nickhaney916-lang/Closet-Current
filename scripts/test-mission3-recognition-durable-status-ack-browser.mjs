@@ -147,19 +147,9 @@ try{
     await b.evaluate(async()=>{
      const state=await readDraftFrom(db);
      const selected=state.find(x=>!x.localAnalyzed);
-     assertCurrentOwner();
-     const updated={...selected,color:'Owner verified maroon',userAdjusted:true};
-     await persistDraft({required:true,mode:'update',expected:selected,record:updated});
-    }).catch(async error=>{
-     // A browser script fixture should not rely on the name of an
-     // incidental helper; the actual per-row CAS is the authoritative API.
-     if(!String(error).includes('assertCurrentOwner'))throw error;
-     await b.evaluate(async()=>{
-      const state=await readDraftFrom(db);
-      const selected=state.find(x=>!x.localAnalyzed);
-      await persistDraft({required:true,mode:'update',expected:selected,
-       record:{...selected,color:'Owner verified maroon',userAdjusted:true}});
-     });
+     if(!selected)throw Error('Same-owner correction source missing');
+     await persistDraft({required:true,mode:'update',expected:selected,
+      record:{...selected,color:'Owner verified maroon',userAdjusted:true}});
     });
     await a.evaluate(()=>window.__releaseAck());
     assert.equal(await a.evaluate(()=>window.__ackResult),false);
@@ -177,7 +167,6 @@ try{
     // Simulated quota or pending cloud marker refusal must not ACK success.
     assert.equal(await capture(a,photos[2]),true);
     const result=await a.evaluate(async()=>{
-     const pending=batch.find(x=>x.image.includes('')&&!x.localAnalyzed&&x.sourceSHA256);
      const selected=batch.find(x=>!x.localAnalyzed&&
       x.sourceSHA256!==undefined&&x.id!==window.__stalePhotoId);
      if(!selected)throw Error('No newly captured source to test storage failure');
