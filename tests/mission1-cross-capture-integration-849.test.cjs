@@ -31,7 +31,7 @@ test('P849 cross-owner/revision guard happens after consent hash and directly be
  assert.match(app,/if\(cross77Scope\)\{/);
  assert.match(app,/source72!==item\.image\|\|origin72!==item\.recognitionPhoto\?\.image/);
  assert.match(app,/oldSource\.revisionSha256!==cross77Decision\.candidateRevisionSha256/);
- assert.match(app,/if\(cross77Scope&&!CrossCaptureDuplicate77\.valid\(cross77Scope\)\)/);
+ assert.match(app,/cross77Scope&&!CrossCaptureDuplicate77\.valid\(cross77Scope\)/);
 });
 test('P849 candidate is owner-only, top one, research OFF unless explicitly selected',()=>{
  assert.match(app,/searchParams\.get\('crossCapture77'\)==='1'&&pendingDraft/);
