@@ -40,13 +40,13 @@ function dbFixture(owner,{holdCommit=false}={}){
 }
 const row=(owner,extra={})=>({id:'same-id',ownerId:owner,category:'Tops',itemType:'T-shirt',
  color:owner==='A'?'Blue':'Red',colorSource:'user',image:jpeg,originalPhoto:{image:jpeg,sha256:'a'.repeat(64)},...extra});
-function fixture({holdPhoto=false,holdQueue=false,holdCommit=false,holdLocal=false}={}){
+function fixture({holdPhoto=false,holdQueue=false,holdCommit=false,holdLocal=false,saved=false}={}){
  const first=dbFixture('A',{holdCommit}),second=dbFixture('B'),photo=deferred(),queue=deferred(),local=deferred(),events=[];
  const old=row('A'),next=row('B'),auth={user:{id:'A'},assertCurrent(){}};
  let handler;
  const ctx={
   window:{closetAuth:auth},db:first.db,captureOperationEpoch:0,localPending:new Set(),busy:false,stream:null,cameraOpening:false,
-  items:[],batch:[old],structuredClone,
+  items:saved?[old]:[],batch:saved?[]:[old],structuredClone,
   openPhotoCrop:(_item,opts)=>{handler=opts;return Promise.resolve();},
   checkPhoto:()=>holdPhoto?photo.promise:Promise.resolve({colorEstimate:{color:'Blue'},signature:'sig-a',aspect:1}),
   queued:fn=>holdQueue?queue.promise.then(fn):fn(),
@@ -134,11 +134,19 @@ test('valid same-owner crop of unsaved review draft persists and renders while r
  assert.equal(f.old.cropBounds.width,.8);
  assert.deepEqual(f.events,['render:A']);
 });
-test('valid same-owner saved garment crop goes through existing protected writeAll',async()=>{
- const f=fixture();f.ctx.batch=[];f.ctx.items=[f.old];let writes=0;
- f.ctx.writeAll=async values=>{writes++;assert.equal(values.length,1);assert.equal(values[0].ownerId,'A');};
+test('valid same-owner saved garment crop uses exact opening-row CAS, not blind upsert',async()=>{
+ const f=fixture({saved:true});let writes=0,protectedEdits=0;
+ f.ctx.writeAll=async values=>{writes++;assert.equal(values.length,1);};
+ f.ctx.saveEditedGarment=async(value,expected)=>{
+  protectedEdits++;
+  assert.equal(value.ownerId,'A');
+  assert.equal(expected.id,f.old.id);
+  assert.equal(expected.cropBounds,undefined,'Review snapshot predates new crop');
+  assert.equal(expected.originalPhoto.image,jpeg,'Original snapshot is intact');
+ };
  assert.equal(await result(f.handler.save(photoPayload,null)),'saved');
- assert.equal(writes,1);
+ assert.equal(writes,baseline?1:0,'Guarded crops must not use blind writeAll');
+ assert.equal(protectedEdits,baseline?0:1,'Guarded crops must use row CAS');
  assert.equal(f.old.cropBounds.width,.8);
  assert.deepEqual(f.events,['render:A']);
 });
