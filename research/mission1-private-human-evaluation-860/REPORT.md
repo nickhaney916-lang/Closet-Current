@@ -1,0 +1,33 @@
+# Mission 1 P860 — private independent human subtype candidate-score custody + abstention accounting (HOLD)
+
+**FAMILY ALPHA HOLD #255 OPEN. MISSION 1 RELEASE NO-GO.** Strict draft research only. Do not merge, deploy, release, start family pilot, change production/staging, hosted Supabase, private wardrobes/photos, protected main, or independent mission/parallel branches.
+
+## Source-verified immutable lineage
+
+- Parent **Mission 1 P859** [draft PR #1008](https://github.com/nickhaney916-lang/Closet-Current/pull/1008), verified exact SHA `dc83c7e54308e0b0d722b7179304e19a0b215a0f`, [NO DEPLOY CI #43446434697](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43446434697), 4/4 jobs SUCCESS, 525/525 native tests and separate inherited camera/indexing CI success. P859 protects exact same-ID in-flight scanner pending leases, P854 signed owner original/crop/mask, P843 owner-confirmed drafts, and P858 P80 image-quality and source-capsule rules.
+- Independent Parallel #80 [draft PR #1007](https://github.com/nickhaney916-lang/Closet-Current/pull/1007) final exact `5637a7b88aff49c897039a15691f11af674bc455`, [NO DEPLOY CI #43446293951](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43446293951) **5/5 SUCCESS**. P860 imports its original exact Git blob `tests/parallel80-private-blind-evaluator.test.mjs` (`64776f47c83a4d87584836c2c6a685991594409c`) and report (`e603900414b9a288d4d4f54f7ad8fbaf0d040b4a`) and its private evaluator as baseline (`a87193d35e03a4723bb1a46bc78c9842ff9d89d9`). Does not modify P80 donor branch. Applies a separate P860 safety correction to the imported evaluator on this isolated Mission 1 branch only.
+
+## An independently auditable, fail-closed, PRIVATE scoring handoff
+
+The P80 offline evaluator consumes an externally vetted and private P79 blind cohort and full photograph source exposure ledger, P75 curated legally usable originals and signed independent two-reviewer full-label agreement, exact source SHA-256, independent Ed25519 prediction scorer key and source-bound complete prediction digest. Requires external trusted fingerprints, model hash, specific 40-character commit and prior approvals, checks cohort size **at least 60** and complete 1:1 source↔two-reviewer↔prediction coverage, fails if missing any expected source or if categories/types cannot be adjudicated without cherry-picking. It refuses private evaluation in GitHub CI and only allows private files outside checkout, without logging source IDs, blind labels, raw photos, or prediction rows. No private evidence files are imported, committed, logged, or requested in this milestone.
+
+**Scientific limitation:** The evaluator can measure at most **conditional subtype candidate-set inclusion given an independently fixed operator-reviewed broad category**, not top-1 recognition accuracy, actual end-to-end category accuracy, color/instance/footwear/wrong-save accuracy or 10/10 correctness. The string describing prereveal operator category is a claim inside a scorer-sealed prediction and does not independently prove human/operator identity or timing; independent external operator-category precommitment must still be verified by responsible human custodians before a result can be treated as externally valid. Cryptographic self-signed synthetic tests prove only validation behavior.
+
+### Source-verifiable P860 safety correction
+
+The upstream donor accepted an invalid output with `status:'abstain'` **and nonempty `alternatives`**, because `validCandidatePrediction80` returned true for all abstentions regardless of alternatives. An attacker could put the true subtype among hidden alternatives and count an apparent candidate-set hit while simultaneously reporting an abstention. P860 tightens the source evaluator: an `abstain` MUST have `alternatives.length === 0`. For `hypotheses`, one to three ranked same-category alternatives are permitted but all require explicit owner review; no certainty/certificate/auto-save. Both synthetic unit arithmetic and source-bound private handoff now reject a contaminated abstention rather than silently inflating coverage. This is a **scoring-integrity bugfix**, NOT a measured clothing recognition improvement.
+
+New `tests/mission1-private-human-evaluation-860.test.mjs` executes the real imported evaluator and checks contaminated abstention rejection, synthetic candidate coverage explicitly not treated as accuracy, empty/forged/unsigned blind-cohort rejection, preservation of all five actual historic public boot Unknowns as **10 strict original regression FAILs**, and unchanged P859 signed-owner/source lease plus P851 release HOLD. The 9 independent donor native adversarial tests are retained.
+
+## Exact source/scope acceptance
+
+P860 changes only **six paths** from immutable P859 parent: imported evaluator (with P860 one-rule hardening), donor synthetic private evaluator tests, donor evaluator private operator documentation, new integration tests, this research report, and a source-pinned P860 no-deploy workflow. The real app, screenshot UI, scanner queue, original JPG/mask, model weights, category/subtype taxonomy, cloud DB/persistence, signed P75/P79 label custody, strict legacy regression checker, public benchmark original images, and P851 release gate are BYTE-IDENTICAL to the verified parent. Inherited no-deploy CI must test all native, original 3 legally sourced real public photos and derived dim/crop, actual FashionCLIP worker, desktop Chromebook/WebKit owner review/duplicate/shoe, and private scorer with zero inputs returning **BLOCKED**. None of this reads an actual private blind cohort.
+
+## Still blocked
+
+- P851 independent release evidence **BLOCKED** and `shouldLiftFamilyAlphaHold:false`.
+- **Zero** externally approved genuine source-disjoint 60+ photos with two independent human signed full labels and masks; zero externally authenticated scorer/registrar/owner category precommitment; no sealed blind measured subtype accuracy. No real accuracy improvement/10-out-of-10 claim.
+- No witnessed physical Android Chrome and iPhone Safari acceptance, no signed two-owner hosted Supabase RLS/backup/restore/revocation checks under Mission 1.
+- The default recognition 32-exposed-public-photo historical developer baseline still flags **10 legacy failures** across five `Shoes/Unknown` boot photos vs older strong `Ankle boots`; no waiver and no new independent subtype truth. Other default CI workflows may therefore remain red; dedicated no-deploy green is not proof all repo checks pass.
+
+**Family Alpha [HOLD #255](https://github.com/nickhaney916-lang/Closet-Current/issues/255) remains OPEN.** No merge, deploy, pilot or owner data authorization.
