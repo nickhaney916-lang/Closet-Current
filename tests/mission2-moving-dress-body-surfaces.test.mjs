@@ -1417,11 +1417,13 @@ test('C50: stale owner source, changed bone pose, replayed and invented private 
  assert.throws(()=>captureSourceDressRepairPreview50({
   root:f.root,dress:f.dress,proposalToken:{}
  }),/one-time staged repair proposal missing or reused/);
- f.dress.mesh.skeleton.bones[1].position.x=.01;
+ // The fixture skins ALL three cloth vertices to bone 0. Moving unused
+ // bone 1 would not change the real cloth pose, and is not a stale proof.
+ f.dress.mesh.skeleton.bones[0].position.x=.01;
  assert.throws(()=>captureSourceDressRepairPreview50({
   root:f.root,dress:f.dress,proposalToken:proposal.proposalToken
  }),/pose changed/);
- f.dress.mesh.skeleton.bones[1].position.x=0;
+ f.dress.mesh.skeleton.bones[0].position.x=0;
  const stagedToken=captureSourceDressRepairPreview50({
   root:f.root,dress:f.dress,proposalToken:proposal.proposalToken
  });
