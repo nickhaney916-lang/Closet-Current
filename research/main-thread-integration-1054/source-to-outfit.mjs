@@ -16,7 +16,8 @@ const validId=id=>typeof id==='string'&&id.trim()===id&&id.length>0&&id.length<=
 function active(getSession){
  const s=typeof getSession==='function'&&getSession();
  if(!s||s.authenticated!==true||typeof s.ownerId!=='string'||!s.ownerId||
-   typeof s.epoch!=='number'||!Number.isSafeInteger(s.epoch)||s.epoch<0||
+   !((typeof s.epoch==='string'&&s.epoch.length>=8&&s.epoch.length<=160)||
+     (typeof s.epoch==='number'&&Number.isSafeInteger(s.epoch)&&s.epoch>=0))||
    s.privateDbName!=='closet-current-user-'+s.ownerId)
   issue('signed owner session and private database required');
  return Object.freeze({ownerId:s.ownerId,epoch:s.epoch,privateDbName:s.privateDbName});
