@@ -61,3 +61,45 @@ The adapter is **not wired into the application or donor renderer**; only after 
 Before P84, existing C52 contact metrics measured a single genuine dress, not cross-garment source intersections. After P84, the added read-only pipeline can find *synthetic* distinct 163-bone skinned inter-garment crossings and preserve metadata and geometry in adversarial regressions. This is functional source verification **only if the new workflow passes on final exact head**. No genuine photographed multi-piece visual delta, FPS, peak-memory improvement, photorealism score, arbitrary owner-photo reconstruction, source-layer visual comparison or physical-phone result has yet been established.
 
 The actual GitHub-hosted focused P84 source and THREE fixture tests plus inherited build/full regression already passed on a prior pre-documentation commit (17 / 17 focused; 1,679 / 1,679 full), but the historical same-run browser evidence job failed because its baseline screenshot output was initially copied into the wrong directory. That workflow path has been corrected and the real licensed-original-JPEG test added. **The final exact-head combined two-job result still must be checked separately.** The local workspace lacks GitHub network resolution and installed THREE; no local authentic rendered multi-piece photo browser run was performed. Full acceptance needs two independently attributed and fitted original-photo mesh groups at once, source-original image/UV and owner-review proof, observed front/side/back, real cloth/skin/layer contact evidence, 320/390/430 screenshot hashes, genuine WebKit and physical-phone tests, measured performance and independent human quality review. **Mission 2 remains incomplete. Family Alpha HOLD #255 remains OPEN.**
+
+
+## P84 follow-on: actual licensed two-piece 163-bone renderer and empirical limits (November 13, 2026)
+
+### Actual source research viewer
+
+Examined pinned exact P541 `df6885d6011cb33fb22dceb81a08f35a0ac4dd61` `research/dress-mobile-01/dress-mobile-demo.mjs`, `dress-outfit-controller.mjs`, `three-d-69/sha-verified-original-garment-sources.mjs`, and `three-d-30/reviewed-photo-pants.mjs`. They already load THREE skinned separate shirt and pant meshes from genuine, source-verified original public licensed photos (shirt source `cb909...`, Commons public-domain Jeans original `b316...`, CC BY-SA Denimjeans2 original `aa7f...`). They use actual front pixel projection and inferred/neutral back. This is a P541 pre-existing research outfit renderer, **not** new owner-photo-to-3D.
+
+A new *detached donor only* installer and browser runner make the read-only two-garment P84 audit run after the existing source and cloth assembly, preserving the preceding original-photo, silhouette/UV, skinned fit, 163-bone and collision protections. Nothing new is added to shipping public app. The donor remains a controlled research viewer with simulated acknowledgement, not independently witnessed owner cutout approval.
+
+### First verified genuine two-piece experiment
+
+[NO DEPLOY Actions #43512709724](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43512709724) completed **2/2 Chromium and WebKit jobs SUCCESS** on earlier P84 code. Recovered generated genuine CI artifacts:
+
+- [Chromium actual two-piece screenshot and measurement artifact #14079866158](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43512709724/artifacts/14079866158)
+- [WebKit actual two-piece screenshot and measurement artifact #14079232262](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43512709724/artifacts/14079232262)
+
+Each engine produced **48 actual 163-bone WebGL screenshot views** (3 CSS widths x 2 figures x 2 photographed denims x front/45°/side/back), **3 actual original-photo/2D fallback screenshots**, and **12 genuine source pair pose receipts**. **96 genuine 3D views, 6 original-photo fallbacks, 24 sampled authentic source combinations across both engines**. These are browser software-rendered source images, *not synthetic geometry test PNGs, physical-device test images, or appearance-improvement A/B pictures*.
+
+SHA-recovered Chromium evidence was visually inspected at 390px female front/side with public denim and male front/back with second denim: front contains recognizable real photographed Armani Jeans black shirt print plus different photographed blue denim fronts, on visible male/female anatomical figures; unphotographed denim side/back is plain blue and shirt reverse is plain black. Visible shoulders/sleeves and denim still resemble stiff, simplified fitted shells and some rear details are inferred/absent. **Human photorealism acceptance = UNVERIFIED and no source-to-geometry physical reconstruction quality increase is established.**
+
+The first audit budget (prior to later optimizer) measured source mesh faces **29,879 female** (29,879 sampled; stride 1) and **31,160 male** (15,581 sampled; stride 2); it exposed an incomplete **800,000 X-axis broadphase source-pair comparison budget on 24/24 sampled outfit receipts**, even where strict transverse crossings had not been seen. All receipts correctly declared `INCOMPLETE_BUDGET`, with **NO clearance and no release**. Sampled garment face count is not automatically proof of non-clipping, sewing, fabric contacts or collisions. This is now a directly observed performance/QA target, not an invented success.
+
+Measured CI button click-to-pair-audit completion (not model initial network load or GPU frame time): **Chromium 11,595-12,024ms; WebKit 11,259-12,422ms** across the earlier 24 total sampled cases. Those long timings are not acceptable evidence for fast mobile recognition/3D rendering. `requestAnimationFrame` intervals around 16-17ms reflect CI software browser scheduling only, **not independently measured GPU completion or physical-phone FPS**. The early source-scene reports 17 geometry objects and 4 textures per tested view; those are counts, **not peak memory**.
+
+### Follow-on bounded algorithmic repair and tests
+
+The real 800,000-compare budget exposed unnecessary O(N²) same-part iteration and X-axis comparisons through disjoint waist/leg heights. The isolated source diagnostic now (1) keeps separate opposite-garment active lists, (2) sweeps physical world-Y bounds of photographed garment triangles to avoid leg vs shirt comparisons, (3) admits at most the declared face+pair comparison budgets, (4) deterministically samples both original garments when their combined face count exceeds 30,000, and (5) explicitly records **full face count, sampled count, omitted count, stride, source-degenerate triangles, and uncertainty**, never declaring safe 3D for an incomplete sample or a zero strict crossing count. Added adversarial THREE skinned and 6,000-same-shirt-face cases, and impossible sampling-budget refusal. All changed controls remain new P84 files only. **The optimized final exact-head browser and full repository CI must independently pass before quantifying performance benefit or new contact status.**
+
+### Updated acceptance matrix
+
+| Test / comparison | Female | Male | Truth and next step |
+|---|---|---|---|
+| SHA-vetted photographed shirt + public denim | 3 CSS widths x 4 angles, Chromium/WebKit screenshot success on prior SHA | Same | Actual real licensed source pair in P541; rigid fit remains; full inter-layer clearance unverified |
+| SHA-vetted photographed shirt + second CC BY-SA denim | 3 widths x 4 angles on each browser, prior SHA success | Same | Distinct front textile; unknown rear inferred |
+| Original-photo/2D fallback screenshot | Actual browser screenshot in each width and engine | Same scene path | Existing original photo fallback stays available; no private account proof |
+| Joint-motion garment contact | NOT TESTED | NOT TESTED | Camera angles are **not pose/joint movements** |
+| Dress + outer garment, jacket, shoes | NOT TESTED | NOT TESTED | No independent licensed reconstruction/accepted mesh in the current trial |
+| Physical iPhone Safari / Android Chrome | NOT TESTED | NOT TESTED | Host Playwright is not a physical phone |
+| Independent human realism / collision certification | UNVERIFIED | UNVERIFIED | Remains hard release gate |
+
+**Decision: still research only.** It is now credible that multiple distinct original photographed clothing textures are visibly used on anatomically skinned dual-figure models, but believable textile drape, arbitrary owner-photo reconstruction, full dynamic layering, continuous collision proof, physical devices, human realism, and Family Alpha readiness are all **UNVERIFIED**. Never merge or deploy without the owner-controlled Mission 2 integration/release approval; Family Alpha #255 stays HOLD.
