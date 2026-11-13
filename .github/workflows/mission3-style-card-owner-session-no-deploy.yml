@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact PR1036 parent and four-path no-deploy allowlist
+      - name: Exact PR1036 parent and five-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-style-card-owner-session-lease.test.cjs|research/mission3-style-card-owner-session/REPORT.md|.github/workflows/mission3-style-card-owner-session-no-deploy.yml) ;;
+              public/app.js|tests/mission3-style-card-owner-session-lease.test.cjs|scripts/test-mission3-style-card-owner-session-browser.mjs|research/mission3-style-card-owner-session/REPORT.md|.github/workflows/mission3-style-card-owner-session-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -33,6 +33,7 @@ jobs:
           set -euo pipefail
           node --check public/app.js
           node --check tests/mission3-style-card-owner-session-lease.test.cjs
+          node --check scripts/test-mission3-style-card-owner-session-browser.mjs
           node --check tests/mission3-saved-card-delete-session-cas.test.cjs
           node --test tests/mission3-style-card-owner-session-lease.test.cjs
           node --test tests/mission3-saved-card-delete-session-cas.test.cjs
@@ -112,7 +113,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict PR1036 four-path same-parent diff gate
+      - name: Strict PR1036 five-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -121,7 +122,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-style-card-owner-session-lease.test.cjs|research/mission3-style-card-owner-session/REPORT.md|.github/workflows/mission3-style-card-owner-session-no-deploy.yml) ;;
+              public/app.js|tests/mission3-style-card-owner-session-lease.test.cjs|scripts/test-mission3-style-card-owner-session-browser.mjs|research/mission3-style-card-owner-session/REPORT.md|.github/workflows/mission3-style-card-owner-session-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -167,6 +168,8 @@ jobs:
         run: node --test tests/confirmed-edit-memory-44.test.cjs tests/review-color-provenance-23.test.cjs tests/family-reliability-edit.test.cjs
       - name: Build current application before PWA and full Node validation (NO DEPLOY)
         run: node scripts/build.mjs
+      - name: Browser-executed saved Style signed-owner switches on Chromium and WebKit mobile widths
+        run: node scripts/test-mission3-style-card-owner-session-browser.mjs benchmark/mission3-style-card-owner-session-browser
       - name: Reverify Chromium WebKit 320 390 430 owner private crop and JPEG evidence
         run: node scripts/test-mission3-crop-owner-lease-browser.mjs benchmark/mission3-crop-owner-browser
       - name: Real Chromium WebKit 320 390 430 delayed owner backup import with native IndexedDB
@@ -214,7 +217,7 @@ jobs:
         shell: bash
         run: |
           set -eu
-          for p in mission3-recognition-durable-ack-browser mission3-owner-no-auto-discard-photo-browser mission3-cloud-rehydrate-inflight-photo-browser mission3-cloud-unsaved-original-fence-browser mission3-safe-draft-refresh-browser mission3-capture-status-cas-browser mission3-draft-row-cas-browser mission3-same-owner-delete-cas-browser mission3-live-session-refresh-cas-browser mission3-offline-auth-recovery-browser mission3-private-queue-owner-browser mission3-mobile-media-interruption-browser mission3-legacy-atomic-browser mission3-cloud-restore-owner-browser mission3-edit-backup-owner-browser mission3-crop-owner-browser mission3-private-mutation-browser native-canonical-closet-style-167 mission3-native-signed-postgres-browser mission3-review-draft-retry-browser; do
+          for p in mission3-style-card-owner-session-browser mission3-recognition-durable-ack-browser mission3-owner-no-auto-discard-photo-browser mission3-cloud-rehydrate-inflight-photo-browser mission3-cloud-unsaved-original-fence-browser mission3-safe-draft-refresh-browser mission3-capture-status-cas-browser mission3-draft-row-cas-browser mission3-same-owner-delete-cas-browser mission3-live-session-refresh-cas-browser mission3-offline-auth-recovery-browser mission3-private-queue-owner-browser mission3-mobile-media-interruption-browser mission3-legacy-atomic-browser mission3-cloud-restore-owner-browser mission3-edit-backup-owner-browser mission3-crop-owner-browser mission3-private-mutation-browser native-canonical-closet-style-167 mission3-native-signed-postgres-browser mission3-review-draft-retry-browser; do
             test -s "benchmark/$p/results.json"
           done
           echo 'FAMILY ALPHA HOLD #255. NO DEPLOY.'
@@ -224,6 +227,7 @@ jobs:
         with:
           name: mission3-recognition-durable-ack-rls-HOLD
           path: |
+            benchmark/mission3-style-card-owner-session-browser/
             benchmark/mission3-recognition-durable-ack-browser/
             benchmark/mission3-owner-no-auto-discard-photo-browser/
             benchmark/mission3-cloud-rehydrate-inflight-photo-browser/
