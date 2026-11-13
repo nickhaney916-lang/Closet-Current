@@ -1,0 +1,125 @@
+name: Parallel 84 photographed multi-layer diagnostics NO DEPLOY
+'on':
+  push:
+    branches:
+      - research/parallel84-real-photo-layer-audit-20261113-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  geometry-and-inherited-regressions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prove immutable exact P2-C52 parent and isolated no-deploy changes
+        shell: bash
+        run: |
+          set -eu
+          BASE=fb61858068be1a775018c42da1dd33bcab5a0128
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD >/tmp/parallel84-scope.txt
+          while IFS= read -r path; do
+            case "$path" in
+              research/parallel84-real-photo-layers/layer-contact84.mjs|research/parallel84-real-photo-layers/actual-skinned-layers84.mjs|research/parallel84-real-photo-layers/REPORT.md|tests/parallel84-layer-contact.test.mjs|tests/parallel84-skinned-layer-adapter.test.mjs|.github/workflows/parallel84-real-photo-layers-no-deploy.yml)
+                ;;
+              *) echo "NO DEPLOY: prohibited #84 changed path $path"; exit 1;;
+            esac
+          done </tmp/parallel84-scope.txt
+          git diff --exit-code "$BASE" HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json
+          node --check research/parallel84-real-photo-layers/layer-contact84.mjs
+          node --check research/parallel84-real-photo-layers/actual-skinned-layers84.mjs
+          node --check tests/parallel84-layer-contact.test.mjs
+          node --check tests/parallel84-skinned-layer-adapter.test.mjs
+      - name: Install reproducible no-deploy test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: New P84 strict source/pair/skin/pose/contact tests
+        run: node --test tests/parallel84-layer-contact.test.mjs tests/parallel84-skinned-layer-adapter.test.mjs
+      - name: Inherited complete source, original photo, 2D fallback and privacy regressions
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+  inherited-original-photo-browser-baseline:
+    # This is only an authentic PHOTO DRESS browser baseline. No two-garment
+    # screenshot or 'after' visual realism is claimed by this job.
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PHOTO_FIT171: '1'
+      PHOTO_TORSO173: '1'
+      PHOTO_SLEEVE174: '1'
+      PHOTO_DRESS175: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Pin immutable P541 anatomical and photo donor commits
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          P541=df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          P60=6fe5e46b91533a96f3c0d86950ea077cb355c459
+          P172=88d2fdb412f84b0498c86bfa17f4b391425e1958
+          git fetch --no-tags origin "$P541" "$P60" "$P172"
+          git worktree add --detach .native05-donor-541 "$P541"
+          git worktree add --detach .p173-p60 "$P60"
+          git worktree add --detach .p173-p172 "$P172"
+          for name in .native05-donor-541 .p173-p60 .p173-p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+      - name: Build existing genuine licensed garment source models
+        run: |
+          set -eu
+          cd .native05-donor-541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Integrate source-only inherited original 163-bone dress in DISPOSABLE donor
+        run: |
+          set -eu
+          cd .p173-p60
+          node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541
+          cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
+          node scripts/install-native-photo-torso-173.mjs .native05-donor-541 .p173-p172
+          node scripts/install-source-shoulder-seam-174.mjs .native05-donor-541
+          node scripts/install-native-original-dress-drape-175.mjs .native05-donor-541
+          node scripts/install-mission2-source-dress-motion.mjs .native05-donor-541
+          node scripts/install-mission2-actual-photo-contact52.mjs .native05-donor-541
+      - name: Capture authentic single-dress before and after baseline screenshots only
+        run: |
+          set -eu
+          PHOTO_DRESS_MOTION36=0 node scripts/test-native-3d-05-browser.mjs
+          mkdir -p benchmark/parallel84-original-photo-baseline
+          cp benchmark/native-3d-05/*.png benchmark/parallel84-original-photo-baseline/
+          cp benchmark/native-3d-05/results.json benchmark/parallel84-original-photo-baseline/
+          PHOTO_DRESS_MOTION36=1 PHOTO_DRESS_CONTACT52=1 PHOTO_DRESS_MOTION_PHASE36=0.25 node scripts/test-native-3d-05-browser.mjs
+          node scripts/audit-mission2-source-dress-motion.mjs
+          node scripts/audit-mission2-actual-dress-contact52.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Parallel84-INHERITED-DRESS-ONLY-baseline-NOT-LAYERED-acceptance
+          path: |
+            benchmark/parallel84-original-photo-baseline/
+            benchmark/native-3d-05/
+          retention-days: 14
+          if-no-files-found: warn
