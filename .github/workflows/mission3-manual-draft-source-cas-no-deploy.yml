@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact parent and six-path no-deploy allowlist
+      - name: Exact parent and seven-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|tests/review-color-provenance-23.test.cjs|research/mission3-manual-draft-source-cas/REPORT.md|.github/workflows/mission3-manual-draft-source-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|tests/review-color-provenance-23.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-manual-draft-source-cas/REPORT.md|.github/workflows/mission3-manual-draft-source-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -80,7 +80,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict six-path same-parent diff gate
+      - name: Strict seven-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -89,7 +89,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|tests/review-color-provenance-23.test.cjs|research/mission3-manual-draft-source-cas/REPORT.md|.github/workflows/mission3-manual-draft-source-cas-no-deploy.yml) ;;
+              public/app.js|tests/mission3-saved-photo-insert-cas.test.cjs|tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs|tests/review-color-provenance-23.test.cjs|scripts/test-mission3-same-owner-delete-cas-browser.mjs|research/mission3-manual-draft-source-cas/REPORT.md|.github/workflows/mission3-manual-draft-source-cas-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
