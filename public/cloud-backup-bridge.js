@@ -51,8 +51,11 @@ async function mission3ReloadOwnerCloudView({ownerDB,assertLease},{queueUnreview
  render();assertLease();
  window.closetIndex02?.refresh().catch(()=>{});
  if(queueUnreviewed){
+  // Queueing the first review intentionally flips automaticRunning. Recheck
+  // once before that deliberate transition; the queue owns later work.
+  afterPublish();
   for(const item of nextBatch){
-   afterPublish();
+   assertLease();
    if(!item.localAnalyzed)queueAutomatic(item);
   }
  }
