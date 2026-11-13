@@ -71,7 +71,12 @@ export function validCandidatePrediction80(p) {
         (i > 0 && a.relativeScore > p.alternatives[i-1].relativeScore)) return false;
     types.add(a.itemType);
   }
-  return p.status === "hypotheses" ? p.alternatives.length >= 1 : true;
+  // P860: abstention means NO subtype candidate was offered. Otherwise a
+  // crafted "abstain" row could still include the true subtype as an
+  // alternative and inflate candidate-set coverage while claiming abstention.
+  return p.status === "hypotheses"
+    ? p.alternatives.length >= 1
+    : p.alternatives.length === 0;
 }
 /**
  * Arithmetic only. Caller MUST first independently validate source bytes,
