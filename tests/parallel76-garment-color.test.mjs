@@ -101,7 +101,9 @@ test('app and worker research switch is explicitly opt-in and cannot auto-save a
  const worker=await fs.readFile('public/outfit-worker.mjs','utf8');
  assert.match(capture,/const outfitColor76=outfitUnits70&&/);
  assert.match(capture,/color76:true,ownerId:job.ownerId/);
- assert.match(capture,/sourceSha256===p.reconciliation70\?\.sourceSha256/);
+ assert.match(capture,/sourceProof===p.reconciliation70\?\.sourceSha256/);
+ assert.match(capture,/originalSha256ForColor76\(image\)/);
+ assert.match(capture,/colorEstimate:safeColorEstimate76/);
  assert.match(capture,/NOT applied/);
  assert.match(worker,/request.color76===true&&request.instanceReview70===true/);
  assert.match(worker,/piece.colorResearch76=/);
