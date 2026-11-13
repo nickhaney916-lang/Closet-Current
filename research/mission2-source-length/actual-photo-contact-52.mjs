@@ -483,8 +483,15 @@ function sourceBoundaryComponents56(graph,{maxBoundaryEdges56,
   const a=graph.reps[edge.from],b=graph.reps[edge.to];
   if(a===undefined||b===undefined){unsafe.add(edge.from);unsafe.add(edge.to);continue;}
   const start=3*a,end=3*b,
-   oldLength=Math.hypot(orig[start]-orig[end],
-    orig[start+1]-orig[end+1],orig[start+2]-orig[end+2]),
+   // The original source is mesh-local, but the actual 163-bone pose was
+   // captured in WORLD coordinates. Apply the unchanged mesh world-linear
+   // transform to the original edge; otherwise an ordinary avatar scale
+   // is falsely diagnosed as fabric stretch on every boundary edge.
+   sourceWorldEdge=new THREE.Vector3(
+    orig[start]-orig[end],
+    orig[start+1]-orig[end+1],
+    orig[start+2]-orig[end+2]).applyMatrix3(graph.sourceWorldLinear56),
+   oldLength=sourceWorldEdge.length(),
    newLength=Math.hypot(move[start]-move[end],
     move[start+1]-move[end+1],move[start+2]-move[end+2]);
   if(!Number.isFinite(oldLength)||!Number.isFinite(newLength)||
@@ -782,6 +789,10 @@ export function auditActualPhotographedDressSurfaces52({
  }:null;
  if(refineEdgeWinding55)context.edgeGraph55=
   sourceEdgeGraph55(context,indices,triangles);
+ // Set the common ORIGINAL-to-POSE WORLD reference frame before measuring
+ // any source-edge stretch. This is private, never part of public receipts.
+ if(refineBoundaryComponents56)context.edgeGraph55.sourceWorldLinear56=
+  new THREE.Matrix3().setFromMatrix4(mesh.matrixWorld);
  const boundary56=refineBoundaryComponents56?
   sourceBoundaryComponents56(context.edgeGraph55,{
    maxBoundaryEdges56,maxBoundaryVertexGroups56
