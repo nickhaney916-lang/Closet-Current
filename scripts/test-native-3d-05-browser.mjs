@@ -252,6 +252,9 @@ const photoDress175=process.env.PHOTO_DRESS175==='1';
 const photoDressContact52=process.env.PHOTO_DRESS_CONTACT52==='1';
 const photoDressDistance53=process.env.PHOTO_DRESS_DISTANCE53==='1';
 const photoDressTopology54=process.env.PHOTO_DRESS_TOPOLOGY54==='1';
+const photoDressEdges55=process.env.PHOTO_DRESS_EDGES55==='1';
+if(photoDressEdges55&&!photoDressTopology54)
+ throw Error('C55 real P61 original photograph source edge winding needs all C54 source-coordinate audit');
 if(photoDressTopology54&&!photoDressDistance53)
  throw Error('C54 real P61 source topology must be accompanied by full C53 source distance evidence');
 if(photoDressDistance53&&!photoDressContact52)
@@ -491,7 +494,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -1919,6 +1922,43 @@ try{
      assert.equal(topo.familyAlpha,'HOLD');
      assert.equal(topo.originalPhotoVertexCoordinatesExposed,false);
      assert.equal(topo.originalSourceFaceIdsExposed,false);
+    }
+   }
+   if(photoDressEdges55){
+    assert.equal(witness.fullOriginalSourceEdgeWindingAuditCompleted55,true,
+     'C55 original licensed garment edge winding audit must not be truncated');
+    assert.equal(witness.noEdgeWindingCollisionExemption55,true);
+    assert.equal(witness.trueSourceSeamSewingEvidenceMissing55,true);
+    assert.equal(witness.ownerSourceAndShaderPhotoProjectionPreserved55,true);
+    for(const [kind,expected] of [
+     ['originalSourceEdgeWinding55',
+      witness.originalSourceTopology54.sourceCoincidentEdgeCandidates],
+     ['posedSourceEdgeWinding55',
+      witness.posedSourceTopology54.sourceCoincidentEdgeCandidates]]){
+     const report=witness[kind];
+     assert.equal(report?.schema,
+      'M2-original-photograph-source-edge-winding-C55');
+     assert.equal(report.sourceEdgeAuditComplete,true);
+     assert.equal(report.sourceEdgePairsClassified,expected);
+     assert.equal(report.sourceEdgePairsClassified,
+      report.sourceTwoFaceOppositeWindingCandidates+
+      report.sourceTwoFaceSameWindingCandidates+
+      report.sourceThreePlusIncidentFaceNonmanifoldCandidates+
+      report.sourceUnsafeOrAmbiguousCoordinateGroupCandidates+
+      report.sourceEdgeUnpairedOrUnresolvedCandidates);
+     assert.equal(report.originalSourceEdgeGroupCount,
+      report.originalBoundarySingleIncidentEdgeGroups+
+      report.originalTwoIncidentEdgeGroups+
+      report.originalNonmanifoldThreePlusIncidentEdgeGroups);
+     assert.equal(report.sourceEdgeWindingOnlyCandidateNotSewnSeam,true);
+     assert.equal(report.oppositeWindingCannotAuthorizeWelding,true);
+     assert.equal(report.sourceManifoldEstimateNotPhysicalFabricCertificate,true);
+     assert.equal(report.changingPoseAndContinuousClothNotCertified,true);
+     assert.equal(report.ownerPhotoOrVertexLocationsExposed,false);
+     assert.equal(report.originalSourceFaceIdsExposed,false);
+     assert.equal(report.photoUVSkinAndSourceMeshUnchanged,true);
+     assert.equal(report.releaseAuthorized,false);
+     assert.equal(report.familyAlpha,'HOLD');
     }
    }
    licensedDressContact52.push({width,...witness});
