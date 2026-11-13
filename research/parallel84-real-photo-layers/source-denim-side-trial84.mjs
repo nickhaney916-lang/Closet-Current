@@ -21,6 +21,22 @@ const fields=['pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWe
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
 const key=p=>p.toArray().map(n=>n.toFixed(5)).join('|');
 const pct=(a,q)=>{const v=a.slice().sort((a,b)=>a-b);return v[Math.floor((v.length-1)*q)];};
+/** Use the measured original rear-side cross-sections WITHOUT a quantized
+ * 45mm station snap. Interpolation is confined to the actual two neighboring
+ * source rows, with no extrapolation, new cloth seams or fabricated photo.
+ * Continuous along the anatomical leg; no data-independent bulges. */
+export function interpolateOriginalDenimStation84(rows,y){
+ if(!Array.isArray(rows)||rows.length<2||!finite(y)||
+   rows.some((p,i)=>!finite(p.y)||!finite(p.outer)||p.outer<0||
+    !finite(p.rear)||(i>0&&p.y<=rows[i-1].y)))
+  throw Error('original-denim-source-station-profile-invalid');
+ if(y<=rows[0].y)return Object.freeze({outer:rows[0].outer,rear:rows[0].rear});
+ if(y>=rows.at(-1).y)return Object.freeze({outer:rows.at(-1).outer,rear:rows.at(-1).rear});
+ let i=1;while(rows[i].y<y)i++;
+ const lo=rows[i-1],hi=rows[i],t=(y-lo.y)/(hi.y-lo.y);
+ return Object.freeze({outer:lerp(lo.outer,hi.outer,t),
+  rear:lerp(lo.rear,hi.rear,t)});
+}
 const base={schema:'P84-original-denim-source-neutral-side-AB/v1',
  photoAndSourceAttributesUnchanged:true,originalBodyGeometryUnchanged:true,
  original163BoneSkinUnchanged:true,photoReverseInvented:false,
@@ -51,7 +67,7 @@ function normals(geometry){
  geometry.computeBoundingBox();geometry.computeBoundingSphere();
 }
 export function trialSourceMeasuredDenimSide84({
- pants,shirt,root,avatar,sideEaseMeters=.018,rearEaseMeters=.009,enabled=true
+ pants,shirt,root,avatar,sideEaseMeters=.011,rearEaseMeters=.004,enabled=true
 }={}){
  if(!enabled)return reject('explicit-opt-out');
  const mesh=pants?.meshes?.[0],g=mesh?.geometry,p=g?.getAttribute('position');
@@ -151,12 +167,12 @@ export function trialSourceMeasuredDenimSide84({
    return {min,max,leg,station};
   });
   const changes=[],byLeg=[0,0];let protectedFront=0,maxShift=0;
+  let proposedMaxSideEase=0,proposedMaxRearEase=0;
   for(const n of nodes){
    if(n.front>=.18){protectedFront+=n.ids.length;continue;}
    const which=n.q.x>=0?0:1,band=bands[which],{leg,min,max}=band,q=n.q;
    if(q.y<min||q.y>max)continue;
-   const row=band.station.reduce((best,current)=>
-    Math.abs(current.y-q.y)<Math.abs(best.y-q.y)?current:best,band.station[0]);
+   const row=interpolateOriginalDenimStation84(band.station,q.y);
    const t=(q.y-leg.knee.y)/(leg.hip.y-leg.knee.y);
    const center=lerp(leg.knee.x,leg.hip.x,t),radius=Math.abs(q.x-center);
    const span=smooth(q.y,min,min+.09)*(1-smooth(q.y,max-.09,max));
@@ -175,6 +191,8 @@ export function trialSourceMeasuredDenimSide84({
    if(!finite(len)||len>.032)throw Error('source-denim-bounded-panel-exceeded');
    changes.push({n,delta});
    byLeg[which]+=n.ids.length;maxShift=Math.max(maxShift,len);
+   proposedMaxSideEase=Math.max(proposedMaxSideEase,Math.abs(outward));
+   proposedMaxRearEase=Math.max(proposedMaxRearEase,Math.abs(back));
   }
   if(changes.length<85||byLeg.some(n=>n<25)||maxShift<.004||
     protectedFront<100)
@@ -219,6 +237,10 @@ export function trialSourceMeasuredDenimSide84({
    sourceId:pants.stats.sourceId,
    avatar,sourceMeasuredNeutralSideStations:bands.map(x=>x.station.length),
    sourceNeutralRearSideVerticesCandidate:changes.length,
+   continuousInterpolatedOriginalDenimStations:true,
+   measuredSourceOnlyNoArtificialRearPhoto:true,
+   maxAcceptedLateralEaseMeters:accepted?proposedMaxSideEase*accepted.amplitude:0,
+   maxAcceptedPosteriorEaseMeters:accepted?proposedMaxRearEase*accepted.amplitude:0,
    movedSourceVertexReferences:accepted?byLeg.reduce((a,b)=>a+b,0):0,
    sourceOriginalPhotographFrontProtectedReferences:protectedFront,
    maxAppliedWorldShiftMeters:accepted?maxShift*accepted.amplitude:0,
