@@ -13,7 +13,7 @@ const fallback=reason=>Object.freeze({
  safe3D:false,releaseAuthorized:false,humanRealismApproved:false,
  contactClearanceProved:false,originalGarmentGeometryEdited:false
 });
-function sample84(mesh,maxFaces){
+function sample84(mesh,faceStride){
  if(!mesh?.isSkinnedMesh||mesh?.skeleton?.bones?.length!==163||
     typeof mesh.getVertexPosition!=='function'||
     !mesh.geometry?.getAttribute('position')?.isBufferAttribute||
@@ -69,7 +69,9 @@ function sample84(mesh,maxFaces){
   }
  }
  const faceCount=(g.index?.count??position.count)/3;
- if(faceCount<1||faceCount>maxFaces)throw Error('source-face-budget');
+ if(!Number.isSafeInteger(faceCount)||faceCount<1||faceCount>300000||
+    !Number.isSafeInteger(faceStride)||faceStride<1)
+  throw Error('source-face-budget');
  const original=Object.entries(g.attributes).map(([name,attr])=>
   [name,attr,attr.array.slice()]);
  const idx=g.index,oldIndex=idx?.array.slice()??null,oldMaterial=mesh.material;
@@ -86,12 +88,18 @@ function sample84(mesh,maxFaces){
    throw Error('nonfinite-posed-source-vertex');
   vertices.set([v.x,v.y,v.z],3*i);
  }
- const faces=new Float64Array(faceCount*9);
- for(let i=0;i<faceCount*3;i++){
-  const j=idx?idx.getX(i):i;
-  if(!Number.isSafeInteger(j)||j<0||j>=position.count)
-   throw Error('source-face-index-outside-vertex-range');
-  faces.set(vertices.subarray(j*3,j*3+3),i*3);
+ // P84 bounded deterministic SOURCE-FACE sampling. This is a diagnostic,
+ // never whole-garment collision clearance; omitted faces remain UNVERIFIED.
+ const faces=new Float64Array(Math.ceil(faceCount/faceStride)*9);
+ let sampledVertexIndex=0;
+ for(let face=0;face<faceCount;face+=faceStride){
+  for(let corner=0;corner<3;corner++){
+   const i=face*3+corner,j=idx?idx.getX(i):i;
+   if(!Number.isSafeInteger(j)||j<0||j>=position.count)
+    throw Error('source-face-index-outside-vertex-range');
+   faces.set(vertices.subarray(j*3,j*3+3),sampledVertexIndex*3);
+   sampledVertexIndex++;
+  }
  }
  for(const [name,attr,snapshot] of original){
   if(g.getAttribute(name)!==attr||attr.array.length!==snapshot.length||
@@ -119,6 +127,28 @@ export function auditActualSkinnedOutfitLayers84({
   });
   if(bodies<1||bodies>16)
    throw Error('real-anatomical-body-not-loaded');
+  // Count the COMPLETE original face inventory before allocating world-space
+  // buffers. A common stride preserves deterministic per-mesh distribution;
+  // unlike silently truncating the last garment, both layers remain sampled.
+  let fullSourceFaces=0,meshCount=0;
+  for(const item of items){
+   if(!item||!Array.isArray(item.meshes)||item.meshes.length>8)
+    throw Error('source-photo-mesh-evidence-missing');
+   for(const mesh of item.meshes){
+    const count=(mesh?.geometry?.index?.count??mesh?.geometry?.getAttribute('position')?.count??0)/3;
+    if(!Number.isSafeInteger(count)||count<1||count>300000)
+     throw Error('source-face-budget');
+    fullSourceFaces+=count;meshCount++;
+   }
+  }
+  if(!Number.isSafeInteger(fullSourceFaces)||fullSourceFaces>300000||
+    meshCount>16)throw Error('source-face-budget');
+  let stride=1;
+  const budgetAt=s=>items.reduce((n,item)=>n+item.meshes.reduce(
+    (v,mesh)=>v+Math.ceil(
+     ((mesh.geometry.index?.count??mesh.geometry.getAttribute('position').count)/3)/s
+    ),0),0);
+  while(budgetAt(stride)>maxFaces)stride++;
   const meshes=new Set(),sourceItems=items.map(item=>{
    if(!item||!PARALLEL84_SOURCE_REGISTRY[item.sourceId]||
       PARALLEL84_SOURCE_REGISTRY[item.sourceId].sha!==item.sourceSHA256||
@@ -136,7 +166,7 @@ export function auditActualSkinnedOutfitLayers84({
        !mesh.visible||mesh.userData?.work56Garment!==true)
      throw Error('duplicate-hidden-or-noncloth-source-mesh');
     meshes.add(mesh);
-    const geometry=sample84(mesh,maxFaces);
+    const geometry=sample84(mesh,stride);
     parts.push(geometry);
    }
    const length=parts.reduce((n,p)=>n+p.length,0);
@@ -159,10 +189,21 @@ export function auditActualSkinnedOutfitLayers84({
    items:sourceItems,avatar,pose,maxFaces,
    maxComparisons,maxCandidatePairs,toleranceMeters
   });
-  // No posed triangles are returned or retained. The 2D board still owns
-  // unsupported clothes and any uncertain or crossing layered fabric.
-  return Object.freeze({...receipt,actualSkinnedPoseSampled:true,
-   anatomicalBodyMeshes:bodies,sourceBuffersPreserved:true});
+  // Original-source FACE inventory and analyzed STRIDE are counts only.
+  // All omitted original triangle faces are unverified; the existing
+  // independently conservative contact veto remains authoritative.
+  const actuallyMeasured=receipt.originalSourceFaceCount??0;
+  const rejected=receipt.status==='ORIGINAL_PHOTO_2D_FALLBACK';
+  return Object.freeze({...receipt,
+   actualSkinnedPoseSampled:!rejected,
+   sourceBuffersPreserved:true,anatomicalBodyMeshes:bodies,
+   fullOriginalSourceFaceCount:fullSourceFaces,
+   sampledSourceFaceCount:actuallyMeasured,
+   sourceFaceSamplingStride:stride,
+   sourceFaceCoverageComplete:!rejected&&stride===1,
+   originalFacesOmittedByBudget:fullSourceFaces-actuallyMeasured,
+   sampledPoseIsNotWholeGarmentClearance:true,
+   safe3D:false,contactClearanceProved:false,releaseAuthorized:false});
  }catch(e){
   // Only fixed codes generated internally above; never echo owner or mesh data.
   const fixed=new Set(['real-disposable-anatomical-outfit-required',
