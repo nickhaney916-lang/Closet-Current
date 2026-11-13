@@ -18,6 +18,7 @@ const maxDownloads=Number(process.env.P75_MAX_ORIGINALS||18);
 if(!Number.isInteger(maxDownloads)||maxDownloads<1||maxDownloads>48)throw Error('Unsafe maximum original count');
 const maxPerQuery=Math.min(4,Number(plan.maxOriginalsPerQuery||3));
 const seen=new Set(),discovered=[],failures={},requests={attempts:0,success:0};
+let originalUrlSamplePrinted=false;
 const headers={'User-Agent':'ClosetCurrentP75DatasetAudit/1.0 (https://github.com/nickhaney916-lang/Closet-Current; research provenance, NO user data)','Accept':'application/json'};
 const count=x=>failures[x]=(failures[x]||0)+1;
 const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim().slice(0,400);
@@ -53,7 +54,16 @@ for(const task of plan.searches){
   const lic=clean(meta.LicenseShortName?.value),licURL=licenseURL(clean(meta.LicenseUrl?.value));
   const src=info.descriptionurl,srcKey=sourceKey(src);
   if(!srcKey){count('commons-page-url-not-recognized');continue;}
-  if(!originalURL(info.url)){count('commons-original-url-not-recognized');continue;}
+  if(!originalURL(info.url)){
+   count('commons-original-url-not-recognized');
+   if(!originalUrlSamplePrinted){
+    try{const u=new URL(info.url);console.log('P75_PUBLIC_URL_STRUCTURE '+JSON.stringify({
+     scheme:u.protocol,host:u.hostname,pathPrefix:u.pathname.split('/').slice(0,5),query:!!u.search,thumb:u.pathname.includes('/thumb/')}));}
+    catch{console.log('P75_PUBLIC_URL_STRUCTURE malformed');}
+    originalUrlSamplePrinted=true;
+   }
+   continue;
+  }
   if(already.has(srcKey)||seen.has(srcKey)){count('historically-exposed-or-repeated');continue;}
   if(!rightsOK(lic,licURL)){count('rights-metadata-unacceptable');continue;}
   const artist=clean(meta.Artist?.value),title=clean(page.title);
