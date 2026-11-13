@@ -32,9 +32,21 @@ export function sourceKey(url){
   return decodeURIComponent(u.pathname.slice('/wiki/'.length)).replace(/_/g,' ').normalize('NFKC').toLowerCase();
  }catch{return null;}
 }
-export function originalURL(url){
- try{const u=new URL(url);return u.protocol==='https:'&&u.hostname==='upload.wikimedia.org'&&u.pathname.startsWith('/wikipedia/commons/')&&!u.pathname.includes('/thumb/')&&!u.search&&!u.hash;}catch{return false;}
+export function canonicalOriginalURL(url){
+ try{
+  const u=new URL(url);
+  if(u.protocol!=='https:'||u.hostname!=='upload.wikimedia.org'||
+     !u.pathname.startsWith('/wikipedia/commons/')||u.pathname.includes('/thumb/')||u.hash)return null;
+  // Wikimedia Commons imageinfo appends analytics UTM query parameters even
+  // to ORIGINAL files. Ignore only these named trackers; reject all other query
+  // arguments because they may select altered/resized media content.
+  const allowed=new Set(['utm_source','utm_campaign','utm_content']);
+  for(const key of u.searchParams.keys())if(!allowed.has(key))return null;
+  return u.origin+u.pathname;
+ }catch{return null;}
 }
+export function originalURL(url){return canonicalOriginalURL(url)!==null;}
+
 export function hamming64(a,b){
  if(!/^[a-f0-9]{16}$/.test(a||'')||!/^[a-f0-9]{16}$/.test(b||''))return null;
  let x=BigInt('0x'+a)^BigInt('0x'+b),n=0;
