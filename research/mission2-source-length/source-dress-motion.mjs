@@ -117,7 +117,7 @@ export function sourceDressSwayProfile({theta,t,phase}={}){
  * every transformed vertex and source-provenance check passes. Reset from
  * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
  */
-export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null}={}){
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null}={}){
  const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
  if(!mesh?.isSkinnedMesh||!root?.isObject3D||
     mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
@@ -131,7 +131,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
     dress.stats?.collisionValidated!==false||
     !Number.isFinite(phase)||phase<0||phase>1||
     (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function')||
-    (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function'))
+    (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function')||
+    (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function'))
   fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
  let state=originals.get(mesh);
  if(!state){
@@ -307,6 +308,31 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   checkProvenance(mesh,state);
   sweptSurfaceAuditObserved40=true;
  }
+ // C41 optional RESEARCH interval-SAT gate. A complete temporal separation
+ // receipt may resolve certain false positives from C40's swept AABBs, but
+ // never certifies nonlinear skeletal movement or owner garment release.
+ let sweptIntervalAuditObserved41=false;
+ if(sweptIntervalAudit41!==null){
+  const receipt=sweptIntervalAudit41({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-linear-triangle-intervals-v1'||
+     receipt.completeBoundedTemporalIntervalAudit!==true||
+     receipt.originalSourceAndBodyProvenanceVerified!==true||
+     receipt.allBroadphasePairsExamined!==true||
+     !Number.isSafeInteger(receipt.broadphasePotentialPairs)||
+     !Number.isSafeInteger(receipt.provenSeparatedPairs)||
+     !Number.isSafeInteger(receipt.unresolvedPairs)||
+     receipt.unresolvedPairs!==0||
+     receipt.broadphasePotentialPairs!==receipt.provenSeparatedPairs||
+     receipt.linearVertexTrajectoriesOnly!==true||
+     receipt.exactContinuousTimeOfImpactMeasured!==false||
+     receipt.nonlinearBoneMotionCertified!==false||
+     receipt.continuousCollisionCertified!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C41 incomplete or unresolved time-interval fabric/body motion refused');
+  checkProvenance(mesh,state);
+  sweptIntervalAuditObserved41=true;
+ }
  // Live change intentionally occurs only after every source/skin/geometry
  // validation and the new frame has been staged. No original JPEG changed.
  p.array.set(target);p.needsUpdate=true;
@@ -335,6 +361,8 @@ export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=n
   sourceDressMotionSweptWholeFabricCertified39:false,
   sourceDressMotionMovingSurfaceVetoObserved40:sweptSurfaceAuditObserved40,
   sourceDressMotionSweptWholeFabricCertified40:false,
+  sourceDressMotionLinearIntervalGuardObserved41:sweptIntervalAuditObserved41,
+  sourceDressMotionExactContinuousCollisionCertified41:false,
   sourceDressMotionRealClothPhysics:false,
   sourceDressMotionSweptCollisionCertified:false,
   sourceDressMotionHumanVisualAcceptance:false,
