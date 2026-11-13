@@ -81,12 +81,27 @@ async function signin(page,owner){
 }
 async function seed(page,owner){
  const f=fixture(owner);
+ // Create fixture records using the real owner-named IndexedDB database,
+ // not the app's mutable in-memory connection, which may be reopening.
  await page.evaluate(data=>new Promise((resolve,reject)=>{
   if(window.closetAuth?.user?.id!==data.owner)throw Error('fixture owner mismatch');
-  const tx=db.transaction(['items','state'],'readwrite');
-  for(const row of data.items)tx.objectStore('items').put(row);
-  tx.objectStore('state').put(data.board);
-  tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+  const req=indexedDB.open('closet-current-user-'+data.owner,2);
+  req.onupgradeneeded=()=>{
+   const db=req.result;
+   if(!db.objectStoreNames.contains('items'))db.createObjectStore('items',{keyPath:'id'});
+   if(!db.objectStoreNames.contains('state'))db.createObjectStore('state',{keyPath:'id'});
+  };
+  req.onerror=()=>reject(req.error);
+  req.onsuccess=()=>{
+   const connection=req.result;
+   let tx;
+   try{tx=connection.transaction(['items','state'],'readwrite');}
+   catch(error){connection.close();reject(error);return;}
+   for(const row of data.items)tx.objectStore('items').put(row);
+   tx.objectStore('state').put(data.board);
+   tx.oncomplete=()=>{connection.close();resolve();};
+   tx.onerror=tx.onabort=()=>{const error=tx.error||Error('fixture IndexedDB seed refused');connection.close();reject(error);};
+  };
  }),{...f,owner});
 }
 async function preview(page,expected){
