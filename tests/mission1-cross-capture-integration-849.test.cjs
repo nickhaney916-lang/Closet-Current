@@ -34,7 +34,7 @@ test('P849 cross-owner/revision guard happens after consent hash and directly be
  assert.match(app,/cross77Scope&&!CrossCaptureDuplicate77\.valid\(cross77Scope\)/);
 });
 test('P849 candidate is owner-only, top one, research OFF unless explicitly selected',()=>{
- assert.match(app,/searchParams\.get\('crossCapture77'\)==='1'&&pendingDraft/);
+ assert.match(app,/new URLSearchParams\(location\.search\)\.get\('crossCapture77'\)==='1'&&pendingDraft/);
  assert.match(app,/CrossCaptureDuplicate77\.propose\(item,items,cross77Scope,\{topK:1\}\)/);
  assert.match(app,/db\?\.name==='closet-current-user-'\+owner/);
  assert.match(index,/cross-capture-duplicate-77\.js/);
