@@ -14,7 +14,10 @@
  function currentEpoch(){
   try{return JSON.parse(localStorage.getItem(STORE)||'null')?.epoch??null;}catch{return null;}
  }
- const stillCurrent=()=>epoch!==null&&currentEpoch()===epoch;
+ // A shared epoch alone is insufficient: different tabs can rotate a refresh
+ // token within the same epoch. Never treat overwritten credentials as ours.
+ const stillCurrent=()=>epoch!==null&&currentEpoch()===epoch&&
+  !!storedSession&&localStorage.getItem(STORE)===storedSession;
  function lockAccount(showLogin=true){
   if(locked)return;
   locked=true;session=null;window.closetAuth.user=null;
@@ -51,7 +54,38 @@
   if(!session?.access_token||!window.closetAuth.user?.id)throw Error('Sign in required');
   if(force||session.expires_at<Date.now()/1000+60){
    if(!session.refresh_token)throw Error('Sign in again');
-   if(!refreshing){const expected=window.closetAuth.user.id;refreshing=request('token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(data=>{window.closetAuth.assertCurrent();if(data.user?.id!==expected||!data.access_token)throw Error('Session account changed');showUser(data);}).finally(()=>{refreshing=null;});}
+   if(!refreshing){
+    const expected=window.closetAuth.user.id,
+     snapshot=storedSession,refreshToken=session.refresh_token;
+    refreshing=request('token?grant_type=refresh_token',{refresh_token:refreshToken})
+     .then(data=>{
+      // The remote response may arrive after another tab has rotated or
+      // replaced our token, even if the *user ID and epoch* are unchanged.
+      // A stale response must never overwrite a newer credential.
+      window.closetAuth.assertCurrent();
+      if(!snapshot||storedSession!==snapshot||localStorage.getItem(STORE)!==snapshot)
+       throw Error('Session replaced during refresh');
+      if(data.user?.id!==expected||!data.access_token||!data.refresh_token){
+       lockAccount();throw Error('Session account changed or required refresh credentials missing');
+      }
+      showUser(data);
+     }).catch(error=>{
+      // Revoked/invalid refresh credentials require fresh authentication.
+      // Preserve any *newer* credentials another tab has already published.
+      const invalid=error?.status===401||
+       error?.code==='invalid_grant'||error?.code==='refresh_token_not_found'||
+       error?.code==='invalid_refresh_token';
+      if(!locked&&snapshot&&
+         (storedSession!==snapshot||localStorage.getItem(STORE)!==snapshot)){
+       lockAccount();
+      }else if(invalid&&!locked&&storedSession===snapshot&&
+          localStorage.getItem(STORE)===snapshot){
+       localStorage.removeItem(STORE);
+       lockAccount();
+      }
+      throw error;
+     }).finally(()=>{refreshing=null;});
+   }
    await refreshing;
   }
   window.closetAuth.assertCurrent();

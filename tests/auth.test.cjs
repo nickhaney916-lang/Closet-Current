@@ -164,7 +164,14 @@ test('simultaneous cloud refreshes rotate the token only once and retain the acc
 });
 test('cloud token refresh cannot switch to a different account',async()=>{
  let calls=0;const a=app(async()=>++calls===1?response({access_token:'old-access',refresh_token:'old-refresh',user:{id:'first-user'}}):response({access_token:'other-access',user:{id:'other-user'}}));await a.submit();
- await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);assert.equal(a.window.closetAuth.user.id,'first-user');
+ await assert.rejects(a.window.closetAuth.getAccessToken({force:true}),/account changed/);
+ // A verified response naming another account must fail CLOSED rather than
+ // leave the former owner's wardrobe unlocked under revoked authority.
+ assert.equal(a.window.closetAuth.user,null);
+ assert.equal(a.get('appShell').hidden,true);
+ assert.equal(a.saved.has('closet-current-auth-v1'),true,
+  'never replace or delete original credentials from a mismatched response');
+ await assert.rejects(a.window.closetAuth.getAccessToken(),/session ended/);
 });
 
 test('an external session change locks an authenticated tab and rejects future tokens',async()=>{

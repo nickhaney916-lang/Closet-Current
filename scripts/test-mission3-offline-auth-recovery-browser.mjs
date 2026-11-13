@@ -131,6 +131,7 @@ try{
     await page.waitForFunction(owner=>
      window.closetAuth.user?.id===owner&&!document.getElementById('appShell').hidden,
      owner,{timeout:15000});
+    await page.waitForFunction(()=>typeof closetReady!=='undefined',null,{timeout:15000});
     await page.evaluate(()=>closetReady);
     const restored=await page.evaluate(({STORE})=>({
      user:window.closetAuth.user.id,
