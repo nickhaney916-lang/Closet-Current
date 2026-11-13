@@ -64,7 +64,8 @@ function scene(){
  const shirt={meshes:[shell,left,right],stats:{
   sourceSHA256:SHIRT,trueSourceShoulderTopSlope:true,
   sourceRigNaturalShoulderFall:true}};
- const pants={meshes:[jeans],stats:{photoApplied:true,sourceSHA256:DENIM}};
+ const pants={meshes:[jeans],stats:{photoApplied:true,
+  sourceId:'commons-public-domain-jeans-2005',sourceSHA256:DENIM}};
  return {root,shirt,pants,shell,left,right,jeans,body};
 }
 function trial(s,options={}){return trialSourceBoneShoulderYoke84({
@@ -120,6 +121,9 @@ test('P84 original source identification cannot be an arbitrary private wardrobe
  s.pants.stats.photoApplied=false;
  assert.equal(trial(s).trialApplied,false);
  s.pants.stats.photoApplied=true;
+ s.pants.stats.sourceId='private-unapproved-denim';
+ assert.equal(trial(s).reason,'source-or-geometry-unverified');
+ s.pants.stats.sourceId='commons-public-domain-jeans-2005';
  s.shirt.meshes=[s.shell];
  assert.equal(trial(s).reason,'source-or-geometry-unverified');
  assert.deepEqual(s.left.geometry.getAttribute('position').array,old);
