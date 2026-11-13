@@ -93,6 +93,28 @@ try{
     });
     return {id:updated.id,color:updated.color,notes:updated.notes};
    });
+   // The still-open first tab has a stale BLUE saved-row snapshot. Exercise
+   // the actual app.js crop callback against native same-owner IndexedDB:
+   // the second tab's newer RED original must survive a stale image crop.
+   const invokeCrop=async page=>page.evaluate(async()=>{
+    const row=items.find(x=>x.id==='same-owner-delete-cas-original');
+    if(!row)throw Error('Saved test garment not found');
+    const priorOpen=window.openPhotoCrop,priorCheck=window.checkPhoto;
+    let operations=null;
+    window.openPhotoCrop=(item,config)=>{operations=config;return Promise.resolve();};
+    window.checkPhoto=async()=>({colorEstimate:null,signature:'crop-fixture',aspect:1});
+    try{
+     cropClothingPhoto(row);
+     if(!operations?.save)throw Error('The real crop controller did not open');
+     await operations.save({image:row.image,
+      cropBounds:{x:0,y:0,width:1,height:1}},null);
+     return {status:'saved'};
+    }catch(error){return {status:'rejected',message:String(error?.message||error)};}
+    finally{window.openPhotoCrop=priorOpen;window.checkPhoto=priorCheck;}
+   });
+   const staleCrop=await invokeCrop(a);
+   assert.equal(staleCrop.status,'rejected');
+   assert.match(staleCrop.message,/CORRECTION10_STALE_SAVED_GARMENT_REOPEN_EDITOR/);
    const staleResult=await a.evaluate(async()=>{
     try{await removeItem('same-owner-delete-cas-original',
      items.find(x=>x.id==='same-owner-delete-cas-original'));
@@ -117,6 +139,9 @@ try{
     return {color:row.color,notes:row.notes};
    });
    assert.equal(updatedInA.color,'Red');
+   // After reloading the revised row, cropping it normally may proceed.
+   const freshCrop=await invokeCrop(a);
+   assert.equal(freshCrop.status,'saved');
    const accepted=await a.evaluate(async()=>{
     await removeItem('same-owner-delete-cas-original',
      items.find(x=>x.id==='same-owner-delete-cas-original'));
@@ -163,6 +188,7 @@ try{
    assert.equal((await sharp(image).metadata()).width,width);
    results.push({engine,width,originalSHA256:originalSHA,
     nativeIndexedDB:true,staleTwoTabDeleteRejected:true,
+    staleTwoTabCropRejected:true,freshReviewedCropSucceeds:true,
     originalPreservedAfterConflict:true,reviewedLatestDeleteSucceeds:true,
     secondOwnerUntouched:true,hostedSupabase:false,physicalPhone:false,
     screenshotSHA256:createHash('sha256').update(image).digest('hex')});
@@ -170,7 +196,8 @@ try{
  }
  assert.equal(results.length,6);assert.deepEqual(pageErrors,[]);
  const receipt=JSON.stringify({milestone:'mission3-same-owner-stale-delete-cas',
-  familyAlphaHold:true,syntheticOnly:true,cases:results,pageErrors},null,2)+'\n';
+  familyAlphaHold:true,syntheticOnly:true,
+  cropCASAcrossSameOwnerTabs:true,cases:results,pageErrors},null,2)+'\n';
  await writeFile(resolve(out,'results.json'),receipt);
  await writeFile(resolve(out,'sha256.txt'),
   createHash('sha256').update(receipt).digest('hex')+'  results.json\n');
