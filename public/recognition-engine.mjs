@@ -401,7 +401,7 @@ export async function classifyIsolatedGarment(model,image,{hint,confirmationMode
  if(sameType)onIdentified(choice);
  const details=sameType?await readVerifiedDetails(model,confirmationModel,image,choice,onStage):{};
  return {
-  strong:sameType,
+  strong:Boolean(sameType),
   categoryConfirmed:!sameType,
   categoryOnly:!sameType,
   choices:[{...choice,sleeveLength:details.sleeveLength||choice.sleeveLength}],
