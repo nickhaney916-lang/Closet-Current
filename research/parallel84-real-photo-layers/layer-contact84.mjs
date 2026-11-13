@@ -96,7 +96,7 @@ export function auditDistinctPhotoLayers84({
  maxCandidatePairs=100000,maxFaces=30000,toleranceMeters=.00002
 }={}){
  if(!['female','male'].includes(avatar)||
-    !['neutral','arms-raised','walking'].includes(pose)||
+    !['neutral','relaxed','source','arms-raised','walking'].includes(pose)||
     !optionsOK(maxComparisons,maxCandidatePairs,maxFaces,toleranceMeters))
    return fail('avatar-pose-or-budget-invalid');
  if(!Array.isArray(items)||items.length!==2||items.some(x=>!x||typeof x!=='object'))
