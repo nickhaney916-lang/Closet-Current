@@ -1,0 +1,110 @@
+name: Mission 1 P876 empirically unsafe dual-model subtype review — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-dual-empirical-confusion-876-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p876-empirical-confusion-HOLD
+  cancel-in-progress: true
+jobs:
+  review-and-native-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: P875 immutable parent exact six-path research scope (NO DEPLOY)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=e70259fd4f5e919fd335a71ad7cf39a370dcae47
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p876-paths
+          test "$(wc -l </tmp/p876-paths)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              public/recognition-confusion-guard.mjs|public/dual-panel-82.mjs|scripts/test-p82-review-browser.mjs|scripts/p876-public-confusion-guard-audit.mjs|research/mission1-dual-empirical-confusion-876/REPORT.md|.github/workflows/mission1-dual-empirical-confusion-876-no-deploy.yml) ;;
+              *) echo "UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p876-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/dual-core-82.mjs public/dual-worker-82.mjs public/model-arbitration-81.mjs public/local-worker.mjs public/recognition-engine.mjs public/cloud-backup.js supabase)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-dual-empirical-confusion-876/REPORT.md
+          echo P876_SCOPE_NO_DEPLOY_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Native/guard syntax, both builds, full native and release BLOCKED
+        run: |
+          set -euo pipefail
+          node --check public/recognition-confusion-guard.mjs
+          node --check public/dual-panel-82.mjs
+          node --check scripts/test-p82-review-browser.mjs
+          node --check scripts/p876-public-confusion-guard-audit.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p876-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p876-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p876-release
+      - name: True source JPEG SHA and full six desktop dual owner policies
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs | tee /tmp/p876-browser
+          test "$(grep -c '^P876_EMPIRICAL_CONFUSION_GUARD_DUAL ' /tmp/p876-browser)" -eq 6
+          test "$(grep -c '^P875_SHARED_CATEGORY_RANK_ONLY ' /tmp/p876-browser)" -eq 6
+          test "$(grep -c '^P875_UNILATERAL_TOP_RANK_HIDDEN ' /tmp/p876-browser)" -eq 6
+          test "$(grep -c '^P874_CROSS_CATEGORY_CONFLICT_MANUAL_ONLY ' /tmp/p876-browser)" -eq 6
+          test "$(grep -c '^P873_TIED_TOP_LABELS_MANUAL_ONLY ' /tmp/p876-browser)" -eq 6
+          test "$(grep -c '^P872_REJECTED_SUGGESTION_NO_FALSE_SUCCESS ' /tmp/p876-browser)" -eq 6
+          node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+  genuine-48-public-original-model-rank-audit-NOT-BLIND-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Confirm immutable source branch six-path-only, unchanged dataset/model weights
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=e70259fd4f5e919fd335a71ad7cf39a370dcae47
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 6
+          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark/locked-photo-sources.json benchmark/manifest-reviewed-32.json benchmark/manifest-holdout-16.json public/model-arbitration-81.mjs public/dual-worker-82.mjs public/recognition-vectors.bin public/dual-model-lock-82.mjs)"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium
+      - name: Recover only the 48 fixed Commons licensed, original source-SHA-locked development JPEGs and models
+        run: |
+          set -euo pipefail
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          test "$(printf '%s\n' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Genuine FashionCLIP + FashionSigLIP Chromium 48 original-photo candidate coverage (NOT blind accuracy)
+        run: |
+          set -euo pipefail
+          node scripts/p82-real-browser.mjs chromium benchmark/p876-real-chromium | tee /tmp/p876-models
+          test "$(grep -c '^P82_REAL_BROWSER_ROW chromium ' /tmp/p876-models)" -eq 48
+          node scripts/p876-public-confusion-guard-audit.mjs benchmark/p876-real-chromium/results.json benchmark/p876-real-chromium/risk-coverage.json | tee /tmp/p876-coverage
+          grep -Fq '"realModelPhotos":48' /tmp/p876-coverage
+          grep -Fq '"recognitionAccuracy":null' /tmp/p876-coverage
+          grep -Fq '"knownSneakerSourceAnkleBootSuggestionRemoved":true' /tmp/p876-coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p876-public-48-development-numeric-risk-coverage-only
+          path: benchmark/p876-real-chromium/risk-coverage.json
+          if-no-files-found: error
