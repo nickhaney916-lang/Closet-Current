@@ -69,6 +69,18 @@ test('same-owner deletion acknowledges only the reviewed source row and updates 
  assert.deepEqual(f.ctx.items,[]);
  assert.deepEqual(f.events,['render:A']);
 });
+test('current-owner delete reconciles all same-ID visible copies without touching a different garment',async()=>{
+ const f=fixture();
+ const extra={...f.a,name:'Stale same-ID duplicate'};
+ const unrelated=row('A',{id:'different-saved-piece'});
+ f.ctx.items.push(extra,unrelated);
+ const pending=f.ctx.del.onclick();
+ f.wait.resolve();
+ await pending;
+ assert.equal(f.ctx.items.length,1);
+ assert.equal(f.ctx.items[0].id,'different-saved-piece');
+ assert.deepEqual(f.events,['render:A']);
+});
 test('old owner delete resolving after switch cannot clear or redraw new owner wardrobe',async()=>{
  const f=fixture(),pending=f.ctx.del.onclick();
  f.switchToB();f.wait.resolve();
