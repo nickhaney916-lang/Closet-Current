@@ -1,0 +1,63 @@
+name: Parallel 81 cross-model arbitration — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel81-model-arbitration-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-and-desktop-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce immutable Mission 1 parent and research-only scope
+        run: |
+          set -eu
+          BASE=bb7dfc69c6d11ef0daaa2c72a8ca90ab2cf78c34
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
+            case "$p" in
+              scripts/test-parallel77-cross-capture-browser.mjs|public/model-arbitration-81.mjs|scripts/p81-real-model-comparison.mjs|scripts/test-p81-arbitration-browser.mjs|tests/parallel81-arbitration.test.mjs|research/parallel81/*|.github/workflows/parallel81-arbitration-no-deploy.yml) ;;
+              *) echo "Unscoped path: $p"; exit 1;;
+            esac
+          done
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/local-worker.mjs public/outfit-worker.mjs public/recognition-engine.mjs public/recognition-vectors.json public/recognition-vectors.bin supabase)"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - run: |
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/test-p81-arbitration-browser.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-parallel77-cross-capture-browser.mjs
+  real-public-development-CPU-models-NOT-independent-accuracy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 sharp@0.34.3
+      - name: Recover only the frozen public development JPEGs by exact SHA
+        run: |
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+      - name: Genuine pinned encoders and native worker-equivalent baseline
+        run: node scripts/p81-real-model-comparison.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p81-public-development-numeric-only
+          path: benchmark/p81-output/comparison.json
+          if-no-files-found: error

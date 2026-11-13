@@ -25,7 +25,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     status:200,contentType:'text/html',body:'<!doctype html><html><body><main id="root"></main></body></html>'
    }));
    await page.goto('http://127.0.0.1:27277/?crossCapture77=1');
-   await page.addStyleTag({content:styles});
+   // Keep this offline fixture independent of external font availability.
+   await page.addStyleTag({content:styles.replace(/@import\s+url\([^;]+;/g,'')});
    for(const source of [taxonomy,details,cross,harness,editor])
     await page.addScriptTag({content:source});
    await page.addScriptTag({content:`window.p77Stages=[];
