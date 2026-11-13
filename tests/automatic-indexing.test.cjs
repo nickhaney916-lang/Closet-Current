@@ -3,11 +3,68 @@ const source=fs.readFileSync('public/app.js','utf8');
 const choice={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:'Unknown'};
 function setup({result={strong:true,choices:[choice],details:{color:'Blue',pattern:'Solid'}},quality,request}={}){
  const stored=[],elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
- const c={captureOperationEpoch:0,scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,localPending:new Set(),automaticQueue:[],automaticRunning:false,localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,crypto:{randomUUID},Date,structuredClone,$:el,render(){},persistDraft(){},message(text){c.messageText=text;},checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),localRequest:request||(async()=>result),queued:work=>work(),db:{transaction(){const tx={objectStore:name=>({put(value){if(name==='items')stored.push(value);}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
- vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
+ let draftRows=[],tail=Promise.resolve();
+ // Real IDB applies the read/insert/draft-delete in one readwrite transaction.
+ // Requests invoke onsuccess before writes commit, then oncomplete once only.
+ const c={
+  captureOperationEpoch:0,scheduleMemoryReview(){},nativeIndex07Refresh:async()=>{},recognitionState:{phase:'idle',percent:null,activeId:null},
+  renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,
+  localPending:new Set(),automaticQueue:[],automaticRunning:false,
+  localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,
+  crypto:{randomUUID},Date,structuredClone,$:el,render(){},
+  message(text){c.messageText=text;},
+  window:{closetAuth:{user:{id:'owner-synthetic'},assertCurrent(){}}},
+  checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),
+  similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),
+  localRequest:request||(async()=>result),
+  queued(work){const promise=tail.then(work);tail=promise.catch(()=>{});return promise;},
+  persistDraft(){const snapshot=structuredClone(c.batch);return c.queued(()=>{
+   draftRows=structuredClone(snapshot);
+  });},
+  db:{name:'closet-current-user-owner-synthetic',transaction(names){
+   const pending=[];let aborted=false,scheduled=false;
+   const tx={error:null,oncomplete:null,onerror:null,onabort:null,
+    abort(){if(aborted)return;aborted=true;setImmediate(()=>tx.onabort?.());},
+    objectStore(name){return {
+     get(id){
+      const req={result:undefined,onsuccess:null,onerror:null};
+      queueMicrotask(()=>{
+       if(aborted)return;
+       if(name==='items')req.result=structuredClone(stored.find(x=>x.id===id));
+       else if(name==='state'&&id==='draft')req.result={id:'draft',batch:structuredClone(draftRows)};
+       req.onsuccess?.();
+      });
+      return req;
+     },
+     add(value){
+      if(name!=='items')throw Error('Unexpected item insert');
+      pending.push({name,value:structuredClone(value),add:true});schedule();
+      if(c.onAutoIndexWrite){const cb=c.onAutoIndexWrite;c.onAutoIndexWrite=null;cb();}
+     },
+     put(value){pending.push({name,value:structuredClone(value)});schedule();}
+    };}};
+   function schedule(){if(scheduled)return;scheduled=true;setImmediate(()=>{
+    if(aborted)return;
+    if(pending.some(x=>x.add&&stored.some(y=>y.id===x.value.id))){
+     tx.error=Error('ConstraintError');tx.abort();return;
+    }
+    for(const write of pending){
+     if(write.name==='items')stored.push(write.value);
+     else draftRows=structuredClone(write.value.batch);
+    }
+    tx.oncomplete?.();
+   });}
+   return tx;
+  }}
+ };
+ vm.createContext(c);vm.runInContext(fs.readFileSync('public/taxonomy.js','utf8'),c);
+ vm.runInContext(fs.readFileSync('public/clothing-details.js','utf8'),c);
+ // Browser mode exposes the real API on window; the VM context also needs
+ // that same API as a global binding for extracted app.js functions.
+ c.ClothingDetails=c.window.ClothingDetails;
  vm.runInContext(source.slice(source.indexOf('function candidate('),source.indexOf('function stopCamera(')),c);
  vm.runInContext(source.slice(source.indexOf('async function enableLocal('),source.indexOf('async function importClothingPhotos(')),c);
- return {c,stored,el};
+ return {c,stored,el,get persistedDraft(){return structuredClone(draftRows);}};
 }
 async function done(c){for(let i=0;i<30&&(c.automaticRunning||c.localPending.size);i++)await new Promise(setImmediate);assert.equal(c.automaticRunning,false);}
 test('a new photo is indexed and saved without a recognition button',async()=>{
@@ -36,7 +93,7 @@ test('user adjustments made during recognition survive its response',async()=>{
 });
 test('new capture during an IndexedDB save is preserved',async()=>{
  const {c}=setup();let first=true;
- c.db.transaction=()=>{const tx={objectStore:()=>({put(){}})};setImmediate(()=>{if(first){first=false;c.candidate('two');}tx.oncomplete();});return tx;};
+ c.onAutoIndexWrite=()=>{if(first){first=false;c.candidate('two');}};
  c.candidate('one');await done(c);assert.equal(c.items.length,2);assert.equal(c.batch.length,0);
 });
 test('model failure preserves all photos and retry processes the backlog',async()=>{

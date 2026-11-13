@@ -142,6 +142,10 @@ test('12 real app opt-in import is before automatic saving and default mode stay
    app.indexOf('  const corePartial='));
  assert.ok(app.includes('if(!decision.autoSaveSafe)'));
  assert.ok(app.includes("const wasSaved=await saveIndexed(item,index04ApprovedOwner)"));
- assert.ok(app.includes("db?.name!=='closet-current-user-'+index04ApprovedOwner"));
+ // New writer closes over exact owner DB + epoch and checks the pinned
+ // approved owner before opening its atomic IDB transaction.
+ assert.ok(app.includes("ownerDB.name!=='closet-current-user-'+owner"));
+ assert.ok(app.includes("owner!==index04ApprovedOwner"));
+ assert.ok(app.includes("epoch===captureOperationEpoch&&db===ownerDB"));
  assert.ok(!/fetch\s*\(|XMLHttpRequest|localStorage|indexedDB\.open|postMessage|new Worker/.test(implementation));
 });

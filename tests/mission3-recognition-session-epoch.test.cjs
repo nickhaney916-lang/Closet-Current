@@ -94,7 +94,9 @@ test('current owner saved recognition still updates private in-memory roster aft
  const saved=await ctx.saveIndexed(old);
  assert.equal(saved,true);assert.equal(ctx.items.length,1);
  assert.equal(ctx.items[0].id,old.id);assert.equal(ctx.batch.length,0);
- assert.deepEqual(events,['persist','index']);
+ // The verified transaction already removed just this persisted draft.
+ // A second whole-batch persist would lose newly captured photos in tab B.
+ assert.deepEqual(events,baseline?['persist','index']:['index']);
 });
 test('session lock clears previous scanner jobs, queue and loading state before owner changes',()=>{
  const events=[],handlers={};

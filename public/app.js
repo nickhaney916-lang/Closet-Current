@@ -1539,22 +1539,79 @@ function applyLocalChoice(item,choice,overwrite=false){
 }
 async function saveIndexed(item,index04ApprovedOwner=null){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
- const epoch=captureOperationEpoch,ownerDB=db;
- if(!ownerDB)return false;
- if(index04Active&&(!index04ApprovedOwner||window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner))return false;
+ const epoch=captureOperationEpoch,ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
+ if(!owner||!ownerDB||ownerDB.name!=='closet-current-user-'+owner)return false;
+ if(index04Active&&(!index04ApprovedOwner||owner!==index04ApprovedOwner))return false;
+ // Freeze source identity BEFORE the queued write. Model suggestions may
+ // change color/category, but a different photo or human-reviewed draft may
+ // never be silently consumed by an old recognition result.
+ const expected={
+  id:item.id,image:item.image,ownerId:item.ownerId||null,
+  sourceSHA256:item.sourceSHA256||null,
+  originalSHA256:item.originalPhoto?.sha256||null,
+  originalImage:item.originalPhoto?.image||null,
+  outfitSourceId:item.outfitSourceId||null
+ };
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
+ const current=()=>!!owner&&window.closetAuth===auth&&auth.user?.id===owner&&
+  epoch===captureOperationEpoch&&db===ownerDB&&ownerDB.name==='closet-current-user-'+owner;
  const saved=await queued(()=>new Promise((resolve,reject)=>{
-  if(epoch!==captureOperationEpoch||db!==ownerDB)return resolve(false);
-  if(!batch.some(x=>x.id===item.id)||item.userAdjusted||item.requiresOwnershipConfirmation||
-     (index04Active&&(window.closetAuth?.user?.id!==index04ApprovedOwner||db?.name!=='closet-current-user-'+index04ApprovedOwner)))return resolve(false);
+  try{auth.assertCurrent?.();}catch(error){reject(error);return;}
+  if(!current()||!batch.includes(item)||item.userAdjusted||
+     item.requiresOwnershipConfirmation||
+     (index04Active&&owner!==index04ApprovedOwner))return resolve(false);
   const tx=ownerDB.transaction(['items','state'],'readwrite');
-  tx.objectStore('items').put(value);
-  tx.objectStore('state').put({id:'draft',batch:structuredClone(batch.filter(x=>x.id!==item.id))});
-  tx.oncomplete=()=>resolve(true);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  const savedStore=tx.objectStore('items'),draftStore=tx.objectStore('state');
+  let failure;
+  const abort=error=>{failure=error;try{tx.abort();}catch{}};
+  const existing=savedStore.get(value.id);
+  existing.onsuccess=()=>{
+   try{
+    auth.assertCurrent?.();
+    if(!current()||!batch.includes(item)||item.userAdjusted||
+       item.requiresOwnershipConfirmation||existing.result)
+     throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+    const persisted=draftStore.get('draft');
+    persisted.onsuccess=()=>{
+     try{
+      auth.assertCurrent?.();
+      if(!current()||!batch.includes(item)||item.userAdjusted||
+         item.requiresOwnershipConfirmation)
+       throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+      const rows=persisted.result?.batch;
+      if(!Array.isArray(rows))throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+      const matches=rows.filter(row=>row?.id===value.id);
+      if(matches.length!==1)throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+      const draft=matches[0];
+      if((draft.ownerId||null)!==expected.ownerId||
+         draft.image!==expected.image||
+         (draft.sourceSHA256||null)!==expected.sourceSHA256||
+         (draft.originalPhoto?.sha256||null)!==expected.originalSHA256||
+         (draft.originalPhoto?.image||null)!==expected.originalImage||
+         (draft.outfitSourceId||null)!==expected.outfitSourceId||
+         draft.userAdjusted||draft.requiresOwnershipConfirmation||
+         draft.colorSource==='user')
+       throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+      // ADD rather than PUT rejects any same-owner saved-item ID collision.
+      // Remove only this verified draft from the ACTUAL persisted list,
+      // preserving other tabs' original photos and review records.
+      savedStore.add(value);
+      draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+     }catch(error){abort(error);}
+    };
+    persisted.onerror=()=>abort(persisted.error||Error('Draft read failed'));
+   }catch(error){abort(error);}
+  };
+  existing.onerror=()=>abort(existing.error||Error('Saved clothing read failed'));
+  tx.oncomplete=()=>{try{auth.assertCurrent?.();resolve(current());}catch(error){reject(error);}};
+  tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Automatic indexing interrupted'));
  }));
- if(!saved||epoch!==captureOperationEpoch||db!==ownerDB)return false;
+ if(!saved||!current())return false;
  if(!items.some(x=>x.id===item.id))items.push(value);
- batch=batch.filter(x=>x.id!==item.id);persistDraft();await nativeIndex07Refresh();return true;
+ // The transaction already committed the narrowed draft deletion. Do not
+ // follow it with a blind whole-batch persist that could delete tab B's photo.
+ batch=batch.filter(x=>x.id!==item.id);
+ await nativeIndex07Refresh();return true;
 }
 async function recognizeItem(item){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
@@ -1643,7 +1700,7 @@ async function recognizeItem(item){
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
- }finally{if(epoch===captureOperationEpoch){localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;persistDraft();render();}}
+ }finally{if(epoch===captureOperationEpoch){localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;if(!savingIndexed)persistDraft();render();}}
 }
 async function recognizeBatch(){
  if(localBatch)return;localBatch=true;recognitionUnavailable=false;
