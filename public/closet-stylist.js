@@ -68,6 +68,27 @@ async function mountOriginalPhotoPreview167(){
    $('stylistStatus').textContent='Outfits are ready. Original clothing photo preview is unavailable in this session; sign in and try again.';
  }
 }
+// Generated outfit cards may finish asynchronous work after their owner,
+// wardrobe or original styling request changed. Bind all three actions to
+// one exact source session and original rendered combination.
+function beginStyledCollectionCardOwnerLease(result,card){
+ const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,
+  epoch=captureOperationEpoch,serial=styledCollectionRequestSerial,
+  wardrobe=[...items];
+ const ownsSession=()=>{
+  if(typeof owner!=='string'||!owner||window.closetAuth!==auth||
+     auth.user?.id!==owner||ownerDB!==db||
+     ownerDB?.name!=='closet-current-user-'+owner||
+     epoch!==captureOperationEpoch||
+     $('authGate')?.hidden!==true||$('appShell')?.hidden!==false)return false;
+  try{auth.assertCurrent?.();return true;}catch{return false;}
+ };
+ const current=()=>ownsSession()&&serial===styledCollectionRequestSerial&&
+  styledCollectionResults.includes(result)&&
+  items.length===wardrobe.length&&wardrobe.every((row,i)=>row===items[i]);
+ if(!current()||!card.isConnected)return null;
+ return {ownsSession,current};
+}
 function renderStyledCollection(){
  const grid=$('styledCollectionResults');
  ++originalPhotoMountSerial167;
@@ -90,7 +111,29 @@ function renderStyledCollection(){
   else card.append(node('p','No matching trend direction in the current library for these pieces. This combination uses general styling rules.','fine'));
   const actions=node('div',null,'actions'),edit=node('button','Adjust on outfit board','secondary'),save=node('button','Save outfit','primary');edit.type=save.type='button';save.disabled=changed;
   if(changed)card.append(node('p','A selected garment was removed or recategorized. Create outfits again.','fine'));
-  edit.onclick=async()=>{await outfitBoardReady;currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);syncBoardInputs();renderOutfitBoard();await storeBoard();switchView('builder');};
+  edit.onclick=async()=>{
+   const lease=beginStyledCollectionCardOwnerLease(result,card);
+   if(!lease||!edit.isConnected)return;
+   try{
+    await outfitBoardReady;
+    if(!lease.current()||!edit.isConnected)return;
+    currentBoard=cleanOutfitBoard({...board,name:result.context.request+' · option '+(index+1)},items);
+    syncBoardInputs();renderOutfitBoard();
+    if(!lease.current())return;
+    const saved=await storeBoard();
+    if(!lease.current())return;
+    if(!saved){
+     updateSaveState('error','Could not save this outfit draft. Review the outfit board and try again.');
+     return;
+    }
+    // Do not navigate away if the user switched pages while saving.
+    if($('stylist')?.hidden!==false)return;
+    switchView('builder');
+   }catch{
+    if(lease.current()&&card.isConnected)
+     updateSaveState('error','Could not open this outfit safely. Reopen My Closet and try again.');
+   }
+  };
   const status=node('p',null,'fine styled-save-status');status.setAttribute('role','status');
   const refresh=node('button','Refresh my closet','secondary refresh-outfit-wardrobe');refresh.type='button';
   const applySaveState=()=>{
@@ -101,16 +144,46 @@ function renderStyledCollection(){
    edit.disabled=changed||state?.phase==='wardrobe-changed';
    refresh.hidden=state?.phase!=='wardrobe-changed';
   };
-  const updateSaveState=(phase,message)=>{styledCollectionSaveStates.set(result,{phase,message});if(card.isConnected)applySaveState();else renderStyledCollection();};
-  refresh.onclick=async()=>{refresh.disabled=true;try{await refreshSavedWardrobeForOutfits();$('createCollectionOutfits').focus({preventScroll:true});}catch(error){updateSaveState('wardrobe-changed',error.message);refresh.disabled=false;}};
+  // Detached cards never re-render a later owner's outfit list.
+  const updateSaveState=(phase,message)=>{
+   styledCollectionSaveStates.set(result,{phase,message});
+   if(card.isConnected)applySaveState();
+  };
+  refresh.onclick=async()=>{
+   const lease=beginStyledCollectionCardOwnerLease(result,card);
+   if(!lease||!refresh.isConnected)return;
+   refresh.disabled=true;
+   try{
+    await refreshSavedWardrobeForOutfits();
+    if(lease.ownsSession())$('createCollectionOutfits')?.focus({preventScroll:true});
+   }catch{
+    if(lease.current())
+     updateSaveState('wardrobe-changed','Refresh your private closet and create these outfits again.');
+   }finally{
+    if(lease.current()&&card.isConnected)refresh.disabled=false;
+   }
+  };
   save.onclick=async()=>{
-   if(['saving','saved','wardrobe-changed'].includes(styledCollectionSaveStates.get(result)?.phase))return;
+   const lease=beginStyledCollectionCardOwnerLease(result,card);
+   if(!lease||!save.isConnected||
+      ['saving','saved','wardrobe-changed'].includes(styledCollectionSaveStates.get(result)?.phase))return;
    updateSaveState('saving','Saving outfit…');
    try{
-    await outfitBoardReady;if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');
+    await outfitBoardReady;
+    if(!lease.current())return;
+    if(savedOutfitBoards.length>=50)throw Error('You can save up to 50 outfits.');
     const saved={...board,name:result.context.request+' · option '+(index+1)};
-    await saveOwnedOutfit(saved);updateSaveState('saved','Saved. Find it in Outfit builder → Saved outfits.');renderSavedOutfitBoards();
-   }catch(error){updateSaveState(error?.code==='OUTFIT_WARDROBE_CHANGED'?'wardrobe-changed':'error',error.message||'Could not save this outfit.');}
+    await saveOwnedOutfit(saved);
+    if(!lease.current())return;
+    updateSaveState('saved','Saved. Find it in Outfit builder → Saved outfits.');
+    renderSavedOutfitBoards();
+   }catch(error){
+    if(!lease.current())return;
+    updateSaveState(error?.code==='OUTFIT_WARDROBE_CHANGED'?'wardrobe-changed':'error',
+     error?.code==='OUTFIT_WARDROBE_CHANGED'?
+      'Selected clothing changed. Refresh your closet and create these outfits again.':
+      'Could not save this outfit. Your saved clothing is unchanged; try again.');
+   }
   };
   actions.append(edit,save,refresh);card.append(actions,status);applySaveState();grid.append(card);
  }
