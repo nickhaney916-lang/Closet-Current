@@ -54,8 +54,8 @@ export function verifiedSource(row){
  if(!Number.isInteger(row.orientation)||row.orientation<1||row.orientation>8)issues.push('EXIF orientation');
  if(!/^(image\/jpeg|image\/png|image\/webp)$/.test(row.mime||''))issues.push('image MIME');
  if(!/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d/.test(row.acquiredAt||''))issues.push('collection date');
- if(row.verification!=='bytes-verified'||row.photoContent!=='unreviewed'||row.rightsReview!=='manual-review-required')issues.push('unfounded human verification');
- if(row.sourceGroupApproved!==false||row.garmentHumanVerified!==false)issues.push('fabricated grouping/human review');
+ if(row.verification!=='bytes-verified'||!['unreviewed','human-reviewed'].includes(row.photoContent)||!['manual-review-required','curator-approved'].includes(row.rightsReview))issues.push('unfounded verification');
+ if(typeof row.sourceGroupApproved!=='boolean'||typeof row.garmentHumanVerified!=='boolean')issues.push('group and human flags not explicit');
  if(!/^[a-f0-9]{16}$/.test(row.dhash64||''))issues.push('perceptual hash');
  return issues;
 }
@@ -96,9 +96,9 @@ export function validatePartition(rows,exposed,{requireBlindHuman=true}={}){
   const issues=verifiedSource(r);
   if(issues.length&&r.split!=='quarantine')errors.push('source not verified: '+issues.join(','));
   if(r.split==='blind'&&requireBlindHuman&&!r.sealedByIndependentHumanAudit)errors.push('no private sealed audit');
-  if(r.split==='blind'&&(r.modelScored||r.labelsPublic||r.previouslyExposed))errors.push('contaminated blind');
+  if(r.split==='blind'&&(r.modelScored||r.labelsPublic||r.previouslyExposed||!r.garmentHumanVerified||r.photoContent!=='human-reviewed'))errors.push('contaminated or unreviewed blind');
   if(r.split==='blind'&&r.rightsReview!=='curator-approved')errors.push('blind rights not approved');
-  if(r.split!=='quarantine'&&(!r.sourceGroupId||r.sourceGroupApproved!==true))errors.push('unverified garment grouping');
+  if(r.split!=='quarantine'&&(!r.sourceGroupId||r.sourceGroupApproved!==true||!r.garmentHumanVerified||r.photoContent!=='human-reviewed'||r.rightsReview!=='curator-approved'))errors.push('missing curator-verified garment grouping/rights/contents');
   const group=r.sourceGroupId||r.objectKey||sourceKey(r.sourcePage);
   if(group){if(partitions.has(group)&&partitions.get(group)!==r.split)errors.push('source group cross-split');partitions.set(group,r.split);}
   if(r.split==='blind'&&checkOverlap(r,exposed).length)errors.push('historical exposure');
