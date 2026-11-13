@@ -70,7 +70,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     env:
-      P75_MAX_ORIGINALS: '18'
+      P75_MAX_ORIGINALS: '36'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,7 +80,7 @@ jobs:
           node-version: '22'
       - name: Temporary image decoder; no app deploy or private keys
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
-      - name: Commons current license/original-byte metadata and 18-image bounded download, UNLABELED
+      - name: Commons current license/original-byte metadata and 36-image bounded download, UNLABELED
         shell: bash
         run: |
           set -euo pipefail
