@@ -1,0 +1,51 @@
+name: Mission 2 genuine original photo visual acceptance gate NO DEPLOY
+'on':
+  push:
+    branches:
+      - research/mission2-independent-real-photo-visual-gate-20261112-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  original-photo-3d-release-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout research only
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Enforce exact verified P2-C34 parent and 4-file no-deploy allowlist
+        shell: bash
+        run: |
+          set -eu
+          BASE=f53e9c4dea7a2ee749e737c16a791a97a21459ef
+          test "$(git merge-base "$BASE" HEAD)" = "$BASE"
+          git diff --name-only "$BASE" HEAD > /tmp/mission2-independent-photo-paths
+          while IFS= read -r p; do
+            case "$p" in
+              research/mission2-source-length/independent-visual-acceptance.mjs|tests/mission2-independent-visual.test.mjs|scripts/check-mission2-independent-visual.mjs|.github/workflows/mission2-independent-visual-no-deploy.yml)
+                ;;
+              *)
+                echo "DENIED nonresearch file $p"
+                exit 1
+                ;;
+            esac
+          done < /tmp/mission2-independent-photo-paths
+          test "$(wc -l < /tmp/mission2-independent-photo-paths)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json benchmark/manifest-reviewed-32.json benchmark/manifest-fresh-11.json benchmark/manifest-holdout-16.json
+      - name: Install pinned test-only verification libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Verify all 59 original SHA-locked Commons JPEGs and deny blind-photo label leakage
+        run: |
+          node --test tests/mission2-independent-visual.test.mjs
+          node scripts/check-mission2-independent-visual.mjs
+      - name: Full repository Node regression no deploy
+        run: |
+          node scripts/build.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
