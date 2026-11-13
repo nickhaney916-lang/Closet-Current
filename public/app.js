@@ -132,8 +132,9 @@ function adjustPhoto(item){
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
    Boolean(color)&&color.toLowerCase()!=='unknown'&&
-   item.reconciliation70Status!=='unresolved'&&unit70OwnerEvidenceValid({...item,category:draft.category})&&
-   !duplicateUnit70InCloset(item,items);
+   item.reconciliation70Status!=='unresolved'&&
+   ((!item.reconciliation70&&!item.reconciliation70Status)||unit70OwnerEvidenceValid({...item,category:draft.category}))&&
+   (!item.reconciliation70||!duplicateUnit70InCloset(item,items));
  };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
@@ -190,7 +191,9 @@ function adjustPhoto(item){
   // A disabled submit button is not a transaction lock: a scripted event or a
   // second mobile submit can enter again while IndexedDB/cloud work is pending.
   if(saveInFlight){message('This photo is already being saved.');return;}
-  if(item.reconciliation70Status==='unresolved'||!unit70OwnerEvidenceValid({...item,category:draft.category})||duplicateUnit70InCloset(item,items)){
+  if(item.reconciliation70Status==='unresolved'||
+   ((item.reconciliation70||item.reconciliation70Status)&&!unit70OwnerEvidenceValid({...item,category:draft.category}))||
+   (item.reconciliation70&&duplicateUnit70InCloset(item,items))){
    message('Resolve garment grouping, source ownership, or duplicate source before saving.');return;
   }
   if(explicitReview&&!canSaveReview()){
@@ -481,7 +484,7 @@ async function saveIndexed(item){
  const saved=await queued(()=>new Promise((resolve,reject)=>{
   if(!db)return reject(Error('Browser storage is unavailable.'));
   if(!batch.some(x=>x.id===item.id)||item.userAdjusted||
-   item.reconciliation70Status==='unresolved'||duplicateUnit70InCloset(item,items)||
+   item.reconciliation70Status==='unresolved'||(item.reconciliation70&&duplicateUnit70InCloset(item,items))||
    !automaticAdmissionCore842(item)||!automaticAdmissionCore842(value)||
    (typeof reviewFirst836!=='undefined'&&reviewFirst836))return resolve(false);
   const tx=db.transaction(['items','state'],'readwrite');
