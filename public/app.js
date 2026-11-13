@@ -263,15 +263,17 @@ function focusSavedClosetCardOwnerSafe(item,button){
      ![...select.options].some(option=>option.value===item.id))
    throw Error('Saved clothing not eligible for outfit styling');
   lease.assert();
+  // switchView('stylist') calls render(), which intentionally REPLACES the
+  // original My Closet card and disconnects its button. This is normal, not
+  // an account change. Fence the exact owner and garment after rendering;
+  // do not incorrectly require that now-hidden prior card to remain attached.
   switchView('stylist');
   lease.assert();
-  if(!button.isConnected)return;
   select.value=item.id;
   lease.assert();
-  if(!button.isConnected)return;
   form.requestSubmit();
  }catch{
-  if(lease.current()&&button.isConnected)
+  if(lease.current())
    message('Could not safely style this saved piece. Reopen My Closet and review its garment details. Your saved clothing and outfits are unchanged.');
  }
 }
