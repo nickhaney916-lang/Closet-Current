@@ -26,4 +26,16 @@
 
 **Acceptance remains blocked** on new independent human-labeled source-disjoint real-photo category/subtype/color/mask/pair truth (#75, currently zero new human blind labels), measurable actual recognition gain, real signed two-account hosted Auth/RLS backup recovery, and physical Android Chrome/iPhone Safari capture→review→private closet end-to-end acceptance. No 10/10 recognition claim. A source-checking test does not establish model accuracy.
 
-**CI STATUS: PENDING exact-head no-deploy verification.**
+## Exact verified executable-head acceptance — November 12, 2026 Pacific
+
+**Executable HEAD:** `d92e42b85932961c54700d4020962579443ecc2f`. [Mission 1 P847 NO DEPLOY GitHub Actions #43338678857](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43338678857) **COMPLETED SUCCESS: all 3/3 jobs**. Strict immutable P846 parent/8-path allowlist verified. **19/19 focused source/native tests and 369/369 full native Node tests**, no failures, normal and independent research builds passed.
+
+Actual Chromium and WebKit at **320/390/430 CSS px**:
+- **6/6** P847 source-executed first-photo owner approval + distinct learning-consent cases: unchecked manual save without training receipt, two separately consented original-photo corrections, >=2-source proposal that never auto-saves or copies color, cross-owner suggestion blocked, all zero page errors. All source imagery/512-feature vectors in these browser checks are explicitly **synthetic**.
+- **6/6** newly added saved-item editor checks: independently checked photo-review and learning-consent checkboxes, no write from learning consent alone, source-SHA verified receipt when correctly approved, and rapid duplicate submit yields exactly one edit. All zero page errors.
+- Inherited P846 owner-verified one-shoe-pair unit/dual-source integrity, P844 save race/failure retry, P843 zero automatic first-photo admission, and P845 optional source-bound quality advice browser suites all passed in both engines at three viewport widths.
+- **11/11 lawful original-photo SHA** checks passed inherited P845 pixel-level descriptive audit: 1/11 limited-resolution warnings, no independently human-labeled color/category/pair/model-accuracy evidence, **actual recognition improvement UNKNOWN**.
+
+This is **research-only locally injected owner-lease UI** and synthetic browser transactions. It is not live authenticated hosted Supabase, production private wardrobes, a user-validated device build, or a verified improvement in FashionCLIP recognition. The normal non-research mode retains legacy ClothingMemory behavior for backward compatibility, while only the opt-in research mode enforces the separate evidence receipt and new learning-consent flow. Do not infer all legacy data are independently verified.
+
+**Report-only follow-up:** this documentation update does not change executable code but triggers a separate exact-final-HEAD no-deploy rerun. Even once green, **Family Alpha HOLD #255 must remain OPEN; Mission 1 release NO-GO.**
