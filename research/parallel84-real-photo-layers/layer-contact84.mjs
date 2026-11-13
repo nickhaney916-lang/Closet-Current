@@ -83,7 +83,11 @@ function preparedFaces(triangles,part,maxFaces,faceCounter){
       [triangles[i+6],triangles[i+7],triangles[i+8]]];
     if(!tri.flat().every(finite))throw Error('nonfinite-face');
     const v=cross(sub(tri[1],tri[0]),sub(tri[2],tri[0]));
-    if(!(dot(v,v)>1e-20))throw Error('degenerate-face');
+    if(!(dot(v,v)>1e-20)){
+      faceCounter.degenerateFaces++;
+      // Never treat unmeasurable source triangles as cleared or repaired.
+      continue;
+    }
     result.push({part,tri,
       lo: [0,1,2].map(k=>Math.min(...tri.map(p=>p[k]))),
       hi: [0,1,2].map(k=>Math.max(...tri.map(p=>p[k])))});
@@ -125,7 +129,7 @@ export function auditDistinctPhotoLayers84({
  if(!(a.slot==='top'&&b.slot==='bottom'&&
       ['shirt','blouse'].includes(srcA.category)&&srcB.category==='jeans'))
    return fail('category-or-layer-not-supported-by-real-source-mesh');
- let faces=[],counter={count:0};
+ let faces=[],counter={count:0,degenerateFaces:0};
  try{
   faces=[...preparedFaces(a.triangles,0,maxFaces,counter),
          ...preparedFaces(b.triangles,1,maxFaces,counter)];
@@ -150,7 +154,8 @@ export function auditDistinctPhotoLayers84({
   active.push(candidate);
  }
  const status=!complete?'INCOMPLETE_BUDGET':
-   crossings?'STRICT_CROSSING_VETO':'UNCERTAIN_NOT_CLEARANCE';
+   crossings?'STRICT_CROSSING_VETO':
+   counter.degenerateFaces>0?'SOURCE_FACE_DEFECTS_UNRESOLVED':'UNCERTAIN_NOT_CLEARANCE';
  // Bounds overlap and zero strict crossings never certify layered cloth safety:
  // coplanar overlaps, containment and unobserved motion remain unresolved.
  return Object.freeze({
@@ -158,6 +163,8 @@ export function auditDistinctPhotoLayers84({
   status,reason:status,avatar,pose,
   distinctSourcePhotoMeshClaims:2,
   originalSourceFaceCount:counter.count,
+  nondegenerateFacesAudited:counter.count-counter.degenerateFaces,
+  sourceDegenerateFacesExcluded:counter.degenerateFaces,
   sourcePair:'top-bottom',
   bboxComparisonCount:Math.min(comparisons,maxComparisons),
   aabbCandidatePairs:Math.min(candidates,maxCandidatePairs),
