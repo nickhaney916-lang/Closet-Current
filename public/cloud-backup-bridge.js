@@ -16,6 +16,21 @@ async function mission3ReloadOwnerCloudView({ownerDB,assertLease},{queueUnreview
   for(const item of nextBatch){assertLease();if(!item.localAnalyzed)queueAutomatic(item);}
  }
 }
+// Never replace private wardrobe and draft rows while a canonical original
+// exists only in the owner-visible review buffer. A failed required capture
+// cannot be recovered by re-reading IndexedDB; restoring cloud state while
+// its Retry saving photo control is present would irreversibly hide it.
+function mission3CloudRestoreReviewIdle(){
+ return !(typeof failedDraftCaptures!=='undefined'&&failedDraftCaptures.size>0) &&
+  !(typeof localPending!=='undefined'&&localPending.size>0) &&
+  !(typeof automaticQueue!=='undefined'&&automaticQueue.length>0) &&
+  !(typeof captureProofTaking!=='undefined'&&captureProofTaking) &&
+  !(typeof photoImportActive!=='undefined'&&photoImportActive) &&
+  !(typeof videoImportActive!=='undefined'&&videoImportActive) &&
+  !(typeof cameraOpening!=='undefined'&&cameraOpening) &&
+  !(typeof stream!=='undefined'&&stream) &&
+  !(typeof saving!=='undefined'&&saving);
+}
 function nativeLossless04RestoreSafe(){
  if(typeof location==='undefined'||typeof URLSearchParams!=='function'||
     new URLSearchParams(location.search).get('nativeLossless04')!=='research')return true;
@@ -84,6 +99,7 @@ function nativeLossless04RestoreSafe(){
    canRestore(){
     if(!current())return false;
     return !busy&&!automaticRunning&&!memoryReviewRunning&&
+     mission3CloudRestoreReviewIdle()&&
      !document.querySelector('dialog[open]')&&nativeLossless04RestoreSafe();
    },
    restored:()=>restored(true)
