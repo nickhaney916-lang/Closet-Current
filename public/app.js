@@ -324,35 +324,104 @@ function commitReviewedDraftCAS(changes,assertCurrent=()=>{}){
   }catch(error){reject(error);}
  }));
 }
-function persistDraft({required=false}={}){
- const owner=window.closetAuth?.user?.id,ownerDB=db;
+// Every draft writer has an explicit per-photo operation. This deliberately
+// refuses the old no-argument full-batch write; absent an expected row we
+// cannot prove that a second tab did not edit/delete the photograph.
+function persistDraft({required=false,mode=null,record=null,expected=null,retry=false}={}){
+ const owner=window.closetAuth?.user?.id,ownerDB=db,auth=window.closetAuth,
+  epoch=typeof captureOperationEpoch==='number'?captureOperationEpoch:null;
  if(!ownerDB){
   if(required)return Promise.reject(Object.assign(Error('Capture storage is unavailable'),{code:'CAPTURE_STORAGE_FAILED'}));
-  return;
+  return Promise.resolve(false);
  }
- const snapshot=structuredClone(batch);
+ const frozen=record?structuredClone(record):null;
+ const prior=expected?structuredClone(expected):null;
  const checkOwner=()=>{
-  window.closetAuth?.assertCurrent?.();
-  if(db!==ownerDB||!owner||window.closetAuth?.user?.id!==owner||
-     ownerDB.name!=='closet-current-user-'+owner)
+  auth?.assertCurrent?.();
+  if(window.closetAuth!==auth||db!==ownerDB||!owner||
+     window.closetAuth?.user?.id!==owner||
+     ownerDB.name!=='closet-current-user-'+owner||
+     (epoch!==null&&epoch!==captureOperationEpoch))
    throw Error('Capture draft account or database changed');
  };
- return queued(()=>new Promise((resolve,reject)=>{
-  try{checkOwner();}catch(error){reject(error);return;}
-  const tx=ownerDB.transaction('state','readwrite');
-  tx.objectStore('state').put({id:'draft',batch:snapshot});
-  tx.oncomplete=()=>{try{checkOwner();resolve();}catch(error){reject(error);}};
-  tx.onerror=()=>reject(tx.error);
-  tx.onabort=()=>reject(tx.error||Error('Capture draft write aborted'));
- })).catch(error=>{
-  // An old owner may sign out while a queued transaction is rejecting.
-  // Never show the former owner's capture warning in a new session.
-  if(owner&&db===ownerDB&&window.closetAuth?.user?.id===owner)
+ const source=(row)=>({
+  id:row?.id,ownerId:row?.ownerId||null,image:row?.image,
+  sourceSHA256:row?.sourceSHA256||null,
+  originalImage:row?.originalPhoto?.image||null,
+  originalSHA256:row?.originalPhoto?.sha256||null
+ });
+ const equivalent=(a,b)=>JSON.stringify(normalizeClothing(a))===JSON.stringify(normalizeClothing(b));
+ const errorWarning=(error)=>{
+  if(owner&&db===ownerDB&&window.closetAuth===auth&&
+     window.closetAuth?.user?.id===owner&&
+     (epoch===null||epoch===captureOperationEpoch))
    message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.');
   if(required)throw Object.assign(Error('Capture photo is in review but not saved on this device'),{
    code:'CAPTURE_STORAGE_FAILED',cause:error
   });
- });
+  return false;
+ };
+ try{
+  checkOwner();
+  if(!['insert','update','remove'].includes(mode)||
+     (!frozen&&mode!=='remove')||
+     ((mode==='update'||mode==='remove')&&!prior)||
+     (frozen&&(!frozen.id||typeof frozen.id!=='string'||frozen.ownerId&&frozen.ownerId!==owner))||
+     (prior&&(prior.ownerId&&prior.ownerId!==owner||
+       (frozen&&JSON.stringify(source(prior))!==JSON.stringify(source(frozen))))))
+   throw Error('CLOSET_DRAFT_EXPLICIT_SOURCE_REQUIRED');
+ }catch(error){return Promise.reject(error).catch(errorWarning);}
+ if(mode!=='insert'){
+  return commitReviewedDraftCAS([{before:prior,after:mode==='remove'?null:frozen}],
+   checkOwner).then(()=>true).catch(errorWarning);
+ }
+ // Insert is ADD-only and never rewrites the stale local batch. Read the
+ // persisted current draft and same-ID saved item in ONE owner-private native
+ // transaction; a second tab's new originals remain untouched.
+ return queued(()=>new Promise((resolve,reject)=>{
+  let failure;
+  try{
+   checkOwner();
+   const tx=ownerDB.transaction(['state','items'],'readwrite'),
+    draftStore=tx.objectStore('state'),savedStore=tx.objectStore('items');
+   const savedRequest=savedStore.get(frozen.id);
+   const draftRequest=draftStore.get('draft');
+   const abort=error=>{failure=error;try{tx.abort();}catch{}};
+   let completed=0;
+   const decide=()=>{
+    if(++completed!==2)return;
+    try{
+     checkOwner();
+     if(savedRequest.result)throw Error('CLOSET_CAPTURE_SAVED_ID_COLLISION');
+     const rows=draftRequest.result?.batch||[];
+     if(!Array.isArray(rows))throw Error('CLOSET_CAPTURE_INVALID_PERSISTED_DRAFT');
+     const matching=rows.filter(row=>row?.id===frozen.id);
+     if(matching.length){
+      if(!retry||matching.length!==1||!equivalent(matching[0],frozen))
+       throw Error('CLOSET_CAPTURE_STALE_OR_DUPLICATE_ID');
+      // A fully identical retry may ACK the already durable source, but
+      // may never resurrect a different previously reviewed record.
+      return;
+     }
+     if(rows.some(row=>(row?.originalPhoto?.image&&
+       row.originalPhoto.image===frozen.originalPhoto?.image)||
+       (row?.image&&row.image===frozen.image)))
+      throw Error('CLOSET_CAPTURE_DUPLICATE_SOURCE_IN_OTHER_TAB');
+     // Failed *required* initial commits can retry this exact photograph.
+     // This control is only offered to a verified owner with an in-memory
+     // failedDraftCaptures flag and original-source SHA re-verification.
+     if(retry&&!failedDraftCaptures.has(frozen.id))
+      throw Error('CLOSET_CAPTURE_RETRY_NOT_AUTHORIZED');
+     draftStore.put({id:'draft',batch:[...rows,frozen]});
+    }catch(error){abort(error);}
+   };
+   savedRequest.onsuccess=decide;draftRequest.onsuccess=decide;
+   savedRequest.onerror=()=>abort(savedRequest.error||Error('Saved ID read failed'));
+   draftRequest.onerror=()=>abort(draftRequest.error||Error('Draft read failed'));
+   tx.oncomplete=()=>{try{checkOwner();resolve(true);}catch(error){reject(error);}};
+   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Capture draft transaction interrupted'));
+  }catch(error){reject(error);}
+ })).catch(errorWarning);
 }
 function readDraft(){return readDraftFrom(db);}
 function readDraftFrom(ownerDB){return new Promise((resolve,reject)=>{const r=ownerDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
@@ -640,7 +709,16 @@ function adjustPhoto(item){
  const expectedDraftRow=!expectedSavedRow&&batch.some(x=>x.id===item.id)?structuredClone(item):null;
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
  if(!correction10)item.userAdjusted=true;
- remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before removing it.':'Could not remove this photo. Try again.');}};
+ remove.onclick=async()=>{try{
+   if(expectedSavedRow)await removeItem(item.id,expectedSavedRow);
+   else if(expectedDraftRow)await persistDraft({required:true,mode:'remove',expected:expectedDraftRow});
+   else throw Error('CLOSET_STALE_DRAFT_RELOAD_PHOTO_RESULTS');
+   items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);
+   sessionCapturedIds.delete(item.id);failedDraftCaptures.delete(item.id);
+   dialog.close();render();
+  }catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?
+   'This clothing piece changed in another tab. Reload My Closet before removing it.':
+   'This pending photo changed or could not be removed. Nothing else was deleted. Reload Photo results and try again.');}};
  form.onsubmit=async event=>{event.preventDefault();save.disabled=true;try{
   const value={...collect(),name:draft.name.trim()||(draft.itemType&&draft.itemType!=='Unknown'?draft.itemType:'Closet piece'),savedAt:new Date().toISOString(),userAdjusted:true,requiresOwnershipConfirmation:false};
   if(typeof captureProof01Active!=='undefined'&&captureProof01Active&&
@@ -1114,7 +1192,7 @@ function candidate(image,options={}){
      proof?.originalPhoto?.sha256===duplicate.sourceSHA256&&
      proof?.originalPhoto?.image===image&&proof?.image===image&&
      duplicate.ownerId&&captureProofOwner()===duplicate.ownerId){
-   return Promise.resolve(persistDraft({required:true})).then(()=>{
+   return Promise.resolve(persistDraft({required:true,mode:'insert',record:duplicate,retry:true})).then(()=>{
     if(!batch.includes(duplicate)||captureProofOwner()!==duplicate.ownerId)
      throw Object.assign(Error('Capture session changed during retry'),{code:'CAPTURE_STORAGE_FAILED'});
     failedDraftCaptures.delete(duplicate.id);
@@ -1150,7 +1228,7 @@ function candidate(image,options={}){
  if(options.importFilename)item.importFilename=String(options.importFilename).slice(0,120);
  batch.push(item);sessionCapturedIds.add(item.id);
  const requireCommit=options.requireDraftCommit===true;
- const committed=persistDraft({required:requireCommit});
+ const committed=persistDraft({required:requireCommit,mode:'insert',record:item});
  session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
  if(!requireCommit){queueAutomatic(item);return true;}
  // Quota failure keeps the source visible for review, but never reports it
@@ -1745,15 +1823,32 @@ async function saveIndexed(item,index04ApprovedOwner=null){
 async function recognizeItem(item){
  const index04Active=typeof index04ResearchActive!=='undefined'&&index04ResearchActive;
  const epoch=captureOperationEpoch;
+ // Freeze the row BEFORE recognition edits status, inferred category/color or
+ // asynchronous image quality/model checks.
+ const expectedDraftForRecognition=structuredClone(item);
  const sameRecognitionLease=()=>epoch===captureOperationEpoch&&batch.includes(item);
  const scanStarted=Date.now();let savingIndexed=false,index04ApprovedOwner=null;recognitionState.activeId=item.id;item.scanFailed=false;item.saveFailed=false;item.localStatus='Checking photo quality…';render();
  try{
   const quality=await checkPhoto(item.recognitionPhoto?.image||item.image);
   if(!sameRecognitionLease())return;
-  if(quality.blank){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
+  if(quality.blank){
+   await persistDraft({required:true,mode:'remove',expected:expectedDraftForRecognition});
+   if(!sameRecognitionLease())return;
+   if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');
+   batch=batch.filter(x=>x.id!==item.id);
+   message('Blank or featureless photo skipped. Frame one garment and try again.');
+   return true;
+  }
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
-  if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
+  if(matches.some(x=>x.image===item.image)){
+   await persistDraft({required:true,mode:'remove',expected:expectedDraftForRecognition});
+   if(!sameRecognitionLease())return;
+   if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');
+   batch=batch.filter(x=>x.id!==item.id);
+   message('Exact duplicate skipped.');
+   return true;
+  }
   item.possibleDuplicate=matches.some(x=>Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();
@@ -1829,7 +1924,19 @@ async function recognizeItem(item){
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
- }finally{if(epoch===captureOperationEpoch){localPending.delete(item.id);if(recognitionState.activeId===item.id)recognitionState.activeId=null;if(!savingIndexed)persistDraft();render();}}
+ }finally{
+  if(epoch===captureOperationEpoch){
+   localPending.delete(item.id);
+   if(recognitionState.activeId===item.id)recognitionState.activeId=null;
+   // Another tab may already have saved or removed this draft. Update only
+   // the exact initiating row; never rewrite the full visible batch.
+   if(!savingIndexed&&batch.includes(item)){
+    const outcome=structuredClone(item);
+    void persistDraft({mode:'update',expected:expectedDraftForRecognition,record:outcome});
+   }
+   render();
+  }
+ }
 }
 async function recognizeBatch(){
  if(localBatch)return;localBatch=true;recognitionUnavailable=false;
