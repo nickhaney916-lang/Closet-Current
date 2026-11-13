@@ -28,10 +28,10 @@ jobs:
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD > /tmp/p80-paths
-          test "$(wc -l < /tmp/p80-paths)" -eq 12
+          test "$(wc -l < /tmp/p80-paths)" -eq 13
           while IFS= read -r path; do
             case "$path" in
-              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|tests/parallel80-subtype.test.mjs|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
+              public/app.js|public/local-worker.mjs|public/subtype-review-80.mjs|public/subtype-panel-80.mjs|public/subtype-worker-80.mjs|scripts/p80-synthetic-evaluation.mjs|scripts/p80-challenge.mjs|scripts/test-parallel80-subtype-browser.mjs|scripts/test-parallel80-real-worker.mjs|tests/parallel80-subtype.test.mjs|research/parallel80/REPORT.md|research/parallel80/OPERATOR.md|.github/workflows/parallel80-subtype-no-deploy.yml) ;;
               *) echo "P80 OUT OF SCOPE $path"; exit 1 ;;
             esac
           done < /tmp/p80-paths
@@ -92,3 +92,19 @@ jobs:
       - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
       - name: P75 frozen public quarantine sources, bytes/metadata only, no blind labels
         run: node scripts/p80-challenge.mjs --recheck 3
+
+  real-worker-generated-input-not-accuracy:
+    needs: exact-parent-native-builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Real unmodified FashionCLIP weights and actual subtype worker on a generated geometric JPEG
+        run: node scripts/test-parallel80-real-worker.mjs

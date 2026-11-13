@@ -202,6 +202,27 @@ function rankedRows(rows) {
     })
     .sort((a, b) => b.score - a.score || a.label.localeCompare(b.label));
 }
+// An approval is an in-memory, single-session capability, not a portable record.
+const issued80 = new WeakMap();
+function freeze80(value) {
+  if (value && typeof value === "object" && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) freeze80(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+function issue80(result) {
+  const frozen = freeze80(structuredClone(result));
+  issued80.set(frozen, {
+    evidence: frozen.evidence,
+    createdAt: frozen.receiptCreatedAt,
+    types: Object.freeze([
+      "Unknown",
+      ...frozen.alternatives.map((c) => c.itemType),
+    ]),
+  });
+  return frozen;
+}
 export function decide80({
   enabled = false,
   consent = false,
@@ -344,7 +365,7 @@ export function decide80({
       "owner-must-resolve-subtype; same-model-agreement-is-not-independent-proof",
     );
   }
-  return result;
+  return issue80(result);
 }
 export function createReview80({
   live,
@@ -352,32 +373,41 @@ export function createReview80({
   decision,
   now = () => Date.now(),
 } = {}) {
+  const lease = issued80.get(decision);
+  if (!lease || !binding80(lease.evidence, evidence))
+    throw Error("P80_UNISSUED_REVIEW");
   let active = true,
     used = false;
   return {
     close() {
       active = false;
+      lease.revoked = true;
     },
     async choose(itemType, { acknowledged = false } = {}) {
       if (
         !active ||
         used ||
+        lease.used ||
+        lease.revoked ||
         !acknowledged ||
-        ![
-          "Unknown",
-          ...(decision?.alternatives || []).map((x) => x.itemType),
-        ].includes(itemType)
+        !lease.types.includes(itemType)
       )
         throw Error("P80_REVIEW_REQUIRED");
       const current = await live();
+      const at = now();
       if (
         !active ||
         used ||
-        !binding80(evidence, current) ||
-        now() - (decision?.receiptCreatedAt || 0) > POLICY.maxAgeMs
+        lease.used ||
+        lease.revoked ||
+        !binding80(lease.evidence, current) ||
+        !Number.isFinite(at) ||
+        at < lease.createdAt ||
+        at - lease.createdAt > POLICY.maxAgeMs
       )
         throw Error("P80_REVOKED");
       used = true;
+      lease.used = true;
       active = false;
       return Object.freeze({
         itemType,
@@ -385,7 +415,7 @@ export function createReview80({
         ownerConfirmed: true,
         independentHumanGroundTruth: false,
         learningConsent: false,
-        evidence,
+        evidence: lease.evidence,
       });
     },
   };

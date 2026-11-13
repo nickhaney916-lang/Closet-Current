@@ -22,10 +22,34 @@ export async function sourceCodeHash80(fetcher = fetch) {
   for (const name of SOURCE_FILES80) {
     const response = await fetcher(new URL(name, import.meta.url), {
       cache: "no-store",
+      signal: AbortSignal.timeout(5000),
     });
     if (!response.ok) throw Error("P80_SOURCE_CODE_UNAVAILABLE");
-    const text = await response.text();
-    if (text.length > 250000) throw Error("P80_SOURCE_CODE_LIMIT");
+    const reader = response.body?.getReader();
+    if (!reader) throw Error("P80_SOURCE_CODE_UNAVAILABLE");
+    const chunks = [];
+    let length = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > 250000) {
+          await reader.cancel();
+          throw Error("P80_SOURCE_CODE_LIMIT");
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const part of chunks) {
+      bytes.set(part, offset);
+      offset += part.byteLength;
+    }
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
     entries.push([name, await hash80(text)]);
   }
   return hash80(canonical(entries));
