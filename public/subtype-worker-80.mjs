@@ -1,0 +1,93 @@
+/** Research adapter around the EXISTING model. No replacement model or training. */
+import { localCandidates } from "./local-catalog.mjs";
+import {
+  VERSION,
+  hash80,
+  canonical,
+  validateSubtypeRequest80,
+} from "./subtype-review-80.mjs";
+export const SOURCE_FILES80 = [
+  "local-worker.mjs",
+  "recognition-engine.mjs",
+  "recognition-confusion-guard.mjs",
+  "recognition-photo.mjs",
+  "vector-scorer.mjs",
+  "local-catalog.mjs",
+  "subtype-review-80.mjs",
+  "subtype-worker-80.mjs",
+];
+export async function sourceCodeHash80(fetcher = fetch) {
+  const entries = [];
+  for (const name of SOURCE_FILES80) {
+    const response = await fetcher(new URL(name, import.meta.url), {
+      cache: "no-store",
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!response.ok) throw Error("P80_SOURCE_CODE_UNAVAILABLE");
+    const reader = response.body?.getReader();
+    if (!reader) throw Error("P80_SOURCE_CODE_UNAVAILABLE");
+    const chunks = [];
+    let length = 0;
+    try {
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        length += value.byteLength;
+        if (length > 250000) {
+          await reader.cancel();
+          throw Error("P80_SOURCE_CODE_LIMIT");
+        }
+        chunks.push(value);
+      }
+    } finally {
+      reader.releaseLock();
+    }
+    const bytes = new Uint8Array(length);
+    let offset = 0;
+    for (const part of chunks) {
+      bytes.set(part, offset);
+      offset += part.byteLength;
+    }
+    const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    entries.push([name, await hash80(text)]);
+  }
+  return hash80(canonical(entries));
+}
+export async function subtypeModel80({
+  request,
+  image,
+  whole,
+  confirmation,
+  metadata,
+  sourceCodeSha256,
+}) {
+  const evidence = await validateSubtypeRequest80(request);
+  const model = {
+    name: metadata.model,
+    revision: metadata.revision,
+    vectorsSha256: metadata.sha256,
+    sourceCodeSha256,
+  };
+  const labels = localCandidates.map((c) => c.label);
+  const [a, b] = await Promise.all([
+    whole(image, labels),
+    confirmation(image, labels),
+  ]);
+  // Never report "identified" or a strong result from this path.
+  return {
+    subtype80: {
+      schema: VERSION,
+      model,
+      receipt: {
+        evidence,
+        modelKey: canonical(model),
+        createdAt: Date.now(),
+      },
+      views: { whole: a, confirmation: b },
+    },
+    strong: false,
+    choices: [],
+    details: {},
+    reason: "subtype80_owner_review_only",
+  };
+}

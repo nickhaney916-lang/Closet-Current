@@ -42,18 +42,25 @@ async function load(){
    return (await vision(await processor(fitted))).image_embeds.data;
   },metadata,vectors);
   const originalCenter=makeVectorScorer(async image=>(await vision(await processor(image))).image_embeds.data,metadata,vectors);
-  scannerStage='ready';return {whole,center,skirtPadding,coatNearFull,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
+  scannerStage='ready';return {whole,center,skirtPadding,coatNearFull,originalWhole,originalCenter,RawImage,prepareRecognitionPhoto,metadata,modelKey:'fashion-clip/whole-v1/'+metadata.revision};
  })().catch(error=>{classifierPromise=null;throw error;});
  return classifierPromise;
 }
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
+  if(request.type==='subtype-candidates80'&&(request.subtype80?.enabled!==true||request.subtype80?.consent!==true||request.subtype80?.categoryOwnerReviewed!==true))throw Error('Subtype research requires explicit opt-in.');
+  if(request.type==='subtype-candidates80'){const {validateSubtypeRequest80}=await import('./subtype-review-80.mjs'+new URL(import.meta.url).search);await validateSubtypeRequest80(request);}
   const model=await load();
   if(request.type==='load'){self.postMessage({type:'ready',id:request.id});return;}
-  if(!['classify','features','benchmark-frames'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
+  if(!['classify','features','benchmark-frames','subtype-candidates80'].includes(request.type)||typeof request.image!=='string'||!request.image.startsWith('data:image/jpeg;base64,'))throw Error('Invalid captured image.');
   scannerStage='catalog_import';const {recognizeWithRecovery,classifyIsolatedGarment}=await import('./recognition-engine.mjs'+new URL(import.meta.url).search);
   scannerStage='identify';const image=await RawImageClass.read(request.image);
+  if(request.type==='subtype-candidates80'){
+   const {subtypeModel80,sourceCodeHash80}=await import('./subtype-worker-80.mjs'+new URL(import.meta.url).search);
+   const result=await subtypeModel80({request,image,whole:model.whole,confirmation:model.center,metadata:model.metadata,sourceCodeSha256:await sourceCodeHash80()});
+   self.postMessage({type:'result',id:request.id,...result});return;
+  }
   if(request.type==='benchmark-frames'){
    // Offline test only. Do not save garments or alter production recognition.
    const {localCandidates}=await import('./local-catalog.mjs'+new URL(import.meta.url).search);
