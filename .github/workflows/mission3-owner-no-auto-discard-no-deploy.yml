@@ -37,7 +37,9 @@ jobs:
           node --check scripts/test-mission3-owner-no-auto-discard-photo-browser.mjs
           node --check tests/mission3-pending-capture-status-cas.test.cjs
           node --check tests/automatic-indexing.test.cjs
-          node --test tests/mission3-pending-capture-status-cas.test.cjs tests/automatic-indexing.test.cjs
+          # Offline minimal job has no node_modules; fake-indexeddb cases run
+          # in the pinned native job after npm ci.
+          node --test tests/automatic-indexing.test.cjs
           node --check tests/mission3-cloud-rehydrate-inflight-photo-cas.test.cjs
           node --check scripts/test-mission3-cloud-rehydrate-inflight-photo-browser.mjs
           node --test tests/mission3-cloud-rehydrate-inflight-photo-cas.test.cjs
