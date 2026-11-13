@@ -89,7 +89,10 @@ function validateRootDress(root,dress){
  * A second capture can use staged source cloth XYZ, without committing it.
  */
 export function captureSourceDressBodyPose40({root,dress,stagedPositions=null,
- maxBodyMeshes=16,maxBodyVertices=300000,maxClothVertices=80000}={}){
+ poseFraction=null,maxBodyMeshes=16,maxBodyVertices=300000,maxClothVertices=80000}={}){
+ if(poseFraction!==null&&(!Number.isFinite(poseFraction)||
+    poseFraction<0||poseFraction>1))
+  fail('C42 finite capture phase in [0,1] required');
  const mesh=validateRootDress(root,dress),geo=faces(mesh);
  if(!Number.isInteger(maxBodyMeshes)||maxBodyMeshes<1||maxBodyMeshes>128||
    !Number.isInteger(maxBodyVertices)||maxBodyVertices<3||maxBodyVertices>1000000||
@@ -113,18 +116,26 @@ export function captureSourceDressBodyPose40({root,dress,stagedPositions=null,
   fail('bounded original 163-bone body meshes required');
  let sum=0;
  const capturesBody=[];
+ const rotation=new THREE.Quaternion();
  for(const body of bodies){
   const b=faces(body);
   sum+=b.p.count;
   if(sum>maxBodyVertices)fail('body vertex capture budget exceeded');
   const sourceBody=positionCopy(b.p);
   if(!finite(sourceBody))fail('nonfinite original body mesh');
+  const boneRotations=[];
+  for(const bone of body.skeleton.bones){
+   bone.getWorldQuaternion(rotation);
+   const q=[rotation.x,rotation.y,rotation.z,rotation.w];
+   if(!finite(q))fail('C42 nonfinite original 163-bone rotation');
+   boneRotations.push(q);
+  }
   capturesBody.push({mesh:body,...b,sourceBody,
     immutable:immutableSkinnedFields(body),
-    world:sourcePose(body,sourceBody)});
+    world:sourcePose(body,sourceBody),boneRotations});
  }
  const token=Object.freeze({});
- captures.set(token,{root,mesh,geo,source,clothSource,clothWorld,
+ captures.set(token,{root,mesh,geo,source,clothSource,clothWorld,poseFraction,
   garmentImmutable:immutableSkinnedFields(mesh),
   bodies:capturesBody,clothIndex:geo.indices?.slice()??null});
  return token;
