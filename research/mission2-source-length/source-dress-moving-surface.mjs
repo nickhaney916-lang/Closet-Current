@@ -314,3 +314,233 @@ export function assertMovingSourceDressBodySurfaces40(receipt){
  return Object.freeze({researchOnly:true,linearBroadphaseClear:true,
   noCompleteClothCertification:true,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
+
+
+/**
+ * M2 P2-C41: conservative INTERVAL-SAT narrowphase refinement.
+ *
+ * For each candidate cloth/body face, a separation axis whose projected
+ * vertex envelopes are disjoint on an entire temporal interval proves that
+ * pair does not collide under LINEAR interpolation of *captured posed vertex
+ * coordinates*. Adaptively subdivide [0,1] until every subinterval is proved
+ * separate, or reject an unresolved interval. No interpolation of nonlinear
+ * skeletal rotation and no claim of exact time-of-impact.
+ *
+ * All source geometry/captured posed vertices remain in the private WeakMap.
+ * The returned privacy-safe receipt contains counts only.
+ */
+const axisAt=(v0,v1,t)=>new THREE.Vector3(
+ v0[0]+(v1[0]-v0[0])*t,
+ v0[1]+(v1[1]-v0[1])*t,
+ v0[2]+(v1[2]-v0[2])*t
+);
+function triangleVertices(world,indices,face){
+ const result=[];
+ for(let c=0;c<3;c++){
+  const j=3*at(indices,face,c);
+  result.push([world[j],world[j+1],world[j+2]]);
+ }
+ return result;
+}
+function separatingAxisInterval41(a0,a1,b0,b1,lo,hi,padding){
+ const mid=(lo+hi)*.5;
+ const pa=a0.map((v,i)=>axisAt(v,a1[i],mid));
+ const pb=b0.map((v,i)=>axisAt(v,b1[i],mid));
+ const edge=(p,i)=>new THREE.Vector3().subVectors(p[(i+1)%3],p[i]);
+ const ea=[0,1,2].map(i=>edge(pa,i));
+ const eb=[0,1,2].map(i=>edge(pb,i));
+ const na=new THREE.Vector3().crossVectors(ea[0],ea[1]);
+ const nb=new THREE.Vector3().crossVectors(eb[0],eb[1]);
+ const axes=[
+  new THREE.Vector3(1,0,0),new THREE.Vector3(0,1,0),
+  new THREE.Vector3(0,0,1),na,nb
+ ];
+ for(const a of ea)for(const b of eb)
+  axes.push(new THREE.Vector3().crossVectors(a,b));
+ // In-plane normals for COPLANAR separated triangles; conventional
+ // 3D edge-cross-edge axes alone cannot resolve disjoint coplanar faces.
+ for(const a of ea)axes.push(new THREE.Vector3().crossVectors(a,na));
+ for(const b of eb)axes.push(new THREE.Vector3().crossVectors(b,nb));
+ const envelope=(start,end,axis)=>{
+  let min=Infinity,max=-Infinity;
+  for(let k=0;k<3;k++){
+   const x=start[k],y=end[k];
+   const startProjection=x[0]*axis.x+x[1]*axis.y+x[2]*axis.z;
+   const deltaProjection=(y[0]-x[0])*axis.x+
+    (y[1]-x[1])*axis.y+(y[2]-x[2])*axis.z;
+   for(const t of [lo,hi]){
+    const p=startProjection+t*deltaProjection;
+    min=Math.min(min,p);max=Math.max(max,p);
+   }
+  }
+  return {min,max};
+ };
+ for(const axis of axes){
+  const norm=axis.length();
+  if(!Number.isFinite(norm)||norm<1e-12)continue;
+  axis.multiplyScalar(1/norm);
+  const a=envelope(a0,a1,axis),b=envelope(b0,b1,axis);
+  if(a.max+padding<b.min||b.max+padding<a.min)return true;
+ }
+ return false; // unresolved, NOT evidence of penetration
+}
+/**
+ * Independent from the source photo and human data: exact source-face
+ * positions are supplied by the authenticated opaque capture tokens.
+ */
+function separateLinearTriangleInterval41(a0,a1,b0,b1,{maxDepth,padding,remainingNodes}){
+ let nodes=0;
+ const queue=[{lo:0,hi:1,depth:0}];
+ while(queue.length){
+  if(++nodes>remainingNodes)return {status:'budget',nodes};
+  const {lo,hi,depth}=queue.pop();
+  if(separatingAxisInterval41(a0,a1,b0,b1,lo,hi,padding))continue;
+  if(depth>=maxDepth)return {status:'unresolved',nodes};
+  const mid=(lo+hi)*.5;
+  queue.push({lo:mid,hi,depth:depth+1});
+  queue.push({lo,hi:mid,depth:depth+1});
+ }
+ return {status:'separated',nodes};
+}
+/**
+ * Source-verified conservative continuous *linearized* narrowphase.
+ * P2-C40's complete broadphase runs first as provenance and physical
+ * displacement gate. EVERY broadphase candidate must be separately proved
+ * harmless by temporal projection envelopes, or remain a veto.
+ *
+ * No source mesh is committed. Computation budget exhaustion always throws.
+ */
+export function auditMovingSourceDressBodyIntervals41({
+ root,dress,startPose,endPose,maxDepth=10,maxTemporalNodes=80000,
+ maxBroadphaseCandidates=400000,maxBroadphasePairs=20000,
+ maxClothShiftMeters=.025,maxBodyShiftMeters=.15,
+ paddingMeters=.00002
+}={}){
+ if(!Number.isInteger(maxDepth)||maxDepth<0||maxDepth>15||
+    !Number.isSafeInteger(maxTemporalNodes)||maxTemporalNodes<1||
+    maxTemporalNodes>500000||
+    !Number.isSafeInteger(maxBroadphaseCandidates)||
+    maxBroadphaseCandidates<1||maxBroadphaseCandidates>1000000||
+    !Number.isSafeInteger(maxBroadphasePairs)||
+    maxBroadphasePairs<1||maxBroadphasePairs>50000)
+  fail('C41 bounded temporal interval, candidate and depth limits required');
+ // P2-C40 verifies original garment identity, body roster, source/photo/skin
+ // buffers, original triangle IDs, completeness, physical-motion cap, etc.
+ const baseline=auditMovingSourceDressBodySurfaces40({
+  root,dress,startPose,endPose,
+  maxTriangleCandidates:maxBroadphaseCandidates,
+  maxPotentialPairs:maxBroadphasePairs,
+  maxClothShiftMeters,maxBodyShiftMeters,paddingMeters
+ });
+ const start=captures.get(startPose),end=captures.get(endPose);
+ let temporalNodes=0,provenSeparatedPairs=0,unresolvedPairs=0,
+  repeatedCandidatePairs=0;
+ const scenes=[];
+ try{
+  if(baseline.potentialPairs){
+   for(let i=0;i<start.bodies.length;i++){
+    const body=start.bodies[i],future=end.bodies[i];
+    let maxShift=0;
+    for(let k=0;k<body.world.length;k+=3)
+     maxShift=Math.max(maxShift,Math.hypot(
+      body.world[k]-future.world[k],
+      body.world[k+1]-future.world[k+1],
+      body.world[k+2]-future.world[k+2]));
+    const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.BufferAttribute(body.world.slice(),3));
+    if(body.indices)g.setIndex(new THREE.BufferAttribute(body.indices.slice(),1));
+    try{scenes.push({body,future,g,
+      tree:new MeshBVH(g,{indirect:true}),shift:maxShift});
+    }catch(error){g.dispose();throw error;}
+   }
+   for(let face=0;face<start.geo.faceCount;face++){
+    const box=new THREE.Box3().makeEmpty();
+    addFaceBox(box,start.clothWorld,start.geo.indices,face);
+    addFaceBox(box,end.clothWorld,end.geo.indices,face);
+    const a0=triangleVertices(start.clothWorld,start.geo.indices,face);
+    const a1=triangleVertices(end.clothWorld,end.geo.indices,face);
+    for(const scene of scenes){
+     let overflow=false;
+     scene.tree.shapecast({
+      intersectsBounds:bounds=>(
+       box.min.x<=bounds.max.x+scene.shift+paddingMeters&&
+       box.max.x+scene.shift+paddingMeters>=bounds.min.x&&
+       box.min.y<=bounds.max.y+scene.shift+paddingMeters&&
+       box.max.y+scene.shift+paddingMeters>=bounds.min.y&&
+       box.min.z<=bounds.max.z+scene.shift+paddingMeters&&
+       box.max.z+scene.shift+paddingMeters>=bounds.min.z
+      ),
+      intersectsTriangle:(_tri,id)=>{
+       repeatedCandidatePairs++;
+       if(repeatedCandidatePairs>maxBroadphaseCandidates){overflow=true;return true;}
+       const originalFace=scene.tree.resolveTriangleIndex(id);
+       const other=new THREE.Box3().makeEmpty();
+       addFaceBox(other,scene.body.world,scene.body.indices,originalFace);
+       addFaceBox(other,scene.future.world,scene.future.indices,originalFace);
+       if(!nearOverlap(box,other,paddingMeters))return false;
+       const b0=triangleVertices(scene.body.world,scene.body.indices,originalFace);
+       const b1=triangleVertices(scene.future.world,scene.future.indices,originalFace);
+       const checked=separateLinearTriangleInterval41(a0,a1,b0,b1,{
+        maxDepth,padding:paddingMeters,
+        remainingNodes:maxTemporalNodes-temporalNodes
+       });
+       temporalNodes+=checked.nodes;
+       if(checked.status==='budget'){overflow=true;return true;}
+       if(checked.status==='separated')provenSeparatedPairs++;
+       else unresolvedPairs++;
+       return false;
+      }
+     });
+     // mesh-bvh v0.9.2 callback unwinding must finish before an exception.
+     if(overflow)fail('C41 bounded source interval/candidate budget exhausted');
+    }
+   }
+  }
+  if(provenSeparatedPairs+unresolvedPairs!==baseline.potentialPairs)
+   fail('C41 source-face candidate accounting disagrees with full C40 broadphase');
+  return Object.freeze({
+   schema:'M2-source-dress-linear-triangle-intervals-v1',
+   completeBoundedTemporalIntervalAudit:true,
+   originalSourceAndBodyProvenanceVerified:true,
+   allBroadphasePairsExamined:true,
+   bodyMeshCount:baseline.bodyMeshCount,
+   bodyFaces:baseline.bodyFaces,clothFaces:baseline.checkedClothFaces,
+   movingBodyObserved:baseline.bodyPoseMotionObserved,
+   broadphasePotentialPairs:baseline.potentialPairs,
+   provenSeparatedPairs,unresolvedPairs,temporalNodes,
+   maximumClothShiftMeters:baseline.maximumClothShiftMeters,
+   maximumBodyShiftMeters:baseline.maximumBodyShiftMeters,
+   maxTemporalDepth:maxDepth,
+   linearVertexTrajectoriesOnly:true,
+   exactContinuousTimeOfImpactMeasured:false,
+   nonlinearBoneMotionCertified:false,selfLayerCollisionCertified:false,
+   continuousCollisionCertified:false,realClothPhysics:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  });
+ }finally{for(const scene of scenes)scene.g.dispose();}
+}
+/** Only a COMPLETE, disjoint linear temporal interval proof passes the C41 veto. */
+export function assertMovingSourceDressBodyIntervals41(receipt){
+ if(receipt?.schema!=='M2-source-dress-linear-triangle-intervals-v1'||
+    receipt.completeBoundedTemporalIntervalAudit!==true||
+    receipt.originalSourceAndBodyProvenanceVerified!==true||
+    receipt.allBroadphasePairsExamined!==true||
+    !Number.isSafeInteger(receipt.bodyFaces)||receipt.bodyFaces<1||
+    !Number.isSafeInteger(receipt.clothFaces)||receipt.clothFaces<1||
+    !Number.isSafeInteger(receipt.provenSeparatedPairs)||
+    !Number.isSafeInteger(receipt.unresolvedPairs)||
+    !Number.isSafeInteger(receipt.broadphasePotentialPairs)||
+    receipt.unresolvedPairs<0||receipt.provenSeparatedPairs<0||
+    receipt.broadphasePotentialPairs!==
+     receipt.provenSeparatedPairs+receipt.unresolvedPairs||
+    receipt.exactContinuousTimeOfImpactMeasured!==false||
+    receipt.nonlinearBoneMotionCertified!==false||
+    receipt.continuousCollisionCertified!==false||
+    receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+  fail('C41 fabricated, partial or unsupported interval clearance receipt');
+ if(receipt.unresolvedPairs)
+  fail('C41 unresolved moving cloth/body temporal surface overlap refused');
+ return Object.freeze({researchOnly:true,linearTimeIntervalsSeparated:true,
+  actualSkinnedAnimationCertified:false,fullClothPhysicsCertified:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'});
+}
