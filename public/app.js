@@ -332,6 +332,10 @@ async function commitOwnerCorrection10(value,expectedSavedRow,nextBatch){
   after:value,nextBatch,assertOwner});
 }
 function savePiece(value,nextBatch,{expectedSavedRow=null}={}){
+ // Freeze the exact reviewed saved row before any async SHA verification.
+ const expected=expectedSavedRow?structuredClone(expectedSavedRow):null;
+ if(expected&&expected.id!==value.id)
+  return Promise.reject(Error('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR'));
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
  const current=()=>!!owner&&epoch===captureOperationEpoch&&window.closetAuth===auth&&
   auth.user?.id===owner&&db===ownerDB&&ownerDB?.name==='closet-current-user-'+owner;
@@ -346,18 +350,33 @@ function savePiece(value,nextBatch,{expectedSavedRow=null}={}){
   await captureProofVerifyBeforeSave(value);
   requireLease();
   // CORRECTION10 retains its separate row-level CAS and human review guard.
-  if(expectedSavedRow&&new URLSearchParams(location.search).get('nativeCorrection10')==='research'){
-   const result=await commitOwnerCorrection10(value,expectedSavedRow,nextBatch);
+  if(expected&&new URLSearchParams(location.search).get('nativeCorrection10')==='research'){
+   const result=await commitOwnerCorrection10(value,expected,nextBatch);
    requireLease();return result;
   }
   return new Promise((resolve,reject)=>{
    try{requireLease();}catch(error){reject(error);return;}
    const tx=ownerDB.transaction(['items','state'],'readwrite');
-   tx.objectStore('items').put(value);
-   tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+   const store=tx.objectStore('items');
+   let failure;
+   const request=store.get(value.id);
+   request.onsuccess=()=>{
+    try{
+     requireLease();
+     // Existing rows require an exact, owner-reviewed compare-and-swap.
+     // A new photo must not overwrite an existing garment with the same ID.
+     if(expected){
+      if(!request.result||JSON.stringify(normalizeClothing(request.result))!==
+         JSON.stringify(normalizeClothing(expected)))
+       throw Error('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR');
+     }else if(request.result)
+      throw Error('CLOSET_ALREADY_SAVED_RELOAD_WARDROBE');
+     store.put(value);
+     tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+    }catch(error){failure=error;try{tx.abort();}catch{}}
+   };
    tx.oncomplete=()=>{try{requireLease();resolve();}catch(error){reject(error);}};
-   tx.onerror=()=>reject(tx.error);
-   tx.onabort=()=>reject(tx.error||Error('Garment save interrupted'));
+   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Garment save interrupted'));
   });
  }).then(async result=>{requireLease();await nativeIndex07Refresh();requireLease();return result;});
 }
@@ -525,7 +544,9 @@ function adjustPhoto(item){
  const correction10=new URLSearchParams(location.search).get('nativeCorrection10')==='research'&&
   new URLSearchParams(location.search).get('nativeIndex07')==='research'&&
   new URLSearchParams(location.search).get('nativeLossless04')==='research';
- const expectedSavedRow=correction10&&items.some(x=>x.id===item.id)?structuredClone(item):null;
+ // Saved photos require the exact opening-row CAS even outside CORRECTION10
+ // research mode. Never silently overwrite another tab's edited original.
+ const expectedSavedRow=items.some(x=>x.id===item.id)?structuredClone(item):null;
  const wasAdjusted=item.userAdjusted,wasScanning=localPending.has(item.id);
  if(!correction10)item.userAdjusted=true;
  remove.onclick=async()=>{try{if(items.some(x=>x.id===item.id))await removeItem(item.id,item);items=items.filter(x=>x.id!==item.id);batch=batch.filter(x=>x.id!==item.id);sessionCapturedIds.delete(item.id);await persistDraft();dialog.close();render();}catch(error){message(error?.message==='CLOSET_STALE_DELETE_REOPEN_EDITOR'?'This clothing piece changed in another tab. Reload My Closet before removing it.':'Could not remove this photo. Try again.');}};
@@ -598,6 +619,10 @@ function adjustPhoto(item){
    ' Your original photo remains available for review.':
    correction10?'Saved garment not overwritten. '+String(error.message||error)+
    '. Reopen Adjust to review the latest clothing details.':
+   String(error?.message||error).includes('CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR')?
+    'Another tab changed this garment. Your changes were not saved. Reload My Closet, then reopen Adjust details.':
+   String(error?.message||error).includes('CLOSET_ALREADY_SAVED_RELOAD_WARDROBE')?
+    'This photo was already saved in another tab. Reload My Closet and review the existing piece.':
    'Could not save changes. Try again.');
  }};
  dialog.onclose=()=>{if(batch.some(x=>x.id===item.id)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};
