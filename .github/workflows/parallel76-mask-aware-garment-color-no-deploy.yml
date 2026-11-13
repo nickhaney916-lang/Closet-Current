@@ -1,0 +1,101 @@
+name: Parallel 76 owner-bound garment-color research — NO DEPLOY
+on:
+  push:
+    branches: [research/parallel76-mask-aware-garment-color-20261112-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: parallel76-color-HOLD
+  cancel-in-progress: true
+jobs:
+  pinned-parent-native-HOLD:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify P846 exact ancestor, nine-file research scope and review-first behavior
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=cadc619c29db4e0447dbef0638c6f6e1a91311a6
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD > /tmp/p76-paths
+          cat /tmp/p76-paths
+          test "$(wc -l </tmp/p76-paths)" -eq 9
+          while IFS= read -r p; do
+            case "$p" in
+              public/garment-color-76.mjs|public/outfit-worker.mjs|public/outfit-capture.js|tests/parallel76-garment-color.test.mjs|scripts/compare-parallel76-color.mjs|scripts/audit-parallel76-lawful-sources.mjs|scripts/test-parallel76-color-browser.mjs|research/parallel76-color/REPORT.md|.github/workflows/parallel76-mask-aware-garment-color-no-deploy.yml) ;;
+              *) echo "OUT OF SCOPE: $p"; exit 1 ;;
+            esac
+          done </tmp/p76-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- supabase public/app.js public/auth.js public/clothing-details.js public/photo-color.js public/outfit-segmentation.mjs benchmark)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          grep -Fq 'const outfitColor76=outfitUnits70' public/outfit-capture.js
+          grep -Fq 'piece.colorResearch76=' public/outfit-worker.mjs
+          grep -Fq 'FAMILY ALPHA HOLD #255' research/parallel76-color/REPORT.md
+          echo P76_PINNED_PARENT_NINE_PATHS_NO_DEPLOY
+      - name: Install ephemeral test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Source execution, frozen fixture comparison, build and full Node regressions
+        run: |
+          set -euo pipefail
+          node --check public/garment-color-76.mjs
+          node --check public/outfit-worker.mjs
+          node --check public/outfit-capture.js
+          node --check scripts/test-parallel76-color-browser.mjs
+          node --test tests/parallel76-garment-color.test.mjs
+          node scripts/compare-parallel76-color.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          echo P76_FULL_NATIVE_NO_DEPLOY_PASS
+  browser-review-HOLD:
+    needs: [pinned-parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install actual desktop Chromium and WebKit (NOT physical mobile)
+        run: |
+          npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+          npx playwright install --with-deps chromium webkit
+      - name: Native build and 320/390/430 no-save owner review and color opt-in
+        run: |
+          set -euo pipefail
+          node scripts/build.mjs
+          node scripts/test-parallel76-color-browser.mjs
+          node scripts/test-m1-owner-review-editor-839.mjs
+          node scripts/test-m1-review-first-default-843.mjs
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          echo P76_CHROMIUM_WEBKIT_NO_DEPLOY_PASS
+  lawful-original-sha-HOLD:
+    needs: [pinned-parent-native-HOLD]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    env:
+      P76_PHOTO_IDS: commons-0003,commons-0021,commons-0049,commons-0082
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify immutable legal originals from approved public source, no fabricated mask labels
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$P76_PHOTO_IDS"
+          node scripts/audit-parallel76-lawful-sources.mjs
+          echo P76_LEGALLY_VERIFIED_PHOTO_SHA_NONACCURACY_ONLY
