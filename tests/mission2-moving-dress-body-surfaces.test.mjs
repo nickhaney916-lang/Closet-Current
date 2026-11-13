@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import {captureSourceDressBodyPose40,auditMovingSourceDressBodySurfaces40,
  assertMovingSourceDressBodySurfaces40,
- auditMovingSourceDressBodyIntervals41,assertMovingSourceDressBodyIntervals41}
+ auditMovingSourceDressBodyIntervals41,assertMovingSourceDressBodyIntervals41,
+ auditSourceDressArticulatedPoseSamples42,assertSourceDressArticulatedPoseSamples42}
  from '../research/mission2-source-length/source-dress-moving-surface.mjs';
 import {auditSourceDressSweptBody39}
  from '../research/mission2-source-length/source-dress-swept-body.mjs';
@@ -59,8 +60,8 @@ function fixture({fullDress=false,bodyZ=0}={}){
 }
 const snap=mesh=>Object.fromEntries(
  Object.entries(mesh.geometry.attributes).map(([key,a])=>[key,a.array.slice()]));
-const capture=(f,stagedPositions=null)=>captureSourceDressBodyPose40({
- root:f.root,dress:f.dress,stagedPositions
+const capture=(f,stagedPositions=null,poseFraction=null)=>captureSourceDressBodyPose40({
+ root:f.root,dress:f.dress,stagedPositions,poseFraction
 });
 const audit=(f,startPose,endPose,extra={})=>auditMovingSourceDressBodySurfaces40({
  root:f.root,dress:f.dress,startPose,endPose,...extra
@@ -320,5 +321,129 @@ test('C41: uncertain source dress full-face interval refuses BEFORE source photo
  assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
   phase:.25,sweptIntervalAudit41:()=>({schema:'fake'})
  }),/C41 incomplete or unresolved/);
+ assert.deepEqual(snap(f.dress.mesh),pristine);
+});
+
+const sampleRotations42=(f,{angles=[0,Math.PI/4,Math.PI/2,Math.PI/4,0],
+ stagedEnd=null}={})=>{
+ const tokens=[];
+ for(let i=0;i<angles.length;i++){
+  f.bodyBones[0].rotation.z=angles[i];
+  tokens.push(capture(f,i===angles.length-1?stagedEnd:null,i/(angles.length-1)));
+ }
+ return tokens;
+};
+const sampled42=(f,tokens,extra={})=>auditSourceDressArticulatedPoseSamples42({
+ root:f.root,dress:f.dress,poseTokens:tokens,
+ startPositions:f.dress.mesh.geometry.getAttribute('position').array.slice(),
+ endPositions:f.dress.mesh.geometry.getAttribute('position').array.slice(),...extra
+});
+test('C42: true 163-bone rotation to intermediate collision and BACK defeats identical-endpoint linear C41',()=>{
+ const f=fixture(),cloth=f.dress.mesh.geometry.getAttribute('position'),
+  body=f.body.geometry.getAttribute('position');
+ // The rotating body triangle maps exactly onto the source cloth triangle
+ // at 90 degrees, but starts and ends remote from the cloth.
+ cloth.setXYZ(0,-.04,.24,0);cloth.setXYZ(1,.04,.24,0);
+ cloth.setXYZ(2,-.04,.30,0);
+ body.setXYZ(0,.24,.04,0);body.setXYZ(1,.24,-.04,0);
+ body.setXYZ(2,.30,.04,0);
+ const before=snap(f.dress.mesh);
+ const tokens=sampleRotations42(f);
+ const chord=audit(f,tokens[0],tokens.at(-1));
+ const linear=intervalAudit(f,tokens[0],tokens.at(-1));
+ assert.equal(chord.potentialPairs,0,'identical endpoint poses have no possible crossing');
+ assert.equal(linear.unresolvedPairs,0,'C41 linear chord misses nonlinear middle swing');
+ const evidence=sampled42(f,tokens);
+ assert.equal(evidence.poseSamples,5);
+ assert.equal(evidence.sampledIntervals,4);
+ assert.equal(evidence.genuineIntermediateBodyRotationsObserved,true);
+ assert.ok(evidence.rotatedBodyJointIntervals>=2);
+ assert.ok(evidence.broadphasePotentialPairs>0);
+ assert.ok(evidence.unresolvedPairs>0);
+ assert.equal(evidence.actualNonlinearMotionBetweenSamplesCertified,false);
+ assert.equal(evidence.collisionFreeContinuousRotationCertified,false);
+ assert.throws(()=>assertSourceDressArticulatedPoseSamples42(evidence),
+  /intermediate 163-bone pose may cross/);
+ assert.deepEqual(snap(f.dress.mesh),before);
+ assert.deepEqual(Object.keys(tokens[2]),[],
+  'original bone orientations/posed coordinates cannot escape opaque token');
+});
+test('C42: genuine far-body joint rotation across 5 intermediate samples clears only research veto',()=>{
+ const f=fixture({bodyZ:2}),before=snap(f.dress.mesh);
+ const tokens=sampleRotations42(f,{angles:[0,.18,.37,.18,0]});
+ const receipt=sampled42(f,tokens);
+ assert.equal(receipt.unresolvedPairs,0);
+ assert.ok(receipt.rotatedBodyJointIntervals>=2);
+ assert.equal(receipt.sampledIntervals,4);
+ assert.equal(receipt.maximumObservedPoseFractionGap,.25);
+ const verdict=assertSourceDressArticulatedPoseSamples42(receipt);
+ assert.equal(verdict.allSampledIntervalsSeparated,true);
+ assert.equal(verdict.unsampledNonlinearMotionNotCertified,true);
+ assert.equal(verdict.releaseAuthorized,false);
+ assert.deepEqual(snap(f.dress.mesh),before);
+});
+test('C42: missing actual intermediate poses, wrong phase order and forged release evidence fail closed',()=>{
+ const f=fixture({bodyZ:2}),tokens=sampleRotations42(f);
+ const original=snap(f.dress.mesh);
+ for(const extra of [
+  {poseTokens:tokens.slice(0,4)},
+  {poseTokens:[tokens[0],tokens[1],tokens[2],tokens[1],tokens[4]]},
+  {poseTokens:[tokens[0],tokens[2],tokens[1],tokens[3],tokens[4]]},
+  {maxTimeGap:.24},{maxPoseSamples:4},{maxTemporalNodesPerInterval:0},
+  {endPositions:new Float32Array(9)}
+ ])assert.throws(()=>sampled42(f,tokens,extra),/M2 C40/);
+ assert.throws(()=>assertSourceDressArticulatedPoseSamples42({
+  schema:'M2-source-dress-articulated-pose-samples-v1',
+  genuineIntermediateBodyRotationsObserved:true,
+  fullProvidedPoseSequenceChecked:true,matchedOriginalPhotoSourceStartEnd:true,
+  allSampledPairsAccounted:true,poseSamples:5,sampledIntervals:4,
+  broadphasePotentialPairs:0,provenSeparatedPairs:0,unresolvedPairs:0,
+  actualNonlinearMotionBetweenSamplesCertified:true,
+  collisionFreeContinuousRotationCertified:true,
+  releaseAuthorized:true,familyAlpha:'HOLD'
+ }),/M2 C40/);
+ assert.deepEqual(snap(f.dress.mesh),original);
+});
+test('C42: failed frozen original-photograph source data rejects independent captured rotation sequence',()=>{
+ const f=fixture({bodyZ:2}),tokens=sampleRotations42(f);
+ f.dress.mesh.geometry.getAttribute('position').setX(1,99);
+ assert.throws(()=>sampled42(f,tokens),/M2 C40/);
+});
+test('C42: full 163-bone source dress opt-in checks real intermediate body joint phases before write',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),pristine=snap(f.dress.mesh);
+ const callback=({startPositions,endPositions})=>{
+  const tokens=sampleRotations42(f,{
+   angles:[0,.08,.16,.08,0],stagedEnd:endPositions
+  });
+  return auditSourceDressArticulatedPoseSamples42({
+   root:f.root,dress:f.dress,poseTokens:tokens,
+   startPositions,endPositions,maxBodyShiftMeters:.25
+  });
+ };
+ const result=sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptArticulatedAudit42:callback
+ });
+ assert.equal(result.stats.sourceDressMotionArticulatedSamplesObserved42,true);
+ assert.equal(result.stats.sourceDressMotionContinuousBoneRotationCertified42,false);
+ assert.equal(result.stats.sourceDressMotionRealClothPhysics,false);
+ assert.equal(result.stats.releaseAuthorized,false);
+ assert.notDeepEqual(snap(f.dress.mesh).position,pristine.position);
+ for(const name of ['dressRest','dressCustomPhotoProjection','skinIndex','skinWeight'])
+  assert.deepEqual(snap(f.dress.mesh)[name],pristine[name]);
+});
+test('C42: explicit incomplete or forged articulated receipt refuses source dress motion before photo change',()=>{
+ const f=fixture({fullDress:true,bodyZ:-2}),pristine=snap(f.dress.mesh);
+ assert.throws(()=>sampleSourceDressMotion36(f.dress,f.root,{
+  phase:.25,sweptArticulatedAudit42:()=>({
+   schema:'M2-source-dress-articulated-pose-samples-v1',
+   fullProvidedPoseSequenceChecked:true,genuineIntermediateBodyRotationsObserved:true,
+   matchedOriginalPhotoSourceStartEnd:true,allSampledPairsAccounted:true,
+   poseSamples:5,sampledIntervals:4,unresolvedPairs:1,
+   provenSeparatedPairs:0,broadphasePotentialPairs:1,
+   actualNonlinearMotionBetweenSamplesCertified:false,
+   collisionFreeContinuousRotationCertified:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  })
+ }),/C42 incomplete or unsafe/);
  assert.deepEqual(snap(f.dress.mesh),pristine);
 });
