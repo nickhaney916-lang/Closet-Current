@@ -493,34 +493,34 @@ function renderReviewQueue850(){
  $('reviewQueueNext850').disabled=status.count<2;
  return true;
 }
-if($('reviewQueue850'))$('reviewQueue850').onchange=()=>{
+if(typeof $==='function'&&$('reviewQueue850'))$('reviewQueue850').onchange=()=>{
  if(!$('reviewQueue850').checked)reviewQueue850?.clear();
  render();
 };
-if($('reviewQueueAdjust850'))$('reviewQueueAdjust850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueueAdjust850'))$('reviewQueueAdjust850').onclick=()=>{
  const item=reviewQueueSelected850();
  if(item&&!localPending.has(item.id))adjustPhoto(item);
 };
-if($('reviewQueueCrop850'))$('reviewQueueCrop850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueueCrop850'))$('reviewQueueCrop850').onclick=()=>{
  const item=reviewQueueSelected850();
  if(item&&!localPending.has(item.id)&&!item.shoePair&&!item.combinedFragments70)cropClothingPhoto(item);
 };
-if($('reviewQueueKeep850'))$('reviewQueueKeep850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueueKeep850'))$('reviewQueueKeep850').onclick=()=>{
  if(!activeReviewQueue850())return;
  reviewQueue850.keepForLater(batch,window.closetAuth.user);render();
 };
-if($('reviewQueuePrevious850'))$('reviewQueuePrevious850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueuePrevious850'))$('reviewQueuePrevious850').onclick=()=>{
  if(!activeReviewQueue850())return;
  reviewQueue850.move(-1,batch,window.closetAuth.user);render();
 };
-if($('reviewQueueNext850'))$('reviewQueueNext850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueueNext850'))$('reviewQueueNext850').onclick=()=>{
  if(!activeReviewQueue850())return;
  reviewQueue850.move(1,batch,window.closetAuth.user);render();
 };
-if($('reviewQueueRetake850'))$('reviewQueueRetake850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueueRetake850'))$('reviewQueueRetake850').onclick=()=>{
  if(activeReviewQueue850())switchView('scan');
 };
-if($('reviewQueueAll850'))$('reviewQueueAll850').onclick=()=>{
+if(typeof $==='function'&&$('reviewQueueAll850'))$('reviewQueueAll850').onclick=()=>{
  $('reviewQueue850').checked=false;reviewQueue850?.clear();render();
 };
 function render(){
