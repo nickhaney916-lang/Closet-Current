@@ -906,7 +906,19 @@ function firstSourceTriangleCrossing49(shot,first,second,toleranceMeters){
   };
  };
  const original=read(shot.source),posed=read(shot.clothWorld);
- const inducedByPose=original.strictInteriorEdgeFaceCrossings===0&&
+ // A zero STRICT-intersection count alone is NOT evidence that the original
+ // source triangles were separate: they may already touch or overlap
+ // coplanarly. Measure actual original-source triangle distance independently.
+ const origA=tri(shot.source,first),origB=tri(shot.source,second);
+ const ta=new ExtendedTriangle(origA[0],origA[1],origA[2]);
+ const tb=new ExtendedTriangle(origB[0],origB[1],origB[2]);
+ ta.needsUpdate=true;tb.needsUpdate=true;
+ const sourceDistance=ta.distanceToTriangle(tb);
+ if(!Number.isFinite(sourceDistance)||sourceDistance<0)
+  fail('C49 original-source triangle separation could not be verified');
+ const originalWasSeparated=sourceDistance>toleranceMeters+1e-9;
+ const inducedByPose=originalWasSeparated&&
+  original.strictInteriorEdgeFaceCrossings===0&&
   posed.strictInteriorEdgeFaceCrossings>0;
  return Object.freeze({
   schema:'M2-first-source-contact-geometry-C49',
@@ -917,6 +929,9 @@ function firstSourceTriangleCrossing49(shot,first,second,toleranceMeters){
   posedContactClass:posed.contactClass,
   originalStrictInteriorCrossings:original.strictInteriorEdgeFaceCrossings,
   posedStrictInteriorCrossings:posed.strictInteriorEdgeFaceCrossings,
+  originalTrianglesSeparatedBeyondTolerance:originalWasSeparated,
+  originalSourceGapCategory:originalWasSeparated?
+   'original-source-separated':'original-source-touching-or-close',
   crossingAppearsOnlyInSkinnedPose:inducedByPose,
   sourceNormalsParallel:original.parallelNormals,
   posedNormalsParallel:posed.parallelNormals,
