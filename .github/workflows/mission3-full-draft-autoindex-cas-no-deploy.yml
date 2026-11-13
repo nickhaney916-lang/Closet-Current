@@ -18,7 +18,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          BASE=67162236613c6fda8f2717522562c26ba9f25fb9
+          BASE=169d549263c8602bd97136d3cb5fc48fb850588c
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
@@ -111,7 +111,7 @@ jobs:
         run: |
           set -euo pipefail
           git config --global --add safe.directory "$GITHUB_WORKSPACE"
-          BASE=67162236613c6fda8f2717522562c26ba9f25fb9
+          BASE=169d549263c8602bd97136d3cb5fc48fb850588c
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
