@@ -53,6 +53,11 @@ for(const [browserName,browserType] of Object.entries({chromium,webkit})){
     contentScroll:el.scrollWidth,available:el.clientWidth}));
    assert.ok(bounds.left>=0&&bounds.right<=width+1,'panel fits CSS mobile width');
    assert.ok(bounds.contentScroll<=bounds.available+2,'panel has no horizontal overflow');
+   // P852: a physical tester must explicitly identify exact running build,
+   // not inherit a stale P850 default by accident.
+   await page.getByRole('button',{name:'Start memory-only session'}).click();
+   assert.match(await page.locator('#p78message').innerText(),/P78_COMMIT_REQUIRED/);
+   await page.locator('#p78commit').fill('9b582710e1b406e0d8ee256940627b5297646500');
    await page.getByRole('button',{name:'Start memory-only session'}).click();
    await page.locator('#p78case').selectOption('owner_review_843');
    await page.locator('#p78status').selectOption('PASS');
