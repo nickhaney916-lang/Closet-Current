@@ -28,12 +28,25 @@ function fixture(){
   boardSaveStatus:{textContent:''},refreshOutfitWardrobe:{hidden:true},
   saveBoard:{disabled:false},boardName:{focus(){events.push('focus')}},loadLatestBoardDraft:{},keepLocalBoardDraft:{}
  };
- const makeDB=owner=>({name:'closet-current-user-'+owner,
-  transaction(){return {objectStore(){return {get(){
-   const request={};
-   queueMicrotask(()=>{request.result={current:{slots:{top:'same-id'}},saved:[]};request.onsuccess?.()});
-   return request;
-  }}};}}});
+ const makeDB=owner=>({
+  name:'closet-current-user-'+owner,
+  transaction(){
+   return {
+    objectStore(){
+     return {
+      get(){
+       const request={};
+       queueMicrotask(()=>{
+        request.result={current:{slots:{top:'same-id'}},saved:[]};
+        request.onsuccess?.();
+       });
+       return request;
+      }
+     };
+    }
+   };
+  }
+ });
  const ctx={
   window:{closetAuth:auth},db:makeDB('owner-a'),captureOperationEpoch:3,
   nativeLossless04Active:false,boardStatusSerial:0,boardConflictDraft:null,
@@ -155,7 +168,7 @@ test('Save Outfit respects existing fifty-saved limit',async()=>{
  assert.match(f.nodes.boardSaveStatus.textContent,/50 outfits/);
  assert.equal(f.events.includes('save:same-id'),false);
 });
-test('old signed owner after Save Outfit commit never changes new owner's UI',async()=>{
+test('old signed owner after Save Outfit commit never changes the next UI',async()=>{
  const f=fixture(),p=f.setSavePending(),job=f.nodes.saveBoard.onclick();await p.started;
  f.swap();f.nodes.boardSaveStatus.textContent='Owner B private screen';f.nodes.saveBoard.disabled=true;
  p.resolve();await job;
