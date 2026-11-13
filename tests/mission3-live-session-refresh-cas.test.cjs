@@ -131,7 +131,7 @@ test('transient offline live refresh preserves current verified owner and origin
 });
 test('wrong-owner verified live refresh cannot open next owner wardrobe',async()=>{
  const f=setup();await f.ready();f.plan.response=ok(B,'bad-owner');
- await assert.rejects(f.request(),/Verified refresh account or credentials changed/);
+ await assert.rejects(f.request(),/Session account changed or required refresh credentials missing/);
  assert.equal(f.owner(),null);assert.equal(f.isLocked(),true);
 });
 test('missing refresh token in verified live response fails closed without new account evidence',async()=>{
@@ -139,7 +139,7 @@ test('missing refresh token in verified live response fails closed without new a
  f.plan.response={ok:true,status:200,json:async()=>({
   user:{id:A},access_token:'new-access',expires_in:3600
  })};
- await assert.rejects(f.request(),/Verified refresh account or credentials changed/);
+ await assert.rejects(f.request(),/Session account changed or required refresh credentials missing/);
  assert.equal(f.owner(),null);assert.equal(f.isLocked(),true);
  assert.equal(f.snapshot(),current,'unverified new data must not overwrite previous credential');
 });
