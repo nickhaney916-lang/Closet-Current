@@ -1349,6 +1349,10 @@ export function proposeSourceDressStagedRepair50({
     maxBodyFaces>500000)
   fail('C50 genuine source capture and bounded research parameters required');
  checkTopology(shot);
+ // C40 captures after root.updateMatrixWorld(true). C50 must refresh the
+ // ENTIRE skeleton, not merely the mesh world matrix, or moved sibling
+ // bones can retain stale bone.matrixWorld and defeat the pose lease.
+ root.updateMatrixWorld(true);
  if(!same(shot.clothSource,shot.source))
   fail('C50 repair proposal must start with captured untouched source cloth');
  const onPose=sourcePose(mesh,shot.source);
@@ -1484,6 +1488,7 @@ export function captureSourceDressRepairPreview50({root,dress,proposalToken}={})
  if(!lease||lease.used||lease.root!==root||lease.mesh!==mesh)
   fail('C50 source-bound one-time staged repair proposal missing or reused');
  checkTopology(lease.shot);
+ root.updateMatrixWorld(true);
  if(!same(sourcePose(mesh,lease.shot.source),lease.shot.clothWorld)||
    lease.shot.bodies.some(b=>!same(sourcePose(b.mesh,b.sourceBody),b.world)))
   fail('C50 staged repair preview source body or cloth pose changed');
