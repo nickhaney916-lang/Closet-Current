@@ -18,6 +18,8 @@ import {registerSourceDressTemporalReceipt46,
  isAuthenticSourceDressTemporalReceipt46} from './source-dress-receipt-lock.mjs';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const captures=new WeakMap();
+// Keep source face IDs and staged XYZ private: no public repair geometry / photo.
+const firstContactPairs50=new WeakMap(), stagedProposals50=new WeakMap();
 // Actual C46 audit results are private, one-shot motion leases, not user-supplied flags.
 // Receipts live in the dependency-free source-dress-receipt-lock.mjs.
 const fail=m=>{throw Error('M2 C40 source surface sweep '+m);};
@@ -1066,7 +1068,7 @@ export function auditSourceDressSelfContact44({
  let checkedOriginalFaces=0,adjacentPairsExcluded=0,
   candidateTriangles=0,unresolvedPairs=0,minDistanceMeters=null;
  let firstUnresolvedContactKind45=null,firstSourceBoundary48=null,
-  firstSourceCrossing49=null,earlyBlock45=false;
+  firstSourceCrossing49=null,firstContactPair50=null,earlyBlock45=false;
  try{
   const bvh=new MeshBVH(g,{indirect:true});
   const start=new ExtendedTriangle(),box=new THREE.Box3();
@@ -1109,6 +1111,7 @@ export function auditSourceDressSelfContact44({
       minDistanceMeters=minDistanceMeters===null?distance:
        Math.min(minDistanceMeters,distance);
       if(stopAtFirstUnresolvedContact45){
+       firstContactPair50=Object.freeze([i,j]);
        firstSourceBoundary48=firstSourceBoundaryWitness48(
         shot,indices,other,toleranceMeters);
        firstSourceCrossing49=firstSourceTriangleCrossing49(
@@ -1149,7 +1152,7 @@ export function auditSourceDressSelfContact44({
    // consume the entire owner's original photo mesh merely to say BLOCK.
    if(earlyBlock45)break;
   }
-  return Object.freeze({
+  const receipt=Object.freeze({
    schema:'M2-source-dress-self-contact-v1',
    originalSourceAndSkinVerified:true,
    actual163BoneSkinnedPose:true,
@@ -1166,6 +1169,10 @@ export function auditSourceDressSelfContact44({
    selfContactPhysicsCertified:false,
    releaseAuthorized:false,familyAlpha:'HOLD'
   });
+  if(firstContactPair50)firstContactPairs50.set(receipt,{
+   root,mesh,shot,faces:firstContactPair50
+  });
+  return receipt;
  }finally{g.dispose();}
 }
 export function assertSourceDressSelfContact44(receipt){
@@ -1228,7 +1235,7 @@ export function auditSourceDressFastSelfContact45({
     (!blocked&&(result.firstSourceBoundary48!==null||
        result.firstSourceCrossing49!==null)))
   fail('C45 contradictory partial self-contact audit');
- return Object.freeze({
+ const receipt=Object.freeze({
   schema:'M2-source-dress-first-contact-veto-v1',
   originalSourceAndSkinVerified:result.originalSourceAndSkinVerified,
   actual163BoneSkinnedPose:result.actual163BoneSkinnedPose,
@@ -1249,6 +1256,13 @@ export function auditSourceDressFastSelfContact45({
   clothPhysicsCertified:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
+ if(blocked){
+  const pair=firstContactPairs50.get(result);
+  if(!pair||pair.root!==root||pair.mesh!==dress.mesh)
+   fail('C50 real source first-contact face provenance not present');
+  firstContactPairs50.set(receipt,pair);
+ }
+ return receipt;
 }
 export function assertSourceDressFastSelfContact45(receipt){
  if(receipt?.schema!=='M2-source-dress-first-contact-veto-v1'||
@@ -1300,6 +1314,188 @@ export function assertSourceDressFastSelfContact45(receipt){
  });
 }
 
+
+
+/**
+ * Mission 2 P2-C50 — reversible, staged-only, full-surface repair EXPLORATION.
+ *
+ * The first genuine 163-bone source garment transverse intersection can be
+ * probed with small +/- normal offsets of a wholly source-disconnected
+ * triangle. Connected/UV-shared vertices may never be moved independently:
+ * this would tear the original photographed surface. If a candidate is
+ * generated, run the COMPLETE original-source cloth face self-contact audit
+ * AND swept whole-garment-vs-body broadphase BEFORE returning a preview.
+ *
+ * This is not cloth physics, a mesh repair, a garment approval or a seam ID.
+ * A preview is a one-time opaque C40 pose token, never raw staged source XYZ;
+ * production geometry, original photo, UV, skin and material are unchanged.
+ */
+export function proposeSourceDressStagedRepair50({
+ root,dress,poseToken,maxShiftMeters=.002,toleranceMeters=.00002,
+ maxSourceFaces=100000,maxTriangleCandidates=300000,
+ maxBodyFaces=500000
+}={}){
+ const mesh=validateRootDress(root,dress),shot=captures.get(poseToken);
+ if(!shot||shot.root!==root||shot.mesh!==mesh||
+    !Number.isFinite(maxShiftMeters)||maxShiftMeters<.00005||
+    maxShiftMeters>.002||
+    !Number.isFinite(toleranceMeters)||toleranceMeters<0||
+    toleranceMeters>.002||
+    !Number.isSafeInteger(maxSourceFaces)||maxSourceFaces<1||
+    maxSourceFaces>200000||
+    !Number.isSafeInteger(maxTriangleCandidates)||maxTriangleCandidates<1||
+    maxTriangleCandidates>2000000||
+    !Number.isSafeInteger(maxBodyFaces)||maxBodyFaces<1||
+    maxBodyFaces>500000)
+  fail('C50 genuine source capture and bounded research parameters required');
+ checkTopology(shot);
+ // C40 captures after root.updateMatrixWorld(true). C50 must refresh the
+ // ENTIRE skeleton, not merely the mesh world matrix, or moved sibling
+ // bones can retain stale bone.matrixWorld and defeat the pose lease.
+ root.updateMatrixWorld(true);
+ if(!same(shot.clothSource,shot.source))
+  fail('C50 repair proposal must start with captured untouched source cloth');
+ const onPose=sourcePose(mesh,shot.source);
+ if(!same(onPose,shot.clothWorld)||
+    shot.bodies.some(b=>!same(sourcePose(b.mesh,b.sourceBody),b.world)))
+  fail('C50 source or anatomical pose changed since original capture');
+ const first=auditSourceDressFastSelfContact45({
+  root,dress,poseToken,maxSourceFaces,maxTriangleCandidates,
+  toleranceMeters
+ });
+ const refusal=(status,attemptedCandidates=0)=>Object.freeze({
+  schema:'M2-source-dress-reversible-repair-C50',
+  status,attemptedCandidates,proposalToken:null,
+  firstSourceContactVerified:first.unresolvedPairs===1,
+  fullOriginalGeometryImmutable:true,
+  wholeGarmentSelfContactClearanceClaim:false,
+  wholeBodySweptClearanceClaim:false,
+  independentSourcePhotoReview:false,
+  realFabricPhysics:false,
+  previewOnly:true,repairCommitted:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ if(first.unresolvedPairs===0)return refusal('no-contact-no-repair-required');
+ const saved=firstContactPairs50.get(first);
+ if(!saved||saved.root!==root||saved.mesh!==mesh||saved.shot!==shot||
+    !Array.isArray(saved.faces)||saved.faces.length!==2)
+  fail('C50 original source first contact not independently traceable');
+ if(first.firstSourceCrossing49?.posedContactClass!==
+    'strict-interior-transverse-face-crossing')
+  return refusal('unverified-contact-no-geometry-correction');
+ const [faceA,faceB]=saved.faces,geom=shot.geo;
+ const ids=[0,1,2].map(k=>at(geom.indices,faceB,k));
+ if(new Set(ids).size!==3)
+  return refusal('nontriangular-or-repeated-source-topology');
+ // No candidate may split a shared edge, a manifold garment surface, or a
+ // genuine UV seam. Compute original index references for the ENTIRE mesh.
+ const counts=new Uint32Array(geom.p.count);
+ for(let face=0;face<geom.faceCount;face++)
+  for(let corner=0;corner<3;corner++)
+   counts[at(geom.indices,face,corner)]++;
+ if(ids.some(v=>counts[v]!==1))
+  return refusal('source-connected-fabric-cannot-move-single-triangle');
+ const tri=ids.map(i=>new THREE.Vector3().fromArray(shot.source,3*i));
+ const normal=new THREE.Vector3().subVectors(tri[1],tri[0])
+  .cross(new THREE.Vector3().subVectors(tri[2],tri[0]));
+ if(!Number.isFinite(normal.length())||normal.length()<1e-10)
+  fail('C50 degenerate original source garment cannot be corrected');
+ normal.normalize();
+ let attempted=0;
+ for(const offset of [.00005,.0001,.00025,.0005,.001,.002]){
+  if(offset>maxShiftMeters+1e-12)continue;
+  for(const direction of [1,-1]){
+   attempted++;
+   const staged=shot.source.slice();
+   for(const v of ids){
+    staged[v*3]+=normal.x*offset*direction;
+    staged[v*3+1]+=normal.y*offset*direction;
+    staged[v*3+2]+=normal.z*offset*direction;
+   }
+   const trial=captureSourceDressBodyPose40({root,dress,stagedPositions:staged});
+   const trialShot=captures.get(trial);
+   let maximumPosedShift=0;
+   for(let i=0;i<trialShot.clothWorld.length;i+=3)
+    maximumPosedShift=Math.max(maximumPosedShift,Math.hypot(
+     trialShot.clothWorld[i]-shot.clothWorld[i],
+     trialShot.clothWorld[i+1]-shot.clothWorld[i+1],
+     trialShot.clothWorld[i+2]-shot.clothWorld[i+2]));
+   // Even a tiny source-space change may become a large skinned displacement
+   // under a scaled/rotating mesh. Refuse unless true posed shift is bounded.
+   if(!Number.isFinite(maximumPosedShift)||
+      maximumPosedShift>maxShiftMeters+1e-7)continue;
+   let cloth,body;
+   try{
+    cloth=auditSourceDressSelfContact44({
+     root,dress,poseToken:trial,maxSourceFaces,
+     maxTriangleCandidates,toleranceMeters
+    });
+    if(!cloth.completeNonadjacentFaceAudit||
+       cloth.checkedOriginalFaces!==cloth.originalFaceCount||
+       cloth.unresolvedPairs!==0)continue;
+    body=auditMovingSourceDressBodySurfaces40({
+     root,dress,startPose:poseToken,endPose:trial,
+     maxClothFaces:maxSourceFaces,
+     maxBodyFaces,maxTriangleCandidates,
+     maxClothShiftMeters:.025,paddingMeters:toleranceMeters
+    });
+    if(!body.wholeGarmentFacesExamined||!body.fullBodyFacesExamined||
+       body.potentialPairs!==0)continue;
+   }catch{
+    // Budget exceed, mesh race, incomplete pose or uncertain body crossing:
+    // evidence may NEVER become a successful staged proposal.
+    continue;
+   }
+   checkTopology(shot);
+   if(!same(sourcePose(mesh,shot.source),shot.clothWorld))
+    fail('C50 original source pose changed during staged candidate evaluation');
+   const proposalToken=Object.freeze({});
+   stagedProposals50.set(proposalToken,{
+    root,mesh,shot,staged,used:false
+   });
+   return Object.freeze({
+    schema:'M2-source-dress-reversible-repair-C50',
+    status:'staged-full-surface-clear-preview-only',
+    attemptedCandidates:attempted,
+    proposalToken,firstSourceContactVerified:true,
+    sourceIndependentTriangleOnly:true,
+    movedSourceVertexCount:3,
+    maximumSourceShiftMeters:offset,
+    maximumPosedShiftMeters:maximumPosedShift,
+    originalSourceFacesChecked:cloth.checkedOriginalFaces,
+    completeSourceContactAudited:true,
+    unresolvedSourceContactPairs:0,
+    bodyFacesAudited:body.bodyFaces,
+    sweptWholeGarmentBodyPotentialPairs:body.potentialPairs,
+    fullOriginalGeometryImmutable:true,
+    wholeGarmentSelfContactClearanceClaim:true,
+    wholeBodySweptClearanceClaim:true,
+    continuousClothMotionApproved:false,
+    independentSourcePhotoReview:false,
+    realFabricPhysics:false,
+    previewOnly:true,repairCommitted:false,
+    releaseAuthorized:false,familyAlpha:'HOLD'
+   });
+  }
+ }
+ return refusal('bounded-candidates-cannot-clear-whole-surfaces',attempted);
+}
+
+/** Research-only one-shot opaque preview; NEVER exposes raw XYZ or commits. */
+export function captureSourceDressRepairPreview50({root,dress,proposalToken}={}){
+ const lease=stagedProposals50.get(proposalToken);
+ const mesh=validateRootDress(root,dress);
+ if(!lease||lease.used||lease.root!==root||lease.mesh!==mesh)
+  fail('C50 source-bound one-time staged repair proposal missing or reused');
+ checkTopology(lease.shot);
+ root.updateMatrixWorld(true);
+ if(!same(sourcePose(mesh,lease.shot.source),lease.shot.clothWorld)||
+   lease.shot.bodies.some(b=>!same(sourcePose(b.mesh,b.sourceBody),b.world)))
+  fail('C50 staged repair preview source body or cloth pose changed');
+ lease.used=true; // consume before invoking capture; failure must not replay
+ return captureSourceDressBodyPose40({root,dress,
+  stagedPositions:lease.staged.slice()});
+}
 
 /**
  * Mission 2 P2-C46 — self-contact during REAL original-skinned cloth motion.
