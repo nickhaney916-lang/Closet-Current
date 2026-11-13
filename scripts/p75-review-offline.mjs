@@ -6,7 +6,7 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {resolve,relative,isAbsolute} from 'node:path';
 import {createPrivateKey,createPublicKey,sign,verify as cryptoVerify} from 'node:crypto';
 import {canonical,sha256,SCHEMA,validateLabel,verifiedSource,priorExposures,
- checkOverlap,validatePartition,independentAgreement,sourceKey} from './p75-dataset-core.mjs';
+ checkOverlap,validatePartition,independentAgreement,verifyHumanReceipt,verifyCuratorApproval,sourceKey} from './p75-dataset-core.mjs';
 function externalFile(p){
  if(!p)throw Error('An explicitly supplied absolute external path is required');
  const q=resolve(p),rel=relative(process.cwd(),q);
@@ -55,33 +55,47 @@ if(command==='sign'){
   createPublicKey(registry.registrarPublicKey),Buffer.from(bundle.exposureAudit?.signature||'','base64'));}catch{}
  if(legacyLedgerOK)for(const r of old)r.dhash64=map[r.sha256];
  const issues=validatePartition(bundle.sources,old);
- let singleHuman=0,dualHuman=0,blindEligible=0;
+ let singleHuman=0,dualHuman=0,blindEligible=0,trainEligible=0,developmentEligible=0;
+ let agreementEqual=0,agreementTotal=0;
  for(const source of bundle.sources){
   const receipts=bundle.reviews[source.sha256]||[];
-  const agreement=independentAgreement(source,receipts,registry,fingerprint);
-  if(receipts.length&&agreement.issues.length===0)singleHuman++;
+  if(!Array.isArray(receipts))throw Error('Invalid private reviewer receipts array');
+  const valid=receipts.filter(receipt=>verifyHumanReceipt(source,receipt,registry,fingerprint).length===0);
+  const independentDistinct=new Set(valid.map(r=>r.reviewerId));
+  if(independentDistinct.size>=1)singleHuman++;
+  const agreement=independentAgreement(source,valid,registry,fingerprint);
+  if(independentDistinct.size>=2&&agreement.agreement){
+   agreementEqual+=agreement.agreement.equal;agreementTotal+=agreement.agreement.total;
+  }
   if(agreement.eligible)dualHuman++;
+  if(source.split==='quarantine')continue;
+  // Every promoted split, including train/dev, requires independently vetted
+  // consent/rights note, verified physical group and a signed human label.
+  const curatorOK=verifyCuratorApproval(source,registry,fingerprint);
+  if(!curatorOK)issues.push('missing independently signed rights/consent/source-group evidence');
+  if(independentDistinct.size<1)issues.push('non-quarantined group requires independently signed human annotation');
+  if(independentDistinct.size>=2&&!agreement.eligible)issues.push('reviewer disagreement requires independent adjudication');
+  if(verifiedSource(source).length)issues.push('promoted source original/rights metadata unverified');
+  if(source.split==='train'&&curatorOK&&independentDistinct.size>=1)trainEligible++;
+  if(source.split==='development'&&curatorOK&&independentDistinct.size>=1)developmentEligible++;
   if(source.split==='blind'){
    if(!legacyLedgerOK)issues.push('sealed blind requires complete signed fingerprint ledger for all historical exposed originals');
-   if(verifiedSource(source).length)issues.push('unverified blind source');
-   if(checkOverlap(source,old,bundle.sources.filter(x=>x!==source)).length)issues.push('blind leakage/duplicate');
-   // Curator signs a separate rights + physical garment/source-group proof.
-   const approval={sha256:source.sha256,sourceGroupId:source.sourceGroupId,rightsReview:'curator-approved',
-     photoContent:'human-reviewed',garmentHumanVerified:true,sourceGroupApproved:true};
-   let curatorOK=false;
-   try{curatorOK=cryptoVerify(null,Buffer.from(canonical(approval)),createPublicKey(registry.registrarPublicKey),
-    Buffer.from(source.curatorApprovalSignature||'','base64'));}catch{}
-   if(!curatorOK)issues.push('missing external curator identity/source/rights approval');
-   if(!agreement.eligible)issues.push('two non-tuned independently attested human labels required');
-   if(curatorOK&&agreement.eligible&&legacyLedgerOK&&
-      !checkOverlap(source,old,bundle.sources.filter(x=>x!==source)).length&&
-      verifiedSource(source).length===0)blindEligible++;
+   const overlap=checkOverlap(source,old,bundle.sources.filter(x=>x!==source));
+   if(overlap.length)issues.push('blind leakage or duplicate');
+   if(!agreement.eligible)issues.push('two non-tuned independently verified human labels required');
+   if(curatorOK&&agreement.eligible&&legacyLedgerOK&&!overlap.length&&verifiedSource(source).length===0)
+     blindEligible++;
   }
  }
  const report={sources:bundle.sources.length,oldExposedSources:old.length,
-  oldSourceFingerprintMissing:oldUnfingerprinted,sourceHumanConsensus:dualHuman,
+  oldSourceFingerprintMissing:oldUnfingerprinted,atLeastOneAttestedHuman:singleHuman,
+  twoHumanConsensus:dualHuman,
+  comparisonAgreement:{equal:agreementEqual,total:agreementTotal,
+   ratio:agreementTotal?agreementEqual/agreementTotal:null},
+  trainVerified:issues.length===0?trainEligible:0,
+  developmentVerified:issues.length===0?developmentEligible:0,
   sealedBlindVerified:issues.length===0?blindEligible:0,errors:[...new Set(issues)].sort(),
-  scoring:'NOT PERFORMED',humanProvenance:'EXTERNAL ATTESTATIONS REQUIRED'};
+  scoring:'NOT PERFORMED',humanProvenance:'OWNER-VETTED ATTESTATIONS REQUIRED'};
  // No IDs, photos, per-row blind labels or model predictions in stdout.
  console.log('P75_PRIVATE_GOVERNANCE_AUDIT '+JSON.stringify(report));
  if(issues.length)process.exitCode=3;
