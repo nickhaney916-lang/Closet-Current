@@ -65,7 +65,27 @@ function triangleContacts(left,right){
  return {count,pairs:pairKeys,maximumLocalOrientedFaceDepth:maxPlaneDepth};
 }
 
-import {smoothSurfaceNormals} from '../three-d-08/garment-fit-profile.mjs';
+
+// Local, deterministic normal reconciliation of only duplicate render vertices.
+// The P541 Work56 fitter has this helper, but its source is intentionally NOT
+// in the immutable P2-C52 parent. Inline a scoped research equivalent, not
+// a cross-branch import or any modification to the shipping application.
+function smoothSurfaceNormals(geometry,surfaceVertices){
+ const p=geometry.getAttribute('position'),n=geometry.getAttribute('normal'),groups=new Map();
+ for(let i=0;i<surfaceVertices;i++){
+  const key=[p.getX(i),p.getY(i),p.getZ(i)].map(v=>v.toFixed(5)).join(',');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(i);
+ }
+ for(const ids of groups.values()){
+  const q=new T.Vector3();
+  for(const i of ids)q.add(new T.Vector3().fromBufferAttribute(n,i));
+  if(q.lengthSq()<1e-10)continue;
+  q.normalize();
+  for(const i of ids)n.setXYZ(i,q.x,q.y,q.z);
+ }
+ n.needsUpdate=true;
+}
 const smooth=T.MathUtils.smoothstep;
 const SHA='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
 const protectedAttributes=['panelPosition','panelNormal','skinIndex','skinWeight','uv'];
