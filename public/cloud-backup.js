@@ -344,6 +344,10 @@
     r.onsuccess=()=>{
      try{
       assertActive();
+      // The earlier checks run before decoding and waiting on queued writes.
+      // Recheck the live owner review buffer in the EXACT native transaction
+      // immediately before any saved/draft/outfit row is cleared or replaced.
+      if(callbacks.canRestore&&!callbacks.canRestore())return;
       const m=r.result||markerDefault();
       if(restoreResearch)guard.assertLease();
       if(m.localRevision!==expectedRevision||m.dirty)return;
