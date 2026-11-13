@@ -7,7 +7,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
-import {sha256,verifiedSource,checkOverlap,priorExposures,sourceKey,originalURL,rightsOK,publicAuditReport,SCHEMA} from './p75-dataset-core.mjs';
+import {sha256,verifiedSource,checkOverlap,priorExposures,sourceKey,originalURL,canonicalOriginalURL,rightsOK,publicAuditReport,SCHEMA} from './p75-dataset-core.mjs';
 const plan=JSON.parse(await readFile('research/parallel75/queries.json','utf8'));
 if(plan.schema!=='p75-query-plan-v1'||!Array.isArray(plan.searches)||plan.searches.length>12)throw Error('Invalid bounded search plan.');
 const filenames=['benchmark/locked-photo-sources.json','benchmark/manifest-holdout-16.json',
@@ -18,7 +18,7 @@ const maxDownloads=Number(process.env.P75_MAX_ORIGINALS||18);
 if(!Number.isInteger(maxDownloads)||maxDownloads<1||maxDownloads>48)throw Error('Unsafe maximum original count');
 const maxPerQuery=Math.min(4,Number(plan.maxOriginalsPerQuery||3));
 const seen=new Set(),discovered=[],failures={},requests={attempts:0,success:0};
-let originalUrlSamplePrinted=false;
+
 const headers={'User-Agent':'ClosetCurrentP75DatasetAudit/1.0 (https://github.com/nickhaney916-lang/Closet-Current; research provenance, NO user data)','Accept':'application/json'};
 const count=x=>failures[x]=(failures[x]||0)+1;
 const clean=s=>String(s||'').replace(/<[^>]*>/g,' ').replace(/&amp;/g,'&').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/\s+/g,' ').trim().slice(0,400);
@@ -54,16 +54,8 @@ for(const task of plan.searches){
   const lic=clean(meta.LicenseShortName?.value),licURL=licenseURL(clean(meta.LicenseUrl?.value));
   const src=info.descriptionurl,srcKey=sourceKey(src);
   if(!srcKey){count('commons-page-url-not-recognized');continue;}
-  if(!originalURL(info.url)){
-   count('commons-original-url-not-recognized');
-   if(!originalUrlSamplePrinted){
-    try{const u=new URL(info.url);console.log('P75_PUBLIC_URL_STRUCTURE '+JSON.stringify({
-     scheme:u.protocol,host:u.hostname,pathPrefix:u.pathname.split('/').slice(0,5),query:!!u.search,thumb:u.pathname.includes('/thumb/')}));}
-    catch{console.log('P75_PUBLIC_URL_STRUCTURE malformed');}
-    originalUrlSamplePrinted=true;
-   }
-   continue;
-  }
+  const original=canonicalOriginalURL(info.url);
+  if(!original){count('commons-original-url-not-recognized');continue;}
   if(already.has(srcKey)||seen.has(srcKey)){count('historically-exposed-or-repeated');continue;}
   if(!rightsOK(lic,licURL)){count('rights-metadata-unacceptable');continue;}
   const artist=clean(meta.Artist?.value),title=clean(page.title);
@@ -72,14 +64,14 @@ for(const task of plan.searches){
   seen.add(srcKey);
   let bytes;
   try{
-   const res=await fetch(info.url,{headers,signal:AbortSignal.timeout(30000)});
+   const res=await fetch(original,{headers,signal:AbortSignal.timeout(30000)});
    if(!res.ok||!originalURL(res.url)||res.headers.get('content-length')&&Number(res.headers.get('content-length'))>12*1024*1024)throw Error('Original unavailable/oversize');
    bytes=Buffer.from(await res.arrayBuffer());
    if(bytes.length!==info.size||bytes.length>12*1024*1024||createHash('sha1').update(bytes).digest('hex')!==info.sha1)throw Error('Publisher SHA1/length changed');
    const decoded=await sharp(bytes,{limitInputPixels:40_000_000}).metadata();
    if(!decoded.width||!decoded.height||decoded.width<100||decoded.height<100||!['jpeg','png','webp'].includes(decoded.format))throw Error('Unsupported decoded photo');
    const row={schema:SCHEMA,id:'p75-candidate-'+String(discovered.length+1).padStart(4,'0'),
-    discoveryFamily:task.family,sourcePage:src,originalURL:info.url,
+    discoveryFamily:task.family,sourcePage:src,originalURL:original,
     license:lic,licenseURL:licURL,artist,title,
     sha256:sha256(bytes),commonsSha1:info.sha1,byteLength:bytes.length,
     width:decoded.width,height:decoded.height,orientation:decoded.orientation||1,
