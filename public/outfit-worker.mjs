@@ -14,6 +14,15 @@ async function load(requestId){
 async function jpegData(image){
  const bytes=new Uint8Array(await(await image.toBlob('image/jpeg',.94)).arrayBuffer());let text='';for(let i=0;i<bytes.length;i+=32768)text+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/jpeg;base64,'+btoa(text);
 }
+async function sha256Bytes70(bytes){
+ const digest=await crypto.subtle.digest('SHA-256',bytes);
+ return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+async function sourceSha256For70(dataURI){
+ const encoded=dataURI.slice('data:image/jpeg;base64,'.length),raw=atob(encoded),bytes=new Uint8Array(raw.length);
+ for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+ return sha256Bytes70(bytes);
+}
 let chain=Promise.resolve();
 self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
  try{
@@ -28,10 +37,15 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
   const groups=!map.personDetected?[]:request.instanceReview840===true?
    (await import('./outfit-instance-review-840.mjs'+new URL(import.meta.url).search)).clothingReviewInstances840(map):
    clothingMaskGroups(map);
+  const sourceSha256=request.instanceReview70===true?await sourceSha256For70(request.image):null;
   let count=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
    const piece={image:await jpegData(new RawImage(isolated.data,isolated.width,isolated.height,3)),recognitionPhoto:{image:await jpegData(new RawImage(raw.data,raw.width,raw.height,3))},cropBounds:{x:b.left/image.width,y:b.top/image.height,width:b.width/image.width,height:b.height/image.height},colorEstimate:(()=>{const palette=PhotoColor.maskedPalette(sample.data,sample.width,sample.height);return palette&&!palette.needsConfirmation?{color:palette.primary,source:'photo-estimate',support:palette.colors[0]?.share||0,secondaryColor:palette.secondary}:null;})(),label:group.label,instanceMethod:group.instanceMethod||'native_semantic_group',requiresReview:request.instanceReview840===true,hint:{categories:group.categories,types:group.types||[],clipped:group.clipped,confidence:group.confidence}};
+   if(request.instanceReview70===true){piece.reconciliation70={
+    sourceSha256,maskSha256:await sha256Bytes70(group.selected),instanceOrdinal:count,
+    method:piece.instanceMethod,colorEstimate:piece.colorEstimate||null
+   };}
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});
