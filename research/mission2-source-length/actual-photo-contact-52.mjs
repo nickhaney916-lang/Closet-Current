@@ -902,6 +902,11 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   sourceFaceCount:triangles,
   originalNeutralSelfBoxPairs:neutral.boundsOverlaps,
   originalNeutralSelfStrictCrossings:neutral.strictCrossings,
+  originalNeutralBodyAuditComplete:false,
+  originalNeutralBodyTriangleCount:0,
+  originalNeutralBodyBoxPairs:0,
+  originalNeutralBodyNearOrZeroUnresolved:0,
+  originalNeutralBodyStrictCrossings:0,
   poseSampleCount:0,completeSelfPoseSweeps:0,
   completeBodyPoseSweeps:0,actuallyDisplacedClothVerticesAcrossSamples:0,
   originalSelfBoxPairsAcrossSamples:0,
@@ -940,6 +945,10 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   maxStrictCrossings:1024,
   refineTriangleDistances53:true,maxDistanceCandidates53:maxDistancePairs58,
   refineSourceTopology54:false,refineEdgeWinding55:false};
+ const neutralBody=bodyClothContact58(
+  bodyFaces58(root,mesh,maxBodyFaces58),neutralWorld,indices,tolerance,{
+   maxBodyComparisons58,maxBodyCandidatePairs58
+  });
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
   bodyFacesCount=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
@@ -1007,6 +1016,11 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   sourceFaceCount:triangles,
   originalNeutralSelfBoxPairs:neutral.boundsOverlaps,
   originalNeutralSelfStrictCrossings:neutral.strictCrossings,
+  originalNeutralBodyAuditComplete:neutralBody.complete,
+  originalNeutralBodyTriangleCount:neutralBody.faces,
+  originalNeutralBodyBoxPairs:neutralBody.candidates,
+  originalNeutralBodyNearOrZeroUnresolved:neutralBody.near,
+  originalNeutralBodyStrictCrossings:neutralBody.strict,
   poseSampleCount:samples,
   completeSelfPoseSweeps:selfComplete,
   completeBodyPoseSweeps:bodyComplete,
@@ -1376,6 +1390,7 @@ export function auditActualPhotographedDressSurfaces52({
    originalArticulatedContactReceipt58:articulated58,
    originalPhotoArticulatedPoseEvidenceComplete58:
     articulated58.poseSampleCount===2&&
+    articulated58.originalNeutralBodyAuditComplete&&
     articulated58.completeSelfPoseSweeps===2&&
     articulated58.completeBodyPoseSweeps===2&&
     articulated58.allTemporaryBoneQuaternionsRestored&&
