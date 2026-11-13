@@ -858,10 +858,27 @@ async function recognizeItem(item){
   }
   // In opt-in quality mode a nearly uniform dark/white frame might still be a
   // real garment. Keep the original photo for human review rather than delete.
-  if(quality.blank&&!quality.captureGuidance){if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_skipped');batch=batch.filter(x=>x.id!==item.id);message('Blank or featureless photo skipped. Frame one garment and try again.');return true;}
+  // P864: a speculative blank/featureless flag is NEVER permission to
+  // discard a captured original JPEG. Even a nearly uniform real garment
+  // needs owner review, not automatic removal or unverified model approval.
+  if(quality.blank){
+   item.localAnalyzed=true;item.requiresOwnershipConfirmation=true;
+   item.localStatus='This photo may be blank or featureless. Original photo kept. Review it in Adjust or remove it yourself.';
+   if(typeof recordDeviceEvent==='function')recordDeviceEvent('blank_review_required');
+   return true;
+  }
   if(!item.userAdjusted)Object.assign(item,ClothingDetails.fillColor(item,quality.colorEstimate));item.visualSignature=quality.signature;item.visualAspect=quality.aspect;
   const matches=[...items,...batch].filter(x=>x.id!==item.id);
-  if(matches.some(x=>x.image===item.image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');batch=batch.filter(x=>x.id!==item.id);message('Exact duplicate skipped.');return true;}
+  // P864: the review scanner may discover a byte-identical previously
+  // saved photo AFTER the pending original was accepted. Never silently
+  // delete that draft or assume it is the same physical garment.
+  if(matches.some(x=>x.image===item.image)){
+   item.possibleDuplicate=true;item.localAnalyzed=true;
+   item.requiresOwnershipConfirmation=true;
+   item.localStatus='Possible exact duplicate photograph. Original photo kept. Compare it in Photo results and remove it only if you choose.';
+   if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_review_required');
+   return true;
+  }
   item.possibleDuplicate=matches.some(x=>Math.abs((x.visualAspect||0)-quality.aspect)<.02&&similarPhotos(quality.signature,x.visualSignature));
   if(recognitionUnavailable)throw Error('Recognition is unavailable. Try again or use Adjust.');
   item.localStatus='Identifying this garment…';render();

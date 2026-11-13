@@ -6,7 +6,7 @@ const choice={label:'a T-shirt',category:'Tops',itemType:'T-shirt',sleeveLength:
 // document, so signed private-user DB acceptance is still tested separately.
 function setup({result={strong:true,choices:[choice],details:{color:'Blue',pattern:'Solid'}},quality,request}={}){
  const stored=[],elements=new Map();const el=id=>{if(!elements.has(id))elements.set(id,{});return elements.get(id);};
- const c={scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},sessionCapturedIds:new Set(),items:[],batch:[],session:0,localPending:new Set(),pendingScanLease859:new Map(),automaticQueue:[],automaticRunning:false,localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,crypto:{randomUUID},Date,structuredClone,$:el,render(){},persistDraft(){},message(text){c.messageText=text;},checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),localRequest:request||(async()=>result),queued:work=>work(),db:{transaction(){const tx={objectStore:name=>({put(value){if(name==='items')stored.push(value);}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
+ const c={scheduleMemoryReview(){},recognitionState:{phase:'idle',percent:null,activeId:null},renderRecognitionNotice(){},photoQualityHints73:new Map(),sessionCapturedIds:new Set(),items:[],batch:[],session:0,localPending:new Set(),pendingScanLease859:new Map(),automaticQueue:[],automaticRunning:false,localReady:true,localLoadPromise:null,recognitionUnavailable:false,localBatch:false,crypto:{randomUUID},Date,structuredClone,$:el,render(){},persistDraft(){},message(text){c.messageText=text;},checkPhoto:quality||(async(image)=>({blank:false,signature:[image.charCodeAt(0),100,200],aspect:1})),similarPhotos:(a,b)=>Array.isArray(a)&&Array.isArray(b)&&a.join()===b.join(),localRequest:request||(async()=>result),queued:work=>work(),db:{transaction(){const tx={objectStore:name=>({put(value){if(name==='items')stored.push(value);}})};setImmediate(()=>tx.oncomplete?.());return tx;}}};
  // This source-executed Node harness uses the VM global as its fake window;
  // ClothingDetails otherwise attaches to a separate fake window object,
  // hiding the existing global and giving false recognition failures.
@@ -25,9 +25,38 @@ test('uncertain labels stay uncategorized and are not autosaved',async()=>{
  const {c,stored}=setup({result:{strong:false,choices:[choice]}});c.candidate('one');await done(c);
  assert.equal(stored.length,0);assert.equal(c.batch[0].category,'Uncategorized');assert.equal(c.batch[0].color,'');assert.match(c.batch[0].localStatus,/Garment identity needs confirmation/);
 });
-test('flat frame is removed before contacting the model',async()=>{
+test('flat frame is preserved for explicit owner review without contacting the model',async()=>{
  let calls=0;const {c}=setup({quality:async()=>({blank:true}),request:async()=>{calls++;}});c.candidate('blank');await done(c);
- assert.equal(c.batch.length,0);assert.equal(c.items.length,0);assert.equal(calls,0);assert.match(c.messageText,/Blank/);
+ assert.equal(c.batch.length,1);assert.equal(c.batch[0].image,'blank');
+ assert.equal(c.batch[0].localAnalyzed,true);
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(c.items.length,0);assert.equal(calls,0);
+ assert.match(c.batch[0].localStatus,/Original photo kept/);
+});
+test('flat photo with optional guidance also retains the owner original and never guesses a garment',async()=>{
+ let calls=0;const {c}=setup({quality:async()=>({blank:true,captureGuidance:{advice:['retake']}}),request:async()=>{calls++;}});
+ c.candidate('dark-solid-garment');await done(c);
+ assert.equal(c.batch.length,1);assert.equal(c.batch[0].image,'dark-solid-garment');
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.match(c.batch[0].localStatus,/Original photo kept/);
+ assert.equal(c.items.length,0);assert.equal(calls,0);
+});
+test('exact match discovered during review keeps original and prior saved garment',async()=>{
+ let models=0;let release;
+ const hold=new Promise(resolve=>{release=resolve;});
+ const {c}=setup({quality:async()=>hold,request:async()=>{models++;return {strong:true,choices:[choice],details:{}};}});
+ assert.equal(c.candidate('one'),true);
+ c.items.push({id:'saved-before-quality',image:'one',category:'Tops',itemType:'T-shirt'});
+ release({blank:false,signature:[1,2,3],aspect:1});
+ await done(c);
+ assert.equal(models,0,'a duplicate hypothesis must not call the model or auto-save');
+ assert.equal(c.items.length,1,'previous original remains saved');
+ assert.equal(c.batch.length,1,'pending original remains in review');
+ assert.equal(c.batch[0].image,'one');
+ assert.equal(c.batch[0].possibleDuplicate,true);
+ assert.equal(c.batch[0].localAnalyzed,true);
+ assert.equal(c.batch[0].requiresOwnershipConfirmation,true);
+ assert.match(c.batch[0].localStatus,/Original photo kept/);
 });
 test('an exact duplicate of a saved or queued photo is skipped',async()=>{
  const {c}=setup();c.candidate('one');assert.equal(c.candidate('one'),false);await done(c);assert.equal(c.candidate('one'),false);assert.equal(c.items.length,1);
