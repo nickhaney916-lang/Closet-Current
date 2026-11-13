@@ -14,6 +14,7 @@ const jpegBytes=await sharp({create:{width:84,height:68,channels:3,
  background:{r:62,g:127,b:176}}}).jpeg({quality:90}).toBuffer();
 const jpeg='data:image/jpeg;base64,'+jpegBytes.toString('base64'),
  sha=createHash('sha256').update(jpegBytes).digest('hex');
+const localTrendData=await readFile(resolve(root,'trend-data.json'),'utf8');
 const types={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript',
  '.json':'application/json','.css':'text/css','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{
@@ -54,6 +55,13 @@ try{
     external.push({method:route.request().method(),host:url.hostname});
     return route.abort();
    });
+   // The production PWA also checks a public trend feed. Serve the exact
+   // checked-in JSON locally so blocked external reads cannot become an
+   // intermittent pageerror during otherwise synthetic auth validation.
+   await context.route(
+    /^https:\/\/raw\.githubusercontent\.com\/nickhaney916-lang\/Closet-Current\/main\/public\/trend-data\.json(?:\?.*)?$/,
+    route=>route.fulfill({status:200,contentType:'application/json',body:localTrendData})
+   );
    await context.route('https://hlkgymugtfbirlpunsra.supabase.co/auth/v1/**',async route=>{
     authRequests++;
     if(mode==='held'){entered?.resolve();await held.promise;}
