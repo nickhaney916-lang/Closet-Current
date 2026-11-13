@@ -72,11 +72,11 @@ test('P84 signed texture/source receipt failures block extraction',()=>{
  assert.equal(x.releaseAuthorized,false);
 });
 test('P84 genuine THREE bone motion is evaluated in the CURRENT skinned pose, not raw rest XYZ',()=>{
- const offset=lower.map((n,i)=>i%3===2?n+.5:n);
+ const offset=lower.map((n,i)=>i%3===2?n+1.2:n);
  const f=scene(offset);
  const before=audit(f);
  assert.equal(before.status,'UNCERTAIN_NOT_CLEARANCE');
- f.jeans.bones[1].position.z=-.5;
+ f.jeans.bones[1].position.z=-1.2;
  for(let i=0;i<3;i++)
   f.jeans.mesh.geometry.getAttribute('skinIndex').setX(i,1);
  const after=audit(f);
