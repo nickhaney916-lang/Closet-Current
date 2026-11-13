@@ -1,0 +1,31 @@
+# Mission 1 P852 — integrate offline physical-device QA with independent release evidence
+
+**Family Alpha HOLD #255 OPEN. Release NO-GO.** This is an isolated DRAFT, UNMERGED, UNDEPLOYED research integration. No main, staging, production, hosted Supabase, private wardrobes, actual users, family photos or sibling branches were modified.
+
+## Compatible verified sources
+
+- Immutable P851 parent: [Mission 1 PR #972](https://github.com/nickhaney916-lang/Closet-Current/pull/972), HEAD `9b582710e1b406e0d8ee256940627b5297646500`. [Exact-head NO DEPLOY Actions #43362537033](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43362537033): 3/3 success, 442/442 native tests, synthetic desktop Chromium/WebKit 320/390/430 owner review, 11/11 legitimate public original-photo hashes, **0 independently vetted blind human labels**. Its independent Ed25519 owner-approved release gate remains BLOCKED.
+- Independently verified source #78: [Parallel PR #973](https://github.com/nickhaney916-lang/Closet-Current/pull/973), HEAD `c4f32017c32ef8824212b2b58d9b5073d8faff70`, [NO DEPLOY Actions #43362942892](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43362942892) 3/3 success, 10/10 focused tests, 424/424 P850-based native tests and 6/6 desktop Chromium/WebKit diagnostics. Source #78 has **0 actual physical phone executions**, 46/46 test-matrix cases NOT RUN. It is a test kit, not a physical-device acceptance result.
+- P851 adds only independent dataset and release-evidence tools over P850; its `public/index.html` parent is byte-identical to P850. The #78 script can be loaded on P851 without altering P851 owner-save/recognition/camera code. P852 brings its device tooling/tests/protocol onto this exact parent; no merge of concurrent sibling branch history.
+
+## Engineering changes
+
+1. `public/device-acceptance-78.js`: opt-in `?deviceLab78=1` launches a second explicit user-activated, local in-memory device QA panel. It records 23 independently actionable test cases per physical platform and manually verified original-JPEG SHA-256 without publishing photos, EXIF, owner IDs, tokens, serials or file names. It never scans private IndexedDB, saves/merges/deletes garments, uploads, requests model predictions, controls camera or asserts a phone from user agent. All report exports say **BLOCKED**.
+2. **P852 integration fix:** original #78 used a fixed P850 `SOURCE_PARENT` default, which would misidentify the tested build after integration. P852 pins the compatible P851 source parent for code/tests, and **requires the operator to enter the exact 40-character commit SHA of the actual running build before any local QA session starts**. No SHA is auto-inferred or independently attested by the field. Missing/malformed commit prevents session start. The operator protocol specifies out-of-band verification of build provenance.
+3. `public/index.html`: adds the source file once at the bottom; no visible change unless the research flag is present and the operator clicks Enable. P843 first-garment owner check, P844 double-submit, P845 JPEG/quality preservation, P846 shoe pairing, P847 consented learning, P848 advisory color, P849 safe duplicate decisions, P850 one-photo batch queue and P851 independent evidence gate remain unchanged.
+4. `tests/mission1-device-release-integration-852.test.mjs` explicitly builds synthetic reporter sessions with **all 23 items per platform marked claimed PASS** and verifies they are **still never independent physical proof**, still map to P851 **BLOCKED**, and cannot bypass authenticated human/owner/device/cloud signature thresholds. Other fixtures check default-off, manual source-commit, source/owner privacy and original app controls. These tests do **NOT** simulate successful physical devices.
+5. Original #78 native tests, source-executed Chromium/WebKit test and independent operator protocol remain available. Browser harness additionally verifies missing commit is rejected before beginning an operator session. Both private and shareable reports remain unverified claims with no public original JPEG bytes.
+
+## Scientific and release limits
+
+- **Actual physical Android Chrome runs: 0 witnessed. Actual physical iPhone Safari runs: 0 witnessed. 46 platform-matrix scenarios: NOT RUN.** Desktop Chromium/WebKit mobile-sized screenshots do not satisfy either. Source commit supplied by the operator is an unverified claim until an independently witnessed build/provenance review.
+- **Independently double-human-labeled lawful sealed blind garment photo accuracy: 0 validated.** P75's 32 public records remain unlabeled development candidates, not accepted test truth. No verified improvement to category, subtype, instance segmentation, footwear correctness, primary/secondary color or lookalike handling. No real-phone latency/memory numbers.
+- **Actual approved hosted signed two-account Cloud RLS/backup/restore acceptance: NOT RUN by this mission.** Mission 3 owns this, not a local injected/browser emulation.
+- No automated CI, device lab report, user-agent string, tool-generated signature or synthetic source may independently lift Family Alpha HOLD or authorize a new pilot.
+- Physical-device testing requires separate owner authorization for actual devices, humans, genuine photographs, signed accounts, secure authorized HTTPS test origin and private evidence custody. The Work session has no such access here.
+
+## Verification
+
+Dedicated strict **NO DEPLOY** GitHub Actions workflow checks immutable P851 parent, exactly eight changed research paths, no core app/worker/storage/model mutation, default BLOCKED device and P851 release-evidence status, focused P78/P852 tests, full native regression, both builds, true desktop Chromium/WebKit at 320/390/430 (P78 diagnostics and P850–P843 inherited owner workflow), and 11 lawfully sourced public original JPEG digest checks only. **CI PENDING at report creation.**
+
+**Mission 1 release status stays BLOCKED, regardless of software-verification outcomes.**
