@@ -38,6 +38,11 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
    (await import('./outfit-instance-review-840.mjs'+new URL(import.meta.url).search)).clothingReviewInstances840(map):
    clothingMaskGroups(map);
   const sourceSha256=request.instanceReview70===true?await sourceSha256For70(request.image):null;
+// Color #76 is a research-only, owner-scoped companion to the existing #70
+// original/mask binding. It never replaces the existing user-facing color.
+const color76=request.color76===true&&request.instanceReview70===true&&
+ typeof request.ownerId==='string'&&request.ownerId.length>0?
+ await import('./garment-color-76.mjs'+new URL(import.meta.url).search):null;
   let count=0;
   for(const group of groups){
    const isolated=isolateClothingPixels(image,map,group),raw=cropClothingPhotoPixels(image,map,group),sample=clothingColorSample(image,map,group),b=raw.bounds;
@@ -46,6 +51,20 @@ self.onmessage=event=>{const request=event.data;chain=chain.then(async()=>{
     sourceSha256,maskSha256:await sha256Bytes70(group.selected),instanceOrdinal:count,
     method:piece.instanceMethod,colorEstimate:piece.colorEstimate||null
    };}
+   if(color76){
+    // The original decoded image and exact selected garment mask are already
+    // in memory. No new decoding, recoloring, photo uploads or owner writes.
+    try{
+     const sampled=color76.sampleMask76(image,map,group);
+     piece.colorResearch76=color76.analyzeColor76(sampled,{
+      ownerId:request.ownerId,requestId:request.id,sourceSha256,
+      maskSha256:piece.reconciliation70.maskSha256
+     });
+    }catch{
+     // A broken experimental estimate cannot interrupt photo preservation.
+     piece.colorResearch76={method:'mask-aware-color-v1',status:'abstain',reasons:['research_unavailable']};
+    }
+   }
    self.postMessage({type:'piece',id:request.id,piece});count++;
   }
   self.postMessage({type:'done',id:request.id,count});
