@@ -257,3 +257,27 @@ test('P2-C31 original shader projected fabric triangle area finds collapsed and 
   '"localXYZ"','"photoRGBA"','"texelRGB"','"triangleIndices"'])
   assert.equal(publicReport.includes(secret),false);
 });
+
+
+test('P2-C31 projection entirely outside actual original photograph fails closed BEFORE donor mesh mutation',()=>{
+ const {shirt}=fixture();
+ const originals=shirt.meshes.map(m=>m.geometry.getAttribute('position').array.slice());
+ const material=shirt.meshes[0].material;
+ material.onBeforeCompile=function(shader){
+  shader.fragmentShader=sourceShader().fragmentShader;
+  shader.uniforms.uPhoto={value:new THREE.Texture()};
+ };
+ const priorCompile=material.onBeforeCompile;
+ const staged=shirt.meshes.map(mesh=>{
+  const next=mesh.geometry.getAttribute('position').array.slice();
+  for(let i=0;i<next.length;i+=3)next[i]+=4;
+  return {mesh,next};
+ });
+ assert.throws(()=>prepareSourceProjection(shirt,staged,[0,.98,.95,.7]),
+  /no usable original photo triangles: preserve original photo and 2D fallback/);
+ shirt.meshes.forEach((mesh,i)=>{
+  assert.deepEqual(mesh.geometry.getAttribute('position').array,originals[i]);
+  assert.equal(mesh.geometry.hasAttribute('sourceProjectionPosition'),false);
+ });
+ assert.equal(material.onBeforeCompile,priorCompile);
+});
