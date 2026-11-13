@@ -99,3 +99,22 @@ test('P84 duplicate mesh refs and visibility failures never cause inferred layer
  const g=scene();g.jeans.mesh.visible=false;
  assert.equal(audit(g).status,'ORIGINAL_PHOTO_2D_FALLBACK');
 });
+
+
+test('P84 rejects collapsed and nonfinite source UVs but respects actual dressRest shader-style projection',()=>{
+ const collapsed=scene();
+ collapsed.shirt.mesh.geometry.getAttribute('uv').setXY(2,0,0);
+ assert.equal(audit(collapsed).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ assert.equal(audit(collapsed).reason,'source-UV-collapsed');
+ const nonfinite=scene();
+ nonfinite.jeans.mesh.geometry.getAttribute('uv').setX(2,NaN);
+ assert.equal(audit(nonfinite).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ assert.equal(audit(nonfinite).reason,'source-projection-nonfinite');
+ const shaderRest=scene();
+ shaderRest.shirt.mesh.geometry.setAttribute('dressRest',
+  shaderRest.shirt.mesh.geometry.getAttribute('position').clone());
+ shaderRest.shirt.mesh.geometry.deleteAttribute('uv');
+ const x=audit(shaderRest);
+ assert.equal(x.status,'STRICT_CROSSING_VETO');
+ assert.equal(x.sourceBuffersPreserved,true);
+});
