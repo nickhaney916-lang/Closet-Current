@@ -109,8 +109,10 @@
   if(!Array.isArray(closet)||closet.length>maxScan||maxScan>MAX_SCAN||topK>MAX_K||topK<1)fail('UNBOUNDED_INDEX');
   const embedding=normFeatures(incoming?.recognitionMemory),out=[],seen=new Set();
   for(const saved of closet){
-   if(!saved||saved.id===incoming?.id||typeof saved.id!=='string'||seen.has(saved.id))continue;
+   if(!saved||typeof saved.id!=='string')continue;
+   if(seen.has(saved.id))fail('AMBIGUOUS_WARDROBE_ID');
    seen.add(saved.id);
+   if(saved.id===incoming?.id)continue;
    // Same capture's multiple masks must remain under #70, never cross-capture link.
    if(incoming?.outfitSourceId&&incoming.outfitSourceId===saved.outfitSourceId)continue;
    if(incoming?.category&&saved.category&&incoming.category!=='Uncategorized'&&saved.category!=='Uncategorized'&&incoming.category!==saved.category)continue;
@@ -168,7 +170,8 @@
   // Intent is ephemeral. In particular 'same-pending' MUST NOT write any record:
   // cross-tab owner-locked atomic alternate-view persistence is not yet proven.
   return Object.freeze({version:1,action,candidateItemId:selected.item.id,
-   incomingItemId:state.incoming.id,incomingSourceSha256:now.sourceSha256,
+   sourceVersion:VERSION,incomingItemId:state.incoming.id,incomingSourceSha256:now.sourceSha256,
+   incomingRevisionSha256:now.revisionSha256,incomingCropSha256:now.cropSha256,
    candidateSourceSha256:targetNow.sourceSha256,candidateRevisionSha256:targetNow.revisionSha256,
    ownerId:scope.ownerId,sessionId:scope.sessionId,maskSha256:now.maskSha256,
    linked:false,persisted:false,needsAtomicAdapter:action==='same-pending'});
