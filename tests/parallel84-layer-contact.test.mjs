@@ -105,7 +105,7 @@ test('P84 face budget, degenerate, nonfinite and malformed buffer all reject wit
   const items=input();items[0].triangles=triangles;
   assert.equal(run(items).status,'ORIGINAL_PHOTO_2D_FALLBACK');
  }
- assert.equal(run(input(),{maxFaces:2}).status,'ORIGINAL_PHOTO_2D_FALLBACK');
+ assert.equal(run(input(new Float64Array([...horizontal,...horizontal]),horizontal),{maxFaces:2}).status,'ORIGINAL_PHOTO_2D_FALLBACK');
 });
 test('P84 duplicate source, reversed slots, unknown clothing source never inherit a photo reconstruction',()=>{
  const same=input();same[1].sourceId=same[0].sourceId;
