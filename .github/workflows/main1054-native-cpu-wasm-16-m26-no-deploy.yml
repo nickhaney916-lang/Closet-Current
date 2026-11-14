@@ -1,0 +1,71 @@
+name: "MAIN1054 M26 16-photo native owner CPU-WASM endurance — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-native-cpu-wasm-16-photo-m26-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  genuine-native-owner-cpu-wasm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '16'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+      MAIN1054_RUN_BUDGET_MS: '690000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact M24 donor and no public app, private storage or hosted schema changes
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 5292cd6e06a0bb1b43c902afe78f9a4d48310820 HEAD
+          git diff --exit-code 5292cd6e06a0bb1b43c902afe78f9a4d48310820 HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-native-cpu-review-m25-browser.mjs
+          node --check research/master-consolidation-1054/cpu-wasm-review-worker-m25.mjs
+          node --check research/master-consolidation-1054/cpu-browser-request-m25.mjs
+          node --check research/master-consolidation-1054/native-cpu-review-gate-m25.mjs
+          node --check research/master-consolidation-1054/native-cpu-16-endurance-gate-m26.mjs
+      - name: Fail-closed owner, model, original JPEG and source-bound CPU tests
+        run: node --test tests/master-native-cpu-review-gate-m25.test.mjs tests/master-native-cpu-endurance-gate-m26.test.mjs tests/master-real-model-memory-gate.test.mjs tests/master-ort-wasm-ab-gate.test.mjs tests/master-real-model-budget-stage.test.mjs
+      - name: Install exactly pinned public photo and CPU ONNX research prerequisites
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3
+      - name: Verify actual alternative CPU runtime and exact photo and pretrained model hashes
+        shell: bash
+        run: |
+          set -eu
+          printf '%s  %s\n' \
+            0cb5ac5be2c414d5b9e361f857108630c6d6e24a5ab9be3cf5f761de55289e94 node_modules/onnxruntime-web/dist/ort.wasm.min.mjs \
+            f061472c6e77d6d50d079aacdc0ff9b63fee287ddd2cbf46cf62438d3891de2b node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm \
+            | sha256sum --check
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Actual native editor and owner-review using genuine CPU-only dual-model WebKit worker
+        run: node scripts/test-main1054-native-cpu-review-m25-browser.mjs webkit
+      - name: Original exact-source, no-auto-save and dual-model acceptance
+        run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-native-cpu-review-m25/webkit-16-diagnostic.json webkit 16 "$GITHUB_SHA"
+      - name: Bound process RSS and PSS, fail closed on missing real inference
+        run: node research/master-consolidation-1054/real-model-memory-gate.mjs benchmark/main1054-native-cpu-review-m25/webkit-16-diagnostic.json webkit 16 "$GITHUB_SHA"
+      - name: Require experimental CPU runtime identity and native no-save owner receipt
+        run: node research/master-consolidation-1054/native-cpu-16-endurance-gate-m26.mjs benchmark/main1054-native-cpu-review-m25/webkit-16-diagnostic.json "$GITHUB_SHA"
+      - name: Keep only public-source numeric diagnostics even on blocked experiments
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m26-native-cpu-16-photo-HOLD
+          path: benchmark/main1054-native-cpu-review-m25/*.json
+          if-no-files-found: warn
+          retention-days: 14
