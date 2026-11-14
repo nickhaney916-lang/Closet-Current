@@ -70,3 +70,11 @@ All primary stacks share common ancestor `39deed987afe2e5668d64e145835ad43ad14c7
 | P1 | All historical PRs are not unique features or accepted integrations | Use inventory and blob ledger to retire duplicates only after behavioral evidence; do not close or modify original research PRs automatically |
 
 Recommendation: **GO for further isolated research integration; NO-GO for Family Alpha or deployment.** All release percentages remain unvalidated; test/PR counts are not product completion percentages.
+
+## Consolidated verification receipt
+
+Full serial combined Node suite completed **2,531/2,531 PASS**, 0 failures, 0 skips, in 128.9 seconds. This source was published as commit `673fe3ccbe0686716f16cc697eb2216cc82035d1`, tree `1742de1bf154a3c78d84c1f5a5df795aa87187c2`, identical to local tested commit `9f46186eec37616ada04a1bb9e3c91116c26ce0b` tree. Local Chromium acceptance is 6 original-preview + 18 revocation + 27 P880 policy checks, plus 63 legacy/v4 exact-owner export cases after aligning the synthetic loader fixture. The export fixture replaces only the ESM loader with a contract stub; actual durable-export transaction modules remain independently exercised by the full suite.
+
+Inventory classification: 229 inherited-stack PR heads; 161 donor-stack heads reviewed selectively; 690 reference-only. Counts do not establish unique functionality.
+
+First combined CI `43553425660` failed **before behavioral tests**, with Git's `detected dubious ownership` in the container checkout. Workflow-only fix explicitly marks `$GITHUB_WORKSPACE` safe before the unchanged ancestry and schema guards (commit `93acdfb7d03c6bc714bcdd76a9cca1e4c1c3b4a8`). Also aligned the inherited browser export fixture's idle globals and ESM-loader stub with the integrated durable export contract; all 63 Chromium cases passed. No application source or safeguard changed in these corrections. Final master PR records the final exact-head CI status and blockers; this report never substitutes donor green runs for combined acceptance.
