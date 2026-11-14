@@ -2317,12 +2317,20 @@ try{
    if(photoDressSkinned86){
     assert.equal(pre.originalSkeletonSharedByCandidate86,true);
     assert.equal(pre.twoActualArticulatedSourcePoseSamplesCompleted86,true);
-    assert.equal(pre.originalSourceBoneSkinnedPoseChecks86.length,2);
+    assert.equal(pre.originalSourceBoneSkinnedPoseChecks86.length,6);
+    assert.equal(pre.sixIntermediateAndEndpointSourcePoseSweepsCompleted86,true);
+    assert.deepEqual(pre.originalSourceBoneSkinnedPoseChecks86.map(p=>
+     [p.sourcePose,p.armProgressFraction86]),[
+      ['left-arm',1/3],['left-arm',2/3],['left-arm',1],
+      ['right-arm',1/3],['right-arm',2/3],['right-arm',1]
+     ]);
     assert.ok(pre.neutralInverseSkinWorldRoundtripMeters86<.000002);
     assert.ok(pre.minimumNeutralBlendedSkinDeterminant86>.000001);
     assert.ok(pre.maxSkinWeightSumDeviation86<.001);
     for(const q of pre.originalSourceBoneSkinnedPoseChecks86){
      assert.ok(['left-arm','right-arm'].includes(q.sourcePose));
+     assert.ok(q.armProgressFraction86>=1/3&&q.armProgressFraction86<=1);
+     assert.ok(Math.abs(q.actualArmRotationRadians86)<=.12);
      assert.ok(q.actuallyMovedCandidateOriginalBoneSkinnedVertices>0);
      assert.ok(q.maxActualBoneDrivenSourceClothMovementMeters>.00001);
      assert.ok(Number.isSafeInteger(q.strictOriginalBodyCrossings));
@@ -2339,6 +2347,8 @@ try{
      actuallySampledRealArmPoses:pre.originalSourceBoneSkinnedPoseChecks86,
      allTwoPoseSourceCollisionAndQualityPass:
       pre.allTwoSkinnedSourcePoseCollisionAndStrainGuardsPass86,
+     allSixSampledSourceCollisionAndQualityPass:
+      pre.allSixSampledSourcePoseCollisionAndStrainGuardsPass86,
      independentHumanApproval:false,
      continuousSkinningAndClothSweptCollisionCertified:false,
      releaseAuthorized:false,familyAlpha:'HOLD'
@@ -2845,6 +2855,7 @@ try{
     originalPhotographedDress:'commons-0053',
     originalPhotographMaterialNeverEdited:true,
     actualSameReconstructedSkinnedGarmentTwoArmPoses:true,
+    actualIntermediateAndEndpointSourcePoseSamples:6,
     originalSourceBonesAndPoseRestored:true,
     sourceSkinnedOutfitSampledAcrossViewportWidths:licensedSkinnedSourcePose86,
     sampledPosePassNotContinuousPhysicsNorProductRelease:true,
