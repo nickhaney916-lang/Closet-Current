@@ -8,7 +8,7 @@ import {auditNativeOwnerViewer38} from '../research/main1054-handoff38/strict-vi
 import {createTrustedNativeOwnerScope39} from '../research/main1054-handoff39/trusted-native-owner-scope.mjs';
 import {assessNative3DQuality40} from '../research/main1054-handoff40/p89-quality-admission.mjs';
 
-const jpeg=readFileSync('benchmark/fixtures/commons-0053.jpg');
+const jpeg=readFileSync('benchmark/fixtures/commons-0023.jpg');
 const photo='data:image/jpeg;base64,'+jpeg.toString('base64');
 const sha=createHash('sha256').update(jpeg).digest('hex');
 async function dbFor(owner){
@@ -39,7 +39,7 @@ async function testOwner(callback){
  let authRef={user:{id:ownerId},assertCurrent(){}};
  let session={ownerId,authenticated:true,epoch:2,operationEpoch:3,
   authRef,privateDbRef:db,privateDbName:db.name};
- let revision=1,board={name:'Safe researched source',slots:{top:id}};
+ let revision=1,board={name:'Safe researched source',slots:{bottom:id}};
  const getSession=()=>({...session}),getRevision=()=>revision,getBoard=()=>board;
  const readOwnerItems=async scope=>{
   scope?.assertCurrent?.();
@@ -51,7 +51,7 @@ async function testOwner(callback){
   color:'Unknown',sourceSHA256:sha,sourceHashVerified:true,
   originalPhoto:{image:photo,sha256:sha},image:photo};
  const review={confirmed:true,recordId:id,originalSHA256:sha,
-  category:'Dresses',itemType:'Casual dress',color:'Blue',singleGarmentConfirmed:true};
+  category:'Bottoms',itemType:'Jeans',color:'Blue',singleGarmentConfirmed:true};
  await new Promise((resolve,reject)=>{
   const tx=db.transaction('state','readwrite');
   tx.objectStore('state').put({id:'draft',batch:[structuredClone(draft)]});
@@ -77,14 +77,14 @@ async function testOwner(callback){
 function viewer(h){
  const auth=h.input.getSession().authRef;
  const selected={id:'saved-board',outfit3dId:'research-fixture-3d-id',
-  ownerId:h.ownerId,name:'Safe researched source',slots:{top:h.id}};
+  ownerId:h.ownerId,name:'Safe researched source',slots:{bottom:h.id}};
  const consumer={
   selected:0,
   status:()=>({active:true,dirty:false}),
   readOnlySnapshot:()=>({saved:[selected]}),
   readOnlyGarmentSources91:ids=>({
    ownerId:h.ownerId,sources:ids.map(id=>({id,sha256:sha,
-    category:'Dresses',itemType:'Casual dress',color:'Blue',secondaryColor:''}))
+    category:'Bottoms',itemType:'Jeans',color:'Blue',secondaryColor:''}))
   }),
   // Independent real source-byte SHA, not a reused trusted metadata string.
   attestOriginalPhotoBytes92:async ids=>{
@@ -93,7 +93,7 @@ function viewer(h){
     const row=actual.find(x=>x.id===id);
     const bytes=Buffer.from((row?.originalPhoto?.image||'').split(',')[1]||'','base64');
     return {id,sha256:createHash('sha256').update(bytes).digest('hex'),
-     category:'Dresses',itemType:'Casual dress',color:'Blue',secondaryColor:''};
+     category:'Bottoms',itemType:'Jeans',color:'Blue',secondaryColor:''};
    })};
   },
   readOnlyWardrobeRevision93:()=>({ownerId:h.ownerId,revision:1,generation:1})
@@ -129,13 +129,13 @@ function actualProvider(h){
  return {...v,ownerScope,expireEpoch(){opEpoch++}};
 }
 
-test('M40 actual licensed Commons dress PHOTO119 review & private M39 source → quality HOLD, not 3D grant',()=>testOwner(async h=>{
+test('M40 actual licensed Commons jeans PHOTO119 review & private M39 source → quality HOLD, not 3D grant',()=>testOwner(async h=>{
  const p=actualProvider(h);
  const q=await assessNative3DQuality40(p);
  assert.equal(q.status,'P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD');
  assert.equal(q.matchedPublicPhotoSources,1);
  assert.equal(q.unmatchedPrivateSources,0);
- assert.deepEqual(q.publicResearchLabels,['commons-0053']);
+ assert.deepEqual(q.publicResearchLabels,['commons-0023']);
  assert.ok(q.missingQualityEvidence.includes('INDEPENDENT_PHOTO_FIDELITY_REVIEW_MISSING'));
  assert.ok(q.missingQualityEvidence.includes('COMPLETE_BODY_AND_LAYER_CONTACT_UNPROVEN'));
  assert.equal(q.consumer3DAdmitted,false);
