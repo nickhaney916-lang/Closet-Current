@@ -106,7 +106,7 @@ test('P85 witness local source is immutable, research-only and cannot displace a
  ]);
  const before=separate.slice(),v=createDisposableWitnessLocalized85(
   separate,null,{...params,strictClothFaceIndices:[0]});
- assert.equal(v.length,11);
+ assert.equal(v.length,14);
  assert.deepEqual(v.map(x=>x.method),[
   'strict-witness-local-radial','strict-witness-local-radial',
   'strict-witness-local-edge-projection','strict-witness-local-edge-projection',
@@ -115,9 +115,12 @@ test('P85 witness local source is immutable, research-only and cannot displace a
   'strict-witness-local-shape-regularized',
   'strict-witness-local-shape-regularized',
   'strict-witness-local-shape-regularized',
+  'strict-witness-local-shape-regularized',
+  'strict-witness-local-shape-regularized',
+  'strict-witness-local-shape-regularized',
   'strict-witness-local-shape-regularized']);
  assert.deepEqual(v.map(x=>x.localGraphRadiusHops85),
-  [12,24,12,24,32,40,24,32,24,24,24]);
+  [12,24,12,24,32,40,24,32,24,24,24,24,24,24]);
  assert.deepEqual(separate,before);
  for(const candidate of v){
   assert.equal(candidate.originalStrictWitnessFaceCount85,1);
@@ -152,7 +155,7 @@ test('P85 witness source geometry requires only real valid face IDs and refuses 
    ...params,strictClothFaceIndices:faceIds}));
  assert.deepEqual(createDisposableWitnessLocalized85(tri,null,{
   ...params,strictClothFaceIndices:[]}).map(p=>p.world),
-  Array.from({length:11},()=>tri),
+  Array.from({length:14},()=>tri),
   'no real crossing faces must never invent body relief');
 });
 test('P85 witness source exactly repeats deterministic tests, with finite C61 quality receipts',()=>{
@@ -173,7 +176,7 @@ test('P85 witness source exactly repeats deterministic tests, with finite C61 qu
 test('P85 follow-on: wide witness graph/shape regularization are source-disposable and pinned',()=>{
  const a=createDisposableWitnessLocalized85(tri,null,{
   ...params,strictClothFaceIndices:[0]});
- assert.equal(a.length,11);
+ assert.equal(a.length,14);
  for(const v of a.slice(4)){
   assert.equal(v.originalSourceFaceIdsNeverExported85,true);
   assert.equal(v.bodyCollisionAndC61QualityMustBeRemeasured,true);
@@ -186,8 +189,8 @@ test('P85 follow-on: wide witness graph/shape regularization are source-disposab
   assert.ok(Number.isFinite(q.maxOriginalPhotoWorldEdgeRelativeStrain));
  }
  for(const v of a.slice(6)){
-  assert.ok([18,36,60].includes(v.shapeSmoothingPasses85));
-  assert.ok([.35,.50].includes(v.shapeNeighborBlend85));
+  assert.ok([18,36,60,100].includes(v.shapeSmoothingPasses85));
+  assert.ok([.35,.50,.70,.80].includes(v.shapeNeighborBlend85));
   assert.equal(v.contactCoreHeldDuringSmoothing85,true);
   assert.ok(v.maxCoincidentSeamDeltaMeters<.000002);
  }

@@ -320,7 +320,10 @@ export function createDisposableWitnessLocalized85(
   localized(32,true),localized(40,true),
   shapeRegularized(24),shapeRegularized(32),
   shapeRegularized(24,36),shapeRegularized(24,60),
-  shapeRegularized(24,36,.50)
+  shapeRegularized(24,36,.50),
+  shapeRegularized(24,60,.70),
+  shapeRegularized(24,60,.80),
+  shapeRegularized(24,100,.80)
  ];
  if(!originalWorld.every((v,i)=>v===before[i]))
   fail('P85 original source-skinned world buffer altered');
