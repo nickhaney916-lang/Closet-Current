@@ -56,7 +56,7 @@ const FILE=/^[A-Za-z0-9][A-Za-z0-9_.-]{0,100}\.json$/;
 function object(x){return !!x&&typeof x==='object'&&!Array.isArray(x);}
 function keys(x,allowed,path,errors){
  if(!object(x)){errors.push(path+': expected object');return false;}
- for(const k of Object.keys(x))if(!allowed.includes(k))errors.push(path+': unexpected field '+k);
+ for(const k of Object.keys(x))if(!allowed.includes(k))errors.push(path+': contains unexpected field');
  return true;
 }
 function field(x,k,path,errors,valid){
@@ -260,8 +260,10 @@ if(invoked){
  }else if(mode==='--verify'&&process.argv.length===4){
   let result;
   try{
-   const filename=process.argv[3],data=await readFile(filename);
-   if(data.length>1048576)throw Error('oversized manifest');
+   const filename=process.argv[3],info=await lstat(filename);
+   if(!info.isFile()||info.isSymbolicLink()||info.size>1048576)
+    throw Error('unsupported or oversized manifest');
+   const data=await readFile(filename);
    const manifest=JSON.parse(data.toString('utf8'));
    result=verifyEvidence(manifest,await readLocalArtifacts(manifest,filename));
   }catch{result={status:'BLOCKED',releaseAuthorized:false,familyAlpha:'HOLD',issues:['manifest: missing, invalid or too large']};}
