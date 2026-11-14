@@ -39,6 +39,7 @@ function run(x,mode='reduce',overrides={}){
  const poseNames=[];
  const receipt=compareActualOriginalPhotoSkirtRegistration89({
   mesh:x.mesh,avatar:'female',
+  originalBodyFaceMask:Uint8Array.from({length:1100},(_,i)=>i%4===0?0:1),
   applyPose:p=>{assert.ok(['source','blend-50','relaxed'].includes(p));poseNames.push(p);},
   sampleContact:()=>{
    const changed=x.mesh.geometry!==x.original,
@@ -63,6 +64,11 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  assert.equal(row.bestResearchOnly.name,'front-15mm');
  assert.equal(row.original3PoseStrictBodyCrossingPairs,12);
  assert.equal(row.bestResearchOnly.trialThreePoseStrictCrossingPairSum,6);
+ assert.equal(row.bestResearchOnly.genuineOriginalSkirtContactTopology.poses.length,3);
+ assert.equal(row.bestResearchOnly.genuineOriginalSkirtContactTopology.sourceSkirtFaceCount,576);
+ assert.equal(row.bestResearchOnly.genuineOriginalSkirtContactTopology.newlyIntroducedOriginalBodySkirtFacePairSum,0);
+ assert.equal(row.bestResearchOnly.genuineOriginalSkirtContactTopology.originalStrictCrossingPairSum,12);
+ assert.equal(row.bestResearchOnly.genuineOriginalSkirtContactTopology.trialStrictCrossingPairSum,6);
  assert.equal(row.bestResearchOnly.introducedOriginalSourceFacePairIDs,0);
  assert.equal(row.bestResearchOnly.maxPlaneDepthWorsened,false);
  assert.equal(row.allCandidatesDisposedAndRestored,true);
@@ -94,6 +100,8 @@ test('forged source anatomy/crossing receipts cannot create a 3D outfit',()=>{
  const x=fixture();
  for(const overrides of [
   {avatar:'owner'}, {applyPose:null},
+  {originalBodyFaceMask:Uint8Array.from({length:1100},()=>1)},
+  {originalBodyFaceMask:new Uint8Array(25)},
   {sampleContact:()=>({count:1,pairs:new Set(['0|1','2|3']),maxDepth:0})},
   {sampleContact:()=>({count:0,pairs:new Set(),maxDepth:NaN})}
  ]){
