@@ -139,6 +139,10 @@ try{
    assert.equal(witness.pose,pose);assert.equal(witness.avatar,avatar);
    assert.equal(witness.realAnatomicalRigBones,163);
    assert.equal(witness.sourceTrianglesAudited,576);
+   assert.equal(witness.trueOriginalPhotoSkirtFaceIDsStable,true);
+   assert.equal(witness.trueOriginalAnatomicalFaceIDsStable,true);
+   assert.equal(witness.originalTriangleIDResolution,
+    'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES');
    assert.equal(witness.releaseAuthorized,false);
    assert.equal(witness.fullContinuousClothOrContainmentSafety,false);
    assert.ok(Number.isSafeInteger(witness.strictTransverseSourceBodyTriangleCrossings)&&
@@ -261,6 +265,8 @@ try{
   assert.equal(registration.releaseAuthorized,false);
   for(const t of registration.trials){
    assert.equal(t.actual163BoneBodyTriangleBVHAcrossThreePoses,true);
+   assert.equal(t.identicalOriginalSourceFaceIDsAcrossRebuiltBVHs,true);
+   assert.equal(t.useOfBVHIndirectIndexMappingVerified,true);
    assert.equal(t.sourceRGBAndReviewAlphaBytesUnchanged,true);
    assert.equal(t.originalSkirtUVUnchanged,true);
    assert.equal(t.originalSkirtRestEdgeLengthUnchanged,true);
@@ -275,6 +281,8 @@ try{
    assert.equal(topology.trialName,t.name);
    assert.equal(topology.originalSkirtSourceId,'commons-0043');
    assert.equal(topology.sourceSkirtFaceCount,576);
+   assert.equal(topology.originalSourceFaceIndicesAreStableAcrossBVHRebuilds,true);
+   assert.equal(topology.indirectOriginalFaceResolutionRequired,true);
    assert.ok(topology.bodySourceFaceCount>=1000);
    assert.equal(topology.poses.length,3);
    assert.equal(topology.originalStrictCrossingPairSum,before);
