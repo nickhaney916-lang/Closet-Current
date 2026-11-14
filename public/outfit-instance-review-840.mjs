@@ -49,7 +49,15 @@ export function clothingReviewInstances840(map,{splitNonFootwear=false}={}){
   }
   // Preserve legacy single-instance behavior for non-footwear classes. Shoe
   // components stay individually reviewable under the existing P840 contract.
-  if(group.id!==9&&(!splitNonFootwear||parts.length===1)){
+  if(group.id!==9&&!splitNonFootwear&&parts.length>1){
+   // The conservative trial must not turn two visible garment islands into
+   // a falsely verified ONE wardrobe item. Keep every pixel, hold saving,
+   // and request separate photos while the research split remains unproven.
+   output.push({...group,requiresReview:true,instanceMethod:'native_semantic_group_unresolved_fragments',
+    componentReviewStatus:'unresolved_fragments_keep_source_mask'});
+   continue;
+  }
+  if(group.id!==9&&parts.length===1){
    output.push({...group,requiresReview:true,instanceMethod:'native_semantic_group'});
    continue;
   }
