@@ -195,3 +195,80 @@ jobs:
           include-hidden-files: true
           retention-days: 14
           if-no-files-found: warn
+
+
+  actual-immutable-P84-P541-three-joint-pose-contrast:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P84_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin P89 source branch and NO consumer deployment/sensitive edits
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git merge-base e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD)" = e8170c9ebce19a189dd03ea2027f87717c821a76
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          node --check research/parallel89/verify-p84-three-pose.mjs
+          node --check scripts/verify-parallel89-real-poses.mjs
+          node --test tests/parallel89-real-poses.test.mjs
+      - name: Install pinned test-only genuine THREE and native Playwright browser engine
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Prepare read-only P84 at pinned verified SHA and disposable P541 actual licensed sources
+        shell: bash
+        run: |
+          set -eu
+          git worktree add --detach .p89-readonly-p84 8385c308df215bcf80eb95b8c37660307dc80536
+          git worktree add --detach .p89-disposable-p541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          for dir in .p89-readonly-p84 .p89-disposable-p541; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$dir"
+            ln -s ../node_modules "$dir/node_modules"
+          done
+          test "$(git -C .p89-readonly-p84 rev-parse HEAD)" = 8385c308df215bcf80eb95b8c37660307dc80536
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          cd .p89-disposable-p541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Apply unmodified P84 read-only static contact tool ONLY inside disposable original P541 donor
+        working-directory: .p89-readonly-p84
+        run: |
+          node scripts/install-parallel84-real-source-layer.mjs ../.p89-disposable-p541
+          node --check ../.p89-disposable-p541/research/dress-mobile-01/dress-outfit-controller.mjs
+      - name: Measure actual original photo shirt and jeans on REAL 163-bone source/blend/relaxed poses in native browser
+        working-directory: .p89-readonly-p84
+        run: node scripts/test-parallel84-source-pose-sweep-browser.mjs ../.p89-disposable-p541
+      - name: P89 independently rehashes three real source photographs/cutouts, 48 genuine WebGL shots and 32 raw RGB pose contrasts
+        run: node scripts/verify-parallel89-real-poses.mjs .p89-readonly-p84 .p89-disposable-p541 ${{ matrix.engine }}
+      - name: Enforce zero original consumer source edits or donor commit mutations
+        run: |
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          test "$(git -C .p89-readonly-p84 rev-parse HEAD)" = 8385c308df215bcf80eb95b8c37660307dc80536
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P89-INDEPENDENT-real-original-three-joint-poses-${{ matrix.engine }}-HOLD
+          path: |
+            benchmark/parallel89-real-pose/${{ matrix.engine }}/
+            .p89-readonly-p84/benchmark/parallel84-source-pose-sweep/${{ matrix.engine }}/
+          include-hidden-files: true
+          retention-days: 14
+          if-no-files-found: warn
