@@ -8,7 +8,7 @@
  */
 import {createHash} from 'node:crypto';
 import {readFile,lstat} from 'node:fs/promises';
-import {basename,dirname,join} from 'node:path';
+import {dirname,join,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 export const DEVICE_CASES=Object.freeze([
@@ -82,13 +82,13 @@ function photoReceipt(x,index,path,errors){
     !(x.capture===x.saved&&x.saved===x.restored))
   errors.push(p+': original JPEG SHA changed during save/restore');
 }
-function reportShape(value,family,sourceHead,errors,path){
+function reportShape(value,family,appAssetRelease,errors,path){
  if(!keys(value,['format','version','appRelease','platform','steps','events'],path,errors))return;
  if(value.format!=='closet-current-device-check'||value.version!==1)
   errors.push(path+': not a Closet Current device-check export');
  if(value.platform!==FAMILIES[family])errors.push(path+': wrong device family');
  if(!SHORT_SHA.test(value.appRelease||'')||
-    value.appRelease!==sourceHead.slice(0,12))
+    value.appRelease!==appAssetRelease)
   errors.push(path+': app release mismatch with tested source head');
  if(keys(value.steps,APP_STEPS,path+'.steps',errors)){
   for(const k of APP_STEPS)if(value.steps[k]!=='pass')
@@ -129,10 +129,11 @@ function artifact(files,name,expected,errors,path){
 /** Pure, offline, fail-closed evidence preflight. Strings from artifacts never appear in output. */
 export function verifyEvidence(manifest,files=new Map()){
  const errors=[],path='mission3';
- if(!keys(manifest,['schema','sourceHead','devices','cloud','integration','ownerApproval'],path,errors))
+ if(!keys(manifest,['schema','sourceHead','appAssetRelease','devices','cloud','integration','ownerApproval'],path,errors))
   return {status:'BLOCKED',releaseAuthorized:false,issues:errors};
  if(manifest.schema!==1)errors.push('mission3.schema: unsupported');
  if(!GIT_SHA.test(manifest.sourceHead||''))errors.push('mission3.sourceHead: exact Git SHA required');
+ if(!SHORT_SHA.test(manifest.appAssetRelease||''))errors.push('mission3.appAssetRelease: exact published asset version required');
  const observed=new Set();
  if(!Array.isArray(manifest.devices)||manifest.devices.length!==2){
   errors.push('mission3.devices: exactly one physical Android and one physical iPhone required');
@@ -158,7 +159,7 @@ export function verifyEvidence(manifest,files=new Map()){
     }
    }
    const app=artifact(files,d.reportFile,d.reportSha256,errors,p+'.report');
-   if(app)reportShape(app,d.family,manifest.sourceHead||'',errors,p+'.report');
+   if(app)reportShape(app,d.family,manifest.appAssetRelease||'',errors,p+'.report');
   }
  }
  for(const family of Object.keys(FAMILIES))if(!observed.has(family))
@@ -221,7 +222,7 @@ export function verifyEvidence(manifest,files=new Map()){
 export function blankManifest(){
  const statuses=keys=>Object.fromEntries(keys.map(k=>[k,'NOT_RUN']));
  return {
-  schema:1,sourceHead:'UNKNOWN',
+  schema:1,sourceHead:'UNKNOWN',appAssetRelease:'UNKNOWN',
   devices:Object.keys(FAMILIES).map(family=>({
    family,execution:'NOT_RUN',osVersion:'',browserVersion:'',testedAt:'',
    reportFile:family+'-device-check.json',reportSha256:'UNKNOWN',
@@ -251,7 +252,7 @@ async function readLocalArtifacts(manifest,manifestPath){
  }
  return files;
 }
-const invoked=process.argv[1]&&fileURLToPath(import.meta.url)===process.argv[1];
+const invoked=process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1]);
 if(invoked){
  const mode=process.argv[2];
  if(mode==='--template'&&process.argv.length===3){
