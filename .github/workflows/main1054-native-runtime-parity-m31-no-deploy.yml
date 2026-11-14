@@ -50,7 +50,7 @@ jobs:
           node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
           node scripts/p82-prepare-models.mjs --check
           git diff --exit-code -- public/
-      - name: Original unmodified JSEP worker in real WebKit native owner photo review (two originals)
+      - name: Original unmodified JSEP worker in real WebKit native owner photo review (four originals)
         env:
           MAIN1054_M30_VARIANT: jsep
         run: node scripts/test-main1054-native-runtime-parity-m31-browser.mjs webkit
@@ -70,7 +70,7 @@ jobs:
           set -eu
           node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-native-runtime-parity-m31/cpu/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
           node research/master-consolidation-1054/real-model-memory-gate.mjs benchmark/main1054-native-runtime-parity-m31/cpu/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
-          node research/master-consolidation-1054/native-runtime-parity-gate-m30.mjs \
+          node research/master-consolidation-1054/native-runtime-parity-gate-m31.mjs \
             benchmark/main1054-native-runtime-parity-m31/jsep/webkit-4-diagnostic.json \
             benchmark/main1054-native-runtime-parity-m31/cpu/webkit-4-diagnostic.json "$GITHUB_SHA"
       - name: Archive public numeric-only photo/model runtime receipts even when blocked
