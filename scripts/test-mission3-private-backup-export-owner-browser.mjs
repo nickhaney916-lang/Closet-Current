@@ -21,7 +21,6 @@ const bootstrap=[
  "'use strict';",
  "let captureOperationEpoch=1,db=null,nativeLossless04Active=false,nativeLossless04=null;",
  "let items=[],inspirationLooks=[],outfitBoardReady=Promise.resolve(),currentBoard={},savedOutfitBoards=[],events=[],created=[];",
- "const location={search:''};",
  "const $=id=>document.getElementById(id);",
  "function message(s){events.push('message:'+s)}",
  "function node(tag){const el=document.createElement(tag);el.click=()=>events.push('click:'+el.download);return el}",
@@ -38,7 +37,7 @@ const bootstrap=[
  " savedOutfitBoards=[{name:'OWNER-A-SAVED'}];",
  " items=[{id:'private-a',image:'data:image/jpeg;base64,/9j/AA==',name:'PRIVATE-A-JPEG'}];",
  " inspirationLooks=[];events=[];created=[];",
- " const v4=mode.startsWith('v4-');location.search=v4?'?restoreAtomic01=research':'';",
+ " const v4=mode.startsWith('v4-');history.replaceState(null,'',v4?'?restoreAtomic01=research':'/');",
  " if(mode==='legacy-empty')items=[];",
  " let resumeReady,resumeBridge;",
  " outfitBoardReady=new Promise(r=>resumeReady=r);",
@@ -95,8 +94,14 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
    try{
     const page=await ctx.newPage(),errors=[];
     page.on('pageerror',e=>errors.push(String(e)));
-    await page.setContent('<main id="fixture"></main>');
+    // A routed, local-only synthetic origin permits real location.search and
+    // history.replaceState without redefining the browser's window.location.
+    await page.route('https://closet-current.synthetic.test/**',route=>
+      route.fulfill({status:200,contentType:'text/html',body:'<main id="fixture"></main>'}));
+    await page.goto('https://closet-current.synthetic.test/',{waitUntil:'domcontentloaded'});
     await page.addScriptTag({content:bootstrap});
+    const installed=await page.evaluate(()=>typeof window.__probe);
+    assert.equal(installed,'function','Source harness initialization: '+errors.join(' | '));
     for(const mode of modes){
      const x=await page.evaluate(m=>window.__probe(m),mode);
      if(mode==='legacy-valid'){
