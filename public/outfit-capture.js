@@ -13,6 +13,9 @@ const outfitUnits70=outfitInstances840&&typeof location!=='undefined'&&new URL(l
 // #76 only exists alongside #70 owner and exact original/mask SHA receipts.
 const outfitColor76=outfitUnits70&&typeof location!=='undefined'&&new URL(location.href).searchParams.get('color76')==='1';
 const approvedColorNames76=new Set(['Black','White','Gray','Beige','Brown','Blue','Green','Red','Pink','Purple','Yellow','Orange','Multicolor']);
+// P88 review-only measured public validation found 0/13 correct accessory masks.
+// Prompt a person to check the actual outfit; do not infer inventory completeness.
+const ownerCoverageReminder88='Compare these tentative regions with your original outfit photo. Small accessories such as watches, belts, headwear, bags or glasses, and some tops or bottoms, may be missed. Photograph missing items individually and confirm each category, subtype and color yourself.';
 const unit70Api=outfitUnits70?import('./outfit-unit-reconciliation-70.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:'')):null;
 let outfitUnit70Error='';
 // Prove the original JPEG hash in the browser instead of trusting two
@@ -77,7 +80,12 @@ function finishOutfitSplit(job,text,failed=false){
  clearTimeout(job.timer);job.worker?.terminate();outfitSplitJob=null;busy=false;controls(false);
  $('outfitSplitStatus').textContent=text;$('outfitRetry').hidden=!failed;renderOutfitCapture();
  if(job.added){if(!$('scan').hidden)switchView('review');$('outfitSaveStatus').textContent=failed?'The separated pieces below are kept. Return to Add clothes to try separating the rest again.':'Separated pieces remain here for you to confirm category, type and color before saving.';
-  if(outfitColor76&&job.colorNotes.length)$('outfitSaveStatus').textContent+=' Research-only color suggestions (NOT applied): '+job.colorNotes.join(' · ')+'. Check each photo and enter its actual color in Adjust details.';}
+  if(outfitColor76&&job.colorNotes.length)$('outfitSaveStatus').textContent+=' Research-only color suggestions (NOT applied): '+job.colorNotes.join(' · ')+'. Check each photo and enter its actual color in Adjust details.';
+  // Successful or partial capture switches to Review, so the scan-only
+  // outfitSplitStatus is not visible to the owner. Preserve the caution on
+  // the actual Review screen with the unsaved pieces.
+  if(outfitInstances840)$('outfitSaveStatus').textContent+=' '+ownerCoverageReminder88;
+ }
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
@@ -178,7 +186,6 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     // split matched 27/53 garment masks. Small/accessory items were often
     // missing; multiple disconnected garments are not verified owned units.
     // Never present detected region count as a complete wardrobe inventory.
-    const ownerCoverageReminder88='Compare these tentative regions with your original outfit photo. Small accessories such as watches, belts, headwear, bags or glasses, and some tops or bottoms, may be missed. Photograph missing items individually and confirm each category, subtype and color yourself.';
     const result=outfitInstances840?
       (job.added?job.added+' tentative clothing regions found, not a verified garment count. ':'No confidently separated clothing regions found. ')+ownerCoverageReminder88:
       (job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.');
