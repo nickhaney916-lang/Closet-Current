@@ -209,6 +209,7 @@ function sourceSaveLease88(item){
  return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
   sourceId:item.outfitSourceId,source:item.reconciliation70.sourceSha256,
   mask:item.reconciliation70.maskSha256,receipt:item.reconciliation70,
+  status:item.reconciliation70Status,
   original:item.originalPhoto?.image,image:item.image,
   review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70};
 }
@@ -222,10 +223,12 @@ function sourceSaveLeaseLive88(lease){
   item.reconciliation70===lease.receipt&&
   item.reconciliation70?.sourceSha256===lease.source&&
   item.reconciliation70?.maskSha256===lease.mask&&
+  item.reconciliation70?.ownerId===lease.ownerId&&
+  item.reconciliation70Status===lease.status&&
+  ['paired_confirmed','fragments_confirmed','separate_confirmed'].includes(lease.status)&&
   item.originalPhoto?.image===lease.original&&item.image===lease.image&&
   item.recognitionPhoto?.image===lease.review&&
-  item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments&&
-  unit70OwnerEvidenceValid(item));
+  item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments);
 }
 async function sourceSavePhotoVerified88(lease){
  if(!sourceSaveLeaseLive88(lease)||typeof lease.original!=='string'||
@@ -249,7 +252,8 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
   if(!sourceSaveLeaseLive88(lease)||
    value.originalPhoto?.image!==lease.original||value.image!==lease.image||
    value.reconciliation70?.sourceSha256!==lease.source||
-   value.reconciliation70?.maskSha256!==lease.mask)
+   value.reconciliation70?.maskSha256!==lease.mask||
+   !unit70OwnerEvidenceValid({...lease.item,category:value.category}))
    throw Error('P88_REVOKED_SOURCE_SAVE');
   return new Promise((resolve,reject)=>{
    const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
