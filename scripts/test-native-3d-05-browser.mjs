@@ -26,6 +26,7 @@ const mission2Performance=process.env.MISSION2_PERFORMANCE==='1';
 const performanceSamples=[];
 const licensedDressContact52=[];
 const licensedPhotoRenderComparison86=[];
+const licensedSkinnedSourcePose86=[];
 const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
 const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
 const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
@@ -262,6 +263,9 @@ const photoDressTorsoTrial60=process.env.PHOTO_DRESS_TORSO_TRIAL60==='1';
 const photoDressStrain61=process.env.PHOTO_DRESS_STRAIN61==='1';
 const photoDressAlternative85=process.env.PHOTO_DRESS_ALTERNATIVE85==='1';
 const photoDressPreview86=process.env.PHOTO_DRESS_PREVIEW86==='1';
+const photoDressSkinned86=process.env.PHOTO_DRESS_SKINNED86==='1';
+if(photoDressSkinned86&&!photoDressPreview86)
+ throw Error('P86 moving source experiment must retain authentic original photo visual A/B and C58/C61 audits');
 if(photoDressPreview86&&!photoDressAlternative85)
  throw Error('P86 licensed-source rendering requires full P85 original contact quality and 163 bone source tests');
 if(photoDressAlternative85&&!photoDressStrain61)
@@ -523,7 +527,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressContact58?'&photoDressContact58=research':'')+(photoDressBodyBands59?'&photoDressBodyBands59=research':'')+(photoDressTorsoTrial60?'&photoDressTorsoTrial60=research':'')+(photoDressStrain61?'&photoDressStrain61=research':'')+(photoDressAlternative85?'&photoDressAlternative85=research':'')+(photoDressPreview86?'&photoDressPreview86=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressContact58?'&photoDressContact58=research':'')+(photoDressBodyBands59?'&photoDressBodyBands59=research':'')+(photoDressTorsoTrial60?'&photoDressTorsoTrial60=research':'')+(photoDressStrain61?'&photoDressStrain61=research':'')+(photoDressAlternative85?'&photoDressAlternative85=research':'')+(photoDressPreview86?'&photoDressPreview86=research':'')+(photoDressSkinned86?'&photoDressSkinned86=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -2308,6 +2312,38 @@ try{
    assert.equal(pre?.originalPhotographicMaterialInstanceShared,true);
    assert.equal(pre?.originalPhotoRestAttributesCopiedNotChanged,true);
    assert.equal(pre?.updatedCloneNormalsOnly,true);
+   assert.equal(pre?.actualOriginal163BoneSkinnedCandidatePreview86,
+    photoDressSkinned86);
+   if(photoDressSkinned86){
+    assert.equal(pre.originalSkeletonSharedByCandidate86,true);
+    assert.equal(pre.twoActualArticulatedSourcePoseSamplesCompleted86,true);
+    assert.equal(pre.originalSourceBoneSkinnedPoseChecks86.length,2);
+    assert.ok(pre.neutralInverseSkinWorldRoundtripMeters86<.000002);
+    assert.ok(pre.minimumNeutralBlendedSkinDeterminant86>.000001);
+    assert.ok(pre.maxSkinWeightSumDeviation86<.001);
+    for(const q of pre.originalSourceBoneSkinnedPoseChecks86){
+     assert.ok(['left-arm','right-arm'].includes(q.sourcePose));
+     assert.ok(q.actuallyMovedCandidateOriginalBoneSkinnedVertices>0);
+     assert.ok(q.maxActualBoneDrivenSourceClothMovementMeters>.00001);
+     assert.ok(Number.isSafeInteger(q.strictOriginalBodyCrossings));
+     assert.ok(Number.isSafeInteger(q.nearOrZeroBodyPairs));
+     assert.ok(Number.isSafeInteger(q.strictOriginalSelfCrossings));
+     assert.equal(q.sourceFaceStrainAndNormalsUnchangedC61,true);
+     assert.equal(q.noPhysicalClothDynamicsOrContinuousPoseCertificate,true);
+     assert.equal(q.releaseAuthorized,false);
+    }
+    licensedSkinnedSourcePose86.push({
+     width,neutralOriginal163BoneSkinnedRoundtripMeters:
+      pre.neutralInverseSkinWorldRoundtripMeters86,
+     movingCandidatePhotoShaderOriginalBones:true,
+     actuallySampledRealArmPoses:pre.originalSourceBoneSkinnedPoseChecks86,
+     allTwoPoseSourceCollisionAndQualityPass:
+      pre.allTwoSkinnedSourcePoseCollisionAndStrainGuardsPass86,
+     independentHumanApproval:false,
+     continuousSkinningAndClothSweptCollisionCertified:false,
+     releaseAuthorized:false,familyAlpha:'HOLD'
+    });
+   }
    assert.equal(pre?.noPrivateSourceArraysOrPhotoBytesExposed,true);
    assert.ok(pre?.maxPreviewWorldRoundtripMeters<.000002);
    assert.equal(pre?.mode,'original');
@@ -2801,6 +2837,21 @@ try{
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
  if(sourceLengthMode)assert.equal(sourceLengthEvidence.length,sourceAdaptiveMode?0:6);
  if(photoDressContact52)assert.deepEqual(licensedDressContact52.map(x=>x.width),[320,390,430]);
+ if(photoDressSkinned86){
+  assert.deepEqual(licensedSkinnedSourcePose86.map(x=>x.width),
+   [320,390,430]);
+  await writeFile('benchmark/mission2-source-dress-motion/photo-render-comparison86/skin-motion-receipt.json',
+   JSON.stringify({schema:'M2-P86-actual-163bone-rest-inversion-pose-audit',
+    originalPhotographedDress:'commons-0053',
+    originalPhotographMaterialNeverEdited:true,
+    actualSameReconstructedSkinnedGarmentTwoArmPoses:true,
+    originalSourceBonesAndPoseRestored:true,
+    sourceSkinnedOutfitSampledAcrossViewportWidths:licensedSkinnedSourcePose86,
+    sampledPosePassNotContinuousPhysicsNorProductRelease:true,
+    arbitraryOwnerClothingHumanRealismApproved:false,
+    physicalAndroidAndIOSDevicesApproved:false,
+    releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
+ }
  if(photoDressPreview86){
   assert.equal(licensedPhotoRenderComparison86.length,9,
    'P86 requires all three genuine original-photo WebGL cameras and desktop viewport sizes');
@@ -2821,7 +2872,8 @@ try{
     originalDressRestAndOriginalSkinnedSourceUnmodified:true,
     sourceCandidateReceivedFullOriginalC58C61NumericalPass85:true,
     originalAndFittedCandidateSameCameraPhotoMaterial:true,
-    candidateStaticNeutralPoseOnly:true,
+    candidateStaticNeutralPoseOnly:!photoDressSkinned86,
+    actualOriginal163BoneCandidateSkinned87:photoDressSkinned86,
     photoFrontRearSideActualScreenshotPairs:licensedPhotoRenderComparison86,
     realOwnerSignedRLS:false,physicalPhoneTested:false,
     independentHumanDrapeApproval:false,
@@ -2842,6 +2894,7 @@ try{
   evidence:cases,screens,errors,external,
   ...(photoDressContact52?{licensedDressContact52}:{}),
   ...(photoDressPreview86?{licensedPhotoRenderComparison86}:{}),
+  ...(photoDressSkinned86?{licensedSkinnedSourcePose86}:{}),
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
   ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence,
    sourceEdgeAblationControl:sourceEdgeAblation,sourceEdgeAblationModuleRequests:interceptedOpticalControlModules,
