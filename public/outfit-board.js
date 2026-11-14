@@ -91,6 +91,20 @@ function beginNativeBoard04OwnerCallbacks(){
  };
  return {attach,current,onChange,onStatus};
 }
+// Admit optional 3D, original-photo, Style and mobile panels only while
+// the exact initiating signed-owner/controller lease is still current.
+function publishNative04OwnerPanel(callbacks,consumer,panel,bridgeName){
+ const current=()=>{
+  if(!callbacks?.current()||nativeLossless04!==consumer)return false;
+  try{return consumer?.status?.().active===true;}catch{return false;}
+ };
+ if(!current()){
+  try{panel?.dispose?.();}catch{}
+  return false;
+ }
+ window[bridgeName]=panel;
+ return true;
+}
 function boardDraftStatus(text,retry=false){
  $('boardSaveStatus').textContent=text;$('retryBoardDraft').hidden=!retry;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=!boardConflictDraft;
@@ -122,6 +136,13 @@ window.addEventListener('closet:session-locked',()=>{
  if(nativeLossless04Active){
   currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];
   nativeLossless04ClearPreview();
+  // The auth-lock event is authoritative, not any late old-panel callback.
+  for(const key of ['native3D05Bridge','nativePhotoReadiness08Bridge',
+   'styleOwnedLive03Bridge','nativeMobile09Bridge','nativeLossless04Bridge']){
+   const old=window[key];window[key]=null;
+   try{old?.dispose?.();}catch{}
+  }
+  nativeLossless04=null;
  }
 });
 async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null}={}){
@@ -451,45 +472,53 @@ const outfitBoardReady=(async()=>{
     await consumer.remove(index,{confirmed:true});
    });
    $('saveBoard').after(controls);
+   const panelConsumer=nativeLossless04;
    if(typeof URLSearchParams==='function'&&
      new URLSearchParams(location.search).get('native3D05')==='research'){
     try{
+     if(!callbacks.current())return;
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
-     window.native3D05Bridge=await mountNative3D05({consumer:nativeLossless04,
+     if(!callbacks.current())return;
+     const panel=await mountNative3D05({consumer:panelConsumer,
       onStatus:callbacks.onStatus});
-    }catch(error){nativeLossless04Notify(error);}
+     if(!publishNative04OwnerPanel(callbacks,panelConsumer,panel,'native3D05Bridge'))return;
+    }catch(error){if(callbacks.current())nativeLossless04Notify(error);}
    }
-   // NATIVE-PHOTO-08: attach only after actual owner Outfit Builder controls
-   // are active; the underlying #560 source-original assessor stays unchanged.
+   // NATIVE-PHOTO-08: owner-private original source readiness stays research only.
    if(new URLSearchParams(location.search).get('sourceReadiness08')==='research'&&
       new URLSearchParams(location.search).get('native3D05')==='research'){
     try{
+     if(!callbacks.current())return;
      const {mountNativeReadiness08}=await import('../research/native-photo-readiness-08/native-readiness-panel.mjs');
-     window.nativePhotoReadiness08Bridge=await mountNativeReadiness08({
-      board:nativeLossless04,db,
-      onStatus:callbacks.onStatus
+     if(!callbacks.current())return;
+     const panel=await mountNativeReadiness08({
+      board:panelConsumer,db,onStatus:callbacks.onStatus
      });
-    }catch(error){nativeLossless04Notify(error);}
+     if(!publishNative04OwnerPanel(callbacks,panelConsumer,panel,'nativePhotoReadiness08Bridge'))return;
+    }catch(error){if(callbacks.current())nativeLossless04Notify(error);}
    }
-   // STYLE03: Actual native Style screen, not a separate wardrobe editor.
-   // Guarded original photos and pinned owned looks use this very same native
-   // authenticated BOARD04 controller and its lossless compare-and-swap.
+   // STYLE03: source-reviewed owner's pinned looks retain native lossless CAS.
    if(new URLSearchParams(location.search).get('styleOwned03')==='research'&&
       new URLSearchParams(location.search).get('nativeIndex07')==='research'){
     try{
+     if(!callbacks.current())return;
      const {mountStyleOwnedLive03}=await import('../research/style-owned-live-03/native-style-panel.mjs');
-     window.styleOwnedLive03Bridge=await mountStyleOwnedLive03({
-      board:nativeLossless04,onStatus:()=>{}
+     if(!callbacks.current())return;
+     const panel=await mountStyleOwnedLive03({
+      board:panelConsumer,onStatus:()=>{}
      });
-    }catch(error){nativeLossless04Notify(error);}
+     if(!publishNative04OwnerPanel(callbacks,panelConsumer,panel,'styleOwnedLive03Bridge'))return;
+    }catch(error){if(callbacks.current())nativeLossless04Notify(error);}
    }
-   // MOBILE09: Research-only tactile and safe-area polish. It changes no
-   // saved record, cloth geometry, owner permission, or released stylesheet.
+   // MOBILE09: touch/safe-area polish, still research only.
    if(new URLSearchParams(location.search).get('nativeMobile09')==='research'){
     try{
+     if(!callbacks.current())return;
      const {mountNativeMobile09}=await import('../research/native-mobile-09/mobile-comfort.mjs');
-     window.nativeMobile09Bridge=mountNativeMobile09({board:nativeLossless04});
-    }catch(error){nativeLossless04Notify(error);}
+     if(!callbacks.current())return;
+     const panel=mountNativeMobile09({board:panelConsumer});
+     if(!publishNative04OwnerPanel(callbacks,panelConsumer,panel,'nativeMobile09Bridge'))return;
+    }catch(error){if(callbacks.current())nativeLossless04Notify(error);}
    }
   }catch(error){
    if(callbacks?.current()){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
