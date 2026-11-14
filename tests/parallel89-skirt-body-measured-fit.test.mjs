@@ -131,3 +131,24 @@ test('three posed body witnesses and original source rig are required, no invent
   assert.equal(r.photoSkirtConsumer3DAdmitted,false);
  }
 });
+
+
+test('forged or incomplete original 163-bone core-part face mask cannot grant a skirt fit',()=>{
+ const x=createSyntheticBodyAndSkirt();
+ const baseIndices=new Uint16Array([0,1,2,2,3,4,4,5,6]);
+ const cases=[
+  {positions:x.sourceBodyPositions,indices:baseIndices,coreFaceMask:new Uint8Array(2)},
+  {positions:x.sourceBodyPositions,indices:baseIndices,coreFaceMask:new Uint8Array(3).fill(1)},
+  {positions:x.sourceBodyPositions,indices:baseIndices,coreFaceMask:new Uint8Array(3).fill(0)},
+  {positions:x.sourceBodyPositions,indices:baseIndices,coreFaceMask:Uint8Array.from([1,2,0])},
+  {positions:x.sourceBodyPositions,indices:baseIndices,coreFaceMask:new Float32Array(3)}
+ ];
+ for(const datum of cases){
+  const r=trial(x,{sampleBodySkinnedWorld:()=>datum});
+  assert.equal(r.status,'BODY_MEASURED_SOURCE_GEOMETRY_REJECTED');
+  assert.equal(r.photoSkirtConsumer3DAdmitted,false);
+  assert.equal(r.originalSourceGeometryRetained,true);
+  assert.equal(x.mesh.geometry,x.originalGeometry);
+  assert.deepEqual(x.mesh.geometry.getAttribute('uv').array,x.sourceUVBytes);
+ }
+});
