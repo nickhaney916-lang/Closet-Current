@@ -23,7 +23,7 @@ for(const variant of ['baseline','candidate','restored']){
  assert.equal(data[variant].samples.length,8);
  for(const row of data[variant].samples){
   assert.equal(row.startup.initialMode,variant==='candidate'?'none':'pants');
-  assert.equal(row.startup.loadedDenimBundles,variant==='candidate'&&row.mode==='dress'?0:2);
+  assert.equal(row.startup.loadedDenimBundles,variant==='candidate'?(row.mode==='dress'?0:1):2);
   if(variant==='candidate')assert.equal(row.startup.initialGarmentMeshes,0);
   else assert.ok(row.startup.initialGarmentMeshes>0);
  }
