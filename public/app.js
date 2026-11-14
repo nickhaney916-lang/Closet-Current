@@ -1843,7 +1843,13 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
  // A backup selected by one account can never be restored into the next.
  let importLease;
  try{importLease=ownerWardrobeMutationLease();}catch{return message('Sign in to import a private backup.');}
- const assertImport=()=>importLease.assertLease();
+ const assertImport=()=>{
+  importLease.assertLease();
+  // An authenticated principal alone is not enough: a private restore must
+  // also stop when the UI has relocked, even if auth/DB have not rotated yet.
+  if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+   throw Error('Private wardrobe is locked; sign in again before importing.');
+ };
  const importMessage=value=>{try{assertImport();message(value);}catch{}};
  try{const data=JSON.parse(await file.text());assertImport();
  if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
@@ -1851,14 +1857,22 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
       !window.restoreAtomic01Bridge)throw Error('Verified lossless restore unavailable; nothing changed');
    assertImport();
    const restoreBridge=window.restoreAtomic01Bridge;
+   const assertRestore=()=>{
+    assertImport();
+    // A replacement restore controller must not inherit a pending old UI
+    // consent callback or publish an old controller's completed status.
+    if(window.restoreAtomic01Bridge!==restoreBridge)
+     throw Error('Private recovery controls changed. Reopen My Closet and verify restore status.');
+   };
+   assertRestore();
    const result=await restoreBridge.importBackup(data,{
-    confirm:({incoming,existing,savedExisting})=>{assertImport();const accepted=confirm(
+    confirm:({incoming,existing,savedExisting})=>{assertRestore();const accepted=confirm(
      'Replace '+existing+' existing clothes and '+savedExisting+' saved outfits with '+
      incoming.itemCount+' backup clothes and '+incoming.savedCount+
      ' saved outfits? The old local version will be replaced. Cancel keeps everything unchanged.');
-     assertImport();return accepted;}
+     assertRestore();return accepted;}
    });
-   assertImport();
+   assertRestore();
    if(result.cancelled)return importMessage('Restore canceled. Your original closet is unchanged.');
    importMessage('All clothing photos, category corrections and outfits restored together.');
    return;
