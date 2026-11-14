@@ -209,8 +209,8 @@ test('P88 unchanged owner can still submit a fully decoded new photo normally',a
 
 test('P88 connected shoes enter pending source review, not separate owned wardrobe entries',()=>{
  const h=captureHarness({ownerId:'owner-A'});
- const piece={image:'data:image/jpeg;base64,SHOE_LEFT',
-  recognitionPhoto:{image:'data:image/jpeg;base64,CROP_LEFT'},
+ const piece={image:'data:image/jpeg;base64,U0hPRUxFRlQ=',
+  recognitionPhoto:{image:'data:image/jpeg;base64,Q1JPUExFRlQ='},
   hint:{categories:['Shoes'],types:[],clipped:false},
   instanceMethod:'connected_footwear_component',requiresReview:true};
  h.emit({type:'piece',piece});
@@ -223,7 +223,7 @@ test('P88 connected shoes enter pending source review, not separate owned wardro
 });
 test('P88 two disconnected same-class tops both require a human physical-unit decision',()=>{
  const h=captureHarness({ownerId:'owner-A'});
- for(const image of ['TOP_A','TOP_B'])h.emit({type:'piece',piece:{
+ for(const image of ['VE9QQQ==','VE9QQg=='])h.emit({type:'piece',piece:{
   image:'data:image/jpeg;base64,'+image,hint:{categories:['Tops'],types:[],clipped:false},
   instanceMethod:'connected_semantic_component_unverified',requiresReview:true
  }});
