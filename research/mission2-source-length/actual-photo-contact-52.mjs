@@ -2032,11 +2032,13 @@ export function installDisposableOriginalDressRenderPreview86({
   const originalBones=mesh.skeleton.bones.map(b=>b.quaternion.clone());
   const neutralCandidateWorld=skinnedWorldBuffer58(overlay);
   try{
-   for(let pose=0;pose<2;pose++){
+   for(let pose=0;pose<2;pose++)for(let step=1;step<=3;step++){
     const arm=pose===0?armL:armR,
      axis=pose===0?new THREE.Vector3(0,0,1):
       new THREE.Vector3(1,0,0),
-     angle=pose===0?.12:-.12;
+     // Incremental continuous-joint-path samples use one unchanged
+     // neutral inverse-bound source geometry, not six per-pose fits.
+     angle=(pose===0?.12:-.12)*(step/3);
     arm.quaternion.multiply(
      new THREE.Quaternion().setFromAxisAngle(axis,angle));
     root.updateMatrixWorld(true);mesh.skeleton.update();
@@ -2070,6 +2072,8 @@ export function installDisposableOriginalDressRenderPreview86({
      fail('P86 genuine original 163-bone moving source pose test incomplete or static');
     poseSequence86.push(Object.freeze({
      sourcePose:pose===0?'left-arm':'right-arm',
+     armProgressFraction86:step/3,
+     actualArmRotationRadians86:angle,
      actuallyMovedCandidateOriginalBoneSkinnedVertices:moved,
      maxActualBoneDrivenSourceClothMovementMeters:maxPoseMovementMeters,
      strictOriginalBodyCrossings:poseBody.strict,
@@ -2134,10 +2138,18 @@ export function installDisposableOriginalDressRenderPreview86({
   maxSkinWeightSumDeviation86:
    skinnedExperiment?maxSkinnedWeightDeviation86:null,
   twoActualArticulatedSourcePoseSamplesCompleted86:
-   skinnedExperiment&&poseSequence86.length===2,
+   skinnedExperiment&&poseSequence86.length===6&&
+   poseSequence86.filter(p=>p.armProgressFraction86===1).length===2,
+  sixIntermediateAndEndpointSourcePoseSweepsCompleted86:
+   skinnedExperiment&&poseSequence86.length===6,
   originalSourceBoneSkinnedPoseChecks86:poseSequence86,
   allTwoSkinnedSourcePoseCollisionAndStrainGuardsPass86:
-   skinnedExperiment&&poseSequence86.length===2&&poseSequence86.every(p=>
+   skinnedExperiment&&poseSequence86.length===6&&
+   poseSequence86.filter(p=>p.armProgressFraction86===1).every(p=>
+    p.bodyClearanceAtSampledPose&&p.noSelfCrossingsAtSampledPose&&
+     p.originalSourcePoseC61DistortionGuard),
+  allSixSampledSourcePoseCollisionAndStrainGuardsPass86:
+   skinnedExperiment&&poseSequence86.length===6&&poseSequence86.every(p=>
     p.bodyClearanceAtSampledPose&&p.noSelfCrossingsAtSampledPose&&
      p.originalSourcePoseC61DistortionGuard),
   originalPhotographicMaterialInstanceShared:overlay.material===mesh.material,
@@ -2151,7 +2163,7 @@ export function installDisposableOriginalDressRenderPreview86({
   sourceMeshAttributesUnchanged:true,
   noPrivateSourceArraysOrPhotoBytesExposed:true,
   candidateContinuousMotionTested:false,
-  sourceSkinnedBoneMotionTwoSamplesOnly86:skinnedExperiment,
+  sourceSkinnedBoneMotionSixSamplesOnly86:skinnedExperiment,
   ownerPhotorealismApproved:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
   });
