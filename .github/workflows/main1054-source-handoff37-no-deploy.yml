@@ -1,0 +1,47 @@
+name: MAIN1054 M37 read-only genuine source cross-mission boundary - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-crossmission-admission37-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  source-bound-read-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M36 parent ancestry and research-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor b3c6b8a9d8e45bf4e57e6912db5a88282e34a288 HEAD
+          git diff --exit-code b3c6b8a9d8e45bf4e57e6912db5a88282e34a288 HEAD -- public/ supabase/ benchmark/
+          git diff --name-only b3c6b8a9d8e45bf4e57e6912db5a88282e34a288 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054-handoff37/safe-readonly-handoff.mjs|tests/main37-source-handoff.test.mjs|research/master-consolidation-1054/MILESTONE37.md|.github/workflows/main1054-source-handoff37-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected M37 changed path $path"; exit 1;;
+            esac
+          done
+          node --check research/main1054-handoff37/safe-readonly-handoff.mjs
+          node --check tests/main37-source-handoff.test.mjs
+      - name: Install pinned no-deploy test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Install browser engines and OS support
+        run: npx playwright install --with-deps chromium webkit
+      - name: Consumer app build unchanged
+        run: node scripts/build.mjs
+      - name: M37 genuine public original plus signed synthetic owner read-only boundary
+        run: node --test tests/main37-source-handoff.test.mjs
+      - name: Inherited M34 true native owner photo and all-roster cross-tab browser matrix
+        run: MAIN34=research node scripts/test-main1054-native-picker33-browser.mjs
+      - name: Inherited complete no-deploy Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Inherited P87 original source and both Chromium WebKit browsers
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
