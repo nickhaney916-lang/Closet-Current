@@ -75,7 +75,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
  screenCaptureCountExpected:18,figurePoseSamplesExpected:6,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -242,7 +242,45 @@ try{
    assert.equal(best.realHumanVisualFitAccepted,false);
   }
   results.measuredBodyFitTrials.push(measured);
+  const registration=await page.evaluate(()=>window.nativeP89Skirt.trialRigidRegistration());
+  assert.ok(['RESEARCH_REGISTRATION_REDUCED_STATIC_PAIRS_NOT_WEARABLE',
+   'NO_SAFE_REDUCING_ORIGINAL_SKIRT_REGISTRATION_WITNESSED'].includes(registration.status),
+   'actual original photo skirt registration source verification rejected: '+
+   (registration.reason||registration.status));
+  assert.equal(registration.avatar,avatar);
+  assert.equal(registration.sourceId,'commons-0043');
+  assert.equal(registration.actualOriginalPhotoSkirtFaces,576);
+  assert.equal(registration.original163BoneModelUnchanged,true);
+  assert.equal(registration.trials.length,5);
+  assert.equal(registration.original3PoseStrictBodyCrossingPairs,before);
+  assert.equal(registration.allCandidatesDisposedAndRestored,true);
+  assert.equal(registration.sourcePhotoPixelsAndMasksUnmodified,true);
+  assert.equal(registration.realPhotoFrontUVAndRestSurfaceUnmodified,true);
+  assert.equal(registration.originalPhoto2DFallbackRequired,true);
+  assert.equal(registration.consumer3DAdmitted,false);
+  assert.equal(registration.releaseAuthorized,false);
+  for(const t of registration.trials){
+   assert.equal(t.actual163BoneBodyTriangleBVHAcrossThreePoses,true);
+   assert.equal(t.sourceRGBAndReviewAlphaBytesUnchanged,true);
+   assert.equal(t.originalSkirtUVUnchanged,true);
+   assert.equal(t.originalSkirtRestEdgeLengthUnchanged,true);
+   assert.equal(t.originalSkirtRestTriangleShapeUnchanged,true);
+   assert.equal(t.perPoseContacts.length,3);
+   assert.equal(t.originalThreePoseStrictCrossingPairSum,before);
+   assert.equal(t.releaseAuthorized,false);
+   if(t.researchOnlyNonworseningReduction){
+    assert.equal(t.introducedOriginalSourceFacePairIDs,0);
+    assert.equal(t.maxPlaneDepthWorsened,false);
+    assert.ok(t.trialThreePoseStrictCrossingPairSum<before);
+   }
+  }
+  const restoredAfterRegistration=await page.evaluate(()=>window.nativeP89Skirt.getState());
+  assert.equal(restoredAfterRegistration.originalSourceSHA256,required.skirt);
+  assert.equal(restoredAfterRegistration.bones,163);
+  assert.equal(restoredAfterRegistration.releaseAuthorized,false);
+  results.registrationTrials.push(registration);
  }
+ assert.equal(results.registrationTrials.length,2);
  assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
  assert.equal(results.captures.length,18);
@@ -273,6 +311,8 @@ try{
    poseSamples:results.poseSamples.length,neutralRearTrialStatus:results.neutralRearTrials.map(x=>x.status),
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
+   photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
+   photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
    measuredBodyFitResearchReduction:results.measuredBodyFitTrials.map(x=>x.bestProvisionalStructuralAB?.originalStrictSkirtBodyCrossingPairSum-x.bestProvisionalStructuralAB?.trialStrictSkirtBodyCrossingPairSum||0),
    sourceBodyCrossingPairs:results.staticSourceBodyCrossingPairSum??null,
    sourceBodyCrossingWitnessSamples:results.staticSourceBodyCrossingWitnesses??null,
