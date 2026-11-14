@@ -92,3 +92,12 @@ test('P90 M9 profiles exact 20 genuine-shirt construction stages with no dropped
  assert.match(bridge,/sceneShirtStages90:active\?data\.sceneShirtStages90\|\|null:null/);
  assert.match(bridge,/revokeChangedSource89\(\)/);
 });
+
+test('P90 M9 paired baselines reset exact fourth original controller for each source variant',()=>{
+ const benchmark=readFileSync('scripts/benchmark-parallel90-startup.mjs','utf8');
+ const command="run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs','research/dress-mobile-01/dress-outfit-controller.mjs']);";
+ assert.equal(benchmark.split(command).length-1,2,
+  'every paired variant and final rebuild must start from pristine PR541 original controller');
+ assert.ok(benchmark.includes("for(const variant of ['baseline','candidate','restored'])"));
+ assert.match(benchmark,/P90_COMPARE_ONLY/);
+});
