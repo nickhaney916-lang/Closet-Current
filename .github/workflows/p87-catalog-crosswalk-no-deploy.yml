@@ -1,0 +1,30 @@
+name: P87 owner catalog crosswalk - NO DEPLOY
+on:
+  push:
+    branches: [research/p87-owner-catalog-crosswalk-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts-and-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scope and immutable master ancestry
+        run: |
+          git merge-base --is-ancestor 07cc52756588c6143a3b6cd19e9eac848a949877 HEAD
+          git diff --exit-code 07cc52756588c6143a3b6cd19e9eac848a949877 HEAD -- public/ supabase/ benchmark/
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Full inherited Node regressions and adapter contracts
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - run: node scripts/build.mjs
+      - name: Licensed original SHA, private isolation, revoke, fallback in both native engines
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
