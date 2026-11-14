@@ -91,10 +91,14 @@ function welded(world,indices){
  }
  return {groups,of,edges};
 }
-function constrained(world,indices,neck,spine,meters){
- // Original C60 is only a disposable initial guess, not the solved cloth.
- const target=createDisposableUpperTorsoWorldTrial60(world,{
+function constrained(world,indices,neck,spine,meters,
+ targetOverride=null,method='welded-edge-strain-projection'){
+ // C60 is an immutable control; optionally optimize a witness-localized
+ // disposable target without ever applying it to original renderer assets.
+ const target=targetOverride??createDisposableUpperTorsoWorldTrial60(world,{
   neck,spine,outwardMeters:meters}).world;
+ if(!(target instanceof Float32Array)||target.length!==world.length||
+  !target.every(Number.isFinite))fail('invalid temporary localized target');
  const {groups,of,edges}=welded(world,indices);
  const base=groups.map(g=>g.p);
  const delta=groups.map(g=>{
@@ -158,7 +162,7 @@ function constrained(world,indices,neck,spine,meters){
    maxCoincidentSeamDeltaMeters=Math.max(maxCoincidentSeamDeltaMeters,dr);
   }
  }
- return summary(world,out,'welded-edge-strain-projection',meters,{
+ return summary(world,out,method,meters,{
   projectionIterations:iterations,projectedEdges,
   sourcePositionGroupCount:groups.length,
   maxCoincidentSeamDeltaMeters,
@@ -178,5 +182,90 @@ export function createDisposableClothAlternatives85(
  ];
  if(!originalWorld.every((v,i)=>v===copy[i]))
   fail('original authenticated world source was mutated');
+ return Object.freeze(candidates);
+}
+
+/**
+ * Parallel #85 continued research: true C58 strict ORIGINAL body crossing
+ * cloth-face witnesses are given ONLY in-memory, from a COMPLETE source
+ * audit. P85 never exports face IDs/XYZ, never exempts collisions, never
+ * rewrites original photo/shader/UV/rest/skin/rig or applies trial geometry.
+ *
+ * Distances are original mesh graph edge hops (NOT Euclidean penetration
+ * depths). This localizes radial relief to actual witnessed topology rather
+ * than globally translating an anatomical torso height band.
+ */
+export function createDisposableWitnessLocalized85(
+ originalWorld,indices=null,{neck,spine,strictClothFaceIndices}={}
+){
+ verify(originalWorld,indices,neck,spine);
+ const faces=(indices?.length??originalWorld.length/3)/3;
+ if(!Array.isArray(strictClothFaceIndices)||
+  strictClothFaceIndices.length>faces||
+  strictClothFaceIndices.some(i=>!Number.isSafeInteger(i)||
+   i<0||i>=faces)||
+  new Set(strictClothFaceIndices).size!==strictClothFaceIndices.length)
+  fail('actual original-source strict cloth witness face IDs required in memory');
+ const before=originalWorld.slice(),graph=welded(originalWorld,indices),
+  {groups,of,edges}=graph,adj=groups.map(()=>[]);
+ for(const [u,v] of edges){adj[u].push(v);adj[v].push(u);}
+ const dist=new Int16Array(groups.length).fill(-1),queue=[];
+ for(const face of strictClothFaceIndices){
+  for(let k=0;k<3;k++){
+   const vertex=indices?indices[3*face+k]:3*face+k,g=of[vertex];
+   if(dist[g]===-1){dist[g]=0;queue.push(g);}
+  }
+ }
+ let head=0;
+ while(head<queue.length){
+  const u=queue[head++];
+  if(dist[u]>=26)continue;
+  for(const v of adj[u])if(dist[v]===-1){
+   dist[v]=dist[u]+1;queue.push(v);
+  }
+ }
+ function localized(radius,constrain){
+  const out=originalWorld.slice();
+  let active=0,maxHop=-1;
+  for(let g=0;g<groups.length;g++){
+   const hop=dist[g];
+   if(hop<0||hop>=radius)continue;
+   const [x,y,z]=groups[g].p,
+    dx=x-spine[0],dz=z-spine[2],r=Math.hypot(dx,dz);
+   if(r<=1e-8)continue;
+   // Full 6 mm in original-crossing neighborhood; C1 quintic graph
+   // falloff to zero at the selected radius, feathered anatomically.
+   const topoWeight=hop<=2?1:q((radius-hop)/(radius-2));
+   const meters=.006*topoWeight*envelope(y,neck,spine);
+   if(!(meters>1e-9))continue;
+   active++;maxHop=Math.max(maxHop,hop);
+   for(const i of groups[g].ids){
+    out[3*i]=Math.fround(originalWorld[3*i]+dx/r*meters);
+    out[3*i+2]=Math.fround(originalWorld[3*i+2]+dz/r*meters);
+   }
+  }
+  const method=constrain?
+   'strict-witness-local-edge-projection':
+   'strict-witness-local-radial';
+  const recipe=constrain?
+   constrained(originalWorld,indices,neck,spine,.006,out,method):
+   summary(originalWorld,out,method,.006);
+  return Object.freeze({
+   ...recipe,
+   originalStrictWitnessFaceCount85:strictClothFaceIndices.length,
+   localGraphRadiusHops85:radius,
+   localizedSourcePositionGroups85:active,
+   furthestMovedGraphHop85:maxHop,
+   originalSourceFaceIdsNeverExported85:true,
+   sourceWitnessNotPhysicalDepthOrContinuousContact:true,
+   bodyCollisionAndC61QualityMustBeRemeasured:true
+  });
+ }
+ const candidates=[
+  localized(12,false),localized(24,false),
+  localized(12,true),localized(24,true)
+ ];
+ if(!originalWorld.every((v,i)=>v===before[i]))
+  fail('P85 original source-skinned world buffer altered');
  return Object.freeze(candidates);
 }
