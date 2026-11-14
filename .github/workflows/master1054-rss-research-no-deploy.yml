@@ -1,0 +1,29 @@
+name: "MASTER1054 owned-browser RSS research ONLY — NO DEPLOY"
+on:
+  push:
+    branches:
+      - research/master1054-real-model-rss-observability-HOLD
+permissions:
+  contents: read
+jobs:
+  rss-source-contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify runner parses without starting inference or accessing accounts
+        run: node --check scripts/test-main1054-real-webkit-repeat.mjs
+      - name: Verify Linux proc sampler parses
+        run: node --check research/master-consolidation-1054/browser-process-rss.mjs
+      - name: Run descendant-only and unmeasured fallback tests
+        run: node --test tests/master-browser-process-rss.test.mjs
+      - name: Confirm consumer, model and hosted-schema unchanged from master
+        run: |
+          git fetch --no-tags origin 07cc52756588c6143a3b6cd19e9eac848a949877
+          git diff --exit-code 07cc52756588c6143a3b6cd19e9eac848a949877 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
+          echo "FAMILY ALPHA #255 HOLD — NO DEPLOY"
