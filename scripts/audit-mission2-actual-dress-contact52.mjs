@@ -925,9 +925,21 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
    'welded-edge-strain-projection-4.5mm',
    'welded-edge-strain-projection-6mm'],
   measured:findings,
+  // A single good pose cannot certify any trial. The SAME candidate
+  // must satisfy every actual source pose and every unchanged guard.
+  perCandidateAllThreeSourcePoseGuards:
+   findings[0].alternatives.map((t,i)=>({
+    method:t.method,limitMeters:t.limitMeters,
+    allThreeSampledPosesPass:findings.length===3&&findings.every(p=>
+     p.alternatives[i].method===t.method&&
+     p.alternatives[i].limitMeters===t.limitMeters&&
+     p.alternatives[i].sampledContactAndQualityThresholdsPassed)
+   })),
   allSampledContactAndQualityGatesSatisfied:
-   findings.some(x=>x.alternatives.some(t=>
-    t.sampledContactAndQualityThresholdsPassed)),
+   findings.length===3&&findings[0].alternatives.some((t,i)=>
+    findings.every(p=>p.alternatives[i].method===t.method&&
+     p.alternatives[i].limitMeters===t.limitMeters&&
+     p.alternatives[i].sampledContactAndQualityThresholdsPassed)),
   originalSourceUVSkinTextureNeverAltered:true,
   noSourceFaceIdentifiersOrPixelsPublished:true,
   trueCandidateRenderedVisualAB:false,
