@@ -157,7 +157,9 @@ try{
  context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await context.route('**/*',route=>{
   const url=route.request().url();
-  if(url.startsWith(host+'/')&&route.request().method()==='GET')return route.continue();
+  if(route.request().method()==='GET'&&
+   (url.startsWith(host+'/')||url.startsWith('blob:'+host+'/')))
+   return route.continue(); // WebKit emits legitimate same-origin runtime blob requests
   requests.push({url:url.slice(0,90),method:route.request().method(),blocked:true});
   return route.abort();
  });
