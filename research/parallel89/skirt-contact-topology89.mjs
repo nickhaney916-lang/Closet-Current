@@ -73,7 +73,13 @@ export function summarizeOriginalPhotoSkirtContactTopology89({
     !isNum(before.count)||!isNum(after.count)||
     before.pairs.size!==before.count||after.pairs.size!==after.count||
     !Number.isFinite(before.maxDepth)||before.maxDepth<0||
-    !Number.isFinite(after.maxDepth)||after.maxDepth<0)
+    !Number.isFinite(after.maxDepth)||after.maxDepth<0||
+    before.trueOriginalSkirtTriangleIndexStable!==true||
+    before.trueOriginalBodyTriangleIndexStable!==true||
+    after.trueOriginalSkirtTriangleIndexStable!==true||
+    after.trueOriginalBodyTriangleIndexStable!==true||
+    before.originalFaceSourceResolution!=='BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'||
+    after.originalFaceSourceResolution!=='BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES')
     throw Error('original-skinned-posed-BVH-triangle-proof-missing');
    const introduced=new Set(),resolved=new Set(),persistent=new Set();
    for(const id of before.pairs){
@@ -115,6 +121,8 @@ export function summarizeOriginalPhotoSkirtContactTopology89({
    schema:'P89-original-photographed-skirt-true-face-contact-topology/v1',
    status:'GENUINE_ORIGINAL_FULL_BODY_SOURCE_CONTACT_TURNOVER_MEASURED_NOT_CLEARANCE',
    avatar,trialName,originalSkirtSourceId:'commons-0043',
+   originalSourceFaceIndicesAreStableAcrossBVHRebuilds:true,
+   indirectOriginalFaceResolutionRequired:true,
    bodySourceFaceCount:bodyFaceCount,sourceSkirtFaceCount:FACE_COUNT,
    poses,originalStrictCrossingPairSum:countOriginal,
    trialStrictCrossingPairSum:countTrial,
