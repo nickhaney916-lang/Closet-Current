@@ -4,7 +4,7 @@
 import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {dirname,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
-import {MODELS81} from '../public/model-arbitration-81.mjs';
+import {MODELS81,arbitrate81} from '../public/model-arbitration-81.mjs';
 import {MODEL_ASSETS82,VERSION82} from '../public/dual-core-82.mjs';
 import {localCandidates} from '../public/local-catalog.mjs';
 import {analyzeFrame877} from './p877-siglip-full-frame-audit.mjs';
@@ -28,12 +28,19 @@ function completeRank(rank){
   used.add(x.label);
  }
 }
-export function verifyPublicPhotoCustody878(data,receipts,{expectedRows=48}={}){
+export function verifyPublicPhotoCustody878(data,receipts,manifest,{expectedRows=48}={}){
  const sum=data?.summary;
  require878(sum?.status==='PUBLIC_DEVELOPMENT_ONLY'&&sum.blindAccuracy===null&&sum.physicalDevices===0&&sum.independentlyHumanReviewedPhotos===0,'RESEARCH_ONLY');
  require878(sum.automaticAdmissions===0&&sum.nonGetOrExternalRequests===0&&sum.isolation==='one-browser-continuous-'+expectedRows+'-one-shot-workers','SESSION_POLICY');
  require878(Array.isArray(data.rows)&&data.rows.length===expectedRows&&sum.photos===expectedRows,'ROW_COUNT');
  require878(Array.isArray(receipts),'RECEIPTS_REQUIRED');
+ require878(Array.isArray(manifest)&&manifest.length===expectedRows,'MANIFEST_REQUIRED');
+ const expectedById=new Map();
+ for(const p of manifest){
+  require878(typeof p?.id==='string'&&typeof p.image==='string'&&typeof p.expectedCategory==='string'&&
+   typeof p.expectedType==='string'&&p.verified===true&&!expectedById.has(p.id),'MANIFEST_ROW');
+  expectedById.set(p.id,p);
+ }
  const ledger=new Map();
  for(const s of receipts){
   require878(typeof s?.id==='string'&&typeof s.image==='string'&&sha(s.sha256)&&s.verified===true&&!ledger.has(s.id),'SOURCE_LEDGER');
@@ -42,8 +49,11 @@ export function verifyPublicPhotoCustody878(data,receipts,{expectedRows=48}={}){
  }
  const ids=new Set(),digestSet=new Set(),requests=new Set(),rows=[];
  for(const row of data.rows){
-  const source=ledger.get(row?.id),out=row?.output,d=row?.decision;
-  require878(!!source&&row?.sourceSha256===source.sha256&&sha(row.sourceSha256)&&!ids.has(row.id),'PHOTO_RECEIPT');
+  const source=ledger.get(row?.id),expected=expectedById.get(row?.id),out=row?.output,d=row?.decision;
+  require878(!!expected&&!!source&&source.image===expected.image&&
+   row?.historicalExpectation?.category===expected.expectedCategory&&
+   row?.historicalExpectation?.itemType===expected.expectedType,'MANIFEST_PROVENANCE');
+  require878(row?.sourceSha256===source.sha256&&sha(row.sourceSha256)&&!ids.has(row.id),'PHOTO_RECEIPT');
   require878(!digestSet.has(row.sourceSha256),'DUPLICATE_PHOTO_DIGEST');
   ids.add(row.id);digestSet.add(row.sourceSha256);
   require878(out?.schema===VERSION82&&sha(out.sourceCodeSha256)&&out.automaticAdmissions===0&&Number.isFinite(out.createdAt)&&typeof out.requestId==='string'&&!requests.has(out.requestId),'MODEL_REQUEST');
@@ -62,6 +72,8 @@ export function verifyPublicPhotoCustody878(data,receipts,{expectedRows=48}={}){
   const clip=obs.get('fashionclip'),sig=obs.get('fashionSiglip');
   require878(!!clip&&!!sig&&sameBinding(clip.binding,sig.binding),'CROSS_MODEL_BINDING');
   require878(d?.requiresOwnerConfirmation===true&&d.automaticallyCertified===false&&d.admissionAllowed===false&&d.itemType==='Unknown'&&sameBinding(d.binding,sig.binding),'NO_OWNER_APPROVAL');
+  const recomputed=arbitrate81({binding:sig.binding,observations:out.observations});
+  require878(JSON.stringify(d)===JSON.stringify(recomputed),'RECOMPUTED_DECISION');
   const alt=out.experiment877;
   require878(alt?.schema==='p877-optional-full-frame-v1'&&alt.modelKey==='fashionSiglip'&&alt.mode==='fitWholePhoto224-white'&&alt.sameModelNotIndependent===true,'ALT_IDENTITY');
   require878(alt.sourceCodeSha256===out.sourceCodeSha256&&alt.vectorSha256===sig.vectorSha256&&alt.inputSha256===source.sha256,'ALT_INPUT_BINDING');
@@ -69,9 +81,11 @@ export function verifyPublicPhotoCustody878(data,receipts,{expectedRows=48}={}){
   completeRank(alt.ranking);
   rows.push({id:row.id,sourceSha256:source.sha256,requestId:out.requestId,originalInputVerified:true,bothPinnedModelsVerified:true,sameModelAlternativeOnly:true,automaticAdmissions:0});
  }
- require878(ids.size===expectedRows&&digestSet.size===expectedRows&&requests.size===expectedRows,'ONE_TO_ONE_CUSTODY');
+ require878(ids.size===expectedRows&&digestSet.size===expectedRows&&requests.size===expectedRows&&
+  [...expectedById.keys()].every(id=>ids.has(id)),'ONE_TO_ONE_CUSTODY');
  const report={schema:'mission1-public-photo-custody-878-v1',status:'VERIFIED_PUBLIC_DEVELOPMENT_ONLY',
   photos:rows.length,distinctPhotoDigests:digestSet.size,distinctModelRequests:requests.size,
+  historicalManifestRowsVerified:expectedById.size,recomputedDualModelDecisions:rows.length,
   independentlyHumanBlindSources:0,physicalDevices:0,blindAccuracy:null,releaseReady:false,modelPromoted:false,
   automaticallySavedGarments:0,holdIssue:255};
  return {summary:report,rows};
@@ -80,8 +94,10 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(resolve(process.argv[1])).hr
  const input=process.argv[2]||'benchmark/p878-real-chromium/results.json';
  const locked=process.argv[3]||'benchmark/locked-photo-sources.json';
  const out=process.argv[4]||'benchmark/p878-real-chromium/custody-audit.json';
- const [data,receipts]=await Promise.all([input,locked].map(async p=>JSON.parse(await readFile(p,'utf8'))));
- const report=verifyPublicPhotoCustody878(data,receipts);
+ const [data,receipts,reviewed,holdout]=await Promise.all(
+  [input,locked,'benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json']
+  .map(async p=>JSON.parse(await readFile(p,'utf8'))));
+ const report=verifyPublicPhotoCustody878(data,receipts,[...reviewed,...holdout]);
  // The legacy P877 metric is retained, not turned into independent blind accuracy.
  const prior=analyzeFrame877(data);
  require878(prior.summary.modelPromoted===false&&prior.summary.blindAccuracy===null,'NO_PROMOTION');
