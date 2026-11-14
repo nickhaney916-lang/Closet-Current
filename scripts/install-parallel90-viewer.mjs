@@ -38,6 +38,7 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);body.a
   if(key){e.preventDefault();command90(key);}
  });`);
 s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    startup90:{...startupTimings90,...view.startup90},
+    renderStages90:rendered?.renderStages90||null,
     garmentSources90:{dress:view.outfit?.dress?.sourceSHA256||null,shirt:view.outfit?.shirt?.sourceSHA256||null,pants:view.outfit?.pants?.sourceSHA256||null},
     camera90:{angle:view.viewAngle,distance:view.cameraDistance,position:view.cameraPosition,target:view.cameraTarget,loadMs:view.loadMs,lastRenderMs:view.lastRenderMs,pixelRatio:view.pixelRatio,drawPixels:view.drawPixels},
     geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,`);
@@ -120,5 +121,19 @@ s=replace(s,' const bundles=[];',` // A loading hint can only reduce available c
  if(dressOnly90===true)return Object.freeze({dress,bundles:Object.freeze([]),
   dispose(){},releaseAuthorized:false,source:'locked-licensed-original-photographs'});
  const bundles=[];`);
+// Instrument real photo-derived presentation without changing geometry,
+// UVs, skinned weights, source capabilities or owner/session admission.
+s=replace(s,"   viewer.applyOutfit('dress',sources.dress,{reviewed:true});",
+ "   const applyStart90=performance.now();viewer.applyOutfit('dress',sources.dress,{reviewed:true});\n   const applyMs90=performance.now()-applyStart90;");
+s=replace(s,"return Object.freeze({...decision,actualMode:'dress',meshCount:actual.garmentMeshes,reusedRenderer:false});",
+ "return Object.freeze({...decision,actualMode:'dress',meshCount:actual.garmentMeshes,reusedRenderer:false,\n    renderStages90:Object.freeze({kind:'dress',prepareMs:0,applyMs:applyMs90})});");
+s=replace(s,"  const prepared=prepareIndexedGarmentsFor3D(indexedPlan,{",
+ "  const prepareStart90=performance.now();\n  const prepared=prepareIndexedGarmentsFor3D(indexedPlan,{");
+s=replace(s,"  if(prepared.status!=='source-bound-3d-ready-for-provisional-preview')",
+ "  const prepareMs90=performance.now()-prepareStart90;\n  if(prepared.status!=='source-bound-3d-ready-for-provisional-preview')");
+s=replace(s,"  const receipt=applyIndexed3DSelection(viewer,prepared,{checkCurrentSession:now});",
+ "  const applyStart90=performance.now();\n  const receipt=applyIndexed3DSelection(viewer,prepared,{checkCurrentSession:now});\n  const applyMs90=performance.now()-applyStart90;");
+s=replace(s,"   genuinePhotoSHA256s:receipt.originalPhotoSHA256s,reusedRenderer:false});",
+ "   genuinePhotoSHA256s:receipt.originalPhotoSHA256s,reusedRenderer:false,\n   renderStages90:Object.freeze({kind:decision.mode,prepareMs:prepareMs90,applyMs:applyMs90})});");
 await writeFile(sourceViewer,s);
 console.log('P90 disposable PR541 viewer controls installed; source garments and rigs unchanged');
