@@ -137,7 +137,9 @@ const maxKnown=(oldValue,newValue)=>newValue===null?oldValue:Math.max(oldValue??
 const sampleMemory=()=>{
   // Linux CI: sampled process tree, not a physical phone or continuous peak.
   // Suppress PIDs and paths; only numeric, bounded data reaches receipts.
-  const observation=snapshotBrowserProcessTree(browserServer?.process()?.pid);
+  let observation;
+  try{observation=snapshotBrowserProcessTree(browserServer?.process()?.pid);}
+  catch{return null;} // Telemetry must never interrupt the original model test.
   if(!observation)return null;
   lastMemory=observation;memorySamples++;
   maxSampledBrowserRootRSSBytes=maxKnown(maxSampledBrowserRootRSSBytes,observation.rootRSSBytes);
