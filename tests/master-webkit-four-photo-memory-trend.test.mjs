@@ -50,7 +50,7 @@ test('complete four-photo variation is measured but never a release or leak proo
 });
 test('decreasing memory is valid, never advertised as leak',()=>{
   const {r,expected}=fixture();for(let i=0;i<4;i++)
-    r.rows[i].browserTreePSSBytes=(4000-i*100)*mib;
+    r.rows[i].browserTreePSSBytes=(3100-i*100)*mib;
   const v=verifyFourPhotoMemoryTrend(r,expected);
   assert.equal(v.status,'FOUR_PHOTO_TREND_MEASURED_NOT_RELEASE');
   assert.equal(v.observedTrend,'FIRST_TO_FOURTH_DECREASE');
