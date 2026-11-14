@@ -88,6 +88,19 @@ function beginNativeBoardMountLease(){
   }
  };
 }
+// MASTER1054: delayed optional panels belong to the initiating active controller.
+// An unchanged owner lease alone does not mean its controller is still usable.
+function publishNative04OwnerPanel(lease,consumer,panel,bridgeName){
+ let current=false;
+ try{current=!!lease?.current()&&nativeLossless04===consumer&&
+  consumer?.status?.().active===true;}catch{}
+ if(!current){
+  try{panel?.dispose?.();}catch{}
+  return false;
+ }
+ window[bridgeName]=panel;
+ return true;
+}
 function boardDraftStatus(text,retry=false){
  $('boardSaveStatus').textContent=text;$('retryBoardDraft').hidden=!retry;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=!boardConflictDraft;
@@ -520,8 +533,7 @@ const outfitBoardReady=(async()=>{
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
      if(!nativeMountLease.current())return;
      const viewer=await mountNative3D05({consumer:created,onStatus:nativeMountLease.onStatus});
-     if(!nativeMountLease.current()){viewer.dispose();return;}
-     window.native3D05Bridge=viewer;
+     if(!publishNative04OwnerPanel(nativeMountLease,created,viewer,'native3D05Bridge'))return;
     }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
    // NATIVE-PHOTO-08: attach only after actual owner Outfit Builder controls
@@ -534,8 +546,7 @@ const outfitBoardReady=(async()=>{
      const readiness=await mountNativeReadiness08({
       board:created,db,onStatus:nativeMountLease.onStatus
      });
-     if(!nativeMountLease.current()){readiness.dispose();return;}
-     window.nativePhotoReadiness08Bridge=readiness;
+     if(!publishNative04OwnerPanel(nativeMountLease,created,readiness,'nativePhotoReadiness08Bridge'))return;
     }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
    // STYLE03: Actual native Style screen, not a separate wardrobe editor.
@@ -547,8 +558,7 @@ const outfitBoardReady=(async()=>{
      const {mountStyleOwnedLive03}=await import('../research/style-owned-live-03/native-style-panel.mjs');
      if(!nativeMountLease.current())return;
      const style=await mountStyleOwnedLive03({board:created,onStatus:()=>{}});
-     if(!nativeMountLease.current()){style.dispose();return;}
-     window.styleOwnedLive03Bridge=style;
+     if(!publishNative04OwnerPanel(nativeMountLease,created,style,'styleOwnedLive03Bridge'))return;
     }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
    // MOBILE09: Research-only tactile and safe-area polish. It changes no
@@ -557,7 +567,8 @@ const outfitBoardReady=(async()=>{
     try{
      const {mountNativeMobile09}=await import('../research/native-mobile-09/mobile-comfort.mjs');
      if(!nativeMountLease.current())return;
-     window.nativeMobile09Bridge=mountNativeMobile09({board:created});
+     const mobile=mountNativeMobile09({board:created});
+     if(!publishNative04OwnerPanel(nativeMountLease,created,mobile,'nativeMobile09Bridge'))return;
     }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
   }catch(error){

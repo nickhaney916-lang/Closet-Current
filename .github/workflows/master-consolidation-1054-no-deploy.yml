@@ -195,6 +195,8 @@ jobs:
       run: node scripts/test-mission3-cloud-unsaved-original-fence-browser.mjs benchmark/mission3-cloud-unsaved-original-fence-browser
     - name: Real Chromium WebKit 320 390 430 safe photo results refresh and unsaved original preservation
       run: node scripts/test-mission3-safe-draft-refresh-browser.mjs benchmark/mission3-safe-draft-refresh-browser
+    - name: Integrated active-controller optional panel publication Chromium and WebKit
+      run: node scripts/test-master-panel-publication-browser.mjs
     - name: Exact full serial Node regression
       run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
     - name: Reverify native Chromium WebKit saved garment mutation isolation
@@ -312,5 +314,7 @@ jobs:
         name: master-consolidation-1054-evidence
         path: 'benchmark/main1054-*/
 
-          benchmark/mission3-*/'
+          benchmark/mission3-*/
+
+          benchmark/master-panel-publication/'
         retention-days: 14

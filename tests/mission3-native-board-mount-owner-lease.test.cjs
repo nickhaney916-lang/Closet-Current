@@ -131,11 +131,10 @@ test('exact source fences async native controller before publishing bridge',()=>
  assert.match(mount,/nativeLossless04=created;nativeMountLease\.bind\(created\)/);
  assert.match(mount,/if\(nativeMountLease&&!nativeMountLease\.current\(\)\)return;/);
 });
-test('real optional preview mount source disposes stale 3D, readiness and Style handles',()=>{
- for(const variable of ['viewer','readiness','style'])
-  assert.ok(mount.includes('if(!nativeMountLease.current()){'+variable+'.dispose();return;}'));
+test('optional native panels all use the exact active-controller publication gate',()=>{
+ for(const [variable,key] of [['viewer','native3D05Bridge'],['readiness','nativePhotoReadiness08Bridge'],['style','styleOwnedLive03Bridge'],['mobile','nativeMobile09Bridge']])
+  assert.ok(mount.includes("publishNative04OwnerPanel(nativeMountLease,created,"+variable+",'"+key+"')"));
  assert.match(mount,/onStatus:nativeMountLease\.onStatus/);
- assert.match(mount,/if\(!nativeMountLease\.current\(\)\)return;\s+window\.nativeMobile09Bridge/);
 });
 test('normal non-native Board Save, CAS and draft conflict logic are retained',()=>{
  assert.match(source,/async function persistBoardState\(/);
