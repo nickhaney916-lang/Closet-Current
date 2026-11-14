@@ -2,6 +2,8 @@ name: MAIN1054 M30 source-verified outfit crosswalk - NO DEPLOY
 on:
   push:
     branches: [research/main1054-crosswalk-outfit30-integrated-HOLD]
+  pull_request:
+    branches: [research/p87-owner-catalog-crosswalk-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
