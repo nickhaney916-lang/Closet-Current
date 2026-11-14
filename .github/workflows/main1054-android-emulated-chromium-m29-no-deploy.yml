@@ -1,0 +1,68 @@
+name: "MAIN1054 M29 Android-profile Chromium native CPU 16 photo — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-chromium-android-emulation-m29-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  genuine-chromium-android-emulated-native:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 16
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '16'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+      MAIN1054_RUN_BUDGET_MS: '540000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified M28 ancestor and unchanged shipped app/source/privacy
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 151b2def2829d81cdbb20c2699763032c3d63684 HEAD
+          git diff --exit-code 151b2def2829d81cdbb20c2699763032c3d63684 HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-android-emulated-cpu-m29-browser.mjs
+          node --check research/master-consolidation-1054/android-emulated-cpu16-gate-m29.mjs
+      - name: Adversarial original/owner/mobile-emulation and previous CPU safety tests
+        run: node --test tests/master-android-emulated-cpu16-m29.test.mjs tests/master-native-cpu-endurance-gate-m26.test.mjs tests/master-real-model-memory-gate.test.mjs tests/master-real-model-budget-stage.test.mjs
+      - name: Install exact pinned browser, source-preprocessor and ONNX CPU runtime
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3
+      - name: Verify immutable legal source photographs, model revisions and CPU-WASM binaries
+        shell: bash
+        run: |
+          set -eu
+          printf '%s  %s\n' \
+            0cb5ac5be2c414d5b9e361f857108630c6d6e24a5ab9be3cf5f761de55289e94 node_modules/onnxruntime-web/dist/ort.wasm.min.mjs \
+            f061472c6e77d6d50d079aacdc0ff9b63fee287ddd2cbf46cf62438d3891de2b node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm \
+            | sha256sum --check
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Actual Chromium Android Pixel 7 emulation and genuine native CPU model 16-photo review
+        run: node scripts/test-main1054-android-emulated-cpu-m29-browser.mjs chromium
+      - name: Original owner/source and two genuinely pinned model families fail-closed
+        run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-chromium-android-emulated-m29/chromium-16-diagnostic.json chromium 16 "$GITHUB_SHA"
+      - name: Sample actual Linux desktop Chromium process RSS/PSS, not phone memory
+        run: node research/master-consolidation-1054/real-model-memory-gate.mjs benchmark/main1054-chromium-android-emulated-m29/chromium-16-diagnostic.json chromium 16 "$GITHUB_SHA"
+      - name: Reject falsely claimed physical mobile acceptance and missing native CPU evidence
+        run: node research/master-consolidation-1054/android-emulated-cpu16-gate-m29.mjs benchmark/main1054-chromium-android-emulated-m29/chromium-16-diagnostic.json "$GITHUB_SHA"
+      - name: Upload public-photo numeric-only desktop diagnostics even if blocked
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m29-android-emulated-chromium-cpu-HOLD
+          path: benchmark/main1054-chromium-android-emulated-m29/*.json
+          if-no-files-found: warn
+          retention-days: 14
