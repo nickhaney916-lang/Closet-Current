@@ -31,14 +31,22 @@ const finite=n=>typeof n==='number'&&Number.isFinite(n);
 // owner identifiers, photo bytes, skeletal quaternions or private face indices.
 const meshIssue=source=>{
  if(!Array.isArray(source)||!source.length)return 'mesh-list-empty';
+ let realSourceFaces=0;
  for(const m of source){
   if(!m?.isSkinnedMesh)return 'non-skinned-source-mesh';
   if(m.skeleton?.bones?.length!==163)return 'source-mesh-rig-not-163-bones';
   const g=m.geometry,count=g?.index?.count??g?.getAttribute('position')?.count;
-  if(!Number.isSafeInteger(count)||count<3)return 'mesh-without-source-triangles';
-  if(count%3!==0)return 'non-triangulated-source-face-topology';
+  if(!Number.isSafeInteger(count)||count<0)
+   return 'mesh-original-face-inventory-invalid';
+  // The genuine Work45 independent shoulder-cap extraction can leave a
+  // vestigial indexed shell with ZERO original triangles. It renders none.
+  // Keep its true source geometry and 163-bone rig verified, but do not
+  // misclassify a zero-face shell as a missing original garment piece.
+  if(g?.index&&count===0)continue;
+  if(count<3||count%3!==0)return 'non-triangulated-source-face-topology';
+  realSourceFaces+=count/3;
  }
- return null;
+ return realSourceFaces>0?null:'all-real-source-garment-triangles-absent';
 };
 const clean=source=>meshIssue(source)===null;
 const meshSnapshot=meshes=>meshes.map(m=>({
