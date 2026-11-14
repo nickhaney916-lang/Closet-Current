@@ -1828,7 +1828,7 @@ export function installDisposableOriginalDressRenderPreview86({
   dress.stats?.sourceTextureAndMaterialPreserved61!==true||
   sourceReceipt?.schema!=='M2-real-original-photo-surface-diagnostic-C52'||
   sourceReceipt?.authenticOriginalLicensedDress!==true||
-  sourceReceipt?.originalPhotoSourceUVRestSkinAndIndicesUntouched!==true||
+  sourceReceipt?.originalSourcePhotoUVRestSkinAndIndicesUntouched!==true||
   sourceReceipt?.genuineOriginalPhotoAlternativesFullyAudited85!==true||
   sourceReceipt?.releaseAuthorized!==false)
   fail('P86 requires exact original licensed shader/photo, 163 bones and complete P85 source numerical audit');
