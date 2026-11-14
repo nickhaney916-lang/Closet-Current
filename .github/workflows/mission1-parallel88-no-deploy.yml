@@ -28,23 +28,26 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 4
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 7
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|tests/mission1-parallel88-instance-conservation.test.mjs|research/mission1-parallel88/REPORT.md|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-worker.mjs|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|research/mission1-parallel88/REPORT.md|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
-          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/auth.js public/outfit-worker.mjs public/outfit-capture.js public/dual-worker-82.mjs public/dual-core-82.mjs public/local-worker.mjs public/recognition-engine.mjs benchmark supabase)"
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/auth.js public/outfit-capture.js public/dual-worker-82.mjs public/dual-core-82.mjs public/local-worker.mjs public/recognition-engine.mjs benchmark supabase)"
           grep -Fq 'const reviewFirst836=true;' public/app.js
           grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-parallel88/REPORT.md
           node --check public/outfit-instance-review-840.mjs
+          node --check public/outfit-worker.mjs
+          node --check public/app.js
           node --check tests/mission1-parallel88-instance-conservation.test.mjs
+          node --check tests/mission1-parallel88-owner-mask-lease.test.mjs
       - name: Synthetic source-conservation and inherited instance/pair regressions
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/mission1-parallel88-instance-conservation.test.mjs tests/outfit-instance-review-840.test.mjs tests/outfit-segmentation.test.mjs tests/outfit-unit-reconciliation-70.test.mjs | tee /tmp/m1-88-targeted
+          node --test tests/mission1-parallel88-instance-conservation.test.mjs tests/mission1-parallel88-owner-mask-lease.test.mjs tests/outfit-instance-review-840.test.mjs tests/outfit-segmentation.test.mjs tests/outfit-unit-reconciliation-70.test.mjs | tee /tmp/m1-88-targeted
           grep -Eq '^# fail 0$' /tmp/m1-88-targeted
       - name: Auth/photo policies and physical validation remain blocked
         shell: bash
