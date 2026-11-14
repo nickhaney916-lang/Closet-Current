@@ -20,6 +20,8 @@ import {measureDisposableSourceSurfaceStrain61}
  from './upper-torso-surface-quality61.mjs';
 import {screenDisposableSourceFitAmplitudes62}
  from './upper-torso-fit-pareto62.mjs';
+import {makeSourceOnlyLocalContactTrial63,LOCAL_TRIALS63}
+ from './upper-torso-contact-local-feather63.mjs';
 const SOURCE_ID='commons-0053';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const fail=msg=>{throw Error('M2 C52 original-photo diagnostic '+msg);};
@@ -910,7 +912,7 @@ function sourceBodyBandReceipt59(count,strict,complete){
 }
 function bodyClothContact58(body,clothWorld,indices,tolerance,{
  maxBodyComparisons58,maxBodyCandidatePairs58,
- bodyTriangleBandClassifier59=null
+ bodyTriangleBandClassifier59=null,onStrictClothFace63=null
 }){
  if(!body.complete)return {...body};
  const clothes=[];
@@ -920,7 +922,7 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
    return new THREE.Vector3().fromArray(clothWorld,3*id);
   });
   const box=new THREE.Box3().setFromPoints(tri);
-  clothes.push({tri,minX:box.min.x,maxX:box.max.x,
+  clothes.push({tri,faceId:i/3,minX:box.min.x,maxX:box.max.x,
    minY:box.min.y,maxY:box.max.y,
    minZ:box.min.z,maxZ:box.max.z});
  }
@@ -984,6 +986,7 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
    }
    if(strictFaceCrossing52(c.tri,b.tri,1e-7)){
     strict++;
+    if(onStrictClothFace63)onStrictClothFace63(c.faceId);
     if(regionCounts59){
      const region=bodyTriangleBandClassifier59(c.tri);
      if(!SOURCE_BODY_BANDS59.includes(region))
@@ -1013,7 +1016,7 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
 function measureDisposableTorsoTrial60(root,mesh,body,world,
  indices,triangles,tolerance,poseBudget,bodyBudget,baselineBodyStrict,
  baselineSelfStrict,refineSurfaceStrain61=false,
- refineCandidateSweep62=false){
+ refineCandidateSweep62=false,refineLocalContactRelief63=false){
  const named=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
  const get=(name)=>{
   const bone=named.get(name);
@@ -1037,15 +1040,20 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   fail('C60 genuine photographed source buffer integrity violated');
  const full=trialSelf.complete&&
   trialSelf.distance53.distanceRefinementComplete&&trialBody.complete;
+ const localStrictClothFaces63=new Set();
  const sourceFitSweep62=refineCandidateSweep62?
   screenDisposableSourceFitAmplitudes62({
    originalWorld:world,indices,neck:get('neck01'),
    spine:get('spine04'),baselineBodyStrict,baselineSelfStrict,
-   evaluateCandidate(candidateWorld){
+   evaluateCandidate(candidateWorld,outwardMeters){
     const fabric=analyze52(candidateWorld,indices,triangles,tolerance,
      poseBudget);
     const anatomy=bodyClothContact58(body,candidateWorld,indices,
-     tolerance,bodyBudget);
+     tolerance,{
+      ...bodyBudget,
+      onStrictClothFace63:refineLocalContactRelief63&&
+       outwardMeters===.002?(f)=>localStrictClothFaces63.add(f):null
+     });
     return {
      bodyComplete:anatomy.complete,
      selfComplete:fabric.complete&&
@@ -1055,6 +1063,98 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
     };
    }
   }):null;
+ let localContactRelief63=null;
+ if(refineLocalContactRelief63){
+  const ref=sourceFitSweep62?.perCandidate.find(p=>p.outwardMeters===.002);
+  if(ref?.actualBodyContactTestPerformed!==true||
+     ref.sourceBodyAndSelfFullyMeasured!==true)
+   fail('C63 original 2mm source shape-safe and full body-contact evidence required');
+  if(localStrictClothFaces63.size===0){
+   if(ref.bodyStrictWitnesses!==0)
+    fail('C63 original signed body intersecting cloth triangles were silently lost');
+   localContactRelief63=Object.freeze({
+    schema:'M2-C63-source-contact-local-feather-fit-diagnostic',
+    originalStrictBodyCrossingPairWitnessesAfter2mm:0,
+    originalSourceClothFacesWithBodyCrossingAfter2mm:0,
+    localCandidateEvaluations:0,
+    allOriginalStrictBodyCrossingsAlreadyAbsentAt2mm:true,
+    candidateAlreadyRenderedInApp:false,
+    releaseAuthorized:false,familyAlpha:'HOLD'
+   });
+  }else{
+   const two=createDisposableUpperTorsoWorldTrial60(world,{
+    neck:get('neck01'),spine:get('spine04'),outwardMeters:.002
+   });
+   const row=LOCAL_TRIALS63.map(({boostMeters,radiusMeters})=>{
+    const v=makeSourceOnlyLocalContactTrial63({
+     originalWorld:world,base2mmWorld:two.world,indices,
+     originalCrossingClothFaceIds:localStrictClothFaces63,
+     spine:get('spine04'),boostMeters,radiusMeters
+    });
+    const strain=measureDisposableSourceSurfaceStrain61(
+     world,v.proposalWorld,indices);
+    let observed=null;
+    if(strain.provisionalMeshDistortionGuardPassed){
+     const bodyAfter=bodyClothContact58(body,v.proposalWorld,
+      indices,tolerance,bodyBudget);
+     const fabricAfter=analyze52(v.proposalWorld,indices,
+      triangles,tolerance,poseBudget);
+     observed={
+      fullOriginalBodyAndSelfContactAuditCompleted:
+       bodyAfter.complete&&fabricAfter.complete&&
+       fabricAfter.distance53.distanceRefinementComplete,
+      sourceBodyStrictCrossingsAfterLocalTrial:bodyAfter.strict,
+      sourceFabricSelfStrictCrossingsAfterLocalTrial:
+       fabricAfter.strictCrossings
+     };
+    }
+    return {
+     boostMeters,radiusMeters,
+     sourceClothFacesWithGenuine2mmBodyCrossings:
+      v.strictSourceClothTriangleCount,
+     original2mmBodyStrictCrossingPairWitnesses:
+      ref.bodyStrictWitnesses,
+     localSourceVertexReferencesMoved:v.affectedVertexReferences,
+     maximumWorldDisplacementMeters:v.maximumOriginalWorldDisplacementMeters,
+     maximumExtraMeters:v.maximumAdditionalWorldDisplacementMeters,
+     largestSourceFaceEdgeRelativeStrain:
+      strain.maxOriginalPhotoWorldEdgeRelativeStrain,
+     largestSourceFaceAreaRelativeChange:
+      strain.maxOriginalPhotoFaceAreaRelativeChange,
+     facesAbove5PercentStrain:strain.facesWithMaxEdgeStrainAbove5Percent,
+     facesAbove10PercentAreaChange:strain.facesWithAreaChangeAbove10Percent,
+     flippedSourceFaceCount:strain.facesWithReversedOrientation,
+     collapsedSourceFaceCount:strain.sourceFacesDegenerateOrCollapsed,
+     originalPhotoSurfaceStrainGuardPass:
+      strain.provisionalMeshDistortionGuardPassed,
+     actualOriginalBodyContactEvaluated:observed!==null,
+     ...(observed??{}),
+     noGarmentSourceOrOwnerPhotoMutated:true,
+     noSourceTriangleIDsOrXYZExported:true,
+     releaseAuthorized:false
+    };
+   });
+   localContactRelief63=Object.freeze({
+    schema:'M2-C63-source-contact-local-feather-fit-diagnostic',
+    originalStrictBodyCrossingPairWitnessesAfter2mm:
+     ref.bodyStrictWitnesses,
+    originalSourceClothFacesWithBodyCrossingAfter2mm:
+     localStrictClothFaces63.size,
+    localCandidateEvaluations:row.length,
+    perLocalCandidate:row,
+    allOriginalStrictBodyCrossingsAlreadyAbsentAt2mm:false,
+    anySampledSourceLocalCandidateClearedBodyAndPreservedFaceShape:
+     row.some(p=>p.originalPhotoSurfaceStrainGuardPass&&
+      p.fullOriginalBodyAndSelfContactAuditCompleted===true&&
+      p.sourceBodyStrictCrossingsAfterLocalTrial===0&&
+      p.sourceFabricSelfStrictCrossingsAfterLocalTrial===0),
+    originalPhotoMeshAndSkinWeightsUntouched:true,
+    noSourceFaceIDsOrClothXYZExported:true,
+    candidateAlreadyRenderedInApp:false,
+    releaseAuthorized:false,familyAlpha:'HOLD'
+   });
+  }
+ }
  return Object.freeze({
   schema:'M2-original-licensed-disposable-upper-torso-clearance-trial-C60',
   outwardTrialMeters:UPPER_TORSO_TRIAL_OUTWARD60,
@@ -1077,6 +1177,9 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   physicalFabricMotionOrPhotorealismUnverified:true,
   originalPhotoMeshUVSkinMaterialsAndBoneMatricesUnmodified:true,
   allTrialVerticesRetainedInMemoryOnly:true,
+  ...(refineLocalContactRelief63?{
+   originalSourceLocalContactFeather63:localContactRelief63
+  }:{}),
   ...(refineCandidateSweep62?{
    originalPhotoSourceFitAmplitudeSweep62:sourceFitSweep62
   }:{}),
@@ -1095,7 +1198,8 @@ function articulatedContact58(root,mesh,source,indices,triangles,
  maxPoseSamples58,refineBodyHeightWitnessBands59=false,
  refineUpperTorsoFitTrial60=false,
  refineSurfaceStrain61=false,
- refineCandidateSweep62=false
+ refineCandidateSweep62=false,
+ refineLocalContactRelief63=false
 }){
  const refused=(reason)=>Object.freeze({
   schema:'M2-licensed-original-163bone-articulated-contact-C58',
@@ -1162,7 +1266,8 @@ function articulatedContact58(root,mesh,source,indices,triangles,
    bodyFaces58(root,mesh,maxBodyFaces58),neutralWorld,indices,
    triangles,tolerance,poseBudget,trialBodyBudget60,
    neutralBody.strict,neutral.strictCrossings,
-   refineSurfaceStrain61,refineCandidateSweep62):null;
+   refineSurfaceStrain61,refineCandidateSweep62,
+   refineLocalContactRelief63):null;
  const trialPoseResults60=[];
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
@@ -1207,7 +1312,8 @@ function articulatedContact58(root,mesh,source,indices,triangles,
      trialPoseResults60.push(measureDisposableTorsoTrial60(root,mesh,
       body,world,indices,triangles,tolerance,poseBudget,
       trialBodyBudget60,bodyCheck.strict,self.strictCrossings,
-      refineSurfaceStrain61,refineCandidateSweep62));
+      refineSurfaceStrain61,refineCandidateSweep62,
+      refineLocalContactRelief63));
     bodyFacesCount+=bodyCheck.faces;
     bodyCompared+=bodyCheck.compared;
     bodyPairs+=bodyCheck.candidates;
@@ -1278,6 +1384,15 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     trialPoseResults60.every(r=>r.allOriginalBodyCrossingsActuallyGone),
    noTrialPreviewGeometryCommitted60:true,
    noPhotographedSourceOr163BoneRigEdited60:true,
+   ...(refineLocalContactRelief63?{
+    originalPhotoLocalContactSourceAuditCompleted63:
+     neutralTrial60?.originalSourceLocalContactFeather63?.schema===
+      'M2-C63-source-contact-local-feather-fit-diagnostic'&&
+     trialPoseResults60.length===2&&
+     trialPoseResults60.every(t=>t.originalSourceLocalContactFeather63?.schema===
+      'M2-C63-source-contact-local-feather-fit-diagnostic'),
+    noLocalOriginalPhotographSourceEditsOrContactWaivers63:true
+   }:{}),
    ...(refineCandidateSweep62?{
     originalPhotoSourceSweepAmplitudesComplete62:
      neutralTrial60?.originalPhotoSourceFitAmplitudeSweep62?.
@@ -1446,6 +1561,7 @@ export function auditActualPhotographedDressSurfaces52({
  refineUpperTorsoFitTrial60=false,
  refineSurfaceStrain61=false,
  refineCandidateSweep62=false,
+ refineLocalContactRelief63=false,
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
  maxDistancePairs58=100000,maxBodyFaces58=160000,
@@ -1496,6 +1612,8 @@ export function auditActualPhotographedDressSurfaces52({
     maxLoopVertices57<1||maxLoopVertices57>100000||
     !Number.isSafeInteger(maxPoseSamples57)||
     maxPoseSamples57<1||maxPoseSamples57>2||
+    typeof refineLocalContactRelief63!=='boolean'||
+    (refineLocalContactRelief63&&!refineCandidateSweep62)||
     typeof refineCandidateSweep62!=='boolean'||
     (refineCandidateSweep62&&!refineSurfaceStrain61)||
     typeof refineSurfaceStrain61!=='boolean'||
@@ -1587,7 +1705,7 @@ export function auditActualPhotographedDressSurfaces52({
     maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
     maxPoseSamples58,refineBodyHeightWitnessBands59,
     refineUpperTorsoFitTrial60,refineSurfaceStrain61,
-    refineCandidateSweep62
+    refineCandidateSweep62,refineLocalContactRelief63
    }):null;
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
@@ -1673,6 +1791,12 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    anatomicalSourceLoopNamesNotHumanVerified57:true,
    realSkinPoseSamplingNotCollisionApproval57:true
+  }:{}),
+  ...(refineLocalContactRelief63?{
+   actualLicensedSourceLocalContactFeatherEvidenceComplete63:
+    articulated58?.originalPhotoLocalContactSourceAuditCompleted63===true,
+   noGarmentSourceContactGeometryOrUVEdits63:true,
+   noHumanVisualOrContinuousPhysicsApproval63:true
   }:{}),
   ...(refineCandidateSweep62?{
    realLicensedPhotographedFitAmplitudeSweepComplete62:
