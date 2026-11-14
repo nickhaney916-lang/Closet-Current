@@ -533,3 +533,83 @@ if(process.env.PHOTO_DRESS_CONTACT58==='1'){
  console.log('M2_C58_REAL_LICENSED_ARTICULATED_CONTACT_SAFE_SUMMARY',
   JSON.stringify(report));
 }
+
+if(process.env.PHOTO_DRESS_BODY_BANDS59==='1'){
+ assert.equal(process.env.PHOTO_DRESS_CONTACT58,'1',
+  'C59 authentic source body band audit requires exhaustive C58 anatomical contact');
+ const rows=receipts.map(r=>{
+  assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+  assert.equal(r.genuineSourceBodyCrossingHeightWitnesses59,true);
+  assert.equal(r.noActualPiercingPointOrSeverityLocalizationCertified59,true);
+  assert.equal(r.noSourceGeometryAdjustmentOrCollisionWaiver59,true);
+  const a=r.originalArticulatedContactReceipt58;
+  assert.equal(a.originalBodyHeightBandEvidenceComplete59,true);
+  const zones=[a.originalNeutralBodyHeightBands59,
+   ...a.originalArticulatedBodyHeightBands59];
+  assert.equal(zones.length,3);
+  const strict=[a.originalNeutralBodyStrictCrossings,
+   ...a.originalArticulatedBodyHeightBands59.map(z=>
+    z.strictlyCrossingBodyTrianglePairWitnesses)];
+  assert.equal(strict.slice(1).reduce((n,c)=>n+c,0),
+   a.originalBodyStrictTransverseCrossingsAcrossSamples);
+  for(let i=0;i<zones.length;i++){
+   const z=zones[i];
+   assert.equal(z.schema,'M2-original-source-body-crossing-centroid-height-bands-C59');
+   assert.equal(z.fullyAuditedAtThisOnePose,true);
+   assert.equal(z.allObservedStrictCrossingsAccountedFor,true);
+   assert.equal(z.strictlyCrossingBodyTrianglePairWitnesses,strict[i]);
+   assert.equal(z.atOrAboveNeckAnchorHeight+
+    z.betweenNeckAndSpineAnchorHeights+
+    z.belowSpineAnchorHeight,strict[i]);
+   assert.equal(z.noOwnerOrOriginalPhotoCoordinatesOrFacesExported,true);
+   assert.equal(z.noContactSeverityOrPhysicalPenetrationDepthMeasured,true);
+   assert.equal(z.geometricSourceTriangleCentroidNotActualIntersectionPoint,true);
+   assert.equal(z.noValidatedAnatomicalDefectLocalization,true);
+   assert.equal(z.anyStrictBodyCrossingBlocksGarmentRelease,true);
+   assert.equal(z.collisionExceptionGranted,false);
+   assert.equal(z.releaseAuthorized,false);
+  }
+  return {neutral:zones[0],arm1:zones[1],arm2:zones[2],
+   neutralStrict:strict[0],armStrictTotal:strict[1]+strict[2]};
+ });
+ for(const row of rows.slice(1))assert.deepEqual(row,rows[0],
+  'C59 same SHA-locked photographed garment and original 163-bone body source may not silently change geometric collision-height distribution across 3 mobile widths');
+ const first59=rows[0];
+ assert.ok(first59.neutralStrict>0,
+  'C59 diagnostic must report genuine neutral licensed source anatomy collision, not invented fit clearance');
+ const summary59={
+  schema:'M2-P2-C59-authentic-public-photo-body-crossing-anonymous-height-bands',
+  source:'original-licensed-P61-P175-dress-and-original-163bone-body',
+  authenticatedWebGLWidthCount:3,
+  sourcePortraitWidths:[320,390,430],
+  genuineOriginalAnatomyAndPhotoTested:true,
+  originalNeutralBodyStrictCrossingWitnesses:first59.neutralStrict,
+  twoArticulatedBodyStrictCrossingWitnesses:first59.armStrictTotal,
+  neutralSourceTriangleCentroidHeightBands:{
+   atOrAboveNeckAnchorHeight:first59.neutral.atOrAboveNeckAnchorHeight,
+   betweenNeckAndSpineAnchorHeights:first59.neutral.betweenNeckAndSpineAnchorHeights,
+   belowSpineAnchorHeight:first59.neutral.belowSpineAnchorHeight
+  },
+  articulatedSourceTriangleCentroidHeightBands:[
+   first59.arm1,first59.arm2
+  ].map(z=>({
+   atOrAboveNeckAnchorHeight:z.atOrAboveNeckAnchorHeight,
+   betweenNeckAndSpineAnchorHeights:z.betweenNeckAndSpineAnchorHeights,
+   belowSpineAnchorHeight:z.belowSpineAnchorHeight
+  })),
+  originalClothingPhotoPixelsOrSourceVerticesNeverExported:true,
+  sourceBodyPoseAndPhotographicShaderRestUnchanged:true,
+  noExactPenetrationPointOrDepthWitness:true,
+  noHumanAnatomicalAreaApproval:true,
+  noCollisionCorrectionOrSourceUVSeamEdit:true,
+  measuredWitnessesStillReleaseBlocking:true,
+  noTimeContinuousClothClearance:true,
+  independentHumanPhotorealismVerified:false,
+  physicalPhoneAcceptanceVerified:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-body-height-bands59.json',
+  JSON.stringify(summary59,null,2)+'\n');
+ console.log('M2_C59_REAL_LICENSED_ANATOMICAL_WITNESS_BANDS_SAFE_SUMMARY',
+  JSON.stringify(summary59));
+}
