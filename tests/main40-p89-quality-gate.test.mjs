@@ -133,6 +133,8 @@ test('M40 actual licensed Commons jeans PHOTO119 review & private M39 source →
  const p=actualProvider(h);
  const baseline=await auditNativeOwnerViewer38(p);
  assert.equal(baseline.status,'OWNER_ORIGINAL_2D_VIEWER_FALLBACK_ONLY','M38 original-owner preflight before M40');
+ const repeated=await auditNativeOwnerViewer38(p);
+ assert.equal(repeated.status,'OWNER_ORIGINAL_2D_VIEWER_FALLBACK_ONLY','M38 sequential owner preflight reentry');
  const q=await assessNative3DQuality40(p);
  assert.equal(q.status,'P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD',q.blockedAt);
  assert.equal(q.matchedPublicPhotoSources,1);
