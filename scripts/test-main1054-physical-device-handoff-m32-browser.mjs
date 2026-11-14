@@ -64,8 +64,14 @@ try{
     includes('Ready for operator-controlled local testing'),{timeout:25000});
    assert.equal((await page.locator('#source').textContent()).includes(fullSourceCommit.slice(0,12)),true);
    await page.getByRole('button',{name:'Run 4 photos'}).click();
-   await page.waitForFunction(()=>document.querySelector('#status')?.textContent?.
-    includes('Local browser completed requested research cases'),null,{timeout:180000});
+   await page.waitForFunction(()=>{
+    const s=document.querySelector('#status')?.textContent||'';
+    return s.includes('Local browser completed requested research cases')||
+      s.includes('BLOCKED:');
+   },null,{timeout:180000});
+   const state=(await page.locator('#status').textContent())||'';
+   assert.match(state,/Local browser completed requested research cases/,
+    'actual four-photo local model path blocked: '+state);
    assert.equal(await page.locator('#rows li').count(),4,'4 genuine CPU native dual-model photos');
    await page.getByRole('button',{name:'Test model cancellation'}).click();
    await page.waitForFunction(()=>document.querySelector('#rows')?.children?.length===5,null,{timeout:90000});
