@@ -116,7 +116,16 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     let verifiedColor76=!outfitColor76,colorNote76=null;
     if(outfitColor76){
      const sourceProof=await job.sourceDigest;
-     if(job!==outfitSplitJob||job.ownerId!==unit70Owner())return;
+     if(job!==outfitSplitJob)return;
+     // SHA computation can yield between model delivery and draft admission.
+     // A replaced same-ID login is no longer authorized to receive the old
+     // JPEG's color/segmentation result even though the textual owner ID agrees.
+     if(job.ownerId!==unit70Owner()||
+       (outfitInstances840&&job.ownerRef88&&captureOwner88()!==job.ownerRef88)){
+      if(outfitInstances840){lastOutfitPhoto='';lastOutfitOwner88=null;}
+      finishOutfitSplit(job,'Owner session changed during photo verification. No further pieces were added.',true);
+      return;
+     }
      const color=p.colorResearch76,valid=sourceProof&&color&&color.ownerId===job.ownerId&&color.requestId===job.id&&
        /^[a-f0-9]{64}$/.test(color.maskSha256||'')&&
        sourceProof===p.reconciliation70?.sourceSha256&&sourceProof===color.sourceSha256&&
