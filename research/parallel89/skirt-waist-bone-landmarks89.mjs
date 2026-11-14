@@ -10,7 +10,7 @@ import * as THREE from 'three';
 const code=reason=>Object.freeze({
  schema:'P89-public-anatomical-waist-bone-attachment-audit/v1',
  status:'ORIGINAL_RIG_WAIST_SOURCE_NOT_VERIFIED',reason,
- 2dFallbackRequired:true,consumer3DAdmitted:false,releaseAuthorized:false,
+ originalPhoto2DFallbackRequired:true,consumer3DAdmitted:false,releaseAuthorized:false,
  familyAlpha:'HOLD'
 });
 const finite=n=>Number.isFinite(n);
@@ -47,7 +47,7 @@ export function auditOriginalSkirtWaistBoneAttachment89({root,skirt,avatar}={}){
    sourceVerticalHeightMeters:round(c.y),
    differenceBelowOriginalPhotoSkirtTopMeters:round(waistY-c.y)
   })).sort((a,b)=>b.sourceVerticalHeightMeters-a.sourceVerticalHeightMeters);
-  const nearest=ordered.toSorted((a,b)=>
+  const nearest=ordered.slice().sort((a,b)=>
    Math.abs(a.differenceBelowOriginalPhotoSkirtTopMeters)-
    Math.abs(b.differenceBelowOriginalPhotoSkirtTopMeters)).slice(0,5);
   return Object.freeze({
