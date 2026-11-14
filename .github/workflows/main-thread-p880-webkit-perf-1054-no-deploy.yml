@@ -43,6 +43,8 @@ jobs:
           grep -q 'peakBrowserDescendantPssKiB' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q 'm11-p880-linux-proc-pss-rss-two-model-phase-v1' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q 'subtypeNeedsManualReview' public/dual-panel-82.mjs
+          grep -q 'return decision.hypotheses.filter(h=>h.label===top.label' public/dual-panel-82.mjs
+          grep -q 'P880: even with top subtype agreement' public/dual-panel-82.mjs
           grep -q 'BL' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q "familyAlpha:'HOLD'" scripts/test-main1054-webkit-phase-memory.mjs
           node --check scripts/test-main1054-webkit-phase-memory.mjs
