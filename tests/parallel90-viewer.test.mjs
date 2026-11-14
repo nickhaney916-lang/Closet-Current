@@ -54,3 +54,14 @@ test('P90 selects one original shirt research source only for verified saved boa
  // Never change the default licensed-source path for selected bottoms/legacy.
  assert.equal(source.includes("for(const denim of ['public']){"),false);
 });
+
+test('P90 research presentation profiling only reports admitted numeric stages',()=>{
+ const bridge=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ assert.ok(source.includes('renderStages90:rendered?.renderStages90||null'));
+ assert.ok(source.includes("const prepareStart90=performance.now()"));
+ assert.ok(source.includes("const applyStart90=performance.now()"));
+ assert.ok(source.includes("kind:'dress',prepareMs:0,applyMs:applyMs90"));
+ assert.ok(source.includes("kind:decision.mode,prepareMs:prepareMs90,applyMs:applyMs90"));
+ assert.match(bridge,/renderStages90:active\?data\.renderStages90\|\|null:null/);
+ assert.match(bridge,/revokeChangedSource89\(\)/);
+});
