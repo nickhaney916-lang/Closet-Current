@@ -960,7 +960,8 @@ function sourceSaveHarness88(){
   subtle:{digest:async(_,bytes)=>Uint8Array.from(createHash('sha256').update(Buffer.from(bytes)).digest()).buffer}
  },atob:s=>Buffer.from(s,'base64').toString('binary'),
   Uint8Array,structuredClone,Promise,
-  unit70OwnerEvidenceValid:i=>i.reconciliation70?.ownerId===c.window.closetAuth.user?.id,
+  unit70OwnerEvidenceValid:i=>i.reconciliation70?.ownerId===c.window.closetAuth.user?.id&&
+   (i.reconciliation70Status!=='paired_confirmed'||i.category==='Shoes'),
   queued:async fn=>{await c.beforeWrite?.();return fn();}
  };
  vm.createContext(c);
@@ -1003,5 +1004,27 @@ test('P88 changed original JPEG or mask receipt cannot use earlier owner photo p
  item.originalPhoto={image:jpeg};
  item.reconciliation70={...item.reconciliation70,maskSha256:'b'.repeat(64)};
  await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_STALE_SOURCE_OWNER/);
+ assert.equal(writes.length,0);
+});
+
+test('P88 owner-approved shoe category permits paired save, but pre-edit category cannot falsely veto it',async()=>{
+ const {c,item,writes}=sourceSaveHarness88();
+ item.category='Uncategorized';
+ item.reconciliation70Status='paired_confirmed';
+ item.shoePair={confirmedByOwner:true,companion:{reconciliation70:{
+  ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,maskSha256:'b'.repeat(64)}}};
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ await c.saveSourceBoundPiece88({...item,category:'Shoes'},[],lease);
+ assert.deepEqual(writes.map(x=>x.name),['items','state']);
+});
+test('P88 paired physical unit refuses mismatched owner category at private write',async()=>{
+ const {c,item,writes}=sourceSaveHarness88();
+ item.category='Uncategorized';
+ item.reconciliation70Status='paired_confirmed';
+ item.shoePair={confirmedByOwner:true};
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ await assert.rejects(c.saveSourceBoundPiece88({...item,category:'Tops'},[],lease),/P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0);
 });
