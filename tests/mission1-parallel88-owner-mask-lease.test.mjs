@@ -62,11 +62,11 @@ function captureHarness(){
    requiresOwnershipConfirmation:!!options.outfitSourceId});return true;},
   render(){c.renderOutfitCapture();},switchView(){},structuredClone,
   closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),
-  Worker:class{postMessage(request){this.request=request;}terminate(){this.closed=true;}}
+  Worker:class{constructor(){c.worker=this;}postMessage(request){this.request=request;}terminate(){this.closed=true;}}
  };
  vm.createContext(c);vm.runInContext(captureSource,c);
  c.startOutfitSplit('data:image/jpeg;base64,ORIGINAL');
- return {c,node,emit:part=>c.outfitSplitJob?.worker?.onmessage({data:{id:c.outfitSplitJob.id,...part}})};
+ return {c,node,emit:part=>c.worker?.onmessage({data:{id:c.worker.request.id,...part}})};
 }
 function allowSaving(item){
  const start=appSource.indexOf('function ownerMaySaveSourceGroup88(');
@@ -90,7 +90,7 @@ test('P88 only explicit trial worker carries unresolved-accepted-fragment reason
 });
 test('P88 native capture preserves original JPEG, unresolved hint and unsaved owner draft',()=>{
  const h=captureHarness();
- assert.equal(h.c.outfitSplitJob.worker.request.instanceReview840,true);
+ assert.equal(h.c.worker.request.instanceReview840,true);
  const piece={image:'data:image/jpeg;base64,PIECE',recognitionPhoto:{image:'data:image/jpeg;base64,CROPPED'},
   hint:{categories:['Tops'],types:[],clipped:false,componentReviewStatus:'unresolved_fragments_keep_source_mask'},
   requiresReview:true};
