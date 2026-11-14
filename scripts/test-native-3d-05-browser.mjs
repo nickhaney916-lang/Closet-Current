@@ -8,7 +8,10 @@ import {createServer} from 'node:http';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
+import {checkViewer90} from './check-parallel90-interactions.mjs';
+const engine90=process.env.P90_ENGINE||'chromium';
+assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
 const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
@@ -135,11 +138,11 @@ function authHttp(route){
  external.push({kind:'unrecognized-auth',method:req.method()});return route.abort();
 }
 try{
- for(const width of [320,390,430]){
+ for(const width of (process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430])){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
   // 163-bone canvas contexts, renderer memory and stale browser navigation.
-  browser=await chromium.launch({headless:true,args:[
-   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browser=await ({chromium,webkit})[engine90].launch({headless:true,args:engine90==='chromium'?[
+   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']:[]});
   const ctx=await browser.newContext({viewport:{width,height:920},deviceScaleFactor:1,
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await ctx.route('**/*',route=>{
@@ -262,9 +265,10 @@ try{
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
   await page.locator('#native3D05Preview').click();
+  if(process.env.P90==='1')page.on('console',m=>{if(m.type()==='error')console.error('P90 console',m.text());});
   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
    window.native3D05Bridge.state().viewerMode==='dress'&&
-   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   window.native3D05Bridge.state().bones===163,null,{timeout:150000}).catch(async e=>{console.error('P90_LOAD_DIAGNOSTIC',await page.evaluate(()=>({native:document.getElementById('native3D05Status')?.textContent,donor:document.getElementById('outfit3D01Status')?.textContent,state:window.native3D05Bridge?.state()})));throw e;});
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
@@ -283,6 +287,7 @@ try{
   await take(page,width,'03-genuine-163-bone-side-dress');
   await page.locator('#outfit3D01Back').click();
   await take(page,width,'04-genuine-163-bone-rear-neutral');
+  if(process.env.P90==='1')await checkViewer90(page,width,engine90);
   if(native89&&width===390){
    // NATIVE89: actual source/owner viewer is already WebGL READY. A native
    // saved outfit selection change must revoke its previously visible
@@ -587,7 +592,7 @@ try{
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
  const result={priority:'NATIVE-3D-05',cases:3,screenshots:15,
-  browser:'chromium',widths:[320,390,430],
+  browser:engine90,widths:[320,390,430],
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
   realSignedRLS:false,originalUserSavedStateUnmodified:true,

@@ -216,6 +216,13 @@ export async function mountNative3D05({
  };
  doc.addEventListener('visibilitychange',onBackground102);
  doc.addEventListener('freeze',onFreeze102);
+ // Context loss ends photo admission; explicit reopen re-attests source.
+ const onContextLost90=e=>{
+  if(e.target?.id!=='outfit3D01Canvas'||closed||cleaning)return;
+  e.preventDefault();
+  cleanup('3D graphics interrupted · original-photo Outfit Builder preserved; reopen to verify source');
+ };
+ doc.addEventListener('webglcontextlost',onContextLost90,true);
  win.addEventListener('closet:alpha-session-changed',invalidate);
  win.addEventListener('pagehide',invalidate);
  doc.getElementById('logout').addEventListener('click',logout,true);
@@ -334,6 +341,8 @@ export async function mountNative3D05({
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
+   camera90:active?data.camera90||null:null,
+   resources90:active?{geometries:data.geometries,textures:data.textures,frames:data.frames}:null,
    photoOnlyUnsupported:true,donorWriteControlsDisabled:true,
    actualConsumerSavePathUnchanged:true,productionEnabled:false,
    realSignedAccountsVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
@@ -343,6 +352,7 @@ export async function mountNative3D05({
   if(closed)return;closed=true;
   doc.removeEventListener('visibilitychange',onBackground102);
   doc.removeEventListener('freeze',onFreeze102);
+  doc.removeEventListener('webglcontextlost',onContextLost90,true);
   win.removeEventListener('closet:alpha-session-changed',invalidate);
   win.removeEventListener('pagehide',invalidate);
   doc.getElementById('logout').removeEventListener('click',logout,true);
