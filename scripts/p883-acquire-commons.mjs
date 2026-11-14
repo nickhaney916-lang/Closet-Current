@@ -119,8 +119,8 @@ for(const task of plan.searches){
 const summary=reportCandidates883(discovered,exposed,{planQueries:plan.searches.length,
  querySuccesses:requests.success,failures});
 await mkdir('research/mission1-expanded-photos-883',{recursive:true});
-await writeFile('research/mission1-expanded-photos-883/runtime-new-candidates-UNLABELED-EXPOSED.json',JSON.stringify(discovered,null,2)+'\\n');
-await writeFile('research/mission1-expanded-photos-883/runtime-summary-PUBLIC.json',JSON.stringify(summary,null,2)+'\\n');
+await writeFile('research/mission1-expanded-photos-883/runtime-new-candidates-UNLABELED-EXPOSED.json',JSON.stringify(discovered,null,2)+'\n');
+await writeFile('research/mission1-expanded-photos-883/runtime-summary-PUBLIC.json',JSON.stringify(summary,null,2)+'\n');
 console.log('P883_NEW_PUBLIC_CANDIDATE_CUSTODY '+JSON.stringify(summary));
 console.log('P883_PUBLIC_UNLABELED_METADATA_RECEIPTS '+JSON.stringify(discovered));
 // All discovered URLs and candidates are newly PUBLIC DEVELOPMENT-EXPOSED.
