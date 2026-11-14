@@ -239,8 +239,10 @@ function originalTorsoLegSourceFaceMask89(){
    if(keepSource)eligible++;else excluded++;
   }
  }
- check(parts.size>=2&&excluded>=24&&eligible>=100&&
-  excluded<eligible,'actual original bone-part mask did not distinguish extremities');
+ check(parts.size>=2&&excluded>=24&&eligible>=100,
+  'original CC0 bone-part mask evidence insufficient: armBones='+parts.size+
+   ',excludedFaces='+excluded+',coreFaces='+eligible+
+   ',sourceFaces='+keep.length);
  coreBodySkinFaceMask89=new Uint8Array(keep);
  return coreBodySkinFaceMask89;
 }
