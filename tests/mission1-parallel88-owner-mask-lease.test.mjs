@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {createHash} from 'node:crypto';
 import * as segmentation from '../public/outfit-segmentation.mjs';
 import * as trial from '../public/outfit-instance-review-840.mjs';
 
@@ -57,7 +58,7 @@ function captureHarness({ownerId=null,autoStart=true,decode=null,href='https://e
   ...(ownerId?{window:{closetAuth:{user:{id:ownerId}}}}:{}),
   $:node,batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'research',
   categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
-  crypto:{randomUUID:()=> 'id-'+(++sequence),...(sourceDigest?{subtle:{digest:()=>sourceDigest}}:{})},
+  crypto:{randomUUID:()=> 'id-'+(++sequence),subtle:{digest:(_,data)=>sourceDigest||Promise.resolve(Uint8Array.from(createHash('sha256').update(Buffer.from(data)).digest()).buffer)}},
   Date:{now:()=>1000},photoToJPEG:decode||(async()=> 'data:image/jpeg;base64,NEWPHOTO'),setTimeout(fn,delay){const id=++sequence;timers.set(id,{fn,delay});return id;},
   clearTimeout:id=>timers.delete(id),stopCamera(){},controls(){},
   candidate(image,options){c.batch.push({id:'piece-'+(++sequence),image,...options,
@@ -279,4 +280,96 @@ test('P88 source SHA await cannot reassign a split garment to a replaced same-ID
  assert.equal(h.c.items.length,0);
  assert.equal(worker.closed,true,'worker must be terminated on post-await revoked owner');
  assert.match(h.node('outfitSplitStatus').textContent,/session changed during photo verification/);
+});
+
+const originalSha70=createHash('sha256').update(Buffer.from('ORIGINAL','base64')).digest('hex');
+const optin70='https://example.test/closet?outfitInstances840=1&outfitUnits70=1';
+function pieceWithSource70(sourceSha256=originalSha70,extra={}){
+ return {
+  image:'data:image/jpeg;base64,U0hPRUxFRlQ=',
+  recognitionPhoto:{image:'data:image/jpeg;base64,Q1JPUExFRlQ='},
+  hint:{categories:['Shoes'],types:[],clipped:false},
+  instanceMethod:'connected_footwear_component',requiresReview:true,
+  reconciliation70:{sourceSha256,maskSha256:'a'.repeat(64)},
+  ...extra
+ };
+}
+test('P88 source70 recomputes the actual local original JPEG SHA before accepting a masked draft',async()=>{
+ const h=captureHarness({ownerId:'owner-A',href:optin70}),job=vm.runInContext('outfitSplitJob',h.c);
+ h.emit({type:'piece',piece:pieceWithSource70()});
+ h.emit({type:'done',count:1});
+ await job.messageQueue;
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+ assert.equal(h.c.batch[0].reconciliation70.sourceSha256,originalSha70);
+ assert.equal(h.c.batch[0].reconciliation70.ownerId,'owner-A');
+ assert.equal(h.c.batch[0].reconciliation70Status,'unresolved');
+ assert.equal(allowSaving(h.c.batch[0]),false);
+ assert.equal(h.c.worker.closed,true);
+});
+test('P88 reject a valid-format but wrong-worker-claimed JPEG SHA before any private draft',async()=>{
+ const h=captureHarness({ownerId:'owner-A',href:optin70}),job=vm.runInContext('outfitSplitJob',h.c);
+ h.emit({type:'piece',piece:pieceWithSource70('f'.repeat(64))});
+ h.emit({type:'done',count:1});
+ await job.messageQueue;
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.worker.closed,true);
+ assert.match(h.node('outfitSplitStatus').textContent,/source did not match its original JPEG/);
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'data:image/jpeg;base64,ORIGINAL','legitimate owner may retry original');
+});
+test('P88 absent or malformed worker mask SHA cannot enter unit70 even with a matching source',async()=>{
+ for(const maskSha256 of [null,'x'.repeat(64),'f'.repeat(63),'not-hash']){
+  const h=captureHarness({ownerId:'owner-A',href:optin70}),job=vm.runInContext('outfitSplitJob',h.c);
+  h.emit({type:'piece',piece:pieceWithSource70(originalSha70,{reconciliation70:{sourceSha256:originalSha70,maskSha256}})});
+  await job.messageQueue;
+  assert.equal(h.c.batch.length,0);
+  assert.equal(h.c.items.length,0);
+  assert.equal(h.c.worker.closed,true);
+  assert.match(h.node('outfitSplitStatus').textContent,/Source proof unavailable/);
+ }
+});
+test('P88 unit70 source digest blocks early done until verified garment is admitted in exact message order',async()=>{
+ let release;
+ const suspendedDigest=new Promise(resolve=>{release=resolve;});
+ const h=captureHarness({ownerId:'owner-A',href:optin70,sourceDigest:suspendedDigest});
+ const job=vm.runInContext('outfitSplitJob',h.c);
+ h.emit({type:'piece',piece:pieceWithSource70()});
+ h.emit({type:'done',count:1});
+ for(let k=0;k<5;k++)await Promise.resolve();
+ assert.equal(h.c.batch.length,0);
+ assert.equal(vm.runInContext('outfitSplitJob',h.c),job);
+ release(Uint8Array.from(createHash('sha256').update(Buffer.from('ORIGINAL','base64')).digest()).buffer);
+ await job.messageQueue;
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.worker.closed,true);
+ assert.match(h.node('outfitSplitStatus').textContent,/1 individual clothing photos cropped/);
+});
+test('P88 preserve previously verified original photo drafts when a later unit receipt disagrees',async()=>{
+ const h=captureHarness({ownerId:'owner-A',href:optin70});
+ const job=vm.runInContext('outfitSplitJob',h.c);
+ h.emit({type:'piece',piece:pieceWithSource70()});
+ h.emit({type:'piece',piece:pieceWithSource70('b'.repeat(64),{
+  image:'data:image/jpeg;base64,VE9QUw==',
+  reconciliation70:{sourceSha256:'b'.repeat(64),maskSha256:'c'.repeat(64)}
+ })});
+ h.emit({type:'done',count:2});
+ await job.messageQueue;
+ assert.equal(h.c.batch.length,1,'verified earlier receipt must not vanish');
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+ assert.equal(h.c.batch[0].reconciliation70.sourceSha256,originalSha70);
+ assert.equal(h.c.worker.closed,true);
+});
+test('P88 unit70 cannot accept receipts if original JPEG digest is unavailable on device',async()=>{
+ const h=captureHarness({ownerId:'owner-A',href:optin70,sourceDigest:Promise.reject(Error('subtle digest unavailable'))});
+ const job=vm.runInContext('outfitSplitJob',h.c);
+ h.emit({type:'piece',piece:pieceWithSource70()});
+ await job.messageQueue;
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.worker.closed,true);
+ assert.match(h.node('outfitSplitStatus').textContent,/source did not match its original JPEG/);
 });
