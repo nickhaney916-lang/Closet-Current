@@ -13,8 +13,13 @@ vm.createContext(context);
 vm.runInContext(readFileSync('public/outfit-board-engine.js','utf8'),context);
 const cleanBoard=(board,items)=>context.cleanOutfitBoard(board,items);
 const ownerId='owner-A';
+// Mirror REAL native currentPhotoOwnerSession167(): a fresh envelope each read
+// but the exact same authenticated object, IDB connection and capture epoch.
+const authRef={user:{id:ownerId},assertCurrent(){}};
+const privateDbRef={name:'closet-current-user-'+ownerId};
 const session=()=>({authenticated:true,ownerId,epoch:7,
- privateDbName:'closet-current-user-'+ownerId});
+ privateDbName:'closet-current-user-'+ownerId,
+ authRef,privateDbRef,operationEpoch:15});
 const rawImage=(seed)=>{
  const bytes=Buffer.alloc(128,0);
  bytes[0]=255;bytes[1]=216;bytes[12]=seed;bytes[126]=255;bytes[127]=217;
@@ -47,6 +52,9 @@ test('real board slots + M3 owner source index produce only original-photo 2D pl
  assert.ok(output.slots.every(s=>s.presentationMode==='verified-original-photo-2d'));
  assert.deepEqual(items.map(x=>x.originalPhoto.image),originals);
  assert.equal(JSON.stringify(output).includes('data:image'),false);
+ assert.equal(JSON.stringify(output).includes('authRef'),false);
+ assert.equal(JSON.stringify(output).includes('privateDbRef'),false);
+ assert.equal(JSON.stringify(output).includes('operationEpoch'),false);
 });
 test('unreviewed AI suggestion cannot become an accepted owner garment',async()=>{
  const items=set();items[0].ownerReviewed=false;
@@ -184,4 +192,71 @@ test('native auth stores opaque string epoch, and it is accepted only while unch
  await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
   getSession:()=>({...session(),epoch:'x'})
  })),/signed owner session/);
+});
+
+test('M12 rejects same-owner NEW auth object even if owner, token, DB name and image stay unchanged',async()=>{
+ const items=set();let currentAuth=authRef;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),authRef:currentAuth}),
+  readOwnerItems:async()=>{currentAuth={user:{id:ownerId},assertCurrent(){}};return structuredClone(items);}
+ })),/owner session changed/);
+});
+test('M12 rejects same-name replacement private IDB connection after asynchronous original fetch',async()=>{
+ const items=set();let currentDB=privateDbRef,reads=0;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),privateDbRef:currentDB}),
+  readOwnerItems:async()=>{
+   if(++reads===2)currentDB={name:privateDbRef.name};
+   return structuredClone(items);
+  }
+ })),/owner session changed/);
+});
+test('M12 rejects capture-generation replacement with unchanged signed identity and token',async()=>{
+ const items=set();let generation=15;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),operationEpoch:generation}),
+  readOwnerItems:async()=>{generation++;return structuredClone(items);}
+ })),/owner session changed/);
+});
+test('M12 rejects same owner and token after revoked auth ref assertCurrent throws',async()=>{
+ const items=set(),revoked={user:{id:ownerId},assertCurrent(){throw Error('session invalid');}};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),authRef:revoked})
+ })),/signed owner session/);
+});
+test('M12 never accepts owner-only lease, wrong owner reference, wrong DB ref or absent generation',async()=>{
+ const items=set();
+ for(const bad of [
+  {authRef:null},
+  {privateDbRef:null},
+  {operationEpoch:undefined},
+  {operationEpoch:-1},
+  {operationEpoch:'x'},
+  {authRef:{user:{id:'owner-B'}}},
+  {privateDbRef:{name:'closet-current-user-owner-B'}}
+ ]){
+  await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+   getSession:()=>({...session(),...bad})
+  })),/signed owner session/);
+ }
+});
+test('M12 accepts fresh immutable wrapper each read ONLY while actual native refs remain identical',async()=>{
+ const items=set();let calls=0;
+ const result=await preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>{calls++;return {...session()};}
+ }));
+ assert.ok(calls>=4);
+ assert.equal(result.renderAuthorized3D,false);
+ assert.equal(result.status,'source-verified-2d-only');
+ assert.equal(result.releaseAuthorized,false);
+});
+test('M12 different auth after final private source read cannot publish outfit IDs or old owner photo',async()=>{
+ const items=set();let currentAuth=authRef,reads=0;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,undefined,{
+  getSession:()=>({...session(),authRef:currentAuth}),
+  readOwnerItems:async()=>{
+   if(++reads===2)currentAuth={user:{id:ownerId},assertCurrent(){}};
+   return structuredClone(items);
+  }
+ })),/owner session changed/);
 });
