@@ -697,3 +697,83 @@ if(process.env.PHOTO_DRESS_TORSO_TRIAL60==='1'){
  console.log('M2_C60_REAL_LICENSED_DISPOSABLE_TORSO_FIT_COMPARISON',
   JSON.stringify(comparison));
 }
+
+if(process.env.PHOTO_DRESS_STRAIN61==='1'){
+ assert.equal(process.env.PHOTO_DRESS_TORSO_TRIAL60,'1',
+  'C61 authenticated photo cloth strain must retain C60 original source body-contact comparison');
+ const exact=receipts.map(r=>{
+  assert.equal(r.disposablePhotographedUpperTorsoFitWorldAudit60,true);
+  assert.equal(r.genuineOriginalPhotoSurfaceStrainBudgetCompleted61,true);
+  assert.equal(r.sourceGeometryNotAlteredByStrainAudit61,true);
+  assert.equal(r.noRealFabricVisualImprovementsCertified61,true);
+  const a=r.originalArticulatedContactReceipt58;
+  assert.equal(a.completeOriginalPhotographFaceStrainAudit61,true);
+  const measurements=[a.disposableNeutralUpperTorsoTrial60,
+   ...a.disposableArticulatedUpperTorsoTrials60].map(x=>
+    x.sourceOriginalPhotoSurfaceStrain61);
+  assert.equal(measurements.length,3);
+  return measurements.map(m=>{
+   assert.equal(m.schema,
+    'M2-C61-disposable-original-photo-source-triangle-strain');
+   assert.equal(m.signedOriginalSourceFacesAnalyzed,r.originalSourceFaces);
+   for(const k of ['maxOriginalPhotoWorldEdgeRelativeStrain',
+    'maxOriginalPhotoFaceNormalTurnDegrees',
+    'maxOriginalPhotoFaceAreaRelativeChange'])
+    assert.ok(Number.isFinite(m[k])&&m[k]>=0);
+   for(const k of ['sourceFacesWithTemporaryPositionDifferences',
+    'facesWithMaxEdgeStrainAbove2Percent',
+    'facesWithMaxEdgeStrainAbove5Percent',
+    'facesWithNormalTurnAbove10Degrees',
+    'facesWithAreaChangeAbove10Percent',
+    'facesWithReversedOrientation',
+    'sourceFacesDegenerateOrCollapsed'])
+    assert.ok(Number.isSafeInteger(m[k])&&m[k]>=0&&
+     m[k]<=r.originalSourceFaces);
+   assert.equal(m.originalPhotoTextureRestUVAndSkinNeverEdited,true);
+   assert.equal(m.sourceFaceLocationsOrIdentifiersWithheld,true);
+   assert.equal(m.noActualRenderedPhotorealismOrFabricPhysicsCertificate,true);
+   assert.equal(m.candidateNotAllowedInConsumer3D,true);
+   assert.equal(m.releaseAuthorized,false);
+   return m;
+  });
+ });
+ for(const row of exact.slice(1))assert.deepEqual(row,exact[0],
+  'C61 identical original photographed 163-bone source geometry must yield identical strain counts across actual 320/390/430px viewport runs');
+ const summary={
+  schema:'M2-C61-original-licensed-source-6mm-torso-surface-strain',
+  originalSourceFaces:first.originalSourceFaces,
+  sourceOnlyLicensedOriginalPublicPhotograph:true,
+  actualNativeWebGLWidths:[320,390,430],
+  originalAnatomicalSourceWorldPoses:3,
+  originalBodyCrossingTrialC60StillVerified:true,
+  perOriginalSourcePose:exact[0].map((m,i)=>({
+   poseIndex:i,
+   sourceTrianglesAnalyzed:m.signedOriginalSourceFacesAnalyzed,
+   originalTrianglesChanged:m.sourceFacesWithTemporaryPositionDifferences,
+   sourceTrianglesWithEdgeStrainAbove2Percent:
+    m.facesWithMaxEdgeStrainAbove2Percent,
+   sourceTrianglesWithEdgeStrainAbove5Percent:
+    m.facesWithMaxEdgeStrainAbove5Percent,
+   sourceTrianglesWithNormalsChangedAbove10Degrees:
+    m.facesWithNormalTurnAbove10Degrees,
+   sourceTrianglesWithAreaChangedAbove10Percent:
+    m.facesWithAreaChangeAbove10Percent,
+   sourceTriangleNormalsFlipped:m.facesWithReversedOrientation,
+   sourceTriangleDegenerateOrCollapsed:m.sourceFacesDegenerateOrCollapsed,
+   largestRelativeEdgeStrain:m.maxOriginalPhotoWorldEdgeRelativeStrain,
+   maximumNormalTurnDegrees:m.maxOriginalPhotoFaceNormalTurnDegrees,
+   maximumFaceAreaRelativeChange:m.maxOriginalPhotoFaceAreaRelativeChange,
+   provisionalMeshDistortionGuardPassed:m.provisionalMeshDistortionGuardPassed
+  })),
+  noSourcePhotoXYZUVOrTriangleIDsExported:true,
+  noTemporaryGeometryCommittedToRenderMesh:true,
+  noIndependentHumanRealismOrMobileAcceptance:true,
+  noSourceCollisionOrSewingWaiver:true,
+  noContinuousClothCollisionCertificate:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-original-cloth-strain61.json',
+  JSON.stringify(summary,null,2)+'\n');
+ console.log('M2_C61_REAL_LICENSED_SOURCE_CLOTH_STRAIN_SAFE_SUMMARY',
+  JSON.stringify(summary));
+}
