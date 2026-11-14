@@ -1930,8 +1930,23 @@ export function installDisposableOriginalDressRenderPreview86({
  const sourceSnapshot=Object.entries(g.attributes).map(([name,attr])=>
   [name,attr,attr.array.slice()]);
  const sourceIndex=g.index?.array.slice()??null;
- let disposed=false,mode='original';
- const state=()=>Object.freeze({
+ let disposed=false,mode='original',materialRebindings86=0;
+ // Actual signed native preview may rebind the source's rendered material
+ // AFTER constructing the dress. Refuse imitation/fallback shaders; only
+ // the genuinely photographic dressRest/uDressImage projection is allowed.
+ const syncPhotoMaterial86=()=>{
+  const current=mesh.material,sourceShader=current?.onBeforeCompile?.toString();
+  if(!current?.isMeshStandardMaterial||
+   !sourceShader?.includes('uDressImage')||
+   !sourceShader?.includes('dressRest'))
+   fail('P86 actual source viewer material is not the original photographic projection shader');
+  if(overlay.material!==current){
+   overlay.material=current;materialRebindings86++;
+  }
+ };
+ const state=()=>{
+  if(!disposed)syncPhotoMaterial86();
+  return Object.freeze({
   schema:'M2-P86-real-photo-shader-world-candidate-static-render-A-B',
   mode:disposed?'disposed':mode,
   original163BoneSkinnedSource:true,
@@ -1940,6 +1955,8 @@ export function installDisposableOriginalDressRenderPreview86({
   originalSourceClothWitnessFaces:poseWitnesses.size,
   candidateGeometryRenderedAsStaticSourceWorldPose:true,
   originalPhotographicMaterialInstanceShared:overlay.material===mesh.material,
+  finalSourcePhotoShaderUsesOriginalDressRestAndImage86:!disposed,
+  sourceViewerMaterialRebindingsHandled86:materialRebindings86,
   originalPhotoRestAttributesCopiedNotChanged:true,
   updatedCloneNormalsOnly:true,
   maxPreviewWorldRoundtripMeters:maxPositionRoundtripMeters,
@@ -1950,7 +1967,8 @@ export function installDisposableOriginalDressRenderPreview86({
   candidateContinuousMotionTested:false,
   ownerPhotorealismApproved:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
- });
+  });
+ };
  const checkSource=()=>{
   if(!sourceSnapshot.every(([name,attr,bytes])=>
    g.getAttribute(name)===attr&&bytes.length===attr.array.length&&
@@ -1976,6 +1994,7 @@ export function installDisposableOriginalDressRenderPreview86({
   if(disposed||mesh.parent!==parent||!['original','candidate'].includes(next))
    fail('P86 stale or invalid owner scene; candidate must not persist');
   checkSource();
+  syncPhotoMaterial86();
   mesh.visible=next==='original'?originalVisible:false;
   overlay.visible=next==='candidate';
   mode=next;
