@@ -1,4 +1,4 @@
-/** MAIN1054: true native clothingFields plus M1 P875 policy in browser.
+/** MAIN1054 M10: true native clothingFields plus P880 top-only policy in browser.
  * Generated decoded JPEG fixtures and synthetic owners; NEVER real customer
  * data, hosted cloud, model inference, physical phones or deploy.
  */
@@ -77,7 +77,8 @@ window.stage1054=async({hash=true,segmented=false,owned=false,owner='owner-A',mo
      else if(window.mode1054==='conflict')score=k===(i?'Casual dress':'Shorts')?1:score;
      else if(window.mode1054==='tied')score=k==='Shorts'||k==='Skirt'?1:score;
      else if(window.mode1054==='one-sided'&&i)score=k==='Skirt'?1:k==='Jeans'?.96:k==='Trousers'?.95:k==='Leggings'?.94:k==='Joggers'?.93:score;
-     else score=k===(i?'Skirt':'Shorts')?1:k===(i?'Shorts':'Skirt')?.96:score;
+     else if(window.mode1054==='subtype-conflict')score=k===(i?'Skirt':'Shorts')?1:k===(i?'Shorts':'Skirt')?.96:score;
+     else score=k==='Shorts'?1:k==='Skirt'?.96:score;
      return {label:c.label,score};
     })}));
   return {schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,
@@ -144,6 +145,7 @@ try{
      await page.getByRole('checkbox',{name:/One garment is isolated/}).check();
      await page.getByRole('button',{name:'Compare with two models'}).click();
      await page.getByRole('button',{name:/Use Shorts/}).waitFor({timeout:12000});
+     assert.equal(await page.getByRole('button',{name:/Use Skirt/}).count(),0,'P880 MUST suppress shared lower-ranked Skirt shortcut');
      await page.getByRole('button',{name:/Use Shorts/}).click();
      assert.equal((await page.evaluate(()=>window.result1054())).draft,'Unknown');
      await page.getByRole('checkbox',{name:/I compared the original photo/}).check();
@@ -162,6 +164,17 @@ try{
      assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);
      assert.equal((await page.evaluate(()=>window.result1054())).draft,'Unknown');
      results.push({engine:engineName,width,case:'cross-category disagreement abstains, no write',pass:true});
+     // P879: two distinct families with Shorts vs Skirt top rankings
+     // cannot offer an AI shortcut despite overlapping top-five lists.
+     f=await page.evaluate(()=>window.stage1054({mode:'subtype-conflict'}));assert.equal(f.mounted,true);
+     await page.getByRole('checkbox',{name:/I consent to a local two-model/}).check();
+     await page.getByRole('checkbox',{name:/One garment is isolated/}).check();
+     await page.getByRole('button',{name:'Compare with two models'}).click();
+     await page.getByText(/disagree on the clothing subtype/).waitFor({timeout:12000});
+     assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);
+     assert.equal((await page.evaluate(()=>window.result1054())).draft,'Unknown');
+     assert.equal((await page.evaluate(()=>window.result1054())).writes,0);
+     results.push({engine:engineName,width,case:'P879 top subtype disagreement with shared ranks has zero AI shortcuts',pass:true});
      // P876: two agreeing model families may still suggest the WRONG
      // physical subtype. The historical public sneaker->Ankle boots confusion
      // must be MANUAL ONLY, while jointly supported Sneakers remains optional.
@@ -169,11 +182,11 @@ try{
      await page.getByRole('checkbox',{name:/I consent to a local two-model/}).check();
      await page.getByRole('checkbox',{name:/One garment is isolated/}).check();
      await page.getByRole('button',{name:'Compare with two models'}).click();
-     await page.getByRole('button',{name:/Use Sneakers/}).waitFor({timeout:12000});
-     assert.equal(await page.getByRole('button',{name:/Use Ankle boots/}).count(),0);
+     await page.getByText(/No jointly supported low-risk subtype/).waitFor({timeout:12000});
+     assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0,'P880 cannot offer runner-up Sneakers after high-risk Ankle boots top');
      assert.equal((await page.evaluate(()=>window.result1054())).draft,'Unknown');
      assert.equal((await page.evaluate(()=>window.result1054())).writes,0);
-     results.push({engine:engineName,width,case:'P876 high-risk Ankle boots auto-choice veto; safe manual Sneakers review option remains',pass:true});
+     results.push({engine:engineName,width,case:'P880 high-risk Ankle boots blocks all AI shortcuts including lower-ranked Sneakers',pass:true});
      // A source SHA mismatch, a segmented garment or already-saved record
      // cannot mount the dual-model runner.
      for(const [label,opt] of [['forged-original',{hash:false}],['segmented',{segmented:true}],['saved',{owned:true}]]){
@@ -195,12 +208,12 @@ try{
   }finally{await browser.close();}
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
- assert.equal(results.length,48); // six 8-scenario sets
+ assert.equal(results.length,54); // six 9-scenario sets
  assert.equal(screens.length,6);
  await writeFile(out+'/results.json',JSON.stringify({status:'PASS',total:results.length,results,screens,
   genuineModelsRun:false,modelBytesInstalled:false,realClothingPhotos:false,
   physicalPhones:false,hostedCloud:false,autoSaved:false,releaseAuthorized:false,
   familyAlpha:'HOLD'},null,2));
- console.log('MAIN1054 M6 48/48 native-editor two-model P876 high-risk policy cases passed; 6 synthetic screenshots; NO model inference or deploy');
+ console.log('MAIN1054 M10 54/54 native-editor P880 exact jointly top-ranked low-risk subtype policy cases passed; 6 synthetic screenshots; NO model inference or deploy');
 }catch(e){console.error('MAIN1054 M4 browser gate failed',String(e),JSON.stringify(errors));process.exitCode=1;}
 finally{await new Promise(done=>server.close(done));}
