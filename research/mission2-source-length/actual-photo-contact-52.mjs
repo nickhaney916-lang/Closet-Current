@@ -1970,13 +1970,25 @@ export function installDisposableOriginalDressRenderPreview86({
   });
  };
  const checkSource=()=>{
-  if(!sourceSnapshot.every(([name,attr,bytes])=>
-   g.getAttribute(name)===attr&&bytes.length===attr.array.length&&
-    bytes.every((x,i)=>x===attr.array[i]))||
-   (sourceIndex!==null&&
-    (sourceIndex.length!==g.index?.array.length||
-     !sourceIndex.every((x,i)=>x===g.index.array[i]))))
-   fail('P86 original photographed source changed during visual trial');
+  for(const [name,attr,bytes] of sourceSnapshot){
+   if(g.getAttribute(name)!==attr)
+    fail('P86 original source attribute identity changed: '+name);
+   if(bytes.length!==attr.array.length)
+    fail('P86 original source attribute length changed: '+name);
+   let drift=0;
+   for(let i=0;i<bytes.length;i++)
+    if(bytes[i]!==attr.array[i])drift++;
+   if(drift)fail('P86 original source attribute changed: '+name+
+    ' count='+drift+' (no private bytes exported)');
+  }
+  if(sourceIndex!==null){
+   if(!g.index||sourceIndex.length!==g.index.array.length)
+    fail('P86 original source index length or identity changed');
+   let drift=0;
+   for(let i=0;i<sourceIndex.length;i++)
+    if(sourceIndex[i]!==g.index.array[i])drift++;
+   if(drift)fail('P86 original source triangle index changed count='+drift);
+  }
  };
  let api=null;
  const dispose=()=>{
