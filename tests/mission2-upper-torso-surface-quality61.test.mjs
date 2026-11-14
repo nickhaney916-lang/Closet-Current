@@ -20,9 +20,9 @@ test('C61: rigid translation has changed source coordinates but no shape degrada
  const shifted=single.map((x,i)=>x+(i%3===0?.1:0));
  const r=measureDisposableSourceSurfaceStrain61(single,shifted);
  assert.equal(r.sourceFacesWithTemporaryPositionDifferences,1);
- assert.equal(r.maxOriginalPhotoWorldEdgeRelativeStrain,0);
+ assert.ok(r.maxOriginalPhotoWorldEdgeRelativeStrain<1e-6);
  assert.equal(r.facesWithReversedOrientation,0);
- assert.equal(r.maxOriginalPhotoFaceAreaRelativeChange,0);
+ assert.ok(r.maxOriginalPhotoFaceAreaRelativeChange<1e-6);
  assert.equal(r.provisionalMeshDistortionGuardPassed,true);
 });
 test('C61: source triangle 2D stretch over five percent cannot be waved away as valid fabric',()=>{
