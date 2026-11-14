@@ -20,18 +20,19 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: M12 exact immutable parent and four isolated research files
+      - name: M12 exact immutable parent and five isolated test or research files
         shell: bash
         run: |
           set -euo pipefail
           BASE=edc486c36fe6194fa30c89690c850306ceadfe92
           git merge-base --is-ancestor "$BASE" HEAD
           CHANGED="$(git diff --name-only "$BASE" HEAD)"
-          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 4
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 5
           while IFS= read -r path; do
             case "$path" in
               research/main-thread-integration-1054/source-to-outfit.mjs|\
               research/main-thread-integration-1054/source-to-outfit.test.mjs|\
+              scripts/test-main1054-native-preview-browser.mjs|\
               research/main-thread-integration-1054/MILESTONE13.md|\
               .github/workflows/main-thread-board-revision-1054-no-deploy.yml) ;;
               *) echo "M13_SCOPE_VIOLATION $path" >&2; exit 1 ;;
@@ -66,13 +67,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - name: Immutable parent, four research files, P880 review preserved
+      - name: Immutable parent, five research files, P880 review preserved
         shell: bash
         run: |
           set -euo pipefail
           BASE=edc486c36fe6194fa30c89690c850306ceadfe92
           git merge-base --is-ancestor "$BASE" HEAD
-          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 5
           git diff --exit-code "$BASE" HEAD -- public/ supabase/
           test "$(git hash-object public/dual-panel-82.mjs)" = "1a6062877be41a831cb4724448d482405ce75727"
       - name: Install only browser test runtime
