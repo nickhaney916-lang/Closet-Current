@@ -74,8 +74,9 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  garmentFitNotHumanApproved:true,
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
- screenCaptureCountExpected:18,figurePoseSamplesExpected:6,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],errors:[],offsite:[],
+ screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
+ researchOnlyRigid45ScreenCaptureCountExpected:18,
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -348,12 +349,87 @@ try{
   assert.equal(waistAnchors.consumer3DAdmitted,false);
   assert.equal(waistAnchors.releaseAuthorized,false);
   results.waistAnchorLandmarkReports.push(waistAnchors);
+  // Never show this on an owner app. Evidence is genuine ORIGINAL PHOTO
+  // source-visible 3D against the two immutable licensed skinned GLBs.
+  // Compare the +45mm candidate to the EXACT original real WebGL pixels
+  // from the same original source rig/avatar and three anatomical poses.
+  // We MUST restore the unchanged original garment after every pose.
+  const research45=registration.trials.find(t=>t.name==='front-45mm');
+  assert.ok(research45,'source-rigid 45mm trial missing');
+  assert.equal(research45.sourceRGBAndReviewAlphaBytesUnchanged,true);
+  assert.equal(research45.originalSkirtUVUnchanged,true);
+  assert.equal(research45.originalSkirtRestTriangleShapeUnchanged,true);
+  assert.equal(research45.releaseAuthorized,false);
+  for(const testPose of ['source','blend-50','relaxed']){
+   const originalWitness=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),testPose);
+   const preview=await page.evaluate(()=>
+    window.nativeP89Skirt.showOnlySourceRigidRegistration45(true));
+   assert.equal(preview.status,'ORIGINAL_PHOTO_RIGID_45MM_STATIC_RESEARCH_PREVIEW_ONLY');
+   assert.equal(preview.researchOnlySourceSkirt45mmActive,true);
+   assert.equal(preview.releaseAuthorized,false);
+   const previewContact=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),testPose);
+   const expected=research45.perPoseContacts[
+    ['source','blend-50','relaxed'].indexOf(testPose)];
+   assert.equal(previewContact.strictTransverseSourceBodyTriangleCrossings,
+    expected.trialStrictTransversePairs,
+    'actual rendered +45mm original-photo skirt has different source-body BVH than measured 45mm trial');
+   const poses=[];
+   for(const angle of [0,90,180]){
+    await page.evaluate(n=>window.nativeP89Skirt.setView(n),angle);
+    const refName=['source-skirt',engine,avatar,testPose,angle].join('-')+'.png';
+    const fromOriginal=await readFile(join(out,refName));
+    const img=await screenshot(page,['research-only-45mm-source-skirt',
+     engine,avatar,testPose,angle].join('-')+'.png');
+    const changedRGB=await changed(img,fromOriginal);
+    poses.push({angle,changedRGBChannelsAbove12:changedRGB});
+    results.research45OnlyPreviewScreenshots.push({
+     avatar,pose:testPose,angle,changedRGBChannelsAbove12:changedRGB,
+     sourceOriginalJPEG:required.skirt,
+     sourceRGBAndTextureUVAndAlphaUnmodified:true,
+     trueOriginal163BoneRig:true,
+     originalPhoto2DFallbackRequired:true,
+     physicalScaleMeasured:false,
+     inferredRearFabricUnobserved:true,
+     humanVisualFitApproved:false,
+     continuouslyCollisionFree:false,
+     sourcePhotoBackHumanVerified:false,
+     consumer3DAdmitted:false,releaseAuthorized:false
+    });
+   }
+   assert.ok(poses.find(x=>x.angle===90).changedRGBChannelsAbove12>100,
+    '45mm original photo skirt registration must physically change real WebGL side pixels');
+   const restoredPreview=await page.evaluate(()=>
+    window.nativeP89Skirt.showOnlySourceRigidRegistration45(false));
+   assert.equal(restoredPreview.status,'ORIGINAL_LICENSED_PHOTO_SKIRT_FULLY_RESTORED');
+   assert.equal(restoredPreview.researchOnlySourceSkirt45mmActive,false);
+   assert.equal(restoredPreview.photoTextureUVAndOriginalRestGeometryUntouched,true);
+   assert.equal(restoredPreview.releaseAuthorized,false);
+   const back=await page.evaluate(name=>window.nativeP89Skirt.setPose(name),testPose);
+   assert.equal(back.strictTransverseSourceBodyTriangleCrossings,
+    originalWitness.strictTransverseSourceBodyTriangleCrossings,
+    'original source photographed skirt was not restored after 45mm preview');
+   const stateAfter=await page.evaluate(()=>window.nativeP89Skirt.getState());
+   assert.equal(stateAfter.researchOnlySourceRigid45PreviewActive,false);
+   assert.equal(stateAfter.originalSourceSHA256,required.skirt);
+   assert.equal(stateAfter.bones,163);
+   assert.equal(stateAfter.consumer3DAdmission,false);
+   results.research45OnlyPoseBVHChecks.push({
+    avatar,pose:testPose,
+    originalPhotoSkirtBodyContactPairs:originalWitness.strictTransverseSourceBodyTriangleCrossings,
+    45mmRenderSourceBodyContactPairs:previewContact.strictTransverseSourceBodyTriangleCrossings,
+    45mmResearchABMeasuredContactPairs:expected.trialStrictTransversePairs,
+    sourceGeometryAndRigRestored:true,originalPhoto2DFallbackRequired:true,
+    humanVisualFitApproved:false,consumer3DAdmitted:false,releaseAuthorized:false
+   });
+  }
  }
+ assert.equal(results.research45OnlyPreviewScreenshots.length,18);
+ assert.equal(results.research45OnlyPoseBVHChecks.length,6);
  assert.equal(results.waistAnchorLandmarkReports.length,2);
  assert.equal(results.registrationTrials.length,2);
  assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
- assert.equal(results.captures.length,18);
+ assert.equal(results.captures.length,36);
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
  assert.equal(results.errors.length,0,'real original source shader/crash problem');
@@ -383,6 +459,8 @@ try{
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
    sourceWaistBoneAuditStatus:results.waistAnchorLandmarkReports.map(x=>x.status),
+   researchOnly45mm3DPoseBVHMatches:results.research45OnlyPoseBVHChecks.length,
+   researchOnly45mmScreenshots:results.research45OnlyPreviewScreenshots.length,
    sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
    photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
    measuredBodyFitResearchReduction:results.measuredBodyFitTrials.map(x=>x.bestProvisionalStructuralAB?.originalStrictSkirtBodyCrossingPairSum-x.bestProvisionalStructuralAB?.trialStrictSkirtBodyCrossingPairSum||0),
