@@ -106,7 +106,7 @@ test('P881 modified mirror source, vector, identity or same-model provenance blo
 test('P881 ranking truncation, corruption and unsorted scores rejected',()=>{
  const a=fixture();a.data.rows[0].output.experiment881.meanRanking.pop();
  assert.throws(()=>audit(a),/P881_INCOMPLETE_RANK/);
- const b=fixture();b.data.rows[0].output.experiment881.mirroredRanking[0].category='Shoes';
+ const b=fixture();b.data.rows[0].output.experiment881.mirroredRanking[0].category='Tops';
  assert.throws(()=>audit(b),/P881_VOCABULARY_OR_SCORE/);
  const c=fixture();c.data.rows[0].output.experiment881.meanRanking[0].score=-1000;
  assert.throws(()=>audit(c),/P881_RANK_SORT/);
