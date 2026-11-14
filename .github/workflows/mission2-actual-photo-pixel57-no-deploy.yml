@@ -18,7 +18,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Lock verified original C56 and exactly 4 photographic pixel-source/test/CI paths
+      - name: Lock exact immutable original C56 and exactly 4 photographic pixel-source/test/CI paths
         shell: bash
         run: |
           set -eu
