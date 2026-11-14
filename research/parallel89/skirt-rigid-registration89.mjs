@@ -3,7 +3,7 @@
  *
  * The original Commons-0043 front image, UV, 343 source surface vertices,
  * all edge lengths, source skin, 163-bone CC0 anatomy, and photo backs remain
- * unchanged. A cloned geometry is shifted by 1.5/3cm in camera-forward (and
+ * unchanged. A cloned geometry is shifted by 1.5/3/4.5/6cm in camera-forward (and
  * reverse) or 2cm vertically. This tests local source garment registration,
  * NOT fabric stretching, apparel sizing, or physical garment reconstruction.
  *
@@ -16,6 +16,8 @@ const POSES=Object.freeze(['source','blend-50','relaxed']);
 const MOVES=Object.freeze([
  Object.freeze({name:'front-15mm',dx:0,dy:0,dz:.015}),
  Object.freeze({name:'front-30mm',dx:0,dy:0,dz:.030}),
+ Object.freeze({name:'front-45mm',dx:0,dy:0,dz:.045}),
+ Object.freeze({name:'front-60mm',dx:0,dy:0,dz:.060}),
  Object.freeze({name:'back-15mm',dx:0,dy:0,dz:-.015}),
  Object.freeze({name:'up-20mm',dx:0,dy:.020,dz:0}),
  Object.freeze({name:'down-20mm',dx:0,dy:-.020,dz:0})
@@ -161,6 +163,8 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    skinnedBodyVerticesNeverExported:true,
    realPhotoFrontUVAndRestSurfaceUnmodified:true,
    sourcePhotoBackStillUnobserved:true,
+   photoRegistrationCandidatesRequireIndependentPhotoFidelityReview:true,
+   maximumExploratoryOriginalWaistForwardRegistrationMeters:.06,
    allCandidatesDisposedAndRestored:true,
    originalPhoto2DFallbackRequired:true,
    continuousCollisionAndClothDynamicsCertified:false,
