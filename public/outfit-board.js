@@ -51,6 +51,46 @@ function beginOwnerBoardUiLease(){
  };
  return current()?{current}:null;
 }
+// BOARD04 can emit during async Auth/storage work. Keep its source events
+// bound to their initiating owner and attached controller.
+function beginNativeBoard04OwnerCallbacks(){
+ const lease=beginOwnerBoardUiLease();
+ if(!lease)return null;
+ let attachedConsumer=null;
+ const current=()=>lease.current()&&
+  (!attachedConsumer||nativeLossless04===attachedConsumer);
+ const onStatus=value=>{
+  if(!current())return;
+  $('boardSaveStatus').textContent=typeof value==='string'?value:
+   'Private outfit status is unavailable. Reopen Outfit Builder.';
+ };
+ const onChange=(value,{revoked}={})=>{
+  if(!current())return;
+  window.nativePhotoReadiness08Bridge?.clear();
+  if(revoked){
+   currentBoard=cleanOutfitBoard({},[]);
+   savedOutfitBoards=[];
+   nativeLossless04ClearPreview();
+   return;
+  }
+  if(!value)return;
+  currentBoard=value;
+  if(attachedConsumer&&attachedConsumer.status().active){
+   savedOutfitBoards=attachedConsumer.readOnlySnapshot().saved;
+   if(boardInitialized){syncBoardInputs();renderOutfitBoard();}
+  }
+ };
+ const attach=consumer=>{
+  if(!lease.current()){
+   try{consumer?.dispose?.();}catch{}
+   return false;
+  }
+  attachedConsumer=consumer;
+  nativeLossless04=consumer;
+  return true;
+ };
+ return {attach,current,onChange,onStatus};
+}
 function boardDraftStatus(text,retry=false){
  $('boardSaveStatus').textContent=text;$('retryBoardDraft').hidden=!retry;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=!boardConflictDraft;
@@ -77,6 +117,12 @@ window.addEventListener('beforeunload',event=>{
 window.addEventListener('closet:session-locked',()=>{
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
+ // Clear former-owner previews at lock even when late controller callbacks
+ // correctly refuse to touch the next owner's board.
+ if(nativeLossless04Active){
+  currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];
+  nativeLossless04ClearPreview();
+ }
 });
 async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
@@ -369,22 +415,17 @@ renderTrendReferences();
 const outfitBoardReady=(async()=>{
  await closetReady;
  if(nativeLossless04Active){
+  const callbacks=beginNativeBoard04OwnerCallbacks();
   try{
+   if(!callbacks)throw Error('Signed private owner is unavailable');
    if(!db)throw Error('Authenticated owner database unavailable');
    const {createNativeConsumerBoard04}=await import('../research/native-consumer-board-04/consumer-board-controller.mjs');
-   nativeLossless04=await createNativeConsumerBoard04({
-    onChange(value,{revoked}={}){
-     window.nativePhotoReadiness08Bridge?.clear();
-     if(revoked){currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];nativeLossless04ClearPreview();return;}
-     if(value){currentBoard=value;
-      if(nativeLossless04&&nativeLossless04.status().active){
-       savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
-       if(boardInitialized){syncBoardInputs();renderOutfitBoard();}
-      }
-     }
-    },
-    onStatus:message=>$('boardSaveStatus').textContent=message
+   if(!callbacks.current())return;
+   const created=await createNativeConsumerBoard04({
+    onChange:callbacks.onChange,
+    onStatus:callbacks.onStatus
    });
+   if(!callbacks.attach(created))return;
    window.nativeLossless04Bridge=nativeLossless04;
    savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
    currentBoard=nativeLossless04.view();
@@ -415,7 +456,7 @@ const outfitBoardReady=(async()=>{
     try{
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
      window.native3D05Bridge=await mountNative3D05({consumer:nativeLossless04,
-      onStatus:value=>$('boardSaveStatus').textContent=value});
+      onStatus:callbacks.onStatus});
     }catch(error){nativeLossless04Notify(error);}
    }
    // NATIVE-PHOTO-08: attach only after actual owner Outfit Builder controls
@@ -426,7 +467,7 @@ const outfitBoardReady=(async()=>{
      const {mountNativeReadiness08}=await import('../research/native-photo-readiness-08/native-readiness-panel.mjs');
      window.nativePhotoReadiness08Bridge=await mountNativeReadiness08({
       board:nativeLossless04,db,
-      onStatus:value=>$('boardSaveStatus').textContent=value
+      onStatus:callbacks.onStatus
      });
     }catch(error){nativeLossless04Notify(error);}
    }
@@ -450,7 +491,9 @@ const outfitBoardReady=(async()=>{
      window.nativeMobile09Bridge=mountNativeMobile09({board:nativeLossless04});
     }catch(error){nativeLossless04Notify(error);}
    }
-  }catch(error){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
+  }catch(error){
+   if(callbacks?.current()){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
+  }
  }else if(db){
   try{
    const state=await new Promise((resolve,reject)=>{
