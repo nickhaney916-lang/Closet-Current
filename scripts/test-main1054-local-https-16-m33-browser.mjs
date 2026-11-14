@@ -70,8 +70,20 @@ try{
       s.includes('BLOCKED:');
    },null,{timeout:180000});
    const state=(await page.locator('#status').textContent())||'';
-   assert.match(state,/Local browser completed requested research cases/,
-    'actual four-photo local model path blocked: '+state);
+   if(!/Local browser completed requested research cases/.test(state)){
+    const diagnostic=await page.evaluate(()=>({
+     finishedRows:document.querySelectorAll('#rows li').length,
+     displayedBlockedState:document.querySelector('#status')?.textContent?.
+      startsWith('BLOCKED:')===true,
+     workerErrorCode:/^P82_[A-Z_]+$/.test(window.workerError1054||'')?
+      window.workerError1054:'UNCLASSIFIED_OR_NOT_SET',
+     stage:document.querySelector('[data-dual82] [role="status"]')?.textContent?.
+      slice(0,45)||'NO_VISIBLE_STAGE'
+    }));
+    console.log('MAIN1054_M33_HTTPS_BLOCKED_DIAGNOSTIC',
+     JSON.stringify({browser:name,...diagnostic,physicalDevice:false}));
+    assert.fail('M33 exact sixteen-photo genuine owner HTTPS run BLOCKED: '+JSON.stringify(diagnostic));
+   }
    assert.equal(await page.locator('#rows li').count(),16,'16 genuine CPU native dual-model photo reviews');
    await page.getByRole('button',{name:'Test model cancellation'}).click();
    await page.waitForFunction(()=>document.querySelector('#rows')?.children?.length===17,null,{timeout:90000});
