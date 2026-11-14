@@ -1,0 +1,40 @@
+# Closet Current Mission 1 — P885 signed-policy commitment and 23-case physical-device evidence gate
+
+**Family Alpha HOLD #255 OPEN. Research-only isolated DRAFT PR, no deployment or merge.** No real private photo, owner account, hosted Supabase, production/staging, model asset, clothes classifier, 2D fallback, 3D or other mission branch was modified.
+
+## Provenance and source-verified defect
+
+Immediate immutable parent is P884 [draft PR #1122](https://github.com/nickhaney916-lang/Closet-Current/pull/1122), HEAD `29094332d0ddb7fb2dff0b30c729c7d07a156b5c`, exact [2/2 NO-DEPLOY SUCCESS #43548747209](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43548747209): 647/647 native tests, six Chromium/WebKit owner-review desktop profiles, 17/17 synthetic adversarial release evidence tests, status BLOCKED/zero trusted human blind or witnessed physical phone evidence. P884 enforced full blind 60+ source cohort **100% no wrong saves**, role separation and distinct physical photo evidence hashes. No real blind/phone/cloud receipts were supplied.
+
+Two remaining source-verifiable release-gate defects warranted an additional isolated defense, rather than another repeated development-set image model experiment:
+
+1. The `independentBlind`, `physicalDevices`, `signedCloud` Ed25519 envelopes were bound to the same source SHA, model hash and blind manifest but *not* to the **actual owner-approved accuracy policy payload**. An after-the-fact replacement owner threshold document, signed with the owner's real key, could still be paired with old independent signer records. The `approvedAt` and `scoredAt` values were self-reported and did not require the owner's **signedAt** to predate scoring.
+2. The physical device array silently ignored invalid/failing entries and accepted `realDeviceRuns>=2` independently of the listed device records. It accepted one PASS camera/closet outcome for each platform without proof that Parallel #78's **23 cases per platform** were completed; it could hide a failed iPhone test if two others passed.
+
+## P885 limited engineering work
+
+- For each signed role other than owner, require `ownerPolicyCommitmentSha256=SHA256(canonical(ownerPolicy.payload))`. The same original approved threshold payload, model, source and manifest must be independently endorsed by source-human-scorer, device operators and cloud/privacy signers. A changed threshold needs all three independent roles to re-attest, and the original historical scoring precommit remains subject to independent external custody.
+- Require chronology `approvedAt <= ownerPolicy.signedAt < independentBlind.scoredAt <= independentBlind.signedAt`, with independently signed Ed25519 documents. **Crucial limitation:** all timestamps remain signer-asserted clock strings. Matching them is a structural consistency check, **not cryptographic proof of a trusted wall-clock**. An external registrar/time-stamped immutable log must independently witness owner threshold commitment *before blind scoring*. CI cannot truthfully provide this witness.
+- Physical acceptance uses the existing independent Parallel #78 23-case matrix on **each actual phone**. For each independently evidenced Android Chrome and iPhone Safari record: `protocolVersion:'parallel78-23-v1'`, `casesRequired:23`, `casesPassed:23`, `casesFailed:0`, `casesBlocked:0`, `casesNotRun:0`. Every reported record must actually meet conditions; no silent skipping of a failure or unknown browser. `realDeviceRuns` must equal the number of declared records (at least two), and device witness SHA digests must be distinct.
+- Previous P884 full blind no-wrong-saves, signatures with four genuinely independent owner-approved public key fingerprints, no secrets in public reports, original image custody, supported owner confirmation, actual source hash and P851 role/metric gate remain unchanged. P885 cannot substitute data from CI or a browser User-Agent for physical device proof.
+- A synthetic fixture now contains a *self-consistent* owner precommit SHA copied into each other signed payload, pre/post-score signer chronology and **23/23 dummy cases** per dummy physical platform. This is deliberately labeled synthetic; it **does not** establish that any human signed, photo was truly captured, physical phone existed or 23 cases were executed.
+- Eight new negative tests cover after-the-fact policy signing, policy rollback without independent re-attestation, forged scorer precommit, post-hoc signing, 23-case incomplete physical runs, silently ignored failures, wrong/unknown platform, and the synthetic review-eligible-but-NOT-release invariant.
+
+## Real operator evidence required and how to bind it (OFF-GITHUB)
+
+1. Owner pin exact 40-hex code commit, model SHA-256, source-disjoint sealed blind SHA-256 and *full frozen threshold policy* including `noWrongSave.minimumAccuracy:1` and full 60+ sources. The owner signs policy BEFORE any blind predictions are scored. An independent registrar witness must retain a trusted immutable timestamp to prove precommit; merely typing an earlier ISO timestamp into a payload does not prove it.
+2. Compute SHA-256 over the deterministic `canonical(ownerPolicy.payload)` from `scripts/p75-dataset-core.mjs`, and include exact `ownerPolicyCommitmentSha256` in each of `independentBlind.payload`, `physicalDevices.payload`, and `signedCloud.payload` **before independently signing** each Ed25519 role record. Never reuse a role's signer key.
+3. External independent curator and **two vetted human labelers per 60+ previously unseen source-disjoint original photos** certify rights, source receipts, physical grouping, labels and blind concealment. The sealed scorer signs actual pinned predictions and all true category/subtype/primary-color/instance/footwear metrics, plus **every single source has no unnoticed wrong save**. These receipts must not be placed in the public repo.
+4. Each authorized actual Android Chrome and iPhone Safari device must finish **all 23 cases** in the P78 [physical operator protocol](https://github.com/nickhaney916-lang/Closet-Current/blob/research/parallel78-physical-mobile-photo-acceptance-HOLD/research/parallel78-physical-device/OPERATOR-PROTOCOL.md). Include genuine source JPEG SHA and owner confirmation for each save, stable repeated 1/10/25-photo handling, witnessed test artifacts, private evidence digest and 23-case numerator/denominator. Any P0/P1 or unfinished run leaves release BLOCKED. Never pretend synthetic desktop WebKit is real iPhone Safari.
+5. Independently authorized real two-owner signed-account hosted private data/RLS/backup/restore/session revocation/cross-tab test must be conducted with explicit approval; report only a source-bound cryptographically signed numeric summary, not auth tokens or owner private wardrobe pictures.
+6. Run `node scripts/m1-release-evidence-851.mjs /PRIVATE-OUTSIDE-GIT/bundle.json /PRIVATE-OUTSIDE-GIT/trusted-pins.json` after all private external evidence genuinely exists. This gate can return **EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE**, **never release/deployment authorization**. The actual pilot still requires separate owner consent and the Family Alpha HOLD #255 release decision.
+
+## Verification, release boundary
+
+`node --test tests/mission1-release-evidence-851.test.mjs`
+`P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs`
+`node scripts/m1-release-evidence-851.mjs` must emit `BLOCKED`, 0 external roles/phones/blind sources.
+`node scripts/test-p82-review-browser.mjs`: six Chromium + desktop WebKit viewport/source/consent/original-photo cases.
+Only 4 exact paths from P884 parent may change: gate script, synthetic tests, this report and its no-deploy CI workflow.
+
+**At report creation CI is pending.** Real approved blind count 0, physical device count 0, authorized signed real cloud evidence 0. All user-facing recognition experiments stay research-only; no app model promoted or source touched. Do not claim Mission 1 complete or lift HOLD #255 until genuinely external independently corroborated evidence exists.
