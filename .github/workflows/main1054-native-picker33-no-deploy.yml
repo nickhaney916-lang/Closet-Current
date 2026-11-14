@@ -44,10 +44,10 @@ jobs:
         run: node scripts/build.mjs
       - name: M33 licensed source, confirmed receipt and exact-row transaction guard
         run: node --test tests/main33-native-picker-commit.test.mjs
-      - name: Complete inherited no-deploy Node suite
-        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Actual signed-owner native picker and outfit save on both browser engines
         run: node scripts/test-main1054-native-picker33-browser.mjs
+      - name: Complete inherited no-deploy Node suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Inherited licensed source catalog Chromium and WebKit
         run: node scripts/audit-p87-catalog-crosswalk.mjs
       - name: Inherited native 2D Outfit Builder source/photo browser regression
