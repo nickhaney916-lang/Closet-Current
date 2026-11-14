@@ -159,10 +159,17 @@ export async function mountOwnerReviewedCloud146({
   if(answer===true&&!approved&&!revoked)revoke();
   cb(approved&&!revoked);
  }
+ // Keep the cancel handler adjacent to settle() for existing source-
+ // executed consent/revoke regression extraction and production behavior.
  by('owner146Cancel').onclick=()=>settle(false);
- by('owner146Approve').onclick=()=>settle(true);
- dialog.addEventListener('cancel',e=>{e.preventDefault();settle(false);});
+ try{
+  by('owner146Approve').onclick=()=>settle(true);
+  dialog.addEventListener('cancel',e=>{e.preventDefault();settle(false);});
+ }catch(error){revoke();throw error;}
  const mountFetch=localFetch;
+ // Service creation can fail after owner-private controls are inserted.
+ // Do not leave half-mounted private UI when either constructor throws.
+ try{
  backupService=createLocalRemoteFence134({
   auth:localAuth,db,baseURL:loc.origin,anonKey:'p146-synthetic-local-only',
   fetcher:mountFetch,subtle,confirmReplace:info=>decide(info,'backup'),
@@ -173,6 +180,10 @@ export async function mountOwnerReviewedCloud146({
   fetcher:mountFetch,subtle,confirmReplaceLocal:info=>decide(info,'restore'),
   onRestored:async()=>{assertLocalOwner();await onRestored();assertLocalOwner();}
  });
+ }catch(error){
+  revoke();
+  throw error;
+ }
  async function run(kind,operation){
   if(working||revoked)return;
   working=true;for(const id of buttonIds)by(id).disabled=true;
@@ -235,8 +246,15 @@ export async function mountOwnerReviewedCloud146({
   safe(()=>globalThis.window?.removeEventListener?.('pagehide',onLocked));
  }
  const onLocked=()=>revoke();
- globalThis.window?.addEventListener('closet:session-locked',onLocked,{once:true});
- globalThis.window?.addEventListener('pagehide',onLocked,{once:true});
+ // If one listener installs and the other throws, never leave a private
+ // panel or any previously attached listener mounted on an aborted factory.
+ try{
+  globalThis.window?.addEventListener('closet:session-locked',onLocked,{once:true});
+  globalThis.window?.addEventListener('pagehide',onLocked,{once:true});
+ }catch(error){
+  revoke();
+  throw error;
+ }
  return Object.freeze({
   preview:()=>by('owner146Preview')?.click(),
   revoke,
