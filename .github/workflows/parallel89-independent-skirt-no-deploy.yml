@@ -34,6 +34,7 @@ jobs:
           node --check research/parallel89/skirt-neutral-contact-trial89.mjs
           node --check research/parallel89/skirt-body-measured-fit89.mjs
           node --check research/parallel89/skirt-rigid-registration89.mjs
+          node --check research/parallel89/skirt-contact-topology89.mjs
           node --check scripts/probe-parallel89-real-skirt.mjs
           node --check tests/parallel89-skirt-source3d.test.mjs
       - name: Install test-only THREE and original JPEG/alpha sharp decoder
@@ -100,7 +101,9 @@ jobs:
           node --check research/parallel89/skirt-neutral-contact-trial89.mjs
           node --check research/parallel89/skirt-body-measured-fit89.mjs
           node --check research/parallel89/skirt-rigid-registration89.mjs
+          node --check research/parallel89/skirt-contact-topology89.mjs
           node --check tests/parallel89-skirt-rigid-registration.test.mjs
+          node --check tests/parallel89-skirt-contact-topology.test.mjs
           node --check scripts/test-parallel89-real-skirt-browser.mjs
       - name: Install pinned native WebGL and original source contact BVH dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
