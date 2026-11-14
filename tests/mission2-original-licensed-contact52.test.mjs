@@ -1143,3 +1143,52 @@ test('C60: forged original body trial request without complete C52-C59 photo lan
  }
  assert.deepEqual(original(f),snapshot);
 });
+
+const audit61=(f,opts={})=>audit60(f,{
+ refineSurfaceStrain61:true,...opts
+});
+test('C61: original licensed photo-linked THREE neutral and both 163-bone articulated source poses report complete read-only triangle strain',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),
+  before=original(f),q=f.bones.map(b=>b.quaternion.clone()),
+  r=audit61(f),a=r.originalArticulatedContactReceipt58;
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.equal(r.genuineOriginalPhotoSurfaceStrainBudgetCompleted61,true);
+ assert.equal(a.completeOriginalPhotographFaceStrainAudit61,true);
+ const strains=[a.disposableNeutralUpperTorsoTrial60,
+  ...a.disposableArticulatedUpperTorsoTrials60]
+  .map(t=>t.sourceOriginalPhotoSurfaceStrain61);
+ assert.equal(strains.length,3);
+ for(const w of strains){
+  assert.equal(w.schema,'M2-C61-disposable-original-photo-source-triangle-strain');
+  assert.equal(w.signedOriginalSourceFacesAnalyzed,4);
+  assert.ok(w.sourceFacesWithTemporaryPositionDifferences>=0);
+  assert.ok(w.maxOriginalPhotoWorldEdgeRelativeStrain>=0);
+  assert.ok(w.maxOriginalPhotoFaceNormalTurnDegrees>=0);
+  assert.ok(w.maxOriginalPhotoFaceAreaRelativeChange>=0);
+  assert.equal(w.originalPhotoTextureRestUVAndSkinNeverEdited,true);
+  assert.equal(w.sourceFaceLocationsOrIdentifiersWithheld,true);
+  assert.equal(w.noActualRenderedPhotorealismOrFabricPhysicsCertificate,true);
+  assert.equal(w.candidateNotAllowedInConsumer3D,true);
+  assert.equal(w.releaseAuthorized,false);
+ }
+ assert.equal(r.sourceGeometryNotAlteredByStrainAudit61,true);
+ assert.equal(r.noRealFabricVisualImprovementsCertified61,true);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(q[i])));
+});
+test('C61: source triangle quality claim cannot be attached to original photographed user garment without C60 provenance',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ for(const props of [
+  {refineSurfaceStrain61:true},
+  {refineSurfaceStrain61:'research'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineAnatomicalLoopLandmarks57:true,refineArticulatedContacts58:true,
+   refineBodyHeightWitnessBands59:true,refineSurfaceStrain61:true}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...props
+  }),/M2 C52 original-photo diagnostic/);
+ }
+});
