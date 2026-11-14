@@ -1,0 +1,66 @@
+name: "MAIN1054 M28 native CPU ONNX-invoked cancel and owner lock — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-native-cpu-active-run-cancel-m28-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  actual-owner-cancel-and-lock:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 13
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '2'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062
+      MAIN1054_RUN_BUDGET_MS: '540000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified M26 parent and research-only source changes
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor a46427c8b8adaa678e0624cbe146c6f97e53545e HEAD
+          git diff --exit-code a46427c8b8adaa678e0624cbe146c6f97e53545e HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-native-cpu-active-cancel-m28-browser.mjs
+          node --check research/master-consolidation-1054/cpu-wasm-review-worker-m28.mjs
+          node --check research/master-consolidation-1054/cpu-browser-request-m28.mjs
+          node --check research/master-consolidation-1054/native-cpu-active-cancel-gate-m28.mjs
+      - name: Adversarial owner cancellation, exact photo and session-lock regressions
+        run: node --test tests/master-native-cpu-active-cancel-gate-m28.test.mjs tests/master-native-cpu-cancel-gate-m27.test.mjs tests/master-native-cpu-review-gate-m25.test.mjs
+      - name: Install source-pinned CPU WASM research and desktop WebKit browser
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3
+      - name: Verify original source JPEG, model and alternative runtime byte hashes
+        shell: bash
+        run: |
+          set -eu
+          printf '%s  %s\n' \
+            0cb5ac5be2c414d5b9e361f857108630c6d6e24a5ab9be3cf5f761de55289e94 node_modules/onnxruntime-web/dist/ort.wasm.min.mjs \
+            f061472c6e77d6d50d079aacdc0ff9b63fee287ddd2cbf46cf62438d3891de2b node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm \
+            | sha256sum --check
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Actual native cancel and owner lock after both CPU workers invoke ONNX session.run
+        run: node scripts/test-main1054-native-cpu-active-cancel-m28-browser.mjs webkit
+      - name: Fail closed on orphan worker, late model results, source change or owner save
+        run: node research/master-consolidation-1054/native-cpu-active-cancel-gate-m28.mjs benchmark/main1054-native-cpu-active-cancel-m28/webkit-2-diagnostic.json "$GITHUB_SHA"
+      - name: Retain numeric-only cancellation receipts on success or failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m28-active-onnx-cpu-cancel-lock-HOLD
+          path: benchmark/main1054-native-cpu-active-cancel-m28/*.json
+          if-no-files-found: warn
+          retention-days: 14
