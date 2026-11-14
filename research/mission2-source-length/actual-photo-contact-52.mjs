@@ -1822,17 +1822,31 @@ export function auditPoseLinkedOriginalPhotoSkinnedFit88({
   toleranceMeters,opts);
  const candidate=bodyClothContact58(body,fittedWorld,originalIndex,
   toleranceMeters,opts);
+ // Existing signed C54 original correspondence and C55 edge winding:
+ // classify all source-self geometric zero pairs, but NEVER turn a source
+ // coincidence or a two-face edge into an authorized sewn seam.
+ const sourceTopology89={
+  source:sourcePosition.array,skinned:fittedWorld,rest:sourceRest,
+  skinIndex:sourceSkin,skinWeight:sourceWeight
+ };
+ sourceTopology89.edgeGraph55=sourceEdgeGraph55(
+  sourceTopology89,originalIndex,triangles);
  const self=analyze52(fittedWorld,originalIndex,triangles,
   toleranceMeters,{
     maxComparisons:800000,maxCandidatePairs:100000,maxStrictCrossings:1024,
     refineTriangleDistances53:true,maxDistanceCandidates53:100000,
-    refineSourceTopology54:false,refineEdgeWinding55:false
-   });
+    refineSourceTopology54:true,maxZeroDistanceTopologyPairs54:100000,
+    refineEdgeWinding55:true,maxEdgePairs55:100000
+   },sourceTopology89);
  const shape=measureDisposableSourceSurfaceStrain61(
   srcWorld,fittedWorld,originalIndex);
  if(!sourceImmutable())fail('P88 photographed original mesh changed during actual collision audit');
  const complete=baseline.complete&&candidate.complete&&
   self.complete&&self.distance53?.distanceRefinementComplete===true&&
+  self.topology54?.classificationComplete===true&&
+  self.edge55?.sourceEdgeAuditComplete===true&&
+  self.topology54.zeroDistancePairsClassified===
+   self.distance53.geometricZeroOrOverlapUnresolved&&
   shape.signedOriginalSourceFacesAnalyzed===triangles;
  const strictAccepted=complete&&shape.provisionalMeshDistortionGuardPassed&&
   candidate.strict===0&&self.strictCrossings===0;
@@ -1848,6 +1862,10 @@ export function auditPoseLinkedOriginalPhotoSkinnedFit88({
   sampledCandidateBodyNearOrZeroUnresolved: candidate.near,
   sampledCandidateSelfGeometricZeroOrOverlapUnresolved:
     self.distance53.geometricZeroOrOverlapUnresolved,
+  sampledCandidateSelfSourceTopology54:self.topology54,
+  sampledCandidateSelfSourceEdgeWinding55:self.edge55,
+  sourceCoincidentOrTwoFaceEdgeCannotProveSewnSeam:true,
+  secondaryGarmentSurfacesAndRimsNotAudited:true,
   completedOriginalBodyAudit:baseline.complete,
   completedCandidateBodyAudit:candidate.complete,
   completedCandidateSelfAudit:self.complete,

@@ -11,6 +11,7 @@ import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 import {validateActualSkinnedPhotoPoseContact88} from '../research/mission2-p88/sample-contact-gate.mjs';
+import {verifyActualPhotoSourceZeroTopology89} from '../research/mission2-p89/source-topology-gate.mjs';
 
 const hostRoot=resolve('.'),donor=resolve('.native05-donor-541');
 const engine=process.env.P87_ENGINE||'chromium';
@@ -120,7 +121,11 @@ try{
  assert.deepEqual(results.errors,[],'shader or script errors not allowed');
  assert.deepEqual(results.external,[],'network egress forbidden');
  results.contactGate88=validateActualSkinnedPhotoPoseContact88(results.actualFittedPoseContact88);
+ results.topologyGate89=verifyActualPhotoSourceZeroTopology89(results.actualFittedPoseContact88);
  assert.equal(results.actualFittedPoseContact88.length,6);
+ assert.equal(results.topologyGate89.status,'SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_CERTIFIED',
+  'genuine original-photo source self-contact correspondences incomplete: '+
+   JSON.stringify(results.topologyGate89.issues));
  assert.equal(results.contactGate88.status,'SAMPLED_STRICT_NONCROSSING_OBSERVED_NOT_RELEASE',
   'genuine P87 fitted source garment crossed body/self or exceeded photo strain: '+
     JSON.stringify(results.contactGate88.issues));
@@ -128,7 +133,7 @@ try{
  assert.equal(results.differences.length,18);
  assert.equal(results.screens.length,54);
  await page.evaluate(()=>window.review87.dispose());
- results.status='PASS_GENUINE_SKINNED_PHOTO_SAMPLED_CONTACT_SIX_POSES_NOT_RELEASE';
+ results.status='PASS_GENUINE_SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_RELEASE';
 }catch(e){
  results.status='BLOCKED';
  results.failure=String(e?.message||e).slice(0,2500);
@@ -138,7 +143,7 @@ try{
  await new Promise(done=>server.close(done));
  await writeFile(out+'/results.json',JSON.stringify(results,null,2)+'\n');
  console.log('M2_P87_REAL_SOURCE',JSON.stringify({status:results.status,figures:results.figures.length,
-  realSourcePoseReceipts:results.sourcePoseReceipts.length,contactGate88:results.contactGate88?.status||'BLOCKED',actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
+  realSourcePoseReceipts:results.sourcePoseReceipts.length,contactGate88:results.contactGate88?.status||'BLOCKED',topologyGate89:results.topologyGate89?.status||'BLOCKED',unresolvedZeroPairs:results.topologyGate89?.classifiedGeometricZeroPairsAcrossSixPoses??null,unresolvedUnsafeOrIndependentPairs:results.topologyGate89?.sourceIndependentOrSkinUnsafePairWitnesses??null,actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
   differences:results.differences.length,errors:results.errors.length,networkBlocked:results.external.length,
   failure:results.failure||null,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }
