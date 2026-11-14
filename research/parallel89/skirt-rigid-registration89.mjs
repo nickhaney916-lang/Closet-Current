@@ -30,7 +30,10 @@ const fail=reason=>Object.freeze({
 const eq=(a,b)=>a.length===b.length&&a.every((v,i)=>Object.is(v,b[i]));
 const validContact=c=>!!c&&Number.isSafeInteger(c.count)&&c.count>=0&&
  c.pairs instanceof Set&&c.pairs.size===c.count&&
- Number.isFinite(c.maxDepth)&&c.maxDepth>=0;
+ Number.isFinite(c.maxDepth)&&c.maxDepth>=0&&
+ c.trueOriginalSkirtTriangleIndexStable===true&&
+ c.trueOriginalBodyTriangleIndexStable===true&&
+ c.originalFaceSourceResolution==='BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES';
 function pairCounts(before,after){
  let introduced=0;
  for(const pair of after.pairs)if(!before.pairs.has(pair))introduced++;
@@ -122,6 +125,8 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     originalSkirtRestEdgeLengthUnchanged:true,
     originalSkirtRestTriangleShapeUnchanged:true,
     actual163BoneBodyTriangleBVHAcrossThreePoses:true,
+    identicalOriginalSourceFaceIDsAcrossRebuiltBVHs:true,
+    useOfBVHIndirectIndexMappingVerified:true,
     originalThreePoseStrictCrossingPairSum:original,
     trialThreePoseStrictCrossingPairSum:trial,
     introducedOriginalSourceFacePairIDs:introduced,
