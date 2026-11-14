@@ -141,7 +141,7 @@ test('P851 desktop Chromium/WebKit emulation cannot pretend to be a witnessed An
  x=syntheticSignedBundle();x.bundle.roles.physicalDevices.payload.devices[0].noWrongSave=false;x.reseal('physicalDevices');
  blocked(evaluate(x),'physical end-to-end acceptance');
  x=syntheticSignedBundle();x.bundle.roles.physicalDevices.payload.syntheticOnly=true;x.reseal('physicalDevices');
- blocked(evaluate(x),'execution count missing');
+ blocked(evaluate(x),'physical device execution count must match all reported attempts');
 });
 test('P851 owner-approved signed two-account cloud isolation is mandatory and cannot be inferred from local mocks',()=>{
  const x=syntheticSignedBundle();
