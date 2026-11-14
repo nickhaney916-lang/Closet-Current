@@ -145,8 +145,13 @@ self.onmessage=async({data:r})=>{
      latencyMs:inferenceMs}));
     verifiedModels++;
    }finally{
-    phase35=key==='fashionclip'?'CLIP_RELEASE':'SIGLIP_RELEASE';
-    await session.release();
+    // Preserve the original failed inference/preprocessor phase when normal
+    // cleanup succeeds. Only attribute RELEASE if release itself throws.
+    try{await session.release();}
+    catch(releaseError){
+     phase35=key==='fashionclip'?'CLIP_RELEASE':'SIGLIP_RELEASE';
+     throw releaseError;
+    }
    }
   }
   phase35='OUTPUT_VALIDATE';
