@@ -739,3 +739,91 @@ test('P88 reject unpair forged companion owner/mask SHA or duplicated JPEG witho
   assert.match(c.outfitUnit70Error,/companion garment|companion photo/i);
  }
 });
+
+test('P88 two rapid owner keep decisions serialize full durable snapshots without losing either decision',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ c.batch.push(h.ownerDraft('part-B'));
+ let release;
+ c.queueGate=new Promise(resolve=>{release=resolve;});
+ const first=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ const second=vm.runInContext("updateUnit70('keep',['part-B'])",c);
+ for(let i=0;i<16;i++)await Promise.resolve();
+ assert.equal(c.queuedCalls,1,'second unit decision must not start a conflicting queued write');
+ assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'separate_confirmed');
+ assert.equal(c.batch.find(x=>x.id==='part-B').reconciliation70Status,'unresolved',
+  'second decision must wait for the first transaction outcome');
+ assert.equal(c.storageWrites.length,0);
+ release();await Promise.all([first,second]);
+ assert.equal(c.storageWrites.length,2);
+ assert.deepEqual(c.storageWrites[0].batch.map(x=>x.reconciliation70Status),
+  ['separate_confirmed','unresolved']);
+ assert.deepEqual(c.storageWrites[1].batch.map(x=>x.reconciliation70Status),
+  ['separate_confirmed','separate_confirmed']);
+ assert.equal(c.batch.every(x=>x.reconciliation70Status==='separate_confirmed'),true);
+ assert.equal(c.items.length,0,'physical decisions are never automatic closet admissions');
+});
+test('P88 rapid pair then unpair commits once each in order, companion scans after its durable snapshot',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ const right=h.ownerDraft('part-B');right.image='data:image/jpeg;base64,U0hPRVJJR0hU';c.batch.push(right);
+ let release;c.queueGate=new Promise(resolve=>{release=resolve;});
+ const paired=vm.runInContext("updateUnit70('pair',['part-A','part-B'])",c);
+ const split=vm.runInContext("updateUnit70('unpair',['part-A'])",c);
+ for(let i=0;i<16;i++)await Promise.resolve();
+ assert.equal(c.queuedCalls,1);
+ assert.equal(c.batch.length,1,'unpair must not run against uncommitted pair snapshot');
+ assert.equal(c.batch[0].shoePair?.confirmedByOwner,true);
+ assert.equal(c.autoQueue.length,0);
+ release();await Promise.all([paired,split]);
+ assert.equal(c.storageWrites.length,2);
+ assert.equal(c.storageWrites[0].batch.length,1,'pair committed first');
+ assert.equal(c.storageWrites[1].batch.length,2,'two unpaired halves committed second');
+ assert.equal(c.autoQueue.length,1);
+ assert.equal(c.autoQueue[0].alreadyPersisted,true);
+ assert.equal(c.batch.length,2);
+ assert.equal(c.batch.every(x=>x.reconciliation70Status==='separate_confirmed'),true);
+ assert.equal(c.session,1);
+});
+test('P88 queued physical decision failure rolls back before next valid decision is evaluated',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ c.batch.push(h.ownerDraft('part-B'));
+ let rejectFirst;c.queueGate=new Promise((resolve,reject)=>{rejectFirst=reject;});
+ const failed=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ const later=vm.runInContext("updateUnit70('keep',['part-B'])",c);
+ for(let i=0;i<12;i++)await Promise.resolve();
+ assert.equal(c.queuedCalls,1);
+ assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'separate_confirmed');
+ c.queueGate=null;
+ rejectFirst(Error('first owner decision cloud preflight failed'));
+ await Promise.all([failed,later]);
+ assert.equal(c.storageWrites.length,1,'failed snapshot must not leak into later durable state');
+ const persisted=c.storageWrites[0].batch;
+ assert.deepEqual(persisted.map(x=>x.reconciliation70Status),
+  ['unresolved','separate_confirmed']);
+ assert.deepEqual(c.batch.map(x=>x.reconciliation70Status),
+  ['unresolved','separate_confirmed']);
+ assert.equal(c.autoQueue.length,0);
+});
+test('P88 owner click-time selection is frozen before delayed reconciliation module import',async()=>{
+ let resolveApi;const delayed=new Promise(resolve=>{resolveApi=resolve;});
+ const h=unitDecisionHarness88({apiPromise:delayed}),c=h.c;
+ c.batch.push(h.ownerDraft('part-B'));
+ c.mutableSelection=['part-A'];
+ const pending=vm.runInContext("updateUnit70('keep',mutableSelection)",c);
+ c.mutableSelection[0]='part-B';
+ resolveApi(unit70);
+ await pending;
+ assert.equal(c.storageWrites.length,1);
+ assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'separate_confirmed');
+ assert.equal(c.batch.find(x=>x.id==='part-B').reconciliation70Status,'unresolved');
+});
+test('P88 two stale same-region keep clicks do not perform duplicate owner confirmed writes',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ const a=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ const b=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ await Promise.all([a,b]);
+ assert.equal(c.storageWrites.length,1);
+ assert.equal(c.queuedCalls,1);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ assert.match(c.outfitUnit70Error,/Invalid owner review decision/);
+});
