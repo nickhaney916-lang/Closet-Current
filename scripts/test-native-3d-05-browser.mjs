@@ -2200,6 +2200,26 @@ try{
      assert.equal(pose.licensedSourceTriangleCount,witness.originalSourceFaces);
      assert.equal(pose.allFourSourceContactSweepsCompleted,true);
      assert.equal(pose.candidates.length,4);
+     assert.equal(pose.witnessLocalizedCandidates85.length,4,
+      'P85 private C58 original source witness topological hypotheses required');
+     assert.equal(pose.allFourWitnessLocalizedSweepsCompleted85,true);
+     assert.equal(pose.originalContactWitnessIdsNeverExported85,true);
+     assert.ok(pose.privateOriginalStrictClothWitnessFaceCount85>=1&&
+      pose.privateOriginalStrictClothWitnessFaceCount85<=
+       pose.candidates[0].baselineBodyStrictCrossings);
+     for(const t of pose.witnessLocalizedCandidates85){
+      assert.ok(['strict-witness-local-radial',
+       'strict-witness-local-edge-projection'].includes(t.method));
+      assert.equal(t.originalStrictWitnessFaceCount85,
+       pose.privateOriginalStrictClothWitnessFaceCount85);
+      assert.equal(t.originalSourceFaceIdsNeverExported85,true);
+      assert.equal(t.fullOriginalContactAndQualitySweepCompleted,true);
+      assert.equal(t.sourceFaceStrain61.signedOriginalSourceFacesAnalyzed,
+       witness.originalSourceFaces);
+      assert.equal(t.bodyCollisionAndC61QualityMustBeRemeasured,true);
+      assert.equal(t.candidateNotInstalledInRenderer,true);
+      assert.equal(t.releaseAuthorized,false);
+     }
      for(const t of pose.candidates){
       assert.equal(t.fullOriginalContactAndQualitySweepCompleted,true);
       assert.equal(t.originalPhotoWorldAndRestNeverModified,true);
