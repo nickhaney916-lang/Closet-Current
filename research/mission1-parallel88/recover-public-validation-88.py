@@ -130,7 +130,7 @@ def audit_accessory_ontology(data):
     import collections
     root = (ROOT / "public" / "outfit-segmentation.mjs").read_text()
     region_ids = set(map(int, re.findall(
-        r"\\{id:(\\d+),label:'[^']+',categories:\\['Accessories'\\]", root
+        r"\{id:(\d+),label:'[^']+',categories:\['Accessories'\]", root
     )))
     if region_ids != {1, 3, 8, 16, 17}:
         raise RuntimeError("Pinned model accessory output taxonomy changed: rerun an audited mapping review")
