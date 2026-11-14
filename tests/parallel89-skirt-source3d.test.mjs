@@ -11,20 +11,20 @@ const lock=manifest.find(x=>x.id==='commons-0043');
 const provisional={id:'commons-0043',sourceSHA256:SKIRT_SOURCE89.originalSHA256,
  cutoutSHA256:'f'.repeat(64),decision:'REVIEW',hasCutout:true,ownerApproved:false};
 const png=Buffer.from('89504e470d0a1a0a'+('00'.repeat(1000)),'hex');
-function blocked(input){const v=attestActualSkirt89({originalBytes:file,cutoutBytes:png,
+async function blocked(input){const v=await attestActualSkirt89({originalBytes:file,cutoutBytes:png,
  lock,work47:provisional,...input});assert.equal(v.status,'ORIGINAL_SKIRT_PHOTO_2D_REQUIRED');
  assert.equal(v.releaseAuthorized,false);return v;}
-test('source skirt is independent from licensed Commons dress even if both have lower fabric',()=>{
+test('source skirt is independent from licensed Commons dress even if both have lower fabric',async()=>{
  assert.notEqual(SKIRT_SOURCE89.originalSHA256,
   'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019');
  assert.equal(SKIRT_SOURCE89.id,'commons-0043');
  assert.equal(SKIRT_SOURCE89.license,'CC0');
  assert.equal(SKIRT_SOURCE89.independentOriginalPhotographedSkirt,true);
  assert.equal(SKIRT_SOURCE89.reconstructedFromDress,false);
- assert.equal(blocked({originalBytes:dress}).reason,'authentic-original-skirt-jpeg-sha-required');
+ assert.equal((await blocked({originalBytes:dress})).reason,'authentic-original-skirt-jpeg-sha-required');
 });
-test('no invented alpha, rights, owner confirmation, or zero-length JPEG can produce a research skirt receipt',()=>{
- assert.equal(blocked({}).reason,'exact-source-skirt-review-alpha-sha-required');
+test('no invented alpha, rights, owner confirmation, or zero-length JPEG can produce a research skirt receipt',async()=>{
+ assert.equal((await blocked({})).reason,'exact-source-skirt-review-alpha-sha-required');
  for(const input of [
   {work47:{...provisional,decision:'APPROVED'}},
   {work47:{...provisional,ownerApproved:true}},
@@ -33,7 +33,7 @@ test('no invented alpha, rights, owner confirmation, or zero-length JPEG can pro
   {lock:{...lock,sha256:'0'.repeat(64)}},
   {lock:{...lock,id:'commons-0053'}},
   {originalBytes:undefined},{cutoutBytes:undefined}
- ])blocked(input);
+ ])await blocked(input);
 });
 function sourceAlpha(){
  const width=64,height=96,alpha=new Uint8Array(width*height);
