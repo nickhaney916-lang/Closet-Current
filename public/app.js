@@ -199,6 +199,66 @@ function unit70OwnerEvidenceValid(item){
  if((item.reconciliation70Status==='paired_confirmed'||item.reconciliation70Status==='fragments_confirmed')&&!companion)return false;
  return true;
 }
+// P88: Adjust of an owner-reviewed P70 region can await learning/hash work and
+// the queued cloud preflight. Bind the final closet transaction to the SAME
+// signed user object, database, draft object, original JPEG and mask receipt.
+// A matching text owner ID alone cannot authorize a replaced login session.
+function sourceSaveLease88(item){
+ if(!item?.reconciliation70)return null;
+ const user=window.closetAuth?.user;
+ return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
+  sourceId:item.outfitSourceId,source:item.reconciliation70.sourceSha256,
+  mask:item.reconciliation70.maskSha256,receipt:item.reconciliation70,
+  original:item.originalPhoto?.image,image:item.image,
+  review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70};
+}
+function sourceSaveLeaseLive88(lease){
+ const item=lease?.item,user=window.closetAuth?.user;
+ return Boolean(lease?.user&&lease.ownerId&&lease.ownerDb&&
+  user===lease.user&&user.id===lease.ownerId&&
+  db===lease.ownerDb&&db.name==='closet-current-user-'+lease.ownerId&&
+  (lease.wasDraft?batch.includes(item):items.includes(item))&&
+  item.outfitSourceId===lease.sourceId&&
+  item.reconciliation70===lease.receipt&&
+  item.reconciliation70?.sourceSha256===lease.source&&
+  item.reconciliation70?.maskSha256===lease.mask&&
+  item.originalPhoto?.image===lease.original&&item.image===lease.image&&
+  item.recognitionPhoto?.image===lease.review&&
+  item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments&&
+  unit70OwnerEvidenceValid(item));
+}
+async function sourceSavePhotoVerified88(lease){
+ if(!sourceSaveLeaseLive88(lease)||typeof lease.original!=='string'||
+  lease.original.length>12000000||
+  !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(lease.original)||
+  !/^[a-f0-9]{64}$/.test(lease.source)||!crypto?.subtle)return false;
+ try{
+  const raw=atob(lease.original.slice('data:image/jpeg;base64,'.length));
+  const bytes=new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+  const hash=await crypto.subtle.digest('SHA-256',bytes);
+  const actual=[...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  return actual===lease.source&&sourceSaveLeaseLive88(lease);
+ }catch{return false;}
+}
+function saveSourceBoundPiece88(value,nextBatch,lease){
+ // Recheck inside queued(), AFTER cloud.beforeWrite, just before the DB write.
+ // The exact original-photo digest is independently checked before enqueueing.
+ if(!sourceSaveLeaseLive88(lease))return Promise.reject(Error('P88_STALE_SOURCE_OWNER'));
+ return queued(()=>{
+  if(!sourceSaveLeaseLive88(lease)||
+   value.originalPhoto?.image!==lease.original||value.image!==lease.image||
+   value.reconciliation70?.sourceSha256!==lease.source||
+   value.reconciliation70?.maskSha256!==lease.mask)
+   throw Error('P88_REVOKED_SOURCE_SAVE');
+  return new Promise((resolve,reject)=>{
+   const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
+   tx.objectStore('items').put(value);
+   tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
 // Mission 1 #88: unresolved SegFormer fragments are not one verified
 // physical garment. A checkbox cannot resolve mixed/fragmented source pixels.
 // A new single-garment capture is required; original unsaved photo is kept.
@@ -240,6 +300,7 @@ function adjustPhoto(item){
  let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null;
  const reviewedKeys72=new Set(['category','itemType']);
  const form=node('form'),draft=structuredClone(item);
+ const sourceLease88=sourceSaveLease88(item);
  const reviewedCore=()=>{
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
@@ -425,9 +486,22 @@ function adjustPhoto(item){
   }
   if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||!dialog.open||!batch.some(x=>x===item)||subtype80Panel&&!subtype80Panel.valid()))throw Error('P80_STALE_SAVE_SCOPE');
   if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||!dialog.open||!batch.some(x=>x===item)||dual82Panel&&!dual82Panel.valid()))throw Error('P82_STALE_SAVE_SCOPE');
-  await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
+  // P88: even a fully checked form cannot bypass a replaced same-ID owner,
+  // mutated original JPEG or swapped source-bound mask during asynchronous work.
+  if(sourceLease88&&!(await sourceSavePhotoVerified88(sourceLease88)))
+   throw Error('P88_ORIGINAL_JPEG_OR_OWNER_CHANGED');
+  await (sourceLease88?
+   saveSourceBoundPiece88(reviewed72,batch.filter(x=>x.id!==item.id),sourceLease88):
+   savePiece(reviewed72,batch.filter(x=>x.id!==item.id)));
+  // If the authenticated session changed while IDB committed, do not mutate
+  // the newly active owner's in-memory wardrobe after the old transaction.
+  if(sourceLease88&&!sourceSaveLeaseLive88(sourceLease88)){dialog.close();return;}
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
-  batch=batch.filter(x=>x.id!==item.id);await persistDraft();dialog.close();render();scheduleMemoryReview();
+  batch=batch.filter(x=>x.id!==item.id);
+  // The source-bound transaction already atomically wrote items + draft.
+  // Never queue a second generic backup against a potentially newer session.
+  if(!sourceLease88)await persistDraft();
+  dialog.close();render();scheduleMemoryReview();
  }catch{
   saveInFlight=false;
   for(const field of lockedFields)field.input.disabled=field.disabled;
