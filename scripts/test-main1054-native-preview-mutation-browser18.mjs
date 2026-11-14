@@ -10,6 +10,11 @@ import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
+// Explicit local environment fallback; CI always requires the default both engines.
+const browserSelection=process.env.MASTER_BROWSER||'both';
+assert.ok(['both','chromium','webkit'].includes(browserSelection));
+const engines=[['chromium',chromium],['webkit',webkit]].filter(([name])=>browserSelection==='both'||name===browserSelection);
+
 const root=resolve('.'),out=resolve('benchmark/main1054-native-preview-m18');
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -128,7 +133,7 @@ async function preview(page,expected){
 }
 let browser,debugPage=null,debugStage='before-browser',debugEngine=null,debugWidth=null;
 try{
- for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+ for(const [name,engine] of engines){
   browser=await engine.launch({headless:true,args:name==='chromium'?['--no-sandbox']:[]});
   try{
    for(const width of [320,390,430]){
@@ -286,17 +291,17 @@ try{
   }finally{await browser.close();browser=null;}
  }
  assert.equal(errors.length,0,'native browser JS exceptions');
- assert.equal(results.length,12);
- assert.equal(mutationCases.length,36,'M18 exact six source mutation cases per browser/width');
+ assert.equal(results.length,engines.length*6);
+ assert.equal(mutationCases.length,engines.length*18,'M18 exact six source mutation cases per browser/width');
  assert.ok(mutationCases.every(x=>x.pass===true));
- assert.equal(screens.length,6);
+ assert.equal(screens.length,engines.length*3);
  for(const image of screens)assert.equal(sha(await readFile(out+'/'+image.name)),image.sha256);
- await writeFile(out+'/results-m18.json',JSON.stringify({results,mutationCases,screens,
+ await writeFile(out+'/results-m18.json',JSON.stringify({browserSelection,results,mutationCases,screens,
   sourceFixture:'synthetic generated JPEG color panels, NOT real clothing photos',
   realModelInference:false,realPrivateCloud:false,physicalDevice:false,releaseAuthorized:false,
   familyAlpha:'HOLD'},null,2));
- console.log('MAIN1054 12/12 Chromium/WebKit native-auth photo preview scenarios passed; 6 synthetic screenshots');
- console.log('MAIN1054_M18 36/36 native-browser original-photo board, auth/DB/capture/commit revocation cases passed; baseline 12/12; synthetic signed owners and JPEGs only');
+ console.log('MAIN1054',browserSelection,results.length,'native-auth photo preview cases;',screens.length,'synthetic screenshots');
+ console.log('MAIN1054_M18',browserSelection,mutationCases.length,'source mutation cases; synthetic owners and JPEGs only');
 }catch(error){
  // The research fixture uses synthetic owners and generated JPEGs ONLY.
  // Emit redacted startup states so a browser regression is never dismissed as

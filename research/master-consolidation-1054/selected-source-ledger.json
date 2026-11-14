@@ -1,0 +1,908 @@
+[
+  {
+    "path": ".github/workflows/master-consolidation-1054-no-deploy.yml",
+    "blob": "d7eb7d3e61dddd1101868bf387dcf744d5be34ef",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": ".github/workflows/mission3-default-board-session-lock-no-deploy.yml",
+    "blob": "fc882997f64721e20b322c7af3177cbe9bf2ba6e",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-integrated-native-board04-photo-review-no-deploy.yml",
+    "blob": "4d0eb392470765c7750f4de437b6f44d0f7e1b00",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-native-board-mount-owner-no-deploy.yml",
+    "blob": "01fa9d5457b1965ce6bce432c7e65dc69e94003b",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-native-board-session-lock-no-deploy.yml",
+    "blob": "27a24120a873ef9a849c4ef4093a06b333c27ab3",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-native-board04-ui-lease-no-deploy.yml",
+    "blob": "42a35695f653993854a6e78d1c9659a447a1314e",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-outfit-board-action-owner-session-no-deploy.yml",
+    "blob": "8969d4010be4e84cf0b1b251de39e340094a8b85",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-outfit-owner-bound-card-picker-no-deploy.yml",
+    "blob": "7b1024fbb54dda5905277672c47542c33e3a25a6",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-outfit-suggestion-owner-lease-no-deploy.yml",
+    "blob": "a16ee76200bb79abacee68021311164ab6f8e0d9",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-owner-bound-backup-export-no-deploy.yml",
+    "blob": "0f6a89a79612acccb3142020c8f43e7baf0c7a82",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-owner-bound-legacy-outfit-import-no-deploy.yml",
+    "blob": "10ca1c794ac5a5638d6b00110553959c30d2bd68",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-photo-retry-exact-session-no-deploy.yml",
+    "blob": "b65f745db1f54820563b10cae73bc7cba43fa9e3",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-private-import-locked-gate-no-deploy.yml",
+    "blob": "75ecc5ece489a777cfa848e77d3392fedf226d82",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-saved-outfit-focus-owner-session-no-deploy.yml",
+    "blob": "01cf549b112f5db9f4e166b4ba1988b21c6263a6",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-style-card-owner-session-no-deploy.yml",
+    "blob": "5a6085b47d50d0a8aca9b3593500d517371903ca",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-styled-outfit-card-save-adjust-owner-no-deploy.yml",
+    "blob": "992e0156f8d350dfa21866d3ec22858b75dee760",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": ".github/workflows/mission3-stylist-submit-owner-request-no-deploy.yml",
+    "blob": "755deea2ce589500766f619df4dc648f7706aa67",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "public/app.js",
+    "blob": "5396dc9c2c75ac3e043f69268c482b6e81e7d2d1",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "public/device-acceptance-78.js",
+    "blob": "bd25038f9357457e92831e4892a48881195a8edd",
+    "exactDonorStacks": [
+      "M1"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "public/outfit-board.js",
+    "blob": "7120cc4b9d52cbf7ab4c25608dc8dd968a1aef46",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "research/mission1-physical-case-ledger-886/REPORT.md",
+    "blob": "1a37a7ed8f3b0427720c4dc28f78f16309d3e59a",
+    "exactDonorStacks": [
+      "M1"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-photo-fit/REPORT.md",
+    "blob": "e63a24c271849c0fa0e6c35833ffe926e5de2092",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/ADAPTIVE-SAFETY-REPORT.md",
+    "blob": "9e4a7ffe5feece7a16f015ae3a1af96a65910370",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/REPORT.md",
+    "blob": "e04562fe8e0e3f6d996bb067a28358b6a6e2b317",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/TRIANGLE-CONTACT-AUDIT.md",
+    "blob": "6a73f01ab6c1f1674c499353550e5b76973e4355",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/actual-photo-contact-52.mjs",
+    "blob": "70bab2187d9033e13f016adfdadb001f66de6a25",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/independent-visual-acceptance.mjs",
+    "blob": "50288662c97d1b59665853906f1adea7696b5287",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/posed-intersections.mjs",
+    "blob": "dc6eb239c6fe02b6c34701fa84dfafefc86fa749",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-arm-pose-transition65.mjs",
+    "blob": "cf8c6c0041d7f10d8869ef873787c6bca698dff8",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-dress-motion.mjs",
+    "blob": "f65c258055f6ba7942d456999a439c6622071135",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-dress-moving-surface.mjs",
+    "blob": "87cc9d9d65d126de795e906092943e555c5e0940",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-dress-receipt-lock.mjs",
+    "blob": "3646d57dd8e9462a38142fc218cbcf7f1c567cb2",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-dress-swept-body.mjs",
+    "blob": "2fd9eb5b78ba9e20caaeceb03156bea8afcfa7d7",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-length.mjs",
+    "blob": "e8d7194a6c2532a1e2177c9f36c72c48612757c4",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-projection.mjs",
+    "blob": "c23c45e837de375c1765ce36e106909f06bba9c4",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/source-texel-audit.mjs",
+    "blob": "7e8a0001429f24ae5ac669a94eea6db3fbf9d61b",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/split-edge-continuity.mjs",
+    "blob": "7a17df41daac5aa33334ccf7e7be377b8be2645b",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/upper-torso-clearance-trial60.mjs",
+    "blob": "beba29e12d7e540c7010893c2a746f77bc01499f",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/upper-torso-contact-fine-grid64.mjs",
+    "blob": "12ea84e50bd70858589eb1e782a5bc44fd69176b",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/upper-torso-contact-local-feather63.mjs",
+    "blob": "de475ddaf947b1d7f26675d7afa705ac5027ea43",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/upper-torso-fit-pareto62.mjs",
+    "blob": "7136cc6d3254f927df9ee83beb99221e50b6457f",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission2-source-length/upper-torso-surface-quality61.mjs",
+    "blob": "76f5b3ec9e7fcb584829f25f6a31b9934087bdee",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-default-board-session-lock/REPORT.md",
+    "blob": "741a8d2cf1b01586048c19790ad0508bfa01d95e",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-integrated-native-board04-photo-review/REPORT.md",
+    "blob": "1185e4140dd3d08d0b6c75d6637a967d37c6dce1",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-native-board-mount-owner/REPORT.md",
+    "blob": "613a8c0a446ef7782bf413e5fa337ebcb67e2151",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-native-board-session-lock/REPORT.md",
+    "blob": "a4eeafad81619e369a557654d9f9dbd0fc1ea4fb",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-native-board04-ui-lease/REPORT.md",
+    "blob": "0a9685c6a13344e18dc2c5effae6e32606e792e7",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-outfit-board-action-owner-session/REPORT.md",
+    "blob": "9c94183517bf7ea5739fac8674bcc8a9b3ce889c",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-outfit-card-picker-owner/REPORT.md",
+    "blob": "0c0c41b0dd08fe443a238b05708a1525c57453da",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-outfit-suggestion-owner/REPORT.md",
+    "blob": "6ec8957b51a1aa9b6d2a3f001663368a2cf90a48",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-owner-bound-legacy-outfit-import/REPORT.md",
+    "blob": "1c06be2529b8c23857580e3df4401060920b2ff5",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-photo-retry-exact-session/REPORT.md",
+    "blob": "24e719a8b8aaa346aab33b231ac48831b868c6db",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-private-backup-export/COMPLETION-AUDIT.md",
+    "blob": "db8527ce689bfad503e795b2cef4d8958cf18849",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-private-import-locked-gate/REPORT.md",
+    "blob": "7154b51330a3744277120591957525916d28554d",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-release-evidence-gate/REPORT.md",
+    "blob": "de95abfc0c937a7771c2dab253e2769dc7009e6a",
+    "exactDonorStacks": [
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-release-evidence-gate/verify.mjs",
+    "blob": "340b47d8f6c2bd12276cc69a3145f60a91e6d922",
+    "exactDonorStacks": [
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-saved-outfit-focus-owner-session/REPORT.md",
+    "blob": "5809fdc7de37bdad15c011ae2342c0298da194bb",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-styled-outfit-card-save-adjust-owner/REPORT.md",
+    "blob": "00220fe486d1ce8d74a76297eff6280d71209111",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/mission3-stylist-submit-owner-request/REPORT.md",
+    "blob": "334025fd8ddc7e98244d1db7a26dcb5580f99eeb",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "research/user-photo-to-anatomical-3d-62/silhouette-fit.mjs",
+    "blob": "bbd24cf62aa094dc36e75e77745712cb9f507f21",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/audit-mission2-actual-dress-contact52.mjs",
+    "blob": "0be75d4cd3b598879a56c115cb090625f39d82a8",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/audit-mission2-source-dress-motion.mjs",
+    "blob": "6f1357c20fb2d974f0b3ee8d929e886f8c9c489f",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/check-mission2-independent-visual.mjs",
+    "blob": "77001ca4e4bfd6f56c751603b0487912c74c67dc",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/check-mission2-visual-delta.mjs",
+    "blob": "c4619ced38b90f67176d4cd2530d4502598de593",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/install-mission2-actual-photo-contact52.mjs",
+    "blob": "c8412b9d21de2692fdb868a9f3f1b2ae406e3fbf",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/install-mission2-source-dress-motion.mjs",
+    "blob": "def004937c50a063936840eaca704f6a748adf55",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/install-mission2-source-length.mjs",
+    "blob": "a514c58251749c9e9f196ad9da0fb53b5eb9cc96",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/m1-physical-case-ledger-886.mjs",
+    "blob": "fe54ca6bf10031860715a7a8df1cb2e5673c3748",
+    "exactDonorStacks": [
+      "M1"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/m1-release-evidence-851.mjs",
+    "blob": "9d67d92496821fb8a8d3bdb29b301584ef8a2b40",
+    "exactDonorStacks": [
+      "M1"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/p75-dataset-core.mjs",
+    "blob": "abf2331bd967b8b2d45bd87e6b45944132c4bb3d",
+    "exactDonorStacks": [
+      "M1"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-main1054-dual-review-browser.mjs",
+    "blob": "764e8053825aa4712fda79a2fffe219c69a6cf74",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "scripts/test-main1054-native-preview-browser.mjs",
+    "blob": "d194e5376f02420aeac0ad83bc4af66021fc5065",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "scripts/test-main1054-native-preview-mutation-browser18.mjs",
+    "blob": "203709bba172e00049fdfb83772f5cf941ab0088",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "scripts/test-mission3-native-board-mount-owner-browser.mjs",
+    "blob": "bf4851d559f00c95cc618fcd3ca224d3128e24df",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-native-board-session-lock-browser.mjs",
+    "blob": "573ba05be4d55428b5f946c94716ab2d53ef41c9",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-native-board04-ui-lease-browser.mjs",
+    "blob": "4ec44ce75cf6f90084c2a357d3968efed306f7c5",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-outfit-card-picker-owner-browser.mjs",
+    "blob": "4e2e12f34414132996d34018ada41950045260a0",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-outfit-suggestion-owner-browser.mjs",
+    "blob": "11ba5f003c83d7a342c719878cb758c5d749b033",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-owner-bound-legacy-outfit-import-browser.mjs",
+    "blob": "3e022ab7f503a30417a9b59f09c0412b8f39753e",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-private-backup-export-owner-browser.mjs",
+    "blob": "dbcfa5117d249e7597db1cdffc0eb44e8a712736",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-saved-outfit-focus-owner-session-browser.mjs",
+    "blob": "11ee6679d3836b1e9385c4d4f065913a62d468ac",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-styled-outfit-card-save-adjust-owner-browser.mjs",
+    "blob": "1687184f6988400d7b463cc13f8089b27ddb27fa",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "scripts/test-mission3-stylist-submit-owner-request-browser.mjs",
+    "blob": "0f43e416f81e521fc1e11791ce05579f3e11de0a",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission1-release-evidence-851.test.mjs",
+    "blob": "df008c760cc089fbf800c37193970326f6361b7f",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "tests/mission2-independent-visual.test.mjs",
+    "blob": "6075a44d007adaff1e09f926b9498a7e941e8b7a",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-moving-dress-body-surfaces.test.mjs",
+    "blob": "e854e9fa2a060645b942cd78fbc29992d1840bc0",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-original-licensed-contact52.test.mjs",
+    "blob": "c3ffa33f70012c479e395ff04a5bac959a5cf858",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-source-adaptive.test.mjs",
+    "blob": "965fe5a6647e778f45e2b30adbbdf30615d4d0d9",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-source-arm-pose-transition65.test.mjs",
+    "blob": "6edf9057f134cf11267e48bbeb137d0080a16420",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-source-dress-local-continuity.test.mjs",
+    "blob": "c285b181df56522d89432a3eb41defcffff73d01",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-source-dress-motion.test.mjs",
+    "blob": "e4bcb6e99668b1ad960ba31b309bf9736a23c6d2",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-source-dress-swept-body.test.mjs",
+    "blob": "4f18e749a4201b44c44672f884a3b3b86006a7ee",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-source-length.test.mjs",
+    "blob": "7792bf173929f01e82b57704f6c92b440b1ffab5",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-triangle-contacts.test.mjs",
+    "blob": "b74c39ce730c944ffacc98f773417d7239b2d00c",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-upper-torso-clearance60.test.mjs",
+    "blob": "7c685d3fd5c7dec32d5103fc554e062adcca61cb",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-upper-torso-contact-fine64.test.mjs",
+    "blob": "169cedec6571ad68cfafa8a46568e5f72930d27f",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-upper-torso-fit-pareto62.test.mjs",
+    "blob": "1f8405815bcadf4e87268607bcda69c203b67d81",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-upper-torso-local-contact63.test.mjs",
+    "blob": "1d158c20c4d6db3d7ba864de0a3698218ed2383f",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-upper-torso-surface-quality61.test.mjs",
+    "blob": "58953240bc099a6a4bc7cc9aaff1c4b2e9216eb5",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission2-visible-acceptance.test.mjs",
+    "blob": "94054216c3698e57e1fcd4b9aece90b0be95a384",
+    "exactDonorStacks": [
+      "M2"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-edit-backup-owner-lease.test.cjs",
+    "blob": "5d77703ea5120a47f0788fce72058e17c68286e5",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "tests/mission3-native-board-mount-owner-lease.test.cjs",
+    "blob": "4fc18a41b45dd490e32a82f1052363d2bc60788c",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-native-board-session-lock.test.cjs",
+    "blob": "ae2f5cae9687b56b5cd42c6cc49c999087302615",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-native-board04-ui-lease.test.cjs",
+    "blob": "125b072f04525b2665a8ff51924e94e2026e2f73",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-outfit-card-picker-owner-lease.test.cjs",
+    "blob": "3168af828d9685543241289edddac299c0e15fb9",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-outfit-suggestion-owner-lease.test.cjs",
+    "blob": "872c29a591cf4fc77c20069a49b61c7fbfe328e4",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-owner-bound-legacy-outfit-import.test.cjs",
+    "blob": "95d0cafb9b5f09eac710b88fb9d1b098696639c1",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-private-backup-export-owner-lease.test.cjs",
+    "blob": "9915007b4ce894f37e084edc1c47f9233c7fee94",
+    "exactDonorStacks": [],
+    "resolution": "INTEGRATION_RESOLVED"
+  },
+  {
+    "path": "tests/mission3-private-import-locked-gate-v4-bridge.test.cjs",
+    "blob": "9e1e0e1d57840f522f8eaba4ee457730db610f39",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-release-evidence-gate.test.mjs",
+    "blob": "a9559cecf6429fb3f1ee392be5dd8fae99dbe632",
+    "exactDonorStacks": [
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/mission3-saved-outfit-focus-owner-session.test.cjs",
+    "blob": "fa4e331587115f69920756f9f2cfed263d0ac4cd",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/native-consumer-board-04.test.mjs",
+    "blob": "62e0d2a916f18aacc8b781480dd9c1667b481c77",
+    "exactDonorStacks": [
+      "M3",
+      "M3-evidence"
+    ],
+    "resolution": "EXACT_DONOR"
+  },
+  {
+    "path": "tests/outfit-draft-resilience.test.cjs",
+    "blob": "1fc491cedffadedfdc8a5c4b33f704e2c927dc5e",
+    "exactDonorStacks": [
+      "M3"
+    ],
+    "resolution": "EXACT_DONOR"
+  }
+]

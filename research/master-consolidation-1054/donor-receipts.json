@@ -1,0 +1,100 @@
+[
+  {
+    "pr": 1134,
+    "head_sha": "ab68cbbbd54376bbc9c099fc3504d1cc00ba632c",
+    "head": "research/mission1-physical-case-ledger-886-HOLD",
+    "base_sha": "eecbc6ac4f750954f6343407a7e7af4e69ddabc0",
+    "base": "research/mission1-precommit-physical-matrix-885-HOLD",
+    "title": "[HOLD] Mission 1 P886: genuine Git SHA and every original physical-device case evidence receipt",
+    "ci": {
+      "pr": 1134,
+      "id": 43551341271,
+      "sha": "ab68cbbbd54376bbc9c099fc3504d1cc00ba632c",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551341271"
+    }
+  },
+  {
+    "pr": 1137,
+    "head_sha": "b3835b3b3f9de943cfff100ab5af0f9d8fcee6fa",
+    "head": "research/mission2-sampled-pose-transition65-20261113-HOLD",
+    "base_sha": "e804bc4ebc86628d70244722e78c7fd3ff39e43c",
+    "base": "research/mission2-local-contact-fine-grid64-20261113-HOLD",
+    "title": "[HOLD] Mission 2 C65: six authentic photo-cloth intermediate 163-bone arm-fit collision samples",
+    "ci": {
+      "pr": 1137,
+      "id": 43551622892,
+      "sha": "b3835b3b3f9de943cfff100ab5af0f9d8fcee6fa",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551622892"
+    }
+  },
+  {
+    "pr": 1130,
+    "head_sha": "2d1a62fd75b308086d841cc918d970286128b254",
+    "head": "research/mission2-p86-end-to-end-HOLD",
+    "base_sha": "0cde1a45621910e723b33559569a08e5323fcf74",
+    "base": "research/mission2-source-fit-pareto-sweep62-20261113-HOLD",
+    "title": "research(#86): low-strain dress candidate and reversible Chromium/WebKit comparisons [HOLD]",
+    "ci": null
+  },
+  {
+    "pr": 1128,
+    "head_sha": "867075ee2e2d2fe8947fd4952d387a291958319c",
+    "head": "research/mission2-p85-source-faithful-clearance-HOLD",
+    "base_sha": "cd18e9225d35373d076b4bd9775bba36cdb3368a",
+    "base": "research/mission2-source-torso-mesh-strain61-20261113-HOLD",
+    "title": "[HOLD] Mission 2 Parallel #85: independent source-faithful 3D dress clearance Pareto audit",
+    "ci": null
+  },
+  {
+    "pr": 1135,
+    "head_sha": "6574fa71e9bbda501e161556dc2aa872920a4eb6",
+    "head": "research/mission3-private-import-gate-and-v4-bridge-20261113-HOLD",
+    "base_sha": "44c4a30012478f63f8a7d6d66ae20f2d93af1695",
+    "base": "research/mission3-owner-bound-legacy-backup-export-final-gate-20261113-HOLD",
+    "title": "[HOLD] Mission 3: deny locked imports and stale v4 private restore approvals",
+    "ci": {
+      "pr": 1135,
+      "id": 43551559909,
+      "sha": "6574fa71e9bbda501e161556dc2aa872920a4eb6",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551559909"
+    }
+  },
+  {
+    "pr": 1136,
+    "head_sha": "0b646df3b1a74d59747ea36fdd81510e5bda81c6",
+    "head": "research/mission3-release-evidence-gate-20261113-HOLD",
+    "base_sha": "8bdbb39fc54ce8bad66b59b3d1611fb771944cb6",
+    "base": "research/mission3-p146-cloud-partial-mount-revoke-20261113-HOLD",
+    "title": "[HOLD] Mission 3: fail-closed physical-device and hosted-cloud release evidence preflight",
+    "ci": {
+      "pr": 1136,
+      "id": 43551597192,
+      "sha": "0b646df3b1a74d59747ea36fdd81510e5bda81c6",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551597192"
+    }
+  },
+  {
+    "pr": 1133,
+    "head_sha": "dba3897cd2c03812985181ffa24e889e44259738",
+    "head": "research/main-thread-native-photo-mutation-browser18-HOLD",
+    "base_sha": "32dab1ded01695b57fc59d91b5043bcb91e4edb6",
+    "base": "research/main-thread-live-board-photo-lease-1054-HOLD",
+    "title": "[HOLD] MAIN1054 M18: real native browser original-photo revocation for board, auth and IDB mutations",
+    "ci": {
+      "pr": 1133,
+      "id": 43551245547,
+      "sha": "dba3897cd2c03812985181ffa24e889e44259738",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551245547"
+    }
+  }
+]

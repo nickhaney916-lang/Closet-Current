@@ -1,0 +1,542 @@
+/**
+ * Closet Current Mission 2 P2-C36 — actual P61 source dress pose-phase skirt
+ * relief on the original 163-bone THREE SkinnedMesh, research only.
+ *
+ * Unlike a shader-only fabric trick, this stages real garment vertex XYZ
+ * changes. Source JPEG RGB/alpha, dressRest/UV, skin indices/weights, material,
+ * armhole/bodice topology, original owner admission and source SHA are NEVER
+ * modified. Original source photograph front remains protected; rear is
+ * explicitly unphotographed/inferred. This is not a time-integrated
+ * cloth simulation or swept collision proof and CANNOT approve release.
+ */
+import * as THREE from 'three';
+import {requireSourceDressTemporalReceipt47} from './source-dress-receipt-lock.mjs';
+
+const DRESS_SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
+const MAX_OUTWARD=.012,MAX_DROP=.0025,MAX_DISPLACEMENT=.01235;
+// Research safeguard: no sampled mesh normal may rotate >10 degrees away
+// from its P61 photographic source normal. This is not a realism rating.
+const MAX_NORMAL_TURN_RADIANS=10*Math.PI/180;
+const originals=new WeakMap();
+const fail=m=>{throw Error('M2 C36 source dress motion '+m);};
+const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
+const smooth=(a,b,x)=>{const t=clamp((x-a)/(b-a),0,1);return t*t*(3-2*t);};
+const equal=(a,b)=>a?.length===b?.length&&a.every((v,i)=>v===b[i]);
+const getSource=mesh=>{
+ const g=mesh.geometry;
+ // Exact original P61 fabric source may deliberately use dressRest/custom
+ // photo coordinates WITHOUT conventional THREE 'uv'. Never synthesize one.
+ const attrs=['position','normal','dressRest','skinIndex','skinWeight'];
+ for(const key of Object.keys(g.attributes))
+  if(!attrs.includes(key))attrs.push(key);
+ const buffers=new Map();
+ const sourceWeights=g.getAttribute('skinWeight'),sourceBoneIDs=g.getAttribute('skinIndex');
+ if(!sourceWeights?.isBufferAttribute||!sourceBoneIDs?.isBufferAttribute||
+    sourceWeights.itemSize!==4||sourceBoneIDs.itemSize!==4)
+  fail('original source has no four bone skin channels');
+ for(let i=0;i<g.getAttribute('position').count;i++){
+  let weight=0;
+  for(let j=0;j<4;j++){
+   const value=sourceWeights.getComponent(i,j),bone=sourceBoneIDs.getComponent(i,j);
+   if(!Number.isFinite(value)||value<0||value>1||
+      !Number.isSafeInteger(bone)||bone<0||bone>=163)
+    fail('original anatomical dress bone fields invalid');
+   weight+=value;
+  }
+  if(Math.abs(weight-1)>.005)
+   fail('original anatomical dress skin weights not normalized');
+ }
+ for(const a of attrs){
+  const f=g.getAttribute(a);
+  if(!f?.isBufferAttribute||f.count!==g.getAttribute('position').count||
+     f.isInterleavedBufferAttribute)fail('original P61 skinned photo/rest/UV/normal fields required: '+a);
+  buffers.set(a,{field:f,values:f.array.slice()});
+ }
+ // The original triangle index is part of source provenance: an external
+ // topology rewrite could otherwise change normals without changing UV/skin.
+ const indexField=g.index,indexValues=indexField?.array.slice()??null;
+ const base=new THREE.BufferGeometry();
+ let baseSurfaceNormals;
+ try{
+  base.setAttribute('position',new THREE.BufferAttribute(buffers.get('position').values.slice(),3));
+  if(indexField)base.setIndex(indexField);
+  base.computeVertexNormals();
+  baseSurfaceNormals=base.getAttribute('normal')?.array.slice();
+  if(!baseSurfaceNormals||!baseSurfaceNormals.every(Number.isFinite))
+   fail('source anatomical dress has invalid baseline face normals');
+ }finally{base.dispose();}
+ return {geometry:g,attributes:buffers,material:mesh.material,
+  indexField,indexValues,baseSurfaceNormals,
+  sourceSHA:DRESS_SHA,last:buffers.get('position').values.slice(),lastNormals:buffers.get('normal').values.slice()};
+};
+const checkProvenance=(mesh,state)=>{
+ const g=mesh.geometry;
+ if(g!==state.geometry||mesh.material!==state.material||
+    mesh.skeleton?.bones.length!==163)
+  fail('original signed garment rig/source material replaced');
+ if(g.index!==state.indexField||
+    (g.index&&!equal(g.index.array,state.indexValues)))
+  fail('original source dress triangle topology changed');
+ // All initially present source attributes (including nonstandard dress
+ // photo mapping) must remain byte-identical; no missing UV is fabricated.
+ const names=Object.keys(g.attributes);
+ if(names.length!==state.attributes.size||
+    names.some(name=>!state.attributes.has(name)))
+  fail('original source photo attribute schema changed or invented UV');
+ for(const [name,expected] of state.attributes){
+  if(name==='position'||name==='normal')continue;
+  const current=g.getAttribute(name);
+  if(current!==expected.field||!equal(current.array,expected.values))
+   fail('original source photograph projection or anatomical skin changed: '+name);
+ }
+ if(!equal(g.getAttribute('position').array,state.last)||
+    !equal(g.getAttribute('normal').array,state.lastNormals))
+  fail('stale source dress geometry or unaudited external pose mutation');
+};
+/** Safe, deterministic, frame-phase-driven skirt displacement in [0,1]. */
+export function sourceDressSwayProfile({theta,t,phase}={}){
+ if(![theta,t,phase].every(Number.isFinite)||
+    theta < -Math.PI-1e-7||theta>Math.PI+1e-7||
+    t<0||t>1||phase<0||phase>1)
+  fail('finite bounded signed source skirt coordinate and phase required');
+ const front=Math.cos(theta);
+ const sideRear=1-smooth(.30,.68,front);
+ const skirtHem=smooth(.04,.94,t);
+ if(sideRear<1e-10||skirtHem<1e-10)
+  return Object.freeze({outward:0,drop:0,photographedFrontProtected:true});
+ // Smooth periodic phase field; radial displacements are ONLY outward
+ // to avoid pulling already-fitted skinned cloth through a static body.
+ // The lower-hem drift remains physically bounded (12mm + 2.5mm).
+ const wave=.5+.5*Math.sin(2*Math.PI*phase + 2.1*theta+.7*t);
+ const ripple=.55+.45*Math.cos(5*theta+.6*t-2*Math.PI*phase)**2;
+ const outward=MAX_OUTWARD*sideRear*skirtHem*wave*ripple;
+ const drop=MAX_DROP*sideRear*skirtHem**2*(.35+.65*wave);
+ return Object.freeze({outward,drop,photographedFrontProtected:false});
+}
+/**
+ * Construct one exact pose sample without mutating the original garment until
+ * every transformed vertex and source-provenance check passes. Reset from
+ * immutable P61 fitted base on EVERY sample; time cannot accumulate warps.
+ */
+export function sampleSourceDressMotion36(dress,root,{phase=0,sweptBodyAudit39=null,sweptSurfaceAudit40=null,sweptIntervalAudit41=null,sweptArticulatedAudit42=null,sweptHighCadenceAudit43=null,sweptSelfContactAudit44=null,sweptFastSelfContactAudit45=null,sweptTemporalSelfContactAudit46=null}={}){
+ const mesh=dress?.mesh,g=mesh?.geometry,p=g?.getAttribute('position');
+ if(!mesh?.isSkinnedMesh||!root?.isObject3D||
+    mesh.skeleton?.bones?.length!==163||!p?.isBufferAttribute||
+    dress.stats?.sourceId!=='commons-0053'||
+    dress.stats?.sourceSHA256!==DRESS_SHA||
+    dress.stats?.photographedDressDrape61!==true||
+    dress.stats?.originalRestPhotoCoordinatesUnchanged61!==true||
+    dress.stats?.sourceTextureAndMaterialPreserved61!==true||
+    dress.stats?.skinIndicesAndWeightsPreserved61!==true||
+    dress.stats?.releaseAuthorized!==false||
+    dress.stats?.collisionValidated!==false||
+    !Number.isFinite(phase)||phase<0||phase>1||
+    (sweptBodyAudit39!==null&&typeof sweptBodyAudit39!=='function')||
+    (sweptSurfaceAudit40!==null&&typeof sweptSurfaceAudit40!=='function')||
+    (sweptIntervalAudit41!==null&&typeof sweptIntervalAudit41!=='function')||
+    (sweptArticulatedAudit42!==null&&typeof sweptArticulatedAudit42!=='function')||
+    (sweptHighCadenceAudit43!==null&&typeof sweptHighCadenceAudit43!=='function')||
+    (sweptSelfContactAudit44!==null&&typeof sweptSelfContactAudit44!=='function')||
+    (sweptFastSelfContactAudit45!==null&&typeof sweptFastSelfContactAudit45!=='function')||
+    (sweptTemporalSelfContactAudit46!==null&&typeof sweptTemporalSelfContactAudit46!=='function'))
+  fail('current unapproved SHA-pinned P61 photographed 163-bone dress required');
+ let state=originals.get(mesh);
+ if(!state){
+  state=getSource(mesh);originals.set(mesh,state);
+ }
+ checkProvenance(mesh,state);
+ root.updateMatrixWorld(true);
+ mesh.updateWorldMatrix(true,false);
+ const rootBone=mesh.skeleton.bones.find(b=>b.name==='spine04');
+ if(!rootBone||!rootBone.isBone||!rootBone.getWorldPosition(new THREE.Vector3()).toArray().every(Number.isFinite))
+  fail('original source anatomical spine04 waist landmark required');
+ const waist=rootBone.getWorldPosition(new THREE.Vector3());
+ const original=state.attributes.get('position').values;
+ const rest=state.attributes.get('dressRest').field;
+ let hem=Infinity;
+ for(let i=0;i<rest.count;i++)hem=Math.min(hem,rest.getY(i));
+ if(!Number.isFinite(hem)||hem<-.5||hem>1.3||p.count<2000)
+  fail('authentic full length source dress and bounded rest skirt required');
+ const transition=hem+.33;
+ // C38: source-photo front is defined in the GARMENT's local anatomical
+ // frame, never relative to world +Z or the viewer/camera. Moving/turning the
+ // humanoid must not reassign front protection to a different dress panel.
+ const transform=mesh.matrixWorld;
+ const det=transform.determinant();
+ if(!Number.isFinite(det)||det<=1e-10||!transform.elements.every(Number.isFinite))
+  fail('garment world transform singular, mirrored or nonfinite');
+ const inv=transform.clone().invert();
+ const waistLocal=waist.clone().applyMatrix4(inv);
+ if(!waistLocal.toArray().every(Number.isFinite))
+  fail('original source waist unavailable in garment local frame');
+ // C38: source garment geometry can be authored in centimeters or another
+ // non-unit scale, so all phase displacements MUST be expressed in WORLD
+ // meters. Transform garment-local directions, normalize them, displace in
+ // world meters, then convert back. The photographed front selection always
+ // stays garment-local. A 163-bone rig scale must never multiply the 12mm cap.
+ const downWorld=new THREE.Vector3(0,-1,0).transformDirection(transform);
+ if(!downWorld.toArray().every(Number.isFinite))
+  fail('source anatomical down axis invalid');
+ const target=original.slice(),baseWorld=new THREE.Vector3(),
+  movedWorld=new THREE.Vector3(),movedLocal=new THREE.Vector3(),
+  radialWorld=new THREE.Vector3();
+ let moving=0,protectedFront=0,skirtVertices=0,maximum=0;
+ // P61 source-fitting state already contains bodice/shoulder moves; only
+ // front-protected, lower skirt positions can be altered here.
+ for(let i=0;i<p.count;i++){
+  const y=rest.getY(i);
+  if(y>=transition)continue;
+  const t=clamp((transition-y)/.33,0,1);
+  const j=i*3;
+  const dx=original[j]-waistLocal.x,dz=original[j+2]-waistLocal.z;
+  const radius=Math.hypot(dx,dz);
+  if(!Number.isFinite(radius)||radius<.05)
+   fail('original anatomical skirt local radial position invalid');
+  const theta=Math.atan2(dx,dz),delta=sourceDressSwayProfile({theta,t,phase});
+  skirtVertices++;
+  if(Math.cos(theta)>=.68){
+   protectedFront++;
+   if(delta.outward!==0||delta.drop!==0)
+    fail('source photographed front RGB silhouette cannot be distorted');
+  }
+  if(delta.outward===0&&delta.drop===0)continue;
+  radialWorld.set(dx/radius,0,dz/radius).transformDirection(transform);
+  if(!radialWorld.toArray().every(Number.isFinite))
+   fail('source dress radial world direction invalid');
+  baseWorld.fromArray(original,j).applyMatrix4(transform);
+  movedWorld.copy(baseWorld)
+   .addScaledVector(radialWorld,delta.outward)
+   .addScaledVector(downWorld,delta.drop);
+  movedLocal.copy(movedWorld).applyMatrix4(inv);
+  const distance=baseWorld.distanceTo(movedWorld);
+  if(!movedLocal.toArray().every(Number.isFinite)||
+     !Number.isFinite(distance)||distance>MAX_DISPLACEMENT+1e-7)
+   fail('real original photo skirt motion beyond bounded 12mm outward envelope');
+  target[j]=movedLocal.x;target[j+1]=movedLocal.y;target[j+2]=movedLocal.z;
+  moving++;maximum=Math.max(maximum,distance);
+ }
+ if(skirtVertices<100||protectedFront<100||moving<100||maximum<.0002)
+  fail('genuine source dress lower skirt motion not evidenced');
+ // Resolve normals from the staging buffer BEFORE committing new source.
+ const scratch=new THREE.BufferGeometry();
+ let newNormals,maxNormalTurnDeg=0,staticNormalsPreserved=0;
+ try{
+  scratch.setAttribute('position',new THREE.BufferAttribute(target,3));
+  if(g.index)scratch.setIndex(g.index);
+  scratch.computeVertexNormals();
+  const bentNormals=scratch.getAttribute('normal')?.array;
+  if(!bentNormals||!bentNormals.every(Number.isFinite))
+   fail('photographed source cloth stage normals not finite');
+  // P2-C36 replaced the *entire* original source normal field with THREE
+  // computed normals. Even static photo-facing bodice/front vertices could
+  // consequently change shading and appear banded. P2-C37 instead applies
+  // only the geometric CHANGE in normal, preserving the original custom
+  // P61 normal on every untouched vertex (not just its XYZ/UV).
+  const originalNormals=state.attributes.get('normal').values;
+  const baseNormals=state.baseSurfaceNormals;
+  newNormals=originalNormals.slice();
+  const prior=new THREE.Vector3(),delta=new THREE.Vector3(),desired=new THREE.Vector3();
+  for(let i=0;i<p.count;i++){
+   const j=i*3;
+   if(target[j]===original[j]&&target[j+1]===original[j+1]&&target[j+2]===original[j+2]){
+    staticNormalsPreserved++;
+    continue;
+   }
+   prior.fromArray(originalNormals,j);
+   const length=prior.length();
+   if(!Number.isFinite(length))fail('source photo normal invalid');
+   if(length<1e-8)continue; // Preserve zero-length source normals; do not invent directions.
+   prior.normalize();
+   delta.set(bentNormals[j]-baseNormals[j],
+    bentNormals[j+1]-baseNormals[j+1],bentNormals[j+2]-baseNormals[j+2]);
+   desired.copy(prior).addScaledVector(delta,.8);
+   if(![desired.x,desired.y,desired.z].every(Number.isFinite)||desired.lengthSq()<1e-12)
+    fail('unstable source photographed cloth normal change');
+   desired.normalize();
+   const angle=prior.angleTo(desired);
+   if(!Number.isFinite(angle))fail('unbounded source photo normal rotation');
+   if(angle>MAX_NORMAL_TURN_RADIANS){
+    desired.lerpVectors(prior,desired,MAX_NORMAL_TURN_RADIANS/angle).normalize();
+   }
+   const measured=prior.angleTo(desired);
+   if(measured>MAX_NORMAL_TURN_RADIANS+1e-5)
+    fail('normal exceeded photographed source cloth shading cap');
+   maxNormalTurnDeg=Math.max(maxNormalTurnDeg,measured*180/Math.PI);
+   newNormals[j]=desired.x;newNormals[j+1]=desired.y;newNormals[j+2]=desired.z;
+  }
+  if(!newNormals.every(Number.isFinite)||staticNormalsPreserved<100)
+   fail('original photo static normals not safely retained');
+ }finally{scratch.dispose();}
+ // C39 opt-in RESEARCH gate: inspect the proposed segment sweep against
+ // real 163-bone posed body triangles BEFORE changing the live garment.
+ // Missing evidence never passes when explicitly requested. No receipt ever
+ // approves physics, continuous swept fabric triangles or Family Alpha.
+ let sweptVertexAuditObserved39=false;
+ if(sweptBodyAudit39!==null){
+  const evidence=sweptBodyAudit39({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  // Caller may supply the pinned auditSourceDressSweptBody39; the receipt
+  // is a refusal diagnostic, NOT a user-supplied release certificate.
+  if(evidence?.schema!=='M2-source-dress-swept-vertex-body-v1'||
+     evidence.sourceVerified!==true||
+     evidence.completeBoundedSweep!==true||
+     !Number.isSafeInteger(evidence.bodyMeshCount)||evidence.bodyMeshCount<1||
+     !Number.isSafeInteger(evidence.crossedSegments)||
+     evidence.crossedSegments!==0||
+     evidence.staticBodyPoseOnly!==true||
+     evidence.continuousCollisionCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C39 incomplete or intersecting swept source garment refused');
+  checkProvenance(mesh,state); // guard callback must not mutate original source
+  sweptVertexAuditObserved39=true;
+ }
+ // C40 opt-in conservative whole-FACE moving-body broadphase. A callback
+ // must use pinned native source/body snapshots and return the bounded
+ // research receipt. Potential overlap (even unproven penetration) vetoes
+ // the staged sample. This remains non-shipping and never authorizes release.
+ let sweptSurfaceAuditObserved40=false;
+ if(sweptSurfaceAudit40!==null){
+  const evidence=sweptSurfaceAudit40({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(evidence?.schema!=='M2-source-dress-moving-face-body-v1'||
+     evidence.completeConservativeLinearBroadphase!==true||
+     evidence.genuine163BonePosePair!==true||
+     evidence.wholeGarmentFacesExamined!==true||
+     evidence.fullBodyFacesExamined!==true||
+     !Number.isSafeInteger(evidence.bodyFaces)||evidence.bodyFaces<1||
+     !Number.isSafeInteger(evidence.checkedClothFaces)||evidence.checkedClothFaces<1||
+     !Number.isSafeInteger(evidence.potentialPairs)||
+     evidence.potentialPairs!==0||
+     evidence.exactContinuousNarrowphasePerformed!==false||
+     evidence.continuousCollisionCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C40 incomplete or potentially intersecting moving source faces refused');
+  checkProvenance(mesh,state);
+  sweptSurfaceAuditObserved40=true;
+ }
+ // C41 optional RESEARCH interval-SAT gate. A complete temporal separation
+ // receipt may resolve certain false positives from C40's swept AABBs, but
+ // never certifies nonlinear skeletal movement or owner garment release.
+ let sweptIntervalAuditObserved41=false;
+ if(sweptIntervalAudit41!==null){
+  const receipt=sweptIntervalAudit41({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-linear-triangle-intervals-v1'||
+     receipt.completeBoundedTemporalIntervalAudit!==true||
+     receipt.originalSourceAndBodyProvenanceVerified!==true||
+     receipt.allBroadphasePairsExamined!==true||
+     !Number.isSafeInteger(receipt.broadphasePotentialPairs)||
+     !Number.isSafeInteger(receipt.provenSeparatedPairs)||
+     !Number.isSafeInteger(receipt.unresolvedPairs)||
+     receipt.unresolvedPairs!==0||
+     receipt.broadphasePotentialPairs!==receipt.provenSeparatedPairs||
+     receipt.linearVertexTrajectoriesOnly!==true||
+     receipt.exactContinuousTimeOfImpactMeasured!==false||
+     receipt.nonlinearBoneMotionCertified!==false||
+     receipt.continuousCollisionCertified!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C41 incomplete or unresolved time-interval fabric/body motion refused');
+  checkProvenance(mesh,state);
+  sweptIntervalAuditObserved41=true;
+ }
+ // P2-C42 research-only multi-snapshot actual skeletal rotation veto.
+ // Caller must supply genuine sampled middle-body poses using the original
+ // immutable photographed garment, never a linearized end-pose guess.
+ let sweptArticulatedAuditObserved42=false;
+ if(sweptArticulatedAudit42!==null){
+  const evidence=sweptArticulatedAudit42({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(evidence?.schema!=='M2-source-dress-articulated-pose-samples-v1'||
+     evidence.genuineIntermediateBodyRotationsObserved!==true||
+     evidence.fullProvidedPoseSequenceChecked!==true||
+     evidence.matchedOriginalPhotoSourceStartEnd!==true||
+     evidence.allSampledPairsAccounted!==true||
+     !Number.isSafeInteger(evidence.poseSamples)||evidence.poseSamples<5||
+     evidence.sampledIntervals!==evidence.poseSamples-1||
+     !Number.isSafeInteger(evidence.unresolvedPairs)||evidence.unresolvedPairs!==0||
+     !Number.isSafeInteger(evidence.provenSeparatedPairs)||
+     evidence.broadphasePotentialPairs!==evidence.provenSeparatedPairs||
+     evidence.actualNonlinearMotionBetweenSamplesCertified!==false||
+     evidence.collisionFreeContinuousRotationCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C42 incomplete or unsafe real intermediate skeletal samples refused');
+  checkProvenance(mesh,state);
+  sweptArticulatedAuditObserved42=true;
+ }
+ // P2-C43 opt-in 17/33 independent original-source pose sequence veto.
+ // A zero-overlap result checks sampled phases only; cannot certify
+ // arbitrary high-frequency nonlinear movement between them or release.
+ let sweptHighCadenceAuditObserved43=false;
+ if(sweptHighCadenceAudit43!==null){
+  const receipt=sweptHighCadenceAudit43({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-high-cadence-joint-guard-v1'||
+     receipt.originalSourceAndSkinVerified!==true||
+     receipt.completeUniformPoseGrid!==true||
+     receipt.independentlyCaptured163BoneBody!==true||
+     receipt.fullProvidedPoseSequenceChecked!==true||
+     (receipt.poseSamples!==17&&receipt.poseSamples!==33)||
+     receipt.sampledIntervals!==receipt.poseSamples-1||
+     !Number.isSafeInteger(receipt.rotatedIntervals)||receipt.rotatedIntervals<1||
+     !Number.isSafeInteger(receipt.movingBodyVertices)||receipt.movingBodyVertices<1||
+     !Number.isFinite(receipt.maxObservedJointStepDegrees)||
+     !Number.isFinite(receipt.maxAllowedJointStepDegrees)||
+     receipt.maxObservedJointStepDegrees>receipt.maxAllowedJointStepDegrees+1e-6||
+     !Number.isFinite(receipt.maxObservedBodyStepMeters)||
+     !Number.isFinite(receipt.maxAllowedBodyStepMeters)||
+     receipt.maxObservedBodyStepMeters>receipt.maxAllowedBodyStepMeters+1e-6||
+     receipt.allSampledPairsAccounted!==true||
+     !Number.isSafeInteger(receipt.unresolvedPairs)||receipt.unresolvedPairs!==0||
+     !Number.isSafeInteger(receipt.provenSeparatedPairs)||
+     receipt.broadphasePotentialPairs!==receipt.provenSeparatedPairs||
+     receipt.actualMotionBetweenSamplesCertified!==false||
+     receipt.continuousNonlinearBoneRotationCertified!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C43 incomplete or unsafe high-cadence skinned body sample refused');
+  checkProvenance(mesh,state);
+  sweptHighCadenceAuditObserved43=true;
+ }
+ // C44 opt-in actual photographed mesh self-contact at a staged pose.
+ // Shared original topology joins are ignored; disconnected face contacts
+ // remain unresolved and refuse any original source buffer commit.
+ let selfContactAuditObserved44=false;
+ if(sweptSelfContactAudit44!==null){
+  const evidence=sweptSelfContactAudit44({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(evidence?.schema!=='M2-source-dress-self-contact-v1'||
+     evidence.originalSourceAndSkinVerified!==true||
+     evidence.actual163BoneSkinnedPose!==true||
+     evidence.completeNonadjacentFaceAudit!==true||
+     !Number.isSafeInteger(evidence.originalFaceCount)||
+     evidence.originalFaceCount<1||
+     evidence.checkedOriginalFaces!==evidence.originalFaceCount||
+     !Number.isSafeInteger(evidence.unresolvedPairs)||
+     evidence.unresolvedPairs!==0||
+     evidence.topologicalNeighborsExcluded!==true||
+     evidence.disconnectedSeamCollisionsUnresolved!==true||
+     evidence.actualContinuousSelfContactCertified!==false||
+     evidence.selfContactPhysicsCertified!==false||
+     evidence.releaseAuthorized!==false||evidence.familyAlpha!=='HOLD')
+   fail('C44 incomplete or possibly self-contacting source fabric refused');
+  checkProvenance(mesh,state);
+  selfContactAuditObserved44=true;
+ }
+ // C45 option: an early first-contact witness is a hard BLOCK, not a green
+ // partial scan. Only a completely inspected non-contact source mesh can
+ // proceed in research. No contact is ever silently exempted as a UV seam.
+ let fastSelfContactObserved45=false;
+ if(sweptFastSelfContactAudit45!==null){
+  const receipt=sweptFastSelfContactAudit45({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-first-contact-veto-v1'||
+     receipt.originalSourceAndSkinVerified!==true||
+     receipt.actual163BoneSkinnedPose!==true||
+     receipt.topologicalNeighborsExcluded!==true||
+     receipt.disconnectedSeamsRemainUnresolved!==true||
+     receipt.originalPhotoAndSkinPreserved!==true||
+     !Number.isSafeInteger(receipt.originalFaceCount)||
+     receipt.originalFaceCount<1||
+     receipt.checkedOriginalFaces!==receipt.originalFaceCount||
+     receipt.completeSourceSelfContactAudit!==true||
+     receipt.stoppedEarlyToRefuse!==false||
+     receipt.firstUnresolvedContactKind!==null||
+     receipt.unresolvedPairs!==0||
+     receipt.actualContinuousSelfContactCertified!==false||
+     receipt.sewnSeamsHumanVerified!==false||
+     receipt.clothPhysicsCertified!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C45 incomplete or unresolved source self-contact refuses research motion');
+  checkProvenance(mesh,state);
+  fastSelfContactObserved45=true;
+ }
+ // C46 opt-in actual skinned original-fabric sequence: any unsupervised
+ // seam or fold at ANY sampled pose is a veto, and no source buffer changes
+ // happen before all 17/33 poses produce complete unchanged-source receipts.
+ let temporalSelfContactObserved46=false;
+ if(sweptTemporalSelfContactAudit46!==null){
+  const receipt=sweptTemporalSelfContactAudit46({root,dress,
+   startPositions:state.last.slice(),endPositions:target.slice()});
+  if(receipt?.schema!=='M2-source-dress-temporal-self-contact-v1'||
+     receipt.originalSourceAndSkinVerified!==true||
+     receipt.independentSkinnedClothPoseGrid!==true||
+     receipt.completeUniformPoseGrid!==true||
+     (receipt.poseSamples!==17&&receipt.poseSamples!==33)||
+     receipt.posesChecked!==receipt.poseSamples||
+     receipt.fullSequenceAudited!==true||
+     receipt.stoppedAtFirstUnresolvedContact!==false||
+     receipt.unresolvedContacts!==0||
+     receipt.firstUnresolvedSampleIndex!==null||
+     receipt.unresolvedKind!==null||
+     !Number.isSafeInteger(receipt.originalSourceFaces)||
+     receipt.originalSourceFaces<1||
+     receipt.checkedOriginalFaces!==receipt.poseSamples*receipt.originalSourceFaces||
+     !Number.isSafeInteger(receipt.sampledClothMoveIntervals)||
+     receipt.sampledClothMoveIntervals<1||
+     receipt.sampledClothMoveIntervals>=receipt.poseSamples||
+     !Number.isFinite(receipt.maxObservedVertexStepMeters)||
+     !Number.isFinite(receipt.maxAllowedVertexStepMeters)||
+     receipt.maxObservedVertexStepMeters<0||
+     receipt.maxAllowedVertexStepMeters<=0||
+     receipt.maxAllowedVertexStepMeters>.1||
+     receipt.maxObservedVertexStepMeters>receipt.maxAllowedVertexStepMeters+1e-7||
+     receipt.disconnectedSeamsRemainUnresolved!==true||
+     receipt.noOriginalPhotographOrSkinChanges!==true||
+     receipt.actualContinuousSelfContactCertified!==false||
+     receipt.inferredRearHumanVerified!==false||
+     receipt.realClothPhysics!==false||
+     receipt.releaseAuthorized!==false||receipt.familyAlpha!=='HOLD')
+   fail('C46 incomplete or unresolved intermediate garment self-contact refused');
+  checkProvenance(mesh,state);
+  // Not just matching JSON fields: genuine C46 scan, same garment and exact
+  // staged source XYZ, and a once-only lease are mandatory before mutation.
+  requireSourceDressTemporalReceipt47({receipt,root,dress,
+   startPositions:state.last,endPositions:target});
+  temporalSelfContactObserved46=true;
+ }
+ // Live change intentionally occurs only after every source/skin/geometry
+ // validation and the new frame has been staged. No original JPEG changed.
+ p.array.set(target);p.needsUpdate=true;
+ g.getAttribute('normal').array.set(newNormals);
+ g.getAttribute('normal').needsUpdate=true;
+ g.computeBoundingBox();g.computeBoundingSphere();
+ state.last=target.slice();state.lastNormals=newNormals.slice();
+ return Object.freeze({...dress,stats:Object.freeze({
+  ...dress.stats,
+  sourceDressMotion36:true,sourceDressMotionPhase36:phase,
+  sourceDressMotionMovedVertices36:moving,
+  sourceDressMotionFrontProtected36:protectedFront,
+  sourceDressMotionMaxMeters36:maximum,
+  sourceDressMotionOutwardOnly36:true,
+  sourceDressMotionRestAndUVUnchanged36:true,
+  sourceDressMotionSkinAndJPEGUnchanged36:true,
+  sourceDressMotionNoAccumulation36:true,
+  sourceDressMotionStaticNormalsPreserved37:staticNormalsPreserved,
+  sourceDressMotionMaxNormalTurnDegrees37:maxNormalTurnDeg,
+  sourceDressMotionNormalTurnCapDegrees37:10,
+  sourceDressMotionProtectsPhotoNormals37:true,
+  sourceDressMotionGarmentLocalFront38:true,
+  sourceDressMotionGarmentLocalRadialRelief38:true,
+  sourceDressMotionSweptContinuityCertified38:false,
+  sourceDressMotionSweptVertexAuditObserved39:sweptVertexAuditObserved39,
+  sourceDressMotionSweptWholeFabricCertified39:false,
+  sourceDressMotionMovingSurfaceVetoObserved40:sweptSurfaceAuditObserved40,
+  sourceDressMotionSweptWholeFabricCertified40:false,
+  sourceDressMotionLinearIntervalGuardObserved41:sweptIntervalAuditObserved41,
+  sourceDressMotionExactContinuousCollisionCertified41:false,
+  sourceDressMotionArticulatedSamplesObserved42:sweptArticulatedAuditObserved42,
+  sourceDressMotionContinuousBoneRotationCertified42:false,
+  sourceDressMotionHighCadenceObserved43:sweptHighCadenceAuditObserved43,
+  sourceDressMotionHighFrequencyBoneMotionCertified43:false,
+  sourceDressMotionSelfContactAuditObserved44:selfContactAuditObserved44,
+  sourceDressMotionContinuousSelfContactCertified44:false,
+  sourceDressMotionFirstContactVetoObserved45:fastSelfContactObserved45,
+  sourceDressMotionContinuousSelfContactCertified45:false,
+  sourceDressMotionTemporalSelfContactObserved46:temporalSelfContactObserved46,
+  sourceDressMotionContinuousSelfContactCertified46:false,
+  sourceDressMotionRealClothPhysics:false,
+  sourceDressMotionSweptCollisionCertified:false,
+  sourceDressMotionHumanVisualAcceptance:false,
+  sourceDressMotionPhysicalPhoneVerified:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ })});
+}
