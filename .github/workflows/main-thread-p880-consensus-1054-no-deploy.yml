@@ -50,7 +50,8 @@ jobs:
       - name: Full inherited native privacy and wardrobe tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Preserve release prohibition
-        run: echo "Family Alpha #255 OPEN HOLD; NO MERGE OR DEPLOY; NO HOSTED ACCOUNTS"
+        run: |
+          echo "Family Alpha #255 OPEN HOLD; NO MERGE OR DEPLOY; NO HOSTED ACCOUNTS"
   real-native-editor-desktop-browser-policy-NO-DEPLOY:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
