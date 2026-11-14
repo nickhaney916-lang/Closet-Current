@@ -1,0 +1,91 @@
+name: "MAIN1054 M14 native M3 signed-photo session convergence — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-native-session-convergence-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m14-source-session-convergence-hold
+  cancel-in-progress: true
+jobs:
+  immutable-source-native-integration-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact pinned M13 base and M3 donor source identity, four allowed files
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=65fe513cac8afa6985782fc4ce8f72414b7d66bb
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              public/closet-stylist.js|\
+              research/main-thread-integration-1054/test-native-session-contract14.mjs|\
+              research/main-thread-integration-1054/MILESTONE14.md|\
+              .github/workflows/main-thread-native-session-convergence-1054-no-deploy.yml) ;;
+              *) echo "M14_SCOPE_VIOLATION $p" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          test "$(git hash-object public/closet-stylist.js)" = "f2657fffb17a3b2cc606f32b4206a574ef5ddf88"
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/outfit-board.js public/dual-panel-82.mjs supabase/ benchmark/ package.json package-lock.json
+          node --check public/closet-stylist.js
+          node --check research/main-thread-integration-1054/test-native-session-contract14.mjs
+          echo "M14 EXACT M3 SOURCE BLOB, P880 UNCHANGED, FAMILY ALPHA HOLD; NO DEPLOY"
+      - name: Install pinned tests only, no manifest changes
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Native M3 signed-session + M4 original source and board safety
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/test-native-session-contract14.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: All inherited native privacy/recognition/outfit/backup safeguards
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No release or hosted mutations
+        run: |
+          echo "Research no deploy. Family Alpha issue #255 OPEN HOLD. No private owner or Supabase use."
+  signed-owner-original-2d-and-p880-browser-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Enforce exact M13 base and M3 source provider without app changes elsewhere
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=65fe513cac8afa6985782fc4ce8f72414b7d66bb
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          test "$(git hash-object public/closet-stylist.js)" = "f2657fffb17a3b2cc606f32b4206a574ef5ddf88"
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/outfit-board.js public/dual-panel-82.mjs
+      - name: Install test-only browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Authentic native source P880 dual-review policy
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Authentic signed user private original JPEG 2D photo preview
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Prove source session and M4 original-photo preflight remains safe
+        run: |
+          node --test research/main-thread-integration-1054/test-native-session-contract14.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Assert 54 native policy cases and unchanged release prohibition
+        run: |
+          node -e "const r=require('./benchmark/main1054-dual-policy-browser/results.json'); if(r.status!=='PASS'||r.total!==54||r.genuineModelsRun!==false||r.physicalPhones!==false||r.hostedCloud!==false||r.autoSaved!==false||r.releaseAuthorized!==false||r.familyAlpha!=='HOLD')process.exit(1);console.log('M14_NATIVE_OWNER_POLICY',r.total)"
+          echo "Real original image previews are 2D research only, not physical Android/iPhone"
