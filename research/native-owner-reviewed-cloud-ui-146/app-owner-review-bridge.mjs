@@ -36,10 +36,11 @@ export async function mountOwnerReviewedCloud146({
     !subtle?.digest||typeof onRestored!=='function')fail('valid synthetic owner database and review transport required');
  const menu=doc.querySelector('header .account-menu>div');
  if(!menu||doc.getElementById('ownerReview146Panel'))fail('account menu unavailable or owner research already mounted');
- const ownerAtMount=auth.user.id;
+ const ownerAtMount=auth.user.id,ownerPrincipalAtMount=auth.user;
  let revoked=false,working=false,pending=null,backupService,restoreService;
  function assertLocalOwner(){
   if(revoked||!ownerReviewedMode146(loc)||auth.user?.id!==ownerAtMount||
+     auth.user!==ownerPrincipalAtMount||
      db?.name!=='closet-current-user-'+ownerAtMount)
    fail('owner session changed or research mode revoked');
   auth.assertCurrent?.();
