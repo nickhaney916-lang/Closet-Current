@@ -4,12 +4,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createHash,generateKeyPairSync,sign} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {createRequire} from 'node:module';
 import {SCHEMA,METRICS,evaluateMission1Evidence} from '../scripts/m1-release-evidence-851.mjs';
 import {canonical} from '../scripts/p75-dataset-core.mjs';
+import {REQUIRED_PHONE_CASES886,verifyPhoneCaseLedger886} from '../scripts/m1-physical-case-ledger-886.mjs';
 
 const hex=x=>String(x).repeat(64);
 const at='2026-11-13T03:20:00.000Z';
-const target=hex('a'),model=hex('b'),manifest=hex('c');
+const target='a'.repeat(40),model=hex('b'),manifest=hex('c');
 const now=new Date('2026-11-13T03:45:00.000Z');
 function syntheticSignedBundle(){
  const roles={},trusted={},secrets={};
@@ -47,7 +49,12 @@ function syntheticSignedBundle(){
   captureToPrivateClosetPass:true,osVersion:'TEST 0.0',browserVersion:'TEST 0.0',
   testEvidenceSha256:hex(platform==='Android'?'d':'f'),
   protocolVersion:'parallel78-23-v1',casesRequired:23,casesPassed:23,
-  casesFailed:0,casesBlocked:0,casesNotRun:0});
+  casesFailed:0,casesBlocked:0,casesNotRun:0,sourceCommit:target,
+  cases:REQUIRED_PHONE_CASES886.map(caseId=>({
+   caseId,status:'PASS',severity:'NONE',
+   observedAt:'2026-11-13T03:00:00.000Z',
+   evidenceSha256:createHash('sha256').update('SYNTHETIC-ONLY:'+platform+':'+caseId).digest('hex')
+  }))});
  roles.physicalDevices.payload={
   ...roles.physicalDevices.payload,devices:[phone('Android','Chrome'),phone('iPhone','Safari')],
   realDeviceRuns:2,syntheticOnly:false
@@ -287,4 +294,75 @@ test('P885 fully signed synthetic only reaches review eligibility, not release a
  assert.equal(result.issues.length,0);
  assert.equal(result.noDeploy,true);
  assert.equal(result.shouldLiftFamilyAlphaHold,false);
+});
+
+test('P886 policy uses real 40-hex Git commit, 64-hex model and manifest SHA-256',()=>{
+ const x=syntheticSignedBundle(),result=evaluate(x);
+ assert.equal(result.status,'EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE');
+ assert.equal(x.bundle.roles.ownerPolicy.payload.targetCommit.length,40);
+ assert.equal(x.bundle.roles.ownerPolicy.payload.modelSha256.length,64);
+ const y=syntheticSignedBundle();y.bundle.roles.ownerPolicy.payload.targetCommit=hex('a');
+ y.reseal('ownerPolicy');
+ blocked(evaluate(y),'real 40-hex Git commit');
+});
+test('P886 signed phone case list derives exact IDs from P78 operator recorder',()=>{
+ const recorder=createRequire(import.meta.url)('../public/device-acceptance-78.js');
+ assert.equal(REQUIRED_PHONE_CASES886.length,23);
+ assert.deepEqual(REQUIRED_PHONE_CASES886,recorder.CASES.map(x=>x[0]));
+ const x=syntheticSignedBundle(),report=evaluate(x);
+ assert.equal(report.status,'EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE');
+});
+test('P886 all 23 individually signed cases required even if numeric summary falsely says 23 pass',()=>{
+ const x=syntheticSignedBundle(),d=x.bundle.roles.physicalDevices.payload.devices[0];
+ d.cases.pop();x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_INCOMPLETE_CASE_LEDGER');
+});
+test('P886 duplicate or unknown original P78 case names cannot replace difficult tasks',()=>{
+ let x=syntheticSignedBundle(),d=x.bundle.roles.physicalDevices.payload.devices[0];
+ d.cases[8].caseId=d.cases[7].caseId;x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_DUPLICATE_OR_UNKNOWN_CASE');
+ x=syntheticSignedBundle();d=x.bundle.roles.physicalDevices.payload.devices[0];
+ d.cases[1].caseId='easier_mock_photo';x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_DUPLICATE_OR_UNKNOWN_CASE');
+});
+test('P886 individual PASS claim requires distinct protected witness proof per case and per platform',()=>{
+ let x=syntheticSignedBundle(),d=x.bundle.roles.physicalDevices.payload.devices[0];
+ d.cases[9].evidenceSha256=d.cases[8].evidenceSha256;x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_MISSING_OR_REUSED_CASE_PROOF');
+ x=syntheticSignedBundle();const ds=x.bundle.roles.physicalDevices.payload.devices;
+ ds[1].cases[10].evidenceSha256=ds[0].cases[10].evidenceSha256;x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_MISSING_OR_REUSED_CASE_PROOF');
+});
+test('P886 negative severity and NOT_RUN/FAIL/BLOCKED case cannot be masked by 23 aggregate pass',()=>{
+ for(const [key,value] of [
+  ['status','NOT_RUN'],['status','FAIL'],['status','BLOCKED'],
+  ['severity','P0'],['severity','P1'],['severity','P2']]){
+  const x=syntheticSignedBundle(),d=x.bundle.roles.physicalDevices.payload.devices[1];
+  d.cases[5][key]=value;x.reseal('physicalDevices');
+  blocked(evaluate(x),'P886_UNPASSED_CASE');
+ }
+});
+test('P886 exact running app SHA and signed witnessed case time cannot be substituted',()=>{
+ let x=syntheticSignedBundle(),d=x.bundle.roles.physicalDevices.payload.devices[1];
+ d.sourceCommit='f'.repeat(40);x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_WRONG_RUNNING_APP_COMMIT');
+ x=syntheticSignedBundle();d=x.bundle.roles.physicalDevices.payload.devices[1];
+ d.cases[2].observedAt='2026-11-11T02:00:00.000Z';x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_UNBOUND_PHYSICAL_CASE_TIME');
+ x=syntheticSignedBundle();d=x.bundle.roles.physicalDevices.payload.devices[1];
+ d.cases[2].observedAt='2026-11-13T04:00:00.000Z';x.reseal('physicalDevices');
+ blocked(evaluate(x),'P886_UNBOUND_PHYSICAL_CASE_TIME');
+});
+test('P886 direct ledger validation never claims physical execution or releases family alpha',()=>{
+ const x=syntheticSignedBundle(),dev=x.bundle.roles.physicalDevices.payload.devices[0];
+ const used=new Set(),proof=verifyPhoneCaseLedger886(dev,{
+  targetCommit:target,approvedAt:x.bundle.roles.ownerPolicy.payload.signedAt,
+  signedAt:x.bundle.roles.physicalDevices.payload.signedAt,usedProofDigests:used
+ });
+ assert.deepEqual(proof,{ok:true,caseCount:23});
+ assert.equal(used.size,23);
+ const report=evaluate(x);
+ assert.equal(report.noDeploy,true);
+ assert.equal(report.shouldLiftFamilyAlphaHold,false);
+ // The generated signing keys and fabricated receipts above exist ONLY here.
 });

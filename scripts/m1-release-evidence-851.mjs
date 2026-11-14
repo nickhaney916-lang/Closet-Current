@@ -9,6 +9,7 @@ import {readFile} from 'node:fs/promises';
 import {resolve,relative,isAbsolute} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {canonical,isHex64} from './p75-dataset-core.mjs';
+import {verifyPhoneCaseLedger886} from './m1-physical-case-ledger-886.mjs';
 
 export const SCHEMA='m1-release-evidence-851-v1';
 export const METRICS=Object.freeze(['category','subtype','primaryColor','instanceSeparation','ownedFootwearUnit','noWrongSave']);
@@ -21,6 +22,7 @@ const sensitive=new Set(['image','imagedata','photo','photobytes','photourl',
  'privatekey','originaljpeg','originalphoto','password','jwttoken']);
 const normalizedField=k=>String(k).replace(/[^a-z0-9]/gi,'').toLowerCase();
 const sha=x=>createHash('sha256').update(x).digest('hex');
+const gitCommit40=x=>typeof x==='string'&&/^[a-f0-9]{40}$/.test(x);
 function cleanReport(issues,details={}){
  return {schema:SCHEMA,status:issues.length?'BLOCKED':'EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE',
   noDeploy:true,shouldLiftFamilyAlphaHold:false,checkedRoles:details.checkedRoles||0,
@@ -76,7 +78,10 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
  if(Object.keys(payload).length!==4)return cleanReport(issues,details);
  const policy=payload.ownerPolicy,blind=payload.independentBlind,phones=payload.physicalDevices,cloud=payload.signedCloud;
  const commit=policy.targetCommit,model=policy.modelSha256,manifest=policy.blindManifestSha256;
- if(!isHex64(commit)||!isHex64(model)||!isHex64(manifest))issues.push('owner policy lacks pinned source/model/blind manifest');
+ // Real GitHub SHA-1 code commits (also used by P78 physical recorder) are 40
+ // lowercase hex. The model/manifest content digests are SHA-256 (64 hex).
+ if(!gitCommit40(commit)||!isHex64(model)||!isHex64(manifest))
+  issues.push('owner policy lacks real 40-hex Git commit or 64-hex model/blind manifest');
  if(policy.familyAlphaHold!==true||policy.releaseAuthorized===true)issues.push('owner policy must preserve Family Alpha HOLD');
  const preapproved=asDate(policy.approvedAt),scoredAt=asDate(blind.scoredAt);
  if(!Number.isFinite(preapproved)||!Number.isFinite(scoredAt)||preapproved>=scoredAt)
@@ -143,7 +148,7 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
       observed.total!==sources||observed.correct!==sources))
     issues.push('noWrongSave must have preapproved 100 percent and full blind source coverage');
  }
- const acceptedDevices=new Set(),deviceReceiptHashes=new Set(),devices=phones.devices;
+ const acceptedDevices=new Set(),deviceReceiptHashes=new Set(),caseProofDigests=new Set(),devices=phones.devices;
  if(!Array.isArray(devices)||devices.length<2||devices.length>10)
   issues.push('real device evidence missing or unbounded');
  else{
@@ -178,6 +183,17 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
    }
    if(deviceReceiptHashes.has(d.testEvidenceSha256)){
     issues.push('duplicate physical-device evidence digest');
+    continue;
+   }
+   // P886: numeric "23 PASS" claims alone are not source evidence.
+   // Reconcile every independent witness's redacted per-case artifact receipt
+   // against the genuine local P78 recorder's EXACT case IDs.
+   const matrix=verifyPhoneCaseLedger886(d,{
+    targetCommit:commit,approvedAt:policy.signedAt,
+    signedAt:phones.signedAt,usedProofDigests:caseProofDigests
+   });
+   if(!matrix.ok){
+    issues.push('physical-device signed case ledger invalid: '+matrix.reason);
     continue;
    }
    deviceReceiptHashes.add(d.testEvidenceSha256);
