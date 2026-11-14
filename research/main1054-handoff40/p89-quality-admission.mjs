@@ -37,9 +37,12 @@ const problems=Object.freeze([
  'PHYSICAL_PHONE_AND_HOSTED_ACCOUNT_ACCEPTANCE_MISSING'
 ]);
 const statusSchema='MAIN1054_M40_P89_public_photo_and_owner_source_quality_hold/v1';
-function answer(status,matched=0,unmatched=0,detail=[]){
+function answer(status,matched=0,unmatched=0,detail=[],blockedAt='NONE'){
  return Object.freeze({
   schema:statusSchema,status,
+  // Only a fixed, source-free lifecycle checkpoint. Never an exception,
+  // owner ID, photo SHA, private category, slot or actual record content.
+  blockedAt:status==='SIGNED_OWNER_OR_ORIGINAL_PHOTO_RECHECK_REQUIRED'?blockedAt:'NONE',
   originalPhoto2DRequired:true,originalPhoto2DFallbackRetained:true,
   consumer3DAdmitted:false,releaseAuthorized:false,
   privateOwnerPhotograph3DAuthorized:false,
@@ -58,9 +61,11 @@ function answer(status,matched=0,unmatched=0,detail=[]){
 export async function assessNative3DQuality40({
  ownerScope,consumer,originalNativeAuth,win,doc
 }={}){
+ let stage='OWNER_PROVIDER_REQUIRED';
  try{
   if(!ownerScope||!consumer||typeof consumer.attestOriginalPhotoBytes92!=='function')
    throw Error('missing-trusted-private-source');
+  stage='M38_PRIVATE_OWNER_PREFLIGHT';
   const owner=auditNativeOwnerViewer38({
    ownerScope,consumer,originalNativeAuth,win,doc
   });
@@ -68,22 +73,28 @@ export async function assessNative3DQuality40({
   if(receipt.status!=='OWNER_ORIGINAL_2D_VIEWER_FALLBACK_ONLY'||
      receipt.consumer3D!==false||receipt.displayApproved!==false)
    throw Error('owner-private-original-photo-not-verified');
+  stage='P90_CURRENT_SAVED_SELECTION';
   requireNative3D05Visible102({doc});
   const selectedIndex=consumer.selected;
   const admitted=validateNative3D05Selection({
    consumer,originalNativeAuth,win,doc
   });
+  stage='P90_SOURCE_METADATA';
   const before=captureNative3D05Sources91({consumer,admitted});
   const revision=requireNative3D05WardrobeRevision93({
    consumer,ownerId:admitted.ownerId
   });
+  stage='NATIVE92_ORIGINAL_JPEG_BYTES';
   const current=await consumer.attestOriginalPhotoBytes92(
    Object.values(admitted.slots));
+  stage='P90_RECHECK_AFTER_ASYNC';
   requireCurrentNative3D05Selection88({
    consumer,originalNativeAuth,win,doc,admitted,selectedIndex
   });
+  stage='SOURCE_RECEIPT_EQUALITY';
   if(JSON.stringify(current)!==JSON.stringify(before))
    throw Error('private-original-jpeg-changed');
+  stage='P90_ROSTER_AND_VISIBILITY_RECHECK';
   captureNative3D05Sources91({consumer,admitted,expected:before});
   requireNative3D05WardrobeRevision93({
    consumer,ownerId:admitted.ownerId,expected:revision
@@ -91,6 +102,7 @@ export async function assessNative3DQuality40({
   requireNative3D05Visible102({doc});
   if(ownerScope.getSession()?.authRef!==originalNativeAuth)
    throw Error('signed-owner-changed');
+  stage='P89_PUBLIC_SOURCE_CROSSWALK';
   const raw=current.sources;
   if(!Array.isArray(raw)||raw.length<1||raw.length>9)
    throw Error('no-saved-original-sources');
@@ -113,6 +125,6 @@ export async function assessNative3DQuality40({
   return answer('P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD',
    matched,0,[...new Set(labels)].sort());
  }catch{
-  return answer('SIGNED_OWNER_OR_ORIGINAL_PHOTO_RECHECK_REQUIRED');
+  return answer('SIGNED_OWNER_OR_ORIGINAL_PHOTO_RECHECK_REQUIRED',0,0,[],stage);
  }
 }
