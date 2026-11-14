@@ -27,3 +27,65 @@ jobs:
           git fetch --no-tags origin 07cc52756588c6143a3b6cd19e9eac848a949877
           git diff --exit-code 07cc52756588c6143a3b6cd19e9eac848a949877 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
           echo "FAMILY ALPHA #255 HOLD — NO DEPLOY"
+  rss-genuine-model-chromium2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '2'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062
+      MAIN1054_RUN_BUDGET_MS: '120000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source and source-only scope
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --no-tags origin 07cc52756588c6143a3b6cd19e9eac848a949877
+          git diff --exit-code 07cc52756588c6143a3b6cd19e9eac848a949877 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
+      - name: Install ephemeral pinned real model and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - name: Verify licensed pinned source JPEG and real q8 models
+        run: |
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Two real continuous model requests and owned process RSS samples
+        run: node scripts/test-main1054-real-webkit-repeat.mjs chromium
+      - name: Independently validate exact SHA real-model source and zero saves
+        run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-real-webkit-repeat/chromium-2-diagnostic.json chromium 2 "$GITHUB_SHA"
+      - name: Require actual observed root and process-tree RSS, never fabricated zero
+        run: |
+          node --input-type=module <<'NODE'
+          import {readFileSync} from 'node:fs';
+          import assert from 'node:assert/strict';
+          const r=JSON.parse(readFileSync('benchmark/main1054-real-webkit-repeat/chromium-2-diagnostic.json','utf8'));
+          assert.equal(r.status,'COMPLETE_OBSERVED');
+          assert.equal(r.completedPhotos,2);
+          assert.equal(r.resourceMeasurements?.measuredMemory,true,'real Linux /proc sample missing');
+          assert.ok(r.resourceMeasurements?.rssSampleCount>0,'RSS sampling never ran');
+          assert.ok(r.resourceMeasurements?.peakBrowserProcessRSSBytes>0,'browser root VmRSS absent');
+          assert.ok(r.resourceMeasurements?.peakBrowserProcessTreeRSSBytes>=r.resourceMeasurements.peakBrowserProcessRSSBytes,'invalid process-tree RSS');
+          assert.equal(r.persistedPrivateWardrobeWrites,0);
+          console.log('MASTER1054_RSS_ACTUAL_GENUINE_MODEL',JSON.stringify({
+            samples:r.resourceMeasurements.rssSampleCount,
+            peakRootRSSBytes:r.resourceMeasurements.peakBrowserProcessRSSBytes,
+            peakTreeRSSBytes:r.resourceMeasurements.peakBrowserProcessTreeRSSBytes,
+            uniqueMemory:false,releaseReady:false,physicalIPhone:false,owner:'synthetic-only'
+          }));
+          NODE
+      - name: Save numeric diagnostic only; no private photos or model weights
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: master1054-owned-rss-chromium2-HOLD
+          path: benchmark/main1054-real-webkit-repeat/chromium-2-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 14
