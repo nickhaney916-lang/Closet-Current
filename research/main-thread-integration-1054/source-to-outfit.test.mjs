@@ -262,10 +262,10 @@ test('M12 different auth after final private source read cannot publish outfit I
 });
 
 test('M13 rejects first private read mutating selected slot before original SHA checks',async()=>{
- const items=set(),board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ const items=[...set(),garment('second-shirt','Tops',11)],board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
  await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
   readOwnerItems:async()=>{
-   board.slots.top='pants';
+   board.slots.top='second-shirt';
    return structuredClone(items);
   }
  })),/outfit board changed/);
@@ -311,7 +311,7 @@ test('M13 detects changed native shopping ideas without persisting or mutating o
 test('M13 refuses mutable normalizer injected into native board verification',async()=>{
  const items=set(),board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
  await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
-  cleanBoard:(b,rows)=>{const out=cleanBoard(b,rows);b.slots.shoes='shirt';return out;}
+  cleanBoard:(b,rows)=>{const out=cleanBoard(b,rows);delete b.slots.shoes;return out;}
  })),/outfit board changed/);
 });
 test('M13 allows semantically same slot map with different insertion order',async()=>{
