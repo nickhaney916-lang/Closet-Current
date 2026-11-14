@@ -81,6 +81,11 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   const consent=()=>page.getByRole('checkbox',{name:/I consent to a local two-model/}),visible=()=>page.getByRole('checkbox',{name:/One garment is isolated/}),check=()=>page.getByRole('button',{name:'Compare with two models'});
   await check().click();assert.equal(await page.evaluate(()=>window.calls82),0);
   await consent().check();await visible().check();await check().click();await page.getByRole('button',{name:/Use Shorts/}).waitFor();assert.equal(await page.evaluate(()=>window.apply82),0);
+  // P880: a second subtype can rank #2 in BOTH models and still has zero
+  // independent top-subtype agreement; it must NOT become a model-backed button.
+  assert.equal(await page.getByRole('button',{name:/Use Skirt/}).count(),0);
+  assert.equal(await page.getByRole('button',{name:/^Use /}).count(),1);
+  console.log('P880_EXACT_ONE_JOINT_TOP_ONLY',name,width);
   await page.getByRole('button',{name:/Use Shorts/}).click();assert.equal(await page.evaluate(()=>window.apply82),0);
   await page.getByRole('checkbox',{name:/I compared the original photo/}).check();await page.getByRole('button',{name:/Use Shorts/}).click();assert.equal(await page.evaluate(()=>window.apply82),1);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   const normal=page.getByRole('checkbox',{name:/I checked the clothing photo/});assert.equal(await normal.isChecked(),false);
@@ -115,13 +120,13 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.hold82=true;});await consent().check();await visible().check();await check().click();await page.getByRole('button',{name:'Cancel comparison'}).click();await page.evaluate(()=>window.hold82=false);assert.equal(await page.evaluate(()=>window.apply82),0);
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();await page.evaluate(()=>{window.mountSynthetic82();window.negative82=true;});await consent().check();await visible().check();await check().click();await page.getByText(/At least one model sees non-clothing/).waitFor();assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);assert.equal(await page.evaluate(()=>window.apply82),0);assert.equal((await page.evaluate(()=>window.state82())).writes,0);
-  // P876: both models confidently agree Ankle boots (empirically risky),
-  // but also rank Sneakers near top. Never show a misleading risk subtype
-  // button. Still allow the less-risky owner-reviewed alternative.
+  // P876/P880: both models confidently agree Ankle boots (empirically
+  // risky) and rank Sneakers next. Show NO model-backed button: a lower
+  // ranked "Sneakers" option does not become jointly agreed top evidence.
   await page.evaluate(()=>window.fixture82());await page.locator('[data-dual82]').waitFor();
   await page.evaluate(()=>{window.mountSynthetic82();window.risky82=true;});
   await consent().check();await visible().check();await check().click();
-  await page.getByRole('button',{name:/Use Sneakers/}).waitFor();
+  await page.getByText(/No jointly supported low-risk subtype is available/).waitFor();
   const riskInfo=await page.evaluate(async()=>{
     const {validateResponse82}=await import('/dual-core-82.mjs');
     const {subtypeNeedsManualReview}=await import('/recognition-confusion-guard.mjs');
@@ -133,7 +138,9 @@ try{for(const [name,engine] of Object.entries({chromium,webkit})){
   assert.equal(riskInfo.priorRank,true);assert.equal(riskInfo.listedRisk,true);
   assert.equal(riskInfo.safe,true);
   assert.equal(await page.getByRole('button',{name:/Use Ankle boots/}).count(),0);
-  assert.equal(await page.getByRole('button',{name:/Use Sneakers/}).count(),1);
+  assert.equal(await page.getByRole('button',{name:/Use Sneakers/}).count(),0);
+  assert.equal(await page.getByRole('button',{name:/^Use /}).count(),0);
+  console.log('P880_KNOWN_RISK_TOP_NO_UNPROVEN_ALTERNATE',name,width);
   assert.equal(await page.evaluate(()=>window.apply82),0);
   assert.equal((await page.evaluate(()=>window.state82())).writes,0);
   console.log('P876_EMPIRICAL_CONFUSION_GUARD_DUAL',name,width);

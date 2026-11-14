@@ -52,7 +52,7 @@ test('P879 empirical Ankle boots confusion veto persists even when two families 
  assert.equal(decision.status,'cross_family_hypothesis');
  const choices=sharedRankChoices82(decision,observations);
  assert.ok(!choices.some(x=>x.itemType==='Ankle boots'));
- assert.ok(choices.some(x=>x.itemType==='Sneakers'));
+ assert.deepEqual(choices,[],'P880 risk veto must not promote runner-up Sneakers into agreed subtype');
 });
 test('P879 forged decision status cannot override actual observed top-label disagreement',()=>{
  const {observations,decision}=pair('Shorts','Skirt');
