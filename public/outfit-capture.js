@@ -173,7 +173,17 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     }
     renderOutfitCapture();return;
    }
-   if(data.type==='done')finishOutfitSplit(job,job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.',false);
+   if(data.type==='done'){
+    // P88 real, human-annotated public validation: the shoe-only-conservative
+    // split matched 27/53 garment masks. Small/accessory items were often
+    // missing; multiple disconnected garments are not verified owned units.
+    // Never present detected region count as a complete wardrobe inventory.
+    const ownerCoverageReminder88='Compare these tentative regions with your original outfit photo. Small accessories such as watches, belts, headwear, bags or glasses, and some tops or bottoms, may be missed. Photograph missing items individually and confirm each category, subtype and color yourself.';
+    const result=outfitInstances840?
+      (job.added?job.added+' tentative clothing regions found, not a verified garment count. ':'No confidently separated clothing regions found. ')+ownerCoverageReminder88:
+      (job.added?job.added+' individual clothing photos cropped. Review their suggested categories and colors before saving.':'No new clothing pieces could be located. Try a clearer full-body photo; exact duplicates may already be in Photo results.');
+    finishOutfitSplit(job,result,false);
+   }
    else if(data.type==='error')finishOutfitSplit(job,job.added?'Some pieces are kept; the rest could not be separated. Try again.':'This outfit could not be separated. Try another clear photo of one person, head to toe.',true);
   };
   job.worker.onmessage=event=>{
