@@ -135,7 +135,13 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     // veto. Do not modify the frozen worker or trust free-text worker status.
     const unresolved88=outfitInstances840&&
       p.instanceMethod==='native_semantic_group_unresolved_fragments';
-    const hint88=unresolved88?{...p.hint,componentReviewStatus:'unresolved_fragments_keep_source_mask'}:p.hint;
+    const split88=outfitInstances840&&
+      ['connected_semantic_component_unverified','connected_footwear_component'].includes(p.instanceMethod);
+    // Even a well-separated mask is NOT a verified owned garment count.
+    // Shoe pairs or shirt fragments require the exact source/mask receipt and
+    // a separate human physical-unit decision before being saved.
+    const hint88=unresolved88?{...p.hint,componentReviewStatus:'unresolved_fragments_keep_source_mask'}:
+     split88?{...p.hint,componentReviewStatus:'owner_must_confirm_garment_units'}:p.hint;
     if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:hint88,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:safeColorEstimate76,
       ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:safeColorEstimate76||null},reconciliation70Status:'unresolved'}:{})})){
       job.added++;if(colorNote76)job.colorNotes.push(colorNote76);
