@@ -1059,3 +1059,87 @@ test('C59: no source-based garment-body localization without genuine C58 provena
   }),/M2 C52 original-photo diagnostic/);
  }
 });
+
+const audit60=(f,opts={})=>audit59(f,{
+ refineUpperTorsoFitTrial60:true,...opts
+});
+test('C60: two true 163-bone arm-pose plus neutral original body/self contact trial is fully measured but NEVER approved',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),
+  before=original(f),saved=f.bones.map(b=>b.quaternion.clone()),
+  r=audit60(f),a=r.originalArticulatedContactReceipt58;
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.equal(r.disposablePhotographedUpperTorsoFitWorldAudit60,true);
+ assert.equal(a.fullOriginalPhotoTrialAuditCompleted60,true);
+ assert.equal(a.disposableArticulatedUpperTorsoTrials60.length,2);
+ const trials=[a.disposableNeutralUpperTorsoTrial60,
+  ...a.disposableArticulatedUpperTorsoTrials60];
+ for(const t of trials){
+  assert.equal(t.schema,
+   'M2-original-licensed-disposable-upper-torso-clearance-trial-C60');
+  assert.equal(t.completeOriginalBodyAndSelfAudit,true);
+  assert.equal(t.outwardTrialMeters,.006);
+  assert.ok(t.maxTrialWorldDisplacementMeters>=0&&
+   t.maxTrialWorldDisplacementMeters<=.006002);
+  assert.equal(t.originalPhotoMeshUVSkinMaterialsAndBoneMatricesUnmodified,true);
+  assert.equal(t.allTrialVerticesRetainedInMemoryOnly,true);
+  assert.equal(t.researchCandidateNotApprovedForConsumer3D,true);
+  assert.equal(t.releaseAuthorized,false);
+ }
+ assert.equal(r.originalPhotoAndAnatomicalBodyNeverAdjusted60,true);
+ assert.equal(r.trialNotApprovedAsWearableGarment60,true);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(saved[i])));
+});
+test('C60: genuine signed skinned upper-source triangle crossing compares candidate to original body without source rewrites',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  .1,1.0,-.12,.15,1.05,.12,.05,1.10,.12
+ ]),before=original(f),r=audit60(f),
+ a=r.originalArticulatedContactReceipt58,
+ n=a.disposableNeutralUpperTorsoTrial60;
+ assert.equal(a.fullOriginalPhotoTrialAuditCompleted60,true);
+ assert.ok(a.originalNeutralBodyStrictCrossings>0);
+ assert.equal(n.baselineOriginalBodyStrictCrossings,
+  a.originalNeutralBodyStrictCrossings);
+ assert.ok(Number.isSafeInteger(n.trialOriginalBodyStrictCrossings));
+ assert.equal(n.trialBodyStrictCrossingReduction,
+  n.baselineOriginalBodyStrictCrossings-
+   n.trialOriginalBodyStrictCrossings);
+ assert.equal(n.allOriginalBodyCrossingsActuallyGone,
+  n.trialOriginalBodyStrictCrossings===0);
+ assert.equal(n.originalPhotoMeshUVSkinMaterialsAndBoneMatricesUnmodified,true);
+ assert.equal(n.researchCandidateNotApprovedForConsumer3D,true);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+});
+test('C60: incomplete original body comparison budget refuses any optimistic trial clearance',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  0,-3,-3,0,3,-3,0,0,3
+ ]);
+ const r=audit60(f,{maxBodyComparisons58:1}),
+ a=r.originalArticulatedContactReceipt58,
+ trial=a.disposableNeutralUpperTorsoTrial60;
+ assert.equal(trial.completeOriginalBodyAndSelfAudit,false);
+ assert.equal(trial.allOriginalBodyCrossingsActuallyGone,false);
+ assert.equal(trial.trialBodyStrictCrossingReduction,null);
+ assert.equal(a.fullOriginalPhotoTrialAuditCompleted60,false);
+ assert.equal(r.disposablePhotographedUpperTorsoFitWorldAudit60,false);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C60: forged original body trial request without complete C52-C59 photo landmark evidence fails closed',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57)),snapshot=original(f);
+ for(const props of [
+  {refineUpperTorsoFitTrial60:true},
+  {refineTriangleDistances53:true,refineUpperTorsoFitTrial60:true},
+  {refineUpperTorsoFitTrial60:'true'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineAnatomicalLoopLandmarks57:true,refineArticulatedContacts58:true,
+   refineUpperTorsoFitTrial60:true}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...props
+  }),/M2 C52 original-photo diagnostic/);
+ }
+ assert.deepEqual(original(f),snapshot);
+});
