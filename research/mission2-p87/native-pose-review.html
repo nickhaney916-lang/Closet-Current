@@ -1,0 +1,36 @@
+<!doctype html><meta charset="utf-8"><title>P87 pose-linked source SkinnedMesh — HOLD</title>
+<style>body{margin:0;font:14px system-ui;background:#f4f3ef}header{padding:10px;background:white}h1{font-size:17px;margin:0}p{margin:5px 0}canvas{display:block;width:390px;height:650px}</style>
+<header><h1>P87 pose-linked real skinned photo candidate · HOLD</h1><p id="label">Loading genuine photographed source…</p><p>Sampled-pose skinned research only; no continuous contact proof. Rear unphotographed. Size estimated. No consumer admission.</p></header><canvas id="canvas"></canvas>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js","three/addons/":"/node_modules/three/examples/jsm/"}}</script>
+<script type="module">
+import {mountAnatomicalShowroom} from '/donor/research/dress-mobile-01/dress-mobile-showroom.mjs';
+import {createPoseContact} from '/donor/research/three-d-42/posed-contact.mjs';
+import {loadLicensedCutout} from '/donor/research/three-d-02/reviewed-texture.mjs';
+const canvas=document.querySelector('canvas'),label=document.querySelector('#label');
+window.review87={ready:false,errors:[]};
+try{
+ const manifest=await fetch('/benchmark/work47/manifest.json').then(r=>r.json());
+ const source=await loadLicensedCutout('commons-0053',{manifest,reviewConfirmed:true});
+ const viewer=mountAnatomicalShowroom(canvas,{
+ premiumTurntable67:true,independentGarments:true,poseContactFactory:createPoseContact,
+ crispSourcePhotoClarity:true,jeansPanelFall:true,tailoredShoulderSleeves:true,
+ independentShoulderCaps:true,realisticShoulderContour:true,upperArmFabricVolume:true,
+ sourceNeutralCollarRoll:true,rearShirtFabricRelief:true,naturalShoulderSleeveTransition:true,
+ sourceMeasuredSleeveHang:true,anatomicalShirtSideFlow:true,naturalShoulderFall61:true,
+ trueShoulderTop64:true,poseConditionedSleeveDrape:true,photoDenimRearDrape73:true,
+ photoDenimCalfHang74:true,photoDenimFolds75:true,photoDenimContinuity76:true,
+ photoDenimContactAudit77:true,photoDenimKneePose78:true,dressMobile74:true});
+ viewer.start();let preview=null;
+ window.review87.load=async figure=>{
+  preview?.dispose();preview=null;const loaded=await viewer.load(figure);if(!loaded)throw Error('source rig failed');
+  viewer.applyOutfit('dress',source,{reviewed:true});
+  preview=viewer.researchPosePreview87();window.review87.receipt=preview.receipt;
+  window.review87.audit=window.__M2C52LicensedResearchReceipt;
+  window.review87.state=viewer.getState();label.textContent=figure+' · ORIGINAL';
+ };
+ window.review87.setPose=(pose)=>{viewer.setPose(pose);window.review87.receipt=preview.receipt;window.review87.state=viewer.getState();return window.review87.receipt;};
+ window.review87.show=(mode,angle)=>{preview[mode]();viewer.viewAt(angle);label.textContent=viewer.getState().kind+' · '+mode.toUpperCase();};
+ window.review87.dispose=()=>{preview?.dispose();viewer.stop();};
+ await window.review87.load('female');window.review87.ready=true;
+}catch(e){window.review87.errors.push(e.message);label.textContent='BLOCKED: '+e.message;throw e;}
+</script>
