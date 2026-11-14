@@ -58,9 +58,43 @@ function persistUnit70Decision88(lease){
   });
  });
 }
+// P88: P70 unpair must not call generic candidate() before the owner-bound
+// queued write settles. candidate() immediately starts a separate draft write
+// and recognition job, outside the physical-decision transaction's lease.
+// Build a *detached* companion; attach both regions in ONE snapshot instead.
+function detachedUnit70Companion88(original,companion,lease){
+ const receipt=companion?.reconciliation70,base=original?.reconciliation70;
+ if(!original||original.outfitSourceId!==lease.sourceId||
+  base?.ownerId!==lease.id||receipt?.ownerId!==lease.id||
+  !/^[a-f0-9]{64}$/.test(receipt?.sourceSha256||'')||
+  !/^[a-f0-9]{64}$/.test(receipt?.maskSha256||'')||
+  receipt.sourceSha256!==base.sourceSha256||
+  receipt.maskSha256===base.maskSha256||
+  !/^data:image\\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(companion?.image||'')||
+  companion.image.length>8000000)
+  throw Error('The companion garment is not bound to the same signed photo and distinct source mask.');
+ if([...items,...batch].some(x=>x.image===companion.image))
+  throw Error('The companion photo already exists; no duplicate was added.');
+ const next=normalizeClothing({id:crypto.randomUUID(),image:companion.image,
+  name:'',category:'Uncategorized',color:'',notes:'',
+  localStatus:'Separate region restored. Check category, subtype and color.'});
+ next.outfitSourceId=lease.sourceId;
+ next.requiresOwnershipConfirmation=true;
+ next.segmentHint=companion.segmentHint;
+ next.recognitionPhoto=companion.recognitionPhoto;
+ next.originalPhoto=original.originalPhoto;
+ next.cropBounds=companion.cropBounds;
+ next.reconciliation70={...receipt};
+ next.reconciliation70Status='separate_confirmed';
+ if(companion.colorEstimate){
+  Object.assign(next,ClothingDetails.fillColor(next,companion.colorEstimate));
+  if(next.colorSource==='photo-estimate')next.colorMethod='garment-mask';
+ }
+ return next;
+}
 async function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
  if(!outfitUnits70)return;
- let previousBatch=null,assignedBatch=null;
+ let previousBatch=null,assignedBatch=null,companionToReview88=null;
  try{
   if(!sameUnit70OwnerLease88(lease))
    throw Error('The signed owner or outfit changed. Reopen Review for this account.');
@@ -87,18 +121,28 @@ async function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
   else if(decision==='unpair'){
    if(ids.length!==1)throw Error('Select one confirmed grouping to separate.');
    const candidateItem=batch.find(x=>x.id===ids[0]),parts=api.unpairComponents70(batch,ids[0],owner);
-   const extra=parts.companion,added=candidate(extra.image,{outfitSourceId:candidateItem.outfitSourceId,
-    segmentHint:extra.segmentHint,recognitionPhoto:extra.recognitionPhoto,
-    originalPhoto:candidateItem.originalPhoto,cropBounds:extra.cropBounds,colorEstimate:extra.colorEstimate,
-    reconciliation70:extra.reconciliation70,reconciliation70Status:'separate_confirmed'});
-   if(!added)throw Error('Companion already exists; nothing was split.');
-   batch=batch.map(x=>x.id===ids[0]?parts.first:x);
+   // No UI, IDB, source mutations or automatic scans until the owner-lease
+   // transaction commits. Both restored components must share the same
+   // actual original photo receipt and have distinct mask SHA receipts.
+   companionToReview88=detachedUnit70Companion88(candidateItem,parts.companion,lease);
+   batch=[...batch.map(x=>x.id===ids[0]?parts.first:x),companionToReview88];
   }else throw Error('Unknown garment review decision.');
   assignedBatch=batch;
   if(!sameUnit70OwnerLease88(lease))
    throw Error('The signed owner changed during garment review.');
   await persistUnit70Decision88(lease);
   if(!sameUnit70OwnerLease88(lease))return;
+  if(companionToReview88&&batch.some(x=>x===companionToReview88)){
+   // Model inference may open an additional (independently guarded) draft
+   // lifecycle only AFTER both owner-confirmed halves are durably restored.
+   sessionCapturedIds.add(companionToReview88.id);
+   session++;
+   $('sessionCount').textContent=session;
+   $('reviewCount').textContent=batch.length;
+   $('lastCaptureImage').src=companionToReview88.image;
+   $('lastCaptureImage').hidden=false;
+   queueAutomatic(companionToReview88);
+  }
   outfitUnit70Error='';render();
  }catch(error){
   // Do not let a revoked account's pre-persist in-memory decision remain in
