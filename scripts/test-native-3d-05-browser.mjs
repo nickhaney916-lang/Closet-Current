@@ -2346,8 +2346,29 @@ try{
      if(d>=18)differentRGBPixels++;
      peakColorDelta=Math.max(peakColorDelta,d);
     }
+    if(differentRGBPixels<=60||peakColorDelta<25){
+     // Preserve the ACTUAL licensed source shader screenshots even on
+     // threshold failure. Never pretend no image is an accepted image.
+     const failureFolder=
+      'benchmark/mission2-source-dress-motion/photo-render-comparison86';
+     await mkdir(failureFolder,{recursive:true});
+     await writeFile(failureFolder+'/'+width+'-'+view.toLowerCase()+'-original.png',a);
+     await writeFile(failureFolder+'/'+width+'-'+view.toLowerCase()+'-candidate.png',b);
+     console.log('M2_P86_SOURCE_RENDER_A_B_DIFFERENCE_DIAGNOSTIC',JSON.stringify({
+      width,view: view.toLowerCase(),
+      differentRGBPixels,peakColorDelta,
+      screenshotOriginalSha256:digest(a),
+      screenshotCandidateSha256:digest(b),
+      photoMaterialShared:candidateState.originalPhotographicMaterialInstanceShared,
+      previewWorldRoundtripMeters:pre.maxPreviewWorldRoundtripMeters,
+      candidateVisible:candidateState.disposableCandidateVisible,
+      originalVisible:candidateState.originalDressVisible,
+      noRealHumanVisualAcceptance:true,releaseAuthorized:false
+     }));
+    }
     assert.ok(differentRGBPixels>60&&peakColorDelta>=25,
-     'P86 real photo-shader A/B must visibly change actual original 3D dress canvas');
+     'P86 actual photo source shader A/B changed too few pixels: '+
+      JSON.stringify({width,view,differentRGBPixels,peakColorDelta}));
     const label=view.toLowerCase(),folder=
      'benchmark/mission2-source-dress-motion/photo-render-comparison86';
     await mkdir(folder,{recursive:true});
