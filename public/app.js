@@ -131,22 +131,45 @@ function clothingFields(body,item,onChange=()=>{}){
  if(item.image&&(!item.color||item.color==='Unknown'))checkPhoto(item.image).then(quality=>{if(!fields.color.isConnected||item.colorSource==='user')return;const updated=ClothingDetails.fillColor(item,quality.colorEstimate);if(updated!==item){Object.assign(item,updated);fields.color.value=item.color||'';if(!fillPhoto.disabled)refreshCompletion();onChange();}}).catch(()=>{});
  return ()=>normalizeClothing(item);
 }
+// P88: an owner photo crop edits displayed JPEG pixels, but the frozen P70
+// worker's mask SHA-256 refers to an *older* region. Such a crop cannot keep
+// that signed mask/unit receipt; request a new single-garment capture instead.
+// Applies to pending drafts and previously saved source-bound garments.
+function hasSourceBoundMask88(item){
+ return Boolean(item?.reconciliation70||item?.reconciliation70Status||
+  item?.shoePair||item?.combinedFragments70||
+  item?.segmentHint?.componentReviewStatus);
+}
 function cropClothingPhoto(item){
+ if(hasSourceBoundMask88(item)){
+  message('This garment is bound to its original segmented mask. Capture a new single-garment photo rather than changing these source-bound pixels.');
+  return;
+ }
  if(localPending.has(item.id)||busy)return;
  if(stream||cameraOpening)stopCamera();
  openPhotoCrop(item,{
   async analyze(image){if(!localReady)await enableLocal();const result=await localRequest('classify',image,null);return (result.strong||result.categoryConfirmed)&&result.choices?.[0]&&segmentationAllows(item,result.choices[0])?{...result.choices[0],details:ClothingDetails.recognizedFields(result.choices[0],result.details)}:null;},
   async save(photo,choice){
+   // A crop editor may have opened before a segmentation receipt arrived.
+   // Re-check at write time; no stale masked source metadata can accompany
+   // newly cropped image pixels into the private draft/closet.
+   if(hasSourceBoundMask88(item))throw Error('P88_SOURCE_MASK_CROP_FORBIDDEN');
    const value={...structuredClone(item),...photo,userAdjusted:true,localAnalyzed:true,scanFailed:false,saveFailed:false,possibleDuplicate:false};
-   delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}const quality=await checkPhoto(photo.image);Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';delete value.maskedColorEstimate;delete value.maskApplied;value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
+   delete value.recognitionMemory;delete value.confirmedDetails;delete value.correctionReceipt72;delete value.learningReviewedWeek;delete value.weeklySuggestion;delete value.recognitionPhoto;delete value.colorMethod;if(value.colorSource==='photo-estimate'){value.color='';delete value.colorSource;}const quality=await checkPhoto(photo.image);
+   if(hasSourceBoundMask88(item))throw Error('P88_STALE_MASK_AFTER_PHOTO_CHECK');
+   Object.assign(value,ClothingDetails.fillColor(value,photo.maskApplied?(photo.maskedColorEstimate||null):quality.colorEstimate));if(photo.maskedColorEstimate&&value.colorSource==='photo-estimate')value.colorMethod='garment-mask';delete value.maskedColorEstimate;delete value.maskApplied;value.visualSignature=quality.signature;value.visualAspect=quality.aspect;delete value.localChoices;delete value.indexedAt;
    if(choice){applyLocalChoice(value,choice,true);Object.assign(value,ClothingDetails.fill(value,choice,choice.details,true));value.indexedAt=new Date().toISOString();}
    value.localStatus=choice?'Crop checked. Suggested details applied.':'Crop saved. Check recognition or adjust the clothing details.';
-   if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));
+   if(hasSourceBoundMask88(item))throw Error('P88_MASK_REVISION_CHANGED_BEFORE_WRITE');
+   if(items.some(x=>x.id===item.id))await writeAll([value]);else await queued(()=>new Promise((resolve,reject)=>{
+    if(hasSourceBoundMask88(item))return reject(Error('P88_MASK_REVISION_CHANGED_IN_QUEUE'));
+    const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:batch.map(x=>x.id===item.id?value:x)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+   }));
    Object.assign(item,value);for(const key of ['visualSignature','visualAspect','localChoices','indexedAt','recognitionPhoto','colorMethod','recognitionMemory','confirmedDetails','correctionReceipt72','learningReviewedWeek','weeklySuggestion'])if(!(key in value))delete item[key];render();
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
-function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||!!item.shoePair||!!item.combinedFragments70;button.onclick=()=>cropClothingPhoto(item);return button;}
+function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||hasSourceBoundMask88(item);button.onclick=()=>cropClothingPhoto(item);return button;}
 // P846: owner's two confirmed photo regions may represent one physical item;
 // never infer that source/mask evidence or a machine suggestion is ownership.
 function unit70Receipts(item){
