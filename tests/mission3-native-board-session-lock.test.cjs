@@ -42,7 +42,7 @@ function fixture({native=true,throwOn=null,missing=[]}={}){
   boardInitialized:true,
   $(id){if(!nodes[id])throw Error('No DOM id '+id);return nodes[id]},
   cleanOutfitBoard(){calls.push('clean');return {name:'',slots:{}}},
-  cancelBoardDraftTimer(){calls.push('cancel-timer');this.boardDraftTimer=null},
+  cancelBoardDraftTimer(){calls.push('cancel-timer')},
   renderOutfitBoard(){calls.push('render')},
  };
  vm.createContext(ctx);
