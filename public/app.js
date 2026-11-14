@@ -490,9 +490,9 @@ function adjustPhoto(item){
   // mutated original JPEG or swapped source-bound mask during asynchronous work.
   if(sourceLease88&&!(await sourceSavePhotoVerified88(sourceLease88)))
    throw Error('P88_ORIGINAL_JPEG_OR_OWNER_CHANGED');
-  await (sourceLease88?
-   saveSourceBoundPiece88(reviewed72,batch.filter(x=>x.id!==item.id),sourceLease88):
-   savePiece(reviewed72,batch.filter(x=>x.id!==item.id)));
+  if(sourceLease88)
+   await saveSourceBoundPiece88(reviewed72,batch.filter(x=>x.id!==item.id),sourceLease88);
+  else await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
   // If the authenticated session changed while IDB committed, do not mutate
   // the newly active owner's in-memory wardrobe after the old transaction.
   if(sourceLease88&&!sourceSaveLeaseLive88(sourceLease88)){dialog.close();return;}
