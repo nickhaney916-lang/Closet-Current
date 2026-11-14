@@ -13,7 +13,13 @@ import {canonical,isHex64} from './p75-dataset-core.mjs';
 export const SCHEMA='m1-release-evidence-851-v1';
 export const METRICS=Object.freeze(['category','subtype','primaryColor','instanceSeparation','ownedFootwearUnit','noWrongSave']);
 const ROLES=['ownerPolicy','independentBlind','physicalDevices','signedCloud'];
-const sensitive=new Set(['image','imageData','photo','photoBytes','photoUrl','filePath','name','email','phone','ownerId','userId','accessToken','refreshToken','rawLabels','blindLabels','annotations','authHeader','privateKey']);
+// P884: prevent alternate spelling/case from smuggling identifiers into a
+// public numeric-only signed summary; private evidence stays off GitHub.
+const sensitive=new Set(['image','imagedata','photo','photobytes','photourl',
+ 'filepath','name','email','phone','ownerid','userid','accesstoken',
+ 'refreshtoken','rawlabels','blindlabels','annotations','authheader',
+ 'privatekey','originaljpeg','originalphoto','password','jwttoken']);
+const normalizedField=k=>String(k).replace(/[^a-z0-9]/gi,'').toLowerCase();
 const sha=x=>createHash('sha256').update(x).digest('hex');
 function cleanReport(issues,details={}){
  return {schema:SCHEMA,status:issues.length?'BLOCKED':'EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE',
@@ -26,7 +32,7 @@ function isNonnegativeInteger(x){return Number.isSafeInteger(x)&&x>=0;}
 function containsSensitive(v,depth=0){
  if(depth>18)return true;
  if(Array.isArray(v))return v.length>5000||v.some(x=>containsSensitive(x,depth+1));
- if(v&&typeof v==='object')return Object.entries(v).some(([k,x])=>sensitive.has(k)||containsSensitive(x,depth+1));
+ if(v&&typeof v==='object')return Object.entries(v).some(([k,x])=>sensitive.has(normalizedField(k))||containsSensitive(x,depth+1));
  return false;
 }
 function envelopeValid(e,expectedRole,approved){
@@ -41,8 +47,14 @@ function envelopeValid(e,expectedRole,approved){
 function asDate(s){const n=Date.parse(s);return typeof s==='string'&&/^\d{4}-\d{2}-\d{2}T/.test(s)&&Number.isFinite(n)?n:NaN;}
 export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
  const issues=[],details={checkedRoles:0,humanBlind:0,physicalPlatforms:0};
- if(!bundle||bundle.schema!==SCHEMA||typeof bundle.roles!=='object'||Array.isArray(bundle.roles))
+ if(!bundle||bundle.schema!==SCHEMA||!bundle.roles||
+    typeof bundle.roles!=='object'||Array.isArray(bundle.roles))
   return cleanReport(['no externally signed evidence bundle']);
+ if(!trusted||typeof trusted!=='object'||Array.isArray(trusted))
+  return cleanReport(['no owner-pinned independent signer fingerprints']);
+ if(Object.keys(bundle.roles).length!==ROLES.length||
+    ROLES.some(role=>!Object.hasOwn(bundle.roles,role)))
+  return cleanReport(['exactly four role-separated signed attestations required']);
  if(bundle.fixture===true||containsSensitive(bundle))return cleanReport(['test fixture or private payload forbidden in acceptance bundle']);
  if(!Number.isFinite(now.getTime()))return cleanReport(['invalid audit time']);
  const payload={},fingerprints=new Set(),nowMs=now.getTime();
@@ -110,8 +122,15 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
   if(observed.total>sources)issues.push(metric+' denominator exceeds blind source count');
   else if(observed.correct/observed.total+Number.EPSILON<plan.minimumAccuracy)
    issues.push(metric+' below preapproved accuracy threshold');
+  // P884: "no wrong saves" is a ZERO-TOLERANCE safety invariant, not an
+  // optimizable recognition metric. Evaluate ALL independently blind sources,
+  // never a retrospectively selected, easier subset.
+  if(metric==='noWrongSave'&&
+     (plan.minimumAccuracy!==1||plan.minimumSamples<sources||
+      observed.total!==sources||observed.correct!==sources))
+    issues.push('noWrongSave must have preapproved 100 percent and full blind source coverage');
  }
- const acceptedDevices=new Set(),devices=phones.devices;
+ const acceptedDevices=new Set(),deviceReceiptHashes=new Set(),devices=phones.devices;
  if(!Array.isArray(devices)||devices.length>10)issues.push('real device evidence missing or unbounded');
  else{
   for(const d of devices){
@@ -122,6 +141,13 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
       typeof d.osVersion!=='string'||!d.osVersion||
       typeof d.browserVersion!=='string'||!d.browserVersion||
       !isHex64(d.testEvidenceSha256))continue;
+   // Each real physical platform needs independently identifiable evidence;
+   // reusing one receipt for both devices cannot satisfy two-platform review.
+   if(deviceReceiptHashes.has(d.testEvidenceSha256)){
+    issues.push('duplicate physical-device evidence digest');
+    continue;
+   }
+   deviceReceiptHashes.add(d.testEvidenceSha256);
    if(d.platform==='Android'&&d.browser==='Chrome')acceptedDevices.add('Android Chrome');
    if(d.platform==='iPhone'&&d.browser==='Safari')acceptedDevices.add('iPhone Safari');
   }
