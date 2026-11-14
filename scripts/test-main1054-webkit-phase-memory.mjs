@@ -132,13 +132,16 @@ const startTime=Date.now(),failures=[];
 let browser,page,context,intentionalShutdown=false;
 
 // Linux /proc telemetry only on the disposable GitHub runner.
+// Reduced sampling cadence (3s) limits /proc smaps_rollup page-table walk
+// overhead during the genuine CPU-bound WebKit q8 model load; no claim of zero
+// profiler distortion or of an observed physical iPhone memory peak.
 // RSS sums double count shared pages; summed PSS apportions shared pages when
 // readable, but sampling cannot establish an OS-level or physical iPhone peak.
 const memory={
  platform:process.platform,sampleCount:0,samplesWithBrowserProcess:0,
  peakBrowserDescendantRssKiB:null,peakBrowserDescendantPssKiB:null,
  processCountAtPeakRss:0,lastBrowserRssKiB:null,lastBrowserPssKiB:null,
- browserPssReadable:false,samplingIntervalMs:1200,
+ browserPssReadable:false,samplingIntervalMs:3000,
  source:'linux-proc-descendants-of-playwright-runner',
  limitations:'RSS sum can double-count shared pages; sampled PSS is not an OS peak; desktop Linux cannot prove iPhone Safari memory safety',
 };
