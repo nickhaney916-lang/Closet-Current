@@ -16,7 +16,7 @@ const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,43
 assert.ok(widths90.every(x=>[320,390,430].includes(x)));
 assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
+const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=process.env.P90_PROFILE_VARIANT?'benchmark/parallel90-profile/'+engine90+'/'+process.env.P90_PROFILE_VARIANT+'/native':process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));

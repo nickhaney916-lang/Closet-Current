@@ -4,7 +4,9 @@ import {mkdir,writeFile} from 'node:fs/promises';
 const hashes={dress:'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',shirt:'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64'};
 export async function checkSavedSwitch90(page,engine){
  const samples=[],baseline=new Map();
- const out='benchmark/parallel90/'+engine;
+ const count=Number(process.env.P90_SWITCH_COUNT||16);
+ assert.ok([4,16].includes(count));
+ const out=process.env.P90_PROFILE_VARIANT?'benchmark/parallel90-profile/'+engine+'/'+process.env.P90_PROFILE_VARIANT:'benchmark/parallel90/'+engine;
  await mkdir(out,{recursive:true});
  const original=await page.evaluate(()=>window.native3D05Bridge.state().opened);
  for(const index of [-1,1.5,999]){
@@ -13,7 +15,7 @@ export async function checkSavedSwitch90(page,engine){
  }
 
  for(const figure of ['female','male']){
-  for(let i=1;i<=16;i++){
+  for(let i=1;i<=count;i++){
    const selected=i%2?2:0,mode=selected===2?'shirt':'dress';
    const began=Date.now();
    // Actual accessible UI change; it invokes guarded native selectSaved,
@@ -32,6 +34,9 @@ export async function checkSavedSwitch90(page,engine){
    await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:120000});
    const state=await page.evaluate(()=>window.native3D05Bridge.state());
    assert.equal(state.bones,163);assert.equal(state.figure90,figure);assert.ok(state.meshCount>0);
+   const expectedBoot=process.env.P90_PROFILE_VARIANT&&process.env.P90_PROFILE_VARIANT!=='candidate'?'pants':'none';
+   assert.equal(state.startup90.initialMode,expectedBoot);
+   if(expectedBoot==='none')assert.equal(state.startup90.initialGarmentMeshes,0);
    assert.equal(state.garmentSources90[mode],hashes[mode]);
    assert.equal(state.garmentSources90[mode==='shirt'?'dress':'shirt'],null,'old garment removed');
    assert.equal(state.fallbackCount,3,'unsupported outerwear/shoes stay photo-only');
@@ -49,17 +54,21 @@ export async function checkSavedSwitch90(page,engine){
     const fresh=window.__p90LastSwitchCanvas!==c;
     window.__p90LastSwitchCanvas=c;return fresh;
    }),true,'each switch must replace the old actual canvas object');
-   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
+   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
    if([1,4,16].includes(i)){
     console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
     await page.screenshot({path:out+'/'+figure+'-'+i+'-saved-switches.png'});
+    if(process.env.P90_PROFILE_VARIANT){
+     await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+     await page.locator('#outfit3D01Canvas').screenshot({path:out+'/'+figure+'-'+i+'-canvas.png'});
+    }
    }
   }
 
  }
  await page.evaluate(()=>{delete window.__p90LastSwitchCanvas;});
  await writeFile(out+'/saved-switches.json',JSON.stringify({engine,samples,
-  sequence:'16 cumulative selections per rig with checkpoints 1/4/16',
+  sequence:count+' cumulative selections per rig',
   source:'licensed pinned research shirt and dress; partial outfits with 3 photo-only pieces',
   nativeSavedSelection:true,privateOwnerSynthetic:true,physicalPhone:false,
   performance:'end-to-end selection+rehash+renderer/model load; not FPS',familyAlpha:'HOLD'},null,2));

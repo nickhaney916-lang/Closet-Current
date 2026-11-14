@@ -383,6 +383,7 @@ export async function mountNative3D05({
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
+   startup90:active?data.startup90||null:null,
    camera90:active?data.camera90||null:null,
    figure90:active?data.figure||null:null,
    garmentSources90:active?data.garmentSources90||null:null,

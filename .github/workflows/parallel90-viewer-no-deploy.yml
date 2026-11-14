@@ -8,7 +8,7 @@ permissions:
 jobs:
   native-viewer:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 40
     strategy:
       fail-fast: false
       matrix:
@@ -50,11 +50,16 @@ jobs:
             export NATIVE88=1 NATIVE89=1 NATIVE91=1 NATIVE92=1 NATIVE93=1 NATIVE102=1
           fi
           node scripts/test-native-3d-05-browser.mjs
+      - name: Same-host baseline candidate restored startup and final-source-frame comparison
+        env:
+          P90_ENGINE: ${{ matrix.engine }}
+        run: node scripts/benchmark-parallel90-startup.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: parallel90-real-browser-evidence-${{ matrix.engine }}-HOLD
           path: |
             benchmark/parallel90/
+            benchmark/parallel90-profile/
             benchmark/native-3d-05/
             benchmark/native-3d-05-webkit/

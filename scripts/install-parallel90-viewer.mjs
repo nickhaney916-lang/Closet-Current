@@ -3,6 +3,9 @@ import {readFile,writeFile} from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import {resolve} from 'node:path';
 import assert from 'node:assert/strict';
+const startupVariant90=process.env.P90_PROFILE_VARIANT||'candidate';
+assert.ok(['baseline','candidate','restored'].includes(startupVariant90));
+const emptyStartup90=startupVariant90==='candidate';
 const donor=resolve(process.argv[2]||'.native05-donor-541');
 assert.notEqual(donor,resolve('.'));
 assert.equal(execFileSync('git',['-C',donor,'rev-parse','HEAD'],{encoding:'utf8'}).trim(),'df6885d6011cb33fb22dceb81a08f35a0ac4dd61');
@@ -30,14 +33,33 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);body.a
   const key={ArrowLeft:'Left90',ArrowRight:'Right90','+':'ZoomIn90','=':'ZoomIn90','-':'ZoomOut90',Home:'Reset90'}[e.key];
   if(key){e.preventDefault();command90(key);}
  });`);
-s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    garmentSources90:{dress:view.outfit?.dress?.sourceSHA256||null,shirt:view.outfit?.shirt?.sourceSHA256||null,pants:view.outfit?.pants?.sourceSHA256||null},
+s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    startup90:{...startupTimings90,...view.startup90},
+    garmentSources90:{dress:view.outfit?.dress?.sourceSHA256||null,shirt:view.outfit?.shirt?.sourceSHA256||null,pants:view.outfit?.pants?.sourceSHA256||null},
     camera90:{angle:view.viewAngle,distance:view.cameraDistance,position:view.cameraPosition,target:view.cameraTarget,loadMs:view.loadMs,lastRenderMs:view.lastRenderMs,pixelRatio:view.pixelRatio,drawPixels:view.drawPixels},
     geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,`);
+// Instrument actual source loading / scene setup without photo bytes.
+s=replace(s,' let scene=null,sources=null,presenter=null,ready=false,shown=false,dead=false,lock=Promise.resolve(),loadSerial=0,rendered=null,modelLoads=0;',
+ ' const startupTimings90={sourceLoadMs:0,sceneSetupMs:0,presentMs:0};\n let scene=null,sources=null,presenter=null,ready=false,shown=false,dead=false,lock=Promise.resolve(),loadSerial=0,rendered=null,modelLoads=0;');
+s=replace(s,'sources=await loadVettedOutfit3D01Sources();still();',
+ 'const sourceStart90=performance.now();sources=await loadVettedOutfit3D01Sources();still();startupTimings90.sourceLoadMs=performance.now()-sourceStart90;');
+s=replace(s,'   scene=mountAnatomicalShowroom(canvas,{',
+ '   const sceneStart90=performance.now();\n   scene=mountAnatomicalShowroom(canvas,{emptyStartup90:'+emptyStartup90+',');
+s=replace(s,"   scene.applyOutfit('none');modelLoads++;",
+ "   scene.applyOutfit('none');modelLoads++;startupTimings90.sceneSetupMs=performance.now()-sceneStart90;");
+s=replace(s,'   const actual=presenter.present(plan);rendered=actual;',
+ '   const presentStart90=performance.now();const actual=presenter.present(plan);startupTimings90.presentMs+=performance.now()-presentStart90;rendered=actual;');
 // Reopened canvases must retain keyboard support too.
 s=replace(s,"  canvas.replaceWith(fresh);canvas=fresh;","  fresh.tabIndex=0;canvas.replaceWith(fresh);canvas=fresh;");
 await writeFile(panel,s);
 const showroom=donor+'/research/dress-mobile-01/dress-mobile-showroom.mjs';
 s=await readFile(showroom,'utf8');
+// Only the native research panel opts out of throwaway neutral pants.
+// Legacy showroom callers retain their original default.
+s=replace(s,'premiumTurntable67=false}={}){','premiumTurntable67=false,emptyStartup90=false}={}){');
+s=replace(s,' const load=async kind=>{',' let startup90=null;\n const load=async kind=>{');
+s=replace(s,"  installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();",
+ "  installOpeningSkinAttribute(selected);const bootStart90=performance.now();\n  const initialMode90=emptyStartup90===true?'none':'pants';outfit.setOutfit(initialMode90);\n  const initialGarmentMs=performance.now()-bootStart90,initialGarmentMeshes=outfit.getState().garmentMeshes;\n  syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();\n  startup90={initialMode:initialMode90,initialGarmentMs,initialGarmentMeshes,totalLoadMs:performance.now()-began};");
+s=replace(s,'getState:()=>({kind:current,','getState:()=>({startup90,kind:current,');
 // Bound horizontal orbit; keep existing authentic geometry/materials/UVs.
 s=replace(s,' controls.minPolarAngle=.8;controls.maxPolarAngle=1.65;',' controls.minPolarAngle=Math.PI/2;controls.maxPolarAngle=Math.PI/2;');
 s=replace(s,' if(premiumTurntable67)controls.addEventListener(\'start\',()=>{spin=false;dirty=true;});'," controls.addEventListener('start',()=>{spin=false;dirty=true;});");
