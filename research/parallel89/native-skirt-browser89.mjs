@@ -117,7 +117,7 @@ async function load(avatar){
  if(root){scene.remove(root);root.traverse(o=>{
   if(o.isMesh){o.geometry.dispose();if(Array.isArray(o.material))o.material.forEach(x=>x.dispose());else o.material?.dispose();}
  });root=null;}
- bodies=[];sourceBodies=[];contacts=[];lastContact=null;phase='loading';
+ bodies=[];sourceBodies=[];contacts=[];lastContact=null;coreBodySkinFaceMask89=null;phase='loading';
  const src=MODELS[avatar],path='/donor/research/three-d-06/models/'+src.file;
  const bytes=await read(path);
  check(await sha(bytes)===src.sha,'authentic original male/female CC0 rig SHA failed');
@@ -202,6 +202,48 @@ function trialNeutralRear(){
  pose='source';originalBodyPositions();render();
  return report;
 }
+/**
+ * Classify every ORIGINAL skin-weighted CC0 body triangle by its anatomical
+ * original rig bone labels. The photographic skirt's radial PATTERN must not
+ * enlarge itself to enclose outstretched forearms, hands, fingers or head.
+ * This mask affects ONLY the shape-hypothesis cross-section, NEVER the
+ * full-original triangle BVH used to veto any body/skirt intersection.
+ */
+let coreBodySkinFaceMask89=null;
+function originalTorsoLegSourceFaceMask89(){
+ if(coreBodySkinFaceMask89)return coreBodySkinFaceMask89;
+ const arm=/upperarm|lowerarm|forearm|shoulder|clavic|hand|finger|thumb|head|neck|eye|ear/i;
+ const keep=[],parts=new Set();let eligible=0,excluded=0;
+ for(const mesh of bodies){
+  const g=mesh.geometry,idx=g.index,skin=g.getAttribute('skinIndex'),
+   weights=g.getAttribute('skinWeight'),position=g.getAttribute('position');
+  check(idx?.count>=150&&skin?.count===position?.count&&
+   weights?.count===position?.count,'actual CC0 body skin weight provenance unavailable');
+  const isCore=new Uint8Array(position.count);
+  for(let i=0;i<position.count;i++){
+   let maxArmWeight=0;
+   for(let k=0;k<4;k++){
+    const w=weights.getComponent(i,k);
+    if(w<=1e-8)continue;
+    const bone=mesh.skeleton.bones[skin.getComponent(i,k)];
+    check(!!bone&&typeof bone.name==='string'&&bone.name.length>0,
+     'original avatar source bone labels missing');
+    if(arm.test(bone.name)){maxArmWeight+=w;parts.add(bone.name);}
+   }
+   isCore[i]=maxArmWeight<.5?1:0;
+  }
+  for(let k=0;k<idx.count;k+=3){
+   const keepSource=!!(isCore[idx.getX(k)]&&isCore[idx.getX(k+1)]&&
+    isCore[idx.getX(k+2)]);
+   keep.push(keepSource?1:0);
+   if(keepSource)eligible++;else excluded++;
+  }
+ }
+ check(parts.size>=2&&excluded>=24&&eligible>=100&&
+  excluded<eligible,'actual original bone-part mask did not distinguish extremities');
+ coreBodySkinFaceMask89=new Uint8Array(keep);
+ return coreBodySkinFaceMask89;
+}
 /** Genuine public-body cross-sectional source fit A/B. The original PHOTO
  * and all original GLB skinned geometry remain immutable. No fitted candidate
  * is exposed or saved; P89 returns only counts and derived band summaries.
@@ -216,8 +258,11 @@ function trialMeasuredAnatomyFit(){
    let b;
    try{
     b=posedSource84(bodies);
+    const coreFaceMask=originalTorsoLegSourceFaceMask89();
+    check(coreFaceMask.length===b.g.index.count/3,
+     'original CC0 skin part face indices do not match immutable BVH source');
     return {positions:b.g.getAttribute('position').array.slice(),
-     indices:b.g.index.array.slice()};
+     indices:b.g.index.array.slice(),coreFaceMask};
    }finally{b?.g.dispose();}
   },
   sampleContact:()=>{
