@@ -2329,6 +2329,11 @@ try{
     assert.equal(candidateState.disposableCandidateVisible,true);
     assert.equal(candidateState.originalPhotographicMaterialInstanceShared,true);
     assert.equal(candidateState.sourceMeshAttributesUnchanged,true);
+    // The native 163-bone research renderer is demand-driven, not an
+    // autonomous scene animation: changing a mesh.visible flag does NOT
+    // force a WebGL draw. Use its real front/side/back button to render
+    // the same camera again AFTER switching the original photo garment.
+    await page.locator('#outfit3D01'+view).click();
     await page.evaluate(()=>new Promise(resolve=>
      requestAnimationFrame(()=>requestAnimationFrame(resolve))));
     const b=await page.screenshot({fullPage:false,animations:'disabled'});
