@@ -25,12 +25,20 @@ function nativeLossless04ClearPreview(){
 }
 function boardLink(text,url,className='textlink'){const a=node('a',text,className);a.href=url;a.target='_blank';a.rel='noopener noreferrer';return a;}
 function boardBackup(){
+ // Export is a private read: never return a previous owner's outfit state
+ // to a guest or a newly signed account even when a button was retained.
+ const lease=beginOwnerBoardUiLease();
+ if(!lease)throw Error('Private outfit export requires a verified owner session');
  if(nativeLossless04Active){
   if(!nativeLossless04||!nativeLossless04.status().active)
-   throw Error('Private outfit export requires a verified owner session');
-  return nativeLossless04.readOnlySnapshot();
+   throw Error('Private outfit export requires an active owner session');
+  const snapshot=nativeLossless04.readOnlySnapshot();
+  if(!lease.current())throw Error('Private owner session changed during export');
+  return snapshot;
  }
- return {current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};
+ const snapshot={current:structuredClone(currentBoard),saved:structuredClone(savedOutfitBoards)};
+ if(!lease.current())throw Error('Private owner session changed during export');
+ return snapshot;
 }
 function boardHasUnsavedDraft(){
  return !nativeLossless04Active&&boardInitialized&&Boolean(db)&&

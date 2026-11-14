@@ -1789,18 +1789,55 @@ $('discard').onclick=async()=>{
   message('Could not confirm whether those unfinished photos were discarded. Review and refresh Photo results from private device storage before retrying.');
  }
 };
-$('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
-  try{
-   if(!window.restoreAtomic01Bridge)throw Error('Verified private recovery is not ready');
-   const {data}=await window.restoreAtomic01Bridge.exportJSON();
-   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
-   const url=URL.createObjectURL(blob),a=node('a');a.href=url;
-   a.download='closet-current-owner-backup-v4.json';document.body.append(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1000);
-   message('Private lossless backup exported. Store this file securely.');
-  }catch(e){message(e.message||'Private backup failed; no data changed.');}
-  return;
- }if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))return message('Save a closet piece or inspiration look before exporting.');const blob=new Blob([JSON.stringify({format:'closet-current',version:3,items,looks:typeof inspirationLooks!=='undefined'?inspirationLooks:[],outfitBoard:typeof boardBackup==='function'?boardBackup():undefined})],{type:'application/json'}),url=URL.createObjectURL(blob),a=node('a');a.href=url;a.download='closet-current-backup.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);message('Backup downloaded. Keep it somewhere you can find again.');};
+$('export').onclick=async()=>{
+ // An export started by owner A must never download owner B's wardrobe if
+ // startup, an async native backup, or a same-ID re-login finishes later.
+ let exportLease;
+ try{exportLease=ownerWardrobeMutationLease();}catch{return;}
+ const assertExport=()=>{
+  exportLease.assertLease();
+  if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+   throw Error('Private wardrobe is locked; sign in again.');
+ };
+ const exportMessage=value=>{try{assertExport();message(value);}catch{}};
+ try{
+  assertExport();
+  if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;
+  assertExport();
+  if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
+   try{
+    const bridge=window.restoreAtomic01Bridge;
+    if(!bridge)throw Error('Verified private recovery is not ready');
+    const {data}=await bridge.exportJSON();
+    assertExport();
+    if(window.restoreAtomic01Bridge!==bridge)
+     throw Error('Private recovery changed sessions.');
+    const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+    assertExport();
+    const url=URL.createObjectURL(blob),a=node('a');a.href=url;
+    a.download='closet-current-owner-backup-v4.json';document.body.append(a);
+    try{assertExport();a.click();}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+    exportMessage('Private lossless backup exported. Store this file securely.');
+   }catch{exportMessage('Private backup failed; no data changed.');}
+   return;
+  }
+  if(!items.length&&(typeof inspirationLooks==='undefined'||!inspirationLooks.length))
+   return exportMessage('Save a closet piece or inspiration look before exporting.');
+  // Snapshot ONLY after the initiating private owner is still current.
+  // The board helper separately checks exact signed owner and visible gate.
+  const backup={format:'closet-current',version:3,
+   items:structuredClone(items),
+   looks:typeof inspirationLooks!=='undefined'?structuredClone(inspirationLooks):[],
+   outfitBoard:typeof boardBackup==='function'?boardBackup():undefined};
+  assertExport();
+  const blob=new Blob([JSON.stringify(backup)],{type:'application/json'});
+  assertExport();
+  const url=URL.createObjectURL(blob),a=node('a');a.href=url;
+  a.download='closet-current-backup.json';
+  try{assertExport();a.click();}finally{setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  exportMessage('Backup downloaded. Keep it somewhere you can find again.');
+ }catch{exportMessage('Private backup failed; sign in and retry. No data changed.');}
+};
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
  // A backup selected by one account can never be restored into the next.
