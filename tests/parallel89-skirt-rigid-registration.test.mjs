@@ -62,7 +62,10 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  const x=fixture(),row=run(x);
  assert.equal(row.schema,'P89-genuine-skirt-photo-rigid-registration-AB/v1');
  assert.equal(row.status,'RESEARCH_REGISTRATION_REDUCED_STATIC_PAIRS_NOT_WEARABLE');
- assert.equal(row.trials.length,5);
+ assert.equal(row.trials.length,7);
+ assert.deepEqual(row.trials.map(x=>x.name),['front-15mm','front-30mm','front-45mm','front-60mm','back-15mm','up-20mm','down-20mm']);
+ assert.equal(row.maximumExploratoryOriginalWaistForwardRegistrationMeters,.06);
+ assert.equal(row.photoRegistrationCandidatesRequireIndependentPhotoFidelityReview,true);
  assert.equal(row.bestResearchOnly.name,'front-15mm');
  assert.equal(row.original3PoseStrictBodyCrossingPairs,12);
  assert.equal(row.bestResearchOnly.trialThreePoseStrictCrossingPairSum,6);
