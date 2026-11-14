@@ -532,8 +532,8 @@ const outfitBoardReady=(async()=>{
    $('boardSaveStatus').textContent='Saved outfits could not be loaded.';
   }
  }
- if(nativeMountLease&&!nativeMountLease.current()||
-    ordinaryBoardLease&&!ordinaryBoardLease.current())return;
+ if(nativeMountLease&&!nativeMountLease.current())return;
+ if(ordinaryBoardLease&&!ordinaryBoardLease.current())return;
  boardCommittedDraft=JSON.stringify(currentBoard);boardInitialized=true;syncBoardInputs();renderOutfitBoard();
 })();
 
