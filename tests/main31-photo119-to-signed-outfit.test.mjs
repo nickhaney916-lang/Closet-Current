@@ -144,12 +144,19 @@ test('M31 injected foreign owner or original digest forgery cannot produce saved
  assert.deepEqual((await e.api.board({slots:{bottom:e.id}})).slots,{});
 }));
 
-test('M31 same-owner auth replacement and logout reject current native reads without sharing private originals',()=>withNativeSource(async e=>{
+test('M31 same-owner relogin revokes in-flight original-photo read; new login can begin fresh read',()=>withNativeSource(async e=>{
  await e.commit();await e.api.item(e.id);
- e.replaceAuth();
- await assert.rejects(e.api.query({slot:'bottom'}),/native-signed-session-required|native-session-changed|native-session-or-content-changed/);
- // New sign-in is allowed to initiate its own fresh read, but cannot use old
- // in-flight owner leases. Explicit logout always fails before reading photos.
+ const interrupted=createNativeCatalogCrosswalk({getSession:e.getSession,
+  getRevision:()=>1,cryptoProvider:webcrypto,
+  readOwnerItems:async scope=>{
+   const rows=await e.readOwnerItems(scope);
+   e.replaceAuth();
+   return rows;
+  }});
+ await assert.rejects(interrupted.item(e.id),/native-session-or-content-changed/);
+ // The replacement same-ID authentication is a new authority, never an old
+ // async continuation. A fresh recheck of this login is permitted.
+ assert.equal((await e.api.item(e.id)).consumer3D,false);
  e.logout();
  await assert.rejects(e.api.item(e.id),/native-signed-session-required/);
 }));
