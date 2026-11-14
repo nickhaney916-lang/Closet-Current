@@ -83,6 +83,22 @@ export async function checkSavedSwitch90(page,engine){
     'measured renderer phases account for their entire wall-clock apply duration');
    assert.ok(sceneStages.totalMs<=stages.applyMs+100,
     'source verified presenter apply receipt must include the real scene apply phases');
+   const shirtStages=state.sceneShirtStages90;
+   assert.ok(shirtStages&&typeof shirtStages==='object'&&!Array.isArray(shirtStages),
+    'original research garment controller must expose only numeric stage timings');
+   const stageEntries=Object.entries(shirtStages);
+   if(mode==='shirt'){
+    const required=['attach','panelsAndSleeves','shoulderCaps','shoulderTop'];
+    for(const stage of required)
+     assert.ok(Object.hasOwn(shirtStages,stage),'unchanged 3D geometry stage '+stage+' must run');
+    assert.ok(stageEntries.length>=12,'full source garment still passes all registered fitting stages');
+    for(const [stage,ms] of stageEntries){
+     assert.match(stage,/^[a-zA-Z]+$/);
+     assert.ok(Number.isFinite(ms)&&ms>=0,'actual original garment stage time is finite');
+    }
+    assert.ok(stageEntries.reduce((total,[,ms])=>total+ms,0)<=sceneStages.setOutfitMs+100,
+     'individual garment stages are contained within actual original setOutfit execution');
+   }else assert.equal(stageEntries.length,0,'dress never forges shirt-construction steps');
    assert.equal(state.garmentSources90[mode],hashes[mode]);
    assert.equal(state.garmentSources90[mode==='shirt'?'dress':'shirt'],null,'old garment removed');
    assert.equal(state.fallbackCount,3,'unsupported outerwear/shoes stay photo-only');
@@ -100,7 +116,7 @@ export async function checkSavedSwitch90(page,engine){
     const fresh=window.__p90LastSwitchCanvas!==c;
     window.__p90LastSwitchCanvas=c;return fresh;
    }),true,'each switch must replace the old actual canvas object');
-   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,secondDenimCount,dressRequestCount,renderStages:stages,sceneApplyStages:sceneStages,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
+   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,secondDenimCount,dressRequestCount,renderStages:stages,sceneApplyStages:sceneStages,shirtStages,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
    if([1,4,16].includes(i)){
     console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
     await page.screenshot({path:out+'/'+figure+'-'+i+'-saved-switches.png'});
