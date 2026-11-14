@@ -45,3 +45,10 @@ test('session cleanup cannot overwrite an earlier first-model inference failure 
  assert.match(source,/phase35=key==='fashionclip'\?'CLIP_INFERENCE':'SIGLIP_INFERENCE'/);
  assert.doesNotMatch(source,/finally\s*\{\s*phase35=key==='fashionclip'\?'CLIP_RELEASE'/);
 });
+
+test('remote Playwright BrowserServer downloads must use saveAs, never path',async()=>{
+ const source=await readFile('scripts/test-main1054-webkit-typed-m35-browser.mjs','utf8');
+ assert.match(source,/await downloaded\.saveAs\(receiptPath\)/);
+ assert.doesNotMatch(source,/await downloaded\.path\(\)/);
+ assert.match(source,/await readFile\(receiptPath,'utf8'\)/);
+});
