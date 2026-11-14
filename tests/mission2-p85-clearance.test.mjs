@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {createDisposableClothAlternatives85} from
+import {createDisposableClothAlternatives85,createDisposableWitnessLocalized85} from
  '../research/mission2-source-length/alternative-photo-clearance85.mjs';
 import {createDisposableUpperTorsoWorldTrial60} from
  '../research/mission2-source-length/upper-torso-clearance-trial60.mjs';
@@ -97,4 +97,68 @@ test('P85: research helper browser-safe, detached donor hooks only, original col
  assert.ok(installer.includes('alternative-photo-clearance85.mjs'));
  assert.ok(driver.includes('PHOTO_DRESS_ALTERNATIVE85'));
  assert.ok(!helper.includes('localStorage')&&!helper.includes('supabase'));
+});
+
+test('P85 witness local source is immutable, research-only and cannot displace a disconnected original cloth island',()=>{
+ const separate=new Float32Array([
+  ...tri,
+  -.21,.035,0,-.22,.055,.025,-.24,.085,.01
+ ]);
+ const before=separate.slice(),v=createDisposableWitnessLocalized85(
+  separate,null,{...params,strictClothFaceIndices:[0]});
+ assert.equal(v.length,4);
+ assert.deepEqual(v.map(x=>x.method),[
+  'strict-witness-local-radial','strict-witness-local-radial',
+  'strict-witness-local-edge-projection','strict-witness-local-edge-projection']);
+ assert.deepEqual(v.map(x=>x.localGraphRadiusHops85),[12,24,12,24]);
+ assert.deepEqual(separate,before);
+ for(const candidate of v){
+  assert.equal(candidate.originalStrictWitnessFaceCount85,1);
+  assert.equal(candidate.originalSourceFaceIdsNeverExported85,true);
+  assert.equal(candidate.originalPhotoWorldAndRestNeverModified,true);
+  assert.equal(candidate.bodyCollisionAndC61QualityMustBeRemeasured,true);
+  assert.equal(candidate.candidateNotInstalledInRenderer,true);
+  assert.equal(candidate.releaseAuthorized,false);
+  assert.equal(candidate.familyAlpha,'HOLD');
+  assert.ok(candidate.maxAppliedMeters<=.006002);
+  assert.ok(candidate.movedVertices>0);
+  assert.deepEqual(candidate.world.slice(18),before.slice(18),
+   'a disconnected uncontacted source cloth island must not be moved');
+  assert.equal(Object.keys(candidate).includes('strictClothFaceIndices'),false);
+  const quality=measureDisposableSourceSurfaceStrain61(separate,candidate.world);
+  assert.equal(quality.signedOriginalSourceFacesAnalyzed,3);
+ }
+});
+test('P85 witness source topology must not collapse or stitch disconnected seam positions',()=>{
+ const proposed=createDisposableWitnessLocalized85(tri,null,{
+  ...params,strictClothFaceIndices:[0]});
+ for(const p of proposed){
+  assert.deepEqual(p.world.slice(3,6),p.world.slice(9,12),
+   'duplicate source positions must have exactly same world displacement');
+  assert.notStrictEqual(p.world,tri);
+  assert.equal(p.originalIndicesNeverModified,true);
+ }
+});
+test('P85 witness source geometry requires only real valid face IDs and refuses malformed/forged audits',()=>{
+ for(const faceIds of [[-1],[2],[0,3],[.4],[0,0],['0'],null,{},new Set([0])])
+  assert.throws(()=>createDisposableWitnessLocalized85(tri,null,{
+   ...params,strictClothFaceIndices:faceIds}));
+ assert.deepEqual(createDisposableWitnessLocalized85(tri,null,{
+  ...params,strictClothFaceIndices:[]}).map(p=>p.world),
+  Array.from({length:4},()=>tri),
+  'no real crossing faces must never invent body relief');
+});
+test('P85 witness source exactly repeats deterministic tests, with finite C61 quality receipts',()=>{
+ const args={...params,strictClothFaceIndices:[0]};
+ const a=createDisposableWitnessLocalized85(tri,null,args),
+  b=createDisposableWitnessLocalized85(tri,null,args);
+ for(let i=0;i<a.length;i++){
+  assert.deepEqual(a[i].world,b[i].world);
+  assert.equal(a[i].localizedSourcePositionGroups85,
+   b[i].localizedSourcePositionGroups85);
+  const m=measureDisposableSourceSurfaceStrain61(tri,a[i].world);
+  assert.ok(Number.isFinite(m.maxOriginalPhotoWorldEdgeRelativeStrain));
+  assert.ok(Number.isFinite(m.maxOriginalPhotoFaceNormalTurnDegrees));
+  assert.equal(m.originalPhotoTextureRestUVAndSkinNeverEdited,true);
+ }
 });
