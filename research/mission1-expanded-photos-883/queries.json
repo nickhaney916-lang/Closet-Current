@@ -1,0 +1,56 @@
+{
+  "schema": "p75-query-plan-v1",
+  "policy": "PUBLIC train/development-only Commons source discovery; ZERO HUMAN TRUTH; every result considered EXPOSED",
+  "maxOriginalsPerQuery": 4,
+  "searches": [
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap running sneakers trainers footwear photograph"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap athletic shoes sneakers pair museum"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap ankle boots shoes footwear display"
+    },
+    {
+      "family": "footwear",
+      "query": "filetype:bitmap leather boots laces footwear museum"
+    },
+    {
+      "family": "tops",
+      "query": "filetype:bitmap cotton t shirt garment museum"
+    },
+    {
+      "family": "tops",
+      "query": "filetype:bitmap blouse fashion textile garment"
+    },
+    {
+      "family": "dresses",
+      "query": "filetype:bitmap casual dress clothing museum mannequin"
+    },
+    {
+      "family": "outerwear",
+      "query": "filetype:bitmap blazer coat suit jacket clothing museum"
+    },
+    {
+      "family": "bottoms",
+      "query": "filetype:bitmap jeans denim trousers clothing museum"
+    },
+    {
+      "family": "bottoms",
+      "query": "filetype:bitmap running shorts sports garment"
+    },
+    {
+      "family": "bottoms",
+      "query": "filetype:bitmap skirt garment mannequin textile"
+    },
+    {
+      "family": "accessories",
+      "query": "filetype:bitmap handbag bag accessory fashion museum"
+    }
+  ],
+  "privacy": "Do not keep, publish or upload original JPEG bytes; no reviewer labels, no sealed blind claims."
+}
