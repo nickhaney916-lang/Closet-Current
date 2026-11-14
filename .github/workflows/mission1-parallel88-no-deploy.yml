@@ -127,6 +127,15 @@ jobs:
           python research/mission1-parallel88/score-public-validation-88.py
           grep -Fq '"shoeOnly68": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           grep -Fq '"p88Safe": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
+          python - <<'PY'
+          import json
+          d=json.load(open('benchmark/p88-real-validation-masks/real-validation-measured-88.json'))
+          safe=d['p88Safe']['classAgnostic']
+          old=d['shoeOnly68']['classAgnostic']
+          assert safe['matched']>=old['matched'] and safe['falsePositives']<=old['falsePositives']
+          assert d['newSealedAcceptance'] is False and d['autoSaveAcceptance']=='BLOCKED_NOT_CALIBRATED'
+          print('P88_EXPOSED_SAFE_MASK_COUNTS_ONLY',safe, 'not human subtype/color or release acceptance')
+          PY
           grep -Fq '"deltaP88VsShoeOnlyRecall"' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           test -s benchmark/p88-real-validation-masks/real-validation-measured-88.json
           grep -Fq '"newSealedAcceptance": false' benchmark/p88-real-validation-masks/real-validation-measured-88.json
