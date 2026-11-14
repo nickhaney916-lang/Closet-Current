@@ -2,16 +2,16 @@
  * Mission 2 P91 — isolated HYPOTHESIS for better original-photo skirt fall.
  * Does not infer source depth, physical folds or hidden back from one image.
  * Geometry is measured from the actual posed, licensed dress skirt boundary,
- * then a sub-5 mm smooth five-lobe hem relief is proposed only on its bottom
+ * then a sub-3 mm smooth three-lobe hem relief is proposed only on its bottom
  * portion. Original photograph, UV/projection, bone weights, and body NEVER
  * change here. P88/P89/P90 strict contact+source strain gates must recheck
  * the actual 163-bone SkinnedMesh after use; no consumer integration.
  */
 export const SOURCE_SKIRT91=Object.freeze({
  schema:'M2-P91-original-source-skirt-hem-fall-experimental-hypothesis',
- amplitudeMeters:.0035,
+ amplitudeMeters:.0020,
  maxAllowedAmplitudeMeters:.0045,
- lobes:5,
+ lobes:3,
  phaseRadians:.65,
  waistAtFractionOfActualGarmentHeight:.48,
  hemVerticalComponentFraction:.22,
