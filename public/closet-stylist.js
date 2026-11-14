@@ -32,17 +32,25 @@ function currentPhotoOwnerSession167(){
  let token=null;
  try{token=JSON.parse(localStorage.getItem('closet-current-auth-v1')||'null');}catch{}
  return {authenticated:!!a?.user?.id&&$('authGate')?.hidden===true&&$('appShell')?.hidden===false,
-  ownerId:a?.user?.id,epoch:token?.epoch,privateDbName:db?.name};
+  ownerId:a?.user?.id,epoch:token?.epoch,privateDbName:db?.name,
+  // The same user ID and persisted token can be reused during re-login.
+  // Pin the actual signed auth/DB connection and capture-session generation.
+  authRef:a,privateDbRef:db,operationEpoch:captureOperationEpoch};
 }
 async function signedOwnerSavedRows167(){
  const start=currentPhotoOwnerSession167();
- if(!start.authenticated||start.privateDbName!=='closet-current-user-'+start.ownerId||!start.epoch)
+ if(!start.authenticated||start.privateDbName!=='closet-current-user-'+start.ownerId||
+    !start.epoch||!start.authRef||!start.privateDbRef)
   throw Error('Private owner session is unavailable');
+ const same=()=>{
+  const now=currentPhotoOwnerSession167();
+  return now.authenticated&&now.ownerId===start.ownerId&&
+   now.epoch===start.epoch&&now.privateDbName===start.privateDbName&&
+   now.authRef===start.authRef&&now.privateDbRef===start.privateDbRef&&
+   now.operationEpoch===start.operationEpoch;
+ };
  const saved=await readAll();
- const end=currentPhotoOwnerSession167();
- if(!end.authenticated||start.ownerId!==end.ownerId||start.epoch!==end.epoch||
-   start.privateDbName!==end.privateDbName)
-  throw Error('Owner changed while reading private saved garments');
+ if(!same())throw Error('Owner changed while reading private saved garments');
  return saved;
 }
 async function mountOriginalPhotoPreview167(){
