@@ -43,3 +43,14 @@ test('P90 selected, freshly byte-attested top-source hint only removes unused pu
  // An absent dress must not be forged using a placeholder source capability.
  assert.equal(source.includes("sourceSHA256:DRESS_SHA"),false);
 });
+
+test('P90 selects one original shirt research source only for verified saved board without bottom',()=>{
+ const bridge=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ assert.match(bridge,/nativeBottomEmpty90:!Object\.hasOwn\(selected\.slots,'bottom'\)/);
+ assert.ok(source.includes("nativeBottomEmpty90===true"));
+ assert.ok(source.includes("if(singleShirtBundle90&&!shirtOnly90)throw Error"));
+ assert.ok(source.includes("singleShirtBundle90?['public']:['public','second']"));
+ assert.ok(source.includes("loadVettedOutfit3D01Sources({dressOnly90=false,shirtOnly90=false,singleShirtBundle90=false}"));
+ // Never change the default licensed-source path for selected bottoms/legacy.
+ assert.equal(source.includes("for(const denim of ['public']){"),false);
+});
