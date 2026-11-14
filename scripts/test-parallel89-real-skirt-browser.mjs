@@ -76,7 +76,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -422,7 +422,43 @@ try{
     humanVisualFitApproved:false,consumer3DAdmitted:false,releaseAuthorized:false
    });
   }
+  // Fixed original+45mm source garment is also checked at two ORIGINAL
+  // P541/3D43 quarter-step static arm-pose interpolations, not continuously.
+  // A motion interpolant is NOT swept collision / cloth physics clearance.
+  for(const quarter of ['blend-25','blend-75']){
+   const originalQuarter=await page.evaluate(x=>window.nativeP89Skirt.setPose(x),quarter);
+   assert.equal(originalQuarter.originalTriangleIDResolution,
+    'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES');
+   const enabled=await page.evaluate(()=>
+    window.nativeP89Skirt.showOnlySourceRigidRegistration45(true));
+   assert.equal(enabled.researchOnlySourceSkirt45mmActive,true);
+   const quarterContact=await page.evaluate(x=>window.nativeP89Skirt.setPose(x),quarter);
+   assert.equal(quarterContact.realAnatomicalRigBones,163);
+   assert.equal(quarterContact.trueOriginalPhotoSkirtFaceIDsStable,true);
+   assert.equal(quarterContact.trueOriginalAnatomicalFaceIDsStable,true);
+   assert.equal(quarterContact.releaseAuthorized,false);
+   const off=await page.evaluate(()=>
+    window.nativeP89Skirt.showOnlySourceRigidRegistration45(false));
+   assert.equal(off.researchOnlySourceSkirt45mmActive,false);
+   const restored=await page.evaluate(x=>window.nativeP89Skirt.setPose(x),quarter);
+   assert.equal(restored.strictTransverseSourceBodyTriangleCrossings,
+    originalQuarter.strictTransverseSourceBodyTriangleCrossings);
+   results.research45OnlyQuarterPoseChecks.push({
+    avatar,pose:quarter,
+    sourceRig163Bones:true,
+    originalSourceStrictCrossingPairs:originalQuarter.strictTransverseSourceBodyTriangleCrossings,
+    rigid45OnlyStrictCrossingPairs:quarterContact.strictTransverseSourceBodyTriangleCrossings,
+    totalOriginalSourceAndMidpointPoseSamples:5,
+    originalPhotoGeometryFullyRestored:true,
+    continuouslySweptCollisionCertified:false,
+    physicalClothDrapeTested:false,
+    humanRealismOrFitApproved:false,
+    originalPhoto2DFallbackRequired:true,
+    consumer3DAdmitted:false,releaseAuthorized:false
+   });
+  }
  }
+ assert.equal(results.research45OnlyQuarterPoseChecks.length,4);
  assert.equal(results.research45OnlyPreviewScreenshots.length,18);
  assert.equal(results.research45OnlyPoseBVHChecks.length,6);
  assert.equal(results.waistAnchorLandmarkReports.length,2);
@@ -460,6 +496,8 @@ try{
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
    sourceWaistBoneAuditStatus:results.waistAnchorLandmarkReports.map(x=>x.status),
    researchOnly45mm3DPoseBVHMatches:results.research45OnlyPoseBVHChecks.length,
+   researchOnly45mmQuarterStepStaticPoseBVHChecks:results.research45OnlyQuarterPoseChecks.length,
+   researchOnly45mmQuarterStepStrictPairs:results.research45OnlyQuarterPoseChecks.map(x=>x.rigid45OnlyStrictCrossingPairs),
    researchOnly45mmScreenshots:results.research45OnlyPreviewScreenshots.length,
    sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
    photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
