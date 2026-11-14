@@ -50,9 +50,16 @@ export async function checkSavedSwitch90(page,engine){
    if(dressOnly)assert.equal(denimRequestCount,0,'canonical dress never requests unused denim assets');
    else assert.ok(denimRequestCount>0,'baseline and shirt path retain full original bundle checks');
    const dressRequestCount=dressManifestRequests.length-dressRequestStart;
-   if(expectedBoot==='none'&&mode==='shirt')
-    assert.equal(dressRequestCount,0,'source-verified shirt must not prepare unused dress manifest');
-   else assert.ok(dressRequestCount>0,'dress and baseline source load retain dress manifest checks');
+   // The independently verified denim bundle loader must fetch the work47
+   // manifest once PER pinned denim source. P90 only removes the extra
+   // dress-specific fetch (and its dress cutout preparation) for a verified
+   // shirt; it must not suppress those two mandatory denim checks.
+   // Expected requests: candidate shirt=2, candidate dress=1,
+   // baseline/restored shirt or dress=3.
+   const expectedManifestRequests=state.startup90.loadedDenimBundles+
+    (expectedBoot==='none'&&mode==='shirt'?0:1);
+   assert.equal(dressRequestCount,expectedManifestRequests,
+    'manifest requests must reflect independently verified denim bundles plus only the needed dress source');
    assert.equal(state.garmentSources90[mode],hashes[mode]);
    assert.equal(state.garmentSources90[mode==='shirt'?'dress':'shirt'],null,'old garment removed');
    assert.equal(state.fallbackCount,3,'unsupported outerwear/shoes stay photo-only');
