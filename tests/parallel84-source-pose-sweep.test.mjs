@@ -100,3 +100,24 @@ test('P84 restores exact current original joint quaternions after interrupted so
  assert.equal(receipt.actualPoseAuditCompleted,false);
  for(let i=0;i<f.bones.length;i++)assert.ok(f.bones[i].quaternion.equals(original[i]));
 });
+
+
+test('P84 accepts authentic 163-bone source extraction shells containing zero rendered triangles while auditing every remaining photo-derived triangle',()=>{
+ const f=fixture(),shell=f.shirt.meshes[0].clone();
+ shell.geometry=f.shirt.meshes[0].geometry.clone();
+ shell.geometry.setIndex([]); // Work45-style exhausted source shoulder shell
+ f.root.add(shell);f.shirt.meshes.push(shell);
+ const receipt=auditRealSourceGarmentArmPoses84(f);
+ assert.equal(receipt.actualPoseAuditCompleted,true,JSON.stringify(receipt));
+ assert.equal(receipt.poseResults.length,3);
+ assert.ok(receipt.poseResults.at(-1).shirtBodyCrossingTrianglePairs>0,
+  'Real body contact must remain detectable through other indexed source shirt panels');
+ assert.equal(receipt.releaseAuthorized,false);
+});
+test('P84 refuses all-zero-source-triangle meshes even if their source hashes and 163-joint skeletons appear plausible',()=>{
+ const f=fixture();f.shirt.meshes[0].geometry.setIndex([]);
+ const receipt=auditRealSourceGarmentArmPoses84(f);
+ assert.equal(receipt.status,'UNVERIFIED_FAIL_CLOSED');
+ assert.equal(receipt.reason,'shirt-all-real-source-garment-triangles-absent');
+ assert.equal(receipt.actualPoseAuditCompleted,false);
+});
