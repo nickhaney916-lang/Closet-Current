@@ -971,17 +971,20 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
    ...a.disposableArmAlternativeClearance85];
   assert.equal(all.length,3);
   return all.map((pose,poseIndex)=>{
-   assert.equal(pose.allFourWitnessLocalizedSweepsCompleted85,true);
+   assert.equal(pose.allEightWitnessLocalizedSweepsCompleted85,true);
    assert.equal(pose.originalContactWitnessIdsNeverExported85,true);
    const count=pose.privateOriginalStrictClothWitnessFaceCount85;
    assert.ok(Number.isSafeInteger(count)&&count>0&&
     count<=pose.candidates[0].baselineBodyStrictCrossings);
-   assert.equal(pose.witnessLocalizedCandidates85.length,4);
+   assert.equal(pose.witnessLocalizedCandidates85.length,8);
    const vals=pose.witnessLocalizedCandidates85.map((t,i)=>{
     assert.equal(t.schema,'M2-P85-disposable-licensed-world-candidate');
-    assert.equal(t.method,i<2?'strict-witness-local-radial':
-     'strict-witness-local-edge-projection');
-    assert.equal(t.localGraphRadiusHops85,i%2===0?12:24);
+    const expectedMethod=i<2?'strict-witness-local-radial':
+     i<6?'strict-witness-local-edge-projection':
+      'strict-witness-local-shape-regularized';
+    assert.equal(t.method,expectedMethod);
+    assert.equal(t.localGraphRadiusHops85,
+     [12,24,12,24,32,40,24,32][i]);
     assert.equal(t.originalStrictWitnessFaceCount85,count);
     assert.equal(t.originalSourceFaceIdsNeverExported85,true);
     assert.equal(t.bodyCollisionAndC61QualityMustBeRemeasured,true);

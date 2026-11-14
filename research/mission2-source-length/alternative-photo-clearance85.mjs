@@ -219,7 +219,7 @@ export function createDisposableWitnessLocalized85(
  let head=0;
  while(head<queue.length){
   const u=queue[head++];
-  if(dist[u]>=26)continue;
+  if(dist[u]>=44)continue;
   for(const v of adj[u])if(dist[v]===-1){
    dist[v]=dist[u]+1;queue.push(v);
   }
@@ -261,9 +261,63 @@ export function createDisposableWitnessLocalized85(
    bodyCollisionAndC61QualityMustBeRemeasured:true
   });
  }
+
+ function shapeRegularized(radius){
+  // Experimental triangle-shape preservation: regularize displacement
+  // between real adjacent source-position groups while hard-pinning the
+  // witnessed contact core and the outer original mesh boundaries.
+  // Nonlinear C61 normal/area/edge metrics remain authoritative.
+  const seed=localized(radius,true),initial=seed.world,
+   delta=groups.map(g=>{
+    const i=3*g.ids[0];
+    return [initial[i]-originalWorld[i],
+     initial[i+1]-originalWorld[i+1],
+     initial[i+2]-originalWorld[i+2]];
+   });
+  let state=delta.map(d=>d.slice());
+  for(let pass=0;pass<18;pass++){
+   const next=state.map(v=>v.slice());
+   for(let g=0;g<groups.length;g++){
+    if(dist[g]<=2||dist[g]>=radius)continue;
+    const near=adj[g];if(near.length<1)continue;
+    const mean=[0,0,0];
+    for(const u of near)
+     for(let k=0;k<3;k++)mean[k]+=state[u][k]/near.length;
+    const d=next[g],start=delta[g];
+    for(let k=0;k<3;k++)
+     d[k]=.60*state[g][k]+.35*mean[k]+.05*start[k];
+    const m=Math.hypot(...d);
+    if(m>.006){
+     for(let k=0;k<3;k++)d[k]*=.006/m;
+    }
+   }
+   state=next;
+  }
+  const target=originalWorld.slice();
+  for(let g=0;g<groups.length;g++){
+   for(const i of groups[g].ids)
+    for(let k=0;k<3;k++)
+     target[3*i+k]=Math.fround(originalWorld[3*i+k]+state[g][k]);
+  }
+  const result=constrained(originalWorld,indices,neck,spine,
+   .006,target,'strict-witness-local-shape-regularized');
+  return Object.freeze({...result,
+   originalStrictWitnessFaceCount85:strictClothFaceIndices.length,
+   localGraphRadiusHops85:radius,
+   localizedSourcePositionGroups85:seed.localizedSourcePositionGroups85,
+   furthestMovedGraphHop85:seed.furthestMovedGraphHop85,
+   shapeSmoothingPasses85:18,
+   contactCoreHeldDuringSmoothing85:true,
+   originalSourceFaceIdsNeverExported85:true,
+   sourceWitnessNotPhysicalDepthOrContinuousContact:true,
+   bodyCollisionAndC61QualityMustBeRemeasured:true
+  });
+ }
  const candidates=[
   localized(12,false),localized(24,false),
-  localized(12,true),localized(24,true)
+  localized(12,true),localized(24,true),
+  localized(32,true),localized(40,true),
+  shapeRegularized(24),shapeRegularized(32)
  ];
  if(!originalWorld.every((v,i)=>v===before[i]))
   fail('P85 original source-skinned world buffer altered');
