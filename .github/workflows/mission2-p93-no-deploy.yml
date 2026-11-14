@@ -24,8 +24,8 @@ jobs:
           git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json benchmark/fixtures/
       - run: node --check research/mission2-p93/alpha-only-source-warm-edge.mjs
       - run: node --check scripts/build-mission2-p93-real-source-mask.mjs
-      - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - run: node scripts/build.mjs
+      - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
   original-licensed-mask-research:
     runs-on: ubuntu-latest
     timeout-minutes: 35
