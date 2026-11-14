@@ -53,7 +53,7 @@ s=replace(s,"   scene.applyOutfit('none');modelLoads++;",
 s=replace(s,'   const actual=presenter.present(plan);rendered=actual;',
  '   const presentStart90=performance.now();const actual=presenter.present(plan);startupTimings90.presentMs+=performance.now()-presentStart90;rendered=actual;');
 // Reopened canvases must retain keyboard support too.
-s=replace(s,"  canvas.replaceWith(fresh);canvas=fresh;","  fresh.tabIndex=0;canvas.replaceWith(fresh);canvas=fresh;");
+s=replace(s,"  canvas.replaceWith(fresh);canvas=fresh;","  fresh.tabIndex=0;fresh.setAttribute('aria-label',canvas.getAttribute('aria-label')||'3D anatomical outfit');canvas.replaceWith(fresh);canvas=fresh;");
 await writeFile(panel,s);
 const showroom=donor+'/research/dress-mobile-01/dress-mobile-showroom.mjs';
 s=await readFile(showroom,'utf8');
@@ -65,6 +65,10 @@ s=replace(s,"  installOpeningSkinAttribute(selected);outfit.setOutfit('pants');s
  "  installOpeningSkinAttribute(selected);const bootStart90=performance.now();\n  const initialMode90=emptyStartup90===true?'none':'pants';outfit.setOutfit(initialMode90);\n  const initialGarmentMs=performance.now()-bootStart90,initialGarmentMeshes=outfit.getState().garmentMeshes;\n  syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();\n  startup90={initialMode:initialMode90,initialGarmentMs,initialGarmentMeshes,totalLoadMs:performance.now()-began};");
 s=replace(s,'getState:()=>({kind:current,','getState:()=>({startup90,kind:current,');
 // Bound horizontal orbit; keep existing authentic geometry/materials/UVs.
+// OrbitControls defaults to touch-action:none, trapping vertical page swipes
+// over the avatar. Preserve horizontal drag rotation and native pan-y scrolling.
+s=replace(s,' const controls=new OrbitControls(camera,canvas);',
+ " const controls=new OrbitControls(camera,canvas);\n controls.domElement.style.touchAction='pan-y';");
 s=replace(s,' controls.minPolarAngle=.8;controls.maxPolarAngle=1.65;',' controls.minPolarAngle=Math.PI/2;controls.maxPolarAngle=Math.PI/2;');
 s=replace(s,' if(premiumTurntable67)controls.addEventListener(\'start\',()=>{spin=false;dirty=true;});'," controls.addEventListener('start',()=>{spin=false;dirty=true;});");
 // At narrow aspect, fixed distance crops arms. Fit the full 2m figure with
