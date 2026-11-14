@@ -1,0 +1,115 @@
+name: Mission 1 P883 expand source-disjoint PUBLIC candidate originals — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-expanded-public-photo-candidates-883-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p883-public-candidates-HOLD-${{ github.sha }}
+  cancel-in-progress: true
+jobs:
+  strict-offline-source-and-owner-safety-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P882 base, exactly six research files and Family Alpha HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=faf0aa8bae2ef0a3dd8d69ed98f0528d46df9e45
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p883-paths
+          test "$(wc -l </tmp/p883-paths)" -eq 6
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/p883-acquire-commons.mjs|scripts/p883-candidate-custody.mjs|tests/mission1-expanded-photo-custody-883.test.mjs|research/mission1-expanded-photos-883/queries.json|research/mission1-expanded-photos-883/REPORT.md|.github/workflows/mission1-expanded-photo-candidates-883-no-deploy.yml) ;;
+              *) echo "P883_UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p883-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public benchmark supabase)"
+          grep -Fiq 'Family Alpha HOLD #255 OPEN' research/mission1-expanded-photos-883/REPORT.md
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          echo P883_STRICT_RESEARCH_SCOPE_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Complete native regression and safe-release BLOCKED gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --check scripts/p883-acquire-commons.mjs
+          node --check scripts/p883-candidate-custody.mjs
+          node --check tests/mission1-expanded-photo-custody-883.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs | tee /tmp/p883-native
+          grep -Eq '^# fail 0$' /tmp/p883-native
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p883-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p883-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p883-release
+      - name: Original-photo, signed owner, Chromium/WebKit manual-review policies
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs | tee /tmp/p883-owner
+          test "$(grep -c '^P82_DESKTOP_POLICY_PASS ' /tmp/p883-owner)" -eq 6
+          test "$(grep -c '^P880_EXACT_ONE_JOINT_TOP_ONLY ' /tmp/p883-owner)" -eq 6
+          test "$(grep -c '^P879_SUBTYPE_CONFLICT_MANUAL_ONLY ' /tmp/p883-owner)" -eq 6
+          node scripts/test-m1-owner-pair-admission-846.mjs
+  acquire-real-COMMONS-public-original-metadata-ONLY-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Frozen origin and no-private-photo proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=faf0aa8bae2ef0a3dd8d69ed98f0528d46df9e45
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 6
+          test -z "$(git diff --name-only "$BASE" HEAD -- public benchmark supabase)"
+          test -f research/parallel75/pinned-public-training-development-candidates.json
+          node -e "const p=require('./research/parallel75/pinned-public-training-development-candidates.json'); if(p.rows.length!==32||p.eligibleForBlind!==false)process.exit(1)"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3
+      - name: Real Commons original bytes VERIFIED in memory, NO images/labels uploaded
+        env:
+          P883_MAX_ORIGINALS: '36'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/p883-acquire-commons.mjs | tee /tmp/p883-commons
+          grep -Fq 'P883_NEW_PUBLIC_CANDIDATE_CUSTODY ' /tmp/p883-commons
+          node --input-type=module -e "
+            import {readFile} from 'node:fs/promises';
+            import {exposedSources883,reportCandidates883} from './scripts/p883-candidate-custody.mjs';
+            const manifests=Object.fromEntries(await Promise.all(['benchmark/locked-photo-sources.json','benchmark/manifest-holdout-16.json','benchmark/manifest-reviewed-32.json','benchmark/manifest-fresh-11.json'].map(async p=>[p,JSON.parse(await readFile(p,'utf8'))])));
+            const pinned=JSON.parse(await readFile('research/parallel75/pinned-public-training-development-candidates.json','utf8'));
+            const report=JSON.parse(await readFile('research/mission1-expanded-photos-883/runtime-summary-PUBLIC.json','utf8'));
+            const rows=JSON.parse(await readFile('research/mission1-expanded-photos-883/runtime-new-candidates-UNLABELED-EXPOSED.json','utf8'));
+            const expected=reportCandidates883(rows,exposedSources883(manifests,pinned),{planQueries:12,querySuccesses:report.queriesSucceeded,failures:report.rejectedByReason});
+            if(JSON.stringify(report)!==JSON.stringify(expected))throw Error('P883_REPORT_MISMATCH');
+            if(report.machineVerifiedNewOriginals<1||report.independentBlindOriginals!==0||report.availableForBlindEvaluation!==0||report.originalJPEGsInCIArtifacts!==0||report.releaseReady!==false)throw Error('P883_NO_GENUINE_PUBLIC_ONLY_OR_RELEASE_BREACH');
+            console.log('P883_GENUINE_PUBLIC_NEW_SHA_VERIFIED_ORIGINALS',report.machineVerifiedNewOriginals);
+          "
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p883-only-public-unlabeled-development-source-receipts-NO-PHOTOS-NO-TRUTH
+          path: |
+            research/mission1-expanded-photos-883/runtime-summary-PUBLIC.json
+            research/mission1-expanded-photos-883/runtime-new-candidates-UNLABELED-EXPOSED.json
+          if-no-files-found: error
