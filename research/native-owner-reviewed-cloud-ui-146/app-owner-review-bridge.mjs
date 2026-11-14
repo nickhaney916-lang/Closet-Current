@@ -159,7 +159,6 @@ export async function mountOwnerReviewedCloud146({
   if(answer===true&&!approved&&!revoked)revoke();
   cb(approved&&!revoked);
  }
- const onLocked=()=>revoke();
  const mountFetch=localFetch;
  // A failed button, modal or service initialization must never strand the
  // already-inserted owner-private panel; all mount stages share one rollback.
@@ -242,6 +241,7 @@ export async function mountOwnerReviewedCloud146({
   safe(()=>globalThis.window?.removeEventListener?.('closet:session-locked',onLocked));
   safe(()=>globalThis.window?.removeEventListener?.('pagehide',onLocked));
  }
+ const onLocked=()=>revoke();
  // If one listener installs and the other throws, never leave a private
  // panel or any previously attached listener mounted on an aborted factory.
  try{
