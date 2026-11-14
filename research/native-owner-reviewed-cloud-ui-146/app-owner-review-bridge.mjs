@@ -159,13 +159,17 @@ export async function mountOwnerReviewedCloud146({
   if(answer===true&&!approved&&!revoked)revoke();
   cb(approved&&!revoked);
  }
- const mountFetch=localFetch;
- // A failed button, modal or service initialization must never strand the
- // already-inserted owner-private panel; all mount stages share one rollback.
- try{
+ // Keep the cancel handler adjacent to settle() for existing source-
+ // executed consent/revoke regression extraction and production behavior.
  by('owner146Cancel').onclick=()=>settle(false);
- by('owner146Approve').onclick=()=>settle(true);
- dialog.addEventListener('cancel',e=>{e.preventDefault();settle(false);});
+ try{
+  by('owner146Approve').onclick=()=>settle(true);
+  dialog.addEventListener('cancel',e=>{e.preventDefault();settle(false);});
+ }catch(error){revoke();throw error;}
+ const mountFetch=localFetch;
+ // Service creation can fail after owner-private controls are inserted.
+ // Do not leave half-mounted private UI when either constructor throws.
+ try{
  backupService=createLocalRemoteFence134({
   auth:localAuth,db,baseURL:loc.origin,anonKey:'p146-synthetic-local-only',
   fetcher:mountFetch,subtle,confirmReplace:info=>decide(info,'backup'),
