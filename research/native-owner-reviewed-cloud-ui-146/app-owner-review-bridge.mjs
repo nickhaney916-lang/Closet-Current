@@ -36,10 +36,11 @@ export async function mountOwnerReviewedCloud146({
     !subtle?.digest||typeof onRestored!=='function')fail('valid synthetic owner database and review transport required');
  const menu=doc.querySelector('header .account-menu>div');
  if(!menu||doc.getElementById('ownerReview146Panel'))fail('account menu unavailable or owner research already mounted');
- const ownerAtMount=auth.user.id;
+ const ownerAtMount=auth.user.id,ownerPrincipalAtMount=auth.user;
  let revoked=false,working=false,pending=null,backupService,restoreService;
  function assertLocalOwner(){
   if(revoked||!ownerReviewedMode146(loc)||auth.user?.id!==ownerAtMount||
+     auth.user!==ownerPrincipalAtMount||
      db?.name!=='closet-current-user-'+ownerAtMount)
    fail('owner session changed or research mode revoked');
   auth.assertCurrent?.();
@@ -108,9 +109,19 @@ export async function mountOwnerReviewedCloud146({
  doc.body.append(dialog);
  const by=id=>doc.getElementById(id);
  const buttonIds=['owner146Preview','owner146Backup','owner146Restore'];
- const status=(message)=>{if(!revoked)by('owner146Status').textContent=message;};
+ const status=(message)=>{
+  if(revoked)return;
+  // A late preview/result must never publish former-owner private status.
+  // Session events can be delayed: re-check the exact originating owner here.
+  try{assertLocalOwner();}catch{revoke();return;}
+  const target=by('owner146Status');
+  if(target)target.textContent=message;
+ };
  const count=(id,value)=>{by(id).textContent=String(Number.isSafeInteger(value)?value:0);};
  function showCounts(info,fromRestore=false){
+  // The operation-level owner check occurs AFTER this callback. Protect
+  // the private count DOM before the first write, including stale awaits.
+  try{assertLocalOwner();}catch(error){revoke();throw error;}
   count('owner146LocalItems',fromRestore?info.localGarmentCount:info.localReviewedGarments);
   count('owner146RemoteItems',fromRestore?info.remoteGarmentCount:info.remoteReviewedGarments);
   count('owner146LocalLooks',fromRestore?info.localSavedOutfitCount:info.localSavedOutfits);
@@ -139,9 +150,14 @@ export async function mountOwnerReviewedCloud146({
  function settle(answer){
   if(!pending)return;
   const cb=pending;pending=null;
+  // Approval belongs to the same exact signed owner/session at click time.
+  // A session switch without a delivered lock event must fail closed.
+  let approved=answer===true&&!revoked;
+  if(approved){try{assertLocalOwner();}catch{approved=false;}}
   // A failing dialog close must not strand a pending owner review promise.
   try{if(dialog.open)dialog.close();}catch{}
-  cb(answer===true&&!revoked);
+  if(answer===true&&!approved&&!revoked)revoke();
+  cb(approved&&!revoked);
  }
  by('owner146Cancel').onclick=()=>settle(false);
  by('owner146Approve').onclick=()=>settle(true);
