@@ -23,18 +23,21 @@ function entry(id,digit){
   experiment877:{schema:'p877-optional-full-frame-v1',modelKey:'fashionSiglip',
    mode:'fitWholePhoto224-white',sameModelNotIndependent:true,sourceCodeSha256:worker,
    vectorSha256:observations[1].vectorSha256,inputSha256:digest,extraMs:9,ranking:observations[1].ranking}};
- return {row:{id,sourceSha256:digest,output:out,decision},
+ const historicalExpectation={category:localCandidates[0].category,itemType:localCandidates[0].itemType};
+ return {row:{id,sourceSha256:digest,historicalExpectation,output:out,decision},
   receipt:{id,image:id+'.jpg',sha256:digest,verified:true,
-   attribution:{license:'CC BY 4.0',source:'https://commons.wikimedia.org/wiki/File:'+id+'.jpg'}}};
+   attribution:{license:'CC BY 4.0',source:'https://commons.wikimedia.org/wiki/File:'+id+'.jpg'}},
+  manifest:{id,image:id+'.jpg',verified:true,
+   expectedCategory:historicalExpectation.category,expectedType:historicalExpectation.itemType}};
 }
 function fixture(){
  const a=entry('commons-A','a'),b=entry('commons-B','b');
  return {data:{summary:{status:'PUBLIC_DEVELOPMENT_ONLY',blindAccuracy:null,physicalDevices:0,
   independentlyHumanReviewedPhotos:0,automaticAdmissions:0,nonGetOrExternalRequests:0,
   isolation:'one-browser-continuous-2-one-shot-workers',photos:2},rows:[a.row,b.row]},
- receipts:[a.receipt,b.receipt]};
+ receipts:[a.receipt,b.receipt],manifest:[a.manifest,b.manifest]};
 }
-const verify=(x)=>verifyPublicPhotoCustody878(x.data,x.receipts,{expectedRows:2});
+const verify=(x)=>verifyPublicPhotoCustody878(x.data,x.receipts,x.manifest,{expectedRows:2});
 test('P878 accepts exact original, independent pinned model bindings and unsaved owner review',()=>{
  const v=verify(fixture());
  assert.equal(v.summary.photos,2);
@@ -96,4 +99,19 @@ test('P878 forbids promotions, cloud mutations, owner auto-save and non-GET or i
  assert.throws(()=>verify(c),/P878_SESSION_POLICY/);
  const d=fixture();d.data.summary.isolation='fresh-browser-per-photo-NOT-continuous-session';
  assert.throws(()=>verify(d),/P878_SESSION_POLICY/);
+});
+
+test('P878 rejects reassigned historical labels and withheld source IDs',()=>{
+ const a=fixture();a.data.rows[0].historicalExpectation.itemType='invented';
+ assert.throws(()=>verify(a),/P878_MANIFEST_PROVENANCE/);
+ const b=fixture();b.manifest[1].image='different-original.jpg';
+ assert.throws(()=>verify(b),/P878_MANIFEST_PROVENANCE/);
+ const c=fixture();c.manifest[1].id='unreviewed-source';
+ assert.throws(()=>verify(c),/P878_MANIFEST_PROVENANCE/);
+});
+test('P878 recomputes every owner-facing decision from pinned model scores',()=>{
+ const a=fixture();a.data.rows[0].decision.hypotheses=[];
+ assert.throws(()=>verify(a),/P878_RECOMPUTED_DECISION/);
+ const b=fixture();b.data.rows[0].decision.reasons=['invented-acceptance'];
+ assert.throws(()=>verify(b),/P878_RECOMPUTED_DECISION/);
 });
