@@ -1,4 +1,4 @@
-name: Mission 2 P85 P86 original-photo numerical clearance and genuine shader A-B NO DEPLOY
+name: Mission 2 P85 P86 original-photo skinned 163-bone motion and shader A-B NO DEPLOY
 'on':
   push:
     branches:
@@ -131,7 +131,7 @@ jobs:
           mkdir -p benchmark/mission2-source-dress-motion/baseline
           cp benchmark/native-3d-05/*.png benchmark/mission2-source-dress-motion/baseline/
           cp benchmark/native-3d-05/results.json benchmark/mission2-source-dress-motion/baseline/results.json
-          PHOTO_DRESS_MOTION36=1 PHOTO_DRESS_CONTACT52=1 PHOTO_DRESS_DISTANCE53=1 PHOTO_DRESS_TOPOLOGY54=1 PHOTO_DRESS_EDGES55=1 PHOTO_DRESS_BOUNDARIES56=1 PHOTO_DRESS_LANDMARKS57=1 PHOTO_DRESS_CONTACT58=1 PHOTO_DRESS_BODY_BANDS59=1 PHOTO_DRESS_TORSO_TRIAL60=1 PHOTO_DRESS_STRAIN61=1 PHOTO_DRESS_ALTERNATIVE85=1 PHOTO_DRESS_PREVIEW86=1 PHOTO_DRESS_MOTION_PHASE36=0.25 node scripts/test-native-3d-05-browser.mjs
+          PHOTO_DRESS_MOTION36=1 PHOTO_DRESS_CONTACT52=1 PHOTO_DRESS_DISTANCE53=1 PHOTO_DRESS_TOPOLOGY54=1 PHOTO_DRESS_EDGES55=1 PHOTO_DRESS_BOUNDARIES56=1 PHOTO_DRESS_LANDMARKS57=1 PHOTO_DRESS_CONTACT58=1 PHOTO_DRESS_BODY_BANDS59=1 PHOTO_DRESS_TORSO_TRIAL60=1 PHOTO_DRESS_STRAIN61=1 PHOTO_DRESS_ALTERNATIVE85=1 PHOTO_DRESS_PREVIEW86=1 PHOTO_DRESS_SKINNED86=1 PHOTO_DRESS_MOTION_PHASE36=0.25 node scripts/test-native-3d-05-browser.mjs
           node scripts/audit-mission2-source-dress-motion.mjs
           PHOTO_DRESS_DISTANCE53=1 PHOTO_DRESS_TOPOLOGY54=1 PHOTO_DRESS_EDGES55=1 PHOTO_DRESS_BOUNDARIES56=1 PHOTO_DRESS_LANDMARKS57=1 PHOTO_DRESS_CONTACT58=1 PHOTO_DRESS_BODY_BANDS59=1 PHOTO_DRESS_TORSO_TRIAL60=1 PHOTO_DRESS_STRAIN61=1 PHOTO_DRESS_ALTERNATIVE85=1 node scripts/audit-mission2-actual-dress-contact52.mjs
       - uses: actions/upload-artifact@v4
