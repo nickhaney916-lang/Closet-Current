@@ -7,6 +7,7 @@ import {commitHumanReviewedPhoto119} from '../public/native-reviewed-private-sav
 import {auditNativeOwnerViewer38} from '../research/main1054-handoff38/strict-viewer-admission.mjs';
 import {createTrustedNativeOwnerScope39} from '../research/main1054-handoff39/trusted-native-owner-scope.mjs';
 import {assessNative3DQuality40} from '../research/main1054-handoff40/p89-quality-admission.mjs';
+import {auditNativeOwnerViewer38} from '../research/main1054-handoff38/strict-viewer-admission.mjs';
 
 const jpeg=readFileSync('benchmark/fixtures/commons-0023.jpg');
 const photo='data:image/jpeg;base64,'+jpeg.toString('base64');
@@ -131,8 +132,10 @@ function actualProvider(h){
 
 test('M40 actual licensed Commons jeans PHOTO119 review & private M39 source → quality HOLD, not 3D grant',()=>testOwner(async h=>{
  const p=actualProvider(h);
+ const baseline=await auditNativeOwnerViewer38(p);
+ assert.equal(baseline.status,'OWNER_ORIGINAL_2D_VIEWER_FALLBACK_ONLY','M38 original-owner preflight before M40');
  const q=await assessNative3DQuality40(p);
- assert.equal(q.status,'P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD');
+ assert.equal(q.status,'P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD',q.blockedAt);
  assert.equal(q.matchedPublicPhotoSources,1);
  assert.equal(q.unmatchedPrivateSources,0);
  assert.deepEqual(q.publicResearchLabels,['commons-0023']);
@@ -151,7 +154,7 @@ test('M40 does not let forged completed human or mesh flags grant genuine 3D',()
  p.consumer.contactPassed=true;p.consumer.humanRealismAccepted=true;
  p.consumer.approved3DRenderer=true;
  const q=await assessNative3DQuality40(p);
- assert.equal(q.status,'P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD');
+ assert.equal(q.status,'P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD',q.blockedAt);
  assert.equal(q.consumer3DAdmitted,false);
  assert.equal(q.releaseAuthorized,false);
  assert.equal(q.independentlyReviewed,false);
