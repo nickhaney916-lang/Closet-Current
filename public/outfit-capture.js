@@ -70,7 +70,7 @@ function detachedUnit70Companion88(original,companion,lease){
   !/^[a-f0-9]{64}$/.test(receipt?.maskSha256||'')||
   receipt.sourceSha256!==base.sourceSha256||
   receipt.maskSha256===base.maskSha256||
-  !/^data:image\\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(companion?.image||'')||
+  !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(companion?.image||'')||
   companion.image.length>8000000)
   throw Error('The companion garment is not bound to the same signed photo and distinct source mask.');
  if([...items,...batch].some(x=>x.image===companion.image))
