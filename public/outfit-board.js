@@ -104,23 +104,31 @@ window.addEventListener('beforeunload',event=>{
 window.addEventListener('closet:session-locked',()=>{
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
- if(!nativeLossless04Active)return;
- // AUTH36 locks the private owner at this synchronous boundary. Retire the
- // controller BEFORE disposing it: any last onChange/onStatus now fails the
- // exact controller lease and cannot republish the old owner's data.
- nativeLossless04=null;
+ // The default private Outfit Builder carries owner names, garment IDs and
+ // stored outfit summaries too. Scrub BOTH modes synchronously at AUTH36 lock,
+ // without touching the signed owner's durable wardrobe or unsaved originals.
+ const nativeMode=nativeLossless04Active;
+ if(nativeMode)nativeLossless04=null;
  currentBoard=cleanOutfitBoard({},[]);
  savedOutfitBoards=[];
+ boardCommittedDraft=JSON.stringify(currentBoard);
+ boardExpectedStoredDraft='null';
+ choosingSlot='shoes';
  syncBoardInputs();
  nativeLossless04ClearPreview();
- // Research-only panels can contain original photo or signed-owner context.
- // Remove every bridge before disposing so no late finalizer can re-admit it.
- for(const key of ['native3D05Bridge','nativePhotoReadiness08Bridge',
-                   'styleOwnedLive03Bridge','nativeMobile09Bridge',
-                   'nativeLossless04Bridge']){
-  const bridge=window[key];
-  window[key]=null;
-  try{bridge?.dispose?.();}catch{}
+ $('boardSummary').textContent='Private outfits locked · sign in again.';
+ $('boardGapStatus').textContent='';
+ $('boardPickerTitle').textContent='Choose clothing after sign-in';
+ if(nativeMode){
+  // Retire the controller BEFORE disposal: old callbacks cannot republish.
+  // Research-only preview bridges may retain private source JPEG context.
+  for(const key of ['native3D05Bridge','nativePhotoReadiness08Bridge',
+                    'styleOwnedLive03Bridge','nativeMobile09Bridge',
+                    'nativeLossless04Bridge']){
+   const bridge=window[key];
+   window[key]=null;
+   try{bridge?.dispose?.();}catch{}
+  }
  }
  $('boardSaveStatus').textContent='Signed-out private outfit cleared. Reopen Outfit Builder.';
 });
@@ -414,7 +422,7 @@ function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceC
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
  await closetReady;
- let nativeMountLease=null;
+ let nativeMountLease=null,ordinaryBoardLease=null;
  if(nativeLossless04Active){
   nativeMountLease=beginNativeBoardMountLease();
   if(!nativeMountLease)return;
@@ -504,17 +512,28 @@ const outfitBoardReady=(async()=>{
    nativeLossless04Notify(error);nativeLossless04ClearPreview();
   }
  }else if(db){
+  // Default private Board IDB can resolve after sign-out or same-ID re-login.
+  // Verify the original signed owner before and after the asynchronous read;
+  // never repopulate a new owner's empty/working board from the old database.
+  ordinaryBoardLease=beginOwnerBoardUiLease();
+  if(!ordinaryBoardLease)return;
+  const ownerDB=db;
   try{
    const state=await new Promise((resolve,reject)=>{
-    const r=db.transaction('state').objectStore('state').get('outfit-board');
+    const r=ownerDB.transaction('state').objectStore('state').get('outfit-board');
     r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
    });
+   if(!ordinaryBoardLease.current())return;
    boardExpectedStoredDraft=JSON.stringify(state?.current??null);
    if(state){currentBoard=cleanOutfitBoard(state.current,items);
     savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}
-  }catch{$('boardSaveStatus').textContent='Saved outfits could not be loaded.';}
+  }catch{
+   if(!ordinaryBoardLease.current())return;
+   $('boardSaveStatus').textContent='Saved outfits could not be loaded.';
+  }
  }
  if(nativeMountLease&&!nativeMountLease.current())return;
+ if(ordinaryBoardLease&&!ordinaryBoardLease.current())return;
  boardCommittedDraft=JSON.stringify(currentBoard);boardInitialized=true;syncBoardInputs();renderOutfitBoard();
 })();
 

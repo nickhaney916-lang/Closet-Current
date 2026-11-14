@@ -25,6 +25,7 @@ const bootstrap=[
  "let currentBoard={name:'PRIVATE-A'},savedOutfitBoards=[],nativeLossless04=null;",
  "let db=null,captureOperationEpoch=0,nativeLossless04Active=true;",
  "let boardStatusSerial=0,boardConflictDraft=null,events=[],boardDraftTimer=null;",
+ "let boardCommittedDraft='PRIVATE-A-DRAFT',boardExpectedStoredDraft='PRIVATE-A-EXPECTED',choosingSlot='top';",
  "const $=id=>document.getElementById(id);",
  "function cleanOutfitBoard(){events.push('clean');return {name:'',slots:{}}}",
  "function cancelBoardDraftTimer(){events.push('cancel-timer');boardDraftTimer=null;}",
@@ -37,13 +38,17 @@ const bootstrap=[
  " const grids=gridIds.map(id=>'<div id=\"'+id+'\">PRIVATE-A-'+id+'</div>').join('');",
  " document.body.innerHTML='<div id=\"authGate\" hidden></div><div id=\"appShell\">'+",
  "  '<p id=\"boardSaveStatus\">PRIVATE-A-SHA</p>'+",
+ "  '<p id=\"boardSummary\">PRIVATE-A-BOARD-SUMMARY</p>'+",
+ "  '<p id=\"boardGapStatus\">PRIVATE-A-OWNED-PIECES</p>'+",
+ "  '<p id=\"boardPickerTitle\">PRIVATE-A-PICKER-TITLE</p>'+", 
  "  '<button id=\"retryBoardDraft\"></button><div id=\"boardDraftConflictActions\"></div>'+",
  "  fields+grids+'<dialog id=\"boardPicker\" open>PRIVATE-A</dialog></div>';",
  " events=[];boardStatusSerial=2;boardDraftTimer=1;",
+ " boardCommittedDraft='PRIVATE-A-DRAFT';boardExpectedStoredDraft='PRIVATE-A-EXPECTED';choosingSlot='top';" ,
  " boardConflictDraft={private:'PRIVATE-A-CONFLICT'};",
  " currentBoard={name:'PRIVATE-A-OUTFIT',slots:{top:'PRIVATE-A-CLOTHING'}};",
  " savedOutfitBoards=[{name:'PRIVATE-A-SAVED'}];",
- " nativeLossless04Active=mode!=='non-native';",
+ " nativeLossless04Active=!mode.startsWith('non-native');",
  " captureOperationEpoch++;",
  " window.closetAuth={user:{id:'owner-a'},assertCurrent(){}};",
  " db={name:'closet-current-user-owner-a'};",
@@ -74,17 +79,21 @@ const bootstrap=[
  " // APP36's lock event is sent after the current auth epoch has been revoked.",
  " captureOperationEpoch++;",
  " window.dispatchEvent(new Event('closet:session-locked'));",
- " if(mode==='repeated')window.dispatchEvent(new Event('closet:session-locked'));",
+ " if(mode==='repeated'||mode==='non-native-repeat')window.dispatchEvent(new Event('closet:session-locked'));", 
  " const fieldsNow=inputIds.map(id=>$(id).value);",
  " const gridsNow=gridIds.map(id=>$(id).textContent);",
  " const bridgesNow=bridgeKeys.map(key=>window[key]??null);",
  " const first={fieldsNow,gridsNow,bridgesNow,board:currentBoard.name,",
+ "  committed:boardCommittedDraft,expected:boardExpectedStoredDraft,target:choosingSlot,",
+ "  summary:$('boardSummary').textContent,gap:$('boardGapStatus').textContent,",
+ "  pickerTitle:$('boardPickerTitle').textContent," ,
  "  saved:savedOutfitBoards.length,status:$('boardSaveStatus').textContent,",
  "  pickerOpen:$('boardPicker').open,events:[...events],",
  "  retryHidden:$('retryBoardDraft').hidden,",
  "  conflictHidden:$('boardDraftConflictActions').hidden};",
- " if(mode==='new-owner-after-lock'||mode==='same-id-after-lock'||mode==='pending-mount'){",
- "  if(mode==='new-owner-after-lock'){window.closetAuth={user:{id:'owner-b'},assertCurrent(){}};db={name:'closet-current-user-owner-b'}}",
+ " if(mode==='new-owner-after-lock'||mode==='same-id-after-lock'||mode==='pending-mount'||",
+ "    mode==='non-native-new-owner'||mode==='non-native-same-id'){", 
+ "  if(mode==='new-owner-after-lock'||mode==='non-native-new-owner'){window.closetAuth={user:{id:'owner-b'},assertCurrent(){}};db={name:'closet-current-user-owner-b'}}", 
  "  else{window.closetAuth={user:{id:'owner-a'},assertCurrent(){}};db={name:'closet-current-user-owner-a'}}",
  "  captureOperationEpoch++;",
  "  currentBoard={name:'NEW-SESSION-CLOSET'};",
@@ -98,7 +107,9 @@ const bootstrap=[
 const modes=[
  'standard','new-owner-after-lock','same-id-after-lock','pending-mount',
  'viewer-throws','style-throws','controller-throws','old-callback-in-dispose',
- 'no-controller','repeated','non-native'
+ 'no-controller','repeated','non-native','non-native-repeat',
+ 'non-native-new-owner','non-native-same-id','non-native-pending-write',
+ 'non-native-guest-locked','non-native-late-status'
 ];
 const results=[];
 for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
@@ -114,25 +125,28 @@ for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
      const x=await page.evaluate(mode=>window.__probe(mode),mode);
      assert.equal(x.retryHidden,true);
      assert.equal(x.conflictHidden,true);
-     if(mode==='non-native'){
-      assert.equal(x.board,'PRIVATE-A-OUTFIT');
-      assert.ok(x.fieldsNow[0].startsWith('PRIVATE-A-'));
-      assert.equal(x.saved,1);
-      assert.equal(x.events.filter(y=>y.startsWith('dispose:')).length,0);
+     assert.equal(x.board,'');
+     assert.equal(x.saved,0);
+     assert.ok(x.fieldsNow.every(y=>y===''),'old outfit field visible after '+mode);
+     assert.ok(x.gridsNow.every(y=>y===''),'old preview grid visible after '+mode);
+     assert.equal(x.pickerOpen,false);
+     assert.equal(x.status,'Signed-out private outfit cleared. Reopen Outfit Builder.');
+     assert.equal(x.summary,'Private outfits locked · sign in again.');
+     assert.equal(x.gap,'');
+     assert.equal(x.pickerTitle,'Choose clothing after sign-in');
+     assert.equal(x.expected,'null');
+     assert.equal(x.committed,JSON.stringify({name:'',slots:{}}));
+     assert.equal(x.target,'shoes');
+     const disposals=x.events.filter(y=>y.startsWith('dispose:'));
+     if(mode.startsWith('non-native')){
+      assert.equal(disposals.length,0,'normal mode must not alter research-only viewers');
      }else{
-      assert.equal(x.board,'');
-      assert.equal(x.saved,0);
-      assert.ok(x.fieldsNow.every(y=>y===''),'old outfit field visible after '+mode);
-      assert.ok(x.gridsNow.every(y=>y===''),'old preview grid visible after '+mode);
       assert.ok(x.bridgesNow.every(y=>y===null),'old private bridge survived '+mode);
-      assert.equal(x.pickerOpen,false);
-      assert.equal(x.status,'Signed-out private outfit cleared. Reopen Outfit Builder.');
-      const disposals=x.events.filter(y=>y.startsWith('dispose:'));
       assert.equal(disposals.length,mode==='no-controller'?4:5);
-      if(x.after){
-       assert.equal(x.after.board,'NEW-SESSION-CLOSET');
-       assert.equal(x.after.status,'NEW-SESSION-STATUS');
-      }
+     }
+     if(x.after){
+      assert.equal(x.after.board,'NEW-SESSION-CLOSET');
+      assert.equal(x.after.status,'NEW-SESSION-STATUS');
      }
      results.push({engine:engineName,width,mode,pass:true});
     }
@@ -141,9 +155,9 @@ for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
   }
  }finally{await browser.close();}
 }
-assert.equal(results.length,66);
+assert.equal(results.length,102);
 await writeFile(resolve(dir,'results.json'),JSON.stringify({
  familyAlpha:'HOLD',noDeploy:true,synthetic:true,physicalDevice:false,
- cases:66,failures:0,engines:['chromium','webkit'],widths:[320,390,430],results
+ cases:102,failures:0,engines:['chromium','webkit'],widths:[320,390,430],results
 },null,2));
-console.log('Mission 3 native session-lock private UI clearing: 66 Chromium/WebKit synthetic mobile-width cases PASS; HOLD, NO DEPLOY.');
+console.log('Mission 3 default+native session-lock private UI clearing: 102 Chromium/WebKit synthetic mobile-width cases PASS; HOLD, NO DEPLOY.');
