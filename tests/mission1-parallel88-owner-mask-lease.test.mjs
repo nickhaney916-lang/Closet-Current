@@ -49,14 +49,15 @@ async function workerMessages(instanceReview840){
  await vm.runInContext('chain',c);
  return sent;
 }
-function captureHarness({ownerId=null,autoStart=true,decode=null}={}){
+function captureHarness({ownerId=null,autoStart=true,decode=null,href='https://example.test/closet?outfitInstances840=1',sourceDigest=null}={}){
  const nodes=new Map(),timers=new Map();let sequence=0;
  const node=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,disabled:false,textContent:''});return nodes.get(id);};
- const c={URL,location:{href:'https://example.test/closet?outfitInstances840=1'},
+ const c={URL,location:{href},
+  atob:x=>Buffer.from(x,'base64').toString('binary'),
   ...(ownerId?{window:{closetAuth:{user:{id:ownerId}}}}:{}),
   $:node,batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'research',
   categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
-  crypto:{randomUUID:()=> 'id-'+(++sequence)},
+  crypto:{randomUUID:()=> 'id-'+(++sequence),...(sourceDigest?{subtle:{digest:()=>sourceDigest}}:{})},
   Date:{now:()=>1000},photoToJPEG:decode||(async()=> 'data:image/jpeg;base64,NEWPHOTO'),setTimeout(fn,delay){const id=++sequence;timers.set(id,{fn,delay});return id;},
   clearTimeout:id=>timers.delete(id),stopCamera(){},controls(){},
   candidate(image,options){c.batch.push({id:'piece-'+(++sequence),image,...options,
@@ -65,7 +66,13 @@ function captureHarness({ownerId=null,autoStart=true,decode=null}={}){
   closetReady:Promise.resolve(),outfitBoardReady:Promise.resolve(),
   Worker:class{constructor(){c.worker=this;}postMessage(request){this.request=request;}terminate(){this.closed=true;}}
  };
- vm.createContext(c);vm.runInContext(captureSource,c);
+ // VM cannot dynamically import the irrelevant source-only grouping UI.
+ // Replace ONLY that transport with a resolved mock; source delivery logic,
+ // session gates, photo hashing and owner draft admission run unmodified.
+ const fixtureCapture=captureSource.replace(
+  "const unit70Api=outfitUnits70?import('./outfit-unit-reconciliation-70.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:'')):null;",
+  "const unit70Api=outfitUnits70?Promise.resolve({}):null;");
+ vm.createContext(c);vm.runInContext(fixtureCapture,c);
  if(autoStart)c.startOutfitSplit('data:image/jpeg;base64,ORIGINAL');
  return {c,node,emit:part=>c.worker?.onmessage({data:{id:c.worker.request.id,...part}})};
 }
@@ -246,4 +253,30 @@ test('P88 forged high-confidence classifier cannot auto-admit a disconnected phy
  assert.equal(c.automaticAdmissionCore842(item),false);
  assert.equal(c.automaticAdmissionCore842({...item,segmentHint:{categories:['Shoes'],clipped:false}}),true,
   'the new guard is scoped to source-bound unresolved units; other legacy auto guard remains testable');
+});
+
+test('P88 source SHA await cannot reassign a split garment to a replaced same-ID owner session',async()=>{
+ let releaseDigest;const digest=new Promise(resolve=>{releaseDigest=resolve;});
+ const h=captureHarness({ownerId:'owner-A',sourceDigest:digest,
+  href:'https://example.test/closet?outfitInstances840=1&outfitUnits70=1&color76=1'});
+ const worker=h.c.worker;
+ assert.equal(worker.request.instanceReview840,true);
+ assert.equal(worker.request.instanceReview70,true);
+ const piece={image:'data:image/jpeg;base64,U0hPRUxFRlQ=',
+  hint:{categories:['Shoes'],types:[],clipped:false},
+  instanceMethod:'connected_footwear_component',requiresReview:true,
+  recognitionPhoto:{image:'data:image/jpeg;base64,Q1JPUExFRlQ='},
+  reconciliation70:{sourceSha256:'0'.repeat(64),maskSha256:'1'.repeat(64)}};
+ h.emit({type:'piece',piece});
+ // Allow queued handleOutfitMessage() to start, suspend at source digest await,
+ // then replace the owner object with identical user ID before it resumes.
+ for(let i=0;i<4;i++)await Promise.resolve();
+ assert.equal(h.c.batch.length,0);
+ h.c.window.closetAuth.user={id:'owner-A'};
+ releaseDigest(new Uint8Array(32).buffer);
+ for(let i=0;i<12;i++)await Promise.resolve();
+ assert.equal(h.c.batch.length,0,'no formerly authorized JPEG may be added to replacement session');
+ assert.equal(h.c.items.length,0);
+ assert.equal(worker.closed,true,'worker must be terminated on post-await revoked owner');
+ assert.match(h.node('outfitSplitStatus').textContent,/session changed during photo verification/);
 });
