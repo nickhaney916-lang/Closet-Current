@@ -27,6 +27,7 @@ const receipt=attestActualSkirt89({originalBytes:original,cutoutBytes:cutout,
  lock:locked.find(x=>x.id==='commons-0043'),work47:row});
 if(receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED')
  throw Error('Independent real source skirt or REVIEW mask not byte verified: '+receipt.reason);
+const originalCutoutRGBA=await sharp(cutout).ensureAlpha().raw().toBuffer({resolveWithObject:true});
 const {data,info}=await sharp(cutout)
  .resize({width:180,height:240,fit:'contain',background:{r:0,g:0,b:0,alpha:0}})
  .ensureAlpha().raw().toBuffer({resolveWithObject:true});
@@ -57,7 +58,8 @@ const {root,body}=syntheticRig();
 // constructed with a bound Three.Texture image placeholder here, with a
 // SEPARATE native real WebGL source-UV test required before photo-render claim.
 const candidate=buildOriginalPhotoSkirtProposal89({
- root,receipt,outline,cutoutImage:{width:info.width,height:info.height,originalCutoutSHA:receipt.cutoutSHA256}
+ root,receipt,outline,cutoutImage:{data:new Uint8Array(originalCutoutRGBA.data),
+  width:originalCutoutRGBA.info.width,height:originalCutoutRGBA.info.height}
 });
 if(candidate?.receipt?.status!=='ACTUAL_SOURCE_SKIRT_VISIBLE_FRONT_PROPOSAL_NOT_FITTED_OR_ACCEPTED')
  throw Error('Research original-photo skirt mesh blocked: '+(candidate?.reason||'unknown'));
@@ -65,7 +67,9 @@ const mesh=candidate.mesh,g=mesh.geometry;
 if(mesh.skeleton!==body.skeleton||mesh.skeleton.bones.length!==163||
     g.index.count!==candidate.receipt.triangleCount*3||
     g.groups.length<20||mesh.material.length!==2||
-    mesh.material[0].map?.image?.originalCutoutSHA!==receipt.cutoutSHA256||
+    mesh.material[0].map?.image?.data?.length!==originalCutoutRGBA.data.length||
+    mesh.material[0].map?.image?.width!==originalCutoutRGBA.info.width||
+    mesh.material[0].map?.image?.height!==originalCutoutRGBA.info.height||
     g.getAttribute('skinIndex').count!==g.getAttribute('position').count||
     g.getAttribute('sourceSkirt89Rest').count!==g.getAttribute('position').count||
     g.getAttribute('uv').array.some(x=>!Number.isFinite(x)||x<0||x>1)||
@@ -81,6 +85,7 @@ const report={schema:'P89-actual-independent-licensed-skirt-alpha-to-THREE-shell
  derivedSourceHemToWaistWidthRatio:outline.sourceHemToWaistWidthRatio,
  croppedObservedMask: outline.crop,
  skinnedShellVertices:g.getAttribute('position').count,triangles:g.index.count/3,
+ originalSourceRGBAActuallyBoundTo3DFrontTexture:true,
  originalSourceRGBProjectedIntoNativeBrowser:false,
  originalSourcePhotoFrameModified:false,realAnatomicalAvatarTested:false,
  synthetic163BoneRigOnly:true,observedSkirtBack:false,
