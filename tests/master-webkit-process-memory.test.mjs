@@ -44,7 +44,7 @@ test('missing root and invalid PID are not memory measurements',()=>withTree(({r
 test('genuine runner samples the live browser PID, keeps no-release blocked rule',()=>{
   const code=readFileSync('scripts/test-main1054-real-webkit-repeat.mjs','utf8');
   assert.match(code,/snapshotBrowserProcessTree/);
-  assert.match(code,/browserServer\.process\(\)\?\.pid/);
+  assert.match(code,/browserServer\?\.process\(\)\?\.pid/);
   assert.match(code,/setInterval\(sampleMemory/);
   assert.match(code,/maxSampledBrowserTreeRSSBytes/);
   assert.match(code,/maxSampledBrowserTreePSSBytes/);
