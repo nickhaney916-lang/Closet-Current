@@ -56,3 +56,76 @@ test('native same-owner auth replacement during JPEG hashing rejects old private
 test('native revision provider cannot switch sessions while preparing a lease',async()=>{
  const s=nativeSetup();const api=createNativeCatalogCrosswalk({getSession:s.session,getRevision:()=>{s.setSession({...s.session(),authRef:{user:{id:'alice'}}});return 1;},readOwnerItems:async()=>[piece()]});await assert.rejects(api.query(),/native-session-changed/);
 });
+test('M30: mismatched original JPEG and unverified digest receipt never enter saved outfit slots',async()=>{
+ const s=setup();
+ const good=await s.api.item('a');
+ assert.deepEqual(good.slotIds,['top','layer']);
+ assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{top:'a'});
+ for(const damaged of [
+  {...piece(),originalPhoto:{image,sha256:'b'.repeat(64)},sourceSHA256:'b'.repeat(64)},
+  {...piece(),sourceHashVerified:false},
+  {...piece(),originalPhoto:{image:null,sha256:sha}},
+ ]){
+  s.set([damaged]);
+  const r=await s.api.item('a');
+  assert.equal(r.category,'Uncategorized');
+  assert.deepEqual(r.slotIds,[]);
+  assert.equal(r.fallback,null);
+  assert.equal(r.consumer3D,false);
+  assert.deepEqual((await s.api.query({slot:'top'})).ids,[]);
+  assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{});
+ }
+ s.set([piece()]);
+ assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{top:'a'});
+});
+test('M30: ambiguous one-photo/multi-garment source cannot become outfit by label alone',async()=>{
+ const s=setup([{...piece(),singleGarmentVerified:false}]);
+ assert.deepEqual((await s.api.item('a')).slotIds,[]);
+ assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{});
+ s.set([{...piece(),outfitSourceId:'source-a',singleGarmentVerified:true}]);
+ assert.deepEqual((await s.api.item('a')).slotIds,[]);
+});
+test('M30: signed JPEG segment requires real cutout bytes, unchanged parent and reviewed crop',async()=>{
+ const cutout='data:image/jpeg;base64,/9gA/9k=';
+ const cutoutSHA=await digestBytes(jpegBytes(cutout),webcrypto);
+ const base={...piece(),singleGarmentVerified:false,outfitSourceId:'source-a',segmentHint:{
+  verified:true,ownerReviewedInstance:true,clipped:false,originalSHA256:sha,
+  cutoutSHA256:cutoutSHA,cutoutImage:cutout
+ }};
+ const s=setup([base]);
+ const valid=await s.api.item('a');
+ assert.deepEqual(valid.slotIds,['top','layer']);
+ assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{top:'a'});
+ for(const hint of [
+  {...base.segmentHint,cutoutImage:null},
+  {...base.segmentHint,cutoutSHA256:'b'.repeat(64)},
+  {...base.segmentHint,originalSHA256:'c'.repeat(64)},
+  {...base.segmentHint,clipped:true},
+  {...base.segmentHint,verified:false},
+  {...base.segmentHint,ownerReviewedInstance:false},
+  {...base.segmentHint,ownerId:'bob'},
+ ]){
+  s.set([{...base,segmentHint:hint}]);
+  assert.deepEqual((await s.api.item('a')).slotIds,[]);
+  assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{});
+ }
+ s.set([{...base,outfitSourceId:undefined}]);
+ assert.deepEqual((await s.api.board({slots:{top:'a'}})).slots,{});
+});
+test('M30: unconfirmed shoe or split unit never gets a slot even when the saved subtype is confirmed',async()=>{
+ const base={...piece('a','Shoes','Sneakers'),reconciliation70Status:'paired_confirmed',
+  shoePair:{confirmedByOwner:true,componentIds:['a','b'],companion:{reconciliation70:{
+   ownerId:'alice',sourceSha256:sha,maskSha256:'b'.repeat(64)
+  }}},reconciliation70:{ownerId:'alice',sourceSha256:sha,maskSha256:'a'.repeat(64)}};
+ const s=setup([base]);
+ assert.deepEqual((await s.api.board({slots:{shoes:'a'}})).slots,{shoes:'a'});
+ for(const update of [
+  {shoePair:{...base.shoePair,confirmedByOwner:false}},
+  {shoePair:{...base.shoePair,componentIds:['a','a']}},
+  {shoePair:{...base.shoePair,companion:{reconciliation70:{...base.shoePair.companion.reconciliation70,ownerId:'bob'}}}},
+  {reconciliation70Status:'unresolved'}
+ ]){
+  s.set([{...base,...update}]);
+  assert.deepEqual((await s.api.board({slots:{shoes:'a'}})).slots,{});
+ }
+});
