@@ -47,7 +47,7 @@ async function syntheticScenario(mode){
  if(mode==='attach-after-switch')swap();
  if(mode==='attach-after-relogin')relogin();
  if(mode==='before-attach-change')callback.onChange({slots:{top:'initial-A'}});
- if(!['attach-after-switch','attach-after-relogin','invalid-gate','wrong-db'].includes(mode))
+ if(!['invalid-gate','wrong-db'].includes(mode))
   callback.attach(controller);
  if(mode==='valid-status')callback.onStatus('Private A ready');
  if(mode==='bad-status')callback.onStatus({message:'PRIVATE A filename'});
