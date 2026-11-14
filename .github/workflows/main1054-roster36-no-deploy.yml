@@ -1,0 +1,49 @@
+name: MAIN1054 M36 synthetic wardrobe revision cost probe - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-roster-performance36-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  roster-cost-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact M34 donor ancestry and research-only source scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 050a39b8fa1e6ee8084bed23855d90e2879609d7 HEAD
+          git diff --exit-code 050a39b8fa1e6ee8084bed23855d90e2879609d7 HEAD -- public/ supabase/ benchmark/
+          git diff --name-only 050a39b8fa1e6ee8084bed23855d90e2879609d7 HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/probe-main1054-roster36.mjs|tests/main36-roster-probe.test.mjs|research/master-consolidation-1054/MILESTONE36.md|.github/workflows/main1054-roster36-no-deploy.yml) ;;
+              *) echo "BLOCKED: unexpected M36 changed path $path"; exit 1;;
+            esac
+          done
+          node --check scripts/probe-main1054-roster36.mjs
+          node --check tests/main36-roster-probe.test.mjs
+          node --check research/main1054-revision34/durable-roster.mjs
+      - name: M36 bounded synthetic Node probe guards
+        run: node --test tests/main36-roster-probe.test.mjs
+      - name: M36 synthetic Node-only timing and resident-memory diagnostic
+        run: |
+          node scripts/probe-main1054-roster36.mjs > "$RUNNER_TEMP/m36-synthetic-node-only.json"
+          node -e "const f=require('fs');const x=JSON.parse(f.readFileSync(process.argv[1]));if(x.gate!=='DESKTOP_NODE_SYNTHETIC_BENCHMARK_ONLY_NO_MOBILE_GO'||x.results.length!==5||x.physicalIphone!=='NOT_TESTED')process.exit(2);" "$RUNNER_TEMP/m36-synthetic-node-only.json"
+          cat "$RUNNER_TEMP/m36-synthetic-node-only.json"
+      - name: Retain numeric synthetic evidence only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: m36-synthetic-node-only
+          path: ${{ runner.temp }}/m36-synthetic-node-only.json
+          if-no-files-found: ignore
+          retention-days: 7
