@@ -22,6 +22,8 @@ import {screenDisposableSourceFitAmplitudes62}
  from './upper-torso-fit-pareto62.mjs';
 import {makeSourceOnlyLocalContactTrial63,LOCAL_TRIALS63}
  from './upper-torso-contact-local-feather63.mjs';
+import {LOCAL_FINE_TRIALS64,summarizeOriginalClothFineGrid64}
+ from './upper-torso-contact-fine-grid64.mjs';
 const SOURCE_ID='commons-0053';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const fail=msg=>{throw Error('M2 C52 original-photo diagnostic '+msg);};
@@ -1016,7 +1018,8 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
 function measureDisposableTorsoTrial60(root,mesh,body,world,
  indices,triangles,tolerance,poseBudget,bodyBudget,baselineBodyStrict,
  baselineSelfStrict,refineSurfaceStrain61=false,
- refineCandidateSweep62=false,refineLocalContactRelief63=false){
+ refineCandidateSweep62=false,refineLocalContactRelief63=false,
+ refineFineLocalGrid64=false){
  const named=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
  const get=(name)=>{
   const bone=named.get(name);
@@ -1085,7 +1088,8 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
    const two=createDisposableUpperTorsoWorldTrial60(world,{
     neck:get('neck01'),spine:get('spine04'),outwardMeters:.002
    });
-   const row=LOCAL_TRIALS63.map(({boostMeters,radiusMeters})=>{
+   const row=(refineFineLocalGrid64?LOCAL_FINE_TRIALS64:LOCAL_TRIALS63)
+    .map(({boostMeters,radiusMeters})=>{
     const v=makeSourceOnlyLocalContactTrial63({
      originalWorld:world,base2mmWorld:two.world,indices,
      originalCrossingClothFaceIds:localStrictClothFaces63,
@@ -1199,7 +1203,8 @@ function articulatedContact58(root,mesh,source,indices,triangles,
  refineUpperTorsoFitTrial60=false,
  refineSurfaceStrain61=false,
  refineCandidateSweep62=false,
- refineLocalContactRelief63=false
+ refineLocalContactRelief63=false,
+ refineFineLocalGrid64=false
 }){
  const refused=(reason)=>Object.freeze({
   schema:'M2-licensed-original-163bone-articulated-contact-C58',
@@ -1267,7 +1272,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
    triangles,tolerance,poseBudget,trialBodyBudget60,
    neutralBody.strict,neutral.strictCrossings,
    refineSurfaceStrain61,refineCandidateSweep62,
-   refineLocalContactRelief63):null;
+   refineLocalContactRelief63,refineFineLocalGrid64):null;
  const trialPoseResults60=[];
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
@@ -1313,7 +1318,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
       body,world,indices,triangles,tolerance,poseBudget,
       trialBodyBudget60,bodyCheck.strict,self.strictCrossings,
       refineSurfaceStrain61,refineCandidateSweep62,
-      refineLocalContactRelief63));
+      refineLocalContactRelief63,refineFineLocalGrid64));
     bodyFacesCount+=bodyCheck.faces;
     bodyCompared+=bodyCheck.compared;
     bodyPairs+=bodyCheck.candidates;
@@ -1384,6 +1389,23 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     trialPoseResults60.every(r=>r.allOriginalBodyCrossingsActuallyGone),
    noTrialPreviewGeometryCommitted60:true,
    noPhotographedSourceOr163BoneRigEdited60:true,
+   ...(refineFineLocalGrid64?{
+    originalPhotoFineLocalGridReceipt64:
+     neutralTrial60?.originalSourceLocalContactFeather63?.localCandidateEvaluations===3&&
+     trialPoseResults60.length===2&&
+     trialPoseResults60.every(t=>
+      t.originalSourceLocalContactFeather63?.localCandidateEvaluations===3)?
+      summarizeOriginalClothFineGrid64([
+       neutralTrial60.originalSourceLocalContactFeather63,
+       ...trialPoseResults60.map(t=>t.originalSourceLocalContactFeather63)
+      ]):Object.freeze({
+       schema:'M2-C64-original-fine-local-contact-not-required',
+       missingGenuineOriginalStrictCrossingsAfterTwoMillimeterSource:true,
+       noBodyContactReleaseApproval:true,
+       releaseAuthorized:false,familyAlpha:'HOLD'
+      }),
+    fineOriginalPhotoSourceContactSweepNeverRendered64:true
+   }:{}),
    ...(refineLocalContactRelief63?{
     originalPhotoLocalContactSourceAuditCompleted63:
      neutralTrial60?.originalSourceLocalContactFeather63?.schema===
@@ -1562,6 +1584,7 @@ export function auditActualPhotographedDressSurfaces52({
  refineSurfaceStrain61=false,
  refineCandidateSweep62=false,
  refineLocalContactRelief63=false,
+ refineFineLocalGrid64=false,
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
  maxDistancePairs58=100000,maxBodyFaces58=160000,
@@ -1612,6 +1635,8 @@ export function auditActualPhotographedDressSurfaces52({
     maxLoopVertices57<1||maxLoopVertices57>100000||
     !Number.isSafeInteger(maxPoseSamples57)||
     maxPoseSamples57<1||maxPoseSamples57>2||
+    typeof refineFineLocalGrid64!=='boolean'||
+    (refineFineLocalGrid64&&!refineLocalContactRelief63)||
     typeof refineLocalContactRelief63!=='boolean'||
     (refineLocalContactRelief63&&!refineCandidateSweep62)||
     typeof refineCandidateSweep62!=='boolean'||
@@ -1705,7 +1730,8 @@ export function auditActualPhotographedDressSurfaces52({
     maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
     maxPoseSamples58,refineBodyHeightWitnessBands59,
     refineUpperTorsoFitTrial60,refineSurfaceStrain61,
-    refineCandidateSweep62,refineLocalContactRelief63
+    refineCandidateSweep62,refineLocalContactRelief63,
+    refineFineLocalGrid64
    }):null;
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
@@ -1791,6 +1817,13 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    anatomicalSourceLoopNamesNotHumanVerified57:true,
    realSkinPoseSamplingNotCollisionApproval57:true
+  }:{}),
+  ...(refineFineLocalGrid64?{
+   genuineSourcePhotoThreePoseFineLocalGrid64:
+    articulated58?.originalPhotoFineLocalGridReceipt64?.schema===
+     'M2-C64-original-public-photograph-local-contact-fine-grid',
+   noPhotographedGarmentSourceOrOwnerWardrobeEdit64:true,
+   noContinuousClothPhysicsAndHumanApproval64:true
   }:{}),
   ...(refineLocalContactRelief63?{
    actualLicensedSourceLocalContactFeatherEvidenceComplete63:
