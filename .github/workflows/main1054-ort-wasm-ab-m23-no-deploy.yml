@@ -1,0 +1,56 @@
+name: "MAIN1054 M23 JSEP vs CPU WASM real-model WebKit A/B — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-jsep-vs-wasm-runtime-m23-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  pinned-onnx-jsep-versus-cpu-wasm:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_M23_SOURCES: commons-0035
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact immutable M22 donor, research-only scope and grammar
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor bf7c7275c84438c8503eb14de4b22ffd5792cddf HEAD
+          git diff --exit-code bf7c7275c84438c8503eb14de4b22ffd5792cddf HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-ort-wasm-ab-webkit.mjs
+          node --check research/master-consolidation-1054/ort-wasm-ab-gate.mjs
+      - name: Same-source and no-release adversarial numerical gate tests
+        run: node --test tests/master-ort-wasm-ab-gate.test.mjs tests/master-real-model-memory-gate.test.mjs tests/master-webkit-four-photo-memory-trend.test.mjs
+      - name: Install exactly version-matched ONNX Runtime JS and JSEP and CPU WASM builds
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3
+      - name: Validate real public JPEG SHA and both quantized model locks
+        shell: bash
+        run: |
+          set -eu
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Real source-matched dual-model JSEP versus plain CPU-only WASM WebKit memory and inference
+        run: node scripts/test-main1054-ort-wasm-ab-webkit.mjs
+      - name: Preserve redacted numeric output even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m23-direct-onnx-jsep-cpu-wasm-HOLD
+          path: benchmark/main1054-ort-wasm-ab/m23-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 14
