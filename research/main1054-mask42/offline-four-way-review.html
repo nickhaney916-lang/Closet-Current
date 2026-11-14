@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' data: file:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'">
+<title>Closet Current M42 — original vs P93 vs conservative fringe (HOLD)</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#e9eef4;background:#0f1824}
+body{max-width:1300px;padding:20px;margin:auto}h1{font-size:1.7rem;margin:0 0 8px}
+h2{font-size:1.15rem}p{line-height:1.55;color:#c5d0dd}
+.notice{border:1px solid #687484;border-radius:12px;padding:16px;background:#192330}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin:24px 0}
+figure{margin:0;background:#222d3b;border:1px solid #536174;border-radius:12px;overflow:hidden}
+figure img{width:100%;height:auto;display:block;object-fit:contain;max-height:510px;background:#bbc6cf}
+figcaption{padding:12px;font-weight:600}
+section{margin:26px 0}label{display:block;font-weight:600;margin:14px 0 6px}
+select,textarea,input{box-sizing:border-box;width:100%;padding:12px;color:#e9eef4;background:#263243;border:1px solid #8190a3;border-radius:7px;font:inherit}
+button{font:inherit;font-weight:700;color:#142234;background:#d6e7ff;border:0;border-radius:9px;padding:13px 20px;cursor:pointer}
+button:focus-visible,select:focus-visible{outline:3px solid #ffc86a}
+small{color:#cbd7e4}#result{min-height:22px}
+</style>
+</head>
+<body>
+<header>
+<h1>Original dress — P93 and M42 conservative fringe comparison</h1>
+<p>Licensed Commons-0053 original JPEG versus unchanged original-RGB Work47, P93 alpha-only experiment, and separate M42 one-pixel color-continuity proposal. This is a LOCAL OFFLINE HUMAN REVIEW WORKSTATION, not a garment-approval decision.</p>
+<div class="notice" role="note"><strong>FAMILY ALPHA HOLD — NO 3D PERMISSION.</strong>
+Even a favorable selection here is an <em>unverified reviewer response</em>. Pixel reduction is not proof of true fabric/neckline quality. It cannot prove independent identity, source fidelity, original 3D cloth fit or safe layers. The source original JPEG is never modified.</div>
+</header>
+<section>
+<h2>Source images — inspect actual neckline, shoulder edges, logo, piping and texture</h2>
+<div class="gallery">
+<figure><img id="original" src="original-source.jpg" alt="Actual licensed original photographed dress JPEG"><figcaption>1. Original licensed photograph (unaltered)</figcaption></figure>
+<figure><img id="baseline" src="baseline-provisional-cutout.png" alt="Original RGB, first provisional segmentation alpha"><figcaption>2. Baseline source-RGB provisional cutout</figcaption></figure>
+<figure><img id="proposal" src="P93-alpha-only-proposal-NOT-APPROVED.png" alt="Same original RGB with separately proposed alpha removal"><figcaption>3. P93 alpha-only proposal — NOT APPROVED</figcaption></figure>
+<figure><img id="upper" src="neckline-comparison.jpg" alt="Aligned upper-source closeup original, before and candidate on grey backing"><figcaption>4. Original / before / candidate upper-neckline closeups</figcaption></figure>
+<figure><img id="difference" src="removed-alpha-overlay.png" alt="P93 diagnostic pink original alpha removals"><figcaption>5. P93 original alpha removals (diagnostic)</figcaption></figure>
+<figure><img id="proposal42" src="M42-conservative-fringe-UNAPPROVED.png" alt="Original RGB mask including conservative single-pixel M42 trial"><figcaption>6. Separate M42 alpha-only proposal — NOT APPROVED</figcaption></figure>
+<figure><img id="extra42" src="M42-extra-alpha-highlight.png" alt="Only incremental alpha pixels proposed by M42 marked in cyan"><figcaption>7. M42 extra suggested pixels (cyan); may include real fabric!</figcaption></figure>
+<figure><img id="compare42" src="M42-source-before-p93-trial-4up.jpg" alt="Actual original, Work47 baseline, P93 and M42 in four adjacent source images"><figcaption>8. Original → baseline → P93 → M42 source comparison</figcaption></figure>
+</div>
+<p>The colored diagnostic is a location overlay, <em>not</em> a reconstructed material or a claimed source segmentation. Pale fabric may resemble mannequin background; do not accept from pixel counts alone. A single frontal original photograph cannot verify side/back garment texture.</p>
+</section>
+<section class="notice" aria-label="Independent visual reviewer questionnaire">
+<h2>Reviewer judgments (manual only)</h2>
+<p>For each question, compare the actual source photograph to both masks at full resolution. The export contains your selections but retains <strong>independentlyVerified:false</strong> and <strong>consumer3DAdmitted:false</strong> for every response.</p>
+<label for="neckline">Does the M42 candidate improve the actual neckline versus P93 without eroding real fabric?</label>
+<select id="neckline"><option value="unreviewed">Not reviewed</option><option value="pass">Looks acceptable from source</option><option value="needs-work">Needs edge cleanup</option><option value="reject">Reject cutout</option></select>
+<label for="piping">Does M42 preserve all white piping/logos/visible fabric edges compared to the original?</label>
+<select id="piping"><option value="unreviewed">Not reviewed</option><option value="pass">Looks acceptable from source</option><option value="needs-work">Needs edge cleanup</option><option value="reject">Reject cutout</option></select>
+<label for="silhouette">Does M42 retain the real garment silhouette/source pattern across the entire image?</label>
+<select id="silhouette"><option value="unreviewed">Not reviewed</option><option value="pass">Looks acceptable from source</option><option value="needs-work">Needs corrections</option><option value="reject">Reject cutout</option></select>
+<label for="remarks">Specific places to correct (no account identifiers or private clothing data)</label>
+<textarea rows="4" id="remarks" placeholder="e.g., pink/cyan fringe at original V-neck; possible real beige fabric removed; piping intact or not"></textarea>
+<p><button id="export" type="button">Export unverified review notes (JSON)</button></p>
+<p id="result" role="status" aria-live="polite"></p>
+<small>Reviewers may inspect file images and export a local JSON record. No network requests, login, cloud uploads, owner-photo mutation, or viewer authorization occur. Independent human identity and any eventual 3D garment approval require separate controlled acceptance.</small>
+</section>
+<script>
+(function(){
+ 'use strict';
+ const get=(id)=>document.getElementById(id);
+ get('export').addEventListener('click',function(){
+  const fields=['neckline','piping','silhouette'];
+  const judgments={};
+  for(const id of fields){
+   judgments[id]=get(id).value;
+   if(judgments[id]==='unreviewed'){
+    get('result').textContent='Review every image and answer all three questions before exporting.';
+    return;
+   }
+  }
+  const record={
+   schema:'MAIN1054_M42_UNVERIFIED_P93_VS_M42_HUMAN_REVIEW/v1',
+   source:'Commons-0053 licensed public photographed dress',
+   candidate:'M42 single-layer P93-anchored warm-source alpha-only experiment NOT APPROVED',
+   judgments,
+   notes:get('remarks').value.slice(0,1600),
+   reviewerIdentityIndependentlyVerified:false,
+   originalSourceFidelityIndependentlyAccepted:false,
+   rendered3DFitIndependentlyAccepted:false,
+   qualifiesForAutomatedMaskAdoption:false,
+   qualifiesForConsumer3D:false,
+   familyAlpha:'HOLD',
+   releaseAuthorized:false,
+   recordKind:'MANUAL_CHOICE_NOT_INDEPENDENT_ACCEPTANCE'
+  };
+  const blob=new Blob([JSON.stringify(record,null,2)+'\n'],{type:'application/json'});
+  const a=document.createElement('a'),url=URL.createObjectURL(blob);
+  a.download='main42-unverified-source-review.json';a.href=url;
+  document.body.appendChild(a);a.click();a.remove();
+  get('result').textContent='Unverified local review notes exported. No 3D permission issued.';
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+ });
+})();
+</script>
+</body>
+</html>
