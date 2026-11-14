@@ -5,6 +5,7 @@
 import {chromium,webkit} from 'playwright';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
+import {server82} from './p82-browser-server.mjs';
 import {readFile} from 'node:fs/promises';
 // P88: use a true byte-derived SHA for the original synthetic JPEG fixture.
 // No family/public source photo or hosted owner account is used in this test.
@@ -53,13 +54,18 @@ const harness=[
  "  adjustPhoto(item);return item;",
  "};"
 ].join('\n');
+// Web Crypto is intentionally unavailable at insecure about:blank. The same
+// ephemeral loopback test host used by P82 exercises actual browser SHA-256.
+const {server,origin}=await server82();
+try{
 for(const [browserName,engine] of Object.entries({chromium,webkit})){
  const browser=await engine.launch({headless:true,...(browserName==='chromium'?{args:['--no-sandbox']}:{})});
  try{
   for(const width of [320,390,430]){
    const page=await browser.newPage({viewport:{width,height:850},hasTouch:true,isMobile:true});
    const errors=[];page.on('pageerror',e=>errors.push(e.message));
-   await page.setContent('<!doctype html><html><body><main>Source verified paired shoe review</main></body></html>');
+   await page.goto(origin+'/');
+   assert.equal(await page.evaluate(()=>isSecureContext&&!!crypto.subtle),true,'real browser SHA-256 must be available');
    for(const s of [taxonomy,details,harness,source])await page.addScriptTag({content:s});
    const approve=async()=>page.getByRole('checkbox',{name:/I checked the clothing photo/}).check();
    const submit=async(times=1)=>page.locator('dialog form').evaluate((form,n)=>{
@@ -108,3 +114,5 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
   }
  }finally{await browser.close();}
 }
+
+}finally{await new Promise(resolve=>server.close(resolve));}
