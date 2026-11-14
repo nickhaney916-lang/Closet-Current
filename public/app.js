@@ -203,6 +203,18 @@ function unit70OwnerEvidenceValid(item){
 // the queued cloud preflight. Bind the final closet transaction to the SAME
 // signed user object, database, draft object, original JPEG and mask receipt.
 // A matching text owner ID alone cannot authorize a replaced login session.
+// A paired shoe/combined fragment contains a nested second source and mask.
+// Object-identity equality alone misses in-place edits to companion receipts.
+// Freeze the complete owner-visible physical-group evidence, not just the
+// outer object reference, while Adjust and queued cloud checks may yield.
+function sourceGroupRevision88(item){
+ const group=item?.shoePair||item?.combinedFragments70;
+ if(!group)return null;
+ try{return JSON.stringify({
+  kind:item.shoePair?'shoe':'fragments',confirmed:group.confirmedByOwner,
+  componentIds:group.componentIds,companion:group.companion
+ });}catch{return '';} // cyclic/unserializable nested evidence fails closed
+}
 function sourceSaveLease88(item){
  if(!item?.reconciliation70)return null;
  const user=window.closetAuth?.user;
@@ -211,7 +223,8 @@ function sourceSaveLease88(item){
   mask:item.reconciliation70.maskSha256,receipt:item.reconciliation70,
   status:item.reconciliation70Status,
   original:item.originalPhoto?.image,image:item.image,
-  review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70};
+  review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70,
+  groupRevision:sourceGroupRevision88(item)};
 }
 function sourceSaveLeaseLive88(lease){
  const item=lease?.item,user=window.closetAuth?.user;
@@ -228,7 +241,8 @@ function sourceSaveLeaseLive88(lease){
   ['paired_confirmed','fragments_confirmed','separate_confirmed'].includes(lease.status)&&
   item.originalPhoto?.image===lease.original&&item.image===lease.image&&
   item.recognitionPhoto?.image===lease.review&&
-  item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments);
+  item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments&&
+  lease.groupRevision!==''&&sourceGroupRevision88(item)===lease.groupRevision);
 }
 async function sourceSavePhotoVerified88(lease){
  if(!sourceSaveLeaseLive88(lease)||typeof lease.original!=='string'||
@@ -253,12 +267,21 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
    value.originalPhoto?.image!==lease.original||value.image!==lease.image||
    value.reconciliation70?.sourceSha256!==lease.source||
    value.reconciliation70?.maskSha256!==lease.mask||
-   !unit70OwnerEvidenceValid({...lease.item,category:value.category}))
+   value.reconciliation70?.ownerId!==lease.ownerId||
+   value.reconciliation70Status!==lease.status||
+   value.outfitSourceId!==lease.sourceId||
+   sourceGroupRevision88(value)!==lease.groupRevision||
+   !unit70OwnerEvidenceValid({...lease.item,category:value.category})||
+   duplicateUnit70InCloset(value,items))
    throw Error('P88_REVOKED_SOURCE_SAVE');
+  // A source-bound owner confirmation must never erase a different garment
+  // captured while cloud.beforeWrite was pending. Recompute from live drafts
+  // INSIDE the authorized queue, not the stale pre-await nextBatch argument.
+  const liveRemaining=batch.filter(x=>x.id!==lease.item.id);
   return new Promise((resolve,reject)=>{
    const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
    tx.objectStore('items').put(value);
-   tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});
+   tx.objectStore('state').put({id:'draft',batch:structuredClone(liveRemaining)});
    tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
   });
  });
