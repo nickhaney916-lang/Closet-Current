@@ -1,0 +1,31 @@
+# MAIN1054 M42 — real licensed original dress / P93 alpha fringe, conservative one-pixel trial
+
+**ISOLATED RESEARCH. NO MERGE OR DEPLOY. Family Alpha #255 OPEN/HOLD.**
+
+## Source and engineering baseline
+
+Parent [M41 draft PR #1184](https://github.com/nickhaney916-lang/Closet-Current/pull/1184) immutable source HEAD \`ed4b011f1852e4101799736aa62ed6d9cb557d3a\`, [no-deploy CI #43634578615](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43634578615) **COMPLETED SUCCESS** (6/6 M41 mask tests, 2,704/2,704 complete Node, real original JPG / P93 PNG rebuild, true offline Chrome/WebKit 5-image comparison). The actual public photograph is **Commons-0053**, licensed CC BY 4.0, SHA-256 \`e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019\`. Original RGB Work47 PNG \`ab7c7caa43fe32b1e0ba5c58e64a59ba49e5a9fe881a3a7a7791c20aab9007c4\`, P93 separate **unapproved** alpha-only proposal \`caf1e8b5e292e9397262333ba6a3d2f673bd6c81b6b1694b5abf69aa90676a31\` — all pinned and reproduced with actual licensed source via detached unchanged P541/P93 worktrees. M41 verified P93 removed 12,961 suspected pale mannequin pixels and preserved exact RGB, logos and piping but identified **301 possible residual warm near-edge samples**; these are **not** ground-truth mannequin counts. Visual jagged/speckled V-neckline and shoulders remain unapproved.
+
+## What M42 actually tests
+
+M42 is an independent narrowly bounded **hypothesis** about one pixel of source-anchored residual alpha at the original P93 transparency boundary, not new source texture, photo recognition or simulated fabric:
+- The only possible additional transparent pixels are still-visible **original warm-colored photograph pixels** 8-neighbor directly adjacent to a pixel that **P93 actually removed**, with genuine source RGB differences <=18/channel and <=36 total. It never expands from an arbitrary unverified transparent background or an already proposed second-generation pixel; there is **one pass** only.
+- Candidate pixels adjacent to original high-brightness neutral white piping/logo are **never removed**. All original RGB/UV/bone/skinned geometry and existing original JPEG/source PNG/P93 candidate remain untouched.
+- Every new alpha must become exactly zero, never increase. No change outside M41's conservatively bounded upper photographed source region. Additional pixels cannot exceed **0.1% of original visible mask** or an absolute **1,000**; an oversized trial is refused unchanged, and no defensible pixel means no manufactured improvement.
+- M42 independently reruns real M41 full decoded original-RGB integrity audit before and after. It produces exact numeric color/alpha/bright-edge risk metrics including before/after warm-colored near-contour diagnostic count, which remains *not a measure of true boundary accuracy or fabric preservation*.
+- Even if an extra mask pixel is removed, a pale genuine fabric pixel could have been deleted. Therefore **every candidate remains UNREVIEWED, NOT ADMITTED**: human original-photo contour inspection, real whole-body 163-bone mesh collision/UV deformation, continuous cloth/layering and rear-angle authenticity, physical phones and four hosted signed accounts remain unsatisfied. All verdicts retain \`consumer3DAdmitted:false\`, \`releaseAuthorized:false\`, \`familyAlpha:HOLD\`.
+
+## Reproducible genuine source and honest review
+1. \`research/main1054-mask42/conservative-fringe-trial.mjs\`: immutable source identity/original-P93 bound research function. Candidate output is never imported by default application or any 3D renderer.
+2. \`tests/main42-conservative-fringe.test.mjs\`: tests source-adjacent color continuity, protecting piping and distant warm fabric, rejecting forged SHA, source RGB mutation, P93 illegitimate deletion, excessive extra fringe, no-op/fabricated improvement and caller-injected 3D/human claims.
+3. \`scripts/build-main42-source-fringe-comparison.mjs\`: invokes unchanged P93 and M41 real source rebuild, hashes actual JPEG/PNG bytes, audits new proposal RGB vs original, writes separate **M42-conservative-fringe-UNAPPROVED.png**, a 4-way source/baseline/P93/M42 picture, cyan incremental-alpha overlay and numeric source truth receipt. If no safe additional pixel exists it records refusal/no-change honestly and still outputs compare images.
+4. \`research/main1054-mask42/offline-four-way-review.html\`: local offline eight-picture human review page, inspecting original, old baseline, P93, M42, incremental cyan highlight and 4-way comparison. Manual selections export \`main42-unverified-source-review.json\` with **independentlyVerified:false**, **no consumer 3D grant**, no release. It is **not** independent human authentication or accepted clothing fidelity.
+5. \`scripts/test-main42-offline-review.mjs\` and new strict no-deploy workflow: actual \`file://\` Chromium and WebKit image loads (8/8), zero network calls, negative permit fields; original source rebuild and pinned JPEG hash; unchanged app build and full inherited Node; only seven named research files changed. CI must complete at exact new HEAD before marking M42 tested.
+
+## Scope and quality truth
+
+M42 can clarify whether an *extremely narrow color-supported second alpha proposal* can remove any of M41's 301 suspicious warm pixels without broad deletion. It does **not** prove those 301 pixels are mannequin or the new image looks better. The actual before/after/diagnostic package must be inspected by an **independent real reviewer**; any loose fringe/garment fabric erosion must be rejected. Do not replace source garment assets or import M42 candidate into Outfit Builder or P90 native 3D.
+
+Parallel #89 has ongoing true skirt 163-bone geometry and contact studies. A successful avatar render or three-pose contact trial is **not** proof of continuous cloth physics, proper backside or genuine human visual acceptability. Keep the source-specific dress and independent skirt provenance separate.
+
+**At creation: exact HEAD M42 CI pending. #255 OPEN/HOLD; no merge/deploy; consumer, private wardrobes, production/staging, hosted Supabase and physical user data unchanged.**
