@@ -6,6 +6,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
+import {ExtendedTriangle} from '../node_modules/three-mesh-bvh/build/index.module.js';
 import {countStableOriginalBodyContacts89}
  from '../research/parallel89/skirt-stable-source-contacts89.mjs';
 
@@ -77,7 +78,7 @@ test('reject incorrect original immutable source indices, nonindexed buffers and
 function bruteOriginalPairs(skirt,body){
  const pa=skirt.getAttribute('position'),pb=body.getAttribute('position');
  const ia=skirt.index,ib=body.index,line=new THREE.Line3();
- const make=(p,ix,i)=>new THREE.Triangle(...[0,1,2].map(k=>
+ const make=(p,ix,i)=>new ExtendedTriangle(...[0,1,2].map(k=>
   new THREE.Vector3().fromBufferAttribute(p,ix.getX(3*i+k))));
  const pairs=new Set();
  for(let i=0;i<ia.count/3;i++){
