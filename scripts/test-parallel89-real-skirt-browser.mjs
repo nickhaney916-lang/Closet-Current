@@ -75,7 +75,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
  screenCaptureCountExpected:18,figurePoseSamplesExpected:6,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -329,7 +329,27 @@ try{
   assert.equal(restoredAfterRegistration.bones,163);
   assert.equal(restoredAfterRegistration.releaseAuthorized,false);
   results.registrationTrials.push(registration);
+  const waistAnchors=await page.evaluate(()=>window.nativeP89Skirt.auditWaistBoneAnchors());
+  assert.equal(waistAnchors.schema,'P89-public-anatomical-waist-bone-attachment-audit/v1');
+  assert.equal(waistAnchors.status,
+   'ORIGINAL_SOURCE_RIG_WAIST_ANCHOR_VERTICAL_LANDMARKS_MEASURED_NOT_FIT');
+  assert.equal(waistAnchors.avatar,avatar);
+  assert.equal(waistAnchors.boneCount,163);
+  assert.equal(waistAnchors.actualOriginalWaistBinding,'spine04');
+  assert.equal(waistAnchors.trueNamedPelvisExists,false);
+  assert.ok(waistAnchors.originalPublicBodyJointHeightCandidates.length>=3);
+  assert.ok(waistAnchors.nearestObservedNamedOriginalRigLandmarks.length>=1);
+  assert.ok(Number.isFinite(waistAnchors.originalSourceWaistRimVerticalHeightMeters));
+  assert.ok(Number.isFinite(waistAnchors.originalSourceSpine04VerticalHeightMeters));
+  assert.ok(Number.isFinite(waistAnchors.originalWaistRimAndSpine04HeightMismatchMeters));
+  assert.equal(waistAnchors.independentPhysicalWaistMeasurementExists,false);
+  assert.equal(waistAnchors.originalSourceGarmentUVAndRigUnmodified,true);
+  assert.equal(waistAnchors.originalPhoto2DFallbackRequired,true);
+  assert.equal(waistAnchors.consumer3DAdmitted,false);
+  assert.equal(waistAnchors.releaseAuthorized,false);
+  results.waistAnchorLandmarkReports.push(waistAnchors);
  }
+ assert.equal(results.waistAnchorLandmarkReports.length,2);
  assert.equal(results.registrationTrials.length,2);
  assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
@@ -362,6 +382,8 @@ try{
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
    measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
    photoSkirtRegistrationStatus:results.registrationTrials.map(x=>x.status),
+   sourceWaistBoneAuditStatus:results.waistAnchorLandmarkReports.map(x=>x.status),
+   sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
    photoSkirtRegistrationCrossingReduction:results.registrationTrials.map(x=>x.bestResearchOnly?.originalThreePoseStrictCrossingPairSum-x.bestResearchOnly?.trialThreePoseStrictCrossingPairSum||0),
    measuredBodyFitResearchReduction:results.measuredBodyFitTrials.map(x=>x.bestProvisionalStructuralAB?.originalStrictSkirtBodyCrossingPairSum-x.bestProvisionalStructuralAB?.trialStrictSkirtBodyCrossingPairSum||0),
    sourceBodyCrossingPairs:results.staticSourceBodyCrossingPairSum??null,
