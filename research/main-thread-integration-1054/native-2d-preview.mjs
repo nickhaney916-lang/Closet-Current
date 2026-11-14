@@ -43,14 +43,35 @@ export function mountOwnerOutfitPhotoPreview1054({
   typeof getBoard!=='function'||typeof cleanBoard!=='function'||
   !events?.addEventListener||!events?.removeEventListener)
   fail('signed-owner native interface required');
- let closed=false,revision=0,renderedSession=null,phase='idle';
- const clear=()=>{target.replaceChildren();renderedSession=null;};
+ let closed=false,revision=0,renderedSession=null,renderedBoardStamp=null,phase='idle';
+ // The real Outfit Builder returns a synchronous cloned currentBoard.
+ // For previously rendered private JPEGs, a thenable/invalid/reentrant
+ // board cannot be checked synchronously: revoke instead of guessing.
+ const boardStamp=value=>{
+  if(!value||typeof value!=='object'||Array.isArray(value)||!value.slots||
+     typeof value.slots!=='object'||Array.isArray(value.slots))
+   throw Error('MAIN1054_PREVIEW native owner outfit board unavailable');
+  const serialized=JSON.stringify(value);
+  if(typeof serialized!=='string'||serialized.length>16384)
+   throw Error('MAIN1054_PREVIEW native outfit revision unavailable');
+  return serialized;
+ };
+ const currentBoardStamp=()=>{
+  try{
+   const value=getBoard();
+   if(value&&typeof value.then==='function')return null;
+   return boardStamp(value);
+  }catch{return null;}
+ };
+ const clear=()=>{target.replaceChildren();renderedSession=null;renderedBoardStamp=null;};
  const revoke=()=>{revision++;clear();phase='revoked';};
  // The signed auth provider can throw after token replacement; a focus/status
  // event must revoke old private JPEG pixels without leaking the error.
  const currentSession=()=>{try{return getSession();}catch{return null;}};
  const hasCurrentDisplayLease=()=>!!renderedSession&&
-  equalSession(renderedSession,currentSession());
+  renderedBoardStamp!==null&&
+  equalSession(renderedSession,currentSession())&&
+  renderedBoardStamp===currentBoardStamp();
  function assertActive(ticket,start){
   if(closed||ticket!==revision||
      !equalSession(start,currentSession()))fail('signed owner or refresh changed');
@@ -61,6 +82,9 @@ export function mountOwnerOutfitPhotoPreview1054({
  }
  function onFocus(){if(renderedSession&&!hasCurrentDisplayLease())revoke();}
  events.addEventListener('closet:session-locked',revoke);
+ // The actual app dispatches this event after a committed signed-owner
+ // wardrobe mutation; any already-published photo needs a fresh source SHA.
+ events.addEventListener('closet:style-owned-inventory-committed',revoke);
  events.addEventListener('pagehide',revoke);
  events.addEventListener('focus',onFocus);
  doc.addEventListener?.('visibilitychange',onVisibility);
@@ -94,7 +118,7 @@ export function mountOwnerOutfitPhotoPreview1054({
      fail('native signed session unavailable');
     const board=await getBoard();
     assertActive(ticket,start);
-    const boardIdentity=JSON.stringify(board);
+    const boardIdentity=boardStamp(board);
     const plan=await preflightOwnedOutfit1054({
      getSession,readOwnerItems,cleanBoard,board
     });
@@ -136,7 +160,7 @@ export function mountOwnerOutfitPhotoPreview1054({
     const newestById=new Map(newest.map(r=>[r.id,r]));
     for(const item of pinned)if(rowSnapshot(newestById.get(item.id))!==item.fingerprint)
      fail('selected owner item changed before showing photos');
-    if(JSON.stringify(await getBoard())!==boardIdentity)
+    if(boardStamp(await getBoard())!==boardIdentity)
      fail('outfit selection changed during preview');
     assertActive(ticket,start);
     const wrapper=doc.createElement('section');
@@ -164,7 +188,12 @@ export function mountOwnerOutfitPhotoPreview1054({
     wrapper.append(foot);
     assertActive(ticket,start);
     target.replaceChildren(wrapper);
-    renderedSession=start;phase='visible';
+    // The final synchronous revision check also protects against a same-tick
+    // board change between the final awaited read and image presentation.
+    renderedSession=start;renderedBoardStamp=boardIdentity;phase='visible';
+    if(!hasCurrentDisplayLease()){
+     revoke();fail('outfit selection changed at photo presentation');
+    }
     verified=Object.freeze({slotCount:pinned.length,presentationMode:'verified-original-photo-2d',
      renderAuthorized3D:false,releaseAuthorized:false,familyAlpha:'HOLD',
      threeDResearchStatus:research3D.status});
@@ -178,6 +207,7 @@ export function mountOwnerOutfitPhotoPreview1054({
    if(closed)return;
    closed=true;revoke();
    events.removeEventListener('closet:session-locked',revoke);
+   events.removeEventListener('closet:style-owned-inventory-committed',revoke);
    events.removeEventListener('pagehide',revoke);
    events.removeEventListener('focus',onFocus);
    doc.removeEventListener?.('visibilitychange',onVisibility);

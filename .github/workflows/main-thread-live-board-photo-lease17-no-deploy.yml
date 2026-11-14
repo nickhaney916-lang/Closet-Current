@@ -1,0 +1,97 @@
+name: "MAIN1054 M17 live owner outfit board / original JPEG display — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-live-board-photo-lease-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m17-live-board-photo-hold
+  cancel-in-progress: true
+jobs:
+  exact-source-native-node-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Immutable M16 exact parent / research-only four-path allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=63e852d348edc3ee63cf1b4973bb6e19038dbf9d
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              research/main-thread-integration-1054/native-2d-preview.mjs|\
+              research/main-thread-integration-1054/native-live-board-display17.test.mjs|\
+              research/main-thread-integration-1054/MILESTONE17.md|\
+              .github/workflows/main-thread-live-board-photo-lease17-no-deploy.yml) ;;
+              *) echo "M17_SCOPE_VIOLATION $p" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ package.json package-lock.json
+          test "$(git hash-object public/closet-stylist.js)" = "f2657fffb17a3b2cc606f32b4206a574ef5ddf88"
+          test "$(git hash-object public/dual-panel-82.mjs)" = "1a6062877be41a831cb4724448d482405ce75727"
+          node --check research/main-thread-integration-1054/native-2d-preview.mjs
+          node --check research/main-thread-integration-1054/native-live-board-display17.test.mjs
+          grep -q "closet:style-owned-inventory-committed" research/main-thread-integration-1054/native-2d-preview.mjs
+          grep -q "renderedBoardStamp===currentBoardStamp" research/main-thread-integration-1054/native-2d-preview.mjs
+          echo "M17 ORIGINAL OWNER BOARD LEASE; FAMILY ALPHA HOLD; NO DEPLOY"
+      - name: Install no-deploy runtime dependencies without manifests
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Offline build and all M17–M14 source/geometry gates
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/native-live-board-display17.test.mjs
+          node --test research/main-thread-integration-1054/native-2d-display-lease16.test.mjs
+          node --test research/main-thread-integration-1054/photographed-3d-evidence-gate15.test.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+          node --test research/main-thread-integration-1054/test-native-session-contract14.mjs
+      - name: All inherited privacy/recognition/private-outfit/backup/3D Node tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Preserve pilot release hold
+        run: |
+          echo 'Research only. Family Alpha #255 OPEN/HOLD, no merge or deploy.'
+  native-chromium-webkit-photo-preview-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Immutable M16 source no application mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=63e852d348edc3ee63cf1b4973bb6e19038dbf9d
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/
+          test "$(git hash-object public/closet-stylist.js)" = "f2657fffb17a3b2cc606f32b4206a574ef5ddf88"
+      - name: Only native source execution dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Chromium/WebKit original signed-owner JPEG 2D preview at 320/390/430
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Chromium/WebKit native P880 photo review no auto saves
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Source-executed M17 live-board and M16 exact-owner display safeguards
+        run: |
+          node --test research/main-thread-integration-1054/native-live-board-display17.test.mjs
+          node --test research/main-thread-integration-1054/native-2d-display-lease16.test.mjs
+      - name: P880 54 genuine UI policies, 3D and Alpha blocked
+        run: |
+          node -e "const r=require('./benchmark/main1054-dual-policy-browser/results.json');if(r.status!=='PASS'||r.total!==54||r.genuineModelsRun!==false||r.physicalPhones!==false||r.hostedCloud!==false||r.autoSaved!==false||r.releaseAuthorized!==false||r.familyAlpha!=='HOLD')process.exit(1);console.log('M17_OWNER_PREVIEW_POLICY',r.total)"
+          echo "No authenticated real device or hosted owner RLS proof; no 3D release"
