@@ -1,0 +1,30 @@
+# MAIN1054 M37 — actual owner-confirmed private wardrobe to read-only viewer handoff
+
+**RESEARCH ONLY · NO MERGE · NO DEPLOY · Family Alpha #255 OPEN/HOLD.**
+
+## Verified parent and source compatibility
+- Parent M36 isolated source HEAD \`b3c6b8a9d8e45bf4e57e6912db5a88282e34a288\`, [PR #1179](https://github.com/nickhaney916-lang/Closet-Current/pull/1179); prior M36 [no-deploy run #43625737194](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43625737194) succeeded.
+- This M37 branch **does not cherry-pick** divergent Mission 1 #88, Mission 2 #89 or Mission #90 branches. Their interfaces are treated as untrusted research-only input descriptions. No claim of a merged application or successful 3D reconstruction.
+- M34 parent [PR #1170](https://github.com/nickhaney916-lang/Closet-Current/pull/1170) established an opt-in native actual Outfit Builder picker, PHOTO119 original JPEG owner correction receipts and entire-roster IndexedDB consistency. M37 calls its **actual unchanged research preflight** rather than creating a guessed owner schema.
+
+## Actual new behavior
+- \`research/main1054-handoff37/safe-readonly-handoff.mjs\`: calls M34 durable full-roster \`createNativeOutfitPicker33.prepareWrite\`, which validates signed synthetic-owner session/private IndexedDB identity, owner-approved fields, original bytes digest, source/slot conservation and byte-exact private row/roster snapshots. It independently repeats a fresh owner-scoped roster read and calls existing exact row/full-roster consistency predicates without ever writing an outfit. The ephemeral native proof is consumed, private handles discarded.
+- If the original source/owner/board snapshot cannot be proved, returns \`BLOCKED_RECHECK_OWNER_OR_SOURCE\` with **no photo, item ID or signed account fields**. Even a successful owner-confirmed snapshot returns **only** \`OWNER_ORIGINAL_2D_PREFLIGHT_ONLY\`, no actual image data or 3D permission; rendering must revalidate the actual owner/session/source. A returned result is not a persistent display authorization.
+- P88 disconnected semantic-class components remain \`requiresReview:true\` unapproved proposals; no automatic save, even if multiple mask components or fully preserved pixels are proposed.
+- P89 public original/geometry receipts are **not private owner-attested garment geometry**. A \`photoIsPublicBenchmark\` and/or \`sourceVerified\` flag never grants photorealistic 3D. P90's request to enter 3D is not authorization. Any caller-supplied true 3D/automatic-save/release/owner-approval flag in an untrusted research packet blocks.
+- No consumer \`public/\`, source photos, model weights, app auth, cloud/hosted code, supabase, original rigs, geometry, default viewer or M34 branch changed.
+
+## Test data and truth boundary
+Focused Node tests run an **authentic licensed original Commons-0053 JPEG** through the real PHOTO119 owner-confirmed atomic private saved garment function, with **fake-indexeddb and synthetic signed auth account only**, then through the actual M34 read-only source-bound selection gates. Explicit scenarios: positive original-owner 2D-only read, unsaved model proposal cannot auto-save, forged public source 3D/owner claims blocked, stale color receipt blocked, cross-tab added unrelated row during reread blocked, logout blocked, invalid slot blocked, and no outfit writes. Private photo data, owner ID, item ID, digest must not appear in any M37 verdict. This is not new pre-trained inference, real human-blind recognition, genuine human 3D fidelity acceptance, actual owner account, physical smartphone, hosted cloud, or end-to-end reconstructed multi-piece 3D.
+
+## Current donor facts — independently verified from GitHub
+- Mission 1 #88 [PR #1175](https://github.com/nickhaney916-lang/Closet-Current/pull/1175) source adapter proposes connected semantic same-class parts for owner review, not independently annotated true garments. Donor branch is divergent and its module not in M34.
+- Mission 2 #89 [PR #1177](https://github.com/nickhaney916-lang/Closet-Current/pull/1177) now documents a genuine licensed source-specific P84 shirt+denim skinned 3D WebGL detached-donor research bridge. This is **not new general 3D geometry** and no owner-approved arbitrary source / independent fidelity/collision human acceptance.
+- Mission #90 [PR #1178](https://github.com/nickhaney916-lang/Closet-Current/pull/1178) source-safe viewer rotation/accessibility/context-loss research. Dedicated exact-head CI was still running at M37 start; older stage-specific workflows include failures. No claim of full 3D browser/device readiness.
+- WebKit native dual-model long-session reliability remains blocked on observed genuine runtime failures (master M34 #1169 / M35 #1176).
+- Branch ancestry, real source/photo and actual private auth barriers must be reconciled before a true combined codebase. No research-only photo or runner screenshot can self-authorize consumer 3D.
+
+## Acceptance
+The dedicated new no-deploy workflow must independently pass exact-parent ancestry/allowlist, native build, the new focused genuine-photo+synthetic owner safety tests, inherited actual native M34 Chromium/WebKit picker/roster browser tests, the full inherited Node suite and source-locked P87 two-browser audit before M37 is credited. **No green claim until exact HEAD CI confirms.** This is a safe handoff *preflight*, NOT full missions merged or default application integration.
+
+**Next:** Wait for actual donor contracts from #88/#89/#90 to be reconciled and independently source/owner/rigged-3D verified. Only then consider a separate native opt-in end-to-end source integration; preserve original-owner 2D when the 3D quality gate is unknown. Physical Android Chrome, iPhone Safari, hosted four-account auth/restore, owner-family release approval and human realism remain BLOCKED.
