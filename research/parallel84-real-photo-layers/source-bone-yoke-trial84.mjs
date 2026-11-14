@@ -1,0 +1,379 @@
+/**
+ * PARALLEL #84 / HOLD — source-bone shoulder-yoke A/B realism research.
+ *
+ * Genuine P541 photographed-shirt, separately sewn THREE.SkinnedMesh garment
+ * and actual licensed 163-bone anatomical body. Never invents photographed
+ * rear cloth or changes original JPEG, source RGB, front UV, skin, GLB or
+ * private wardrobe. Bounded reversible trial, NOT physics/realism approval.
+ *
+ * ONLY a disposable P541 donor calls this after existing garment/pose fits.
+ * A changed sample is admitted to the research preview IFF it introduces no
+ * newly witnessed real posed body contacts or shirt/jeans contacts. It does
+ * not certify baseline collision freedom, continuing motion or appearance.
+ */
+import * as T from 'three';
+import {MeshBVH} from '../../node_modules/three-mesh-bvh/build/index.module.js';
+
+// Mirrors the original P541 P42 true skinned posed-triangle contact measurement
+// without importing or changing that other mission's code. Public package
+// THREE MeshBVH, original actual body and cloth triangle indices; no tokens,
+// garment pixels, real owner private coordinates, or raw face keys exported.
+function posedGeometry(meshes){
+ const pos=[],idx=[];
+ for(const mesh of meshes){
+  mesh.updateWorldMatrix(true,false);mesh.skeleton.update();
+  const start=pos.length/3,geometry=mesh.geometry,
+   position=geometry.getAttribute('position');
+  if(!position||!mesh.isSkinnedMesh||mesh.skeleton.bones.length!==163)
+   throw Error('source-skinned-pose-required');
+  for(let i=0;i<position.count;i++){
+   const q=mesh.applyBoneTransform(i,
+    new T.Vector3().fromBufferAttribute(position,i))
+    .applyMatrix4(mesh.matrixWorld);
+   if(!q.toArray().every(finite))throw Error('nonfinite-source-pose');
+   pos.push(q.x,q.y,q.z);
+  }
+  const index=geometry.index;
+  for(let i=0;i<(index?.count??position.count);i++){
+   const v=index?index.getX(i):i;
+   if(!Number.isSafeInteger(v)||v<0||v>=position.count)
+    throw Error('invalid-original-source-face-index');
+   idx.push(start+v);
+  }
+ }
+ const geometry=new T.BufferGeometry();
+ geometry.setAttribute('position',new T.Float32BufferAttribute(pos,3));
+ geometry.setIndex(idx);
+ return {g:geometry};
+}
+function triangleContacts(left,right){
+ const ba=new MeshBVH(left),bb=new MeshBVH(right),
+  line=new T.Line3(),normal=new T.Vector3(),pairKeys=new Set();
+ let count=0,maxPlaneDepth=0;
+ ba.bvhcast(bb,new T.Matrix4(),{
+  intersectsTriangles:(ta,tb,i,j)=>{
+   if(ta.intersectsTriangle(tb,line)&&line.distance()>1e-5){
+    pairKeys.add(i+'|'+j);count++;
+    tb.getNormal(normal);
+    const depth=Math.max(0,...[ta.a,ta.b,ta.c].map(q=>
+     -q.clone().sub(tb.a).dot(normal)));
+    maxPlaneDepth=Math.max(maxPlaneDepth,depth);
+   }
+   return false;
+  }
+ });
+ return {count,pairs:pairKeys,maximumLocalOrientedFaceDepth:maxPlaneDepth};
+}
+
+
+// Local, deterministic normal reconciliation of only duplicate render vertices.
+// The P541 Work56 fitter has this helper, but its source is intentionally NOT
+// in the immutable P2-C52 parent. Inline a scoped research equivalent, not
+// a cross-branch import or any modification to the shipping application.
+function smoothSurfaceNormals(geometry,surfaceVertices){
+ const p=geometry.getAttribute('position'),n=geometry.getAttribute('normal'),groups=new Map();
+ for(let i=0;i<surfaceVertices;i++){
+  const key=[p.getX(i),p.getY(i),p.getZ(i)].map(v=>v.toFixed(5)).join(',');
+  if(!groups.has(key))groups.set(key,[]);
+  groups.get(key).push(i);
+ }
+ for(const ids of groups.values()){
+  const q=new T.Vector3();
+  for(const i of ids)q.add(new T.Vector3().fromBufferAttribute(n,i));
+  if(q.lengthSq()<1e-10)continue;
+  q.normalize();
+  for(const i of ids)n.setXYZ(i,q.x,q.y,q.z);
+ }
+ n.needsUpdate=true;
+}
+const smooth=T.MathUtils.smoothstep;
+const SHA='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
+const PHOTO_DENIM84=Object.freeze({
+ 'commons-public-domain-jeans-2005':'b316902ad85e8ff46b164ceb7f2c38d3c1424c9d789703e0267e3dfce68fbe1c',
+ 'commons-cc-by-sa-denimjeans2-2008':'aa7f288055874773b87cd38b5b4e473b532920f61c2d17cb0ccd7872466c444a'
+});
+const protectedAttributes=['panelPosition','panelNormal','skinIndex','skinWeight','uv'];
+const code=reason=>({
+ schema:'parallel84-source-bone-shoulder-yoke/v1',status:'REFUSED_UNCHANGED',
+ reason,trialApplied:false,sourcePhotoPreserved:true,
+ sourceSkinUVPreserved:true,originalBodyUnchanged:true,
+ originalGarmentMeshTopologyUnchanged:true,
+ newBodyContactsNotAllowed:true,newLayerContactsNotAllowed:true,
+ sourceBackUnphotographed:true,continuousClothPhysicsValidated:false,
+ humanVisualRealismApproved:false,releaseAuthorized:false
+});
+const finite=n=>typeof n==='number'&&Number.isFinite(n);
+const point84=(m,i)=>{
+ const attr=m.geometry.getAttribute('position');
+ return new T.Vector3().fromBufferAttribute(attr,i).applyMatrix4(m.matrixWorld);
+};
+const key84=p=>p.toArray().map(x=>x.toFixed(5)).join('|');
+function contactCount(source,target){
+ const audit=triangleContacts(source,target);
+ return {count:audit.count,pairs:audit.pairs,
+  maxDepth:audit.maximumLocalOrientedFaceDepth};
+}
+const newPairs=(before,after)=>{
+ let newly=0;for(const id of after.pairs)if(!before.pairs.has(id))newly++;
+ return newly;
+};
+export function trialSourceBoneShoulderYoke84({
+ shirt,pants,root,avatar,requestedDropMeters=.014,
+ outwardClearanceMeters=.0025,enabled=true
+}={}){
+ if(!enabled)return code('opt-out');
+ const initial=code('source-or-geometry-unverified');
+ if(!['male','female'].includes(avatar)||!root?.isObject3D||
+    !finite(requestedDropMeters)||requestedDropMeters<.003||
+    requestedDropMeters>.025||
+    !finite(outwardClearanceMeters)||outwardClearanceMeters<0||
+    outwardClearanceMeters>.022||
+    shirt?.stats?.sourceSHA256!==SHA||
+    shirt.stats?.trueSourceShoulderTopSlope!==true||
+    shirt.stats?.sourceRigNaturalShoulderFall!==true||
+    !Array.isArray(shirt?.meshes)||shirt.meshes.length<3||
+    !Array.isArray(pants?.meshes)||pants.meshes.length!==1||
+    pants.stats?.photoApplied!==true||
+    !Object.hasOwn(PHOTO_DENIM84,pants.stats?.sourceId)||
+    pants.stats?.sourceSHA256!==PHOTO_DENIM84[pants.stats.sourceId]||
+    pants.meshes[0]?.skeleton?.bones?.length!==163)
+  return initial;
+ const meshes=shirt.meshes.filter(m=>m?.isSkinnedMesh&&
+  (m.name==='Work56-independent-shirt-shell'||m.userData.work45IndependentShoulderCap));
+ if(!meshes.some(m=>m.userData.work45IndependentShoulderCap==='L')||
+    !meshes.some(m=>m.userData.work45IndependentShoulderCap==='R')||
+    !meshes.some(m=>m.name==='Work56-independent-shirt-shell')||
+    meshes.some(m=>m.skeleton?.bones?.length!==163))
+  return code('real-two-sided-source-shoulder-panels-required');
+ const bones={};root.updateMatrixWorld(true);
+ root.traverse(b=>{
+  if(b.isBone&&['upperarm01L','upperarm01R'].includes(b.name))
+   bones[b.name.slice(-1)]=b.getWorldPosition(new T.Vector3());
+ });
+ if(!bones.L||!bones.R||Math.sign(bones.L.x)===Math.sign(bones.R.x))
+  return code('two-source-shoulder-bones-missing');
+ const bodies=[];root.traverse(m=>{
+  if(m.isSkinnedMesh&&!m.userData.work56Garment)bodies.push(m);
+ });
+ if(bodies.length<1||bodies.some(m=>m.skeleton?.bones?.length!==163))
+  return code('genuine-source-anatomical-body-missing');
+ const snapshot=new Map();
+ let bodyPose,originalShirt,originalPants;
+ const restore=()=>{
+  for(const [m,s] of snapshot){
+   const g=m.geometry,p=g.getAttribute('position'),normal=g.getAttribute('normal');
+   p.array.set(s.position);p.needsUpdate=true;
+   if(s.normal&&normal?.array.length===s.normal.length)
+    {normal.array.set(s.normal);normal.needsUpdate=true;}
+   g.computeBoundingBox();g.computeBoundingSphere();
+  }
+ };
+ const auditIntegrity=()=>{
+  for(const [m,s] of snapshot){
+   const g=m.geometry;
+   if(g!==s.geometry||g.index!==s.index||m.material!==s.material||
+      g.getAttribute('position')!==s.positionAttribute||
+      g.getAttribute('normal')!==s.normalAttribute)
+    throw Error('source-mesh-object-or-topology-mutation');
+   if(s.indexArray&&(!g.index||s.indexArray.length!==g.index.array.length||
+     !s.indexArray.every((n,i)=>n===g.index.array[i])))
+    throw Error('original-face-index-mutation');
+   for(const [name,record] of s.protected){
+    const now=g.getAttribute(name);
+    if(now!==record.attribute||now.array.length!==record.bytes.length||
+       !record.bytes.every((n,i)=>Object.is(now.array[i],n)))
+     throw Error('original-photograph-source-or-skin-mutation');
+   }
+  }
+ };
+ try{
+  const groups=new Map();
+  for(const m of meshes){
+   m.updateWorldMatrix(true,false);m.skeleton.update();
+   const g=m.geometry,position=g.getAttribute('position'),normal=g.getAttribute('normal'),ix=g.index;
+   if(!position||!normal||!ix||ix.count<3||
+      protectedAttributes.slice(0,4).some(n=>g.getAttribute(n)?.count!==position.count)||
+      (g.getAttribute('uv')&&g.getAttribute('uv').count!==position.count))
+    return code('source-panel-uv-or-geometry-attributes-missing');
+   const protectedRows=new Map(protectedAttributes.filter(n=>g.getAttribute(n)).
+    map(n=>[n,{attribute:g.getAttribute(n),bytes:g.getAttribute(n).array.slice()}]));
+   snapshot.set(m,{
+    geometry:g,positionAttribute:position,normalAttribute:normal,
+    position:position.array.slice(),normal:normal.array.slice(),
+    protected:protectedRows,index:ix,indexArray:ix.array.slice(),material:m.material
+   });
+   const used=new Set(ix.array);
+   for(const i of used){
+    if(!Number.isSafeInteger(i)||i<0||i>=position.count)
+     throw Error('invalid-original-source-face-index');
+    const world=point84(m,i);
+    if(!world.toArray().every(finite))throw Error('source-world-nonfinite');
+    const id=key84(world);
+    if(!groups.has(id))groups.set(id,{world,refs:[]});
+    groups.get(id).refs.push([m,i]);
+   }
+  }
+  const move=new Map(),stats={L:{caps:0,shells:0,moved:0,maxShift:0},R:{caps:0,shells:0,moved:0,maxShift:0}};
+  let protectedPrintedChest=0,maximum=0,sampleCandidate=0;
+  const seamSource={L:0,R:0};
+  for(const item of groups.values()){
+   const q=item.world,x=Math.abs(q.x),
+    side=Math.sign(q.x)===Math.sign(bones.L.x)?'L':'R';
+   const hasCap=item.refs.some(([m])=>m.userData.work45IndependentShoulderCap),
+    hasShell=item.refs.some(([m])=>m.name==='Work56-independent-shirt-shell');
+   if(hasCap&&hasShell)seamSource[side]++;
+   if(x<=.26){protectedPrintedChest+=item.refs.length;continue;}
+   // The A-pose shoulder bone and ORIGINAL fitted cloth give the actual
+   // anatomy; this is not an arbitrary fake outer sleeve or printed front.
+   // Constrain the upper-yoke band, leave distal cuffs, waist and neck.
+   const dy=q.y-bones[side].y;
+   if(x>=.595||dy<=-.26||dy>=.23)continue;
+   const across=smooth(x,.26,.34)*(1-smooth(x,.485,.595));
+   const high=smooth(dy,-.26,-.145)*(1-smooth(dy,.115,.23));
+   const weight=across*high;
+   if(weight<.065)continue;
+   // Soften source yoke into the real upper-arm hang. A tiny OUTWARD
+   // component avoids collapsing material into the deltoid. No fictive
+   // reverse-photo color is added. All shared seam vertices move jointly.
+   const drop=requestedDropMeters*(.55+.45*smooth(dy,-.10,.10))*weight;
+   const outward=outwardClearanceMeters*weight;
+   const delta=new T.Vector3(Math.sign(q.x)*outward,-drop,0);
+   const magnitude=delta.length();
+   if(magnitude<.0004)continue;
+   if(!finite(magnitude)||magnitude>.0255)
+    throw Error('source-cloth-shoulder-movement-cap-exceeded');
+   const target=q.clone().add(delta);
+   move.set(item,target);
+   sampleCandidate+=item.refs.length;maximum=Math.max(maximum,magnitude);
+   for(const [m] of item.refs){
+    stats[side].moved++;stats[side].maxShift=Math.max(stats[side].maxShift,magnitude);
+    if(m.userData.work45IndependentShoulderCap)stats[side].caps++;
+    else stats[side].shells++;
+   }
+  }
+  if(sampleCandidate<24||maximum<.003||
+     protectedPrintedChest<100||
+     ['L','R'].some(s=>stats[s].caps<5||stats[s].shells<5||seamSource[s]<3))
+   return code('source-bone-yoke-envelope-not-substantive');
+  bodyPose=posedGeometry(bodies);
+  originalShirt=posedGeometry(shirt.meshes);
+  originalPants=posedGeometry(pants.meshes);
+  const oldBody=contactCount(originalShirt.g,bodyPose.g);
+  const oldLayer=contactCount(originalShirt.g,originalPants.g);
+  // Actual full original-face, true skinned body+layer intersection sets,
+  // not a made-up silhouette metric, drive bounded refusal/rollback.
+  // Try the actual original sewn-mesh shoulder change at full amplitude,
+  // then progressively smaller true ORIGINAL-source displacements. No
+  // exposure of any partially failing mesh to the research viewer. Every
+  // intermediate step restores the captured original source bytes first.
+  // Candidate ACCEPTANCE requires full intersecting-triangle BVH audits of
+  // both body and photographed jeans, original protected attributes, and
+  // cap-to-shell coincidence; no "nonzero is good enough" heuristic.
+  const trials=[],levels=[1,.5,.25,.125];
+  let chosen=null;
+  for(const amplitude of levels){
+   if(amplitude*maximum<.0029)break;
+   restore();
+   for(const [item,target] of move){
+    const scaled=item.world.clone().lerp(target,amplitude);
+    for(const [m,i] of item.refs){
+     const local=scaled.clone().applyMatrix4(m.matrixWorld.clone().invert());
+     m.geometry.getAttribute('position').setXYZ(i,local.x,local.y,local.z);
+    }
+   }
+   let largestGap=0;
+   for(const item of groups.values()){
+    if(new Set(item.refs.map(v=>v[0])).size<2)continue;
+    const [first,...others]=item.refs.map(([m,i])=>point84(m,i));
+    for(const current of others)
+     largestGap=Math.max(largestGap,first.distanceTo(current));
+   }
+   for(const m of meshes){
+    const g=m.geometry,p=g.getAttribute('position');
+    p.needsUpdate=true;g.computeVertexNormals();
+    smoothSurfaceNormals(g,p.count);
+    g.computeBoundingBox();g.computeBoundingSphere();
+   }
+   auditIntegrity();
+   if(!finite(largestGap)||largestGap>5e-5)
+    throw Error('original-shoulder-seam-not-coincident');
+   const candidate=posedGeometry(shirt.meshes);
+   let newBody,newLayer;
+   try{
+    newBody=contactCount(candidate.g,bodyPose.g);
+    newLayer=contactCount(candidate.g,originalPants.g);
+   }finally{candidate.g.dispose();}
+   const introducedBody=newPairs(oldBody,newBody),
+    introducedLayer=newPairs(oldLayer,newLayer);
+   const depthWorsened=!finite(newBody.maxDepth)||!finite(newLayer.maxDepth)||
+    newBody.maxDepth>oldBody.maxDepth+.0005||
+    newLayer.maxDepth>oldLayer.maxDepth+.0005;
+   const attempt=Object.freeze({amplitude,bodyCrossingPairsTrial:newBody.count,
+    layerCrossingPairsTrial:newLayer.count,
+    newlyIntroducedBodyTrianglePairs:introducedBody,
+    newlyIntroducedLayerTrianglePairs:introducedLayer,
+    localPlaneDepthWorsened:depthWorsened,
+    maxSeamGapMeters:largestGap});
+   trials.push(attempt);
+   if(!introducedBody&&!introducedLayer&&!depthWorsened){
+    chosen=attempt;break;
+   }
+  }
+  if(!chosen){restore();auditIntegrity();}
+  const report=chosen||trials[0]||{
+   amplitude:0,bodyCrossingPairsTrial:oldBody.count,
+   layerCrossingPairsTrial:oldLayer.count,
+   newlyIntroducedBodyTrianglePairs:0,
+   newlyIntroducedLayerTrianglePairs:0,
+   maxSeamGapMeters:0,localPlaneDepthWorsened:false
+  };
+  const accepted=!!chosen,observedMax=accepted?maximum*chosen.amplitude:0;
+  const base=Object.freeze({
+   schema:'parallel84-source-bone-shoulder-yoke/v1',
+   avatar,requestedDropMeters,outwardClearanceMeters,
+   adaptiveOriginalSourceDisplacement:true,
+   candidateAmplitudesTested:trials.length,
+   fullSourceMagnitudeMeters:maximum,
+   acceptedTrialAmplitude:accepted?chosen.amplitude:0,
+   renderedDisplacementRetained:accepted,
+   movedOriginalRenderedVertices:accepted?sampleCandidate:0,
+   maxShoulderWorldDisplacementMeters:observedMax,
+   protectedFrontCenterOriginalVertices:protectedPrintedChest,
+   actualSeamMaxWorldGapMeters:report.maxSeamGapMeters,
+   shoulderCounts:stats,seamSourceWitnesses:seamSource,
+   bodyCrossingPairsBefore:oldBody.count,
+   bodyCrossingPairsTrial:report.bodyCrossingPairsTrial,
+   newlyIntroducedBodyTrianglePairs:report.newlyIntroducedBodyTrianglePairs,
+   layerCrossingPairsBefore:oldLayer.count,
+   layerCrossingPairsTrial:report.layerCrossingPairsTrial,
+   newlyIntroducedLayerTrianglePairs:report.newlyIntroducedLayerTrianglePairs,
+   firstFullAmplitudeBodyIntroduced:trials[0]?.newlyIntroducedBodyTrianglePairs??0,
+   firstFullAmplitudeLayerIntroduced:trials[0]?.newlyIntroducedLayerTrianglePairs??0,
+   triedCandidateAmplitudes:trials.map(t=>Object.freeze({...t})),
+   sourcePhotoPreserved:true,sourceSkinUVPreserved:true,
+   originalBodyUnchanged:true,originalGarmentMeshTopologyUnchanged:true,
+   newBodyContactsNotAllowed:true,newLayerContactsNotAllowed:true,
+   sourceBackUnphotographed:true,
+   continuousClothPhysicsValidated:false,
+   humanVisualRealismApproved:false,
+   releaseAuthorized:false
+  });
+  return Object.freeze({...base,
+   status:accepted?'SAMPLED_CONTACT_NONWORSENING_ONLY':'REFUSED_NEW_CONTACT',
+   trialApplied:accepted,sourceGeometryRestored:!accepted});
+ }catch(e){
+  restore();
+  // Only vetted internal codes, never original owner tokens/face locations.
+  const allowed=new Set(['source-mesh-object-or-topology-mutation',
+   'original-face-index-mutation','original-photograph-source-or-skin-mutation',
+   'invalid-original-source-face-index','source-world-nonfinite',
+   'source-cloth-shoulder-movement-cap-exceeded',
+   'original-shoulder-seam-not-coincident']);
+  return code(allowed.has(e?.message)?e.message:'source-pose-contact-audit-failed');
+ }finally{
+  bodyPose?.g.dispose();originalShirt?.g.dispose();originalPants?.g.dispose();
+ }
+}
+
+// Read-only reuse by independent P84 source-photographed jeans fit trial.
+export {posedGeometry as posedSource84, contactCount as countSourceContacts84};
