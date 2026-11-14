@@ -94,7 +94,7 @@ jobs:
   # prefix triggers a single validation research run; later docs-only pushes
   # do not repeatedly download public photos/model assets. NO deployment.
   real-public-human-validation-NO-DEPLOY:
-    if: ${{ startsWith(github.event.head_commit.message, 'research(m1 #88): run real') }}
+    if: "${{ startsWith(github.event.head_commit.message, 'research(m1 #88): run real') }}"
     runs-on: ubuntu-24.04
     timeout-minutes: 55
     steps:
