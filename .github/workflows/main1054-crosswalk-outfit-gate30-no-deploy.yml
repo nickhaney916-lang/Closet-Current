@@ -1,0 +1,36 @@
+name: MAIN1054 M30 source-verified outfit crosswalk - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-crosswalk-outfit30-integrated-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contracts-and-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Scope and immutable verified P87 ancestry
+        run: |
+          git merge-base --is-ancestor 6f6526cc169c3555135f8417aae7eb859ed4d901 HEAD
+          git diff --exit-code 6f6526cc169c3555135f8417aae7eb859ed4d901 HEAD -- public/ supabase/ benchmark/
+          git diff --name-only 6f6526cc169c3555135f8417aae7eb859ed4d901 HEAD | while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/main1054-crosswalk-outfit-gate30-no-deploy.yml|research/master-consolidation-1054/MILESTONE30.md|research/p87-catalog-crosswalk/crosswalk.mjs|scripts/audit-p87-catalog-crosswalk.mjs|tests/p87-catalog-crosswalk.test.mjs) ;;
+              *) echo "Unexpected assignment path: $path"; exit 1 ;;
+            esac
+          done
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/build.mjs
+      - name: Full inherited Node regressions and additional source/cutout/pair fail-closed contracts
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Genuine licensed original SHA/forged cutout/outfit refusal in Chromium and WebKit
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
