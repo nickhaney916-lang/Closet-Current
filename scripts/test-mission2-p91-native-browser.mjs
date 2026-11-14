@@ -1,0 +1,181 @@
+/**
+ * P87 genuine photographed Commons-0053, actual 163-bone male/female posed
+ * SKINNED source clone, original/candidate/restored Chromium + WebKit A/B.
+ * Everything is read-only, synthetic owner, localhost, never deployment.
+ */
+import assert from 'node:assert/strict';
+import {createServer} from 'node:http';
+import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {resolve,extname} from 'node:path';
+import {createHash} from 'node:crypto';
+import sharp from 'sharp';
+import {chromium,webkit} from 'playwright';
+import {validateActualSkinnedPhotoPoseContact88} from '../research/mission2-p88/sample-contact-gate.mjs';
+import {verifyActualPhotoSourceZeroTopology89} from '../research/mission2-p89/source-topology-gate.mjs';
+import {verifyActualFivePosePhotoContact90,POSES90} from '../research/mission2-p90/five-pose-contact-gate.mjs';
+import {verifySourceSkirtRelief91} from '../research/mission2-p91/drape-source-gate.mjs';
+
+const hostRoot=resolve('.'),donor=resolve('.native05-donor-541');
+const engine=process.env.P87_ENGINE||'chromium';
+assert.ok(['chromium','webkit'].includes(engine));
+const out='benchmark/mission2-p91/native-'+engine;
+await mkdir(out,{recursive:true});
+const types={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.glb':'model/gltf-binary'};
+const server=createServer(async(req,res)=>{
+ try{
+  const p=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
+  if(p.includes('..'))throw Error('outside');
+  const fromDonor=p.startsWith('/donor/')||p.startsWith('/benchmark/');
+  const base=fromDonor?donor:hostRoot;
+  const file=resolve(base,'.'+(p.startsWith('/donor/')?p.slice(6):p));
+  if(!file.startsWith(base+'/'))throw Error('outside');
+  const data=await readFile(file);
+  res.setHeader('content-type',types[extname(file)]||'application/octet-stream');
+  res.end(data);
+ }catch{res.writeHead(404);res.end();}
+});
+await new Promise(done=>server.listen(0,'127.0.0.1',done));
+const sha=b=>createHash('sha256').update(b).digest('hex');
+const results={schema:'p91-genuine-original-source-skirt-relief-A-B-Drape-restored-v1',
+ engine,sourceId:'commons-0053',realAvatar163Bones:true,
+ figures:[],sourcePoseReceipts:[],actualFittedPoseContact88:[],drapeSourcePoseContacts91:[],drapeVisual91:[],screens:[],differences:[],errors:[],external:[],
+ researchOnly:true,physicalPhone:false,continuousClothSafetyCertified:false,
+ photoProjectionIndependentlyApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'};
+let browser,page;
+try{
+ browser=await ({chromium,webkit})[engine].launch({
+  headless:true,...(engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{})
+ });
+ page=await browser.newPage({viewport:{width:390,height:820},deviceScaleFactor:1});
+ page.on('pageerror',e=>results.errors.push(String(e.message).slice(0,500)));
+ page.on('console',m=>{
+  if(m.type()==='error'&&/WebGLProgram|VALIDATE_STATUS|shader error|ERROR: 0:/i.test(m.text()))
+   results.errors.push(m.text().slice(0,500));
+ });
+ await page.route('**/*',route=>{
+  const url=new URL(route.request().url());
+  if(url.hostname==='127.0.0.1'||['data:','blob:'].includes(url.protocol))return route.continue();
+  results.external.push(url.hostname);return route.abort();
+ });
+ const flags=['photoDress175','photoDressContact52','photoDressDistance53','photoDressTopology54','photoDressEdges55','photoDressBoundaries56','photoDressLandmarks57','photoDressContact58','photoDressBodyBands59','photoDressTorsoTrial60','photoDressStrain61'];
+ await page.goto('http://127.0.0.1:'+server.address().port+'/research/mission2-p91/native-drape-review.html?'+flags.map(f=>f+'=research').join('&'));
+ await page.waitForFunction(()=>window.review87?.ready||window.review87?.errors?.length,null,{timeout:120000});
+ const poses=POSES90;
+ for(const figure of ['female','male']){
+  if(figure==='male')await page.evaluate(()=>window.review87.load('male'));
+  let start=await page.evaluate(()=>({r:window.review87.receipt,s:window.review87.state,errors:window.review87.errors}));
+  assert.deepEqual(start.errors,[],'genuine source setup failed');
+  assert.equal(start.s.stats.bones,163,'actual anatomical 163-bone avatar missing');
+  assert.equal(start.r.actualSkinnedMeshClone,true);
+  assert.equal(start.r.liveSkeletonShared,true);
+  assert.equal(start.r.originalSHA256,'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019');
+  assert.equal(start.r.sourceGarmentParts>0,true);
+  results.figures.push({figure,bones:start.s.stats.bones,parts:start.r.sourceGarmentParts});
+  let previous=start.r.poseUpdates;
+  for(const pose of poses){
+   const receipt=await page.evaluate(mode=>window.review87.setPose(mode),pose);
+   const actualViewerPose=await page.evaluate(()=>window.review87.state.pose);
+   assert.equal(actualViewerPose,pose,'actual source 163-bone viewer did not change to demanded pose');
+   assert.equal(receipt.actualSkinnedMeshClone,true);
+   assert.equal(receipt.liveSkeletonShared,true);
+   assert.equal(receipt.originalGeometryAndPhotoUVUntouched,true);
+   assert.equal(receipt.staticOriginalP86SourceGatePassed,true);
+   assert.equal(receipt.releaseAuthorized,false);
+   assert.equal(receipt.fittedVertices>0,true);
+   assert.ok(receipt.poseUpdates>previous,'real skinned fitting must actually update at each pose');
+   assert.ok(receipt.maximumCPUWorldSkinInverseResidualMeters<=.00005);
+   previous=receipt.poseUpdates;
+   const contact=await page.evaluate(()=>window.review87.auditFit88());
+   assert.equal(contact.schema,'M2-P88-original-photo-real-skinned-source-contact-sampled-v1');
+   assert.equal(contact.actualAnatomicalBodyFaces>=100000,true);
+   assert.equal(contact.originalSourceTriangles>=3000,true);
+   assert.equal(contact.genuineSource163BoneSkeleton,true);
+   assert.equal(contact.sourcePhotoRestUVSkinAndGeometryUnchanged,true);
+   assert.equal(contact.releaseAuthorized,false);
+   results.actualFittedPoseContact88.push({figure,pose,contact});
+   // Auditing the proposed P91 shape happens on the ACTUAL 163-bone
+   // photo material SkinnedMesh after a pose-linked, sub-5mm cloned-only
+   // geometry adjustment, not on original source or synthetic proxy.
+   const reliefReceipt=await page.evaluate(()=>window.review87.drape91());
+   assert.equal(reliefReceipt.sourceSkirtDrapeResearch91?.schema,
+    'M2-P91-provisional-sourced-hem-fall-true-SkinnedMesh');
+   assert.equal(reliefReceipt.originalGeometryAndPhotoUVUntouched,true);
+   assert.equal(reliefReceipt.sourceSkirtDrapeResearch91.releaseAuthorized,false);
+   const reliefContact=await page.evaluate(()=>window.review87.auditFit88());
+   results.drapeSourcePoseContacts91.push({figure,pose,contact:reliefContact,
+    preview:reliefReceipt});
+   results.sourcePoseReceipts.push({figure,pose,poseUpdates:receipt.poseUpdates,
+    fittedVertices:receipt.fittedVertices,maxInverseResidualMeters:receipt.maximumCPUWorldSkinInverseResidualMeters,
+    rigBones:receipt.realSkinBoneCount,sourcePhotoOriginalUnchanged:receipt.originalGeometryAndPhotoUVUntouched,
+    noRelease:!receipt.releaseAuthorized});
+   for(const [view,angle] of [['front',0],['side',90],['rear',180]]){
+    const images=[];
+    for(const mode of ['original','candidate','drape91','original']){
+     await page.evaluate(({mode,angle})=>window.review87.show(mode,angle),{mode,angle});
+     await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
+     const name=figure+'-'+pose+'-'+view+'-'+(images.length===3?'restored-original':mode)+'.png';
+     const b=await page.locator('canvas').screenshot({path:out+'/'+name});
+     results.screens.push({figure,pose,view,mode:images.length===3?'restored-original':mode,
+      file:name,sha256:sha(b)});
+     images.push(b);
+    }
+    const raw=await Promise.all(images.map(b=>sharp(b).ensureAlpha().raw().toBuffer()));
+    assert.equal(raw[0].length,raw[1].length);
+    let changed=0,draped=0,restored=0;
+    for(let i=0;i<raw[0].length;i+=4){
+     if([0,1,2].some(c=>Math.abs(raw[0][i+c]-raw[1][i+c])>8))changed++;
+     if([0,1,2].some(c=>Math.abs(raw[1][i+c]-raw[2][i+c])>8))draped++;
+     if([0,1,2].some(c=>Math.abs(raw[0][i+c]-raw[3][i+c])>8))restored++;
+    }
+    assert.ok(changed>0,'genuine photographed garment candidate must visibly change '+figure+'/'+pose+'/'+view);
+    assert.equal(restored,0,'original source RGB must restore '+figure+'/'+pose+'/'+view);
+    results.drapeVisual91.push({figure,pose,view,originalVsBaselineChangedRGBPixelsAbove8:changed,
+     baselineVsReliefChangedRGBPixelsAbove8:draped,restoredOriginalChangedRGBPixelsAbove8:restored});
+    results.differences.push({figure,pose,view,changedRGBPixelsAbove8:changed,
+     restoredOriginalRGBPixelsAbove8:restored});
+   }
+  }
+ }
+ assert.deepEqual(results.errors,[],'shader or script errors not allowed');
+ assert.deepEqual(results.external,[],'network egress forbidden');
+ const six=[0,2,4,5,7,9].map(i=>results.actualFittedPoseContact88[i]);
+ results.contactGate88=validateActualSkinnedPhotoPoseContact88(six);
+ results.topologyGate89=verifyActualPhotoSourceZeroTopology89(six);
+ results.fivePoseGate90=verifyActualFivePosePhotoContact90(results.actualFittedPoseContact88);
+ results.drapeGate91=verifySourceSkirtRelief91({
+  baseline:results.actualFittedPoseContact88,
+  relief:results.drapeSourcePoseContacts91,
+  visual:results.drapeVisual91
+ });
+ assert.equal(results.drapeGate91.status,'ACTUAL_SOURCE_DRAPE_HYPOTHESIS_RENDERED_NOT_PHOTOREALISM',
+  'P91 actual original photo hem candidate source contact/shape/visual failure: '+
+  JSON.stringify(results.drapeGate91.issues));
+ assert.equal(results.actualFittedPoseContact88.length,10);
+ assert.equal(results.fivePoseGate90.status,'TEN_SOURCE_POSES_CHECKED_NOT_CONTINUOUS_COLLISION_CERTIFICATE',
+  'real original-photo 25/75% pose source, contact or strain failure: '+JSON.stringify(results.fivePoseGate90.issues));
+ assert.equal(results.topologyGate89.status,'SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_CERTIFIED',
+  'genuine original-photo source self-contact correspondences incomplete: '+
+   JSON.stringify(results.topologyGate89.issues));
+ assert.equal(results.contactGate88.status,'SAMPLED_STRICT_NONCROSSING_OBSERVED_NOT_RELEASE',
+  'genuine P87 fitted source garment crossed body/self or exceeded photo strain: '+
+    JSON.stringify(results.contactGate88.issues));
+ assert.equal(results.sourcePoseReceipts.length,10);
+ assert.equal(results.differences.length,30);
+ assert.equal(results.screens.length,120);
+ assert.equal(results.drapeVisual91.length,30);
+ assert.equal(results.drapeSourcePoseContacts91.length,10);
+ await page.evaluate(()=>window.review87.dispose());
+ results.status='PASS_REAL_PHOTO_SKINNED_HEM_RELIEF_HYPOTHESIS_NOT_RELEASE';
+}catch(e){
+ results.status='BLOCKED';
+ results.failure=String(e?.message||e).slice(0,2500);
+ process.exitCode=1;
+}finally{
+ await browser?.close();
+ await new Promise(done=>server.close(done));
+ await writeFile(out+'/results.json',JSON.stringify(results,null,2)+'\n');
+ console.log('M2_P87_REAL_SOURCE',JSON.stringify({status:results.status,figures:results.figures.length,
+  realSourcePoseReceipts:results.sourcePoseReceipts.length,drapeGate91:results.drapeGate91?.status||'BLOCKED',drapeChangedRGBPixels:results.drapeGate91?.actualRenderedBaselineVersusDrapeChangedRGBPixelsAbove8??0,peakDrapeMeters:results.drapeGate91?.maximumActualFittedSourceHemReliefMeters??null,fivePoseGate90:results.fivePoseGate90?.status||'BLOCKED',real25and75Samples:results.fivePoseGate90?.additionalRealInterpolatedPoseSamples??0,tenPoseZeros:results.fivePoseGate90?.countedOriginalSourceZeroContactPairs??null,contactGate88:results.contactGate88?.status||'BLOCKED',topologyGate89:results.topologyGate89?.status||'BLOCKED',unresolvedZeroPairs:results.topologyGate89?.classifiedGeometricZeroPairsAcrossSixPoses??null,unresolvedUnsafeOrIndependentPairs:results.topologyGate89?.sourceIndependentOrSkinUnsafePairWitnesses??null,actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
+  differences:results.differences.length,errors:results.errors.length,networkBlocked:results.external.length,
+  failure:results.failure||null,releaseAuthorized:false,familyAlpha:'HOLD'}));
+}

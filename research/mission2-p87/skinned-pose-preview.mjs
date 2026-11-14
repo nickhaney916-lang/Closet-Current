@@ -10,6 +10,7 @@
 import * as THREE from 'three';
 import {createRadialPreview86} from '../mission2-p86/radial-preview.mjs';
 import {auditPoseLinkedOriginalPhotoSkinnedFit88} from '../mission2-source-length/actual-photo-contact-52.mjs';
+import {calculateSourceSkirtRelief91,deriveSourceSkirtBand91,SOURCE_SKIRT91} from '../mission2-p91/photographed-skirt-relief.mjs';
 
 const SOURCE_HASH='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const SCALE=1.025;
@@ -70,6 +71,7 @@ export function createSkinnedPosePreview87(root,dress){
  const clothes=dress.meshes;
  const snapshots=clothes.map(m=>sourceAttributes(m));
  let closed=false,mode='original',updates=0,lastMaxResidual=0,lastChanged=0;
+ let drape91Active=false,drape91Receipt=null;
  const clones=[];
  const teardown=()=>{
   if(closed)return;
@@ -134,8 +136,90 @@ export function createSkinnedPosePreview87(root,dress){
    }
    verify();
    updates++;lastMaxResidual=maxResidual;lastChanged=changed;
+   drape91Active=false;drape91Receipt=null;
    return summary();
   }catch(error){teardown();throw error;}
+ };
+
+ const drape91=()=>{
+  // Reset owned trial geometry to actual P90 source-fitted baseline on each
+  // request; never accumulate a made-up pleat from repeated interactions.
+  verify();update();
+  const piece=clones.find(x=>x.original===dress.mesh);
+  if(!piece)fail('P91 original photographed main source mesh not found');
+  const {clone,geometry}=piece,posed=geometry.getAttribute('position');
+  if(!posed||posed.itemSize!==3||posed.count<3000)
+   fail('P91 original licensed dress source triangle vertices absent');
+  root.updateMatrixWorld(true);clone.updateWorldMatrix(true,false);
+  clone.skeleton.update();
+  const spin=dress.mesh.skeleton.bones.find(b=>b.name==='spine04');
+  if(!spin)fail('P91 original 163-bone anatomical spine04 not present');
+  const center=spin.getWorldPosition(new THREE.Vector3());
+  const p=new THREE.Vector3(),world=new THREE.Vector3(),
+   targetLocal=new THREE.Vector3(),predicted=new THREE.Vector3(),
+   invWorld=clone.matrixWorld.clone().invert();
+  // The height band is derived from the ACTUAL posed garment, never a
+  // hypothetical ideal dress or an invented human-body measurement.
+  let hemY=Infinity,topY=-Infinity;
+  for(let i=0;i<posed.count;i++){
+   p.fromBufferAttribute(posed,i);
+   world.copy(inPose(clone,i,p)).applyMatrix4(clone.matrixWorld);
+   hemY=Math.min(hemY,world.y);topY=Math.max(topY,world.y);
+  }
+  const band=deriveSourceSkirtBand91({hemY,topY});
+  let moved=0,peak=0,maximumSkinResidual=0;
+  try{
+   for(let i=0;i<posed.count;i++){
+    p.fromBufferAttribute(posed,i);
+    world.copy(inPose(clone,i,p)).applyMatrix4(clone.matrixWorld);
+    const offset=calculateSourceSkirtRelief91({
+     x:world.x,y:world.y,z:world.z,
+     centerX:center.x,centerZ:center.z,hemY:band.hemY,
+     waistY:band.waistY
+    });
+    if(offset.magnitudeMeters<=1e-9)continue;
+    const desiredWorld=world.clone().add(
+     new THREE.Vector3(offset.dx,offset.dy,offset.dz));
+    targetLocal.copy(desiredWorld).applyMatrix4(invWorld);
+    const fitted=inverseSkinTransform87(clone,i,targetLocal);
+    posed.setXYZ(i,fitted.x,fitted.y,fitted.z);
+    predicted.copy(inPose(clone,i,fitted)).applyMatrix4(clone.matrixWorld);
+    const residual=predicted.distanceTo(desiredWorld);
+    if(!Number.isFinite(residual)||residual>.00005)
+     fail('P91 true posed skinned cloth target not recovered');
+    moved++;peak=Math.max(peak,offset.magnitudeMeters);
+    maximumSkinResidual=Math.max(maximumSkinResidual,residual);
+   }
+   if(moved<100||peak<.001)
+    fail('P91 genuine photographic hem-source drape shape was not realized');
+   posed.needsUpdate=true;
+   geometry.computeBoundingSphere();
+   verify();
+   drape91Active=true;
+   drape91Receipt=Object.freeze({
+    schema:'M2-P91-provisional-sourced-hem-fall-true-SkinnedMesh',
+    actualGarmentGeometryBandMeasured:true,
+    sourceHeightMeters:topY-hemY,
+    experimentalWaistAtActualGarmentFraction:
+     SOURCE_SKIRT91.waistAtFractionOfActualGarmentHeight,
+    heuristicNotHumanDrapeAnnotation:true,
+    drapeAmplitudeMeters:SOURCE_SKIRT91.amplitudeMeters,
+    sourceSkirtHemWaveCount:SOURCE_SKIRT91.lobes,
+    movedRealSkinnedPhotoVertices:moved,
+    maximumSampledHemReliefMeters:peak,
+    maximumPoseSkinInverseResidualMeters:maximumSkinResidual,
+    sourceSHA256:SOURCE_HASH,
+    originalSourceRestPhotoUVSkinAndPixelsUntouched:true,
+    noClothPhysicsOrIndependentPhotoDrapeCertification:true,
+    onlyOriginalPhotographedMainDressComponent:true,
+    releaseAuthorized:false,familyAlpha:'HOLD'
+   });
+   mode='drape91';
+   for(const c of clones){
+    c.original.visible=false;c.clone.visible=true;
+   }
+   return summary();
+  }catch(e){teardown();throw e;}
  };
  const audit88=()=>{
   verify();
@@ -147,7 +231,7 @@ export function createSkinnedPosePreview87(root,dress){
   });
  };
  const original=()=>{verify();mode='original';for(const c of clones){c.original.visible=c.wasVisible;c.clone.visible=false;}return summary();};
- const candidate=()=>{verify();if(updates===0)update();mode='candidate';for(const c of clones){c.original.visible=false;c.clone.visible=true;}return summary();};
+ const candidate=()=>{verify();if(updates===0||drape91Active)update();mode='candidate';for(const c of clones){c.original.visible=false;c.clone.visible=true;}return summary();};
  const summary=()=>Object.freeze({
   schema:'M2-P87-original-public-photographed-dress-posed-skinned-source-preview',
   originalSHA256:SOURCE_HASH,realSkinBoneCount:163,
@@ -159,12 +243,13 @@ export function createSkinnedPosePreview87(root,dress){
   poseUpdates:updates,fittedVertices:lastChanged,
   maximumCPUWorldSkinInverseResidualMeters:lastMaxResidual,
   estimatedSizeRadialFactor:SCALE,
+  sourceSkirtDrapeResearch91:drape91Receipt,
   staticOriginalP86SourceGatePassed:true,
   arbitraryOriginalOwnerPhotoReconstruction:false,
   continuousContactOrDrapeCertified:false,photographicProjectionIndependentlyReviewed:false,
   actualPhysicalPhonesTested:false,consumer3DAdmitted:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
- try{update();return Object.freeze({original,candidate,update,audit88,dispose:teardown,get receipt(){return summary();}});}
+ try{update();return Object.freeze({original,candidate,drape91,update,audit88,dispose:teardown,get receipt(){return summary();}});}
  catch(e){teardown();throw e;}
 }
