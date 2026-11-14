@@ -141,21 +141,20 @@ test('M32 board mutation while original JPEG hash awaits must not grant stale se
  allowed(await gate.authorize('bottom',e.id));
 }));
 
-test('M32 invalidate and dispose fail closed, never emit authenticated photo data',()=>fixture(async e=>{
- let release;
- const entered=new Promise(resolve=>{
-  const gate=e.make({readOwnerItems:async scope=>{
-   release=resolve;
-   return e.readOwnerItems(scope);
-  }});
-  // The admission may be invalidated even while its first async source read
-  // is queued; no callback can retroactively persist or admit the stale row.
-  const pending=gate.authorize('bottom',e.id);
-  Promise.resolve().then(()=>gate.invalidate());
-  pending.then(blocked).then(()=>gate.dispose());
- });
+test('M32 invalidate and dispose fail closed without publishing previous source',()=>fixture(async e=>{
+ let started,release;
+ const entered=new Promise(resolve=>{started=resolve;});
+ const pause=new Promise(resolve=>{release=resolve;});
+ const gate=e.make({readOwnerItems:async scope=>{
+  started();
+  await pause;
+  return e.readOwnerItems(scope);
+ }});
+ const pending=gate.authorize('bottom',e.id);
  await entered;
- // Separate explicit disposal test avoids relying on private error text.
- const gate=e.make();gate.dispose();
+ gate.invalidate();
+ release();
+ blocked(await pending);
+ gate.dispose();
  blocked(await gate.authorize('bottom',e.id));
 }));
