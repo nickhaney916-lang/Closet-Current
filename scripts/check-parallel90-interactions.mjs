@@ -36,13 +36,17 @@ export async function checkViewer90(page,width,engine){
  await page.locator('#outfit3D01Reset90').click();
  await mkdir('benchmark/parallel90/'+engine,{recursive:true});
  await page.screenshot({path:'benchmark/parallel90/'+engine+'/'+width+'-interactive.png'});
- // A synthetic event tests the lifecycle handler; hardware GPU loss remains
- // a distinct physical-device acceptance requirement.
- await page.evaluate(()=>document.getElementById('outfit3D01Canvas').dispatchEvent(new Event('webglcontextlost',{cancelable:true})));
+ // Lose the actual renderer context through the browser extension. This
+ // remains a software-browser simulation, not a physical GPU fault.
+ assert.equal(await page.evaluate(()=>{
+  const gl=document.getElementById('outfit3D01Canvas').getContext('webgl2');
+  const extension=gl?.getExtension('WEBGL_lose_context');
+  if(!extension)return false;extension.loseContext();return true;
+ }),true,'actual WebGL context-loss extension required');
  await page.waitForFunction(()=>!window.native3D05Bridge.state().active);
  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
- await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,contextLossSimulation:'PASS',physicalPhone:false,familyAlpha:'HOLD'},null,2));
+ await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
  // Reopen requires actual owner/source re-attestation and a new renderer.
  await page.locator('#native3D05Preview').click();
  await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:150000});

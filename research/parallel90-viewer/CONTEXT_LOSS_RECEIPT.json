@@ -1,0 +1,185 @@
+{
+  "samples": [
+    {
+      "figure": "female",
+      "width": 390,
+      "engine": "chromium",
+      "before": {
+        "angle": 0,
+        "distance": 4.25,
+        "position": [
+          0,
+          1.0400000000000003,
+          4.25
+        ],
+        "target": [
+          0,
+          1.04,
+          0
+        ],
+        "loadMs": 173.80000000004657,
+        "lastRenderMs": 0.5999999999767169,
+        "pixelRatio": 2,
+        "drawPixels": 530480
+      },
+      "after": {
+        "angle": 15,
+        "distance": 4.25,
+        "position": [
+          1.0999809416857131,
+          1.0400000000000003,
+          4.10518476172854
+        ],
+        "target": [
+          0,
+          1.04,
+          0
+        ],
+        "loadMs": 173.80000000004657,
+        "lastRenderMs": 0.8000000000465661,
+        "pixelRatio": 2,
+        "drawPixels": 530480
+      },
+      "finalCamera": {
+        "angle": 122.74285714285674,
+        "distance": 4.25,
+        "position": [
+          3.574702402958842,
+          1.0400000000000003,
+          -2.2986958759871388
+        ],
+        "target": [
+          0,
+          1.04,
+          0
+        ],
+        "loadMs": 173.80000000004657,
+        "lastRenderMs": 0.5,
+        "pixelRatio": 2,
+        "drawPixels": 530480
+      },
+      "buttonRoundTripMs": [
+        436,
+        437,
+        445,
+        384,
+        394,
+        395,
+        397,
+        379,
+        384,
+        382,
+        381,
+        390,
+        401,
+        394,
+        386,
+        384
+      ],
+      "baselineBones": 163,
+      "finalBones": 163,
+      "baselineResources": {
+        "geometries": 11,
+        "textures": 3,
+        "frames": 52
+      },
+      "finalResources": {
+        "geometries": 11,
+        "textures": 3,
+        "frames": 80
+      }
+    },
+    {
+      "figure": "male",
+      "width": 390,
+      "engine": "chromium",
+      "before": {
+        "angle": 0,
+        "distance": 4.25,
+        "position": [
+          -8.967076794265237e-18,
+          1.0400000000000003,
+          4.25
+        ],
+        "target": [
+          0,
+          1.04,
+          0
+        ],
+        "loadMs": 152.30000000004657,
+        "lastRenderMs": 0.8000000000465661,
+        "pixelRatio": 2,
+        "drawPixels": 530480
+      },
+      "after": {
+        "angle": 15,
+        "distance": 4.25,
+        "position": [
+          1.0999809416857131,
+          1.0400000000000003,
+          4.10518476172854
+        ],
+        "target": [
+          0,
+          1.04,
+          0
+        ],
+        "loadMs": 152.30000000004657,
+        "lastRenderMs": 0.5,
+        "pixelRatio": 2,
+        "drawPixels": 530480
+      },
+      "finalCamera": {
+        "angle": 122.74285714285674,
+        "distance": 4.25,
+        "position": [
+          3.574702402958842,
+          1.0400000000000003,
+          -2.2986958759871388
+        ],
+        "target": [
+          0,
+          1.04,
+          0
+        ],
+        "loadMs": 152.30000000004657,
+        "lastRenderMs": 1.5,
+        "pixelRatio": 2,
+        "drawPixels": 530480
+      },
+      "buttonRoundTripMs": [
+        508,
+        422,
+        439,
+        394,
+        383,
+        383,
+        396,
+        396,
+        397,
+        404,
+        391,
+        381,
+        385,
+        384,
+        396,
+        406
+      ],
+      "baselineBones": 163,
+      "finalBones": 163,
+      "baselineResources": {
+        "geometries": 11,
+        "textures": 3,
+        "frames": 123
+      },
+      "finalResources": {
+        "geometries": 11,
+        "textures": 3,
+        "frames": 151
+      }
+    }
+  ],
+  "contextLossSimulation": "PASS_WEBGL_lose_context",
+  "physicalPhone": false,
+  "familyAlpha": "HOLD"
+}
