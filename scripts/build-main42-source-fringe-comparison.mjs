@@ -63,7 +63,8 @@ const candidatePNG=await sharp(candidate,{
 const candidateFilename='M42-conservative-fringe-UNAPPROVED.png';
 await writeFile(join(dir,candidateFilename),candidatePNG,{flag:'wx'});
 const verify=await sharp(candidatePNG).ensureAlpha().raw().toBuffer();
-assert.deepEqual(verify,candidate);
+assert.equal(Buffer.compare(verify,Buffer.from(candidate)),0,
+ 'decoded candidate PNG RGBA bytes must match the exact calculated source pixels');
 const overlay=Buffer.alloc(candidate.length);
 for(let p=0;p<si.width*si.height;p++){
  const i=p*4;
