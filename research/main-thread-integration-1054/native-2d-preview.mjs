@@ -8,9 +8,31 @@ import {jpegBytes,digestBytes} from '../../public/native-canonical-photo-source-
 import {assessPhoto3DResearchGate1054} from './photographed-3d-evidence-gate15.mjs';
 
 const fail=reason=>{throw Error('MAIN1054_PREVIEW '+reason);};
-const equalSession=(a,b)=>!!a&&!!b&&a.authenticated===true&&b.authenticated===true&&
- a.ownerId===b.ownerId&&a.epoch===b.epoch&&a.privateDbName===b.privateDbName&&
- b.privateDbName==='closet-current-user-'+b.ownerId;
+// M16: owner ID, stored token epoch and DB NAME alone can survive a
+// same-user re-login or connection swap. The verified native M3 provider
+// supplies these exact ephemeral refs; never send refs to DOM or output.
+const validRef=x=>x!==null&&(typeof x==='object'||typeof x==='function');
+function equalSession(a,b){
+ try{
+  if(!a||!b||a.authenticated!==true||b.authenticated!==true||
+     typeof a.ownerId!=='string'||!a.ownerId||
+     a.ownerId!==b.ownerId||a.epoch!==b.epoch||
+     a.privateDbName!==b.privateDbName||
+     b.privateDbName!=='closet-current-user-'+b.ownerId||
+     !validRef(a.authRef)||!validRef(b.authRef)||
+     !validRef(a.privateDbRef)||!validRef(b.privateDbRef)||
+     a.authRef!==b.authRef||a.privateDbRef!==b.privateDbRef||
+     a.operationEpoch!==b.operationEpoch||
+     !(typeof b.operationEpoch==='number'&&
+       Number.isSafeInteger(b.operationEpoch)&&b.operationEpoch>=0)||
+     b.authRef.user?.id!==b.ownerId||
+     b.privateDbRef.name!==b.privateDbName||
+     typeof b.authRef.assertCurrent!=='function')
+   return false;
+  b.authRef.assertCurrent();
+  return true;
+ }catch{return false;}
+}
 
 export function mountOwnerOutfitPhotoPreview1054({
  target,getSession,readOwnerItems,getBoard,cleanBoard,events=globalThis.window,
@@ -24,14 +46,20 @@ export function mountOwnerOutfitPhotoPreview1054({
  let closed=false,revision=0,renderedSession=null,phase='idle';
  const clear=()=>{target.replaceChildren();renderedSession=null;};
  const revoke=()=>{revision++;clear();phase='revoked';};
+ // The signed auth provider can throw after token replacement; a focus/status
+ // event must revoke old private JPEG pixels without leaking the error.
+ const currentSession=()=>{try{return getSession();}catch{return null;}};
+ const hasCurrentDisplayLease=()=>!!renderedSession&&
+  equalSession(renderedSession,currentSession());
  function assertActive(ticket,start){
-  if(closed||ticket!==revision||!equalSession(start,getSession()))fail('signed owner or refresh changed');
+  if(closed||ticket!==revision||
+     !equalSession(start,currentSession()))fail('signed owner or refresh changed');
  }
  function onVisibility(){
-  // Never leave private imagery in the background when the browser hides.
-  if(doc.hidden)revoke();else if(renderedSession&&!equalSession(renderedSession,getSession()))revoke();
+  // A hidden page must not retain previously authenticated photo pixels.
+  if(doc.hidden||renderedSession&&!hasCurrentDisplayLease())revoke();
  }
- function onFocus(){if(renderedSession&&!equalSession(renderedSession,getSession()))revoke();}
+ function onFocus(){if(renderedSession&&!hasCurrentDisplayLease())revoke();}
  events.addEventListener('closet:session-locked',revoke);
  events.addEventListener('pagehide',revoke);
  events.addEventListener('focus',onFocus);
@@ -47,17 +75,22 @@ export function mountOwnerOutfitPhotoPreview1054({
   ]);
  }
  return Object.freeze({
-  get status(){return Object.freeze({phase,active:!closed,hasOwnerPhotos:target.querySelectorAll?.('img').length>0,
-   renderAuthorized3D:false,releaseAuthorized:false,familyAlpha:'HOLD'});},
+  get status(){
+   // A caller polling status after a same-owner login swap also revokes the
+   // display immediately, even without a session-lock/focus browser event.
+   if(renderedSession&&!hasCurrentDisplayLease())revoke();
+   return Object.freeze({phase,active:!closed,
+    hasOwnerPhotos:target.querySelectorAll?.('img').length>0,
+    renderAuthorized3D:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+  },
   clear:revoke,
   async refresh(){
    const ticket=++revision;
    clear();phase='checking';
-   const start=getSession();
+   const start=currentSession();
    let verified=null;
    try{
-    if(!start?.authenticated||typeof start.ownerId!=='string'||!start.ownerId||
-       start.privateDbName!=='closet-current-user-'+start.ownerId)
+    if(!equalSession(start,currentSession()))
      fail('native signed session unavailable');
     const board=await getBoard();
     assertActive(ticket,start);
@@ -66,7 +99,7 @@ export function mountOwnerOutfitPhotoPreview1054({
      getSession,readOwnerItems,cleanBoard,board
     });
     assertActive(ticket,start);
-    if(!equalSession(start,getSession())||plan.ownerId!==start.ownerId||
+    if(!equalSession(start,currentSession())||plan.ownerId!==start.ownerId||
        plan.sessionEpoch!==start.epoch||plan.renderAuthorized3D!==false)
      fail('source plan cannot authorize private image rendering');
     const rows=await readOwnerItems();
