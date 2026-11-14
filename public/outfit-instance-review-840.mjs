@@ -31,7 +31,12 @@ function acceptedComponents(map,group){
  }
  return parts;
 }
-export function clothingReviewInstances840(map){
+// Actual exposed P68 validation (16 genuine photos / 53 independent human
+// masks, 2026-11-14) found identical 27/53 matched instances versus shoe-only,
+// but six extra false positives from all-class splitting (46 vs 40 proposals).
+// Keep the real worker's one-flag review conservative. The all-class candidate
+// remains explicitly callable for RESEARCH comparison only; no auto admission.
+export function clothingReviewInstances840(map,{splitNonFootwear=false}={}){
  const original=clothingMaskGroups(map),output=[],{width,height}=map;
  for(const group of original){
   const parts=acceptedComponents(map,group);
@@ -44,7 +49,7 @@ export function clothingReviewInstances840(map){
   }
   // Preserve legacy single-instance behavior for non-footwear classes. Shoe
   // components stay individually reviewable under the existing P840 contract.
-  if(group.id!==9&&parts.length===1){
+  if(group.id!==9&&(!splitNonFootwear||parts.length===1)){
    output.push({...group,requiresReview:true,instanceMethod:'native_semantic_group'});
    continue;
   }
