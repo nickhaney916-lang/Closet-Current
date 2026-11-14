@@ -14,7 +14,7 @@ const appLease=extract(app,'function ownerWardrobeMutationLease(){','function wr
 const exportHandler=extract(app,"$('export').onclick=async()=>{","$('import').onchange=async e=>");
 const boardLease=extract(board,'function beginOwnerBoardUiLease(){','function beginNativeBoardMountLease(){');
 const boardExport=extract(board,'function boardBackup(){','function boardHasUnsavedDraft(){');
-function fixture({native=false,restore=false,ready=false,bridgeReady=false}={}){
+function fixture({native=false,restore=false,ready=false,bridgeReady=false,lossless=false}={}){
  const downloads=[],created=[],messages=[],nodes={},events=[];
  let startReady,startBridge;
  const outfitBoardReady=ready?Promise.resolve():new Promise(r=>startReady=r);
@@ -31,7 +31,7 @@ function fixture({native=false,restore=false,ready=false,bridgeReady=false}={}){
    readOnlySnapshot(){return {current:{name:'NATIVE-A'},saved}}},
   currentBoard:{name:'OWNER-A-CURRENT',slots:{top:'private-a'}},savedOutfitBoards:saved,
   items,inspirationLooks:[],outfitBoardReady,
-  location:{search:restore?'?restoreAtomic01=research':''},
+  location:{search:lossless?'?losslessV4M3=research':restore?'?restoreAtomic01=research':''},
   Blob,structuredClone,URLSearchParams,
   URL:class{
    constructor(path){this.searchParams=new URLSearchParams(String(path).split('?')[1]||'')}
@@ -50,7 +50,8 @@ function fixture({native=false,restore=false,ready=false,bridgeReady=false}={}){
  vm.createContext(ctx);
  // Isolate only the ESM loader; execute the actual durable helper separately in
  // mission3-default-verified-backup-export tests against real fake-IDB stores.
- const handler=exportHandler.replace("import('./native-default-verified-backup-export-m3.mjs')",'durableModule');
+ const handler=exportHandler.replace("import('./native-default-verified-backup-export-m3.mjs')",'durableModule').replace("import('./native-lossless-v4-owner-acceptance-m3.mjs')",'losslessModule');
+ ctx.losslessModule={async exportLosslessV4M3({assertLease,assertIdle}){assertLease();assertIdle();return {json:JSON.stringify({version:4,marker:'UNFINISHED-ORIGINAL-KEPT'}),savedCount:1,pendingOriginals:1}}};
  ctx.writes=Promise.resolve();
  Object.assign(ctx,{busy:false,saving:false,captureProofTaking:false,cameraOpening:false,
   photoImportActive:false,videoImportActive:false,automaticRunning:false,
@@ -161,4 +162,15 @@ test('exact app source pins private owner both before and after awaits and befor
  assert.match(exportHandler,/const \{data\}=await bridge\.exportJSON\(\);\s*assertExport\(\)/);
  assert.match(exportHandler,/try\{assertExport\(\);a\.click\(\);\}/);
  assert.match(boardExport,/const lease=beginOwnerBoardUiLease\(\)/);
+});
+
+test('integrated full-original v4 branch uses initiating outer owner/UI lease without shadowing',async()=>{
+ const f=fixture({ready:true,lossless:true});await f.click();
+ const data=await f.exportedJSON();assert.equal(data.version,4);
+ assert.equal(data.marker,'UNFINISHED-ORIGINAL-KEPT');
+ assert.match(f.messages.at(-1),/unfinished photographs/);
+});
+test('integrated full-original v4 rejects locked private shell before download',async()=>{
+ const f=fixture({ready:true,lossless:true});f.lock();await f.click();
+ assert.equal(f.downloads.length,0);assert.equal(f.created.length,0);
 });

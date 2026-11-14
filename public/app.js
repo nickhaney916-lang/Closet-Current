@@ -1890,10 +1890,8 @@ $('export').onclick=async()=>{
  // Reading in-memory card arrays could miss a second tab's correction, and
  // v3 cannot restore unfinished Photo results originals. Refuse a misleading
  // 'backup complete' claim while ANY review JPEG or outfit edit is pending.
- let exportLease;
- try{exportLease=ownerWardrobeMutationLease();}
- catch{return message('Sign in to export your private closet.');}
- const assertExport=()=>{exportLease.assertLease();if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)throw Error('Private wardrobe locked');};
+ // Reuse the initiating outer owner/UI lease for both v4 and durable v3.
+ // Redeclaring assertExport in this scope would shadow the v4 guard in a TDZ.
  const pendingWrites=writes;
  const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
   !photoImportActive&&!videoImportActive&&!automaticRunning&&
