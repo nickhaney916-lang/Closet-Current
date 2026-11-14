@@ -121,7 +121,7 @@ window.result1054=()=>({
 const results=[],requests=[],pageErrors=[],consoleErrors=[];
 const events={workerCreated:0,workerTerminated:0,pageCrash:0,pageClosed:0,browserDisconnected:0};
 const startTime=Date.now(),failures=[];
-let browser,page,context;
+let browser,page,context,intentionalShutdown=false;
 const emit=async()=>{
  const completed=results.length;
  const state={
@@ -153,7 +153,7 @@ try{
  browser=await ({webkit,chromium}[engineName]).launch({
   headless:true,args:engineName==='chromium'?['--no-sandbox']:[],
  });
- browser.on('disconnected',()=>{events.browserDisconnected++;});
+ browser.on('disconnected',()=>{if(!intentionalShutdown)events.browserDisconnected++;});
  context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await context.route('**/*',route=>{
   const url=route.request().url();
@@ -168,7 +168,7 @@ try{
  page.on('pageerror',e=>pageErrors.push(String(e.message).slice(0,180)));
  page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text().slice(0,180));});
  page.on('crash',()=>{events.pageCrash++;});
- page.on('close',()=>{events.pageClosed++;});
+ page.on('close',()=>{if(!intentionalShutdown)events.pageClosed++;});
  page.on('worker',worker=>{
   events.workerCreated++;
   worker.on('close',()=>{events.workerTerminated++;});
@@ -266,6 +266,7 @@ try{
 }finally{
  // This is a DIAGNOSTIC experiment. Capture incomplete runs as BLOCKED, not
  // a false completed acceptance or a fabricated cause, even when browser dies.
+ intentionalShutdown=true; // voluntary shutdown is NOT a browser crash or disconnect
  try{await context?.close();}catch{}
  try{await browser?.close();}catch{}
  const state=await emit();
