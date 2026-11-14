@@ -11,6 +11,7 @@ const src=await readFile('research/native-owner-reviewed-cloud-ui-146/app-owner-
 function slice(a,b){const i=src.indexOf(a),j=src.indexOf(b,i);
  assert.ok(i>=0&&j>i,'actual P146 source '+a);return src.slice(i,j);}
 const actual=[
+ slice(' function assertLocalOwner(){',' const localAuth={'),
  slice(' const status=(message)=>',' function decide(info,type){'),
  slice(' function settle(answer){'," by('owner146Cancel').onclick"),
  slice(' function revoke(){',' const onLocked=()=>revoke();')
@@ -20,7 +21,10 @@ const frameCode=[
  'let revoked=false,pending=null,panel=null,dialog=null,style=null,backupService=null,restoreService=null,ownerValid=true,answer=null;',
  "const buttonIds=['owner146Preview','owner146Backup','owner146Restore'];",
  "const by=id=>document.getElementById(id);",
- "function assertLocalOwner(){if(!ownerValid||revoked)throw Error('owner-session-revoked')}",
+ "const ownerAtMount='00000000-0000-4000-8000-000000000001';let ownerPrincipalAtMount={id:ownerAtMount};",
+ "const auth={user:ownerPrincipalAtMount,assertCurrent(){if(!ownerValid)throw Error('owner-session-revoked')}};",
+ "const db={name:'closet-current-user-'+ownerAtMount},loc={};",
+ "const ownerReviewedMode146=()=>true,fail=msg=>{throw Error('owner session changed: '+msg)};",
  actual,
  'const onLocked=()=>revoke();',
  `window.__scenario=async function(mode){
@@ -42,7 +46,7 @@ const frameCode=[
    let revokedServices=0;
    backupService={revoke(){revokedServices++}};
    restoreService={revoke(){revokedServices++}};
-   revoked=false;pending=null;ownerValid=true;answer=null;
+   revoked=false;pending=null;ownerValid=true;answer=null;auth.user=ownerPrincipalAtMount={id:ownerAtMount};
    const sample={localReviewedGarments:2,remoteReviewedGarments:9,
     localSavedOutfits:1,remoteSavedOutfits:7,remoteRevision:4};
    if(mode==='count-current')showCounts(sample);
@@ -50,6 +54,10 @@ const frameCode=[
    if(mode==='count-stale'){
     await Promise.resolve();ownerValid=false;
     try{showCounts(sample)}catch(e){if(!String(e).includes('owner-session-revoked'))throw e}
+   }
+   if(mode==='same-id-relogin'){
+    await Promise.resolve();auth.user={id:ownerAtMount};
+    try{showCounts(sample)}catch(e){if(!String(e).includes('owner session changed'))throw e}
    }
    if(mode==='status-stale'){
     await Promise.resolve();ownerValid=false;status('SECRET FORMER OWNER');
@@ -73,7 +81,7 @@ const srv=createServer((req,res)=>{res.writeHead(200,{'content-type':'text/html;
  res.end('<!doctype html><html><body>P146 synthetic phone width</body></html>')});
 await new Promise(ok=>srv.listen(0,'127.0.0.1',ok));
 const url='http://127.0.0.1:'+srv.address().port+'/';
-const modes=['count-current','status-current','count-stale','status-stale','approve-stale','approve-current'];
+const modes=['count-current','status-current','count-stale','status-stale','approve-stale','approve-current','same-id-relogin'];
 const rows=[];
 try{
  for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
@@ -89,7 +97,7 @@ try{
      for(const mode of modes){
       const result=await page.evaluate(m=>window.__scenario(m),mode);
       assert.equal(result.secretVisible,false,name+' '+width+' '+mode);
-      if(mode.endsWith('stale')){
+      if(mode.endsWith('stale')||mode==='same-id-relogin'){
        assert.equal(result.revoked,true,name+' '+width+' '+mode);
        assert.equal(result.panelPresent,false);
        assert.equal(result.dialogPresent,false);
@@ -111,7 +119,7 @@ try{
   }finally{await browser.close()}
  }
 }finally{await new Promise(ok=>srv.close(ok))}
-assert.equal(rows.length,36);
+assert.equal(rows.length,42);
 await writeFile(resolve(out,'results.json'),JSON.stringify({
  source:'P146 real owner panel display and approval source, synthetic DOM only',
  noHostedSupabase:true,noPhysicalPhones:true,familyAlpha:'HOLD',
