@@ -198,7 +198,7 @@ window.addEventListener('beforeunload',event=>{
  if(boardHasUnsavedDraft()){event.preventDefault();event.returnValue='';}
 });
 window.addEventListener('closet:session-locked',()=>{
- ++ownerPicker33Serial;
+ if(typeof ownerPicker33Serial!=='undefined')++ownerPicker33Serial;
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
  // The default private Outfit Builder carries owner names, garment IDs and
@@ -243,7 +243,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
  const current=structuredClone(replaceCurrent===null?currentBoard:replaceCurrent),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
  let proof33=null,picker33Gate=null;
- if(ownerPicker33Active){
+ if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){
   try{
    picker33Gate=await ownerPicker33Gate();
    assertOwner();
@@ -388,7 +388,7 @@ function openBoardPicker(slotId){
   $('boardPicker').close();switchView('scan');};grid.append(add);}
  for(const item of options){const b=node('button',null,'board-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('strong',item.name||'Closet piece'),node('span',[item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · ')));b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
-   if(ownerPicker33Active){void ownerPicker33Choose(slotId,item.id,b,pickerLease,{closePicker:true});return;}
+   if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(slotId,item.id,b,pickerLease,{closePicker:true});return;}
    selectBoardPiece(slotId,item.id);$('boardPicker').close();
   };grid.append(b);}
  $('boardPicker').showModal();
@@ -436,7 +436,7 @@ function renderBoardSuggestions(){
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>{
   if(!suggestionsCurrent()||b.isConnected===false||
      ($('boardTarget').value||'shoes')!==target||!items.includes(item))return;
-  if(ownerPicker33Active){void ownerPicker33Choose(target,item.id,b,suggestionLease);return;}
+  if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(target,item.id,b,suggestionLease);return;}
   selectBoardPiece(target,item.id);
  };ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();
