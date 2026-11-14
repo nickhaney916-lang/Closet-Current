@@ -53,7 +53,13 @@ for(const figure of ['female','male']){
    medianPresentMs:median(rows.map(x=>x.startup.presentMs)),
    medianShirtPrepareMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.renderStages.prepareMs)),
    medianShirtApplyMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.renderStages.applyMs)),
-   medianDressApplyMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.renderStages.applyMs))});
+   medianDressApplyMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.renderStages.applyMs)),
+   medianShirtRigSetOutfitMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.sceneApplyStages.setOutfitMs)),
+   medianShirtPhotoSamplingMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.sceneApplyStages.samplingMs)),
+   medianShirtCleanupMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.sceneApplyStages.cleanupMs)),
+   medianShirtWebGLDrawMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.sceneApplyStages.drawMs)),
+   medianDressRigSetOutfitMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.sceneApplyStages.setOutfitMs)),
+   medianDressWebGLDrawMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.sceneApplyStages.drawMs))});
  }
 }
 await mkdir(root,{recursive:true});
