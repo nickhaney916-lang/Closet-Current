@@ -115,6 +115,7 @@ test('source retains synthetic localhost gate and does not introduce cloud write
   "const SYNTHETIC_TOKEN_PREFIX=","redirect:'error',credentials:'omit'",
   "try{assertLocalOwner();}catch(error){revoke();throw error;}",
   "if(answer===true&&!approved&&!revoked)revoke();",
-  "auth.user!==ownerPrincipalAtMount",\n  "if(approved){try{assertLocalOwner();}catch{approved=false;}}"
+  "auth.user!==ownerPrincipalAtMount",
+  "if(approved){try{assertLocalOwner();}catch{approved=false;}}"
  ])assert.ok(src.includes(required),required);
 });
