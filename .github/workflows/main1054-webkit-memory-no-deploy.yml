@@ -43,4 +43,6 @@ jobs:
       - name: Sample real desktop Chromium and WebKit process trees without loading models
         run: node scripts/test-main1054-webkit-process-memory-browser.mjs
       - name: Explicitly retain Family Alpha HOLD
-        run: echo "Research-only desktop memory instrumentation; no physical phones, blind recognition, cloud, fitted 3D, merge or deployment. HOLD #255."
+        shell: bash
+        run: |
+          echo 'Research-only desktop memory instrumentation; no physical phones, blind recognition, cloud, fitted 3D, merge or deployment. Family Alpha HOLD issue 255.'
