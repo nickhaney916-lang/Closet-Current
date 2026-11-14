@@ -16,7 +16,7 @@ export function sourceSeriesHint883(url){
  const original=sourceSeriesHint(url);
  if(original)return original;
  const key=sourceKey(url);
- const match=key?.match(/\bam[ _-]+(\d{4}(?:\.\d+){2,})(?:-\d+)?\b/);
+ const match=key?.match(/\bam[ _-]+(\d{4}(?:\.\d+){1,})(?:-\d+)?\b/);
  return match?'museum-accession-am:'+match[1]:null;
 }
 export function exposedSources883(manifests,pinned){
