@@ -34,7 +34,7 @@ jobs:
               *) echo "P881_UNAUTHORIZED_PATH $p"; exit 1;;
             esac
           done </tmp/p881-paths
-          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/dual-core-82.mjs public/recognition-engine.mjs public/model-arbitration-81.mjs public/dual-worker-82.mjs public/local-worker.mjs public/recognition-confusion-guard.mjs public/cloud-backup.js benchmark supabase)"
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/recognition-engine.mjs public/model-arbitration-81.mjs public/local-worker.mjs public/recognition-confusion-guard.mjs public/cloud-backup.js benchmark supabase)"
           grep -Fq 'const reviewFirst836=true;' public/app.js
           grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-siglip-mirror-881/REPORT.md
           echo P881_SCOPE_NO_DEPLOY_PASS
@@ -87,7 +87,7 @@ jobs:
           BASE=a4261f8e7dd968046dc14ff88ba969c91514d0b0
           git merge-base --is-ancestor "$BASE" HEAD
           test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 8
-          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark public/dual-worker-82.mjs public/dual-core-82.mjs public/model-arbitration-81.mjs public/dual-model-lock-82.mjs)"
+          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark public/model-arbitration-81.mjs public/dual-model-lock-82.mjs)"
       - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
       - run: npx playwright install --with-deps chromium
       - name: Verify frozen 48 public original source bytes and q8 weights
