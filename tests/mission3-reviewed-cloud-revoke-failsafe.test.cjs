@@ -43,8 +43,8 @@ function fixture(options={}){
   restoreService:{revoke(){events.push('restore.revoke');if(options.restoreThrows)throw Error('PRIVATE restore service')}},
   by(id){events.push('by:'+id);if(id===options.buttonThrows)throw Error('PRIVATE button');
    return buttons[id];},revoked:false,pending};
- vm.createContext(ctx);vm.runInContext(code,ctx);
- return {ctx,buttons,panel,dialog,style,events,hooks,getConsent:()=>result,getCount:()=>consents};
+ vm.createContext(ctx);vm.runInContext(code+'\nglobalThis.testOnLocked=onLocked;',ctx);
+ return {ctx,buttons,panel,dialog,style,events,hooks,options,getConsent:()=>result,getCount:()=>consents};
 }
 function verify(f){
  assert.equal(f.ctx.revoked,true,'must permanently revoke old owner interface');
@@ -57,7 +57,7 @@ function verify(f){
  assert.ok(f.events.includes('backup.revoke'),'backup service revocation attempted');
  assert.ok(f.events.includes('restore.revoke'),'restore service revocation attempted');
  for(const id of Object.keys(f.buttons)){
-  if(!f.events.includes('by:'+id))continue;
+  if(!f.events.includes('by:'+id)||id===f.options.buttonThrows)continue;
   assert.equal(f.buttons[id].disabled,true);
   assert.equal(f.buttons[id].onclick,null);
  }
@@ -99,7 +99,7 @@ test('P146 revoked state is idempotent even after prior service error',()=>{
 });
 test('P146 session-locked and pagehide handlers delegate to same fail-safe revoke',()=>{
  const f=fixture({backupThrows:true,restoreThrows:true});
- f.ctx.onLocked();verify(f);assert.doesNotThrow(()=>f.ctx.onLocked());
+ f.ctx.testOnLocked();verify(f);assert.doesNotThrow(()=>f.ctx.testOnLocked());
 });
 test('P146 no pending confirmation still revokes remaining services and removes owner DOM',()=>{
  const f=fixture({restoreThrows:true});f.ctx.pending=null;
