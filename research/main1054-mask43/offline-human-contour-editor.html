@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' file:; img-src data: blob: file:; style-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; object-src 'none'; frame-src 'none'; worker-src 'none'; base-uri 'none'">
+<title>Closet Current M43 — manual original-photo neckline annotation (HOLD)</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#101923;color:#e9eef4}
+*{box-sizing:border-box}body{max-width:1500px;margin:auto;padding:20px}
+h1{font-size:1.55rem;margin:0 0 8px}h2{font-size:1.07rem;margin:0 0 8px}
+p{color:#c6d2de;line-height:1.5}.warn{background:#263240;border-left:4px solid #ffd07a;padding:12px 16px;border-radius:8px}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin:12px 0}
+button,select,textarea,input{font:inherit}button{background:#d8e9ff;color:#162438;border:0;border-radius:7px;padding:10px 14px;font-weight:700;cursor:pointer}
+button:disabled{opacity:.4}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #ffd075}
+.controls{padding:13px 16px;background:#1b2938;border-radius:10px;margin:15px 0}
+select,textarea{padding:10px;background:#293749;color:#fff;border:1px solid #92a4b6;border-radius:8px}
+label{font-weight:600}input[type=range]{width:130px}
+.sides{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(440px,100%),1fr));gap:14px}
+figure{margin:0;min-width:0;border:1px solid #536575;border-radius:10px;background:#1b2938;padding:10px}
+figcaption{font-weight:650;margin-bottom:10px}
+canvas{display:block;width:100%;height:auto;background:repeating-conic-gradient(#adbac6 0% 25%,#667787 0% 50%) 50% / 22px 22px;touch-action:none;border-radius:5px}
+#edited{cursor:crosshair;border:2px solid #b4d6fe}
+#status{white-space:pre-wrap;font-variant-numeric:tabular-nums}
+.details{background:#1b2938;border-radius:10px;padding:16px;margin-top:16px}
+code{font-size:.9em;color:#bce5ff}
+small{display:block;color:#c1d1de;line-height:1.5}
+</style>
+</head>
+<body>
+<header>
+<h1>Real photographed dress — precise contour annotations</h1>
+<p>Genuine licensed Commons-0053 original JPEG and unchanged P93 cutout. Zoom and pan both images together, then mark suspected background for removal or P93 pixels for restoration to the original Work47 alpha. These are manual <strong>proposals</strong>, not automatic garment reconstructions.</p>
+<div class="warn"><strong>FAMILY ALPHA HOLD • NOT APPROVED FOR 3D.</strong> A pale original-fabric edge can resemble a mannequin. No choice or downloaded file constitutes independently verified human review, a correct garment mask, or permission to place clothing on an avatar. Only a later audited process can reconstruct an unapproved PNG from the signed original source.</div>
+</header>
+<div class="controls">
+ <div class="row">
+  <label for="mode">Annotate</label>
+  <select id="mode"><option value="restore">Restore potentially real fabric (only P93-removed source pixels)</option><option value="remove">Mark suspected fringe for removal (only next to P93 cutout)</option></select>
+  <label for="brush">Brush radius</label><select id="brush"><option value="1">1 original pixel</option><option value="2">2 original pixels</option><option value="3">3 original pixels</option></select>
+  <label for="zoom">Zoom</label><input id="zoom" type="range" min="1" max="6" step=".5" value="2">
+  <output id="zoomValue" for="zoom">2×</output>
+ </div>
+ <div class="row" aria-label="Pan source photograph">
+  <button id="up" type="button">Pan up</button><button id="down" type="button">Pan down</button>
+  <button id="left" type="button">Pan left</button><button id="right" type="button">Pan right</button>
+  <button id="undo" type="button" disabled>Undo last stroke</button>
+  <button id="reset" type="button" disabled>Reset draft</button>
+ </div>
+ <p id="status" role="status" aria-live="polite">Loading real licensed original and exact P93 mask…</p>
+</div>
+<div class="sides">
+ <figure><figcaption>Original source JPEG — immutable, same view</figcaption><canvas id="original" width="800" height="600" aria-label="Source dress color photograph"></canvas></figure>
+ <figure><figcaption>Candidate alpha preview — unverified manual marks</figcaption><canvas id="edited" width="800" height="600" aria-label="Edit transparent mask; amber marks restore source fabric and cyan marks remove suspected background"></canvas></figure>
+</div>
+<div class="details">
+ <h2>Export a safe, source-pinned manual pixel proposal</h2>
+ <p>The export contains only exact changed pixel coordinates and the pinned public source hashes. It is **not** an approved PNG. A separate verified source-byte reconstructor must check every annotation against the original JPEG, Work47 and P93 alpha before making any review-only candidate file.</p>
+ <label for="notes">Source details to inspect (optional)</label>
+ <textarea id="notes" rows="3" style="width:100%;margin-top:8px" placeholder="Example: I marked the pale pixel at the actual V-neck for restoration; white piping appears intact."></textarea>
+ <div class="row"><button id="export" type="button" disabled>Export UNVERIFIED original-source annotation JSON</button></div>
+ <p><small>Manual editing does not verify identity, textile segmentation or 3D geometry. No account, original family photo, private wardrobe, cloud storage, network, training data or deployment is accessed. The original JPEG, Work47 and P93 files stay unchanged. This local tool is not part of the consumer app.</small></p>
+</div>
+<script src="./licensed-original-data.js"></script>
+<script src="./manual-contour-editor.js"></script>
+</body>
+</html>
