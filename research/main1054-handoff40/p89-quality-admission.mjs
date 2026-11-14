@@ -71,7 +71,10 @@ export async function assessNative3DQuality40({
   });
   const receipt=await owner;
   if(receipt.status!=='OWNER_ORIGINAL_2D_VIEWER_FALLBACK_ONLY'||
-     receipt.consumer3D!==false||receipt.displayApproved!==false)
+     receipt.consumer3D!==false||
+     receipt.ownerPhotoRenderAuthorized!==false||
+     receipt.real3DQualityApproved!==false||
+     receipt.releaseAuthorized!==false)
    throw Error('owner-private-original-photo-not-verified');
   stage='P90_CURRENT_SAVED_SELECTION';
   requireNative3D05Visible102({doc});
