@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {safeFailureMark35,failurePhases35,failureClasses35} from '../research/master-consolidation-1054/webkit-phase-classifier-m35.mjs';
 const messages=[
  ['CLIP_SESSION',Error('WebAssembly.Memory(): could not allocate 1234 private tokens'),'MEMORY_SIGNAL'],
@@ -36,4 +37,11 @@ test('bounded closed stage/class list is explicit and stable',()=>{
  assert.deepEqual(new Set(failureClasses35).size,failureClasses35.length);
  assert.equal(failurePhases35.includes('CLIP_INFERENCE'),true);
  assert.equal(failurePhases35.includes('SIGLIP_RELEASE'),true);
+});
+
+test('session cleanup cannot overwrite an earlier first-model inference failure phase',async()=>{
+ const source=await readFile('research/master-consolidation-1054/cpu-wasm-review-worker-m35.mjs','utf8');
+ assert.match(source,/try\{await session\.release\(\);\}\s*catch\(releaseError\)/);
+ assert.match(source,/phase35=key==='fashionclip'\?'CLIP_INFERENCE':'SIGLIP_INFERENCE'/);
+ assert.doesNotMatch(source,/finally\s*\{\s*phase35=key==='fashionclip'\?'CLIP_RELEASE'/);
 });
