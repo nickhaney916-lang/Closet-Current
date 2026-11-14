@@ -57,7 +57,8 @@ export function inspectNewCandidate883(row,exposed,accepted=[]){
  // the actual old source record remains untouched.
  const group=sourceSeriesHint883(row?.sourcePage);
  const normalized={...row,seriesKey:group||row?.seriesKey||null};
- const flags=checkOverlap(normalized,exposed,accepted);
+ const prior=[...exposed,...accepted].map(p=>({...p,seriesKey:p.seriesKey||sourceSeriesHint883(p.sourcePage)}));
+ const flags=checkOverlap(normalized,prior);
  return {sourceMachineVerified:issues.length===0,
   newSourceDisjoint:issues.length===0&&flags.length===0,
   issues:[...new Set(issues)].sort(),overlapFlags:flags};
