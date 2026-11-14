@@ -32,10 +32,14 @@ export function createDisposableUpperTorsoWorldTrial60(
  // C59 detects strict witnesses only in the height band neck01..spine04.
  // Feather outside BOTH landmarks, avoiding an artificial discontinuity
  // or sharp edges at the waist or neckline. Do not translate the skirt.
- const lower=spine[1]-.12,lowerFull=spine[1]+.12,
-  upperFull=neck[1]-.12,upper=neck[1]+.12;
+ // Source P61 bone heights are NOT assumed to be 240mm apart.
+ // Narrow anatomical neck-to-spine spans need proportionally smaller
+ // feather regions or all actual torso vertices could be rejected.
+ const height=neck[1]-spine[1],feather=Math.min(.12,height/4);
+ const lower=spine[1]-feather,lowerFull=spine[1]+feather,
+  upperFull=neck[1]-feather,upper=neck[1]+feather;
  assert.ok(upperFull>lowerFull,
-  'C60 authentic original neck/spine source separation insufficient for controlled feather');
+  'C60 authentic original neck/spine source landmark separation invalid');
  for(let i=0;i<originalWorld.length;i+=3){
   const x=originalWorld[i],y=originalWorld[i+1],z=originalWorld[i+2];
   assert.ok([x,y,z].every(Number.isFinite),
