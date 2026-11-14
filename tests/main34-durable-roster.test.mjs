@@ -55,7 +55,8 @@ async function commitGuarded(db,proof){
   req.onsuccess=()=>{
    try{
     proof.assertCurrent();
-    if(!proof.matchesRoster(req.result))throw Error('M34_ROSTER_CHANGED');
+    const match=typeof proof.matchesRoster==='function'?proof.matchesRoster(req.result):proof.matchesRows(req.result);
+    if(!match)throw Error('M34_ROSTER_CHANGED');
     tx.objectStore('state').put({id:'outfit-board',current:{slots:{bottom:'source'}},saved:[]});
    }catch(e){error=e;tx.abort();}
   };
