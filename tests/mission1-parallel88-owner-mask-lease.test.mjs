@@ -345,7 +345,9 @@ test('P88 unit70 source digest blocks early done until verified garment is admit
  assert.equal(h.c.batch.length,1);
  assert.equal(h.c.items.length,0);
  assert.equal(h.c.worker.closed,true);
- assert.match(h.node('outfitSplitStatus').textContent,/1 individual clothing photos cropped/);
+ assert.match(h.node('outfitSplitStatus').textContent,/1 tentative clothing regions found, not a verified garment count/);
+ assert.match(h.node('outfitSplitStatus').textContent,/Small accessories such as watches, belts, headwear, bags or glasses/);
+ assert.match(h.node('outfitSplitStatus').textContent,/Photograph missing items individually/);
 });
 test('P88 preserve previously verified original photo drafts when a later unit receipt disagrees',async()=>{
  const h=captureHarness({ownerId:'owner-A',href:optin70});
@@ -445,4 +447,46 @@ test('P88 late P70 mask receipt inserted after editor opens but before Save reje
  await assert.rejects(c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null),/P88_SOURCE_MASK_CROP_FORBIDDEN/);
  assert.equal(c.writeCount,0);
  assert.equal(item.image,sampleSource88().image);
+});
+
+test('P88 an incomplete outfit scan prompts human comparison and independent close-up photos, never a complete item count',()=>{
+ const h=captureHarness({ownerId:'owner-A'});
+ h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,UElFQ0U=',
+  hint:{categories:['Dresses'],types:[],clipped:false},
+  instanceMethod:'native_semantic_group',requiresReview:true
+ }});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.items.length,0,'no implicit wardrobe save');
+ const status=h.node('outfitSplitStatus').textContent;
+ assert.match(status,/1 tentative clothing regions found, not a verified garment count/);
+ assert.match(status,/Compare these tentative regions with your original outfit photo/);
+ assert.match(status,/watches, belts, headwear, bags or glasses/);
+ assert.match(status,/tops or bottoms, may be missed/);
+ assert.match(status,/Photograph missing items individually and confirm each category, subtype and color yourself/);
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+});
+test('P88 zero recognised outfit regions does not falsely declare a clean empty inventory',()=>{
+ const h=captureHarness({ownerId:'owner-A'});
+ h.emit({type:'done',count:0});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ const status=h.node('outfitSplitStatus').textContent;
+ assert.match(status,/No confidently separated clothing regions found/);
+ assert.match(status,/watches, belts, headwear, bags or glasses/);
+ assert.match(status,/Photograph missing items individually/);
+});
+test('P88 missing-category caution is flag-gated and legacy outfit completion text is unchanged',()=>{
+ const h=captureHarness({href:'https://example.test/closet'});
+ assert.equal(h.c.worker.request.instanceReview840,undefined);
+ h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,UElFQ0U=',
+  hint:{categories:['Tops'],types:[],clipped:false},
+  instanceMethod:'native_semantic_group'
+ }});
+ h.emit({type:'done',count:1});
+ assert.match(h.node('outfitSplitStatus').textContent,/1 individual clothing photos cropped/);
+ assert.doesNotMatch(h.node('outfitSplitStatus').textContent,/tentative clothing regions|watches/);
+ assert.equal(h.c.items.length,0);
 });
