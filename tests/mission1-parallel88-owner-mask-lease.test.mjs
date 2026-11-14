@@ -383,7 +383,7 @@ function cropHarness88({saved=false,checkPhoto=null}={}){
   stopCamera(){},originalSourceOnly:true,
   node:(_,label)=>({label,disabled:false,type:''}),messages:[],
   message(s){c.messages.push(s);},openPhotoCrop(_,callbacks){c.editor=callbacks;return Promise.resolve();},
-  structuredClone, checkPhoto:checkPhoto||async()=>({colorEstimate:null,signature:[],aspect:1}),
+  structuredClone, checkPhoto:checkPhoto||(async()=>({colorEstimate:null,signature:[],aspect:1})),
   ClothingDetails:{fillColor:()=>({})},
   items:saved?[{id:'garment'}]:[],batch:[{id:'garment'}],writeCount:0,
   writeAll:async()=>{c.writeCount++},render(){},
