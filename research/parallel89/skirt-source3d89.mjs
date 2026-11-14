@@ -5,7 +5,6 @@
  * unobserved. This is a research SkinnedMesh PROPOSAL, never consumer clothing.
  */
 import * as THREE from 'three';
-import {createHash} from 'node:crypto';
 export const SKIRT_SOURCE89=Object.freeze({
  id:'commons-0043',category:'skirt',slot:'bottom',
  originalSHA256:'c8d0812ab69d698f5bf8dc5a14ace6b8034e4c74152471acf4f079fdd6d0c344',
@@ -15,14 +14,19 @@ export const SKIRT_SOURCE89=Object.freeze({
  alphaStatus:'REVIEW',rearObserved:false,physicalFitCertified:false,
  releaseAuthorized:false,familyAlpha:'HOLD'
 });
-const approved=new WeakSet(),sha=x=>createHash('sha256').update(x).digest('hex');
+const approved=new WeakSet();
+const sha=async x=>{
+ if(!globalThis.crypto?.subtle)throw Error('Secure source SHA-256 unavailable');
+ const bytes=await globalThis.crypto.subtle.digest('SHA-256',x);
+ return Array.from(new Uint8Array(bytes),n=>n.toString(16).padStart(2,'0')).join('');
+};
 const hex=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const fail=reason=>Object.freeze({status:'ORIGINAL_SKIRT_PHOTO_2D_REQUIRED',reason,
  consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'});
 /** Source attestation is byte-bound, process-local and intentionally NOT owner
  * approval; neither forged metadata nor same-category dress is admissible.
  */
-export function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47}={}){
+export async function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47}={}){
  try{
   if(lock?.id!==SKIRT_SOURCE89.id||lock?.verified!==true||
    lock?.sha256!==SKIRT_SOURCE89.originalSHA256||
@@ -37,11 +41,11 @@ export function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47}={}){
    throw Error('provisional-skirt-mask-needs-review');
   if(!(originalBytes instanceof Uint8Array)||originalBytes.length<1000||
     originalBytes[0]!==255||originalBytes[1]!==216||originalBytes[2]!==255||
-    sha(originalBytes)!==SKIRT_SOURCE89.originalSHA256)
+    await sha(originalBytes)!==SKIRT_SOURCE89.originalSHA256)
    throw Error('authentic-original-skirt-jpeg-sha-required');
   if(!(cutoutBytes instanceof Uint8Array)||cutoutBytes.length<300||
-    Buffer.from(cutoutBytes.subarray(0,8)).toString('hex')!=='89504e470d0a1a0a'||
-    sha(cutoutBytes)!==work47.cutoutSHA256)
+    cutoutBytes.slice(0,8).some((v,i)=>v!==[137,80,78,71,13,10,26,10][i])||
+    await sha(cutoutBytes)!==work47.cutoutSHA256)
    throw Error('exact-source-skirt-review-alpha-sha-required');
   const receipt=Object.freeze({schema:'P89-authentic-independent-source-skirt-photo-and-review-mask/v1',
    status:'SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED',
