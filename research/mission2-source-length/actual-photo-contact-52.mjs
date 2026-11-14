@@ -18,6 +18,8 @@ import {createDisposableUpperTorsoWorldTrial60,UPPER_TORSO_TRIAL_OUTWARD60}
  from './upper-torso-clearance-trial60.mjs';
 import {measureDisposableSourceSurfaceStrain61}
  from './upper-torso-surface-quality61.mjs';
+import {createDisposableClothAlternatives85}
+ from './alternative-photo-clearance85.mjs';
 const SOURCE_ID='commons-0053';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const fail=msg=>{throw Error('M2 C52 original-photo diagnostic '+msg);};
@@ -1064,13 +1066,72 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
 }
+/**
+ * P85: compare two genuinely different disposable alternatives against
+ * unchanged C58 strict body and C52/C53 self contact plus unchanged C61
+ * surface-quality guard. Original 163-bone skinned dress/texture are NEVER
+ * edited. No raw source positions, per-face IDs or private RGB in receipts.
+ */
+function compareAlternative85(root,mesh,body,world,indices,triangles,
+ tolerance,poseBudget,bodyBudget,baselineBodyStrict,baselineSelfStrict){
+ const byName=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
+ const pos=name=>{
+  const bone=byName.get(name);
+  if(!bone?.isBone)fail('P85 authentic 163-bone landmark missing');
+  return bone.getWorldPosition(new THREE.Vector3()).toArray();
+ };
+ const before=world.slice(),at=Date.now();
+ const candidates=createDisposableClothAlternatives85(world,indices,{
+  neck:pos('neck01'),spine:pos('spine04')});
+ const rows=candidates.map(({world:trial,...recipe})=>{
+  const self=analyze52(trial,indices,triangles,tolerance,poseBudget);
+  const bodyCheck=bodyClothContact58(body,trial,indices,tolerance,bodyBudget);
+  const strain=measureDisposableSourceSurfaceStrain61(world,trial,indices);
+  const complete=self.complete&&
+   self.distance53.distanceRefinementComplete&&bodyCheck.complete&&
+   strain.signedOriginalSourceFacesAnalyzed===triangles;
+  return Object.freeze({
+   ...recipe,
+   baselineBodyStrictCrossings:baselineBodyStrict,
+   baselineSelfStrictCrossings:baselineSelfStrict,
+   strictBodyCrossings:bodyCheck.strict,
+   strictSelfCrossings:self.strictCrossings,
+   unresolvedBodyNearOrZeroPairs:bodyCheck.near,
+   sourceFaceStrain61:strain,
+   fullOriginalContactAndQualitySweepCompleted:complete,
+   bodyClearanceSampled:complete&&bodyCheck.strict===0,
+   noIntroducedSelfCrossing:complete&&
+    self.strictCrossings<=baselineSelfStrict,
+   provisionalGeometryGuard:complete&&strain.provisionalMeshDistortionGuardPassed&&
+    (recipe.maxCoincidentSeamDeltaMeters??0)<.000002,
+   candidateAcceptedForWearable3D:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  });
+ });
+ if(!world.every((v,i)=>v===before[i]))
+  fail('P85 original original-photo skinned world geometry modified');
+ return Object.freeze({
+  schema:'M2-P85-source-pinned-alternative-world-clearance-Pareto',
+  licensedSourceTriangleCount:triangles,
+  actualSkinned163BoneSource:true,
+  elapsedDesktopOrBrowserMilliseconds:Date.now()-at,
+  originalPhotoUVRestSkinAnd163BonesUnchanged:true,
+  realSourceContactAndQualityGatesUnchanged:true,
+  candidates:rows,
+  allFourSourceContactSweepsCompleted:rows.every(x=>
+   x.fullOriginalContactAndQualitySweepCompleted),
+  noContinuousCollisionOrHumanVisualAcceptance:true,
+  noPhotoPixelsOrSourceCoordinatesExported:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 function articulatedContact58(root,mesh,source,indices,triangles,
  neutralWorld,neutral,anatomical57,tolerance,{
  maxComparisons58,maxCandidatePairs58,maxDistancePairs58,
  maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
  maxPoseSamples58,refineBodyHeightWitnessBands59=false,
  refineUpperTorsoFitTrial60=false,
- refineSurfaceStrain61=false
+ refineSurfaceStrain61=false,refineAlternative85=false
 }){
  const refused=(reason)=>Object.freeze({
   schema:'M2-licensed-original-163bone-articulated-contact-C58',
@@ -1138,6 +1199,11 @@ function articulatedContact58(root,mesh,source,indices,triangles,
    triangles,tolerance,poseBudget,trialBodyBudget60,
    neutralBody.strict,neutral.strictCrossings,refineSurfaceStrain61):null;
  const trialPoseResults60=[];
+ const alternativesPose85=[];
+ const neutralAlternatives85=refineAlternative85?
+  compareAlternative85(root,mesh,bodyFaces58(root,mesh,maxBodyFaces58),
+   neutralWorld,indices,triangles,tolerance,poseBudget,trialBodyBudget60,
+   neutralBody.strict,neutral.strictCrossings):null;
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
   bodyFacesCount=0,bodyCompared=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
@@ -1182,6 +1248,10 @@ function articulatedContact58(root,mesh,source,indices,triangles,
       body,world,indices,triangles,tolerance,poseBudget,
       trialBodyBudget60,bodyCheck.strict,self.strictCrossings,
       refineSurfaceStrain61));
+    if(refineAlternative85)
+     alternativesPose85.push(compareAlternative85(root,mesh,body,
+      world,indices,triangles,tolerance,poseBudget,trialBodyBudget60,
+      bodyCheck.strict,self.strictCrossings));
     bodyFacesCount+=bodyCheck.faces;
     bodyCompared+=bodyCheck.compared;
     bodyPairs+=bodyCheck.candidates;
@@ -1239,6 +1309,15 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   originalBodyStrictTransverseCrossingsAcrossSamples:bodyStrict,
   originalBodyPairSampleBudgetExhausted:bodyComplete!==samples,
   originalBodyIndependentClothFitCertified:false,
+  ...(refineAlternative85?{
+   disposableNeutralAlternativeClearance85:neutralAlternatives85,
+   disposableArmAlternativeClearance85:alternativesPose85,
+   sourceOriginalPhotoAlternativeSweepComplete85:
+    neutralAlternatives85?.allFourSourceContactSweepsCompleted===true&&
+    alternativesPose85.length===2&&
+    alternativesPose85.every(x=>x.allFourSourceContactSweepsCompleted),
+   allAlternativesRemainResearchOnly85:true
+  }:{}),
   ...(refineUpperTorsoFitTrial60?{
    disposableNeutralUpperTorsoTrial60:neutralTrial60,
    disposableArticulatedUpperTorsoTrials60:trialPoseResults60,
@@ -1408,7 +1487,7 @@ export function auditActualPhotographedDressSurfaces52({
  refineArticulatedContacts58=false,
  refineBodyHeightWitnessBands59=false,
  refineUpperTorsoFitTrial60=false,
- refineSurfaceStrain61=false,
+ refineSurfaceStrain61=false,refineAlternative85=false,
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
  maxDistancePairs58=100000,maxBodyFaces58=160000,
@@ -1461,6 +1540,8 @@ export function auditActualPhotographedDressSurfaces52({
     maxPoseSamples57<1||maxPoseSamples57>2||
     typeof refineSurfaceStrain61!=='boolean'||
     (refineSurfaceStrain61&&!refineUpperTorsoFitTrial60)||
+    typeof refineAlternative85!=='boolean'||
+    (refineAlternative85&&!refineSurfaceStrain61)||
     typeof refineUpperTorsoFitTrial60!=='boolean'||
     (refineUpperTorsoFitTrial60&&
      (!refineBodyHeightWitnessBands59||!refineArticulatedContacts58))||
@@ -1547,7 +1628,7 @@ export function auditActualPhotographedDressSurfaces52({
     maxComparisons58,maxCandidatePairs58,maxDistancePairs58,
     maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
     maxPoseSamples58,refineBodyHeightWitnessBands59,
-    refineUpperTorsoFitTrial60,refineSurfaceStrain61
+    refineUpperTorsoFitTrial60,refineSurfaceStrain61,refineAlternative85
    }):null;
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
@@ -1633,6 +1714,12 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    anatomicalSourceLoopNamesNotHumanVerified57:true,
    realSkinPoseSamplingNotCollisionApproval57:true
+  }:{}),
+  ...(refineAlternative85?{
+   genuineOriginalPhotoAlternativesFullyAudited85:
+    articulated58?.sourceOriginalPhotoAlternativeSweepComplete85===true,
+   originalLicensedSourceNotDeformedOrDeployed85:true,
+   noResearchAlternativeApprovedForWear85:true
   }:{}),
   ...(refineSurfaceStrain61?{
    genuineOriginalPhotoSurfaceStrainBudgetCompleted61:
