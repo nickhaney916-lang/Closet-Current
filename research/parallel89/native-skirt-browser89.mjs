@@ -10,8 +10,8 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {setResearchPose} from '/donor/research/three-d-43/intermediate-pose.mjs';
 import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
  buildOriginalPhotoSkirtProposal89} from './skirt-source3d89.mjs';
-import {posedSource84,countSourceContacts84}
- from '/p84/research/parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';
+import {posedSource84} from '/p84/research/parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';
+import {countStableOriginalBodyContacts89} from './skirt-stable-source-contacts89.mjs';
 import {compareActualNeutralSkirtRear89} from './skirt-neutral-contact-trial89.mjs';
 import {compareActualMeasuredSkirtFit89} from './skirt-body-measured-fit89.mjs';
 import {compareActualOriginalPhotoSkirtRegistration89} from './skirt-rigid-registration89.mjs';
@@ -163,7 +163,7 @@ function inspectPose(mode){
  try{
   sourceGeometry=posedSource84(candidate.meshes);
   bodyGeometry=posedSource84(bodies);
-  const contact=countSourceContacts84(sourceGeometry.g,bodyGeometry.g);
+  const contact=countStableOriginalBodyContacts89(sourceGeometry.g,bodyGeometry.g);
   check(Number.isSafeInteger(contact.count)&&contact.count>=0&&
    Number.isFinite(contact.maxDepth),'real posed triangle BVH source/body contact invalid');
   const row=Object.freeze({avatar:current,pose:mode,
@@ -192,7 +192,7 @@ function trialNeutralRear(){
    let skirt,body;
    try{
     skirt=posedSource84(candidate.meshes);body=posedSource84(bodies);
-    return countSourceContacts84(skirt.g,body.g);
+    return countStableOriginalBodyContacts89(skirt.g,body.g);
    }finally{skirt?.g.dispose();body?.g.dispose();}
   }
  });
@@ -273,7 +273,7 @@ function trialMeasuredAnatomyFit(){
    try{
     skirt=posedSource84(candidate.meshes);
     body=posedSource84(bodies);
-    return countSourceContacts84(skirt.g,body.g);
+    return countStableOriginalBodyContacts89(skirt.g,body.g);
    }finally{skirt?.g.dispose();body?.g.dispose();}
   }
  });
@@ -299,7 +299,7 @@ function trialRigidRegistration(){
    try{
     skirt=posedSource84(candidate.meshes);
     body=posedSource84(bodies);
-    return countSourceContacts84(skirt.g,body.g);
+    return countStableOriginalBodyContacts89(skirt.g,body.g);
    }finally{skirt?.g.dispose();body?.g.dispose();}
   }
  });
