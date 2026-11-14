@@ -1,0 +1,83 @@
+name: "MAIN1054 M31 four-original native owner JSEP vs CPU clothing classification parity — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-native-runtime-four-photo-m31-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  native-owner-jsep-cpu-parity:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 24
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '4'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+      MAIN1054_RUN_BUDGET_MS: '680000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Require verified M29 ancestor and no production source/cloud/photo changes
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 554e219bd8f39ad97c654296a73a982629536248 HEAD
+          git diff --exit-code 554e219bd8f39ad97c654296a73a982629536248 HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-native-runtime-parity-m31-browser.mjs
+          node --check research/master-consolidation-1054/native-runtime-parity-gate-m30.mjs
+      - name: Fail closed on exact owner decision, 47-label rankings and safeguards
+        run: node --test tests/master-native-runtime-parity-m31.test.mjs tests/master-real-model-sequence-gate.test.mjs tests/master-real-model-memory-gate.test.mjs tests/master-ort-wasm-ab-gate.test.mjs
+      - name: Install source-matched pretrained models, correct JSEP+CPU runtimes and WebKit
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3
+      - name: Verify original licensed photographs and pinned original model/runtime integrity
+        shell: bash
+        run: |
+          set -eu
+          printf '%s  %s\n' \
+            0cb5ac5be2c414d5b9e361f857108630c6d6e24a5ab9be3cf5f761de55289e94 node_modules/onnxruntime-web/dist/ort.wasm.min.mjs \
+            f061472c6e77d6d50d079aacdc0ff9b63fee287ddd2cbf46cf62438d3891de2b node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm \
+            | sha256sum --check
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Original unmodified JSEP worker in real WebKit native owner photo review (two originals)
+        env:
+          MAIN1054_M30_VARIANT: jsep
+        run: node scripts/test-main1054-native-runtime-parity-m31-browser.mjs webkit
+      - name: Verify JSEP original source owner, real models and measured process-tree memory
+        shell: bash
+        run: |
+          set -eu
+          node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-native-runtime-parity-m31/jsep/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
+          node research/master-consolidation-1054/real-model-memory-gate.mjs benchmark/main1054-native-runtime-parity-m31/jsep/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
+      - name: Experimental CPU-only worker in same native owner screen/WebKit and photo sources
+        env:
+          MAIN1054_M30_VARIANT: cpu
+        run: node scripts/test-main1054-native-runtime-parity-m31-browser.mjs webkit
+      - name: Source-matched strict full-vocabulary/abstention/owner-choice JSEP-vs-CPU parity
+        shell: bash
+        run: |
+          set -eu
+          node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-native-runtime-parity-m31/cpu/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
+          node research/master-consolidation-1054/real-model-memory-gate.mjs benchmark/main1054-native-runtime-parity-m31/cpu/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
+          node research/master-consolidation-1054/native-runtime-parity-gate-m30.mjs \
+            benchmark/main1054-native-runtime-parity-m31/jsep/webkit-4-diagnostic.json \
+            benchmark/main1054-native-runtime-parity-m31/cpu/webkit-4-diagnostic.json "$GITHUB_SHA"
+      - name: Archive public numeric-only photo/model runtime receipts even when blocked
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m31-four-original-native-jsep-cpu-parity-HOLD
+          path: benchmark/main1054-native-runtime-parity-m31/*/*.json
+          if-no-files-found: warn
+          retention-days: 14
