@@ -928,3 +928,80 @@ test('P88 normal non-outfit scanner cleanup is unaffected by the experimental un
  assert.equal(c.storageWrites[0].origin,'scanner');
  assert.equal(c.batch[0].localAnalyzed,true);
 });
+
+
+// Source-execute P88's actual owner/private-save lease functions. These tests
+// use synthetic JPEG bytes and fake IndexedDB, NOT hosted signed accounts.
+function sourceSaveHarness88(){
+ const start=appSource.indexOf('function sourceSaveLease88(');
+ const end=appSource.indexOf('// Mission 1 #88: unresolved SegFormer fragments',start);
+ assert.ok(start>=0&&end>start,'native source lease must be present');
+ const jpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,225,7,255,217]).toString('base64');
+ const hash=createHash('sha256').update(Buffer.from([255,216,255,225,7,255,217])).digest('hex');
+ const user={id:'owner-a'},writes=[],db={
+  name:'closet-current-user-owner-a',
+  transaction(stores,mode){
+   assert.deepEqual([...stores],['items','state']);
+   assert.equal(mode,'readwrite');
+   const tx={
+    objectStore(name){return {put(value){
+     writes.push({name,value});
+     if(name==='state')queueMicrotask(()=>tx.oncomplete?.());
+    }}}
+   };
+   return tx;
+  }
+ };
+ const receipt={ownerId:user.id,sourceSha256:hash,maskSha256:'a'.repeat(64)};
+ const item={id:'source-88',outfitSourceId:'photo-88',image:jpeg,
+  originalPhoto:{image:jpeg},recognitionPhoto:{image:jpeg},
+  reconciliation70:receipt,reconciliation70Status:'separate_confirmed'};
+ const c={window:{closetAuth:{user}},db,items:[],batch:[item],crypto:{
+  subtle:{digest:async(_,bytes)=>Uint8Array.from(createHash('sha256').update(Buffer.from(bytes)).digest()).buffer}
+ },atob:s=>Buffer.from(s,'base64').toString('binary'),
+  Uint8Array,structuredClone,Promise,
+  unit70OwnerEvidenceValid:i=>i.reconciliation70?.ownerId===c.window.closetAuth.user?.id,
+  queued:async fn=>{await c.beforeWrite?.();return fn();}
+ };
+ vm.createContext(c);
+ vm.runInContext(appSource.slice(start,end),c);
+ return {c,user,db,item,jpeg,hash,writes};
+}
+test('P88 owner source lease independently hashes original JPEG before atomic private save',async()=>{
+ const {c,item,writes}=sourceSaveHarness88();
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ await c.saveSourceBoundPiece88({...item},[],lease);
+ assert.deepEqual(writes.map(x=>x.name),['items','state']);
+ assert.equal(writes[0].value.originalPhoto.image,item.originalPhoto.image);
+ assert.equal(writes[1].value.batch.length,0);
+});
+test('P88 same-ID owner replacement during JPEG hash refuses original session save',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ let release;
+ const prior=c.crypto.subtle.digest;
+ c.crypto.subtle.digest=(...args)=>new Promise(resolve=>{release=()=>prior(...args).then(resolve);});
+ const verifying=c.sourceSavePhotoVerified88(lease);
+ await Promise.resolve();
+ c.window.closetAuth.user={id:'owner-a'};
+ release();
+ assert.equal(await verifying,false);
+ await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_STALE_SOURCE_OWNER/);
+ assert.equal(writes.length,0);
+});
+test('P88 queued cloud preflight rechecks signed owner and actual IDB handle before transaction',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ c.beforeWrite=async()=>{c.db={name:'closet-current-user-owner-a'};};
+ await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0);
+});
+test('P88 changed original JPEG or mask receipt cannot use earlier owner photo proof',async()=>{
+ const {c,item,writes,jpeg}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ item.originalPhoto={image:jpeg+'A'};
+ assert.equal(await c.sourceSavePhotoVerified88(lease),false);
+ item.originalPhoto={image:jpeg};
+ item.reconciliation70={...item.reconciliation70,maskSha256:'b'.repeat(64)};
+ await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_STALE_SOURCE_OWNER/);
+ assert.equal(writes.length,0);
+});
