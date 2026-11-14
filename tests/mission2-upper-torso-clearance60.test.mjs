@@ -71,8 +71,9 @@ test('C60: invalid original photo source, 163-bone anatomical reference and forg
 
 test('C60: native browser-imported original photographed source fit helper has no Node-only imports',async()=>{
  const helper=await readFile('research/mission2-source-length/upper-torso-clearance-trial60.mjs','utf8');
- assert.doesNotMatch(helper,/from\\s*['\\"]node:|import\\s*['\\"]node:|require\\s*\\(/);
- assert.doesNotMatch(helper,/\\bprocess\\.|\\bBuffer\\./);
+ assert.ok(!helper.includes("from 'node:")&&!helper.includes('from "node:'));
+ assert.ok(!helper.includes("import 'node:")&&!helper.includes('import "node:'));
+ assert.ok(!helper.includes('require(')&&!helper.includes('process.')&&!helper.includes('Buffer.'));
  const installer=await readFile('scripts/install-mission2-actual-photo-contact52.mjs','utf8');
- assert.match(installer,/upper-torso-clearance-trial60\\.mjs/);
+ assert.ok(installer.includes('upper-torso-clearance-trial60.mjs'));
 });
