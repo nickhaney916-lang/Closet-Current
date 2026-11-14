@@ -43,21 +43,53 @@ export function createCatalogCrosswalk({lease,readSavedItems,cryptoProvider=glob
   const before=current(),records=clone(await readSavedItems(before));
   if(key(current())!==key(before))fail('stale-read');
   if(!Array.isArray(records))fail('snapshot-required');
-  const originals=new Map(),raw=new Map();
+  const originals=new Map(),raw=new Map(),cutoutVerified=new Set();
   for(const record of records){
    // Require explicit owner on this new boundary; legacy ownerless records need migration proof.
    if(record.ownerId!==before.ownerId)fail('record-owner-mismatch');
    if(typeof record.id!=='string'||!record.id||record.id.trim()!==record.id||record.id.length>200)fail('invalid-item-id');
    const image=record.originalPhoto?.image;
    let valid=false;
-   if(!record.deleted&&!record.sourceRevoked&&image){
+   // A matching digest alone cannot silently upgrade a deliberately unverified
+   // source receipt. Both the saved receipt AND the original bytes must agree.
+   if(!record.deleted&&!record.sourceRevoked&&record.sourceHashVerified===true&&image){
     try{const sha=await digestBytes(jpegBytes(image),cryptoProvider);valid=sha===record.sourceSHA256&&sha===record.originalPhoto.sha256;}catch{}
    }
    originals.set(record.id,valid?image:null);raw.set(record.id,record);
+   const hint=record.segmentHint;
+   // Shared-photo split pieces require their own genuine cutout bytes. A
+   // claimed cutout SHA, model mask or ownerReviewedInstance boolean alone
+   // never establishes a selectable inventory garment.
+   if(valid&&hint?.verified===true&&hint.ownerReviewedInstance===true&&
+      hint.clipped!==true&&hint.originalSHA256===record.sourceSHA256&&
+      (hint.ownerId===undefined||hint.ownerId===before.ownerId)&&
+      typeof hint.cutoutSHA256==='string'&&/^[0-9a-f]{64}$/.test(hint.cutoutSHA256)&&
+      hint.cutoutSHA256!==record.sourceSHA256&&typeof hint.cutoutImage==='string'){
+    try{
+     if(await digestBytes(jpegBytes(hint.cutoutImage),cryptoProvider)===hint.cutoutSHA256)
+      cutoutVerified.add(record.id);
+    }catch{}
+   }
   }
   if(key(current())!==key(before))fail('stale-source');
   const live=records.filter(r=>!r.deleted&&!r.sourceRevoked);
-  const index=buildOwnerWardrobeIndex(before.ownerId,live.map(reviewed));
+  const index=buildOwnerWardrobeIndex(before.ownerId,live.map(record=>{
+   const row=reviewed(record),originalReady=!!originals.get(record.id);
+   const segmented=!!(record.segmentHint||record.outfitSourceId||record.cropBounds);
+   const distinctSegment=segmented&&cutoutVerified.has(record.id)&&
+    typeof record.outfitSourceId==='string'&&record.outfitSourceId.trim()!=='';
+   const single=record.singleGarmentVerified===true&&!segmented;
+   const grouped=!!(record.shoePair||record.combinedFragments70);
+   const resolvedUnit=!grouped||unitLineage(record,originalReady).ownerConfirmed;
+   // Keep an unverified piece visible for review, but never let its
+   // previously confirmed label make it selectable in an outfit. This is
+   // stronger than merely suppressing the fallback photo and consumer 3D.
+   if(!(originalReady&&(single||distinctSegment)&&resolvedUnit&&
+        record.requiresOwnershipConfirmation!==true)){
+    delete row.category;delete row.itemType;
+   }
+   return row;
+  }));
   return {before,index,originals,raw};
  }
  return Object.freeze({
