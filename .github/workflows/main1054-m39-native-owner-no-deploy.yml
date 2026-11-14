@@ -25,7 +25,8 @@ jobs:
           test "$(git rev-parse HEAD:research/main1054-handoff37/safe-readonly-handoff.mjs)" = "$(git rev-parse d2eb53448e784e588ef9b9e6bff6693a3a2da977:research/main1054-handoff37/safe-readonly-handoff.mjs)"
           test "$(git rev-parse HEAD:tests/main37-source-handoff.test.mjs)" = "$(git rev-parse d2eb53448e784e588ef9b9e6bff6693a3a2da977:tests/main37-source-handoff.test.mjs)"
           git diff --exit-code b6deb8cfeb78168eee4d9456d8cce05cff94d491 HEAD -- supabase/ benchmark/
-          git diff --name-only b6deb8cfeb78168eee4d9456d8cce05cff94d491 HEAD -- public/ | grep -vx 'public/outfit-board.js' | (! grep .)
+          extra_public=$(git diff --name-only b6deb8cfeb78168eee4d9456d8cce05cff94d491 HEAD -- public/ | grep -vx 'public/outfit-board.js' || true)
+          test -z "$extra_public" || { echo "BLOCKED unexpected public source: $extra_public"; exit 1; }
           git diff --name-only b6deb8cfeb78168eee4d9456d8cce05cff94d491 HEAD | while IFS= read -r path; do
             case "$path" in
               research/main1054-handoff39/trusted-native-owner-scope.mjs|public/outfit-board.js|scripts/test-native-3d-05-browser.mjs|tests/main39-native-provider.test.mjs|research/master-consolidation-1054/MILESTONE39.md|.github/workflows/main1054-m39-native-owner-no-deploy.yml) ;;
