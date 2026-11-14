@@ -38,7 +38,7 @@ export function clothingReviewInstances840(map){
   // If any accepted fragment is too small/weak, do NOT silently drop it.
   // Keep the entire source mask available for explicit manual grouping.
   if(!parts||!parts.length||parts.some(p=>!p.usable)){
-   output.push({...group,requiresReview:true,instanceMethod:'native_semantic_group',
+   output.push({...group,requiresReview:true,instanceMethod:'native_semantic_group_unresolved_fragments',
     componentReviewStatus:'unresolved_fragments_keep_source_mask'});
    continue;
   }
