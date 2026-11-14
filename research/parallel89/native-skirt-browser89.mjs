@@ -169,6 +169,9 @@ function inspectPose(mode){
   const row=Object.freeze({avatar:current,pose:mode,
    sourceId:SKIRT_SOURCE89.id,realAnatomicalRigBones:163,
    sourceTrianglesAudited:candidate.receipt.triangleCount,
+   trueOriginalPhotoSkirtFaceIDsStable:contact.trueOriginalSkirtTriangleIndexStable,
+   trueOriginalAnatomicalFaceIDsStable:contact.trueOriginalBodyTriangleIndexStable,
+   originalTriangleIDResolution:contact.originalFaceSourceResolution,
    strictTransverseSourceBodyTriangleCrossings:contact.count,
    maxOrientedPlaneDepthMeters:contact.maxDepth,
    status:contact.count>0?'ORIGINAL_SKIRT_BODY_CROSSING_WITNESSED_3D_REJECTED':
