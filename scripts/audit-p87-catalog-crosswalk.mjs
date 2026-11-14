@@ -12,7 +12,7 @@ try{for(const [engine,kind] of Object.entries({chromium,webkit})){
  const browser=await kind.launch({headless:true});
  try{const page=await browser.newPage();await page.goto(origin+'/README.md');
  const results=await page.evaluate(async({origin,image})=>{
-  const {createCatalogCrosswalk}=await import(origin+'/research/p87-catalog-crosswalk/crosswalk.mjs');
+  const {createCatalogCrosswalk,createNativeCatalogCrosswalk}=await import(origin+'/research/p87-catalog-crosswalk/crosswalk.mjs');
   const {digestBytes,jpegBytes}=await import(origin+'/public/native-canonical-photo-source-167.mjs');
   const sha=await digestBytes(jpegBytes(image));
   let token={ownerId:'synthetic-alice',session:'1',database:'alice',revision:'1'};
@@ -22,6 +22,18 @@ try{for(const [engine,kind] of Object.entries({chromium,webkit})){
   const checks={sha:sha==='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',original:row.fallback.image===image,only2D:row.state==='2D_ONLY'&&!row.consumer3D,slot:(await api.query({slot:'top'})).ids[0]==='dress'};
   records[0].sourceRevoked=true;try{await api.item('dress');checks.revoke=false;}catch{checks.revoke=true;}
   records[0].sourceRevoked=false;token={...token,ownerId:'synthetic-bob'};try{await api.query();checks.isolation=false;}catch{checks.isolation=true;}
+  let nativeSession={authenticated:true,ownerId:'synthetic-alice',epoch:1,operationEpoch:1,
+   privateDbName:'closet-current-user-synthetic-alice',authRef:{user:{id:'synthetic-alice'}},
+   privateDbRef:{name:'closet-current-user-synthetic-alice'}};
+  let replaceAuth=false,dbBound=false;
+  const native=createNativeCatalogCrosswalk({getSession:()=>nativeSession,getRevision:()=>1,
+   readOwnerItems:async scope=>{dbBound=scope.privateDbRef===nativeSession.privateDbRef;scope.assertCurrent();
+    if(replaceAuth)nativeSession={...nativeSession,authRef:{user:{id:'synthetic-alice'}}};return records;}});
+  checks.nativeOriginal=(await native.item('dress')).fallback.image===image;
+  checks.nativeDatabase=dbBound;
+  replaceAuth=true;try{await native.item('dress');checks.nativeRelogin=false;}catch{checks.nativeRelogin=true;}
+  replaceAuth=false;nativeSession={...nativeSession,authenticated:false};
+  try{await native.query();checks.nativeLogout=false;}catch{checks.nativeLogout=true;}
   return checks;
  },{origin,image});
  assert.ok(Object.values(results).every(Boolean),JSON.stringify(results));console.log(JSON.stringify({engine,checks:results,physicalPhone:false}));

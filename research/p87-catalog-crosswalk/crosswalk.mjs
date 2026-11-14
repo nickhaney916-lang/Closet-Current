@@ -92,3 +92,44 @@ export function createCatalogCrosswalk({lease,readSavedItems,cryptoProvider=glob
   }
  });
 }
+
+/** Native #1054 session-shape bridge. Read-only and unwired: the real controller
+ * supplies its current auth/DB objects and a content revision that changes on
+ * edits, deletion, revocation and restore. No JWT/cloud-auth claim is made here.
+ */
+export function createNativeCatalogCrosswalk({getSession,getRevision,readOwnerItems,cryptoProvider=globalThis.crypto}={}){
+ if([getSession,getRevision,readOwnerItems].some(f=>typeof f!=='function'))fail('native-interface-required');
+ const refs=new WeakMap();let sequence=0;
+ const refId=ref=>{if(!refs.has(ref))refs.set(ref,++sequence);return refs.get(ref);};
+ const reference=x=>x!==null&&(typeof x==='object'||typeof x==='function');
+ const generation=x=>typeof x==='number'&&Number.isSafeInteger(x)&&x>=0||typeof x==='string'&&x.length>=8&&x.length<=160;
+ const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&a.operationEpoch===b.operationEpoch&&a.authRef===b.authRef&&a.privateDbRef===b.privateDbRef&&a.privateDbName===b.privateDbName;
+ function active(){
+  const s=getSession();
+  if(!s||s.authenticated!==true||typeof s.ownerId!=='string'||!s.ownerId.trim()||
+    !generation(s.epoch)||!generation(s.operationEpoch)||
+    !reference(s.authRef)||!reference(s.privateDbRef)||s.authRef.user?.id!==s.ownerId||
+    s.privateDbName!=='closet-current-user-'+s.ownerId||s.privateDbRef.name!==s.privateDbName)
+   fail('native-signed-session-required');
+  s.authRef.assertCurrent?.();
+  return Object.freeze({ownerId:s.ownerId,epoch:s.epoch,operationEpoch:s.operationEpoch,
+   authRef:s.authRef,privateDbRef:s.privateDbRef,privateDbName:s.privateDbName});
+ }
+ function capture(){
+  const before=active(),revision=getRevision(before);
+  if(!same(before,active()))fail('native-session-changed');
+  if(!generation(revision))fail('native-content-revision-required');
+  return {before,lease:{ownerId:before.ownerId,
+   session:JSON.stringify([refId(before.authRef),before.epoch,before.operationEpoch]),
+   database:String(refId(before.privateDbRef)),revision:JSON.stringify(revision)}};
+ }
+ const stamp=x=>JSON.stringify([x.ownerId,x.session,x.database,x.revision]);
+ return createCatalogCrosswalk({cryptoProvider,lease:()=>capture().lease,
+  async readSavedItems(expected){
+   const captured=capture();
+   const assertCurrent=()=>{if(stamp(capture().lease)!==stamp(expected))fail('native-session-or-content-changed');};
+   assertCurrent();
+   const records=await readOwnerItems(Object.freeze({...captured.before,assertCurrent}));
+   assertCurrent();return records;
+  }});
+}
