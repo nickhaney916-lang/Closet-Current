@@ -3,9 +3,14 @@ import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const hashes={dress:'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',shirt:'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64'};
 export async function checkSavedSwitch90(page,engine){
- const samples=[],baseline=new Map(),denimRequests=[];
+ const samples=[],baseline=new Map(),denimRequests=[],dressManifestRequests=[];
  const onDenimRequest=r=>{const p=new URL(r.url()).pathname;if(/^\/benchmark\/three-d-(31|37)\//.test(p))denimRequests.push(p);};
+ const onDressManifestRequest=r=>{
+  if(new URL(r.url()).pathname==='/benchmark/work47/manifest.json')
+   dressManifestRequests.push(r.url());
+ };
  page.on('request',onDenimRequest);
+ page.on('request',onDressManifestRequest);
  const count=Number(process.env.P90_SWITCH_COUNT||16);
  assert.ok([4,16].includes(count));
  const out=process.env.P90_PROFILE_VARIANT?'benchmark/parallel90-profile/'+engine+'/'+process.env.P90_PROFILE_VARIANT:'benchmark/parallel90/'+engine;
@@ -19,7 +24,7 @@ export async function checkSavedSwitch90(page,engine){
  for(const figure of ['female','male']){
   for(let i=1;i<=count;i++){
    const selected=i%2?2:0,mode=selected===2?'shirt':'dress';
-   const began=Date.now(),denimRequestStart=denimRequests.length;
+   const began=Date.now(),denimRequestStart=denimRequests.length,dressRequestStart=dressManifestRequests.length;
    // Actual accessible UI change; it invokes guarded native selectSaved,
    // destroys the old preview and creates a fresh independently admitted one.
    await page.selectOption('#native3D90Saved',String(selected));
@@ -44,6 +49,10 @@ export async function checkSavedSwitch90(page,engine){
    const denimRequestCount=denimRequests.length-denimRequestStart;
    if(dressOnly)assert.equal(denimRequestCount,0,'canonical dress never requests unused denim assets');
    else assert.ok(denimRequestCount>0,'baseline and shirt path retain full original bundle checks');
+   const dressRequestCount=dressManifestRequests.length-dressRequestStart;
+   if(expectedBoot==='none'&&mode==='shirt')
+    assert.equal(dressRequestCount,0,'source-verified shirt must not prepare unused dress manifest');
+   else assert.ok(dressRequestCount>0,'dress and baseline source load retain dress manifest checks');
    assert.equal(state.garmentSources90[mode],hashes[mode]);
    assert.equal(state.garmentSources90[mode==='shirt'?'dress':'shirt'],null,'old garment removed');
    assert.equal(state.fallbackCount,3,'unsupported outerwear/shoes stay photo-only');
@@ -61,7 +70,7 @@ export async function checkSavedSwitch90(page,engine){
     const fresh=window.__p90LastSwitchCanvas!==c;
     window.__p90LastSwitchCanvas=c;return fresh;
    }),true,'each switch must replace the old actual canvas object');
-   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
+   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,dressRequestCount,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
    if([1,4,16].includes(i)){
     console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
     await page.screenshot({path:out+'/'+figure+'-'+i+'-saved-switches.png'});
@@ -73,7 +82,7 @@ export async function checkSavedSwitch90(page,engine){
   }
 
  }
- page.off('request',onDenimRequest);
+ page.off('request',onDenimRequest);page.off('request',onDressManifestRequest);
  await page.evaluate(()=>{delete window.__p90LastSwitchCanvas;});
  await writeFile(out+'/saved-switches.json',JSON.stringify({engine,samples,
   sequence:count+' cumulative selections per rig',
