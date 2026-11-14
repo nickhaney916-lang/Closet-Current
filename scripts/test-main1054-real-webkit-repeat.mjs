@@ -123,10 +123,10 @@ window.result1054=()=>({
 /** Continuous native editor, REAL pinned q8 models, no private account or save.
  * A crash is a legitimate OBSERVED FAILURE of release acceptance, not an
  * excuse to report a successful 16-photo run. Never infer OOM from a crash. */
-const results=[],requests=[],pageErrors=[],consoleErrors=[];
+const results=[],requests=[],pageErrors=[],consoleErrors=[],modelStages=[];
 const events={workerCreated:0,workerTerminated:0,pageCrash:0,pageClosed:0,browserDisconnected:0};
 const startTime=Date.now(),failures=[];
-let browser,page,context,intentionalShutdown=false;
+let browser,page,context,browserServer,intentionalShutdown=false;
 const emit=async()=>{
  const completed=results.length;
  const state={
@@ -139,7 +139,8 @@ const emit=async()=>{
   uniquePublicPhotoSources:photos.length,
   photoAttemptsTarget:target,completedPhotos:completed,
   gateCounts:Object.fromEntries([2,4,8,16].map(n=>[String(n),{requested:target>=n,met:completed>=n}])),
-  rootCause:'UNDETERMINED',
+  rootCause:'UNDETERMINED',modelStages,
+  runBudgetMs:480000,
   pageEvents:events,resourceMeasurements:{
    browserProcessRSSBytes:null,peakBrowserProcessRSSBytes:null,
    measuredMemory:false,source:'no browser process RSS/pressure available from Playwright interface'},
@@ -155,10 +156,23 @@ const emit=async()=>{
  await writeFile(out+'/'+engineName+'-'+target+'-diagnostic.json',JSON.stringify(state,null,2)+'\n');
  return state;
 };
+// page.evaluate and browser teardown have no guaranteed timeout. Keep the
+// whole diagnostic bounded independently of page responsiveness. The owned
+// browser process is forcibly stopped only when this research budget expires.
+const runBudget=setTimeout(async()=>{
+ failures.push({category:'HARNESS_WALL_CLOCK_BUDGET',budgetMs:480000,
+  lastModelStage:modelStages.at(-1)?.stage||null,completedPhotos:results.length});
+ try{await emit();}finally{
+  try{browserServer?.process()?.kill('SIGKILL');}catch{}
+  console.log('MASTER_REAL_MODEL_BUDGET',JSON.stringify({engine:engineName,completed:results.length,target,releaseReady:false}));
+  process.exit(2);
+ }
+},480000);
 try{
- browser=await ({webkit,chromium}[engineName]).launch({
+ browserServer=await ({webkit,chromium}[engineName]).launchServer({
   headless:true,args:engineName==='chromium'?['--no-sandbox']:[],
  });
+ browser=await ({webkit,chromium}[engineName]).connect(browserServer.wsEndpoint());
  browser.on('disconnected',()=>{if(!intentionalShutdown)events.browserDisconnected++;});
  context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await context.route('**/*',route=>{
@@ -172,7 +186,14 @@ try{
  page=await context.newPage();
  page.setDefaultTimeout(300000);
  page.on('pageerror',e=>pageErrors.push(String(e.message).slice(0,180)));
- page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text().slice(0,180));});
+ page.on('console',m=>{
+  if(m.type()==='error')consoleErrors.push(m.text().slice(0,180));
+  if(m.text().startsWith('MASTER_REAL_MODEL_STAGE ')){
+   const stage=m.text().slice('MASTER_REAL_MODEL_STAGE '.length,120);
+   modelStages.push({attempt:results.length+1,stage,elapsedMs:Date.now()-startTime});
+   console.log('MASTER_REAL_MODEL_PROGRESS',JSON.stringify(modelStages.at(-1)));
+  }
+ });
  page.on('crash',()=>{events.pageCrash++;});
  page.on('close',()=>{if(!intentionalShutdown)events.pageClosed++;});
  page.on('worker',worker=>{
@@ -281,6 +302,8 @@ try{
  intentionalShutdown=true; // voluntary shutdown is NOT a browser crash or disconnect
  try{await context?.close();}catch{}
  try{await browser?.close();}catch{}
+ try{await browserServer?.close();}catch{}
+ clearTimeout(runBudget);
  const state=await emit();
  console.log('MAIN1054_WEBKIT_GENUINE_SUMMARY',JSON.stringify({
   engine:engineName,completed:state.completedPhotos,target,

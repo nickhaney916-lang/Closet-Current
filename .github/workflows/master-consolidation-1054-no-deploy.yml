@@ -8,7 +8,7 @@ permissions:
   contents: read
 concurrency:
   group: master1054-exact-source
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   integrated-native-signed-and-browsers:
     runs-on: ubuntu-24.04
@@ -320,7 +320,7 @@ jobs:
         retention-days: 14
   real-pretrained-continuous-sequence:
     runs-on: ubuntu-24.04
-    timeout-minutes: 45
+    timeout-minutes: 20
     strategy:
       fail-fast: false
       matrix:
