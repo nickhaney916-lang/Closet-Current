@@ -955,3 +955,125 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
   JSON.stringify(summary,null,2)+'\n');
  console.log('M2_P85_REAL_SOURCE_ALTERNATIVE_CLEARANCE',JSON.stringify(summary));
 }
+
+/**
+ * P85 follow-on: witness-local relief measured against the UNCHANGED
+ * source C52/C53/C58/C61 algorithms. The raw contact face IDs remain
+ * private to the genuine-source original skinned 163-bone browser run.
+ * Only an anonymous per-pose count and quality aggregates are recorded.
+ */
+if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
+ const perWidth=receipts.map(r=>{
+  const a=r.originalArticulatedContactReceipt58;
+  assert.equal(a.allWitnessLocalizedOriginalSourceSweepsCompleted85,true);
+  assert.equal(a.originalBodyWitnessFaceIDsOnlyInMemory85,true);
+  const all=[a.disposableNeutralAlternativeClearance85,
+   ...a.disposableArmAlternativeClearance85];
+  assert.equal(all.length,3);
+  return all.map((pose,poseIndex)=>{
+   assert.equal(pose.allFourWitnessLocalizedSweepsCompleted85,true);
+   assert.equal(pose.originalContactWitnessIdsNeverExported85,true);
+   const count=pose.privateOriginalStrictClothWitnessFaceCount85;
+   assert.ok(Number.isSafeInteger(count)&&count>0&&
+    count<=pose.candidates[0].baselineBodyStrictCrossings);
+   assert.equal(pose.witnessLocalizedCandidates85.length,4);
+   const vals=pose.witnessLocalizedCandidates85.map((t,i)=>{
+    assert.equal(t.schema,'M2-P85-disposable-licensed-world-candidate');
+    assert.equal(t.method,i<2?'strict-witness-local-radial':
+     'strict-witness-local-edge-projection');
+    assert.equal(t.localGraphRadiusHops85,i%2===0?12:24);
+    assert.equal(t.originalStrictWitnessFaceCount85,count);
+    assert.equal(t.originalSourceFaceIdsNeverExported85,true);
+    assert.equal(t.bodyCollisionAndC61QualityMustBeRemeasured,true);
+    assert.equal(t.originalPhotoWorldAndRestNeverModified,true);
+    assert.equal(t.originalIndicesNeverModified,true);
+    assert.equal(t.sourceUVTextureSkinAndBonesNeverModified,true);
+    assert.equal(t.fullOriginalContactAndQualitySweepCompleted,true,
+     'P85 localized original source cannot report truncated C52/C58 sweeps');
+    assert.equal(t.sourceFaceStrain61.signedOriginalSourceFacesAnalyzed,
+     r.originalSourceFaces);
+    assert.equal(t.baselineBodyStrictCrossings,
+     pose.candidates[0].baselineBodyStrictCrossings);
+    assert.equal(t.baselineSelfStrictCrossings,
+     pose.candidates[0].baselineSelfStrictCrossings);
+    assert.equal(t.bodyClearanceSampled,t.strictBodyCrossings===0);
+    assert.equal(t.noIntroducedSelfCrossing,
+     t.strictSelfCrossings<=t.baselineSelfStrictCrossings);
+    const q=t.sourceFaceStrain61;
+    assert.equal(t.provisionalGeometryGuard,
+     q.provisionalMeshDistortionGuardPassed&&
+      (t.maxCoincidentSeamDeltaMeters??0)<.000002);
+    assert.ok(t.maxAppliedMeters>=0&&
+     t.maxAppliedMeters<=.006002);
+    assert.equal(t.candidateNotInstalledInRenderer,true);
+    assert.equal(t.releaseAuthorized,false);
+    assert.equal(t.familyAlpha,'HOLD');
+    return {
+     method:t.method,radiusGraphHops:t.localGraphRadiusHops85,
+     strictBodyCrossings:t.strictBodyCrossings,
+     nearOrZeroBodyPairs:t.unresolvedBodyNearOrZeroPairs,
+     strictSelfCrossings:t.strictSelfCrossings,
+     sourceOriginalTrianglesEdgeAbove2Percent:
+      q.facesWithMaxEdgeStrainAbove2Percent,
+     sourceOriginalTrianglesEdgeAbove5Percent:
+      q.facesWithMaxEdgeStrainAbove5Percent,
+     sourceOriginalTrianglesAreaAbove10Percent:
+      q.facesWithAreaChangeAbove10Percent,
+     sourceOriginalTrianglesNormalsAbove10Degrees:
+      q.facesWithNormalTurnAbove10Degrees,
+     invertedOriginalFaces:q.facesWithReversedOrientation,
+     collapsedOriginalFaces:q.sourceFacesDegenerateOrCollapsed,
+     maxSourceEdgeStrain:q.maxOriginalPhotoWorldEdgeRelativeStrain,
+     maxSourceAreaChange:q.maxOriginalPhotoFaceAreaRelativeChange,
+     maxSourceNormalTurnDegrees:q.maxOriginalPhotoFaceNormalTurnDegrees,
+     trialVerticesMoved:t.movedVertices,
+     positionGroupsLocalized:t.localizedSourcePositionGroups85,
+     furthestMovedGraphHop:t.furthestMovedGraphHop85,
+     maxMovedMeters:t.maxAppliedMeters,
+     maxCoincidentPositionGapMeters:
+      t.maxCoincidentSeamDeltaMeters??null,
+     sourceSampleContactAndQualityPass:
+      t.bodyClearanceSampled&&t.noIntroducedSelfCrossing&&
+       t.provisionalGeometryGuard
+    };
+   });
+   return {poseIndex,privateWitnessFacesCount:count,variants:vals};
+  });
+ });
+ for(const rows of perWidth.slice(1))
+  assert.deepEqual(rows,perWidth[0],
+   'P85 genuine source topology and strict collision/strain must be identical across CSS widths');
+ const poses=perWidth[0],
+  allPosePass=poses[0].variants.map((v,i)=>({
+   method:v.method,graphRadiusHops:v.radiusGraphHops,
+   allThreeOriginal163BonePosesPass:poses.length===3&&poses.every(p=>
+    p.variants[i].method===v.method&&
+    p.variants[i].radiusGraphHops===v.radiusGraphHops&&
+    p.variants[i].sourceSampleContactAndQualityPass)
+  }));
+ const report={
+  schema:'M2-P85-original-photo-C58-strict-witness-topology-localized-clearance',
+  originalLicensedPhotoId:'commons-0053',
+  originalLicensedPhotoSHA256:
+   'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
+  originalPhotoTriangles:first.originalSourceFaces,
+  anatomicalBones:163,
+  genuineOriginalWorldPoses:3,
+  desktopChromiumCSSWidths:[320,390,430],
+  witnessFacesRemainAnonymous:true,
+  poses,perCandidateThreePoseQualityAndContactGate:allPosePass,
+  allSourceCandidateQualityGatesPassed:allPosePass.some(x=>
+   x.allThreeOriginal163BonePosesPass),
+  continuousPoseClearanceNotDemonstrated:true,
+  actualPhotoTextureAndUVProjectionChangesNotRendered:true,
+  realPhysicalPhoneAcceptanceNotTested:true,
+  independentRealHumanVisualAppearanceNotTested:true,
+  originalSourceGeometryBonesPhotoUVSkinNotChanged:true,
+  candidatesInstalledInConsumer:false,
+  familyAlpha:'HOLD',releaseAuthorized:false
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-strict-witness-local-clearance85.json',
+  JSON.stringify(report,null,2)+'\n');
+ console.log('M2_P85_REAL_LICENSED_WITNESS_LOCAL_NO_GO_DIAGNOSTIC',
+  JSON.stringify(report));
+}
