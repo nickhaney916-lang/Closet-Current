@@ -19,7 +19,7 @@ function fixture(){
   cleanOutfitBoard:()=>({name:'',slots:{}}),
   syncBoardInputs(){for(const [id,key] of Object.entries({boardName:'name',boardOccasion:'occasion',
    boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'}))
-   elements[id].value=this.currentBoard[key]||'';},
+   elements[id].value=c.currentBoard[key]||'';},
   nativeLossless04ClearPreview(){
    for(const id of ['boardSlots','savedBoards','boardPickerItems','boardOwnedOptions','boardRecommendations'])
     elements[id].replaceChildren();
