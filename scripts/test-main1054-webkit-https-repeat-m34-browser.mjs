@@ -59,14 +59,18 @@ try{
  assert.equal((await request('/','POST')).status,405,'server must reject all uploads/writes');
  for(let repeat=1;repeat<=REPEATS;repeat++){
   const name='webkit',engine=webkit;
-  let browser,context,page,memoryTimer=null;
+  let browser,browserServer,context,page,memoryTimer=null;
   const telemetry={repeat,workerCreated:0,workerClosed:0,
    pageCrashes:0,modelStageCounts:{verifying:0,first:0,second:0,onnxInvoked:0},
    lastModelStage:'NONE',maxSampledProcessTreePSSBytes:0,sampleCount:0,
    requestFailures:0,consoleErrors:0};
   try{
-   browser=await engine.launch({headless:true});
-   const pid=browser.process()?.pid;
+   // Playwright Browser has no public process() API. Use its supported
+   // BrowserServer owner so Linux /proc sampling is pinned to that exact PID.
+   browserServer=await engine.launchServer({headless:true});
+   const pid=browserServer.process()?.pid;
+   assert.ok(Number.isSafeInteger(pid)&&pid>0,'M34_BROWSER_SERVER_PID_REQUIRED');
+   browser=await engine.connect(browserServer.wsEndpoint());
    const sample=()=>{
     try{
      const reading=snapshotBrowserProcessTree(pid);
@@ -183,7 +187,9 @@ try{
       window.workerError1054:'NO_SAFE_P82_ERROR'
     }));
    }catch{}
-   const kind=String(e?.message||'').includes('MODEL_WORKER_REPORTED_FAILURE')?
+   const kind=telemetry.workerCreated===0?
+    'HARNESS_INSTRUMENTATION_SETUP_FAILURE':
+    String(e?.message||'').includes('MODEL_WORKER_REPORTED_FAILURE')?
     'MODEL_WORKER_REPORTED_FAILURE':
     e?.name==='TimeoutError'?'BROWSER_TIMEOUT':
     'SOURCE_OR_OWNER_ACCEPTANCE_FAILURE';
@@ -199,6 +205,7 @@ try{
    clearInterval(memoryTimer);
    try{await context?.close();}catch{}
    try{await browser?.close();}catch{}
+   try{await browserServer?.close();}catch{}
   }
  }
  await save();
