@@ -16,6 +16,8 @@ const src='research/mission2-source-length/actual-photo-contact-52.mjs';
 const dest=join(donor,src);
 await mkdir(dirname(dest),{recursive:true});
 await copyFile(src,dest);
+await copyFile('research/mission2-source-length/upper-torso-clearance-trial60.mjs',
+ join(donor,'research/mission2-source-length/upper-torso-clearance-trial60.mjs'));
 const controllerPath=join(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
 let controller=await readFile(controllerPath,'utf8');
 const importAnchor="import {sampleSourceDressMotion36} from '../mission2-source-length/source-dress-motion.mjs';";
@@ -38,7 +40,8 @@ controller=controller.replace(anchor,anchor+
  "         refineBoundaryComponents56:query52.get(\x27photoDressBoundaries56\x27)===\x27research\x27,\n"+
  "         refineAnatomicalLoopLandmarks57:query52.get(\x27photoDressLandmarks57\x27)===\x27research\x27,\n"+
  "         refineArticulatedContacts58:query52.get(\x27photoDressContact58\x27)===\x27research\x27,\n"+
- "         refineBodyHeightWitnessBands59:query52.get(\x27photoDressBodyBands59\x27)===\x27research\x27});\n"+
+ "         refineBodyHeightWitnessBands59:query52.get(\x27photoDressBodyBands59\x27)===\x27research\x27,\n"+
+ "         refineUpperTorsoFitTrial60:query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27});\n"+
  "        if(evidence52.schema!=='M2-real-original-photo-surface-diagnostic-C52'||\n"+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
