@@ -777,3 +777,137 @@ if(process.env.PHOTO_DRESS_STRAIN61==='1'){
  console.log('M2_C61_REAL_LICENSED_SOURCE_CLOTH_STRAIN_SAFE_SUMMARY',
   JSON.stringify(summary));
 }
+
+/**
+ * P85: genuine licensed original photographed world dress and 163-bone
+ * anatomical body. Four disposable trials, both original C52/C58 collision
+ * definitions and unchanged C61 source-face quality; no altered exemptions.
+ * Receipts contain numbers only, never garment coordinates/photo pixels.
+ */
+if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
+ assert.equal(process.env.PHOTO_DRESS_STRAIN61,'1',
+  'P85 source alternative trial must retain full C61 6mm surface evidence');
+ const measured=receipts.map(r=>{
+  assert.equal(r.genuineOriginalPhotoAlternativesFullyAudited85,true);
+  assert.equal(r.originalLicensedSourceNotDeformedOrDeployed85,true);
+  assert.equal(r.noResearchAlternativeApprovedForWear85,true);
+  const a=r.originalArticulatedContactReceipt58;
+  assert.equal(a?.sourceOriginalPhotoAlternativeSweepComplete85,true);
+  const all=[a.disposableNeutralAlternativeClearance85,
+   ...a.disposableArmAlternativeClearance85];
+  const originals=[a.disposableNeutralUpperTorsoTrial60,
+   ...a.disposableArticulatedUpperTorsoTrials60];
+  assert.equal(all.length,3);
+  return all.map((p,i)=>{
+   assert.equal(p.schema,'M2-P85-source-pinned-alternative-world-clearance-Pareto');
+   assert.equal(p.licensedSourceTriangleCount,r.originalSourceFaces);
+   assert.equal(p.actualSkinned163BoneSource,true);
+   assert.equal(p.allFourSourceContactSweepsCompleted,true);
+   assert.equal(p.originalPhotoUVRestSkinAnd163BonesUnchanged,true);
+   assert.equal(p.realSourceContactAndQualityGatesUnchanged,true);
+   assert.equal(p.noPhotoPixelsOrSourceCoordinatesExported,true);
+   assert.equal(p.releaseAuthorized,false);
+   assert.equal(p.candidates.length,4);
+   const alternatives=p.candidates.map(t=>{
+    assert.equal(t.schema,'M2-P85-disposable-licensed-world-candidate');
+    assert.ok(['quintic-height-envelope',
+     'welded-edge-strain-projection'].includes(t.method));
+    assert.equal(t.fullOriginalContactAndQualitySweepCompleted,true);
+    assert.equal(t.originalPhotoWorldAndRestNeverModified,true);
+    assert.equal(t.sourceUVTextureSkinAndBonesNeverModified,true);
+    assert.equal(t.originalIndicesNeverModified,true);
+    assert.equal(t.noHumanReviewedPhotorealism,true);
+    assert.equal(t.candidateNotInstalledInRenderer,true);
+    assert.equal(t.releaseAuthorized,false);
+    assert.ok(t.maxAppliedMeters>=0&&
+     t.maxAppliedMeters<=t.limitMeters+.000002);
+    const q=t.sourceFaceStrain61;
+    assert.equal(q.schema,'M2-C61-disposable-original-photo-source-triangle-strain');
+    assert.equal(q.signedOriginalSourceFacesAnalyzed,r.originalSourceFaces);
+    assert.equal(q.originalPhotoTextureRestUVAndSkinNeverEdited,true);
+    assert.equal(q.candidateNotAllowedInConsumer3D,true);
+    assert.equal(t.baselineBodyStrictCrossings,
+     originals[i].baselineOriginalBodyStrictCrossings);
+    assert.equal(t.baselineSelfStrictCrossings,
+     originals[i].baselineOriginalSelfStrictCrossings);
+    assert.equal(t.bodyClearanceSampled,t.strictBodyCrossings===0);
+    assert.equal(t.noIntroducedSelfCrossing,
+     t.strictSelfCrossings<=t.baselineSelfStrictCrossings);
+    assert.equal(t.provisionalGeometryGuard,
+     q.provisionalMeshDistortionGuardPassed&&
+     (t.maxCoincidentSeamDeltaMeters??0)<.000002);
+    return {
+     method:t.method,limitMeters:t.limitMeters,
+     strictBodyCrossings:t.strictBodyCrossings,
+     strictSelfCrossings:t.strictSelfCrossings,
+     unresolvedBodyNearOrZeroPairs:t.unresolvedBodyNearOrZeroPairs,
+     sourceTrianglesOver2PercentEdge:q.facesWithMaxEdgeStrainAbove2Percent,
+     sourceTrianglesOver5PercentEdge:q.facesWithMaxEdgeStrainAbove5Percent,
+     sourceTrianglesOver10PercentArea:q.facesWithAreaChangeAbove10Percent,
+     sourceTrianglesOver10DegreesNormal:q.facesWithNormalTurnAbove10Degrees,
+     flipped:q.facesWithReversedOrientation,
+     collapsed:q.sourceFacesDegenerateOrCollapsed,
+     maxEdgeStrain:q.maxOriginalPhotoWorldEdgeRelativeStrain,
+     maxNormalTurnDegrees:q.maxOriginalPhotoFaceNormalTurnDegrees,
+     maxAreaChange:q.maxOriginalPhotoFaceAreaRelativeChange,
+     maxMovedMeters:t.maxAppliedMeters,
+     movedVertices:t.movedVertices,
+     maxCoincidentSeamDeltaMeters:t.maxCoincidentSeamDeltaMeters??null,
+     sampledContactAndQualityThresholdsPassed:
+      t.bodyClearanceSampled&&t.noIntroducedSelfCrossing&&
+      t.provisionalGeometryGuard
+    };
+   });
+   const base=originals[i],bq=base.sourceOriginalPhotoSurfaceStrain61;
+   return {
+    poseIndex:i,authenticSourceBodyStrict:base.baselineOriginalBodyStrictCrossings,
+    authenticSourceSelfStrict:base.baselineOriginalSelfStrictCrossings,
+    original6mm:{
+     strictBodyCrossings:base.trialOriginalBodyStrictCrossings,
+     strictSelfCrossings:base.trialOriginalSelfStrictCrossings,
+     sourceTrianglesOver5PercentEdge:bq.facesWithMaxEdgeStrainAbove5Percent,
+     sourceTrianglesOver10PercentArea:bq.facesWithAreaChangeAbove10Percent,
+     maxEdgeStrain:bq.maxOriginalPhotoWorldEdgeRelativeStrain,
+     maxAreaChange:bq.maxOriginalPhotoFaceAreaRelativeChange,
+     provisionalGuard:bq.provisionalMeshDistortionGuardPassed
+    },
+    alternatives
+   };
+  });
+ });
+ for(const row of measured.slice(1))
+  assert.deepEqual(row,measured[0],
+   'P85 same exact licensed original 163-bone world and real articulated poses must not diverge with desktop viewport CSS width');
+ const findings=measured[0];
+ const summary={
+  schema:'M2-P85-authentic-source-photo-anatomical-clearance-Pareto',
+  licensedDressId:'commons-0053',
+  originalLicensedPhotoSHA256:
+   'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
+  originalSourceTriangleCount:first.originalSourceFaces,
+  actualSkinnedAnatomicalBoneCount:163,
+  originalWorldPoses:3,
+  desktopChromiumCSSWidths:[320,390,430],
+  methodsCompared:['unmodified-original','C60-6mm',
+   'quintic-height-envelope-4.5mm','quintic-height-envelope-6mm',
+   'welded-edge-strain-projection-4.5mm',
+   'welded-edge-strain-projection-6mm'],
+  measured:findings,
+  allSampledContactAndQualityGatesSatisfied:
+   findings.some(x=>x.alternatives.some(t=>
+    t.sampledContactAndQualityThresholdsPassed)),
+  originalSourceUVSkinTextureNeverAltered:true,
+  noSourceFaceIdentifiersOrPixelsPublished:true,
+  trueCandidateRenderedVisualAB:false,
+  sourcePhotoRGBPixelChangeUnmeasured:true,
+  actualUVSeamOrViewClippingVisualAcceptanceUnmeasured:true,
+  actualContinuousPoseSweepsUnmeasured:true,
+  actualMaleFemaleFittingUnmeasured:true,
+  noPhysicalPhoneTests:true,
+  sampledFitNotReleaseAuthorization:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-alternative-clearance85.json',
+  JSON.stringify(summary,null,2)+'\n');
+ console.log('M2_P85_REAL_SOURCE_ALTERNATIVE_CLEARANCE',JSON.stringify(summary));
+}
