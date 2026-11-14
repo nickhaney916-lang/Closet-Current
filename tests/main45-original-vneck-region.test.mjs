@@ -16,6 +16,7 @@ function set(x,y,r,g,b,alpha=254){
  const i=(y*W+x)*4;
  sourceRGBA.set([r,g,b,255],i);
  baselineRGBA.set([r,g,b,alpha],i);
+ p93RGBA[i]=r;p93RGBA[i+1]=g;p93RGBA[i+2]=b;
 }
 const p93RGBA=new Uint8Array(baselineRGBA);
 let oldChanges=0;
@@ -60,7 +61,7 @@ test('M45 actual-mask-shaped source region expands true P93 matte without changi
  assert.equal(r.sourceOriginalPhoto2DFallbackRequired,true);
  assert.equal(r.humanMaskAccepted,false);
  assert.equal(r.consumer3DAdmitted,false);
- assert.equal(r.approved3D,false); // undefined is not true, but contract requires explicit FALSE
+ assert.equal(r.approved3D,false);
  assert.equal(r.releaseAuthorized,false);
  assert.equal(r.familyAlpha,'HOLD');
  assert.deepEqual(sourceRGBA,before[0]);
