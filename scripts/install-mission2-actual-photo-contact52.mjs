@@ -58,13 +58,22 @@ controller=controller.replace(anchor,anchor+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
  "        globalThis.__M2C52LicensedResearchReceipt=evidence52;\n"+
- "        if(query52.get('photoDressPreview86')==='research'){\n"+
- "         const preview=installDisposableOriginalDressRenderPreview86({root,dress:fitted,sourceReceipt:evidence52});\n"+
- "         if(preview.schema!=='M2-P86-real-photo-shader-world-candidate-static-render-A-B'||\n"+
- "          preview.mode!=='original'||preview.releaseAuthorized!==false)\n"+
- "          throw Error('P86 original-photo render-only side-by-side refused');\n"+
- "        }\n"+
  "       }");
+// P86 must bind AFTER final photo/source geometry + anatomical opening
+// finishing, not while P61's intermediate fitted SkinnedMesh may still be
+// rewritten/replaced by the native preview renderer. The C52 original
+// diagnostic itself remains at its original independent source stage.
+const completedDressAnchor="      built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;";
+assert.equal(controller.split(completedDressAnchor).length,2,
+ 'P86 requires actual completed original-photo dress and anatomical opening finishing stage');
+controller=controller.replace(completedDressAnchor,completedDressAnchor+
+ "\n      if(new URLSearchParams(globalThis.location?.search||'').get('photoDressPreview86')==='research'){\n"+
+ "       const evidence86=globalThis.__M2C52LicensedResearchReceipt;\n"+
+ "       const preview86=installDisposableOriginalDressRenderPreview86({root,dress:built.dress,sourceReceipt:evidence86});\n"+
+ "       if(preview86.schema!=='M2-P86-real-photo-shader-world-candidate-static-render-A-B'||\n"+
+ "        preview86.mode!=='original'||preview86.releaseAuthorized!==false)\n"+
+ "        throw Error('P86 completed original-photo shader render comparison refused');\n"+
+ "      }");
 await writeFile(controllerPath,controller);
 console.log('M2_C52_DISPOSABLE_ACTUAL_LICENSED_163_BONE_DRESS_AUDIT_INSTALLED_HOLD');
 
