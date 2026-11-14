@@ -469,3 +469,22 @@ test('C55: topology receipt exposes counts only, no photo pixels or raw source c
  assert.equal(e.familyAlpha,'HOLD');
  assert.deepEqual(Object.keys(e).filter(k=>/vertexId|faceId|photoPixel|coordinateArray|sourceXYZ/i.test(k)),[]);
 });
+
+test('C55: malformed original 163-bone skin channels refuse without reading undefined components',()=>{
+ const f=fixture52(cross),g=f.dress.mesh.geometry,before=original(f);
+ const weights=new THREE.Float32BufferAttribute(new Float32Array(
+  g.getAttribute('position').count*3),3);
+ g.setAttribute('skinWeight',weights);
+ assert.throws(()=>audit55(f),/C52 original-photo diagnostic/);
+ assert.equal(f.dress.mesh.geometry.getAttribute('skinWeight'),weights);
+ assert.deepEqual(f.dress.mesh.geometry.getAttribute('position').array,before.position);
+});
+test('C55: malformed original photograph shader rest coordinates refuse instead of accepting false seam agreement',()=>{
+ const f=fixture52(cross),g=f.dress.mesh.geometry;
+ const badRest=new THREE.Float32BufferAttribute(new Float32Array(
+  g.getAttribute('position').count*2),2);
+ g.setAttribute('dressRest',badRest);
+ assert.throws(()=>audit55(f),/C52 original-photo diagnostic/);
+ assert.equal(g.getAttribute('dressRest'),badRest);
+ assert.equal(auditActualPhotographedDressSurfaces52({root:f.root,dress:f.dress}).releaseAuthorized,false);
+});
