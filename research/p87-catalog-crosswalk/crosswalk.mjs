@@ -9,7 +9,10 @@ function unitLineage(record,sourceValid){
  const grouping=pair||fragments;
  const receipts=[record.reconciliation70,grouping?.companion?.reconciliation70].filter(Boolean);
  const bound=receipts.length===2&&receipts.every(r=>r.ownerId===record.ownerId&&r.sourceSha256===record.sourceSHA256&&/^[a-f0-9]{64}$/.test(r.maskSha256||''))&&receipts[0].maskSha256!==receipts[1].maskSha256;
- const confirmed=sourceValid&&bound&&grouping?.confirmedByOwner===true&&
+ const ids=grouping?.componentIds;
+ const components=Array.isArray(ids)&&ids.length===2&&ids[0]===record.id&&
+  ids.every(id=>typeof id==='string'&&id.trim()===id&&id.length>0&&id.length<=200)&&ids[0]!==ids[1];
+ const confirmed=sourceValid&&bound&&components&&grouping?.confirmedByOwner===true&&
   record.reconciliation70Status===(pair?'paired_confirmed':'fragments_confirmed')&&
   record.requiresOwnershipConfirmation!==true;
  return {kind:pair?'shoe-pair':fragments?'garment-fragments':'item',
