@@ -82,6 +82,7 @@ export async function checkViewer90(page,width,engine){
  }),true,'actual WebGL context-loss extension required');
  await page.waitForFunction(()=>!window.native3D05Bridge.state().active);
  assert.equal((await state()).renderStages90,null,'revoked original-photo 3D cannot expose stale render timings');
+ assert.equal((await state()).sceneApplyStages90,null,'revoked viewer cannot expose stale WebGL apply-stage timings');
  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
  await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,landscape,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
