@@ -92,8 +92,21 @@ function detachedUnit70Companion88(original,companion,lease){
  }
  return next;
 }
-async function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
- if(!outfitUnits70)return;
+// P88: concurrent owner clicks must never compute/commit two competing
+// snapshots while the first action is waiting on cloud.beforeWrite/IDB.
+// Serialize only P70 opt-in physical-unit decisions. Every queued action
+// rechecks the exact owner/source lease after any earlier commit or rejection.
+let unit70DecisionTail88=Promise.resolve();
+function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
+ if(!outfitUnits70)return Promise.resolve();
+ // The checkbox selection is frozen at CLICK time, before any async wait.
+ const selection=Array.isArray(ids)?[...ids]:ids;
+ const execute=()=>applyUnit70Decision88(decision,selection,lease);
+ const result=unit70DecisionTail88.then(execute,execute);
+ unit70DecisionTail88=result.then(()=>{},()=>{});
+ return result;
+}
+async function applyUnit70Decision88(decision,ids,lease){
  let previousBatch=null,assignedBatch=null,companionToReview88=null;
  try{
   if(!sameUnit70OwnerLease88(lease))
