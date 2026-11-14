@@ -77,8 +77,9 @@ async function fixture(callback){
   scope?.assertCurrent?.();
   return records;
  };
- const seal=async(records=await all(db))=>sealDurablePrivateWardrobe34({
-  getSession,getRevision,readOwnerItems,records,cryptoProvider:webcrypto
+ const seal=async(records)=>sealDurablePrivateWardrobe34({
+  getSession,getRevision,readOwnerItems,
+  records:records??await all(db),cryptoProvider:webcrypto
  });
  const picker=()=>createNativeOutfitPicker33({
   getSession,getRevision,readOwnerItems,getBoard:()=>board,
