@@ -293,6 +293,7 @@ function trialRigidRegistration(){
   'actual original independent photographed skirt and 163-bone CC0 body required');
  const receipt=compareActualOriginalPhotoSkirtRegistration89({
   mesh:candidate.mesh,avatar:current,applyPose:name=>setResearchPose(root,name),
+  originalBodyFaceMask:originalTorsoLegSourceFaceMask89(),
   sampleContact:()=>{
    let skirt,body;
    try{
