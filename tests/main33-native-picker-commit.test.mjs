@@ -152,7 +152,7 @@ test('M33 test suite also asserts research-only opt-in native UI and transaction
  assert.match(code,/ownerPicker33\W.*research/);
  assert.match(code,/ownerPicker33Choose\(slotId,item.id,b,pickerLease/);
  assert.match(code,/ownerPicker33Choose\(target,item.id,b,suggestionLease/);
- assert.match(code,/proof33\?\.matches\(id,row\)/);
+ assert.match(code,/proof33\.matches\(id,row\)/);
  assert.match(code,/ownerDB\.transaction\(candidate\|\|proof33\?\['state','items'\]/);
  assert.doesNotMatch(code,/\bconsumer3D\s*:\s*true\b/);
 });
