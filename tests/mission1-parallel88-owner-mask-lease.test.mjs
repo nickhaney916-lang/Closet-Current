@@ -49,7 +49,7 @@ async function workerMessages(instanceReview840){
  await vm.runInContext('chain',c);
  return sent;
 }
-function captureHarness({ownerId=null}={}){
+function captureHarness({ownerId=null,autoStart=true,decode=null}={}){
  const nodes=new Map(),timers=new Map();let sequence=0;
  const node=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,disabled:false,textContent:''});return nodes.get(id);};
  const c={URL,location:{href:'https://example.test/closet?outfitInstances840=1'},
@@ -57,7 +57,7 @@ function captureHarness({ownerId=null}={}){
   $:node,batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'research',
   categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
   crypto:{randomUUID:()=> 'id-'+(++sequence)},
-  Date:{now:()=>1000},setTimeout(fn,delay){const id=++sequence;timers.set(id,{fn,delay});return id;},
+  Date:{now:()=>1000},photoToJPEG:decode||async()=> 'data:image/jpeg;base64,NEWPHOTO',setTimeout(fn,delay){const id=++sequence;timers.set(id,{fn,delay});return id;},
   clearTimeout:id=>timers.delete(id),stopCamera(){},controls(){},
   candidate(image,options){c.batch.push({id:'piece-'+(++sequence),image,...options,
    requiresOwnershipConfirmation:!!options.outfitSourceId});return true;},
@@ -66,7 +66,7 @@ function captureHarness({ownerId=null}={}){
   Worker:class{constructor(){c.worker=this;}postMessage(request){this.request=request;}terminate(){this.closed=true;}}
  };
  vm.createContext(c);vm.runInContext(captureSource,c);
- c.startOutfitSplit('data:image/jpeg;base64,ORIGINAL');
+ if(autoStart)c.startOutfitSplit('data:image/jpeg;base64,ORIGINAL');
  return {c,node,emit:part=>c.worker?.onmessage({data:{id:c.worker.request.id,...part}})};
 }
 function allowSaving(item){
@@ -138,4 +138,65 @@ test('P88 replaced same-ID signed owner reference revokes an in-flight instance 
  assert.equal(h.c.batch.length,0);
  assert.equal(h.c.items.length,0);
  assert.equal(oldWorker.closed,true);
+});
+
+test('P88 retry cannot replay an old owner photo after a different-owner sign-in',()=>{
+ const h=captureHarness({ownerId:'owner-A'}),original=h.c.worker;
+ h.emit({type:'error'}); // full original still in retry slot under original owner
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.node('outfitRetry').onclick();
+ assert.equal(h.c.worker,original,'no new worker receives the previous owner JPEG');
+ assert.equal(h.c.outfitSplitJob,null);
+ assert.equal(h.c.lastOutfitPhoto,'','previous owner original discarded from retry cache');
+ assert.match(h.node('outfitSplitStatus').textContent,/previous photo belongs to another signed session/);
+});
+test('P88 a replaced same-ID signed session cannot replay old-owner photo',()=>{
+ const h=captureHarness({ownerId:'owner-A'}),original=h.c.worker;
+ h.emit({type:'error'});
+ h.c.window.closetAuth.user={id:'owner-A'};
+ h.node('outfitRetry').onclick();
+ assert.equal(h.c.worker,original);
+ assert.equal(h.c.outfitSplitJob,null);
+ assert.equal(h.c.lastOutfitPhoto,'');
+});
+test('P88 unchanged original signed-owner reference may retry an errored unsaved photo',()=>{
+ const h=captureHarness({ownerId:'owner-A'}),original=h.c.worker;
+ h.emit({type:'error'});
+ h.node('outfitRetry').onclick();
+ assert.notEqual(h.c.worker,original);
+ assert.equal(h.c.worker.request.image,'data:image/jpeg;base64,ORIGINAL');
+ assert.equal(h.c.worker.request.instanceReview840,true);
+});
+test('P88 a JPG decoded after owner change never enters a new account draft or worker',async()=>{
+ let resolveDecode;
+ const decoding=new Promise(resolve=>{resolveDecode=resolve;});
+ const h=captureHarness({ownerId:'owner-A',autoStart:false,decode:()=>decoding});
+ const reading=h.c.readOutfitPhoto({size:400,type:'image/jpeg',name:'photo.jpg'});
+ h.c.window.closetAuth.user={id:'owner-B'};
+ resolveDecode('data:image/jpeg;base64,OWNER_A_ORIGINAL');
+ await reading;
+ assert.equal(h.c.worker,undefined);
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.lastOutfitPhoto,'');
+ assert.match(h.node('outfitSplitStatus').textContent,/session changed while opening this photo/);
+});
+test('P88 a JPG decoded after a replaced same-ID session cannot become a new draft',async()=>{
+ let resolveDecode;
+ const decoding=new Promise(resolve=>{resolveDecode=resolve;});
+ const h=captureHarness({ownerId:'owner-A',autoStart:false,decode:()=>decoding});
+ const reading=h.c.readOutfitPhoto({size:400,type:'image/jpeg',name:'photo.jpg'});
+ h.c.window.closetAuth.user={id:'owner-A'};
+ resolveDecode('data:image/jpeg;base64,OLD_SESSION_PHOTO');
+ await reading;
+ assert.equal(h.c.worker,undefined);
+ assert.equal(h.c.batch.length,0);
+ assert.match(h.node('outfitSplitStatus').textContent,/session changed while opening this photo/);
+});
+test('P88 unchanged owner can still submit a fully decoded new photo normally',async()=>{
+ const h=captureHarness({ownerId:'owner-A',autoStart:false,
+  decode:async()=> 'data:image/jpeg;base64,NEWPHOTO'});
+ await h.c.readOutfitPhoto({size:400,type:'image/jpeg',name:'photo.jpg'});
+ assert.equal(h.c.worker.request.image,'data:image/jpeg;base64,NEWPHOTO');
+ assert.equal(h.c.worker.request.instanceReview840,true);
 });
