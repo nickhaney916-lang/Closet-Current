@@ -147,7 +147,8 @@ const emit=async()=>{
   pageEvents:events,resourceMeasurements:{
    browserProcessRSSBytes:null,peakBrowserProcessRSSBytes:null,
    measuredMemory:false,source:'no browser process RSS/pressure available from Playwright interface'},
-  sourceHashesVerified:true,originalPhotoModified:false,autoAdmissions:0,
+  sourceHashesVerified:true,publicOriginalDiskWrites:0,
+  failedAttemptRendererImageIntegrity:failures.length?null:true,autoAdmissions:0,
   ownerAccount:'synthetic-only',ownerSessionIdentityChanged:false,
   persistedPrivateWardrobeWrites:0,authorizedHostedCloud:false,
   independentHumanPhotoLabels:0,blindAccuracy:null,physicalMobileDevices:0,
@@ -247,7 +248,7 @@ try{
     /timeout/i.test(message)?'TIMEOUT_UNCLASSIFIED':'UNCLASSIFIED_EXCEPTION';
    failure={iteration:attempt,id:photo.id,category,message,observedPageCrash:events.pageCrash>0,
     observedBrowserDisconnect:events.browserDisconnected>0,lastModelStage,
-    observedProcessRSSBytes:null,sourceBytesIntact:true};
+    observedProcessRSSBytes:null,rendererImageIntegrityAfterFailure:null};
    failures.push(failure);
    console.log('MAIN1054_WEBKIT_BOUNDED_FAILURE',JSON.stringify(failure));
   }
