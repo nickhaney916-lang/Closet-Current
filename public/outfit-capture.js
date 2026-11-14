@@ -113,7 +113,13 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
      // color slip through as a confident fallback. Keep the photo for Adjust.
     }
     const safeColorEstimate76=verifiedColor76?p.colorEstimate:null;
-    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:p.hint,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:safeColorEstimate76,
+    // P88: the P82 source-pinned worker already forwards instanceMethod.
+    // Translate ONLY this exact opt-in diagnostic method into an owner draft
+    // veto. Do not modify the frozen worker or trust free-text worker status.
+    const unresolved88=outfitInstances840&&
+      p.instanceMethod==='native_semantic_group_unresolved_fragments';
+    const hint88=unresolved88?{...p.hint,componentReviewStatus:'unresolved_fragments_keep_source_mask'}:p.hint;
+    if(candidate(p.image,{outfitSourceId:sourceId,segmentHint:hint88,recognitionPhoto:p.recognitionPhoto,originalPhoto:{image},cropBounds:p.cropBounds,colorEstimate:safeColorEstimate76,
       ...(outfitUnits70?{reconciliation70:{...p.reconciliation70,ownerId:job.ownerId,colorEstimate:safeColorEstimate76||null},reconciliation70Status:'unresolved'}:{})})){
       job.added++;if(colorNote76)job.colorNotes.push(colorNote76);
     }
