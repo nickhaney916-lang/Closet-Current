@@ -216,7 +216,8 @@ function trialMeasuredAnatomyFit(){
    let b;
    try{
     b=posedSource84(bodies);
-    return b.g.getAttribute('position').array.slice();
+    return {positions:b.g.getAttribute('position').array.slice(),
+     indices:b.g.index.array.slice()};
    }finally{b?.g.dispose();}
   },
   sampleContact:()=>{
