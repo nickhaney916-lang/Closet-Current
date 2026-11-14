@@ -1,5 +1,11 @@
 'use strict';
 let outfitActiveId=null,lastOutfitPhoto='',outfitSplitJob=null;
+// P88 opt-in only: a retry has no authority to reassign the previous owner's
+// JPEG to another signed session, including a replaced same-ID session.
+let lastOutfitOwner88=null;
+const captureOwner88=()=>typeof window==='undefined'?null:window.closetAuth?.user||null;
+const sameCaptureOwner88=(lease)=>lease&&captureOwner88()===lease.user&&
+ (captureOwner88()?.id||null)===lease.id;
 // P840 no-deploy diagnostic flag; never enable all-user segmentation changes
 // until prospective human-ground-truth and actual device gates are met.
 const outfitInstances840=typeof location!=='undefined'&&new URL(location.href).searchParams.get('outfitInstances840')==='1';
@@ -75,7 +81,9 @@ function finishOutfitSplit(job,text,failed=false){
 }
 function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
- stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
+ stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;
+ if(outfitInstances840){const user=captureOwner88();lastOutfitOwner88={user,id:user?.id||null};}
+ $('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
  const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),ownerRef88:outfitInstances840&&typeof window!=='undefined'?window.closetAuth?.user:null,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
@@ -92,6 +100,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     (job.ownerId!==unit70Owner()||
      (outfitInstances840&&job.ownerRef88&&
       (typeof window==='undefined'||window.closetAuth?.user!==job.ownerRef88)))){
+    if(outfitInstances840){lastOutfitPhoto='';lastOutfitOwner88=null;}
     finishOutfitSplit(job,'Owner session changed. Further garment drafts were not accepted.',true);return;
    }
    if(data.type==='progress'){
@@ -152,12 +161,28 @@ async function readOutfitPhoto(file){
  if(file.size>10*1024*1024)return $('outfitSplitStatus').textContent='Choose an outfit photo smaller than 10 MB.';
  if(!file.type?.startsWith('image/')&&!/\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name||''))return $('outfitSplitStatus').textContent='Choose a clothing photo.';
  stopCamera();busy=true;controls(true);let timer;
- try{const image=await Promise.race([photoToJPEG(file,{maxDimension:3072,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);busy=false;controls(false);session=0;startOutfitSplit(image);}
+ const ownerAtDecode88=outfitInstances840?captureOwner88():null;
+ try{const image=await Promise.race([photoToJPEG(file,{maxDimension:3072,quality:.94}),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('decode timeout')),15000);})]);
+  if(outfitInstances840&&(ownerAtDecode88!==captureOwner88()||
+   (ownerAtDecode88?.id||null)!==(captureOwner88()?.id||null))){
+   $('outfitSplitStatus').textContent='Your signed session changed while opening this photo. Choose the photo again for the current account.';
+   return;
+  }
+  busy=false;controls(false);session=0;startOutfitSplit(image);}
  catch{$('outfitSplitStatus').textContent='Could not open that outfit photo. Try JPEG or PNG.';}
  finally{clearTimeout(timer);if(!outfitSplitJob){busy=false;controls(false);}}
 }
 for(const id of ['outfitCamera','outfitUpload']){$(id).onclick=()=>{if(!busy)stopCamera();};$(id).onchange=event=>{const file=event.target.files?.[0];event.target.value='';readOutfitPhoto(file);};}
-$('outfitRetry').onclick=()=>{if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId);};
+$('outfitRetry').onclick=()=>{
+ if(outfitInstances840&&!sameCaptureOwner88(lastOutfitOwner88)){
+  // Never replay a prior account's JPEG through another owner's model/draft.
+  lastOutfitPhoto='';lastOutfitOwner88=null;
+  $('outfitRetry').hidden=true;
+  $('outfitSplitStatus').textContent='The previous photo belongs to another signed session. Choose a new photo for this account.';
+  return;
+ }
+ if(lastOutfitPhoto)startOutfitSplit(lastOutfitPhoto,outfitActiveId);
+};
 function capturedPieceSlot(item){
  if(['Tops','Dresses'].includes(item.category))return 'top';if(item.category==='Bottoms')return 'bottom';if(item.category==='Outerwear')return 'layer';if(item.category==='Shoes')return 'shoes';
  return item.itemType==='Bag'?'bag':['Jewelry','Sunglasses'].includes(item.itemType)?'accessory':['Belt','Scarf','Hat'].includes(item.itemType)?'finish':null;
