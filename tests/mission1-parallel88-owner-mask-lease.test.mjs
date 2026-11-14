@@ -108,7 +108,13 @@ test('P88 reviewed category, color, approval checkbox cannot certify unresolved 
  const unresolved={segmentHint:{componentReviewStatus:'unresolved_fragments_keep_source_mask'},
   category:'Tops',color:'Blue',itemType:'T-shirt',userAdjusted:true,ownerConfirmed:true};
  assert.equal(allowSaving(unresolved),false);
- assert.equal(allowSaving({...unresolved,segmentHint:{componentReviewStatus:'owner_must_confirm_garment_units'}}),true);
+ assert.equal(allowSaving({...unresolved,segmentHint:{componentReviewStatus:'owner_must_confirm_garment_units'}}),false,'photo review alone cannot invent a physical garment count');
+ assert.equal(allowSaving({...unresolved,segmentHint:{componentReviewStatus:'owner_must_confirm_garment_units'},
+  reconciliation70:{ownerId:'owner-A',sourceSha256:'a'.repeat(64),maskSha256:'b'.repeat(64)},
+  reconciliation70Status:'separate_confirmed'}),true,'explicit owner unit resolution may proceed to separate signed source validation');
+ assert.equal(allowSaving({...unresolved,segmentHint:{componentReviewStatus:'owner_must_confirm_garment_units'},
+  reconciliation70:{ownerId:'owner-A'},reconciliation70Status:'unresolved'}),false);
+ assert.equal(allowSaving({...unresolved,segmentHint:{componentReviewStatus:'fabricated_or_new_future_status'}}),false);
  assert.equal(allowSaving({...unresolved,segmentHint:undefined}),true);
  const reviewedCore=appSource.slice(appSource.indexOf('const reviewedCore=()=>{'),appSource.indexOf('const canSaveReview=()=>{'));
  assert.match(reviewedCore,/ownerMaySaveSourceGroup88\(item\)/);
@@ -199,4 +205,45 @@ test('P88 unchanged owner can still submit a fully decoded new photo normally',a
  await h.c.readOutfitPhoto({size:400,type:'image/jpeg',name:'photo.jpg'});
  assert.equal(h.c.worker.request.image,'data:image/jpeg;base64,NEWPHOTO');
  assert.equal(h.c.worker.request.instanceReview840,true);
+});
+
+test('P88 connected shoes enter pending source review, not separate owned wardrobe entries',()=>{
+ const h=captureHarness({ownerId:'owner-A'});
+ const piece={image:'data:image/jpeg;base64,SHOE_LEFT',
+  recognitionPhoto:{image:'data:image/jpeg;base64,CROP_LEFT'},
+  hint:{categories:['Shoes'],types:[],clipped:false},
+  instanceMethod:'connected_footwear_component',requiresReview:true};
+ h.emit({type:'piece',piece});
+ h.emit({type:'done',count:1});
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.c.items.length,0);
+ assert.equal(h.c.batch[0].segmentHint.componentReviewStatus,'owner_must_confirm_garment_units');
+ assert.equal(allowSaving(h.c.batch[0]),false,'category and color cannot convert one shoe into owned pair');
+ assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+});
+test('P88 two disconnected same-class tops both require a human physical-unit decision',()=>{
+ const h=captureHarness({ownerId:'owner-A'});
+ for(const image of ['TOP_A','TOP_B'])h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,'+image,hint:{categories:['Tops'],types:[],clipped:false},
+  instanceMethod:'connected_semantic_component_unverified',requiresReview:true
+ }});
+ h.emit({type:'done',count:2});
+ assert.equal(h.c.batch.length,2);
+ assert.equal(h.c.items.length,0);
+ assert.ok(h.c.batch.every(x=>x.segmentHint.componentReviewStatus==='owner_must_confirm_garment_units'));
+ assert.ok(h.c.batch.every(x=>allowSaving(x)===false));
+ assert.ok(h.c.batch.every(x=>x.originalPhoto.image==='data:image/jpeg;base64,ORIGINAL'));
+});
+test('P88 forged high-confidence classifier cannot auto-admit a disconnected physical mask',()=>{
+ const start=appSource.indexOf('function automaticAdmissionCore842(');
+ const stop=appSource.indexOf('async function saveIndexed(',start);
+ assert.ok(start>=0&&stop>start);
+ const c={categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories']};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,stop),c);
+ const item={id:'source',image:'data:image/jpeg;base64,FAKE',category:'Shoes',
+  itemType:'Sneakers',color:'Black',requiresOwnershipConfirmation:false,
+  segmentHint:{categories:['Shoes'],clipped:false,componentReviewStatus:'owner_must_confirm_garment_units'}};
+ assert.equal(c.automaticAdmissionCore842(item),false);
+ assert.equal(c.automaticAdmissionCore842({...item,segmentHint:{categories:['Shoes'],clipped:false}}),true,
+  'the new guard is scoped to source-bound unresolved units; other legacy auto guard remains testable');
 });
