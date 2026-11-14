@@ -124,7 +124,7 @@ export async function mountNative3D05({
  win=globalThis.window,doc=win?.document,
  consumer=win?.nativeLossless04Bridge,
  importPinnedDonor=()=>import('/donor/research/outfit-3d-01/research-panel.mjs'),
- onStatus=()=>{}
+ onStatus=()=>{},ownerScope38=null
 }={}){
  const params=typeof win?.location?.search==='string'?
   new URLSearchParams(win.location.search):null;
@@ -274,6 +274,20 @@ export async function mountNative3D05({
   opening=true;button.disabled=true;
   try{
    notify('Verifying owner wardrobe and loading original-photo anatomical 3D…');
+   // M38 is a SECOND, explicitly opt-in, fail-closed research gate.
+   // Even when the actual signed-owner M37 preflight passes, it only
+   // authorizes keeping the already visible original-photo 2D board.
+   // Do this BEFORE any anatomical donor import or WebGL allocation.
+   if(params?.get('main38')==='research'){
+    const {auditNativeOwnerViewer38}=await import(
+     '../main1054-handoff38/strict-viewer-admission.mjs');
+    const gate=await auditNativeOwnerViewer38({
+     ownerScope:ownerScope38,consumer,originalNativeAuth:nativeAuth,win,doc
+    });
+    throw Error(gate.status==='OWNER_ORIGINAL_2D_VIEWER_FALLBACK_ONLY'?
+     'MAIN38_OWNER_ORIGINAL_2D_ONLY_NO_3D_ADMISSION':
+     'MAIN38_OWNER_SOURCE_RECHECK_REQUIRED');
+   }
    if(!epoch)epoch=createNativeAuthEpoch01({nativeAuth,win,doc});
    const lease=epoch.status().active?
     {ownerId:nativeAuth.user.id,generation:epoch.auth.getSessionGeneration()}:
