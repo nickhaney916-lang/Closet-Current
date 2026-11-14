@@ -1,0 +1,48 @@
+name: MAIN1054 M32 source-bound picker admission - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-picker-action-m32-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  safe-picker-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 28
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail-closed immutable M31 ancestry and no-deploy source scope
+        run: |
+          git merge-base --is-ancestor 2e781ab8aabf2fc24ff25fe1b20b2076147bc36d HEAD
+          git diff --exit-code 2e781ab8aabf2fc24ff25fe1b20b2076147bc36d HEAD -- public/ supabase/ benchmark/
+          git diff --name-only 2e781ab8aabf2fc24ff25fe1b20b2076147bc36d HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054-picker32/picker-admission.mjs|\
+              tests/main32-picker-admission.test.mjs|\
+              research/master-consolidation-1054/MILESTONE32.md|\
+              .github/workflows/main1054-picker32-no-deploy.yml) ;;
+              *) echo "BLOCKED: unexpected M32 path $path"; exit 1;;
+            esac
+          done
+          node --check research/main1054-picker32/picker-admission.mjs
+          node --check tests/main32-picker-admission.test.mjs
+      - name: Pinned isolated no-deploy dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Chromium and WebKit research browsers
+        run: npx playwright install --with-deps chromium webkit
+      - name: Build unchanged consumer app
+        run: node scripts/build.mjs
+      - name: New genuine original PHOTO119 to picker admission test
+        run: node --test tests/main32-picker-admission.test.mjs
+      - name: All inherited no-deploy Node tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Licensed catalog source, owner and slot browser checks
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
+      - name: Actual native browser 2D preview regression
+        run: node scripts/test-main1054-native-preview-browser.mjs
