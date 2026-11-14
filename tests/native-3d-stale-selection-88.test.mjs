@@ -84,7 +84,7 @@ test('NATIVE88 real bridge verifies current selection on every async donor and W
  assert.match(source,/if\(opened\|\|opening\)throw Error/);
  assert.match(source,/}finally\{opening=false;button.disabled=false;}/);
  assert.match(source,/const donor=await importPinnedDonor\(\);\s*requireFresh\(\)/);
- assert.match(source,/panel=await donor\.mountOutfit3D01Research\(\{doc,auth:epoch\.auth,\s*nativeTopSource90:selectedSources91\.sources\.find\(x=>x\.id===selected\.slots\.top\)\?\.sha256\|\|null\}\);\s*requireFresh\(\)/);
+ assert.match(source,/panel=await donor\.mountOutfit3D01Research\(\{doc,auth:epoch\.auth,\s*nativeTopSource90:selectedSources91\.sources\.find\(x=>x\.id===selected\.slots\.top\)\?\.sha256\|\|null,\s*nativeBottomEmpty90:!Object\.hasOwn\(selected\.slots,'bottom'\)\}\);\s*requireFresh\(\)/);
  assert.match(source,/await panel\.open\(\);[\s\S]*?requireFresh\(\)/);
  assert.match(source,/const plan=panel\.controller\.openSaved\(selected\.id\);\s*requireFresh\(\)/);
  assert.match(source,/requireFresh\(\); \/\/ The public successful preview receipt/);
