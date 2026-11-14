@@ -1,0 +1,65 @@
+name: 'Parallel 89 real independently photographed skirt alpha-to-3D source shell NO DEPLOY'
+on:
+  push:
+    branches: [research/parallel89-multicategory-source-contract-20261114-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  genuine-source-skirt-mesh-research-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P92 ancestry, P89 research path only and no-deploy guard
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          git diff --name-only e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/parallel89/*|scripts/audit-parallel89-public-source.mjs|scripts/verify-parallel89-real-pair.mjs|scripts/verify-parallel89-real-poses.mjs|scripts/probe-parallel89-real-skirt.mjs|tests/parallel89-*.test.mjs|.github/workflows/parallel89-multicategory-source-no-deploy.yml|.github/workflows/parallel89-independent-skirt-no-deploy.yml) ;;
+              *) echo "P89 unrelated/consumer edit: $path"; exit 1;;
+            esac
+          done
+          node --check research/parallel89/skirt-source3d89.mjs
+          node --check scripts/probe-parallel89-real-skirt.mjs
+          node --check tests/parallel89-skirt-source3d.test.mjs
+      - name: Install test-only THREE and original JPEG/alpha sharp decoder
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 sharp@0.34.3
+      - name: Source identity/forged-rights/silhouette rejection tests
+        run: node --test tests/parallel89-skirt-source3d.test.mjs
+      - name: Prepare exact original P541 generated licensed Work47 skirt alpha without modifying upstream
+        shell: bash
+        run: |
+          set -eu
+          git worktree add --detach .p89-disposable-p541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git config --global --add safe.directory "$GITHUB_WORKSPACE/.p89-disposable-p541"
+          ln -s ../node_modules .p89-disposable-p541/node_modules
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          cd .p89-disposable-p541
+          node scripts/build-work47-benchmark.mjs
+          test -s benchmark/work47/assets/commons-0043.jpg
+          test -s benchmark/work47/assets/commons-0043.png
+      - name: Genuine public Commons-0043 independent skirt PNG+JPEG to THREE source-UV, synthetic 163-bone research rig
+        run: node scripts/probe-parallel89-real-skirt.mjs .p89-disposable-p541
+      - name: Final exact original SHA, no deployment or owner-photo change
+        shell: bash
+        run: |
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P89-independent-licensed-skirt-actual-source-to-THREE-geometry-HOLD
+          path: benchmark/parallel89/genuine-skirt-proposal.json
+          retention-days: 14
+          if-no-files-found: warn
