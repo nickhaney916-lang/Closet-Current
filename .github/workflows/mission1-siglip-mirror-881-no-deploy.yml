@@ -1,0 +1,120 @@
+name: Mission 1 P881 genuine SigLIP horizontal-mirror experiment — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-siglip-mirror-view-881-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: m1-p881-mirror-HOLD
+  cancel-in-progress: true
+jobs:
+  owner-review-preservation-and-helper-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P880 and exact eight-file scope; Family Alpha HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a4261f8e7dd968046dc14ff88ba969c91514d0b0
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p881-paths
+          test "$(wc -l </tmp/p881-paths)" -eq 8
+          while IFS= read -r p; do
+            case "$p" in
+              public/dual-core-82.mjs|public/dual-worker-82.mjs|public/siglip-horizontal-view-881.mjs|scripts/p82-real-browser.mjs|scripts/p881-siglip-mirror-audit.mjs|tests/mission1-siglip-mirror-881.test.mjs|research/mission1-siglip-mirror-881/REPORT.md|.github/workflows/mission1-siglip-mirror-881-no-deploy.yml) ;;
+              *) echo "P881_UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p881-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/dual-core-82.mjs public/recognition-engine.mjs public/model-arbitration-81.mjs public/dual-worker-82.mjs public/local-worker.mjs public/recognition-confusion-guard.mjs public/cloud-backup.js benchmark supabase)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          grep -Fq 'Family Alpha HOLD #255 OPEN' research/mission1-siglip-mirror-881/REPORT.md
+          echo P881_SCOPE_NO_DEPLOY_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Offline local builds and full native test suite
+        run: |
+          set -euo pipefail
+          node --check public/dual-core-82.mjs
+          node --check public/dual-worker-82.mjs
+          node --check public/siglip-horizontal-view-881.mjs
+          node --check scripts/test-p82-review-browser.mjs
+          node --check scripts/p82-real-browser.mjs
+          node --check scripts/p881-siglip-mirror-audit.mjs
+          node --check tests/mission1-siglip-mirror-881.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p881-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p881-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p881-release
+      - name: Desktop Chromium/WebKit original photo, owner-safe agreement and disagreements
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs | tee /tmp/p881-desktop
+          test "$(grep -c '^P879_SUBTYPE_CONFLICT_MANUAL_ONLY ' /tmp/p881-desktop)" -eq 6
+          test "$(grep -c '^P880_EXACT_ONE_JOINT_TOP_ONLY ' /tmp/p881-desktop)" -eq 6
+          test "$(grep -c '^P880_KNOWN_RISK_TOP_NO_UNPROVEN_ALTERNATE ' /tmp/p881-desktop)" -eq 6
+          test "$(grep -c '^P876_EMPIRICAL_CONFUSION_GUARD_DUAL ' /tmp/p881-desktop)" -eq 6
+          test "$(grep -c '^P875_SHARED_CATEGORY_RANK_ONLY ' /tmp/p881-desktop)" -eq 6
+          test "$(grep -c '^P82_DESKTOP_POLICY_PASS ' /tmp/p881-desktop)" -eq 6
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
+  actual-48-public-model-mirror-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original photo and pinned model revisions frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a4261f8e7dd968046dc14ff88ba969c91514d0b0
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 8
+          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark public/dual-worker-82.mjs public/dual-core-82.mjs public/model-arbitration-81.mjs public/dual-model-lock-82.mjs)"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium
+      - name: Verify frozen 48 public original source bytes and q8 weights
+        run: |
+          set -euo pipefail
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          test "$(printf '%s\n' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Genuine two-family 48-photo mirror-vs-original SigLIP original-custody audit
+        env:
+          P877_FULL_FRAME: '1'
+          P881_MIRROR: '1'
+        run: |
+          set -euo pipefail
+          node scripts/p82-real-browser.mjs chromium benchmark/p881-real-chromium | tee /tmp/p881-originals
+          test "$(grep -c '^P82_REAL_BROWSER_ROW chromium ' /tmp/p881-originals)" -eq 48
+          node scripts/p878-public-photo-custody.mjs benchmark/p881-real-chromium/results.json benchmark/locked-photo-sources.json benchmark/p881-real-chromium/custody-audit.json | tee /tmp/p881-custody
+          grep -Fq '"distinctPhotoDigests":48' /tmp/p881-custody
+          node scripts/p881-siglip-mirror-audit.mjs benchmark/p881-real-chromium/results.json benchmark/p881-real-chromium/mirror-audit.json | tee /tmp/p881-audit
+          grep -Fq '"photos":48' /tmp/p881-audit
+          grep -Fq '"sameModelNotIndependent":true' /tmp/p881-audit
+          grep -Fq '"ownerFacingChanged":false' /tmp/p881-audit
+          grep -Fq '"blindAccuracy":null' /tmp/p881-audit
+          grep -Fq '"releaseReady":false' /tmp/p881-audit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p881-public-development-only-siglip-mirror-numeric-result
+          path: benchmark/p881-real-chromium/mirror-audit.json
+          if-no-files-found: error
