@@ -96,14 +96,19 @@ function detachedUnit70Companion88(original,companion,lease){
 // snapshots while the first action is waiting on cloud.beforeWrite/IDB.
 // Serialize only P70 opt-in physical-unit decisions. Every queued action
 // rechecks the exact owner/source lease after any earlier commit or rejection.
-let unit70DecisionTail88=Promise.resolve();
+let unit70DecisionTail88=Promise.resolve(),unit70Pending88=0;
 function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
  if(!outfitUnits70)return Promise.resolve();
  // The checkbox selection is frozen at CLICK time, before any async wait.
  const selection=Array.isArray(ids)?[...ids]:ids;
  const execute=()=>applyUnit70Decision88(decision,selection,lease);
+ unit70Pending88++;
  const result=unit70DecisionTail88.then(execute,execute);
- unit70DecisionTail88=result.then(()=>{},()=>{});
+ // Scanner cleanup must not snapshot the staged unit decision before it
+ // commits or rolls back. Release the fence for both success and rejection.
+ unit70DecisionTail88=result.then(
+  ()=>{unit70Pending88--;},()=>{unit70Pending88--;}
+ );
  return result;
 }
 async function applyUnit70Decision88(decision,ids,lease){
