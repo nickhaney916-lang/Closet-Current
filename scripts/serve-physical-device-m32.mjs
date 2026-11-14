@@ -89,7 +89,7 @@ const send=(res,status,type,data)=>{
   'x-frame-options':'DENY','content-security-policy':[
    "default-src 'self' blob: data:","base-uri 'none'","object-src 'none'",
    "frame-ancestors 'none'","form-action 'none'","worker-src 'self' blob:",
-   "connect-src 'self' blob:","img-src 'self' data:",
+   "connect-src 'self' blob:","img-src 'self' data:","style-src 'self' 'unsafe-inline'",
    "script-src 'self' blob: 'wasm-unsafe-eval'"].join('; ')});
  res.end(data);
 };
