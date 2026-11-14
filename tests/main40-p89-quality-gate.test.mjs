@@ -4,7 +4,6 @@ import {createHash,randomUUID,webcrypto} from 'node:crypto';
 import {readFileSync} from 'node:fs';
 import 'fake-indexeddb/auto';
 import {commitHumanReviewedPhoto119} from '../public/native-reviewed-private-save-167.mjs';
-import {auditNativeOwnerViewer38} from '../research/main1054-handoff38/strict-viewer-admission.mjs';
 import {createTrustedNativeOwnerScope39} from '../research/main1054-handoff39/trusted-native-owner-scope.mjs';
 import {assessNative3DQuality40} from '../research/main1054-handoff40/p89-quality-admission.mjs';
 import {auditNativeOwnerViewer38} from '../research/main1054-handoff38/strict-viewer-admission.mjs';
