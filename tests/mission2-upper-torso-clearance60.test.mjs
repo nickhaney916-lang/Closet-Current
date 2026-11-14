@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {createDisposableUpperTorsoWorldTrial60,
  UPPER_TORSO_TRIAL_OUTWARD60} from
  '../research/mission2-source-length/upper-torso-clearance-trial60.mjs';
@@ -66,4 +67,12 @@ test('C60: invalid original photo source, 163-bone anatomical reference and forg
    new Float32Array([NaN,.3,0,.1,.5,0,.2,.7,0]),
    {neck:[0,1.1,0],spine:[0,0,0]})
  ])assert.throws(run);
+});
+
+test('C60: native browser-imported original photographed source fit helper has no Node-only imports',async()=>{
+ const helper=await readFile('research/mission2-source-length/upper-torso-clearance-trial60.mjs','utf8');
+ assert.doesNotMatch(helper,/from\\s*['\\"]node:|import\\s*['\\"]node:|require\\s*\\(/);
+ assert.doesNotMatch(helper,/\\bprocess\\.|\\bBuffer\\./);
+ const installer=await readFile('scripts/install-mission2-actual-photo-contact52.mjs','utf8');
+ assert.match(installer,/upper-torso-clearance-trial60\\.mjs/);
 });
