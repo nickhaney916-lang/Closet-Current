@@ -30,20 +30,58 @@ async function originalSha256ForColor76(image){
  }catch{return null;}
 }
 function unit70Owner(){return typeof window!=='undefined'?window.closetAuth?.user?.id:null;}
-async function updateUnit70(decision,ids){
+// P88: a physical garment decision is permissioned by the exact signed
+// session object, original outfit source and owner ID at the time the Review
+// panel is rendered. The ID alone does NOT distinguish replaced sessions.
+function unit70OwnerLease88(){
+ const user=captureOwner88();
+ return {user,id:user?.id||null,sourceId:outfitActiveId};
+}
+function sameUnit70OwnerLease88(lease){
+ const user=captureOwner88();
+ return !!(lease?.user&&lease.id&&lease.sourceId&&user===lease.user&&
+  user.id===lease.id&&outfitActiveId===lease.sourceId);
+}
+// The regular persistDraft() is a general-purpose queued best-effort write.
+// For a source-bound owner decision, verify authorization *inside* the queued
+// transaction callback, after the queue's asynchronous cloud.beforeWrite().
+function persistUnit70Decision88(lease){
+ const snapshot=structuredClone(batch),ownerDb=db;
+ if(!ownerDb||!sameUnit70OwnerLease88(lease))return Promise.reject(Error('Owner session changed before garment draft persistence.'));
+ return queued(()=>{
+  if(!sameUnit70OwnerLease88(lease)||db!==ownerDb)
+   throw Error('Owner session changed before garment draft persistence.');
+  return new Promise((resolve,reject)=>{
+   const tx=ownerDb.transaction('state','readwrite');
+   tx.objectStore('state').put({id:'draft',batch:snapshot});
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
+async function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
  if(!outfitUnits70)return;
+ let previousBatch=null,assignedBatch=null;
  try{
-  const api=await unit70Api,owner=unit70Owner();
-  if(!owner)throw Error('Sign in to resolve your garment pieces.');
+  if(!sameUnit70OwnerLease88(lease))
+   throw Error('The signed owner or outfit changed. Reopen Review for this account.');
+  // Capture the Review-panel authorization *before* the import await. A
+  // same-ID replacement account cannot inherit old pairing/discard clicks.
+  const api=await unit70Api,owner=lease.id;
+  if(!sameUnit70OwnerLease88(lease))
+   throw Error('The signed owner changed while loading garment review.');
+  if(!Array.isArray(ids)||!ids.length||ids.some(id=>
+   typeof id!=='string'||!batch.some(x=>x.id===id&&
+    x.outfitSourceId===lease.sourceId&&x.reconciliation70?.ownerId===owner)))
+   throw Error('Garment decision is outside the current original photo or signed owner.');
+  previousBatch=batch.slice();
   if(decision==='pair'||decision==='combine'){
    if(ids.length!==2||ids[0]===ids[1])throw Error('Select exactly two different regions.');
    if(ids.some(id=>items.some(x=>x.id===id)))throw Error('A saved item cannot be regrouped.');
    batch=api.confirmWardrobePair70(batch,ids[0],ids[1],owner,{fragments:decision==='combine'});
   }else if(decision==='keep')batch=api.keepSeparate70(batch,ids,owner);
-  else if(decision==='discard'){
-   if(!ids.length||ids.some(id=>!batch.some(x=>x.id===id&&x.reconciliation70?.ownerId===owner)))throw Error('Invalid source selection.');
-   batch=batch.filter(x=>!ids.includes(x.id));
-  }else if(decision==='unpair'){
+  else if(decision==='discard')batch=batch.filter(x=>!ids.includes(x.id));
+  else if(decision==='unpair'){
+   if(ids.length!==1)throw Error('Select one confirmed grouping to separate.');
    const candidateItem=batch.find(x=>x.id===ids[0]),parts=api.unpairComponents70(batch,ids[0],owner);
    const extra=parts.companion,added=candidate(extra.image,{outfitSourceId:candidateItem.outfitSourceId,
     segmentHint:extra.segmentHint,recognitionPhoto:extra.recognitionPhoto,
@@ -51,21 +89,41 @@ async function updateUnit70(decision,ids){
     reconciliation70:extra.reconciliation70,reconciliation70Status:'separate_confirmed'});
    if(!added)throw Error('Companion already exists; nothing was split.');
    batch=batch.map(x=>x.id===ids[0]?parts.first:x);
-  }
-  outfitUnit70Error='';await persistDraft();render();
- }catch(error){outfitUnit70Error=error?.message||'Review decision could not be saved.';renderOutfitCapture();}
+  }else throw Error('Unknown garment review decision.');
+  assignedBatch=batch;
+  if(!sameUnit70OwnerLease88(lease))
+   throw Error('The signed owner changed during garment review.');
+  await persistUnit70Decision88(lease);
+  if(!sameUnit70OwnerLease88(lease))return;
+  outfitUnit70Error='';render();
+ }catch(error){
+  // Do not let a revoked account's pre-persist in-memory decision remain in
+  // the active draft, and never roll back a newer session's replacement batch.
+  if(previousBatch&&assignedBatch&&batch===assignedBatch)batch=previousBatch;
+  if(!sameUnit70OwnerLease88(lease))return;
+  outfitUnit70Error=error?.message||'Review decision could not be saved.';
+  renderOutfitCapture();
+ }
 }
 function renderUnit70Panel(){
  if(!outfitUnits70||typeof document==='undefined')return;
  const target=document.getElementById('outfitUnitReview70');if(!target)return;
+ const lease=unit70OwnerLease88();
+ if(!sameUnit70OwnerLease88(lease)){target.replaceChildren();target.hidden=true;return;}
  unit70Api.then(api=>{
-  if(!outfitUnits70)return;
+  // An asynchronous import cannot render old-owner photos into a new session,
+  // and all buttons keep the lease from the panel that created them.
+  if(!sameUnit70OwnerLease88(lease))return;
   if(typeof window!=='undefined')window.ownerMaySaveUnit70=api.ownerMaySaveUnit70;
-  api.renderUnitReview70(target,{drafts:batch,existing:items,sourceId:outfitActiveId,
-   onPair:(a,b)=>updateUnit70('pair',[a,b]),onCombine:(a,b)=>updateUnit70('combine',[a,b]),
-   onKeep:ids=>updateUnit70('keep',ids),onDiscard:ids=>updateUnit70('discard',ids),onUnpair:id=>updateUnit70('unpair',[id])});
+  api.renderUnitReview70(target,{drafts:batch,existing:items,sourceId:lease.sourceId,
+   onPair:(a,b)=>updateUnit70('pair',[a,b],lease),onCombine:(a,b)=>updateUnit70('combine',[a,b],lease),
+   onKeep:ids=>updateUnit70('keep',ids,lease),onDiscard:ids=>updateUnit70('discard',ids,lease),
+   onUnpair:id=>updateUnit70('unpair',[id],lease)});
   if(outfitUnit70Error){const warning=document.createElement('p');warning.textContent=outfitUnit70Error;warning.setAttribute('role','alert');target.prepend(warning);}
- }).catch(()=>{target.hidden=false;target.textContent='Garment reconciliation is unavailable. Your draft photographs are preserved. Use individual photos or retry.';});
+ }).catch(()=>{
+  if(!sameUnit70OwnerLease88(lease))return;
+  target.hidden=false;target.textContent='Garment reconciliation is unavailable. Your draft photographs are preserved. Use individual photos or retry.';
+ });
 }
 function renderOutfitCapture(){
  if(!outfitActiveId)outfitActiveId=batch.find(x=>x.outfitSourceId)?.outfitSourceId||null;
