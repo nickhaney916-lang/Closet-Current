@@ -1,0 +1,41 @@
+{
+  "message": "Error: M2 C36 genuine source dress native WebGL failed readiness: {\"status\":\"3D not available · original clothing photographs preserved. P171 source-bound anatomical 3D receipt not independently available: actual-original-163-bone-webgl-view-is-unavailable; sanitized-render={\\\"ready\\\":false,\\\"visible\\\":true,\\\"bones\\\":0,\\\"mode\\\":\\\"none\\\",\\\"receiptSlots\\\":[\\\"shirt\\\",\\\"dress\\\",\\\"pants\\\"],\\\"status\\\":\\\"Private wardrobe ready; verifying 3D. Original photographs remain available.\\\"}\",\"bridgeState\":{\"active\":false,\"opened\":null,\"modelReady\":false,\"figure\":null,\"bones\":0,\"meshCount\":0,\"viewerMode\":\"none\",\"fallbackCount\":0,\"photoOnlyUnsupported\":true,\"photoSourceFit171\":false,\"photoSourceSilhouette62\":false,\"silhouetteVertices62\":0,\"silhouetteMaxMeters62\":0,\"sourceProjectionRGB\":false,\"sourceProjectionMaterialCount\":0,\"sourceProjectionCompiledMaterialCount\":0,\"sourceProjectionRearPhotographed\":false,\"sourceLengthFit\":false,\"sourceLengthSeamShadingApplied\":false,\"sourceLengthSeamShadingEvidence\":null,\"sourceLengthSHA256\":null,\"sourceLengthMovedVertices\":0,\"sourceLengthOldHemY\":null,\"sourceLengthNewHemY\":null,\"sourceLengthExtension\":0,\"sourceLengthFlare\":1,\"sourceLengthIntersectionPairsBefore\":null,\"sourceLengthIntersectionPairsAfter\":null,\"sourceLengthTestedPairs\":0,\"sourceLengthConstructionMs\":0,\"sourceLengthTriangleContactAudit\":false,\"sourceLengthTriangleContactStrictlyAccepted\":false,\"sourceLengthTriangleContactBefore\":null,\"sourceLengthTriangleContactAfter\":null,\"sourceLengthNewTriangleContacts\":null,\"sourceLengthDepthClearance\":null,\"sourceLengthDepthEasingExponent\":null,\"sourceLengthHemWeightedDepthTaper\":false,\"sourceLengthDepthTaperNotPhotoMeasured\":false,\"sourceLengthExperimentalDepthTrial\":false,\"sourceLengthDepthFromPhotographVerified\":false,\"sourceLengthOriginalXYPhotographedSilhouetteRetained\":false,\"sourceLengthBodyContactDistribution\":null,\"sourceLengthGarmentPartContactStrictlyAccepted\":false,\"sourceLengthGarmentPartContactsBefore\":null,\"sourceLengthGarmentPartContactsAfter\":null,\"sourceLengthNewGarmentPartContacts\":null,\"sourceLengthSelfLayerCollisionCertified\":false,\"sourceLengthIntrapanelStrictlyAccepted\":false,\"sourceLengthIntrapanelAffectedPairOnly\":false,\"sourceLengthIntrapanelFullBaselineEnumerated\":false,\"sourceL; cause=page.waitForFunction: Timeout 75000ms exceeded.\n    at file:///workspace/scratch/3053074860ae/closet-current/scripts/test-native-3d-05-browser.mjs:1855:10",
+  "cases": 0,
+  "screens": 1,
+  "errors": [],
+  "external": [
+    {
+      "kind": "unexpected-external",
+      "method": "GET",
+      "host": "fonts.googleapis.com"
+    },
+    {
+      "kind": "unexpected-external",
+      "method": "GET",
+      "host": "raw.githubusercontent.com"
+    },
+    {
+      "kind": "unexpected-external",
+      "method": "GET",
+      "host": "fonts.googleapis.com"
+    },
+    {
+      "kind": "unexpected-external",
+      "method": "GET",
+      "host": "raw.githubusercontent.com"
+    }
+  ],
+  "navigations": [
+    {
+      "width": 320,
+      "path": "/public/index.html",
+      "query": "?nativeLossless04=research&native3D05=research&photoFit171=research&photoTorso173=research&photoSleeve174=research&photoDress175=research&photoDressContact52=research&photoDressDistance53=research&photoDressTopology54=research&photoDressEdges55=research&photoDressBoundaries56=research&photoDressLandmarks57=research&photoDressContact58=research&photoDressBodyBands59=research&photoDressTorsoTrial60=research&photoDressStrain61=research&photoDressMotion36=research&photoDressMotionPhase36=0.25"
+    },
+    {
+      "width": 320,
+      "path": "/public/index.html",
+      "query": "?nativeLossless04=research&native3D05=research&photoFit171=research&photoTorso173=research&photoSleeve174=research&photoDress175=research&photoDressContact52=research&photoDressDistance53=research&photoDressTopology54=research&photoDressEdges55=research&photoDressBoundaries56=research&photoDressLandmarks57=research&photoDressContact58=research&photoDressBodyBands59=research&photoDressTorsoTrial60=research&photoDressStrain61=research&photoDressMotion36=research&photoDressMotionPhase36=0.25"
+    }
+  ],
+  "crashes": []
+}

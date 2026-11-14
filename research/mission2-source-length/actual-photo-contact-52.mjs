@@ -1,3 +1,4 @@
+import {measurePrincipalStretch86} from '../mission2-p86/surface-metric.mjs';
 /**
  * M2 P2-C52: exact licensed, photographed P61 / P175 163-bone fabric
  * contact DIAGNOSTIC, read-only and research-only.
@@ -1082,7 +1083,13 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   }:{}),
   ...(refineSurfaceStrain61?{
    sourceOriginalPhotoSurfaceStrain61:
-    measureDisposableSourceSurfaceStrain61(world,proposal.world,indices)
+    measureDisposableSourceSurfaceStrain61(world,proposal.world,indices),
+   sourcePrincipalTextureMetric86:measurePrincipalStretch86({
+    original:world,candidate:proposal.world,
+    indices:indices??Uint32Array.from({length:world.length/3},(_,i)=>i),
+    originalUV:mesh.geometry?.attributes?.uv?.array?Float32Array.from(mesh.geometry.attributes.uv.array):null,
+    candidateUV:mesh.geometry?.attributes?.uv?.array?Float32Array.from(mesh.geometry.attributes.uv.array):null
+   })
   }:{}),
   researchCandidateNotApprovedForConsumer3D:true,
   releaseAuthorized:false,familyAlpha:'HOLD'

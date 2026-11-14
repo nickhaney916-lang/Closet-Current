@@ -1,0 +1,48 @@
+{
+  "engine": "chromium",
+  "scope": "front-panel-not-fitted-garment",
+  "screens": [
+    {
+      "path": "benchmark/mission2-p86/chromium-front.png",
+      "sha256": "c0d14cb687e00f346af6db71e3d0ce7ce6abc9e1ee2b7859479c3f1ed7501c3c"
+    },
+    {
+      "path": "benchmark/mission2-p86/chromium-oblique.png",
+      "sha256": "e5930a0ecb5255908ea9408c696c4ef118d5eb51fcf07861df437e54509c1155"
+    },
+    {
+      "path": "benchmark/mission2-p86/chromium-side.png",
+      "sha256": "2b41167400d7aab41fb900d814e95f2932764b4028ece12e8ea2cfe866a65e20"
+    },
+    {
+      "path": "benchmark/mission2-p86/chromium-rear-unobserved.png",
+      "sha256": "2b41167400d7aab41fb900d814e95f2932764b4028ece12e8ea2cfe866a65e20"
+    }
+  ],
+  "errors": [],
+  "physicalDevice": false,
+  "releaseAuthorized": false,
+  "familyAlpha": "HOLD",
+  "render": {
+    "ready": true,
+    "panels": [
+      {
+        "id": "commons-0001",
+        "triangles": 15720,
+        "drawCalls": 1
+      },
+      {
+        "id": "commons-0016",
+        "triangles": 28464,
+        "drawCalls": 1
+      },
+      {
+        "id": "commons-0053",
+        "triangles": 12208,
+        "drawCalls": 1
+      }
+    ],
+    "errors": []
+  },
+  "status": "PASS_FRONT_PANEL_RENDER_ONLY"
+}

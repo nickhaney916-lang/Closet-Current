@@ -1,0 +1,23 @@
+<!doctype html><meta charset="utf-8"><title>P86 observed-front panel review — HOLD</title>
+<style>body{font:15px system-ui;background:#eee;color:#222;margin:20px}h1{font-size:20px}canvas{width:330px;height:420px}section{display:inline-block;vertical-align:top;background:white;margin:4px;padding:10px}p{max-width:1000px}</style>
+<h1>P86 · licensed photographed front surfaces · HOLD</h1>
+<p>Observed silhouettes on flat front panels. No reconstructed depth, back, anatomy, fabric drape or fitted garment. Masks remain unapproved. Side view deliberately reveals zero measured depth.</p>
+<script type="importmap">{"imports":{"three":"/node_modules/three/build/three.module.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+window.review={ready:false,panels:[],errors:[]};
+try{
+for(const id of ['commons-0001','commons-0016','commons-0053']){
+ const panel=await fetch('/benchmark/mission2-p86/'+id+'-panel.json').then(r=>r.json());
+ const section=document.createElement('section');section.innerHTML='<h2>'+id+'</h2>';document.body.append(section);
+ const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(330,420);renderer.setPixelRatio(1);renderer.setClearColor(0xfafafa);section.append(renderer.domElement);
+ const scene=new THREE.Scene(),camera=new THREE.OrthographicCamera(-.65,.65,.83,-.83,.01,10);camera.position.z=3;
+ const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(panel.positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(panel.uv,2));geometry.setIndex(panel.indices);geometry.computeVertexNormals();
+ const texture=await new THREE.TextureLoader().loadAsync('/benchmark/mission2-p86/'+id+'.png');texture.colorSpace=THREE.SRGBColorSpace;
+ const material=new THREE.MeshBasicMaterial({map:texture,transparent:true,side:THREE.FrontSide});const mesh=new THREE.Mesh(geometry,material);scene.add(mesh);renderer.render(scene,camera);
+ window.review.panels.push({id,triangles:panel.receipt.triangles,drawCalls:renderer.info.render.calls});
+ window.addEventListener('review-angle',e=>{mesh.rotation.y=e.detail;renderer.render(scene,camera);});
+}
+window.review.ready=true;
+}catch(e){window.review.errors.push(e.message);throw e;}
+</script>

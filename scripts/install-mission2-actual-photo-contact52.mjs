@@ -12,6 +12,8 @@ const donor=resolve(donorArg),cwd=resolve('.');
 if(donor==='/'||donor===cwd||cwd.startsWith(donor+'/')||
    donor.startsWith(cwd+'/public')||donor.startsWith(cwd+'/supabase'))
  throw Error('C52 refuses production, current or private wardrobe tree');
+await mkdir(join(donor,'research/mission2-p86'),{recursive:true});
+await copyFile('research/mission2-p86/surface-metric.mjs',join(donor,'research/mission2-p86/surface-metric.mjs'));
 const src='research/mission2-source-length/actual-photo-contact-52.mjs';
 const dest=join(donor,src);
 await mkdir(dirname(dest),{recursive:true});
