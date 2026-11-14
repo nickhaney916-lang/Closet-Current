@@ -165,11 +165,11 @@ test('M40 same JPEG recognized public, but mismatched category cannot become ver
   originalBytes=p.consumer.attestOriginalPhotoBytes92;
  p.consumer.readOnlyGarmentSources91=ids=>{
   const out=original(ids);
-  return {...out,sources:out.sources.map(x=>({...x,category:'Bottoms'}))};
+  return {...out,sources:out.sources.map(x=>({...x,category:'Tops'}))};
  };
  p.consumer.attestOriginalPhotoBytes92=async ids=>{
   const out=await originalBytes(ids);
-  return {...out,sources:out.sources.map(x=>({...x,category:'Bottoms'}))};
+  return {...out,sources:out.sources.map(x=>({...x,category:'Tops'}))};
  };
  const q=await assessNative3DQuality40(p);
  assert.equal(q.consumer3DAdmitted,false);
