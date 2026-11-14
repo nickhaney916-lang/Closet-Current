@@ -119,7 +119,11 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
    receipt.sourceId!=='commons-0043'||!cutoutImage||
    !Number.isInteger(segments)||segments<24||segments>96||segments%4!==0||
    !Number.isFinite(skirtLengthMeters)||skirtLengthMeters<.4||skirtLengthMeters>.9||
-   !Number.isFinite(waistHalfWidthMeters)||waistHalfWidthMeters<.16||waistHalfWidthMeters>.32)
+   !Number.isFinite(waistHalfWidthMeters)||waistHalfWidthMeters<.16||waistHalfWidthMeters>.32||
+   !(cutoutImage?.data instanceof Uint8Array)||
+   !Number.isSafeInteger(cutoutImage.width)||!Number.isSafeInteger(cutoutImage.height)||
+   cutoutImage.width<32||cutoutImage.height<32||
+   cutoutImage.data.length!==cutoutImage.width*cutoutImage.height*4)
   return fail('source-skeleton-or-original-mask-capability-missing');
  let mesh=null,geo=null,texture=null,materials=null;
  try{
@@ -164,8 +168,8 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
   geo.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));
   geo.setIndex(tris);geo.computeVertexNormals();
   for(const group of seams)geo.addGroup(group.start,group.count,group.materialIndex);
-  texture=new THREE.Texture(cutoutImage);
-  texture.colorSpace=THREE.SRGBColorSpace;texture.needsUpdate=true;
+  texture=new THREE.DataTexture(cutoutImage.data,cutoutImage.width,cutoutImage.height,THREE.RGBAFormat);
+  texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=true;texture.needsUpdate=true;
   materials=[
    new THREE.MeshStandardMaterial({map:texture,color:0xffffff,roughness:.95,
     side:THREE.DoubleSide,transparent:true,depthWrite:true}),
@@ -190,7 +194,8 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
    sourcePhotoCameraUnadjudicated:true,originalPhotoBytesUntouched:true,
    sourceAlphaHumanApproved:false,interlayerContactPassed:false,
    bodyPenetrationUnmeasured:true,clothDrapeDynamics:false,
-   sourceRGBOriginalOnFrontOnly:true,triangleCount:tris.length/3,
+   sourceRGBADataTextureBoundToFrontOnly:true,
+   genuinePhotoShaderWebGLNotYetMeasured:true,triangleCount:tris.length/3,
    originalHumanVisualRealismAccepted:false,consumer3DAdmitted:false,
    originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
   });
