@@ -62,7 +62,7 @@ test('complete native two-model source-matched rank parity is research only',()=
 });
 const bad={
  'missing original runtime':({jsep})=>jsep.runtimeVariant='cpu',
- 'incorrect CPU source':({cpu})=>cpu.runtimeJS_SHA256='d'.repeat(64),
+ 'incorrect CPU source':({cpu})=>cpu.rows[0].runtimeJS_SHA256='d'.repeat(64),
  'changed source owner':({cpu})=>cpu.ownerSessionIdentityChanged=true,
  'wrong original JPEG':({cpu})=>cpu.rows[1].observedOriginalSHA256='e'.repeat(64),
  'changed code commit':({cpu})=>cpu.codeCommit='e'.repeat(40),
