@@ -505,6 +505,10 @@ try{
    if(new URL(r.url()).pathname.startsWith('/donor/'))donorRequests187++;
   });
   page.on('pageerror',e=>errors.push({width,message:e.message}));
+  if(photoDressTorsoTrial60)page.on('console',msg=>{
+   if(msg.text().startsWith('M2_C60_SIGNED_SOURCE_TRIAL_REFUSED:'))
+    console.error(msg.text().slice(0,250));
+  });
   if(sourceProjectionMode)page.on('console',msg=>{if(msg.type()==='error'&&/WebGLProgram|shader error|VALIDATE_STATUS|ERROR: 0:/i.test(msg.text()))errors.push({width,kind:'shader-error',message:msg.text()});});
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
@@ -1846,7 +1850,9 @@ try{
     previewDisabled:document.getElementById('native3D05Preview')?.disabled||false
    }));
    throw Error('M2 C36 genuine source dress native WebGL failed readiness: '+
-    JSON.stringify(detail).slice(0,1800)+'; cause='+String(error?.message||error));
+    JSON.stringify({...detail,c60PageExceptions:photoDressTorsoTrial60?
+     errors.slice(-3).map(x=>String(x.message).slice(0,200)):undefined
+    }).slice(0,2200)+'; cause='+String(error?.message||error));
   }
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
