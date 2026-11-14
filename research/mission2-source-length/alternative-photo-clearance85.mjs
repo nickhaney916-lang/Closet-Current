@@ -1,0 +1,182 @@
+/**
+ * Mission 2 / parallel #85: independent, read-only photographed-dress trial.
+ * Only call from C52's SHA-verified, original 163-bone source path.
+ * Two alternatives to C60: a quintic-height radial envelope and a
+ * welded, stretch-constrained positional solver. Neither is consumer 3D.
+ * Pure browser/Node ESM; no network, owner images or source mutations.
+ */
+import {createDisposableUpperTorsoWorldTrial60} from './upper-torso-clearance-trial60.mjs';
+
+const fail=(s)=>{throw Error('M2 P85 disposable photo geometry '+s);};
+const q=t=>{const x=Math.max(0,Math.min(1,t));return x*x*x*(x*(6*x-15)+10);};
+const key=(a,i)=>[0,1,2].map(k=>Math.round(a[3*i+k]/0.0000005)).join(':');
+const length=(x,y,z)=>Math.hypot(x,y,z);
+function verify(world,indices,neck,spine){
+ if(!(world instanceof Float32Array)||world.length<9||world.length%3||
+  !world.every(Number.isFinite)||
+  !(indices===null||indices instanceof Uint16Array||indices instanceof Uint32Array)||
+  (indices!==null&&(indices.length<3||indices.length%3||
+   Array.from(indices).some(i=>i>=world.length/3)))||
+  !Array.isArray(neck)||!Array.isArray(spine)||
+  neck.length!==3||spine.length!==3||
+  !neck.every(Number.isFinite)||!spine.every(Number.isFinite)||
+  neck[1]<=spine[1]+.001)
+  fail('finite original source triangles and upright neck01/spine04 required');
+}
+function summary(world,out,method,maxMeters,extra={}){
+ let moved=0,maxAppliedMeters=0;
+ for(let i=0;i<world.length;i+=3){
+  const d=length(out[i]-world[i],out[i+1]-world[i+1],out[i+2]-world[i+2]);
+  if(d>maxMeters+2e-6)fail('outward candidate exceeded bounded displacement');
+  if(d>1e-8)moved++;
+  maxAppliedMeters=Math.max(maxAppliedMeters,d);
+ }
+ return Object.freeze({
+  schema:'M2-P85-disposable-licensed-world-candidate',
+  method,limitMeters:maxMeters,
+  movedVertices:moved,maxAppliedMeters,
+  originalPhotoWorldAndRestNeverModified:true,
+  sourceUVTextureSkinAndBonesNeverModified:true,
+  originalIndicesNeverModified:true,
+  noHumanReviewedPhotorealism:true,
+  continuousCollisionNotMeasured:true,
+  candidateNotInstalledInRenderer:true,
+  releaseAuthorized:false,familyAlpha:'HOLD',
+  ...extra,world:out
+ });
+}
+function envelope(y,neck,spine){
+ const h=neck[1]-spine[1],f=Math.min(.10,h/4);
+ return q((y-(spine[1]-f))/(2*f))*
+  (1-q((y-(neck[1]-f))/(2*f)));
+}
+function quintic(world,neck,spine,meters){
+ const out=world.slice();
+ for(let i=0;i<world.length;i+=3){
+  const x=world[i],y=world[i+1],z=world[i+2],
+   dx=x-spine[0],dz=z-spine[2],r=Math.hypot(dx,dz),
+   w=envelope(y,neck,spine);
+  if(r>1e-8&&w>0){
+   out[i]=Math.fround(x+meters*w*dx/r);
+   out[i+2]=Math.fround(z+meters*w*dz/r);
+  }
+ }
+ return summary(world,out,'quintic-height-envelope',meters);
+}
+/**
+ * Weld only vertices sharing signed skinned-WORLD positions within .5um.
+ * No geometry is reindexed, no seam is sewn, original UVs are never read.
+ * This graph is used solely for disposable displacement continuity.
+ * Separate source positions always remain separate.
+ */
+function welded(world,indices){
+ const groups=[],map=new Map(),of=new Uint32Array(world.length/3);
+ for(let i=0;i<of.length;i++){
+  const k=key(world,i);let g=map.get(k);
+  if(g===undefined){
+   g=groups.length;map.set(k,g);
+   groups.push({ids:[],p:[world[3*i],world[3*i+1],world[3*i+2]]});
+  }
+  groups[g].ids.push(i);of[i]=g;
+ }
+ const count=(indices?.length??of.length),seen=new Set(),edges=[];
+ for(let f=0;f<count;f+=3){
+  const t=[0,1,2].map(k=>of[indices?indices[f+k]:f+k]);
+  for(let j=0;j<3;j++){
+   const u=Math.min(t[j],t[(j+1)%3]),v=Math.max(t[j],t[(j+1)%3]);
+   if(u===v)continue;
+   const k=u+':'+v;
+   if(!seen.has(k)){seen.add(k);edges.push([u,v]);}
+  }
+ }
+ return {groups,of,edges};
+}
+function constrained(world,indices,neck,spine,meters){
+ // Original C60 is only a disposable initial guess, not the solved cloth.
+ const target=createDisposableUpperTorsoWorldTrial60(world,{
+  neck,spine,outwardMeters:meters}).world;
+ const {groups,of,edges}=welded(world,indices);
+ const base=groups.map(g=>g.p);
+ const delta=groups.map(g=>{
+  const i=g.ids[0]*3;
+  return [target[i]-world[i],target[i+1]-world[i+1],target[i+2]-world[i+2]];
+ });
+ const p=base.map((v,i)=>v.map((a,k)=>a+delta[i][k]));
+ const mobile=delta.map(d=>Math.hypot(...d)>1e-9);
+ let iterations=0,projectedEdges=0;
+ // Bounded strain energy projection, NOT a collision resolver: actual
+ // collisions must be checked later by untouched C58 strict triangle test.
+ for(let iter=0;iter<22;iter++){
+  let projections=0;
+  for(const [u,v] of edges){
+   const a=p[u],b=p[v],A=base[u],B=base[v];
+   const dx=b[0]-a[0],dy=b[1]-a[1],dz=b[2]-a[2],
+    L=length(dx,dy,dz),
+    L0=length(B[0]-A[0],B[1]-A[1],B[2]-A[2]);
+   if(!(L0>1e-10)||!(L>1e-10))continue;
+   const ideal=Math.max(L0*.97,Math.min(L0*1.03,L));
+   if(Math.abs(L-ideal)<1e-9)continue;
+   const coeff=.75*(L-ideal)/L;
+   const wU=mobile[u]?1:0,wV=mobile[v]?1:0,sum=wU+wV;
+   if(!sum)continue;
+   for(let k=0;k<3;k++){
+    const d=coeff*(k===0?dx:k===1?dy:dz);
+    a[k]+=d*wU/sum;b[k]-=d*wV/sum;
+   }
+   projections++;
+  }
+  // Small target spring avoids unbounded drift and keeps start localized.
+  for(let i=0;i<p.length;i++){
+   if(!mobile[i]){p[i]=base[i].slice();continue;}
+   const v=p[i],orig=base[i],goal=delta[i];
+   for(let k=0;k<3;k++)v[k]=orig[k]+.94*(v[k]-orig[k])+.06*goal[k];
+   let dx=v[0]-orig[0],dy=v[1]-orig[1],dz=v[2]-orig[2];
+   const r=length(dx,dy,dz),cap=Math.min(meters,Math.hypot(...goal)+.001);
+   if(r>cap){const s=cap/r;dx*=s;dy*=s;dz*=s;}
+   // Never force an originally outward vertex inward to 'fix' quality.
+   if(dx*goal[0]+dy*goal[1]+dz*goal[2]<0){dx=dy=dz=0;}
+   v[0]=orig[0]+dx;v[1]=orig[1]+dy;v[2]=orig[2]+dz;
+  }
+  iterations++;projectedEdges+=projections;
+  if(projections===0)break;
+ }
+ const out=world.slice();
+ for(let i=0;i<of.length;i++){
+  const g=of[i],at=groups[g].p,sol=p[g];
+  for(let k=0;k<3;k++)out[3*i+k]=Math.fround(
+   world[3*i+k]+sol[k]-at[k]);
+ }
+ let maxCoincidentSeamDeltaMeters=0;
+ for(const g of groups){
+  if(g.ids.length<2)continue;
+  const i=g.ids[0];
+  for(const j of g.ids.slice(1)){
+   const dr=length(
+    (out[3*j]-out[3*i])-(world[3*j]-world[3*i]),
+    (out[3*j+1]-out[3*i+1])-(world[3*j+1]-world[3*i+1]),
+    (out[3*j+2]-out[3*i+2])-(world[3*j+2]-world[3*i+2]));
+   maxCoincidentSeamDeltaMeters=Math.max(maxCoincidentSeamDeltaMeters,dr);
+  }
+ }
+ return summary(world,out,'welded-edge-strain-projection',meters,{
+  projectionIterations:iterations,projectedEdges,
+  sourcePositionGroupCount:groups.length,
+  maxCoincidentSeamDeltaMeters,
+  actualUVSeamAndVisualHoleAcceptanceNotMeasured:true
+ });
+}
+export function createDisposableClothAlternatives85(
+ originalWorld,indices=null,{neck,spine}={}
+){
+ verify(originalWorld,indices,neck,spine);
+ const copy=originalWorld.slice();
+ const candidates=[
+  quintic(originalWorld,neck,spine,.0045),
+  quintic(originalWorld,neck,spine,.006),
+  constrained(originalWorld,indices,neck,spine,.0045),
+  constrained(originalWorld,indices,neck,spine,.006)
+ ];
+ if(!originalWorld.every((v,i)=>v===copy[i]))
+  fail('original authenticated world source was mutated');
+ return Object.freeze(candidates);
+}
