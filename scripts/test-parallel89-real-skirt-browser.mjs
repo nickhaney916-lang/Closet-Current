@@ -416,8 +416,8 @@ try{
    results.research45OnlyPoseBVHChecks.push({
     avatar,pose:testPose,
     originalPhotoSkirtBodyContactPairs:originalWitness.strictTransverseSourceBodyTriangleCrossings,
-    45mmRenderSourceBodyContactPairs:previewContact.strictTransverseSourceBodyTriangleCrossings,
-    45mmResearchABMeasuredContactPairs:expected.trialStrictTransversePairs,
+    rigid45mmRenderSourceBodyContactPairs:previewContact.strictTransverseSourceBodyTriangleCrossings,
+    rigid45mmResearchABMeasuredContactPairs:expected.trialStrictTransversePairs,
     sourceGeometryAndRigRestored:true,originalPhoto2DFallbackRequired:true,
     humanVisualFitApproved:false,consumer3DAdmitted:false,releaseAuthorized:false
    });
