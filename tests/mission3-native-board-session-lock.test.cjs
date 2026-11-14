@@ -27,6 +27,9 @@ function fixture({native=true,throwOn=null,missing=[]}={}){
  };
  nodes.boardPicker={open:true,close(){this.open=false;calls.push('close-picker')}};
  nodes.boardSaveStatus={textContent:'PRIVATE-A-JPEG-SHA'};
+ nodes.boardSummary={textContent:'PRIVATE-A-OUTFIT-SUMMARY'};
+ nodes.boardGapStatus={textContent:'PRIVATE-A-OWNED-CLOTHING-IDEAS'};
+ nodes.boardPickerTitle={textContent:'PRIVATE-A-PICKER'};
  nodes.retryBoardDraft={hidden:false};
  nodes.boardDraftConflictActions={hidden:false};
  nodes.authGate={hidden:true};
@@ -134,13 +137,25 @@ test('native session lock does not make a storage write',()=>{
  const f=fixture();f.lock();
  assert.equal(f.calls.filter(x=>/persist|store|save|write|delete/i.test(x)&&!x.startsWith('empty:')).length,0);
 });
-test('normal non-native lock retains existing handler behavior',()=>{
+test('default non-native session lock scrubs previous owner from outfit memory and DOM',()=>{
  const f=fixture({native:false});f.lock();
- assert.equal(f.ctx.currentBoard.name,'PRIVATE-A-OUTFIT');
- assert.equal(f.ctx.nativeLossless04,f.originalConsumer);
- assert.equal(f.nodes.boardName.value,'PRIVATE-A-boardName');
+ assert.equal(f.ctx.currentBoard.name,'');
+ assert.equal(f.ctx.currentBoard.slots.top,undefined);
+ assert.equal(f.ctx.savedOutfitBoards.length,0);
+ for(const id of inputIds)assert.equal(f.nodes[id].value,'','retained default outfit field '+id);
+ for(const id of gridIds)assert.equal(f.nodes[id].entries.length,0);
+ assert.equal(f.nodes.boardPicker.open,false);
+ assert.equal(f.nodes.boardSummary.textContent,'Private outfits locked · sign in again.');
+ assert.equal(f.nodes.boardGapStatus.textContent,'');
+ assert.equal(f.nodes.boardPickerTitle.textContent,'Choose clothing after sign-in');
+ assert.equal(f.nodes.boardSaveStatus.textContent,'Signed-out private outfit cleared. Reopen Outfit Builder.');
+ assert.equal(f.ctx.boardCommittedDraft,JSON.stringify(f.ctx.currentBoard));
+ assert.equal(f.ctx.boardExpectedStoredDraft,'null');
+ assert.equal(f.ctx.choosingSlot,'shoes');
  assert.equal(f.nodes.retryBoardDraft.hidden,true);
  assert.equal(f.nodes.boardDraftConflictActions.hidden,true);
+ // Default mode does not interfere with research-only controllers/panels.
+ assert.equal(f.ctx.nativeLossless04,f.originalConsumer);
  assert.equal(f.calls.filter(x=>x.startsWith('dispose:')).length,0);
 });
 test('old native controller callbacks cannot write into newly signed owner screen after lock',()=>{
@@ -166,8 +181,131 @@ test('clearing the UI requires neither a live controller nor network access',()=
  assert.equal(f.nodes.boardSaveStatus.textContent,'Signed-out private outfit cleared. Reopen Outfit Builder.');
 });
 test('production source clears private board before retiring old controller effects',()=>{
- assert.match(handler,/nativeLossless04=null;\s*currentBoard=cleanOutfitBoard\(\{\},\[\]\);\s*savedOutfitBoards=\[\];/);
+ assert.match(handler,/if\(nativeMode\)nativeLossless04=null;\s*currentBoard=cleanOutfitBoard\(\{\},\[\]\);\s*savedOutfitBoards=\[\];/);
  assert.match(handler,/syncBoardInputs\(\);\s*nativeLossless04ClearPreview\(\);/);
  assert.match(handler,/window\[key\]=null;\s*try\{bridge\?\.dispose\?\.\(\);\}catch\{\}/);
- assert.match(handler,/if\(!nativeLossless04Active\)return;/);
+ assert.match(handler,/const nativeMode=nativeLossless04Active;/);
+ assert.match(handler,/boardCommittedDraft=JSON.stringify\(currentBoard\);\s*boardExpectedStoredDraft='null';/);
+});
+
+test('default non-native lock is idempotent and clears private draft metadata',()=>{
+ const f=fixture({native:false});
+ f.lock();f.lock();
+ assert.equal(f.ctx.currentBoard.name,'');
+ assert.equal(f.ctx.savedOutfitBoards.length,0);
+ assert.equal(f.ctx.boardExpectedStoredDraft,'null');
+ assert.equal(f.nodes.boardName.value,'');
+ assert.equal(f.calls.filter(x=>x.startsWith('dispose:')).length,0);
+});
+test('default private board backups cannot return an old owner outfit after logout',()=>{
+ const f=fixture({native:false});f.lock();
+ const snap=JSON.parse(JSON.stringify({current:f.ctx.currentBoard,saved:f.ctx.savedOutfitBoards}));
+ assert.equal(snap.current.name,'');
+ assert.equal(Object.keys(snap.current.slots).length,0);
+ assert.deepEqual(snap.saved,[]);
+});
+test('default owner scrub does not mutate persistent wardrobe data',()=>{
+ const f=fixture({native:false});f.lock();
+ assert.equal(f.calls.filter(x=>/persist|store|delete|write/.test(x)).length,0);
+});
+
+const startup=slice('const outfitBoardReady=(async()=>{','const TREND_DATA_URL=');
+function defaultLoadFixture(){
+ const events=[],request={},nodes={
+  authGate:{hidden:true},appShell:{hidden:false},boardSaveStatus:{textContent:'INITIAL'}
+ };
+ const auth={user:{id:'owner-a'},assertCurrent(){if(this.revoked)throw Error('revoked');}};
+ const originalDB={name:'closet-current-user-owner-a',
+  transaction(name){events.push('read:'+name);return {objectStore(table){
+   assert.equal(table,'state');return {get(key){
+    assert.equal(key,'outfit-board');events.push('get');return request;
+   }};
+  }};}
+ };
+ const ctx={
+  window:{closetAuth:auth},db:originalDB,closetReady:Promise.resolve(),
+  captureOperationEpoch:10,nativeLossless04Active:false,
+  currentBoard:{name:'',slots:{}},savedOutfitBoards:[],
+  boardExpectedStoredDraft:'null',boardCommittedDraft:null,
+  boardInitialized:false,items:[],
+  cleanOutfitBoard:value=>JSON.parse(JSON.stringify(value||{})),
+  syncBoardInputs(){events.push('sync')},
+  renderOutfitBoard(){events.push('render')},
+  $(id){if(!nodes[id])throw Error('missing '+id);return nodes[id]}
+ };
+ vm.createContext(ctx);
+ vm.runInContext(lease+startup,ctx,{timeout:1000});
+ async function begin(){
+  // Awaited closetReady first resumes in the VM microtask queue.
+  await Promise.resolve();await Promise.resolve();
+  assert.equal(typeof request.onsuccess,'function');
+ }
+ function release(value){
+  request.result=value;
+  request.onsuccess();
+  return vm.runInContext('outfitBoardReady',ctx);
+ }
+ return {ctx,events,nodes,request,auth,originalDB,begin,release,
+  switchOwner(){
+   ctx.window.closetAuth={user:{id:'owner-b'},assertCurrent(){}};
+   ctx.db={name:'closet-current-user-owner-b'};ctx.captureOperationEpoch++;
+  },
+  relogin(){
+   ctx.window.closetAuth={user:{id:'owner-a'},assertCurrent(){}};
+   ctx.db={name:'closet-current-user-owner-a'};ctx.captureOperationEpoch++;
+  },
+  revoke(){auth.revoked=true},
+  hideGate(){nodes.authGate.hidden=false},
+  moveDB(){ctx.db={name:'closet-current-user-owner-a'}},
+  rotate(){ctx.captureOperationEpoch++}
+ };
+}
+const privateRead={current:{name:'PRIVATE-A-BOARD',slots:{top:'PRIVATE-A-ITEM'}},
+ saved:[{name:'PRIVATE-A-SAVED'}]};
+test('default owner-valid delayed IndexedDB startup can adopt its own private board',async()=>{
+ const f=defaultLoadFixture();await f.begin();
+ await f.release(privateRead);
+ assert.equal(f.ctx.currentBoard.name,'PRIVATE-A-BOARD');
+ assert.equal(f.ctx.savedOutfitBoards[0].name,'PRIVATE-A-SAVED');
+ assert.equal(f.ctx.boardInitialized,true);
+ assert.equal(f.events.includes('render'),true);
+ assert.equal(f.events.includes('sync'),true);
+});
+for(const [why,change] of [
+ ['account switch',f=>f.switchOwner()],
+ ['same-ID re-login',f=>f.relogin()],
+ ['capture epoch rotation',f=>f.rotate()],
+ ['private DB handle replacement',f=>f.moveDB()],
+ ['revoked session',f=>f.revoke()],
+ ['locked auth gate',f=>f.hideGate()]
+]){
+ test('old default IndexedDB load cannot repopulate new owner after '+why,async()=>{
+  const f=defaultLoadFixture();await f.begin();
+  change(f);
+  f.ctx.currentBoard={name:'NEW-SESSION-BOARD',slots:{top:'NEW-SESSION-GARMENT'}};
+  f.ctx.savedOutfitBoards=[{name:'NEW-SESSION-SAVED'}];
+  await f.release(privateRead);
+  assert.equal(f.ctx.currentBoard.name,'NEW-SESSION-BOARD');
+  assert.equal(f.ctx.savedOutfitBoards[0].name,'NEW-SESSION-SAVED');
+  assert.equal(f.ctx.boardExpectedStoredDraft,'null');
+  assert.equal(f.ctx.boardInitialized,false);
+  assert.equal(f.events.includes('sync'),false);
+  assert.equal(f.events.includes('render'),false);
+ });
+}
+test('stale default IndexedDB read error cannot display private previous owner details',async()=>{
+ const f=defaultLoadFixture();await f.begin();
+ f.switchOwner();
+ f.nodes.boardSaveStatus.textContent='NEW OWNER STATUS';
+ f.request.onerror();
+ await vm.runInContext('outfitBoardReady',f.ctx);
+ assert.equal(f.nodes.boardSaveStatus.textContent,'NEW OWNER STATUS');
+ assert.equal(f.ctx.boardInitialized,false);
+});
+test('default startup source binds exact owner database before and after await',()=>{
+ assert.match(startup,/ordinaryBoardLease=beginOwnerBoardUiLease\(\)/);
+ assert.match(startup,/const ownerDB=db;/);
+ assert.match(startup,/ownerDB\.transaction\('state'\)/);
+ assert.match(startup,/if\(!ordinaryBoardLease\.current\(\)\)return;/);
+ assert.match(startup,/ordinaryBoardLease&&!ordinaryBoardLease\.current\(\)/);
 });
