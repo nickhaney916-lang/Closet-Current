@@ -24,16 +24,16 @@ The new opt-in adapter performs four-neighbor connected-component extraction for
 | Two shoes (existing P840) | 1 | 2 | 50/50 | Required |
 | Background-only | 0 | 0 | 0/0 | No proposed item |
 
-All above are **test expectations** until exact-head CI runs, not claimed passing observations. The semantic-class test masks are synthetic; no pixel mask from a genuine JPEG was newly evaluated in #88. No human labels, real FashionCLIP/FashionSigLIP inference, device acceptance, or measured recall improvement is claimed.
+All five above are **verified passing synthetic test observations** in the new source-conservation suite; they are NOT a real-model or independently human-labeled recognition result. The semantic-class test masks are synthetic; no pixel mask from a genuine JPEG was newly evaluated in #88. No human labels, real FashionCLIP/FashionSigLIP inference, device acceptance, or measured recall improvement is claimed.
 
 ## Acceptance ledger
-- Native class-mask component conservation and owner-review flags: TEST PENDING exact-head no-deploy CI.
-- Shoe-pair and original-crop inherited source contracts: TEST PENDING exact-head no-deploy CI.
+- Native class-mask component conservation and owner-review flags: **PASS**, 5/5 new synthetic fixtures, plus retained original 20 targeted native instance, segmentation and pairing regressions, 25/25 targeted combined; no user-photo instances were scored.
+- Shoe-pair, original-crop, duplicate owner and original JPEG custody contracts: **PASS** inherited no-deploy synthetic/native/browser checks; see exact receipts below.
 - T-shirt/sweatshirt, sneakers/boots, dress/long-top cross-family **classification accuracy**: **BLOCKED** independent source-disjoint human-verified genuine photos and baseline/candidate inference.
 - Original multi-garment detection recall, false positives, source-faithful color and owner-corrected zero-wrong-save denominators: **BLOCKED** independently sealed labels and genuine original-photo runs.
 - Two-pretrained-model desktop browser stability: inherited research only; continuous WebKit reliability still unresolved in separate master M34 [#1169](https://github.com/nickhaney916-lang/Closet-Current/pull/1169). No inference model or runtime changed here.
-- Native owner review/default no-auto-save and original custody: inherited protective contracts, to be rerun; physical phones, independent operators and authorized 2-account cloud: **BLOCKED**.
-- Source-to-outfit/private index: coordination remains with master #1054 M33 [#1167](https://github.com/nickhaney916-lang/Closet-Current/pull/1167); this branch does not integrate with its different branch or enable 3D.
+- Native owner review/default no-auto-save and original custody: **PASS** inherited 668/668 Node plus desktop synthetic-owner/source-bound policy. Physical phones, independent operators and authorized two-account cloud: **BLOCKED**.
+- Source-to-outfit/private index: coordination remains with master #1054, including later M34 [#1170](https://github.com/nickhaney916-lang/Closet-Current/pull/1170) durable owner-row research; this branch does not integrate with that different ancestry or enable 3D.
 - Mobile per-photo p50/p95, device memory: **UNMEASURED**; no hardware available. Synthetic 5-fixture proposal diagnostics are never model recognition precision/recall.
 
 ## Reproduction and master consumer handoff
@@ -43,3 +43,9 @@ node --test tests/mission1-release-evidence-851.test.mjs
 node scripts/m1-release-evidence-851.mjs   # must remain BLOCKED, never release
 ```
 CI also runs the inherited full native Node/build and desktop Chromium/WebKit original photo/owner safety suite. **Do not independently cherry-pick this on a consumer branch** until master verifies exact source compatibility and real-photo over-/under-segmentation on source-disjoint originals. Keep owners' review and same-source mask receipts mandatory and preserve the original JPEG/2D fallback. Next priority is blind public/legal real-photo two-human ground truth and before/after mask/recognition/owner-save measurement, separate from mocked safety.
+
+## Actual no-deploy CI receipt — exact implementation tree
+
+[Actions #43622320025](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43622320025) **COMPLETED SUCCESS, 2/2 jobs** on implementation SHA `a5a6736216ca53397eee84155f2eec798685d26e` (parent P886 `ab68cbbbd54376bbc9c099fc3504d1cc00ba632c`). Exact four path allowlist and no cloud/app/worker/model/original-corpus edits PASS. Focused source-mask/footwear/owner unit suite **25/25 PASS**; signed independent evidence adversarial gate **33/33 PASS** and release evidence correctly `BLOCKED` with `shouldLiftFamilyAlphaHold:false`. Inherited full native Node/build **668/668 PASS, zero fails/skips**. Chromium and WebKit 320/390/430 original-JPEG source/custody/reload profiles **6/6 PASS** (source SHA preserved); optional dual-model owner review/consent/stale/conflict safeguards **6/6 PASS**; owner pair-unit duplicate and cross-owner browser guards **6/6 PASS**. These are scripted desktop/synthetic owner safety tests, NOT new genuine model classification accuracy, physical phones, legally source-disjoint human masks, real cloud owner authentication or live release approval.
+
+The above CI run is pinned to the immutable **implementation tree**. A later documentation-only report update leaves executable files unchanged but requires its OWN final exact-head CI before a whole-current-HEAD green claim. The draft PR records the final checked SHA. For independently verified multi-garment masks, the next operator must run genuine source-JPEG segmentation with two independent human instance annotations and report false positives, missed overlapping garments, class confusion and owner-corrected saves; the 5 synthetic cases must never be presented as such evidence.
