@@ -1,0 +1,36 @@
+name: MAIN1054 M19 exact-source ancestry audit NO DEPLOY
+on:
+  pull_request:
+    branches:
+      - research/main-thread-native-photo-mutation-browser18-HOLD
+    paths:
+      - scripts/audit-main-crossmission-19.mjs
+      - tests/main-crossmission-ancestry-19.test.mjs
+      - research/main-thread-integration-1054/MILESTONE19.md
+      - .github/workflows/main-thread-crossmission-ancestry19-no-deploy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readonly-ancestry-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test read-only audit and fail-closed behavior
+        run: node --test tests/main-crossmission-ancestry-19.test.mjs
+      - name: Verify donor ancestry without merges or deployment
+        run: |
+          node scripts/audit-main-crossmission-19.mjs \
+            --controller dba3897cd2c03812985181ffa24e889e44259738 \
+            --donor m1=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c \
+            --donor m2=b3835b3b3f9de943cfff100ab5af0f9d8fcee6fa \
+            --donor m3=6574fa71e9bbda501e161556dc2aa872920a4eb6 \
+            --donor m3-evidence=0b646df3b1a74d59747ea36fdd81510e5bda81c6 \
+            --donor m2-p86=2d1a62fd75b308086d841cc918d970286128b254
