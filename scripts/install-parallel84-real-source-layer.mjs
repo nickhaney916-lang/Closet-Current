@@ -15,7 +15,7 @@ if(!process.argv[2]||donor===base||donor==='/'||
 const entry='research/parallel84-real-photo-layers';
 for(const name of ['layer-contact84.mjs','actual-skinned-layers84.mjs',
  'source-bone-yoke-trial84.mjs','source-denim-side-trial84.mjs',
- 'source-pose-sweep84.mjs']){
+ 'source-pose-sweep84.mjs','source-three-pose-denim-gate84.mjs']){
  await mkdir(join(donor,entry),{recursive:true});
  await copyFile(join(base,entry,name),join(donor,entry,name));
 }
@@ -28,7 +28,8 @@ source=source.replace(importAnchor,importAnchor+
  "\nimport {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';"+
  "\nimport {trialSourceBoneShoulderYoke84} from '../parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';"+
  "\nimport {trialSourceMeasuredDenimSide84} from '../parallel84-real-photo-layers/source-denim-side-trial84.mjs';"+
- "\nimport {auditRealSourceGarmentArmPoses84} from '../parallel84-real-photo-layers/source-pose-sweep84.mjs';");
+ "\nimport {auditRealSourceGarmentArmPoses84} from '../parallel84-real-photo-layers/source-pose-sweep84.mjs';"+
+ "\nimport {gateActualSourceDenimAcrossStaticPoses84} from '../parallel84-real-photo-layers/source-three-pose-denim-gate84.mjs';");
 const end="contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();";
 assert.equal(source.split(end).length,2,
  'P84 genuine P541 garments completed anchor missing');
@@ -52,6 +53,13 @@ const addition=[
 "   schema:'P84-original-denim-source-neutral-side-AB/v1',",
 "   status:'BASELINE_UNMODIFIED',trialApplied:false,releaseAuthorized:false",
 "  });",
+"  if(denimMode==='gated')globalThis.__parallel84PoseGateResult=",
+"   gateActualSourceDenimAcrossStaticPoses84({",
+"    root,pants:built.pants,shirt:built.shirt,",
+"    avatar:globalThis.document?.getElementById('model')?.value,",
+"    applyPose:researchPose=>setResearchPose(root,researchPose),",
+"    sideEaseMeters:.011,rearEaseMeters:.004",
+"   });",
 "  if(denimMode==='trial'||denimMode==='legacy')globalThis.__parallel84DenimResult=",
 "   trialSourceMeasuredDenimSide84({",
 "    root,pants:built.pants,shirt:built.shirt,",
