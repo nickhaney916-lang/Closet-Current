@@ -68,3 +68,51 @@ test('reject incorrect original immutable source indices, nonindexed buffers and
  corrupted.getAttribute('position').setX(0,NaN);
  assert.throws(()=>countStableOriginalBodyContacts89(corrupted,good),/vertex-not-finite/);
 });
+
+
+/** Independent full original-triangle brute oracle (NO BVH). Checks that
+ * returned "original" face IDs actually name the intersecting source
+ * triangles; mere repeatable BVH-to-BVH labels would not be sufficient.
+ */
+function bruteOriginalPairs(skirt,body){
+ const pa=skirt.getAttribute('position'),pb=body.getAttribute('position');
+ const ia=skirt.index,ib=body.index,line=new THREE.Line3();
+ const make=(p,ix,i)=>new THREE.Triangle(...[0,1,2].map(k=>
+  new THREE.Vector3().fromBufferAttribute(p,ix.getX(3*i+k))));
+ const pairs=new Set();
+ for(let i=0;i<ia.count/3;i++){
+  const a=make(pa,ia,i);
+  for(let j=0;j<ib.count/3;j++){
+   const b=make(pb,ib,j);
+   if(a.intersectsTriangle(b,line)&&line.distance()>1e-5)
+    pairs.add(i+'|'+j);
+  }
+ }
+ return pairs;
+}
+test('original-skirt/body contact face IDs agree EXACTLY with independently computed brute triangle pairs, not only BVH-internal labels',()=>{
+ for(const [a,b] of [
+  [new THREE.BoxGeometry(1,1,1),new THREE.BoxGeometry(1,1,1).translate(.35,.12,.10)],
+  [new THREE.SphereGeometry(.7,8,6),new THREE.BoxGeometry(1,1,1).translate(.22,.14,.05)]
+ ]){
+  const origA=bytes(a),origB=bytes(b);
+  let truth=bruteOriginalPairs(a,b);
+  let report=countStableOriginalBodyContacts89(a,b);
+  assert.deepEqual([...report.pairs].sort(),[...truth].sort(),
+   'BVH indirect callback must resolve to real original triangle indices');
+  stable(a,origA);stable(b,origB);
+  // Reverse the original source face order (not vertex locations) to make
+  // genuine geometry-ID remapping different from the first BVH build.
+  const reindex=a.clone(),index=reindex.index.array.slice(),count=index.length/3;
+  for(let i=0;i<count;i++){
+   const j=count-1-i;
+   for(let k=0;k<3;k++)reindex.index.array[i*3+k]=index[j*3+k];
+  }
+  const untouched=bytes(reindex);
+  truth=bruteOriginalPairs(reindex,b);
+  report=countStableOriginalBodyContacts89(reindex,b);
+  assert.deepEqual([...report.pairs].sort(),[...truth].sort(),
+   'reordered original face IDs must still match an independent geometric oracle');
+  stable(reindex,untouched);stable(b,origB);
+ }
+});
