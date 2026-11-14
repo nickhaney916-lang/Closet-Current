@@ -1,0 +1,124 @@
+name: Mission 1 P882 genuine SigLIP original/full-frame equal-score audit — NO DEPLOY
+on:
+  push:
+    branches: [research/mission1-siglip-view-score-fusion-882-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  # GitHub push event delivery can lag and arrive out of commit order. A
+  # delayed OLD commit must not cancel the current source-verified HEAD run.
+  group: m1-p882-siglip-equal-scores-HOLD-${{ github.sha }}
+  cancel-in-progress: true
+jobs:
+  preserve-owner-review-and-full-tests-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Immutable P881 and exact four-file scope; Family Alpha HOLD
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=41fbf06f9da1b2654413a5c9453058a4b1a03398
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --name-only "$BASE" HEAD | tee /tmp/p882-paths
+          test "$(wc -l </tmp/p882-paths)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/p882-siglip-view-fusion-audit.mjs|tests/mission1-siglip-view-fusion-882.test.mjs|research/mission1-siglip-view-fusion-882/REPORT.md|.github/workflows/mission1-siglip-view-fusion-882-no-deploy.yml) ;;
+              *) echo "P882_UNAUTHORIZED_PATH $p"; exit 1;;
+            esac
+          done </tmp/p882-paths
+          test -z "$(git diff --name-only "$BASE" HEAD -- public/app.js public/dual-worker-82.mjs public/dual-core-82.mjs public/dual-panel-82.mjs public/recognition-engine.mjs public/model-arbitration-81.mjs public/local-worker.mjs public/recognition-confusion-guard.mjs public/cloud-backup.js benchmark supabase)"
+          grep -Fq 'const reviewFirst836=true;' public/app.js
+          grep -Fq 'FAMILY ALPHA HOLD #255 OPEN' research/mission1-siglip-view-fusion-882/REPORT.md
+          echo P882_SCOPE_NO_DEPLOY_PASS
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Offline local builds and full native test suite
+        run: |
+          set -euo pipefail
+          node --check public/dual-core-82.mjs
+          node --check public/dual-worker-82.mjs
+          node --check public/siglip-horizontal-view-881.mjs
+          node --check scripts/test-p82-review-browser.mjs
+          node --check scripts/p82-real-browser.mjs
+          node --check scripts/p882-siglip-view-fusion-audit.mjs
+          node --check tests/mission1-siglip-view-fusion-882.test.mjs
+          node scripts/build.mjs
+          node scripts/build-m1-no-account-trial-831.mjs
+          P79_REQUIRE_DECODER=1 node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+          node scripts/m1-release-evidence-851.mjs | tee /tmp/p882-release
+          grep -Fq '"status":"BLOCKED"' /tmp/p882-release
+          grep -Fq '"shouldLiftFamilyAlphaHold":false' /tmp/p882-release
+      - name: Desktop Chromium/WebKit original photo, owner-safe agreement and disagreements
+        run: |
+          set -euo pipefail
+          node scripts/test-m1-original-photo-browser-865.mjs
+          node scripts/test-p82-review-browser.mjs | tee /tmp/p882-desktop
+          test "$(grep -c '^P879_SUBTYPE_CONFLICT_MANUAL_ONLY ' /tmp/p882-desktop)" -eq 6
+          test "$(grep -c '^P880_EXACT_ONE_JOINT_TOP_ONLY ' /tmp/p882-desktop)" -eq 6
+          test "$(grep -c '^P880_KNOWN_RISK_TOP_NO_UNPROVEN_ALTERNATE ' /tmp/p882-desktop)" -eq 6
+          test "$(grep -c '^P876_EMPIRICAL_CONFUSION_GUARD_DUAL ' /tmp/p882-desktop)" -eq 6
+          test "$(grep -c '^P875_SHARED_CATEGORY_RANK_ONLY ' /tmp/p882-desktop)" -eq 6
+          test "$(grep -c '^P82_DESKTOP_POLICY_PASS ' /tmp/p882-desktop)" -eq 6
+          node scripts/test-m1-owner-pair-admission-846.mjs
+          node scripts/test-parallel80-subtype-browser.mjs
+  actual-48-public-model-equal-scores-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original photo and pinned model revisions frozen
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=41fbf06f9da1b2654413a5c9453058a4b1a03398
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          test -z "$(git diff --name-only "$BASE" HEAD -- benchmark public/dual-worker-82.mjs public/dual-core-82.mjs public/dual-panel-82.mjs public/model-arbitration-81.mjs public/dual-model-lock-82.mjs)"
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium
+      - name: Verify frozen 48 public original source bytes and q8 weights
+        run: |
+          set -euo pipefail
+          IDS=$(node -e "const fs=require('fs');console.log(['benchmark/manifest-reviewed-32.json','benchmark/manifest-holdout-16.json'].flatMap(p=>JSON.parse(fs.readFileSync(p)).map(x=>x.id)).join(','))")
+          test "$(printf '%s\n' "$IDS" | tr ',' '\n' | wc -l)" -eq 48
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos "$IDS"
+          node scripts/p82-prepare-models.mjs --check
+      - name: Genuine two-family 48-photo original/full-frame equal-score source-locked audit
+        env:
+          P877_FULL_FRAME: '1'
+        run: |
+          set -euo pipefail
+          node scripts/p82-real-browser.mjs chromium benchmark/p882-real-chromium | tee /tmp/p882-originals
+          test "$(grep -c '^P82_REAL_BROWSER_ROW chromium ' /tmp/p882-originals)" -eq 48
+          node scripts/p878-public-photo-custody.mjs benchmark/p882-real-chromium/results.json benchmark/locked-photo-sources.json benchmark/p882-real-chromium/custody-audit.json | tee /tmp/p882-custody
+          grep -Fq '"distinctPhotoDigests":48' /tmp/p882-custody
+          node scripts/p882-siglip-view-fusion-audit.mjs benchmark/p882-real-chromium/results.json benchmark/p882-real-chromium/equal-view-audit.json | tee /tmp/p882-audit
+          grep -Fq '"photos":48' /tmp/p882-audit
+          grep -Fq '"sameModelNotIndependent":true' /tmp/p882-audit
+          grep -Fq '"predeclaredFusion":"one-half-original-plus-one-half-whole-score"' /tmp/p882-audit
+          grep -Fq '"sourceOriginalsVerified":48' /tmp/p882-audit
+          grep -Fq '"noNewModelInferenceBeyondP877":true' /tmp/p882-audit
+          grep -Fq '"ownerPathModified":false' /tmp/p882-audit
+          grep -Fq '"blindAccuracy":null' /tmp/p882-audit
+          grep -Fq '"releaseReady":false' /tmp/p882-audit
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p882-public-development-only-siglip-equal-score-historical-counts
+          path: benchmark/p882-real-chromium/equal-view-audit.json
+          if-no-files-found: error
