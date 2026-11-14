@@ -58,9 +58,29 @@ async function mountOriginalPhotoPreview167(){
  originalPhotoPreview167?.dispose();
  originalPhotoPreview167=null;
  if(!styledCollectionResults.some(x=>!!x?.focusItemId))return;
+ // Importing the viewer module is asynchronous. Preserve the exact owner,
+ // DB connection, generation, original results and request at entry; a new
+ // login with the same ID/token must not mount former-session cards.
+ let start;
+ try{start=currentPhotoOwnerSession167();}catch{return;}
+ const originalResults=styledCollectionResults,request=styledCollectionRequestSerial;
+ const stillCurrent=()=>{
+  try{
+   const now=currentPhotoOwnerSession167();
+   return !!start.authenticated&&now.authenticated&&
+    start.ownerId===now.ownerId&&start.epoch===now.epoch&&
+    start.privateDbName===now.privateDbName&&
+    start.authRef===now.authRef&&start.privateDbRef===now.privateDbRef&&
+    start.operationEpoch===now.operationEpoch&&
+    ticket===originalPhotoMountSerial167&&
+    request===styledCollectionRequestSerial&&
+    originalResults===styledCollectionResults;
+  }catch{return false;}
+ };
+ if(!stillCurrent())return;
  try{
   const mod=await import('./style-photo-preview-gate-165.mjs');
-  if(ticket!==originalPhotoMountSerial167)return;
+  if(!stillCurrent())return;
   const viewer=mod.createStyledOwnerPhotoPreview165({
     grid:$('styledCollectionResults'),
     readResults:()=>styledCollectionResults,
@@ -68,11 +88,12 @@ async function mountOriginalPhotoPreview167(){
     getSession:currentPhotoOwnerSession167,
     events:window
   });
-  if(ticket!==originalPhotoMountSerial167){viewer.dispose();return;}
+  if(!stillCurrent()){viewer.dispose();return;}
   viewer.mount();
+  if(!stillCurrent()){viewer.dispose();return;}
   originalPhotoPreview167=viewer;
  }catch{
-  if(ticket===originalPhotoMountSerial167&&styledCollectionResults.length)
+  if(stillCurrent()&&styledCollectionResults.length)
    $('stylistStatus').textContent='Outfits are ready. Original clothing photo preview is unavailable in this session; sign in and try again.';
  }
 }
