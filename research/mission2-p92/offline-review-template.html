@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Closet Current P92 · Source-truth human review HOLD</title>
+<style>
+:root{font:15px system-ui;color:#1d2834;background:#f4f3ee;line-height:1.45}
+body{margin:0 auto;max-width:1140px;padding:0 14px 36px}
+header{padding:20px 0 12px;border-bottom:2px solid #697987}
+h1{font-size:1.4rem;margin:0 0 8px}
+h2{font-size:1.1rem;margin:0 0 8px}
+strong{font-weight:650}
+p{margin:7px 0}
+.call{border-left:4px solid #68788b;background:#fff;padding:10px 14px;margin:12px 0}
+.source{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:12px 0}
+.source figure,.case{border:1px solid #c5cad0;border-radius:7px;background:#fff;margin:0;padding:10px}
+.source img{max-width:100%;max-height:390px;object-fit:contain;display:block;margin:auto}
+.source figcaption{font-size:.85rem;margin:8px 0;color:#435262}
+.case{margin:20px 0;padding:16px}
+.pair{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.pair figure{margin:0;border:1px solid #c9cdd2;padding:6px;background:#f4f3ee}
+.pair img{width:100%;height:auto;display:block;object-fit:contain}
+.pair figcaption{font-weight:650;text-align:center}
+label{display:block;margin-top:12px;font-weight:600}
+select,input,textarea,button{font:inherit;padding:7px;max-width:100%;box-sizing:border-box}
+select,textarea,input{border:1px solid #adb6bf;border-radius:4px;background:#fff}
+textarea{width:100%;min-height:55px}
+button{border:0;border-radius:5px;background:#243e5a;color:#fff;margin-top:12px;padding:10px 16px;cursor:pointer}
+.flag{color:#764400;font-size:.87rem}
+small{font-size:.82rem}
+footer{border-top:1px solid #ccc;margin-top:30px;padding-top:8px}
+@media(max-width:500px){body{padding:0 8px 24px}.source{gap:5px}.source figure{padding:4px}.case{padding:8px}.pair{gap:5px}.pair figure{padding:3px}}
+</style>
+<header>
+ <h1>Closet Current · Mission 2 P92</h1>
+ <p>Human comparison of genuine source photography and two blinded 3D fit candidates. Research-only · Family Alpha <strong>HOLD</strong>.</p>
+ <p class="flag">These photographs are not a photorealism certificate. Original cutout is a provisional mask, not owner-approved. Source photo shows FRONT ONLY; the rear and side cannot be truth-checked against an unseen photograph.</p>
+</header>
+<div id="attribution" class="call" aria-label="Photographic original license and attribution">Photographic source attribution verified in the SHA-pinned packet.</div>
+<section class="source">
+ <figure><img src="source-original.jpg" alt="Unaltered publicly licensed original front photograph"><figcaption>Unedited, SHA-pinned licensed original JPEG · FRONT source evidence</figcaption></figure>
+ <figure><img src="source-provisional-cutout.png" alt="Provisional front garment alpha cutout, may be imperfect"><figcaption>SHA-pinned provisional alpha cutout · NOT human approved</figcaption></figure>
+</section>
+<div class="call">
+ <strong>Reviewer instructions:</strong> Compare A and B at the same avatar, pose, and angle. For FRONT views, note which preserves authentic fabric markings and silhouette better versus the original/cutout. For SIDE and REAR, judge only whether the rendered shape looks plausible; **do not claim photographic source accuracy** because no such original view exists. Choose "Cannot judge" when unsure. The order of A and B is blinded and fixed by source receipt.
+</div>
+<section>
+ <label for="reviewer">Independent reviewer code (not a name or email; needed to associate exported notes)</label>
+ <input id="reviewer" maxlength="48" placeholder="Reviewer ID, e.g. reviewer-1" autocomplete="off">
+ <p><small>No network access, account, telemetry, server submission or automatic file saving. Export only by clicking below. Review does NOT authorize Family Alpha or consumer 3D.</small></p>
+</section>
+<main id="cases" aria-live="polite"></main>
+<section class="call">
+ <button type="button" id="export">Export my local review JSON</button>
+ <p id="status" aria-live="polite">Nothing has been reviewed or submitted.</p>
+</section>
+<footer><small>Provenance locked to Commons-0053 original; independent owner photos, true sewing seams, hidden back, fabric physics, physical phones, independent 2-person consensus and release remain unverified. This packet contains only publicly licensed images and research renders.</small></footer>
+<script type="application/json" id="packet">__P92_CASES_JSON__</script>
+<script>
+(()=>{'use strict';
+ const packet=JSON.parse(document.getElementById('packet').textContent);
+ const root=document.getElementById('cases');
+ document.getElementById('attribution').textContent =
+  'Source: '+String(packet?.attribution?.title||'Commons original')+
+  ' · License: '+String(packet?.attribution?.license||'unverified')+
+  ' · Credit: '+String(packet?.attribution?.credit||'not specified')+
+  ' · Original SHA-256: '+String(packet?.originalSourceSHA256||'missing');
+ const safe=s=>String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+ const note=document.getElementById('status');
+ if(packet?.schema!=='M2-P92-authentic-licensed-photo-blind-A-B-human-review-unrated-v1'||
+  packet?.familyAlpha!=='HOLD'||packet?.releaseAuthorized!==false||packet?.cases?.length!==30)
+  throw Error('Unverified source / release reference packet');
+ packet.cases.forEach((c,i)=>{
+  const section=document.createElement('section');section.className='case';
+  const photoTruth=c.sourcePhotoIsFrontOnly?
+   'FRONT source photograph available for approximate feature comparison; camera and 3D pose are not calibrated.' :
+   'NO original photographed '+c.view.toUpperCase()+' view. Do not rate source-photo fidelity.';
+  section.innerHTML=
+   '<h2>'+safe(i+1)+'. '+safe(c.figure)+' / '+safe(c.pose)+' / '+safe(c.view)+'</h2>'+
+   '<p class="flag">'+safe(photoTruth)+'</p>'+
+   '<div class="pair"><figure><img loading="lazy" src="'+safe(c.A)+'" alt="Anonymous candidate A">'+
+   '<figcaption>Candidate A</figcaption></figure>'+
+   '<figure><img loading="lazy" src="'+safe(c.B)+'" alt="Anonymous candidate B">'+
+   '<figcaption>Candidate B</figcaption></figure></div>'+
+   '<label for="pick'+i+'">Which better represents a believable photographed garment? (Select cannot judge if uncertain)</label>'+
+   '<select id="pick'+i+'"><option value="">Not reviewed</option>'+
+   '<option value="A">A</option><option value="B">B</option>'+
+   '<option value="TIE">Tie</option><option value="UNKNOWN">Cannot judge</option></select>'+
+   '<label for="comment'+i+'">Specific observed reason (fabric pattern, seam, fit, shape, uncertainty)</label>'+
+   '<textarea id="comment'+i+'" maxlength="480" placeholder="Describe visible evidence, not a guess about the hidden back"></textarea>';
+  root.append(section);
+ });
+ document.getElementById('export').addEventListener('click',()=>{
+  const reviewer=document.getElementById('reviewer').value.trim();
+  const rows=packet.cases.map((c,i)=>({
+   caseId:c.caseId,sourceViewComparable:c.sourcePhotoIsFrontOnly,
+   choice:document.getElementById('pick'+i).value||null,
+   note:document.getElementById('comment'+i).value.trim().slice(0,480)
+  }));
+  const responded=rows.filter(x=>x.choice!==null).length;
+  const result={
+   schema:'M2-P92-human-entered-offline-blind-review-NOT-RELEASE',
+   sourceSHA256:packet.originalSourceSHA256,engine:packet.engine,
+   reviewerProvidedCode:reviewer||null,cases:rows,
+   completedAllCases:responded===30&&reviewer.length>=3,
+   humanReviewIdentityIndependentlyVerified:false,
+   photographicRearSourceAvailable:false,
+   sourceFidelityAccepted:false,consumer3DAdmitted:false,
+   releaseAuthorized:false,familyAlpha:'HOLD'
+  };
+  const blob=new Blob([JSON.stringify(result,null,2)+'\n'],{type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='P92-local-review-'+packet.engine+'.json';
+  document.body.append(a);a.click();a.remove();URL.revokeObjectURL(url);
+  note.textContent='Exported '+responded+'/30 manually selected cases. '+
+   (result.completedAllCases?'All selections entered; still NOT independently verified.':'Incomplete review — no acceptance.');
+ });
+})();
+</script>
+</html>
