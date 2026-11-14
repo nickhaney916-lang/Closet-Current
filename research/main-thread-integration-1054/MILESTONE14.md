@@ -1,0 +1,20 @@
+# MAIN1054 Mission 4 M14 — Converge real native signed-photo session with M12/M13 owner-safe outfit preflight
+
+## Verified real-source incompatibility
+Draft M12 [#1105](https://github.com/nickhaney916-lang/Closet-Current/pull/1105) and M13 [#1106](https://github.com/nickhaney916-lang/Closet-Current/pull/1106) strengthened the *research* `preflightOwnedOutfit1054` to require the exact authenticated object, owner ID, private IndexedDB handle/name and capture-operation generation across private JPEG digest awaits. The browser-native original-photo preview integration still calls `currentPhotoOwnerSession167` in **actual** `public/closet-stylist.js`. At M13 parent commit `65fe513cac8afa6985782fc4ce8f72414b7d66bb`, that native provider returned **only** `authenticated, ownerId, epoch, privateDbName`. Thus a genuinely signed original-photo preview cannot satisfy the stronger lease. No M12/M13 whole-job green claim is permissible; the first full browser jobs failed.
+
+This is a concrete cross-mission source-version incompatibility, not evidence that an owner leaked a photograph, and not permission to weaken the new lease. Mission 3's verified [#1100](https://github.com/nickhaney916-lang/Closet-Current/pull/1100) HEAD `ce2785fd5b2646f727cfd877bab39859d494eb8c` contains the exact safe provider + owner-private read contract. Its `public/closet-stylist.js` Git blob is **`f2657fffb17a3b2cc606f32b4206a574ef5ddf88`**.
+
+## Minimal source-proven M14 integration
+- Branch from exact M13 immutable parent `65fe513cac8afa6985782fc4ce8f72414b7d66bb`. Replace **only** `function currentPhotoOwnerSession167` and `async function signedOwnerSavedRows167` sections with **unmodified** functions from verified M3 #1100. The resulting **entire** `public/closet-stylist.js` blob equals upstream verified Git SHA `f2657fffb17a3b2cc606f32b4206a574ef5ddf88`; exact hash checked in CI, so no accidental replacement of adjacent styling behavior.
+- Native source now returns `authRef`, `privateDbRef` and `operationEpoch` and validates same signed user, auth object, private DB connection, token epoch and capture generation **before and after** awaited owner-private wardrobe reads. This is the contract demanded by the research preflight; no tokens or owner JPEGs are logged.
+- Eight added synthetic source-executing native session tests validate success and owner change, same-ID auth replacement, same-name DB replacement, capture-epoch mutation, token change, signed UI lock and auth-currentness rejection.
+- Continue M13 board-revision and M12 exact-source preflight checks; source-verified original JPEG and 2D fallback are required, unreviewed AI suggestions never save, and **3D remains prohibited**.
+- One exact-parent no-deploy workflow with TWO independent jobs verifies strict four-file scope, exact whole-file M3 donor blob, PWA build, eight new native session tests, 32 inherited M4 source-to-outfit tests, full inherited Node privacy/wardrobe suite, genuine native owner-review **54** Chromium/WebKit synthetic cases and original-photo 2D browser **12** scenarios. These are planned until exact-head CI finishes.
+
+## Research and release limits
+The donor source was previously green in its own Mission 3 source tree. **Its independent test success alone does NOT prove it integrates with the M4 M12/M13 tree.** This M14 browser test specifically exercises the combined live native P167 signed owner session, original public JPEG-shaped synthetic data and research M4 adapter. This is a branch-local source compatibility fix, not a production release.
+
+Do **not** merge, deploy, modify staging/production, hosted Supabase, customer accounts or user photos. Mission 1 experimental recognition P881 remains independent; Mission 2 has independently observed **196 strict body-to-dress triangle crossing witnesses**, so authentic photographed 3D collision-free wearable certification remains BLOCKED. No independent blind human-labeled recognition accuracy, real physical iPhone/Android, authorized hosted signed two-account RLS/Storage/backup or Family Alpha release acceptance.
+
+**Family Alpha #255 OPEN/HOLD. DRAFT, UNMERGED, UNDEPLOYED.**
