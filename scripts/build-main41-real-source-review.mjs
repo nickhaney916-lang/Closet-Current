@@ -35,6 +35,12 @@ assert.equal(ri.width,1920);assert.equal(ri.height,2880);
 assert.equal(ri.channels,4);assert.equal(oi.channels,4);assert.equal(ti.channels,4);
 assert.equal(oi.width,ri.width);assert.equal(oi.height,ri.height);
 assert.equal(ti.width,ri.width);assert.equal(ti.height,ri.height);
+const manifest=JSON.parse(await readFile('.native05-donor-541/benchmark/work47/manifest.json','utf8'));
+const sourceRecord=manifest.rows?.find(x=>x.id==='commons-0053');
+assert.equal(sourceRecord?.sourceSHA256,orig);
+assert.equal(sourceRecord?.attribution?.license,'CC BY 4.0');
+assert.ok(sourceRecord?.attribution?.source?.startsWith('https://commons.wikimedia.org/wiki/File:'));
+assert.ok(sourceRecord?.attribution?.credit);
 const measured=auditSourceAlphaContours41({
  sourceRGBA:rgb,baselineRGBA:oldRgba,candidateRGBA:trialRgba,
  width:ri.width,height:ri.height
@@ -92,8 +98,8 @@ const safe={
   ['neckline-comparison.jpg',digest(await readFile(join(out,'neckline-comparison.jpg')))]
  ]),
  originalPublicLicense:'CC BY 4.0',
- originalPublicSource:'https://commons.wikimedia.org/wiki/File:Ordnance_Officer%27s_Dress_Uniform%2C_1831_%28Malm%C3%B6_Museum%29.JPG',
- sourceCredit:'Use attribution/license from original Commons-0053 Work47 manifest; not independently human-certified by this packet.',
+ originalPublicSource:sourceRecord.attribution.source,
+ sourceCredit:sourceRecord.attribution.credit,
  derivativeSourceOnly:true,
  reviewerSelectionsAreNotIndependentQualityApproval:true
 };
