@@ -4,19 +4,28 @@ import {evidence80,binding80,revision80} from './subtype-review-80.mjs';
 import {subtypeNeedsManualReview} from './recognition-confusion-guard.mjs';
 // P875: a top-four fused rank is not proof that *both* models support it.
 // Retain only candidates in the same agreed category and each family's top five.
+// P879: an abstaining pair (even with a shared top-five label) cannot offer
+// an actionable AI shortcut. The owner still has ordinary manual Adjust.
+// P880: even with top subtype agreement, lower-ranked overlapping labels are
+// not cross-family top-subtype agreement. Offer at most that exact agreed top.
 // This narrows optional hints; never confers accuracy, certainty or auto-save.
 export function sharedRankChoices82(decision,observations){
  if(!Array.isArray(decision?.hypotheses)||!Array.isArray(decision?.reasons)||
     !Array.isArray(observations)||observations.length!==2)return [];
- if(decision.reasons.some(r=>['nonclothing_evidence','top_rank_tied','category_disagreement'].includes(r)))return [];
+ // Do not turn an ABSTAIN into clickable model advice simply because a
+ // lower-ranked label appears in both families' candidate lists.
+ if(decision.status!=='cross_family_hypothesis'||decision.reasons.length!==0)return [];
+ if(decision.reasons.some(r=>['nonclothing_evidence','top_rank_tied','category_disagreement','subtype_disagreement'].includes(r)))return [];
  const [a,b]=observations;
  if(a?.model?.family===b?.model?.family||!a?.model?.family||!b?.model?.family||
     !Array.isArray(a.ranking)||!Array.isArray(b.ranking))return [];
  const agreedCategory=a.ranking[0]?.category;
  if(!agreedCategory||agreedCategory==='Uncategorized'||agreedCategory!==b.ranking[0]?.category)return [];
- const inA=new Set(a.ranking.slice(0,5).map(x=>x.label));
- const inB=new Set(b.ranking.slice(0,5).map(x=>x.label));
- return decision.hypotheses.filter(h=>h.category===agreedCategory&&inA.has(h.label)&&inB.has(h.label)&&!subtypeNeedsManualReview(h.category,h.itemType));
+ if(!a.ranking[0]?.label||a.ranking[0].label!==b.ranking[0]?.label)return [];
+ const top=a.ranking[0];
+ if(subtypeNeedsManualReview(top.category,top.itemType))return [];
+ return decision.hypotheses.filter(h=>h.label===top.label&&h.category===agreedCategory&&
+  h.itemType===top.itemType).slice(0,1);
 }
 export const dualBrowserAvailable82=(ua=globalThis.navigator?.userAgent||'')=>/(?:Chrome|Chromium|Edg)\//.test(ua)&&!/(?:iPhone|iPad|iPod)/.test(ua);
 const el=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
@@ -57,7 +66,11 @@ export function mountDual82({form,item,getOwner,isLive,unitAllowed,onChoose,getD
    // P874: competing broad categories (e.g., dress vs bottoms) are not
    // independently identified. They must not become actionable AI category edits.
    if(decision.reasons.includes('category_disagreement')){status.textContent='The two models disagree about the main clothing category. No AI category or subtype suggestion can be applied; compare the original photo and choose the category manually.';return;}
-   status.textContent=decision.status==='abstain'?'The models disagree or cannot identify this garment. Unknown is retained; compare the alternatives with your original.':'The models suggest these possibilities. Agreement does not establish that a subtype is correct.';
+   // P879: never create a model-backed Use button after the two independent
+   // model families disagree about subtype, even when both top-5 lists overlap.
+   if(decision.reasons.includes('subtype_disagreement')){status.textContent='The two models disagree on the clothing subtype. No AI subtype suggestion was applied. Use manual Adjust with the original photo and confirm before saving.';return;}
+   if(decision.status!=='cross_family_hypothesis'){status.textContent='The models cannot jointly identify this subtype. Keep Unknown and choose manually after reviewing the original photo.';return;}
+   status.textContent='The models suggest these possibilities. Agreement does not establish that a subtype is correct.';
    const commonChoices=sharedRankChoices82(decision,output.observations);
    if(!commonChoices.length){status.textContent='No jointly supported low-risk subtype is available. Keep Unknown or choose the correct type manually after reviewing the original photo.';return;}
    const ack=el('input');ack.type='checkbox';const label=el('label');label.append(ack,document.createTextNode(' I compared the original photo and want to apply this possibility to my unsaved draft.'));results.append(label);
