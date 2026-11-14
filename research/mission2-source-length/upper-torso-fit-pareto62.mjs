@@ -35,7 +35,7 @@ export function screenDisposableSourceFitAmplitudes62({
    deny('source photo and face provenance check incomplete');
   let verdict=null;
   if(strain.provisionalMeshDistortionGuardPassed){
-   const v=evaluateCandidate(trial.world);
+   const v=evaluateCandidate(trial.world,outwardMeters);
    scans++;
    if(!v||typeof v!=='object'||typeof v.bodyComplete!=='boolean'||
       typeof v.selfComplete!=='boolean'||

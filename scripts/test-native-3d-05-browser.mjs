@@ -260,6 +260,9 @@ const photoDressBodyBands59=process.env.PHOTO_DRESS_BODY_BANDS59==='1';
 const photoDressTorsoTrial60=process.env.PHOTO_DRESS_TORSO_TRIAL60==='1';
 const photoDressStrain61=process.env.PHOTO_DRESS_STRAIN61==='1';
 const photoDressPareto62=process.env.PHOTO_DRESS_PARETO62==='1';
+const photoDressLocal63=process.env.PHOTO_DRESS_LOCAL63==='1';
+if(photoDressLocal63&&!photoDressPareto62)
+ throw Error('C63 local photographed garment body-face fit requires full C62 shape/contact provenance');
 if(photoDressPareto62&&!photoDressStrain61)
  throw Error('C62 source-authentic fit Pareto scan requires the original C61 face strain and C60 body contact audit');
 if(photoDressStrain61&&!photoDressTorsoTrial60)
@@ -519,7 +522,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressContact58?'&photoDressContact58=research':'')+(photoDressBodyBands59?'&photoDressBodyBands59=research':'')+(photoDressTorsoTrial60?'&photoDressTorsoTrial60=research':'')+(photoDressStrain61?'&photoDressStrain61=research':'')+(photoDressPareto62?'&photoDressPareto62=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressContact58?'&photoDressContact58=research':'')+(photoDressBodyBands59?'&photoDressBodyBands59=research':'')+(photoDressTorsoTrial60?'&photoDressTorsoTrial60=research':'')+(photoDressStrain61?'&photoDressStrain61=research':'')+(photoDressPareto62?'&photoDressPareto62=research':'')+(photoDressLocal63?'&photoDressLocal63=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -2219,6 +2222,43 @@ try{
        assert.equal(c.actualBodyContactTestPerformed,false);
        assert.equal(c.excludedFromBodyContactIfDistorting,true);
       }
+     }
+    }
+   }
+   if(photoDressLocal63){
+    const a=witness.originalArticulatedContactReceipt58;
+    assert.equal(witness.actualLicensedSourceLocalContactFeatherEvidenceComplete63,true);
+    assert.equal(witness.noGarmentSourceContactGeometryOrUVEdits63,true);
+    assert.equal(witness.noHumanVisualOrContinuousPhysicsApproval63,true);
+    assert.equal(a?.originalPhotoLocalContactSourceAuditCompleted63,true);
+    const trials=[a.disposableNeutralUpperTorsoTrial60,
+     ...a.disposableArticulatedUpperTorsoTrials60];
+    assert.equal(trials.length,3);
+    for(const p of trials){
+     const r=p.originalSourceLocalContactFeather63;
+     assert.equal(r.schema,'M2-C63-source-contact-local-feather-fit-diagnostic');
+     assert.equal(r.candidateAlreadyRenderedInApp,false);
+     assert.equal(r.releaseAuthorized,false);
+     assert.ok(Number.isSafeInteger(r.originalSourceClothFacesWithBodyCrossingAfter2mm));
+     assert.ok(r.localCandidateEvaluations===0||r.localCandidateEvaluations===3);
+     if(r.localCandidateEvaluations===3){
+      assert.ok(r.originalSourceClothFacesWithBodyCrossingAfter2mm>0);
+      assert.equal(r.perLocalCandidate.length,3);
+      for(const c of r.perLocalCandidate){
+       assert.equal(c.noGarmentSourceOrOwnerPhotoMutated,true);
+       assert.equal(c.noSourceTriangleIDsOrXYZExported,true);
+       assert.equal(c.releaseAuthorized,false);
+       assert.ok(c.maximumWorldDisplacementMeters<=.006002);
+       assert.equal(c.actualOriginalBodyContactEvaluated,
+        c.originalPhotoSurfaceStrainGuardPass);
+       if(c.actualOriginalBodyContactEvaluated){
+        assert.equal(c.fullOriginalBodyAndSelfContactAuditCompleted,true);
+        assert.ok(c.sourceBodyStrictCrossingsAfterLocalTrial>=0);
+       }
+      }
+     }else{
+      assert.equal(r.originalStrictBodyCrossingPairWitnessesAfter2mm,0);
+      assert.equal(r.allOriginalStrictBodyCrossingsAlreadyAbsentAt2mm,true);
      }
     }
    }

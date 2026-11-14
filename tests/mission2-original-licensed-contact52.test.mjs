@@ -1240,3 +1240,60 @@ test('C62: no real-photo size/shape evidence if a signed-source 163-bone owner t
   }),/M2 C52 original-photo diagnostic/);
  }
 });
+
+const audit63=(f,opts={})=>audit62(f,{
+ refineLocalContactRelief63:true,...opts
+});
+test('C63: original licensed THREE 163-bone real source body/cloth audit retains all previous guards while sampling local strict-contact relief',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  .1,1.0,-.12,.15,1.05,.12,.05,1.10,.12
+ ]),originalCloth=original(f),
+ originalBones=f.bones.map(b=>b.quaternion.clone());
+ const r=audit63(f),a=r.originalArticulatedContactReceipt58;
+ assert.equal(r.realLicensedPhotographedFitAmplitudeSweepComplete62,true);
+ assert.equal(r.actualLicensedSourceLocalContactFeatherEvidenceComplete63,true);
+ assert.equal(r.noGarmentSourceContactGeometryOrUVEdits63,true);
+ assert.equal(r.noHumanVisualOrContinuousPhysicsApproval63,true);
+ assert.equal(a.originalPhotoLocalContactSourceAuditCompleted63,true);
+ const trials=[a.disposableNeutralUpperTorsoTrial60,
+  ...a.disposableArticulatedUpperTorsoTrials60];
+ assert.equal(trials.length,3);
+ for(const t of trials){
+  const q=t.originalSourceLocalContactFeather63;
+  assert.equal(q.schema,'M2-C63-source-contact-local-feather-fit-diagnostic');
+  assert.equal(q.releaseAuthorized,false);
+  assert.equal(q.candidateAlreadyRenderedInApp,false);
+  assert.ok(q.localCandidateEvaluations===0||q.localCandidateEvaluations===3);
+  if(q.localCandidateEvaluations===3){
+   assert.ok(q.originalSourceClothFacesWithBodyCrossingAfter2mm>0);
+   for(const c of q.perLocalCandidate){
+    assert.equal(c.noGarmentSourceOrOwnerPhotoMutated,true);
+    assert.equal(c.noSourceTriangleIDsOrXYZExported,true);
+    assert.equal(c.releaseAuthorized,false);
+   }
+  }else{
+   assert.equal(q.originalStrictBodyCrossingPairWitnessesAfter2mm,0);
+   assert.equal(q.allOriginalStrictBodyCrossingsAlreadyAbsentAt2mm,true);
+  }
+ }
+ assert.deepEqual(original(f),originalCloth);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(originalBones[i])));
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C63: original photographed garment cannot request unproven body-contact localization without complete signed C52–C62 source evidence',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ for(const flags of [
+  {refineLocalContactRelief63:true},
+  {refineLocalContactRelief63:'true'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineAnatomicalLoopLandmarks57:true,refineArticulatedContacts58:true,
+   refineBodyHeightWitnessBands59:true,
+   refineUpperTorsoFitTrial60:true,refineSurfaceStrain61:true,
+   refineLocalContactRelief63:true}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...flags
+  }),/M2 C52 original-photo diagnostic/);
+ }
+});
