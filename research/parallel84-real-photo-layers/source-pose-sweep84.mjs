@@ -27,11 +27,20 @@ const base=Object.freeze({
 const failed=reason=>Object.freeze({...base,status:'UNVERIFIED_FAIL_CLOSED',
  reason,actualPoseAuditCompleted:false,poseResults:[]});
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
-const clean=source=>Array.isArray(source)&&source.length&&source.every(m=>{
-  const g=m?.geometry,count=g?.index?.count??g?.getAttribute('position')?.count;
-  return m?.isSkinnedMesh&&m.skeleton?.bones?.length===163&&
-   Number.isSafeInteger(count)&&count>=3&&count%3===0;
- });
+// Each reason is a vetted research capability category, never raw fabric XYZ,
+// owner identifiers, photo bytes, skeletal quaternions or private face indices.
+const meshIssue=source=>{
+ if(!Array.isArray(source)||!source.length)return 'mesh-list-empty';
+ for(const m of source){
+  if(!m?.isSkinnedMesh)return 'non-skinned-source-mesh';
+  if(m.skeleton?.bones?.length!==163)return 'source-mesh-rig-not-163-bones';
+  const g=m.geometry,count=g?.index?.count??g?.getAttribute('position')?.count;
+  if(!Number.isSafeInteger(count)||count<3)return 'mesh-without-source-triangles';
+  if(count%3!==0)return 'non-triangulated-source-face-topology';
+ }
+ return null;
+};
+const clean=source=>meshIssue(source)===null;
 const meshSnapshot=meshes=>meshes.map(m=>({
  m,geometry:m.geometry,index:m.geometry.index,material:m.material,
  indices:m.geometry.index?.array.slice()??null,
@@ -65,15 +74,21 @@ export function auditRealSourceGarmentArmPoses84({
  root,shirt,pants,avatar,applyPose,poses=POSES
 }={}){
  if(!['male','female'].includes(avatar)||!root?.isObject3D||
-    typeof applyPose!=='function'||!clean(shirt?.meshes)||
-    !clean(pants?.meshes)||pants.meshes.length!==1||
-    shirt.stats?.sourceSHA256!==SHIRT||
-    !pants.stats?.photoApplied||
+    typeof applyPose!=='function')
+  return failed('real-anatomical-figure-and-static-pose-callback-required');
+ if(shirt?.stats?.sourceSHA256!==SHIRT)
+  return failed('original-licensed-shirt-source-hash-unverified');
+ if(pants?.stats?.photoApplied!==true||
     !Object.hasOwn(DENIMS,pants.stats?.sourceId)||
-    DENIMS[pants.stats.sourceId]!==pants.stats.sourceSHA256||
-    !Array.isArray(poses)||poses.length!==3||
+    DENIMS[pants.stats.sourceId]!==pants.stats.sourceSHA256)
+  return failed('original-licensed-denim-source-hash-unverified');
+ const shirtIssue=meshIssue(shirt?.meshes),pantsIssue=meshIssue(pants?.meshes);
+ if(shirtIssue)return failed('shirt-'+shirtIssue);
+ if(pantsIssue||pants.meshes.length!==1)
+  return failed('denim-'+(pantsIssue||'not-one-original-sourced-piece'));
+ if(!Array.isArray(poses)||poses.length!==3||
     poses.some((name,i)=>name!==POSES[i]))
-  return failed('real-authorized-photographed-source-or-poses-missing');
+  return failed('unapproved-static-research-pose-label');
  const bones=[],body=[];
  root.traverse(m=>{
   if(m.isBone)bones.push(m);
