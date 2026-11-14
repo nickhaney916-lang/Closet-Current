@@ -6,7 +6,7 @@ export const MODEL_ASSETS82=Object.freeze({fashionclip:{visionSha256:ASSETS82.fi
 Object.values(MODEL_ASSETS82).forEach(Object.freeze);
 let busy82=false;
 export const VERSION82='dual-browser-review-82-v1';
-export const SOURCE82=['app.js','dual-core-82.mjs','dual-worker-82.mjs','dual-panel-82.mjs','dual-model-lock-82.mjs','model-arbitration-81.mjs','local-catalog.mjs','recognition-engine.mjs','recognition-confusion-guard.mjs','recognition-photo.mjs','vector-scorer.mjs','subtype-review-80.mjs'];
+export const SOURCE82=['app.js','dual-core-82.mjs','dual-worker-82.mjs','dual-panel-82.mjs','dual-model-lock-82.mjs','model-arbitration-81.mjs','local-catalog.mjs','recognition-engine.mjs','recognition-confusion-guard.mjs','recognition-photo.mjs','siglip-horizontal-view-881.mjs','vector-scorer.mjs','subtype-review-80.mjs'];
 export async function codeHash82(){
  const hashes=[];
  for(const name of SOURCE82){const r=await fetch(new URL(name,import.meta.url),{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('P82_SOURCE_UNAVAILABLE');const b=await r.arrayBuffer();if(b.byteLength>250000)throw Error('P82_SOURCE_LIMIT');hashes.push([name,await hash80(new Uint8Array(b))]);}

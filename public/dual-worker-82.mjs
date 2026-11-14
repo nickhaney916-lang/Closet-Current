@@ -5,6 +5,7 @@ import {MODELS81,observation81} from './model-arbitration-81.mjs';
 import {localCandidates} from './local-catalog.mjs';
 import {hash80} from './subtype-review-80.mjs';
 import {makeVectorScorer,normalizedVector} from './vector-scorer.mjs';
+import {mirrorRGB881,meanUnitEmbeddings881} from './siglip-horizontal-view-881.mjs';
 import {prepareRecognitionPhoto,fitWholePhoto} from './recognition-photo.mjs';
 import {recognizeWithRecovery} from './recognition-engine.mjs';
 import {corroborateAmbiguousType} from './recognition-confusion-guard.mjs';
@@ -44,7 +45,7 @@ self.onmessage=async({data:r})=>{
   if(meta.revision!==MODELS81.fashionclip.revision||await hash80(new Uint8Array(clipBytes))!==meta.sha256)throw Error('P82_CLIP_VECTORS');
   const textBytes=await(await fetch(new URL('siglip-text/fashion-text-vectors.bin',root).href)).arrayBuffer(),text=new Float32Array(textBytes);
   if(text.length!==47*768||text.some(x=>!Number.isFinite(x)))throw Error('P82_TEXT');
-  const labels=localCandidates.map(x=>x.label),observations=[],timings=[],allStart=performance.now();let baseline,experiment877=null;
+  const labels=localCandidates.map(x=>x.label),observations=[],timings=[],allStart=performance.now();let baseline,experiment877=null,experiment881=null;
   for(const [key,pin] of Object.entries(MODELS81)){
    progress(key==='fashionclip'?'Comparing first model':'Comparing second model');const load=performance.now();
    const opts={revision:pin.revision,dtype:'q8',device:'wasm'},processor=await AutoProcessor.from_pretrained(pin.id,{revision:pin.revision}),vision=await (key==='fashionclip'?CLIPVisionModelWithProjection:SiglipVisionModel).from_pretrained(pin.id,opts);
@@ -62,6 +63,25 @@ self.onmessage=async({data:r})=>{
      const scoreImage=vector=>labels.map((label,i)=>({label,score:textUnit[i].reduce((s,x,j)=>s+x*vector[j],0)}));
      const vector=normalizedVector((await vision(await processor(image))).image_embeds.data,768);
      scores=scoreImage(vector);
+     // P881: source-locked offline test-time horizontal mirroring only.
+     // Never change ordinary FashionSigLIP scores, owner review, or auto saves.
+     if(r.researchFlip881==='horizontal-mirror-v1'){
+      const flippedStart=performance.now();
+      const flipped=mirrorRGB881(image,RawImage);
+      const mirrorVector=normalizedVector((await vision(await processor(flipped))).image_embeds.data,768);
+      const mean=meanUnitEmbeddings881(vector,mirrorVector);
+      const mirrored=observation81({modelKey:key,binding:r.binding,scores:scoreImage(mirrorVector),
+       workerSourceSha256:sourceHash,vectorSha256:ASSETS82.files['siglip-text/fashion-text-vectors.bin'].sha256,
+       latencyMs:performance.now()-flippedStart});
+      const paired=observation81({modelKey:key,binding:r.binding,scores:scoreImage(mean),
+       workerSourceSha256:sourceHash,vectorSha256:ASSETS82.files['siglip-text/fashion-text-vectors.bin'].sha256,
+       latencyMs:performance.now()-flippedStart});
+      experiment881={schema:'p881-optional-horizontal-mirror-v1',modelKey:key,
+       mode:'same-original-rgb-horizontal-mirror',sameModelNotIndependent:true,weightsChanged:false,
+       sourceCodeSha256:sourceHash,vectorSha256:ASSETS82.files['siglip-text/fashion-text-vectors.bin'].sha256,
+       inputSha256:r.binding.inputSha256,mirrorMs:performance.now()-flippedStart,
+       mirroredRanking:mirrored.ranking,meanRanking:paired.ranking};
+     }
      if(r.researchFrame877==='whole-224-v1'){
       const extraStart=performance.now();
       const padded=await fitWholePhoto(image,RawImage);
@@ -78,6 +98,6 @@ self.onmessage=async({data:r})=>{
    }finally{await vision.dispose();}
   }
   // Dynamic-imported runtime glue is fixed same-origin; hashing checks file integrity, not independent scorer custody.
-  self.postMessage({type:'result',requestId:r.requestId,output:{schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,createdAt:Date.now(),sourceCodeSha256:sourceHash,observations,baseline:{strong:baseline.strong,choices:baseline.choices,reason:baseline.reason},experiment877,timings,setupMs:allStart-loadStart,totalMs:performance.now()-loadStart,fetchedBytes,verifiedAssets:verified.size,estimatedWeightBytes:ASSETS82.files['models/ff13/fashion-clip/onnx/vision_model_quantized.onnx'].bytes+ASSETS82.files['models/Marqo/marqo-fashionSigLIP/onnx/vision_model_quantized.onnx'].bytes,peakMemoryBytes:null,automaticAdmissions:0}});
+  self.postMessage({type:'result',requestId:r.requestId,output:{schema:VERSION82,assets:MODEL_ASSETS82,requestId:r.requestId,createdAt:Date.now(),sourceCodeSha256:sourceHash,observations,baseline:{strong:baseline.strong,choices:baseline.choices,reason:baseline.reason},experiment877,experiment881,timings,setupMs:allStart-loadStart,totalMs:performance.now()-loadStart,fetchedBytes,verifiedAssets:verified.size,estimatedWeightBytes:ASSETS82.files['models/ff13/fashion-clip/onnx/vision_model_quantized.onnx'].bytes+ASSETS82.files['models/Marqo/marqo-fashionSigLIP/onnx/vision_model_quantized.onnx'].bytes,peakMemoryBytes:null,automaticAdmissions:0}});
  }catch(error){self.postMessage({type:'error',requestId:r?.requestId,code:String(error?.message||'P82_FAILURE').slice(0,100)});}
 };
