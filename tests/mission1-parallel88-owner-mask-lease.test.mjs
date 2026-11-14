@@ -157,7 +157,7 @@ test('P88 a replaced same-ID signed session cannot replay old-owner photo',()=>{
  h.node('outfitRetry').onclick();
  assert.equal(h.c.worker,original);
  assert.equal(vm.runInContext('outfitSplitJob',h.c),null);
- assert.equal(h.c.lastOutfitPhoto,'');
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'');
 });
 test('P88 unchanged original signed-owner reference may retry an errored unsaved photo',()=>{
  const h=captureHarness({ownerId:'owner-A'}),original=h.c.worker;
@@ -178,7 +178,7 @@ test('P88 a JPG decoded after owner change never enters a new account draft or w
  assert.equal(h.c.worker,undefined);
  assert.equal(h.c.batch.length,0);
  assert.equal(h.c.items.length,0);
- assert.equal(h.c.lastOutfitPhoto,'');
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'');
  assert.match(h.node('outfitSplitStatus').textContent,/session changed while opening this photo/);
 });
 test('P88 a JPG decoded after a replaced same-ID session cannot become a new draft',async()=>{
