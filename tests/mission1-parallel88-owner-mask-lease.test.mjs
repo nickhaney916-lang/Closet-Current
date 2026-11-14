@@ -971,6 +971,12 @@ function sourceSaveHarness88(){
   queued:async fn=>{await c.beforeWrite?.();return fn();}
  };
  vm.createContext(c);
+ // Native duplicate predicate, not a mocked decision: source-bound saving
+ // must detect masks that another item acquired while cloud preflight awaited.
+ const receiptsStart=appSource.indexOf('function unit70Receipts(');
+ const receiptsEnd=appSource.indexOf('function unit70OwnerEvidenceValid(',receiptsStart);
+ assert.ok(receiptsStart>=0&&receiptsEnd>receiptsStart);
+ vm.runInContext(appSource.slice(receiptsStart,receiptsEnd),c);
  vm.runInContext(appSource.slice(start,end),c);
  return {c,user,db,item,jpeg,hash,writes};
 }
