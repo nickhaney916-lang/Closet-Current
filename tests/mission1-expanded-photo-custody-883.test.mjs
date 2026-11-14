@@ -105,7 +105,7 @@ test('P883 Auckland Museum numbered sibling views share one accession, not two d
 });
 test('P883 candidate identifier namespace must not collide with P75 frozen 32',()=>{
  const old=pinned().rows;
- assert.ok(old.every(r=>r.id.startsWith('p75-candidate-')));
+ assert.ok(old.every(r=>!r.id.startsWith('p883-candidate-')),'synthetic previously exposed IDs must not occupy the new namespace');
  const a=candidate('p883-candidate-0001','d');
  assert.equal(inspectNewCandidate883(a,exposure()).newSourceDisjoint,true);
  const out=reportCandidates883([a],exposure(),{planQueries:12,querySuccesses:1});
