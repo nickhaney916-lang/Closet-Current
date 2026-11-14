@@ -28,6 +28,18 @@ function reviewed(record){
   const colorReviewed=key==='color'&&record.colorSource==='user'&&record.confirmedColor===true;
   if(!colorReviewed&&(evidence===undefined||JSON.stringify(evidence)!==JSON.stringify(record[key])))delete out[key];
  }
+ // PHOTO119 marks the saved record as owner-reviewed. That broad boolean
+ // cannot alone certify which field values the owner accepted. Bind its
+ // category/subtype/color to the same-source atomic M31 field receipt;
+ // older PHOTO119 rows without that new receipt remain review-only.
+ if(record.reviewProvenance==='explicit-owner-claim-not-independent-review-evidence'){
+  const receipt=record.confirmedDetailsSource31;
+  if(receipt?.basis!=='PHOTO119-explicit-owner-confirmation'||
+     receipt.ownerId!==record.ownerId||receipt.itemId!==record.id||
+     receipt.sourceSHA256!==record.sourceSHA256){
+   delete out.category;delete out.itemType;delete out.color;
+  }
+ }
  if(record.requiresOwnershipConfirmation===true||record.reconciliation70Status==='unresolved'){delete out.category;delete out.itemType;}
  return out;
 }
