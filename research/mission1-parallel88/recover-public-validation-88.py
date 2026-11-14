@@ -119,12 +119,67 @@ def verify_or_extract(data):
         "privateOrFamilyPhotos": False}, separators=(",", ":")))
 
 
+def audit_accessory_ontology(data):
+    """Report official human labels with NO dedicated pinned SegFormer output class.
+
+    This is static ontology coverage, NOT model inference, recall or accuracy.
+    The official Fashionpedia category mapping here follows P68's scorer:
+    categories 0..12 -> clothing, 21 -> Bottoms, 23 -> Shoes; remainder
+    -> Accessories. Sunglasses are only a PARTIAL proxy for all eyeglasses.
+    """
+    import collections
+    root = (ROOT / "public" / "outfit-segmentation.mjs").read_text()
+    region_ids = set(map(int, re.findall(
+        r"\\{id:(\\d+),label:'[^']+',categories:\\['Accessories'\\]", root
+    )))
+    if region_ids != {1, 3, 8, 16, 17}:
+        raise RuntimeError("Pinned model accessory output taxonomy changed: rerun an audited mapping review")
+    accessory_ids = set(range(13, 27)) - {21, 23}
+    direct = {14: 1, 19: 8, 24: 16, 25: 17}
+    partial = {13: 3}  # Fashionpedia glasses include non-sunglasses
+    counts = collections.Counter(
+        a["category_id"]
+        for row in data["rows"]
+        for a in row["annotations"]
+        if a["category_id"] in accessory_ids
+    )
+    names = {x["id"]: x["name"] for x in data["categories"]}
+    statuses = [
+        {"fashionpediaId": k, "humanCategory": names[k], "humanInstances": v,
+         "directSegformerLabel": "yes" if k in direct else
+                                 "partial_proxy" if k in partial else "none",
+         "segformerId": direct.get(k, partial.get(k))}
+        for k, v in sorted(counts.items())
+    ]
+    output = {
+        "schema": "closet-current-p88-public-human-accessory-ontology-audit/v1",
+        "cohort": "P68 already exposed public Fashionpedia validation",
+        "frozenManifestSha256": MANIFEST_SHA256,
+        "humanAccessoryInstances": sum(counts.values()),
+        "noDirectSegformerClassInstances": sum(v for k, v in counts.items()
+                                                if k not in direct and k not in partial),
+        "partialGlassesSunglassesProxyInstances": counts.get(13, 0),
+        "directRegionClassInstances": sum(counts.get(k, 0) for k in direct),
+        "byCategory": statuses, "modelInference": False,
+        "actualInstanceRecall": "NOT_MEASURED_BY_ONTOLOGY",
+        "independentFineSubtypeOrColorTruth": False,
+        "newBlindAcceptance": False, "autoSaveAllowed": False
+    }
+    if sum(counts.values()) != 13 or output["noDirectSegformerClassInstances"] != 5:
+        raise RuntimeError("Source-subtype count differs from the reviewed P68 manifest")
+    return output
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--verify-manifest-only", action="store_true")
+    parser.add_argument("--audit-accessory-ontology", action="store_true")
     args = parser.parse_args()
     data = frozen()
-    if args.verify_manifest_only:
+    if args.audit_accessory_ontology:
+        print("P88_PUBLIC_HUMAN_ACCESSORY_ONTOLOGY", json.dumps(audit_accessory_ontology(data),
+              separators=(",", ":")))
+    elif args.verify_manifest_only:
         print(json.dumps({"frozenManifestSha256": MANIFEST_SHA256, "photos": len(data["rows"]),
                           "humanInstances": 53, "modelAccuracy": "NOT_MEASURED"}))
     else:
