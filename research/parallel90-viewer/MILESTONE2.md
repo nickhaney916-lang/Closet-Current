@@ -20,9 +20,9 @@ Four real bridge guard unit tests exercise invalid/foreign indices, unsaved edit
 
 ## Measurements and honest limits
 
-- Initial Chromium checkpoints: female 1/4/16 PASS; male 1/4 PASS at initial publication; full run pending. Shirt 16 geometries / 3 textures; dress 11 geometries / 3 textures at observed checkpoints.
+- Initial Chromium 390px full saved-selection sequence: female and male **1/4/16 PASS** (32 changes), no original saved-board mutation. This local run preceded the final test-only optimization to avoid redundant same-model reloads; exact-head CI remains authoritative for current timings and added checkpoint screenshots. Shirt 16 geometries / 3 textures; dress 11 geometries / 3 textures at observed checkpoints.
 - New guard tests: 4/4 PASS; inherited focused native/viewer checks: 105/105 PASS before final publication.
-- Final full Node and exact-head Chromium/WebKit CI acceptance must be recorded in PR #1178 and coordination #1054 after completion, not inferred from this file.
+- Full local Node regression: **2,673/2,673 PASS**, zero failures/skips (131.4 seconds). Final exact-head Chromium/WebKit CI acceptance must be recorded in PR #1178 and coordination #1054 after completion, not inferred from this file.
 - Latency is end-to-end UI change + original-byte validation + source bundle/rig/garment setup, including a male-model selection when needed. No artificial settle interval is added to this switching measurement. Coarse `performance.memory.usedJSHeapSize` is recorded only if exposed; null means unavailable. This is not a controlled before/after speedup comparison, FPS, total process/GPU memory or leak-proof heap acceptance. Stable per-renderer counts alone cannot establish those claims.
 - Physical Android/iPhone, finger gestures, landscape, hardware GPU faults, real signed owner-source 3D, independent photographic fidelity, complete multi-garment geometry/drape/collision and actual complete-outfit 1/4/16 acceptance remain unverified. P89's new two-piece public research evidence is a donor, not permission for private-owner display.
 

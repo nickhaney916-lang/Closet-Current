@@ -49,9 +49,12 @@ export async function checkSavedSwitch90(page,engine){
     window.__p90LastSwitchCanvas=c;return fresh;
    }),true,'each switch must replace the old actual canvas object');
    samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
-   if([1,4,16].includes(i))console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
+   if([1,4,16].includes(i)){
+    console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
+    await page.screenshot({path:out+'/'+figure+'-'+i+'-saved-switches.png'});
+   }
   }
-  await page.screenshot({path:out+'/'+figure+'-16-saved-switches.png'});
+
  }
  await page.evaluate(()=>{delete window.__p90LastSwitchCanvas;});
  await writeFile(out+'/saved-switches.json',JSON.stringify({engine,samples,
