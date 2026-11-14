@@ -1,0 +1,96 @@
+name: "MAIN1054 M18 actual native browser session/board mutation source — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-native-photo-mutation-browser18-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m18-browser-actual-mutated-photos-hold
+  cancel-in-progress: true
+jobs:
+  exact-source-full-node-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Strict pinned M17 exact-head 3-new-path research-only scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=32dab1ded01695b57fc59d91b5043bcb91e4edb6
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 3
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/test-main1054-native-preview-mutation-browser18.mjs|\
+              research/main-thread-integration-1054/MILESTONE18.md|\
+              .github/workflows/main-thread-native-browser-mutation18-no-deploy.yml) ;;
+              *) echo "M18_SCOPE_VIOLATION $p" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ package.json package-lock.json research/main-thread-integration-1054/native-2d-preview.mjs
+          test "$(git hash-object public/closet-stylist.js)" = "f2657fffb17a3b2cc606f32b4206a574ef5ddf88"
+          test "$(git hash-object public/dual-panel-82.mjs)" = "1a6062877be41a831cb4724448d482405ce75727"
+          node --check scripts/test-main1054-native-preview-mutation-browser18.mjs
+          echo 'M18 only research browser acceptance added, no hosted or consumer change'
+      - name: Test-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact original app build and M14–M17 source/board/session/3D no-go
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/native-live-board-display17.test.mjs
+          node --test research/main-thread-integration-1054/native-2d-display-lease16.test.mjs
+          node --test research/main-thread-integration-1054/photographed-3d-evidence-gate15.test.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+          node --test research/main-thread-integration-1054/test-native-session-contract14.mjs
+      - name: All existing native private wardrobe/recognition/3D/backup regression tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Release pilot hold remains
+        run: |
+          echo 'Family Alpha HOLD 255 OPEN. Tests research-only, never release or deploy.'
+  actual-native-chromium-webkit-browsers-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Actual native owner/browser source must be immutable
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=32dab1ded01695b57fc59d91b5043bcb91e4edb6
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 3
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ research/main-thread-integration-1054/native-2d-preview.mjs
+          test "$(git hash-object public/closet-stylist.js)" = "f2657fffb17a3b2cc606f32b4206a574ef5ddf88"
+      - name: Browser research-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Native signed original-owner JPEG 2D regression original source
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: NEW real native browser original-JPEG display owner/board mutation 36 checks
+        run: node scripts/test-main1054-native-preview-mutation-browser18.mjs
+      - name: Native original owner P880 review safety 54 checks
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Focused source-lease tests independent of browser synthetic mutations
+        run: |
+          node --test research/main-thread-integration-1054/native-live-board-display17.test.mjs
+          node --test research/main-thread-integration-1054/native-2d-display-lease16.test.mjs
+      - name: Browser privacy evidence, fail closed on unsupported release flags
+        run: |
+          node -e "const fs=require('node:fs');const x=JSON.parse(fs.readFileSync('./benchmark/main1054-native-preview-m18/results-m18.json','utf8'));if(x.mutationCases?.length!==36||x.results?.length!==12||x.screens?.length!==6||x.releaseAuthorized!==false||x.familyAlpha!=='HOLD'||x.realModelInference!==false||x.realPrivateCloud!==false||x.physicalDevice!==false)process.exit(1);console.log('M18_ACTUAL_BROWSER_MUTATIONS',x.mutationCases.length)"
+          node -e "const r=require('./benchmark/main1054-dual-policy-browser/results.json');if(r.status!=='PASS'||r.total!==54||r.genuineModelsRun!==false||r.physicalPhones!==false||r.hostedCloud!==false||r.autoSaved!==false||r.releaseAuthorized!==false||r.familyAlpha!=='HOLD')process.exit(1);console.log('M18_NATIVE_OWNER_POLICY',r.total)"
+          echo 'Physical phones, actual owner photos, authorized hosted RLS and fitted 3D remain BLOCKED. No deploy.'
