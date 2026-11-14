@@ -178,14 +178,17 @@ test('M34 actual integrated M33 preflight binds ALL selected item receipts to on
  p.dispose();
 }));
 test('M34 integrated preflight detects a same-account unrelated edit before any outfit write',()=>fixture(async h=>{
- let once=true;
+ let reads=0;
  const gate=createNativeOutfitPicker33({
   getSession:h.getSession,getRevision:h.getRevision,
   getBoard:()=>({name:'Safe outfit',slots:{bottom:h.id}}),
   cryptoProvider:webcrypto,durableRoster34:true,
   readOwnerItems:async scope=>{
    const rows=await h.readOwnerItems(scope);
-   if(once){once=false;await h.another({category:'Tops',color:'Purple'});}
+   // First two reads are the P87 board/item source checks. The third is
+   // M33's all-rows snapshot. Insert after that read to force M34's second
+   // owner DB read to observe changed content before any outfit transaction.
+   if(++reads===3)await h.another({category:'Tops',color:'Purple'});
    return rows;
   }
  });
