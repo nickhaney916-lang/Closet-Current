@@ -101,3 +101,16 @@ test('P90 M9 paired baselines reset exact fourth original controller for each so
  assert.ok(benchmark.includes("for(const variant of ['baseline','candidate','restored'])"));
  assert.match(benchmark,/P90_COMPARE_ONLY/);
 });
+
+test('P90 M10 attributes previously untimed original rig/pose/contact/release work',()=>{
+ assert.ok(source.includes('M10 no-functional-change timing of previously unaccounted original pose'));
+ for(const name of ['detachPrevious','poseSource','skeletonValidate','contactCreate','contactPose','contactFit','poseRestore','previousRelease'])
+  assert.ok(source.includes("'"+name+"'"),'unmodified source operation still profiled: '+name);
+ assert.ok(source.includes("if(!next.includes('shirt'))return run();"),
+  'dress cannot falsely record shirt-only construction operations');
+ assert.ok(source.includes("const skeletons=new Set();root.traverse"));
+ assert.ok(source.includes("builtContact.fit(pose)"));
+ assert.ok(source.includes("contact?.dispose();Object.values(parts).forEach(g=>g.dispose())"));
+ assert.ok(source.includes("setResearchPose(root,pose)"));
+ assert.ok(source.includes("shirtBuildStages90=Object.freeze({...shirtClock90})"));
+});
