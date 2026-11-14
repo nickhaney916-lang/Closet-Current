@@ -2801,7 +2801,7 @@ try{
     independentHumanDrapeApproval:false,
     continuousSkinnedAnimationCertified:false,
     sourcePhotoPixelFidelityAccepted:false,
-    releaseAuthorized:false,familyAlpha:'HOLD'},null,2)+'\\n');
+    releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
  }
  if(mission2Performance){assert.equal(performanceSamples.length,6);
   for(const width of [320,390,430])assert.deepEqual(performanceSamples.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);}
