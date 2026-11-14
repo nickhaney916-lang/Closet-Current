@@ -64,6 +64,15 @@ export async function checkSavedSwitch90(page,engine){
     (expectedBoot==='none'&&mode==='shirt'?0:1);
    assert.equal(dressRequestCount,expectedManifestRequests,
     'manifest requests must reflect independently verified denim bundles plus only the needed dress source');
+   // Read-only research timing from the same genuinely attached mesh. No
+   // original JPEG bytes, owner IDs or texture data leave the active lease.
+   const stages=state.renderStages90;
+   assert.equal(stages?.kind,mode,'staged timings must follow actual displayed garment');
+   assert.equal(stages?.prepareMs>=0,true);
+   assert.equal(stages?.applyMs>=0,true);
+   assert.ok(Number.isFinite(stages.prepareMs)&&Number.isFinite(stages.applyMs));
+   if(mode==='dress')assert.equal(stages.prepareMs,0,'dress has no indexed shirt-preparation phase');
+   else assert.ok(stages.prepareMs>=0,'shirt preparation is measured, not inferred');
    assert.equal(state.garmentSources90[mode],hashes[mode]);
    assert.equal(state.garmentSources90[mode==='shirt'?'dress':'shirt'],null,'old garment removed');
    assert.equal(state.fallbackCount,3,'unsupported outerwear/shoes stay photo-only');
@@ -81,7 +90,7 @@ export async function checkSavedSwitch90(page,engine){
     const fresh=window.__p90LastSwitchCanvas!==c;
     window.__p90LastSwitchCanvas=c;return fresh;
    }),true,'each switch must replace the old actual canvas object');
-   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,secondDenimCount,dressRequestCount,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
+   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,secondDenimCount,dressRequestCount,renderStages:stages,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
    if([1,4,16].includes(i)){
     console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
     await page.screenshot({path:out+'/'+figure+'-'+i+'-saved-switches.png'});
