@@ -1,0 +1,83 @@
+name: "MAIN1054 M10 P880 exact-top owner review integration — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-p880-consensus-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m10-p880-consensus-hold
+  cancel-in-progress: true
+jobs:
+  immutable-source-and-native-regression-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Exact verified M9 parent, four-file isolated research delta, P880 source identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a8570ef5dc063549db1a2f0a88b4ce1f9f2fed1a
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 4
+          while IFS= read -r p; do
+            case "$p" in
+              public/dual-panel-82.mjs|scripts/test-main1054-dual-review-browser.mjs|research/main-thread-integration-1054/MILESTONE10.md|.github/workflows/main-thread-p880-consensus-1054-no-deploy.yml) ;;
+              *) echo "M10_SCOPE_VIOLATION: $p" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          test "$(git hash-object public/dual-panel-82.mjs)" = "1a6062877be41a831cb4724448d482405ce75727"
+          git diff --exit-code "$BASE" HEAD -- public/app.js public/dual-core-82.mjs public/dual-worker-82.mjs public/m4-dual-review-1054.mjs public/outfit-board-engine.js supabase/ benchmark/locked-photo-sources.json package.json package-lock.json
+          node --check public/dual-panel-82.mjs
+          node --check scripts/test-main1054-dual-review-browser.mjs
+          grep -q "status!=='cross_family_hypothesis'" public/dual-panel-82.mjs
+          grep -q "P880 MUST suppress shared lower-ranked Skirt" scripts/test-main1054-dual-review-browser.mjs
+          echo "M10 PINNED P880 CONSERVATIVE POLICY; RESEARCH ONLY; NO DEPLOY"
+      - name: Install test dependencies without writing lockfile
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Native offline build, owner & outfit source tests
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Full inherited native privacy and wardrobe tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Preserve release prohibition
+        run: echo "Family Alpha #255 OPEN HOLD; NO MERGE OR DEPLOY; NO HOSTED ACCOUNTS"
+  real-native-editor-desktop-browser-policy-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Require same source-pinned P880 policy and M9 parent
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a8570ef5dc063549db1a2f0a88b4ce1f9f2fed1a
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          test "$(git hash-object public/dual-panel-82.mjs)" = "1a6062877be41a831cb4724448d482405ce75727"
+      - name: Install test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Source-execute genuine app clothingFields and P880 review in desktop mobile-width browsers
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Source-execute signed owner original JPEG 2D fallback browser
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Check strict results + no genuine-model/phone/hosted release claims
+        run: |
+          node -e "const r=require('./benchmark/main1054-dual-policy-browser/results.json'); if(r.status!=='PASS'||r.total!==54||r.results.some(x=>!x.pass)||r.genuineModelsRun!==false||r.physicalPhones!==false||r.hostedCloud!==false||r.autoSaved!==false||r.releaseAuthorized!==false||r.familyAlpha!=='HOLD')process.exit(1);console.log('P880_NATIVE_EDITOR_SAFETY',r.total,'synthetic policy assertions')"
+          echo "Desktop browser simulation is not iPhone/Android or blind photo accuracy"
