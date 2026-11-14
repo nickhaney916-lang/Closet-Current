@@ -15,7 +15,7 @@ const engineName=process.argv[2]||'webkit',target=Number(process.env.MAIN1054_TA
 assert.ok(['webkit','chromium'].includes(engineName),'unsupported engine');
 assert.ok([2,4,8,16].includes(target),'only specified stage targets 2/4/8/16');
 const runBudgetMs=Number(process.env.MAIN1054_RUN_BUDGET_MS||1200000);
-assert.ok(Number.isInteger(runBudgetMs)&&runBudgetMs>=120000&&runBudgetMs<=1200000,'bounded 2–20 minute research budget');
+assert.ok(Number.isInteger(runBudgetMs)&&runBudgetMs>=120000&&runBudgetMs<=1800000,'bounded 2–30 minute research budget');
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const ids=(process.env.MAIN1054_REAL_IDS||'commons-0035,commons-0062,commons-0078,commons-0059').split(',');

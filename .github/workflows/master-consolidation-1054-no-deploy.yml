@@ -320,7 +320,7 @@ jobs:
         retention-days: 14
   real-pretrained-continuous-sequence:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix:
@@ -331,6 +331,9 @@ jobs:
         - engine: webkit
           target: 8
           budgetMs: 720000
+        - engine: webkit
+          target: 16
+          budgetMs: 1680000
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
       options: --shm-size=1gb
