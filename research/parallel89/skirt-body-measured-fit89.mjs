@@ -39,7 +39,14 @@ function measureSkinnedBodyEnvelopes89({worldBody,rest}){
  // bands are insufficient to infer anything about source panel clearance.
  const positions=worldBody?.positions??worldBody,
    indices=worldBody?.indices??null,
+   coreFaceMask=worldBody?.coreFaceMask??null,
    indexed=indices instanceof Uint16Array||indices instanceof Uint32Array;
+ if(coreFaceMask!==null&&(!indexed||
+    !(coreFaceMask instanceof Uint8Array)||
+    coreFaceMask.length!==indices.length/3||
+    !coreFaceMask.some(x=>x===0)||!coreFaceMask.some(x=>x===1)||
+    coreFaceMask.some(x=>x!==0&&x!==1)))
+  throw Error('original skinned body limb-part contour filter missing source face proof');
  if(!(positions instanceof Float32Array)||positions.length%3!==0||
    positions.length<900||positions.length>2_100_000)
   throw Error('original skinned CC0 anatomical positions missing');
@@ -74,6 +81,12 @@ function measureSkinnedBodyEnvelopes89({worldBody,rest}){
    // vertices conveniently within an arbitrary near-y tolerance.
    const edge=[[0,1],[1,2],[2,0]];
    for(let t=0;t<indices.length;t+=3){
+    // Outward envelope for a waist/upper-leg SKIRT should not be
+    // expanded to contain unrelated arms, fingers and head. The mask is
+    // strictly derived from actual ORIGINAL GLB skin weights and bone
+    // names, not invented geometry. Whole-source BODY BVH still audits
+    // the complete anatomical mesh on every proposed fitting trial.
+    if(coreFaceMask&&coreFaceMask[t/3]===0)continue;
     const verts=[];
     for(let k=0;k<3;k++){
      const id=indices[t+k]*3;
@@ -136,6 +149,12 @@ function measureSkinnedBodyEnvelopes89({worldBody,rest}){
   directSliceSamples.push(count);observed.push(covered);segmentEvidence.push(segments);
  }
  return {radiusSlices,observed,directSliceSamples,segmentEvidence,
+  originalFullBodySourceFacesStillAuditedInContactBVH:true,
+  originalOutwardEnvelopeUsesSkinPartSpecificExclusions:!!coreFaceMask,
+  excludedOriginalArmHandHeadFacesFromCoreEnvelope:coreFaceMask?
+   coreFaceMask.reduce((n,x)=>n+(x===0),0):0,
+  includedOriginalTorsoLegFacesForCoreEnvelope:coreFaceMask?
+   coreFaceMask.reduce((n,x)=>n+(x===1),0):0,
   actualAnatomicalIndexedFaceCutsUsed:indexed};
 }
 function fitCandidateGeometry89({geometry,original,rest,envelopes,regime,worldInverse}){
@@ -245,6 +264,10 @@ export function compareActualMeasuredSkirtFit89({
    envelopeObservations.push({pose,angularBinsObservedPerSourceBand:measured.observed,
     trueOriginalBodyFacePlaneSegmentsPerBand:measured.segmentEvidence,
     genuineSkinnedBodySourceTriangleIntersections:measured.actualAnatomicalIndexedFaceCutsUsed,
+    originalBodyCorePartSpecificEnvelope:measured.originalOutwardEnvelopeUsesSkinPartSpecificExclusions,
+    originalArmHandHeadTrianglesExcludedFromSkirtEnvelopeOnly:measured.excludedOriginalArmHandHeadFacesFromCoreEnvelope,
+    originalTorsoLegTrianglesRetainedForSkirtEnvelope:measured.includedOriginalTorsoLegFacesForCoreEnvelope,
+    fullOriginalBodyStillUsedForIndependentCollisionAudit:true,
     originalAnatomicalBodyProfileSamplesWithinHeightBands:measured.directSliceSamples});
    const contact=sampleContact(pose);
    if(!validContact(contact))throw Error('actual-posed-original-source-BVH-missing');
@@ -351,6 +374,8 @@ export function compareActualMeasuredSkirtFit89({
    trueOriginalLicensedGarment:true,originalCutoutReviewOnly:true,
    actualBodyMeasurementsFromOriginalPublicGLBsOnly:true,
    originalSkinnedSourceFacePlaneIntersectionsUsed:fullBody.every(x=>x.actualAnatomicalIndexedFaceCutsUsed),
+   independentCoreTorsoLegBoneSourcePartMaskVerified:fullBody.every(x=>x.originalOutwardEnvelopeUsesSkinPartSpecificExclusions),
+   unrelatedUpperExtremityOnlyExcludedFromRadialDesignNeverFromCollisionBVH:true,
    sampledActualBonePoses:POSES,radialSourceBands:ROWS,sectorCount:SEGMENTS,
    actualAnatomicalOriginalBodyCrossSectionSummaries:envelopeObservations,
    baselineStrictSkirtBodyTriangleCrossingsAcrossPoses:baseline.reduce((n,x)=>n+x.count,0),
@@ -371,6 +396,7 @@ export function compareActualMeasuredSkirtFit89({
  }catch(e){
   const known=['original 163-bone cross-section too incomplete for safe front/back estimation',
    'original skinned CC0 anatomical positions missing',
+   'original skinned body limb-part contour filter missing source face proof',
    'invalid original anatomical skinned vertex',
    'original photographed skirt radius invalid',
    'actual-posed-original-source-BVH-missing',
