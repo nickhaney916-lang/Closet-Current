@@ -88,10 +88,12 @@ export async function checkSavedSwitch90(page,engine){
     'original research garment controller must expose only numeric stage timings');
    const stageEntries=Object.entries(shirtStages);
    if(mode==='shirt'){
-    const required=['attach','panelsAndSleeves','shoulderCaps','shoulderTop'];
+    const required=['attach','panelsAndSleeves','shoulderCaps','shoulderTop',
+     'detachPrevious','poseSource','skeletonValidate','contactCreate',
+     'contactPose','contactFit','poseRestore','previousRelease'];
     for(const stage of required)
      assert.ok(Object.hasOwn(shirtStages,stage),'unchanged 3D geometry stage '+stage+' must run');
-    assert.ok(stageEntries.length>=12,'full source garment still passes all registered fitting stages');
+    assert.ok(stageEntries.length>=27,'full original shirt still executes 20 shaping calls plus 8 real pose/contact/cleanup operations');
     for(const [stage,ms] of stageEntries){
      assert.match(stage,/^[a-zA-Z]+$/);
      assert.ok(Number.isFinite(ms)&&ms>=0,'actual original garment stage time is finite');
