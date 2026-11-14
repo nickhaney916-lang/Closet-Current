@@ -15,7 +15,7 @@ const candidate=(id,digit)=>({
  acquiredAt:now,verification:'bytes-verified',photoContent:'unreviewed',
  rightsReview:'manual-review-required',sourceGroupApproved:false,
  garmentHumanVerified:false,split:'quarantine',sourceGroupId:null,
- modelScored:false,labelsPublic:false,seriesKey:null,dhash64:'1234567890abcdef',
+ modelScored:false,labelsPublic:false,seriesKey:null,dhash64:digit.repeat(16),
  overlapFlags:[]});
 const pinned=()=>({schema:'p75-public-candidates-pin-v1',rows:[
  candidate('old-p75','a'),candidate('previous-photo','b')
