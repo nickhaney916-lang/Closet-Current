@@ -45,7 +45,7 @@ s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:
 s=replace(s,' let scene=null,sources=null,presenter=null,ready=false,shown=false,dead=false,lock=Promise.resolve(),loadSerial=0,rendered=null,modelLoads=0;',
  ' const startupTimings90={sourceLoadMs:0,sceneSetupMs:0,presentMs:0};\n let scene=null,sources=null,presenter=null,ready=false,shown=false,dead=false,lock=Promise.resolve(),loadSerial=0,rendered=null,modelLoads=0;');
 s=replace(s,'sources=await loadVettedOutfit3D01Sources();still();',
- 'const sourceStart90=performance.now();sources=await loadVettedOutfit3D01Sources({dressOnly90:'+emptyStartup90+'&&nativeTopSource90===OUTFIT3D_PINNED_SOURCE_SHA.dress});still();startupTimings90.sourceLoadMs=performance.now()-sourceStart90;startupTimings90.loadedDenimBundles=sources.bundles.length;');
+ 'const sourceStart90=performance.now();sources=await loadVettedOutfit3D01Sources({dressOnly90:'+emptyStartup90+'&&nativeTopSource90===OUTFIT3D_PINNED_SOURCE_SHA.dress,shirtOnly90:'+emptyStartup90+'&&nativeTopSource90===OUTFIT3D_PINNED_SOURCE_SHA.shirt});still();startupTimings90.sourceLoadMs=performance.now()-sourceStart90;startupTimings90.loadedDenimBundles=sources.bundles.length;');
 s=replace(s,'   scene=mountAnatomicalShowroom(canvas,{',
  '   const sceneStart90=performance.now();\n   scene=mountAnatomicalShowroom(canvas,{emptyStartup90:'+emptyStartup90+',');
 s=replace(s,"   scene.applyOutfit('none');modelLoads++;",
@@ -91,7 +91,23 @@ for(const angle of [90,180])s=replace(s,'setAnatomicalCameraView(camera,controls
 await writeFile(showroom,s);
 const sourceViewer=donor+'/research/outfit-3d-01/source-true-viewer.mjs';
 s=await readFile(sourceViewer,'utf8');
-s=replace(s,'loadVettedOutfit3D01Sources(){','loadVettedOutfit3D01Sources({dressOnly90=false}={}){');
+s=replace(s,'loadVettedOutfit3D01Sources(){','loadVettedOutfit3D01Sources({dressOnly90=false,shirtOnly90=false}={}){');
+// Symmetric demand-loading: when the native verified top SHA is the pinned
+// shirt, skip only unused public dress manifest/cutout preparation. No fake
+// source-capability placeholder, no private asset caching, no new admission.
+s=replace(s," const manifestResponse=await fetch('/benchmark/work47/manifest.json',{cache:'no-store'});",
+` if(dressOnly90&&shirtOnly90)throw Error('Mutually exclusive P90 source loading hints');
+ let dress=null;
+ if(!shirtOnly90){
+ const manifestResponse=await fetch('/benchmark/work47/manifest.json',{cache:'no-store'});`);
+s=replace(s," const dress=await loadLicensedCutout('commons-0053',{manifest,reviewConfirmed:true});",
+ " dress=await loadLicensedCutout('commons-0053',{manifest,reviewConfirmed:true});");
+s=replace(s," if(dress.sourceSHA256!==DRESS_SHA||!dress.realFabricTexture)throw Error('Pinned original dress source invalid');",
+ " if(dress.sourceSHA256!==DRESS_SHA||!dress.realFabricTexture)throw Error('Pinned original dress source invalid');\n }");
+s=replace(s,'!sources?.dress||!Array.isArray(sources?.bundles)',
+ '(sources?.dress==null&&sources?.bundles?.length===0)||!Array.isArray(sources?.bundles)');
+s=replace(s,'if(!dressPiece||dressPiece.originalSHA256!==sources.dress.sourceSHA256)',
+ 'if(!sources.dress||!dressPiece||dressPiece.originalSHA256!==sources.dress.sourceSHA256)');
 s=replace(s,' const bundles=[];',` // A loading hint can only reduce available canonical public sources.
  // It never bypasses actual selected-source/owner admission in present().
  if(dressOnly90===true)return Object.freeze({dress,bundles:Object.freeze([]),
