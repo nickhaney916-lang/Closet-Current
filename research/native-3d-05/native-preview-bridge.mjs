@@ -388,6 +388,7 @@ export async function mountNative3D05({
    startup90:active?data.startup90||null:null,
    renderStages90:active?data.renderStages90||null:null,
    sceneApplyStages90:active?data.sceneApplyStages90||null:null,
+   sceneShirtStages90:active?data.sceneShirtStages90||null:null,
    camera90:active?data.camera90||null:null,
    figure90:active?data.figure||null:null,
    garmentSources90:active?data.garmentSources90||null:null,
