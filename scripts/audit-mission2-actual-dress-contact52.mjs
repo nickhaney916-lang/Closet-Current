@@ -613,3 +613,87 @@ if(process.env.PHOTO_DRESS_BODY_BANDS59==='1'){
  console.log('M2_C59_REAL_LICENSED_ANATOMICAL_WITNESS_BANDS_SAFE_SUMMARY',
   JSON.stringify(summary59));
 }
+
+if(process.env.PHOTO_DRESS_TORSO_TRIAL60==='1'){
+ assert.equal(process.env.PHOTO_DRESS_BODY_BANDS59,'1',
+  'C60 requires original source anatomical crossing bands and full C58 body sweeps');
+ const rows=receipts.map(r=>{
+  assert.equal(r.disposablePhotographedUpperTorsoFitWorldAudit60,true);
+  assert.equal(r.originalPhotoAndAnatomicalBodyNeverAdjusted60,true);
+  assert.equal(r.trialNotApprovedAsWearableGarment60,true);
+  const a=r.originalArticulatedContactReceipt58;
+  assert.equal(a?.fullOriginalPhotoTrialAuditCompleted60,true);
+  const trials=[a.disposableNeutralUpperTorsoTrial60,
+   ...a.disposableArticulatedUpperTorsoTrials60];
+  assert.equal(trials.length,3);
+  assert.equal(trials[0].baselineOriginalBodyStrictCrossings,
+   a.originalNeutralBodyStrictCrossings);
+  assert.equal(trials.slice(1).reduce((n,t)=>n+
+   t.baselineOriginalBodyStrictCrossings,0),
+   a.originalBodyStrictTransverseCrossingsAcrossSamples);
+  for(const t of trials){
+   assert.equal(t.schema,
+    'M2-original-licensed-disposable-upper-torso-clearance-trial-C60');
+   assert.equal(t.completeOriginalBodyAndSelfAudit,true);
+   assert.equal(t.outwardTrialMeters,.006);
+   assert.ok(t.trialVerticesMoved>0);
+   assert.ok(t.maxTrialWorldDisplacementMeters<=.006002);
+   assert.equal(t.trialBodyStrictCrossingReduction,
+    t.baselineOriginalBodyStrictCrossings-
+    t.trialOriginalBodyStrictCrossings);
+   assert.equal(t.noNewBodyStrictCrossings,
+    t.trialOriginalBodyStrictCrossings<=
+    t.baselineOriginalBodyStrictCrossings);
+   assert.equal(t.noNewSelfStrictCrossings,
+    t.trialOriginalSelfStrictCrossings<=
+    t.baselineOriginalSelfStrictCrossings);
+   assert.equal(t.originalPhotoMeshUVSkinMaterialsAndBoneMatricesUnmodified,true);
+   assert.equal(t.allTrialVerticesRetainedInMemoryOnly,true);
+   assert.equal(t.researchCandidateNotApprovedForConsumer3D,true);
+   assert.equal(t.releaseAuthorized,false);
+  }
+  return trials.map(t=>({
+   phaseKind:t===trials[0]?'neutral':'temporary-arm',
+   originalBodyStrict:t.baselineOriginalBodyStrictCrossings,
+   trialBodyStrict:t.trialOriginalBodyStrictCrossings,
+   bodyStrictWitnessDelta:t.trialBodyStrictCrossingReduction,
+   originalSelfStrict:t.baselineOriginalSelfStrictCrossings,
+   trialSelfStrict:t.trialOriginalSelfStrictCrossings,
+   movedSourceVertices:t.trialVerticesMoved,
+   maxWorldDisplacementMeters:t.maxTrialWorldDisplacementMeters,
+   noNewSelfStrict:t.noNewSelfStrictCrossings,
+   noNewBodyStrict:t.noNewBodyStrictCrossings,
+   allBodyStrictGone:t.allOriginalBodyCrossingsActuallyGone
+  }));
+ });
+ for(const row of rows.slice(1))assert.deepEqual(row,rows[0],
+  'C60 same authenticated original public dress and 163-bone body must produce identical numerical candidate counts across all three mobile widths');
+ const trial60=rows[0];
+ const comparison={
+  schema:'M2-P2-C60-original-licensed-upper-torso-world-only-disposable-fit-trial',
+  originalPhoto3DBody:'public licensed Commons-0053 163-bone P61/P175',
+  actual3DNativeWebGLWidths:[320,390,430],
+  originalNeutralAndTwoArticulatedPoseSweeps:3,
+  boundedOutwardDisplacementMeters:.006,
+  sourceGarmentTriangles:first.originalSourceFaces,
+  perSourcePoseComparisons:trial60,
+  sampledNoWorseningBodyCrossings:trial60.every(x=>x.noNewBodyStrict),
+  sampledNoWorseningSelfCrossings:trial60.every(x=>x.noNewSelfStrict),
+  allStrictBodyIntersectionsActuallyEliminated:trial60.every(x=>x.allBodyStrictGone),
+  realClothVisualChangeNotRenderedOrHumanReviewed:true,
+  trialProposalNotAppliedToOriginalMesh:true,
+  originalPhotoOrShaderUVSkinWeightsAltered:false,
+  onlyTemporaryWorldBufferGeometryCompared:true,
+  noOpenSourceSewingOrCollisionWaivers:true,
+  noPhysicalHumanAnatomicalFitCertified:true,
+  noContinuousClothOrPhysicalMobileAcceptance:true,
+  noRealOwnerPhotosOrWardrobeWrites:true,
+  noReleasePermissionRegardlessOfComparisonOutcome:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile(
+  'benchmark/mission2-source-dress-motion/live-disposable-torso-fit60.json',
+  JSON.stringify(comparison,null,2)+'\n');
+ console.log('M2_C60_REAL_LICENSED_DISPOSABLE_TORSO_FIT_COMPARISON',
+  JSON.stringify(comparison));
+}
