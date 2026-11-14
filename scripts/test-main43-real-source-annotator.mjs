@@ -31,9 +31,9 @@ try{
  const p=await page.evaluate(()=>window.M43_RESEARCH_TEST.findEditable('restore'));
  assert.ok(p&&Number.isInteger(p.x)&&Number.isInteger(p.y),
   'No genuine original P93-removed pixel available for manual restoration');
- await page.locator('#edited').scrollIntoViewIfNeeded();
  await page.locator('#mode').selectOption('restore');
  await page.locator('#brush').selectOption('1');
+ await page.locator('#edited').scrollIntoViewIfNeeded();
  const xy=await page.evaluate(p=>window.M43_RESEARCH_TEST.focusOn(p.x,p.y),p);
  await page.mouse.click(xy.clientX,xy.clientY);
  await page.waitForFunction(()=>window.M43_RESEARCH_TEST.state().marked>0);
@@ -41,6 +41,7 @@ try{
  assert.ok(marked>0&&marked<=2500);
  await page.locator('#undo').click();
  assert.equal((await page.evaluate(()=>window.M43_RESEARCH_TEST.state())).marked,0);
+ await page.locator('#edited').scrollIntoViewIfNeeded();
  const point=await page.evaluate(p=>window.M43_RESEARCH_TEST.focusOn(p.x,p.y),p);
  await page.mouse.click(point.clientX,point.clientY);
  await page.waitForFunction(()=>window.M43_RESEARCH_TEST.state().marked>0);
