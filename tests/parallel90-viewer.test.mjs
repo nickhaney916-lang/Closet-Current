@@ -32,3 +32,14 @@ test('P90 a replacement WebGL canvas retains keyboard target and full instructio
  assert.match(source,/fresh\.tabIndex=0;fresh\.setAttribute\('aria-label'/);
  assert.match(source,/canvas\.getAttribute\('aria-label'\)/);
 });
+
+test('P90 selected, freshly byte-attested top-source hint only removes unused public dress preparation',()=>{
+ assert.ok(source.includes("nativeTopSource90===OUTFIT3D_PINNED_SOURCE_SHA.shirt"));
+ assert.ok(source.includes("loadVettedOutfit3D01Sources({dressOnly90=false,shirtOnly90=false}"));
+ assert.ok(source.includes("if(dressOnly90&&shirtOnly90)throw Error"));
+ assert.ok(source.includes("if(!shirtOnly90){"));
+ assert.ok(source.includes("if(!sources.dress||!dressPiece"));
+ assert.ok(source.includes("(sources?.dress==null&&sources?.bundles?.length===0)"));
+ // An absent dress must not be forged using a placeholder source capability.
+ assert.equal(source.includes("sourceSHA256:DRESS_SHA"),false);
+});
