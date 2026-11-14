@@ -132,7 +132,7 @@ export function summarizeOriginalPhotoSkirtContactTopology89({
    rawOriginalAnatomicalSourceCoordinatesPersisted:false,
    exactOriginalSourceTrianglePairIDsPersisted:false,
    sourcePhotoRGBAndAlphaUnmodified:true,
-   unphotographedNeutralRearNotTreatedAsReal:false,
+   unphotographedNeutralRearNotTreatedAsReal:true,
    independentHumanFitApproved:false,continuousSweptContactCertified:false,
    ownerPrivate3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD',
    originalPhoto2DFallbackRequired:true
