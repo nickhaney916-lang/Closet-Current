@@ -76,7 +76,7 @@ async function visit(ctx,figure,denim,variant){
  const state=await page.evaluate(()=>({
   garment:window.ccDress12Diagnostics(),
   pose:window.__parallel84PoseResult??null,
-  shape:window.__parallel84DenimResult??null,
+  shape:window.__parallel84PoseGateResult??window.__parallel84DenimResult??null,
   staticPoseControls:typeof window.__parallel84SetStaticPose==='function',
   frames:Number(document.getElementById('avatar').dataset.frames||0),
   webgl2:!!document.getElementById('avatar').getContext('webgl2')
@@ -105,18 +105,29 @@ async function visit(ctx,figure,denim,variant){
  assert.equal(state.pose?.continuousOrSweptCollisionCertified,false);
  assert.equal(state.pose?.releaseAuthorized,false);
  assert.equal(state.pose?.avatar,figure);
- assert.equal(state.shape?.schema,'P84-original-denim-source-neutral-side-AB/v1');
+ assert.equal(state.shape?.schema,variant==='baseline'?
+  'P84-original-denim-source-neutral-side-AB/v1':
+  'P84-original-denim-three-static-pose-acceptance-gate/v1');
  if(variant==='baseline'){
   assert.equal(state.shape.status,'BASELINE_UNMODIFIED');
   assert.equal(state.shape.trialApplied,false);
  }else{
-  assert.ok(['SAMPLED_SOURCE_PANEL_CONTACT_NONWORSENING_ONLY','REFUSED_NEW_CONTACT','REFUSED_UNCHANGED']
-   .includes(state.shape.status),'No unsafe source-pose fitting acceptance');
+  assert.ok(['THREE_STATIC_POSES_NO_NEW_SOURCE_CROSSINGS_NOT_MOTION_CERTIFIED',
+   'REFUSED_ORIGINAL_GEOMETRY_RESTORED'].includes(state.shape.status),
+   'No unsafe source pose fitting acceptance: '+JSON.stringify(state.shape));
+  assert.equal(state.shape.releaseAuthorized,false);
   if(state.shape.trialApplied){
-   assert.equal(state.shape.newlyIntroducedBodyTrianglePairs,0);
-   assert.equal(state.shape.newlyIntroducedShirtTrianglePairs,0);
-   assert.equal(state.shape.photoAndSourceAttributesUnchanged,true);
-   assert.equal(state.shape.sourceFrontPhotographProtected,true);
+   assert.equal(state.shape.allSourceFacesAudited,true);
+   assert.equal(state.shape.exactPairIdentityComparison,true);
+   assert.equal(state.shape.fullOriginalFaceSampledPoses,3);
+   assert.equal(state.shape.actualFullContactPoseComparisons.length,3);
+   assert.ok(state.shape.actualFullContactPoseComparisons.every(p=>
+    p.newBodyShirtTrianglePairs===0&&
+    p.newBodyDenimTrianglePairs===0&&
+    p.newShirtDenimTrianglePairs===0&&!p.maximumOrientedPlaneDepthWorsened));
+   assert.equal(state.shape.sourcePoseOriginalProtected,true);
+  }else{
+   assert.equal(state.shape.originalGeometryRestored,true);
   }
  }
  // These visual frames are actual source/half-arm/relaxed 163-bone skinning
@@ -138,9 +149,20 @@ async function visit(ctx,figure,denim,variant){
    shots.push({png,shot});captures.push(shot);
   }
  }
+ // Prove the THREE original 163-bone source joints visibly changed pose.
+ // A name-only pose or unrendered joint change must fail; CI screenshot
+ // differences are actual WebGL rendered RGB channels, not claimed physics.
+ const posePixels=[];
+ for(let i=1;i<poses.length;i++){
+  const a=await sharp(shots[(i-1)*angles.length].png).removeAlpha().raw().toBuffer();
+  const b=await sharp(shots[i*angles.length].png).removeAlpha().raw().toBuffer();
+  const n=rgbDiff(a,b);
+  assert.ok(n>5000,'A real named arm pose must change source WebGL pixels: '+figure+' '+poses[i]);
+  posePixels.push({from:poses[i-1],to:poses[i],channelsChangedAbove12:n});
+ }
  await page.evaluate(()=>window.__parallel84SetStaticPose('relaxed'));
  await page.close();
- return {figure,denim,variant,pose:state.pose,shape:state.shape,elapsed,shots};
+ return {figure,denim,variant,pose:state.pose,shape:state.shape,elapsed,shots,posePixels};
 }
 function rgbDiff(a,b){
  assert.equal(a.length,b.length);let count=0;
@@ -158,7 +180,7 @@ try{
  });
  for(const figure of figures)for(const denim of denims){
   const before=await visit(context,figure,denim,'baseline');
-  const changed=await visit(context,figure,denim,'trial');
+  const changed=await visit(context,figure,denim,'gated');
   const witnesses=poses.map((name,i)=>{
    const a=before.pose.poseResults[i],b=changed.pose.poseResults[i];
    const delta={
@@ -191,7 +213,11 @@ try{
   samples.push({figure,denim,baselineMs:before.elapsed,refinedMs:changed.elapsed,
    originalPhotoUnchanged:true,originalSkinned163BoneCloth:true,
    shapeTrialApplied:changed.shape.trialApplied,
-   sourcePoseNewContactPairs:changed.shape.newlyIntroducedBodyTrianglePairs||0,
+   visibleDistinctOriginalJointPoses:changed.posePixels,
+   rigidPoseIsNotFabricDynamicMotion:true,
+   sourcePoseNewContactPairs:changed.shape.actualFullContactPoseComparisons?.reduce(
+    (n,p)=>n+p.newBodyShirtTrianglePairs+
+     p.newBodyDenimTrianglePairs+p.newShirtDenimTrianglePairs,0)??0,
    poseWitnesses:witnesses,pixelDiffs,
    additionalStaticPoseContactReleaseBlock:witnesses.some(x=>x.anyIncreaseOverBaseline),
    continuousPoseSafetyCertified:false,independentRealismApproved:false});
