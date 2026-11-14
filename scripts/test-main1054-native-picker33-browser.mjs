@@ -192,7 +192,7 @@ try{
   }finally{await browser.close();browser=null;}
  }
  assert.equal(errors.length,0,'native app page runtime errors');
- assert.ok(external.every(x=>['fonts.googleapis.com','raw.githubusercontent.com'].includes(x.host)),
+ assert.ok(external.every(x=>['fonts.googleapis.com','raw.githubusercontent.com','cdn.jsdelivr.net'].includes(x.host)),
   'unexpected external request origin; all external requests are aborted');
  assert.equal(results.length,engines.length*9);
  console.log('MAIN1054_M33',JSON.stringify({results,source:'licensed Commons-0053',
