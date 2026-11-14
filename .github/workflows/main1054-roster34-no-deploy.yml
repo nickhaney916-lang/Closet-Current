@@ -1,0 +1,58 @@
+name: MAIN1054 M34 durable signed private wardrobe roster - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-durable-roster34-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  durable-private-wardrobe-revision:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 36
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M33 ancestry, no production staging or unrelated app edits
+        run: |
+          git merge-base --is-ancestor 9d560cb439241cf590b793ea4a6bf3fcbb0b8a8d HEAD
+          git diff --exit-code 9d560cb439241cf590b793ea4a6bf3fcbb0b8a8d HEAD -- public/app.js public/auth.js public/cloud-backup.js supabase/ benchmark/
+          git diff --name-only 9d560cb439241cf590b793ea4a6bf3fcbb0b8a8d HEAD | while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/main1054-roster34-no-deploy.yml|\
+              public/outfit-board.js|\
+              research/main1054-picker33/native-picker-bridge.mjs|\
+              research/main1054-revision34/durable-roster.mjs|\
+              tests/main34-durable-roster.test.mjs|\
+              scripts/test-main1054-native-picker33-browser.mjs|\
+              research/master-consolidation-1054/MILESTONE34.md) ;;
+              *) echo "BLOCKED: unexpected M34 changed path $path"; exit 1;;
+            esac
+          done
+          node --check public/outfit-board.js
+          node --check research/main1054-picker33/native-picker-bridge.mjs
+          node --check research/main1054-revision34/durable-roster.mjs
+          node --check tests/main34-durable-roster.test.mjs
+          node --check scripts/test-main1054-native-picker33-browser.mjs
+      - name: Install isolated pinned no-deploy dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Browser runtimes and OS dependencies
+        run: npx playwright install --with-deps chromium webkit
+      - name: Native app build unchanged production entrypoint
+        run: node scripts/build.mjs
+      - name: M34 genuine source private DB content-derived revision and synthetic cross-tab races
+        run: node --test tests/main34-durable-roster.test.mjs
+      - name: M34 actual signed native builder both engines and all mobile viewport profiles
+        run: MAIN34=research node scripts/test-main1054-native-picker33-browser.mjs
+      - name: Inherited M33 unchanged native picker 18-case regression
+        run: node scripts/test-main1054-native-picker33-browser.mjs
+      - name: Complete no-deploy Node regression suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Source-honest licensed catalog Chromium WebKit
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
+      - name: Protected signed native original-photo preview
+        run: node scripts/test-main1054-native-preview-browser.mjs
