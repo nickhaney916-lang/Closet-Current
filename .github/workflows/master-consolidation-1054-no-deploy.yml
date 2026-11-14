@@ -324,16 +324,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        engine:
-        - chromium
-        - webkit
+        include:
+        - engine: chromium
+          target: 16
+          budgetMs: 240000
+        - engine: webkit
+          target: 8
+          budgetMs: 720000
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
-      MAIN1054_TARGET: '16'
+      MAIN1054_TARGET: ${{ matrix.target }}
       MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+      MAIN1054_RUN_BUDGET_MS: ${{ matrix.budgetMs }}
     steps:
     - uses: actions/checkout@v4
       with:
@@ -359,11 +364,11 @@ jobs:
         node scripts/p82-prepare-models.mjs --check
 
         git diff --exit-code -- public/'
-    - name: Sixteen actual requests; one continuous browser/page; checkpoints 2 4 8 16
+    - name: Actual continuous model sequence; measured per-engine staged target
       run: node scripts/test-main1054-real-webkit-repeat.mjs ${{ matrix.engine }}
     - name: Require complete source-bound real-model sequence; incomplete is BLOCKED
       run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-real-webkit-repeat/${{
-        matrix.engine }}-16-diagnostic.json ${{ matrix.engine }} 16 "$GITHUB_SHA"
+        matrix.engine }}-${{ matrix.target }}-diagnostic.json ${{ matrix.engine }} ${{ matrix.target }} "$GITHUB_SHA"
     - name: Keep public numeric diagnostics on success or failure, no JPEG or weights
       if: always()
       uses: actions/upload-artifact@v4

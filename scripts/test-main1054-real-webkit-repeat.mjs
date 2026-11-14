@@ -14,6 +14,8 @@ assert.match(codeCommit,/^[a-f0-9]{40}$/);
 const engineName=process.argv[2]||'webkit',target=Number(process.env.MAIN1054_TARGET||16);
 assert.ok(['webkit','chromium'].includes(engineName),'unsupported engine');
 assert.ok([2,4,8,16].includes(target),'only specified stage targets 2/4/8/16');
+const runBudgetMs=Number(process.env.MAIN1054_RUN_BUDGET_MS||1200000);
+assert.ok(Number.isInteger(runBudgetMs)&&runBudgetMs>=120000&&runBudgetMs<=1200000,'bounded 2–20 minute research budget');
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const ids=(process.env.MAIN1054_REAL_IDS||'commons-0035,commons-0062,commons-0078,commons-0059').split(',');
@@ -140,7 +142,7 @@ const emit=async()=>{
   photoAttemptsTarget:target,completedPhotos:completed,
   gateCounts:Object.fromEntries([2,4,8,16].map(n=>[String(n),{requested:target>=n,met:completed>=n}])),
   rootCause:'UNDETERMINED',modelStages,
-  runBudgetMs:480000,
+  runBudgetMs,
   pageEvents:events,resourceMeasurements:{
    browserProcessRSSBytes:null,peakBrowserProcessRSSBytes:null,
    measuredMemory:false,source:'no browser process RSS/pressure available from Playwright interface'},
@@ -160,14 +162,14 @@ const emit=async()=>{
 // whole diagnostic bounded independently of page responsiveness. The owned
 // browser process is forcibly stopped only when this research budget expires.
 const runBudget=setTimeout(async()=>{
- failures.push({category:'HARNESS_WALL_CLOCK_BUDGET',budgetMs:480000,
+ failures.push({category:'HARNESS_WALL_CLOCK_BUDGET',budgetMs:runBudgetMs,
   lastModelStage:modelStages.at(-1)?.stage||null,completedPhotos:results.length});
  try{await emit();}finally{
   try{browserServer?.process()?.kill('SIGKILL');}catch{}
   console.log('MASTER_REAL_MODEL_BUDGET',JSON.stringify({engine:engineName,completed:results.length,target,releaseReady:false}));
   process.exit(2);
  }
-},480000);
+},runBudgetMs);
 try{
  browserServer=await ({webkit,chromium}[engineName]).launchServer({
   headless:true,args:engineName==='chromium'?['--no-sandbox']:[],
