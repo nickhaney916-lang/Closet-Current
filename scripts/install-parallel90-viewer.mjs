@@ -166,9 +166,9 @@ await writeFile(sourceViewer,s);
 // geometric output remain unchanged. No production code is patched.
 const sourceOutfitController=donor+'/research/dress-mobile-01/dress-outfit-controller.mjs';
 s=await readFile(sourceOutfitController,'utf8');
-s=replace(s," let contact=null;"," let shirtBuildStages90=null;\\n let contact=null;");
+s=replace(s," let contact=null;"," let shirtBuildStages90=null;\n let contact=null;");
 s=replace(s,"const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes","const summarize=()=>({mode,pose,changes,shirtBuildStages90,slots:Object.keys(parts),garmentMeshes");
-s=replace(s,"  let builtContact=null;const held=all(parts).map","  let builtContact=null;const shirtClock90=Object.create(null);\\n  const timeShirt90=(stage,run)=>{const t=performance.now();try{return run();}finally{shirtClock90[stage]=(shirtClock90[stage]||0)+(performance.now()-t);}};\\n  const held=all(parts).map");
+s=replace(s,"  let builtContact=null;const held=all(parts).map","  let builtContact=null;const shirtClock90=Object.create(null);\n  const timeShirt90=(stage,run)=>{const t=performance.now();try{return run();}finally{shirtClock90[stage]=(shirtClock90[stage]||0)+(performance.now()-t);}};\n  const held=all(parts).map");
 s=replace(s,"  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();","  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;shirtBuildStages90=Object.freeze({...shirtClock90});return summarize();");
 s=replace(s," function dispose(){if(closed)return;contact?.dispose();"," function dispose(){if(closed)return;shirtBuildStages90=null;contact?.dispose();");
 s=replace(s,"built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true})","built.shirt=timeShirt90(\"attach\",()=>attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true}))");
