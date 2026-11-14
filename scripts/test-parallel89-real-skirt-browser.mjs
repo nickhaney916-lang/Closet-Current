@@ -196,6 +196,13 @@ try{
   assert.equal(measured.trueOriginalLicensedGarment,true);
   assert.equal(measured.actualBodyMeasurementsFromOriginalPublicGLBsOnly,true);
   assert.equal(measured.originalSkinnedSourceFacePlaneIntersectionsUsed,true);
+  assert.equal(measured.independentCoreTorsoLegBoneSourcePartMaskVerified,true);
+  assert.equal(measured.unrelatedUpperExtremityOnlyExcludedFromRadialDesignNeverFromCollisionBVH,true);
+  assert.ok(measured.actualAnatomicalOriginalBodyCrossSectionSummaries.every(x=>
+   x.originalBodyCorePartSpecificEnvelope===true&&
+   Number.isSafeInteger(x.originalArmHandHeadTrianglesExcludedFromSkirtEnvelopeOnly)&&
+   x.originalArmHandHeadTrianglesExcludedFromSkirtEnvelopeOnly>=24&&
+   x.fullOriginalBodyStillUsedForIndependentCollisionAudit===true));
   assert.ok(measured.actualAnatomicalOriginalBodyCrossSectionSummaries.every(x=>
    x.genuineSkinnedBodySourceTriangleIntersections===true&&
    x.trueOriginalBodyFacePlaneSegmentsPerBand.length===7&&
