@@ -62,7 +62,7 @@
    'Source: licensed Commons-0053 · original 1920×2880 · '+zoom+'× zoom\n'+
    changes.size+'/'+limit+' manual pixels marked ('+removed+' remove, '+
    restored+' restore) · '+modes[$('mode').value]+'\n'+lastMessage:
-   'Loading exact original licensed JPEG, Work47 source and P93 cutout…';
+   lastMessage||'Loading exact original licensed JPEG, Work47 source and P93 cutout…';
   $('undo').disabled=!strokes.length;
   $('reset').disabled=!changes.size;
   $('export').disabled=!changes.size;
@@ -220,8 +220,10 @@
    if(baselinePixels.data[i+3]>=128){
     const y=Math.floor(p/W);top=Math.min(top,y);bottom=Math.max(bottom,y);
    }
-   if(baselinePixels.data[i+3]>=128&&p93Pixels.data[i+3]===0){
-    oldChangeRegion[p]=1;removed++;
+   if(baselinePixels.data[i+3]!==p93Pixels.data[i+3]){
+    removed++;
+    if(baselinePixels.data[i+3]>=128&&p93Pixels.data[i+3]===0)
+     oldChangeRegion[p]=1;
    }
   }
   if(removed!==12961||top<0||bottom<=top)
