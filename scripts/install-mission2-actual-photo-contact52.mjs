@@ -63,7 +63,7 @@ controller=controller.replace(anchor,anchor+
 // finishing, not while P61's intermediate fitted SkinnedMesh may still be
 // rewritten/replaced by the native preview renderer. The C52 original
 // diagnostic itself remains at its original independent source stage.
-const completedDressAnchor="      built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;";
+const completedDressAnchor="     built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;";
 assert.equal(controller.split(completedDressAnchor).length,2,
  'P86 requires actual completed original-photo dress and anatomical opening finishing stage');
 controller=controller.replace(completedDressAnchor,completedDressAnchor+
