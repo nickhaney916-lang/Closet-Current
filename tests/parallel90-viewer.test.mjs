@@ -25,10 +25,10 @@ test('P90 context-loss listener is captured and removed on bridge disposal',()=>
 });
 
 test('P90 touch allows vertical page scrolling without disabling horizontal orbit',()=>{
- assert.match(source,/controls\\.domElement\\.style\\.touchAction='pan-y'/);
- assert.match(source,/new OrbitControls\\(camera,canvas\\)/);
+ assert.match(source,/controls\.domElement\.style\.touchAction='pan-y'/);
+ assert.match(source,/new OrbitControls\(camera,canvas\)/);
 });
 test('P90 a replacement WebGL canvas retains keyboard target and full instructions',()=>{
- assert.match(source,/fresh\\.tabIndex=0;fresh\\.setAttribute\\('aria-label'/);
- assert.match(source,/canvas\\.getAttribute\\('aria-label'\\)/);
+ assert.match(source,/fresh\.tabIndex=0;fresh\.setAttribute\('aria-label'/);
+ assert.match(source,/canvas\.getAttribute\('aria-label'\)/);
 });
