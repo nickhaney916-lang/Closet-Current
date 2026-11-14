@@ -939,7 +939,7 @@ test('P88 normal non-outfit scanner cleanup is unaffected by the experimental un
 // Source-execute P88's actual owner/private-save lease functions. These tests
 // use synthetic JPEG bytes and fake IndexedDB, NOT hosted signed accounts.
 function sourceSaveHarness88(){
- const start=appSource.indexOf('function sourceSaveLease88(');
+ const start=appSource.indexOf('function sourceGroupRevision88(');
  const end=appSource.indexOf('// Mission 1 #88: unresolved SegFormer fragments',start);
  assert.ok(start>=0&&end>start,'native source lease must be present');
  const jpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,225,7,255,217]).toString('base64');
