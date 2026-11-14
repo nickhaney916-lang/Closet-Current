@@ -95,6 +95,8 @@ test('P883 Auckland Museum numbered sibling views share one accession, not two d
  const second='https://commons.wikimedia.org/wiki/File:Boots,_ankle_(AM_2008.11.3-2).jpg';
  assert.equal(sourceSeriesHint883(first),'museum-accession-am:2008.11.3');
  assert.equal(sourceSeriesHint883(second),'museum-accession-am:2008.11.3');
+ assert.equal(sourceSeriesHint883('https://commons.wikimedia.org/wiki/File:Boots,_pair_woman_(AM_1992.157-1).jpg'),'museum-accession-am:1992.157');
+ assert.equal(sourceSeriesHint883('https://commons.wikimedia.org/wiki/File:Boots,_pair_woman_(AM_1992.157-2).jpg'),'museum-accession-am:1992.157');
  const old=candidate('p883-first-view','d');old.sourcePage=first;
  const next=candidate('p883-second-view','e');next.sourcePage=second;
  const checked=inspectNewCandidate883(next,exposure(),[old]);
