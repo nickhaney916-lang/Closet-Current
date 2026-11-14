@@ -521,9 +521,17 @@ function unitDecisionHarness88({ownerId='owner-A',sourceId='src-A',apiPromise=nu
    oncomplete:null,onerror:null,onabort:null
   };return tx}},
   storageWrites:[],queuedCalls:0,renderCalls:0,captureRenders:0,
-  queued:async task=>{c.queuedCalls++;if(queueBeforeWrite)await queueBeforeWrite;return task()},
+  queued:async task=>{c.queuedCalls++;if(c.queueGate||queueBeforeWrite)await (c.queueGate||queueBeforeWrite);return task()},
   render(){c.renderCalls++},renderOutfitCapture(){c.captureRenders++},
-  candidate(){throw Error('unexpected unpair candidate')},
+  candidate(){throw Error('UNSAFE generic candidate may not run before P70 unpair authorization')},
+  normalizeClothing:x=>({...x}),crypto:{randomUUID:()=> 'restored-companion-88'},
+  ClothingDetails:{fillColor:()=>({})},
+  sessionCapturedIds:new Set(),session:0,
+  uiNodes:new Map(),$:id=>{
+   if(!c.uiNodes.has(id))c.uiNodes.set(id,{textContent:'',src:'',hidden:true});
+   return c.uiNodes.get(id);
+  },
+  autoQueue:[],queueAutomatic(item){c.autoQueue.push({item,alreadyPersisted:c.storageWrites.some(x=>x.batch.some(y=>y.id===item.id))})},
   document:{
    getElementById:id=>id==='outfitUnitReview70'?dom:null,
    createElement:()=>({textContent:'',setAttribute(){}})
@@ -646,4 +654,88 @@ test('P88 old discard callback cannot delete a garment the owner has already con
  assert.equal(c.batch.length,1,'confirmed draft must survive old unresolved-group discard action');
  assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
  assert.equal(c.storageWrites.length,beforeWrites,'no stale discard persistence');
+});
+
+function makeConfirmedPair88(h){
+ const c=h.c;
+ const second=h.ownerDraft('part-B');
+ second.image='data:image/jpeg;base64,U0hPRVJJR0hU';
+ c.batch.push(second);
+ return vm.runInContext("updateUnit70('pair',['part-A','part-B'])",c);
+}
+test('P88 unpair restores companion ONLY after a single authorized snapshot commit, then starts recognition',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ await makeConfirmedPair88(h);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].shoePair?.confirmedByOwner,true);
+ assert.equal(c.storageWrites.length,1);
+ const priorWrites=c.storageWrites.length;
+ await vm.runInContext("updateUnit70('unpair',['part-A'])",c);
+ assert.equal(c.batch.length,2);
+ assert.equal(c.storageWrites.length,priorWrites+1,
+  'unpair must use a single owner-bound IDB draft transaction');
+ assert.deepEqual(c.storageWrites.at(-1).batch.map(x=>x.id),['part-A','restored-companion-88']);
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.batch[1].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.batch[1].reconciliation70.maskSha256,'c'.repeat(64));
+ assert.equal(c.batch[1].outfitSourceId,'src-A');
+ assert.equal(c.autoQueue.length,1);
+ assert.equal(c.autoQueue[0].alreadyPersisted,true,
+  'recognition must run only AFTER the P70 snapshot is durably committed');
+ assert.equal(c.sessionCapturedIds.has('restored-companion-88'),true);
+ assert.equal(c.session,1);
+ assert.equal(c.uiNodes.get('reviewCount').textContent,2);
+});
+test('P88 revoked owner during unpair queued cloud-beforeWrite cannot leak companion photo or recognition',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ await makeConfirmedPair88(h);
+ const before=c.storageWrites.length;
+ let release;
+ c.queueGate=new Promise(resolve=>{release=resolve;});
+ const pending=vm.runInContext("updateUnit70('unpair',['part-A'])",c);
+ for(let n=0;n<10;n++)await Promise.resolve();
+ assert.equal(c.batch.length,2,'in-memory restoration may stage pending commit');
+ assert.equal(c.storageWrites.length,before);
+ assert.equal(c.autoQueue.length,0);
+ assert.equal(c.sessionCapturedIds.size,0);
+ c.window.closetAuth.user={id:'owner-A'};
+ release();
+ await pending;
+ assert.equal(c.storageWrites.length,before,'no separate generic draft transaction after owner change');
+ assert.equal(c.batch.length,1,'failed unpair rolls back only its staged halves');
+ assert.equal(c.batch[0].shoePair?.confirmedByOwner,true);
+ assert.equal(c.autoQueue.length,0);
+ assert.equal(c.sessionCapturedIds.size,0);
+ assert.equal(c.session,0);
+});
+test('P88 failed queue aborts complete unpair without a second shadow draft write or photo scan',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ await makeConfirmedPair88(h);
+ const before=c.storageWrites.length;
+ c.queueGate=Promise.reject(Error('cloud.beforeWrite failed'));
+ await vm.runInContext("updateUnit70('unpair',['part-A'])",c);
+ assert.equal(c.storageWrites.length,before);
+ assert.equal(c.batch.length,1);
+ assert.equal(c.batch[0].shoePair?.confirmedByOwner,true);
+ assert.equal(c.autoQueue.length,0);
+ assert.equal(c.session,0);
+ assert.match(c.outfitUnit70Error,/cloud.beforeWrite failed/);
+});
+test('P88 reject unpair forged companion owner/mask SHA or duplicated JPEG without side effects',async()=>{
+ for(const kind of ['owner','mask','duplicate']){
+  const h=unitDecisionHarness88(),c=h.c;
+  await makeConfirmedPair88(h);
+  const before=c.storageWrites.length;
+  const companion=c.batch[0].shoePair.companion;
+  if(kind==='owner')companion.reconciliation70={...companion.reconciliation70,ownerId:'owner-B'};
+  if(kind==='mask')companion.reconciliation70={...companion.reconciliation70,maskSha256:'b'.repeat(64)};
+  if(kind==='duplicate')companion.image=c.batch[0].image;
+  await vm.runInContext("updateUnit70('unpair',['part-A'])",c);
+  assert.equal(c.batch.length,1);
+  assert.equal(c.storageWrites.length,before);
+  assert.equal(c.autoQueue.length,0);
+  assert.equal(c.sessionCapturedIds.size,0);
+  assert.equal(c.session,0);
+  assert.match(c.outfitUnit70Error,/companion garment|companion photo/i);
+ }
 });
