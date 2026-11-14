@@ -176,6 +176,12 @@ function unit70OwnerEvidenceValid(item){
  if((item.reconciliation70Status==='paired_confirmed'||item.reconciliation70Status==='fragments_confirmed')&&!companion)return false;
  return true;
 }
+// Mission 1 #88: unresolved SegFormer fragments are not one verified
+// physical garment. A checkbox cannot resolve mixed/fragmented source pixels.
+// A new single-garment capture is required; original unsaved photo is kept.
+function ownerMaySaveSourceGroup88(item){
+ return item?.segmentHint?.componentReviewStatus!=='unresolved_fragments_keep_source_mask';
+}
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
  const dialog=document.createElement('dialog');dialog.className='photo-adjust clothing-editor';
@@ -206,6 +212,7 @@ function adjustPhoto(item){
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
    Boolean(color)&&color.toLowerCase()!=='unknown'&&
+   ownerMaySaveSourceGroup88(item)&&
    item.reconciliation70Status!=='unresolved'&&
    ((!item.reconciliation70&&!item.reconciliation70Status)||unit70OwnerEvidenceValid({...item,category:draft.category}))&&
    (!item.reconciliation70||!duplicateUnit70InCloset(item,items));
@@ -251,6 +258,7 @@ function adjustPhoto(item){
   proof.append(second,node('figcaption','Second source region · owner grouping confirmed'));
   form.prepend(proof);
  }
+ if(!ownerMaySaveSourceGroup88(item))form.prepend(node('p','This photo contains unresolved garment fragments. The original is kept, but this combined mask cannot be saved as one verified item. Photograph the garment separately, then review again.','fine'));
  if(item.reconciliation70Status==='unresolved')form.prepend(node('p','Resolve shoe pairing or garment fragments under Your outfit pieces before saving.','fine'));
  save=node('button','Save changes','primary');
  const cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
@@ -310,6 +318,7 @@ function adjustPhoto(item){
   if(saveInFlight){message('This photo is already being saved.');return;}
   if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||dual82Panel&&!dual82Panel.valid())){message('This comparison belongs to a different photo or signed session. Reopen Adjust.');return;}
   if(subtype80Enabled&&((window.closetAuth?.user!==subtype80Owner||window.closetAuth?.user?.id!==subtype80OwnerId)||subtype80Panel&&!subtype80Panel.valid())){message('This subtype review belongs to a different photo or signed session. Reopen Adjust.');return;}
+  if(!ownerMaySaveSourceGroup88(item)){message('The original photo has unresolved garment fragments. Retake a single-garment photo before saving this draft.');return;}
   if(item.reconciliation70Status==='unresolved'||
    ((item.reconciliation70||item.reconciliation70Status)&&!unit70OwnerEvidenceValid({...item,category:draft.category}))||
    (item.reconciliation70&&duplicateUnit70InCloset(item,items))){
