@@ -18,7 +18,7 @@ import {createDisposableUpperTorsoWorldTrial60,UPPER_TORSO_TRIAL_OUTWARD60}
  from './upper-torso-clearance-trial60.mjs';
 import {measureDisposableSourceSurfaceStrain61}
  from './upper-torso-surface-quality61.mjs';
-import {createDisposableClothAlternatives85}
+import {createDisposableClothAlternatives85,createDisposableWitnessLocalized85}
  from './alternative-photo-clearance85.mjs';
 const SOURCE_ID='commons-0053';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
@@ -910,8 +910,12 @@ function sourceBodyBandReceipt59(count,strict,complete){
 }
 function bodyClothContact58(body,clothWorld,indices,tolerance,{
  maxBodyComparisons58,maxBodyCandidatePairs58,
- bodyTriangleBandClassifier59=null
+ bodyTriangleBandClassifier59=null,
+ captureStrictOriginalClothFaces85=null
 }){
+ if(captureStrictOriginalClothFaces85!==null&&
+  !(captureStrictOriginalClothFaces85 instanceof Set))
+  fail('P85 original strict body witness collector must be in-memory Set');
  if(!body.complete)return {...body};
  const clothes=[];
  for(let i=0;i<(indices?.length??clothWorld.length/3);i+=3){
@@ -920,7 +924,7 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
    return new THREE.Vector3().fromArray(clothWorld,3*id);
   });
   const box=new THREE.Box3().setFromPoints(tri);
-  clothes.push({tri,minX:box.min.x,maxX:box.max.x,
+  clothes.push({tri,faceIndex:i/3,minX:box.min.x,maxX:box.max.x,
    minY:box.min.y,maxY:box.max.y,
    minZ:box.min.z,maxZ:box.max.z});
  }
@@ -984,6 +988,9 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
    }
    if(strictFaceCrossing52(c.tri,b.tri,1e-7)){
     strict++;
+    // Existing C58 definition is unchanged. Capture original cloth FACE
+    // IDs in a private Set only; never publish raw geometry or IDs.
+    captureStrictOriginalClothFaces85?.add(c.faceIndex);
     if(regionCounts59){
      const region=bodyTriangleBandClassifier59(c.tri);
      if(!SOURCE_BODY_BANDS59.includes(region))
@@ -1073,7 +1080,12 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
  * edited. No raw source positions, per-face IDs or private RGB in receipts.
  */
 function compareAlternative85(root,mesh,body,world,indices,triangles,
- tolerance,poseBudget,bodyBudget,baselineBodyStrict,baselineSelfStrict){
+ tolerance,poseBudget,bodyBudget,baselineBodyStrict,baselineSelfStrict,
+ originalClothWitnessFaces85){
+ if(!(originalClothWitnessFaces85 instanceof Set)||
+  (baselineBodyStrict>0&&originalClothWitnessFaces85.size===0)||
+  originalClothWitnessFaces85.size>baselineBodyStrict)
+  fail('P85 incomplete real original strict body-cloth witness source');
  const byName=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
  const pos=name=>{
   const bone=byName.get(name);
@@ -1081,9 +1093,14 @@ function compareAlternative85(root,mesh,body,world,indices,triangles,
   return bone.getWorldPosition(new THREE.Vector3()).toArray();
  };
  const before=world.slice(),at=Date.now();
+ const neck=pos('neck01'),spine=pos('spine04');
  const candidates=createDisposableClothAlternatives85(world,indices,{
-  neck:pos('neck01'),spine:pos('spine04')});
- const rows=candidates.map(({world:trial,...recipe})=>{
+  neck,spine});
+ const localCandidates=createDisposableWitnessLocalized85(world,indices,{
+  neck,spine,
+  strictClothFaceIndices:[...originalClothWitnessFaces85].sort((a,b)=>a-b)
+ });
+ const evaluate=({world:trial,...recipe})=>{
   const self=analyze52(trial,indices,triangles,tolerance,poseBudget);
   const bodyCheck=bodyClothContact58(body,trial,indices,tolerance,bodyBudget);
   const strain=measureDisposableSourceSurfaceStrain61(world,trial,indices);
@@ -1107,7 +1124,8 @@ function compareAlternative85(root,mesh,body,world,indices,triangles,
    candidateAcceptedForWearable3D:false,
    releaseAuthorized:false,familyAlpha:'HOLD'
   });
- });
+ };
+ const rows=candidates.map(evaluate),localRows=localCandidates.map(evaluate);
  if(!world.every((v,i)=>v===before[i]))
   fail('P85 original original-photo skinned world geometry modified');
  return Object.freeze({
@@ -1118,6 +1136,14 @@ function compareAlternative85(root,mesh,body,world,indices,triangles,
   originalPhotoUVRestSkinAnd163BonesUnchanged:true,
   realSourceContactAndQualityGatesUnchanged:true,
   candidates:rows,
+  // Only anonymous counts escape. Raw witness face IDs are never emitted.
+  privateOriginalStrictClothWitnessFaceCount85:
+   originalClothWitnessFaces85.size,
+  witnessLocalizedCandidates85:localRows,
+  allFourWitnessLocalizedSweepsCompleted85:
+   localRows.length===4&&localRows.every(x=>
+    x.fullOriginalContactAndQualitySweepCompleted),
+  originalContactWitnessIdsNeverExported85:true,
   allFourSourceContactSweepsCompleted:rows.every(x=>
    x.fullOriginalContactAndQualitySweepCompleted),
   noContinuousCollisionOrHumanVisualAcceptance:true,
@@ -1185,11 +1211,13 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   maxStrictCrossings:1024,
   refineTriangleDistances53:true,maxDistanceCandidates53:maxDistancePairs58,
   refineSourceTopology54:false,refineEdgeWinding55:false};
+ const neutralPrivateWitness85=refineAlternative85?new Set():null;
  const neutralBody=bodyClothContact58(
   bodyFaces58(root,mesh,maxBodyFaces58),neutralWorld,indices,tolerance,{
    maxBodyComparisons58,maxBodyCandidatePairs58,
    bodyTriangleBandClassifier59:refineBodyHeightWitnessBands59?
-    sourceBodyBandClassifier59(root,mesh):null
+    sourceBodyBandClassifier59(root,mesh):null,
+   captureStrictOriginalClothFaces85:neutralPrivateWitness85
   });
  const sampledBodyHeightBands59=[];
  const trialBodyBudget60={maxBodyComparisons58,maxBodyCandidatePairs58};
@@ -1203,7 +1231,8 @@ function articulatedContact58(root,mesh,source,indices,triangles,
  const neutralAlternatives85=refineAlternative85?
   compareAlternative85(root,mesh,bodyFaces58(root,mesh,maxBodyFaces58),
    neutralWorld,indices,triangles,tolerance,poseBudget,trialBodyBudget60,
-   neutralBody.strict,neutral.strictCrossings):null;
+   neutralBody.strict,neutral.strictCrossings,
+   neutralPrivateWitness85):null;
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
   bodyFacesCount=0,bodyCompared=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
@@ -1236,10 +1265,12 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     if(self.complete&&self.distance53.distanceRefinementComplete)
      selfComplete++;
     const body=bodyFaces58(root,mesh,maxBodyFaces58);
+    const armPrivateWitness85=refineAlternative85?new Set():null;
     const bodyCheck=bodyClothContact58(body,world,indices,tolerance,{
      maxBodyComparisons58,maxBodyCandidatePairs58,
      bodyTriangleBandClassifier59:refineBodyHeightWitnessBands59?
-      sourceBodyBandClassifier59(root,mesh):null
+      sourceBodyBandClassifier59(root,mesh):null,
+     captureStrictOriginalClothFaces85:armPrivateWitness85
     });
     if(refineBodyHeightWitnessBands59)
      sampledBodyHeightBands59.push(bodyCheck.sourceBodyHeightBandReceipt59??null);
@@ -1251,7 +1282,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     if(refineAlternative85)
      alternativesPose85.push(compareAlternative85(root,mesh,body,
       world,indices,triangles,tolerance,poseBudget,trialBodyBudget60,
-      bodyCheck.strict,self.strictCrossings));
+      bodyCheck.strict,self.strictCrossings,armPrivateWitness85));
     bodyFacesCount+=bodyCheck.faces;
     bodyCompared+=bodyCheck.compared;
     bodyPairs+=bodyCheck.candidates;
@@ -1316,7 +1347,12 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     neutralAlternatives85?.allFourSourceContactSweepsCompleted===true&&
     alternativesPose85.length===2&&
     alternativesPose85.every(x=>x.allFourSourceContactSweepsCompleted),
-   allAlternativesRemainResearchOnly85:true
+   allAlternativesRemainResearchOnly85:true,
+   allWitnessLocalizedOriginalSourceSweepsCompleted85:
+    neutralAlternatives85?.allFourWitnessLocalizedSweepsCompleted85===true&&
+    alternativesPose85.length===2&&
+    alternativesPose85.every(x=>x.allFourWitnessLocalizedSweepsCompleted85),
+   originalBodyWitnessFaceIDsOnlyInMemory85:true
   }:{}),
   ...(refineUpperTorsoFitTrial60?{
    disposableNeutralUpperTorsoTrial60:neutralTrial60,
