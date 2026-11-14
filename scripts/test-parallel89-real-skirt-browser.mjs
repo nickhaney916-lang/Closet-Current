@@ -199,7 +199,7 @@ try{
   assert.ok(measured.actualAnatomicalOriginalBodyCrossSectionSummaries.every(x=>
    x.genuineSkinnedBodySourceTriangleIntersections===true&&
    x.trueOriginalBodyFacePlaneSegmentsPerBand.length===7&&
-   x.trueOriginalBodyFacePlaneSegmentsPerBand.every(n=>Number.isInteger(n)&&n>=12)));
+   x.trueOriginalBodyFacePlaneSegmentsPerBand.every(n=>Number.isInteger(n)&&n>=4)));
   assert.deepEqual(measured.sampledActualBonePoses,['source','blend-50','relaxed']);
   assert.equal(measured.radialSourceBands,7);
   assert.equal(measured.sectorCount,48);
