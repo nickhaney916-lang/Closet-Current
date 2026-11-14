@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
+import {snapshotBrowserProcessTree} from '../research/master-consolidation-1054/browser-process-memory.mjs';
 const root=resolve('public'),out=resolve('benchmark/main1054-real-webkit-repeat');
 const codeCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 assert.match(codeCommit,/^[a-f0-9]{40}$/);
@@ -129,6 +130,24 @@ const results=[],requests=[],pageErrors=[],consoleErrors=[],modelStages=[];
 const events={workerCreated:0,workerTerminated:0,pageCrash:0,pageClosed:0,browserDisconnected:0};
 const startTime=Date.now(),failures=[];
 let browser,page,context,browserServer,intentionalShutdown=false;
+let memoryTimer=null,lastMemory=null,memorySamples=0;
+let maxSampledBrowserRootRSSBytes=null,maxSampledBrowserTreeRSSBytes=null;
+let maxSampledBrowserTreePSSBytes=null,maxObservedBrowserProcessCount=0;
+const maxKnown=(oldValue,newValue)=>newValue===null?oldValue:Math.max(oldValue??0,newValue);
+const sampleMemory=()=>{
+  // Linux CI: sampled process tree, not a physical phone or continuous peak.
+  // Suppress PIDs and paths; only numeric, bounded data reaches receipts.
+  let observation;
+  try{observation=snapshotBrowserProcessTree(browserServer?.process()?.pid);}
+  catch{return null;} // Telemetry must never interrupt the original model test.
+  if(!observation)return null;
+  lastMemory=observation;memorySamples++;
+  maxSampledBrowserRootRSSBytes=maxKnown(maxSampledBrowserRootRSSBytes,observation.rootRSSBytes);
+  maxSampledBrowserTreeRSSBytes=maxKnown(maxSampledBrowserTreeRSSBytes,observation.summedTreeRSSBytes);
+  maxSampledBrowserTreePSSBytes=maxKnown(maxSampledBrowserTreePSSBytes,observation.proportionalTreePSSBytes);
+  maxObservedBrowserProcessCount=Math.max(maxObservedBrowserProcessCount,observation.processCount);
+  return observation;
+};
 const emit=async()=>{
  const completed=results.length;
  const state={
@@ -144,8 +163,20 @@ const emit=async()=>{
   rootCause:'UNDETERMINED',modelStages,
   runBudgetMs,
   pageEvents:events,resourceMeasurements:{
-   browserProcessRSSBytes:null,peakBrowserProcessRSSBytes:null,
-   measuredMemory:false,source:'no browser process RSS/pressure available from Playwright interface'},
+   browserProcessRSSBytes:lastMemory?.rootRSSBytes??null,
+   peakBrowserProcessRSSBytes:maxSampledBrowserRootRSSBytes,
+   browserTreeSummedRSSBytes:lastMemory?.summedTreeRSSBytes??null,
+   maxSampledBrowserTreeRSSBytes,
+   browserTreePSSBytes:lastMemory?.proportionalTreePSSBytes??null,
+   maxSampledBrowserTreePSSBytes,
+   processCount:lastMemory?.processCount??null,
+   maxObservedBrowserProcessCount,
+   sampleCount:memorySamples,sampleIntervalMs:2000,
+   measuredMemory:memorySamples>0,
+   rssComplete:lastMemory?.rssComplete??false,
+   pssComplete:lastMemory?.pssComplete??false,
+   source:'Linux /proc status and smaps_rollup, original browser PID descendants only',
+   caveat:'RSS sum double-counts shared memory; PSS can be unavailable. Maxima are sampled, not continuous peaks or OOM proof.'},
   sourceHashesVerified:true,originalPhotoModified:false,autoAdmissions:0,
   ownerAccount:'synthetic-only',ownerSessionIdentityChanged:false,
   persistedPrivateWardrobeWrites:0,authorizedHostedCloud:false,
@@ -162,6 +193,7 @@ const emit=async()=>{
 // whole diagnostic bounded independently of page responsiveness. The owned
 // browser process is forcibly stopped only when this research budget expires.
 const runBudget=setTimeout(async()=>{
+ sampleMemory();
  failures.push({category:'HARNESS_WALL_CLOCK_BUDGET',budgetMs:runBudgetMs,
   lastModelStage:modelStages.at(-1)?.stage||null,completedPhotos:results.length});
  try{await emit();}finally{
@@ -174,6 +206,9 @@ try{
  browserServer=await ({webkit,chromium}[engineName]).launchServer({
   headless:true,args:engineName==='chromium'?['--no-sandbox']:[],
  });
+ sampleMemory();
+ memoryTimer=setInterval(sampleMemory,2000);
+ memoryTimer.unref();
  browser=await ({webkit,chromium}[engineName]).connect(browserServer.wsEndpoint());
  browser.on('disconnected',()=>{if(!intentionalShutdown)events.browserDisconnected++;});
  context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
@@ -270,6 +305,7 @@ try{
    console.log('MAIN1054_WEBKIT_REAL_FAILURE',JSON.stringify(failure));
   }
   if(failure){await emit();break;}
+  const sampledAtPhoto=sampleMemory();
   results.push({iteration:attempt,id:photo.id,sourceSHA256:photo.sourceSHA256,
    observedOriginalSHA256:info.observedOriginalSHA256,workerSourceCodeSha256:info.workerSourceCodeSha256,
    realModelFamilies:info.modelKeys,verifiedAssets:info.verifiedAssets,
@@ -277,13 +313,15 @@ try{
    elapsedInferenceMs:Math.round(info.totalMs),
    sourceValid:true,privateWrites:0,automaticAdmissions:0,
    browserJSHeapBytes:info.memoryUsedJSHeapBytes,
-   processRSSBytes:null,
+   processRSSBytes:sampledAtPhoto?.rootRSSBytes??null,
+   browserTreeSummedRSSBytes:sampledAtPhoto?.summedTreeRSSBytes??null,
+   browserTreePSSBytes:sampledAtPhoto?.proportionalTreePSSBytes??null,
   });
   console.log('MAIN1054_WEBKIT_REAL_ROW',JSON.stringify({
    engine:engineName,iteration:attempt,publicSource:photo.id,
    models:info.modelKeys,ms:Math.round(info.totalMs),
    workerEvents:events.workerCreated,workerTerminations:events.workerTerminated,
-   rssMeasured:false,autoSaves:0}));
+   rssMeasured:memorySamples>0,autoSaves:0}));
   if([2,4,8,16].includes(attempt))await emit();
  }
  if(!page?.isClosed()&&!failures.length){
@@ -301,6 +339,8 @@ try{
 }finally{
  // This is a DIAGNOSTIC experiment. Capture incomplete runs as BLOCKED, not
  // a false completed acceptance or a fabricated cause, even when browser dies.
+ sampleMemory();
+ if(memoryTimer)clearInterval(memoryTimer);
  intentionalShutdown=true; // voluntary shutdown is NOT a browser crash or disconnect
  try{await context?.close();}catch{}
  try{await browser?.close();}catch{}
@@ -312,6 +352,6 @@ try{
   checkpoints:state.gateCounts,failures:state.failures.length,
   status:state.status,releaseReady:false,physicalIPhone:false,
   pageCrashEvents:events.pageCrash,workerEvents:events.workerCreated,
-  observedMemoryRSS:false}));
+  observedMemoryRSS:memorySamples>0}));
  await new Promise(resolve=>server.close(resolve));
 }
