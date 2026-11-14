@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {observation81,arbitrate81} from '../public/model-arbitration-81.mjs';
 import {sharedRankChoices82} from '../public/dual-panel-82.mjs';
 import {localCandidates} from '../public/local-catalog.mjs';
+import {frozenPreviousChoices879} from '../scripts/p880-exact-top-risk-audit.mjs';
 const hash='a'.repeat(64),binding={sourceSha256:hash,inputSha256:hash,ownerSession:'synthetic-owner',
  photoRevision:'r1',cropRevision:'c1',maskRevision:'m1',unitRevision:'one-garment',instanceId:'item-1'};
 function build(first,second,{firstOther='Skirt',secondOther='Skirt',firstTopScore=10,secondTopScore=10}={}){
@@ -44,4 +45,14 @@ test('P880 category disagreement yields zero options, no automatic saves',()=>{
  assert.ok(decision.reasons.includes('category_disagreement'));
  assert.deepEqual(sharedRankChoices82(decision,observations),[]);
  assert.equal(decision.admissionAllowed,false);
+});
+
+test('P880 frozen P879 baseline offers multiple supported ranks but new policy only exact joint top',()=>{
+ const {observations,decision}=build('Shorts','Shorts');
+ const old=frozenPreviousChoices879(decision,observations);
+ const updated=sharedRankChoices82(decision,observations);
+ assert.ok(old.some(h=>h.itemType==='Shorts'));
+ assert.ok(old.some(h=>h.itemType==='Skirt'));
+ assert.deepEqual(updated.map(h=>h.itemType),['Shorts']);
+ assert.ok(updated.every(h=>old.some(x=>x.label===h.label)));
 });
