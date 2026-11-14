@@ -9,7 +9,10 @@ import {summarizeOriginalPhotoSkirtContactTopology89}
  from '../research/parallel89/skirt-contact-topology89.mjs';
 
 const mask=Uint8Array.from({length:1500},(_,i)=>i%3===0?0:1);
-const item=ids=>({count:ids.length,pairs:new Set(ids),maxDepth:.002});
+const item=ids=>({count:ids.length,pairs:new Set(ids),maxDepth:.002,
+ trueOriginalSkirtTriangleIndexStable:true,
+    trueOriginalBodyTriangleIndexStable:true,
+    originalFaceSourceResolution:'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'});
 const before=[item(['0|20','25|40','96|5']),item(['575|7','100|30']),
  item(['190|200'])];
 const after=[item(['0|20','72|40']),item(['100|30','480|30']),
@@ -69,6 +72,8 @@ test('forged actual CC0 source-body mask, pose count, or outside-source triangle
   {trial:[item(['-1|3']),after[1],after[2]]},
   {trial:[item(['01|3']),after[1],after[2]]},
   {trial:[{count:2,pairs:new Set(['0|20']),maxDepth:0},after[1],after[2]]},
+  {trial:[{...item(['0|20']),trueOriginalSkirtTriangleIndexStable:false},after[1],after[2]]},
+  {trial:[{...item(['0|20']),originalFaceSourceResolution:'BVH_MUTABLE_INTERNAL_INDEX'},after[1],after[2]]},
   {trial:[{count:0,pairs:new Set(),maxDepth:NaN},after[1],after[2]]}
  ]){
   const r=summarizeOriginalPhotoSkirtContactTopology89({...args,...bad});
