@@ -21,6 +21,9 @@ const pause=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {pro
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={}){
  const messages=[],writes=[],looks=[],boards=[],readGate=pause(),importInput={value:''};
+ // Keep the historical actual-source fixture aligned with the authenticated
+ // private UI gate now required by the import handler (not just the auth ID).
+ const nodes={import:importInput,authGate:{hidden:true},appShell:{hidden:false}};
  const a={name:'closet-current-user-A'},b={name:'closet-current-user-B'};
  const auth={user:{id:'A'},assertCurrent(){}};
  let confirmed=0,bridgeCalls=0;
@@ -31,7 +34,7 @@ function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={})
    return accepted?{cancelled:false}:{cancelled:true};
   }}},
   db:a,captureOperationEpoch:0,
-  $:id=>{assert.equal(id,'import');return importInput;},URLSearchParams,
+  $:id=>{assert.ok(Object.hasOwn(nodes,id),'unexpected DOM element '+id);return nodes[id];},URLSearchParams,
   location:{search:mode},categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
   normalizeClothing:value=>value,validLook:value=>value,
   readAllFrom:async()=>writes.flat(),

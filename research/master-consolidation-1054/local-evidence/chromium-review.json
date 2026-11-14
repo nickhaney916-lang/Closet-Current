@@ -1,0 +1,192 @@
+{
+  "browserSelection": "chromium",
+  "status": "PASS",
+  "total": 27,
+  "results": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native clothingFields research panel mounts without writing",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "two explicit consents + review acknowledgement allow UNSAVED subtype only",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "cross-category disagreement abstains, no write",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "P879 top subtype disagreement with shared ranks has zero AI shortcuts",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "P880 high-risk Ankle boots blocks all AI shortcuts including lower-ranked Sneakers",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "forged-original blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "segmented blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "saved blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native session-lock clears research model panel",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native clothingFields research panel mounts without writing",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "two explicit consents + review acknowledgement allow UNSAVED subtype only",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "cross-category disagreement abstains, no write",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "P879 top subtype disagreement with shared ranks has zero AI shortcuts",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "P880 high-risk Ankle boots blocks all AI shortcuts including lower-ranked Sneakers",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "forged-original blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "segmented blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "saved blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native session-lock clears research model panel",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native clothingFields research panel mounts without writing",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "two explicit consents + review acknowledgement allow UNSAVED subtype only",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "cross-category disagreement abstains, no write",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "P879 top subtype disagreement with shared ranks has zero AI shortcuts",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "P880 high-risk Ankle boots blocks all AI shortcuts including lower-ranked Sneakers",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "forged-original blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "segmented blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "saved blocked before model request",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native session-lock clears research model panel",
+      "pass": true
+    }
+  ],
+  "screens": [
+    {
+      "image": "chromium-320-research-panel.png",
+      "sha256": "8adee3577e57352b12fce0a6a187ef81153d6aa19fe1987e40418fc8b9798ee4"
+    },
+    {
+      "image": "chromium-390-research-panel.png",
+      "sha256": "e5395f03c28885a1357e06c5f18b22e47095030a3ec6c1ae556d8bbbd689b747"
+    },
+    {
+      "image": "chromium-430-research-panel.png",
+      "sha256": "de8b342a90dc7952c57a8348e6b417fa30e98a5d7c3d3142c9416bfabbd86d87"
+    }
+  ],
+  "genuineModelsRun": false,
+  "modelBytesInstalled": false,
+  "realClothingPhotos": false,
+  "physicalPhones": false,
+  "hostedCloud": false,
+  "autoSaved": false,
+  "releaseAuthorized": false,
+  "familyAlpha": "HOLD",
+  "exactApplicationSource": "582ae47f"
+}

@@ -1,0 +1,178 @@
+{
+  "results": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native signed owner original photo preview",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "changed original source rejected",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native signed owner original photo preview",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "changed original source rejected",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native signed owner original photo preview",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "changed original source rejected",
+      "pass": true
+    }
+  ],
+  "mutationCases": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native-live-outfit-occasion-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native-live-top-slot-on-status",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "same-owner-auth-reference-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "same-name-private-db-reference-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "same-owner-capture-generation-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native-owned-wardrobe-commit-event",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native-live-outfit-occasion-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native-live-top-slot-on-status",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "same-owner-auth-reference-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "same-name-private-db-reference-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "same-owner-capture-generation-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native-owned-wardrobe-commit-event",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native-live-outfit-occasion-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native-live-top-slot-on-status",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "same-owner-auth-reference-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "same-name-private-db-reference-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "same-owner-capture-generation-on-focus",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native-owned-wardrobe-commit-event",
+      "pass": true
+    }
+  ],
+  "screens": [
+    {
+      "name": "chromium-320-ownerA-preview.png",
+      "sha256": "19497b2d01ca06d015a5827b66296d65e90b47fe14b80bf598a1105a80946644",
+      "width": 320,
+      "engine": "chromium"
+    },
+    {
+      "name": "chromium-390-ownerA-preview.png",
+      "sha256": "a23961ee4aaeb1dde0ce2644f8240a7e43d314abab2b3f52fe7e3f71d5e64f79",
+      "width": 390,
+      "engine": "chromium"
+    },
+    {
+      "name": "chromium-430-ownerA-preview.png",
+      "sha256": "1d52666afc64555518860a661049bab5b3285acff1328fdf42d9fed483dd2147",
+      "width": 430,
+      "engine": "chromium"
+    }
+  ],
+  "sourceFixture": "synthetic generated JPEG color panels, NOT real clothing photos",
+  "realModelInference": false,
+  "realPrivateCloud": false,
+  "physicalDevice": false,
+  "releaseAuthorized": false,
+  "familyAlpha": "HOLD",
+  "browserSelection": "chromium",
+  "exactApplicationSource": "582ae47f"
+}

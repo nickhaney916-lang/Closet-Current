@@ -1,17 +1,21 @@
-/** MAIN1054: true native clothingFields plus M1 P875 policy in browser.
- * Generated decoded JPEG fixtures and synthetic owners; NEVER real customer
- * data, hosted cloud, model inference, physical phones or deploy.
- */
+/** MAIN1054: native integrated P880 review with REAL pinned pretrained inference.
+ * Public licensed development JPEGs, synthetic owner only; no blind accuracy,
+ * private cloud, physical device or release claim. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 const root=resolve('public'),out=resolve('benchmark/main1054-real-webkit-repeat');
+const codeCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+assert.match(codeCommit,/^[a-f0-9]{40}$/);
 const engineName=process.argv[2]||'webkit',target=Number(process.env.MAIN1054_TARGET||16);
 assert.ok(['webkit','chromium'].includes(engineName),'unsupported engine');
 assert.ok([2,4,8,16].includes(target),'only specified stage targets 2/4/8/16');
+const runBudgetMs=Number(process.env.MAIN1054_RUN_BUDGET_MS||1200000);
+assert.ok(Number.isInteger(runBudgetMs)&&runBudgetMs>=120000&&runBudgetMs<=1800000,'bounded 2–30 minute research budget');
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const ids=(process.env.MAIN1054_REAL_IDS||'commons-0035,commons-0062,commons-0078,commons-0059').split(',');
@@ -83,7 +87,10 @@ window.stage1054=async({hash=true,segmented=false,owned=false,owner='owner-A',mo
   window.requests1054++;
   try{
    const {browserRequest82}=await import('/dual-core-82.mjs');
-   const output=await browserRequest82(r,options);
+   const output=await browserRequest82(r,{...options,onProgress:stage=>{
+    console.log('MASTER_REAL_MODEL_STAGE',String(stage).slice(0,90));
+    options?.onProgress?.(stage);
+   }});
    window.actual1054={request:r,output};
    return output;
   }catch(error){window.workerError1054=String(error?.message||error);throw error;}
@@ -118,10 +125,10 @@ window.result1054=()=>({
 /** Continuous native editor, REAL pinned q8 models, no private account or save.
  * A crash is a legitimate OBSERVED FAILURE of release acceptance, not an
  * excuse to report a successful 16-photo run. Never infer OOM from a crash. */
-const results=[],requests=[],pageErrors=[],consoleErrors=[];
+const results=[],requests=[],pageErrors=[],consoleErrors=[],modelStages=[];
 const events={workerCreated:0,workerTerminated:0,pageCrash:0,pageClosed:0,browserDisconnected:0};
 const startTime=Date.now(),failures=[];
-let browser,page,context,intentionalShutdown=false;
+let browser,page,context,browserServer,intentionalShutdown=false;
 const emit=async()=>{
  const completed=results.length;
  const state={
@@ -129,11 +136,13 @@ const emit=async()=>{
   status:completed===target&&!failures.length?'COMPLETE_OBSERVED':'BLOCKED_INCOMPLETE',
   engine:engineName,browserPlatform:'GitHub Actions ubuntu-24.04 desktop',
   session:'one-continuous-browser-one-page-sequential-disposable-workers',
+  codeCommit,workerSourceCodeSha256:results[0]?.workerSourceCodeSha256||null,
   modelFamilies:['FashionCLIP q8 WASM','FashionSigLIP q8 WASM'],
   uniquePublicPhotoSources:photos.length,
   photoAttemptsTarget:target,completedPhotos:completed,
   gateCounts:Object.fromEntries([2,4,8,16].map(n=>[String(n),{requested:target>=n,met:completed>=n}])),
-  rootCause:'UNDETERMINED',
+  rootCause:'UNDETERMINED',modelStages,
+  runBudgetMs,
   pageEvents:events,resourceMeasurements:{
    browserProcessRSSBytes:null,peakBrowserProcessRSSBytes:null,
    measuredMemory:false,source:'no browser process RSS/pressure available from Playwright interface'},
@@ -149,10 +158,23 @@ const emit=async()=>{
  await writeFile(out+'/'+engineName+'-'+target+'-diagnostic.json',JSON.stringify(state,null,2)+'\n');
  return state;
 };
+// page.evaluate and browser teardown have no guaranteed timeout. Keep the
+// whole diagnostic bounded independently of page responsiveness. The owned
+// browser process is forcibly stopped only when this research budget expires.
+const runBudget=setTimeout(async()=>{
+ failures.push({category:'HARNESS_WALL_CLOCK_BUDGET',budgetMs:runBudgetMs,
+  lastModelStage:modelStages.at(-1)?.stage||null,completedPhotos:results.length});
+ try{await emit();}finally{
+  try{browserServer?.process()?.kill('SIGKILL');}catch{}
+  console.log('MASTER_REAL_MODEL_BUDGET',JSON.stringify({engine:engineName,completed:results.length,target,releaseReady:false}));
+  process.exit(2);
+ }
+},runBudgetMs);
 try{
- browser=await ({webkit,chromium}[engineName]).launch({
+ browserServer=await ({webkit,chromium}[engineName]).launchServer({
   headless:true,args:engineName==='chromium'?['--no-sandbox']:[],
  });
+ browser=await ({webkit,chromium}[engineName]).connect(browserServer.wsEndpoint());
  browser.on('disconnected',()=>{if(!intentionalShutdown)events.browserDisconnected++;});
  context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await context.route('**/*',route=>{
@@ -166,7 +188,14 @@ try{
  page=await context.newPage();
  page.setDefaultTimeout(300000);
  page.on('pageerror',e=>pageErrors.push(String(e.message).slice(0,180)));
- page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text().slice(0,180));});
+ page.on('console',m=>{
+  if(m.type()==='error')consoleErrors.push(m.text().slice(0,180));
+  if(m.text().startsWith('MASTER_REAL_MODEL_STAGE ')){
+   const stage=m.text().slice('MASTER_REAL_MODEL_STAGE '.length,120);
+   modelStages.push({attempt:results.length+1,stage,elapsedMs:Date.now()-startTime});
+   console.log('MASTER_REAL_MODEL_PROGRESS',JSON.stringify(modelStages.at(-1)));
+  }
+ });
  page.on('crash',()=>{events.pageCrash++;});
  page.on('close',()=>{if(!intentionalShutdown)events.pageClosed++;});
  page.on('worker',worker=>{
@@ -196,7 +225,11 @@ try{
     const {output,request}=window.actual1054;
     const decision=validateResponse82(output,request);
     const choices=sharedRankChoices82(decision,output.observations);
-    return {modelKeys:output.observations.map(o=>o.modelKey),
+    const currentImage=window.item1054.image;
+    const bytes=Uint8Array.from(atob(currentImage.split(',')[1]),c=>c.charCodeAt(0));
+    const observedOriginalSHA256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
+    return {observedOriginalSHA256,workerSourceCodeSha256:output.sourceCodeSha256,
+     modelKeys:output.observations.map(o=>o.modelKey),
      status:decision.status,reasons:decision.reasons,
      outputs:output.observations.length,
      candidateCount:choices.length,verifiedAssets:output.verifiedAssets,
@@ -219,6 +252,7 @@ try{
    assert.equal(info.writes,0);
    assert.equal(info.approval,false);
    assert.equal(info.sourceValid,true);
+   assert.equal(info.observedOriginalSHA256,photo.sourceSHA256,'original JPEG byte digest after inference');
    assert.equal(info.itemSavedType,'Unknown');
    assert.equal(info.buttons,info.candidateCount);
    assert.equal(info.adapterActive,true);
@@ -237,6 +271,7 @@ try{
   }
   if(failure){await emit();break;}
   results.push({iteration:attempt,id:photo.id,sourceSHA256:photo.sourceSHA256,
+   observedOriginalSHA256:info.observedOriginalSHA256,workerSourceCodeSha256:info.workerSourceCodeSha256,
    realModelFamilies:info.modelKeys,verifiedAssets:info.verifiedAssets,
    candidateCount:info.candidateCount,decisionStatus:info.status,
    elapsedInferenceMs:Math.round(info.totalMs),
@@ -269,6 +304,8 @@ try{
  intentionalShutdown=true; // voluntary shutdown is NOT a browser crash or disconnect
  try{await context?.close();}catch{}
  try{await browser?.close();}catch{}
+ try{await browserServer?.close();}catch{}
+ clearTimeout(runBudget);
  const state=await emit();
  console.log('MAIN1054_WEBKIT_GENUINE_SUMMARY',JSON.stringify({
   engine:engineName,completed:state.completedPhotos,target,

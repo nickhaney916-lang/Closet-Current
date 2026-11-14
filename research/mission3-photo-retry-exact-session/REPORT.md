@@ -1,6 +1,6 @@
 # Mission 3 — failed source-JPEG retry must stay in its originating signed session
 
-**Family Alpha HOLD #255 remains OPEN.** Research-only stacked on [Mission 3 PR #1039](https://github.com/nickhaney916-lang/Closet-Current/pull/1039) at pinned parent `9439e9afd757075a2a445a6bfeac581f408a7469`. No merges, deployments, production, staging, hosted Supabase, private accounts or customer photos.
+**Family Alpha HOLD #255 remains OPEN.** Research-only stacked on [Mission 3 PR #1039](https://github.com/nickhaney916-lang/Closet-Current/pull/1039) at pinned parent `8aff55b81443ad8be1728d35ff956f2f03eb130c`. No merges, deployments, production, staging, hosted Supabase, private accounts or customer photos.
 
 ## Source-verified gap
 
@@ -19,10 +19,14 @@ The existing native `candidate(... requireDraftCommit:true)` and per-photo Index
 
 1. `tests/mission3-photo-retry-exact-session-lease.test.cjs`: 14 source-executed synthetic cases including valid retry, genuine re-hash preflight, current error sanitization, old-account and same-ID re-login before module completion, old-owner completion of candidate, revoked auth, same-ID rehydrate, wrong DB, JPEG identity mismatch, detachment and verification refusal.
 2. `scripts/test-mission3-photo-retry-exact-session-browser.mjs`: production callback source executed within Chromium and WebKit browser contexts at 320/390/430 CSS-pixel mobile viewport widths. Ten synthetic modes × six browser/viewport environments = **60 planned cases**, with a machine-readable `results.json`. These are not full-application or physical-phone tests.
-3. Strict exact-parent eight-file no-deploy GitHub workflow plus inherited serial Node, native browser, local IDB, source SHA-256 and disposable signed two-owner PostgreSQL checks. The inherited PHOTO122/PHOTO123 tests now assert the safe signed-owner Style contract rather than outdated inline callback strings, and the inherited private-photo retry VM fixture now provides a real synthetic auth object and session epoch as required by the source.
+3. Strict exact-parent six-file no-deploy GitHub workflow plus inherited serial Node, native browser, local IDB, source SHA-256 and disposable signed two-owner PostgreSQL checks. The inherited PHOTO122/PHOTO123 tests now assert the safe signed-owner Style contract rather than outdated inline callback strings, and the inherited private-photo retry VM fixture now provides a real synthetic auth object and session epoch as required by the source.
 
 **Do not claim final exact-head SUCCESS or 60/60 until actual workflow jobs and receipts pass on the final SHA.**
 
 ## Remaining Mission 3 release blockers
 
 Real Android Chrome/iPhone Safari original-photo capture and failure recovery, authorized hosted Supabase two-owner Auth/RLS/private Storage recovery, independent legally usable labeled clothing-photograph recognition evidence, genuine photograph-to-3D garment fit and drape, integrated Mission 1/2/3 QA and explicit release approval. HOLD #255 stays OPEN.
+
+## Stacked-parent reconciliation
+
+After PR #1039's PHOTO122/PHOTO123 compatibility tests passed, this branch was prepared for rebasing onto its latest green head. The two inherited legacy test files are now supplied by parent PR #1039 (identical blob SHA before rebase) and **not** part of this branch's changed-path allowlist. This avoids counting them twice while continuing to execute them in the native test job. The rebased branch must receive a fresh exact-head no-deploy CI result before being described as green.

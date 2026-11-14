@@ -246,6 +246,39 @@ async function withOwnerStyleCardAction(item,button,work){
   if(lease.current()&&button.isConnected)button.disabled=false;
  }
 }
+// The general "Get three outfit ideas" card predates the reviewed-photo
+// shortcuts. It must not select a different signed owner's matching item ID
+// from a stale My Closet button or surface raw owner-private style errors.
+function focusSavedClosetCardOwnerSafe(item,button){
+ let lease;
+ try{lease=ownerStyleCardActionLease(item);}catch{return;}
+ if(!button?.isConnected)return;
+ try{
+  lease.assert();
+  if(typeof refreshStylistFocusItems!=='function')
+   throw Error('Owner-private outfit selection unavailable');
+  refreshStylistFocusItems();
+  lease.assert();
+  if(!button.isConnected)return;
+  const select=$('stylistFocusItem'),form=$('styleCollectionForm');
+  if(!select||!form||typeof form.requestSubmit!=='function'||
+     ![...select.options].some(option=>option.value===item.id))
+   throw Error('Saved clothing not eligible for outfit styling');
+  lease.assert();
+  // switchView('stylist') calls render(), which intentionally REPLACES the
+  // original My Closet card and disconnects its button. This is normal, not
+  // an account change. Fence the exact owner and garment after rendering;
+  // do not incorrectly require that now-hidden prior card to remain attached.
+  switchView('stylist');
+  lease.assert();
+  select.value=item.id;
+  lease.assert();
+  form.requestSubmit();
+ }catch{
+  if(lease.current())
+   message('Could not safely style this saved piece. Reopen My Closet and review its garment details. Your saved clothing and outfits are unchanged.');
+ }
+}
 function ownerWardrobeMutationLease(){
  const auth=window.closetAuth,owner=auth?.user?.id,ownerDB=db,epoch=captureOperationEpoch;
  const assertLease=()=>{
@@ -1216,7 +1249,7 @@ function render(){
  const visible=(query||filter!=='All categories'||window.closetBrowseAll||window.closetSlotFilter)?items.filter(x=>(!window.closetSlotFilter||outfitSlots.some(slot=>slot.id===window.closetSlotFilter&&slotAllows(slot,x)))&&(!window.closetItemType||x.itemType===window.closetItemType)&&(!window.closetSleeves||window.closetSleeves.includes(x.sleeveLength))&&clothingMatches(x,query,filter,$('seasonFilter').value,$('sleeveFilter').value)&&(!window.closetIndex02||window.closetIndex02.includes(x.id))):[];
  if(!visible.length)empty(cg,items.length?'No matching pieces.':'Your closet is ready to grow.',items.length?'Try a different search or category.':'Save your first piece from the review tab.');
  const page=visible.length<=100?visible:visible.slice(0,closetRendered136);
- for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>{try{const auth=window.closetAuth,owner=auth?.user?.id;auth?.assertCurrent?.();if(!owner||db?.name!=='closet-current-user-'+owner||!items.some(saved=>saved.id===item.id))throw Error('This saved item is no longer available in your signed-in closet.');if(typeof refreshStylistFocusItems!=='function')throw Error('Style My New Clothes is not ready yet.');refreshStylistFocusItems();const select=$('stylistFocusItem');if(![...select.options].some(option=>option.value===item.id))throw Error('Review and save this clothing category before styling it.');switchView('stylist');select.value=item.id;$('styleCollectionForm').requestSubmit();}catch(error){message(error.message||'Could not start styling this saved item.');}};edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
+ for(const item of page){const card=node('article',null,'card'),im=node('img');card.dataset.itemId=item.id;im.loading='lazy';if(visible.length>100)im.decoding='async';im.src=item.image;im.alt=item.name;const body=node('div',null,'card-body');body.append(node('h3',item.name),node('p',[item.color,item.pattern].filter(x=>x&&x!=='Unknown'&&x!=='Not applicable').join(' · ')),node('p',item.seasons.length?item.seasons.join(' · '):'Season unknown'),node('p',[item.brand,item.size,item.material,item.occasion].filter(Boolean).join(' · ')),node('p',item.notes));if(item.itemType==='Unknown'&&item.color)body.append(node('p','Category and color saved · refine the type when convenient.','fine'));const actions=node('div',null,'actions'),edit=node('button','Adjust details','secondary'),del=node('button','Delete','secondary'),styleFocus=node('button','Get three outfit ideas','secondary');edit.dataset.action='edit-clothing';styleFocus.type='button';styleFocus.onclick=()=>focusSavedClosetCardOwnerSafe(item,styleFocus);edit.onclick=()=>{const editorLease=ownerWardrobeMutationLease();
  const assertEditor=()=>{editorLease.assertLease();if(!items.includes(item))throw Error('This saved garment is no longer in the signed-owner wardrobe');};
  const dialog=document.createElement('dialog');dialog.className='clothing-editor';dialog.style.cssText='border:1px solid #d9ddd2;border-radius:8px;max-width:440px;width:90%;padding:24px';
  {
@@ -1780,18 +1813,39 @@ $('discard').onclick=async()=>{
   message('Could not confirm whether those unfinished photos were discarded. Review and refresh Photo results from private device storage before retrying.');
  }
 };
-$('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
-  try{
-   if(!window.restoreAtomic01Bridge)throw Error('Verified private recovery is not ready');
-   const {data}=await window.restoreAtomic01Bridge.exportJSON();
-   const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
-   const url=URL.createObjectURL(blob),a=node('a');a.href=url;
-   a.download='closet-current-owner-backup-v4.json';document.body.append(a);a.click();a.remove();
-   setTimeout(()=>URL.revokeObjectURL(url),1000);
-   message('Private lossless backup exported. Store this file securely.');
-  }catch(e){message(e.message||'Private backup failed; no data changed.');}
-  return;
- }
+$('export').onclick=async()=>{
+ // An export started by owner A must never download owner B's wardrobe if
+ // startup, an async native backup, or a same-ID re-login finishes later.
+ let exportLease;
+ try{exportLease=ownerWardrobeMutationLease();}catch{return;}
+ const assertExport=()=>{
+  exportLease.assertLease();
+  if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+   throw Error('Private wardrobe is locked; sign in again.');
+ };
+ const exportMessage=value=>{try{assertExport();message(value);}catch{}};
+ try{
+  assertExport();
+  if(typeof outfitBoardReady!=='undefined')await outfitBoardReady;
+  assertExport();
+  if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
+   try{
+    const bridge=window.restoreAtomic01Bridge;
+    if(!bridge)throw Error('Verified private recovery is not ready');
+    const {data}=await bridge.exportJSON();
+    assertExport();
+    if(window.restoreAtomic01Bridge!==bridge)
+     throw Error('Private recovery changed sessions.');
+    const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+    assertExport();
+    const url=URL.createObjectURL(blob),a=node('a');a.href=url;
+    a.download='closet-current-owner-backup-v4.json';document.body.append(a);
+    try{assertExport();a.click();}finally{a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+    exportMessage('Private lossless backup exported. Store this file securely.');
+   }catch{exportMessage('Private backup failed; no data changed.');}
+   return;
+  }
+  {
  // M3 V4 acceptance only: carry saved JPEGs AND unfinished Photo results.
  // This feature is disabled on normal URLs; never imply that the v3
  // saved-only download includes source photographs awaiting owner review.
@@ -1807,7 +1861,7 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
    !(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())&&
    window.native3D05Bridge?.state?.().active!==true&&
    writes===initialWrites;
-  const check=()=>{lease.assertLease();if(!idle())throw Error(
+  const check=()=>{assertExport();lease.assertLease();if(!idle())throw Error(
    'Finish photographing, correcting and saving outfit edits before making a full backup. Unfinished originals stay on your device.');};
   const report=value=>{try{lease.assertLease();message(value);}catch{}};
   try{
@@ -1836,10 +1890,8 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
  // Reading in-memory card arrays could miss a second tab's correction, and
  // v3 cannot restore unfinished Photo results originals. Refuse a misleading
  // 'backup complete' claim while ANY review JPEG or outfit edit is pending.
- let exportLease;
- try{exportLease=ownerWardrobeMutationLease();}
- catch{return message('Sign in to export your private closet.');}
- const assertExport=()=>exportLease.assertLease();
+ // Reuse the initiating outer owner/UI lease for both v4 and durable v3.
+ // Redeclaring assertExport in this scope would shadow the v4 guard in a TDZ.
  const pendingWrites=writes;
  const idle=()=>!busy&&!saving&&!captureProofTaking&&!cameraOpening&&
   !photoImportActive&&!videoImportActive&&!automaticRunning&&
@@ -1882,13 +1934,21 @@ $('export').onclick=async()=>{if(typeof outfitBoardReady!=='undefined')await out
     error.message+'). Your originals remain unchanged.':
     error.message||'Private backup was not downloaded. Your original photos remain unchanged.');
  }
+  }
+ }catch{exportMessage('Private backup failed; sign in and retry. No data changed.');}
 };
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
  // A backup selected by one account can never be restored into the next.
  let importLease;
  try{importLease=ownerWardrobeMutationLease();}catch{return message('Sign in to import a private backup.');}
- const assertImport=()=>importLease.assertLease();
+ const assertImport=()=>{
+  importLease.assertLease();
+  // An authenticated principal alone is not enough: a private restore must
+  // also stop when the UI has relocked, even if auth/DB have not rotated yet.
+  if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+   throw Error('Private wardrobe is locked; sign in again before importing.');
+ };
  const importMessage=value=>{try{assertImport();message(value);}catch{}};
  try{const data=JSON.parse(await file.text());assertImport();
  if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
@@ -1896,14 +1956,22 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
       !window.restoreAtomic01Bridge)throw Error('Verified lossless restore unavailable; nothing changed');
    assertImport();
    const restoreBridge=window.restoreAtomic01Bridge;
+   const assertRestore=()=>{
+    assertImport();
+    // A replacement restore controller must not inherit a pending old UI
+    // consent callback or publish an old controller's completed status.
+    if(window.restoreAtomic01Bridge!==restoreBridge)
+     throw Error('Private recovery controls changed. Reopen My Closet and verify restore status.');
+   };
+   assertRestore();
    const result=await restoreBridge.importBackup(data,{
-    confirm:({incoming,existing,savedExisting})=>{assertImport();const accepted=confirm(
+    confirm:({incoming,existing,savedExisting})=>{assertRestore();const accepted=confirm(
      'Replace '+existing+' existing clothes and '+savedExisting+' saved outfits with '+
      incoming.itemCount+' backup clothes and '+incoming.savedCount+
      ' saved outfits? The old local version will be replaced. Cancel keeps everything unchanged.');
-     assertImport();return accepted;}
+     assertRestore();return accepted;}
    });
-   assertImport();
+   assertRestore();
    if(result.cancelled)return importMessage('Restore canceled. Your original closet is unchanged.');
    importMessage('All clothing photos, category corrections and outfits restored together.');
    return;

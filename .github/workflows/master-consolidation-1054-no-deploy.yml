@@ -1,0 +1,382 @@
+name: "MASTER1054 integrated owner journey \u2014 NO DEPLOY"
+'on':
+  push:
+    branches:
+    - research/master-consolidation-1054-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+concurrency:
+  group: master1054-exact-source
+  cancel-in-progress: true
+jobs:
+  integrated-native-signed-and-browsers:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: mission3-temporary-only
+          POSTGRES_DB: mission3_disposable
+        options: --health-cmd "pg_isready -U postgres -d mission3_disposable" --health-interval 5s --health-timeout 5s --health-retries
+          20
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      PGHOST: postgres
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: mission3-temporary-only
+      PGDATABASE: mission3_disposable
+      M3_EPHEMERAL_POSTGRES_URL: postgresql://postgres:mission3-temporary-only@postgres:5432/mission3_disposable
+      P147_POSTGRES_URL: postgresql://postgres:mission3-temporary-only@postgres:5432/mission3_disposable
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Master ancestry and unchanged hosted schema guard
+      run: 'git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+        git merge-base --is-ancestor dba3897cd2c03812985181ffa24e889e44259738 HEAD
+
+        git merge-base --is-ancestor 6574fa71e9bbda501e161556dc2aa872920a4eb6 HEAD
+
+        git diff --exit-code dba3897cd2c03812985181ffa24e889e44259738 HEAD -- supabase/
+
+        node --check public/app.js
+
+        node --check public/outfit-board.js'
+    - name: Install pinned offline browser and database test packages
+      run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4
+        three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+    - name: Production-source native BOARD04 Save Cancel Delete signed-session tests
+      run: node --test tests/mission3-native-board04-ui-lease.test.cjs
+    - name: Confirm native BOARD04 source assertions pin owner-authenticated lossless writes
+      run: node --test tests/native-consumer-board-04.test.mjs
+    - name: Production-source native Outfit Board actions exact signed-owner tests
+      run: node --test tests/mission3-outfit-board-action-owner-session.test.cjs
+    - name: Reverify real native private Outfit Board draft conflicts and stale timers
+      run: node --test tests/outfit-draft-conflicts.test.cjs tests/outfit-draft-resilience.test.cjs
+    - name: Exact production-source default and v4 private backup export signed-session regression
+      run: node --test tests/mission3-private-backup-export-owner-lease.test.cjs
+    - name: Exact production-source owner-bound outfit suggestion callbacks
+      run: node --test tests/mission3-outfit-suggestion-owner-lease.test.cjs
+    - name: Exact production-source legacy outfit backup owner/session and IDB commit regression
+      run: node --test tests/mission3-owner-bound-legacy-outfit-import.test.cjs
+    - name: Exact production-source signed owner saved card and photo picker regression
+      run: node --test tests/mission3-outfit-card-picker-owner-lease.test.cjs
+    - name: Production-source default+native Outfit Board session lock and stale IDB load regression
+      run: node --test tests/mission3-native-board-session-lock.test.cjs
+    - name: Production-source native research BOARD04 mount callback owner-session tests
+      run: node --test tests/mission3-native-board-mount-owner-lease.test.cjs
+    - name: Production-source pending Photo Review Discard/Refresh exact owner session tests
+      run: node --test tests/mission3-review-discard-refresh-exact-session.test.cjs
+    - name: Production-source generated outfit Save, Adjust and Refresh exact owner session tests
+      run: node --test tests/mission3-styled-outfit-card-save-adjust-owner-lease.test.cjs
+    - name: Actual source async Stylist form signed-owner and request supersession
+      run: node --test tests/mission3-stylist-submit-owner-request-lease.test.cjs
+    - name: Actual source saved closet outfit-focus signed owner/session regression
+      run: node --test tests/mission3-saved-outfit-focus-owner-session.test.cjs
+    - name: Source-executed original photo retry exact-session and integrity tests
+      run: node --test tests/mission3-photo-retry-exact-session-lease.test.cjs
+    - name: Inherited owner-private draft retry exact-source integration regression
+      run: node --test tests/mission3-owner-visible-private-draft-retry.test.cjs
+    - name: Reverify updated owner-bound saved-photo Style source invariants
+      run: node --test tests/reopened-reviewed-closet-style-123.test.mjs tests/reviewed-photo-to-three-owned-looks-122.test.mjs
+    - name: Source-executed saved-photo Style card signed-owner session tests
+      run: node --test tests/mission3-style-card-owner-session-lease.test.cjs
+    - name: Exact saved closet card source deletion owner/session cases
+      run: node --test tests/mission3-saved-card-delete-session-cas.test.cjs
+    - name: Exact reviewed photo editor same-owner, revoked owner and relogin source tests
+      run: node --test tests/mission3-reviewed-editor-postcommit-lease.test.cjs
+    - name: Exact owner recognition status CAS commit acknowledged, quota and stale-tab evidence
+      run: node --test tests/mission3-pending-capture-status-cas.test.cjs
+    - name: No automatic source-original deletion on blank or exact duplicate with owner source CAS
+      run: node --test tests/mission3-pending-capture-status-cas.test.cjs tests/automatic-indexing.test.cjs
+    - name: Source-executed cloud rehydrate new JPEG and owner correction fence
+      run: node --test tests/mission3-cloud-rehydrate-inflight-photo-cas.test.cjs
+    - name: Source-executed unsaved photo vs cloud restore IDB transaction fence
+      run: node --test tests/mission3-cloud-unsaved-original-restore-fence.test.cjs
+    - name: Reverify safe owner-private photo results refresh source tests
+      run: node --test tests/mission3-safe-draft-refresh.test.cjs
+    - name: Actual source two-tab native-IDB capture and status CAS regressions
+      run: node --test tests/mission3-pending-capture-status-cas.test.cjs
+    - name: Prove signed disposable two-owner PostgreSQL and private Storage RLS
+      run: 'node scripts/bootstrap-mission3-disposable-postgres.mjs
+
+        node scripts/test-signed-jwt-postgres-147.mjs
+
+        '
+    - name: Exact source saved photo edit/insert, crop and deletion CAS regression
+      run: node --test tests/mission3-draft-row-cas.test.cjs tests/automatic-indexing.test.cjs tests/index-04-saved-recognition.test.mjs
+        tests/mission3-recognition-session-epoch.test.cjs tests/mission3-auto-index-source-cas.test.cjs tests/mission3-saved-photo-insert-cas.test.cjs
+        tests/mission3-private-wardrobe-hydration-save-epoch.test.cjs tests/mission3-crop-saved-row-cas.test.cjs tests/mission3-same-owner-delete-cas.test.cjs
+    - name: Actual source live Auth refresh token CAS and 401 revocation regression
+      run: node --test tests/mission3-live-session-refresh-cas.test.cjs
+    - name: Actual source offline Auth refresh and locked recovery regression
+      run: node --test tests/mission3-offline-auth-refresh-recovery.test.cjs
+    - name: Actual source queued private write owner and cloud notification lease regression
+      run: node --test tests/mission3-private-write-queue-owner-lease.test.cjs
+    - name: Actual source media lifecycle interruption and rapid foreground regression
+      run: node --test tests/mission3-mobile-media-interruption.test.cjs
+    - name: Atomic legacy multi-store transaction rollback and CAS regression
+      run: node --test tests/mission3-legacy-atomic-import.test.mjs
+    - name: Exact source cloud restore and inherited saved edit / backup lease regressions
+      run: node --test tests/mission3-cloud-restore-owner-lease.test.cjs tests/mission3-edit-backup-owner-lease.test.cjs
+    - name: Reverify original saved-editor color and stale-CAS source fixtures
+      run: node --test tests/confirmed-edit-memory-44.test.cjs tests/review-color-provenance-23.test.cjs tests/family-reliability-edit.test.cjs
+    - name: Build current application before PWA and full Node validation (NO DEPLOY)
+      run: node scripts/build.mjs
+    - name: Browser-executed saved Style signed-owner switches on Chromium and WebKit mobile widths
+      run: node scripts/test-mission3-style-card-owner-session-browser.mjs benchmark/mission3-style-card-owner-session-browser
+    - name: Browser-executed native BOARD04 Save Cancel Delete owner-session races
+      run: node scripts/test-mission3-native-board04-ui-lease-browser.mjs benchmark/mission3-native-board04-ui-lease-browser
+    - name: Browser-executed Outfit Board Save and draft action owner races
+      run: node scripts/test-mission3-outfit-board-action-owner-browser.mjs benchmark/mission3-outfit-board-action-owner-browser
+    - name: Browser-executed signed-owner legacy/v4 private backup export session races
+      run: node scripts/test-mission3-private-backup-export-owner-browser.mjs benchmark/mission3-private-backup-export-owner-browser
+    - name: Browser-executed owner-bound actual outfit suggestion callbacks
+      run: node scripts/test-mission3-outfit-suggestion-owner-browser.mjs benchmark/mission3-outfit-suggestion-owner-browser
+    - name: Browser-executed legacy outfit backup import exact owner and commit gate
+      run: node scripts/test-mission3-owner-bound-legacy-outfit-import-browser.mjs benchmark/mission3-owner-bound-legacy-outfit-import-browser
+    - name: Browser-executed signed owner saved outfit buttons and clothing picker
+      run: node scripts/test-mission3-outfit-card-picker-owner-browser.mjs benchmark/mission3-outfit-card-picker-owner-browser
+    - name: Browser-executed default+native Outfit Board signed-owner memory clearing
+      run: node scripts/test-mission3-native-board-session-lock-browser.mjs benchmark/mission3-native-board-session-lock-browser
+    - name: Browser-executed native BOARD04 mount callback owner races
+      run: node scripts/test-mission3-native-board-mount-owner-browser.mjs benchmark/mission3-native-board-mount-owner-browser
+    - name: Browser-executed pending Photo Review Discard/Refresh owner races
+      run: node scripts/test-mission3-review-discard-refresh-owner-browser.mjs benchmark/mission3-review-discard-refresh-owner-browser
+    - name: Browser-executed generated outfit Save, Adjust and Refresh signed owner races
+      run: node scripts/test-mission3-styled-outfit-card-save-adjust-owner-browser.mjs benchmark/mission3-styled-outfit-card-save-adjust-owner-browser
+    - name: Browser-executed async Stylist trend request owner and supersession races on mobile widths
+      run: node scripts/test-mission3-stylist-submit-owner-request-browser.mjs benchmark/mission3-stylist-submit-owner-request-browser
+    - name: Browser-executed saved outfit-focus owner session switches in Chromium/WebKit mobile widths
+      run: node scripts/test-mission3-saved-outfit-focus-owner-session-browser.mjs benchmark/mission3-saved-outfit-focus-owner-session-browser
+    - name: Browser-executed original photo retry session switches on Chromium and WebKit mobile widths
+      run: node scripts/test-mission3-photo-retry-exact-session-browser.mjs benchmark/mission3-photo-retry-exact-session-browser
+    - name: Reverify Chromium WebKit 320 390 430 owner private crop and JPEG evidence
+      run: node scripts/test-mission3-crop-owner-lease-browser.mjs benchmark/mission3-crop-owner-browser
+    - name: Real Chromium WebKit 320 390 430 delayed owner backup import with native IndexedDB
+      run: node scripts/test-mission3-edit-backup-owner-browser.mjs benchmark/mission3-edit-backup-owner-browser
+    - name: Real Chromium WebKit 320 390 430 revoked cloud restore refresh
+      run: node scripts/test-mission3-cloud-restore-owner-browser.mjs benchmark/mission3-cloud-restore-owner-browser
+    - name: Real Chromium WebKit six native legacy atomic multi-store imports and revoked accounts
+      run: node scripts/test-mission3-legacy-atomic-browser.mjs benchmark/mission3-legacy-atomic-browser
+    - name: Real Chromium WebKit mobile pagehide video and gallery recovery
+      run: node scripts/test-mission3-mobile-media-interruption-browser.mjs benchmark/mission3-mobile-media-interruption-browser
+    - name: Real Chromium WebKit 320 390 430 private write queue account and native IndexedDB isolation
+      run: node scripts/test-mission3-private-write-queue-owner-browser.mjs benchmark/mission3-private-queue-owner-browser
+    - name: Real Chromium WebKit 320 390 430 offline Auth reconnect and private original recovery
+      run: node scripts/test-mission3-offline-auth-recovery-browser.mjs benchmark/mission3-offline-auth-recovery-browser
+    - name: Real Chromium WebKit two-tab live Auth token rotation and private source JPEG CAS
+      run: node scripts/test-mission3-live-session-refresh-cas-browser.mjs benchmark/mission3-live-session-refresh-cas-browser
+    - name: Real Chromium WebKit same-owner photo save + crop + deletion CAS and original proof
+      run: node scripts/test-mission3-same-owner-delete-cas-browser.mjs benchmark/mission3-same-owner-delete-cas-browser
+    - name: Real Chromium WebKit 320 390 430 pending original crop-category-discard CAS
+      run: node scripts/test-mission3-draft-row-cas-browser.mjs benchmark/mission3-draft-row-cas-browser
+    - name: Real Chromium WebKit 320 390 430 exact capture status retry and original CAS
+      run: node scripts/test-mission3-capture-status-cas-browser.mjs benchmark/mission3-capture-status-cas-browser
+    - name: Real Chromium WebKit 320 390 430 recognition status ACK after IDB commit and owner correction
+      run: node scripts/test-mission3-recognition-durable-status-ack-browser.mjs benchmark/mission3-recognition-durable-ack-browser
+    - name: Real Chromium WebKit original photo manual review not auto-discard
+      run: node scripts/test-mission3-owner-no-auto-discard-photo-browser.mjs benchmark/mission3-owner-no-auto-discard-photo-browser
+    - name: Real Chromium WebKit 320 390 430 cloud rehydrate owner photo CAS
+      run: node scripts/test-mission3-cloud-rehydrate-inflight-photo-browser.mjs benchmark/mission3-cloud-rehydrate-inflight-photo-browser
+    - name: Real Chromium WebKit owner-unsaved original guard on cloud restore
+      run: node scripts/test-mission3-cloud-unsaved-original-fence-browser.mjs benchmark/mission3-cloud-unsaved-original-fence-browser
+    - name: Real Chromium WebKit 320 390 430 safe photo results refresh and unsaved original preservation
+      run: node scripts/test-mission3-safe-draft-refresh-browser.mjs benchmark/mission3-safe-draft-refresh-browser
+    - name: Integrated active-controller optional panel publication Chromium and WebKit
+      run: node scripts/test-master-panel-publication-browser.mjs
+    - name: Exact full serial Node regression
+      run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+    - name: Reverify native Chromium WebKit saved garment mutation isolation
+      run: node scripts/test-mission3-private-mutation-browser.mjs benchmark/mission3-private-mutation-browser
+    - name: Reverify native canonical photographed garment to private wardrobe styling
+      run: node scripts/test-native-canonical-original-167-browser.mjs
+    - name: Reverify actual signed two-owner PostgreSQL browser
+      run: node scripts/test-mission3-native-signed-postgres-browser.mjs benchmark/mission3-native-signed-postgres-browser
+    - name: Reverify private owner video draft retry and cloud recovery browser
+      run: node scripts/test-mission3-review-draft-retry-browser.mjs benchmark/mission3-review-draft-retry-browser
+    - name: Verify all checked browser result receipts
+      if: always()
+      shell: bash
+      run: "set -eu\nfor p in mission3-private-backup-export-owner-browser mission3-outfit-suggestion-owner-browser mission3-owner-bound-legacy-outfit-import-browser\
+        \ mission3-outfit-card-picker-owner-browser mission3-native-board-session-lock-browser mission3-native-board-mount-owner-browser\
+        \ mission3-review-discard-refresh-owner-browser mission3-native-board04-ui-lease-browser mission3-outfit-board-action-owner-browser\
+        \ mission3-styled-outfit-card-save-adjust-owner-browser mission3-stylist-submit-owner-request-browser mission3-saved-outfit-focus-owner-session-browser\
+        \ mission3-photo-retry-exact-session-browser mission3-style-card-owner-session-browser mission3-recognition-durable-ack-browser\
+        \ mission3-owner-no-auto-discard-photo-browser mission3-cloud-rehydrate-inflight-photo-browser mission3-cloud-unsaved-original-fence-browser\
+        \ mission3-safe-draft-refresh-browser mission3-capture-status-cas-browser mission3-draft-row-cas-browser mission3-same-owner-delete-cas-browser\
+        \ mission3-live-session-refresh-cas-browser mission3-offline-auth-recovery-browser mission3-private-queue-owner-browser\
+        \ mission3-mobile-media-interruption-browser mission3-legacy-atomic-browser mission3-cloud-restore-owner-browser mission3-edit-backup-owner-browser\
+        \ mission3-crop-owner-browser mission3-private-mutation-browser native-canonical-closet-style-167 mission3-native-signed-postgres-browser\
+        \ mission3-review-draft-retry-browser; do\n  test -s \"benchmark/$p/results.json\"\ndone\necho 'FAMILY ALPHA HOLD\
+        \ #255. NO DEPLOY.'\n"
+    - name: Upload synthetic actual-browser crop and privacy evidence
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: mission3-recognition-durable-ack-rls-HOLD
+        path: 'benchmark/mission3-private-backup-export-owner-browser/
+
+          benchmark/mission3-outfit-suggestion-owner-browser/
+
+          benchmark/mission3-owner-bound-legacy-outfit-import-browser/
+
+          benchmark/mission3-outfit-card-picker-owner-browser/
+
+          benchmark/mission3-native-board-session-lock-browser/
+
+          benchmark/mission3-native-board-mount-owner-browser/
+
+          benchmark/mission3-review-discard-refresh-owner-browser/
+
+          benchmark/mission3-native-board04-ui-lease-browser/
+
+          benchmark/mission3-outfit-board-action-owner-browser/
+
+          benchmark/mission3-styled-outfit-card-save-adjust-owner-browser/
+
+          benchmark/mission3-stylist-submit-owner-request-browser/
+
+          benchmark/mission3-saved-outfit-focus-owner-session-browser/
+
+          benchmark/mission3-photo-retry-exact-session-browser/
+
+          benchmark/mission3-style-card-owner-session-browser/
+
+          benchmark/mission3-recognition-durable-ack-browser/
+
+          benchmark/mission3-owner-no-auto-discard-photo-browser/
+
+          benchmark/mission3-cloud-rehydrate-inflight-photo-browser/
+
+          benchmark/mission3-cloud-unsaved-original-fence-browser/
+
+          benchmark/mission3-safe-draft-refresh-browser/
+
+          benchmark/mission3-capture-status-cas-browser/
+
+          benchmark/mission3-draft-row-cas-browser/
+
+          benchmark/mission3-same-owner-delete-cas-browser/
+
+          benchmark/mission3-live-session-refresh-cas-browser/
+
+          benchmark/mission3-offline-auth-recovery-browser/
+
+          benchmark/mission3-private-queue-owner-browser/
+
+          benchmark/mission3-mobile-media-interruption-browser/
+
+          benchmark/mission3-legacy-atomic-browser/
+
+          benchmark/mission3-cloud-restore-owner-browser/
+
+          benchmark/mission3-edit-backup-owner-browser/
+
+          benchmark/mission3-crop-owner-browser/
+
+          benchmark/mission3-private-mutation-browser/
+
+          benchmark/native-canonical-closet-style-167/
+
+          benchmark/mission3-native-signed-postgres-browser/
+
+          benchmark/mission3-review-draft-retry-browser/
+
+          '
+        if-no-files-found: error
+        compression-level: 0
+        retention-days: 14
+    - name: Combined M4 owner, original JPEG, board and 3D fail-closed contracts
+      run: node --test research/main-thread-integration-1054/*.test.mjs research/main-thread-integration-1054/test-native-session-contract14.mjs
+    - name: Combined Chromium and WebKit source journey and revocation acceptance
+      run: 'node scripts/test-main1054-native-preview-browser.mjs
+
+        node scripts/test-main1054-native-preview-mutation-browser18.mjs
+
+        node scripts/test-main1054-dual-review-browser.mjs'
+    - name: Save full exact-commit combined evidence even on failure
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: master-consolidation-1054-evidence
+        path: 'benchmark/main1054-*/
+
+          benchmark/mission3-*/
+
+          benchmark/master-panel-publication/'
+        retention-days: 14
+  real-pretrained-continuous-sequence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - engine: chromium
+          target: 16
+          budgetMs: 240000
+        - engine: webkit
+          target: 8
+          budgetMs: 720000
+        - engine: webkit
+          target: 16
+          budgetMs: 1680000
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: ${{ matrix.target }}
+      MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+      MAIN1054_RUN_BUDGET_MS: ${{ matrix.budgetMs }}
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Pin exact source; unchanged application, models and hosted schema
+      run: 'git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+        git merge-base --is-ancestor c405b50f06564999b771643843e289daf71c2938 HEAD
+
+        git diff --exit-code c405b50f06564999b771643843e289daf71c2938 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
+
+        node --test tests/master-real-model-sequence-gate.test.mjs'
+    - name: Ephemeral pinned pretrained model and browser test dependencies
+      run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1
+        sharp@0.34.3
+    - name: Verify actual public JPEG bytes and pinned pretrained q8 assets
+      run: 'node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+
+        node scripts/p82-prepare-models.mjs --check
+
+        git diff --exit-code -- public/'
+    - name: Actual continuous model sequence; measured per-engine staged target
+      run: node scripts/test-main1054-real-webkit-repeat.mjs ${{ matrix.engine }}
+    - name: Require complete source-bound real-model sequence; incomplete is BLOCKED
+      run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-real-webkit-repeat/${{
+        matrix.engine }}-${{ matrix.target }}-diagnostic.json ${{ matrix.engine }} ${{ matrix.target }} "$GITHUB_SHA"
+    - name: Keep public numeric diagnostics on success or failure, no JPEG or weights
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: master-real-model-${{ matrix.engine }}-sequence-HOLD
+        path: benchmark/main1054-real-webkit-repeat/*.json
+        if-no-files-found: warn
+        retention-days: 14

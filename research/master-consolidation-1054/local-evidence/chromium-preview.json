@@ -1,0 +1,68 @@
+{
+  "results": [
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "native signed owner original photo preview",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 320,
+      "case": "changed original source rejected",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "native signed owner original photo preview",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 390,
+      "case": "changed original source rejected",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "native signed owner original photo preview",
+      "pass": true
+    },
+    {
+      "engine": "chromium",
+      "width": 430,
+      "case": "changed original source rejected",
+      "pass": true
+    }
+  ],
+  "screens": [
+    {
+      "name": "chromium-320-ownerA-preview.png",
+      "sha256": "dcbb27f1958d6e51133e27f2945c01232b1934dbc65ff43578d875117a95616c",
+      "width": 320,
+      "engine": "chromium"
+    },
+    {
+      "name": "chromium-390-ownerA-preview.png",
+      "sha256": "470c838defceacdf67a7fe957798be1c1ad049c3b0b1151089bfa87e261ed154",
+      "width": 390,
+      "engine": "chromium"
+    },
+    {
+      "name": "chromium-430-ownerA-preview.png",
+      "sha256": "1d52666afc64555518860a661049bab5b3285acff1328fdf42d9fed483dd2147",
+      "width": 430,
+      "engine": "chromium"
+    }
+  ],
+  "sourceFixture": "synthetic generated JPEG color panels, NOT real clothing photos",
+  "realModelInference": false,
+  "realPrivateCloud": false,
+  "physicalDevice": false,
+  "releaseAuthorized": false,
+  "familyAlpha": "HOLD",
+  "browserSelection": "chromium",
+  "exactApplicationSource": "582ae47f"
+}

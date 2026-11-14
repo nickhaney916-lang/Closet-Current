@@ -9,6 +9,11 @@ import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
+// Explicit local environment fallback; CI always requires the default both engines.
+const browserSelection=process.env.MASTER_BROWSER||'both';
+assert.ok(['both','chromium','webkit'].includes(browserSelection));
+const engines=[['chromium',chromium],['webkit',webkit]].filter(([name])=>browserSelection==='both'||name===browserSelection);
+
 const root=resolve('public'),out=resolve('benchmark/main1054-dual-policy-browser');
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -113,7 +118,7 @@ window.result1054=()=>({
 `;
 const results=[],screens=[],errors=[];
 try{
- for(const [engineName,engine] of [['chromium',chromium],['webkit',webkit]]){
+ for(const [engineName,engine] of engines){
   const browser=await engine.launch({headless:true,args:engineName==='chromium'?['--no-sandbox']:[]});
   try{
    for(const width of [320,390,430]){
@@ -208,12 +213,12 @@ try{
   }finally{await browser.close();}
  }
  assert.equal(errors.length,0,JSON.stringify(errors));
- assert.equal(results.length,54); // six 9-scenario sets
- assert.equal(screens.length,6);
- await writeFile(out+'/results.json',JSON.stringify({status:'PASS',total:results.length,results,screens,
+ assert.equal(results.length,engines.length*27); // six 9-scenario sets
+ assert.equal(screens.length,engines.length*3);
+ await writeFile(out+'/results.json',JSON.stringify({browserSelection,status:'PASS',total:results.length,results,screens,
   genuineModelsRun:false,modelBytesInstalled:false,realClothingPhotos:false,
   physicalPhones:false,hostedCloud:false,autoSaved:false,releaseAuthorized:false,
   familyAlpha:'HOLD'},null,2));
- console.log('MAIN1054 M10 54/54 native-editor P880 exact jointly top-ranked low-risk subtype policy cases passed; 6 synthetic screenshots; NO model inference or deploy');
+ console.log('MAIN1054 M10',browserSelection,results.length,'P880 policy cases;',screens.length,'synthetic screenshots; NO model inference or deploy');
 }catch(e){console.error('MAIN1054 M4 browser gate failed',String(e),JSON.stringify(errors));process.exitCode=1;}
 finally{await new Promise(done=>server.close(done));}
