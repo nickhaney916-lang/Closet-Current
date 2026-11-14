@@ -159,4 +159,36 @@ s=replace(s,"  const receipt=applyIndexed3DSelection(viewer,prepared,{checkCurre
 s=replace(s,"   genuinePhotoSHA256s:receipt.originalPhotoSHA256s,reusedRenderer:false});",
  "   genuinePhotoSHA256s:receipt.originalPhotoSHA256s,reusedRenderer:false,\n   renderStages90:Object.freeze({kind:decision.mode,prepareMs:prepareMs90,applyMs:applyMs90})});");
 await writeFile(sourceViewer,s);
+// M9 source-preserving shirt-stage timings apply ONLY inside the pinned
+// disposable original PR541 research controller. The exact original
+// garment method calls/order, error behavior, source integrity and
+// geometric output remain unchanged. No production code is patched.
+const sourceOutfitController=donor+'/research/dress-mobile-01/dress-outfit-controller.mjs';
+s=await readFile(sourceOutfitController,'utf8');
+s=replace(s," let contact=null;"," let shirtBuildStages90=null;\\n let contact=null;");
+s=replace(s,"const summarize=()=>({mode,pose,changes,slots:Object.keys(parts),garmentMeshes","const summarize=()=>({mode,pose,changes,shirtBuildStages90,slots:Object.keys(parts),garmentMeshes");
+s=replace(s,"  let builtContact=null;const held=all(parts).map","  let builtContact=null;const shirtClock90=Object.create(null);\\n  const timeShirt90=(stage,run)=>{const t=performance.now();try{return run();}finally{shirtClock90[stage]=(shirtClock90[stage]||0)+(performance.now()-t);}};\\n  const held=all(parts).map");
+s=replace(s,"  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;return summarize();","  contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;shirtBuildStages90=Object.freeze({...shirtClock90});return summarize();");
+s=replace(s," function dispose(){if(closed)return;contact?.dispose();"," function dispose(){if(closed)return;shirtBuildStages90=null;contact?.dispose();");
+s=replace(s,"built.shirt=attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true})","built.shirt=timeShirt90(\"attach\",()=>attachReviewedShirt(root,candidate,{acknowledged:reviewed,pose:'source',improved:true}))");
+s=replace(s,"built.shirt=protectShirtShoulders(built.shirt,shoulders)","built.shirt=timeShirt90(\"shoulders\",()=>protectShirtShoulders(built.shirt,shoulders))");
+s=replace(s,"built.shirt=protectShirtCuffClearance(built.shirt,root)","built.shirt=timeShirt90(\"cuffClearance\",()=>protectShirtCuffClearance(built.shirt,root))");
+s=replace(s,"built.shirt=finishInnerCuffs(built.shirt,root)","built.shirt=timeShirt90(\"innerCuffs\",()=>finishInnerCuffs(built.shirt,root))");
+s=replace(s,"built.shirt=bridgeSourceCuffHem(built.shirt,root)","built.shirt=timeShirt90(\"cuffBridge\",()=>bridgeSourceCuffHem(built.shirt,root))");
+s=replace(s,"built.shirt=fitContinuousShirt(built.shirt,root)","built.shirt=timeShirt90(\"continuousFit\",()=>fitContinuousShirt(built.shirt,root))");
+s=replace(s,"built.shirt=finishNecklineAndSeams(built.shirt,root)","built.shirt=timeShirt90(\"neckSeams\",()=>finishNecklineAndSeams(built.shirt,root))");
+s=replace(s,"built.shirt=drapeOriginalPhotographedShirtTorso(built.shirt)","built.shirt=timeShirt90(\"torsoDrape\",()=>drapeOriginalPhotographedShirtTorso(built.shirt))");
+s=replace(s,"built.shirt=constructShirtPanels(hangSleevePanels(relaxShirtSidePanels(built.shirt),root))","built.shirt=timeShirt90(\"panelsAndSleeves\",()=>constructShirtPanels(hangSleevePanels(relaxShirtSidePanels(built.shirt),root)))");
+s=replace(s,"built.shirt=tailorOriginalShirtShoulderSleeves(built.shirt,root)","built.shirt=timeShirt90(\"shoulderTailor\",()=>tailorOriginalShirtShoulderSleeves(built.shirt,root))");
+s=replace(s,"built.shirt=constructIndependentShoulderCaps(built.shirt,root)","built.shirt=timeShirt90(\"shoulderCaps\",()=>constructIndependentShoulderCaps(built.shirt,root))");
+s=replace(s,"built.shirt=reprofileIndependentShoulderSilhouette(built.shirt,root)","built.shirt=timeShirt90(\"shoulderContour\",()=>reprofileIndependentShoulderSilhouette(built.shirt,root))");
+s=replace(s,"built.shirt=tailorIndependentUpperArmVolume(built.shirt,root)","built.shirt=timeShirt90(\"upperArm\",()=>tailorIndependentUpperArmVolume(built.shirt,root))");
+s=replace(s,"built.shirt=shapeSourceNeutralCollarRoll(built.shirt,root)","built.shirt=timeShirt90(\"collarRoll\",()=>shapeSourceNeutralCollarRoll(built.shirt,root))");
+s=replace(s,"built.shirt=easeSourceNeutralRearFabric(built.shirt,root)","built.shirt=timeShirt90(\"rearRelief\",()=>easeSourceNeutralRearFabric(built.shirt,root))");
+s=replace(s,"built.shirt=roundRealShoulderSleeveCrest(built.shirt,root)","built.shirt=timeShirt90(\"crest\",()=>roundRealShoulderSleeveCrest(built.shirt,root))");
+s=replace(s,"built.shirt=hangPhotographedSleeveCloth(built.shirt,root)","built.shirt=timeShirt90(\"sleeveHang\",()=>hangPhotographedSleeveCloth(built.shirt,root))");
+s=replace(s,"built.shirt=fitPhotographedShirtSideFlow(built.shirt,root)","built.shirt=timeShirt90(\"sideFlow\",()=>fitPhotographedShirtSideFlow(built.shirt,root))");
+s=replace(s,"built.shirt=easePhotographedShoulderFall(built.shirt,root)","built.shirt=timeShirt90(\"shoulderFall\",()=>easePhotographedShoulderFall(built.shirt,root))");
+s=replace(s,"built.shirt=slopeTruePhotographedShoulderTop(built.shirt,root)","built.shirt=timeShirt90(\"shoulderTop\",()=>slopeTruePhotographedShoulderTop(built.shirt,root))");
+await writeFile(sourceOutfitController,s);
 console.log('P90 disposable PR541 viewer controls installed; source garments and rigs unchanged');
