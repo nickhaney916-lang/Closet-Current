@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' file:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'none'; form-action 'none'; base-uri 'none'; frame-src 'none'">
+<title>Closet Current M45 — genuine V-neck photo-matte hypothesis (NOT APPROVED)</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#eaf0f8;background:#111b27}
+body{max-width:1400px;padding:20px;margin:auto}
+h1{font-size:1.55rem}h2{font-size:1.1rem}
+p{line-height:1.55;color:#d1dce7}
+section{margin:22px 0}
+.notice{padding:14px 16px;border-radius:10px;border:1px solid #a3aec1;background:#263444}
+figure{margin:12px 0;border:1px solid #617389;background:#233346;border-radius:10px;padding:12px}
+figure img{max-width:100%;height:auto;display:block;margin:auto}
+figcaption{margin-bottom:8px;font-weight:700}
+li{margin:7px 0;color:#dce6f1}
+button,select,textarea{font:inherit}
+label{display:block;margin:12px 0 7px}
+select,textarea{padding:10px;box-sizing:border-box;width:100%;color:#eaf0f8;background:#27384d;border:1px solid #90a4bb;border-radius:8px}
+button{background:#dceaff;border:0;color:#1c2b39;border-radius:8px;padding:11px 16px;font-weight:700;cursor:pointer;margin-top:12px}
+button:focus-visible{outline:3px solid #ffca66}
+</style>
+</head>
+<body>
+<header>
+ <h1>Original photographed dress: V-neck mannequin-mask trial</h1>
+ <p>Authenticated public Commons-0053 photograph (CC BY 4.0), original Work47 alpha, earlier P93 color proposal, and M45's independently sourced local-tone matte experiment.</p>
+ <div class="notice" role="note">
+ <strong>NOT APPROVED • FAMILY ALPHA HOLD.</strong> The source RGB and original JPEG are unchanged. Additional transparent pixels are a source-image-informed hypothesis, NOT proof that mannequin material was removed without garment loss. All 3D clothing, release and human-approval decisions remain blocked.
+ </div>
+</header>
+<section>
+ <h2>Source-nearline close comparison</h2>
+ <figure>
+  <figcaption>From left to right: original photograph / P93 / M45 separate unapproved alpha / magenta exact extra removals over original</figcaption>
+  <img id="close" src="actual-original-vneck-P93-M45-difference-4up.jpg" alt="Real original mannequin dress V-neckline compared against P93, new M45 matte and exact source alpha difference">
+ </figure>
+ <p>The pale woven material belongs to the mannequin in the original photograph, not the dress. The M45 transparent area is selected through a narrow original-image lightness/colour region within a bounded neckline ROI. Its dark-collar guard and two-pixel protection of original neutral white piping are mechanical checks, <em>not independent visual-fidelity approval</em>.</p>
+</section>
+<section>
+ <h2>Whole garment context</h2>
+ <figure>
+  <figcaption>Genuine original / original P93 / separate M45 candidate — the front and logo must remain source-faithful</figcaption>
+  <img id="whole" src="actual-full-dress-original-P93-M45-3up.jpg" alt="Actual full dress original photograph, P93 and M45 source-only alpha test">
+ </figure>
+ <p>Assess white neckline piping, original jersey outline, armhole, chest logos, shoulder seams, color and remaining background speckles. The source photograph does not observe the rear. No anatomy, rigging, fabric drape, UV mapping, or cloth collision is approved from this image.</p>
+</section>
+<section class="notice">
+ <h2>Review questions (choices remain unverified)</h2>
+ <p>Select observations only after studying the real source photograph at high resolution. Even selecting all passes does not give independent identity or mask/3D acceptance.</p>
+ <label for="vneck">Compared with P93, is the V-neckline mannequin background more completely removed?</label>
+ <select id="vneck"><option value="unreviewed">Not reviewed</option><option value="looks-better">Looks better, requires independent verification</option><option value="uncertain">Uncertain</option><option value="worse">Worse/reject</option></select>
+ <label for="piping">Are black collar, white piping, chest logos and true garment edges preserved?</label>
+ <select id="piping"><option value="unreviewed">Not reviewed</option><option value="looks-preserved">Looks preserved, needs independent verification</option><option value="uncertain">Uncertain</option><option value="damage">Potential garment loss, reject</option></select>
+ <label for="speckle">Is remaining background speckle or matte fringing still visible?</label>
+ <select id="speckle"><option value="unreviewed">Not reviewed</option><option value="some">Yes, remaining defects</option><option value="none-seen">No obvious defect at this scale</option><option value="uncertain">Uncertain</option></select>
+ <label for="notes">Detailed location-specific observations</label>
+ <textarea rows="4" id="notes" placeholder="e.g., original neckline black collar intact but woven mesh remains at lower V; left seam feathered"></textarea>
+ <button id="export" type="button">Export unverified observations (JSON)</button>
+ <p id="status" role="status" aria-live="polite"></p>
+ <small>Local offline packet. No external network, personal photo upload, owner account, model inference, new 3D garment, or live product behavior. Synthetic browser choices in CI are not human feedback.</small>
+</section>
+<script>
+(function(){
+ 'use strict';
+ const $=id=>document.getElementById(id);
+ $('export').addEventListener('click',()=>{
+  const ids=['vneck','piping','speckle'];
+  const judgments={};
+  for(const id of ids){
+   judgments[id]=$(id).value;
+   if(judgments[id]==='unreviewed'){
+    $('status').textContent='Inspect both authentic source images and answer all review questions first.';
+    return;
+   }
+  }
+  const record={
+   schema:'MAIN1054_M45_UNVERIFIED_SOURCE_VNECK_REVIEW/v1',
+   originalSource:'commons-0053',
+   candidate:'M45 source local-tone no-auto-approval',
+   originalJpegSHA256:'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
+   judgments,notes:$('notes').value.slice(0,1500),
+   reviewerIndependentlyVerified:false,
+   independentHumanSourceFidelityAccepted:false,
+   maskSegmentationApproved:false,
+   approvedReal3D:false,
+   consumer3DAdmitted:false,
+   releaseAuthorized:false,familyAlpha:'HOLD',
+   recordKind:'UNVERIFIED_MANUAL_OBSERVATIONS_NOT_AUTHORIZATION'
+  };
+  const blob=new Blob([JSON.stringify(record,null,2)+'\n'],
+   {type:'application/json'});
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='main45-UNVERIFIED-vneck-review.json';
+  document.body.appendChild(a);a.click();a.remove();
+  $('status').textContent='Local unverified observation exported; no mask or 3D approval granted.';
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+ });
+})();
+</script>
+</body>
+</html>
