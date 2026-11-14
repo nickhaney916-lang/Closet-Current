@@ -262,7 +262,7 @@ export function createDisposableWitnessLocalized85(
   });
  }
 
- function shapeRegularized(radius){
+ function shapeRegularized(radius,passes=18,neighborBlend=.35){
   // Experimental triangle-shape preservation: regularize displacement
   // between real adjacent source-position groups while hard-pinning the
   // witnessed contact core and the outer original mesh boundaries.
@@ -275,7 +275,7 @@ export function createDisposableWitnessLocalized85(
      initial[i+2]-originalWorld[i+2]];
    });
   let state=delta.map(d=>d.slice());
-  for(let pass=0;pass<18;pass++){
+  for(let pass=0;pass<passes;pass++){
    const next=state.map(v=>v.slice());
    for(let g=0;g<groups.length;g++){
     if(dist[g]<=2||dist[g]>=radius)continue;
@@ -285,7 +285,7 @@ export function createDisposableWitnessLocalized85(
      for(let k=0;k<3;k++)mean[k]+=state[u][k]/near.length;
     const d=next[g],start=delta[g];
     for(let k=0;k<3;k++)
-     d[k]=.60*state[g][k]+.35*mean[k]+.05*start[k];
+     d[k]=(.95-neighborBlend)*state[g][k]+neighborBlend*mean[k]+.05*start[k];
     const m=Math.hypot(...d);
     if(m>.006){
      for(let k=0;k<3;k++)d[k]*=.006/m;
@@ -306,7 +306,8 @@ export function createDisposableWitnessLocalized85(
    localGraphRadiusHops85:radius,
    localizedSourcePositionGroups85:seed.localizedSourcePositionGroups85,
    furthestMovedGraphHop85:seed.furthestMovedGraphHop85,
-   shapeSmoothingPasses85:18,
+   shapeSmoothingPasses85:passes,
+   shapeNeighborBlend85:neighborBlend,
    contactCoreHeldDuringSmoothing85:true,
    originalSourceFaceIdsNeverExported85:true,
    sourceWitnessNotPhysicalDepthOrContinuousContact:true,
@@ -317,7 +318,9 @@ export function createDisposableWitnessLocalized85(
   localized(12,false),localized(24,false),
   localized(12,true),localized(24,true),
   localized(32,true),localized(40,true),
-  shapeRegularized(24),shapeRegularized(32)
+  shapeRegularized(24),shapeRegularized(32),
+  shapeRegularized(24,36),shapeRegularized(24,60),
+  shapeRegularized(24,36,.50)
  ];
  if(!originalWorld.every((v,i)=>v===before[i]))
   fail('P85 original source-skinned world buffer altered');

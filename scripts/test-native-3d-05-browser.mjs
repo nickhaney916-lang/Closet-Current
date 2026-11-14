@@ -2200,9 +2200,9 @@ try{
      assert.equal(pose.licensedSourceTriangleCount,witness.originalSourceFaces);
      assert.equal(pose.allFourSourceContactSweepsCompleted,true);
      assert.equal(pose.candidates.length,4);
-     assert.equal(pose.witnessLocalizedCandidates85.length,8,
+     assert.equal(pose.witnessLocalizedCandidates85.length,11,
       'P85 private C58 original source witness topological hypotheses required');
-     assert.equal(pose.allEightWitnessLocalizedSweepsCompleted85,true);
+     assert.equal(pose.allElevenWitnessLocalizedSweepsCompleted85,true);
      assert.equal(pose.originalContactWitnessIdsNeverExported85,true);
      assert.ok(pose.privateOriginalStrictClothWitnessFaceCount85>=1&&
       pose.privateOriginalStrictClothWitnessFaceCount85<=
