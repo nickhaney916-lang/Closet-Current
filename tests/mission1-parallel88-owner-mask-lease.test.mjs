@@ -80,20 +80,22 @@ test('P88 only explicit trial worker carries unresolved-accepted-fragment reason
  assert.equal(flagged.filter(x=>x.type==='error').length,0);
  const rows=flagged.filter(x=>x.type==='piece').map(x=>x.piece);
  assert.equal(rows.length,1);
- assert.equal(rows[0].hint.componentReviewStatus,'unresolved_fragments_keep_source_mask');
+ assert.equal(rows[0].instanceMethod,'native_semantic_group_unresolved_fragments');
+ assert.equal(rows[0].hint.componentReviewStatus,undefined,'original worker message contract remains unchanged');
  assert.equal(rows[0].requiresReview,true);
  assert.equal(rows[0].hint.categories[0],'Tops');
  assert.equal(rows[0].recognitionPhoto.image.startsWith('data:image/jpeg;base64,'),true);
  const old=defaultRun.filter(x=>x.type==='piece').map(x=>x.piece);
  assert.equal(old.length,1);
+ assert.equal(old[0].instanceMethod,'native_semantic_group','default grouping unchanged');
  assert.equal(old[0].hint.componentReviewStatus,undefined,'default consumer hint unchanged');
 });
 test('P88 native capture preserves original JPEG, unresolved hint and unsaved owner draft',()=>{
  const h=captureHarness();
  assert.equal(h.c.worker.request.instanceReview840,true);
  const piece={image:'data:image/jpeg;base64,PIECE',recognitionPhoto:{image:'data:image/jpeg;base64,CROPPED'},
-  hint:{categories:['Tops'],types:[],clipped:false,componentReviewStatus:'unresolved_fragments_keep_source_mask'},
-  requiresReview:true};
+  hint:{categories:['Tops'],types:[],clipped:false},
+  instanceMethod:'native_semantic_group_unresolved_fragments',requiresReview:true};
  h.emit({type:'piece',piece});h.emit({type:'done',count:1});
  assert.equal(h.c.batch.length,1);assert.equal(h.c.items.length,0);
  assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
