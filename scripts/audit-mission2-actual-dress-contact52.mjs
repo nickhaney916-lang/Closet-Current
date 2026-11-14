@@ -885,3 +885,110 @@ if(process.env.PHOTO_DRESS_PARETO62==='1'){
  console.log('M2_C62_REAL_LICENSED_FIT_PARETO_SOURCE_COUNTS',
   JSON.stringify(summary));
 }
+
+if(process.env.PHOTO_DRESS_LOCAL63==='1'){
+ assert.equal(process.env.PHOTO_DRESS_PARETO62,'1',
+  'C63 local body intersection targets demand authenticated original P2-C62 2mm baseline');
+ const rows=receipts.map(r=>{
+  assert.equal(r.actualLicensedSourceLocalContactFeatherEvidenceComplete63,true);
+  assert.equal(r.noGarmentSourceContactGeometryOrUVEdits63,true);
+  assert.equal(r.noHumanVisualOrContinuousPhysicsApproval63,true);
+  const a=r.originalArticulatedContactReceipt58;
+  assert.equal(a.originalPhotoLocalContactSourceAuditCompleted63,true);
+  const poses=[a.disposableNeutralUpperTorsoTrial60,
+   ...a.disposableArticulatedUpperTorsoTrials60];
+  assert.equal(poses.length,3);
+  return poses.map((t,poseIndex)=>{
+   const q=t.originalSourceLocalContactFeather63;
+   assert.equal(q.schema,'M2-C63-source-contact-local-feather-fit-diagnostic');
+   assert.equal(q.releaseAuthorized,false);
+   assert.equal(q.candidateAlreadyRenderedInApp,false);
+   assert.ok(q.localCandidateEvaluations===0||q.localCandidateEvaluations===3);
+   if(q.localCandidateEvaluations===0){
+    assert.equal(q.originalStrictBodyCrossingPairWitnessesAfter2mm,0);
+    return {poseIndex,original2mmStrictWitnesses:0,
+     originalSourceFaceHitsAfter2mm:0,localCandidateResults:[],
+     allStrictBodyCrossingsGoneAtBaseline2mm:true};
+   }
+   assert.ok(q.originalStrictBodyCrossingPairWitnessesAfter2mm>0);
+   assert.ok(q.originalSourceClothFacesWithBodyCrossingAfter2mm>0);
+   assert.equal(q.perLocalCandidate.length,3);
+   const trials=q.perLocalCandidate.map(v=>{
+    assert.equal(v.noGarmentSourceOrOwnerPhotoMutated,true);
+    assert.equal(v.noSourceTriangleIDsOrXYZExported,true);
+    assert.equal(v.releaseAuthorized,false);
+    assert.equal(v.original2mmBodyStrictCrossingPairWitnesses,
+     q.originalStrictBodyCrossingPairWitnessesAfter2mm);
+    assert.ok(v.maximumWorldDisplacementMeters<=.006002);
+    assert.equal(v.actualOriginalBodyContactEvaluated,
+     v.originalPhotoSurfaceStrainGuardPass);
+    if(v.actualOriginalBodyContactEvaluated)
+     assert.equal(v.fullOriginalBodyAndSelfContactAuditCompleted,true);
+    return {
+     additionalOutwardMeters:v.boostMeters,
+     featherRadiusMeters:v.radiusMeters,
+     originalSourceFaceTriangleContacts:v.sourceClothFacesWithGenuine2mmBodyCrossings,
+     originalSourceVertexReferencesMoved:v.localSourceVertexReferencesMoved,
+     maxTemporaryWorldDisplacementMeters:v.maximumWorldDisplacementMeters,
+     largestOriginalFaceRelativeEdgeStrain:v.largestSourceFaceEdgeRelativeStrain,
+     largestOriginalFaceRelativeAreaDrift:v.largestSourceFaceAreaRelativeChange,
+     originalSourceFacesAbove5PercentStrain:v.facesAbove5PercentStrain,
+     originalSourceFacesAbove10PercentAreaDrift:v.facesAbove10PercentAreaChange,
+     originalSourceFacesFlipped:v.flippedSourceFaceCount,
+     originalSourceFacesCollapsed:v.collapsedSourceFaceCount,
+     photoClothShapePass:v.originalPhotoSurfaceStrainGuardPass,
+     actualBodyAndSelfSweepsPerformed:v.actualOriginalBodyContactEvaluated,
+     originalSourceBodyStrictWitnessesRemaining:
+      v.actualOriginalBodyContactEvaluated?
+       v.sourceBodyStrictCrossingsAfterLocalTrial:null,
+     originalFabricSelfStrictWitnesses:
+      v.actualOriginalBodyContactEvaluated?
+       v.sourceFabricSelfStrictCrossingsAfterLocalTrial:null
+    };
+   });
+   return {
+    poseIndex,
+    original2mmStrictWitnesses:
+     q.originalStrictBodyCrossingPairWitnessesAfter2mm,
+    originalSourceFaceHitsAfter2mm:
+     q.originalSourceClothFacesWithBodyCrossingAfter2mm,
+    localCandidateResults:trials,
+    allStrictBodyCrossingsGoneAtBaseline2mm:false
+   };
+  });
+ });
+ for(const w of rows.slice(1))assert.deepEqual(w,rows[0],
+  'C63 original licensed photo source and 163-bone anatomy local contact trial differs between 320/390/430px screenshots');
+ const samples=rows[0];
+ const common=[{boost:.002,radius:.25},{boost:.004,radius:.45},
+  {boost:.004,radius:.75}].filter(c=>
+  samples.every(p=>p.localCandidateResults.some(v=>
+   v.additionalOutwardMeters===c.boost&&v.featherRadiusMeters===c.radius&&
+   v.photoClothShapePass&&v.actualBodyAndSelfSweepsPerformed&&
+   v.originalSourceBodyStrictWitnessesRemaining===0&&
+   v.originalFabricSelfStrictWitnesses===0)));
+ const summary={
+  schema:'M2-C63-original-licensed-contact-local-fit-sampled-pose',
+  exactShaPinnedOriginalPublicDress:'commons-0053-P61-P175-163bone',
+  authenticSourceGarmentFaces:first.originalSourceFaces,
+  genuineNativeChromiumViewports:[320,390,430],
+  sourceOriginalNeutralAndTwoArticulatedPoseCount:3,
+  signed2mmSourceBodyCrossingOriginalPairWitnesses:samples[0].original2mmStrictWitnesses,
+  poseResults:samples,
+  anyCommonSampledLocalFitAvoidsStrictCrossingsWithProvisionalSourceShapeGuard:
+   common.length>0,
+  commonSampledPoseShapeAndBodyCompatibleLocalTrials:common,
+  noRealOriginalPhotographedGarmentMeshDeformed:true,
+  noRealPhotoTextureOrOriginalUVRestSkinReconstructed:true,
+  noBodyOrClothCollisionWaiverGranted:true,
+  noContinuousMotionClothCollisionSafetyCertificate:true,
+  noHumanValidatedRealPhotoFabricLook:true,
+  noRealMobilePhysicalDeviceVerification:true,
+  noOwnerWardrobeOrHostedSupabaseAccess:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-local-fit63.json',
+  JSON.stringify(summary,null,2)+'\n');
+ console.log('M2_C63_REAL_LICENSED_LOCAL_BODY_FIT_SOURCE_COUNTS',
+  JSON.stringify(summary));
+}
