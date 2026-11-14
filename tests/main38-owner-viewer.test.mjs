@@ -83,6 +83,15 @@ function viewer(h){
   readOnlyGarmentSources91:ids=>({
    ownerId:h.ownerId,sources:ids.map(id=>({id,sha256:sha}))
   }),
+  // Independent real source-byte SHA, not a reused trusted metadata string.
+  attestOriginalPhotoBytes92:async ids=>{
+   const actual=await rows(h.db);
+   return {ownerId:h.ownerId,sources:ids.map(id=>{
+    const row=actual.find(x=>x.id===id);
+    const bytes=Buffer.from((row?.originalPhoto?.image||'').split(',')[1]||'','base64');
+    return {id,sha256:createHash('sha256').update(bytes).digest('hex')};
+   })};
+  },
   readOnlyWardrobeRevision93:()=>({ownerId:h.ownerId,revision:1,generation:1})
  };
  const doc={
@@ -140,7 +149,10 @@ test('M38 rejects mismatched P90 photo SHA, account and revision',()=>testOwner(
  // P90 metadata check alone cannot prove real JPEG bytes: the M37 check
  // must still only return a 2D preflight, never a 3D grant.
  const r=await auditNativeOwnerViewer38(wrongPhoto);
+ assert.equal(r.status,'BLOCKED_OWNER_OR_SOURCE_RECHECK');
  assert.equal(r.consumer3D,false);
+ const missingPhoto={...v,consumer:{...v.consumer,attestOriginalPhotoBytes92:undefined}};
+ assert.equal((await auditNativeOwnerViewer38(missingPhoto)).status,'BLOCKED_OWNER_OR_SOURCE_RECHECK');
  const wrongOwner={...v,win:{closetAuth:{user:{id:'another-owner'}}}};
  assert.equal((await auditNativeOwnerViewer38(wrongOwner)).status,'BLOCKED_OWNER_OR_SOURCE_RECHECK');
  const hidden={...v,doc:{...v.doc,hidden:true,visibilityState:'hidden'}};
