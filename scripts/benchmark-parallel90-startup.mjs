@@ -50,7 +50,10 @@ for(const figure of ['female','male']){
    medianInitialGarmentMs:median(rows.map(x=>x.startup.initialGarmentMs)),
    medianSceneSetupMs:median(rows.map(x=>x.startup.sceneSetupMs)),
    medianSourcesMs:median(rows.map(x=>x.startup.sourceLoadMs)),
-   medianPresentMs:median(rows.map(x=>x.startup.presentMs))});
+   medianPresentMs:median(rows.map(x=>x.startup.presentMs)),
+   medianShirtPrepareMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.renderStages.prepareMs)),
+   medianShirtApplyMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.renderStages.applyMs)),
+   medianDressApplyMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.renderStages.applyMs))});
  }
 }
 await mkdir(root,{recursive:true});
