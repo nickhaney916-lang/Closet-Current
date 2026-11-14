@@ -12,9 +12,9 @@ test('P90 donor installer refuses another source HEAD before any write',()=>{
   assert.throws(()=>execFileSync(process.execPath,['scripts/install-parallel90-viewer.mjs',dir],{stdio:'pipe'}));
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
-test('P90 installer limits writes to panel, camera and source loading, not geometry or skeleton authoring',()=>{
+test('P90 installer limits writes to disposable panel, showroom, source loader and exact controller only',()=>{
  const writes=[...source.matchAll(/writeFile\((\w+),s\)/g)].map(x=>x[1]);
- assert.deepEqual(writes,['panel','showroom','sourceViewer']);
+ assert.deepEqual(writes,['panel','showroom','sourceViewer','sourceOutfitController']);
  assert.match(source,/assert.equal\(s.split\(a\).length,2/);
 });
 test('P90 context-loss listener is captured and removed on bridge disposal',()=>{
@@ -77,5 +77,18 @@ test('P90 real mesh renderer has exhaustive numeric read-only apply-stage diagno
  assert.ok(source.includes("const finished90=performance.now()"));
  assert.ok(source.includes("sceneApplyStages90:view.applyStages90||null"));
  assert.match(bridge,/sceneApplyStages90:active\?data\.sceneApplyStages90\|\|null:null/);
+ assert.match(bridge,/revokeChangedSource89\(\)/);
+});
+
+test('P90 M9 profiles exact 20 genuine-shirt construction stages with no dropped source calls',()=>{
+ assert.match(source,/const sourceOutfitController=donor\+'\/research\/dress-mobile-01\/dress-outfit-controller\.mjs'/);
+ assert.match(source,/shirtBuildStages90=Object\.freeze\(\{\.\.\.shirtClock90\}\)/);
+ assert.match(source,/const timeShirt90=\(stage,run\)=>/);
+ const labels=["attach","shoulders","cuffClearance","innerCuffs","cuffBridge","continuousFit","neckSeams","torsoDrape","panelsAndSleeves","shoulderTailor","shoulderCaps","shoulderContour","upperArm","collarRoll","rearRelief","crest","sleeveHang","sideFlow","shoulderFall","shoulderTop"];
+ for(const name of labels)assert.ok(source.includes('timeShirt90(\\"'+name+'\\",()=>')||
+  source.includes('timeShirt90("'+name+'",()=>'), 'source stage present '+name);
+ assert.equal(labels.length,20);
+ const bridge=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ assert.match(bridge,/sceneShirtStages90:active\?data\.sceneShirtStages90\|\|null:null/);
  assert.match(bridge,/revokeChangedSource89\(\)/);
 });
