@@ -404,9 +404,17 @@ export function compareActualMeasuredSkirtFit89({
    'source-original-bvh-contact-after-body-fit-missing',
    'original-photographed-source-uv-skin-or-faces-mutated',
    'original-source-photo-skirt-geometry-was-mutated'];
-  return fail(known.includes(e.message)||
-   e.message.startsWith('insufficient original anatomical source face contour at skirt band ')?
-   e.message:'source-measured-real-body-fit-not-verifiable');
+  const safePublicSourcePrefixes=[
+   'original CC0 bone-part mask evidence insufficient:',
+   'actual CC0 body skin weight provenance unavailable',
+   'original avatar source bone labels missing',
+   'original CC0 skin part face indices do not match immutable BVH source',
+   'original skinned body limb-part contour filter missing source face proof',
+   'insufficient original anatomical source face contour at skirt band '
+  ];
+  return fail(known.includes(e.message)||safePublicSourcePrefixes.some(prefix=>
+   e.message.startsWith(prefix))?e.message.slice(0,220):
+   'source-measured-real-body-fit-not-verifiable');
  }finally{
   mesh.geometry=original;
   cleanup(cloned);
