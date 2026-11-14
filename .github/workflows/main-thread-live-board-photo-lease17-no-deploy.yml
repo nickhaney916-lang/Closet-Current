@@ -58,7 +58,8 @@ jobs:
       - name: All inherited privacy/recognition/private-outfit/backup/3D Node tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - name: Preserve pilot release hold
-        run: echo "Research only. Family Alpha #255 OPEN/HOLD, no merge or deploy."
+        run: |
+          echo 'Research only. Family Alpha #255 OPEN/HOLD, no merge or deploy.'
   native-chromium-webkit-photo-preview-NO-DEPLOY:
     runs-on: ubuntu-24.04
     timeout-minutes: 40
