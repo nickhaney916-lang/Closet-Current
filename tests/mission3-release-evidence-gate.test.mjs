@@ -157,10 +157,22 @@ test('raw access tokens or photo paths cannot enter manually attached report',()
  f.files.set(name,bytes);f.manifest.devices[0].reportSha256=sha(bytes);
  const v=check(f);
  assert.equal(v.status,'BLOCKED');
- assert.ok(v.issues.some(x=>x.includes('unexpected field access_token')));
- assert.ok(v.issues.some(x=>x.includes('unexpected field image')));
+ assert.ok(v.issues.some(x=>x.includes('contains unexpected field')));
+ assert.ok(v.issues.some(x=>x.includes('contains unexpected field')));
  assert.ok(!JSON.stringify(v).includes('PRIVATE SECRET'));
  assert.ok(!JSON.stringify(v).includes('data:image'));
+});
+test('attacker-controlled secret JSON key names are never echoed into diagnostics',()=>{
+ const f=fixture();
+ const name=f.manifest.devices[0].reportFile;
+ const report=JSON.parse(f.files.get(name));
+ report['PRIVATE_OWNER_EMAIL_AND_SECRET_TOKEN']=true;
+ const bytes=Buffer.from(JSON.stringify(report));
+ f.files.set(name,bytes);f.manifest.devices[0].reportSha256=sha(bytes);
+ const result=check(f);
+ assert.equal(result.status,'BLOCKED');
+ assert.ok(result.issues.some(x=>x.includes('unexpected field')));
+ assert.ok(!JSON.stringify(result).includes('PRIVATE_OWNER_EMAIL_AND_SECRET_TOKEN'));
 });
 test('missing or modified local report cannot pass even with manually typed PASS values',()=>{
  const f=fixture(),name=f.manifest.devices[0].reportFile;
@@ -174,7 +186,7 @@ test('private path traversal, URLs and unexpected manifest keys fail closed',()=
  f.manifest.devices[0].reportFile='../../owner-private-file.json';
  f.manifest.authorization='Bearer secrets';
  const v=check(f);assert.equal(v.status,'BLOCKED');
- assert.ok(v.issues.some(x=>x.includes('unexpected field authorization')));
+ assert.ok(v.issues.some(x=>x.includes('contains unexpected field')));
  assert.ok(v.issues.some(x=>x.includes('invalid safe JSON filename')));
 });
 test('handwritten cloud and integration passedCase receipts must cover every required case',()=>{
