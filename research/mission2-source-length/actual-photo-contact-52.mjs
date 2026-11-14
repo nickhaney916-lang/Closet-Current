@@ -1140,8 +1140,8 @@ function compareAlternative85(root,mesh,body,world,indices,triangles,
   privateOriginalStrictClothWitnessFaceCount85:
    originalClothWitnessFaces85.size,
   witnessLocalizedCandidates85:localRows,
-  allFourWitnessLocalizedSweepsCompleted85:
-   localRows.length===4&&localRows.every(x=>
+  allEightWitnessLocalizedSweepsCompleted85:
+   localRows.length===8&&localRows.every(x=>
     x.fullOriginalContactAndQualitySweepCompleted),
   originalContactWitnessIdsNeverExported85:true,
   allFourSourceContactSweepsCompleted:rows.every(x=>
@@ -1349,9 +1349,9 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     alternativesPose85.every(x=>x.allFourSourceContactSweepsCompleted),
    allAlternativesRemainResearchOnly85:true,
    allWitnessLocalizedOriginalSourceSweepsCompleted85:
-    neutralAlternatives85?.allFourWitnessLocalizedSweepsCompleted85===true&&
+    neutralAlternatives85?.allEightWitnessLocalizedSweepsCompleted85===true&&
     alternativesPose85.length===2&&
-    alternativesPose85.every(x=>x.allFourWitnessLocalizedSweepsCompleted85),
+    alternativesPose85.every(x=>x.allEightWitnessLocalizedSweepsCompleted85),
    originalBodyWitnessFaceIDsOnlyInMemory85:true
   }:{}),
   ...(refineUpperTorsoFitTrial60?{

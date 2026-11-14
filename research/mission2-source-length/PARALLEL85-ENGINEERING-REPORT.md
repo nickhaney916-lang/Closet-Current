@@ -61,3 +61,21 @@ No 3D renderer fit, 2D original-photo fallback, owner wardrobe, production, stag
 - **Quality release blocker:** 151–153 >5%-strain source faces on best intersection-free candidate. No solver gets both 0 source body crossings and every provisional C61 quality bound in any of 3 samples. Real B candidate rendering and photo RGB texture preservation: **BLOCKED**. Independent human cloth acceptance: **NOT TESTED**. Full continuous arm/torso motion, both truly evaluated avatar sexes and actual physical phones: **NOT TESTED**. Authenticated owner-specific photo sources/3D: **NOT TESTED**. Peak memory: **NOT TESTED**.
 - **Ranked next trials:** (1) gather **actual C58 crossing witness triangle neighborhoods** and body outward surface normals *privately inside the same source audit*, rather than displacing all upper torso faces; optimize contact local-only while preserving original UV/skin data; (2) contact-constrained edge/area/normal optimization over all three poses simultaneously, with hard C61 caps and no hidden intersections/contacts rather than per-pose posthoc relaxation; (3) seam- and UV-island aware fitting with original photograph projection for true front/side/back candidate render and pixel comparison, plus dynamic pose sweep; (4) independently human review true original-photo candidate 3D at both verified avatars, then actual physical-phone acceptance.
 - Maintain full no-deploy tests, exact SHA license source, and source-only room. Main Mission 2 decides whether/how to cherry-pick donor; #84 owns layered outfit/photoreal category coverage and this track does not edit its branch. **Family Alpha #255 stays OPEN/HOLD. NO MERGE. NO DEPLOY.**
+
+## Milestone #85B — exact C58 source cloth witness neighborhoods and adaptive shape research
+
+**Initial new green original-source verification:** [CI #43551081531](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551081531) (native genuine licensed Commons-0053 P61 dress, 3,836 triangles, 163-bone body, 320/390/430 Chromium CSS widths, neutral + both articulated arm poses; full no-deploy Node regressions). The original C58 unchanged strict crossing algorithm identified 196 body/dress pair witnesses involving **17 distinct original cloth faces per pose**. This original cloth face index set is retained solely in the trusted diagnostic's private in-memory Set, never returned as face IDs, owner RGB, XYZ, texture or bone matrices.
+
+**First contact-local results, source verified (neutral / left-arm / right-arm):**
+| Temporary exact-source variant | Body strict (3 poses) | Self strict | Faces >5% edge strain (3 poses) | Faces >10% area change (3 poses) | Faces >10-degree normals (3 poses) | Max edge strain | Acceptance |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Original 6mm global torso C60 | 0/0/0 | 0 | 178/178/178 | 90/90/90 | 0/0/0 | 13.04% | FAIL |
+| Previous #85 welded 6mm global | 0/0/0 | 0 | 151/151/153 | 0/0/0 | 0/0/0 | 8.08% | FAIL |
+| 12-hop source-witness-local radial | 0/0/0 | 0 | 65/65/65 | 15/15/13 | 18/18/18 | 38.04% | FAIL |
+| 24-hop source-witness-local radial | 0/0/0 | 0 | 24/24/24 | 15/15/15 | 14/14/14 | 32.07% | FAIL |
+| 12-hop source-witness-local edge-projected | 0/0/0 | 0 | 5/5/5 | 3/3/3 | 17/17/17 | 7.69% | FAIL |
+| **24-hop source-witness-local edge-projected** | **0/0/0** | **0** | **2/2/2** | **6/6/6** | **14/14/14** | **5.21%** | **FAIL** |
+
+These are actual native licensed-source contact and C61 per-face diagnostics, not actual rendered candidate wearability approval. Numerical source-contact progress is substantial, but the strongest candidate also has 6 excessive face area changes, 14 excessive normal changes and two faces above the provisional 5% edge strain limit. No 3D photo texture A/B or continuous pose clearance was established.
+
+**Follow-on method under test:** source graph neighborhoods widened to 32/40 hops, plus two 18-pass displacement-shape-regularized proposals at 24/32 hops, retaining all four original local controls. The same unchanged C52/C58 and C61 analyzers must measure all **eight** witnesses. Exact-head native test outcome of the new four trials is **PENDING**; nothing has been approved for garment rendering or integration. Do not mistake desktop Chromium CSS widths for physical phones. Family Alpha #255 remains OPEN/HOLD, 2D safe fallback stays unchanged.
