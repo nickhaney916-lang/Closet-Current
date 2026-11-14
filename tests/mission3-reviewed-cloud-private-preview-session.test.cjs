@@ -96,12 +96,25 @@ test('explicit cancel always denies without treating missing auth as approval',(
  f.ctx.settle(false);
  assert.equal(answer(),false);assert.equal(f.ctx.revoked,false);
 });
+test('actual P146 origin principal check rejects same-ID relogin without a lock event',()=>{
+ const actualGuard=slice(' function assertLocalOwner(){',' const localAuth={');
+ const id='00000000-0000-4000-8000-000000000001';
+ const initial={id};
+ const auth={user:initial,assertCurrent(){}};
+ const ctx={auth,ownerAtMount:id,ownerPrincipalAtMount:initial,
+  db:{name:'closet-current-user-'+id},loc:{},revoked:false,
+  ownerReviewedMode146:()=>true,fail(msg){throw Error(msg)}};
+ vm.createContext(ctx);vm.runInContext(actualGuard,ctx);
+ assert.doesNotThrow(()=>ctx.assertLocalOwner());
+ auth.user={id}; // different verified signed session, same user ID
+ assert.throws(()=>ctx.assertLocalOwner(),/owner session changed/);
+});
 test('source retains synthetic localhost gate and does not introduce cloud writes',()=>{
  for(const required of [
   "ownerReview145')==='research'","ownerReview146')==='research'",
   "const SYNTHETIC_TOKEN_PREFIX=","redirect:'error',credentials:'omit'",
   "try{assertLocalOwner();}catch(error){revoke();throw error;}",
   "if(answer===true&&!approved&&!revoked)revoke();",
-  "if(approved){try{assertLocalOwner();}catch{approved=false;}}"
+  "auth.user!==ownerPrincipalAtMount",\n  "if(approved){try{assertLocalOwner();}catch{approved=false;}}"
  ])assert.ok(src.includes(required),required);
 });
