@@ -1,0 +1,51 @@
+name: MAIN1054 M31 owner-reviewed source to outfit - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-photo119-field-receipt-to-outfit31-HOLD]
+  pull_request:
+    branches: [research/main1054-crosswalk-outfit30-integrated-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  protected-original-saved-item-to-outfit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 27
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict parent ancestry, source scope and no hosted production writes
+        run: |
+          git merge-base --is-ancestor f7d85adceaf872af053af40a20f12e7833c884f0 HEAD
+          git diff --exit-code f7d85adceaf872af053af40a20f12e7833c884f0 HEAD -- supabase/ benchmark/ public/app.js public/outfit-board.js
+          git diff --name-only f7d85adceaf872af053af40a20f12e7833c884f0 HEAD | while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/main1054-photo119-outfit31-no-deploy.yml|\
+              public/native-reviewed-private-save-167.mjs|\
+              research/p87-catalog-crosswalk/crosswalk.mjs|\
+              research/master-consolidation-1054/MILESTONE31.md|\
+              tests/main31-photo119-to-signed-outfit.test.mjs) ;;
+              *) echo "BLOCKED: unexpected M31 source path $path"; exit 1;;
+            esac
+          done
+          node --check public/native-reviewed-private-save-167.mjs
+          node --check research/p87-catalog-crosswalk/crosswalk.mjs
+      - name: Pinned isolated test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Browser engines and OS libraries
+        run: npx playwright install --with-deps chromium webkit
+      - name: Build actual native app
+        run: node scripts/build.mjs
+      - name: Genuine-source PHOTO119 commit to owner board index contracts
+        run: node --test tests/main31-photo119-to-signed-outfit.test.mjs
+      - name: All inherited no-deploy Node tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Licensed native crosswalk Chromium and WebKit
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
+      - name: Actual signed-owner native app and 2D Outfit Builder browser tests
+        run: node scripts/test-main1054-native-preview-browser.mjs
