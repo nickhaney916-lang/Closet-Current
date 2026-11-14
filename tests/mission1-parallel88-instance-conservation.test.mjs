@@ -79,7 +79,9 @@ test('P88 source-verified conservative trial does not create six unproved nonsho
   const original=source.find(x=>x.id===id);
   assert.equal(safe.filter(x=>x.id===id).length,1,'no unsupported automatic nonshoe instance inflation');
   assert.equal(research.filter(x=>x.id===id).length,2,'all-class research remains reproducible');
-  assert.equal(safe.find(x=>x.id===id).instanceMethod,'native_semantic_group');
+  assert.equal(safe.find(x=>x.id===id).instanceMethod,'native_semantic_group_unresolved_fragments');
+  assert.equal(safe.find(x=>x.id===id).componentReviewStatus,'unresolved_fragments_keep_source_mask',
+   'two disconnected garments must never silently save as one item');
   proveConservation(original,safe.filter(x=>x.id===id));
   proveConservation(original,research.filter(x=>x.id===id));
  }
