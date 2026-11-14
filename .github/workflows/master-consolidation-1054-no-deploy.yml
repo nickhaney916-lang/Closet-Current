@@ -43,7 +43,9 @@ jobs:
       with:
         node-version: '22'
     - name: Master ancestry and unchanged hosted schema guard
-      run: 'git merge-base --is-ancestor dba3897cd2c03812985181ffa24e889e44259738 HEAD
+      run: 'git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+        git merge-base --is-ancestor dba3897cd2c03812985181ffa24e889e44259738 HEAD
 
         git merge-base --is-ancestor 6574fa71e9bbda501e161556dc2aa872920a4eb6 HEAD
 
