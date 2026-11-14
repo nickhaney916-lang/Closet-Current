@@ -109,7 +109,11 @@ async function preview(page,expected){
  await page.locator('#mission4Preview1054Section').waitFor();
  await page.locator('#mission4Preview1054Section button').click();
  await page.waitForFunction(()=>document.querySelectorAll(
-  '#mission4Preview1054Photos img').length===3,{timeout:20000});
+  '#mission4Preview1054Photos img').length===3||
+  document.querySelector('#mission4Preview1054Status')?.textContent.includes('Preview refused'),
+  null,{timeout:20000});
+ const refused=await page.locator('#mission4Preview1054Status').innerText();
+ assert.ok(!refused.includes('Preview refused'),'native preview explicitly REFUSED despite original-source preflight');
  const data=await page.locator('#mission4Preview1054Photos img').evaluateAll(nodes=>
   nodes.map(x=>({complete:x.complete,width:x.naturalWidth,source:x.getAttribute('src')})));
  assert.equal(data.length,3);
@@ -153,6 +157,28 @@ try{
     await page.waitForFunction(()=>window.closetAuth?.user?.id==='m4-A'&&db?.name==='closet-current-user-m4-A');
     debugStage='reload-native-board-with-reviewed-original';
     await page.waitForFunction(()=>typeof currentBoard!=='undefined'&&currentBoard.slots?.top==='m4-A-shirt');
+    // Call the SAME source-locked M4 preflight independently of UI. It is
+    // synthetic-only, read-only and returns only status/count or static error.
+    // If newly tightened M4 owner validation contradicts native auth fields,
+    // explain the contract rejection instead of a misleading 30s UI timeout.
+    debugStage='native-source-preflight';
+    const check=await page.evaluate(async()=>{
+     try{
+      const {preflightOwnedOutfit1054}=await import('../research/main-thread-integration-1054/source-to-outfit.mjs');
+      const output=await preflightOwnedOutfit1054({
+       getSession:currentPhotoOwnerSession167,
+       readOwnerItems:signedOwnerSavedRows167,
+       cleanBoard:cleanOutfitBoard,
+       board:structuredClone(currentBoard)
+      });
+      return {ok:true,count:output.slots.length,mode:output.status,
+       noPrivatePixels:JSON.stringify(output).includes('data:image')===false};
+     }catch(error){return {ok:false,reason:String(error?.message||error).slice(0,190)};}
+    });
+    console.log('MAIN1054_PUBLIC_SYNTHETIC_SOURCE_PREFLIGHT',JSON.stringify(check));
+    assert.equal(check.ok,true,'source-authenticated M4 private outfit preflight refused '+(check.reason||''));
+    assert.equal(check.count,3);
+    assert.equal(check.noPrivatePixels,true);
     debugStage='preview-click-and-private-photo-verification';
     await preview(page,3);
     const file=name+'-'+width+'-ownerA-preview.png';
