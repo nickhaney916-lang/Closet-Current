@@ -44,7 +44,7 @@ const sha=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA
  n=>n.toString(16).padStart(2,'0')).join('');
 let source=null,outline=null,image=null,root=null,candidate=null,current=null,bodies=[],
  sourceBodies=[],contacts=[],pose='source',angle=0,frames=0,errors=[],networkDenied=[],
- phase='loading',lastContact=null,shapeMeasured=null,lastRenderMs=0;
+ phase='loading',lastContact=null,shapeMeasured=null,lastRenderMs=0,rigid45Preview=null;
 const check=(bool,why)=>{if(!bool)throw Error(why);};
 const read=async url=>{
  const r=await fetch(url,{cache:'no-store'});
@@ -112,7 +112,72 @@ function render(){
  lastRenderMs=performance.now()-started;frames++;
  canvas.dataset.frames=String(frames);
 }
+/**
+ * The following preview is deliberately NON-CONSUMER and scoped to native
+ * localhost research. It only moves the original PHOTO skirt in body-local Z
+ * by +45mm to obtain genuine 2D pixel comparisons across camera angles.
+ *
+ * It is not a proposed fit: independent cloth back/drape, source dimensions,
+ * waist attachment, containment, physical phones and human visual quality
+ * are unverified. All original source garment positions, UV and skeletons
+ * are restored when the trial ends or an avatar unloads.
+ */
+function showOnlySourceRigidRegistration45(active,{draw=true}={}){
+ check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh,
+  'original authenticated source skirt required for research preview');
+ if(active){
+  check(!rigid45Preview,'one unpublished research photo-skirt preview at a time');
+  const original=candidate.mesh.geometry,
+   positions=original?.getAttribute('position'),
+   uv=original?.getAttribute('uv'),rest=original?.getAttribute('sourceSkirt89Rest');
+  check(positions?.count===343&&uv?.count===343&&rest?.count===343&&
+   original.index?.count===1728,'original source skirt topology wrong');
+  const snapshot=positions.array.slice(),uvSnapshot=uv.array.slice(),
+   originalRest=rest.array.slice(),sourceGeometry=original;
+  let copy=null;
+  try{
+   copy=original.clone();const translated=copy.getAttribute('position');
+   for(let i=0;i<translated.count;i++){
+    translated.setXYZ(i,positions.getX(i),positions.getY(i),positions.getZ(i)+.045);
+   }
+   translated.needsUpdate=true;
+   copy.computeVertexNormals();copy.computeBoundingSphere();copy.computeBoundingBox();
+   check(copy.getAttribute('uv').array.every((v,i)=>Object.is(v,uvSnapshot[i]))&&
+    copy.getAttribute('sourceSkirt89Rest').array.every((v,i)=>
+     Object.is(v,originalRest[i])),'source photo UV/rest buffer preview mutation');
+   candidate.mesh.geometry=copy;
+   rigid45Preview={sourceGeometry,copy,snapshot,uvSnapshot,originalRest};
+  }catch(e){
+   candidate.mesh.geometry=sourceGeometry;
+   copy?.dispose();throw e;
+  }
+ }else if(rigid45Preview){
+  const previous=rigid45Preview;rigid45Preview=null;
+  candidate.mesh.geometry=previous.sourceGeometry;
+  previous.copy.dispose();
+  check(previous.sourceGeometry.getAttribute('position').array.every((v,i)=>
+   Object.is(v,previous.snapshot[i]))&&
+   previous.sourceGeometry.getAttribute('uv').array.every((v,i)=>
+    Object.is(v,previous.uvSnapshot[i]))&&
+   previous.sourceGeometry.getAttribute('sourceSkirt89Rest').array.every((v,i)=>
+    Object.is(v,previous.originalRest[i])),
+   'original public photographed skirt source buffers not restored');
+ }
+ if(draw)render();
+ return Object.freeze({
+  status:active?'ORIGINAL_PHOTO_RIGID_45MM_STATIC_RESEARCH_PREVIEW_ONLY':
+   'ORIGINAL_LICENSED_PHOTO_SKIRT_FULLY_RESTORED',
+  researchOnlySourceSkirt45mmActive:!!rigid45Preview,
+  sourceOriginalPhotoRGBAndAlphaUntouched:true,
+  photoTextureUVAndOriginalRestGeometryUntouched:true,
+  garmentFrontAndRearAppearanceNotHumanApproved:true,
+  originalPhoto2DFallbackRequired:true,
+  independentPhysicalFitApproved:false,
+  consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 async function load(avatar){
+ if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});
  check(!!source&&!!image&&!!outline,'original public skirt not verified');
  check(Object.hasOwn(MODELS,avatar),'unsupported anatomical model');
  candidate?.dispose();candidate=null;
@@ -342,6 +407,8 @@ function getState(){return Object.freeze({
  originalAnatomicalRigReal:true,bones:candidate?.mesh?.skeleton?.bones?.length??0,
  attachedSkinnedMesh:!!candidate?.mesh?.isSkinnedMesh,
  sourcePhotoInferredBack:true,realWorldScaleMeasured:false,pose,angle,frames,
+ researchOnlySourceRigid45PreviewActive:!!rigid45Preview,
+ researchOnlySourceRigid45NotAnApprovedGarment:true,
  contact:lastContact,contactSamples:contacts.length,
  nativeWebGL2:!!renderer.getContext()&&renderer.capabilities.isWebGL2,
  lastRenderMs,sourcePhoto2DFallbackRequired:true,
@@ -350,9 +417,9 @@ function getState(){return Object.freeze({
  consumer3DAdmission:false,releaseAuthorized:false,familyAlpha:'HOLD',
  errors:errors.length
 });}
-function close(){candidate?.dispose();candidate=null;scene.remove(root);root=null;
+function close(){if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
