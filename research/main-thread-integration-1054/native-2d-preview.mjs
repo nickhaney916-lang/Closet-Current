@@ -5,6 +5,7 @@
  */
 import {preflightOwnedOutfit1054} from './source-to-outfit.mjs';
 import {jpegBytes,digestBytes} from '../../public/native-canonical-photo-source-167.mjs';
+import {assessPhoto3DResearchGate1054} from './photographed-3d-evidence-gate15.mjs';
 
 const fail=reason=>{throw Error('MAIN1054_PREVIEW '+reason);};
 const equalSession=(a,b)=>!!a&&!!b&&a.authenticated===true&&b.authenticated===true&&
@@ -76,6 +77,11 @@ export function mountOwnerOutfitPhotoPreview1054({
     assertActive(ticket,start);
     if(JSON.stringify(confirmed.slots)!==JSON.stringify(plan.slots))
      fail('private outfit changed during repeated verification');
+    // The actual native original JPEG outfit remains a 2D-only verified
+    // preview; Mission 2's disposable C60/C61 geometry cannot grant fitted 3D.
+    const research3D=assessPhoto3DResearchGate1054({plan:confirmed});
+    if(research3D.renderAuthorized3D!==false||research3D.releaseAuthorized!==false)
+     fail('unsafe sampled 3D research cannot authorize owner garment');
     const byId=new Map(rows.map(r=>[r.id,r]));
     const pinned=[];
     for(const slot of confirmed.slots){
@@ -121,13 +127,14 @@ export function mountOwnerOutfitPhotoPreview1054({
     }
     wrapper.append(grid);
     const foot=doc.createElement('p');
-    foot.textContent='3D fit not verified. No clothing photos or outfit records were changed.';
+    foot.textContent='3D fit not verified or authorized. Measured Mission 2 test cloth is not an owner-photo reconstruction; original photo 2D remains available. No clothing photos or outfits were changed.';
     wrapper.append(foot);
     assertActive(ticket,start);
     target.replaceChildren(wrapper);
     renderedSession=start;phase='visible';
     verified=Object.freeze({slotCount:pinned.length,presentationMode:'verified-original-photo-2d',
-     renderAuthorized3D:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+     renderAuthorized3D:false,releaseAuthorized:false,familyAlpha:'HOLD',
+     threeDResearchStatus:research3D.status});
    }catch(error){
     if(ticket===revision&&!closed){clear();phase='refused';}
     throw error;
