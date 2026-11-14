@@ -15,6 +15,8 @@ assert.match(codeCommit,/^[a-f0-9]{40}$/);
 const engineName=process.argv[2]||'webkit',target=Number(process.env.MAIN1054_TARGET||2);
 assert.ok(['webkit','chromium'].includes(engineName),'unsupported engine');
 assert.ok([2,4,8,16].includes(target),'only specified stage targets 2/4/8/16');
+const revocationMode=process.env.MAIN1054_REVOCATION_M27==='1';
+if(revocationMode)assert.equal(target,2,'M27 requires exactly two genuine source baseline photos');
 const runBudgetMs=Number(process.env.MAIN1054_RUN_BUDGET_MS||1200000);
 assert.ok(Number.isInteger(runBudgetMs)&&runBudgetMs>=120000&&runBudgetMs<=1800000,'bounded 2–30 minute research budget');
 await mkdir(out,{recursive:true});
@@ -69,6 +71,7 @@ window.stage1054=async({hash=true,segmented=false,owned=false,owner='owner-A',mo
  window.owner1054=window.owner1054||{id:owner};window.auth1054=window.auth1054||{user:window.owner1054};window.db1054=window.db1054||{name:'closet-current-user-'+owner};
  window.epoch1054='test-epoch-'+crypto.randomUUID();window.writes1054=0;
  window.mode1054=mode;window.hold1054=onHold;window.requests1054=0;window.effects1054=0;window.actual1054=null;window.workerError1054=null;
+ window.progressStages1054=[];window.currentProgress1054=null;
  const raw=window.publicPhoto1054,sha=window.publicSHA1054;
  const item={
   id:'owner-photo-1',ownerId:owner,image:raw,
@@ -93,6 +96,7 @@ window.stage1054=async({hash=true,segmented=false,owned=false,owner='owner-A',mo
   try{
    const {cpuBrowserRequest25}=await import('/m25/cpu-browser-request-m25.mjs');
    const output=await cpuBrowserRequest25(r,{...options,onProgress:stage=>{
+    window.currentProgress1054=stage;window.progressStages1054.push(stage);
     console.log('MASTER_REAL_MODEL_STAGE',String(stage).slice(0,90));
     options?.onProgress?.(stage);
    }});
@@ -130,7 +134,7 @@ window.result1054=()=>({
 /** Continuous native editor, REAL pinned q8 models, no private account or save.
  * A crash is a legitimate OBSERVED FAILURE of release acceptance, not an
  * excuse to report a successful 16-photo run. Never infer OOM from a crash. */
-const results=[],requests=[],pageErrors=[],consoleErrors=[],modelStages=[];
+const results=[],requests=[],pageErrors=[],consoleErrors=[],modelStages=[],revocationCases=[];
 const events={workerCreated:0,workerTerminated:0,pageCrash:0,pageClosed:0,browserDisconnected:0};
 const startTime=Date.now(),failures=[];
 let browser,page,context,browserServer,intentionalShutdown=false;
@@ -156,7 +160,8 @@ const emit=async()=>{
  const completed=results.length;
  const state={
   schema:'main1054-m25-native-owner-review-cpu-only-wasm-v1',
-  status:completed===target&&!failures.length?'COMPLETE_OBSERVED':'BLOCKED_INCOMPLETE',
+  status:completed===target&&!failures.length&&(!revocationMode||revocationCases.length===4)?'COMPLETE_OBSERVED':'BLOCKED_INCOMPLETE',
+  ...(revocationMode?{revocationMode:'m27-native-inflight-revocation',revocationCases}:{}),
   engine:engineName,browserPlatform:'GitHub Actions ubuntu-24.04 desktop',
   session:'one-continuous-browser-one-page-sequential-disposable-workers',
   codeCommit,workerSourceCodeSha256:results[0]?.workerSourceCodeSha256||null,
@@ -333,6 +338,105 @@ try{
    rssMeasured:memorySamples>0,autoSaves:0}));
   if([2,4,8,16].includes(attempt))await emit();
  }
+
+ if(revocationMode&&!page?.isClosed()&&!failures.length){
+  // Actual research worker is interrupted AFTER it has begun running the
+  // first genuine pretrained model, not merely before a worker is created.
+  for(const kind of ['cancel','owner','lock','source']){
+   try{
+    const id=revocationCases.length%photos.length,photo=photos[id];
+    await page.evaluate(p=>{
+     window.mounted1054?.close();
+     window.owner1054={id:'owner-A'};
+     window.auth1054={user:window.owner1054};
+     window.db1054={name:'closet-current-user-owner-A'};
+     window.publicPhoto1054=p.image;window.publicSHA1054=p.sourceSHA256;
+    },photo);
+    const mounted=await page.evaluate(()=>window.stage1054());
+    assert.equal(mounted.mounted,true,'revocation scenario must use the real owner-native editor');
+    const beforeCreated=events.workerCreated,beforeTerminated=events.workerTerminated;
+    await page.getByRole('checkbox',{name:/I consent to a local two-model/}).check();
+    await page.getByRole('checkbox',{name:/One garment is isolated/}).check();
+    await page.getByRole('button',{name:'Compare with two models'}).click();
+    await page.waitForFunction(()=>
+     window.progressStages1054?.includes('Comparing first model')||window.workerError1054!==null,
+     null,{timeout:180000});
+    const initial=await page.evaluate(()=>({
+     progress:window.progressStages1054?.includes('Comparing first model')===true,
+     draftBefore:window.draft1054.itemType,
+     workerError:window.workerError1054,
+     priorModelResult:window.actual1054!==null
+    }));
+    assert.equal(initial.progress,true,'real first-model inference never began');
+    assert.equal(initial.workerError,null,'worker already failed before cancellation');
+    assert.equal(initial.priorModelResult,false,'model returned before interruption');
+    if(kind==='cancel'){
+     await page.getByRole('button',{name:'Cancel comparison'}).click();
+    }else{
+     await page.evaluate(k=>{
+      window.revoke1054(k);
+      if(k==='owner'||k==='source')window.dispatchEvent(new Event('focus'));
+     },kind);
+    }
+    await page.waitForFunction(()=>window.workerError1054!==null,null,{timeout:15000});
+    const deadline=Date.now()+6000;
+    while(events.workerTerminated<beforeTerminated+1&&Date.now()<deadline)
+     await new Promise(resolve=>setTimeout(resolve,150));
+    await new Promise(resolve=>setTimeout(resolve,1200));
+    const after=await page.evaluate(async()=>{
+     const original=window.item1054.originalPhoto.image;
+     const bytes=Uint8Array.from(atob(original.split(',')[1]),c=>c.charCodeAt(0));
+     const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+      .map(x=>x.toString(16).padStart(2,'0')).join('');
+     return {observedOriginalSHA256:digest,
+      workerError:window.workerError1054,
+      draftTypeAfter:window.draft1054.itemType,
+      itemSavedType:window.item1054.itemType,
+      ownerApprovalChecked:window.ack1054.checked,
+      privateWrites:window.writes1054,
+      automaticAdmissions:0,
+      lateModelResultApplied:window.actual1054!==null,
+      comparisonPanelPresent:!!document.querySelector('[data-dual82]')
+     };
+    });
+    const row={kind,id:photo.id,
+     firstModelProgressObserved:initial.progress,
+     workerCreatedDelta:events.workerCreated-beforeCreated,
+     workerTerminatedDelta:events.workerTerminated-beforeTerminated,
+     observedCancelError:after.workerError,
+     observedOriginalSHA256:after.observedOriginalSHA256,
+     draftTypeBefore:initial.draftBefore,
+     draftTypeAfter:after.draftTypeAfter,
+     itemSavedType:after.itemSavedType,
+     ownerApprovalChecked:after.ownerApprovalChecked,
+     privateWrites:after.privateWrites,
+     automaticAdmissions:after.automaticAdmissions,
+     lateModelResultApplied:after.lateModelResultApplied,
+     comparisonPanelPresent:after.comparisonPanelPresent};
+    assert.equal(row.workerCreatedDelta,1,'one new genuine inference worker per revocation');
+    assert.equal(row.workerTerminatedDelta,1,'cancellation must terminate the worker');
+    assert.equal(row.observedCancelError,'P82_CANCELLED','request was not cancelled');
+    assert.equal(row.observedOriginalSHA256,photo.sourceSHA256,'original photo must remain byte identical');
+    assert.equal(row.draftTypeBefore,'Unknown');
+    assert.equal(row.draftTypeAfter,'Unknown');
+    assert.equal(row.itemSavedType,'Unknown');
+    assert.equal(row.ownerApprovalChecked,false);
+    assert.equal(row.privateWrites,0);
+    assert.equal(row.lateModelResultApplied,false,'late worker response leaked into editor');
+    assert.equal(row.comparisonPanelPresent,kind==='cancel');
+    revocationCases.push(row);
+    console.log('MAIN1054_M27_CPU_INFLIGHT_REVOKED',JSON.stringify({
+     case:kind,source:photo.id,workerCreated:row.workerCreatedDelta,
+     workerTerminated:row.workerTerminatedDelta,ownerWrites:row.privateWrites}));
+    await page.evaluate(()=>window.mounted1054?.close());
+   }catch(error){
+    failures.push({category:'M27_INFLIGHT_REVOCATION_FAILURE',kind,
+     message:String(error?.message||error).slice(0,350)});
+    console.log('MAIN1054_M27_REVOCATION_FAILURE',JSON.stringify(failures.at(-1)));
+    break;
+   }
+  }
+ }
  if(!page?.isClosed()&&!failures.length){
   await page.evaluate(()=>window.revoke1054('lock'));
   assert.equal(await page.locator('[data-dual82]').count(),0);
@@ -361,6 +465,7 @@ try{
   checkpoints:state.gateCounts,failures:state.failures.length,
   status:state.status,releaseReady:false,physicalIPhone:false,
   pageCrashEvents:events.pageCrash,workerEvents:events.workerCreated,
-  observedMemoryRSS:memorySamples>0}));
+  observedMemoryRSS:memorySamples>0,
+  m27Revocations:revocationMode?revocationCases.length:null}));
  await new Promise(resolve=>server.close(resolve));
 }
