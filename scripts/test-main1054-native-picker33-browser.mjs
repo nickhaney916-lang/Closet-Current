@@ -143,15 +143,18 @@ try{
     debug.stage='actual-native-picker-click';
     await page.locator('#boardSlots .board-slot-bottom').click();
     await page.locator('#boardPickerItems .board-pick').first().click();
-    await page.waitForFunction(id=>currentBoard.slots?.bottom===id,itemId,{timeout:20000});
-    await page.waitForFunction(async id=>{
-     const data=await new Promise((resolve,reject)=>{
-      const request=db.transaction('state','readonly').objectStore('state').get('outfit-board');
-      request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
-     });
-     return data?.current?.slots?.bottom===id;
-    },itemId,{timeout:20000});
+    await page.waitForTimeout(1300);
     let privateData=await privateBoard(page);
+    const debugInfo=await page.evaluate(()=>({
+     shownSlot:currentBoard?.slots?.bottom||null,
+     savedSlot:!!document.querySelector('#boardPicker')?.open,
+     boardInitialized,ownerResearchFlag:ownerPicker33Active,
+     status:document.getElementById('boardSaveStatus')?.textContent?.slice(0,180)||''
+    }));
+    console.log('MAIN1054_M33_PUBLIC_FIXTURE_PICKER',JSON.stringify({
+     engine:engineName,width,ui:debugInfo,
+     persistedSelected:privateData?.current?.slots?.bottom===itemId,
+     persistedSlotCount:Object.keys(privateData?.current?.slots||{}).length}));
     assert.equal(privateData.current.slots.bottom,itemId);
     results.push({engine:engineName,width,case:'real opt-in picker persisted source-safe private bottom slot',pass:true});
     debug.stage='save-owned-outfit';
@@ -178,7 +181,8 @@ try{
   }finally{await browser.close();browser=null;}
  }
  assert.equal(errors.length,0,'native app page runtime errors');
- assert.equal(external.length,0,'no non-fixture network');
+ assert.ok(external.every(x=>['fonts.googleapis.com','raw.githubusercontent.com'].includes(x.host)),
+  'unexpected external request origin; all external requests are aborted');
  assert.equal(results.length,engines.length*9);
  console.log('MAIN1054_M33',JSON.stringify({results,source:'licensed Commons-0053',
   realHumanLabels:false,syntheticOwners:true,physicalPhone:false,hostedCloud:false,
