@@ -159,14 +159,25 @@ try{
     results.push({engine:engineName,width,case:'real opt-in picker persisted source-safe private bottom slot',pass:true});
     debug.stage='save-owned-outfit';
     await page.locator('#saveBoard').click();
-    await page.waitForFunction(async()=>{
-     const data=await new Promise((resolve,reject)=>{
-      const request=db.transaction('state','readonly').objectStore('state').get('outfit-board');
-      request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
-     });
-     return data?.saved?.length===1;
-    },null,{timeout:20000});
-    privateData=await privateBoard(page);
+    let outcomeStatus='';
+    for(let spin=0;spin<50;spin++){
+     await page.waitForTimeout(200);
+     privateData=await privateBoard(page);
+     outcomeStatus=await page.locator('#boardSaveStatus').innerText();
+     if(privateData?.saved?.length===1||outcomeStatus.includes('Could not save'))break;
+    }
+    const sourceGateDebug=privateData?.saved?.length===1?null:await page.evaluate(async()=>{
+     try{
+      const gate=await ownerPicker33Gate();
+      try{await gate.prepareWrite(currentBoard);return 'preflight-accepted';}
+      catch(e){return String(e?.message||e).slice(0,140);}
+      finally{gate.dispose();}
+     }catch(e){return String(e?.message||e).slice(0,140);}
+    });
+    console.log('MAIN1054_M33_PUBLIC_FIXTURE_SAVE',JSON.stringify({
+     engine:engineName,width,persistedSaved:privateData?.saved?.length||0,
+     status:outcomeStatus.slice(0,160),preflight:sourceGateDebug
+    }));
     assert.equal(privateData.saved.length,1);
     results.push({engine:engineName,width,case:'real native saved outfit passed atomic source row CAS',pass:true});
     debug.stage='tamper-source-and-resave-veto';
