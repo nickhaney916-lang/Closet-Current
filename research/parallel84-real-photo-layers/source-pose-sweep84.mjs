@@ -27,18 +27,22 @@ const base=Object.freeze({
 const failed=reason=>Object.freeze({...base,status:'UNVERIFIED_FAIL_CLOSED',
  reason,actualPoseAuditCompleted:false,poseResults:[]});
 const finite=n=>typeof n==='number'&&Number.isFinite(n);
-const clean=source=>Array.isArray(source)&&source.length&&source.every(m=>
- m?.isSkinnedMesh&&m.skeleton?.bones?.length===163&&m.geometry?.index?.count>0);
+const clean=source=>Array.isArray(source)&&source.length&&source.every(m=>{
+  const g=m?.geometry,count=g?.index?.count??g?.getAttribute('position')?.count;
+  return m?.isSkinnedMesh&&m.skeleton?.bones?.length===163&&
+   Number.isSafeInteger(count)&&count>=3&&count%3===0;
+ });
 const meshSnapshot=meshes=>meshes.map(m=>({
  m,geometry:m.geometry,index:m.geometry.index,material:m.material,
- indices:m.geometry.index.array.slice(),
+ indices:m.geometry.index?.array.slice()??null,
  attrs:Object.entries(m.geometry.attributes).map(([name,attr])=>({
   name,attr,old:attr.array.slice()
  }))
 }));
 const unchanged=parts=>parts.every(({m,geometry,index,material,indices,attrs})=>
  m.geometry===geometry&&m.geometry.index===index&&m.material===material&&
- index.array.length===indices.length&&indices.every((v,i)=>v===index.array[i])&&
+ (index?(indices!==null&&index.array.length===indices.length&&
+   indices.every((v,i)=>v===index.array[i])):indices===null)&&
  attrs.every(({name,attr,old})=>
   m.geometry.getAttribute(name)===attr&&attr.array.length===old.length&&
   old.every((v,i)=>Object.is(v,attr.array[i]))));
