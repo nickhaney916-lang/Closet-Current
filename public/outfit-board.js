@@ -11,6 +11,10 @@ let boardExpectedStoredDraft='null',boardConflictDraft=null;
  // The default app keeps its existing behavior until independent acceptance.
  const ownerPicker33Active=!nativeLossless04Active&&typeof URLSearchParams==='function'&&
   typeof location!=='undefined'&&new URLSearchParams(location.search).get('ownerPicker33')==='research';
+ // M34 is a SECOND explicit opt-in. Older M33 and normal owner workflow
+ // retain their exact behavior; never force a large roster scan on default UI.
+ const ownerRevision34Active=ownerPicker33Active&&
+  new URLSearchParams(location.search).get('ownerRevision34')==='research';
  let ownerPicker33Serial=0;
  // Observes the local UI roster; not a durable cross-tab database revision.
  // Each M33 write also compares the complete private owner row atomically.
@@ -34,6 +38,7 @@ let boardExpectedStoredDraft='null',boardConflictDraft=null;
   return mod.createNativeOutfitPicker33({
    getSession:currentPhotoOwnerSession167,
    getRevision:ownerPicker33Revision,getBoard:()=>currentBoard,
+   durableRoster34:ownerRevision34Active,
    readOwnerItems:async scope=>{
     scope.assertCurrent();
     const rows=await readAllFrom(scope.privateDbRef);
@@ -273,6 +278,16 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
        candidate&&(!expected||!actual||expected.length!==actual.length||
          !expected.every((v,i)=>v===actual[i])))
      throw outfitWardrobeChanged();
+   }catch(error){failure=error;tx.abort();}};
+  }
+  if(proof33?.durableContentChecked){
+   // This read and the outfit state put share one exclusive IDB transaction.
+   // Every item—including unrelated rows and source edits by another tab—
+   // must equal the last preverified durable private wardrobe snapshot.
+   const roster=tx.objectStore('items').getAll();
+   roster.onsuccess=()=>{try{
+    assertOwner();proof33.assertCurrent();
+    if(!proof33.matchesRoster(roster.result))throw outfitWardrobeChanged();
    }catch(error){failure=error;tx.abort();}};
   }
   const request=store.get('outfit-board');
