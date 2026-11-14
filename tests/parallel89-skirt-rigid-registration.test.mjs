@@ -50,7 +50,9 @@ function run(x,mode='reduce',overrides={}){
    else if(changed&&mode==='introduce')pairs=['0|45','1|58','3|99','5|108'];
    else if(changed&&mode==='depth')pairs=['0|45'];
    return {count:pairs.length,pairs:new Set(pairs),
-    maxDepth:changed&&mode==='depth'?.02:.001};
+    maxDepth:changed&&mode==='depth'?.02:.001,trueOriginalSkirtTriangleIndexStable:true,
+    trueOriginalBodyTriangleIndexStable:true,
+    originalFaceSourceResolution:'BVH_INDIRECT_RESOLVED_ORIGINAL_TRIANGLE_INDICES'};
   },
   ...overrides
  });
