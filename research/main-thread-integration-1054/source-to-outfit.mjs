@@ -4,6 +4,8 @@
  * Hand off actual owned board slots to a source-honest 2D-only decision.
  * A later Mission 2 adapter must independently prove photographed geometry,
  * collisions, both rigs and source continuity before 3D can be authorized.
+ * Same-owner re-login is NOT the same authentication session: identity-pin
+ * real auth/DB references and capture generation around every asynchronous read.
  */
 import {buildOwnerWardrobeIndex} from '../../public/native-owner-wardrobe-index-167.mjs';
 import {jpegBytes,digestBytes} from '../../public/native-canonical-photo-source-167.mjs';
@@ -13,16 +15,38 @@ const SHA=/^[0-9a-f]{64}$/;
 const issue=reason=>{throw Error('MAIN1054 '+reason);};
 const validId=id=>typeof id==='string'&&id.trim()===id&&id.length>0&&id.length<=200;
 
+// M12: the native Style original-photo session already pins auth object,
+// private IndexedDB handle and capture generation (Mission 3 #1100/#1104).
+// Owner ID, persisted token epoch and DB *name* can survive same-owner re-login.
+// This research handoff must reject a different live session across awaits.
+const reference=x=>x!==null&&(typeof x==='object'||typeof x==='function');
+const generation=x=>(typeof x==='number'&&Number.isSafeInteger(x)&&x>=0)||
+  (typeof x==='string'&&x.length>=8&&x.length<=160);
 function active(getSession){
- const s=typeof getSession==='function'&&getSession();
- if(!s||s.authenticated!==true||typeof s.ownerId!=='string'||!s.ownerId||
-   !((typeof s.epoch==='string'&&s.epoch.length>=8&&s.epoch.length<=160)||
-     (typeof s.epoch==='number'&&Number.isSafeInteger(s.epoch)&&s.epoch>=0))||
-   s.privateDbName!=='closet-current-user-'+s.ownerId)
+ let s;
+ try{s=typeof getSession==='function'&&getSession();}catch{
   issue('signed owner session and private database required');
- return Object.freeze({ownerId:s.ownerId,epoch:s.epoch,privateDbName:s.privateDbName});
+ }
+ if(!s||s.authenticated!==true||typeof s.ownerId!=='string'||!s.ownerId||
+   !generation(s.epoch)||
+   s.privateDbName!=='closet-current-user-'+s.ownerId||
+   !reference(s.authRef)||!reference(s.privateDbRef)||
+   s.authRef.user?.id!==s.ownerId||
+   s.privateDbRef.name!==s.privateDbName||
+   !generation(s.operationEpoch))
+  issue('signed owner session and private database required');
+ try{s.authRef.assertCurrent?.();}catch{
+  issue('signed owner session and private database required');
+ }
+ // Return object references only in ephemeral local lease; never in result,
+ // logs, saved wardrobe, model inference or any hosted network payload.
+ return Object.freeze({ownerId:s.ownerId,epoch:s.epoch,
+  privateDbName:s.privateDbName,authRef:s.authRef,
+  privateDbRef:s.privateDbRef,operationEpoch:s.operationEpoch});
 }
-const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&a.privateDbName===b.privateDbName;
+const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&
+ a.privateDbName===b.privateDbName&&a.authRef===b.authRef&&
+ a.privateDbRef===b.privateDbRef&&a.operationEpoch===b.operationEpoch;
 function assertLive(getSession,before){
  if(!same(before,active(getSession)))issue('owner session changed');
 }
