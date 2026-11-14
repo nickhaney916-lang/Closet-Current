@@ -18,7 +18,7 @@ const blocked=new Set(['repeat','result','failureClass','completedPhotos','lastP
  'requestFailures','consoleErrors','device']);
 const stageKeys=new Set(['verifying','first','second','onnxInvoked']);
 const stageSet=new Set(['NONE',...stageKeys]);
-const failSet=new Set(['MODEL_WORKER_REPORTED_FAILURE','BROWSER_TIMEOUT','SOURCE_OR_OWNER_ACCEPTANCE_FAILURE']);
+const failSet=new Set(['MODEL_WORKER_REPORTED_FAILURE','BROWSER_TIMEOUT','SOURCE_OR_OWNER_ACCEPTANCE_FAILURE','HARNESS_INSTRUMENTATION_SETUP_FAILURE']);
 const ids=new Set(['NONE','UNKNOWN','commons-0035','commons-0062','commons-0078','commons-0059']);
 export function auditRepeatedWebkitHTTPS34(report,{commit}={}){
  const issues=[],check=(flag,label)=>{if(!flag)issues.push(label);};
