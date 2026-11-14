@@ -20,8 +20,23 @@ page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});
 try{
  await page.goto(pathToFileURL(resolve(out,'offline-human-contour-editor.html')).href);
- await page.waitForFunction(()=>window.M43_RESEARCH_TEST?.state().ready,
-  null,{timeout:30000});
+ try{
+  await page.waitForFunction(()=>window.M43_RESEARCH_TEST?.state().ready,
+   null,{timeout:30000});
+ }catch(error){
+  const diagnostic=await page.evaluate(()=>({
+   text:document.getElementById('status')?.textContent?.slice(0,500),
+   annotated:typeof window.M43_RESEARCH_TEST,
+   sources:!!window.M43_ORIGINAL_LICENSED_SOURCES,
+   sourceDataLength:window.M43_ORIGINAL_LICENSED_SOURCES?.p93?.length||0,
+   allScripts:[...document.scripts].map(s=>s.src||'(inline)')
+  })).catch(e=>({evaluationFailed:String(e)}));
+  console.error('MAIN43_BROWSER_INITIALIZATION_DIAGNOSTIC',
+   JSON.stringify({engine,diagnostic,errors,consoleErrors,network}));
+  await page.screenshot({path:resolve(out,engine+'-source-editor-startup-BLOCKED.png'),
+   fullPage:false}).catch(()=>{});
+  throw error;
+ }
  assert.match(await page.locator('.warn').innerText(),/FAMILY ALPHA HOLD/);
  const before=await page.evaluate(()=>window.M43_RESEARCH_TEST.state());
  assert.equal(before.ready,true);
