@@ -147,7 +147,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
     bone.push(pelvis,0,0,0);weights.push(1,0,0,0);
     // Front only carries photo RGB. Source background alpha remains transparent.
     uv.push(outline.crop[0]+(x+1)*.5*outline.crop[2],
-      1-outline.crop[1]-(1-t)*outline.crop[3]);
+      1-outline.crop[1]-t*outline.crop[3]);
     if(ri<heights.length-1&&j<segments){
      const p=ri*(segments+1)+j,q=p+segments+1;
      const offset=tris.length;tris.push(p,p+1,q,p+1,q+1,q);
