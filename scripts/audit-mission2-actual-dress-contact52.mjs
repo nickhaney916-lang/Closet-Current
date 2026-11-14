@@ -1065,3 +1065,72 @@ if(process.env.PHOTO_DRESS_FINE64==='1'){
  console.log('M2_C64_REAL_LICENSED_SOURCE_FINE_LOCAL_CONTACT_RESULT',
   JSON.stringify(sourceFine));
 }
+
+if(process.env.PHOTO_DRESS_POSE65==='1'){
+ assert.equal(process.env.PHOTO_DRESS_FINE64,'1',
+  'C65 independently sampled original source intermediate arm fit demands previous exact C64 photo shape/contact evidence');
+ const evidence=receipts.map(r=>{
+  assert.equal(r.authenticOriginalSourceArmIntermediateSampleBudgetComplete65,true);
+  assert.equal(r.noOriginalClothingPhotoOrSourceSkinnedMeshWrites65,true);
+  assert.equal(r.noSweptClothMotionSafetyOrHumanPhotorealismCertified65,true);
+  const s=r.originalArticulatedContactReceipt58.originalPhotoArmTransitionSamples65;
+  assert.equal(s.schema,'M2-C65-original-public-photo-discrete-intermediate-arm-poses');
+  assert.equal(s.genuineSignedSource163BoneArmCount,2);
+  assert.equal(s.intermediateOriginalSourcePoseSamples,6);
+  assert.equal(s.sourceGarmentOriginalFaceCount,r.originalSourceFaces);
+  assert.deepEqual(s.sampledFractionsPerArm,[.25,.5,.75]);
+  assert.equal(s.intermediateSamples.length,6);
+  assert.equal(s.noIntermediateClothVerticesOrFaceIDsExported,true);
+  assert.equal(s.originalPhotographedGarmentAndSkeletonNeverChanged,true);
+  assert.equal(s.sourcePhotoOriginalUVRestSkinAndJPEGUnchanged,true);
+  assert.equal(s.onlyDiscreteContactSamplesNotSweptContinuousMotion,true);
+  assert.equal(s.neverApproveOwnerPhotoReconstructionOrPhotorealism,true);
+  assert.equal(s.noPhysicalAndroidOrIPhoneDeviceVerified,true);
+  assert.equal(s.releaseAuthorized,false);
+  for(const x of s.intermediateSamples){
+   assert.equal(x.originalSignedSourceGarmentFaces,r.originalSourceFaces);
+   assert.equal(x.sourcePhotoOriginalBodyAndSelfContactBudgetsComplete,true);
+   assert.equal(x.noSourceOriginalOr163BoneRigWritten,true);
+   assert.ok(x.maximumTemporaryWorldDisplacementMeters<=.005002);
+   assert.equal(x.releaseAuthorized,false);
+  }
+  assert.equal(s.remainingSourceBodyStrictPairWitnessesAcrossIntermediatePoses,
+   s.intermediateSamples.reduce((n,x)=>n+x.fittedSourceBodyStrictPairWitnesses,0));
+  assert.equal(s.everySampledPoseOriginalPhotoFaceShapeAndStrictContactPass,
+   s.intermediateSamples.every(x=>x.sourcePhotoClothFaceShapePass&&
+    x.fittedSourceBodyStrictPairWitnesses===0&&
+    x.fittedSourceSelfStrictPairWitnesses===0));
+  return s;
+ });
+ for(const e of evidence.slice(1))assert.deepEqual(e,evidence[0],
+  'C65 genuine signed 163-bone source dress intermediate body/cloth fit must not change across 320/390/430 px screenshots');
+ const s=evidence[0];
+ const summary={
+  schema:'M2-C65-original-licensed-163bone-discrete-arm-pose-strict-fit-check',
+  originalSourceSHA:'e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',
+  originalPublicPhotoClothSource:'P61-P175-commons-0053',
+  originalPhotographedDressFaces:first.originalSourceFaces,
+  authenticatedMobileWidthWebGLScreens:[320,390,430],
+  realAdditionalArmPoseSamples:6,
+  originalNeutralAndFullArmPosesFromC64:3,
+  sourceArmFractionsPerArm:[.25,.5,.75],
+  originalSourcePoseEvidence:s.intermediateSamples,
+  everyAdditionalSampledPosePassedShapeAndStrictBodySelfContact:
+   s.everySampledPoseOriginalPhotoFaceShapeAndStrictContactPass,
+  remainingStrictBodyPairWitnessesAcrossIntermediatePoses:
+   s.remainingSourceBodyStrictPairWitnessesAcrossIntermediatePoses,
+  anyIntermediateOriginalPhotoShapeFailure:
+   s.anyIntermediatePhotoStrainThresholdFailed,
+  noOriginalImageGarmentSkeletonOrVertexAttributesModified:true,
+  noActualPhotographicGarmentFitRendered:true,
+  noHumanPhotorealismOrOwnerSourceReconstructionApproval:true,
+  NO_CONTINUOUS_TIME_SWEPT_CLOTH_COLLISION_CERTIFICATE:true,
+  noPhysicalAndroidIPhoneAcceptance:true,
+  noProductionStagingSupabaseOrOwnerWardrobeChanges:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-arm-transition-contact65.json',
+  JSON.stringify(summary,null,2)+'\n');
+ console.log('M2_C65_REAL_LICENSED_ORIGINAL_ARM_TRANSITION_SAMPLE_RESULTS',
+  JSON.stringify(summary));
+}
