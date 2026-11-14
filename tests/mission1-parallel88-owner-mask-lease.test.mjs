@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {createHash} from 'node:crypto';
 import * as segmentation from '../public/outfit-segmentation.mjs';
+import * as unit70 from '../public/outfit-unit-reconciliation-70.mjs';
 import * as trial from '../public/outfit-instance-review-840.mjs';
 
 const workerSource=fs.readFileSync('public/outfit-worker.mjs','utf8');
@@ -496,4 +497,130 @@ test('P88 missing-category caution is flag-gated and legacy outfit completion te
  assert.doesNotMatch(h.node('outfitSplitStatus').textContent,/tentative clothing regions|watches/);
  assert.doesNotMatch(h.node('outfitSaveStatus').textContent,/watches|missing items/);
  assert.equal(h.c.items.length,0);
+});
+
+function unitDecisionHarness88({ownerId='owner-A',sourceId='src-A',apiPromise=null,queueBeforeWrite=null}={}){
+ const begin=captureSource.indexOf('function unit70Owner(){');
+ const end=captureSource.indexOf('function renderOutfitCapture(){',begin);
+ assert.ok(begin>=0&&end>begin,'native P88 owner decisions are source-executed');
+ const initialOwner={id:ownerId};
+ const ownerDraft=(id,source=sourceId,owner=ownerId)=>({
+  id,outfitSourceId:source,category:'Shoes',itemType:'',image:'data:image/jpeg;base64,U0hPRQ==',
+  reconciliation70Status:'unresolved',segmentHint:{categories:['Shoes'],clipped:false},
+  reconciliation70:{ownerId:owner,sourceSha256:'a'.repeat(64),
+   maskSha256:(id==='part-A'?'b':'c').repeat(64)}
+ });
+ const dom={hidden:true,children:[],replaceChildren(){this.children=[]},prepend(x){this.children.unshift(x)}};
+ const c={
+  window:{closetAuth:{user:initialOwner}},outfitActiveId:sourceId,
+  batch:[ownerDraft('part-A')],items:[],outfitUnits70:true,
+  outfitUnit70Error:'',unit70Api:apiPromise||Promise.resolve(unit70),
+  structuredClone,captureOwner88:()=>c.window.closetAuth?.user||null,
+  db:{transaction(){const tx={
+   objectStore(){return {put(value){c.storageWrites.push(value);Promise.resolve().then(()=>tx.oncomplete?.())}}},
+   oncomplete:null,onerror:null,onabort:null
+  };return tx}},
+  storageWrites:[],queuedCalls:0,renderCalls:0,captureRenders:0,
+  queued:async task=>{c.queuedCalls++;if(queueBeforeWrite)await queueBeforeWrite;return task()},
+  render(){c.renderCalls++},renderOutfitCapture(){c.captureRenders++},
+  candidate(){throw Error('unexpected unpair candidate')},
+  document:{
+   getElementById:id=>id==='outfitUnitReview70'?dom:null,
+   createElement:()=>({textContent:'',setAttribute(){}})
+  },
+  apiPanelCallbacks:null,
+  extraDom:dom
+ };
+ if(!apiPromise)c.unit70Api=Promise.resolve({
+  ...unit70,renderUnitReview70(_target,callbacks){c.apiPanelCallbacks=callbacks;}
+ });
+ vm.createContext(c);vm.runInContext(captureSource.slice(begin,end),c);
+ return {c,ownerDraft,originalOwner:initialOwner,dom};
+}
+test('P88 physical owner keep decision persists only to same exact signed session and original outfit',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ await vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites.length,1);
+ assert.equal(c.storageWrites[0].batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites[0].batch[0].reconciliation70.ownerId,'owner-A');
+ assert.equal(c.renderCalls,1);
+ assert.equal(c.items.length,0);
+});
+test('P88 physical unit decision cannot cross an asynchronous API import into replaced same-ID session',async()=>{
+ let resolveApi;
+ const pendingApi=new Promise(resolve=>{resolveApi=resolve;});
+ const h=unitDecisionHarness88({apiPromise:pendingApi}),c=h.c;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ c.window.closetAuth.user={id:'owner-A'};
+ resolveApi(unit70);
+ await pending;
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved');
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.queuedCalls,0);
+ assert.equal(c.renderCalls,0);
+});
+test('P88 stale Review-panel callbacks do not authorize a replaced same-ID login',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ vm.runInContext('renderUnit70Panel()',c);
+ for(let i=0;i<5;i++)await Promise.resolve();
+ assert.ok(c.apiPanelCallbacks,'real Review panel captured the source owner lease');
+ c.window.closetAuth.user={id:'owner-A'};
+ await c.apiPanelCallbacks.onKeep(['part-A']);
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved');
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.queuedCalls,0);
+});
+test('P88 stale Review-panel callbacks cannot apply to another outfit source',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ vm.runInContext('renderUnit70Panel()',c);
+ for(let i=0;i<5;i++)await Promise.resolve();
+ assert.ok(c.apiPanelCallbacks);
+ c.outfitActiveId='src-B';
+ await c.apiPanelCallbacks.onKeep(['part-A']);
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved');
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.queuedCalls,0);
+});
+test('P88 asynchronous panel import cannot paint old-owner garments after account changes',async()=>{
+ let resolveApi;
+ const pendingApi=new Promise(resolve=>{resolveApi=resolve;});
+ let painted=0;
+ const h=unitDecisionHarness88({apiPromise:pendingApi}),c=h.c;
+ vm.runInContext('renderUnit70Panel()',c);
+ c.window.closetAuth.user={id:'owner-A'};
+ resolveApi({...unit70,renderUnitReview70(){painted++}});
+ for(let i=0;i<8;i++)await Promise.resolve();
+ assert.equal(painted,0);
+ assert.equal(c.window.ownerMaySaveUnit70,undefined);
+ assert.equal(c.storageWrites.length,0);
+});
+test('P88 queued cloud-beforeWrite authorization is checked again before IDB draft mutation',async()=>{
+ let release;
+ const blocked=new Promise(resolve=>{release=resolve;});
+ const h=unitDecisionHarness88({queueBeforeWrite:blocked}),c=h.c;
+ const original=c.batch;
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let i=0;i<8;i++)await Promise.resolve();
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed',
+  'candidate stays only in memory while queued beforeWrite runs');
+ assert.equal(c.storageWrites.length,0);
+ c.window.closetAuth.user={id:'owner-B'};
+ release();
+ await pending;
+ assert.equal(c.storageWrites.length,0,'old signed source never writes after queue await');
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved','revoked in-memory decision rolled back');
+ assert.equal(c.batch[0].id,original[0].id);
+ assert.equal(c.renderCalls,0);
+});
+test('P88 current owner cannot claim a separate source/photo or a different owner reconciliation',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ c.batch.push(h.ownerDraft('part-B','src-other','owner-A'));
+ c.batch.push(h.ownerDraft('part-C','src-A','owner-B'));
+ await vm.runInContext("updateUnit70('keep',['part-B'])",c);
+ await vm.runInContext("updateUnit70('keep',['part-C'])",c);
+ assert.ok(c.batch.every(x=>x.reconciliation70Status==='unresolved'));
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.queuedCalls,0);
+ assert.ok(c.captureRenders>=2,'error stays on actual owner Review panel');
 });
