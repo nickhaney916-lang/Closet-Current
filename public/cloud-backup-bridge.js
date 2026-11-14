@@ -123,7 +123,14 @@ function nativeLossless04RestoreSafe(){
    const bridge=await mountOwnerReviewedCloud146({
     auth:initialAuth,db:ownerDB,onRestored:()=>restored()
    });
-   assertLease();
+   // P146 creates owner-private DOM and attaches Auth listeners before its
+   // async factory resolves. Revoke that stale UI after account switches,
+   // including a same-owner re-login with a different auth generation.
+   try{assertLease();}
+   catch(error){
+    try{bridge?.revoke?.();}catch{}
+    throw error;
+   }
    window.ownerReviewedCloud146=bridge;
    return;
   }
