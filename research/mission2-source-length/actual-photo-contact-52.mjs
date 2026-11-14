@@ -482,6 +482,13 @@ export function auditActualPhotographedDressSurfaces52({
     !rest||rest.count!==p.count||!si||!sw||
     si.count!==p.count||sw.count!==p.count)
   fail('original full photo dress/UV/rest/skin surface required');
+ if(auditOriginalHalfEdges55&&(
+    !rest.isBufferAttribute||rest.itemSize!==3||
+    !si.isBufferAttribute||si.itemSize!==4||
+    !sw.isBufferAttribute||sw.itemSize!==4||
+    si.array.some(x=>!Number.isSafeInteger(x)||x<0||x>=163)||
+    sw.array.some(x=>!Number.isFinite(x)||x<0||x>1)))
+  fail('C55 authentic original shader rest and complete 163-bone skin channels required');
  // P61's original photographic shader projects the authenticated image
  // directly from dressRest; it does NOT require a fabricated UV or custom
  // photoProjection BufferAttribute. Snapshot and verify all actual fields.
