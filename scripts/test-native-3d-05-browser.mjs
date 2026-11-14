@@ -13,12 +13,14 @@ import {checkViewer90} from './check-parallel90-interactions.mjs';
 const engine90=process.env.P90_ENGINE||'chromium';
 const strict38=process.env.M38==='research';
 const main39=process.env.M39==='research';
+const main40=process.env.M40==='research';
+assert.equal(main40&&!(main39&&strict38),false,'M40 must have signed M39 + strict M38');
 assert.equal(main39&&!strict38,false,'M39 must never run without explicit strict M38');
 const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430];
 assert.ok(widths90.every(x=>[320,390,430].includes(x)));
 assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=main39?'benchmark/main39-'+engine90:strict38?'benchmark/main38-'+engine90:process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
+const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=main40?'benchmark/main40-'+engine90:main39?'benchmark/main39-'+engine90:strict38?'benchmark/main38-'+engine90:process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -189,7 +191,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(strict38?'&main38=research'+(main39?'&main39=research':''):''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(strict38?'&main38=research'+(main39?'&main39=research'+(main40?'&main40=research':''):''):''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -212,7 +214,8 @@ try{
    await page.route('**/donor/**',route=>{donorRequests38++;return route.abort();});
    await page.locator('#native3D05Preview').click();
    await page.waitForFunction(expected=>document.getElementById('native3D05Status')
-    ?.textContent.includes(expected),main39?
+    ?.textContent.includes(expected),main40?
+     'MAIN40_QUALITY_REVIEW_REQUIRED':main39?
      'MAIN38_OWNER_ORIGINAL_2D_ONLY_NO_3D_ADMISSION':
      'MAIN38_OWNER_SOURCE_RECHECK_REQUIRED',{timeout:30000});
    assert.equal(donorRequests38,0,'No unverified 3D donor may be imported');
@@ -228,6 +231,7 @@ try{
     signedSyntheticOwnerStillActive:true,
     liveM39LexicalOwnerScopeAttached:main39,
     actualSourcePrivateM34Preflight2DOnly:main39,
+    p89VerifiedPublicOriginalAndHumanReviewStillBlocked:main40,
     realPhoneVerified:false,realAccountVerified:false,
     consumer3DApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'});
    await page.close();await ctx.close();
