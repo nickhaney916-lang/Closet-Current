@@ -33,7 +33,8 @@ controller=controller.replace(anchor,anchor+
  "Commons 0053 experimental browser query may run the contact probe.\n"+
  "       if(new URLSearchParams(globalThis.location?.search||'').get('photoDressContact52')==='research'){\n"+
  "        const query52=new URLSearchParams(globalThis.location?.search||\x27\x27);\n"+
- "        const evidence52=auditActualPhotographedDressSurfaces52({root,dress:fitted,\n"+
+ "        let evidence52;\n"+
+ "        try{evidence52=auditActualPhotographedDressSurfaces52({root,dress:fitted,\n"+
  "         refineTriangleDistances53:query52.get(\x27photoDressDistance53\x27)===\x27research\x27,\n"+
  "         refineSourceTopology54:query52.get(\x27photoDressTopology54\x27)===\x27research\x27,\n"+
  "         refineEdgeWinding55:query52.get(\x27photoDressEdges55\x27)===\x27research\x27,\n"+
@@ -42,6 +43,11 @@ controller=controller.replace(anchor,anchor+
  "         refineArticulatedContacts58:query52.get(\x27photoDressContact58\x27)===\x27research\x27,\n"+
  "         refineBodyHeightWitnessBands59:query52.get(\x27photoDressBodyBands59\x27)===\x27research\x27,\n"+
  "         refineUpperTorsoFitTrial60:query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27});\n"+
+ "        }catch(e){\n"+
+ "         if(query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27)\n"+
+ "          console.error(\x27M2_C60_SIGNED_SOURCE_TRIAL_REFUSED:\x27+String(e?.message||e).slice(0,220));\n"+
+ "         throw e;\n"+
+ "        }\n"+
  "        if(evidence52.schema!=='M2-real-original-photo-surface-diagnostic-C52'||\n"+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
