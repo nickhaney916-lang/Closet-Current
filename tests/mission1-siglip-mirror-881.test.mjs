@@ -1,6 +1,7 @@
 /** P881 generated synthetic arrays/receipts only. NOT human truth or photo accuracy. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
 import {mirrorRGB881,meanUnitEmbeddings881} from '../public/siglip-horizontal-view-881.mjs';
 import {auditMirror881} from '../scripts/p881-siglip-mirror-audit.mjs';
 import {VERSION82,MODEL_ASSETS82} from '../public/dual-core-82.mjs';
@@ -118,4 +119,17 @@ test('P881 original swap, forged historical label or automatic save blocked by P
  assert.throws(()=>audit(b),/P878_MANIFEST_PROVENANCE/);
  const c=fixture();c.data.rows[0].output.automaticAdmissions=1;
  assert.throws(()=>audit(c),/P878_MODEL_REQUEST/);
+});
+
+test('P881 ordinary owner panel never activates research flip and helper is source-hashed',async()=>{
+ const [panel,core,worker,runner]=await Promise.all([
+  'public/dual-panel-82.mjs','public/dual-core-82.mjs',
+  'public/dual-worker-82.mjs','scripts/p82-real-browser.mjs'
+ ].map(p=>readFile(p,'utf8')));
+ assert.doesNotMatch(panel,/researchFlip881|P881_MIRROR/);
+ assert.match(core,/siglip-horizontal-view-881\\.mjs/);
+ assert.match(worker,/r\\.researchFlip881==='horizontal-mirror-v1'/);
+ assert.match(worker,/let baseline,experiment877=null,experiment881=null/);
+ assert.match(runner,/process\\.env\\.P881_MIRROR==='1'/);
+ assert.match(worker,/experiment877,experiment881,timings/);
 });
