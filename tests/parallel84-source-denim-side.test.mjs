@@ -182,21 +182,31 @@ test('P84 measured SOURCE-neutral refined denim has less exaggerated movement th
 function guardedSourceFixture(withObstacle=false){
  const f=setup(),bones=f.body.skeleton.bones;
  bones[150].name='upperarm01L';bones[151].name='upperarm01R';
+ if(withObstacle)bones[150].position.y=.72;
  const applyPose=name=>{
   const x={'source':0,'blend-50':-.20,'relaxed':-.40}[name];
   if(x===undefined)throw Error('unapproved-source-arm-pose');
   bones[150].rotation.x=x;bones[151].rotation.x=x;
+  // SYNTHETIC negative control intentionally moves the body obstacle into
+  // the adjusted rear side-panel only in the final pose, while quaternion
+  // rotation is also real. This is NOT an anatomically approved human pose.
+  if(withObstacle)bones[150].position.x=
+   {'source':0,'blend-50':-.009,'relaxed':-.018}[name];
   f.root.updateMatrixWorld(true);
   f.root.traverse(m=>{if(m.isSkinnedMesh)m.skeleton.update();});
  };
  if(withObstacle){
-  // A real indexed THREE.SkinnedMesh vertical torso-test "fence" is just
-  // beyond original neutral denim right outer thigh x~.22 in THIS fixture.
-  // Source ease shifts its original rear neutral triangles across it.
-  skinned(f.root,bones,[
-   .2235,.67,-.075,.2235,.77,-.075,
-   .2235,.67,.075,.2235,.77,.075
+  // A real indexed THREE.SkinnedMesh body surface is outside original AND
+  // adjusted jeans at the source pose (x=.243). Its ORIGINAL skinned joint
+  // moves it toward jeans at relaxed (x=.225). Original denim stays outside;
+  // the adjusted neutral outer thigh must trigger a NEW exact face crossing.
+  const fence=skinned(f.root,bones,[
+   .243,.67,-.075,.243,.77,-.075,
+   .243,.67,.075,.243,.77,.075
   ],[0,1,2,1,3,2],{garment:false});
+  const skin=fence.geometry.getAttribute('skinIndex');
+  for(let i=0;i<skin.count;i++)skin.setX(i,150);
+  skin.needsUpdate=true;
  }
  return {...f,applyPose};
 }
@@ -225,7 +235,11 @@ test('P84 three-pose gate refuses NEW true posed-triangle body contact and rolls
  const report=gateActualSourceDenimAcrossStaticPoses84(f);
  assert.equal(report.trialApplied,false,JSON.stringify(report));
  assert.equal(report.status,'REFUSED_ORIGINAL_GEOMETRY_RESTORED');
- assert.match(report.reason,/new-original-source-triangle-crossing|error-closed-restored-original-denim-source/);
+ assert.equal(report.reason,'new-original-source-triangle-crossing-at-relaxed',
+  'Collision veto MUST actually witness a new TRUE original mesh face pair in bent synthetic body pose: '+JSON.stringify(report));
+ assert.equal(report.poseResults.length,3);
+ assert.ok(report.poseResults.at(-1).newBodyDenimTrianglePairs>0);
+ assert.equal(report.poseResults[0].newBodyDenimTrianglePairs,0);
  assert.equal(report.releaseAuthorized,false);
  assert.deepEqual(f.mesh.geometry.getAttribute('position').array,original.position);
  assert.deepEqual(f.mesh.geometry.getAttribute('normal').array,normal);
