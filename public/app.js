@@ -1021,13 +1021,23 @@ async function recognizeItem(item){
   else{item.localStatus=error.message||'Automatic indexing stopped. Retry or adjust details.';}
   $('localStatus').textContent=item.localStatus;return false;
  }finally{
+  // P88 opt-in: a finished background scan must not queue a stale whole-draft
+  // backup while an owner's physical pairing/unpairing decision is still
+  // waiting on cloud.beforeWrite or IndexedDB. Waiting here does NOT enqueue
+  // a second DB transaction and therefore cannot deadlock the decision.
+  // A selected item may have been replaced by an owner-confirmed clone;
+  // in that case the owner transaction already persisted its replacement.
+  const unitDecisionFence88=typeof outfitUnits70!=='undefined'&&outfitUnits70&&
+   !!item.outfitSourceId&&typeof unit70Pending88!=='undefined'&&unit70Pending88>0;
+  if(unitDecisionFence88)await unit70DecisionTail88;
   // Never clear a new owner's or newer same-ID scanner lease. P854 still
   // forbids old-owner persistence, even if the new owner's item IDs collide.
   if(sameOwner854()&&(!lease859||pendingScanLease859.get(item.id)===lease859)){
    if(lease859)pendingScanLease859.delete(item.id);
    localPending.delete(item.id);
    if(recognitionState.activeId===item.id)recognitionState.activeId=null;
-   persistDraft();render();
+   if(!unitDecisionFence88||live854())persistDraft();
+   render();
    // If this exact owner replaced/cropped the photo during async inference,
    // refresh the still-unreviewed current draft rather than strand it.
    const current=batch.find(x=>x.id===item.id);
