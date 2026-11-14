@@ -34,6 +34,7 @@ const host='http://127.0.0.1:'+server.address().port;
 const authHost='https://hlkgymugtfbirlpunsra.supabase.co';
 const owner='m33-A',itemId=owner+'-jeans';
 const mode=process.env.MAIN33_ENGINE||'both';
+const sourceRoster34=process.env.MAIN34==='research';
 assert.ok(['chromium','webkit','both'].includes(mode));
 const engines=[['chromium',chromium],['webkit',webkit]].filter(([name])=>mode==='both'||name===mode);
 const cloudStub='window.closetCloud={start:async()=>{},changed:()=>{},beforeWrite:async()=>{},sync:async()=>{}};';
@@ -132,7 +133,7 @@ try{
     const page=await context.newPage();
     debug={engine:engineName,width,stage:'goto'};
     page.on('pageerror',e=>errors.push({engine:engineName,width,error:String(e)}));
-    await page.goto(host+'/public/index.html?ownerPicker33=research',{waitUntil:'domcontentloaded'});
+    await page.goto(host+'/public/index.html?ownerPicker33=research'+(sourceRoster34?'&ownerRevision34=research':''),{waitUntil:'domcontentloaded'});
     debug.stage='signin';await signin(page);
     debug.stage='seed';await seed(page);
     await page.reload({waitUntil:'domcontentloaded'});
@@ -180,6 +181,42 @@ try{
     }));
     assert.equal(privateData.saved.length,1);
     results.push({engine:engineName,width,case:'real native saved outfit passed atomic source row CAS',pass:true});
+    if(sourceRoster34){
+     debug.stage='content-derived-durable-cross-tab-roster';
+     const compared=await page.evaluate(async()=>{
+      const gate=await ownerPicker33Gate();
+      try{
+       const proof=await gate.prepareWrite(currentBoard);
+       const getRows=()=>new Promise((resolve,reject)=>{
+        const q=db.transaction('items','readonly').objectStore('items').getAll();
+        q.onsuccess=()=>resolve(q.result);q.onerror=()=>reject(q.error);
+       });
+       const before=await getRows();
+       const matchedBefore=proof.matchesRoster(before);
+       // A second IndexedDB connection simulates an old writer/another tab
+       // changing an unrelated saved garment without incrementing UI epoch.
+       await new Promise((resolve,reject)=>{
+        const q=indexedDB.open(db.name,2);
+        q.onerror=()=>reject(q.error);
+        q.onsuccess=()=>{
+         const other=q.result,tx=other.transaction('items','readwrite');
+         tx.objectStore('items').put({
+          id:'unrelated-cross-tab',ownerId:window.closetAuth.user.id,
+          category:'Tops',itemType:'Other',color:'Purple',
+          notes:'Synthetic unrelated cross-tab addition'
+         });
+         tx.oncomplete=()=>{other.close();resolve();};
+         tx.onerror=tx.onabort=()=>{const e=tx.error;other.close();reject(e);};
+        };
+       });
+       const after=await getRows();
+       return {durable:proof.durableContentChecked,matchedBefore,
+        matchedAfter:proof.matchesRoster(after)};
+      }finally{gate.dispose();}
+     });
+     assert.deepEqual(compared,{durable:true,matchedBefore:true,matchedAfter:false});
+     results.push({engine:engineName,width,case:'durable M34 full-roster CAS refuses unrelated cross-tab garment change',pass:true});
+    }
     debug.stage='tamper-source-and-resave-veto';
     await mutateSource(page);
     await page.locator('#saveBoard').click();
@@ -194,8 +231,8 @@ try{
  assert.equal(errors.length,0,'native app page runtime errors');
  assert.ok(external.every(x=>['fonts.googleapis.com','raw.githubusercontent.com','cdn.jsdelivr.net'].includes(x.host)),
   'unexpected external request origin; all external requests are aborted');
- assert.equal(results.length,engines.length*9);
- console.log('MAIN1054_M33',JSON.stringify({results,source:'licensed Commons-0053',
+ assert.equal(results.length,engines.length*(sourceRoster34?12:9));
+ console.log(sourceRoster34?'MAIN1054_M34':'MAIN1054_M33',JSON.stringify({results,source:'licensed Commons-0053',
   realHumanLabels:false,syntheticOwners:true,physicalPhone:false,hostedCloud:false,
   consumer3D:false,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }catch(error){
