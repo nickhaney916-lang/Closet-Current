@@ -78,3 +78,9 @@ Revalidated donor #928 exact `306813d14679196d4124a21aa8977bdf07e9bf0d`, reading
 Revalidated #963 exact `46b59e7cec22182cbe7c7222a456cf2aef3040fb`, reading `public/cross-capture-duplicate-77.js`: source/crop/mask/revision SHA receipts and `unitIdentity` primary/companion mask provenance exist; its same-item result remains UNLINKED/UNSAVED. Adapter does not turn that nonpersistent intent into a physical identity or add a new persistent view. Multi-photo references are preserved if supplied but remain an integration/storage blocker for real reversible alternate-view linking.
 
 Two further adversarial cases cover actual P70 donor pair receipts, foreign companion owner, unresolved units and board refusal. **15/15 targeted Node PASS**. First exact published source tree remains `af51bad019fc59c62d8b84f8ea46699a4d9c3702`, commit `2f75b641ef4975c08dee0179834210301c5004df`; its prior 2,623-test receipt applies to that predecessor. Final expanded full-suite and exact-head CI receipts must be checked separately.
+
+### CI harness correction
+
+First no-deploy run [43608385191](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43608385191) at predecessor `2f75b641` failed 1/2,623 tests because `tests/pwa.test.mjs` requires built `dist/manifest.webmanifest`; workflow incorrectly built after testing. All other 2,622 tests passed. Build is now before full regressions. No test weakened or skipped. Final pair receipt validation also requires exactly two distinct unchanged component IDs with primary ID matching the saved item. Fresh exact-head CI is required for the corrected workflow and final code.
+
+Final local expanded suite: **2,625/2,625 PASS**, zero skips/failures, 126.59 seconds. Final targeted contracts plus built-PWA smoke: **16/16 PASS**. Build and diff PASS. These source-tested results do not replace exact-head CI/browser receipts.

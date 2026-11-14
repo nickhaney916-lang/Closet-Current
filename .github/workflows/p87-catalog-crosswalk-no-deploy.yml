@@ -29,8 +29,8 @@ jobs:
           done
       - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - run: npx playwright install --with-deps chromium webkit
+      - run: node scripts/build.mjs
       - name: Full inherited Node regressions and adapter contracts
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
-      - run: node scripts/build.mjs
       - name: Licensed original SHA, private isolation, revoke, fallback in both native engines
         run: node scripts/audit-p87-catalog-crosswalk.mjs
