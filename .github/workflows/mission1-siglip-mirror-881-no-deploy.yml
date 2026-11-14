@@ -6,7 +6,9 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: m1-p881-mirror-HOLD
+  # GitHub push event delivery can lag and arrive out of commit order. A
+  # delayed OLD commit must not cancel the current source-verified HEAD run.
+  group: m1-p881-mirror-HOLD-${{ github.sha }}
   cancel-in-progress: true
 jobs:
   owner-review-preservation-and-helper-NO-DEPLOY:
