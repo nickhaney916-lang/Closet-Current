@@ -180,7 +180,16 @@ function unit70OwnerEvidenceValid(item){
 // physical garment. A checkbox cannot resolve mixed/fragmented source pixels.
 // A new single-garment capture is required; original unsaved photo is kept.
 function ownerMaySaveSourceGroup88(item){
- return item?.segmentHint?.componentReviewStatus!=='unresolved_fragments_keep_source_mask';
+ const status=item?.segmentHint?.componentReviewStatus;
+ if(status===undefined)return true;
+ // Model separation is never proof of how many owned garments exist.
+ // Do not permit a mere category/color checkbox to convert a shoe pair
+ // or fractured same-class garment into independently saved inventory.
+ if(status==='owner_must_confirm_garment_units')
+  return Boolean(item?.reconciliation70&&
+   ['paired_confirmed','fragments_confirmed','separate_confirmed'].includes(item.reconciliation70Status));
+ // Unknown status and unresolved small/noisy fragments both fail closed.
+ return false;
 }
 function adjustPhoto(item){
  if(stream||cameraOpening)stopCamera();
@@ -258,7 +267,10 @@ function adjustPhoto(item){
   proof.append(second,node('figcaption','Second source region · owner grouping confirmed'));
   form.prepend(proof);
  }
- if(!ownerMaySaveSourceGroup88(item))form.prepend(node('p','This photo contains unresolved garment fragments. The original is kept, but this combined mask cannot be saved as one verified item. Photograph the garment separately, then review again.','fine'));
+ if(item.segmentHint?.componentReviewStatus==='unresolved_fragments_keep_source_mask')
+  form.prepend(node('p','This photo contains unresolved garment fragments. The original is kept, but this combined mask cannot be saved as one verified item. Photograph the garment separately, then review again.','fine'));
+ if(item.segmentHint?.componentReviewStatus==='owner_must_confirm_garment_units'&&!item.reconciliation70)
+  form.prepend(node('p','This separated garment is not yet verified as one physical wardrobe item. Use a single-garment photo, or first enable and finish the owner-reviewed outfit-piece grouping flow. Do not save unpaired footwear as separate purchases.','fine'));
  if(item.reconciliation70Status==='unresolved')form.prepend(node('p','Resolve shoe pairing or garment fragments under Your outfit pieces before saving.','fine'));
  save=node('button','Save changes','primary');
  const cancel=node('button','Cancel','secondary'),remove=node('button','Remove photo','secondary');
@@ -847,7 +859,8 @@ function automaticAdmissionCore842(item){
   (typeof categories!=='undefined'&&categories.includes(item?.category)&&item.category!=='Uncategorized');
  return Boolean(item?.image&&knownCategory&&color&&color.toLowerCase()!=='unknown'&&
   !item.possibleDuplicate&&!item.requiresOwnershipConfirmation&&
-  !item.outfitSourceId&&!item.reconciliation70Status&&!item.segmentHint?.clipped);
+  !item.outfitSourceId&&!item.reconciliation70Status&&!item.segmentHint?.clipped&&
+  !item.segmentHint?.componentReviewStatus);
 }
 async function saveIndexed(item){
  const value={...normalizeClothing(item),name:item.name.trim()||'Closet piece',savedAt:new Date().toISOString(),indexedAt:new Date().toISOString()};
