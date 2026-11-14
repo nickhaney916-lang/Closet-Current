@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 import {validateActualSkinnedPhotoPoseContact88} from '../research/mission2-p88/sample-contact-gate.mjs';
 import {verifyActualPhotoSourceZeroTopology89} from '../research/mission2-p89/source-topology-gate.mjs';
+import {verifySourcePhotoQuarterSteps90} from '../research/mission2-p90/quarter-step-gate.mjs';
 
 const hostRoot=resolve('.'),donor=resolve('.native05-donor-541');
 const engine=process.env.P87_ENGINE||'chromium';
@@ -36,7 +37,7 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const results={schema:'p87-genuine-source-skinned-pose-original-candidate-restored-v1',
  engine,sourceId:'commons-0053',realAvatar163Bones:true,
- figures:[],sourcePoseReceipts:[],actualFittedPoseContact88:[],screens:[],differences:[],errors:[],external:[],
+ figures:[],sourcePoseReceipts:[],actualFittedPoseContact88:[],actualQuarterStepContact90:[],screens:[],differences:[],errors:[],external:[],
  researchOnly:true,physicalPhone:false,continuousClothSafetyCertified:false,
  photoProjectionIndependentlyApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser,page;
@@ -117,12 +118,66 @@ try{
      restoredOriginalRGBPixelsAbove8:restored});
    }
   }
+
+  // P90: two additional TRUE research quaternion-interpolated anatomical bone
+  // poses. Original three P88/P89 poses remain unchanged and gate separately.
+  for(const pose of ['blend-25','blend-75']){
+   const receipt=await page.evaluate(mode=>window.review87.setPose(mode),pose);
+   assert.equal(receipt.actualSkinnedMeshClone,true);
+   assert.equal(receipt.liveSkeletonShared,true);
+   assert.equal(receipt.realSkinBoneCount,163);
+   assert.equal(receipt.originalGeometryAndPhotoUVUntouched,true);
+   assert.equal(receipt.releaseAuthorized,false);
+   assert.ok(receipt.poseUpdates>previous,'actual fitted quarter pose not recomputed');
+   assert.ok(receipt.maximumCPUWorldSkinInverseResidualMeters<=.00005);
+   previous=receipt.poseUpdates;
+   const contact=await page.evaluate(()=>window.review87.auditFit88());
+   assert.equal(contact.schema,'M2-P88-original-photo-real-skinned-source-contact-sampled-v1');
+   assert.equal(contact.originalSourceId,'commons-0053');
+   assert.equal(contact.sourcePhotoRestUVSkinAndGeometryUnchanged,true);
+   assert.equal(contact.releaseAuthorized,false);
+   results.actualQuarterStepContact90.push({
+    figure,pose,rigBones:receipt.realSkinBoneCount,
+    fittedVertices:receipt.fittedVertices,
+    maxInverseResidualMeters:receipt.maximumCPUWorldSkinInverseResidualMeters,
+    sourcePhotoOriginalUnchanged:receipt.originalGeometryAndPhotoUVUntouched,
+    contact
+   });
+   for(const [view,angle] of [['front',0],['side',90]]){
+    const images=[];
+    for(const mode of ['original','candidate','original']){
+     await page.evaluate(({mode,angle})=>window.review87.show(mode,angle),{mode,angle});
+     await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
+     const name=figure+'-'+pose+'-'+view+'-'+(images.length===2?'restored-original':mode)+'.png';
+     const b=await page.locator('canvas').screenshot({path:out+'/'+name});
+     results.screens.push({figure,pose,view,mode:images.length===2?'restored-original':mode,
+      file:name,sha256:sha(b)});
+     images.push(b);
+    }
+    const raw=await Promise.all(images.map(b=>sharp(b).ensureAlpha().raw().toBuffer()));
+    assert.equal(raw[0].length,raw[1].length);
+    let changed=0,restored=0;
+    for(let i=0;i<raw[0].length;i+=4){
+     if([0,1,2].some(c=>Math.abs(raw[0][i+c]-raw[1][i+c])>8))changed++;
+     if([0,1,2].some(c=>Math.abs(raw[0][i+c]-raw[2][i+c])>8))restored++;
+    }
+    assert.ok(changed>0,'authentic photo garment must change in additional '+figure+'/'+pose+'/'+view);
+    assert.equal(restored,0,'original-source RGB must restore in added '+figure+'/'+pose+'/'+view);
+    results.differences.push({figure,pose,view,changedRGBPixelsAbove8:changed,
+     restoredOriginalRGBPixelsAbove8:restored});
+   }
+  }
  }
  assert.deepEqual(results.errors,[],'shader or script errors not allowed');
  assert.deepEqual(results.external,[],'network egress forbidden');
  results.contactGate88=validateActualSkinnedPhotoPoseContact88(results.actualFittedPoseContact88);
  results.topologyGate89=verifyActualPhotoSourceZeroTopology89(results.actualFittedPoseContact88);
+ results.quarterStepGate90=verifySourcePhotoQuarterSteps90(results.actualFittedPoseContact88,results.actualQuarterStepContact90);
  assert.equal(results.actualFittedPoseContact88.length,6);
+ assert.equal(results.actualQuarterStepContact90.length,4);
+ assert.equal(results.quarterStepGate90.status,'TEN_SAMPLED_AUTHENTIC_SKINNED_CONTACTS_OBSERVED_NOT_RELEASE',
+  'extra genuine fitted photographed C52/C54/C55 quarter-step source proof incomplete: '+
+  JSON.stringify(results.quarterStepGate90.issues));
  assert.equal(results.topologyGate89.status,'SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_CERTIFIED',
   'genuine original-photo source self-contact correspondences incomplete: '+
    JSON.stringify(results.topologyGate89.issues));
@@ -130,10 +185,10 @@ try{
   'genuine P87 fitted source garment crossed body/self or exceeded photo strain: '+
     JSON.stringify(results.contactGate88.issues));
  assert.equal(results.sourcePoseReceipts.length,6);
- assert.equal(results.differences.length,18);
- assert.equal(results.screens.length,54);
+ assert.equal(results.differences.length,26);
+ assert.equal(results.screens.length,78);
  await page.evaluate(()=>window.review87.dispose());
- results.status='PASS_GENUINE_SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_RELEASE';
+ results.status='PASS_GENUINE_SOURCE_QUARTER_STEP_SAMPLES_NOT_RELEASE';
 }catch(e){
  results.status='BLOCKED';
  results.failure=String(e?.message||e).slice(0,2500);
@@ -143,7 +198,7 @@ try{
  await new Promise(done=>server.close(done));
  await writeFile(out+'/results.json',JSON.stringify(results,null,2)+'\n');
  console.log('M2_P87_REAL_SOURCE',JSON.stringify({status:results.status,figures:results.figures.length,
-  realSourcePoseReceipts:results.sourcePoseReceipts.length,contactGate88:results.contactGate88?.status||'BLOCKED',topologyGate89:results.topologyGate89?.status||'BLOCKED',unresolvedZeroPairs:results.topologyGate89?.classifiedGeometricZeroPairsAcrossSixPoses??null,unresolvedUnsafeOrIndependentPairs:results.topologyGate89?.sourceIndependentOrSkinUnsafePairWitnesses??null,actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
+  realSourcePoseReceipts:results.sourcePoseReceipts.length,contactGate88:results.contactGate88?.status||'BLOCKED',topologyGate89:results.topologyGate89?.status||'BLOCKED',quarterStepGate90:results.quarterStepGate90?.status||'BLOCKED',additionalRealQuarterPoseAudits:results.actualQuarterStepContact90.length,unresolvedZeroPairs:results.topologyGate89?.classifiedGeometricZeroPairsAcrossSixPoses??null,unresolvedUnsafeOrIndependentPairs:results.topologyGate89?.sourceIndependentOrSkinUnsafePairWitnesses??null,actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
   differences:results.differences.length,errors:results.errors.length,networkBlocked:results.external.length,
   failure:results.failure||null,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }
