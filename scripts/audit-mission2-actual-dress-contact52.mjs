@@ -971,20 +971,21 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
    ...a.disposableArmAlternativeClearance85];
   assert.equal(all.length,3);
   return all.map((pose,poseIndex)=>{
-   assert.equal(pose.allFourteenWitnessLocalizedSweepsCompleted85,true);
+   assert.equal(pose.allSixteenWitnessLocalizedSweepsCompleted85,true);
    assert.equal(pose.originalContactWitnessIdsNeverExported85,true);
    const count=pose.privateOriginalStrictClothWitnessFaceCount85;
    assert.ok(Number.isSafeInteger(count)&&count>0&&
     count<=pose.candidates[0].baselineBodyStrictCrossings);
-   assert.equal(pose.witnessLocalizedCandidates85.length,14);
+   assert.equal(pose.witnessLocalizedCandidates85.length,16);
    const vals=pose.witnessLocalizedCandidates85.map((t,i)=>{
     assert.equal(t.schema,'M2-P85-disposable-licensed-world-candidate');
     const expectedMethod=i<2?'strict-witness-local-radial':
      i<6?'strict-witness-local-edge-projection':
-      'strict-witness-local-shape-regularized';
+     i<14?'strict-witness-local-shape-regularized':
+      'strict-witness-local-normal-restoration';
     assert.equal(t.method,expectedMethod);
     assert.equal(t.localGraphRadiusHops85,
-     [12,24,12,24,32,40,24,32,24,24,24,24,24,24][i]);
+     [12,24,12,24,32,40,24,32,24,24,24,24,24,24,24,24][i]);
     assert.equal(t.originalStrictWitnessFaceCount85,count);
     assert.equal(t.originalSourceFaceIdsNeverExported85,true);
     assert.equal(t.bodyCollisionAndC61QualityMustBeRemeasured,true);
@@ -1015,6 +1016,9 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
      method:t.method,radiusGraphHops:t.localGraphRadiusHops85,
      shapeSmoothingPasses:t.shapeSmoothingPasses85??null,
      shapeNeighborBlend:t.shapeNeighborBlend85??null,
+     normalRestorationMaxPasses:t.normalRestorationMaxPasses85??null,
+     normalRestorationStrength:t.normalRestorationStrength85??null,
+     normalRestorationActualPasses:t.normalRestorationActualPasses85??null,
      strictBodyCrossings:t.strictBodyCrossings,
      nearOrZeroBodyPairs:t.unresolvedBodyNearOrZeroPairs,
      strictSelfCrossings:t.strictSelfCrossings,
@@ -1053,11 +1057,15 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
    method:v.method,graphRadiusHops:v.radiusGraphHops,
    shapeSmoothingPasses:v.shapeSmoothingPasses,
    shapeNeighborBlend:v.shapeNeighborBlend,
+   normalRestorationMaxPasses:v.normalRestorationMaxPasses,
+   normalRestorationStrength:v.normalRestorationStrength,
    allThreeOriginal163BonePosesPass:poses.length===3&&poses.every(p=>
     p.variants[i].method===v.method&&
     p.variants[i].radiusGraphHops===v.radiusGraphHops&&
     p.variants[i].shapeSmoothingPasses===v.shapeSmoothingPasses&&
     p.variants[i].shapeNeighborBlend===v.shapeNeighborBlend&&
+    p.variants[i].normalRestorationMaxPasses===v.normalRestorationMaxPasses&&
+    p.variants[i].normalRestorationStrength===v.normalRestorationStrength&&
     p.variants[i].sourceSampleContactAndQualityPass)
   }));
  const report={

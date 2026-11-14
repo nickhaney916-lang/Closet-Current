@@ -314,6 +314,105 @@ export function createDisposableWitnessLocalized85(
    bodyCollisionAndC61QualityMustBeRemeasured:true
   });
  }
+
+ function normalRestoration(passes,strength){
+  // Keep original C61 normal guard UNCHANGED. Each iteration uses actual
+  // original triangle directions internally to reduce displacement gradient
+  // ONLY around candidate faces currently exceeding 9 degrees. No face ID
+  // or original/after source XYZ escapes the returned aggregate receipt.
+  const seed=shapeRegularized(24,100,.80),
+   state=groups.map(g=>{
+    const i=3*g.ids[0];
+    return [seed.world[i]-originalWorld[i],
+     seed.world[i+1]-originalWorld[i+1],
+     seed.world[i+2]-originalWorld[i+2]];
+   }),frozenCore=state.map(v=>v.slice()),nf=indices?.length??originalWorld.length/3;
+  const norm=(a,b,c)=>{
+   const u=[b[0]-a[0],b[1]-a[1],b[2]-a[2]],
+    v=[c[0]-a[0],c[1]-a[1],c[2]-a[2]],
+    n=[u[1]*v[2]-u[2]*v[1],
+     u[2]*v[0]-u[0]*v[2],u[0]*v[1]-u[1]*v[0]],
+    length=Math.hypot(...n);
+   return length>1e-12?n.map(x=>x/length):null;
+  };
+  let iterations=0,trianglesFlagged=0;
+  for(let round=0;round<passes;round++){
+   const sums=groups.map(()=>[0,0,0]),counts=new Uint32Array(groups.length);
+   let flagged=0;
+   for(let f=0;f<nf;f+=3){
+    const ids=[0,1,2].map(k=>indices?indices[f+k]:f+k),
+     groupsAtFace=ids.map(i=>of[i]),
+     orig=ids.map(i=>[originalWorld[3*i],
+      originalWorld[3*i+1],originalWorld[3*i+2]]),
+     moved=orig.map((p,k)=>p.map((v,j)=>v+state[groupsAtFace[k]][j]));
+    const n0=norm(...orig),n1=norm(...moved);
+    if(!n0||!n1)continue;
+    const cos=n0[0]*n1[0]+n0[1]*n1[1]+n0[2]*n1[2];
+    if(cos>=Math.cos(9*Math.PI/180))continue;
+    flagged++;
+    const mean=[0,1,2].map(k=>
+     (state[groupsAtFace[0]][k]+
+      state[groupsAtFace[1]][k]+state[groupsAtFace[2]][k])/3);
+    for(const g of groupsAtFace){
+     if(dist[g]<0||dist[g]>=24)continue;
+     for(let k=0;k<3;k++)sums[g][k]+=mean[k]-state[g][k];
+     counts[g]++;
+    }
+   }
+   trianglesFlagged+=flagged;
+   if(!flagged)break;
+   for(let g=0;g<groups.length;g++){
+    if(!counts[g])continue;
+    for(let k=0;k<3;k++)
+     state[g][k]+=strength*sums[g][k]/counts[g];
+    if(dist[g]<=2){
+     const deviations=state[g].map((v,k)=>v-frozenCore[g][k]),
+      d=Math.hypot(...deviations);
+     if(d>.00035)for(let k=0;k<3;k++)
+      state[g][k]=frozenCore[g][k]+deviations[k]*.00035/d;
+    }
+    const mag=Math.hypot(...state[g]);
+    if(mag>.006)
+     for(let k=0;k<3;k++)state[g][k]*=.006/mag;
+   }
+   iterations++;
+  }
+  const out=originalWorld.slice();
+  for(let g=0;g<groups.length;g++)
+   for(const i of groups[g].ids)
+    for(let k=0;k<3;k++)
+     out[3*i+k]=Math.fround(originalWorld[3*i+k]+state[g][k]);
+  let gap=0;
+  for(const group of groups){
+   if(group.ids.length<2)continue;
+   const first=group.ids[0];
+   for(const i of group.ids.slice(1)){
+    const delta=[0,1,2].map(k=>
+     (out[3*i+k]-originalWorld[3*i+k])-
+     (out[3*first+k]-originalWorld[3*first+k]));
+    gap=Math.max(gap,Math.hypot(...delta));
+   }
+  }
+  const result=summary(originalWorld,out,
+   'strict-witness-local-normal-restoration',.006,{
+    originalStrictWitnessFaceCount85:strictClothFaceIndices.length,
+    localGraphRadiusHops85:24,
+    localizedSourcePositionGroups85:
+     seed.localizedSourcePositionGroups85,
+    furthestMovedGraphHop85:seed.furthestMovedGraphHop85,
+    shapeSmoothingPasses85:100,shapeNeighborBlend85:.80,
+    normalRestorationMaxPasses85:passes,
+    normalRestorationStrength85:strength,
+    normalRestorationActualPasses85:iterations,
+    originalSourceNormalDeviationsHandledInternally85:trianglesFlagged,
+    maxCoincidentSeamDeltaMeters:gap,
+    originalSourceFaceIdsNeverExported85:true,
+    bodyCollisionAndC61QualityMustBeRemeasured:true,
+    candidateNotInstalledInRenderer:true,
+    releaseAuthorized:false,familyAlpha:'HOLD'
+  });
+  return result;
+ }
  const candidates=[
   localized(12,false),localized(24,false),
   localized(12,true),localized(24,true),
@@ -323,7 +422,8 @@ export function createDisposableWitnessLocalized85(
   shapeRegularized(24,36,.50),
   shapeRegularized(24,60,.70),
   shapeRegularized(24,60,.80),
-  shapeRegularized(24,100,.80)
+  shapeRegularized(24,100,.80),
+  normalRestoration(16,.30),normalRestoration(32,.55)
  ];
  if(!originalWorld.every((v,i)=>v===before[i]))
   fail('P85 original source-skinned world buffer altered');
