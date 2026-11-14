@@ -57,6 +57,17 @@ export async function auditNativeOwnerViewer38({
   if(!equalSlots(ownerScope.getBoard()?.slots,selected.slots))
    throw Error('active-board-not-saved-viewer-slots');
   const sources=captureNative3D05Sources91({consumer,admitted:selected});
+  // P90/NATIVE92 must independently re-hash actual original JPEG bytes.
+  // Merely matching the display metadata is not source custody.
+  if(typeof consumer?.attestOriginalPhotoBytes92!=='function')
+   throw Error('missing-native-original-byte-attestation');
+  const attested=await consumer.attestOriginalPhotoBytes92(
+   Object.values(selected.slots));
+  requireCurrentNative3D05Selection88({
+   consumer,originalNativeAuth,win,doc,admitted:selected,selectedIndex
+  });
+  if(JSON.stringify(attested)!==JSON.stringify(sources))
+   throw Error('photo-bytes-do-not-match-p90-source');
   const revision=requireNative3D05WardrobeRevision93({
    consumer,ownerId:selected.ownerId
   });
