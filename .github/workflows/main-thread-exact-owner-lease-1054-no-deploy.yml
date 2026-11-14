@@ -1,0 +1,90 @@
+name: "MAIN1054 M12 exact signed-owner outfit lease — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-outfit-exact-owner-lease-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m12-outfit-exact-owner-lease-hold
+  cancel-in-progress: true
+jobs:
+  exact-source-and-complete-native-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Immutable M10 parent and exact four research-only changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b1f4e9f598935d06fbb5bbf652d0f327f4df3ad5
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 4
+          while IFS= read -r path; do
+            case "$path" in
+              research/main-thread-integration-1054/source-to-outfit.mjs|\
+              research/main-thread-integration-1054/source-to-outfit.test.mjs|\
+              research/main-thread-integration-1054/MILESTONE12.md|\
+              .github/workflows/main-thread-exact-owner-lease-1054-no-deploy.yml) ;;
+              *) echo "M12_SCOPE_VIOLATION $path" >&2; exit 1 ;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ package.json package-lock.json
+          node --check research/main-thread-integration-1054/source-to-outfit.mjs
+          node --check research/main-thread-integration-1054/source-to-outfit.test.mjs
+          grep -q "a.authRef===b.authRef" research/main-thread-integration-1054/source-to-outfit.mjs
+          grep -q "a.privateDbRef===b.privateDbRef" research/main-thread-integration-1054/source-to-outfit.mjs
+          grep -q "a.operationEpoch===b.operationEpoch" research/main-thread-integration-1054/source-to-outfit.mjs
+          echo "EXACT M10 P880 SOURCE PRESERVED; RESEARCH-ONLY OWNER LEASE; NO DEPLOY"
+      - name: Install only native and browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Build original PWA and run real source-to-outfit board + M12 race regressions
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Complete inherited private account, photograph, wardrobe, backup and 3D safety tests
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Never deploy or authorize owner data access
+        run: |
+          echo "Family Alpha issue 255 OPEN HOLD; no merges, hosting, staging, production or Supabase access"
+  native-browser-and-original-fallback-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Source scope and original P880 panel must remain unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=b1f4e9f598935d06fbb5bbf652d0f327f4df3ad5
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 4
+          git diff --exit-code "$BASE" HEAD -- public/
+          test "$(git hash-object public/dual-panel-82.mjs)" = "1a6062877be41a831cb4724448d482405ce75727"
+      - name: Install runtime-only native browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Execute actual M4 native Photo Review with P880 safety policy
+        run: node scripts/test-main1054-dual-review-browser.mjs
+      - name: Execute original-photo 2D owner preview on desktop mobile viewport widths
+        run: node scripts/test-main1054-native-preview-browser.mjs
+      - name: Repeat M12 read-only signed owner original-outfit preflight
+        run: node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+      - name: Verify no model/image/cloud/human/phone claims
+        run: |
+          node -e "const r=require('./benchmark/main1054-dual-policy-browser/results.json'); if(r.status!=='PASS'||r.total!==54||r.genuineModelsRun!==false||r.physicalPhones!==false||r.hostedCloud!==false||r.autoSaved!==false||r.releaseAuthorized!==false||r.familyAlpha!=='HOLD')process.exit(1);console.log('M12_OWNER_SAFETY_AND_2D',r.total)"
+          echo "No real iPhone or Android, no blind recognition, no hosted RLS release"
