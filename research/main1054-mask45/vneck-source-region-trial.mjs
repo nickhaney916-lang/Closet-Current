@@ -216,7 +216,7 @@ export function proposeOriginalVNeckSourceMatte45({
    automaticMannequinVsFabricAccuracyNotProven:true,
    visuallyBetterIsNotHumanAcceptance:true,
    sourceOriginalPhoto2DFallbackRequired:true,
-   humanMaskAccepted:false,originalSourceGarmentFidelityAccepted:false,
+   humanMaskAccepted:false,approved3D:false,originalSourceGarmentFidelityAccepted:false,
    consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'
   })
  });
