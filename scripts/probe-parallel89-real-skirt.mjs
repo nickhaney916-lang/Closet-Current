@@ -23,7 +23,7 @@ const cutout=await readFile(join(donor,'benchmark/work47/assets/commons-0043.png
 if(sha(original)!==SKIRT_SOURCE89.originalSHA256||!original.equals(donorOriginal))
  throw Error('Source identity mismatch between exact P89 original and immutable P541 Work47');
 const row=manifest.rows.find(x=>x.id==='commons-0043');
-const receipt=attestActualSkirt89({originalBytes:original,cutoutBytes:cutout,
+const receipt=await attestActualSkirt89({originalBytes:original,cutoutBytes:cutout,
  lock:locked.find(x=>x.id==='commons-0043'),work47:row});
 if(receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED')
  throw Error('Independent real source skirt or REVIEW mask not byte verified: '+receipt.reason);
