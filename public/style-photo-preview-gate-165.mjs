@@ -20,9 +20,16 @@ const requireLive=(session)=>{
    typeof s.epoch!=='string'||!s.epoch||
    s.privateDbName!=='closet-current-user-'+s.ownerId)
   throw Error('Sign in to your current private wardrobe to view saved clothing');
- return {ownerId:s.ownerId,epoch:s.epoch,privateDbName:s.privateDbName};
+ return {ownerId:s.ownerId,epoch:s.epoch,privateDbName:s.privateDbName,
+  // When provided by the real app, these are the exact live auth and private
+  // IndexedDB objects, not just a potentially reused owner ID/token string.
+  authRef:s.authRef||null,privateDbRef:s.privateDbRef||null,
+  operationEpoch:s.operationEpoch??null};
 };
-const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&a.privateDbName===b.privateDbName;
+const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&
+ a.privateDbName===b.privateDbName&&
+ a.authRef===b.authRef&&a.privateDbRef===b.privateDbRef&&
+ a.operationEpoch===b.operationEpoch;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 const shaHex=async bytes=>{
  const hash=await crypto.subtle.digest('SHA-256',bytes);
@@ -122,10 +129,11 @@ export function createStyledOwnerPhotoPreview165({
  const render=async(index,clicked)=>{
   const op=++serial;
   anchor?.remove();anchor=null;
-  let start;
+  let start,resultAtStart;
   try{
    start=requireLive(getSession);
    const result=readResults()[index];
+   resultAtStart=result;
    if(!result?.board||!result.focusItemId)throw Error('Choose a reviewed item from your private closet');
    const card=clicked.closest('.styled-outfit');
    if(!card||!grid.contains(card))throw Error('Saved styled outfit card no longer current');
@@ -155,10 +163,14 @@ export function createStyledOwnerPhotoPreview165({
    card.append(container);anchor=container;
    return preview;
   }catch(error){
-   if(!closed&&serial===op&&clicked.isConnected){
+   // A prior owner's failed JPEG verification must never publish its raw
+   // error (or even a failure status) into the next owner's card.
+   let originalOwnerStillCurrent=false;
+   try{originalOwnerStillCurrent=!!start&&same(start,requireLive(getSession));}catch{}
+   if(!closed&&serial===op&&clicked.isConnected&&originalOwnerStillCurrent){
     const card=clicked.closest('.styled-outfit');
-    if(card&&grid.contains(card)){
-     const p=createAlert(String(error?.message||'Original photo unavailable'),card);
+    if(card&&grid.contains(card)&&readResults()[index]===resultAtStart){
+     const p=createAlert('Could not verify this saved photo. Reopen My Closet and try again.',card);
      anchor=p;
     }
    }
@@ -176,7 +188,21 @@ export function createStyledOwnerPhotoPreview165({
    const btn=el('button','See saved photo (2D)','secondary');
    btn.type='button';btn.setAttribute('data-style-photo-preview-165','true');
    btn.setAttribute('aria-label','See your saved clothing photo in 2D; 3D fitting not verified');
-   btn.onclick=async()=>{btn.disabled=true;try{await render(i,btn);}catch{ /* Safe visible warning already shown. */ }finally{btn.disabled=false;}};
+   btn.onclick=async()=>{
+    let ownerAtClick;
+    try{ownerAtClick=requireLive(getSession);}catch{return;}
+    const resultAtClick=readResults()[i];
+    if(!btn.isConnected||!grid.contains(card)||!resultAtClick)return;
+    btn.disabled=true;
+    try{await render(i,btn);}catch{ /* Generic warning only in same signed session. */ }
+    finally{
+     try{
+      if(!closed&&btn.isConnected&&grid.contains(card)&&
+         readResults()[i]===resultAtClick&&
+         same(ownerAtClick,requireLive(getSession)))btn.disabled=false;
+     }catch{}
+    }
+   };
    card.append(btn);
   }
   return cards.length;
