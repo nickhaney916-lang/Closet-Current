@@ -827,3 +827,104 @@ test('P88 two stale same-region keep clicks do not perform duplicate owner confi
  assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
  assert.match(c.outfitUnit70Error,/Invalid owner review decision/);
 });
+
+function recognitionUnitRaceHarness88(){
+ const h=unitDecisionHarness88(),c=h.c;
+ const start=appSource.indexOf('async function recognizeItem(item){');
+ const end=appSource.indexOf('async function recognizeBatch(){',start);
+ assert.ok(start>=0&&end>start,'actual asynchronous recognition source is executed');
+ let resolvePhoto;
+ const photo=new Promise(resolve=>{resolvePhoto=resolve;});
+ c.window.document={};
+ c.db.name='closet-current-user-owner-A';
+ c.recognitionState={activeId:null,phase:'ready'};
+ c.pendingScanLease859=new Map();
+ c.localPending=new Set();
+ c.photoQualityHints73=new Map();
+ c.checkPhoto=()=>photo;
+ c.recognitionUnavailable=false;
+ c.localReady=true;
+ c.recordDeviceEvent=()=>{};
+ c.scanDraftBackupCalls=0;
+ c.persistDraft=()=>{
+  c.scanDraftBackupCalls++;
+  const snapshot=structuredClone(c.batch);
+  return c.queued(async()=>{
+   c.storageWrites.push({id:'draft',batch:snapshot,origin:'scanner'});
+  });
+ };
+ vm.runInContext(appSource.slice(start,end),c);
+ return {...h,resolvePhoto,scan:(item)=>{
+  c.pendingScanLease859.set(item.id,{item,owner:c.window.closetAuth.user,db:c.db});
+  c.localPending.add(item.id);
+  return vm.runInContext('recognizeItem(batch.find(x=>x.id === '+JSON.stringify(item.id)+'))',c);
+ }};
+}
+test('P88 background scanner cannot back up a staged, not-yet-committed owner unit decision',async()=>{
+ const h=recognitionUnitRaceHarness88(),c=h.c;
+ const item=c.batch[0],recognition=h.scan(item);
+ let release;
+ c.queueGate=new Promise(resolve=>{release=resolve;});
+ const decision=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let i=0;i<15;i++)await Promise.resolve();
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed',
+  'in-memory pairing decision is not yet persisted');
+ assert.equal(c.storageWrites.length,0);
+ h.resolvePhoto({blank:true});
+ for(let i=0;i<15;i++)await Promise.resolve();
+ assert.equal(c.scanDraftBackupCalls,0,'stale scanner must not queue a shadow draft');
+ assert.equal(c.queuedCalls,1,'only owner unit transaction may enter the write queue');
+ release();await Promise.all([decision,recognition]);
+ assert.equal(c.storageWrites.length,1,'scanner cannot overwrite the committed owner review');
+ assert.equal(c.storageWrites[0].batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.scanDraftBackupCalls,0);
+ assert.equal(c.localPending.size,0);
+});
+test('P88 unaffected garment scan backs up fresh post-decision owner state only after unit commit',async()=>{
+ const h=recognitionUnitRaceHarness88(),c=h.c;
+ const second=h.ownerDraft('part-B');second.image='data:image/jpeg;base64,U0hPRVJJR0hU';
+ c.batch.push(second);
+ const scan=h.scan(second);
+ let release;c.queueGate=new Promise(resolve=>{release=resolve;});
+ const decision=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let i=0;i<15;i++)await Promise.resolve();
+ assert.equal(c.storageWrites.length,0);
+ h.resolvePhoto({blank:true});
+ for(let i=0;i<18;i++)await Promise.resolve();
+ assert.equal(c.scanDraftBackupCalls,0);
+ release();await Promise.all([decision,scan]);
+ assert.equal(c.storageWrites.length,2,'owner decision first, current scanner draft second');
+ assert.equal(c.storageWrites[0].batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites[1].origin,'scanner');
+ assert.equal(c.storageWrites[1].batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites[1].batch[1].localAnalyzed,true);
+ assert.equal(c.batch[1].requiresOwnershipConfirmation,true);
+ assert.equal(c.items.length,0);
+});
+test('P88 same-ID owner replacement during scanner/fenced decision cannot persist old account JPEG',async()=>{
+ const h=recognitionUnitRaceHarness88(),c=h.c;
+ const scan=h.scan(c.batch[0]);
+ let release;c.queueGate=new Promise(resolve=>{release=resolve;});
+ const decision=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let i=0;i<15;i++)await Promise.resolve();
+ h.resolvePhoto({blank:true});
+ for(let i=0;i<15;i++)await Promise.resolve();
+ c.window.closetAuth.user={id:'owner-A'};
+ release();await Promise.all([decision,scan]);
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.scanDraftBackupCalls,0);
+ assert.equal(c.batch[0].reconciliation70Status,'unresolved');
+ assert.equal(c.items.length,0);
+});
+test('P88 normal non-outfit scanner cleanup is unaffected by the experimental unit fence',async()=>{
+ const h=recognitionUnitRaceHarness88(),c=h.c;
+ c.outfitUnits70=false;
+ c.batch[0].outfitSourceId=null;
+ const scan=h.scan(c.batch[0]);
+ h.resolvePhoto({blank:true});
+ await scan;
+ assert.equal(c.scanDraftBackupCalls,1);
+ assert.equal(c.storageWrites.length,1);
+ assert.equal(c.storageWrites[0].origin,'scanner');
+ assert.equal(c.batch[0].localAnalyzed,true);
+});
