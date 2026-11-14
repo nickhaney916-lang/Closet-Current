@@ -1,7 +1,7 @@
 /** P883: synthetic source receipts only. No human, model, or private image data. */
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {exposedSources883,inspectNewCandidate883,reportCandidates883} from '../scripts/p883-candidate-custody.mjs';
+import {exposedSources883,inspectNewCandidate883,reportCandidates883,sourceSeriesHint883} from '../scripts/p883-candidate-custody.mjs';
 
 const hash=n=>n.repeat(64),now=new Date().toISOString();
 const src=n=>'https://commons.wikimedia.org/wiki/File:Garment_'+n+'.jpg';
@@ -88,4 +88,24 @@ test('P883 even successful public source acquisition never manufactures independ
  assert.equal(r.shouldLiftFamilyAlphaHold,false);
  assert.equal(r.releaseReady,false);
  assert.equal(r.modelPromoted,false);
+});
+
+test('P883 Auckland Museum numbered sibling views share one accession, not two distinct garments',()=>{
+ const first='https://commons.wikimedia.org/wiki/File:Boots,_ankle_(AM_2008.11.3-1).jpg';
+ const second='https://commons.wikimedia.org/wiki/File:Boots,_ankle_(AM_2008.11.3-2).jpg';
+ assert.equal(sourceSeriesHint883(first),'museum-accession-am:2008.11.3');
+ assert.equal(sourceSeriesHint883(second),'museum-accession-am:2008.11.3');
+ const old=candidate('p883-first-view','d');old.sourcePage=first;
+ const next=candidate('p883-second-view','e');next.sourcePage=second;
+ const checked=inspectNewCandidate883(next,exposure(),[old]);
+ assert.ok(checked.overlapFlags.includes('same-publisher-series'));
+ assert.equal(checked.newSourceDisjoint,false);
+});
+test('P883 candidate identifier namespace must not collide with P75 frozen 32',()=>{
+ const old=pinned().rows;
+ assert.ok(old.every(r=>r.id.startsWith('p75-candidate-')));
+ const a=candidate('p883-candidate-0001','d');
+ assert.equal(inspectNewCandidate883(a,exposure()).newSourceDisjoint,true);
+ const out=reportCandidates883([a],exposure(),{planQueries:12,querySuccesses:1});
+ assert.equal(out.machineVerifiedNewOriginals,1);
 });
