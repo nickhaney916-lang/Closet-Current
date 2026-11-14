@@ -1,0 +1,25 @@
+# Mission 2 P91 — source-constrained skirt-fall experiment on actual photo-textured 163-bone SkinnedMesh
+
+**Research only — Family Alpha #255 remains OPEN/HOLD.** Isolated branch is stacked on verified [P90 #1157](https://github.com/nickhaney916-lang/Closet-Current/pull/1157) exact commit `5d4b90fa8d23476b7c2c5bdcff064ad1cff2791d`. P90 independent exact-head CI #43609877038: 3/3 SUCCESS, 1,794/1,794 Node tests; genuine Commons-0053 source photo and original CC0 163-bone male/female figures, five original skeletal pose fractions, complete actual fitted strict body/self C52/C53/C58, face strain C61 and original source correspondence C54/C55 checks, Chromium and WebKit. **Five poses do not certify swept motion or real cloth physics.**
+
+## Actual engineering change, with no invented photographic evidence
+
+Previous verified P90 renders show a convincing source-image color pattern on the front but a comparatively rigid trapezoidal skirt and no authentic photograph of the back. This P91 investigation avoids fabricating a hidden-back texture or claiming learned photo-to-mesh drape.
+
+A new **reversible, analytic, source-bounded skirt-hem fall hypothesis** is applied ONLY to a disposable true `THREE.SkinnedMesh` clone of the same genuine photographed garment. The algorithm first re-fits P90 original pose/skinning geometry, measures the **actual posed source mesh** minimum hem and maximum garment heights, identifies a smooth lower-skirt region with a waist anchor at 48% of that genuine garment height, and applies a **five-lobe, smooth 3.5 mm radial hem wave with 0.77 mm maximum vertical component** tapering continuously to exactly zero above the calculated waist. These are conservative proposed design parameters, **not measurements from the original fabric/photo, not physically based cloth, and not independently approved aesthetic improvements.** Maximum bounded absolute displacement under 4.5 mm. No fake anatomy, new garment identity, retexturing or synthetic screenshot replacement.
+
+Each altered source vertex is recovered by inversion of its **actual live four-weight blend of the 163-bone rig**, with ≤0.05 mm CPU target residual. The original public photograph pixels, source image provenance/SHA, source original garment attributes including dressRest/skinIndex/skinWeight/UV, original rig and unclothed anatomy are unchanged. The candidate can be reversed to exactly the baseline P90 fitted version and original source view without retaining edits; clone-only materials/geometries are disposed. Research toggles never enter private owner/consumer app, hosted Supabase or public site.
+
+## Acceptance — required before any P91 claim
+
+- **Ten original photographed five-pose samples per browser** (male/female × source/25%/50%/75%/relaxed), each with BOTH the unchanged P90 radial baseline C52/C53/C58/C61/C54/C55 receipt AND a fresh C52/C53/C58/C61/C54/C55 receipt on **the actual hem-relief SkinnedMesh**, not a proxy.
+- The inherited strict 0 body–cloth and 0 self strict triangle crossings, complete source-distance/near/zero and origin/source-edge topology accounting, unchanged original/source geometry/photographic pixels and 5% edge, 10% face-area, no flip/collapse limits MUST remain intact. A softer looking photograph never overrides geometry proof.
+- **Four true per-view images: original photographed source / verified P90 baseline / proposed P91 hem trial / restored original**, front/side/rear × five poses × two figures = **120 actual browser WebGL screenshots per engine**, **30 pixel comparisons** including a measured P90→P91 visual delta and zero original-restored >RGB8 differences.
+- New independently bounded analytic shape unit tests + exact per-pose/source/visual receipts, no synthetic approvals; Node full regression plus unchanged consumer source/build diff check and genuine Playwright Chromium/WebKit public source model CI.
+- **Evidence PENDING** new exact SHA/run. If no real visual difference, any silhouette distortion, cloth contact, invalid topology, too-large strain or wrong source, fail closed. NO photorealistic/safe-drape claim without independent human source review.
+
+## Explicit limitations and hold
+
+This is a *hypothesis*, not reconstructed hidden photo geometry, fabric mechanics, verified pleat pattern or animated material physics. The real one-dress black-and-white source does not contain a trusted back photograph; no fake reverse photograph is painted. Realistic skirt folds, physically correct hanging cloth, all garment parts/layers, independently human rated source-photo fidelity, actual iPhone Safari/Android Chrome, owner-confirmed private photo to 3D and four signed hosted users are unverified. P90 source zero-distance self-pairs still remain unresolved as possible seams/contact despite source classification; no welding/sewing permissions. Original source 2D fallback stays protected.
+
+**Do not merge, deploy, alter production/staging, hosted Supabase, user wardrobes or original garment photographs. Keep #255 OPEN/HOLD.** Master #1054, Mission 2 #1124. P91 is isolated research until genuine tests prove a source-safe visible improvement.
