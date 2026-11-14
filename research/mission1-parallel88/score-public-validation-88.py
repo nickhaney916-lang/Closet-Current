@@ -146,9 +146,10 @@ def main():
     data = json.loads((MASKS / "real-validation-predictions-88.json").read_text())
     if (data.get("schema") != "closet-current-p88-exposed-real-photo-comparison/v1" or
         any(data[x].get("manifestSha256") != EXPECTED or
-            data[x].get("automaticSave") is not False for x in ("baseline", "p88"))):
+            data[x].get("automaticSave") is not False for x in ("baseline", "shoeOnly68", "p88"))):
         raise ValueError("Real model receipt is not from the frozen source")
-    baseline, candidate = measure(truth, data["baseline"]), measure(truth, data["p88"])
+    baseline, shoes, candidate = (measure(truth, data[mode])
+        for mode in ("baseline", "shoeOnly68", "p88"))
     result = {
         "schema": "closet-current-p88-exposed-human-instance-iou/v1",
         "source": "Exact official Fashionpedia JPEGs, independently annotated public P68 validation",
@@ -160,15 +161,17 @@ def main():
         "primaryColorAccuracy": "NO_INDEPENDENT_HUMAN_COLOR_TRUTH",
         "autoSaveAcceptance": "BLOCKED_NOT_CALIBRATED",
         "physicalDevice": False, "privateAccountTouched": False,
-        "baseline": baseline, "p88": candidate,
+        "baseline": baseline, "shoeOnly68": shoes, "p88": candidate,
         "deltaClassAgnosticRecall": candidate["classAgnostic"]["recall"] - baseline["classAgnostic"]["recall"],
-        "deltaCategoryCompatibleRecall": candidate["categoryCompatible"]["recall"] - baseline["categoryCompatible"]["recall"]
+        "deltaCategoryCompatibleRecall": candidate["categoryCompatible"]["recall"] - baseline["categoryCompatible"]["recall"],
+        "deltaP88VsShoeOnlyRecall": candidate["classAgnostic"]["recall"] - shoes["classAgnostic"]["recall"],
+        "deltaP88VsShoeOnlyPrecision": candidate["classAgnostic"]["precision"] - shoes["classAgnostic"]["precision"]
     }
     (MASKS / "real-validation-measured-88.json").write_text(json.dumps(result, indent=2)+"\n")
     print("P88_GENUINE_HUMAN_MASK_EVALUATION", json.dumps({
-        k: v for k, v in result.items() if k not in ("baseline", "p88")
+        k: v for k, v in result.items() if k not in ("baseline", "shoeOnly68", "p88")
     }, separators=(",", ":")))
-    for mode in ("baseline", "p88"):
+    for mode in ("baseline", "shoeOnly68", "p88"):
         print(mode.upper()+"_EXPOSED_VALIDATION", json.dumps({
             "classAgnostic": result[mode]["classAgnostic"],
             "categoryCompatible": result[mode]["categoryCompatible"],
