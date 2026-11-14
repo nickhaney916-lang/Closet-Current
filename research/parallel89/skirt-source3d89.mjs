@@ -107,10 +107,18 @@ function sourceSkeleton(root){
    (!body||o.geometry?.attributes?.position?.count>body.geometry.attributes.position.count))body=o;
  });
  if(!body)throw Error('authentic 163-bone anatomical body source required');
- const pelvis=body.skeleton.bones.findIndex(b=>b.name.replaceAll('.','')==='pelvis');
- const waist=body.skeleton.bones.find(b=>b.name.replaceAll('.','')==='spine04');
- if(pelvis<0||!waist)throw Error('real waist/pelvis 163-bone landmarks unavailable');
- return {body,pelvis,waist};
+ const bones=body.skeleton.bones,names=bones.map(b=>b.name.replaceAll('.',''));
+ const waistIndex=names.indexOf('spine04');
+ // The actual CC0 MakeHuman GLBs do NOT have a literal 'pelvis' joint.
+ // The existing SOURCE dress fitter binds the lower body to the genuine
+ // spine04 joint when pelvis is absent; retain that exact observed fallback,
+ // NEVER manufacture a new bone or pretend the fit is physically correct.
+ const pelvisIndex=names.indexOf('pelvis')>=0?names.indexOf('pelvis'):waistIndex;
+ if(pelvisIndex<0||waistIndex<0)
+  throw Error('real lower-torso 163-bone source landmarks unavailable');
+ return {body,pelvis:pelvisIndex,waist:bones[waistIndex],
+  authenticLowerBodyBoneName:names[pelvisIndex],
+  inferredPelvisBinding:names[pelvisIndex]!=='pelvis'};
 }
 /** Actually constructs a skinned THREE shell from source alpha proportions
  * and immutable original-PNG photo front. The neutral back is openly inferred.
@@ -131,7 +139,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
   return fail('source-skeleton-or-original-mask-capability-missing');
  let mesh=null,geo=null,texture=null,materials=null;
  try{
-  const {body,pelvis,waist}=sourceSkeleton(root);
+  const {body,pelvis,waist,authenticLowerBodyBoneName,inferredPelvisBinding}=sourceSkeleton(root);
   root.updateMatrixWorld(true);
   const at=waist.getWorldPosition(new THREE.Vector3());
   if(![at.x,at.y,at.z].every(Number.isFinite)||at.y<.5||at.y>2.2)
@@ -193,6 +201,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
    originalSHA256:receipt.originalSHA256,cutoutSHA256:receipt.cutoutSHA256,
    sourceId:SKIRT_SOURCE89.id,category:'skirt',sourcePhotoNotDress:true,
    actualSkinnedMesh:true,sourceSkeletonBones:body.skeleton.bones.length,
+   authenticLowerBodyBoneName,inferredPelvisBinding,
    distinctSourceOriginalJPEG:true,measuredSourceMaskRows:heights.length,
    extractedSourceHemToWaistRatio:outline.sourceHemToWaistWidthRatio,
    frontPhotoAppliedFromVerifiedCutout:true,unobservedBackNeutral:true,
@@ -211,7 +220,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
  }catch(e){
   mesh?.removeFromParent();geo?.dispose();materials?.forEach(m=>m.dispose());texture?.dispose();
   return fail(['authentic 163-bone anatomical body source required',
-   'real waist/pelvis 163-bone landmarks unavailable','anatomical waist height invalid',
+   'real lower-torso 163-bone source landmarks unavailable','anatomical waist height invalid',
    'independent rig changed'].includes(e.message)?e.message:'source-skirt-rig-proposal-rejected');
  }
 }
