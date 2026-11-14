@@ -201,3 +201,63 @@ if(process.env.PHOTO_DRESS_TOPOLOGY54==='1'){
   JSON.stringify(output54,null,2)+'\n');
  console.log('M2_C54_REAL_LICENSED_SOURCE_TOPOLOGY_SAFE_SUMMARY',JSON.stringify(output54));
 }
+
+if(process.env.PHOTO_DRESS_HALF_EDGE55==='1'){
+ assert.equal(process.env.PHOTO_DRESS_TOPOLOGY54,'1',
+  'C55 original photo half-edge evidence requires prior complete C54 source topology');
+ const checked=receipts.map(r=>r.originalSourceHalfEdge55);
+ for(let i=0;i<checked.length;i++){
+  const e=checked[i],r=receipts[i];
+  assert.equal(e?.schema,'M2-original-licensed-source-half-edge-winding-C55');
+  assert.equal(e.originalSourceFacesExamined,r.originalSourceFaces);
+  assert.equal(e.sourceHalfEdgesExamined,r.originalSourceFaces*3);
+  assert.equal(e.everyNoncollapsedHalfEdgeAccountedFor,true);
+  assert.equal(e.distinctSourceCoordinateEdges,
+   e.boundarySourceEdges+e.pairedOppositeWindingEdges+
+    e.pairedSameWindingEdges+e.pairedUnsafeRestSkinOrPoseEdges+
+    e.nonmanifoldSourceEdges);
+  assert.equal(e.pairedOppositeWindingEdges,
+   e.indexedConnectedOppositeWindingEdges+
+    e.splitIndexOppositeWindingEdgeCandidates);
+  assert.equal(e.physicallySewnSeamsCertified,false);
+  assert.equal(e.noAutomaticUVJoiningOrIndexWelding,true);
+  assert.equal(e.poseContinuousCollisionSafetyCertified,false);
+  assert.equal(e.aggregateOnlyNoRawCoordinatesOrFaceIndices,true);
+  assert.equal(e.originalPhotoAndGarmentMutated,false);
+  assert.equal(e.releaseAuthorized,false);
+  assert.equal(r.actualSourceHalfEdgesCertifiedAsSewing55,false);
+  assert.equal(r.noSourceStitchingOrCollisionWaiver55,true);
+  assert.equal(r.fullOriginalSourceTopologyAuditCompleted54,true);
+ }
+ for(const e of checked.slice(1))assert.deepEqual(e,checked[0],
+  'same licensed original source half-edge incidence must be identical at every viewport width');
+ const first55=checked[0];
+ const summary55={
+  schema:'M2-P2-C55-genuine-licensed-3D-photo-half-edge-audit',
+  source:'licensed-original-Commons-0053-P61-P175',
+  authenticatedRealWebGLViewports:[320,390,430],
+  originalSourceFaces:first55.originalSourceFacesExamined,
+  originalSourceVertices:first55.originalSourceVerticesExamined,
+  originalHalfEdges:first55.sourceHalfEdgesExamined,
+  originalCoordinateEdgeGroups:first55.distinctSourceCoordinateEdges,
+  boundarySourceEdges:first55.boundarySourceEdges,
+  consistentOppositeWindingCandidates:first55.pairedOppositeWindingEdges,
+  independentlyIndexedOppositeWindingCandidates:first55.splitIndexOppositeWindingEdgeCandidates,
+  sameWindingConflicts:first55.pairedSameWindingEdges,
+  unsafeRestSkinPoseEdges:first55.pairedUnsafeRestSkinOrPoseEdges,
+  nonmanifoldSourceEdges:first55.nonmanifoldSourceEdges,
+  ambiguousSourceMatches:first55.ambiguousSourceMatches,
+  incompatibleSourceTwins:first55.incompatibleSourceTwins,
+  sourcePhotoSHAImmutable:true,real163BonePoseWitness:true,
+  originalPhotosSourceVerticesUVIndicesAndSkinUnchanged:true,
+  photoPixelsAndRawVertexCoordinatesExcluded:true,
+  sourceCoincidenceIsNotProofOfSewing:true,
+  noAutomaticWeldingOrSeamRepair:true,
+  noContinuousFabricClearance:true,
+  noIndependentPhotorealOrPhysicalPhoneAcceptance:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-half-edge55.json',
+  JSON.stringify(summary55,null,2)+'\n');
+ console.log('M2_C55_REAL_LICENSED_SOURCE_HALF_EDGE_SAFE_SUMMARY',JSON.stringify(summary55));
+}
