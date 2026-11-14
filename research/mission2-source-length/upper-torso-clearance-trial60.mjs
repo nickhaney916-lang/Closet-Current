@@ -8,7 +8,13 @@
  * reconstruction, preview rendering, natural textile simulation or an
  * authorization to alter source photographs or production geometry.
  */
-import assert from 'node:assert/strict';
+// This module is also imported by real Chromium browser WebGL, not only Node.
+// NEVER use node:assert or other Node-only dependencies here.
+const assert=Object.freeze({
+ ok(condition,message){
+  if(!condition)throw Error('M2 C60 source-only fit hypothesis '+String(message||'rejected'));
+ }
+});
 const finite3=p=>Array.isArray(p)&&p.length===3&&p.every(Number.isFinite);
 const smooth=(a,b,x)=>{
  const t=Math.max(0,Math.min(1,(x-a)/(b-a)));
