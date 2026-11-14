@@ -17,7 +17,7 @@ const unit70Api=outfitUnits70?import('./outfit-unit-reconciliation-70.mjs'+(reco
 let outfitUnit70Error='';
 // Prove the original JPEG hash in the browser instead of trusting two
 // self-consistent fields from one worker response. Opt-in unit70 and color76.
-async function originalSha256ForSource70(image){
+async function originalSha256ForColor76(image){
  try{
   if(typeof image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image)||image.length>12000000||!crypto?.subtle)return null;
   const encoded=image.slice('data:image/jpeg;base64,'.length),decoded=atob(encoded),bytes=new Uint8Array(decoded.length);
@@ -85,7 +85,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(outfitInstances840){const user=captureOwner88();lastOutfitOwner88={user,id:user?.id||null};}
  $('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
- const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),ownerRef88:outfitInstances840&&typeof window!=='undefined'?window.closetAuth?.user:null,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitUnits70?originalSha256ForSource70(image):null};outfitSplitJob=job;
+ const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),ownerRef88:outfitInstances840&&typeof window!=='undefined'?window.closetAuth?.user:null,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null,unit70SourceDigest:outfitUnits70&&!outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();
  $('outfitSplitStatus').textContent='Preparing…';
@@ -122,7 +122,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
     // P88: unit grouping is also a source-security workflow without color76.
     // Recompute SHA-256 from the owner's original JPEG, not another worker
     // receipt; keep message processing ordered until the digest has settled.
-    const sourceProof70=outfitUnits70?await job.sourceDigest:null;
+    const sourceProof70=outfitUnits70?await (job.sourceDigest||job.unit70SourceDigest):null;
     if(outfitUnits70){
      if(job!==outfitSplitJob)return;
      if(job.ownerId!==unit70Owner()||
