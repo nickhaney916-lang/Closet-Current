@@ -1800,3 +1800,193 @@ export function auditActualPhotographedDressSurfaces52({
   familyAlpha:'HOLD'
  });
 }
+
+/**
+ * P86 research-only: actually render the exactly C58/C61-approved
+ * photographed Commons-0053 original skinned WORLD-pose cloth candidate.
+ *
+ * Source P61 shader uses original dressRest and uDressImage: attach a
+ * parallel NEVER-SKINNED static-pose Mesh using the exact ORIGINAL material
+ * instance, untouched photo crop/texture and cloned source attributes.
+ * This is not a replacement SkinnedMesh, not motion/photoreal approval.
+ * Never expose sampled RGB, UV arrays, vertex coordinates or face IDs
+ * through the browser research bridge. Release/merge/ship always refused.
+ */
+export function installDisposableOriginalDressRenderPreview86({
+ root,dress,sourceReceipt
+}={}){
+ const mesh=dress?.mesh,g=mesh?.geometry,parent=mesh?.parent;
+ if(!root?.isObject3D||!mesh?.isSkinnedMesh||!parent?.isObject3D||
+  !mesh.skeleton||mesh.skeleton.bones.length!==163||
+  !g?.isBufferGeometry||!g.getAttribute('dressRest')||
+  !g.getAttribute('skinIndex')||!g.getAttribute('skinWeight')||
+  !mesh.material?.isMeshStandardMaterial||
+  typeof mesh.material.onBeforeCompile!=='function'||
+  dress.stats?.sourceId!==SOURCE_ID||
+  dress.stats?.sourceSHA256!==SHA||
+  dress.stats?.photographedDressDrape61!==true||
+  dress.stats?.sourceTextureAndMaterialPreserved61!==true||
+  sourceReceipt?.schema!=='M2-real-original-photo-surface-diagnostic-C52'||
+  sourceReceipt?.authenticOriginalLicensedDress!==true||
+  sourceReceipt?.originalPhotoSourceUVRestSkinAndIndicesUntouched!==true||
+  sourceReceipt?.genuineOriginalPhotoAlternativesFullyAudited85!==true||
+  sourceReceipt?.releaseAuthorized!==false)
+  fail('P86 requires exact original licensed shader/photo, 163 bones and complete P85 source numerical audit');
+ const poses=[sourceReceipt.originalArticulatedContactReceipt58?.
+   disposableNeutralAlternativeClearance85,
+  ...sourceReceipt.originalArticulatedContactReceipt58?.
+   disposableArmAlternativeClearance85??[]];
+ if(poses.length!==3||poses.some(p=>{
+  const t=p?.witnessLocalizedCandidates85?.[14],q=t?.sourceFaceStrain61;
+  return p.allSixteenWitnessLocalizedSweepsCompleted85!==true||
+   t?.method!=='strict-witness-local-normal-restoration'||
+   t?.normalRestorationStrength85!==.30||
+   t?.bodyClearanceSampled!==true||
+   t?.strictBodyCrossings!==0||t?.strictSelfCrossings!==0||
+   q?.provisionalMeshDistortionGuardPassed!==true||
+   t?.provisionalGeometryGuard!==true;
+ }))fail('P86 no full three-pose original C52 C58 C61 numerical acceptance; no render permitted');
+ if(globalThis.__M2P85Preview86)
+  fail('P86 existing visual source preview must first be revoked');
+ root.updateMatrixWorld(true);mesh.updateWorldMatrix(true,false);
+ mesh.skeleton.update();
+ const source=g.getAttribute('position'),indices=g.index?.array??null,
+  originalWorld=skinnedWorldBuffer58(mesh),before=originalWorld.slice(),
+  originalVisible=mesh.visible,
+  poseWitnesses=new Set(),body=bodyFaces58(root,mesh,160000),
+  bodyCheck=bodyClothContact58(body,originalWorld,indices,.00002,{
+   maxBodyComparisons58:10000000,
+   maxBodyCandidatePairs58:160000,
+   captureStrictOriginalClothFaces85:poseWitnesses
+  });
+ if(!bodyCheck.complete||bodyCheck.strict!==
+  poses[0].candidates[0].baselineBodyStrictCrossings||
+  poseWitnesses.size!==
+   poses[0].privateOriginalStrictClothWitnessFaceCount85)
+  fail('P86 failed to reproduce unchanged original C58 contact witness set');
+ const bone=name=>{
+  const b=mesh.skeleton.bones.find(x=>x.name===name);
+  if(!b?.isBone)fail('P86 exact neutral 163-bone landmark missing');
+  return b.getWorldPosition(new THREE.Vector3()).toArray();
+ };
+ const alternatives=createDisposableWitnessLocalized85(originalWorld,indices,{
+  neck:bone('neck01'),spine:bone('spine04'),
+  strictClothFaceIndices:[...poseWitnesses].sort((a,b)=>a-b)
+ });
+ const chosen=alternatives[14],test=chosen.world;
+ const b=bodyClothContact58(body,test,indices,.00002,{
+   maxBodyComparisons58:10000000,maxBodyCandidatePairs58:160000
+  });
+ const triangles=(indices?.length??source.count)/3,
+  c=analyze52(test,indices,triangles,.00002,{
+   maxComparisons:800000,maxCandidatePairs:100000,
+   maxStrictCrossings:1024,refineTriangleDistances53:true,
+   maxDistanceCandidates53:100000,
+   refineSourceTopology54:false,refineEdgeWinding55:false
+  }),quality=measureDisposableSourceSurfaceStrain61(
+   originalWorld,test,indices);
+ if(!b.complete||b.strict!==0||b.near!==0||
+  !c.complete||c.strictCrossings!==0||
+  !c.distance53.distanceRefinementComplete||
+  !quality.provisionalMeshDistortionGuardPassed||
+  !originalWorld.every((x,i)=>x===before[i]))
+  fail('P86 corrected real neutral pose failed unchanged original source numerical guards');
+ const clone=g.clone(),positions=clone.getAttribute('position'),
+  inv=mesh.matrixWorld.clone().invert(),v=new THREE.Vector3(),
+  identity=mesh.matrixWorld;
+ if(!positions||positions.count!==source.count)
+  fail('P86 cloned source photo topology differs');
+ let maxPositionRoundtripMeters=0;
+ for(let i=0;i<positions.count;i++){
+  v.fromArray(test,3*i).applyMatrix4(inv);
+  positions.setXYZ(i,v.x,v.y,v.z);
+  v.fromBufferAttribute(positions,i).applyMatrix4(identity);
+  const dx=v.x-test[3*i],dy=v.y-test[3*i+1],dz=v.z-test[3*i+2];
+  maxPositionRoundtripMeters=Math.max(maxPositionRoundtripMeters,
+   Math.hypot(dx,dy,dz));
+ }
+ if(maxPositionRoundtripMeters>2e-6){
+  clone.dispose();
+  fail('P86 preview transform roundtrip disagrees with C58 source world positions');
+ }
+ // Original photographic texture sampling is based on untouched dressRest.
+ // Cloned normals are recomputed for the candidate's genuine front/back
+ // drape; candidate never overwrites any SkinnedMesh source attribute.
+ clone.computeVertexNormals();
+ const rest=g.getAttribute('dressRest').array,
+  cloneRest=clone.getAttribute('dressRest').array;
+ if(cloneRest.length!==rest.length||
+    !rest.every((x,i)=>x===cloneRest[i])){
+  clone.dispose();fail('P86 candidate copied wrong original photo projection');
+ }
+ const overlay=new THREE.Mesh(clone,mesh.material);
+ overlay.name='P86-authentic-Commons-0053-static-pose-photo-HOLD';
+ overlay.position.copy(mesh.position);
+ overlay.quaternion.copy(mesh.quaternion);
+ overlay.scale.copy(mesh.scale);
+ overlay.frustumCulled=false;overlay.visible=false;
+ overlay.userData.p86ResearchOnly=true;
+ parent.add(overlay);
+ const sourceSnapshot=Object.entries(g.attributes).map(([name,attr])=>
+  [name,attr,attr.array.slice()]);
+ const sourceIndex=g.index?.array.slice()??null;
+ let disposed=false,mode='original';
+ const state=()=>Object.freeze({
+  schema:'M2-P86-real-photo-shader-world-candidate-static-render-A-B',
+  mode:disposed?'disposed':mode,
+  original163BoneSkinnedSource:true,
+  exactLicensedSourceId:SOURCE_ID,
+  candidateTriangles:triangles,
+  originalSourceClothWitnessFaces:poseWitnesses.size,
+  candidateGeometryRenderedAsStaticSourceWorldPose:true,
+  originalPhotographicMaterialInstanceShared:overlay.material===mesh.material,
+  originalPhotoRestAttributesCopiedNotChanged:true,
+  updatedCloneNormalsOnly:true,
+  maxPreviewWorldRoundtripMeters:maxPositionRoundtripMeters,
+  originalDressVisible:disposed?null:mesh.visible,
+  disposableCandidateVisible:disposed?false:overlay.visible,
+  sourceMeshAttributesUnchanged:true,
+  noPrivateSourceArraysOrPhotoBytesExposed:true,
+  candidateContinuousMotionTested:false,
+  ownerPhotorealismApproved:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ const checkSource=()=>{
+  if(!sourceSnapshot.every(([name,attr,bytes])=>
+   g.getAttribute(name)===attr&&bytes.length===attr.array.length&&
+    bytes.every((x,i)=>x===attr.array[i]))||
+   (sourceIndex!==null&&
+    (sourceIndex.length!==g.index?.array.length||
+     !sourceIndex.every((x,i)=>x===g.index.array[i]))))
+   fail('P86 original photographed source changed during visual trial');
+ };
+ let api=null;
+ const dispose=()=>{
+  if(disposed)return;
+  disposed=true;overlay.visible=false;overlay.removeFromParent();
+  clone.dispose();
+  if(mesh.parent===parent)mesh.visible=originalVisible;
+  globalThis.removeEventListener?.('closet:alpha-session-changed',dispose);
+  globalThis.removeEventListener?.('pagehide',dispose);
+  if(globalThis.__M2P85Preview86===api)
+   delete globalThis.__M2P85Preview86;
+  checkSource();
+ };
+ const setMode=next=>{
+  if(disposed||mesh.parent!==parent||!['original','candidate'].includes(next))
+   fail('P86 stale or invalid owner scene; candidate must not persist');
+  checkSource();
+  mesh.visible=next==='original'?originalVisible:false;
+  overlay.visible=next==='candidate';
+  mode=next;
+  root.updateMatrixWorld(true);
+  if(overlay.material!==mesh.material||overlay.parent!==parent)
+   fail('P86 detached or reskinned original photo shader');
+  return state();
+ };
+ api=Object.freeze({state,setMode,dispose});
+ globalThis.__M2P85Preview86=api;
+ globalThis.addEventListener?.('closet:alpha-session-changed',dispose);
+ globalThis.addEventListener?.('pagehide',dispose);
+ return state();
+}
