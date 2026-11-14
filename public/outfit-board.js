@@ -6,6 +6,79 @@ let mission4Preview1054Viewer=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
 let boardExpectedStoredDraft='null',boardConflictDraft=null;
+
+ // MAIN1054 M33: opt-in native Outfit Builder picker source validation only.
+ // The default app keeps its existing behavior until independent acceptance.
+ const ownerPicker33Active=!nativeLossless04Active&&typeof URLSearchParams==='function'&&
+  typeof location!=='undefined'&&new URLSearchParams(location.search).get('ownerPicker33')==='research';
+ let ownerPicker33Serial=0;
+ // Observes the local UI roster; not a durable cross-tab database revision.
+ // Each M33 write also compares the complete private owner row atomically.
+ function ownerPicker33Revision(){
+  let hash=2166136261,length=0;
+  const rows=Array.isArray(items)?items:[];
+  for(const row of rows){
+   const words=JSON.stringify([row?.id,row?.ownerId,row?.category,
+    row?.itemType,row?.color,row?.sourceSHA256,row?.sourceHashVerified,
+    row?.originalPhoto?.sha256,row?.confirmedDetails,
+    row?.confirmedDetailsSource31,row?.deleted,row?.sourceRevoked]);
+   length+=words.length;
+   for(let i=0;i<words.length;i++)hash=Math.imul(hash^words.charCodeAt(i),16777619)>>>0;
+  }
+  return 'm33-'+rows.length+'-'+length+'-'+hash.toString(16).padStart(8,'0');
+ }
+ async function ownerPicker33Gate(){
+  if(!ownerPicker33Active||typeof currentPhotoOwnerSession167!=='function'||
+     typeof readAllFrom!=='function')throw Error('M33 signed source unavailable');
+  const mod=await import('../research/main1054-picker33/native-picker-bridge.mjs');
+  return mod.createNativeOutfitPicker33({
+   getSession:currentPhotoOwnerSession167,
+   getRevision:ownerPicker33Revision,getBoard:()=>currentBoard,
+   readOwnerItems:async scope=>{
+    scope.assertCurrent();
+    const rows=await readAllFrom(scope.privateDbRef);
+    scope.assertCurrent();return rows;
+   }
+  });
+ }
+ async function ownerPicker33Choose(slotId,itemId,button,lease,{closePicker=false}={}){
+  const serial=++ownerPicker33Serial;
+  if(!lease?.current()||!button?.isConnected)return false;
+  let gate;
+  const before=structuredClone(currentBoard),stamp=JSON.stringify(currentBoard);
+  button.disabled=true;
+  try{
+   gate=await ownerPicker33Gate();
+   if(serial!==ownerPicker33Serial||!lease.current()||!button.isConnected)return false;
+   const decision=await gate.authorize(slotId,itemId);
+   if(serial!==ownerPicker33Serial||!lease.current()||!button.isConnected||
+      JSON.stringify(currentBoard)!==stamp)return false;
+   if(decision.status!=='authorized-for-immediate-2d-selection-only'){
+    $('boardSaveStatus').textContent='Review this garment and original photo in My Closet, then reopen the outfit picker.';
+    return false;
+   }
+   const pending=selectBoardPiece(slotId,itemId);
+   const candidate=JSON.stringify(currentBoard);
+   const saved=await pending;
+   if(!lease.current())return false;
+   if(!saved){
+    if(JSON.stringify(currentBoard)===candidate){
+     currentBoard=before;renderOutfitBoard();
+    }
+    $('boardSaveStatus').textContent='Outfit not saved. This garment or private source changed; reopen the picker.';
+    return false;
+   }
+   if(closePicker&&$('boardPicker').open)$('boardPicker').close();
+   return true;
+  }catch{
+   if(lease.current())$('boardSaveStatus').textContent='Owner/source verification unavailable. Outfit unchanged; reopen the picker.';
+   return false;
+  }finally{
+   try{gate?.dispose();}catch{}
+   if(lease.current()&&button.isConnected)button.disabled=false;
+  }
+ }
+
 function nativeLossless04Notify(error){
  // Raw storage/auth exceptions can contain private original-photo metadata.
  const value=typeof error==='string'?error:
