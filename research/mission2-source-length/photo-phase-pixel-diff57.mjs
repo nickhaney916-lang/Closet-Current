@@ -46,6 +46,11 @@ export function summarizeMeasuredPhasePixels57(rows){
   'C57 requires actual source-rendered 4 phases x 3 widths x 3 camera viewpoints');
  let count=0,changedSideRear=0,changedFront=0;
  let largest=0;
+ // The same source garment, camera stage, and viewport must have an
+ // identical decoded image-pixel count at EVERY sampled phase. Without
+ // this check, a forged zero-motion receipt can shrink its denominator
+ // to one pixel without changing its normalized zero fraction.
+ const pixelsPerView=new Map();
  for(const phase of PHASES57.slice(1))
   for(const width of WIDTHS57)
    for(const stage of STAGES57){
@@ -55,6 +60,11 @@ export function summarizeMeasuredPhasePixels57(rows){
     assert.ok(Number.isSafeInteger(r.changedRGBPixelsAboveThreshold)&&
      r.changedRGBPixelsAboveThreshold>=0);
     assert.ok(Number.isSafeInteger(r.measuredRGBPixels)&&r.measuredRGBPixels>0);
+    const key=width+'|'+stage;
+    if(pixelsPerView.has(key))
+     assert.equal(r.measuredRGBPixels,pixelsPerView.get(key),
+      'C57 same signed original source viewport/stage must retain identical RGB image dimensions across phases');
+    else pixelsPerView.set(key,r.measuredRGBPixels);
     assert.ok(r.changedRGBPixelsAboveThreshold<=r.measuredRGBPixels);
     assert.ok(Number.isFinite(r.changedRGBPixelFraction)&&
      Math.abs(r.changedRGBPixelFraction-
