@@ -117,9 +117,14 @@ function measureSkinnedBodyEnvelopes89({worldBody,rest}){
   for(let i=0;i<SEGMENTS;i++)if(seen[i]){
    covered++;maxRadius=Math.max(maxRadius,bins[i]);
   }
-  if(covered<SEGMENTS*.60||count<60||maxRadius<.09||maxRadius>.57||
-    (indexed&&segments<12))
-   throw Error('original indexed anatomy cross-section incomplete at skirt band '+row+
+  // Some original body sections intersect only part of the 48-sector
+  // circle (including disconnected source left/right legs). Unobserved
+  // angular sectors remain UNKNOWN, never treated as empty/cleared fabric.
+  // A source trial with any unknown sector is absolutely INADMISSIBLE,
+  // even if genuine later full-BVH triangle contact counts improve.
+  if(covered<6||count<10||maxRadius<.09||maxRadius>.57||
+    (indexed&&segments<4))
+   throw Error('insufficient original anatomical source face contour at skirt band '+row+
     ': angular '+covered+'/48, source-face-segments '+segments+
     ', measured points '+count);
   const corrected=Array.from(bins,(v,i)=>{
@@ -287,19 +292,21 @@ export function compareActualMeasuredSkirtFit89({
    if(distort.worstAreaRelativeChange>.22||distort.worstEdgeRelativeChange>.20||
       distort.flippedTriangles>0||distort.degenerateTriangles>0)
     rejectReasons.push('photographic-fabric-triangle-area-edge-normal-distortion');
+   // Still run the true ORIGINAL full skinned body/skirt BVH even if
+   // the provisional photo-front fit is rejected by missing sectors,
+   // source real-world sizing or UV strain. Reductions are diagnostics
+   // only and NEVER approved while any observation/release gate is false.
    const contacts=[];
-   if(!rejectReasons.length){
-    for(let i=0;i<POSES.length;i++){
-     applyPose(POSES[i]);
-     const after=sampleContact(POSES[i]);
-     if(!validContact(after))throw Error('source-original-bvh-contact-after-body-fit-missing');
-     contacts.push(collisionWitnesses(baseline[i],after));
-    }
-    if(contacts.some(x=>x.addedCrossingPairIDs>0))
-     rejectReasons.push('new-body-skirt-original-triangle-crossing-IDs');
-    if(contacts.some(x=>x.contactPlaneDepthWorsened))
-     rejectReasons.push('oriented-anatomical-body-plane-depth-worsened');
+   for(let i=0;i<POSES.length;i++){
+    applyPose(POSES[i]);
+    const after=sampleContact(POSES[i]);
+    if(!validContact(after))throw Error('source-original-bvh-contact-after-body-fit-missing');
+    contacts.push(collisionWitnesses(baseline[i],after));
    }
+   if(contacts.some(x=>x.addedCrossingPairIDs>0))
+    rejectReasons.push('new-body-skirt-original-triangle-crossing-IDs');
+   if(contacts.some(x=>x.contactPlaneDepthWorsened))
+    rejectReasons.push('oriented-anatomical-body-plane-depth-worsened');
    const beforeTotal=baseline.reduce((n,x)=>n+x.count,0),
     afterTotal=contacts.reduce((n,x)=>n+x.after,0);
    if(!rejectReasons.length&&afterTotal>=beforeTotal)
@@ -372,7 +379,7 @@ export function compareActualMeasuredSkirtFit89({
    'original-photographed-source-uv-skin-or-faces-mutated',
    'original-source-photo-skirt-geometry-was-mutated'];
   return fail(known.includes(e.message)||
-   e.message.startsWith('original indexed anatomy cross-section incomplete at skirt band ')?
+   e.message.startsWith('insufficient original anatomical source face contour at skirt band ')?
    e.message:'source-measured-real-body-fit-not-verifiable');
  }finally{
   mesh.geometry=original;
