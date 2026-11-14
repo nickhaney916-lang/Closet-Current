@@ -886,7 +886,7 @@ if(process.env.PHOTO_DRESS_PARETO62==='1'){
   JSON.stringify(summary));
 }
 
-if(process.env.PHOTO_DRESS_LOCAL63==='1'){
+if(process.env.PHOTO_DRESS_LOCAL63==='1'&&process.env.PHOTO_DRESS_FINE64!=='1'){
  assert.equal(process.env.PHOTO_DRESS_PARETO62,'1',
   'C63 local body intersection targets demand authenticated original P2-C62 2mm baseline');
  const rows=receipts.map(r=>{
@@ -991,4 +991,77 @@ if(process.env.PHOTO_DRESS_LOCAL63==='1'){
   JSON.stringify(summary,null,2)+'\n');
  console.log('M2_C63_REAL_LICENSED_LOCAL_BODY_FIT_SOURCE_COUNTS',
   JSON.stringify(summary));
+}
+
+if(process.env.PHOTO_DRESS_FINE64==='1'){
+ assert.equal(process.env.PHOTO_DRESS_LOCAL63,'1',
+  'C64 original source local displacement fine grid demands real signed P2-C63 body-cloth contact faces');
+ const samples=receipts.map(r=>{
+  assert.equal(r.genuineSourcePhotoThreePoseFineLocalGrid64,true);
+  assert.equal(r.noPhotographedGarmentSourceOrOwnerWardrobeEdit64,true);
+  assert.equal(r.noContinuousClothPhysicsAndHumanApproval64,true);
+  const x=r.originalArticulatedContactReceipt58.originalPhotoFineLocalGridReceipt64;
+  assert.equal(x.schema,'M2-C64-original-public-photograph-local-contact-fine-grid');
+  assert.equal(x.originalSourceNeutralPlusArticulatedPoseCount,3);
+  assert.equal(x.perSourcePose.length,3);
+  assert.equal(x.originalSourceStrictContactFaceIdentifiersNeverExported,true);
+  assert.equal(x.sampledWorldOnlyNotActualSkinnedDressEdit,true);
+  assert.equal(x.originalPhotographicTextureSkinUVRestUnchanged,true);
+  assert.equal(x.authenticOwnerSourceReconstructionCertified,false);
+  assert.equal(x.continuousPoseClothCollisionSafeCertified,false);
+  assert.equal(x.releaseAuthorized,false);
+  for(const p of x.perSourcePose){
+   assert.equal(p.originalStrictCrossingWitnessesAfter2mm,42);
+   assert.equal(p.originalDistinctSourceContactFaceReferences,6);
+   assert.deepEqual(p.candidates.map(c=>c.extraOutwardMeters),
+    [.0025,.003,.004]);
+   assert.equal(p.candidates.length,3);
+   for(const c of p.candidates){
+    assert.equal(c.featherRadiusMeters,.25);
+    assert.ok(c.worstOriginalSourceEdgeStrain>=0);
+    assert.ok(c.worstSourceAreaDrift>=0);
+    if(c.originalSourceShapeGuardPassed){
+     assert.equal(c.completeSourceBodySelfContactAudited,true);
+     assert.ok(c.originalStrictBodyWitnessesRemaining>=0);
+     assert.ok(c.originalStrictClothSelfWitnesses>=0);
+    }else{
+     assert.equal(c.completeSourceBodySelfContactAudited,false);
+     assert.equal(c.originalStrictBodyWitnessesRemaining,null);
+     assert.equal(c.originalStrictClothSelfWitnesses,null);
+    }
+   }
+  }
+  assert.equal(x.anySampledPoseQualifiedLocalFit,
+   x.candidateProfilesClearingAllSampledStrictBodyAndClothContactsWithShapeGuard.length>0);
+  return x;
+ });
+ for(const s of samples.slice(1))assert.deepEqual(s,samples[0],
+  'C64 original same source licensed photographed dress and 163-bone body must have identical contact/strain figures across all three real mobile viewports');
+ const firstFine=samples[0];
+ const sourceFine={
+  schema:'M2-C64-licensed-photo-3pose-contact-local-fine-grid-verified',
+  originalPublicPhotoSource:'commons-0053-P61-P175-signed-original',
+  originalAuthenticSourceGarmentTriangles:first.originalSourceFaces,
+  realNativeChromiumViewportWidths:[320,390,430],
+  originalIndependent163BonePoseSamples:3,
+  original2mmSourceBodyStrictWitnessesPerPose:
+   firstFine.perSourcePose.map(p=>p.originalStrictCrossingWitnessesAfter2mm),
+  sourceBodyIntersectingDistinctClothFacesPerPose:
+   firstFine.perSourcePose.map(p=>p.originalDistinctSourceContactFaceReferences),
+  candidateProfilesPerOriginalPose:firstFine.perSourcePose,
+  testedProfilesSourceShapeAndBodyContactSafeInAllThreeSampledPoses:
+   firstFine.candidateProfilesClearingAllSampledStrictBodyAndClothContactsWithShapeGuard,
+  anySampledLocalProfilePassesBothOriginalPhotoClothStrainAndBodyClearance:
+   firstFine.anySampledPoseQualifiedLocalFit,
+  noRealPhotographicDressPreviewAltered:true,
+  noOwnerSourceSkinUVTextureOrRestEdited:true,
+  noBodyContactExceptionGranted:true,
+  noContinuousClothMotionOrHumanLookCertification:true,
+  noPrivateOwnerWardrobeOrSupabaseReadWrite:true,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ };
+ await writeFile('benchmark/mission2-source-dress-motion/live-source-fine-local-grid64.json',
+  JSON.stringify(sourceFine,null,2)+'\n');
+ console.log('M2_C64_REAL_LICENSED_SOURCE_FINE_LOCAL_CONTACT_RESULT',
+  JSON.stringify(sourceFine));
 }
