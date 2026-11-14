@@ -75,7 +75,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
  screenCaptureCountExpected:18,figurePoseSamplesExpected:6,
- captures:[],poseSamples:[],diffs:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -157,7 +157,38 @@ try{
      sourceSkirtVisible:diff>1000,subjectNotHumanApproved:true});
    }
   }
+  const trial=await page.evaluate(()=>window.nativeP89Skirt.trialNeutralRear());
+  assert.ok([
+   'BOUNDED_NEUTRAL_REAR_CONTACT_REDUCTION_NOT_CLEARANCE',
+   'NO_REAR_ONLY_NONWORSENING_REDUCTION_SHOWN'
+  ].includes(trial.status),'original photographed skirt rear trial not source-verified');
+  assert.equal(trial.avatar,avatar);
+  assert.equal(trial.actualFullSourcePoseSamples,3);
+  assert.equal(trial.candidateTests.length,3);
+  assert.equal(trial.sourcePhoto2DFallbackRequired,true);
+  assert.equal(trial.frontPhotoGeometryUntouched,true);
+  assert.equal(trial.originalSourceUVAndSourceAlphaUntouched,true);
+  assert.equal(trial.allCandidateGeometryRestored,true);
+  assert.equal(trial.releaseAuthorized,false);
+  assert.equal(trial.consumer3DAdmitted,false);
+  const before=results.poseSamples.filter(x=>x.avatar===avatar).reduce(
+   (sum,x)=>sum+x.strictTransverseSourceBodyTriangleCrossings,0);
+  assert.equal(trial.actualSourceCrossingPairsBefore,before,
+   'research rear-only trial must compare against same genuine 163-bone pose contacts');
+  if(trial.bestProvisional){
+   assert.ok(trial.bestProvisional.trialSourcePoseCrossingSum<
+    trial.bestProvisional.originalSourcePoseCrossingSum);
+   assert.equal(trial.bestProvisional.newCrossingPairKeys,0);
+   assert.equal(trial.bestProvisional.orientedPlaneDepthWorsened,false);
+   assert.equal(trial.bestProvisional.originalFrontPositionsAndUVFixed,true);
+  }
+  const restored=await page.evaluate(()=>window.nativeP89Skirt.getState());
+  assert.equal(restored.bones,163);
+  assert.equal(restored.originalSourceSHA256,required.skirt);
+  assert.equal(restored.releaseAuthorized,false);
+  results.neutralRearTrials.push(trial);
  }
+ assert.equal(results.neutralRearTrials.length,2);
  assert.equal(results.captures.length,18);
  assert.equal(results.poseSamples.length,6);
  assert.equal(results.diffs.length,18);
@@ -183,7 +214,9 @@ try{
  await writeFile(join(out,'results.json'),JSON.stringify(results,null,2)+'\n');
  console.log('P89_REAL_SKIRT_NATIVE_WEBGL_BODY_INTERSECTIONS_NOT_RELEASE',
   JSON.stringify({engine,status:results.status,frames:results.captures.length,
-   poseSamples:results.poseSamples.length,sourceBodyCrossingPairs:results.staticSourceBodyCrossingPairSum??null,
+   poseSamples:results.poseSamples.length,neutralRearTrialStatus:results.neutralRearTrials.map(x=>x.status),
+   provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
+   sourceBodyCrossingPairs:results.staticSourceBodyCrossingPairSum??null,
    sourceBodyCrossingWitnessSamples:results.staticSourceBodyCrossingWitnesses??null,
    sourceOriginalJPEG:results.originalSHA256,
    actualSourceFrontPhoto:results.renderedPhotoToActualAnatomicalAvatar??false,
