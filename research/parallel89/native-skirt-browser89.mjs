@@ -13,6 +13,7 @@ import {SKIRT_SOURCE89,attestActualSkirt89,sourceSkirtOutline89,
 import {posedSource84,countSourceContacts84}
  from '/p84/research/parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';
 import {compareActualNeutralSkirtRear89} from './skirt-neutral-contact-trial89.mjs';
+import {compareActualMeasuredSkirtFit89} from './skirt-body-measured-fit89.mjs';
 if(!['localhost','127.0.0.1','[::1]'].includes(location.hostname))
  throw Error('Original skirt research is localhost-only');
 const MODELS=Object.freeze({
@@ -201,6 +202,38 @@ function trialNeutralRear(){
  pose='source';originalBodyPositions();render();
  return report;
 }
+/** Genuine public-body cross-sectional source fit A/B. The original PHOTO
+ * and all original GLB skinned geometry remain immutable. No fitted candidate
+ * is exposed or saved; P89 returns only counts and derived band summaries.
+ */
+function trialMeasuredAnatomyFit(){
+ check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh&&root&&bodies.length>0,
+  'verified source-skirt and actual CC0 anatomical avatar required');
+ const report=compareActualMeasuredSkirtFit89({
+  root,mesh:candidate.mesh,avatar:current,
+  applyPose:name=>setResearchPose(root,name),
+  sampleBodySkinnedWorld:()=>{
+   let b;
+   try{
+    b=posedSource84(bodies);
+    return b.g.getAttribute('position').array.slice();
+   }finally{b?.g.dispose();}
+  },
+  sampleContact:()=>{
+   let skirt,body;
+   try{
+    skirt=posedSource84(candidate.meshes);
+    body=posedSource84(bodies);
+    return countSourceContacts84(skirt.g,body.g);
+   }finally{skirt?.g.dispose();body?.g.dispose();}
+  }
+ });
+ check(report?.releaseAuthorized===false&&report?.source2DFallbackRequired===true,
+  'no body-fitted source skirt may be authorized for the private closet');
+ // A measured anatomical surface can still intersect and distort the original
+ // two-dimensional photograph. This viewer deliberately NEVER swaps it in.
+ pose='source';originalBodyPositions();render();return report;
+}
 function setPose(mode){const out=inspectPose(mode);render();return out;}
 function setView(deg){check([0,90,180].includes(deg),'only research original photo views');angle=deg;render();return getState();}
 function toggleSkirt(show){check(phase==='ready','actual photographed skirt not loaded');
@@ -223,7 +256,7 @@ function getState(){return Object.freeze({
 });}
 function close(){candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
