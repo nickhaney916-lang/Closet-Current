@@ -81,6 +81,18 @@ test('C57: missing, duplicate or invented real phase stage comparisons fail clos
   assert.throws(()=>summarizeMeasuredPhasePixels57(clone));
  }
 });
+test('C57: same original photographed camera view cannot report different image dimensions between phases',()=>{
+ const rows=sample();
+ // Image area cannot shrink for the same source photograph and same
+ // viewport/stage just because one sampled phase is zero-motion.
+ const other=rows.find(r=>r.phase===.5&&r.width===390&&
+  r.stage===STAGES57[0]);
+ other.measuredRGBPixels=1;
+ assert.equal(other.changedRGBPixelsAboveThreshold,0);
+ assert.equal(other.changedRGBPixelFraction,0);
+ assert.throws(()=>summarizeMeasuredPhasePixels57(rows),
+  /same signed original source viewport\/stage/);
+});
 test('C57: malformed raw image dimensions or threshold never become a reassuring measurement',()=>{
  const a=ones(12),b=ones(12);
  for(const op of [
