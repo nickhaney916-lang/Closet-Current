@@ -371,7 +371,9 @@ export function compareActualMeasuredSkirtFit89({
    'source-original-bvh-contact-after-body-fit-missing',
    'original-photographed-source-uv-skin-or-faces-mutated',
    'original-source-photo-skirt-geometry-was-mutated'];
-  return fail(known.includes(e.message)?e.message:'source-measured-real-body-fit-not-verifiable');
+  return fail(known.includes(e.message)||
+   e.message.startsWith('original indexed anatomy cross-section incomplete at skirt band ')?
+   e.message:'source-measured-real-body-fit-not-verifiable');
  }finally{
   mesh.geometry=original;
   cleanup(cloned);
