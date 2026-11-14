@@ -6,6 +6,79 @@ let mission4Preview1054Viewer=null;
 let currentBoard=cleanOutfitBoard({},[]),savedOutfitBoards=[],boardInitialized=false,choosingSlot='shoes';
 let boardCommittedDraft=null,boardPendingWrites=0,boardDraftTimer=null,boardStatusSerial=0;
 let boardExpectedStoredDraft='null',boardConflictDraft=null;
+
+ // MAIN1054 M33: opt-in native Outfit Builder picker source validation only.
+ // The default app keeps its existing behavior until independent acceptance.
+ const ownerPicker33Active=!nativeLossless04Active&&typeof URLSearchParams==='function'&&
+  typeof location!=='undefined'&&new URLSearchParams(location.search).get('ownerPicker33')==='research';
+ let ownerPicker33Serial=0;
+ // Observes the local UI roster; not a durable cross-tab database revision.
+ // Each M33 write also compares the complete private owner row atomically.
+ function ownerPicker33Revision(){
+  let hash=2166136261,length=0;
+  const rows=Array.isArray(items)?items:[];
+  for(const row of rows){
+   const words=JSON.stringify([row?.id,row?.ownerId,row?.category,
+    row?.itemType,row?.color,row?.sourceSHA256,row?.sourceHashVerified,
+    row?.originalPhoto?.sha256,row?.confirmedDetails,
+    row?.confirmedDetailsSource31,row?.deleted,row?.sourceRevoked]);
+   length+=words.length;
+   for(let i=0;i<words.length;i++)hash=Math.imul(hash^words.charCodeAt(i),16777619)>>>0;
+  }
+  return 'm33-'+rows.length+'-'+length+'-'+hash.toString(16).padStart(8,'0');
+ }
+ async function ownerPicker33Gate(){
+  if(!ownerPicker33Active||typeof currentPhotoOwnerSession167!=='function'||
+     typeof readAllFrom!=='function')throw Error('M33 signed source unavailable');
+  const mod=await import('../research/main1054-picker33/native-picker-bridge.mjs');
+  return mod.createNativeOutfitPicker33({
+   getSession:currentPhotoOwnerSession167,
+   getRevision:ownerPicker33Revision,getBoard:()=>currentBoard,
+   readOwnerItems:async scope=>{
+    scope.assertCurrent();
+    const rows=await readAllFrom(scope.privateDbRef);
+    scope.assertCurrent();return rows;
+   }
+  });
+ }
+ async function ownerPicker33Choose(slotId,itemId,button,lease,{closePicker=false}={}){
+  const serial=++ownerPicker33Serial;
+  if(!lease?.current()||!button?.isConnected)return false;
+  let gate;
+  const before=structuredClone(currentBoard),stamp=JSON.stringify(currentBoard);
+  button.disabled=true;
+  try{
+   gate=await ownerPicker33Gate();
+   if(serial!==ownerPicker33Serial||!lease.current()||!button.isConnected)return false;
+   const decision=await gate.authorize(slotId,itemId);
+   if(serial!==ownerPicker33Serial||!lease.current()||!button.isConnected||
+      JSON.stringify(currentBoard)!==stamp)return false;
+   if(decision.status!=='authorized-for-immediate-2d-selection-only'){
+    $('boardSaveStatus').textContent='Review this garment and original photo in My Closet, then reopen the outfit picker.';
+    return false;
+   }
+   const pending=selectBoardPiece(slotId,itemId);
+   const candidate=JSON.stringify(currentBoard);
+   const saved=await pending;
+   if(!lease.current())return false;
+   if(!saved){
+    if(JSON.stringify(currentBoard)===candidate){
+     currentBoard=before;renderOutfitBoard();
+    }
+    $('boardSaveStatus').textContent='Outfit not saved. This garment or private source changed; reopen the picker.';
+    return false;
+   }
+   if(closePicker&&$('boardPicker').open)$('boardPicker').close();
+   return true;
+  }catch{
+   if(lease.current())$('boardSaveStatus').textContent='Owner/source verification unavailable. Outfit unchanged; reopen the picker.';
+   return false;
+  }finally{
+   try{gate?.dispose();}catch{}
+   if(lease.current()&&button.isConnected)button.disabled=false;
+  }
+ }
+
 function nativeLossless04Notify(error){
  // Raw storage/auth exceptions can contain private original-photo metadata.
  const value=typeof error==='string'?error:
@@ -125,6 +198,7 @@ window.addEventListener('beforeunload',event=>{
  if(boardHasUnsavedDraft()){event.preventDefault();event.returnValue='';}
 });
 window.addEventListener('closet:session-locked',()=>{
+ if(typeof ownerPicker33Serial!=='undefined')++ownerPicker33Serial;
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
  // The default private Outfit Builder carries owner names, garment IDs and
@@ -168,21 +242,42 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
  assertOwner();
  const current=structuredClone(replaceCurrent===null?currentBoard:replaceCurrent),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
+ let proof33=null,picker33Gate=null;
+ if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){
+  try{
+   picker33Gate=await ownerPicker33Gate();
+   assertOwner();
+   proof33=await picker33Gate.prepareWrite(current);
+   assertOwner();
+   if(candidate&&(Object.keys(candidate.slots).length!==Object.keys(current.slots).length||
+     Object.entries(candidate.slots).some(([slot,id])=>current.slots[slot]!==id)))
+    throw outfitWardrobeChanged();
+  }catch{
+   try{picker33Gate?.dispose();}catch{}
+   throw outfitWardrobeChanged();
+  }
+ }
  ++boardPendingWrites;
  try{await queued(()=>new Promise((resolve,reject)=>{
-  assertOwner();const tx=ownerDB.transaction(candidate?['state','items']:'state','readwrite'),store=tx.objectStore('state');
+  assertOwner();proof33?.assertCurrent();
+  const tx=ownerDB.transaction(candidate||proof33?['state','items']:'state','readwrite'),store=tx.objectStore('state');
   let failure,saved,keepStoredDraft=false;
-  if(candidate)for(const [slotId,id]of Object.entries(candidate.slots)){
+  if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
    const selected=tx.objectStore('items').get(id);
    selected.onsuccess=()=>{try{
-    assertOwner();const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
-    if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||(row.ownerId&&row.ownerId!==owner)||!expected||!actual||expected.length!==actual.length||!expected.every((v,i)=>v===actual[i]))
+    assertOwner();proof33?.assertCurrent();
+    const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),
+     expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
+    if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||
+       (row.ownerId&&row.ownerId!==owner)||proof33&&!proof33.matches(id,row)||
+       candidate&&(!expected||!actual||expected.length!==actual.length||
+         !expected.every((v,i)=>v===actual[i])))
      throw outfitWardrobeChanged();
    }catch(error){failure=error;tx.abort();}};
   }
   const request=store.get('outfit-board');
   request.onsuccess=()=>{try{
-   assertOwner();
+   assertOwner();proof33?.assertCurrent();
    const observed=JSON.stringify(request.result?.current??null),expected=replaceDraft?replaceDraft.stored:boardExpectedStoredDraft;
    if(replacement===null&&observed!==expected){
     boardConflictDraft={ownerDB,auth,owner,stored:observed};
@@ -196,9 +291,9 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
    if(candidate){if(saved.length>=50)throw Error('You can save up to 50 outfits.');saved.push(candidate);}
    store.put({id:'outfit-board',current:keepStoredDraft?(request.result?.current??null):current,saved});
   }catch(error){failure=error;tx.abort();}};
-  tx.oncomplete=()=>{try{assertOwner();savedOutfitBoards=structuredClone(saved);if(!keepStoredDraft){boardCommittedDraft=JSON.stringify(current);boardExpectedStoredDraft=JSON.stringify(current);boardConflictDraft=null;}resolve();}catch(error){reject(error);}};
+  tx.oncomplete=()=>{try{assertOwner();proof33?.assertCurrent();proof33?.consume();savedOutfitBoards=structuredClone(saved);if(!keepStoredDraft){boardCommittedDraft=JSON.stringify(current);boardExpectedStoredDraft=JSON.stringify(current);boardConflictDraft=null;}resolve();}catch(error){reject(error);}};
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Could not save this outfit.'));
- }));}finally{--boardPendingWrites;}
+ }));}finally{--boardPendingWrites;try{picker33Gate?.dispose();}catch{}}
 }
 function outfitSavedItemFacts(item){
  const row=normalizeClothing(item);
@@ -293,6 +388,7 @@ function openBoardPicker(slotId){
   $('boardPicker').close();switchView('scan');};grid.append(add);}
  for(const item of options){const b=node('button',null,'board-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('strong',item.name||'Closet piece'),node('span',[item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · ')));b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
+   if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(slotId,item.id,b,pickerLease,{closePicker:true});return;}
    selectBoardPiece(slotId,item.id);$('boardPicker').close();
   };grid.append(b);}
  $('boardPicker').showModal();
@@ -340,6 +436,7 @@ function renderBoardSuggestions(){
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>{
   if(!suggestionsCurrent()||b.isConnected===false||
      ($('boardTarget').value||'shoes')!==target||!items.includes(item))return;
+  if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(target,item.id,b,suggestionLease);return;}
   selectBoardPiece(target,item.id);
  };ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();
