@@ -62,7 +62,7 @@ function footwearOnly68(map) {
   }
   return output;
 }
-const reports = Object.fromEntries(['baseline', 'shoeOnly68', 'p88'].map(mode => [mode, {
+const reports = Object.fromEntries(['baseline', 'shoeOnly68', 'p88Safe', 'p88'].map(mode => [mode, {
   schema: 'closet-current-p88-real-public-human-mask-inference/v1',
   method: mode,
   scope: 'previously exposed P68 validation only; unknown pretraining exposure',
@@ -110,9 +110,10 @@ try {
     const groupsByMode = {
       baseline: map.personDetected ? clothingMaskGroups(map) : [],
       shoeOnly68: map.personDetected ? footwearOnly68(map) : [],
-      p88: map.personDetected ? clothingReviewInstances840(map) : []
+      p88Safe: map.personDetected ? clothingReviewInstances840(map) : [],
+      p88: map.personDetected ? clothingReviewInstances840(map,{splitNonFootwear:true}) : []
     };
-    for (const mode of ['baseline', 'shoeOnly68', 'p88']) {
+    for (const mode of ['baseline', 'shoeOnly68', 'p88Safe', 'p88']) {
       const groups = groupsByMode[mode], regions = [];
       for (const [ordinal, group] of groups.entries()) {
         if (!(group.selected instanceof Uint8Array) ||
@@ -151,6 +152,7 @@ try {
       humanInstances: row.annotations.length,
       baselineMasks: groupsByMode.baseline.length,
       shoeOnlyMasks: groupsByMode.shoeOnly68.length,
+      conservativeMasks: groupsByMode.p88Safe.length,
       candidateMasks: groupsByMode.p88.length, inferenceMs: Math.round(inferenceMs)
     }));
     globalThis.gc?.();
@@ -161,7 +163,8 @@ try {
   }
   await writeFile(INDEX, JSON.stringify({
     schema: 'closet-current-p88-exposed-real-photo-comparison/v1',
-    baseline: reports.baseline, shoeOnly68: reports.shoeOnly68, p88: reports.p88
+    baseline: reports.baseline, shoeOnly68: reports.shoeOnly68,
+    p88Safe: reports.p88Safe, p88: reports.p88
   }, null, 2) + '\n');
   console.log('P88_REAL_VALIDATION_PREDICTIONS', JSON.stringify({
     rows: 16, humanInstances: 53, originalSha256Verified: true,
