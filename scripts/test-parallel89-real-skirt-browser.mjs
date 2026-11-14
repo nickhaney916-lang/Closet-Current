@@ -75,7 +75,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  fullContinuousMeshContactNotCertified:true,
  originalPhoto2DShown:true,
  screenCaptureCountExpected:18,figurePoseSamplesExpected:6,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -187,7 +187,51 @@ try{
   assert.equal(restored.originalSourceSHA256,required.skirt);
   assert.equal(restored.releaseAuthorized,false);
   results.neutralRearTrials.push(trial);
+  const measured=await page.evaluate(()=>window.nativeP89Skirt.trialMeasuredAnatomyFit());
+  assert.ok(['BODY_MEASURED_FIT_RESEARCH_CONTACT_REDUCED_NOT_WEARABLE',
+   'BODY_MEASURED_SOURCE_FIT_REFUSED_OR_COLLISIONS_REMAIN'].includes(measured.status),
+   'original body source envelope fitting unverified: '+(measured.reason||measured.status));
+  assert.equal(measured.avatar,avatar);
+  assert.equal(measured.nativeSkinnedRigBones,163);
+  assert.equal(measured.trueOriginalLicensedGarment,true);
+  assert.equal(measured.actualBodyMeasurementsFromOriginalPublicGLBsOnly,true);
+  assert.deepEqual(measured.sampledActualBonePoses,['source','blend-50','relaxed']);
+  assert.equal(measured.radialSourceBands,7);
+  assert.equal(measured.sectorCount,48);
+  assert.equal(measured.candidateRegimes.length,3);
+  assert.equal(measured.actualAnatomicalOriginalBodyCrossSectionSummaries.length,3);
+  assert.equal(measured.originalPhotographedFrontColorAndUVPreserved,true);
+  assert.equal(measured.originalSkirtSourceBuffersUntouched,true);
+  assert.equal(measured.allTestsRevertedNoConsumerGeometryChanged,true);
+  assert.equal(measured.source2DFallbackRequired,true);
+  assert.equal(measured.photoSkirtConsumer3DAdmitted,false);
+  assert.equal(measured.releaseAuthorized,false);
+  assert.equal(measured.baselineStrictSkirtBodyTriangleCrossingsAcrossPoses,before);
+  assert.equal(measured.baselineCrossingsBySourceSkirtBand.length,6);
+  assert.equal(measured.baselineCrossingsBySourceSkirtBand.reduce((a,b)=>a+b,0),before);
+  for(const test of measured.candidateRegimes){
+   assert.equal(test.trueOriginalSkinnedRig,163);
+   assert.equal(test.sampledPoseCount,3);
+   assert.equal(test.sourceCutoutJPEGAndAlphaBytesPreserved,true);
+   assert.equal(test.originalPhotoTextureUVNeverEdited,true);
+   assert.equal(test.photoMotifStretchHasNoHumanAcceptance,true);
+   assert.equal(test.consumer3DAdmitted,false);
+   assert.equal(test.releaseAuthorized,false);
+   assert.equal(test.sourceMaskBandFit.length,7);
+   assert.ok(Number.isFinite(test.worstAreaRelativeChange)&&
+    Number.isFinite(test.worstEdgeRelativeChange));
+  }
+  if(measured.bestProvisionalStructuralAB){
+   const best=measured.bestProvisionalStructuralAB;
+   assert.equal(best.refusedReasons.length,0);
+   assert.equal(best.acceptedForResearchA_BOnly,true);
+   assert.ok(best.trialStrictSkirtBodyCrossingPairSum<
+    best.originalStrictSkirtBodyCrossingPairSum);
+   assert.equal(best.realHumanVisualFitAccepted,false);
+  }
+  results.measuredBodyFitTrials.push(measured);
  }
+ assert.equal(results.measuredBodyFitTrials.length,2);
  assert.equal(results.neutralRearTrials.length,2);
  assert.equal(results.captures.length,18);
  assert.equal(results.poseSamples.length,6);
@@ -216,6 +260,8 @@ try{
   JSON.stringify({engine,status:results.status,frames:results.captures.length,
    poseSamples:results.poseSamples.length,neutralRearTrialStatus:results.neutralRearTrials.map(x=>x.status),
    provisionalContactReduction:results.neutralRearTrials.map(x=>x.bestProvisional?.originalSourcePoseCrossingSum-x.bestProvisional?.trialSourcePoseCrossingSum||0),
+   measuredBodyFitTrialStatus:results.measuredBodyFitTrials.map(x=>x.status),
+   measuredBodyFitResearchReduction:results.measuredBodyFitTrials.map(x=>x.bestProvisionalStructuralAB?.originalStrictSkirtBodyCrossingPairSum-x.bestProvisionalStructuralAB?.trialStrictSkirtBodyCrossingPairSum||0),
    sourceBodyCrossingPairs:results.staticSourceBodyCrossingPairSum??null,
    sourceBodyCrossingWitnessSamples:results.staticSourceBodyCrossingWitnesses??null,
    sourceOriginalJPEG:results.originalSHA256,
