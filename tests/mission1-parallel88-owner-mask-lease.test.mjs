@@ -396,6 +396,12 @@ function cropHarness88({saved=false,checkPhoto=null}={}){
   window:{closetAuth:{user:{id:'owner-A'}}}
  };
  vm.createContext(c);
+ // Execute the ACTUAL native same-source/mask duplicate policy in addition
+ // to the source-bound private save; do not replace it with a mock predicate.
+ const receiptStart=appSource.indexOf('function unit70Receipts(');
+ const receiptEnd=appSource.indexOf('function unit70OwnerEvidenceValid(',receiptStart);
+ assert.ok(receiptStart>=0&&receiptEnd>receiptStart);
+ vm.runInContext(appSource.slice(receiptStart,receiptEnd),c);
  vm.runInContext(appSource.slice(start,end),c);
  return c;
 }
@@ -1027,4 +1033,47 @@ test('P88 paired physical unit refuses mismatched owner category at private writ
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
  await assert.rejects(c.saveSourceBoundPiece88({...item,category:'Tops'},[],lease),/P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0);
+});
+
+
+test('P88 nested companion mask edited in place during cloud preflight revokes shoe save',async()=>{
+ const {c,item,writes}=sourceSaveHarness88();
+ item.category='Shoes';item.reconciliation70Status='paired_confirmed';
+ item.shoePair={confirmedByOwner:true,componentIds:['left','right'],
+  companion:{image:'data:image/jpeg;base64,QUJDRA==',
+   reconciliation70:{ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,
+    maskSha256:'b'.repeat(64)}}};
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ const approved=structuredClone(item);
+ c.beforeWrite=async()=>{
+  // The pair object reference remains identical, as does the main source mask.
+  item.shoePair.companion.reconciliation70.maskSha256='c'.repeat(64);
+ };
+ await assert.rejects(c.saveSourceBoundPiece88(approved,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0,'never save mutated physical-pair evidence');
+});
+
+test('P88 newly saved duplicate mask during queued cloud preflight vetoes private admission',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ c.beforeWrite=async()=>c.items.push({
+  id:'already-saved-other',reconciliation70:{ownerId:'owner-a',
+   sourceSha256:item.reconciliation70.sourceSha256,
+   maskSha256:item.reconciliation70.maskSha256}
+ });
+ await assert.rejects(c.saveSourceBoundPiece88(structuredClone(item),[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0,'same original mask can enter closet only once');
+});
+
+test('P88 queued original save preserves unrelated new photo draft added during cloud preflight',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ const second={id:'independent-new-photo',image:'data:image/jpeg;base64,SU5ERVBFTkRFTlQ='};
+ c.beforeWrite=async()=>c.batch.push(second);
+ await c.saveSourceBoundPiece88(structuredClone(item),[],lease);
+ assert.deepEqual(writes.map(x=>x.name),['items','state']);
+ assert.equal(writes[1].value.batch.length,1);
+ assert.equal(writes[1].value.batch[0].id,second.id);
+ assert.equal(writes[0].value.id,item.id);
 });
