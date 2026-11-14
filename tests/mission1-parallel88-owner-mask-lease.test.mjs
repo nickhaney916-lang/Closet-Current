@@ -466,6 +466,12 @@ test('P88 an incomplete outfit scan prompts human comparison and independent clo
  assert.match(status,/tops or bottoms, may be missed/);
  assert.match(status,/Photograph missing items individually and confirm each category, subtype and color yourself/);
  assert.equal(h.c.batch[0].originalPhoto.image,'data:image/jpeg;base64,ORIGINAL');
+ // The app navigates to Review when drafts were captured. The caution must
+ // be visible there, not only in the hidden Add clothes/scan status.
+ const reviewStatus=h.node('outfitSaveStatus').textContent;
+ assert.match(reviewStatus,/Separated pieces remain here for you to confirm category, type and color/);
+ assert.match(reviewStatus,/watches, belts, headwear, bags or glasses/);
+ assert.match(reviewStatus,/Photograph missing items individually/);
 });
 test('P88 zero recognised outfit regions does not falsely declare a clean empty inventory',()=>{
  const h=captureHarness({ownerId:'owner-A'});
@@ -488,5 +494,6 @@ test('P88 missing-category caution is flag-gated and legacy outfit completion te
  h.emit({type:'done',count:1});
  assert.match(h.node('outfitSplitStatus').textContent,/1 individual clothing photos cropped/);
  assert.doesNotMatch(h.node('outfitSplitStatus').textContent,/tentative clothing regions|watches/);
+ assert.doesNotMatch(h.node('outfitSaveStatus').textContent,/watches|missing items/);
  assert.equal(h.c.items.length,0);
 });
