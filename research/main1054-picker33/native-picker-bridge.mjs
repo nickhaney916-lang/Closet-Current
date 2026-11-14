@@ -6,6 +6,7 @@
  */
 import {createPickerAdmission32} from '../main1054-picker32/picker-admission.mjs';
 import {createNativeCatalogCrosswalk} from '../p87-catalog-crosswalk/crosswalk.mjs';
+import {sealDurablePrivateWardrobe34} from '../main1054-revision34/durable-roster.mjs';
 
 const SLOTS=new Set(['top','bottom','layer','layer2','layer3','shoes','bag','accessory','finish']);
 const fail=reason=>{throw Error('MAIN1054_M33 '+reason);};
@@ -50,7 +51,8 @@ const same=(a,b)=>a.ownerId===b.ownerId&&a.epoch===b.epoch&&
  a.revision===b.revision;
 
 export function createNativeOutfitPicker33({
- getSession,getRevision,readOwnerItems,getBoard,cryptoProvider=globalThis.crypto
+ getSession,getRevision,readOwnerItems,getBoard,cryptoProvider=globalThis.crypto,
+ durableRoster34=false
 }={}){
  if([getSession,getRevision,readOwnerItems,getBoard].some(f=>typeof f!=='function'))
   fail('providers-required');
@@ -140,9 +142,23 @@ export function createNativeOutfitPicker33({
     snapshots.set(id,serialized);
    }
    assertSource();
+   let sealed34=null;
+   if(durableRoster34===true){
+    // This authentic owner/DB getAll() snapshot is made after PHOTO119 source
+    // verification; a second read detects unrelated tab mutations too.
+    sealed34=await sealDurablePrivateWardrobe34({
+     getSession,getRevision,readOwnerItems,records,
+     cryptoProvider
+    });
+    assertSource();
+    await sealed34.verify();
+    assertSource();
+   }
    let consumed=false;
    return Object.freeze({
     itemIds:Object.freeze([...snapshots.keys()]),
+    durableContentChecked:durableRoster34===true,
+    matchesRoster(rows){return sealed34?sealed34.matchesRows(rows):true;},
     assertCurrent(){if(consumed)fail('consumed');assertSource();},
     matches(id,actual){
      if(consumed)return false;
@@ -152,7 +168,7 @@ export function createNativeOutfitPicker33({
      try{return JSON.stringify(actual)===snapshots.get(id);}
      catch{return false;}
     },
-    consume(){assertSource();consumed=true;},
+    consume(){assertSource();consumed=true;sealed34?.dispose();},
     consumer3D:false,releaseAuthorized:false
    });
   }
