@@ -69,7 +69,8 @@ assert.equal(controller.split(completedDressAnchor).length,2,
 controller=controller.replace(completedDressAnchor,completedDressAnchor+
  "\n      if(new URLSearchParams(globalThis.location?.search||'').get('photoDressPreview86')==='research'){\n"+
  "       const evidence86=globalThis.__M2C52LicensedResearchReceipt;\n"+
- "       const preview86=installDisposableOriginalDressRenderPreview86({root,dress:built.dress,sourceReceipt:evidence86});\n"+
+ "       const preview86=installDisposableOriginalDressRenderPreview86({root,dress:built.dress,sourceReceipt:evidence86,\n"+
+ "        skinnedExperiment:new URLSearchParams(globalThis.location?.search||'').get('photoDressSkinned86')==='research'});\n"+
  "       if(preview86.schema!=='M2-P86-real-photo-shader-world-candidate-static-render-A-B'||\n"+
  "        preview86.mode!=='original'||preview86.releaseAuthorized!==false)\n"+
  "        throw Error('P86 completed original-photo shader render comparison refused');\n"+
