@@ -325,7 +325,8 @@ export async function mountNative3D05({
    requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
     throw Error('NATIVE05 exact pinned 3D donor not available');
-   panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
+   panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth,
+    nativeTopSource90:selectedSources91.sources.find(x=>x.id===selected.slots.top)?.sha256||null});
    requireFresh(); // Do not open a donor after the native outfit changed.
    lockDonorEditing();
    opened=selected.id;

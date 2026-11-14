@@ -12,9 +12,9 @@ test('P90 donor installer refuses another source HEAD before any write',()=>{
   assert.throws(()=>execFileSync(process.execPath,['scripts/install-parallel90-viewer.mjs',dir],{stdio:'pipe'}));
  }finally{rmSync(dir,{recursive:true,force:true});}
 });
-test('P90 installer changes only panel and camera, not garment or skeleton authoring',()=>{
+test('P90 installer limits writes to panel, camera and source loading, not geometry or skeleton authoring',()=>{
  const writes=[...source.matchAll(/writeFile\((\w+),s\)/g)].map(x=>x[1]);
- assert.deepEqual(writes,['panel','showroom']);
+ assert.deepEqual(writes,['panel','showroom','sourceViewer']);
  assert.match(source,/assert.equal\(s.split\(a\).length,2/);
 });
 test('P90 context-loss listener is captured and removed on bridge disposal',()=>{

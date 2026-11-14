@@ -11,7 +11,7 @@ const root='benchmark/parallel90-profile/'+engine,donor=resolve('.native05-donor
 const run=(cmd,args,env={})=>execFileSync(cmd,args,{stdio:'inherit',env:{...process.env,...env}});
 if(process.env.P90_COMPARE_ONLY!=='1'){
  for(const variant of ['baseline','candidate','restored']){
-  run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs']);
+  run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs']);
   const env={P90_ENGINE:engine,P90_PROFILE_VARIANT:variant,P90_SWITCH_COUNT:'4',P90SWAPS:'1',P90_WIDTH:'390',P90:''};
   run(process.execPath,['scripts/install-parallel90-viewer.mjs'],env);
   run(process.execPath,['scripts/test-native-3d-05-browser.mjs'],env);
@@ -23,6 +23,7 @@ for(const variant of ['baseline','candidate','restored']){
  assert.equal(data[variant].samples.length,8);
  for(const row of data[variant].samples){
   assert.equal(row.startup.initialMode,variant==='candidate'?'none':'pants');
+  assert.equal(row.startup.loadedDenimBundles,variant==='candidate'&&row.mode==='dress'?0:2);
   if(variant==='candidate')assert.equal(row.startup.initialGarmentMeshes,0);
   else assert.ok(row.startup.initialGarmentMeshes>0);
  }
@@ -56,11 +57,11 @@ await mkdir(root,{recursive:true});
 await writeFile(root+'/comparison.json',JSON.stringify({engine,status:'PASS',
  experiment:'same worker; sequential baseline/candidate/restored, fresh browser per variant, 4 changes per rig/variant',
  metrics,frames,sourceAndFinalResourcesUnchanged:true,
- onlyThrowawayNeutralPantsBuildRemoved:true,physicalPhone:false,
+ throwawayNeutralPantsRemoved:true,unusedDenimPreparationSkippedForCanonicalDress:true,physicalPhone:false,
  humanFidelityApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
 console.log('P90_STARTUP_COMPARISON',JSON.stringify({engine,metrics,frames:frames.length,status:'PASS'}));
 
 if(process.env.P90_COMPARE_ONLY!=='1'){
- run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs']);
+ run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs']);
  run(process.execPath,['scripts/install-parallel90-viewer.mjs'],{P90_PROFILE_VARIANT:'candidate'});
 }

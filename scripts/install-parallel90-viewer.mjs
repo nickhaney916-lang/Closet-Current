@@ -12,6 +12,10 @@ assert.equal(execFileSync('git',['-C',donor,'rev-parse','HEAD'],{encoding:'utf8'
 const replace=(s,a,b)=>{assert.equal(s.split(a).length,2,'Pinned source anchor changed: '+a.slice(0,90));return s.replace(a,b);};
 const panel=donor+'/research/outfit-3d-01/research-panel.mjs';
 let s=await readFile(panel,'utf8');
+s=replace(s,'createSourceTrueOutfit3D01Viewer} from', 'createSourceTrueOutfit3D01Viewer,OUTFIT3D_PINNED_SOURCE_SHA} from');
+s=replace(s,'mountOutfit3D01Research({doc=document,auth=window.closetAuth}={})',
+ 'mountOutfit3D01Research({doc=document,auth=window.closetAuth,nativeTopSource90=null}={})');
+
 s=replace(s,"[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Rotate']]","[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Auto rotate'],['Left90','Rotate left'],['Right90','Rotate right'],['ZoomIn90','Zoom in'],['ZoomOut90','Zoom out'],['Reset90','Reset view']]");
 s=replace(s," left.append(views);body.append(left);",` left.append(views);body.append(left);
  const style90=el('style');style90.textContent='.cc3d-controls{display:flex;flex-wrap:wrap;gap:4px}.cc3d-controls button{min-width:44px;min-height:44px;flex:1 1 25%;touch-action:manipulation}.cc3d-viewer canvas:focus-visible{outline:3px solid #155db4}';dialog.append(style90);
@@ -41,7 +45,7 @@ s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:
 s=replace(s,' let scene=null,sources=null,presenter=null,ready=false,shown=false,dead=false,lock=Promise.resolve(),loadSerial=0,rendered=null,modelLoads=0;',
  ' const startupTimings90={sourceLoadMs:0,sceneSetupMs:0,presentMs:0};\n let scene=null,sources=null,presenter=null,ready=false,shown=false,dead=false,lock=Promise.resolve(),loadSerial=0,rendered=null,modelLoads=0;');
 s=replace(s,'sources=await loadVettedOutfit3D01Sources();still();',
- 'const sourceStart90=performance.now();sources=await loadVettedOutfit3D01Sources();still();startupTimings90.sourceLoadMs=performance.now()-sourceStart90;');
+ 'const sourceStart90=performance.now();sources=await loadVettedOutfit3D01Sources({dressOnly90:'+emptyStartup90+'&&nativeTopSource90===OUTFIT3D_PINNED_SOURCE_SHA.dress});still();startupTimings90.sourceLoadMs=performance.now()-sourceStart90;startupTimings90.loadedDenimBundles=sources.bundles.length;');
 s=replace(s,'   scene=mountAnatomicalShowroom(canvas,{',
  '   const sceneStart90=performance.now();\n   scene=mountAnatomicalShowroom(canvas,{emptyStartup90:'+emptyStartup90+',');
 s=replace(s,"   scene.applyOutfit('none');modelLoads++;",
@@ -81,4 +85,13 @@ s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{spin=false;gr
 for(const angle of [90,180])s=replace(s,'setAnatomicalCameraView(camera,controls,'+angle+', {radius:4.25,elevation:0})'.replace(', {',',{'),
  'setAnatomicalCameraView(camera,controls,'+angle+',{radius:Math.max(4.25,1.25/(Math.tan(camera.fov*Math.PI/360)*Math.min(1,camera.aspect))),elevation:0})');
 await writeFile(showroom,s);
+const sourceViewer=donor+'/research/outfit-3d-01/source-true-viewer.mjs';
+s=await readFile(sourceViewer,'utf8');
+s=replace(s,'loadVettedOutfit3D01Sources(){','loadVettedOutfit3D01Sources({dressOnly90=false}={}){');
+s=replace(s,' const bundles=[];',` // A loading hint can only reduce available canonical public sources.
+ // It never bypasses actual selected-source/owner admission in present().
+ if(dressOnly90===true)return Object.freeze({dress,bundles:Object.freeze([]),
+  dispose(){},releaseAuthorized:false,source:'locked-licensed-original-photographs'});
+ const bundles=[];`);
+await writeFile(sourceViewer,s);
 console.log('P90 disposable PR541 viewer controls installed; source garments and rigs unchanged');
