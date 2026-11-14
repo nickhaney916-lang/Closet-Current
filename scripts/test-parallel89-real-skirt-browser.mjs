@@ -267,6 +267,44 @@ try{
    assert.equal(t.originalSkirtRestTriangleShapeUnchanged,true);
    assert.equal(t.perPoseContacts.length,3);
    assert.equal(t.originalThreePoseStrictCrossingPairSum,before);
+   const topology=t.genuineOriginalSkirtContactTopology;
+   assert.equal(topology?.status,
+    'GENUINE_ORIGINAL_FULL_BODY_SOURCE_CONTACT_TURNOVER_MEASURED_NOT_CLEARANCE',
+    'real original photo source garment/body BVH triangle pair topology missing');
+   assert.equal(topology.avatar,avatar);
+   assert.equal(topology.trialName,t.name);
+   assert.equal(topology.originalSkirtSourceId,'commons-0043');
+   assert.equal(topology.sourceSkirtFaceCount,576);
+   assert.ok(topology.bodySourceFaceCount>=1000);
+   assert.equal(topology.poses.length,3);
+   assert.equal(topology.originalStrictCrossingPairSum,before);
+   assert.equal(topology.trialStrictCrossingPairSum,t.trialThreePoseStrictCrossingPairSum);
+   assert.equal(topology.newlyIntroducedOriginalBodySkirtFacePairSum,
+    t.introducedOriginalSourceFacePairIDs);
+   assert.equal(topology.persistedOriginalBodySkirtFacePairSum+
+    topology.resolvedOriginalBodySkirtFacePairSum,before);
+   assert.equal(topology.persistedOriginalBodySkirtFacePairSum+
+    topology.newlyIntroducedOriginalBodySkirtFacePairSum,
+    t.trialThreePoseStrictCrossingPairSum);
+   for(const key of ['originalContactBands','trialContactBands',
+    'introducedContactBands','resolvedContactBands']){
+    assert.equal(topology[key].length,6);
+   }
+   assert.equal(topology.originalContactBands.reduce((a,b)=>a+b,0),before);
+   assert.equal(topology.trialContactBands.reduce((a,b)=>a+b,0),
+    t.trialThreePoseStrictCrossingPairSum);
+   assert.equal(topology.introducedContactBands.reduce((a,b)=>a+b,0),
+    t.introducedOriginalSourceFacePairIDs);
+   assert.equal(topology.originalContactSurfaces.photoFront+
+    topology.originalContactSurfaces.unphotographedBack,before);
+   assert.equal(topology.trialContactSurfaces.photoFront+
+    topology.trialContactSurfaces.unphotographedBack,
+    t.trialThreePoseStrictCrossingPairSum);
+   assert.equal(topology.rawOriginalAnatomicalSourceCoordinatesPersisted,false);
+   assert.equal(topology.exactOriginalSourceTrianglePairIDsPersisted,false);
+   assert.equal(topology.unphotographedNeutralRearNotTreatedAsReal,true);
+   assert.equal(topology.continuousSweptContactCertified,false);
+   assert.equal(topology.releaseAuthorized,false);
    assert.equal(t.releaseAuthorized,false);
    if(t.researchOnlyNonworseningReduction){
     assert.equal(t.introducedOriginalSourceFacePairIDs,0);
