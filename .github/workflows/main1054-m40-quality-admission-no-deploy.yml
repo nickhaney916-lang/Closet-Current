@@ -41,13 +41,14 @@ jobs:
       - name: Pin no-deploy test dependencies and browser engines
         run: |
           npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
-          npx playwright install --with-deps chromium webkit
       - name: Unchanged consumer build
         run: node scripts/build.mjs
       - name: Original PHOTO119+M39 owner + source-fidelity P89 M40 readiness regression
         run: node --test tests/main37-source-handoff.test.mjs tests/main38-owner-viewer.test.mjs tests/main39-native-provider.test.mjs tests/main40-p89-quality-gate.test.mjs
       - name: Complete no-deploy regression suite
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Install browser engines for native Chromium WebKit QA
+        run: npx playwright install --with-deps chromium webkit
       - name: M34 owner/source roster native Chromium WebKit acceptance
         run: MAIN34=research node scripts/test-main1054-native-picker33-browser.mjs
       - name: Build immutable PR541 true 163-bone donor into disposable worktree
