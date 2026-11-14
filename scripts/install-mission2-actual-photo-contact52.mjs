@@ -20,6 +20,8 @@ await copyFile('research/mission2-source-length/upper-torso-clearance-trial60.mj
  join(donor,'research/mission2-source-length/upper-torso-clearance-trial60.mjs'));
 await copyFile('research/mission2-source-length/upper-torso-surface-quality61.mjs',
  join(donor,'research/mission2-source-length/upper-torso-surface-quality61.mjs'));
+await copyFile('research/mission2-source-length/alternative-photo-clearance85.mjs',
+ join(donor,'research/mission2-source-length/alternative-photo-clearance85.mjs'));
 const controllerPath=join(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
 let controller=await readFile(controllerPath,'utf8');
 const importAnchor="import {sampleSourceDressMotion36} from '../mission2-source-length/source-dress-motion.mjs';";
@@ -45,7 +47,8 @@ controller=controller.replace(anchor,anchor+
  "         refineArticulatedContacts58:query52.get(\x27photoDressContact58\x27)===\x27research\x27,\n"+
  "         refineBodyHeightWitnessBands59:query52.get(\x27photoDressBodyBands59\x27)===\x27research\x27,\n"+
  "         refineUpperTorsoFitTrial60:query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27,\n"+
- "         refineSurfaceStrain61:query52.get(\x27photoDressStrain61\x27)===\x27research\x27});\n"+
+ "         refineSurfaceStrain61:query52.get(\x27photoDressStrain61\x27)===\x27research\x27,\n"+
+ "         refineAlternative85:query52.get(\x27photoDressAlternative85\x27)===\x27research\x27});\n"+
  "        }catch(e){\n"+
  "         if(query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27)\n"+
  "          console.error(\x27M2_C60_SIGNED_SOURCE_TRIAL_REFUSED:\x27+String(e?.message||e).slice(0,220));\n"+
