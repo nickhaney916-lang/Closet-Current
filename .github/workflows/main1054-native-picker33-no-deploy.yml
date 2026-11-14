@@ -1,0 +1,54 @@
+name: MAIN1054 M33 actual native source-guarded picker - NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-native-picker33-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  native-private-picker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: M32 exact parent, strict no-deploy scope, no secret or hosted changes
+        run: |
+          git merge-base --is-ancestor 3693842255cc8af2d0f5a57d232017f687ef80a7 HEAD
+          git diff --exit-code 3693842255cc8af2d0f5a57d232017f687ef80a7 HEAD -- supabase/ benchmark/ public/app.js public/auth.js
+          git diff --name-only 3693842255cc8af2d0f5a57d232017f687ef80a7 HEAD | while IFS= read -r path; do
+            case "$path" in
+              .github/workflows/main1054-native-picker33-no-deploy.yml|\
+              public/outfit-board.js|\
+              research/main1054-picker33/native-picker-bridge.mjs|\
+              tests/main33-native-picker-commit.test.mjs|\
+              scripts/test-main1054-native-picker33-browser.mjs|\
+              research/master-consolidation-1054/MILESTONE33.md) ;;
+              *) echo "BLOCKED: unexpected M33 changed path $path"; exit 1;;
+            esac
+          done
+          node --check public/outfit-board.js
+          node --check research/main1054-picker33/native-picker-bridge.mjs
+          node --check tests/main33-native-picker-commit.test.mjs
+          node --check scripts/test-main1054-native-picker33-browser.mjs
+      - name: Pinned isolated test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Browser runtime and libraries
+        run: npx playwright install --with-deps chromium webkit
+      - name: Native app build unchanged entrypoint
+        run: node scripts/build.mjs
+      - name: M33 licensed source, confirmed receipt and exact-row transaction guard
+        run: node --test tests/main33-native-picker-commit.test.mjs
+      - name: Complete inherited no-deploy Node suite
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Actual signed-owner native picker and outfit save on both browser engines
+        run: node scripts/test-main1054-native-picker33-browser.mjs
+      - name: Inherited licensed source catalog Chromium and WebKit
+        run: node scripts/audit-p87-catalog-crosswalk.mjs
+      - name: Inherited native 2D Outfit Builder source/photo browser regression
+        run: node scripts/test-main1054-native-preview-browser.mjs
