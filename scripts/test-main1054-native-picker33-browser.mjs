@@ -63,7 +63,7 @@ async function signin(page){
 }
 async function seed(page){
  const row={id:itemId,ownerId:owner,category:'Bottoms',itemType:'Jeans',
-  color:'Blue',name:'Licensed original reviewed blue jeans',colorSource:'user',
+  color:'Blue',name:'Synthetic owner category label - not blind photo truth',colorSource:'user',
   sourceSHA256:sha,sourceHashVerified:true,singleGarmentVerified:true,
   sourcePhotoOriginal:true,ownerReviewed:true,userAdjusted:true,
   confirmedCategory:true,confirmedColor:true,seasons:[],
