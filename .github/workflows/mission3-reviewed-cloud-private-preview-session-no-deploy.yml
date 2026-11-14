@@ -2,6 +2,9 @@ name: Mission 3 P146 same-owner private count and approval fence — NO DEPLOY
 on:
   push:
     branches: [research/mission3-p146-private-preview-session-fence-20261113-HOLD]
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [research/mission3-reviewed-cloud-revoke-failsafe-20261113-HOLD]
   workflow_dispatch:
 permissions:
   contents: read
