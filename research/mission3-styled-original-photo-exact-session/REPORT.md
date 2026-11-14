@@ -26,3 +26,7 @@ The original-photo preview `render()` catch also printed arbitrary `error.messag
 - `.github/workflows/mission3-styled-original-photo-exact-session-no-deploy.yml`: exact pinned-parent six-file diff gate; new source and browser tests; inherited all Mission 3 no-deploy checks, full serial Node, native original photographed clothing→owner-private wardrobe→outfit styling, disposable signed two-owner PostgreSQL/Storage RLS and browser receipts.
 
 **Acceptance requires final exact-head green CI.** Not authenticated live-cloud, actual owner original photo evaluation, independent human-labeled 10/10 recognition, photographed-garment 3D fitting, physical iPhone/Android or release approval. Family Alpha HOLD #255 stays OPEN.
+
+## Focused CI receipt and final-head restriction
+
+At intermediate workflow commit `e414d5766aba887e0a85019ffa88f48d7901aea2`, [run #43536354028](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43536354028) passed its strict offline gate, actual-source SHA/private-photo owner-session tests and all **108 real Chromium/WebKit synthetic mobile-viewport original-photo preview scenarios**. The inherited serial/photo/privacy suite was still in progress when this entry was written. Because the engineering report was committed afterward, **the intermediate run is not an exact-final-head approval**; the latest commit requires its own two-job no-deploy pass. Never claim real physical phones, a live cloud, or independent photographic accuracy from this receipt.
