@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const vm=require('node:vm');
 const source=fs.readFileSync('public/cloud-backup-bridge.js','utf8');
-const module=fs.readFileSync('research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs','utf8');
+const reviewedModuleSource=fs.readFileSync('research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs','utf8');
 const start=source.indexOf('   const bridge=await mountOwnerReviewedCloud146({');
 const end=source.indexOf('   return;',start);
 assert.ok(start>=0&&end>start);
@@ -95,9 +95,9 @@ test('late mount stays rejected after same owner identity returns',async()=>{
 test('source uses P146 revoke, not unrelated Restore01 dispose',()=>{
  assert.ok(source.includes('try{bridge?.revoke?.();}catch{}'));
  assert.ok(real.indexOf('try{assertLease();}')<real.indexOf('window.ownerReviewedCloud146=bridge'));
- assert.ok(module.includes('function revoke()'));
- assert.ok(module.includes('return Object.freeze({'));
- assert.ok(module.includes('  revoke,'));
+ assert.ok(reviewedModuleSource.includes('function revoke()'));
+ assert.ok(reviewedModuleSource.includes('return Object.freeze({'));
+ assert.ok(reviewedModuleSource.includes('  revoke,'));
  assert.match(source,/location\.protocol==='http:'/);
  assert.match(source,/ownerReview146'\)==='research'/);
  assert.match(source,/legacy sync must be held before reviewed cloud UI/);
