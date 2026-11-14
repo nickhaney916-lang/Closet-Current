@@ -24,6 +24,8 @@ import {makeSourceOnlyLocalContactTrial63,LOCAL_TRIALS63}
  from './upper-torso-contact-local-feather63.mjs';
 import {LOCAL_FINE_TRIALS64,summarizeOriginalClothFineGrid64}
  from './upper-torso-contact-fine-grid64.mjs';
+import {ARM_INTERMEDIATE_FRACTIONS65,summarizeSourceArmTransitions65}
+ from './source-arm-pose-transition65.mjs';
 const SOURCE_ID='commons-0053';
 const SHA='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const fail=msg=>{throw Error('M2 C52 original-photo diagnostic '+msg);};
@@ -1204,7 +1206,8 @@ function articulatedContact58(root,mesh,source,indices,triangles,
  refineSurfaceStrain61=false,
  refineCandidateSweep62=false,
  refineLocalContactRelief63=false,
- refineFineLocalGrid64=false
+ refineFineLocalGrid64=false,
+ refinePoseTransitions65=false
 }){
  const refused=(reason)=>Object.freeze({
   schema:'M2-licensed-original-163bone-articulated-contact-C58',
@@ -1274,6 +1277,7 @@ function articulatedContact58(root,mesh,source,indices,triangles,
    refineSurfaceStrain61,refineCandidateSweep62,
    refineLocalContactRelief63,refineFineLocalGrid64):null;
  const trialPoseResults60=[];
+ const originalTransitionSamples65=[];
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
   bodyFacesCount=0,bodyCompared=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
@@ -1330,6 +1334,84 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     arm.quaternion.copy(original);
     root.updateMatrixWorld(true);
     mesh.skeleton.update();
+   }
+  }
+  if(refinePoseTransitions65){
+   const named=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
+   const landmark=name=>{
+    const bone=named.get(name);
+    if(!bone?.isBone)fail('C65 original 163-bone signed anatomical landmarks absent');
+    return bone.getWorldPosition(new THREE.Vector3()).toArray();
+   };
+   for(let armIndex=0;armIndex<2;armIndex++){
+    const arm=arms[armIndex];
+    const axis=armIndex===0?new THREE.Vector3(0,0,1):
+     new THREE.Vector3(1,0,0);
+    for(const phaseFraction of ARM_INTERMEDIATE_FRACTIONS65){
+     const savedArm=arm.quaternion.clone();
+     try{
+      arm.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(
+       axis,(armIndex===0?.12:-.12)*phaseFraction));
+      root.updateMatrixWorld(true);
+      mesh.skeleton.update();
+      const sourceWorld=skinnedWorldBuffer58(mesh);
+      const body=bodyFaces58(root,mesh,maxBodyFaces58);
+      const originalBody=bodyClothContact58(body,sourceWorld,
+       indices,tolerance,trialBodyBudget60);
+      const originalSelf=analyze52(sourceWorld,indices,triangles,
+       tolerance,poseBudget);
+      const spine=landmark('spine04');
+      const two=createDisposableUpperTorsoWorldTrial60(sourceWorld,{
+       neck:landmark('neck01'),spine,outwardMeters:.002
+      });
+      const contacts=new Set();
+      const twoBody=bodyClothContact58(body,two.world,
+       indices,tolerance,{
+        ...trialBodyBudget60,onStrictClothFace63:id=>contacts.add(id)
+       });
+      if(twoBody.strict>0&&contacts.size<1)
+       fail('C65 original photographed cloth intersecting faces silently missing');
+      const locallyFitted=contacts.size?
+       makeSourceOnlyLocalContactTrial63({
+        originalWorld:sourceWorld,base2mmWorld:two.world,
+        indices,originalCrossingClothFaceIds:contacts,
+        spine,boostMeters:.003,radiusMeters:.25
+       }):null;
+      const candidate=locallyFitted?.proposalWorld??two.world;
+      const shape=measureDisposableSourceSurfaceStrain61(
+       sourceWorld,candidate,indices);
+      const finalBody=bodyClothContact58(body,candidate,indices,
+       tolerance,trialBodyBudget60);
+      const finalSelf=analyze52(candidate,indices,triangles,
+       tolerance,poseBudget);
+      originalTransitionSamples65.push({
+       arm:armIndex,phaseFraction,
+       originalSignedSourceGarmentFaces:triangles,
+       originalBodyStrictPairWitnesses:originalBody.strict,
+       originalSelfStrictPairWitnesses:originalSelf.strictCrossings,
+       fittedBodyStrictPairWitnesses:finalBody.strict,
+       fittedSelfStrictPairWitnesses:finalSelf.strictCrossings,
+       sourceContactFaceCountAfter2mm:contacts.size,
+       maximumTemporaryWorldDisplacementMeters:
+        locallyFitted?.maximumOriginalWorldDisplacementMeters??
+        two.maxAppliedMeters,
+       originalClothFaceShapeGuardPass:
+        shape.provisionalMeshDistortionGuardPassed,
+       originalPhotoAnd163BoneBodyContactBudgetsComplete:
+        originalBody.complete&&originalSelf.complete&&
+        originalSelf.distance53.distanceRefinementComplete&&
+        twoBody.complete&&finalBody.complete&&finalSelf.complete&&
+        finalSelf.distance53.distanceRefinementComplete,
+       noOriginalSourceMeshOrUVOrSkinChanged:true,
+       noSourceFaceIdsOrWorldCoordinatesExported:true,
+       releaseAuthorized:false
+      });
+     }finally{
+      arm.quaternion.copy(savedArm);
+      root.updateMatrixWorld(true);
+      mesh.skeleton.update();
+     }
+    }
    }
   }
  }finally{
@@ -1389,6 +1471,12 @@ function articulatedContact58(root,mesh,source,indices,triangles,
     trialPoseResults60.every(r=>r.allOriginalBodyCrossingsActuallyGone),
    noTrialPreviewGeometryCommitted60:true,
    noPhotographedSourceOr163BoneRigEdited60:true,
+   ...(refinePoseTransitions65?{
+    originalPhotoArmTransitionSamples65:
+     summarizeSourceArmTransitions65(originalTransitionSamples65),
+    noContinuousPoseSweptContactCertified65:true,
+    originalPoseTransitionGeometryNeverCommitted65:true
+   }:{}),
    ...(refineFineLocalGrid64?{
     originalPhotoFineLocalGridReceipt64:
      neutralTrial60?.originalSourceLocalContactFeather63?.localCandidateEvaluations===3&&
@@ -1585,6 +1673,7 @@ export function auditActualPhotographedDressSurfaces52({
  refineCandidateSweep62=false,
  refineLocalContactRelief63=false,
  refineFineLocalGrid64=false,
+ refinePoseTransitions65=false,
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
  maxDistancePairs58=100000,maxBodyFaces58=160000,
@@ -1635,6 +1724,8 @@ export function auditActualPhotographedDressSurfaces52({
     maxLoopVertices57<1||maxLoopVertices57>100000||
     !Number.isSafeInteger(maxPoseSamples57)||
     maxPoseSamples57<1||maxPoseSamples57>2||
+    typeof refinePoseTransitions65!=='boolean'||
+    (refinePoseTransitions65&&!refineFineLocalGrid64)||
     typeof refineFineLocalGrid64!=='boolean'||
     (refineFineLocalGrid64&&!refineLocalContactRelief63)||
     typeof refineLocalContactRelief63!=='boolean'||
@@ -1731,7 +1822,7 @@ export function auditActualPhotographedDressSurfaces52({
     maxPoseSamples58,refineBodyHeightWitnessBands59,
     refineUpperTorsoFitTrial60,refineSurfaceStrain61,
     refineCandidateSweep62,refineLocalContactRelief63,
-    refineFineLocalGrid64
+    refineFineLocalGrid64,refinePoseTransitions65
    }):null;
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
@@ -1817,6 +1908,13 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    anatomicalSourceLoopNamesNotHumanVerified57:true,
    realSkinPoseSamplingNotCollisionApproval57:true
+  }:{}),
+  ...(refinePoseTransitions65?{
+   authenticOriginalSourceArmIntermediateSampleBudgetComplete65:
+    articulated58?.originalPhotoArmTransitionSamples65?.intermediateOriginalSourcePoseSamples===6&&
+    articulated58.originalPhotoArmTransitionSamples65?.sourceGarmentOriginalFaceCount===triangles,
+   noOriginalClothingPhotoOrSourceSkinnedMeshWrites65:true,
+   noSweptClothMotionSafetyOrHumanPhotorealismCertified65:true
   }:{}),
   ...(refineFineLocalGrid64?{
    genuineSourcePhotoThreePoseFineLocalGrid64:
