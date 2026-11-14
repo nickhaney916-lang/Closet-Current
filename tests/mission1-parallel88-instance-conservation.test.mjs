@@ -31,7 +31,7 @@ test('P88 two disconnected shirts become separate UNSAVED review masks, never du
  const f=fixture();f.paint(4,5,9,6,6);f.paint(4,27,9,6,6);f.paint(6,15,25,10,7);
  const map=f.map(),original=clothingMaskGroups(map).find(x=>x.id===4);
  assert.equal(original.count,72,'legacy merged the two same-class garments');
- const proposals=clothingReviewInstances840(map).filter(x=>x.id===4);
+ const proposals=clothingReviewInstances840(map,{splitNonFootwear:true}).filter(x=>x.id===4);
  assert.equal(proposals.length,2);
  assert.deepEqual(proposals.map(p=>p.count),[36,36]);
  assert.ok(proposals.every(p=>p.requiresReview===true&&
@@ -42,7 +42,7 @@ test('P88 two disconnected shirts become separate UNSAVED review masks, never du
 test('P88 two disconnected dresses remain proposals, not verified dress identities',()=>{
  const f=fixture();f.paint(7,4,7,6,7);f.paint(7,30,8,6,7);
  const map=f.map(),original=clothingMaskGroups(map).find(x=>x.id===7);
- const proposed=clothingReviewInstances840(map).filter(x=>x.id===7);
+ const proposed=clothingReviewInstances840(map,{splitNonFootwear:true}).filter(x=>x.id===7);
  assert.equal(proposed.length,2);
  assert.ok(proposed.every(x=>x.requiresReview&&x.types===undefined&&x.id===7));
  proveConservation(original,proposed);
@@ -67,4 +67,21 @@ test('P88 existing two-shoe owner-review split remains unchanged and source-cons
 test('P88 no clothing pixels produce no phantom garment proposals',()=>{
  const f=fixture(),map=f.map();
  assert.deepEqual(clothingReviewInstances840(map),[]);
+});
+
+test('P88 source-verified conservative trial does not create six unproved nonshoe physical items',()=>{
+ const f=fixture();f.paint(4,5,9,6,6);f.paint(4,27,9,6,6);
+ f.paint(7,4,25,6,7);f.paint(7,30,25,6,7);
+ const map=f.map(),source=clothingMaskGroups(map);
+ const safe=clothingReviewInstances840(map);
+ const research=clothingReviewInstances840(map,{splitNonFootwear:true});
+ for(const id of [4,7]){
+  const original=source.find(x=>x.id===id);
+  assert.equal(safe.filter(x=>x.id===id).length,1,'no unsupported automatic nonshoe instance inflation');
+  assert.equal(research.filter(x=>x.id===id).length,2,'all-class research remains reproducible');
+  assert.equal(safe.find(x=>x.id===id).instanceMethod,'native_semantic_group');
+  proveConservation(original,safe.filter(x=>x.id===id));
+  proveConservation(original,research.filter(x=>x.id===id));
+ }
+ assert.equal(safe.every(x=>x.requiresReview===true),true);
 });
