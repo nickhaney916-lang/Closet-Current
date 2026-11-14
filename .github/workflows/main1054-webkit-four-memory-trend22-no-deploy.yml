@@ -1,0 +1,64 @@
+name: "MAIN1054 M22 actual four-photo WebKit memory trend — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-webkit-four-photo-memory-trend22-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  genuine-webkit-four-photo-memory:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '4'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+      MAIN1054_RUN_BUDGET_MS: '780000'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check exact branch ancestry and unchanged consumer/source fixtures
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 863244ebd1de9817e163f401a4cfaf29f4942a73 HEAD
+          git diff --exit-code 863244ebd1de9817e163f401a4cfaf29f4942a73 HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check research/master-consolidation-1054/four-photo-memory-trend.mjs
+          node --check scripts/test-main1054-real-webkit-repeat.mjs
+      - name: Fail-closed source, memory, trend and WebKit budget adversarial tests
+        run: node --test tests/master-real-model-sequence-gate.test.mjs tests/master-real-model-memory-gate.test.mjs tests/master-webkit-process-memory.test.mjs tests/master-webkit-four-photo-memory-trend.test.mjs tests/master-real-model-budget-stage.test.mjs
+      - name: Install pinned public pretrained model and browser dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - name: Verify immutable public licensed JPEG sources and q8 model hashes
+        shell: bash
+        run: |
+          set -eu
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Genuine WebKit dual-model four sequential photos and browser tree memory samples
+        run: node scripts/test-main1054-real-webkit-repeat.mjs webkit
+      - name: Reject incomplete, changed source, missing models, saves or browser errors
+        run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-real-webkit-repeat/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
+      - name: Reject incomplete source-bound process RSS/PSS memory evidence
+        run: node research/master-consolidation-1054/real-model-memory-gate.mjs benchmark/main1054-real-webkit-repeat/webkit-4-diagnostic.json webkit 4 "$GITHUB_SHA"
+      - name: Report four-photo per-frame memory progression without claiming a leak
+        run: node research/master-consolidation-1054/four-photo-memory-trend.mjs benchmark/main1054-real-webkit-repeat/webkit-4-diagnostic.json "$GITHUB_SHA"
+      - name: Retain numeric-only diagnostics on success or failure, never photos or model weights
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-real-webkit-four-photo-memory-HOLD
+          path: benchmark/main1054-real-webkit-repeat/*.json
+          if-no-files-found: warn
+          retention-days: 14
