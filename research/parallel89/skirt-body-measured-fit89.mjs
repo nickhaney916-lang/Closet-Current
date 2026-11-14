@@ -195,6 +195,16 @@ export function compareActualMeasuredSkirtFit89({
    if(!validContact(contact))throw Error('actual-posed-original-source-BVH-missing');
    baseline.push(contact);
   }
+  // Preserve only six per-band strict crossing counts as a reproducible,
+  // source-geometry-located research finding. NO body coordinates/photographic
+  // pixels, source triangulation arrays or owner-related data leave the browser.
+  const baselineCrossingsByGarmentBand=Array.from({length:ROWS-1},()=>0);
+  for(const result of baseline)for(const pair of result.pairs){
+   const triangle=Number(pair.split('|',1)[0]);
+   if(!Number.isSafeInteger(triangle)||triangle<0||triangle>=TRIANGLES)
+    throw Error('real skinned source contact triangle identity invalid');
+   baselineCrossingsByGarmentBand[Math.floor(triangle/(SEGMENTS*2))]++;
+  }
   // Maximum across TRUE original poses, each same immutable source body and
   // original skirt photo garment bands; missing bins remain UNKNOWN.
   const combined=fullBody[0].radiusSlices.map((row,r)=>({
@@ -210,6 +220,8 @@ export function compareActualMeasuredSkirtFit89({
   mesh.geometry=cloned;
   let best=null;
   for(const regime of REGIMES){
+   cloned.getAttribute('position').array.set(saved);
+   cloned.getAttribute('position').needsUpdate=true;
    const candidate=fitCandidateGeometry89({geometry:cloned,original:saved,
     rest,envelopes:combined,regime,worldInverse:inv});
    const distort=imageGeometryDistortion89(saved,cloned.getAttribute('position').array,index);
@@ -284,6 +296,7 @@ export function compareActualMeasuredSkirtFit89({
    sampledActualBonePoses:POSES,radialSourceBands:ROWS,sectorCount:SEGMENTS,
    actualAnatomicalOriginalBodyCrossSectionSummaries:envelopeObservations,
    baselineStrictSkirtBodyTriangleCrossingsAcrossPoses:baseline.reduce((n,x)=>n+x.count,0),
+   baselineCrossingsBySourceSkirtBand:baselineCrossingsByGarmentBand,
    candidateRegimes:regimes,
    bestProvisionalStructuralAB:best,
    originalPhotographedFrontColorAndUVPreserved:true,
@@ -303,6 +316,7 @@ export function compareActualMeasuredSkirtFit89({
    'invalid original anatomical skinned vertex',
    'original photographed skirt radius invalid',
    'actual-posed-original-source-BVH-missing',
+   'real skinned source contact triangle identity invalid',
    'source-original-bvh-contact-after-body-fit-missing',
    'original-photographed-source-uv-skin-or-faces-mutated',
    'original-source-photo-skirt-geometry-was-mutated'];
