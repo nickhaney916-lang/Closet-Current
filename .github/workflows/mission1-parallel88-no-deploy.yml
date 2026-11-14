@@ -28,10 +28,10 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 7
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 11
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|research/mission1-parallel88/REPORT.md|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
@@ -43,6 +43,9 @@ jobs:
           node --check public/app.js
           node --check tests/mission1-parallel88-instance-conservation.test.mjs
           node --check tests/mission1-parallel88-owner-mask-lease.test.mjs
+          node --check research/mission1-parallel88/run-public-validation-88.mjs
+          python -m py_compile research/mission1-parallel88/recover-public-validation-88.py research/mission1-parallel88/score-public-validation-88.py
+          python research/mission1-parallel88/recover-public-validation-88.py --verify-manifest-only
       - name: Synthetic source-conservation and inherited instance/pair regressions
         shell: bash
         run: |
@@ -86,3 +89,50 @@ jobs:
           node scripts/test-m1-original-photo-browser-865.mjs
           node scripts/test-p82-review-browser.mjs
           node scripts/test-m1-owner-pair-admission-846.mjs
+
+  # Expensive, genuine licensed-source model benchmark. The deliberate commit
+  # prefix triggers a single validation research run; later docs-only pushes
+  # do not repeatedly download public photos/model assets. NO deployment.
+  real-public-human-validation-NO-DEPLOY:
+    if: ${{ startsWith(github.event.head_commit.message, 'research(m1 #88): run real') }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Recover frozen P68 public-original JPEGs without sharing images
+        shell: bash
+        run: |
+          set -euo pipefail
+          python research/mission1-parallel88/recover-public-validation-88.py --verify-manifest-only
+          python research/mission1-parallel88/recover-public-validation-88.py
+      - name: Install pinned SegFormer native inference and human COCO IoU dependencies
+        run: |
+          set -euo pipefail
+          npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 sharp@0.34.3
+          python -m pip install --disable-pip-version-check numpy==2.2.6 pycocotools==2.0.10
+      - name: Actual fp32 SegFormer on original validation JPEGs — no owner save
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --expose-gc research/mission1-parallel88/run-public-validation-88.mjs
+          python research/mission1-parallel88/score-public-validation-88.py
+          test -s benchmark/p88-real-validation-masks/real-validation-measured-88.json
+          grep -Fq '"newSealedAcceptance": false' benchmark/p88-real-validation-masks/real-validation-measured-88.json
+      - name: Evidence only, no original photos or masks uploaded
+        uses: actions/upload-artifact@v4
+        with:
+          name: p88-exposed-validation-human-instance-metrics
+          path: |
+            benchmark/p88-real-validation-masks/real-validation-measured-88.json
+            benchmark/p88-real-validation-masks/real-validation-predictions-88.json
+          if-no-files-found: error
+          retention-days: 14
