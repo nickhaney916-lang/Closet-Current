@@ -195,6 +195,11 @@ try{
   assert.equal(measured.nativeSkinnedRigBones,163);
   assert.equal(measured.trueOriginalLicensedGarment,true);
   assert.equal(measured.actualBodyMeasurementsFromOriginalPublicGLBsOnly,true);
+  assert.equal(measured.originalSkinnedSourceFacePlaneIntersectionsUsed,true);
+  assert.ok(measured.actualAnatomicalOriginalBodyCrossSectionSummaries.every(x=>
+   x.genuineSkinnedBodySourceTriangleIntersections===true&&
+   x.trueOriginalBodyFacePlaneSegmentsPerBand.length===7&&
+   x.trueOriginalBodyFacePlaneSegmentsPerBand.every(n=>Number.isInteger(n)&&n>=12)));
   assert.deepEqual(measured.sampledActualBonePoses,['source','blend-50','relaxed']);
   assert.equal(measured.radialSourceBands,7);
   assert.equal(measured.sectorCount,48);
