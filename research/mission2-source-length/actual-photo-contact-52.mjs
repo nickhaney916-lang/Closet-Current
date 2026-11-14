@@ -1813,8 +1813,10 @@ export function auditActualPhotographedDressSurfaces52({
  * through the browser research bridge. Release/merge/ship always refused.
  */
 export function installDisposableOriginalDressRenderPreview86({
- root,dress,sourceReceipt
+ root,dress,sourceReceipt,skinnedExperiment=false
 }={}){
+ if(typeof skinnedExperiment!=='boolean')
+  fail('P86 source-verified 163-bone skinned experiment flag required');
  const mesh=dress?.mesh,g=mesh?.geometry,parent=mesh?.parent;
  if(!root?.isObject3D||!mesh?.isSkinnedMesh||!parent?.isObject3D||
   !mesh.skeleton||mesh.skeleton.bones.length!==163||
@@ -1893,21 +1895,65 @@ export function installDisposableOriginalDressRenderPreview86({
   fail('P86 corrected real neutral pose failed unchanged original source numerical guards');
  const clone=g.clone(),positions=clone.getAttribute('position'),
   inv=mesh.matrixWorld.clone().invert(),v=new THREE.Vector3(),
-  identity=mesh.matrixWorld;
+  identity=mesh.matrixWorld,skinIndices=g.getAttribute('skinIndex'),
+  skinWeights=g.getAttribute('skinWeight');
  if(!positions||positions.count!==source.count)
   fail('P86 cloned source photo topology differs');
- let maxPositionRoundtripMeters=0;
+ // For the moving version solve the *actual* 163-bone linear blend matrix
+ // at every vertex, rather than making a static lookalike that cannot
+ // follow the owner figure's skeletal joints. World target was independently
+ // C58/C61-audited before this operation. Rest/UV/skin/bones are cloned.
+ const neutralWorldMatrices=mesh.skeleton.boneMatrices,
+  meshBindToWorld=new THREE.Matrix4().multiplyMatrices(
+   mesh.matrixWorld,mesh.bindMatrixInverse),
+  weighted=new THREE.Matrix4(),localToWorld=new THREE.Matrix4(),
+  boneInverse=new THREE.Matrix4(),weightedElems=new Float64Array(16);
+ let maxPositionRoundtripMeters=0,minSkinnedMatrixDeterminant86=Infinity,
+  maxSkinnedWeightDeviation86=0;
  for(let i=0;i<positions.count;i++){
-  v.fromArray(test,3*i).applyMatrix4(inv);
+  v.fromArray(test,3*i);
+  if(skinnedExperiment){
+   weightedElems.fill(0);
+   let weightSum=0;
+   for(let slot=0;slot<4;slot++){
+    const weight=skinWeights.getComponent(i,slot);
+    const boneIndex=skinIndices.getComponent(i,slot);
+    if(!Number.isFinite(weight)||weight<0||boneIndex<0||
+       boneIndex>=163||!Number.isInteger(boneIndex)){
+     clone.dispose();fail('P86 invalid original photographic skin weights or indices');
+    }
+    weightSum+=weight;
+    for(let k=0;k<16;k++)
+     weightedElems[k]+=weight*neutralWorldMatrices[16*boneIndex+k];
+   }
+   maxSkinnedWeightDeviation86=Math.max(
+    maxSkinnedWeightDeviation86,Math.abs(weightSum-1));
+   if(Math.abs(weightSum-1)>.001){
+    clone.dispose();fail('P86 original 163-bone photograph skin weights are not normalized');
+   }
+   weighted.fromArray(weightedElems);
+   localToWorld.multiplyMatrices(meshBindToWorld,weighted)
+    .multiply(mesh.bindMatrix);
+   const determinant=localToWorld.determinant();
+   minSkinnedMatrixDeterminant86=Math.min(
+    minSkinnedMatrixDeterminant86,Math.abs(determinant));
+   if(!Number.isFinite(determinant)||Math.abs(determinant)<.000001){
+    clone.dispose();fail('P86 weighted source skin matrix is near-singular');
+   }
+   boneInverse.copy(localToWorld).invert();
+   v.applyMatrix4(boneInverse);
+  }else v.applyMatrix4(inv);
   positions.setXYZ(i,v.x,v.y,v.z);
-  v.fromBufferAttribute(positions,i).applyMatrix4(identity);
+  if(skinnedExperiment)
+   v.fromBufferAttribute(positions,i).applyMatrix4(localToWorld);
+  else v.fromBufferAttribute(positions,i).applyMatrix4(identity);
   const dx=v.x-test[3*i],dy=v.y-test[3*i+1],dz=v.z-test[3*i+2];
   maxPositionRoundtripMeters=Math.max(maxPositionRoundtripMeters,
    Math.hypot(dx,dy,dz));
  }
  if(maxPositionRoundtripMeters>2e-6){
   clone.dispose();
-  fail('P86 preview transform roundtrip disagrees with C58 source world positions');
+  fail('P86 neutral 163-bone inverse skin roundtrip disagrees with accepted C58 world fit');
  }
  // Original photographic texture sampling is based on untouched dressRest.
  // Cloned normals are recomputed for the candidate's genuine front/back
@@ -1919,17 +1965,121 @@ export function installDisposableOriginalDressRenderPreview86({
     !rest.every((x,i)=>x===cloneRest[i])){
   clone.dispose();fail('P86 candidate copied wrong original photo projection');
  }
- const overlay=new THREE.Mesh(clone,mesh.material);
- overlay.name='P86-authentic-Commons-0053-static-pose-photo-HOLD';
+ const overlay=skinnedExperiment?
+  new THREE.SkinnedMesh(clone,mesh.material):
+  new THREE.Mesh(clone,mesh.material);
+ overlay.name=skinnedExperiment?
+  'P86-authentic-Commons-0053-163bone-skinned-photo-HOLD':
+  'P86-authentic-Commons-0053-static-pose-photo-HOLD';
  overlay.position.copy(mesh.position);
  overlay.quaternion.copy(mesh.quaternion);
  overlay.scale.copy(mesh.scale);
  overlay.frustumCulled=false;overlay.visible=false;
  overlay.userData.p86ResearchOnly=true;
+ overlay.userData.work56Garment=true;
  parent.add(overlay);
+ if(skinnedExperiment){
+  overlay.bindMode=mesh.bindMode;
+  overlay.bind(mesh.skeleton,mesh.bindMatrix);
+  if(overlay.skeleton!==mesh.skeleton||
+   overlay.skeleton.bones.length!==163){
+   overlay.removeFromParent();clone.dispose();
+   fail('P86 cloned skinned garment must share exact original 163-bone skeleton');
+  }
+  const neutralRendered=skinnedWorldBuffer58(overlay);
+  let disagreement=0;
+  for(let i=0;i<neutralRendered.length;i++)
+   disagreement=Math.max(disagreement,
+    Math.abs(neutralRendered[i]-test[i]));
+  if(disagreement>2e-6){
+   overlay.removeFromParent();clone.dispose();
+   fail('P86 source skinned counterpart must reconstruct authentic audited neutral mesh');
+  }
+ }
  const sourceSnapshot=Object.entries(g.attributes).map(([name,attr])=>
   [name,attr,attr.array.slice()]);
  const sourceIndex=g.index?.array.slice()??null;
+ // C58 uses the *same* original actual body triangles and original
+ // C52/C53/C61 face validators on BOTH arm poses of the SAME neutral-
+ // bound garment. No re-fitting, no regenerated world candidate per pose.
+ // No acceptance is inferred from a neutral-only skinning roundtrip.
+ const poseSequence86=[];
+ if(skinnedExperiment){
+  const byName=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
+  const armL=byName.get('upperarm01L'),armR=byName.get('upperarm01R');
+  if(!armL?.isBone||!armR?.isBone)
+   fail('P86 163-bone skinned articulated arm sources unavailable');
+  const originalBones=mesh.skeleton.bones.map(b=>b.quaternion.clone());
+  const neutralCandidateWorld=skinnedWorldBuffer58(overlay);
+  try{
+   for(let pose=0;pose<2;pose++){
+    const arm=pose===0?armL:armR,
+     axis=pose===0?new THREE.Vector3(0,0,1):
+      new THREE.Vector3(1,0,0),
+     angle=pose===0?.12:-.12;
+    arm.quaternion.multiply(
+     new THREE.Quaternion().setFromAxisAngle(axis,angle));
+    root.updateMatrixWorld(true);mesh.skeleton.update();
+    const candidateWorld=skinnedWorldBuffer58(overlay),
+     originalPoseWorld=skinnedWorldBuffer58(mesh);
+    let moved=0,maxPoseMovementMeters=0;
+    for(let i=0;i<originalPoseWorld.length;i+=3){
+     const movedMeters=Math.hypot(
+      candidateWorld[i]-neutralCandidateWorld[i],
+      candidateWorld[i+1]-neutralCandidateWorld[i+1],
+      candidateWorld[i+2]-neutralCandidateWorld[i+2]);
+     if(movedMeters>.00001)moved++;
+     maxPoseMovementMeters=Math.max(maxPoseMovementMeters,movedMeters);
+    }
+    const poseBody=bodyClothContact58(
+     bodyFaces58(root,mesh,160000),candidateWorld,indices,.00002,{
+      maxBodyComparisons58:10000000,maxBodyCandidatePairs58:160000
+     });
+    const poseSelf=analyze52(candidateWorld,indices,triangles,.00002,{
+     maxComparisons:800000,maxCandidatePairs:100000,
+     maxStrictCrossings:1024,refineTriangleDistances53:true,
+     maxDistanceCandidates53:100000,
+     refineSourceTopology54:false,refineEdgeWinding55:false
+    });
+    const poseStrain=measureDisposableSourceSurfaceStrain61(
+     originalPoseWorld,candidateWorld,indices);
+    if(!poseBody.complete||!poseSelf.complete||
+       !poseSelf.distance53.distanceRefinementComplete||
+       poseStrain.signedOriginalSourceFacesAnalyzed!==triangles||
+       !moved||maxPoseMovementMeters<=.00001)
+     fail('P86 genuine original 163-bone moving source pose test incomplete or static');
+    poseSequence86.push(Object.freeze({
+     sourcePose:pose===0?'left-arm':'right-arm',
+     actuallyMovedCandidateOriginalBoneSkinnedVertices:moved,
+     maxActualBoneDrivenSourceClothMovementMeters:maxPoseMovementMeters,
+     strictOriginalBodyCrossings:poseBody.strict,
+     nearOrZeroBodyPairs:poseBody.near,
+     strictOriginalSelfCrossings:poseSelf.strictCrossings,
+     sourceFaceStrainAndNormalsUnchangedC61:
+      poseStrain.signedOriginalSourceFacesAnalyzed===triangles,
+     originalSourcePoseC61DistortionGuard:
+      poseStrain.provisionalMeshDistortionGuardPassed,
+     bodyClearanceAtSampledPose:
+      poseBody.strict===0&&poseBody.near===0,
+     noSelfCrossingsAtSampledPose:poseSelf.strictCrossings===0,
+     noPhysicalClothDynamicsOrContinuousPoseCertificate:true,
+     allOriginal163BonePoseSourcesOnly:true,
+     releaseAuthorized:false,familyAlpha:'HOLD'
+    }));
+    arm.quaternion.copy(originalBones[mesh.skeleton.bones.indexOf(arm)]);
+    root.updateMatrixWorld(true);mesh.skeleton.update();
+   }
+  }finally{
+   for(let i=0;i<originalBones.length;i++)
+    mesh.skeleton.bones[i].quaternion.copy(originalBones[i]);
+   root.updateMatrixWorld(true);mesh.skeleton.update();
+  }
+  const restoredCandidate=skinnedWorldBuffer58(overlay);
+  const restoredSource=skinnedWorldBuffer58(mesh);
+  if(!restoredCandidate.every((v,i)=>v===neutralCandidateWorld[i])||
+   !restoredSource.every((v,i)=>v===originalWorld[i]))
+   fail('P86 moving source research did not restore original 163-bone neutral pose');
+ }
  let disposed=false,mode='original',materialRebindings86=0;
  // Actual signed native preview may rebind the source's rendered material
  // AFTER constructing the dress. Refuse imitation/fallback shaders; only
@@ -1953,7 +2103,23 @@ export function installDisposableOriginalDressRenderPreview86({
   exactLicensedSourceId:SOURCE_ID,
   candidateTriangles:triangles,
   originalSourceClothWitnessFaces:poseWitnesses.size,
-  candidateGeometryRenderedAsStaticSourceWorldPose:true,
+  candidateGeometryRenderedAsStaticSourceWorldPose:!skinnedExperiment,
+  actualOriginal163BoneSkinnedCandidatePreview86:skinnedExperiment,
+  originalSkeletonSharedByCandidate86:
+   skinnedExperiment?overlay.skeleton===mesh.skeleton:false,
+  neutralInverseSkinWorldRoundtripMeters86:
+   skinnedExperiment?maxPositionRoundtripMeters:null,
+  minimumNeutralBlendedSkinDeterminant86:
+   skinnedExperiment?minSkinnedMatrixDeterminant86:null,
+  maxSkinWeightSumDeviation86:
+   skinnedExperiment?maxSkinnedWeightDeviation86:null,
+  twoActualArticulatedSourcePoseSamplesCompleted86:
+   skinnedExperiment&&poseSequence86.length===2,
+  originalSourceBoneSkinnedPoseChecks86:poseSequence86,
+  allTwoSkinnedSourcePoseCollisionAndStrainGuardsPass86:
+   skinnedExperiment&&poseSequence86.length===2&&poseSequence86.every(p=>
+    p.bodyClearanceAtSampledPose&&p.noSelfCrossingsAtSampledPose&&
+     p.originalSourcePoseC61DistortionGuard),
   originalPhotographicMaterialInstanceShared:overlay.material===mesh.material,
   finalSourcePhotoShaderUsesOriginalDressRestAndImage86:!disposed,
   sourceViewerMaterialRebindingsHandled86:materialRebindings86,
@@ -1965,6 +2131,7 @@ export function installDisposableOriginalDressRenderPreview86({
   sourceMeshAttributesUnchanged:true,
   noPrivateSourceArraysOrPhotoBytesExposed:true,
   candidateContinuousMotionTested:false,
+  sourceSkinnedBoneMotionTwoSamplesOnly86:skinnedExperiment,
   ownerPhotorealismApproved:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
   });
