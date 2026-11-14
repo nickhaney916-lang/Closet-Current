@@ -21,6 +21,8 @@ Exact source parent: PR #1126 at `44c4a30012478f63f8a7d6d66ae20f2d93af1695` (sep
 
 `tests/mission3-private-import-locked-gate-v4-bridge.test.cjs` executes the exact production import handler and owner lease with synthetic authenticated sessions, delayed file reads, locked gates, same-ID re-login, controller replacement before/during approval, and delayed return. The no-deploy workflow runs syntax and this source regression before the inherited full serial Node, two-owner **disposable** database RLS, Chromium/WebKit and original-photo custody suites.
 
+The first CI run exposed four inherited `tests/mission3-edit-backup-owner-lease.test.cjs` failures: its old synthetic import fixture provided only `#import` and asserted against access to any other element. The app's new required `#authGate` and `#appShell` checks therefore correctly stopped the synthetic import before it reached previous assertions. The historical test fixture now provides explicit authorized private-gate nodes, without changing its original signed-account test cases. A new exact-head no-deploy run is required before a passing claim.
+
 **No exact-head test status is claimed until the dedicated CI jobs finish.** Unit and browser tests are not physical Android/iPhone or authorized hosted-cloud acceptance.
 
 Release blockers remain the same as PR #1126's completion audit: independently authorized signed four-account hosted backup/restore, physical phone end-to-end, genuine human-confirmed garment recognition, source-photo 3D garment fit, integrated source-to-outfit journey, and explicit owner release decision. #255 must remain OPEN/HOLD.
