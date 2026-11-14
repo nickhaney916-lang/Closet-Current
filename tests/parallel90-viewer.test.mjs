@@ -65,3 +65,17 @@ test('P90 research presentation profiling only reports admitted numeric stages',
  assert.match(bridge,/renderStages90:active\?data\.renderStages90\|\|null:null/);
  assert.match(bridge,/revokeChangedSource89\(\)/);
 });
+
+test('P90 real mesh renderer has exhaustive numeric read-only apply-stage diagnostics',()=>{
+ const bridge=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ assert.ok(source.includes("getState:()=>({startup90,applyStages90,kind:current,"));
+ assert.ok(source.includes("let applyStages90=null;"));
+ assert.ok(source.includes("const s=outfit.setOutfit(mode,candidate,options);"));
+ assert.ok(source.includes("const fitted90=performance.now()"));
+ assert.ok(source.includes("const sampling90=performance.now()"));
+ assert.ok(source.includes("const reclaimed90=performance.now()"));
+ assert.ok(source.includes("const finished90=performance.now()"));
+ assert.ok(source.includes("sceneApplyStages90:view.applyStages90||null"));
+ assert.match(bridge,/sceneApplyStages90:active\?data\.sceneApplyStages90\|\|null:null/);
+ assert.match(bridge,/revokeChangedSource89\(\)/);
+});
