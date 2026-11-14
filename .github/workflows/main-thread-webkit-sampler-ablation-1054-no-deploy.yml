@@ -1,0 +1,144 @@
+name: "MAIN1054 M12 P880 actual q8 WebKit no-sampler vs RSS-only vs PSS ablation — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-webkit-sampler-ablation-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m12-p880-webkit-sampler-ablation-${{ github.sha }}
+  cancel-in-progress: false
+jobs:
+  immutable-source-and-private-owner-policy-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: M11 P880 immutable parent and exactly THREE research-only changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a610460aaf2786753602000cc8603da81009d755
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 3
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/test-main1054-webkit-sampler-ablation.mjs|\
+              research/main-thread-integration-1054/MILESTONE12.md|\
+              .github/workflows/main-thread-webkit-sampler-ablation-1054-no-deploy.yml) ;;
+              *) echo "RESEARCH_SCOPE_VIOLATION $p" >&2; exit 1;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/locked-photo-sources.json package.json package-lock.json
+          grep -q 'timeoutMs:140000' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q 'MAIN1054_REAL_MODEL_STAGE' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q 'phaseTimings:info.phaseTimings' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q 'peakBrowserDescendantPssKiB' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q 'samplingIntervalMs:3000' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q "memoryMode==='none'" scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q "memoryMode==='pss'?await" scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q 'm12-p880-real-webkit-sampler-ablation-v1' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q 'subtypeNeedsManualReview' public/dual-panel-82.mjs
+          grep -q 'return decision.hypotheses.filter(h=>h.label===top.label' public/dual-panel-82.mjs
+          grep -q 'P880: even with top subtype agreement' public/dual-panel-82.mjs
+          grep -q 'BL' scripts/test-main1054-webkit-sampler-ablation.mjs
+          grep -q "familyAlpha:'HOLD'" scripts/test-main1054-webkit-sampler-ablation.mjs
+          node --check scripts/test-main1054-webkit-sampler-ablation.mjs
+          echo "MAIN1054 M12 NO LIVE DATA NO DEPLOY EXACT THREE SOURCE FILES"
+      - name: Install native and browser test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Preserve original native PWA and owner source safeguards
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+          node scripts/test-main1054-dual-review-browser.mjs
+          node scripts/test-main1054-native-preview-browser.mjs
+      - name: All inherited privacy, offline wardrobe, recognition and P119 image regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No release/hosted cloud or private-data operations
+        run: |
+          echo "NO DEPLOY NO MERGE NO PRODUCTION NO HOSTED SUPABASE FAMILY ALPHA HOLD 255"
+  real-public-model-stage-bounded-WebKit-and-Chromium-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Immutable M11 P880 source, no app or model/persistence changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=a610460aaf2786753602000cc8603da81009d755
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 3
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-webkit-sampler-ablation.mjs
+      - name: Install pinned q8 model and desktop browser test binaries in ephemeral CI
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Recover immutable Commons originals and public q8 model runtime
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+      - name: P880 genuine WebKit same-original four-photo NO MEMORY SAMPLER baseline
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "4"
+          MAIN1054_MEMORY_MODE: none
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-webkit-sampler-ablation.mjs webkit | tee /tmp/main1054-none
+          grep -q '^MAIN1054_WEBKIT_ABLATION_SUMMARY ' /tmp/main1054-none
+          node -e "const r=require('./benchmark/main1054-webkit-sampler-ablation/webkit-none-4-ablation.json');if(r.engine!=='webkit'||r.photoAttemptsTarget!==4||r.blindAccuracy!==null||r.resourceMeasurements.mode!=='none'||r.resourceMeasurements.measuredMemory!==false||r.acceptanceForRelease!==false||r.familyAlpha!=='HOLD'||r.persistedPrivateWardrobeWrites!==0||r.completedPhotos>4||r.rows.some(x=>x.phaseTimings.length!==2))process.exit(1);console.log('ABLATION_NONE_PUBLIC',JSON.stringify({completed:r.completedPhotos,target:4,failures:r.failures,first:r.rows[0]?.phaseTimings}));"
+      - name: P880 genuine WebKit same-original four-photo RSS STATUS ONLY 3s sampler
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "4"
+          MAIN1054_MEMORY_MODE: rss
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-webkit-sampler-ablation.mjs webkit | tee /tmp/main1054-rss
+          grep -q '^MAIN1054_WEBKIT_ABLATION_SUMMARY ' /tmp/main1054-rss
+          node -e "const r=require('./benchmark/main1054-webkit-sampler-ablation/webkit-rss-4-ablation.json');if(r.engine!=='webkit'||r.photoAttemptsTarget!==4||r.blindAccuracy!==null||r.resourceMeasurements.mode!=='rss'||r.resourceMeasurements.browserPssReadable!==false||r.acceptanceForRelease!==false||r.familyAlpha!=='HOLD'||r.persistedPrivateWardrobeWrites!==0||r.completedPhotos>4||r.rows.some(x=>x.phaseTimings.length!==2))process.exit(1);console.log('ABLATION_RSS_PUBLIC',JSON.stringify({completed:r.completedPhotos,target:4,failures:r.failures,memory:r.resourceMeasurements}));"
+      - name: P880 genuine WebKit same-original four-photo RSS PLUS PSS 3s sampler
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "4"
+          MAIN1054_MEMORY_MODE: pss
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-webkit-sampler-ablation.mjs webkit | tee /tmp/main1054-pss
+          grep -q '^MAIN1054_WEBKIT_ABLATION_SUMMARY ' /tmp/main1054-pss
+          node -e "const r=require('./benchmark/main1054-webkit-sampler-ablation/webkit-pss-4-ablation.json');if(r.engine!=='webkit'||r.photoAttemptsTarget!==4||r.blindAccuracy!==null||r.resourceMeasurements.mode!=='pss'||r.acceptanceForRelease!==false||r.familyAlpha!=='HOLD'||r.persistedPrivateWardrobeWrites!==0||r.completedPhotos>4||r.rows.some(x=>x.phaseTimings.length!==2))process.exit(1);console.log('ABLATION_PSS_PUBLIC',JSON.stringify({completed:r.completedPhotos,target:4,failures:r.failures,memory:r.resourceMeasurements}));"
+      - name: Exact same original-photo q8 Chromium two-photo NO SAMPLER control
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "2"
+          MAIN1054_MEMORY_MODE: none
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-webkit-sampler-ablation.mjs chromium | tee /tmp/main1054-chromium
+          grep -q '^MAIN1054_WEBKIT_ABLATION_SUMMARY ' /tmp/main1054-chromium
+          node -e "const r=require('./benchmark/main1054-webkit-sampler-ablation/chromium-none-2-ablation.json');if(r.engine!=='chromium'||r.photoAttemptsTarget!==2||r.blindAccuracy!==null||r.resourceMeasurements.mode!=='none'||r.acceptanceForRelease!==false||r.persistedPrivateWardrobeWrites!==0||r.completedPhotos>2)process.exit(1);console.log('ABLATION_CHROMIUM_PUBLIC',JSON.stringify({completed:r.completedPhotos,target:2,failures:r.failures}));"
+      - name: Upload public ID, model-stage and counts only, not photographs, weights or owner data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m12-webkit-none-rss-pss-public-ablation
+          path: benchmark/main1054-webkit-sampler-ablation/*.json
+          if-no-files-found: warn
+          retention-days: 7
