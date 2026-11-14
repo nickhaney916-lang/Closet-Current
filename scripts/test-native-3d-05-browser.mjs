@@ -11,9 +11,11 @@ import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import {checkViewer90} from './check-parallel90-interactions.mjs';
 const engine90=process.env.P90_ENGINE||'chromium';
+const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430];
+assert.ok(widths90.every(x=>[320,390,430].includes(x)));
 assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-3d-05';
+const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -114,7 +116,7 @@ async function take(page,width,stage){
  const meta=await sharp(png).metadata(),stat=await sharp(png).stats();
  assert.equal(meta.width,width);assert.ok(meta.height>=880&&png.length>4500);
  assert.ok(stat.channels.some(x=>x.stdev>7),'Actual mobile canvas/image blank');
- const name='chromium-'+width+'-'+stage+'.png';
+ const name=engine90+'-'+width+'-'+stage+'.png';
  await writeFile(dir+'/'+name,png);
  screens.push({name,width,stage,sha256:digest(png)});
 }
@@ -138,7 +140,7 @@ function authHttp(route){
  external.push({kind:'unrecognized-auth',method:req.method()});return route.abort();
 }
 try{
- for(const width of (process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430])){
+ for(const width of widths90){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
   // 163-bone canvas contexts, renderer memory and stale browser navigation.
   browser=await ({chromium,webkit})[engine90].launch({headless:true,args:engine90==='chromium'?[
@@ -587,12 +589,12 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,15);
+ assert.equal(cases.length,widths90.length);assert.equal(screens.length,5*widths90.length);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:'NATIVE-3D-05',cases:3,screenshots:15,
-  browser:engine90,widths:[320,390,430],
+ const result={priority:'NATIVE-3D-05',cases:cases.length,screenshots:screens.length,
+  browser:engine90,widths:widths90,
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
   realSignedRLS:false,originalUserSavedStateUnmodified:true,
@@ -601,8 +603,8 @@ try{
   evidence:cases,screens,errors,external,
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
- console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
-   real163BoneWebGL:true,realMobileScreenshots:15,familyAlpha:'HOLD'}));
+ console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:cases.length,
+   real163BoneWebGL:true,realMobileScreenshots:screens.length,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,

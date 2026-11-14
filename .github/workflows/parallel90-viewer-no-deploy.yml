@@ -46,3 +46,4 @@ jobs:
           path: |
             benchmark/parallel90/
             benchmark/native-3d-05/
+            benchmark/native-3d-05-webkit/

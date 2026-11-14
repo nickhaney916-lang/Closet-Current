@@ -24,16 +24,17 @@ P90=1 node scripts/test-native-3d-05-browser.mjs
 P90=1 P90_ENGINE=webkit node scripts/test-native-3d-05-browser.mjs
 ```
 
-The interaction harness checks both real 163-bone rigs at 320/390/430 CSS pixels, actual button/keyboard/pointer camera changes, bounded zoom, 16 repeated camera commands without texture/geometry growth, context-loss cleanup and explicit reopen. Existing inherited harness checks saved source dress plus honest photo-only unsupported pieces, original board preservation, independent synthetic-owner privacy and closed-preview fallback. P90 receipts are engine-specific; original inherited screenshots are named Chromium historically and should not be interpreted as engine evidence without the result's browser field.
+The interaction harness checks both real 163-bone rigs at 320/390/430 CSS pixels, actual button/keyboard/pointer camera changes, bounded zoom, 16 repeated camera commands without texture/geometry growth, context-loss cleanup and explicit reopen. Existing inherited harness checks saved source dress plus honest photo-only unsupported pieces, original board preservation, independent synthetic-owner privacy and closed-preview fallback. P90 receipts are engine-specific; the inherited WebKit evidence uses a separate `benchmark/native-3d-05-webkit` directory and engine-specific screenshot names.
 
 ## Evidence at initial publication
 
 - Native app build PASS.
 - Focused inherited native Node: 102/102 PASS.
 - New installer/source-scope/lifecycle wiring checks: 3/3 PASS. These are structural safeguards, not browser acceptance.
-- Full inherited Node suite and Chromium interaction run in progress at initial publication; no acceptance credited yet.
+- Full inherited Node suite: **2,669/2,669 PASS**, zero failures/skips (124.7 seconds).
+- Initial Chromium 320px run: **FAIL** awaiting 3D-ready state after 150 seconds; zero recorded script errors/crashes. Cause found and corrected: detached dialog button lookup used document before insertion. Corrected Chromium **390px PASS**: both real rigs, keyboard/button/pointer camera changes, zoom/reset, 16 camera operations each without geometry/texture-count growth, simulated context loss, explicit source re-attestation/reopen, original board unchanged and synthetic-owner isolation. Genuine screenshot visually inspected. Three-width regression run pending.
 - Local WebKit launch BLOCKED: missing GTK4/Graphene/WOFF/Harfbuzz/Hyphen/Manette/GLES shared libraries; automated dependency installation lacks root access. CI installs browser dependencies on Ubuntu.
-- Exact-head no-deploy CI: pending. Do not infer green status from workflow creation.
+- Initial head `4a707b868a20fb27bbf62621a6a7c23090c3d4df`, draft PR #1178. Dedicated no-deploy run https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43625644240 is in progress; no green acceptance claimed. Do not infer green status from workflow creation.
 
 ## Remaining blockers and handoff to #1054 / #89 / #88
 

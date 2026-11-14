@@ -24,7 +24,7 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);body.a
   }catch{clearPrivate();}
  };
  for(const action of ['Left90','Right90','ZoomIn90','ZoomOut90','Reset90'])
-  doc.getElementById('outfit3D01'+action).onclick=()=>command90(action);
+  views.querySelector('#outfit3D01'+action).onclick=()=>command90(action);
  dialog.addEventListener('keydown',e=>{
   if(e.target!==canvas)return;
   const key={ArrowLeft:'Left90',ArrowRight:'Right90','+':'ZoomIn90','=':'ZoomIn90','-':'ZoomOut90',Home:'Reset90'}[e.key];
