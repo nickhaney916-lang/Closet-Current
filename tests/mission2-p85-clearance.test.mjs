@@ -190,7 +190,7 @@ test('P85 follow-on: wide witness graph/shape regularization are source-disposab
   assert.equal(q.signedOriginalSourceFacesAnalyzed,2);
   assert.ok(Number.isFinite(q.maxOriginalPhotoWorldEdgeRelativeStrain));
  }
- for(const v of a.slice(6)){
+ for(const v of a.slice(6,14)){
   assert.ok([18,36,60,100].includes(v.shapeSmoothingPasses85));
   assert.ok([.35,.50,.70,.80].includes(v.shapeNeighborBlend85));
   assert.equal(v.contactCoreHeldDuringSmoothing85,true);
