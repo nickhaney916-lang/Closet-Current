@@ -3,9 +3,6 @@ name: "MAIN1054 WebKit browser memory evidence — NO DEPLOY"
   push:
     branches:
       - research/main1054-webkit-memory-evidence-20261113-HOLD
-  pull_request:
-    branches:
-      - research/master-consolidation-1054-HOLD
   workflow_dispatch: {}
 permissions:
   contents: read
