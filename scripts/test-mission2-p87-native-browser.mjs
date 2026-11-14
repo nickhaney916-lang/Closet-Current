@@ -12,11 +12,12 @@ import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
 import {validateActualSkinnedPhotoPoseContact88} from '../research/mission2-p88/sample-contact-gate.mjs';
 import {verifyActualPhotoSourceZeroTopology89} from '../research/mission2-p89/source-topology-gate.mjs';
+import {verifyActualFivePosePhotoContact90,POSES90} from '../research/mission2-p90/five-pose-contact-gate.mjs';
 
 const hostRoot=resolve('.'),donor=resolve('.native05-donor-541');
 const engine=process.env.P87_ENGINE||'chromium';
 assert.ok(['chromium','webkit'].includes(engine));
-const out='benchmark/mission2-p87/native-'+engine;
+const out='benchmark/mission2-p90/native-'+engine;
 await mkdir(out,{recursive:true});
 const types={'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.glb':'model/gltf-binary'};
 const server=createServer(async(req,res)=>{
@@ -34,7 +35,7 @@ const server=createServer(async(req,res)=>{
 });
 await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const sha=b=>createHash('sha256').update(b).digest('hex');
-const results={schema:'p87-genuine-source-skinned-pose-original-candidate-restored-v1',
+const results={schema:'p90-genuine-source-skinned-five-poses-original-candidate-restored-v1',
  engine,sourceId:'commons-0053',realAvatar163Bones:true,
  figures:[],sourcePoseReceipts:[],actualFittedPoseContact88:[],screens:[],differences:[],errors:[],external:[],
  researchOnly:true,physicalPhone:false,continuousClothSafetyCertified:false,
@@ -58,7 +59,7 @@ try{
  const flags=['photoDress175','photoDressContact52','photoDressDistance53','photoDressTopology54','photoDressEdges55','photoDressBoundaries56','photoDressLandmarks57','photoDressContact58','photoDressBodyBands59','photoDressTorsoTrial60','photoDressStrain61'];
  await page.goto('http://127.0.0.1:'+server.address().port+'/research/mission2-p87/native-pose-review.html?'+flags.map(f=>f+'=research').join('&'));
  await page.waitForFunction(()=>window.review87?.ready||window.review87?.errors?.length,null,{timeout:120000});
- const poses=['source','blend-50','relaxed'];
+ const poses=POSES90;
  for(const figure of ['female','male']){
   if(figure==='male')await page.evaluate(()=>window.review87.load('male'));
   let start=await page.evaluate(()=>({r:window.review87.receipt,s:window.review87.state,errors:window.review87.errors}));
@@ -72,6 +73,8 @@ try{
   let previous=start.r.poseUpdates;
   for(const pose of poses){
    const receipt=await page.evaluate(mode=>window.review87.setPose(mode),pose);
+   const actualViewerPose=await page.evaluate(()=>window.review87.state.pose);
+   assert.equal(actualViewerPose,pose,'actual source 163-bone viewer did not change to demanded pose');
    assert.equal(receipt.actualSkinnedMeshClone,true);
    assert.equal(receipt.liveSkeletonShared,true);
    assert.equal(receipt.originalGeometryAndPhotoUVUntouched,true);
@@ -120,20 +123,24 @@ try{
  }
  assert.deepEqual(results.errors,[],'shader or script errors not allowed');
  assert.deepEqual(results.external,[],'network egress forbidden');
- results.contactGate88=validateActualSkinnedPhotoPoseContact88(results.actualFittedPoseContact88);
- results.topologyGate89=verifyActualPhotoSourceZeroTopology89(results.actualFittedPoseContact88);
- assert.equal(results.actualFittedPoseContact88.length,6);
+ const six=[0,2,4,5,7,9].map(i=>results.actualFittedPoseContact88[i]);
+ results.contactGate88=validateActualSkinnedPhotoPoseContact88(six);
+ results.topologyGate89=verifyActualPhotoSourceZeroTopology89(six);
+ results.fivePoseGate90=verifyActualFivePosePhotoContact90(results.actualFittedPoseContact88);
+ assert.equal(results.actualFittedPoseContact88.length,10);
+ assert.equal(results.fivePoseGate90.status,'TEN_SOURCE_POSES_CHECKED_NOT_CONTINUOUS_COLLISION_CERTIFICATE',
+  'real original-photo 25/75% pose source, contact or strain failure: '+JSON.stringify(results.fivePoseGate90.issues));
  assert.equal(results.topologyGate89.status,'SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_CERTIFIED',
   'genuine original-photo source self-contact correspondences incomplete: '+
    JSON.stringify(results.topologyGate89.issues));
  assert.equal(results.contactGate88.status,'SAMPLED_STRICT_NONCROSSING_OBSERVED_NOT_RELEASE',
   'genuine P87 fitted source garment crossed body/self or exceeded photo strain: '+
     JSON.stringify(results.contactGate88.issues));
- assert.equal(results.sourcePoseReceipts.length,6);
- assert.equal(results.differences.length,18);
- assert.equal(results.screens.length,54);
+ assert.equal(results.sourcePoseReceipts.length,10);
+ assert.equal(results.differences.length,30);
+ assert.equal(results.screens.length,90);
  await page.evaluate(()=>window.review87.dispose());
- results.status='PASS_GENUINE_SOURCE_ZERO_TOPOLOGY_CLASSIFIED_NOT_RELEASE';
+ results.status='PASS_AUTHENTIC_FIVE_POSE_SKINNED_SOURCE_CONTACT_NOT_RELEASE';
 }catch(e){
  results.status='BLOCKED';
  results.failure=String(e?.message||e).slice(0,2500);
@@ -143,7 +150,7 @@ try{
  await new Promise(done=>server.close(done));
  await writeFile(out+'/results.json',JSON.stringify(results,null,2)+'\n');
  console.log('M2_P87_REAL_SOURCE',JSON.stringify({status:results.status,figures:results.figures.length,
-  realSourcePoseReceipts:results.sourcePoseReceipts.length,contactGate88:results.contactGate88?.status||'BLOCKED',topologyGate89:results.topologyGate89?.status||'BLOCKED',unresolvedZeroPairs:results.topologyGate89?.classifiedGeometricZeroPairsAcrossSixPoses??null,unresolvedUnsafeOrIndependentPairs:results.topologyGate89?.sourceIndependentOrSkinUnsafePairWitnesses??null,actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
+  realSourcePoseReceipts:results.sourcePoseReceipts.length,fivePoseGate90:results.fivePoseGate90?.status||'BLOCKED',real25and75Samples:results.fivePoseGate90?.additionalRealInterpolatedPoseSamples??0,tenPoseZeros:results.fivePoseGate90?.countedOriginalSourceZeroContactPairs??null,contactGate88:results.contactGate88?.status||'BLOCKED',topologyGate89:results.topologyGate89?.status||'BLOCKED',unresolvedZeroPairs:results.topologyGate89?.classifiedGeometricZeroPairsAcrossSixPoses??null,unresolvedUnsafeOrIndependentPairs:results.topologyGate89?.sourceIndependentOrSkinUnsafePairWitnesses??null,actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
   differences:results.differences.length,errors:results.errors.length,networkBlocked:results.external.length,
   failure:results.failure||null,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }
