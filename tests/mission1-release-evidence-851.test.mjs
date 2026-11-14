@@ -24,6 +24,7 @@ function syntheticSignedBundle(){
  }
  roles.ownerPolicy.payload={
   ...roles.ownerPolicy.payload,approvedAt:'2026-11-11T04:00:00.000Z',
+  signedAt:'2026-11-11T04:01:00.000Z',
   familyAlphaHold:true,releaseAuthorized:false,
   thresholds:Object.fromEntries(METRICS.map(m=>[m,{minimumSamples:m==='noWrongSave'?60:20,
    minimumAccuracy:m==='noWrongSave'?1:.8}]))
@@ -31,6 +32,7 @@ function syntheticSignedBundle(){
  roles.independentBlind.payload={
   ...roles.independentBlind.payload,
   scoredAt:'2026-11-12T15:00:00.000Z',
+  signedAt:'2026-11-12T15:05:00.000Z',
   independentRegistrarVetted:true,sourceDisjoint:true,
   historicalExposureCount:0,crossSplitLeakageCount:0,
   predictionsVisibleToReviewers:false,originalBytesVerified:true,
@@ -43,7 +45,9 @@ function syntheticSignedBundle(){
   witnessedByIndependentOperator:true,genuineOriginalPhotoUsed:true,
   ownerConfirmedEachSave:true,noWrongSave:true,privateDataIsolationVerified:true,
   captureToPrivateClosetPass:true,osVersion:'TEST 0.0',browserVersion:'TEST 0.0',
-  testEvidenceSha256:hex(platform==='Android'?'d':'f')});
+  testEvidenceSha256:hex(platform==='Android'?'d':'f'),
+  protocolVersion:'parallel78-23-v1',casesRequired:23,casesPassed:23,
+  casesFailed:0,casesBlocked:0,casesNotRun:0});
  roles.physicalDevices.payload={
   ...roles.physicalDevices.payload,devices:[phone('Android','Chrome'),phone('iPhone','Safari')],
   realDeviceRuns:2,syntheticOnly:false
@@ -53,6 +57,9 @@ function syntheticSignedBundle(){
   ownerIsolationPass:true,backupRestorePass:true,sessionRevocationPass:true,
   crossTabRacePass:true,privateAuditSha256:hex('e'),fakeAccountsOnly:false
  };
+ const policyHash=createHash('sha256').update(canonical(roles.ownerPolicy.payload)).digest('hex');
+ for(const role of ['independentBlind','physicalDevices','signedCloud'])
+  roles[role].payload.ownerPolicyCommitmentSha256=policyHash;
  function reseal(role){
   roles[role].signature=sign(null,Buffer.from(canonical({role,payload:roles[role].payload})),secrets[role]).toString('base64');
  }
@@ -134,7 +141,7 @@ test('P851 desktop Chromium/WebKit emulation cannot pretend to be a witnessed An
  x=syntheticSignedBundle();x.bundle.roles.physicalDevices.payload.devices[0].noWrongSave=false;x.reseal('physicalDevices');
  blocked(evaluate(x),'physical end-to-end acceptance');
  x=syntheticSignedBundle();x.bundle.roles.physicalDevices.payload.syntheticOnly=true;x.reseal('physicalDevices');
- blocked(evaluate(x),'execution count missing');
+ blocked(evaluate(x),'physical device execution count must match all reported attempts');
 });
 test('P851 owner-approved signed two-account cloud isolation is mandatory and cannot be inferred from local mocks',()=>{
  const x=syntheticSignedBundle();
@@ -214,4 +221,70 @@ test('P884 synthetic 100% noWrongSave only means review eligible, never deployed
  assert.equal(result.shouldLiftFamilyAlphaHold,false);
  assert.equal(result.countOfIndependentHumanBlindSources,60);
  assert.equal(result.countOfPhysicalDevicePlatforms,2);
+});
+
+test('P885 signed owner policy must predate scoring even if approvedAt is backdated',()=>{
+ const x=syntheticSignedBundle();
+ x.bundle.roles.ownerPolicy.payload.signedAt='2026-11-12T15:01:00.000Z';
+ x.reseal('ownerPolicy');
+ blocked(evaluate(x),'owner policy signature must precede blind scoring');
+});
+test('P885 owner cannot retroactively lower thresholds without independent role reattestation',()=>{
+ const x=syntheticSignedBundle();
+ x.bundle.roles.ownerPolicy.payload.thresholds.subtype.minimumAccuracy=.1;
+ x.reseal('ownerPolicy');
+ blocked(evaluate(x),'independentBlind not cryptographically bound to exact owner threshold policy');
+ blocked(evaluate(x),'physicalDevices not cryptographically bound to exact owner threshold policy');
+ blocked(evaluate(x),'signedCloud not cryptographically bound to exact owner threshold policy');
+});
+test('P885 blind receipt cannot substitute a scorer policy digest while preserving valid signatures',()=>{
+ const x=syntheticSignedBundle();
+ x.bundle.roles.independentBlind.payload.ownerPolicyCommitmentSha256=hex('9');
+ x.reseal('independentBlind');
+ blocked(evaluate(x),'independentBlind not cryptographically bound to exact owner threshold policy');
+});
+test('P885 scoring evidence must be independently signed after its claimed inference time',()=>{
+ const x=syntheticSignedBundle();
+ x.bundle.roles.independentBlind.payload.signedAt='2026-11-12T14:00:00.000Z';
+ x.reseal('independentBlind');
+ blocked(evaluate(x),'owner policy signature must precede blind scoring');
+});
+test('P885 physical #78 23-case matrix must have no not-run, blocked or failed rows',()=>{
+ for(const [key,value] of [
+  ['casesPassed',22],['casesFailed',1],['casesBlocked',1],
+  ['casesNotRun',1],['casesRequired',22],['protocolVersion','other-protocol']]){
+  const x=syntheticSignedBundle();
+  x.bundle.roles.physicalDevices.payload.devices[1][key]=value;
+  x.reseal('physicalDevices');
+  blocked(evaluate(x),'physical-device 23-case acceptance incomplete');
+ }
+});
+test('P885 all real reported physical attempts must match and be verified; no discarded bad runs',()=>{
+ let x=syntheticSignedBundle();
+ x.bundle.roles.physicalDevices.payload.realDeviceRuns=3;
+ x.reseal('physicalDevices');
+ blocked(evaluate(x),'physical device execution count must match all reported attempts');
+ x=syntheticSignedBundle();
+ x.bundle.roles.physicalDevices.payload.devices.push({platform:'iPhone',browser:'Safari',
+  physical:false,testEvidenceSha256:hex('b')});
+ x.bundle.roles.physicalDevices.payload.realDeviceRuns=3;
+ x.reseal('physicalDevices');
+ blocked(evaluate(x),'invalid, failed or unverified physical-device evidence receipt');
+});
+test('P885 browser mismatch and unknown physical platform cannot meet expected platform pair',()=>{
+ let x=syntheticSignedBundle();
+ x.bundle.roles.physicalDevices.payload.devices[1].browser='Chrome';
+ x.reseal('physicalDevices');
+ blocked(evaluate(x),'unsupported physical-device browser');
+ x=syntheticSignedBundle();
+ x.bundle.roles.physicalDevices.payload.devices[0].platform='tablet-unknown';
+ x.reseal('physicalDevices');
+ blocked(evaluate(x),'unsupported physical-device platform');
+});
+test('P885 fully signed synthetic only reaches review eligibility, not release authorization',()=>{
+ const x=syntheticSignedBundle(),result=evaluate(x);
+ assert.equal(result.status,'EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE');
+ assert.equal(result.issues.length,0);
+ assert.equal(result.noDeploy,true);
+ assert.equal(result.shouldLiftFamilyAlphaHold,false);
 });

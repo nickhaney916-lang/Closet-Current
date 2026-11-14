@@ -81,6 +81,19 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
  const preapproved=asDate(policy.approvedAt),scoredAt=asDate(blind.scoredAt);
  if(!Number.isFinite(preapproved)||!Number.isFinite(scoredAt)||preapproved>=scoredAt)
   issues.push('independent blind thresholds were not frozen before scoring');
+ // P885 requires each independent role to sign the exact frozen owner
+ // threshold payload, not merely the same model and image manifest.
+ // These self-reported times are structural checks, not trusted timestamps.
+ const policySignedAt=asDate(policy.signedAt),blindSignedAt=asDate(blind.signedAt);
+ if(!Number.isFinite(preapproved)||!Number.isFinite(policySignedAt)||
+    !Number.isFinite(scoredAt)||!Number.isFinite(blindSignedAt)||
+    preapproved>policySignedAt||policySignedAt>=scoredAt||scoredAt>blindSignedAt)
+  issues.push('owner policy signature must precede blind scoring and independent score signature');
+ const policyCommitmentSha256=sha(canonical(policy));
+ for(const role of ['independentBlind','physicalDevices','signedCloud']){
+  if(payload[role].ownerPolicyCommitmentSha256!==policyCommitmentSha256)
+   issues.push(role+' not cryptographically bound to exact owner threshold policy');
+ }
  for(const obj of [blind,phones,cloud]){
   if(obj.targetCommit!==commit||obj.modelSha256!==model||obj.blindManifestSha256!==manifest)
    issues.push('source/model/blind evidence is not bound to owner-approved revision');
@@ -131,7 +144,8 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
     issues.push('noWrongSave must have preapproved 100 percent and full blind source coverage');
  }
  const acceptedDevices=new Set(),deviceReceiptHashes=new Set(),devices=phones.devices;
- if(!Array.isArray(devices)||devices.length>10)issues.push('real device evidence missing or unbounded');
+ if(!Array.isArray(devices)||devices.length<2||devices.length>10)
+  issues.push('real device evidence missing or unbounded');
  else{
   for(const d of devices){
    if(!d||d.physical!==true||d.emulated===true||d.witnessedByIndependentOperator!==true||
@@ -140,23 +154,42 @@ export function evaluateMission1Evidence(bundle,trusted={},now=new Date()){
       d.captureToPrivateClosetPass!==true||
       typeof d.osVersion!=='string'||!d.osVersion||
       typeof d.browserVersion!=='string'||!d.browserVersion||
-      !isHex64(d.testEvidenceSha256))continue;
-   // Each real physical platform needs independently identifiable evidence;
-   // reusing one receipt for both devices cannot satisfy two-platform review.
+      !isHex64(d.testEvidenceSha256)){
+    // Failed/unwitnessed entries cannot silently disappear from the count.
+    issues.push('invalid, failed or unverified physical-device evidence receipt');
+    continue;
+   }
+   if(d.platform!=='Android'&&d.platform!=='iPhone'){
+    issues.push('unsupported physical-device platform');
+    continue;
+   }
+   if((d.platform==='Android'&&d.browser!=='Chrome')||
+      (d.platform==='iPhone'&&d.browser!=='Safari')){
+    issues.push('unsupported physical-device browser');
+    continue;
+   }
+   // #78 includes 23 real camera, gallery, repeat, denied/recovery, batch-25,
+   // ownership, review, persistence, offline, memory and source cases.
+   if(d.protocolVersion!=='parallel78-23-v1'||d.casesRequired!==23||
+      d.casesPassed!==23||d.casesFailed!==0||
+      d.casesBlocked!==0||d.casesNotRun!==0){
+    issues.push('physical-device 23-case acceptance incomplete');
+    continue;
+   }
    if(deviceReceiptHashes.has(d.testEvidenceSha256)){
     issues.push('duplicate physical-device evidence digest');
     continue;
    }
    deviceReceiptHashes.add(d.testEvidenceSha256);
-   if(d.platform==='Android'&&d.browser==='Chrome')acceptedDevices.add('Android Chrome');
-   if(d.platform==='iPhone'&&d.browser==='Safari')acceptedDevices.add('iPhone Safari');
+   acceptedDevices.add(d.platform==='Android'?'Android Chrome':'iPhone Safari');
   }
  }
  details.physicalPlatforms=acceptedDevices.size;
  if(!acceptedDevices.has('Android Chrome')||!acceptedDevices.has('iPhone Safari'))
   issues.push('witnessed genuine Android Chrome and iPhone Safari physical end-to-end acceptance missing');
- if(phones.syntheticOnly===true||phones.realDeviceRuns<2||!isNonnegativeInteger(phones.realDeviceRuns))
-  issues.push('physical device execution count missing');
+ if(phones.syntheticOnly===true||!isNonnegativeInteger(phones.realDeviceRuns)||
+    !Array.isArray(devices)||phones.realDeviceRuns!==devices.length)
+  issues.push('physical device execution count must match all reported attempts');
  if(cloud.ownerAuthorizedTest!==true||cloud.signedTwoAccountPrivateEndToEnd!==true||
    cloud.ownerIsolationPass!==true||cloud.backupRestorePass!==true||
    cloud.sessionRevocationPass!==true||cloud.crossTabRacePass!==true||
