@@ -624,3 +624,26 @@ test('P88 current owner cannot claim a separate source/photo or a different owne
  assert.equal(c.queuedCalls,0);
  assert.ok(c.captureRenders>=2,'error stays on actual owner Review panel');
 });
+
+test('P88 foreign-source owner receipt cannot appear in the signed review panel',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ c.batch.push(h.ownerDraft('other-owner','src-A','owner-B'));
+ vm.runInContext('renderUnit70Panel()',c);
+ for(let i=0;i<8;i++)await Promise.resolve();
+ assert.equal(c.apiPanelCallbacks,null,'foreign owner photos may never enter this panel');
+ assert.equal(h.dom.hidden,true);
+ assert.equal(c.storageWrites.length,0);
+});
+test('P88 old discard callback cannot delete a garment the owner has already confirmed',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ vm.runInContext('renderUnit70Panel()',c);
+ for(let i=0;i<8;i++)await Promise.resolve();
+ const staleAction=c.apiPanelCallbacks.onDiscard;
+ await vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ const beforeWrites=c.storageWrites.length;
+ await staleAction(['part-A']);
+ assert.equal(c.batch.length,1,'confirmed draft must survive old unresolved-group discard action');
+ assert.equal(c.batch[0].reconciliation70Status,'separate_confirmed');
+ assert.equal(c.storageWrites.length,beforeWrites,'no stale discard persistence');
+});
