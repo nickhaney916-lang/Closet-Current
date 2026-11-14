@@ -73,6 +73,16 @@ export async function checkSavedSwitch90(page,engine){
    assert.ok(Number.isFinite(stages.prepareMs)&&Number.isFinite(stages.applyMs));
    if(mode==='dress')assert.equal(stages.prepareMs,0,'dress has no indexed shirt-preparation phase');
    else assert.ok(stages.prepareMs>=0,'shirt preparation is measured, not inferred');
+   const sceneStages=state.sceneApplyStages90;
+   assert.equal(sceneStages?.mode,mode,'actual avatar renderer timings must follow displayed garment');
+   for(const key of ['setOutfitMs','samplingMs','cleanupMs','drawMs','totalMs'])
+    assert.ok(Number.isFinite(sceneStages[key])&&sceneStages[key]>=0,
+     'real original-source '+key+' must be finite and nonnegative');
+   assert.ok(Math.abs(sceneStages.totalMs-(
+    sceneStages.setOutfitMs+sceneStages.samplingMs+sceneStages.cleanupMs+sceneStages.drawMs))<2,
+    'measured renderer phases account for their entire wall-clock apply duration');
+   assert.ok(sceneStages.totalMs<=stages.applyMs+100,
+    'source verified presenter apply receipt must include the real scene apply phases');
    assert.equal(state.garmentSources90[mode],hashes[mode]);
    assert.equal(state.garmentSources90[mode==='shirt'?'dress':'shirt'],null,'old garment removed');
    assert.equal(state.fallbackCount,3,'unsupported outerwear/shoes stay photo-only');
@@ -90,7 +100,7 @@ export async function checkSavedSwitch90(page,engine){
     const fresh=window.__p90LastSwitchCanvas!==c;
     window.__p90LastSwitchCanvas=c;return fresh;
    }),true,'each switch must replace the old actual canvas object');
-   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,secondDenimCount,dressRequestCount,renderStages:stages,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
+   samples.push({figure,operation:i,mode,sourceSHA256:photoHash,resources,denimRequestCount,secondDenimCount,dressRequestCount,renderStages:stages,sceneApplyStages:sceneStages,startup:state.startup90,heapBytes:await page.evaluate(()=>performance.memory?.usedJSHeapSize??null),elapsedMs:Date.now()-began,checkpoint:[1,4,16].includes(i)});
    if([1,4,16].includes(i)){
     console.log('P90_SAVED_SWITCH',engine,figure,i,mode,JSON.stringify(resources));
     await page.screenshot({path:out+'/'+figure+'-'+i+'-saved-switches.png'});
