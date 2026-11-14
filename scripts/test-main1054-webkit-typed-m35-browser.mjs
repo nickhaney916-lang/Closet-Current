@@ -155,7 +155,12 @@ try{
    const promise=page.waitForEvent('download',{timeout:30000});
    await page.getByRole('button',{name:'Export local research receipt'}).click();
    const downloaded=await promise;
-   const receipt=JSON.parse(await readFile(await downloaded.path(),'utf8'));
+   // Playwright Download.path() throws on BrowserType.connect() sessions.
+   // saveAs() is its supported cross-connection API. Only locally generated
+   // redacted research receipts enter this short-lived, auto-deleted temp dir.
+   const receiptPath=join(tmp,'m35-public-receipt-'+repeat+'.json');
+   await downloaded.saveAs(receiptPath);
+   const receipt=JSON.parse(await readFile(receiptPath,'utf8'));
    checkpoint='AFTER_RECEIPT_EXPORTED';
    const audit=auditLocalDeviceHandoff32(receipt,{commit:fullSourceCommit,sourceHashes:sources});
    assert.equal(audit.status,'LOCAL_16_PLUS_CANCEL_LOCK_RECEIPT_REQUIRES_EXTERNAL_HARDWARE_REVIEW',
