@@ -214,6 +214,14 @@ export async function commitHumanReviewedPhoto119({
   ...record,ownerId,category:review.category,itemType:review.itemType,
   color:review.color,name:review.name&&validText(review.name,120)
    ?review.name:review.color+' '+review.itemType,
+  // M31: PHOTO119's owner-confirmed original SHA and category/type/color are
+  // accepted together INSIDE the same atomic item/draft commit. P87's
+  // source-locked index must not infer these labels from old AI predictions or
+  // broad ownerReviewed booleans. A later field edit fails exact-value match.
+  confirmedDetails:{category:review.category,itemType:review.itemType,
+   color:review.color},
+  confirmedDetailsSource31:{ownerId,itemId:record.id,sourceSHA256:sourceSHA,
+   basis:'PHOTO119-explicit-owner-confirmation'},
   confirmedCategory:true,confirmedColor:true,colorSource:'user',
   userAdjusted:true,ownerReviewed:true,sourcePhotoOriginal:true,
   humanReviewedSource:true,sourceHashVerified:true,
