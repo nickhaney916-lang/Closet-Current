@@ -11,12 +11,12 @@ This is a code path / race, **not** evidence of a reported user privacy incident
 In `research/native-owner-reviewed-cloud-ui-146/app-owner-review-bridge.mjs`:
 1. Check the exact captured owner session before writing count-only preview, revoke and reject if stale.
 2. Check the session before writing status, revoke and suppress former-owner status when stale.
-3. Check the session **at the owner approval click**; reject approval and revoke the stale dialog without depending on a separately delivered auth event.
+3. Pin the exact mount-time authenticated principal object (not merely owner UUID), rejecting same-owner-ID sign-out/sign-in or login replacement before owner-private UI writes. Check the session **at the owner approval click**; reject approval and revoke the stale dialog without depending on a separately delivered auth event.
 4. Preserve previous independent fail-safe cleanup on exceptions, consent denial when revoked, idempotent revocation, SHA-256 double-JPEG provenance, owner review, no automatic merges and existing 2D fallback. No new transport, endpoints or data persistence.
 
 ## Reproducible acceptance
 - `node --test tests/mission3-reviewed-cloud-private-preview-session.test.cjs`: actual extracted source executed with synthetic owner epoch, race/cancellation and DOM stubs. Includes current-owner preview, stale private count, stale status, stale approve, current approve, explicit decline and localhost-only invariant.
-- `node scripts/test-mission3-reviewed-cloud-private-preview-session-browser.mjs benchmark/mission3-reviewed-cloud-private-preview-session-browser`: **36 planned** real Chromium/WebKit engine simulations across 320/390/430 CSS pixels × six conditions, with machine-readable privacy receipts. These are not physical phone tests.
+- `node scripts/test-mission3-reviewed-cloud-private-preview-session-browser.mjs benchmark/mission3-reviewed-cloud-private-preview-session-browser`: **42 planned** real Chromium/WebKit engine simulations across 320/390/430 CSS pixels × seven conditions, with machine-readable privacy receipts. These are not physical phone tests.
 - `.github/workflows/mission3-reviewed-cloud-private-preview-session-no-deploy.yml`: parent-pinned five-path no-deploy diff gate and inherited full serial native Node, original photo / owner-private wardrobe / native outfit, signed disposable two-owner PostgreSQL/Storage RLS and browser suite. This workflow is created on the isolated feature branch only.
 
 **Validation state:** Do not claim exact-head CI or browser PASS until the new GitHub Actions run actually finishes successfully. Existing inherited parent #1116 was fully green at `3c7fce...` before this patch; that does **not** automatically validate this child.
