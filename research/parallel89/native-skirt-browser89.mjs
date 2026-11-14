@@ -221,7 +221,8 @@ async function load(avatar){
 }
 function inspectPose(mode){
  check(phase==='ready'&&candidate&&root,'source-authentic native scene unavailable');
- check(['source','blend-50','relaxed'].includes(mode),'unsupported real skeletal pose');
+ check(['source','blend-25','blend-50','blend-75','relaxed'].includes(mode),
+  'unsupported real skeletal pose');
  setResearchPose(root,mode);pose=mode;
  root.updateMatrixWorld(true);
  originalBodyPositions();
