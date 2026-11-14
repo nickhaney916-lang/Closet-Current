@@ -1,0 +1,113 @@
+name: "MAIN1054 M9 historical-latency-calibrated real WebKit model-stage diagnosis — NO DEPLOY"
+on:
+  push:
+    branches: [research/main-thread-webkit-calibrated-stage-1054-HOLD]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: main1054-m9-calibrated-webkit-hold
+  cancel-in-progress: true
+jobs:
+  immutable-source-and-private-owner-policy-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: M8 immutable parent and exactly THREE research-only changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=cbef3192135a9701c2de9d4d125d8bd8c61934fb
+          git merge-base --is-ancestor "$BASE" HEAD
+          CHANGED="$(git diff --name-only "$BASE" HEAD)"
+          test "$(printf '%s\n' "$CHANGED" | wc -l)" -eq 3
+          while IFS= read -r p; do
+            case "$p" in
+              scripts/test-main1054-webkit-calibrated-stage.mjs|\
+              research/main-thread-integration-1054/MILESTONE9.md|\
+              .github/workflows/main-thread-webkit-calibrated-1054-no-deploy.yml) ;;
+              *) echo "RESEARCH_SCOPE_VIOLATION $p" >&2; exit 1;;
+            esac
+          done <<< "$CHANGED"
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/locked-photo-sources.json package.json package-lock.json
+          grep -q 'timeoutMs:140000' scripts/test-main1054-webkit-calibrated-stage.mjs
+          grep -q 'MAIN1054_REAL_MODEL_STAGE' scripts/test-main1054-webkit-calibrated-stage.mjs
+          grep -q 'BL' scripts/test-main1054-webkit-calibrated-stage.mjs
+          grep -q "familyAlpha:'HOLD'" scripts/test-main1054-webkit-calibrated-stage.mjs
+          node --check scripts/test-main1054-webkit-calibrated-stage.mjs
+          echo "MAIN1054 M9 NO LIVE DATA NO DEPLOY EXACT THREE SOURCE FILES"
+      - name: Install native and browser test dependencies only
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Preserve original native PWA and owner source safeguards
+        run: |
+          node scripts/build.mjs
+          node --test research/main-thread-integration-1054/source-to-outfit.test.mjs
+          node scripts/test-main1054-dual-review-browser.mjs
+          node scripts/test-main1054-native-preview-browser.mjs
+      - name: All inherited privacy, offline wardrobe, recognition and P119 image regressions
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No release/hosted cloud or private-data operations
+        run: |
+          echo "NO DEPLOY NO MERGE NO PRODUCTION NO HOSTED SUPABASE FAMILY ALPHA HOLD 255"
+  real-public-model-stage-bounded-WebKit-and-Chromium-NO-DEPLOY:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Immutable M8 source, no app or model/persistence changes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=cbef3192135a9701c2de9d4d125d8bd8c61934fb
+          git merge-base --is-ancestor "$BASE" HEAD
+          test "$(git diff --name-only "$BASE" HEAD | wc -l)" -eq 3
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ package.json package-lock.json benchmark/locked-photo-sources.json
+          node --check scripts/test-main1054-webkit-calibrated-stage.mjs
+      - name: Install pinned q8 model and desktop browser test binaries in ephemeral CI
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1 sharp@0.34.3
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Recover immutable Commons originals and public q8 model runtime
+        run: |
+          set -euo pipefail
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+      - name: Calibrated actual WebKit two-model four-attempt same-owner same-browser research
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "4"
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-webkit-calibrated-stage.mjs webkit | tee /tmp/main1054-webkit-stage
+          grep -q '^MAIN1054_WEBKIT_CALIBRATED_SUMMARY ' /tmp/main1054-webkit-stage
+          node -e "const r=require('./benchmark/main1054-webkit-calibrated-stage/webkit-4-calibrated-diagnostic.json');if(r.engine!=='webkit'||r.photoAttemptsTarget!==4||r.blindAccuracy!==null||r.perRequestTimeoutMs!==140000||r.acceptanceForRelease!==false||r.persistedPrivateWardrobeWrites!==0||r.completedPhotos>4||r.familyAlpha!=='HOLD')process.exit(1);console.log('REAL_WEBKIT_DIAG_ONLY',JSON.stringify({observed:r.completedPhotos,target:4,status:r.status,stages:r.modelStages.slice(-6),failures:r.failures}));"
+      - name: Calibrated actual Chromium two-model two-attempt same-origin control
+        env:
+          MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+          MAIN1054_TARGET: "2"
+        run: |
+          set -euo pipefail
+          node scripts/test-main1054-webkit-calibrated-stage.mjs chromium | tee /tmp/main1054-chromium-stage
+          grep -q '^MAIN1054_WEBKIT_CALIBRATED_SUMMARY ' /tmp/main1054-chromium-stage
+          node -e "const r=require('./benchmark/main1054-webkit-calibrated-stage/chromium-2-calibrated-diagnostic.json');if(r.engine!=='chromium'||r.photoAttemptsTarget!==2||r.blindAccuracy!==null||r.acceptanceForRelease!==false||r.persistedPrivateWardrobeWrites!==0)process.exit(1);console.log('REAL_CHROMIUM_CONTROL',JSON.stringify({observed:r.completedPhotos,target:2,status:r.status,stages:r.modelStages.slice(-6)}));"
+      - name: Upload public ID, model-stage and counts only, not photographs, weights or owner data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m9-real-webkit-140s-stage-provenance
+          path: benchmark/main1054-webkit-calibrated-stage/*.json
+          if-no-files-found: warn
+          retention-days: 7
