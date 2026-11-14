@@ -51,6 +51,33 @@ function beginOwnerBoardUiLease(){
  };
  return current()?{current}:null;
 }
+// Native BOARD04 may emit callbacks before it finishes loading. Pin them to
+// the originating signed owner and to the exact controller once mounted.
+function beginNativeBoardMountLease(){
+ const lease=beginOwnerBoardUiLease();
+ if(!lease)return null;
+ let controller=null;
+ const current=()=>lease.current()&&(!controller||nativeLossless04===controller);
+ return {
+  current,
+  bind(value){controller=value;},
+  onChange(value,{revoked}={}){
+   if(!current())return;
+   window.nativePhotoReadiness08Bridge?.clear();
+   if(revoked){currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];
+    nativeLossless04ClearPreview();return;}
+   if(value){currentBoard=value;
+    if(nativeLossless04&&nativeLossless04.status().active){
+     savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
+     if(boardInitialized){syncBoardInputs();renderOutfitBoard();}
+    }
+   }
+  },
+  onStatus(message){
+   if(current())$('boardSaveStatus').textContent=message;
+  }
+ };
+}
 function boardDraftStatus(text,retry=false){
  $('boardSaveStatus').textContent=text;$('retryBoardDraft').hidden=!retry;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=!boardConflictDraft;
@@ -368,24 +395,21 @@ function renderTrendReferences(){const grid=$('boardTrendSources');grid.replaceC
 renderTrendReferences();
 const outfitBoardReady=(async()=>{
  await closetReady;
+ let nativeMountLease=null;
  if(nativeLossless04Active){
+  nativeMountLease=beginNativeBoardMountLease();
+  if(!nativeMountLease)return;
   try{
    if(!db)throw Error('Authenticated owner database unavailable');
    const {createNativeConsumerBoard04}=await import('../research/native-consumer-board-04/consumer-board-controller.mjs');
-   nativeLossless04=await createNativeConsumerBoard04({
-    onChange(value,{revoked}={}){
-     window.nativePhotoReadiness08Bridge?.clear();
-     if(revoked){currentBoard=cleanOutfitBoard({},[]);savedOutfitBoards=[];nativeLossless04ClearPreview();return;}
-     if(value){currentBoard=value;
-      if(nativeLossless04&&nativeLossless04.status().active){
-       savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
-       if(boardInitialized){syncBoardInputs();renderOutfitBoard();}
-      }
-     }
-    },
-    onStatus:message=>$('boardSaveStatus').textContent=message
+   if(!nativeMountLease.current())return;
+   const created=await createNativeConsumerBoard04({
+    onChange:nativeMountLease.onChange,onStatus:nativeMountLease.onStatus
    });
-   window.nativeLossless04Bridge=nativeLossless04;
+   // A same-ID re-login is a new owner session even with the same DB name.
+   if(!nativeMountLease.current()){created.dispose();return;}
+   nativeLossless04=created;nativeMountLease.bind(created);
+   window.nativeLossless04Bridge=created;
    savedOutfitBoards=nativeLossless04.readOnlySnapshot().saved;
    currentBoard=nativeLossless04.view();
    const controls=node('div',null,'actions');controls.id='nativeLossless04Controls';
@@ -414,9 +438,11 @@ const outfitBoardReady=(async()=>{
      new URLSearchParams(location.search).get('native3D05')==='research'){
     try{
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
-     window.native3D05Bridge=await mountNative3D05({consumer:nativeLossless04,
-      onStatus:value=>$('boardSaveStatus').textContent=value});
-    }catch(error){nativeLossless04Notify(error);}
+     if(!nativeMountLease.current())return;
+     const viewer=await mountNative3D05({consumer:created,onStatus:nativeMountLease.onStatus});
+     if(!nativeMountLease.current()){viewer.dispose();return;}
+     window.native3D05Bridge=viewer;
+    }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
    // NATIVE-PHOTO-08: attach only after actual owner Outfit Builder controls
    // are active; the underlying #560 source-original assessor stays unchanged.
@@ -424,11 +450,13 @@ const outfitBoardReady=(async()=>{
       new URLSearchParams(location.search).get('native3D05')==='research'){
     try{
      const {mountNativeReadiness08}=await import('../research/native-photo-readiness-08/native-readiness-panel.mjs');
-     window.nativePhotoReadiness08Bridge=await mountNativeReadiness08({
-      board:nativeLossless04,db,
-      onStatus:value=>$('boardSaveStatus').textContent=value
+     if(!nativeMountLease.current())return;
+     const readiness=await mountNativeReadiness08({
+      board:created,db,onStatus:nativeMountLease.onStatus
      });
-    }catch(error){nativeLossless04Notify(error);}
+     if(!nativeMountLease.current()){readiness.dispose();return;}
+     window.nativePhotoReadiness08Bridge=readiness;
+    }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
    // STYLE03: Actual native Style screen, not a separate wardrobe editor.
    // Guarded original photos and pinned owned looks use this very same native
@@ -437,20 +465,25 @@ const outfitBoardReady=(async()=>{
       new URLSearchParams(location.search).get('nativeIndex07')==='research'){
     try{
      const {mountStyleOwnedLive03}=await import('../research/style-owned-live-03/native-style-panel.mjs');
-     window.styleOwnedLive03Bridge=await mountStyleOwnedLive03({
-      board:nativeLossless04,onStatus:()=>{}
-     });
-    }catch(error){nativeLossless04Notify(error);}
+     if(!nativeMountLease.current())return;
+     const style=await mountStyleOwnedLive03({board:created,onStatus:()=>{}});
+     if(!nativeMountLease.current()){style.dispose();return;}
+     window.styleOwnedLive03Bridge=style;
+    }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
    // MOBILE09: Research-only tactile and safe-area polish. It changes no
    // saved record, cloth geometry, owner permission, or released stylesheet.
    if(new URLSearchParams(location.search).get('nativeMobile09')==='research'){
     try{
      const {mountNativeMobile09}=await import('../research/native-mobile-09/mobile-comfort.mjs');
-     window.nativeMobile09Bridge=mountNativeMobile09({board:nativeLossless04});
-    }catch(error){nativeLossless04Notify(error);}
+     if(!nativeMountLease.current())return;
+     window.nativeMobile09Bridge=mountNativeMobile09({board:created});
+    }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
-  }catch(error){nativeLossless04Notify(error);nativeLossless04ClearPreview();}
+  }catch(error){
+   if(!nativeMountLease.current())return;
+   nativeLossless04Notify(error);nativeLossless04ClearPreview();
+  }
  }else if(db){
   try{
    const state=await new Promise((resolve,reject)=>{
@@ -462,6 +495,7 @@ const outfitBoardReady=(async()=>{
     savedOutfitBoards=(state.saved||[]).slice(0,50).map(x=>cleanOutfitBoard(x,items));}
   }catch{$('boardSaveStatus').textContent='Saved outfits could not be loaded.';}
  }
+ if(nativeMountLease&&!nativeMountLease.current())return;
  boardCommittedDraft=JSON.stringify(currentBoard);boardInitialized=true;syncBoardInputs();renderOutfitBoard();
 })();
 
