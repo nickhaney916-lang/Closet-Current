@@ -373,3 +373,76 @@ test('P88 unit70 cannot accept receipts if original JPEG digest is unavailable o
  assert.equal(h.c.worker.closed,true);
  assert.match(h.node('outfitSplitStatus').textContent,/source did not match its original JPEG/);
 });
+
+function cropHarness88({saved=false,checkPhoto=null}={}){
+ const start=appSource.indexOf('function hasSourceBoundMask88(');
+ const end=appSource.indexOf('// P846:',start);
+ assert.ok(start>=0&&end>start,'P88 native crop controller available');
+ const c={
+  localPending:new Set(),busy:false,stream:null,cameraOpening:false,
+  stopCamera(){},originalSourceOnly:true,
+  node:(_,label)=>({label,disabled:false,type:''}),messages:[],
+  message(s){c.messages.push(s);},openPhotoCrop(_,callbacks){c.editor=callbacks;return Promise.resolve();},
+  structuredClone, checkPhoto:checkPhoto||async()=>({colorEstimate:null,signature:[],aspect:1}),
+  ClothingDetails:{fillColor:()=>({})},
+  items:saved?[{id:'garment'}]:[],batch:[{id:'garment'}],writeCount:0,
+  writeAll:async()=>{c.writeCount++},render(){},
+  queued:async fn=>{c.writeCount++;return fn();},
+  db:{transaction(){return {objectStore:()=>({put(){}}),set oncomplete(fn){fn()}}}},
+  applyLocalChoice(){throw Error('unexpected suggestion')},
+  window:{closetAuth:{user:{id:'owner-A'}}}
+ };
+ vm.createContext(c);
+ vm.runInContext(appSource.slice(start,end),c);
+ return c;
+}
+const sampleSource88=()=>({id:'garment',image:'data:image/jpeg;base64,T1JJR0lOQUw=',category:'Tops',color:'Blue',
+  itemType:'T-shirt',name:'Source photo',seasons:[]});
+test('P88 source-bound P70 photo is not crop-editable even through a direct function call',()=>{
+ const c=cropHarness88();
+ for(const bound of [
+  {reconciliation70:{ownerId:'owner-A',sourceSha256:'a'.repeat(64),maskSha256:'b'.repeat(64)}},
+  {reconciliation70Status:'unresolved'},
+  {reconciliation70Status:'separate_confirmed'},
+  {shoePair:{confirmedByOwner:true}},
+  {combinedFragments70:{confirmedByOwner:true}},
+  {segmentHint:{componentReviewStatus:'owner_must_confirm_garment_units'}},
+  {segmentHint:{componentReviewStatus:'unresolved_fragments_keep_source_mask'}}
+ ]){
+  const item={...sampleSource88(),...bound};
+  assert.equal(c.cropButton(item).disabled,true);
+  c.editor=null;c.cropClothingPhoto(item);
+  assert.equal(c.editor,null,'direct script invocation cannot bypass disabled button');
+  assert.match(c.messages.at(-1),/original segmented mask/);
+  assert.equal(c.writeCount,0);
+ }
+});
+test('P88 unsegmented single-photo crop still works with original owner-edit workflow',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ assert.equal(c.cropButton(item).disabled,false);
+ c.cropClothingPhoto(item);
+ assert.ok(c.editor);
+ await c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT',cropBounds:{x:0,y:0,width:1,height:1}},null);
+ assert.equal(c.writeCount,1);
+ assert.equal(item.image,'data:image/jpeg;base64,TkVXUElYRUxT');
+ assert.equal(c.messages.length,0);
+});
+test('P88 late P70 mask receipt during awaited crop photo-quality check forbids stale write',async()=>{
+ let release;
+ const c=cropHarness88({saved:true,checkPhoto:()=>new Promise(resolve=>{release=resolve;})}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ const pending=c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null);
+ item.reconciliation70={ownerId:'owner-A',sourceSha256:'a'.repeat(64),maskSha256:'b'.repeat(64)};
+ release({colorEstimate:null,signature:[],aspect:1});
+ await assert.rejects(pending,/P88_STALE_MASK_AFTER_PHOTO_CHECK/);
+ assert.equal(c.writeCount,0);
+ assert.equal(item.image,sampleSource88().image,'original pixels retained on rejected crop');
+});
+test('P88 late P70 mask receipt inserted after editor opens but before Save rejects immediately',async()=>{
+ const c=cropHarness88({saved:true}),item=sampleSource88();
+ c.cropClothingPhoto(item);
+ item.segmentHint={componentReviewStatus:'owner_must_confirm_garment_units'};
+ await assert.rejects(c.editor.save({image:'data:image/jpeg;base64,TkVXUElYRUxT'},null),/P88_SOURCE_MASK_CROP_FORBIDDEN/);
+ assert.equal(c.writeCount,0);
+ assert.equal(item.image,sampleSource88().image);
+});
