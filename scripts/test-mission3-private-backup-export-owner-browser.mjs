@@ -28,8 +28,10 @@ const bootstrap=[
  "URL.createObjectURL=blob=>{created.push(blob);return 'blob:synthetic-'+created.length};",
  "URL.revokeObjectURL=()=>{};",
  aLease,bLease,bBackup,handler,
+ "const originalExportClick=$('export').onclick;",
  "window.__probe=async mode=>{",
  " document.body.innerHTML='<div id=\"authGate\" hidden></div><div id=\"appShell\"><button id=\"export\">Export</button></div>';",
+ " $('export').onclick=originalExportClick;",
  " const auth={user:{id:'owner-a'},assertCurrent(){if(auth.revoked)throw Error('revoked')}};",
  " window.closetAuth=auth;db={name:'closet-current-user-owner-a'};captureOperationEpoch++;",
  " nativeLossless04Active=false;nativeLossless04=null;",
@@ -97,7 +99,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     // A routed, local-only synthetic origin permits real location.search and
     // history.replaceState without redefining the browser's window.location.
     await page.route('https://closet-current.synthetic.test/**',route=>
-      route.fulfill({status:200,contentType:'text/html',body:'<main id="fixture"></main>'}));
+      route.fulfill({status:200,contentType:'text/html',body:'<div id="authGate" hidden></div><div id="appShell"><button id="export">Export</button></div>'}));
     await page.goto('https://closet-current.synthetic.test/',{waitUntil:'domcontentloaded'});
     await page.addScriptTag({content:bootstrap});
     const installed=await page.evaluate(()=>typeof window.__probe);
