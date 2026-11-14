@@ -28,8 +28,12 @@ const receipt=attestActualSkirt89({originalBytes:original,cutoutBytes:cutout,
 if(receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED')
  throw Error('Independent real source skirt or REVIEW mask not byte verified: '+receipt.reason);
 const originalCutoutRGBA=await sharp(cutout).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+// Preserve exact relative source coordinates without letterbox padding:
+const factor=Math.min(240/originalCutoutRGBA.info.width,240/originalCutoutRGBA.info.height);
+const sampleWidth=Math.max(12,Math.round(originalCutoutRGBA.info.width*factor));
+const sampleHeight=Math.max(12,Math.round(originalCutoutRGBA.info.height*factor));
 const {data,info}=await sharp(cutout)
- .resize({width:180,height:240,fit:'contain',background:{r:0,g:0,b:0,alpha:0}})
+ .resize({width:sampleWidth,height:sampleHeight,fit:'fill'})
  .ensureAlpha().raw().toBuffer({resolveWithObject:true});
 const alpha=new Uint8Array(info.width*info.height);
 for(let i=0;i<alpha.length;i++)alpha[i]=data[i*4+3];
