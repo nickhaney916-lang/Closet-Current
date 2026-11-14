@@ -25,7 +25,8 @@ function syntheticSignedBundle(){
  roles.ownerPolicy.payload={
   ...roles.ownerPolicy.payload,approvedAt:'2026-11-11T04:00:00.000Z',
   familyAlphaHold:true,releaseAuthorized:false,
-  thresholds:Object.fromEntries(METRICS.map(m=>[m,{minimumSamples:20,minimumAccuracy:.8}]))
+  thresholds:Object.fromEntries(METRICS.map(m=>[m,{minimumSamples:m==='noWrongSave'?60:20,
+   minimumAccuracy:m==='noWrongSave'?1:.8}]))
  };
  roles.independentBlind.payload={
   ...roles.independentBlind.payload,
@@ -36,13 +37,13 @@ function syntheticSignedBundle(){
   curatorRightsApproved:true,sealedBeforeScoring:true,p75OfflineAuditVerified:true,
   newSealedBlindSources:60,originalSourcesVerified:60,
   twoIndependentHumanConsensus:60,eligibleScoredSources:60,
-  metrics:Object.fromEntries(METRICS.map(m=>[m,{correct:55,total:60}]))
+  metrics:Object.fromEntries(METRICS.map(m=>[m,{correct:m==='noWrongSave'?60:55,total:60}]))
  };
  const phone=(platform,browser)=>({platform,browser,physical:true,emulated:false,
   witnessedByIndependentOperator:true,genuineOriginalPhotoUsed:true,
   ownerConfirmedEachSave:true,noWrongSave:true,privateDataIsolationVerified:true,
   captureToPrivateClosetPass:true,osVersion:'TEST 0.0',browserVersion:'TEST 0.0',
-  testEvidenceSha256:hex('d')});
+  testEvidenceSha256:hex(platform==='Android'?'d':'f')});
  roles.physicalDevices.payload={
   ...roles.physicalDevices.payload,devices:[phone('Android','Chrome'),phone('iPhone','Safari')],
   realDeviceRuns:2,syntheticOnly:false
@@ -159,4 +160,58 @@ test('P851 existing P850 owner-reviewed save, source-bound color, queue and P849
  assert.match(app,/reviewQueue850\.keepForLater/);
  assert.match(outfit,/const outfitColor76=outfitUnits70/);
  assert.doesNotMatch(queue,/writeAll\(|savePiece\(/);
+});
+
+test('P884 zero silently wrong blind saves requires full 60/60, not policy-approved 55/60',()=>{
+ let x=syntheticSignedBundle();x.bundle.roles.ownerPolicy.payload.thresholds.noWrongSave.minimumAccuracy=.8;
+ x.reseal('ownerPolicy');
+ blocked(evaluate(x),'noWrongSave must have preapproved 100 percent');
+ x=syntheticSignedBundle();x.bundle.roles.independentBlind.payload.metrics.noWrongSave.correct=59;
+ x.reseal('independentBlind');
+ blocked(evaluate(x),'noWrongSave must have preapproved 100 percent');
+});
+test('P884 refuse selective denominator shrinkage of blind no-wrong-save suite',()=>{
+ let x=syntheticSignedBundle();x.bundle.roles.independentBlind.payload.metrics.noWrongSave.total=59;
+ x.bundle.roles.independentBlind.payload.metrics.noWrongSave.correct=59;
+ x.bundle.roles.ownerPolicy.payload.thresholds.noWrongSave.minimumSamples=59;
+ x.reseal('independentBlind');x.reseal('ownerPolicy');
+ blocked(evaluate(x),'noWrongSave must have preapproved 100 percent');
+ x=syntheticSignedBundle();x.bundle.roles.ownerPolicy.payload.thresholds.noWrongSave.minimumSamples=20;
+ x.reseal('ownerPolicy');
+ blocked(evaluate(x),'noWrongSave must have preapproved 100 percent');
+});
+test('P884 one physical phone evidence digest cannot masquerade as two platforms',()=>{
+ const x=syntheticSignedBundle(),a=x.bundle.roles.physicalDevices.payload;
+ a.devices[1].testEvidenceSha256=a.devices[0].testEvidenceSha256;
+ x.reseal('physicalDevices');
+ blocked(evaluate(x),'duplicate physical-device evidence digest');
+ blocked(evaluate(x),'physical end-to-end acceptance');
+});
+test('P884 malformed trusted pins, missing roles, extra roles fail closed without throwing',()=>{
+ let x=syntheticSignedBundle();
+ blocked(evaluateMission1Evidence({...x.bundle,roles:null},x.trusted,now),'no externally signed evidence bundle');
+ blocked(evaluateMission1Evidence(x.bundle,null,now),'no owner-pinned independent signer fingerprints');
+ x=syntheticSignedBundle();delete x.bundle.roles.physicalDevices;
+ blocked(evaluate(x),'exactly four role-separated');
+ x=syntheticSignedBundle();x.bundle.roles.fifthRole={spoofed:true};
+ blocked(evaluate(x),'exactly four role-separated');
+});
+test('P884 numeric-only public reports ban underscore/case variations of private data keys',()=>{
+ let x=syntheticSignedBundle();x.bundle.roles.independentBlind.payload.access_token='FAKE';
+ x.reseal('independentBlind');
+ blocked(evaluate(x),'private payload forbidden');
+ x=syntheticSignedBundle();x.bundle.roles.signedCloud.payload.owner_ID='FAKE';
+ x.reseal('signedCloud');
+ blocked(evaluate(x),'private payload forbidden');
+ x=syntheticSignedBundle();x.bundle.roles.physicalDevices.payload.photo_url='private://photo';
+ x.reseal('physicalDevices');
+ blocked(evaluate(x),'private payload forbidden');
+});
+test('P884 synthetic 100% noWrongSave only means review eligible, never deployed or released',()=>{
+ const x=syntheticSignedBundle(),result=evaluate(x);
+ assert.equal(result.status,'EVIDENCE_REVIEW_ELIGIBLE_NOT_RELEASE');
+ assert.equal(result.noDeploy,true);
+ assert.equal(result.shouldLiftFamilyAlphaHold,false);
+ assert.equal(result.countOfIndependentHumanBlindSources,60);
+ assert.equal(result.countOfPhysicalDevicePlatforms,2);
 });
