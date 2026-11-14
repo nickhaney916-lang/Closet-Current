@@ -28,6 +28,7 @@ jobs:
       - run: node --check research/mission2-p91/drape-source-gate.mjs
       - run: node --check research/mission2-p92/blind-photo-review.mjs
       - run: node --check scripts/build-mission2-p92-review-pack.mjs
+      - run: node --check scripts/test-mission2-p92-offline-page.mjs
       - run: node --check scripts/install-mission2-p91-preview.mjs
       - run: node --check scripts/test-mission2-p91-native-browser.mjs
       - run: node --check research/mission2-p87/skinned-pose-preview.mjs
@@ -91,6 +92,8 @@ jobs:
       - run: node scripts/test-mission2-p91-native-browser.mjs
       - name: Build original-JPEG-SHA-locked blind human review packet from actual WebGL
         run: node scripts/build-mission2-p92-review-pack.mjs
+      - name: Smoke the actual offline A/B page, local images and synthetic export (NOT human evidence)
+        run: node scripts/test-mission2-p92-offline-page.mjs
       - run: git diff --exit-code 5a27618d31facb8c98065c9d32b7d2f3671cc0e0 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
       - uses: actions/upload-artifact@v4
         if: always()
