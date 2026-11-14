@@ -37,7 +37,8 @@ controller=controller.replace(anchor,anchor+
  "         refineEdgeWinding55:query52.get(\x27photoDressEdges55\x27)===\x27research\x27,\n"+
  "         refineBoundaryComponents56:query52.get(\x27photoDressBoundaries56\x27)===\x27research\x27,\n"+
  "         refineAnatomicalLoopLandmarks57:query52.get(\x27photoDressLandmarks57\x27)===\x27research\x27,\n"+
- "         refineArticulatedContacts58:query52.get(\x27photoDressContact58\x27)===\x27research\x27});\n"+
+ "         refineArticulatedContacts58:query52.get(\x27photoDressContact58\x27)===\x27research\x27,\n"+
+ "         refineBodyHeightWitnessBands59:query52.get(\x27photoDressBodyBands59\x27)===\x27research\x27});\n"+
  "        if(evidence52.schema!=='M2-real-original-photo-surface-diagnostic-C52'||\n"+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
