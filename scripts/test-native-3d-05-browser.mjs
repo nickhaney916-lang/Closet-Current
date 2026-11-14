@@ -12,11 +12,13 @@ import {chromium,webkit} from 'playwright';
 import {checkViewer90} from './check-parallel90-interactions.mjs';
 const engine90=process.env.P90_ENGINE||'chromium';
 const strict38=process.env.M38==='research';
+const main39=process.env.M39==='research';
+assert.equal(main39&&!strict38,false,'M39 must never run without explicit strict M38');
 const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430];
 assert.ok(widths90.every(x=>[320,390,430].includes(x)));
 assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=strict38?'benchmark/main38-'+engine90:process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
+const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=main39?'benchmark/main39-'+engine90:strict38?'benchmark/main38-'+engine90:process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -71,7 +73,7 @@ function fixture(owner){
   originalPhoto:{image:photos[pic].image,sha256:photos[pic].sha256},
   image:photos[pic].image,seasons:[],notes:'',brand:'',size:'',material:'',occasion:''
  });
- return {
+ const result={
   items:[
    item('dress','Dresses','Casual dress','commons-0053'),
    item('jacket','Outerwear','Jacket','commons-0064'),
@@ -91,6 +93,29 @@ function fixture(owner){
      futureSourceKeys:{ver:2}}],
    futureBoardVersion:'never-drop'}
  };
+ if(main39){
+  // Test fixture only: a synthetic signed owner has explicitly confirmed
+  // the licensed original and fields. Not an independent human review and
+  // not a consumer 3D garment; the actual PHOTO119 API is separately used
+  // in M37/M39 Node tests, and all release gates stay closed.
+  const row=result.items.find(x=>x.id===owner+'-shirt');
+  Object.assign(row,{
+   reviewProvenance:'explicit-owner-claim-not-independent-review-evidence',
+   confirmedDetails:{category:'Tops',itemType:'T-shirt',color:'Black'},
+   confirmedDetailsSource31:{
+    ownerId:owner,itemId:row.id,sourceSHA256:row.sourceSHA256,
+    basis:'PHOTO119-explicit-owner-confirmation'
+   }
+  });
+  result.state.saved.unshift({
+   id:owner+'-approved-original-test-only',
+   outfit3dId:owner+'-NO-3D-ADMISSION',
+   ownerId:owner,name:'Owner-reviewed original shirt, photo fallback only',
+   slots:{top:owner+'-shirt'},ideas:{},layerCount:0,
+   occasion:'Casual',season:'Fall',audience:'Women',size:'',budget:0
+  });
+ }
+ return result;
 }
 const readBoard=page=>page.evaluate(()=>new Promise((resolve,reject)=>{
  const r=db.transaction('state','readonly').objectStore('state').get('outfit-board');
@@ -164,7 +189,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(strict38?'&main38=research':''),
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(strict38?'&main38=research'+(main39?'&main39=research':''):''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -186,8 +211,10 @@ try{
    let donorRequests38=0;
    await page.route('**/donor/**',route=>{donorRequests38++;return route.abort();});
    await page.locator('#native3D05Preview').click();
-   await page.waitForFunction(()=>document.getElementById('native3D05Status')
-    ?.textContent.includes('MAIN38_OWNER_SOURCE_RECHECK_REQUIRED'),null,{timeout:30000});
+   await page.waitForFunction(expected=>document.getElementById('native3D05Status')
+    ?.textContent.includes(expected),main39?
+     'MAIN38_OWNER_ORIGINAL_2D_ONLY_NO_3D_ADMISSION':
+     'MAIN38_OWNER_SOURCE_RECHECK_REQUIRED',{timeout:30000});
    assert.equal(donorRequests38,0,'No unverified 3D donor may be imported');
    assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
    assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
@@ -199,6 +226,8 @@ try{
     donorImportRequests:donorRequests38,webglAllocated:false,
     originalPhoto2DFallbackRetained:true,ownerPrivateSavedOutfitUnchanged:true,
     signedSyntheticOwnerStillActive:true,
+    liveM39LexicalOwnerScopeAttached:main39,
+    actualSourcePrivateM34Preflight2DOnly:main39,
     realPhoneVerified:false,realAccountVerified:false,
     consumer3DApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'});
    await page.close();await ctx.close();

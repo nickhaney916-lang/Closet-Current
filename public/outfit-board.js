@@ -644,7 +644,43 @@ const outfitBoardReady=(async()=>{
     try{
      const {mountNative3D05}=await import('../research/native-3d-05/native-preview-bridge.mjs');
      if(!nativeMountLease.current())return;
-     const viewer=await mountNative3D05({consumer:created,onStatus:nativeMountLease.onStatus});
+     // M39 only: actual native app lexical signed auth / owner IDB scope.
+     // Never obtain private DB references from global research/viewer inputs.
+     // Existing M33 ownerPicker remains disabled in nativeLossless04 mode;
+     // this independently scoped adapter calls unchanged M34 read-only guards.
+     let ownerScope38=null;
+     const mode39=new URLSearchParams(location.search);
+     if(mode39.get('main39')==='research'&&
+        mode39.get('main38')==='research'){
+      const originalAuth39=window.closetAuth,ownerDb39=db,
+       originalEpoch39=captureOperationEpoch,originalOwner39=originalAuth39?.user?.id;
+      const assertOriginalOwner39=()=>{
+       if(!nativeMountLease.current()||nativeLossless04!==created||
+          !created.status().active||db!==ownerDb39||
+          window.closetAuth!==originalAuth39||
+          originalAuth39?.user?.id!==originalOwner39||
+          captureOperationEpoch!==originalEpoch39||
+          ownerDb39?.name!=='closet-current-user-'+originalOwner39)
+        throw Error('MAIN39 owner/source private lease revoked');
+       originalAuth39.assertCurrent();
+      };
+      const {createTrustedNativeOwnerScope39}=await import(
+       '../research/main1054-handoff39/trusted-native-owner-scope.mjs');
+      assertOriginalOwner39();
+      ownerScope38=createTrustedNativeOwnerScope39({
+       consumer:created,authRef:originalAuth39,privateDbRef:ownerDb39,
+       getActualOperationEpoch:()=>captureOperationEpoch,
+       assertOwnerLive:assertOriginalOwner39,
+       readActualOwnerItems:async scope=>{
+        scope.assertCurrent();assertOriginalOwner39();
+        const rows=await readAllFrom(scope.privateDbRef);
+        scope.assertCurrent();assertOriginalOwner39();
+        return rows;
+       }
+      });
+     }
+     const viewer=await mountNative3D05({consumer:created,
+      onStatus:nativeMountLease.onStatus,ownerScope38});
      if(!publishNative04OwnerPanel(nativeMountLease,created,viewer,'native3D05Bridge'))return;
     }catch(error){if(!nativeMountLease.current())return;nativeLossless04Notify(error);}
    }
