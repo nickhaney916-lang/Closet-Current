@@ -1,0 +1,34 @@
+# MAIN1054 Mission 4 M13 — Native Outfit Board revision/cancellation handoff (HOLD)
+
+## Verified upstream source and race condition
+The exact Research M12 adapter parent `edc486c36fe6194fa30c89690c850306ceadfe92` (draft [#1105](https://github.com/nickhaney916-lang/Closet-Current/pull/1105)) binds private photo/outfit preflight to owner, signed auth object, private database object and capture generation across asynchronous IndexedDB reads and original-JPEG SHA digests. **M12 exact-head CI was pending when this M13 branch was cut; no inherited M12 success may be inferred.**
+
+The actual `public/outfit-board-engine.js` `cleanOutfitBoard()` accepts `currentBoard.slots` and native `name, occasion, season, audience, size, budget, layerCount, ideas`. M12 snapshots the selected slot IDs but never rechecks that input after awaiting private wardrobe reads and SHA-256 image digests. Example: a user changes selected `top:shirt` to another shirt during a pending `readOwnerItems()` or just before the final verification. The old selection could still be represented as current. This is a **source-observed acceptance gap**, not an observed real privacy leak.
+
+## Minimal M13 research correction
+- Snapshot exact native slot key/item-ID pairs and all normal board context/ideas before reading private wardrobe data. Sort slot keys to avoid falsely rejecting cosmetic insertion-order changes.
+- Require strict serializable, bounded native board metadata. Reject malformed, ambiguous/repeated item IDs, cyclic/unavailable or overlong metadata. Never include JPEG pixels, token, signed auth reference, IDB connection or model scores in this revision.
+- Check that original board revision still matches after each asynchronous private read, after native normalizer call, around each original JPEG SHA await and just before publishing the **unchanged 2D-only** result. This detects replacement/deletion/in-place edits to slots as well as changes in occasion, audience, budget or shopping ideas.
+- Fail closed with explicit `outfit board changed during source verification` (no stale owner clothing ID handoff); never mutate or re-save originals, board, owner records or any private environment.
+- Eight additional synthetic adversarial tests (first/second owner-read mutations, source swap, omitted garment, style/ideas changes, intentionally mutating normalizer, semantically identical slot insertion-order, cyclic/oversize metadata), stacked on the original 17 and M12's seven cases. Test assertion target **32 focused source tests**, *not verified until CI completes*.
+- All methods still source-execute true native `cleanOutfitBoard`, real native owner index and actual JPEG digest; synthetic photographed pixels/owner sessions are fixtures. The library remains **research-only**, not wired into production.
+
+## Branch, CI and release boundaries
+Isolated strict five-file change on M12 exact commit; files restricted to `source-to-outfit.mjs`, its tests, the existing M4 native 2D browser test harness, this report and no-deploy workflow. Zero change in `public/`, photo records, 3D geometry, WebKit model worker, hosted Supabase, staging, production or sibling mission branches.
+
+Two independent no-deploy CI jobs check immutable M12 parent/path allowlist and P880 untouched panel source, offline PWA build, 32 planned source tests, all inherited private original/source/pair/backup/wardrobe Node regressions, native desktop Chromium/WebKit 320/390/430 model owner-policy (54) and original 2D browser fallback (12). **No exact-head pass asserted until corresponding run finishes successfully.**
+
+Mission 2's photographed 163-bone dress already has 196 strict anatomical body/cloth crossing pair witnesses at neutral and each sampled articulated pose [P2-C59 #1098](https://github.com/nickhaney916-lang/Closet-Current/pull/1098); real-photo 3D collision release **BLOCKED**, regardless of this 2D gate. Independent human-blind recognition accuracy, actual physical iPhone/Android, authorized hosted signed two-owner Auth/Storage RLS and cloud backup acceptance remain unverified.
+
+**Family Alpha #255 remains OPEN/HOLD; DRAFT, UNMERGED, UNDEPLOYED.** No automatic model suggestions saved and no claimed end-to-end family test completion.
+
+## Required root-cause diagnostic — recurring original-photo native browser timeout
+The first original M12 [no-deploy run #43538372940](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43538372940) and the first M13 [run #43538935302](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43538935302) completed the source test and P880 owner-browser checks, but the **independent native original-photo 2D browser check timed out** on Chromium 320 in a 30-second `page.waitForFunction`; neither may be marked 2/2 green. Original PWA app, signed auth, board data, images and Model P880 are unmodified versus verified M10. The cause of the timeout was not identified from the earlier logs; GitHub font/trend HTTP host blocks do not establish a causal diagnosis.
+
+To make the existing **mandatory** acceptance reproducible, modify its research-only `scripts/test-main1054-native-preview-browser.mjs` *without retries, skipped cases or relaxed assertions* to emit a **redacted synthetic-only stage/owner/DB/board-startup receipt** on failure. The verification still fails closed; any startup defect is a BLOCKER requiring a source-verified fix. This explains the fifth allowed changed research/test path in M13. No private account or clothing data is logged. Do not claim browser acceptance until a new exact-head two-job run succeeds.
+
+## 2D failure-stage finding and next exact-source check
+
+[Exact diagnostic run #43539366358](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43539366358) confirmed the failed Chromium 320 test had completed signed owner login, the private DB, and the saved `currentBoard.slots` restoration. It then timed out in `preview-click-and-private-photo-verification`. The real native P880 reviewer 54/54 and full inherited Node/source-to-outfit job succeeded. Earlier guesses about login/board startup are not supported. The prior diagnostic's `startup:null` does not establish a browser crash or privacy breach.
+
+Next M13 test-only improvement runs the exact M4 `preflightOwnedOutfit1054` through the **native signed auth, private IDB and true `cleanOutfitBoard`** before clicking preview, reporting only `ok`, count and static error; this pinpoints compatibility mismatch, if any. The browser checks either verified JPEG <img> results or an explicit `Preview refused` status and fails immediately on a refusal rather than waiting the full timeout. No app, original photo, owner data, cloud or admission guard is modified. The new exact-head run must be inspected before CI acceptance or root cause is claimed.

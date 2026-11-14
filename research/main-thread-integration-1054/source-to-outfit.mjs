@@ -14,6 +14,34 @@ const SLOTS=new Set(['top','bottom','layer','layer2','layer3','shoes','bag','acc
 const SHA=/^[0-9a-f]{64}$/;
 const issue=reason=>{throw Error('MAIN1054 '+reason);};
 const validId=id=>typeof id==='string'&&id.trim()===id&&id.length>0&&id.length<=200;
+// M13: the real native outfit builder can edit currentBoard while JPEG SHA
+// awaits. Snapshot only normal board metadata + exact selected slot identities;
+// never keep or emit an image, account, token or private database in the stamp.
+const boardFields=['name','occasion','season','audience','size','budget','layerCount'];
+function boardRevision(board){
+ if(!board||typeof board!=='object'||!board.slots||
+    typeof board.slots!=='object'||Array.isArray(board.slots))
+  issue('actual private wardrobe and board adapter required');
+ const slots=Object.entries(board.slots);
+ if(!slots.length||slots.length>SLOTS.size||
+    slots.some(([slot,id])=>!SLOTS.has(slot)||!validId(id))||
+    new Set(slots.map(([,id])=>id)).size!==slots.length)
+  issue('invalid or repeated outfit slot identity');
+ // Sort the slot keys so cosmetic key insertion order alone is irrelevant.
+ // Include native outfit metadata and shopping ideas, because a changed
+ // style request cannot silently publish the previous selection's proof.
+ let stamp;
+ try{
+  stamp=JSON.stringify([
+   slots.slice().sort(([a],[b])=>a.localeCompare(b)),
+   boardFields.map(key=>board[key]??null),
+   board.ideas??null
+  ]);
+ }catch{issue('native outfit board revision unavailable');}
+ if(typeof stamp!=='string'||stamp.length>16384)
+  issue('native outfit board revision unavailable');
+ return {slots,stamp};
+}
 
 // M12: the native Style original-photo session already pins auth object,
 // private IndexedDB handle and capture generation (Mission 3 #1100/#1104).
@@ -91,19 +119,19 @@ function confirmed(row,item,ownerId){
  */
 export async function preflightOwnedOutfit1054({getSession,readOwnerItems,cleanBoard,board}={}){
  const begin=active(getSession);
- if(typeof readOwnerItems!=='function'||typeof cleanBoard!=='function'||
-   !board||typeof board!=='object'||!board.slots||
-   typeof board.slots!=='object'||Array.isArray(board.slots))
+ if(typeof readOwnerItems!=='function'||typeof cleanBoard!=='function')
   issue('actual private wardrobe and board adapter required');
- const raw=Object.entries(board.slots);
- if(!raw.length||raw.length>SLOTS.size||
-   raw.some(([slot,id])=>!SLOTS.has(slot)||!validId(id))||
-   new Set(raw.map(([,id])=>id)).size!==raw.length)
-  issue('invalid or repeated outfit slot identity');
+ const {slots:raw,stamp}=boardRevision(board);
+ const assertBoard=()=>{
+  if(boardRevision(board).stamp!==stamp)
+   issue('outfit board changed during source verification');
+ };
  const records=await readOwnerItems();
  assertLive(getSession,begin);
+ assertBoard(); // New selected slots cannot be substituted mid-private-read.
  const index=buildOwnerWardrobeIndex(begin.ownerId,records);
  const clean=cleanBoard(board,records);
+ assertBoard(); // Even the injected native normalizer may never mutate input.
  if(!clean?.slots||Object.keys(clean.slots).length!==raw.length||
    raw.some(([slot,id])=>clean.slots[slot]!==id))
   issue('native outfit normalization would silently lose selected garment');
@@ -118,16 +146,19 @@ export async function preflightOwnedOutfit1054({getSession,readOwnerItems,cleanB
   if(!item||!row||!row.slotIds.includes(slot))
    issue('missing or incompatible owned garment');
   confirmed(row,item,begin.ownerId);
+  assertBoard();
   const bytes=jpegBytes(item.originalPhoto.image);
   if(bytes.length<80)issue('original JPEG has no usable source envelope');
   const actual=await digestBytes(bytes);
   assertLive(getSession,begin);
+  assertBoard();
   if(actual!==item.sourceSHA256)issue('original JPEG SHA does not match saved source');
   pinned.push(Object.freeze({slot,itemId:id,sourceSHA256:actual,
    fingerprint:fingerprint(item)}));
  }
  const fresh=await readOwnerItems();
  assertLive(getSession,begin);
+ assertBoard();
  // Detect a different tab adding a lookalike/duplicate while SHA awaits.
  const freshIndex=buildOwnerWardrobeIndex(begin.ownerId,fresh);
  if(freshIndex.summary.sourcePairs.some(pair=>pair.ids.some(id=>chosen.has(id))))
@@ -136,6 +167,7 @@ export async function preflightOwnedOutfit1054({getSession,readOwnerItems,cleanB
  for(const item of pinned)if(fingerprint(freshById.get(item.itemId))!==item.fingerprint)
   issue('saved garment changed during source verification');
  assertLive(getSession,begin);
+ assertBoard();
  return Object.freeze({
   ownerId:begin.ownerId,sessionEpoch:begin.epoch,
   status:'source-verified-2d-only',

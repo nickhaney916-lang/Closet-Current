@@ -260,3 +260,76 @@ test('M12 different auth after final private source read cannot publish outfit I
   }
  })),/owner session changed/);
 });
+
+test('M13 rejects first private read mutating selected slot before original SHA checks',async()=>{
+ const items=[...set(),garment('second-shirt','Tops',11)],board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
+  readOwnerItems:async()=>{
+   board.slots.top='second-shirt';
+   return structuredClone(items);
+  }
+ })),/outfit board changed/);
+});
+test('M13 rejects later private read replacing selected garment with same-owner item',async()=>{
+ const items=[...set(),garment('second-shirt','Tops',11)];
+ const board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ let reads=0;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
+  readOwnerItems:async()=>{
+   if(++reads===2)board.slots.top='second-shirt';
+   return structuredClone(items);
+  }
+ })),/outfit board changed/);
+});
+test('M13 rejects late outfit slot deletion after verified SHA read',async()=>{
+ const items=set(),board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ let reads=0;
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
+  readOwnerItems:async()=>{
+   if(++reads===2)delete board.slots.bottom;
+   return structuredClone(items);
+  }
+ })),/outfit board changed/);
+});
+test('M13 rejects changed occasion even when slots, source hashes and owner stay identical',async()=>{
+ const items=set(),board={occasion:'Casual',slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
+  readOwnerItems:async()=>{board.occasion='Work';return structuredClone(items);}
+ })),/outfit board changed/);
+});
+test('M13 detects changed native shopping ideas without persisting or mutating owner garments',async()=>{
+ const items=set(),originals=items.map(x=>x.originalPhoto.image);
+ const board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'},ideas:{layer:{type:'Cardigan',color:'Gray'}}};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
+  readOwnerItems:async()=>{
+   board.ideas.layer.color='Black';
+   return structuredClone(items);
+  }
+ })),/outfit board changed/);
+ assert.deepEqual(items.map(x=>x.originalPhoto.image),originals);
+});
+test('M13 refuses mutable normalizer injected into native board verification',async()=>{
+ const items=set(),board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,board,{
+  cleanBoard:(b,rows)=>{const out=cleanBoard(b,rows);delete b.slots.shoes;return out;}
+ })),/outfit board changed/);
+});
+test('M13 allows semantically same slot map with different insertion order',async()=>{
+ const items=set(),board={slots:{top:'shirt',bottom:'pants',shoes:'shoes'}};
+ const result=await preflightOwnedOutfit1054(opts(items,board,{
+  readOwnerItems:async()=>{
+   const entries=Object.entries(board.slots).reverse();
+   board.slots=Object.fromEntries(entries);
+   return structuredClone(items);
+  }
+ }));
+ assert.equal(result.status,'source-verified-2d-only');
+ assert.equal(result.renderAuthorized3D,false);
+ assert.deepEqual(result.slots.map(x=>x.itemId),['shirt','pants','shoes']);
+});
+test('M13 rejects cyclic/oversized board style revision instead of claiming verified original',async()=>{
+ const items=set(),cyclic={slots:{top:'shirt'}};cyclic.ideas={layer:cyclic};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,cyclic)),/revision unavailable/);
+ const oversized={slots:{top:'shirt'},ideas:{layer:{type:'Jacket',description:'x'.repeat(17000)}}};
+ await assert.rejects(preflightOwnedOutfit1054(opts(items,oversized)),/revision unavailable/);
+});
