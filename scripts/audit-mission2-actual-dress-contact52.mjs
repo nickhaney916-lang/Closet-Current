@@ -484,8 +484,29 @@ if(process.env.PHOTO_DRESS_CONTACT58==='1'){
   assert.equal(a.releaseAuthorized,false);
   assert.equal(a.familyAlpha,'HOLD');
  }
- for(const w of evidence.slice(1))assert.deepEqual(w,evidence[0],
-  'Original licensed 163-bone P61/P175 articulated contact outcome must be invariant across browser widths at same source and articulations');
+ // P85 adds a REAL measured wall-clock diagnostic. Unlike source geometry
+ // and strict witnesses, this duration cannot be invariant across viewport
+ // runs. Strip ONLY that volatile field for C58 source numerical equality;
+ // no collision, strain, normal, face, source-hash or budget is exempted.
+ const deterministic58=(row)=>{
+  if(process.env.PHOTO_DRESS_ALTERNATIVE85!=='1')return row;
+  const a=row.a,stable=(p)=>{
+   assert.ok(p&&Number.isSafeInteger(p.elapsedDesktopOrBrowserMilliseconds)&&
+    p.elapsedDesktopOrBrowserMilliseconds>=0,
+    'P85 real source candidate timing must be measured and nonnegative');
+   const {elapsedDesktopOrBrowserMilliseconds,...unchanged}=p;
+   return unchanged;
+  };
+  assert.equal(a.disposableArmAlternativeClearance85.length,2);
+  return {...row,a:{...a,
+   disposableNeutralAlternativeClearance85:
+    stable(a.disposableNeutralAlternativeClearance85),
+   disposableArmAlternativeClearance85:
+    a.disposableArmAlternativeClearance85.map(stable)}};
+ };
+ for(const w of evidence.slice(1))
+  assert.deepEqual(deterministic58(w),deterministic58(evidence[0]),
+   'Original licensed 163-bone P61/P175 articulated collision, face strain and source geometry must be width invariant; only measured wall clock duration is excluded');
  const a=evidence[0].a;
  const report={
   schema:'M2-P2-C58-real-licensed-photo-articulated-garment-body-contact',
@@ -888,6 +909,17 @@ if(process.env.PHOTO_DRESS_ALTERNATIVE85==='1'){
   actualSkinnedAnatomicalBoneCount:163,
   originalWorldPoses:3,
   desktopChromiumCSSWidths:[320,390,430],
+  measuredElapsedMillisecondsByDesktopCSSWidth:receipts.map(r=>{
+   const a=r.originalArticulatedContactReceipt58;
+   return {width:r.width,
+    exactOriginalPhotoPoseTrialMilliseconds:[
+     a.disposableNeutralAlternativeClearance85,
+     ...a.disposableArmAlternativeClearance85
+    ].map(p=>p.elapsedDesktopOrBrowserMilliseconds)};
+  }),
+  peakBrowserProcessMemoryMeasured:false,
+  sourceWorldBufferSizeBytes:first.originalSourceFaces*3*3*4,
+  memoryBytesNotMeasuredAsPeakHeap:true,
   methodsCompared:['unmodified-original','C60-6mm',
    'quintic-height-envelope-4.5mm','quintic-height-envelope-6mm',
    'welded-edge-strain-projection-4.5mm',
