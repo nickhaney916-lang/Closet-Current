@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as T from 'three';
 import {trialSourceMeasuredDenimSide84,interpolateOriginalDenimStation84} from '../research/parallel84-real-photo-layers/source-denim-side-trial84.mjs';
+import {gateActualSourceDenimAcrossStaticPoses84} from '../research/parallel84-real-photo-layers/source-three-pose-denim-gate84.mjs';
 
 // SYNTHETIC source-like garment topology + *real THREE* SkinnedMesh with 163
 // bone influences. This fixture is never represented as a genuine garment
@@ -175,4 +176,69 @@ test('P84 measured SOURCE-neutral refined denim has less exaggerated movement th
  }
  assert.deepEqual(mild.mesh.geometry.getAttribute('pantsSourceFront').array,originalPhotoFront);
  assert.deepEqual(mild.mesh.geometry.getAttribute('pantsSourceUV').array,originalUV);
+});
+
+
+function guardedSourceFixture(withObstacle=false){
+ const f=setup(),bones=f.body.skeleton.bones;
+ bones[150].name='upperarm01L';bones[151].name='upperarm01R';
+ const applyPose=name=>{
+  const x={'source':0,'blend-50':-.20,'relaxed':-.40}[name];
+  if(x===undefined)throw Error('unapproved-source-arm-pose');
+  bones[150].rotation.x=x;bones[151].rotation.x=x;
+  f.root.updateMatrixWorld(true);
+  f.root.traverse(m=>{if(m.isSkinnedMesh)m.skeleton.update();});
+ };
+ if(withObstacle){
+  // A real indexed THREE.SkinnedMesh vertical torso-test "fence" is just
+  // beyond original neutral denim right outer thigh x~.22 in THIS fixture.
+  // Source ease shifts its original rear neutral triangles across it.
+  skinned(f.root,bones,[
+   .2235,.67,-.075,.2235,.77,-.075,
+   .2235,.67,.075,.2235,.77,.075
+  ],[0,1,2,1,3,2],{garment:false});
+ }
+ return {...f,applyPose};
+}
+test('P84 three-pose ORIGINAL source denim trial accepts only after exact skinned-triangle pair checks in all three researched arm poses',()=>{
+ const f=guardedSourceFixture(),photo=inspect(f.mesh),bone=f.body.skeleton.bones[150].quaternion.clone();
+ const report=gateActualSourceDenimAcrossStaticPoses84(f);
+ assert.equal(report.trialApplied,true,JSON.stringify(report));
+ assert.equal(report.status,'THREE_STATIC_POSES_NO_NEW_SOURCE_CROSSINGS_NOT_MOTION_CERTIFIED');
+ assert.equal(report.allSourceFacesAudited,true);
+ assert.equal(report.exactPairIdentityComparison,true);
+ assert.equal(report.fullOriginalFaceSampledPoses,3);
+ assert.equal(report.actualFullContactPoseComparisons.length,3);
+ assert.ok(report.actualFullContactPoseComparisons.every(x=>
+  !x.newBodyDenimTrianglePairs&&!x.newShirtDenimTrianglePairs&&!x.newBodyShirtTrianglePairs));
+ assert.ok(report.maxWorldSourcePanelChangeMeters>0);
+ assert.equal(report.continuousMotionClothPhysicsNotCertified,true);
+ assert.equal(report.releaseAuthorized,false);
+ assert.ok(f.body.skeleton.bones[150].quaternion.equals(bone));
+ assert.notDeepEqual(f.mesh.geometry.getAttribute('position').array,photo.position);
+ for(const attr of ['pantsRest','pantsSourceUV','pantsSourceFront','skinIndex','skinWeight','uv'])
+  assert.deepEqual(f.mesh.geometry.getAttribute(attr).array,photo[attr]);
+});
+test('P84 three-pose gate refuses NEW true posed-triangle body contact and rolls every original photographed jeans position and normal back',()=>{
+ const f=guardedSourceFixture(true),original=inspect(f.mesh),
+  normal=f.mesh.geometry.getAttribute('normal').array.slice();
+ const report=gateActualSourceDenimAcrossStaticPoses84(f);
+ assert.equal(report.trialApplied,false,JSON.stringify(report));
+ assert.equal(report.status,'REFUSED_ORIGINAL_GEOMETRY_RESTORED');
+ assert.match(report.reason,/new-original-source-triangle-crossing|error-closed-restored-original-denim-source/);
+ assert.equal(report.releaseAuthorized,false);
+ assert.deepEqual(f.mesh.geometry.getAttribute('position').array,original.position);
+ assert.deepEqual(f.mesh.geometry.getAttribute('normal').array,normal);
+ assert.equal(report.originalGeometryRestored,true);
+});
+test('P84 three-pose gate rejects unauthorized photo source before touching geometry or original wearer pose',()=>{
+ const f=guardedSourceFixture(),before=inspect(f.mesh);
+ const joint=f.body.skeleton.bones[150].quaternion.clone();
+ f.pants.stats.sourceSHA256='0'.repeat(64);
+ const report=gateActualSourceDenimAcrossStaticPoses84(f);
+ assert.equal(report.status,'REFUSED_ORIGINAL_GEOMETRY_RESTORED');
+ assert.equal(report.trialApplied,false);
+ assert.equal(report.releaseAuthorized,false);
+ assert.deepEqual(f.mesh.geometry.getAttribute('position').array,before.position);
+ assert.ok(f.body.skeleton.bones[150].quaternion.equals(joint));
 });
