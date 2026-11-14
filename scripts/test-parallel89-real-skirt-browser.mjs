@@ -255,7 +255,11 @@ try{
   assert.equal(registration.sourceId,'commons-0043');
   assert.equal(registration.actualOriginalPhotoSkirtFaces,576);
   assert.equal(registration.original163BoneModelUnchanged,true);
-  assert.equal(registration.trials.length,5);
+  assert.equal(registration.trials.length,7);
+  assert.deepEqual(registration.trials.map(t=>t.name),
+   ['front-15mm','front-30mm','front-45mm','front-60mm','back-15mm','up-20mm','down-20mm']);
+  assert.equal(registration.maximumExploratoryOriginalWaistForwardRegistrationMeters,.06);
+  assert.equal(registration.photoRegistrationCandidatesRequireIndependentPhotoFidelityReview,true);
   assert.equal(registration.original3PoseStrictBodyCrossingPairs,before);
   assert.equal(registration.allCandidatesDisposedAndRestored,true);
   assert.equal(registration.sourcePhotoPixelsAndMasksUnmodified,true);
