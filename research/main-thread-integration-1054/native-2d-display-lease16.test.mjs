@@ -130,7 +130,7 @@ test('M16 changed DB identity without focus event is detected on status polling'
 test('M16 same-owner auth swap during async private read cannot display previous-session originals',async()=>{
  const f=fixture();
  f.setReadHook(async n=>{if(n===1)f.replaceAuth();});
- await assert.rejects(f.preview.refresh(),/signed owner or refresh changed/);
+ await assert.rejects(f.preview.refresh(),/signed owner or refresh changed|owner session changed/);
  assertProtected(f);f.preview.dispose();
 });
 test('M16 DB connection rotation during SHA path cancels old read-only photo preview',async()=>{
