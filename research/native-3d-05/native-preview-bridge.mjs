@@ -279,6 +279,23 @@ export async function mountNative3D05({
    // authorizes keeping the already visible original-photo 2D board.
    // Do this BEFORE any anatomical donor import or WebGL allocation.
    if(params?.get('main38')==='research'){
+    // M40 additionally crosswalks *actual* source-byte-verified saved
+    // originals with public P89 source identities. This cannot replace
+    // human/rig/contact/device acceptance or authorize a WebGL garment.
+    if(params?.get('main40')==='research'&&
+       params?.get('main39')==='research'){
+     const {assessNative3DQuality40}=await import(
+      '../main1054-handoff40/p89-quality-admission.mjs');
+     const quality=await assessNative3DQuality40({
+      ownerScope:ownerScope38,consumer,originalNativeAuth:nativeAuth,
+      win,doc
+     });
+     throw Error(quality.status==='P89_PUBLIC_SOURCE_ALIGNED_BUT_3D_QUALITY_HOLD'?
+      'MAIN40_QUALITY_REVIEW_REQUIRED — This photographed clothing is not approved for realistic 3D. Your original-photo outfit remains in 2D.':
+      quality.status==='UNREGISTERED_OR_CATEGORY_MISMATCHED_ORIGINAL_2D_ONLY'?
+      'MAIN40_UNSUPPORTED_ORIGINAL_SOURCE — Realistic 3D is unavailable for this outfit. Your original photos remain in 2D.':
+      'MAIN40_OWNER_SOURCE_RECHECK_REQUIRED — Reopen your original-photo outfit; no 3D garment was loaded.');
+    }
     const {auditNativeOwnerViewer38}=await import(
      '../main1054-handoff38/strict-viewer-admission.mjs');
     const gate=await auditNativeOwnerViewer38({
