@@ -79,7 +79,11 @@ async function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
    if(ids.some(id=>items.some(x=>x.id===id)))throw Error('A saved item cannot be regrouped.');
    batch=api.confirmWardrobePair70(batch,ids[0],ids[1],owner,{fragments:decision==='combine'});
   }else if(decision==='keep')batch=api.keepSeparate70(batch,ids,owner);
-  else if(decision==='discard')batch=batch.filter(x=>!ids.includes(x.id));
+  else if(decision==='discard'){
+   if(ids.some(id=>batch.find(x=>x.id===id)?.reconciliation70Status!=='unresolved'))
+    throw Error('Only unresolved, unsaved detections can be discarded in this review.');
+   batch=batch.filter(x=>!ids.includes(x.id));
+  }
   else if(decision==='unpair'){
    if(ids.length!==1)throw Error('Select one confirmed grouping to separate.');
    const candidateItem=batch.find(x=>x.id===ids[0]),parts=api.unpairComponents70(batch,ids[0],owner);
@@ -109,11 +113,18 @@ function renderUnit70Panel(){
  if(!outfitUnits70||typeof document==='undefined')return;
  const target=document.getElementById('outfitUnitReview70');if(!target)return;
  const lease=unit70OwnerLease88();
- if(!sameUnit70OwnerLease88(lease)){target.replaceChildren();target.hidden=true;return;}
+ const scoped=batch.filter(x=>x.outfitSourceId===lease.sourceId&&x.reconciliation70);
+ // Never paint an out-of-session photo into the next signed owner's Review
+ // panel, even if a stale draft batch has not yet been swapped by app auth.
+ if(!sameUnit70OwnerLease88(lease)||
+  scoped.some(x=>x.reconciliation70.ownerId!==lease.id)){
+  target.replaceChildren();target.hidden=true;return;
+ }
  unit70Api.then(api=>{
   // An asynchronous import cannot render old-owner photos into a new session,
   // and all buttons keep the lease from the panel that created them.
-  if(!sameUnit70OwnerLease88(lease))return;
+  if(!sameUnit70OwnerLease88(lease)||batch.some(x=>x.outfitSourceId===lease.sourceId&&
+   x.reconciliation70&&x.reconciliation70.ownerId!==lease.id))return;
   if(typeof window!=='undefined')window.ownerMaySaveUnit70=api.ownerMaySaveUnit70;
   api.renderUnitReview70(target,{drafts:batch,existing:items,sourceId:lease.sourceId,
    onPair:(a,b)=>updateUnit70('pair',[a,b],lease),onCombine:(a,b)=>updateUnit70('combine',[a,b],lease),
