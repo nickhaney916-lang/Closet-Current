@@ -1,0 +1,167 @@
+# Mission 2 — Parallel #85 | independent source-faithful photo dress clearance (HOLD)
+
+## Scope and immutable provenance
+- Assignment: [#1121](https://github.com/nickhaney916-lang/Closet-Current/issues/1121).
+- Exact donor parent: C61 [PR #1111](https://github.com/nickhaney916-lang/Closet-Current/pull/1111) commit `cd18e9225d35373d076b4bd9775bba36cdb3368a`; C61's original analysis uses strict C52/C58 source triangles and source-surface strain C61.
+- Original licensed photo mesh provenance: Commons-0053/P61/P175, SHA-256 `e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019`. 3,836 source triangles, authenticated 163-bone anatomical rig.
+- Original garment photo: *Dress, match (AM 2017.66.33-1)*, [Wikimedia Commons original source](https://commons.wikimedia.org/wiki/File:Dress,_match_(AM_2017.66.33-1).jpg), license [CC BY 4.0](https://creativecommons.org/licenses/by/4.0), catalogue credit “API data Catalogue record Photo,” `author` field empty in the locked manifest. Original source/license manifest is `benchmark/locked-photo-sources.json` at C61 Git blob `5af9b4412e861d6cb6c638e4a414aedcb813f16e`. No claimed independent human provenance approval.
+- Immutable donor body/photo build commits: `df6885d6011cb33fb22dceb81a08f35a0ac4dd61` (P541), `6fe5e46b91533a96f3c0d86950ea077cb355c459` (P60), `88d2fdb412f84b0498c86bfa17f4b391425e1958` (P172). All downloaded into throwaway CI worktrees only. Source C60 trial helper blob `beba29e12d7e540c7010893c2a746f77bc01499f`; unchanged C61 strain helper blob `76f5b3ec9e7fcb584829f25f6a31b9934087bdee`.
+- Actual new raw photo bytes **not redistributed**, no owner photos, no production/staging, no hosted Supabase, no source mesh changes, no private wardrobes.
+- Historic verified genuine-source baseline (C59): 196 strict body/dress crossing pairs per neutral + two articulated pose samples. C60 disposable 6mm (C61 confirmed) removes crossings in three samples, but 178 face triangles exceed 5% edge strain, 90 exceed 10% area drift, max 13.0429% edge strain and 14.5618% area change. **C60 fails** provisional quality gate.
+- P85 source tested **only when** `PHOTO_DRESS_ALTERNATIVE85=1` in same detached genuine-photo 3D research donor. Off by default.
+
+## Experimental methods, not fitted-garment approvals
+A. **Quintic-envelope radial relief**: preserve radial anatomical direction, try 4.5mm and 6mm with higher-order height feather. This differs from C60's cubic height envelope while retaining source geometry and the bounded displacement.
+B. **Welded-position edge-strain projection**: initialize with the unchanged C60 proposal at 4.5mm/6mm; group original coincident skinned-world vertices only in temporary memory; impose bounded 3% per-edge target strain through iterative position corrections and a soft source-proposal spring. Preserve original source triangles/indexing and UV, restore outer-height anchors, clamp displacement; measure any duplicate-coordinate seam divergence. Does **not** imply genuine UV-seam identity, textile mechanics or reliable body clearance.
+
+Four numerical candidates are compared to unmodified original and exact C60 6mm on each authentic source pose. The same unchanged C52/C53, C58 and C61 analyzers are used. All changed vertex buffers are temporary, discarded after aggregate receipts; do not export source coordinates, face IDs or owner RGB. A full reported row includes strict body/body near-or-zero, strict self, edge strain max and 2%/5% counts, max angle and >10° count, area max and >10% count, flipped/degenerate faces, displacement, duplicate-coordinate gap and all source-budget completion.
+
+## Acceptance logic
+A candidate may satisfy the *sampled numerical guard* only with exhaustive C52/C53/C58 source sweeps, zero body strict crossings, no introduced self-crossings, C61 unchanged face-quality pass (no source faces >5% strain, >10% face area or >10° normal, no inversions/collapses) and measured duplicate-coordinate divergence below 2 micrometers. This is NOT a human visual, photo RGB, actual UV seam, continuous pose, male/female, physical phone, fabric physics or release approval. Even a sampled numerical pass leaves Family Alpha #255 **HOLD**.
+
+## Actual-source execution (GitHub no-deploy CI)
+```bash
+node --test tests/mission2-p85-clearance.test.mjs
+# In exact authenticated P541/P60/P172 detached source donor:
+PHOTO_DRESS_MOTION36=1 PHOTO_DRESS_CONTACT52=1 PHOTO_DRESS_DISTANCE53=1 PHOTO_DRESS_TOPOLOGY54=1 PHOTO_DRESS_EDGES55=1 PHOTO_DRESS_BOUNDARIES56=1 PHOTO_DRESS_LANDMARKS57=1 PHOTO_DRESS_CONTACT58=1 PHOTO_DRESS_BODY_BANDS59=1 PHOTO_DRESS_TORSO_TRIAL60=1 PHOTO_DRESS_STRAIN61=1 PHOTO_DRESS_ALTERNATIVE85=1 PHOTO_DRESS_MOTION_PHASE36=0.25 node scripts/test-native-3d-05-browser.mjs
+PHOTO_DRESS_DISTANCE53=1 PHOTO_DRESS_TOPOLOGY54=1 PHOTO_DRESS_EDGES55=1 PHOTO_DRESS_BOUNDARIES56=1 PHOTO_DRESS_LANDMARKS57=1 PHOTO_DRESS_CONTACT58=1 PHOTO_DRESS_BODY_BANDS59=1 PHOTO_DRESS_TORSO_TRIAL60=1 PHOTO_DRESS_STRAIN61=1 PHOTO_DRESS_ALTERNATIVE85=1 node scripts/audit-mission2-actual-dress-contact52.mjs
+```
+Measured anonymized output: `benchmark/mission2-source-dress-motion/live-source-alternative-clearance85.json`, generated only after genuine-source native WebGL runs. Exclude original photo image, texture and geometry bytes from uploaded artifacts.
+
+## Exact genuine-source observations — NO-GO
+
+**Successful independently executed source run:** [GitHub Actions #43549800718](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43549800718), exact run HEAD `7a0103c63521f3f94cdd8072642fb20706fae0cf`: both jobs success; **1,746/1,746** inherited full Node tests pass, zero failures/skips, same consumer build; real Chromium/WebGL photographed original source at desktop CSS widths **320/390/430**, all actual source C52/C58/C61 sweep budgets complete. The subsequent receipt-logic hardening change is separate and requires its own exact-head green run. No physical-phone claims.
+
+**Measured per original pose:** pose 0 neutral, pose 1 left-arm sample, pose 2 right-arm sample. Values are genuine licensed Commons-0053 + 163-bone source, not synthetic geometry; crossing numbers are strict triangle-pair *witnesses*, not physical piercing depth. Every candidate had zero measured garment self strict crossings, zero flipped/collapsed source triangles and zero normal-turn faces above 10° for these three samples.
+
+| Original-photo experiment | Strict body crossings (poses 0/1/2) | Faces >5% edge strain (0/1/2) | Faces >10% area change (0/1/2) | Max edge strain all poses | Max area drift all poses | Sampled numerical guard |
+| --- | ---: | ---: | ---: | ---: | ---: | --- |
+| Unmodified original | **196/196/196** | 0/0/0 baseline | 0/0/0 baseline | 0% | 0% | **FAIL body crossing** |
+| C60 original cubic upper-torso 6mm | 0/0/0 | **178/178/178** | **90/90/90** | **13.0429%** | **14.5618%** | **FAIL strain and area** |
+| P85 quintic-height radial 4.5mm | 4/4/4 | 148/148/148 | 20/20/20 | 10.0451% | 11.6013% | FAIL crossing, strain, area |
+| P85 quintic-height radial 6mm | 0/0/0 | 194/194/194 | 100/100/100 | 13.4015% | 15.5681% | FAIL strain and area |
+| P85 welded-edge constrained 4.5mm | 4/4/4 | **76/76/76** | **0/0/0** | **6.1823%** | **7.3033%** | FAIL crossing and strain |
+| **P85 welded-edge constrained 6mm** | **0/0/0** | **151/151/153** | **0/0/0** | **8.0789%** | **9.1737%** | **FAIL strain** |
+
+**Pareto decision:** The welded-edge 6mm candidate has the best measured combination among the intersection-free samples: strict body 0, self 0, near/zero body pairs 0; high-area-drift faces **90→0**, maximum area drift **14.56%→9.17%**, maximum edge strain **13.04%→8.08%** relative to C60, and high-strain faces **178→151/153** (14.0–15.2% fewer, but still over the absolute threshold). Its original-source position-coincident group gaps were at most ~2.8e-17 meters in the numerical buffer; this is NOT actual UV seam/winding/texture evidence. It moved 7,860 of 11,508 temporary source vertices. Geometry quality is **NO-GO** because **151–153** original source triangles still exceed 5% strain. Smaller 4.5mm candidate improves stretch more but still has **four** actual body intersections in each sampled pose. The higher-order quintic 6mm candidate is strictly worse than C60 on two deformation metrics and is rejected.
+
+**Unresolved contacts:** Original source C58 neutral has 216 body near/zero pairs (196 strict). P85 4.5mm candidates retain 4 strict + 4 near/zero, whereas P85 6mm candidates record 0 strict + 0 near/zero in these sampled poses. None establishes continuous motion safety or clearances in unmeasured anatomy/poses. Self-contact C52/C53 completion confirmed for each candidate; source position/rest/skin/UV/indices and bone matrices unchanged.
+
+**Performance:** The four methods' combined measurement and associated original-source contact/quality sweeps took **565–696 ms per sampled pose** in desktop Chromium at CSS 320/390/430 widths in exact green run. Per viewport/pose samples: 320px [630,613,637], 390px [637,565,656], 430px [630,578,696] milliseconds. CSS widths do NOT represent physical phone performance. Source skinned-world `Float32Array` size = **138,096 bytes**, excluding other buffers and analyzer temporaries; no peak browser heap/memory benchmark measured, so no peak memory or mobile speed claim.
+
+## Visual acceptance and provenance integrity
+
+Genuine original-source front/side/rear desktop Chromium screenshots exist as `chromium-*-02-genuine-163-bone-front-dress.png`, `chromium-*-03-genuine-163-bone-side-dress.png`, `chromium-*-04-genuine-163-bone-rear-neutral.png` in the [P85 actual source CI artifact](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43549800718/artifacts/14095816328). **These show original garment only.** None represents a modified candidate or photographic A/B. No rendered P85 temporary buffer, source-photo pixel-difference/UV distortion screenshot, human wearability score or inferred original rear photographic authenticity is claimed. UV/rest and original projected image bytes remain unchanged, but projective image deformation on the temporary candidate has **not** been measured.
+
+No 3D renderer fit, 2D original-photo fallback, owner wardrobe, production, staging, hosted Supabase, real private photo or physical rig source was modified. No actual owner-specific photograph-to-3D reconstruction proved.
+
+## CI, blockers, next experimental directions
+
+- [Initial genuine source Actions #43549334848](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43549334848): 1,746/1,746 Node PASS; native measurements were computed at all three widths but the final auditor **failed** because raw wall-clock elapsed time was incorrectly included in a deterministic full C58 receipt equality. A narrow receipt-only correction excluded **only** measured timing from viewport-invariant comparison; **all** source collision/strain/normal/area/face/pose fields remain strict. The full [second run #43549800718](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43549800718) passed BOTH jobs, confirming the 4-variant real source numbers above. No existing geometry guards were changed.
+- **Quality release blocker:** 151–153 >5%-strain source faces on best intersection-free candidate. No solver gets both 0 source body crossings and every provisional C61 quality bound in any of 3 samples. Real B candidate rendering and photo RGB texture preservation: **BLOCKED**. Independent human cloth acceptance: **NOT TESTED**. Full continuous arm/torso motion, both truly evaluated avatar sexes and actual physical phones: **NOT TESTED**. Authenticated owner-specific photo sources/3D: **NOT TESTED**. Peak memory: **NOT TESTED**.
+- **Ranked next trials:** (1) gather **actual C58 crossing witness triangle neighborhoods** and body outward surface normals *privately inside the same source audit*, rather than displacing all upper torso faces; optimize contact local-only while preserving original UV/skin data; (2) contact-constrained edge/area/normal optimization over all three poses simultaneously, with hard C61 caps and no hidden intersections/contacts rather than per-pose posthoc relaxation; (3) seam- and UV-island aware fitting with original photograph projection for true front/side/back candidate render and pixel comparison, plus dynamic pose sweep; (4) independently human review true original-photo candidate 3D at both verified avatars, then actual physical-phone acceptance.
+- Maintain full no-deploy tests, exact SHA license source, and source-only room. Main Mission 2 decides whether/how to cherry-pick donor; #84 owns layered outfit/photoreal category coverage and this track does not edit its branch. **Family Alpha #255 stays OPEN/HOLD. NO MERGE. NO DEPLOY.**
+
+## Milestone #85B — exact C58 source cloth witness neighborhoods and adaptive shape research
+
+**Initial new green original-source verification:** [CI #43551081531](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551081531) (native genuine licensed Commons-0053 P61 dress, 3,836 triangles, 163-bone body, 320/390/430 Chromium CSS widths, neutral + both articulated arm poses; full no-deploy Node regressions). The original C58 unchanged strict crossing algorithm identified 196 body/dress pair witnesses involving **17 distinct original cloth faces per pose**. This original cloth face index set is retained solely in the trusted diagnostic's private in-memory Set, never returned as face IDs, owner RGB, XYZ, texture or bone matrices.
+
+**First contact-local results, source verified (neutral / left-arm / right-arm):**
+| Temporary exact-source variant | Body strict (3 poses) | Self strict | Faces >5% edge strain (3 poses) | Faces >10% area change (3 poses) | Faces >10-degree normals (3 poses) | Max edge strain | Acceptance |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| Original 6mm global torso C60 | 0/0/0 | 0 | 178/178/178 | 90/90/90 | 0/0/0 | 13.04% | FAIL |
+| Previous #85 welded 6mm global | 0/0/0 | 0 | 151/151/153 | 0/0/0 | 0/0/0 | 8.08% | FAIL |
+| 12-hop source-witness-local radial | 0/0/0 | 0 | 65/65/65 | 15/15/13 | 18/18/18 | 38.04% | FAIL |
+| 24-hop source-witness-local radial | 0/0/0 | 0 | 24/24/24 | 15/15/15 | 14/14/14 | 32.07% | FAIL |
+| 12-hop source-witness-local edge-projected | 0/0/0 | 0 | 5/5/5 | 3/3/3 | 17/17/17 | 7.69% | FAIL |
+| **24-hop source-witness-local edge-projected** | **0/0/0** | **0** | **2/2/2** | **6/6/6** | **14/14/14** | **5.21%** | **FAIL** |
+
+These are actual native licensed-source contact and C61 per-face diagnostics, not actual rendered candidate wearability approval. Numerical source-contact progress is substantial, but the strongest candidate also has 6 excessive face area changes, 14 excessive normal changes and two faces above the provisional 5% edge strain limit. No 3D photo texture A/B or continuous pose clearance was established.
+
+**Follow-on method under test:** source graph neighborhoods widened to 32/40 hops, plus two 18-pass displacement-shape-regularized proposals at 24/32 hops, retaining all four original local controls. The same unchanged C52/C58 and C61 analyzers must measure all **eight** witnesses. Exact-head native test outcome of the new four trials is **PENDING**; nothing has been approved for garment rendering or integration. Do not mistake desktop Chromium CSS widths for physical phones. Family Alpha #255 remains OPEN/HOLD, 2D safe fallback stays unchanged.
+
+## Milestone #85C — measured shape-regularized 24-hop residual (exact verified CI)
+
+[Exact-head full green original source CI #43551728583](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551728583): both NO-DEPLOY jobs **SUCCESS**, 1,751/1,751 Node tests passed, genuine licensed SHA-pinned Commons-0053 P61/P175 3,836-triangle original and anatomical 163 bones all three source poses at Chromium CSS 320/390/430 passed complete unchanged source C52/C58/C61 measurements. [Real source anonymous artifact #14096907633](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43551728583/artifacts/14096907633). **No numerical candidate passed all provisional guards.**
+
+Best original witnessed topology candidate: 24-hop **18-pass shape-regularized relief**: all three poses strict body intersections **0**, strict cloth self-intersections **0**, unresolved body near/zero **0**, original 3,836 source faces with >5% edge strain **0**, >10% area drift **0**, >10-degree normals **3** per pose; maximum original edge strain **4.61%**, largest area change **9.44%**, highest single face normal turn **21.32°**, 9,504 temporary world vertices displaced. It fails conservative C61 quality because 3 source normals rotate too far. No original garment shader rendered, no original photo UV pixel comparison, continuous motion/phone/human review. **NO 3D APPROVAL.**
+
+Other newly sampled variants (worst across three poses): 32-hop edge projection: 4 strained, 3 high-area, 14 high-normal faces; 40-hop edge projection: 4 strained, 3 high-area, 12 high-normal; 32-hop 18-pass shape regularization: 0 strained, 1 high-area, 7 high-normal. This directs the next experiment to **24-hop neighborhood** and stronger regularization toward the remaining 3 high-normal face defects, not wider indiscriminate displacement.
+
+**Pending next exact-source tests**: deterministic 24-hop 36/60-pass and 36-pass stronger-neighbor-blend research-only alternatives added while keeping earlier 8 candidates as controls; do not report them as measured or acceptable until exact-head CI and source audit pass. Family Alpha #255 open/HOLD; 2D fallback intact.
+
+## Milestone #85D — post-C61 contact-local surface normal investigation
+
+[No-deploy original source CI #43552391462](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43552391462) was **two-job GREEN**. Exact-head real licensed photographed P61/P175 body & cloth original 163-bone poses and unchanged C52/C58/C61 analysis. [Source numerical artifact #14096053478](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43552391462/artifacts/14096053478).
+
+The best sampled numerical candidate through 11 methods is `strict-witness-local-shape-regularized`, 24 graph hops, **36 smoothing passes, neighbor blend 0.50**. It recorded on each of neutral, left-arm and right-arm source poses: body crossings **0**, self crossings **0**, >5%-edge-strain original faces **0**, >10%-area original faces **0**, >10-degree-normal original faces **2**, max normal turn **16.50 degrees**, max original edge strain **4.53%** and max face area drift **9.05%**. This is closer than 18-pass earlier but **FAILS** the C61 normal-turn guard by two faces; real source texture, photo 3D A/B, continuous fabric motion, anatomical male/female validation, physical phones and human approval remain missing. This does NOT permit wear/ship.
+
+For comparison: 24-hop 36-pass default blend 0.35 retains 2 normal violations, max normal 19.65 degrees; 24-hop 60-pass default blend 0.35 retains 2, max ~19.14 degrees. All candidates preserve zero sampled body strict witnesses, but that never guarantees physical continuous clearance.
+
+**Now under test, NOT VERIFIED:** 24-hop original strict witness localized edge+shape optimization with 60-pass blend 0.70, 60-pass blend 0.80, and 100-pass blend 0.80, bringing total to **14** fully source-audited candidates per neutral/left/right original anatomical pose. The original quality metric definitions are unchanged and no new source garment shader/texture or owner photo geometry is committed.
+
+## Milestone #85E — last 1–2 source normal defects (original source measured, 14 methods)
+
+[Verified full NO-DEPLOY source CI #43552857745](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43552857745) both jobs **GREEN** on head `85efa0ae0ff3f7b6a36530277f3fd1bd0e2e9e09`. [Original source numeric artifact #14096909730](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43552857745/artifacts/14096909730).
+
+All 14 variants were measured against the same genuine source exact 163-bone 3 poses and C52/C58/C61 real source guards. The best 24-hop 100-pass, neighbor-blend 0.80 version has **zero** strict body and self crossings, **zero** triangles over 5% edge strain, **zero** triangles over 10% area drift, but **2/1/2** triangles over 10° normal turn (neutral/left/right). Worst maximum normal turn **12.125°**, max original edge strain **4.43%**, max original face area drift **7.70%**. The provisional C61 mesh-quality gate remains **FAIL** even for these nearly shape-preserving original-source trials. No amended source-photo UV/texture shader or photoreal acceptability is claimed.
+
+**New follow-up trial pending source CI:** shape-original-normal correction on a fresh disposable buffer for the remaining bad face normals, with 16-pass/0.30 and 32-pass/0.55 correction settings. It retains source-original face IDs exclusively within the authenticated browser audit, bounded 6mm movements, and rechecks unmodified C58 full body/cloth triangle crossings and C61 original-face strain/area/normal. No release or production rights granted. Keep Family Alpha #255 HOLD.
+
+## FINAL #85F — **PASS of sampled source-geometry-quality gate only** / NO-GO for wearable 3D
+
+**Verified engineering test:** [Exact-source NO-DEPLOY workflow #43553564872](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43553564872) **COMPLETED SUCCESS (2/2 jobs)** on code/test head `9c98ecda3f180f5544c315ab76a2ce412de2715f`. 1,752/1,752 full inherited Node regression **PASS** with zero skips/failures, focused original-source tests pass, and unchanged consumer PWA build succeeds. [Actual source native original-3D artifact #14097521794](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43553564872/artifacts/14097521794) includes per-pose/viewport numerical receipts and original-only screenshots. It is not proof of actual fitted candidate photographs.
+
+**Source/data:** CC BY 4.0 Commons-0053 SHA-256 `e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019`, full original photographed P61/P175 **3,836 source triangles**, genuine original anatomical **163-bone** avatar with **109,064** body triangles, three actual original-arm/neutral skinned-world poses and desktop Chromium CSS widths **320/390/430**. Original C52/C53/C58 strict self/body checks and original unchanged C61 edge/face/area/normal analyzer had complete source sweep budgets. C58 diagnosed 196 original strict body/cloth triangle-pair crossing witnesses from only **17 unique source cloth faces** per pose; private original face IDs never exported.
+
+**Winning temporary research-only method:** `strict-witness-local-normal-restoration` — original-contact graph radius **24 hops**, preceding 100-pass neighbor-blend .80 shape-regularization, then up to 16 local original-face normal-restoration passes at strength **.30**; actual correction required one normal-restoration pass per authentic pose. **Each of the three sampled world poses satisfies EVERY conservative provisional numerical limit:**
+
+| Genuine CC-BY original 163-bone sampled mesh metric | Neutral | Left arm | Right arm | Provisional bound |
+| --- | ---: | ---: | ---: | --- |
+| Original strict body/dress crossing pairs | 196 | 196 | 196 | blocks release |
+| Candidate strict body/dress crossing pairs | **0** | **0** | **0** | 0 |
+| Candidate body near/zero unresolved pairs | **0** | **0** | **0** | report, but not continuous clearance |
+| Candidate strict cloth/cloth self crossing pairs | **0** | **0** | **0** | 0 |
+| Original cloth faces with >5% edge strain | **0** | **0** | **0** | 0 |
+| Original cloth faces with >10% area drift | **0** | **0** | **0** | 0 |
+| Original cloth faces with >10° normal rotation | **0** | **0** | **0** | 0 |
+| Inverted or degenerate original faces | **0** | **0** | **0** | 0 |
+| Max relative edge strain | 4.4563% | 4.4487% | 4.4563% | ≤5% |
+| Max relative face area drift | 7.692% | 7.661% | 7.692% | ≤10% |
+| Max normal rotation | 8.438° | 8.438° | 8.302° | ≤10° |
+| Candidate source-world vertices temporarily moved | 10,089 | 10,089 | 10,089 | research only |
+| Max temporary movement | ~6.0000 mm | ~6.0000 mm | ~6.0000 mm | ≤6 mm + Float32 tolerance |
+
+For a deliberately stronger local correction with normal strength `.55`, all three poses do **NOT** pass: **3 faces >5% edge strain** although normal-rotation counts are zero. This adversarial tradeoff confirms the test does not silently waive source quality failures. The successful .30 proposal has no source rest/index/UV/texture/shader/skin/bone edits; world-coincident buffer gap is <1e-14 m in the tested samples, but source UV-island seam/texture *appearance* continuity is still UNVERIFIED.
+
+**Performance and reproducibility:** source original 3,836-triangle 163-bone Chromium sweep *including all 16 research candidates and unchanged strict body/self/face scans* recorded desktop per-sampled-pose durations: CSS 320 [4910,4779,5267] ms; CSS 390 [5120,4742,5261] ms; CSS 430 [4897,4645,5252] ms. These are desktop research observations, **not** physical Android Chrome or iPhone Safari timings or peak heap measurements. No raw source photos, owner IDs, original face indices or private wardrobes published.
+
+**Critically, numerical geometry pass ≠ garment, renderer, human realism, photo-to-3D or release pass.** The optimizer returns **unapplied disposable skinned-WORLD buffers** that have NEVER been loaded as an actual rendered photo-textured dress onto the male/female avatars. Real photo source texture sample/UV projection distortion (including front/side/back/rear holes and stitching) is **NOT MEASURED**; original model texture and source photo bytes only are verified immutable. Continuous articulation/swept penetration beyond these three samples, believable folds/drape/material/physics, multilayered clothing, actual two-sex avatar trials, independent human visual acceptability, arbitrary owner photograph reconstruction, private owner cloud RLS, and physical mobile-device acceptance remain **BLOCKED / NOT TESTED**. No photographic image comparison of the candidate is available and none is claimed. All actual source screenshots in the linked artifact depict the **original** garment, never the proposed temporary geometry.
+
+**Handoff to primary Mission 2:** independently inspect this cherry-pickable isolated eight-file donor, preserve exact original C58/C61 guards, and consider only the measured `strict-witness-local-normal-restoration` candidate for detached **candidate shader-rendered original-photo A/B** and broad continuous-pose fabric verification. Verify original photo-to-rest projection and UV seam behavior in front/side/back, actual anatomy intersections over moving arms, then side-by-side independent human realism and physical phones, before any source geometry integration/consumer 3D. Keep sibling #84 independent for layered-outfit and avatar-category rendering acceptance. **Family Alpha #255 stays OPEN/HOLD; draft PR UNMERGED; no deployment/production/staging/Supabase/private wardrobe/owner original-photo changes.**
+
+**Exact-head CI note:** Updating this report creates a documentation-only child commit after the green code/test HEAD above; the resulting full head must itself pass no-deploy CI before calling it exact-head verified. Regardless of documentary CI, garment/release approval remains false.
+
+## Follow-on P86: ACTUAL original photo-shader static-pose WebGL A/B — verified, release still HOLD
+
+**Exact authentic photographic source run:** [M2 P85/P86 original-source GitHub Actions #43557117625](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43557117625) **2 of 2 jobs COMPLETED SUCCESS** on SHA `6e1d7c3969347cdf0178669d984f69e8a809c16d`. The original complete 1,752/1,752 Node tests, no-deploy consumer build, and authentic P85 all-16-candidate 3-pose 163-bone numerical gates were re-run without alteration. [Original source screenshot/numerical evidence ZIP artifact #14097839864](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43557117625/artifacts/14097839864) includes **18 real rendered PNGs** (nine original/candidate A/B pairs) and machine-checkable `mission2-source-dress-motion/photo-render-comparison86/receipt.json`.
+
+**Source-true construction:** P86 calls P85's real C58 strict original body-crossing face collector and reconstructs the P85 exact accepted neutral body/source world candidate from the full 3,836 licensed cloth triangles, 163-bone source and 109,064 original anatomical body faces. It rechecks the **unchanged** original C58 complete body contact and C52/C53 self-contact and C61 per-original-face strain, area and normals before any scene preview. On the **final** native P541/P175/C36 anatomical dress stage after `finishAnatomicalOpenings` (not an earlier mutable fitting intermediate), it clones original source geometry, replaces only the cloned **static** neutral-pose positions and recomputes clone normals, while reusing the genuine **original** Commons-0053 photographic `MeshStandardMaterial` shader with `uDressImage` + unchanged `dressRest` photograph projection and original material instance. The original photo JPEG bytes, original source rest/UV/index/skin weights/bones/mesh attributes and original material are not modified. The donor source remains SHA pinned and disconnected from main, staging, prod, database, and owner wardrobe.
+
+The comparison uses the exact **same real rendered camera** for before and after, waits for the native `Front` / `Side` / `Back` control to draw again after each static candidate toggle, then captures actual Playwright Chromium software-WebGL screenshots (not simulated source diagrams or synthetic garment replacement). The original source remains present but hidden only while the candidate is visible, and returns to its prior state on reset. Owner session revoke, pagehide and native modal close call `dispose()` to detach/dispose only the disposable clone; the original source shader and photo remain owner-controlled. Tests explicitly check that the preview is removed on close and that two-account saved wardrobe state is unchanged.
+
+| Source screenshot CSS width | Front pixels with RGB sum difference ≥18 | Side | Rear |
+| --- | ---: | ---: | ---: |
+| 320 px | 1,091 | 782 | 1,581 |
+| 390 px | 1,090 | 779 | 1,584 |
+| 430 px | 1,092 | 780 | 1,568 |
+
+For the 320/390/430 previews the maximum absolute per-screen-pixel summed RGB-channel difference was 515 (front), 485 (side), 408 (back), out of a possible 765. Every original/candidate PNG has a **different authentic screenshot SHA-256** and at least 60 real changed pixels exceeding the test difference threshold. This **proves the actual photographic material has been drawn with a distinct candidate cloth mesh**, not that its clothing quality is good.
+
+The actual original versus corrected **female** figure shows local changes at bodice/waist and skirt; in rear screenshots a stronger vertical fold/shadow appearance is visible, although the rear is **inferred from source-median material** rather than a separately photographed back. Human fabric-plausibility, silhouette, original-source visual pattern retention and seam credibility are not independently approved and must be reviewed; no quantitative photoreal fidelity, hole-free appearance, or photo garment category coverage is claimed. Numerical full source C61 PASS applies to original triangle strain/area/normal and sampled static source poses, not an independent photographed RGB-space geometry reconstruction proof.
+
+**EXPLICIT BLOCKERS:** Only neutral static candidate physically rendered on a female source avatar; no correctly reskinned moving corrected cloth with new bones, no continuous motion or swept collision over many poses, no independently photo-proven back, no real fabric physics, no male anatomy/gender/size acceptance, no true layered garment dressing, no arbitrary owner-photo 3D, no actual physical Android/iPhone GPU tests, no genuine signed hosted Supabase RLS, no human visual/photoreal approval. CSS width is NOT device acceptance. **NO user-visible production installation**; candidate geometry and photos remain isolated in no-deploy research artifacts. Keep Family Alpha #255 **OPEN/HOLD**; PR #1128 DRAFT, unmerged and not deployed.
+
+**Research next action:** Review authentic front/side/rear screenshot A/B pairs with independent owner/human acceptance, particularly rear fold/stretch and waist silhouette. Implement and prove a truly *pose-dependent skinned* original-photo candidate using the original source bones, and obtain broad swept-pose C58/C61 clearance, photo-space texture/UV continuity and cross-avatar/physical-device acceptance before considering any release gate. Never describe this P86 result as 10/10 realism or production-ready 3D.
+
+**Exact-head report-only note:** These report lines were appended after the verified P86 code/test HEAD above and require another exact-head CI run, with no policy or source relaxations. This is a documentation-only change.

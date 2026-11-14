@@ -25,6 +25,7 @@ const photoPhysicalReadback196=process.env.PHOTO_PHYSICAL_READBACK196==='1';
 const mission2Performance=process.env.MISSION2_PERFORMANCE==='1';
 const performanceSamples=[];
 const licensedDressContact52=[];
+const licensedPhotoRenderComparison86=[];
 const sourceLengthMode=process.env.PHOTO_SOURCE_LENGTH==='1';
 const sourceTriangleMode=process.env.PHOTO_TRIANGLE_CONTACTS==='1';
 const sourceAdaptiveMode=process.env.PHOTO_TRIANGLE_ADAPTIVE==='1';
@@ -259,6 +260,12 @@ const photoDressContact58=process.env.PHOTO_DRESS_CONTACT58==='1';
 const photoDressBodyBands59=process.env.PHOTO_DRESS_BODY_BANDS59==='1';
 const photoDressTorsoTrial60=process.env.PHOTO_DRESS_TORSO_TRIAL60==='1';
 const photoDressStrain61=process.env.PHOTO_DRESS_STRAIN61==='1';
+const photoDressAlternative85=process.env.PHOTO_DRESS_ALTERNATIVE85==='1';
+const photoDressPreview86=process.env.PHOTO_DRESS_PREVIEW86==='1';
+if(photoDressPreview86&&!photoDressAlternative85)
+ throw Error('P86 licensed-source rendering requires full P85 original contact quality and 163 bone source tests');
+if(photoDressAlternative85&&!photoDressStrain61)
+ throw Error('P85 exact licensed-source alternative comparison requires C61 original strain guard');
 if(photoDressStrain61&&!photoDressTorsoTrial60)
  throw Error('C61 signed original-photo temporary torso face strain requires validated C60 source contact trial');
 if(photoDressTorsoTrial60&&!photoDressBodyBands59)
@@ -516,7 +523,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressContact58?'&photoDressContact58=research':'')+(photoDressBodyBands59?'&photoDressBodyBands59=research':'')+(photoDressTorsoTrial60?'&photoDressTorsoTrial60=research':'')+(photoDressStrain61?'&photoDressStrain61=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(photoFit171?'&photoFit171=research':'')+(photoTorso173?'&photoTorso173=research':'')+(photoSleeve174?'&photoSleeve174=research':'')+(photoDress175?'&photoDress175=research':'')+(photoDressContact52?'&photoDressContact52=research':'')+(photoDressDistance53?'&photoDressDistance53=research':'')+(photoDressTopology54?'&photoDressTopology54=research':'')+(photoDressEdges55?'&photoDressEdges55=research':'')+(photoDressBoundaries56?'&photoDressBoundaries56=research':'')+(photoDressLandmarks57?'&photoDressLandmarks57=research':'')+(photoDressContact58?'&photoDressContact58=research':'')+(photoDressBodyBands59?'&photoDressBodyBands59=research':'')+(photoDressTorsoTrial60?'&photoDressTorsoTrial60=research':'')+(photoDressStrain61?'&photoDressStrain61=research':'')+(photoDressAlternative85?'&photoDressAlternative85=research':'')+(photoDressPreview86?'&photoDressPreview86=research':'')+(photoDressMotion36?'&photoDressMotion36=research&photoDressMotionPhase36='+photoDressMotionPhase36:'')+(photoSilhouette62?'&photoSilhouette62=research':'')+(photoShoulder185?'&photoShoulder185=research':'')+(photoOwnerCutout186?'&photoOwnerCutout186=research':'')+(photoPreflight187?'&photoOwnerCutout187=research':'')+(photoOwnerPositive188?'&photoOwnerPositive188=research':'')+(photoOwnerAlpha189?'&photoOwnerAlpha189=research':'')+(photoOwnerGeometry190?'&photoOwnerGeometry190=research':'')+(photoOwnerTopology191?'&photoOwnerTopology191=research':'')+(photoOwnerBilateral195?'&photoOwnerBilateral195=research':'')+(photoPhysicalReadback196?'&photoPhysicalReadback196=research':'')+(sourceLengthMode?'&photoSourceLength=research':'')+(sourceProjectionMode?'&photoSourceProjection=research':'')+(sourceTriangleMode?'&photoSourceTriangleAudit=research':'')+(sourceAdaptiveMode?'&photoSourceTrianglePolicy=adaptive':'')+(sourceDepthExperiment?'&photoSourceDepthTrial=research':'')+(sourceStageAudit?'&photoSourceStageAudit=research':'')+
     (sourceShortEdgeTrial?'&photoSourceShortEdgeTrial=research':'')+
     (sourceNeighborRelaxation?'&photoSourceNeighborFeather=research':'')+
     (sourceResidualDirection?'&photoSourceResidualPairDirection=research':'')+
@@ -2184,6 +2191,54 @@ try{
      assert.equal(q.releaseAuthorized,false);
     }
    }
+   if(photoDressAlternative85){
+    const a=witness.originalArticulatedContactReceipt58;
+    assert.equal(witness.genuineOriginalPhotoAlternativesFullyAudited85,true);
+    assert.equal(witness.originalLicensedSourceNotDeformedOrDeployed85,true);
+    assert.equal(a?.sourceOriginalPhotoAlternativeSweepComplete85,true);
+    const all=[a.disposableNeutralAlternativeClearance85,
+     ...a.disposableArmAlternativeClearance85];
+    assert.equal(all.length,3);
+    for(const pose of all){
+     assert.equal(pose.schema,'M2-P85-source-pinned-alternative-world-clearance-Pareto');
+     assert.equal(pose.licensedSourceTriangleCount,witness.originalSourceFaces);
+     assert.equal(pose.allFourSourceContactSweepsCompleted,true);
+     assert.equal(pose.candidates.length,4);
+     assert.equal(pose.witnessLocalizedCandidates85.length,16,
+      'P85 private C58 original source witness topological hypotheses required');
+     assert.equal(pose.allSixteenWitnessLocalizedSweepsCompleted85,true);
+     assert.equal(pose.originalContactWitnessIdsNeverExported85,true);
+     assert.ok(pose.privateOriginalStrictClothWitnessFaceCount85>=1&&
+      pose.privateOriginalStrictClothWitnessFaceCount85<=
+       pose.candidates[0].baselineBodyStrictCrossings);
+     for(const t of pose.witnessLocalizedCandidates85){
+      assert.ok(['strict-witness-local-radial',
+       'strict-witness-local-edge-projection',
+       'strict-witness-local-shape-regularized',
+       'strict-witness-local-normal-restoration'].includes(t.method));
+      assert.equal(t.originalStrictWitnessFaceCount85,
+       pose.privateOriginalStrictClothWitnessFaceCount85);
+      assert.equal(t.originalSourceFaceIdsNeverExported85,true);
+      assert.equal(t.fullOriginalContactAndQualitySweepCompleted,true);
+      assert.equal(t.sourceFaceStrain61.signedOriginalSourceFacesAnalyzed,
+       witness.originalSourceFaces);
+      assert.equal(t.bodyCollisionAndC61QualityMustBeRemeasured,true);
+      assert.equal(t.candidateNotInstalledInRenderer,true);
+      assert.equal(t.releaseAuthorized,false);
+     }
+     for(const t of pose.candidates){
+      assert.equal(t.fullOriginalContactAndQualitySweepCompleted,true);
+      assert.equal(t.originalPhotoWorldAndRestNeverModified,true);
+      assert.equal(t.sourceUVTextureSkinAndBonesNeverModified,true);
+      assert.equal(t.originalIndicesNeverModified,true);
+      assert.equal(t.releaseAuthorized,false);
+      assert.ok(t.maxAppliedMeters<=t.limitMeters+.000002);
+      assert.equal(t.sourceFaceStrain61.signedOriginalSourceFacesAnalyzed,
+       witness.originalSourceFaces);
+     }
+    }
+    assert.equal(witness.releaseAuthorized,false);
+   }
    licensedDressContact52.push({width,...witness});
   }
   if(photoDress175){
@@ -2238,6 +2293,113 @@ try{
   await take(page,width,'03-genuine-163-bone-side-dress');
   await page.locator('#outfit3D01Back').click();
   await take(page,width,'04-genuine-163-bone-rear-neutral');
+  if(photoDressPreview86){
+   // True original-photo material and exact 163-bone cloth position are
+   // actually rendered: three same-camera A/B screenshot pairs. Never
+   // store original face IDs, JPEG bytes, private RGB, per-vertex UV or XYZ.
+   const pre=await page.evaluate(()=>
+    globalThis.__M2P85Preview86?.state?.()??null);
+   assert.equal(pre?.schema,
+    'M2-P86-real-photo-shader-world-candidate-static-render-A-B');
+   assert.equal(pre?.original163BoneSkinnedSource,true);
+   assert.equal(pre?.exactLicensedSourceId,'commons-0053');
+   assert.equal(pre?.candidateTriangles,3836);
+   assert.equal(pre?.originalSourceClothWitnessFaces,17);
+   assert.equal(pre?.originalPhotographicMaterialInstanceShared,true);
+   assert.equal(pre?.originalPhotoRestAttributesCopiedNotChanged,true);
+   assert.equal(pre?.updatedCloneNormalsOnly,true);
+   assert.equal(pre?.noPrivateSourceArraysOrPhotoBytesExposed,true);
+   assert.ok(pre?.maxPreviewWorldRoundtripMeters<.000002);
+   assert.equal(pre?.mode,'original');
+   assert.equal(pre?.releaseAuthorized,false);
+   for(const view of ['Front','Side','Back']){
+    await page.locator('#outfit3D01'+view).click();
+    await page.evaluate(()=>new Promise(resolve=>
+     requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const originalState=await page.evaluate(()=>
+     globalThis.__M2P85Preview86.state());
+    assert.equal(originalState.mode,'original');
+    assert.equal(originalState.originalDressVisible,true);
+    assert.equal(originalState.disposableCandidateVisible,false);
+    const a=await page.screenshot({fullPage:false,animations:'disabled'});
+    const candidateState=await page.evaluate(()=>
+     globalThis.__M2P85Preview86.setMode('candidate'));
+    assert.equal(candidateState.mode,'candidate');
+    assert.equal(candidateState.originalDressVisible,false);
+    assert.equal(candidateState.disposableCandidateVisible,true);
+    assert.equal(candidateState.originalPhotographicMaterialInstanceShared,true);
+    assert.equal(candidateState.sourceMeshAttributesUnchanged,true);
+    // The native 163-bone research renderer is demand-driven, not an
+    // autonomous scene animation: changing a mesh.visible flag does NOT
+    // force a WebGL draw. Use its real front/side/back button to render
+    // the same camera again AFTER switching the original photo garment.
+    await page.locator('#outfit3D01'+view).click();
+    await page.evaluate(()=>new Promise(resolve=>
+     requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    const b=await page.screenshot({fullPage:false,animations:'disabled'});
+    const ma=await sharp(a).metadata(),mb=await sharp(b).metadata();
+    assert.equal(ma.width,width);assert.equal(mb.width,width);
+    assert.equal(ma.height,mb.height);
+    const rawA=await sharp(a).removeAlpha().raw().toBuffer();
+    const rawB=await sharp(b).removeAlpha().raw().toBuffer();
+    assert.equal(rawA.length,rawB.length);
+    let differentRGBPixels=0,peakColorDelta=0;
+    for(let k=0;k<rawA.length;k+=3){
+     const d=Math.abs(rawA[k]-rawB[k])+
+      Math.abs(rawA[k+1]-rawB[k+1])+
+      Math.abs(rawA[k+2]-rawB[k+2]);
+     if(d>=18)differentRGBPixels++;
+     peakColorDelta=Math.max(peakColorDelta,d);
+    }
+    if(differentRGBPixels<=60||peakColorDelta<25){
+     // Preserve the ACTUAL licensed source shader screenshots even on
+     // threshold failure. Never pretend no image is an accepted image.
+     const failureFolder=
+      'benchmark/mission2-source-dress-motion/photo-render-comparison86';
+     await mkdir(failureFolder,{recursive:true});
+     await writeFile(failureFolder+'/'+width+'-'+view.toLowerCase()+'-original.png',a);
+     await writeFile(failureFolder+'/'+width+'-'+view.toLowerCase()+'-candidate.png',b);
+     console.log('M2_P86_SOURCE_RENDER_A_B_DIFFERENCE_DIAGNOSTIC',JSON.stringify({
+      width,view: view.toLowerCase(),
+      differentRGBPixels,peakColorDelta,
+      screenshotOriginalSha256:digest(a),
+      screenshotCandidateSha256:digest(b),
+      photoMaterialShared:candidateState.originalPhotographicMaterialInstanceShared,
+      previewWorldRoundtripMeters:pre.maxPreviewWorldRoundtripMeters,
+      candidateVisible:candidateState.disposableCandidateVisible,
+      originalVisible:candidateState.originalDressVisible,
+      noRealHumanVisualAcceptance:true,releaseAuthorized:false
+     }));
+    }
+    assert.ok(differentRGBPixels>60&&peakColorDelta>=25,
+     'P86 actual photo source shader A/B changed too few pixels: '+
+      JSON.stringify({width,view,differentRGBPixels,peakColorDelta}));
+    const label=view.toLowerCase(),folder=
+     'benchmark/mission2-source-dress-motion/photo-render-comparison86';
+    await mkdir(folder,{recursive:true});
+    await writeFile(folder+'/'+width+'-'+label+'-original.png',a);
+    await writeFile(folder+'/'+width+'-'+label+'-candidate.png',b);
+    licensedPhotoRenderComparison86.push({width,view:label,
+     originalScreenshotSha256:digest(a),
+     candidateScreenshotSha256:digest(b),
+     originalScreenshotBytes:a.length,candidateScreenshotBytes:b.length,
+     screenRGBPixelsAboveDifference18:differentRGBPixels,
+     maxPerPixelRGBAbsoluteDifference:peakColorDelta,
+     originalMaterialAndPhotographTrulyReused:true,
+     actualOriginalSkinnedSourceVisibleInOriginal:true,
+     actualC58C61ApprovedDisposableMeshVisibleInCandidate:true,
+     capturedRealOriginalPhotoShaderNotSyntheticDiagram:true,
+     imagesNeedIndependentHumanDrapeAndPhotoAccuracyReview:true,
+     noContinuousMotionOrPhoneApproval:true,
+     releaseAuthorized:false,familyAlpha:'HOLD'});
+    const restored=await page.evaluate(()=>
+     globalThis.__M2P85Preview86.setMode('original'));
+    assert.equal(restored.mode,'original');
+    assert.equal(restored.originalDressVisible,true);
+    assert.equal(restored.disposableCandidateVisible,false);
+    assert.deepEqual(await readBoard(page),ownerOriginal);
+   }
+  }
   if(native89&&width===390){
    // NATIVE89: actual source/owner viewer is already WebGL READY. A native
    // saved outfit selection change must revoke its previously visible
@@ -2556,6 +2718,11 @@ try{
   }
   // Explicit scene close must NOT invalidate still-signed-in consumer editor.
   await page.evaluate(()=>window.native3D05Bridge.close());
+  if(photoDressPreview86){
+   assert.equal(await page.evaluate(()=>
+    globalThis.__M2P85Preview86===undefined),true,
+    'P86 must revoke source-photo mesh/material on actual native viewer close');
+  }
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
   assert.deepEqual(await readBoard(page),ownerOriginal);
   // Unsaved edit must fail closed, rather than replacing source with a fake mesh.
@@ -2634,6 +2801,34 @@ try{
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
  if(sourceLengthMode)assert.equal(sourceLengthEvidence.length,sourceAdaptiveMode?0:6);
  if(photoDressContact52)assert.deepEqual(licensedDressContact52.map(x=>x.width),[320,390,430]);
+ if(photoDressPreview86){
+  assert.equal(licensedPhotoRenderComparison86.length,9,
+   'P86 requires all three genuine original-photo WebGL cameras and desktop viewport sizes');
+  assert.deepEqual([...new Set(licensedPhotoRenderComparison86.map(x=>x.width))],
+   [320,390,430]);
+  for(const x of licensedPhotoRenderComparison86){
+   assert.ok(x.screenRGBPixelsAboveDifference18>60);
+   assert.ok(x.originalScreenshotSha256!==x.candidateScreenshotSha256);
+   assert.equal(x.originalMaterialAndPhotographTrulyReused,true);
+   assert.equal(x.releaseAuthorized,false);
+  }
+  await writeFile('benchmark/mission2-source-dress-motion/photo-render-comparison86/receipt.json',
+   JSON.stringify({schema:'M2-P86-genuine-original-photo-shader-static-pose-A-B',
+    actualLicensedOriginalPhoto:'commons-0053',
+    real163BoneAnatomicalCloth:true,
+    originalDressSourceTriangles:3836,
+    originalPhotoTextureMaterialUnmodified:true,
+    originalDressRestAndOriginalSkinnedSourceUnmodified:true,
+    sourceCandidateReceivedFullOriginalC58C61NumericalPass85:true,
+    originalAndFittedCandidateSameCameraPhotoMaterial:true,
+    candidateStaticNeutralPoseOnly:true,
+    photoFrontRearSideActualScreenshotPairs:licensedPhotoRenderComparison86,
+    realOwnerSignedRLS:false,physicalPhoneTested:false,
+    independentHumanDrapeApproval:false,
+    continuousSkinnedAnimationCertified:false,
+    sourcePhotoPixelFidelityAccepted:false,
+    releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
+ }
  if(mission2Performance){assert.equal(performanceSamples.length,6);
   for(const width of [320,390,430])assert.deepEqual(performanceSamples.filter(x=>x.width===width).map(x=>x.figure).sort(),['female','male']);}
  const result={priority:photoPhysicalReadback196?'OWNER-163BONE-PHYSICAL-READBACK-196':photoOwnerBilateral195?'OWNER-BILATERAL-ASYMMETRIC-SOURCE-FIT-195':photoOwnerHairline194?'OWNER-HAIRLINE-ALPHA-REJECTED-194':photoOwnerDamaged193?'OWNER-LOCAL-ALPHA-DAMAGE-REJECTED-193':photoOwnerTopology191?'OWNER-SOURCE-ALPHA-TOPOLOGY-191':photoOwnerGeometry190?'OWNER-ALPHA-PHYSICAL-SILHOUETTE-190':photoOwnerAlpha189?'OWNER-ALPHA-PNG-ON-REVIEWED-JPEG-3D-189':photoOwnerPositive188?'OWNER-REVIEWED-PRIVATE-JPEG-TEXTURE-188':photoPreflight187?'PRE-WEBGL-CUTOUT-187':photoOwnerCutout186?'OWNER-CUTOUT-186':photoSilhouette62?'USER-PHOTO-TO-ANATOMICAL-3D-62':'NATIVE-3D-05',cases:3,...((photoOwnerDamaged193||photoOwnerHairline194)?{screenshots:6}:photoOwnerPositive188?{screenshots:22}:photoOwnerCutout186?{screenshots:6}:{screenshots:photoSilhouette62?21:photoTorso173?24:15}),
@@ -2646,6 +2841,7 @@ try{
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
   ...(photoDressContact52?{licensedDressContact52}:{}),
+  ...(photoDressPreview86?{licensedPhotoRenderComparison86}:{}),
   ...(mission2Performance?{performanceSamples,performanceAcceptance:false}:{}),
   ...(sourceLengthMode?{sourceLengthMode,sourceProjectionMode,sourceTriangleMode,sourceAdaptiveMode,sourceDepthExperiment,sourceLengthEvidence,
    sourceEdgeAblationControl:sourceEdgeAblation,sourceEdgeAblationModuleRequests:interceptedOpticalControlModules,

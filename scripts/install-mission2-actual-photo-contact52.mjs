@@ -20,13 +20,15 @@ await copyFile('research/mission2-source-length/upper-torso-clearance-trial60.mj
  join(donor,'research/mission2-source-length/upper-torso-clearance-trial60.mjs'));
 await copyFile('research/mission2-source-length/upper-torso-surface-quality61.mjs',
  join(donor,'research/mission2-source-length/upper-torso-surface-quality61.mjs'));
+await copyFile('research/mission2-source-length/alternative-photo-clearance85.mjs',
+ join(donor,'research/mission2-source-length/alternative-photo-clearance85.mjs'));
 const controllerPath=join(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
 let controller=await readFile(controllerPath,'utf8');
 const importAnchor="import {sampleSourceDressMotion36} from '../mission2-source-length/source-dress-motion.mjs';";
 assert.equal(controller.split(importAnchor).length,2,
  'C52 requires exact actual original photographed P175+C36 donor');
 controller=controller.replace(importAnchor,
- importAnchor+"\nimport {auditActualPhotographedDressSurfaces52} from '../mission2-source-length/actual-photo-contact-52.mjs';");
+ importAnchor+"\nimport {auditActualPhotographedDressSurfaces52,installDisposableOriginalDressRenderPreview86} from '../mission2-source-length/actual-photo-contact-52.mjs';");
 const anchor="       fitted=refinePhotographedDress61(fitted,root);";
 assert.equal(controller.split(anchor).length,2,
  'C52 original P61 garment fit stage missing or changed');
@@ -45,7 +47,8 @@ controller=controller.replace(anchor,anchor+
  "         refineArticulatedContacts58:query52.get(\x27photoDressContact58\x27)===\x27research\x27,\n"+
  "         refineBodyHeightWitnessBands59:query52.get(\x27photoDressBodyBands59\x27)===\x27research\x27,\n"+
  "         refineUpperTorsoFitTrial60:query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27,\n"+
- "         refineSurfaceStrain61:query52.get(\x27photoDressStrain61\x27)===\x27research\x27});\n"+
+ "         refineSurfaceStrain61:query52.get(\x27photoDressStrain61\x27)===\x27research\x27,\n"+
+ "         refineAlternative85:query52.get(\x27photoDressAlternative85\x27)===\x27research\x27});\n"+
  "        }catch(e){\n"+
  "         if(query52.get(\x27photoDressTorsoTrial60\x27)===\x27research\x27)\n"+
  "          console.error(\x27M2_C60_SIGNED_SOURCE_TRIAL_REFUSED:\x27+String(e?.message||e).slice(0,220));\n"+
@@ -56,5 +59,39 @@ controller=controller.replace(anchor,anchor+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
  "        globalThis.__M2C52LicensedResearchReceipt=evidence52;\n"+
  "       }");
+// P86 must bind AFTER final photo/source geometry + anatomical opening
+// finishing, not while P61's intermediate fitted SkinnedMesh may still be
+// rewritten/replaced by the native preview renderer. The C52 original
+// diagnostic itself remains at its original independent source stage.
+const completedDressAnchor="     built.dress=refineFit?(anatomyEnabled?finishAnatomicalOpenings(fitted):finishDressEdges(fitted)):fitted;";
+assert.equal(controller.split(completedDressAnchor).length,2,
+ 'P86 requires actual completed original-photo dress and anatomical opening finishing stage');
+controller=controller.replace(completedDressAnchor,completedDressAnchor+
+ "\n      if(new URLSearchParams(globalThis.location?.search||'').get('photoDressPreview86')==='research'){\n"+
+ "       const evidence86=globalThis.__M2C52LicensedResearchReceipt;\n"+
+ "       const preview86=installDisposableOriginalDressRenderPreview86({root,dress:built.dress,sourceReceipt:evidence86});\n"+
+ "       if(preview86.schema!=='M2-P86-real-photo-shader-world-candidate-static-render-A-B'||\n"+
+ "        preview86.mode!=='original'||preview86.releaseAuthorized!==false)\n"+
+ "        throw Error('P86 completed original-photo shader render comparison refused');\n"+
+ "      }");
 await writeFile(controllerPath,controller);
 console.log('M2_C52_DISPOSABLE_ACTUAL_LICENSED_163_BONE_DRESS_AUDIT_INSTALLED_HOLD');
+
+/**
+ * Research P86: both standard signed-out disposal and modal close remove
+ * the ephemeral source-original photo comparison Mesh before native viewer
+ * disposes its own source JPEG shader/material or changes account.
+ */
+const panelPath=join(donor,'research/outfit-3d-01/research-panel.mjs');
+let panel=await readFile(panelPath,'utf8');
+for(const [anchor,inject] of [
+ [" function clearPrivate(){",
+  " function clearPrivate(){\n  globalThis.__M2P85Preview86?.dispose();"],
+ [" dialog.addEventListener('close',()=>{",
+  " dialog.addEventListener('close',()=>{\n  globalThis.__M2P85Preview86?.dispose();"]
+]){
+ assert.equal(panel.split(anchor).length,2,
+  'P86 detached native signed session/canvas viewer lifecycle anchor drift');
+ panel=panel.replace(anchor,inject);
+}
+await writeFile(panelPath,panel);
