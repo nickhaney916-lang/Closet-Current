@@ -143,7 +143,7 @@ test('consumer dispose failure on revoked session is harmless',()=>{
 });
 test('session lock immediately clears former owner preview and old draft conflict',()=>{
  const f=fixture();f.attach();f.lock();
- assert.equal(f.ctx.currentBoard.slots.top,undefined);
+ assert.equal(f.ctx.currentBoard.slots?.top,undefined);
  assert.equal(f.ctx.savedOutfitBoards.length,0);
  assert.equal(f.ctx.boardConflictDraft,null);
  assert.deepEqual(f.events,['cancel-timer','clean','clear-preview']);
