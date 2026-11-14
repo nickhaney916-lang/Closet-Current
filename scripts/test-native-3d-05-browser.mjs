@@ -508,6 +508,10 @@ try{
    if(new URL(r.url()).pathname.startsWith('/donor/'))donorRequests187++;
   });
   page.on('pageerror',e=>errors.push({width,message:e.message}));
+  if(process.env.P86_DIAGNOSTICS==='1'){
+   page.on('console',m=>{if(m.type()==='error')console.error('P86_BROWSER:'+m.text().slice(0,700));});
+   page.on('response',r=>{if(r.status()>=400)console.error('P86_HTTP:'+r.status()+' '+new URL(r.url()).pathname);});
+  }
   if(photoDressTorsoTrial60)page.on('console',msg=>{
    if(msg.text().startsWith('M2_C60_SIGNED_SOURCE_TRIAL_REFUSED:'))
     console.error(msg.text().slice(0,250));
@@ -2172,6 +2176,16 @@ try{
     for(const t of [a.disposableNeutralUpperTorsoTrial60,
      ...a.disposableArticulatedUpperTorsoTrials60]){
      const q=t.sourceOriginalPhotoSurfaceStrain61;
+     const metric86=t.sourcePrincipalTextureMetric86,radial86=t.sourceGlobalRadialScreen86;
+     assert.equal(metric86.triangles,witness.originalSourceFaces);
+     assert.equal(metric86.degenerateTriangles,0);
+     assert.ok(Number.isFinite(metric86.maxPrincipalStretch));
+     assert.equal(metric86.photoProjectionMeasured,false);
+     assert.equal(metric86.releaseAuthorized,false);
+     assert.equal(radial86.rows.length,4);
+     assert.equal(radial86.consumer3DAdmitted,false);
+     assert.equal(radial86.originalSourceUnchanged,true);
+
      assert.equal(q?.schema,'M2-C61-disposable-original-photo-source-triangle-strain');
      assert.equal(q.signedOriginalSourceFacesAnalyzed,witness.originalSourceFaces);
      assert.ok(Number.isFinite(q.maxOriginalPhotoWorldEdgeRelativeStrain));

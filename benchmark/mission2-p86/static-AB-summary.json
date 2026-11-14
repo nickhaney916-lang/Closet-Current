@@ -1,0 +1,856 @@
+{
+  "schema": "P86-source-static-AB-summary",
+  "engines": {
+    "chromium": {
+      "status": "PASS_STATIC_SOURCE_AB_ONLY",
+      "screens": 18,
+      "differences": [
+        {
+          "figure": "female",
+          "view": "front",
+          "changedRGBPixelsAbove8": 4647,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "female",
+          "view": "side",
+          "changedRGBPixelsAbove8": 3234,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "female",
+          "view": "rear",
+          "changedRGBPixelsAbove8": 4601,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "male",
+          "view": "front",
+          "changedRGBPixelsAbove8": 3759,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "male",
+          "view": "side",
+          "changedRGBPixelsAbove8": 2682,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "male",
+          "view": "rear",
+          "changedRGBPixelsAbove8": 3853,
+          "restoredRGBPixelsAbove8": 0
+        }
+      ],
+      "figures": [
+        {
+          "figure": "female",
+          "receipt": {
+            "sourceTriangles": 3836,
+            "scale": 1.025,
+            "sampledPoseNumericalClearance": true,
+            "staticSnapshotOnly": true,
+            "sourceImageUnchanged": true,
+            "sourceSHA256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+            "sampledPoseResults": [
+              {
+                "pose": 0,
+                "baselineBodyWitnesses": 196,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.009330014087434264,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3836,
+                    "sourceFacesWithTemporaryPositionDifferences": 3836,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3644,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.02501108520155615,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074942735835971,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04964783291636121,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3836,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.0250480259584407,
+                    "minPrincipalStretch": 1.0000000000029199,
+                    "maxAnisotropy": 1.0250035526297538,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 1,
+                "baselineBodyWitnesses": 196,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.009330014087434264,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3836,
+                    "sourceFacesWithTemporaryPositionDifferences": 3836,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3647,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.02501108520155615,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7073725157045028,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04964783291636121,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3836,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.0250270243342972,
+                    "minPrincipalStretch": 1.0000000012144257,
+                    "maxAnisotropy": 1.0250035526297538,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 2,
+                "baselineBodyWitnesses": 196,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.009330014087434264,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3836,
+                    "sourceFacesWithTemporaryPositionDifferences": 3836,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3650,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.02501074187633967,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074942735835971,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.0497847402267233,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3836,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.0250480259584407,
+                    "minPrincipalStretch": 1.0000000000029199,
+                    "maxAnisotropy": 1.0250002373622527,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              }
+            ],
+            "constructionAndReauditMs": 4468.899999999907,
+            "sourceRestAndSkinUnmodified": true,
+            "sourceBufferByteSnapshotsChecked": true,
+            "openingRimCollisionSeparatelyVerified": false,
+            "continuousAnimationVerified": false,
+            "humanVisualApproved": false,
+            "consumer3DAdmitted": false,
+            "releaseAuthorized": false,
+            "familyAlpha": "HOLD"
+          }
+        },
+        {
+          "figure": "male",
+          "receipt": {
+            "sourceTriangles": 3826,
+            "scale": 1.025,
+            "sampledPoseNumericalClearance": true,
+            "staticSnapshotOnly": true,
+            "sourceImageUnchanged": true,
+            "sourceSHA256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+            "sampledPoseResults": [
+              {
+                "pose": 0,
+                "baselineBodyWitnesses": 0,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.008683295156692278,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3826,
+                    "sourceFacesWithTemporaryPositionDifferences": 3826,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3603,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.025001279382351083,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074104494676187,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.05062169864153665,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3826,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.025039113935907,
+                    "minPrincipalStretch": 1.0000000058701244,
+                    "maxAnisotropy": 1.0250006621435108,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 1,
+                "baselineBodyWitnesses": 0,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.008683295156692278,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3826,
+                    "sourceFacesWithTemporaryPositionDifferences": 3826,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3604,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.025001279382351083,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7073755769427721,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04966895822302164,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3826,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.025039113935907,
+                    "minPrincipalStretch": 1.0000000058701244,
+                    "maxAnisotropy": 1.0250006621435108,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 2,
+                "baselineBodyWitnesses": 0,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.008683295156692278,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3826,
+                    "sourceFacesWithTemporaryPositionDifferences": 3826,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3610,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.025002111358945367,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074104494676187,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.05062169864153665,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3826,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.025039113935907,
+                    "minPrincipalStretch": 1.0000000058701244,
+                    "maxAnisotropy": 1.025000147418869,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              }
+            ],
+            "constructionAndReauditMs": 3995.2000000001863,
+            "sourceRestAndSkinUnmodified": true,
+            "sourceBufferByteSnapshotsChecked": true,
+            "openingRimCollisionSeparatelyVerified": false,
+            "continuousAnimationVerified": false,
+            "humanVisualApproved": false,
+            "consumer3DAdmitted": false,
+            "releaseAuthorized": false,
+            "familyAlpha": "HOLD"
+          }
+        }
+      ]
+    },
+    "webkit": {
+      "status": "PASS_STATIC_SOURCE_AB_ONLY",
+      "screens": 18,
+      "differences": [
+        {
+          "figure": "female",
+          "view": "front",
+          "changedRGBPixelsAbove8": 4653,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "female",
+          "view": "side",
+          "changedRGBPixelsAbove8": 3220,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "female",
+          "view": "rear",
+          "changedRGBPixelsAbove8": 4602,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "male",
+          "view": "front",
+          "changedRGBPixelsAbove8": 3807,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "male",
+          "view": "side",
+          "changedRGBPixelsAbove8": 2668,
+          "restoredRGBPixelsAbove8": 0
+        },
+        {
+          "figure": "male",
+          "view": "rear",
+          "changedRGBPixelsAbove8": 3850,
+          "restoredRGBPixelsAbove8": 0
+        }
+      ],
+      "figures": [
+        {
+          "figure": "female",
+          "receipt": {
+            "sourceTriangles": 3836,
+            "scale": 1.025,
+            "sampledPoseNumericalClearance": true,
+            "staticSnapshotOnly": true,
+            "sourceImageUnchanged": true,
+            "sourceSHA256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+            "sampledPoseResults": [
+              {
+                "pose": 0,
+                "baselineBodyWitnesses": 196,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.009330014087434264,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3836,
+                    "sourceFacesWithTemporaryPositionDifferences": 3836,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3644,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.02501108520155615,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074942735835971,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04964783291636121,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3836,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.0250480259584407,
+                    "minPrincipalStretch": 1.0000000000029199,
+                    "maxAnisotropy": 1.0250035526297538,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 1,
+                "baselineBodyWitnesses": 196,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.009330014087434264,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3836,
+                    "sourceFacesWithTemporaryPositionDifferences": 3836,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3647,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.02501108520155615,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7073725157039875,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04964783291636121,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3836,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.0250270243342972,
+                    "minPrincipalStretch": 1.0000000012144257,
+                    "maxAnisotropy": 1.0250035526297538,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 2,
+                "baselineBodyWitnesses": 196,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.009330014087434264,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3836,
+                    "sourceFacesWithTemporaryPositionDifferences": 3836,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3650,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.02501074187633967,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074942735835971,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04978474022672352,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3836,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.0250480259584407,
+                    "minPrincipalStretch": 1.0000000000029199,
+                    "maxAnisotropy": 1.0250002373622527,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              }
+            ],
+            "constructionAndReauditMs": 8443,
+            "sourceRestAndSkinUnmodified": true,
+            "sourceBufferByteSnapshotsChecked": true,
+            "openingRimCollisionSeparatelyVerified": false,
+            "continuousAnimationVerified": false,
+            "humanVisualApproved": false,
+            "consumer3DAdmitted": false,
+            "releaseAuthorized": false,
+            "familyAlpha": "HOLD"
+          }
+        },
+        {
+          "figure": "male",
+          "receipt": {
+            "sourceTriangles": 3826,
+            "scale": 1.025,
+            "sampledPoseNumericalClearance": true,
+            "staticSnapshotOnly": true,
+            "sourceImageUnchanged": true,
+            "sourceSHA256": "e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019",
+            "sampledPoseResults": [
+              {
+                "pose": 0,
+                "baselineBodyWitnesses": 0,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.008683295156692278,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3826,
+                    "sourceFacesWithTemporaryPositionDifferences": 3826,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3603,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.025001279382351083,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074104494676187,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.05062169864153665,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3826,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.025039113935907,
+                    "minPrincipalStretch": 1.0000000058701244,
+                    "maxAnisotropy": 1.0250006621435108,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 1,
+                "baselineBodyWitnesses": 0,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.008683295156692278,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3826,
+                    "sourceFacesWithTemporaryPositionDifferences": 3826,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3604,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.025001279382351083,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7073755769427721,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.04966895822302164,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3826,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.025039113935907,
+                    "minPrincipalStretch": 1.0000000058701244,
+                    "maxAnisotropy": 1.0250006621435108,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              },
+              {
+                "pose": 2,
+                "baselineBodyWitnesses": 0,
+                "selected": {
+                  "scale": 1.025,
+                  "maxDisplacementMeters": 0.008683295156692278,
+                  "shape": {
+                    "schema": "M2-C61-disposable-original-photo-source-triangle-strain",
+                    "signedOriginalSourceFacesAnalyzed": 3826,
+                    "sourceFacesWithTemporaryPositionDifferences": 3826,
+                    "facesWithMaxEdgeStrainAbove2Percent": 3610,
+                    "facesWithMaxEdgeStrainAbove5Percent": 0,
+                    "facesWithNormalTurnAbove10Degrees": 0,
+                    "facesWithAreaChangeAbove10Percent": 0,
+                    "facesWithReversedOrientation": 0,
+                    "sourceFacesDegenerateOrCollapsed": 0,
+                    "maxOriginalPhotoWorldEdgeRelativeStrain": 0.025002111358945367,
+                    "maxOriginalPhotoFaceNormalTurnDegrees": 0.7074104494676187,
+                    "maxOriginalPhotoFaceAreaRelativeChange": 0.05062169864153665,
+                    "provisionalMeshDistortionGuardPassed": true,
+                    "originalPhotoTextureRestUVAndSkinNeverEdited": true,
+                    "sourceFaceLocationsOrIdentifiersWithheld": true,
+                    "noActualRenderedPhotorealismOrFabricPhysicsCertificate": true,
+                    "candidateNotAllowedInConsumer3D": true,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "principal": {
+                    "triangles": 3826,
+                    "degenerateTriangles": 0,
+                    "maxPrincipalStretch": 1.025039113935907,
+                    "minPrincipalStretch": 1.0000000058701244,
+                    "maxAnisotropy": 1.025000147418869,
+                    "trianglesOver5PercentPrincipalStrain": 0,
+                    "sourceUVBytesPreserved": null,
+                    "photoProjectionMeasured": false,
+                    "provisionalTextureMetricPassed": false,
+                    "sourceImageVerificationPerformed": false,
+                    "collisionVerified": false,
+                    "releaseAuthorized": false,
+                    "familyAlpha": "HOLD"
+                  },
+                  "sourceShapeGuardPassed": true,
+                  "contactMeasured": true,
+                  "contact": {
+                    "bodyComplete": true,
+                    "selfComplete": true,
+                    "bodyStrict": 0,
+                    "selfStrict": 0
+                  },
+                  "sampledNumericalClearance": true,
+                  "estimatedGarmentSizeNotPhotographMeasured": true,
+                  "candidateRendered": false,
+                  "releaseAuthorized": false
+                }
+              }
+            ],
+            "constructionAndReauditMs": 7588,
+            "sourceRestAndSkinUnmodified": true,
+            "sourceBufferByteSnapshotsChecked": true,
+            "openingRimCollisionSeparatelyVerified": false,
+            "continuousAnimationVerified": false,
+            "humanVisualApproved": false,
+            "consumer3DAdmitted": false,
+            "releaseAuthorized": false,
+            "familyAlpha": "HOLD"
+          }
+        }
+      ]
+    }
+  },
+  "consumer3DAdmitted": false,
+  "releaseAuthorized": false,
+  "familyAlpha": "HOLD"
+}

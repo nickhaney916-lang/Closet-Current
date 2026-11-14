@@ -75,5 +75,7 @@ test('C60: native browser-imported original photographed source fit helper has n
  assert.ok(!helper.includes("import 'node:")&&!helper.includes('import "node:'));
  assert.ok(!helper.includes('require(')&&!helper.includes('process.')&&!helper.includes('Buffer.'));
  const installer=await readFile('scripts/install-mission2-actual-photo-contact52.mjs','utf8');
- assert.ok(installer.includes('upper-torso-clearance-trial60.mjs'));
+ assert.ok(installer.includes('installMeasurementModules86'));
+ const closure=await readFile('scripts/mission2-p86-module-install.mjs','utf8');
+ assert.ok(closure.includes('upper-torso-clearance-trial60.mjs'));
 });

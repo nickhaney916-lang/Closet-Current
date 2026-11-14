@@ -5,7 +5,7 @@ const server=createServer(async(req,res)=>{try{const path=decodeURIComponent(new
  if(!target.startsWith(root+'/'))throw Error();const b=await readFile(target);res.setHeader('content-type',({'.mjs':'text/javascript','.js':'text/javascript','.html':'text/html','.png':'image/png','.json':'application/json'})[extname(target)]||'application/octet-stream');res.end(b);
 }catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;const result={engine,scope:'front-panel-not-fitted-garment',screens:[],errors:[],physicalDevice:false,releaseAuthorized:false,familyAlpha:'HOLD'};
-try{browser=await ({chromium,webkit})[engine].launch({headless:true,...(engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{})});
+try{browser=await ({chromium,webkit})[engine].launch({headless:true,...(process.env.P86_BROWSER_EXECUTABLE?{executablePath:process.env.P86_BROWSER_EXECUTABLE}:{}),...(engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']}:{})});
  const page=await browser.newPage({viewport:{width:1120,height:650},deviceScaleFactor:1});page.on('pageerror',e=>result.errors.push(e.message));
  await page.goto('http://127.0.0.1:'+server.address().port+'/research/mission2-p86/panel-review.html');await page.waitForFunction(()=>window.review?.ready,{timeout:30000});
  result.render=await page.evaluate(()=>window.review);

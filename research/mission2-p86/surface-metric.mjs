@@ -37,7 +37,7 @@ export function measurePrincipalStretch86({original,candidate,indices,originalUV
   maxPrincipalStretch:degenerate===indices.length/3?null:maxStretch,minPrincipalStretch:degenerate===indices.length/3?null:minStretch,maxAnisotropy,
   trianglesOver5PercentPrincipalStrain:over5,sourceUVBytesPreserved:uvPreserved,photoProjectionMeasured:false,
   provisionalTextureMetricPassed:uvPreserved===true&&degenerate===0&&over5===0,
-  photoPixelsVerified:false,collisionVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+  sourceImageVerificationPerformed:false,collisionVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
 }
 function BufferlessEqual(a,b){
  const x=new Uint8Array(a.buffer,a.byteOffset,a.byteLength),y=new Uint8Array(b.buffer,b.byteOffset,b.byteLength);

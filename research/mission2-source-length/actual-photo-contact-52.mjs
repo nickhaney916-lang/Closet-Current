@@ -1,3 +1,4 @@
+import {screenRadialFit86} from '../mission2-p86/radial-fit.mjs';
 import {measurePrincipalStretch86} from '../mission2-p86/surface-metric.mjs';
 /**
  * M2 P2-C52: exact licensed, photographed P61 / P175 163-bone fabric
@@ -1038,6 +1039,9 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   fail('C60 genuine photographed source buffer integrity violated');
  const full=trialSelf.complete&&
   trialSelf.distance53.distanceRefinementComplete&&trialBody.complete;
+ const sourceUV86=mesh.geometry?.attributes?.uv;
+ const uvCompatible86=sourceUV86?.itemSize===2&&sourceUV86.count===world.length/3;
+ const uvArray86=uvCompatible86?Float32Array.from(sourceUV86.array):null;
  const sourceFitSweep62=refineCandidateSweep62?
   screenDisposableSourceFitAmplitudes62({
    originalWorld:world,indices,neck:get('neck01'),
@@ -1084,12 +1088,24 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   ...(refineSurfaceStrain61?{
    sourceOriginalPhotoSurfaceStrain61:
     measureDisposableSourceSurfaceStrain61(world,proposal.world,indices),
-   sourcePrincipalTextureMetric86:measurePrincipalStretch86({
+   sourceGlobalRadialScreen86:screenRadialFit86({original:world,indices,spine:get('spine04'),
+    evaluate(candidate){
+     const self=analyze52(candidate,indices,triangles,tolerance,poseBudget);
+     const bodyResult=bodyClothContact58(body,candidate,indices,tolerance,bodyBudget);
+     return {bodyComplete:bodyResult.complete,
+      selfComplete:self.complete&&self.distance53.distanceRefinementComplete,
+      bodyStrict:bodyResult.strict,selfStrict:self.strictCrossings};
+    }
+   }),
+   sourcePrincipalTextureMetric86:{
+    sourceUVStatus:!sourceUV86?'ABSENT_PROJECTED_SOURCE':uvCompatible86?'COMPLETE':'INCOMPATIBLE_WITH_SOURCE_TOPOLOGY',
+    sourceUVVertexCount:sourceUV86?.count??0,
+    ...measurePrincipalStretch86({
     original:world,candidate:proposal.world,
     indices:indices??Uint32Array.from({length:world.length/3},(_,i)=>i),
-    originalUV:mesh.geometry?.attributes?.uv?.array?Float32Array.from(mesh.geometry.attributes.uv.array):null,
-    candidateUV:mesh.geometry?.attributes?.uv?.array?Float32Array.from(mesh.geometry.attributes.uv.array):null
-   })
+    originalUV:uvArray86,
+    candidateUV:uvArray86
+   })}
   }:{}),
   researchCandidateNotApprovedForConsumer3D:true,
   releaseAuthorized:false,familyAlpha:'HOLD'

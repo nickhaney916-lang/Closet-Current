@@ -6,22 +6,14 @@
 import assert from 'node:assert/strict';
 import {readFile,writeFile,copyFile,mkdir} from 'node:fs/promises';
 import {resolve,join,dirname} from 'node:path';
+import {installMeasurementModules86} from './mission2-p86-module-install.mjs';
 const donorArg=process.argv[2];
 if(!donorArg)throw Error('C52 disposable donor required');
 const donor=resolve(donorArg),cwd=resolve('.');
 if(donor==='/'||donor===cwd||cwd.startsWith(donor+'/')||
    donor.startsWith(cwd+'/public')||donor.startsWith(cwd+'/supabase'))
  throw Error('C52 refuses production, current or private wardrobe tree');
-await mkdir(join(donor,'research/mission2-p86'),{recursive:true});
-await copyFile('research/mission2-p86/surface-metric.mjs',join(donor,'research/mission2-p86/surface-metric.mjs'));
-const src='research/mission2-source-length/actual-photo-contact-52.mjs';
-const dest=join(donor,src);
-await mkdir(dirname(dest),{recursive:true});
-await copyFile(src,dest);
-await copyFile('research/mission2-source-length/upper-torso-clearance-trial60.mjs',
- join(donor,'research/mission2-source-length/upper-torso-clearance-trial60.mjs'));
-await copyFile('research/mission2-source-length/upper-torso-surface-quality61.mjs',
- join(donor,'research/mission2-source-length/upper-torso-surface-quality61.mjs'));
+await installMeasurementModules86(cwd,donor);
 const controllerPath=join(donor,'research/dress-mobile-01/dress-outfit-controller.mjs');
 let controller=await readFile(controllerPath,'utf8');
 const importAnchor="import {sampleSourceDressMotion36} from '../mission2-source-length/source-dress-motion.mjs';";

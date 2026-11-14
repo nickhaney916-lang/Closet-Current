@@ -18,3 +18,62 @@ jobs:
       - run: node scripts/build.mjs
       - run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
       - run: git diff --exit-code -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json
+  actual-source-static-AB:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P86_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3
+      - name: Prepare immutable detached research donors
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .p173-p60 6fe5e46b91533a96f3c0d86950ea077cb355c459
+          git worktree add --detach .p173-p172 88d2fdb412f84b0498c86bfa17f4b391425e1958
+          for name in .native05-donor-541 .p173-p60 .p173-p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+      - name: Reproduce genuine licensed source photos and original rigs
+        working-directory: .native05-donor-541
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Install research source chain and reversible static preview
+        run: |
+          cd .p173-p60
+          node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541
+          cd ..
+          node scripts/install-native-photo-anatomical-fit-171.mjs .native05-donor-541
+          node scripts/install-native-photo-torso-173.mjs .native05-donor-541 .p173-p172
+          node scripts/install-source-shoulder-seam-174.mjs .native05-donor-541
+          node scripts/install-native-original-dress-drape-175.mjs .native05-donor-541
+          node scripts/install-mission2-source-dress-motion.mjs .native05-donor-541
+          node scripts/install-mission2-actual-photo-contact52.mjs .native05-donor-541
+          node scripts/install-mission2-p86-preview.mjs .native05-donor-541
+      - run: node scripts/test-mission2-p86-native-browser.mjs
+      - run: git diff --exit-code -- public supabase benchmark/fixtures benchmark/locked-photo-sources.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P86-actual-source-static-AB-${{ matrix.engine }}-HOLD
+          path: benchmark/mission2-p86/native-${{ matrix.engine }}/
+          retention-days: 14
