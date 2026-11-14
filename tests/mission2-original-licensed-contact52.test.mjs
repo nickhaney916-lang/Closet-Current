@@ -1344,3 +1344,49 @@ test('C64: source photo 2.5-4mm local correction requires complete earlier signe
   }),/M2 C52 original-photo diagnostic/);
  }
 });
+
+const audit65=(f,opts={})=>audit64(f,{
+ refinePoseTransitions65:true,...opts
+});
+test('C65: real THREE original licensed 163-bone source checks six authentic inter-arm phases, restores skin and never edits garment',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  .1,1.0,-.12,.15,1.05,.12,.05,1.10,.12
+ ]);
+ const before=original(f),q=f.bones.map(b=>b.quaternion.clone());
+ const r=audit65(f),a=r.originalArticulatedContactReceipt58,
+ summary=a.originalPhotoArmTransitionSamples65;
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.equal(r.authenticOriginalSourceArmIntermediateSampleBudgetComplete65,true);
+ assert.equal(r.noOriginalClothingPhotoOrSourceSkinnedMeshWrites65,true);
+ assert.equal(r.noSweptClothMotionSafetyOrHumanPhotorealismCertified65,true);
+ assert.equal(summary.schema,
+  'M2-C65-original-public-photo-discrete-intermediate-arm-poses');
+ assert.equal(summary.intermediateOriginalSourcePoseSamples,6);
+ assert.deepEqual(summary.sampledFractionsPerArm,[.25,.5,.75]);
+ assert.equal(summary.sourceGarmentOriginalFaceCount,4);
+ assert.equal(summary.intermediateSamples.length,6);
+ assert.ok(summary.intermediateSamples.every(s=>
+  s.sourcePhotoOriginalBodyAndSelfContactBudgetsComplete));
+ assert.equal(summary.onlyDiscreteContactSamplesNotSweptContinuousMotion,true);
+ assert.equal(summary.releaseAuthorized,false);
+ assert.deepEqual(original(f),before);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(q[i])));
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C65: source pose motion must retain exact C52-C64 signed original photo/fit provenance',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ for(const flags of [
+  {refinePoseTransitions65:true},
+  {refinePoseTransitions65:'true'},
+  {refineTriangleDistances53:true,refineSourceTopology54:true,
+   refineEdgeWinding55:true,refineBoundaryComponents56:true,
+   refineAnatomicalLoopLandmarks57:true,refineArticulatedContacts58:true,
+   refineBodyHeightWitnessBands59:true,refineUpperTorsoFitTrial60:true,
+   refineSurfaceStrain61:true,refineCandidateSweep62:true,
+   refineLocalContactRelief63:true,refinePoseTransitions65:true}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...flags
+  }),/M2 C52 original-photo diagnostic/);
+ }
+});
