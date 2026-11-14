@@ -1015,6 +1015,7 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   if(!bone?.isBone)fail('C60 original neck/spine anatomical rig missing');
   return bone.getWorldPosition(new THREE.Vector3()).toArray();
  };
+ const untouchedWorld=world.slice();
  const proposal=createDisposableUpperTorsoWorldTrial60(world,{
   neck:get('neck01'),spine:get('spine04'),
   outwardMeters:UPPER_TORSO_TRIAL_OUTWARD60
@@ -1023,8 +1024,8 @@ function measureDisposableTorsoTrial60(root,mesh,body,world,
   poseBudget);
  const trialBody=bodyClothContact58(body,proposal.world,indices,tolerance,
   bodyBudget);
- const sourceUntouched=world.length===proposal.world.length&&
-  !Array.from(world).some((x,i)=>x!==world[i]);
+ const sourceUntouched=world.length===untouchedWorld.length&&
+  world.every((x,i)=>x===untouchedWorld[i]);
  // The *original* supplied buffer is never passed to any mutator;
  // a fresh clone is allocated even if no vertices moved.
  if(!sourceUntouched||proposal.world===world)
