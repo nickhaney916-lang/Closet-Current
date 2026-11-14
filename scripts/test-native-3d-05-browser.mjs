@@ -12,11 +12,12 @@ import {chromium,webkit} from 'playwright';
 import {checkViewer90} from './check-parallel90-interactions.mjs';
 import {checkSavedSwitch90} from './check-parallel90-saved-switch.mjs';
 const engine90=process.env.P90_ENGINE||'chromium';
+const strict38=process.env.M38==='research';
 const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430];
 assert.ok(widths90.every(x=>[320,390,430].includes(x)));
 assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
+const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=strict38?'benchmark/main38-'+engine90:process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -168,7 +169,7 @@ try{
   page.on('framenavigated',f=>{if(f===page.mainFrame())
    navigations.push({width,path:new URL(f.url()).pathname,query:new URL(f.url()).search});});
   page.on('crash',()=>crashes.push({width,kind:'renderer-crash'}));
-  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research',
+  await page.goto(origin+'/public/index.html?nativeLossless04=research&native3D05=research'+(strict38?'&main38=research':''),
     {waitUntil:'domcontentloaded'});
   await login(page,'native05-A');
   await seed(page,'native05-A');
@@ -183,6 +184,32 @@ try{
   // A clicked original saved outfit rather than donor-created selection.
   await page.locator('#savedBoards button').first().click();
   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().selected),0);
+  if(strict38){
+   // Native owner research source+board are real to the test browser.
+   // main38=research has NO trusted M37 adapter automatically wired by
+   // the application. This MUST block before any donor WebGL import.
+   let donorRequests38=0;
+   await page.route('**/donor/**',route=>{donorRequests38++;return route.abort();});
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>document.getElementById('native3D05Status')
+    ?.textContent.includes('MAIN38_OWNER_SOURCE_RECHECK_REQUIRED'),null,{timeout:30000});
+   assert.equal(donorRequests38,0,'No unverified 3D donor may be imported');
+   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().active),false);
+   assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
+   assert.deepEqual(await readBoard(page),ownerOriginal);
+   await take(page,width,'38-strict-owner-original-2d-still-visible');
+   cases.push({width,engine:engine90,actualOriginalOwnerOutfitInApp:true,
+    savedOutfitSelected:true,strictM38GateBlockedUnverifiedViewer:true,
+    donorImportRequests:donorRequests38,webglAllocated:false,
+    originalPhoto2DFallbackRetained:true,ownerPrivateSavedOutfitUnchanged:true,
+    signedSyntheticOwnerStillActive:true,
+    realPhoneVerified:false,realAccountVerified:false,
+    consumer3DApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+   await page.close();await ctx.close();
+   await browser.close();browser=null;
+   continue;
+  }
   let tamperedOriginalBlocked92=false;
   if(native92&&width===390){
    // A genuine but WRONG licensed JPEG replaces the stored bytes under the
@@ -598,22 +625,23 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,widths90.length);assert.equal(screens.length,5*widths90.length);
+ assert.equal(cases.length,widths90.length);assert.equal(screens.length,(strict38?2:5)*widths90.length);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
  const result={priority:'NATIVE-3D-05',cases:cases.length,screenshots:screens.length,
   browser:engine90,widths:widths90,
-  originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
+  originalNativeAuthHTTPOnlyMocked:true,realWebGL:!strict38,strictOriginal2DOnly:strict38,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
   realSignedRLS:false,originalUserSavedStateUnmodified:true,
-  actual3DWithHonestUnsupportedPhotoFallback:true,
+  actual3DWithHonestUnsupportedPhotoFallback:!strict38,
+  originalPhoto2DFallbackWhen3DDenied:strict38,
   physicalPhone:'NOT TESTED',familyAlpha:'HOLD',releaseAuthorized:false,
   evidence:cases,screens,errors,external,
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
  console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:cases.length,
-   real163BoneWebGL:true,realMobileScreenshots:screens.length,familyAlpha:'HOLD'}));
+   real163BoneWebGL:!strict38,strictOriginal2DOnly:strict38,realMobileScreenshots:screens.length,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,
