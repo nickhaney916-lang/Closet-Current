@@ -59,7 +59,11 @@ for(const figure of ['female','male']){
    medianShirtCleanupMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.sceneApplyStages.cleanupMs)),
    medianShirtWebGLDrawMs:median(rows.filter(x=>x.mode==='shirt').map(x=>x.sceneApplyStages.drawMs)),
    medianDressRigSetOutfitMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.sceneApplyStages.setOutfitMs)),
-   medianDressWebGLDrawMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.sceneApplyStages.drawMs))});
+   medianDressWebGLDrawMs:median(rows.filter(x=>x.mode==='dress').map(x=>x.sceneApplyStages.drawMs)),
+   medianShirtBuildStagesMs:Object.fromEntries(
+    Object.keys(rows.find(x=>x.mode==='shirt')?.shirtStages||{}).sort().map(k=>[
+     k,median(rows.filter(x=>x.mode==='shirt').map(x=>x.shirtStages[k]))
+    ]))});
  }
 }
 await mkdir(root,{recursive:true});
