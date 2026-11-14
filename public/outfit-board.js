@@ -104,6 +104,25 @@ window.addEventListener('beforeunload',event=>{
 window.addEventListener('closet:session-locked',()=>{
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
+ if(!nativeLossless04Active)return;
+ // AUTH36 locks the private owner at this synchronous boundary. Retire the
+ // controller BEFORE disposing it: any last onChange/onStatus now fails the
+ // exact controller lease and cannot republish the old owner's data.
+ nativeLossless04=null;
+ currentBoard=cleanOutfitBoard({},[]);
+ savedOutfitBoards=[];
+ syncBoardInputs();
+ nativeLossless04ClearPreview();
+ // Research-only panels can contain original photo or signed-owner context.
+ // Remove every bridge before disposing so no late finalizer can re-admit it.
+ for(const key of ['native3D05Bridge','nativePhotoReadiness08Bridge',
+                   'styleOwnedLive03Bridge','nativeMobile09Bridge',
+                   'nativeLossless04Bridge']){
+  const bridge=window[key];
+  window[key]=null;
+  try{bridge?.dispose?.();}catch{}
+ }
+ $('boardSaveStatus').textContent='Signed-out private outfit cleared. Reopen Outfit Builder.';
 });
 async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
