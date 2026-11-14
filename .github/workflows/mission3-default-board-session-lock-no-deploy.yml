@@ -14,7 +14,7 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
-      - name: Exact PR1090 parent and five-path no-deploy allowlist
+      - name: Exact PR1090 parent and six-path no-deploy allowlist
         shell: bash
         run: |
           set -euo pipefail
@@ -23,7 +23,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/cloud-backup.js public/cloud-backup-engine.js supabase package.json package-lock.json
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/outfit-board.js|tests/mission3-native-board-session-lock.test.cjs|scripts/test-mission3-native-board-session-lock-browser.mjs|research/mission3-default-board-session-lock/REPORT.md|.github/workflows/mission3-default-board-session-lock-no-deploy.yml) ;;
+              public/outfit-board.js|tests/mission3-native-board-session-lock.test.cjs|tests/outfit-draft-resilience.test.cjs|scripts/test-mission3-native-board-session-lock-browser.mjs|research/mission3-default-board-session-lock/REPORT.md|.github/workflows/mission3-default-board-session-lock-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done
@@ -152,7 +152,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Strict PR1090 five-path same-parent diff gate
+      - name: Strict PR1090 six-path same-parent diff gate
         shell: bash
         run: |
           set -euo pipefail
@@ -161,7 +161,7 @@ jobs:
           test "$(git merge-base "$BASE" HEAD)" = "$BASE"
           git diff --name-only "$BASE" HEAD | while read -r p; do
             case "$p" in
-              public/outfit-board.js|tests/mission3-native-board-session-lock.test.cjs|scripts/test-mission3-native-board-session-lock-browser.mjs|research/mission3-default-board-session-lock/REPORT.md|.github/workflows/mission3-default-board-session-lock-no-deploy.yml) ;;
+              public/outfit-board.js|tests/mission3-native-board-session-lock.test.cjs|tests/outfit-draft-resilience.test.cjs|scripts/test-mission3-native-board-session-lock-browser.mjs|research/mission3-default-board-session-lock/REPORT.md|.github/workflows/mission3-default-board-session-lock-no-deploy.yml) ;;
               *) echo "REFUSE path: $p"; exit 1 ;;
             esac
           done

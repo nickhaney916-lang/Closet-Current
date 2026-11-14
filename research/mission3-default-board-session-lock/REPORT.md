@@ -25,3 +25,9 @@ A second source-observed asynchronous bug: default startup `outfitBoardReady` re
 ## Release limitations
 
 No physical device acceptance, owner-authorized live Supabase/Storage/Cloud, independently human-ground-truthed 10/10 recognition, cross-mission real photographed 3D garments/fabric fitting, or Family Alpha launch. No merge/deploy, hosted cloud mutation, or private wardrobe data read/write. Keep #255 OPEN/HOLD.
+
+## First-run CI diagnosis and source-compatible fixture repair
+
+The initial [exact-head Actions run #43535604082](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43535604082) was **RED** before it reached new browser scenarios. In a newly introduced synthetic VM fixture, two host microtasks were insufficient to let the real extracted `outfitBoardReady` queue the IndexedDB request. The corrected fixture waits on a bounded `setImmediate` event-loop yield until `request.onsuccess` is installed. This neither mocks the production owner lease nor bypasses a failing security assertion. In the inherited `tests/outfit-draft-resilience.test.cjs`, the old isolated fixture executed the source handler without the clean-board/DOM functions it now legitimately invokes in ordinary mode, causing `ReferenceError: cleanOutfitBoard is not defined`. Update that fixture to provide real-form dummy nodes and the expected in-memory clear operation, and strengthen its sign-out assertions. **No production source was changed after the original patch.**
+
+The exact changed path allowlist increases from five to six, adding only the existing `tests/outfit-draft-resilience.test.cjs`. Full Node/browser/regression evidence must be rechecked on the **new exact head**. Do not use the failed first run as green evidence.

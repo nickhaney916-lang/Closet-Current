@@ -236,9 +236,12 @@ function defaultLoadFixture(){
  vm.createContext(ctx);
  vm.runInContext(lease+startup,ctx,{timeout:1000});
  async function begin(){
-  // Awaited closetReady first resumes in the VM microtask queue.
-  await Promise.resolve();await Promise.resolve();
-  assert.equal(typeof request.onsuccess,'function');
+  // VM async continuations run in a separate realm; yield the event loop
+  // rather than assuming two host Promise turns finish cross-realm scheduling.
+  for(let i=0;i<24&&typeof request.onsuccess!=='function';i++)
+   await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(typeof request.onsuccess,'function',
+   'Actual default Outfit Board did not open its signed owner-private IDB read');
  }
  function release(value){
   request.result=value;
