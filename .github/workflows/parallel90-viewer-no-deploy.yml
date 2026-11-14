@@ -36,9 +36,9 @@ jobs:
           node research/three-d-20/restore-approved-models.mjs
       - run: node scripts/install-parallel90-viewer.mjs
       - name: Chromium actual native owner-photo viewer
-        run: P90=1 NATIVE88=1 NATIVE89=1 NATIVE91=1 NATIVE92=1 NATIVE93=1 NATIVE102=1 node scripts/test-native-3d-05-browser.mjs
+        run: P90SWAPS=1 P90=1 NATIVE88=1 NATIVE89=1 NATIVE91=1 NATIVE92=1 NATIVE93=1 NATIVE102=1 node scripts/test-native-3d-05-browser.mjs
       - name: WebKit actual native owner-photo viewer
-        run: P90=1 P90_ENGINE=webkit node scripts/test-native-3d-05-browser.mjs
+        run: P90SWAPS=1 P90=1 P90_ENGINE=webkit node scripts/test-native-3d-05-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

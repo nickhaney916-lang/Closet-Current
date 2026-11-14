@@ -30,7 +30,8 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);body.a
   const key={ArrowLeft:'Left90',ArrowRight:'Right90','+':'ZoomIn90','=':'ZoomIn90','-':'ZoomOut90',Home:'Reset90'}[e.key];
   if(key){e.preventDefault();command90(key);}
  });`);
-s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    camera90:{angle:view.viewAngle,distance:view.cameraDistance,position:view.cameraPosition,target:view.cameraTarget,loadMs:view.loadMs,lastRenderMs:view.lastRenderMs,pixelRatio:view.pixelRatio,drawPixels:view.drawPixels},
+s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    garmentSources90:{dress:view.outfit?.dress?.sourceSHA256||null,shirt:view.outfit?.shirt?.sourceSHA256||null,pants:view.outfit?.pants?.sourceSHA256||null},
+    camera90:{angle:view.viewAngle,distance:view.cameraDistance,position:view.cameraPosition,target:view.cameraTarget,loadMs:view.loadMs,lastRenderMs:view.lastRenderMs,pixelRatio:view.pixelRatio,drawPixels:view.drawPixels},
     geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,`);
 // Reopened canvases must retain keyboard support too.
 s=replace(s,"  canvas.replaceWith(fresh);canvas=fresh;","  fresh.tabIndex=0;canvas.replaceWith(fresh);canvas=fresh;");

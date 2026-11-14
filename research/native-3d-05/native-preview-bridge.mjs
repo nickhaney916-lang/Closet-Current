@@ -244,6 +244,38 @@ export async function mountNative3D05({
    },true);
   }
  }
+ // P90 M2: use only the existing native selection path, never donor writes.
+ async function switchSaved(index){
+  if(closed||opening)throw Error('NATIVE90 viewer busy or disposed');
+  requireNative3D05Visible102({doc});
+  validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
+  const rows=consumer.readOnlySnapshot().saved;
+  if(!Number.isInteger(index)||index<0||index>=rows.length||
+     !goodId(rows[index]?.id)||
+     (rows[index].ownerId!==undefined&&rows[index].ownerId!==nativeAuth.user.id))
+   throw Error('NATIVE90 invalid owner saved outfit');
+  cleanup('Verifying selected saved outfit…');
+  consumer.selectSaved(index); // guarded native draft selection; no DB writes
+  return open(); // all original-byte, owner, slot and wardrobe checks repeat
+ }
+ function installSavedSwitch90(){
+  const dialog=doc.getElementById('outfit3D01Dialog');
+  if(!dialog||doc.getElementById('native3D90Saved'))return;
+  const label=doc.createElement('label');label.textContent='View another saved outfit';
+  const select=doc.createElement('select');select.id='native3D90Saved';
+  select.style.cssText='display:block;width:100%;min-height:44px';
+  const rows=consumer.readOnlySnapshot().saved;
+  for(let i=0;i<rows.length;i++){
+   const option=doc.createElement('option');option.value=String(i);
+   option.textContent=rows[i].name||'Saved outfit '+(i+1);select.append(option);
+  }
+  select.value=String(consumer.selected);
+  select.onchange=()=>{select.disabled=true;switchSaved(Number(select.value)).catch(e=>{
+   if(select.isConnected){try{select.disabled=false;select.value=String(consumer.selected);}catch{}}
+   notify('3D unavailable · original-photo board preserved. '+String(e.message||e));
+  });};
+  label.append(select);dialog.querySelector('.cc3d-viewer')?.append(label);
+ }
  async function open(){
   if(closed)throw Error('NATIVE05 private preview disposed');
   requireNative3D05Visible102({doc});
@@ -315,6 +347,7 @@ export async function mountNative3D05({
    // always re-check before announcing success.
    revokeChangedSource89();
    if(!displayedSelection89)throw Error('NATIVE89 saved outfit changed as 3D became visible');
+   installSavedSwitch90();
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
@@ -342,6 +375,8 @@ export async function mountNative3D05({
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
    camera90:active?data.camera90||null:null,
+   figure90:active?data.figure||null:null,
+   garmentSources90:active?data.garmentSources90||null:null,
    resources90:active?{geometries:data.geometries,textures:data.textures,frames:data.frames}:null,
    photoOnlyUnsupported:true,donorWriteControlsDisabled:true,
    actualConsumerSavePathUnchanged:true,productionEnabled:false,
@@ -361,5 +396,5 @@ export async function mountNative3D05({
   button.remove();status.remove();
  };
  notify('Choose a saved outfit, then preview verified 3D (unsaved edits must be saved).');
- return Object.freeze({open,close,dispose,state,researchOnly:true,releaseAuthorized:false});
+ return Object.freeze({open,switchSaved,close,dispose,state,researchOnly:true,releaseAuthorized:false});
 }

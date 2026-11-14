@@ -10,6 +10,7 @@ import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 import {checkViewer90} from './check-parallel90-interactions.mjs';
+import {checkSavedSwitch90} from './check-parallel90-saved-switch.mjs';
 const engine90=process.env.P90_ENGINE||'chromium';
 const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430];
 assert.ok(widths90.every(x=>[320,390,430].includes(x)));
@@ -87,7 +88,11 @@ function fixture(owner){
     {id:owner+'-missing-saved',outfit3dId:owner+'-missing-3D',
      ownerId:owner,name:'Missing lower garment',
      slots:{top:owner+'-shirt',bottom:owner+'-lost-denim',shoes:owner+'-shoes'},
-     futureSourceKeys:{ver:2}}],
+     futureSourceKeys:{ver:2}},
+    ...(process.env.P90SWAPS==='1'?[{id:owner+'-shirt-saved',
+     outfit3dId:owner+'-verified-shirt-3D',ownerId:owner,
+     name:'Source-true shirt with photo-only outerwear',
+     slots:{top:owner+'-shirt',layer2:owner+'-jacket',layer3:owner+'-coat',shoes:owner+'-shoes'}}]:[])],
    futureBoardVersion:'never-drop'}
  };
 }
@@ -290,6 +295,10 @@ try{
   await page.locator('#outfit3D01Back').click();
   await take(page,width,'04-genuine-163-bone-rear-neutral');
   if(process.env.P90==='1')await checkViewer90(page,width,engine90);
+  if(process.env.P90SWAPS==='1'&&width===390){
+   await checkSavedSwitch90(page,engine90);
+   assert.deepEqual(await readBoard(page),ownerOriginal,'Repeated previews never write saved outfits');
+  }
   if(native89&&width===390){
    // NATIVE89: actual source/owner viewer is already WebGL READY. A native
    // saved outfit selection change must revoke its previously visible
