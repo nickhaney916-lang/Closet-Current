@@ -1,0 +1,71 @@
+name: "MAIN1054 M34 repeated WebKit original HTTPS worker stage and memory diagnostics — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-webkit-repeated-https-diagnostics-m34-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  desktop-https-owner-acceptance-bridge:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified M31 source ancestor, research only, no app/hosted cloud/original corpus changes
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor c1ddebcd072c2088d62a823a6e9c2b1efe7378ae HEAD
+          git diff --exit-code c1ddebcd072c2088d62a823a6e9c2b1efe7378ae HEAD -- public/ supabase/ benchmark/photos/ benchmark/locked-photo-sources.json
+          node --check scripts/serve-physical-device-m32.mjs
+          node --check scripts/test-main1054-webkit-https-repeat-m34-browser.mjs
+          node --check research/master-consolidation-1054/webkit-https-repeat-gate-m34.mjs
+          node --check research/master-consolidation-1054/physical-device-m32-client.mjs
+          node --check research/master-consolidation-1054/physical-device-evidence-gate-m32.mjs
+      - name: Reject fabricated physical device, automatic owner save and private receipt leaks
+        run: node --test tests/master-webkit-https-repeat-m34.test.mjs tests/master-physical-device-handoff-m32.test.mjs tests/master-native-cpu-active-cancel-gate-m28.test.mjs tests/master-native-cpu-endurance-gate-m26.test.mjs tests/master-real-model-memory-gate.test.mjs
+      - name: Install exactly pinned public CPU runtime, genuine models and desktop WebKit/Chromium
+        run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 onnxruntime-web@1.22.0-dev.20250409-89f8206ba4 playwright@1.56.1 sharp@0.34.3
+      - name: Verify four legally licensed original garment JPEGs, genuine pinned model and CPU WASM assets
+        shell: bash
+        run: |
+          set -eu
+          printf '%s  %s\n' \
+            0cb5ac5be2c414d5b9e361f857108630c6d6e24a5ab9be3cf5f761de55289e94 node_modules/onnxruntime-web/dist/ort.wasm.min.mjs \
+            f061472c6e77d6d50d079aacdc0ff9b63fee287ddd2cbf46cf62438d3891de2b node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm \
+            | sha256sum --check
+          node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+          node scripts/p82-prepare-models.mjs --check
+          git diff --exit-code -- public/
+      - name: Reproduce 3 independent full 16-photo desktop WebKit HTTPS owner review and cancel/lock attempts
+        run: node scripts/test-main1054-webkit-https-repeat-m34-browser.mjs
+      - name: Fail closed on WebKit intermittent worker error, source, memory or missing events
+        run: node research/master-consolidation-1054/webkit-https-repeat-gate-m34.mjs benchmark/main1054-webkit-https-repeated-m34/source-bound-numeric-diagnostics.json "$GITHUB_SHA"
+      - name: Preserve numeric-only evidence even if WebKit fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m34-webkit-original-https-repeat-HOLD
+          path: benchmark/main1054-webkit-https-repeated-m34/*.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Confirm no consumer source/app release or private/hosted changes
+        shell: bash
+        run: |
+          set -eu
+          git diff --exit-code be9016c1cdf92c9d974f3177cbc8551058a1892c HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
+          test -z "$(git status --porcelain -- public/)"
+          echo 'MAIN1054_M34_3X16_WEBKIT_HTTPS_DESKTOP_NOT_PHONE_OR_RELEASE'
