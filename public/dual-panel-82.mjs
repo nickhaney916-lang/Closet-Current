@@ -6,6 +6,8 @@ import {subtypeNeedsManualReview} from './recognition-confusion-guard.mjs';
 // Retain only candidates in the same agreed category and each family's top five.
 // P879: an abstaining pair (even with a shared top-five label) cannot offer
 // an actionable AI shortcut. The owner still has ordinary manual Adjust.
+// P880: even with top subtype agreement, lower-ranked overlapping labels are
+// not cross-family top-subtype agreement. Offer at most that exact agreed top.
 // This narrows optional hints; never confers accuracy, certainty or auto-save.
 export function sharedRankChoices82(decision,observations){
  if(!Array.isArray(decision?.hypotheses)||!Array.isArray(decision?.reasons)||
@@ -20,9 +22,10 @@ export function sharedRankChoices82(decision,observations){
  const agreedCategory=a.ranking[0]?.category;
  if(!agreedCategory||agreedCategory==='Uncategorized'||agreedCategory!==b.ranking[0]?.category)return [];
  if(!a.ranking[0]?.label||a.ranking[0].label!==b.ranking[0]?.label)return [];
- const inA=new Set(a.ranking.slice(0,5).map(x=>x.label));
- const inB=new Set(b.ranking.slice(0,5).map(x=>x.label));
- return decision.hypotheses.filter(h=>h.category===agreedCategory&&inA.has(h.label)&&inB.has(h.label)&&!subtypeNeedsManualReview(h.category,h.itemType));
+ const top=a.ranking[0];
+ if(subtypeNeedsManualReview(top.category,top.itemType))return [];
+ return decision.hypotheses.filter(h=>h.label===top.label&&h.category===agreedCategory&&
+  h.itemType===top.itemType).slice(0,1);
 }
 export const dualBrowserAvailable82=(ua=globalThis.navigator?.userAgent||'')=>/(?:Chrome|Chromium|Edg)\//.test(ua)&&!/(?:iPhone|iPad|iPod)/.test(ua);
 const el=(tag,text)=>{const e=document.createElement(tag);if(text)e.textContent=text;return e;};
