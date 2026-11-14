@@ -318,3 +318,57 @@ jobs:
 
           benchmark/master-panel-publication/'
         retention-days: 14
+  real-pretrained-continuous-sequence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        engine:
+        - chromium
+        - webkit
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      MAIN1054_TARGET: '16'
+      MAIN1054_REAL_IDS: commons-0035,commons-0062,commons-0078,commons-0059
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        persist-credentials: false
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+    - name: Pin exact source; unchanged application, models and hosted schema
+      run: 'git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+        git merge-base --is-ancestor c405b50f06564999b771643843e289daf71c2938 HEAD
+
+        git diff --exit-code c405b50f06564999b771643843e289daf71c2938 HEAD -- public/ supabase/ benchmark/locked-photo-sources.json
+
+        node --test tests/master-real-model-sequence-gate.test.mjs'
+    - name: Ephemeral pinned pretrained model and browser test dependencies
+      run: npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 playwright@1.56.1
+        sharp@0.34.3
+    - name: Verify actual public JPEG bytes and pinned pretrained q8 assets
+      run: 'node scripts/download-reviewed-photos.mjs benchmark/locked-photo-sources.json benchmark/photos commons-0035,commons-0062,commons-0078,commons-0059
+
+        node scripts/p82-prepare-models.mjs --check
+
+        git diff --exit-code -- public/'
+    - name: Sixteen actual requests; one continuous browser/page; checkpoints 2 4 8 16
+      run: node scripts/test-main1054-real-webkit-repeat.mjs ${{ matrix.engine }}
+    - name: Require complete source-bound real-model sequence; incomplete is BLOCKED
+      run: node research/master-consolidation-1054/real-model-sequence-gate.mjs benchmark/main1054-real-webkit-repeat/${{
+        matrix.engine }}-16-diagnostic.json ${{ matrix.engine }} 16 "$GITHUB_SHA"
+    - name: Keep public numeric diagnostics on success or failure, no JPEG or weights
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: master-real-model-${{ matrix.engine }}-sequence-HOLD
+        path: benchmark/main1054-real-webkit-repeat/*.json
+        if-no-files-found: warn
+        retention-days: 14

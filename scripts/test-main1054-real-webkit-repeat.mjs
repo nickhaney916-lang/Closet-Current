@@ -1,14 +1,16 @@
-/** MAIN1054: true native clothingFields plus M1 P875 policy in browser.
- * Generated decoded JPEG fixtures and synthetic owners; NEVER real customer
- * data, hosted cloud, model inference, physical phones or deploy.
- */
+/** MAIN1054: native integrated P880 review with REAL pinned pretrained inference.
+ * Public licensed development JPEGs, synthetic owner only; no blind accuracy,
+ * private cloud, physical device or release claim. */
 import assert from 'node:assert/strict';
 import {createServer} from 'node:http';
 import {readFile,mkdir,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
+import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
 const root=resolve('public'),out=resolve('benchmark/main1054-real-webkit-repeat');
+const codeCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
+assert.match(codeCommit,/^[a-f0-9]{40}$/);
 const engineName=process.argv[2]||'webkit',target=Number(process.env.MAIN1054_TARGET||16);
 assert.ok(['webkit','chromium'].includes(engineName),'unsupported engine');
 assert.ok([2,4,8,16].includes(target),'only specified stage targets 2/4/8/16');
@@ -83,7 +85,10 @@ window.stage1054=async({hash=true,segmented=false,owned=false,owner='owner-A',mo
   window.requests1054++;
   try{
    const {browserRequest82}=await import('/dual-core-82.mjs');
-   const output=await browserRequest82(r,options);
+   const output=await browserRequest82(r,{...options,onProgress:stage=>{
+    console.log('MASTER_REAL_MODEL_STAGE',String(stage).slice(0,90));
+    options?.onProgress?.(stage);
+   }});
    window.actual1054={request:r,output};
    return output;
   }catch(error){window.workerError1054=String(error?.message||error);throw error;}
@@ -129,6 +134,7 @@ const emit=async()=>{
   status:completed===target&&!failures.length?'COMPLETE_OBSERVED':'BLOCKED_INCOMPLETE',
   engine:engineName,browserPlatform:'GitHub Actions ubuntu-24.04 desktop',
   session:'one-continuous-browser-one-page-sequential-disposable-workers',
+  codeCommit,workerSourceCodeSha256:results[0]?.workerSourceCodeSha256||null,
   modelFamilies:['FashionCLIP q8 WASM','FashionSigLIP q8 WASM'],
   uniquePublicPhotoSources:photos.length,
   photoAttemptsTarget:target,completedPhotos:completed,
@@ -196,7 +202,11 @@ try{
     const {output,request}=window.actual1054;
     const decision=validateResponse82(output,request);
     const choices=sharedRankChoices82(decision,output.observations);
-    return {modelKeys:output.observations.map(o=>o.modelKey),
+    const currentImage=window.item1054.image;
+    const bytes=Uint8Array.from(atob(currentImage.split(',')[1]),c=>c.charCodeAt(0));
+    const observedOriginalSHA256=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(x=>x.toString(16).padStart(2,'0')).join('');
+    return {observedOriginalSHA256,workerSourceCodeSha256:output.sourceCodeSha256,
+     modelKeys:output.observations.map(o=>o.modelKey),
      status:decision.status,reasons:decision.reasons,
      outputs:output.observations.length,
      candidateCount:choices.length,verifiedAssets:output.verifiedAssets,
@@ -219,6 +229,7 @@ try{
    assert.equal(info.writes,0);
    assert.equal(info.approval,false);
    assert.equal(info.sourceValid,true);
+   assert.equal(info.observedOriginalSHA256,photo.sourceSHA256,'original JPEG byte digest after inference');
    assert.equal(info.itemSavedType,'Unknown');
    assert.equal(info.buttons,info.candidateCount);
    assert.equal(info.adapterActive,true);
@@ -237,6 +248,7 @@ try{
   }
   if(failure){await emit();break;}
   results.push({iteration:attempt,id:photo.id,sourceSHA256:photo.sourceSHA256,
+   observedOriginalSHA256:info.observedOriginalSHA256,workerSourceCodeSha256:info.workerSourceCodeSha256,
    realModelFamilies:info.modelKeys,verifiedAssets:info.verifiedAssets,
    candidateCount:info.candidateCount,decisionStatus:info.status,
    elapsedInferenceMs:Math.round(info.totalMs),
