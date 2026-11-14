@@ -10,6 +10,7 @@ import {resolve,extname} from 'node:path';
 import {createHash} from 'node:crypto';
 import sharp from 'sharp';
 import {chromium,webkit} from 'playwright';
+import {validateActualSkinnedPhotoPoseContact88} from '../research/mission2-p88/sample-contact-gate.mjs';
 
 const hostRoot=resolve('.'),donor=resolve('.native05-donor-541');
 const engine=process.env.P87_ENGINE||'chromium';
@@ -34,7 +35,7 @@ await new Promise(done=>server.listen(0,'127.0.0.1',done));
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const results={schema:'p87-genuine-source-skinned-pose-original-candidate-restored-v1',
  engine,sourceId:'commons-0053',realAvatar163Bones:true,
- figures:[],sourcePoseReceipts:[],screens:[],differences:[],errors:[],external:[],
+ figures:[],sourcePoseReceipts:[],actualFittedPoseContact88:[],screens:[],differences:[],errors:[],external:[],
  researchOnly:true,physicalPhone:false,continuousClothSafetyCertified:false,
  photoProjectionIndependentlyApproved:false,releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser,page;
@@ -79,6 +80,14 @@ try{
    assert.ok(receipt.poseUpdates>previous,'real skinned fitting must actually update at each pose');
    assert.ok(receipt.maximumCPUWorldSkinInverseResidualMeters<=.00005);
    previous=receipt.poseUpdates;
+   const contact=await page.evaluate(()=>window.review87.auditFit88());
+   assert.equal(contact.schema,'M2-P88-original-photo-real-skinned-source-contact-sampled-v1');
+   assert.equal(contact.actualAnatomicalBodyFaces>=100000,true);
+   assert.equal(contact.originalSourceTriangles>=3000,true);
+   assert.equal(contact.genuineSource163BoneSkeleton,true);
+   assert.equal(contact.sourcePhotoRestUVSkinAndGeometryUnchanged,true);
+   assert.equal(contact.releaseAuthorized,false);
+   results.actualFittedPoseContact88.push({figure,pose,contact});
    results.sourcePoseReceipts.push({figure,pose,poseUpdates:receipt.poseUpdates,
     fittedVertices:receipt.fittedVertices,maxInverseResidualMeters:receipt.maximumCPUWorldSkinInverseResidualMeters,
     rigBones:receipt.realSkinBoneCount,sourcePhotoOriginalUnchanged:receipt.originalGeometryAndPhotoUVUntouched,
@@ -110,11 +119,16 @@ try{
  }
  assert.deepEqual(results.errors,[],'shader or script errors not allowed');
  assert.deepEqual(results.external,[],'network egress forbidden');
+ results.contactGate88=validateActualSkinnedPhotoPoseContact88(results.actualFittedPoseContact88);
+ assert.equal(results.actualFittedPoseContact88.length,6);
+ assert.equal(results.contactGate88.status,'SAMPLED_STRICT_NONCROSSING_OBSERVED_NOT_RELEASE',
+  'genuine P87 fitted source garment crossed body/self or exceeded photo strain: '+
+    JSON.stringify(results.contactGate88.issues));
  assert.equal(results.sourcePoseReceipts.length,6);
  assert.equal(results.differences.length,18);
  assert.equal(results.screens.length,54);
  await page.evaluate(()=>window.review87.dispose());
- results.status='PASS_AUTHENTIC_SKINNED_SOURCE_SAMPLED_POSES_NOT_RELEASE';
+ results.status='PASS_GENUINE_SKINNED_PHOTO_SAMPLED_CONTACT_SIX_POSES_NOT_RELEASE';
 }catch(e){
  results.status='BLOCKED';
  results.failure=String(e?.message||e).slice(0,2500);
@@ -124,7 +138,7 @@ try{
  await new Promise(done=>server.close(done));
  await writeFile(out+'/results.json',JSON.stringify(results,null,2)+'\n');
  console.log('M2_P87_REAL_SOURCE',JSON.stringify({status:results.status,figures:results.figures.length,
-  realSourcePoseReceipts:results.sourcePoseReceipts.length,screens:results.screens.length,
+  realSourcePoseReceipts:results.sourcePoseReceipts.length,contactGate88:results.contactGate88?.status||'BLOCKED',actualFittedPoseContact88:results.actualFittedPoseContact88.length,screens:results.screens.length,
   differences:results.differences.length,errors:results.errors.length,networkBlocked:results.external.length,
   failure:results.failure||null,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }

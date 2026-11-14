@@ -9,6 +9,7 @@
  */
 import * as THREE from 'three';
 import {createRadialPreview86} from '../mission2-p86/radial-preview.mjs';
+import {auditPoseLinkedOriginalPhotoSkinnedFit88} from '../mission2-source-length/actual-photo-contact-52.mjs';
 
 const SOURCE_HASH='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019';
 const SCALE=1.025;
@@ -94,6 +95,7 @@ export function createSkinnedPosePreview87(root,dress){
    material.onBeforeCompile=original.material.onBeforeCompile;
    material.customProgramCacheKey=()=>original.material.customProgramCacheKey();
    const clone=original.clone(false);
+   clone.userData.work56Garment=true; // never count an actual cloth clone as anatomy
    clone.geometry=geometry;clone.material=material;clone.name='P87-research-source-skinned-fit';
    clone.frustumCulled=false;clone.visible=false;
    original.parent.add(clone);
@@ -135,6 +137,15 @@ export function createSkinnedPosePreview87(root,dress){
    return summary();
   }catch(error){teardown();throw error;}
  };
+ const audit88=()=>{
+  verify();
+  if(updates<1)fail('P88 sample requires an actual fully posed fitted clone');
+  const piece=clones.find(x=>x.original===dress.mesh);
+  if(!piece)fail('P88 real photographed source mesh not found');
+  return auditPoseLinkedOriginalPhotoSkinnedFit88({
+   root,dress,fitted:piece.clone
+  });
+ };
  const original=()=>{verify();mode='original';for(const c of clones){c.original.visible=c.wasVisible;c.clone.visible=false;}return summary();};
  const candidate=()=>{verify();if(updates===0)update();mode='candidate';for(const c of clones){c.original.visible=false;c.clone.visible=true;}return summary();};
  const summary=()=>Object.freeze({
@@ -154,6 +165,6 @@ export function createSkinnedPosePreview87(root,dress){
   actualPhysicalPhonesTested:false,consumer3DAdmitted:false,
   releaseAuthorized:false,familyAlpha:'HOLD'
  });
- try{update();return Object.freeze({original,candidate,update,dispose:teardown,get receipt(){return summary();}});}
+ try{update();return Object.freeze({original,candidate,update,audit88,dispose:teardown,get receipt(){return summary();}});}
  catch(e){teardown();throw e;}
 }
