@@ -64,7 +64,29 @@ s=replace(s,'premiumTurntable67=false}={}){','premiumTurntable67=false,emptyStar
 s=replace(s,' const load=async kind=>{',' let startup90=null;\n const load=async kind=>{');
 s=replace(s,"  installOpeningSkinAttribute(selected);outfit.setOutfit('pants');syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();",
  "  installOpeningSkinAttribute(selected);const bootStart90=performance.now();\n  const initialMode90=emptyStartup90===true?'none':'pants';outfit.setOutfit(initialMode90);\n  const initialGarmentMs=performance.now()-bootStart90,initialGarmentMeshes=outfit.getState().garmentMeshes;\n  syncOutfit();reapDetachedGarmentGeometries();shade(lastColor);front();\n  startup90={initialMode:initialMode90,initialGarmentMs,initialGarmentMeshes,totalLoadMs:performance.now()-began};");
-s=replace(s,'getState:()=>({kind:current,','getState:()=>({startup90,kind:current,');
+s=replace(s,'getState:()=>({kind:current,','getState:()=>({startup90,applyStages90,kind:current,');
+// P90 M8 diagnostic only: split the existing photographed-garment
+// applyOutfit() call into exactly its original ordered phases, without
+// simplifying/skipping CPU skinning, textures, resource reclamation or draw.
+s=replace(s," const applyOutfit=(mode,candidate,options={})=>{if(!selected||finish)throw Error('Loaded figure required');spin=false;group.rotation.y=0;const s=outfit.setOutfit(mode,candidate,options);sourcePhotoSampling=mode.includes('shirt')&&crispSourcePhotoClarity?configureOriginalPhotoSampling(selected,renderer,{enabled:true}):null;syncOutfit();reapDetachedGarmentGeometries();draw();return s;};",
+ ` let applyStages90=null;
+ const applyOutfit=(mode,candidate,options={})=>{
+  if(!selected||finish)throw Error('Loaded figure required');
+  const began90=performance.now();
+  spin=false;group.rotation.y=0;
+  const s=outfit.setOutfit(mode,candidate,options);
+  const fitted90=performance.now();
+  sourcePhotoSampling=mode.includes('shirt')&&crispSourcePhotoClarity?configureOriginalPhotoSampling(selected,renderer,{enabled:true}):null;
+  const sampling90=performance.now();
+  syncOutfit();reapDetachedGarmentGeometries();
+  const reclaimed90=performance.now();
+  draw();
+  const finished90=performance.now();
+  applyStages90=Object.freeze({mode,setOutfitMs:fitted90-began90,
+   samplingMs:sampling90-fitted90,cleanupMs:reclaimed90-sampling90,
+   drawMs:finished90-reclaimed90,totalMs:finished90-began90});
+  return s;
+ };`);
 // Bound horizontal orbit; keep existing authentic geometry/materials/UVs.
 // OrbitControls defaults to touch-action:none, trapping vertical page swipes
 // over the avatar. Preserve horizontal drag rotation and native pan-y scrolling.
