@@ -6,6 +6,19 @@
  */
 import {checkOverlap,sourceKey,sourceSeriesHint,verifiedSource,publicAuditReport} from './p75-dataset-core.mjs';
 const forbid=reason=>{throw Error('P883_'+reason);};
+/** Conservative museum source-identity screen. A repeated museum accession
+ * is only SUSPECTED to be the same physical object, so quarantine/skip its
+ * sibling rather than silently count two different garments or blind groups.
+ * Original P75 historical sourceSeriesHint recognizes MET/LACMA, but not
+ * Commons Auckland Museum filenames '(AM 2008.11.3-1)' and '-2'.
+ */
+export function sourceSeriesHint883(url){
+ const original=sourceSeriesHint(url);
+ if(original)return original;
+ const key=sourceKey(url);
+ const match=key?.match(/\bam[ _-]+(\d{4}(?:\.\d+){2,})(?:-\d+)?\b/);
+ return match?'museum-accession-am:'+match[1]:null;
+}
 export function exposedSources883(manifests,pinned){
  if(!Array.isArray(pinned?.rows)||pinned.schema!=='p75-public-candidates-pin-v1')forbid('PINNED_P75_LEDGER');
  const seen=new Set(),exposed=[];
@@ -15,7 +28,7 @@ export function exposedSources883(manifests,pinned){
    const source=row.sourcePage||row.source||row.attribution?.source;
    const key=sourceKey(source);
    const receipt={id:row.id,sourcePage:source,
-    sha256:row.sha256,seriesKey:row.seriesKey||sourceSeriesHint(source),from:name};
+    sha256:row.sha256,seriesKey:row.seriesKey||sourceSeriesHint883(source),from:name};
    const receiptKey=(receipt.sha256||'')+'|'+(key||'');
    if(!seen.has(receiptKey)){exposed.push(receipt);seen.add(receiptKey);}
   }
@@ -25,7 +38,7 @@ export function exposedSources883(manifests,pinned){
   const key=sourceKey(row.sourcePage);
   if(!key)forbid('PINNED_P75_URL');
   const receipt={id:row.id,sourcePage:row.sourcePage,sha256:row.sha256,
-   dhash64:row.dhash64,seriesKey:row.seriesKey||sourceSeriesHint(row.sourcePage),
+   dhash64:row.dhash64,seriesKey:row.seriesKey||sourceSeriesHint883(row.sourcePage),
    from:'previous-p75-publicly-exposed-not-blind'};
   const receiptKey=receipt.sha256+'|'+key;
   if(!seen.has(receiptKey)){exposed.push(receipt);seen.add(receiptKey);}
@@ -40,7 +53,11 @@ export function inspectNewCandidate883(row,exposed,accepted=[]){
    row?.rightsReview!=='manual-review-required'||row?.modelScored!==false||
    row?.labelsPublic!==false||row?.sourceGroupId!==null)
   issues.push('unapproved-public-claim');
- const flags=checkOverlap(row,exposed,accepted);
+ // Repair missing accession grouping on incoming metadata before comparing;
+ // the actual old source record remains untouched.
+ const group=sourceSeriesHint883(row?.sourcePage);
+ const normalized={...row,seriesKey:group||row?.seriesKey||null};
+ const flags=checkOverlap(normalized,exposed,accepted);
  return {sourceMachineVerified:issues.length===0,
   newSourceDisjoint:issues.length===0&&flags.length===0,
   issues:[...new Set(issues)].sort(),overlapFlags:flags};
