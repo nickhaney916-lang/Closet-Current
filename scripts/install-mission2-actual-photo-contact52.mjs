@@ -28,7 +28,7 @@ const importAnchor="import {sampleSourceDressMotion36} from '../mission2-source-
 assert.equal(controller.split(importAnchor).length,2,
  'C52 requires exact actual original photographed P175+C36 donor');
 controller=controller.replace(importAnchor,
- importAnchor+"\nimport {auditActualPhotographedDressSurfaces52} from '../mission2-source-length/actual-photo-contact-52.mjs';");
+ importAnchor+"\nimport {auditActualPhotographedDressSurfaces52,installDisposableOriginalDressRenderPreview86} from '../mission2-source-length/actual-photo-contact-52.mjs';");
 const anchor="       fitted=refinePhotographedDress61(fitted,root);";
 assert.equal(controller.split(anchor).length,2,
  'C52 original P61 garment fit stage missing or changed');
@@ -58,6 +58,31 @@ controller=controller.replace(anchor,anchor+
  "           evidence52.authenticOriginalLicensedDress!==true||\n"+
  "           evidence52.releaseAuthorized!==false)throw Error('C52 source photo evidence refused');\n"+
  "        globalThis.__M2C52LicensedResearchReceipt=evidence52;\n"+
+ "        if(query52.get('photoDressPreview86')==='research'){\n"+
+ "         const preview=installDisposableOriginalDressRenderPreview86({root,dress:fitted,sourceReceipt:evidence52});\n"+
+ "         if(preview.schema!=='M2-P86-real-photo-shader-world-candidate-static-render-A-B'||\n"+
+ "          preview.mode!=='original'||preview.releaseAuthorized!==false)\n"+
+ "          throw Error('P86 original-photo render-only side-by-side refused');\n"+
+ "        }\n"+
  "       }");
 await writeFile(controllerPath,controller);
 console.log('M2_C52_DISPOSABLE_ACTUAL_LICENSED_163_BONE_DRESS_AUDIT_INSTALLED_HOLD');
+
+/**
+ * Research P86: both standard signed-out disposal and modal close remove
+ * the ephemeral source-original photo comparison Mesh before native viewer
+ * disposes its own source JPEG shader/material or changes account.
+ */
+const panelPath=join(donor,'research/outfit-3d-01/research-panel.mjs');
+let panel=await readFile(panelPath,'utf8');
+for(const [anchor,inject] of [
+ [" function clearPrivate(){",
+  " function clearPrivate(){\n  globalThis.__M2P85Preview86?.dispose();"],
+ [" dialog.addEventListener('close',()=>{",
+  " dialog.addEventListener('close',()=>{\n  globalThis.__M2P85Preview86?.dispose();"]
+]){
+ assert.equal(panel.split(anchor).length,2,
+  'P86 detached native signed session/canvas viewer lifecycle anchor drift');
+ panel=panel.replace(anchor,inject);
+}
+await writeFile(panelPath,panel);
