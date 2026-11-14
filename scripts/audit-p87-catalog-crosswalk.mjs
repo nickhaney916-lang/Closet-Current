@@ -20,6 +20,22 @@ try{for(const [engine,kind] of Object.entries({chromium,webkit})){
   const api=createCatalogCrosswalk({lease:()=>token,readSavedItems:async()=>records});
   const row=await api.item('dress');
   const checks={sha:sha==='e7a617cd23a159864f619e8397d5f37d48b684e47dddc4ad6b46b14481042019',original:row.fallback.image===image,only2D:row.state==='2D_ONLY'&&!row.consumer3D,slot:(await api.query({slot:'top'})).ids[0]==='dress'};
+  // Real licensed JPEG source: neither false hash flags nor invented segment
+  // digests may preserve a previously approved garment's outfit eligibility.
+  records[0].sourceHashVerified=false;
+  const noReceipt=await api.item('dress');
+  checks.unverifiedOutfitDenied=noReceipt.fallback===null&&noReceipt.slotIds.length===0&&
+   Object.keys((await api.board({slots:{top:'dress'}})).slots).length===0;
+  records[0].sourceHashVerified=true;
+  records[0].singleGarmentVerified=false;
+  records[0].outfitSourceId='source-dress';
+  records[0].segmentHint={verified:true,ownerReviewedInstance:true,originalSHA256:sha,
+   cutoutSHA256:'b'.repeat(64),cutoutImage:image,clipped:false};
+  checks.forgedCutoutDenied=(await api.item('dress')).slotIds.length===0&&
+   Object.keys((await api.board({slots:{top:'dress'}})).slots).length===0;
+  delete records[0].segmentHint;delete records[0].outfitSourceId;
+  records[0].singleGarmentVerified=true;
+  checks.validSourceRestored=(await api.item('dress')).slotIds.includes('top');
   records[0].sourceRevoked=true;try{await api.item('dress');checks.revoke=false;}catch{checks.revoke=true;}
   records[0].sourceRevoked=false;token={...token,ownerId:'synthetic-bob'};try{await api.query();checks.isolation=false;}catch{checks.isolation=true;}
   return checks;
