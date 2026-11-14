@@ -14,7 +14,7 @@ for(const id of Object.keys(SOURCE_CLASSES89)){
   assert.equal(row.status,'ORIGINAL_JPEG_VERIFIED');assert.equal(row.category,record.category);
   assert.equal(row.license,record.license);assert.equal(row.originalByteCount,photo.byteLength);
   assert.equal(row.actual163BoneFitProved,false);assert.equal(row.releaseAuthorized,false);
-  assert.deepEqual(row.observedViews,['front']);
+  assert.deepEqual(row.observedViews,['single-published-view-angle-unadjudicated']);
  });
 }
 test('two different source categories, authentic original JPEGs, both avatars, still gated 2D',()=>{
@@ -54,6 +54,7 @@ test('corrupted photo, forged legal rights, wrong source and missing photo fail 
 test('wrong owner category, duplicate garment, unobserved jacket, dress+bottom and positive crossings are rejected',()=>{
  const top=verified('commons-0003'),bottom=verified('commons-0023'),dress=verified('commons-0053');
  const cases=[
+  [top,{...bottom}],
   [top,{...bottom,category:'jacket'}],
   [top,top],
   [top,{...bottom,sourceId:'owner-unsupported-jacket'}],
@@ -67,6 +68,6 @@ test('a bounded P84 no-crossing receipt NEVER certifies source 3D fit or indepen
  const receipt={schema:'parallel84-distinct-source-layer-contact/v1',status:'UNCERTAIN_NOT_CLEARANCE',
    budgetComplete:true,contactClearanceProved:false,releaseAuthorized:false,strictTransverseCrossings:0};
  const r=auditSourceOutfit89({pieces:[verified('commons-0016'),verified('commons-0023')],avatar:'male',contactReceipt:receipt});
- assert.equal(r.independentLayerContactMeasured,true);assert.equal(r.contactStatus,'UNCERTAIN_NOT_CLEARANCE');
+ assert.equal(r.independentLayerContactMeasured,false);assert.equal(r.contactStatus,'UNVERIFIED_EXTERNAL_RECEIPT');
  assert.equal(r.safeToRenderPhotorealistic3D,false);assert.equal(r.releaseAuthorized,false);
 });
