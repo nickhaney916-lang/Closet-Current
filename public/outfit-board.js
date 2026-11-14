@@ -132,7 +132,7 @@ window.addEventListener('closet:session-locked',()=>{
  }
  $('boardSaveStatus').textContent='Signed-out private outfit cleared. Reopen Outfit Builder.';
 });
-async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null}={}){
+async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraft=null,expectedClothing=null,replaceCurrent=null}={}){
  if(nativeLossless04Active)throw Error('Unsafe native outfit write blocked; use lossless Save changes or Save outfit');
  if(!db){$('boardSaveStatus').textContent='Browser storage is unavailable. Keep this page open.';throw Error('Browser storage is unavailable.');}
  const ownerDB=db,auth=window.closetAuth,owner=auth?.user?.id;
@@ -143,7 +143,7 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
    throw Error('Your account changed. Reopen your closet before saving this outfit.');
  };
  assertOwner();
- const current=structuredClone(currentBoard),candidate=appendSaved?structuredClone(appendSaved):null,
+ const current=structuredClone(replaceCurrent===null?currentBoard:replaceCurrent),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
  ++boardPendingWrites;
  try{await queued(()=>new Promise((resolve,reject)=>{
@@ -343,9 +343,24 @@ function renderSavedOutfitBoards(){
 async function importBoardBackup(value){
  if(nativeLossless04Active)
   throw Error('Native backup import blocked in lossless research mode; atomic items/outfit restore is not yet accepted');
+ // Legacy v1–v3 outfit restore must never publish a previous signed owner's
+ // data into a new account during a delayed startup or private IDB write.
+ const lease=beginOwnerBoardUiLease();
+ if(!lease)throw Error('Sign in again before restoring private outfits.');
  if(!boardInitialized)await outfitBoardReady;
- if(!value||!Array.isArray(value.saved)||value.saved.length>50)throw Error('Invalid outfit board backup.');
- currentBoard=cleanOutfitBoard(value.current,items);savedOutfitBoards=value.saved.map(board=>cleanOutfitBoard(board,items));syncBoardInputs();await persistBoardState({replaceSaved:savedOutfitBoards});renderOutfitBoard();
+ if(!lease.current())throw Error('Your account changed. Restart this outfit restore.');
+ if(!value||!Array.isArray(value.saved)||value.saved.length>50)
+  throw Error('Invalid outfit board backup.');
+ // Keep proposed private names, source IDs and garment selections off-screen
+ // until the exact signed owner transaction has committed successfully.
+ const incomingCurrent=cleanOutfitBoard(value.current,items),
+  incomingSaved=value.saved.map(board=>cleanOutfitBoard(board,items));
+ if(!lease.current())throw Error('Your account changed. Restart this outfit restore.');
+ await persistBoardState({replaceSaved:incomingSaved,replaceCurrent:incomingCurrent});
+ if(!lease.current())return;
+ currentBoard=incomingCurrent;
+ savedOutfitBoards=incomingSaved;
+ syncBoardInputs();renderOutfitBoard();
 }
 for(const slot of outfitSlots){const option=node('option',slot.label);option.value=slot.id;$('boardTarget').append(option);}$('boardTarget').value='shoes';$('boardTarget').onchange=renderBoardSuggestions;
 for(const [id,key]of Object.entries({boardName:'name',boardOccasion:'occasion',boardSeason:'season',boardAudience:'audience',boardSize:'size',boardBudget:'budget'})){
