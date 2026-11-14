@@ -139,7 +139,8 @@ export async function mountOwnerReviewedCloud146({
  function settle(answer){
   if(!pending)return;
   const cb=pending;pending=null;
-  if(dialog.open)dialog.close();
+  // A failing dialog close must not strand a pending owner review promise.
+  try{if(dialog.open)dialog.close();}catch{}
   cb(answer===true&&!revoked);
  }
  by('owner146Cancel').onclick=()=>settle(false);
@@ -201,10 +202,21 @@ export async function mountOwnerReviewedCloud146({
  });
  function revoke(){
   if(revoked)return;revoked=true;
-  settle(false);
-  backupService?.revoke();restoreService?.revoke();
-  for(const id of buttonIds){const b=by(id);if(b){b.disabled=true;b.onclick=null;}}
-  panel.remove();if(dialog.open)dialog.close();dialog.remove();style.remove();
+  // Clean up all independent parts even if a service, button or dialog
+  // throws. The private panel must not survive a stale owner session.
+  const safe=fn=>{try{fn();}catch{}};
+  safe(()=>settle(false));
+  safe(()=>backupService?.revoke());
+  safe(()=>restoreService?.revoke());
+  for(const id of buttonIds)safe(()=>{
+   const b=by(id);if(b){b.disabled=true;b.onclick=null;}
+  });
+  safe(()=>{if(dialog.open)dialog.close();});
+  safe(()=>panel.remove());
+  safe(()=>dialog.remove());
+  safe(()=>style.remove());
+  safe(()=>globalThis.window?.removeEventListener?.('closet:session-locked',onLocked));
+  safe(()=>globalThis.window?.removeEventListener?.('pagehide',onLocked));
  }
  const onLocked=()=>revoke();
  globalThis.window?.addEventListener('closet:session-locked',onLocked,{once:true});
