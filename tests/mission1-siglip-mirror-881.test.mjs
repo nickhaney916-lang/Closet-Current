@@ -127,9 +127,9 @@ test('P881 ordinary owner panel never activates research flip and helper is sour
   'public/dual-worker-82.mjs','scripts/p82-real-browser.mjs'
  ].map(p=>readFile(p,'utf8')));
  assert.doesNotMatch(panel,/researchFlip881|P881_MIRROR/);
- assert.match(core,/siglip-horizontal-view-881\\.mjs/);
- assert.match(worker,/r\\.researchFlip881==='horizontal-mirror-v1'/);
- assert.match(worker,/let baseline,experiment877=null,experiment881=null/);
- assert.match(runner,/process\\.env\\.P881_MIRROR==='1'/);
- assert.match(worker,/experiment877,experiment881,timings/);
+ assert.ok(core.includes('siglip-horizontal-view-881.mjs'));
+ assert.ok(worker.includes("r.researchFlip881==='horizontal-mirror-v1'"));
+ assert.ok(worker.includes('let baseline,experiment877=null,experiment881=null'));
+ assert.ok(runner.includes("process.env.P881_MIRROR==='1'"));
+ assert.ok(worker.includes('experiment877,experiment881,timings'));
 });
