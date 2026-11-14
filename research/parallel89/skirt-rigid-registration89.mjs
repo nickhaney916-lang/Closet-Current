@@ -11,6 +11,7 @@
  * poses, and exact pair IDs are checked. A numerical improvement is NEVER
  * owner, garment fit, swept-collision, or visual-quality acceptance.
  */
+import {summarizeOriginalPhotoSkirtContactTopology89} from './skirt-contact-topology89.mjs';
 const POSES=Object.freeze(['source','blend-50','relaxed']);
 const MOVES=Object.freeze([
  Object.freeze({name:'front-15mm',dx:0,dy:0,dz:.015}),
@@ -39,8 +40,13 @@ function pairCounts(before,after){
   planeDepthIncreased:after.maxDepth>before.maxDepth+.0005};
 }
 export function compareActualOriginalPhotoSkirtRegistration89({
- mesh,avatar,applyPose,sampleContact
+ mesh,avatar,applyPose,sampleContact,originalBodyFaceMask
 }={}){
+ if(!(originalBodyFaceMask instanceof Uint8Array)||
+  originalBodyFaceMask.length<1000||originalBodyFaceMask.length>500000||
+  !originalBodyFaceMask.some(x=>x===0)||!originalBodyFaceMask.some(x=>x===1)||
+  originalBodyFaceMask.some(x=>x!==0&&x!==1))
+  return fail('original-cc0-source-skin-body-face-mask-required');
  if(!mesh?.isSkinnedMesh||mesh?.skeleton?.bones.length!==163||
   !['female','male'].includes(avatar)||
   typeof applyPose!=='function'||typeof sampleContact!=='function')
@@ -86,12 +92,13 @@ export function compareActualOriginalPhotoSkirtRegistration89({
       !eq(clone.getAttribute('skinWeight').array,weights.array)||
       !eq(clone.getAttribute('sourceSkirt89Rest').array,rest.array))
     throw Error('original-photo-source-UV-weights-or-faces-altered');
-   const contact=[];
+   const contact=[],sourceBVHAfter=[];
    for(let i=0;i<POSES.length;i++){
     applyPose(POSES[i]);
     const after=sampleContact(POSES[i]);
     if(!validContact(after))
      throw Error('real-original-rig-posed-BVH-contact-pairs-unavailable');
+    sourceBVHAfter.push(after);
     contact.push(pairCounts(baseline[i],after));
    }
    const original=contact.reduce((v,x)=>v+x.originalStrictTransversePairs,0),
@@ -99,6 +106,15 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     introduced=contact.reduce((v,x)=>v+x.newOriginalSourceFacePairIDs,0),
     depthIncreased=contact.some(x=>x.planeDepthIncreased);
    // Compare complete P84 original-body BVH identifiers, not count alone.
+   const topology=summarizeOriginalPhotoSkirtContactTopology89({
+    baseline,trial:sourceBVHAfter,bodyFaceMask:originalBodyFaceMask,
+    bodyFaceCount:originalBodyFaceMask.length,avatar,trialName:t.name
+   });
+   if(topology.status!=='GENUINE_ORIGINAL_FULL_BODY_SOURCE_CONTACT_TURNOVER_MEASURED_NOT_CLEARANCE'||
+      topology.originalStrictCrossingPairSum!==original||
+      topology.trialStrictCrossingPairSum!==trial||
+      topology.newlyIntroducedOriginalBodySkirtFacePairSum!==introduced)
+    throw Error('genuine-source-contact-turnover-analysis-failed');
    const researchOnlyReduction=introduced===0&&!depthIncreased&&trial<original;
    const row=Object.freeze({
     name:t.name,localCameraFacingRegistrationMeters:[t.dx,t.dy,t.dz],
@@ -110,6 +126,7 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     trialThreePoseStrictCrossingPairSum:trial,
     introducedOriginalSourceFacePairIDs:introduced,
     maxPlaneDepthWorsened:depthIncreased,perPoseContacts:contact,
+    genuineOriginalSkirtContactTopology:topology,
     researchOnlyNonworseningReduction:researchOnlyReduction,
     photographicFrontDepthAlignmentHumanApproved:false,
     garmentAbsolutePhysicalScaleKnown:false,realMotionAndDrapeApproved:false,
@@ -152,7 +169,8 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    'real-original-rig-posed-BVH-contact-pairs-unavailable',
    'original-photo-source-UV-weights-or-faces-altered',
    'photographed source skin/UV/geometry mutated',
-   'original photographed skirt photo-derived positions modified'
+   'original photographed skirt photo-derived positions modified',
+   'genuine-source-contact-turnover-analysis-failed'
   ]);
   return fail(safe.has(e.message)?e.message:
    'real-photo-skirt-registration-trial-source-not-verifiable');
