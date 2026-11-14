@@ -49,10 +49,11 @@ async function workerMessages(instanceReview840){
  await vm.runInContext('chain',c);
  return sent;
 }
-function captureHarness(){
+function captureHarness({ownerId=null}={}){
  const nodes=new Map(),timers=new Map();let sequence=0;
  const node=id=>{if(!nodes.has(id))nodes.set(id,{hidden:false,disabled:false,textContent:''});return nodes.get(id);};
  const c={URL,location:{href:'https://example.test/closet?outfitInstances840=1'},
+  ...(ownerId?{window:{closetAuth:{user:{id:ownerId}}}}:{}),
   $:node,batch:[],items:[],localPending:new Set(),busy:false,session:0,recognitionAssetVersion:'research',
   categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
   crypto:{randomUUID:()=> 'id-'+(++sequence)},
@@ -113,4 +114,28 @@ test('P88 reviewed category, color, approval checkbox cannot certify unresolved 
  assert.match(reviewedCore,/ownerMaySaveSourceGroup88\(item\)/);
  assert.match(appSource,/if\(!ownerMaySaveSourceGroup88\(item\)\)\{message\('The original photo has unresolved garment fragments/);
  assert.match(appSource,/Photograph the garment separately, then review again/);
+});
+
+test('P88 owner ID switch stops midflight garment emissions without adding a draft',()=>{
+ const h=captureHarness({ownerId:'owner-A'});
+ const oldWorker=h.c.worker;
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,PIECE',
+  hint:{categories:['Tops'],types:[],clipped:false},
+  instanceMethod:'connected_semantic_component_unverified',requiresReview:true}});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(oldWorker.closed,true);
+ assert.match(h.node('outfitSplitStatus').textContent,/Owner session changed/);
+});
+test('P88 replaced same-ID signed owner reference revokes an in-flight instance result',()=>{
+ const h=captureHarness({ownerId:'owner-A'});
+ const oldWorker=h.c.worker;
+ h.c.window.closetAuth.user={id:'owner-A'};
+ h.emit({type:'piece',piece:{image:'data:image/jpeg;base64,PIECE',
+  hint:{categories:['Dresses'],types:[],clipped:false},
+  instanceMethod:'connected_semantic_component_unverified',requiresReview:true}});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(oldWorker.closed,true);
 });
