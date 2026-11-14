@@ -6,8 +6,8 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: main1054-m11-p880-webkit-phase-memory-hold
-  cancel-in-progress: true
+  group: main1054-m11-p880-webkit-phase-memory-${{ github.sha }}
+  cancel-in-progress: false
 jobs:
   immutable-source-and-private-owner-policy-NO-DEPLOY:
     runs-on: ubuntu-24.04
@@ -41,6 +41,7 @@ jobs:
           grep -q 'MAIN1054_REAL_MODEL_STAGE' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q 'phaseTimings:info.phaseTimings' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q 'peakBrowserDescendantPssKiB' scripts/test-main1054-webkit-phase-memory.mjs
+          grep -q 'samplingIntervalMs:3000' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q 'm11-p880-linux-proc-pss-rss-two-model-phase-v1' scripts/test-main1054-webkit-phase-memory.mjs
           grep -q 'subtypeNeedsManualReview' public/dual-panel-82.mjs
           grep -q 'return decision.hypotheses.filter(h=>h.label===top.label' public/dual-panel-82.mjs
