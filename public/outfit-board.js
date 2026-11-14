@@ -198,6 +198,7 @@ window.addEventListener('beforeunload',event=>{
  if(boardHasUnsavedDraft()){event.preventDefault();event.returnValue='';}
 });
 window.addEventListener('closet:session-locked',()=>{
+ ++ownerPicker33Serial;
  cancelBoardDraftTimer();++boardStatusSerial;boardConflictDraft=null;$('retryBoardDraft').hidden=true;
  const actions=$('boardDraftConflictActions');if(actions)actions.hidden=true;
  // The default private Outfit Builder carries owner names, garment IDs and
@@ -241,21 +242,42 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
  assertOwner();
  const current=structuredClone(replaceCurrent===null?currentBoard:replaceCurrent),candidate=appendSaved?structuredClone(appendSaved):null,
   replacement=replaceSaved===null?null:structuredClone(replaceSaved);
+ let proof33=null,picker33Gate=null;
+ if(ownerPicker33Active){
+  try{
+   picker33Gate=await ownerPicker33Gate();
+   assertOwner();
+   proof33=await picker33Gate.prepareWrite(current);
+   assertOwner();
+   if(candidate&&(Object.keys(candidate.slots).length!==Object.keys(current.slots).length||
+     Object.entries(candidate.slots).some(([slot,id])=>current.slots[slot]!==id)))
+    throw outfitWardrobeChanged();
+  }catch{
+   try{picker33Gate?.dispose();}catch{}
+   throw outfitWardrobeChanged();
+  }
+ }
  ++boardPendingWrites;
  try{await queued(()=>new Promise((resolve,reject)=>{
-  assertOwner();const tx=ownerDB.transaction(candidate?['state','items']:'state','readwrite'),store=tx.objectStore('state');
+  assertOwner();proof33?.assertCurrent();
+  const tx=ownerDB.transaction(candidate||proof33?['state','items']:'state','readwrite'),store=tx.objectStore('state');
   let failure,saved,keepStoredDraft=false;
-  if(candidate)for(const [slotId,id]of Object.entries(candidate.slots)){
+  if(candidate||proof33)for(const [slotId,id]of Object.entries(candidate?.slots||current.slots)){
    const selected=tx.objectStore('items').get(id);
    selected.onsuccess=()=>{try{
-    assertOwner();const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
-    if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||(row.ownerId&&row.ownerId!==owner)||!expected||!actual||expected.length!==actual.length||!expected.every((v,i)=>v===actual[i]))
+    assertOwner();proof33?.assertCurrent();
+    const row=selected.result,slot=outfitSlots.find(x=>x.id===slotId),
+     expected=expectedClothing?.[id],actual=row?outfitSavedItemFacts(row):null;
+    if(!row||!slot||!slotAllows(slot,normalizeClothing(row))||
+       (row.ownerId&&row.ownerId!==owner)||proof33&&!proof33.matches(id,row)||
+       candidate&&(!expected||!actual||expected.length!==actual.length||
+         !expected.every((v,i)=>v===actual[i])))
      throw outfitWardrobeChanged();
    }catch(error){failure=error;tx.abort();}};
   }
   const request=store.get('outfit-board');
   request.onsuccess=()=>{try{
-   assertOwner();
+   assertOwner();proof33?.assertCurrent();
    const observed=JSON.stringify(request.result?.current??null),expected=replaceDraft?replaceDraft.stored:boardExpectedStoredDraft;
    if(replacement===null&&observed!==expected){
     boardConflictDraft={ownerDB,auth,owner,stored:observed};
@@ -269,9 +291,9 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
    if(candidate){if(saved.length>=50)throw Error('You can save up to 50 outfits.');saved.push(candidate);}
    store.put({id:'outfit-board',current:keepStoredDraft?(request.result?.current??null):current,saved});
   }catch(error){failure=error;tx.abort();}};
-  tx.oncomplete=()=>{try{assertOwner();savedOutfitBoards=structuredClone(saved);if(!keepStoredDraft){boardCommittedDraft=JSON.stringify(current);boardExpectedStoredDraft=JSON.stringify(current);boardConflictDraft=null;}resolve();}catch(error){reject(error);}};
+  tx.oncomplete=()=>{try{assertOwner();proof33?.assertCurrent();proof33?.consume();savedOutfitBoards=structuredClone(saved);if(!keepStoredDraft){boardCommittedDraft=JSON.stringify(current);boardExpectedStoredDraft=JSON.stringify(current);boardConflictDraft=null;}resolve();}catch(error){reject(error);}};
   tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('Could not save this outfit.'));
- }));}finally{--boardPendingWrites;}
+ }));}finally{--boardPendingWrites;try{picker33Gate?.dispose();}catch{}}
 }
 function outfitSavedItemFacts(item){
  const row=normalizeClothing(item);
@@ -366,6 +388,7 @@ function openBoardPicker(slotId){
   $('boardPicker').close();switchView('scan');};grid.append(add);}
  for(const item of options){const b=node('button',null,'board-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('strong',item.name||'Closet piece'),node('span',[item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · ')));b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
+   if(ownerPicker33Active){void ownerPicker33Choose(slotId,item.id,b,pickerLease,{closePicker:true});return;}
    selectBoardPiece(slotId,item.id);$('boardPicker').close();
   };grid.append(b);}
  $('boardPicker').showModal();
@@ -413,6 +436,7 @@ function renderBoardSuggestions(){
  for(const item of owned){const b=node('button',null,'board-owned-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span','Already in your closet'),node('strong',item.name),node('small','Use this piece'));b.onclick=()=>{
   if(!suggestionsCurrent()||b.isConnected===false||
      ($('boardTarget').value||'shoes')!==target||!items.includes(item))return;
+  if(ownerPicker33Active){void ownerPicker33Choose(target,item.id,b,suggestionLease);return;}
   selectBoardPiece(target,item.id);
  };ownGrid.append(b);}
  const grid=$('boardRecommendations');grid.replaceChildren();
