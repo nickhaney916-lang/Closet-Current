@@ -169,7 +169,7 @@ function cropClothingPhoto(item){
   }
  }).catch(()=>message('Could not open this photo for cropping. Your saved photo is kept.'));
 }
-function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||hasSourceBoundMask88(item);button.onclick=()=>cropClothingPhoto(item);return button;}
+function cropButton(item){const button=node('button','Crop photo','secondary');button.type='button';button.disabled=localPending.has(item.id)||!!item?.reconciliation70||!!item?.reconciliation70Status||!!item?.shoePair||!!item?.combinedFragments70||!!item?.segmentHint?.componentReviewStatus;button.onclick=()=>cropClothingPhoto(item);return button;}
 // P846: owner's two confirmed photo regions may represent one physical item;
 // never infer that source/mask evidence or a machine suggestion is ownership.
 function unit70Receipts(item){
