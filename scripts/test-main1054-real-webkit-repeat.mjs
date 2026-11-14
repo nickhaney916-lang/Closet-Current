@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {execFileSync} from 'node:child_process';
 import {resolve,extname} from 'node:path';
 import {chromium,webkit} from 'playwright';
+import {sampleBrowserProcessRss} from '../research/master-consolidation-1054/browser-process-rss.mjs';
 const root=resolve('public'),out=resolve('benchmark/main1054-real-webkit-repeat');
 const codeCommit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
 assert.match(codeCommit,/^[a-f0-9]{40}$/);
@@ -129,6 +130,21 @@ const results=[],requests=[],pageErrors=[],consoleErrors=[],modelStages=[];
 const events={workerCreated:0,workerTerminated:0,pageCrash:0,pageClosed:0,browserDisconnected:0};
 const startTime=Date.now(),failures=[];
 let browser,page,context,browserServer,intentionalShutdown=false;
+const rss={rootPid:null,latest:null,peakRoot:0,peakTree:0,samples:0};
+let rssTimer,rssSampling=false;
+async function sampleRss(){
+ if(rssSampling||!rss.rootPid)return;
+ rssSampling=true;
+ try{
+  const sample=await sampleBrowserProcessRss(rss.rootPid);
+  if(sample){
+   rss.latest=sample;
+   rss.peakRoot=Math.max(rss.peakRoot,sample.rootRssBytes);
+   rss.peakTree=Math.max(rss.peakTree,sample.treeRssBytes);
+   rss.samples++;
+  }
+ }finally{rssSampling=false;}
+}
 const emit=async()=>{
  const completed=results.length;
  const state={
@@ -144,8 +160,14 @@ const emit=async()=>{
   rootCause:'UNDETERMINED',modelStages,
   runBudgetMs,
   pageEvents:events,resourceMeasurements:{
-   browserProcessRSSBytes:null,peakBrowserProcessRSSBytes:null,
-   measuredMemory:false,source:'no browser process RSS/pressure available from Playwright interface'},
+   browserProcessRSSBytes:rss.latest?.rootRssBytes??null,
+   peakBrowserProcessRSSBytes:rss.samples?rss.peakRoot:null,
+   browserProcessTreeRSSBytes:rss.latest?.treeRssBytes??null,
+   peakBrowserProcessTreeRSSBytes:rss.samples?rss.peakTree:null,
+   browserDescendantProcessCount:rss.latest?.processCount??null,
+   rssSampleCount:rss.samples,
+   measuredMemory:rss.samples>0,
+   source:rss.samples?'Linux /proc VmRSS; aggregate RSS can double-count shared pages':'Linux /proc unavailable; RSS unmeasured'},
   sourceHashesVerified:true,originalPhotoModified:false,autoAdmissions:0,
   ownerAccount:'synthetic-only',ownerSessionIdentityChanged:false,
   persistedPrivateWardrobeWrites:0,authorizedHostedCloud:false,
@@ -175,6 +197,10 @@ try{
   headless:true,args:engineName==='chromium'?['--no-sandbox']:[],
  });
  browser=await ({webkit,chromium}[engineName]).connect(browserServer.wsEndpoint());
+ rss.rootPid=browserServer.process?.()?.pid??null;
+ await sampleRss();
+ rssTimer=setInterval(()=>{void sampleRss()},1000);
+ rssTimer.unref?.();
  browser.on('disconnected',()=>{if(!intentionalShutdown)events.browserDisconnected++;});
  context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  await context.route('**/*',route=>{
@@ -270,6 +296,7 @@ try{
    console.log('MAIN1054_WEBKIT_REAL_FAILURE',JSON.stringify(failure));
   }
   if(failure){await emit();break;}
+  await sampleRss();
   results.push({iteration:attempt,id:photo.id,sourceSHA256:photo.sourceSHA256,
    observedOriginalSHA256:info.observedOriginalSHA256,workerSourceCodeSha256:info.workerSourceCodeSha256,
    realModelFamilies:info.modelKeys,verifiedAssets:info.verifiedAssets,
@@ -277,13 +304,14 @@ try{
    elapsedInferenceMs:Math.round(info.totalMs),
    sourceValid:true,privateWrites:0,automaticAdmissions:0,
    browserJSHeapBytes:info.memoryUsedJSHeapBytes,
-   processRSSBytes:null,
+   processRSSBytes:rss.latest?.rootRssBytes??null,
+   processTreeRSSBytes:rss.latest?.treeRssBytes??null,
   });
   console.log('MAIN1054_WEBKIT_REAL_ROW',JSON.stringify({
    engine:engineName,iteration:attempt,publicSource:photo.id,
    models:info.modelKeys,ms:Math.round(info.totalMs),
    workerEvents:events.workerCreated,workerTerminations:events.workerTerminated,
-   rssMeasured:false,autoSaves:0}));
+   rssMeasured:rss.samples>0,autoSaves:0}));
   if([2,4,8,16].includes(attempt))await emit();
  }
  if(!page?.isClosed()&&!failures.length){
@@ -301,6 +329,8 @@ try{
 }finally{
  // This is a DIAGNOSTIC experiment. Capture incomplete runs as BLOCKED, not
  // a false completed acceptance or a fabricated cause, even when browser dies.
+ if(rssTimer)clearInterval(rssTimer);
+ await sampleRss();
  intentionalShutdown=true; // voluntary shutdown is NOT a browser crash or disconnect
  try{await context?.close();}catch{}
  try{await browser?.close();}catch{}
@@ -312,6 +342,6 @@ try{
   checkpoints:state.gateCounts,failures:state.failures.length,
   status:state.status,releaseReady:false,physicalIPhone:false,
   pageCrashEvents:events.pageCrash,workerEvents:events.workerCreated,
-  observedMemoryRSS:false}));
+  observedMemoryRSS:state.resourceMeasurements.measuredMemory}));
  await new Promise(resolve=>server.close(resolve));
 }
