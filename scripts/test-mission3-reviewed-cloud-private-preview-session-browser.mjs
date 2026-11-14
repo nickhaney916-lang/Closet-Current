@@ -28,6 +28,9 @@ const frameCode=[
  actual,
  'const onLocked=()=>revoke();',
  `window.__scenario=async function(mode){
+   // Isolate each synthetic case: a prior valid-owner case intentionally keeps
+   // its private style mounted until revocation, so do not leak that fixture.
+   document.querySelectorAll('#owner146Style').forEach(s=>s.remove());
    document.body.innerHTML='<div id="menu"><section id="ownerReview146Panel">'+
     '<button id="owner146Preview">Preview</button>'+
     '<button id="owner146Backup">Backup</button>'+
