@@ -37,6 +37,20 @@ test('C60: zero radial axis or below skirt produces no invented displacement',()
  assert.deepEqual(v.world,p);
  assert.notStrictEqual(v.world,p);
 });
+test('C60: genuine narrow neck-to-spine anatomical height still permits smooth source dry-run without fabric edits',()=>{
+ const source=new Float32Array([
+  .15,.04,0,.17,.05,.03,.13,.08,-.01,
+  -.15,.04,0,-.17,.05,.03,-.13,.08,-.01
+ ]);
+ const snapshot=source.slice(),trial=createDisposableUpperTorsoWorldTrial60(source,{
+  neck:[0,.13,0],spine:[0,0,0]
+ });
+ assert.ok(trial.movedVertices>=3);
+ assert.ok(trial.maxAppliedMeters>.0001&&trial.maxAppliedMeters<=.006002);
+ assert.deepEqual(source,snapshot);
+ assert.equal(trial.originalPhotographedSourceMeshChanged,false);
+ assert.equal(trial.releaseAuthorized,false);
+});
 test('C60: invalid original photo source, 163-bone anatomical reference and forged excessive move rejected',()=>{
  const normal=new Float32Array([.2,.2,0,.3,.3,0,.4,.4,0]);
  for(const run of [
@@ -44,7 +58,7 @@ test('C60: invalid original photo source, 163-bone anatomical reference and forg
   ()=>createDisposableUpperTorsoWorldTrial60(new Float32Array(7),{neck:[0,1,0],spine:[0,0,0]}),
   ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,0,0],spine:[0,0,0]}),
   ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,NaN,0],spine:[0,0,0]}),
-  ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,.13,0],spine:[0,0,0]}),
+  ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,.0005,0],spine:[0,0,0]}),
   ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,1,0],spine:[0,0,0],outwardMeters:.02}),
   ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,1,0],spine:[0,0,0],outwardMeters:-.001}),
   ()=>createDisposableUpperTorsoWorldTrial60(normal,{neck:[0,1,0],spine:[0,0,0],outwardMeters:'6mm'}),
