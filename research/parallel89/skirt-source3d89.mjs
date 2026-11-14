@@ -150,7 +150,9 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
     pos.applyMatrix4(inverse);verts.push(...pos.toArray());
     bone.push(pelvis,0,0,0);weights.push(1,0,0,0);
     // Front only carries photo RGB. Source background alpha remains transparent.
-    uv.push(outline.crop[0]+(x+1)*.5*outline.crop[2],
+    // Use the actual measured source row center/width, not a fictional
+    // symmetric bounding-box projection that loses motif registration.
+    uv.push((s.centerPixels+x*s.widthPixels*.5)/outline.pixelDimensions[0],
       1-outline.crop[1]-t*outline.crop[3]);
     if(ri<heights.length-1&&j<segments){
      const p=ri*(segments+1)+j,q=p+segments+1;
