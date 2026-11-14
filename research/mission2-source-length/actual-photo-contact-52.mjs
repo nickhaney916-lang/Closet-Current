@@ -848,8 +848,63 @@ function bodyFaces58(root,cloth,maxBodyFaces){
  out.sort((a,b)=>a.minX-b.minX);
  return {complete:true,bodyMeshes,faces,invalid,out};
 }
+
+/**
+ * P2-C59: classify only actual C58 strict body/fabric triangle-crossing
+ * witnesses by the licensed source garment TRIANGLE CENTROID relative to
+ * original neck01 / spine04 world-height landmarks.
+ *
+ * These are COARSE HEIGHT BANDS, not measured crossing coordinates,
+ * penetrating volumes, skeletal anatomical diagnoses or verified sewing.
+ * No raw world positions, face IDs, bone matrices, owner photos or vertices
+ * enter the returned summary. The original 163-bone model must be upright.
+ */
+const SOURCE_BODY_BANDS59=Object.freeze([
+ 'atOrAboveNeckAnchorHeight',
+ 'betweenNeckAndSpineAnchorHeights',
+ 'belowSpineAnchorHeight'
+]);
+function sourceBodyBandClassifier59(root,mesh){
+ const named=new Map(mesh.skeleton.bones.map(b=>[b.name,b]));
+ const neck=named.get('neck01'),spine=named.get('spine04');
+ if(!neck?.isBone||!spine?.isBone||neck===spine)
+  fail('C59 original 163-bone neck/spine source landmarks required');
+ root.updateMatrixWorld(true);
+ const ny=neck.getWorldPosition(new THREE.Vector3()).y,
+  sy=spine.getWorldPosition(new THREE.Vector3()).y;
+ if(!Number.isFinite(ny)||!Number.isFinite(sy)||ny<=sy+.001)
+  fail('C59 upright original source anatomical height anchors required');
+ return tri=>{
+  const y=(tri[0].y+tri[1].y+tri[2].y)/3;
+  if(!Number.isFinite(y))fail('C59 nonfinite original cloth triangle centroid');
+  return y>=ny?SOURCE_BODY_BANDS59[0]:
+   y>=sy?SOURCE_BODY_BANDS59[1]:SOURCE_BODY_BANDS59[2];
+ };
+}
+function sourceBodyBandReceipt59(count,strict,complete){
+ if(!count)return null;
+ const total=SOURCE_BODY_BANDS59.reduce((n,k)=>n+count[k],0);
+ if(total!==strict)fail('C59 strict body contact witness bands do not sum exactly');
+ return Object.freeze({
+  schema:'M2-original-source-body-crossing-centroid-height-bands-C59',
+  atOrAboveNeckAnchorHeight:count.atOrAboveNeckAnchorHeight,
+  betweenNeckAndSpineAnchorHeights:count.betweenNeckAndSpineAnchorHeights,
+  belowSpineAnchorHeight:count.belowSpineAnchorHeight,
+  strictlyCrossingBodyTrianglePairWitnesses:strict,
+  allObservedStrictCrossingsAccountedFor:total===strict,
+  geometricSourceTriangleCentroidNotActualIntersectionPoint:true,
+  noValidatedAnatomicalDefectLocalization:true,
+  noContactSeverityOrPhysicalPenetrationDepthMeasured:true,
+  noOwnerOrOriginalPhotoCoordinatesOrFacesExported:true,
+  fullyAuditedAtThisOnePose:complete,
+  anyStrictBodyCrossingBlocksGarmentRelease:true,
+  collisionExceptionGranted:false,
+  releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+}
 function bodyClothContact58(body,clothWorld,indices,tolerance,{
- maxBodyComparisons58,maxBodyCandidatePairs58
+ maxBodyComparisons58,maxBodyCandidatePairs58,
+ bodyTriangleBandClassifier59=null
 }){
  if(!body.complete)return {...body};
  const clothes=[];
@@ -896,6 +951,8 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
  }
  let compared=0,candidates=0,strict=0,near=0,positive=0,
   complete=true;
+ const regionCounts59=bodyTriangleBandClassifier59?
+  Object.fromEntries(SOURCE_BODY_BANDS59.map(k=>[k,0])):null;
  outer:for(const c of clothes){
   const t=span(c),
    n=(t.y1-t.y0+1)*(t.z1-t.z0+1);
@@ -919,7 +976,15 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
    if(++candidates>maxBodyCandidatePairs58){
     complete=false;break outer;
    }
-   if(strictFaceCrossing52(c.tri,b.tri,1e-7))strict++;
+   if(strictFaceCrossing52(c.tri,b.tri,1e-7)){
+    strict++;
+    if(regionCounts59){
+     const region=bodyTriangleBandClassifier59(c.tri);
+     if(!SOURCE_BODY_BANDS59.includes(region))
+      fail('C59 unknown original source height band');
+     regionCounts59[region]++;
+    }
+   }
    const d=triangleDistance53(c.tri,b.tri);
    if(!Number.isFinite(d)||d<0)
     fail('C58 invalid original photograph garment-body separation');
@@ -927,13 +992,15 @@ function bodyClothContact58(body,clothWorld,indices,tolerance,{
   }
  }
  return {complete,bodyMeshes:body.bodyMeshes,faces:body.faces,
-  invalid:body.invalid,compared,candidates,strict,near,positive};
+  invalid:body.invalid,compared,candidates,strict,near,positive,
+  sourceBodyHeightBandReceipt59:
+   sourceBodyBandReceipt59(regionCounts59,strict,complete)};
 }
 function articulatedContact58(root,mesh,source,indices,triangles,
  neutralWorld,neutral,anatomical57,tolerance,{
  maxComparisons58,maxCandidatePairs58,maxDistancePairs58,
  maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
- maxPoseSamples58
+ maxPoseSamples58,refineBodyHeightWitnessBands59=false
 }){
  const refused=(reason)=>Object.freeze({
   schema:'M2-licensed-original-163bone-articulated-contact-C58',
@@ -989,8 +1056,11 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   refineSourceTopology54:false,refineEdgeWinding55:false};
  const neutralBody=bodyClothContact58(
   bodyFaces58(root,mesh,maxBodyFaces58),neutralWorld,indices,tolerance,{
-   maxBodyComparisons58,maxBodyCandidatePairs58
+   maxBodyComparisons58,maxBodyCandidatePairs58,
+   bodyTriangleBandClassifier59:refineBodyHeightWitnessBands59?
+    sourceBodyBandClassifier59(root,mesh):null
   });
+ const sampledBodyHeightBands59=[];
  let samples=0,selfComplete=0,bodyComplete=0,displacements=0,
   selfBoxPairs=0,selfZeros=0,selfSeparated=0,selfStrict=0,
   bodyFacesCount=0,bodyCompared=0,bodyPairs=0,bodyNear=0,bodyStrict=0;
@@ -1024,8 +1094,12 @@ function articulatedContact58(root,mesh,source,indices,triangles,
      selfComplete++;
     const body=bodyFaces58(root,mesh,maxBodyFaces58);
     const bodyCheck=bodyClothContact58(body,world,indices,tolerance,{
-     maxBodyComparisons58,maxBodyCandidatePairs58
+     maxBodyComparisons58,maxBodyCandidatePairs58,
+     bodyTriangleBandClassifier59:refineBodyHeightWitnessBands59?
+      sourceBodyBandClassifier59(root,mesh):null
     });
+    if(refineBodyHeightWitnessBands59)
+     sampledBodyHeightBands59.push(bodyCheck.sourceBodyHeightBandReceipt59??null);
     bodyFacesCount+=bodyCheck.faces;
     bodyCompared+=bodyCheck.compared;
     bodyPairs+=bodyCheck.candidates;
@@ -1083,6 +1157,16 @@ function articulatedContact58(root,mesh,source,indices,triangles,
   originalBodyStrictTransverseCrossingsAcrossSamples:bodyStrict,
   originalBodyPairSampleBudgetExhausted:bodyComplete!==samples,
   originalBodyIndependentClothFitCertified:false,
+  ...(refineBodyHeightWitnessBands59?{
+   originalNeutralBodyHeightBands59:neutralBody.sourceBodyHeightBandReceipt59??null,
+   originalArticulatedBodyHeightBands59:sampledBodyHeightBands59,
+   originalBodyHeightBandEvidenceComplete59:
+    neutralBody.complete&&bodyComplete===samples&&samples===2&&
+    sampledBodyHeightBands59.length===2&&
+    sampledBodyHeightBands59.every(x=>x?.fullyAuditedAtThisOnePose===true),
+   rawBodyClothCrossingFaceIDsAndXYZWithheld59:true,
+   noAnatomicalCollisionReleaseWaiver59:true
+  }:{}),
   allTemporaryBoneQuaternionsRestored:restored,
   exactNeutralWorldSkinnedDressRestored:worldRestored,
   sourceReadOnlySampleRefusedReason:null,
@@ -1216,6 +1300,7 @@ export function auditActualPhotographedDressSurfaces52({
  refineAnatomicalLoopLandmarks57=false,maxLoopVertices57=50000,
  maxPoseSamples57=2,
  refineArticulatedContacts58=false,
+ refineBodyHeightWitnessBands59=false,
  maxPoseSamples58=2,
  maxComparisons58=800000,maxCandidatePairs58=100000,
  maxDistancePairs58=100000,maxBodyFaces58=160000,
@@ -1266,6 +1351,8 @@ export function auditActualPhotographedDressSurfaces52({
     maxLoopVertices57<1||maxLoopVertices57>100000||
     !Number.isSafeInteger(maxPoseSamples57)||
     maxPoseSamples57<1||maxPoseSamples57>2||
+    typeof refineBodyHeightWitnessBands59!=='boolean'||
+    (refineBodyHeightWitnessBands59&&!refineArticulatedContacts58)||
     typeof refineArticulatedContacts58!=='boolean'||
     (refineArticulatedContacts58&&!refineAnatomicalLoopLandmarks57)||
     !Number.isSafeInteger(maxPoseSamples58)||maxPoseSamples58<1||
@@ -1346,7 +1433,7 @@ export function auditActualPhotographedDressSurfaces52({
    skinned,posed,anatomical57,toleranceMeters,{
     maxComparisons58,maxCandidatePairs58,maxDistancePairs58,
     maxBodyFaces58,maxBodyComparisons58,maxBodyCandidatePairs58,
-    maxPoseSamples58
+    maxPoseSamples58,refineBodyHeightWitnessBands59
    }):null;
  for(const [name,attr,bytes] of immutable)
   if(g.getAttribute(name)!==attr||
@@ -1432,6 +1519,12 @@ export function auditActualPhotographedDressSurfaces52({
     posed.edge55.sourceEdgeAuditComplete,
    anatomicalSourceLoopNamesNotHumanVerified57:true,
    realSkinPoseSamplingNotCollisionApproval57:true
+  }:{}),
+  ...(refineBodyHeightWitnessBands59?{
+   genuineSourceBodyCrossingHeightWitnesses59:
+    articulated58?.originalBodyHeightBandEvidenceComplete59===true,
+   noActualPiercingPointOrSeverityLocalizationCertified59:true,
+   noSourceGeometryAdjustmentOrCollisionWaiver59:true
   }:{}),
   ...(refineArticulatedContacts58?{
    originalArticulatedContactReceipt58:articulated58,

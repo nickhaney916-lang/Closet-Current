@@ -971,3 +971,91 @@ test('C58: original 163-bone anatomy comparison budget exhaustion refuses partia
  assert.equal(a.releaseAuthorized,false);
  assert.deepEqual(original(f),originalSource);
 });
+
+const audit59=(f,opts={})=>audit58(f,{
+ refineBodyHeightWitnessBands59:true,...opts
+});
+const body59=(f,tri)=>{
+ const attr=f.body.geometry.getAttribute('position');
+ attr.array.set(tri);attr.needsUpdate=true;
+ return f;
+};
+test('C59: REAL signed-source THREE neutral and two articulated strict body crossings are counted by original neck/spine height band, not waived',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  .1,1.0,-.12,.15,1.05,.12,.05,1.10,.12
+ ]);
+ const immutable=original(f),saved=f.bones.map(b=>b.quaternion.clone());
+ const r=audit59(f),a=r.originalArticulatedContactReceipt58;
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,true);
+ assert.equal(a.originalBodyHeightBandEvidenceComplete59,true);
+ assert.equal(r.genuineSourceBodyCrossingHeightWitnesses59,true);
+ const n=a.originalNeutralBodyHeightBands59;
+ assert.equal(n.schema,'M2-original-source-body-crossing-centroid-height-bands-C59');
+ assert.ok(a.originalNeutralBodyStrictCrossings>0);
+ assert.equal(n.strictlyCrossingBodyTrianglePairWitnesses,
+  a.originalNeutralBodyStrictCrossings);
+ assert.equal(n.atOrAboveNeckAnchorHeight,0);
+ assert.ok(n.betweenNeckAndSpineAnchorHeights>0);
+ assert.equal(n.belowSpineAnchorHeight,0);
+ assert.equal(a.originalArticulatedBodyHeightBands59.length,2);
+ assert.equal(a.originalArticulatedBodyHeightBands59.reduce(
+  (n,z)=>n+z.strictlyCrossingBodyTrianglePairWitnesses,0),
+  a.originalBodyStrictTransverseCrossingsAcrossSamples);
+ assert.ok(a.originalArticulatedBodyHeightBands59.every(z=>
+  z.fullyAuditedAtThisOnePose&&z.allObservedStrictCrossingsAccountedFor));
+ assert.equal(n.geometricSourceTriangleCentroidNotActualIntersectionPoint,true);
+ assert.equal(n.noValidatedAnatomicalDefectLocalization,true);
+ assert.equal(n.noContactSeverityOrPhysicalPenetrationDepthMeasured,true);
+ assert.equal(n.noOwnerOrOriginalPhotoCoordinatesOrFacesExported,true);
+ assert.equal(n.anyStrictBodyCrossingBlocksGarmentRelease,true);
+ assert.equal(n.collisionExceptionGranted,false);
+ assert.equal(r.releaseAuthorized,false);
+ assert.deepEqual(original(f),immutable);
+ assert.ok(f.bones.every((b,i)=>b.quaternion.equals(saved[i])));
+});
+test('C59: original lower dress crossing is reported below spine anchor without claiming precise anatomical location',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  .15,-1.0,-.12,.2,-.9,.12,.05,-.95,.12
+ ]),r=audit59(f),a=r.originalArticulatedContactReceipt58,
+ z=a.originalNeutralBodyHeightBands59;
+ assert.equal(a.originalBodyHeightBandEvidenceComplete59,true);
+ assert.ok(z.belowSpineAnchorHeight>0);
+ assert.equal(z.atOrAboveNeckAnchorHeight,0);
+ assert.equal(z.betweenNeckAndSpineAnchorHeights,0);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C59: original source cloth centroid above neck landmark is classified only as coarse height band',()=>{
+ const c=fourLoops57.slice();
+ c.splice(9,9,0,1.3,0,.3,1.3,0,0,1.6,0);
+ const f=body59(annotatedBones57(fixture52(c)),[
+  .1,1.4,-.12,.15,1.45,.12,.05,1.5,.12
+ ]),r=audit59(f),a=r.originalArticulatedContactReceipt58;
+ assert.equal(a.originalBodyHeightBandEvidenceComplete59,true);
+ assert.ok(a.originalNeutralBodyStrictCrossings>0);
+ assert.equal(a.originalNeutralBodyHeightBands59.atOrAboveNeckAnchorHeight,
+  a.originalNeutralBodyStrictCrossings);
+ assert.equal(r.noActualPiercingPointOrSeverityLocalizationCertified59,true);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C59: incomplete body comparison budget fails closed for source body band evidence',()=>{
+ const f=body59(annotatedBones57(fixture52(fourLoops57)),[
+  0,-3,-3,0,3,-3,0,0,3
+ ]);
+ const r=audit59(f,{maxBodyComparisons58:1});
+ assert.equal(r.originalPhotoArticulatedPoseEvidenceComplete58,false);
+ assert.equal(r.originalArticulatedContactReceipt58.originalBodyHeightBandEvidenceComplete59,false);
+ assert.equal(r.genuineSourceBodyCrossingHeightWitnesses59,false);
+ assert.equal(r.noSourceGeometryAdjustmentOrCollisionWaiver59,true);
+ assert.equal(r.releaseAuthorized,false);
+});
+test('C59: no source-based garment-body localization without genuine C58 provenance and valid boolean flags',()=>{
+ const f=annotatedBones57(fixture52(fourLoops57));
+ for(const invalid of [
+  {refineBodyHeightWitnessBands59:true},
+  {refineBodyHeightWitnessBands59:'true'}
+ ]){
+  assert.throws(()=>auditActualPhotographedDressSurfaces52({
+   root:f.root,dress:f.dress,...invalid
+  }),/M2 C52 original-photo diagnostic/);
+ }
+});
