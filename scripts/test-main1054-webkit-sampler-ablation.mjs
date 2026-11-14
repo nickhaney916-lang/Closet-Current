@@ -227,7 +227,7 @@ const emit=async()=>{
   rows:results,failures,networkBlocked:requests.filter(x=>x.blocked).length,
   pageErrors:pageErrors.slice(0,6),consoleErrors:consoleErrors.slice(0,6),
  };
- await writeFile(out+'/'+engineName+'-'+target+'-ablation.json',JSON.stringify(state,null,2)+'\n');
+ await writeFile(out+'/'+engineName+'-'+memoryMode+'-'+target+'-ablation.json',JSON.stringify(state,null,2)+'\n');
  return state;
 };
 try{
