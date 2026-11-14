@@ -1,0 +1,43 @@
+name: "MAIN1054 WebKit browser memory evidence — NO DEPLOY"
+'on':
+  push:
+    branches:
+      - research/main1054-webkit-memory-evidence-20261113-HOLD
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  linux-memory-browser-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 18
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict research-only scope and source grammar
+        shell: bash
+        run: |
+          set -eu
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor adf8c3912c68a1a3fce6e7598a35d11c3251e4db HEAD
+          git diff --exit-code adf8c3912c68a1a3fce6e7598a35d11c3251e4db HEAD -- public/ supabase/ benchmark/photos/
+          node --check research/master-consolidation-1054/browser-process-memory.mjs
+          node --check scripts/test-main1054-real-webkit-repeat.mjs
+          node --check scripts/test-main1054-webkit-process-memory-browser.mjs
+      - name: Adversarial numeric-source and fail-closed acceptance regressions
+        run: node --test tests/master-webkit-process-memory.test.mjs tests/master-real-model-budget-stage.test.mjs tests/master-real-model-sequence-gate.test.mjs
+      - name: Install pinned Playwright for disposable Linux browser memory sampling
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1
+      - name: Sample real desktop Chromium and WebKit process trees without loading models
+        run: node scripts/test-main1054-webkit-process-memory-browser.mjs
+      - name: Explicitly retain Family Alpha HOLD
+        run: echo "Research-only desktop memory instrumentation; no physical phones, blind recognition, cloud, fitted 3D, merge or deployment. HOLD #255."
