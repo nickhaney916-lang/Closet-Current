@@ -11,7 +11,7 @@ const root='benchmark/parallel90-profile/'+engine,donor=resolve('.native05-donor
 const run=(cmd,args,env={})=>execFileSync(cmd,args,{stdio:'inherit',env:{...process.env,...env}});
 if(process.env.P90_COMPARE_ONLY!=='1'){
  for(const variant of ['baseline','candidate','restored']){
-  run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs']);
+  run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs','research/dress-mobile-01/dress-outfit-controller.mjs']);
   const env={P90_ENGINE:engine,P90_PROFILE_VARIANT:variant,P90_SWITCH_COUNT:'4',P90SWAPS:'1',P90_WIDTH:'390',P90:''};
   run(process.execPath,['scripts/install-parallel90-viewer.mjs'],env);
   run(process.execPath,['scripts/test-native-3d-05-browser.mjs'],env);
@@ -75,6 +75,6 @@ await writeFile(root+'/comparison.json',JSON.stringify({engine,status:'PASS',
 console.log('P90_STARTUP_COMPARISON',JSON.stringify({engine,metrics,frames:frames.length,status:'PASS'}));
 
 if(process.env.P90_COMPARE_ONLY!=='1'){
- run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs']);
+ run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs','research/dress-mobile-01/dress-outfit-controller.mjs']);
  run(process.execPath,['scripts/install-parallel90-viewer.mjs'],{P90_PROFILE_VARIANT:'candidate'});
 }
