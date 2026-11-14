@@ -46,6 +46,10 @@ jobs:
           node --check research/mission1-parallel88/run-public-validation-88.mjs
           python -m py_compile research/mission1-parallel88/recover-public-validation-88.py research/mission1-parallel88/score-public-validation-88.py
           python research/mission1-parallel88/recover-public-validation-88.py --verify-manifest-only
+          python research/mission1-parallel88/recover-public-validation-88.py --audit-accessory-ontology | tee /tmp/p88-human-accessory-ontology
+          grep -Fq '"humanAccessoryInstances":13' /tmp/p88-human-accessory-ontology
+          grep -Fq '"noDirectSegformerClassInstances":5' /tmp/p88-human-accessory-ontology
+          grep -Fq '"modelInference":false' /tmp/p88-human-accessory-ontology
       - name: Synthetic source-conservation and inherited instance/pair regressions
         shell: bash
         run: |
