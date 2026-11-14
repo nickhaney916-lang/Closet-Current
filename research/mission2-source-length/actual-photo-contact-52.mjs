@@ -1981,19 +1981,39 @@ export function installDisposableOriginalDressRenderPreview86({
  if(skinnedExperiment){
   overlay.bindMode=mesh.bindMode;
   overlay.bind(mesh.skeleton,mesh.bindMatrix);
+  // Exact original owner garment may have a world-derived attached
+  // bindMatrixInverse. THREE.bind() recalculates its own inverse; the
+  // research clone must copy the ORIGINAL signed mesh's actual matrices.
+  overlay.bindMatrix.copy(mesh.bindMatrix);
+  overlay.bindMatrixInverse.copy(mesh.bindMatrixInverse);
+  overlay.updateWorldMatrix(true,false);
   if(overlay.skeleton!==mesh.skeleton||
    overlay.skeleton.bones.length!==163){
    overlay.removeFromParent();clone.dispose();
    fail('P86 cloned skinned garment must share exact original 163-bone skeleton');
   }
   const neutralRendered=skinnedWorldBuffer58(overlay);
-  let disagreement=0;
+  let disagreement=0,originalMatrixMismatch86=0,
+   bindMatrixMismatch86=0,bindInverseMismatch86=0;
   for(let i=0;i<neutralRendered.length;i++)
    disagreement=Math.max(disagreement,
     Math.abs(neutralRendered[i]-test[i]));
-  if(disagreement>2e-6){
+  for(let i=0;i<16;i++){
+   originalMatrixMismatch86=Math.max(originalMatrixMismatch86,
+    Math.abs(overlay.matrixWorld.elements[i]-mesh.matrixWorld.elements[i]));
+   bindMatrixMismatch86=Math.max(bindMatrixMismatch86,
+    Math.abs(overlay.bindMatrix.elements[i]-mesh.bindMatrix.elements[i]));
+   bindInverseMismatch86=Math.max(bindInverseMismatch86,
+    Math.abs(overlay.bindMatrixInverse.elements[i]-mesh.bindMatrixInverse.elements[i]));
+  }
+  if(disagreement>2e-6||originalMatrixMismatch86>1e-9||
+   bindMatrixMismatch86>1e-9||bindInverseMismatch86>1e-9){
    overlay.removeFromParent();clone.dispose();
-   fail('P86 source skinned counterpart must reconstruct authentic audited neutral mesh');
+   fail('P86 original 163-bone neutral skin mismatch meters='+
+    disagreement.toFixed(9)+' worldmatrix='+
+    originalMatrixMismatch86.toFixed(9)+' bindmatrix='+
+    bindMatrixMismatch86.toFixed(9)+' bindinverse='+
+    bindInverseMismatch86.toFixed(9));
   }
  }
  const sourceSnapshot=Object.entries(g.attributes).map(([name,attr])=>
