@@ -4,7 +4,13 @@
  */
 import {chromium,webkit} from 'playwright';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
+// P88: use a true byte-derived SHA for the original synthetic JPEG fixture.
+// No family/public source photo or hosted owner account is used in this test.
+const originalJpeg88=Buffer.from([255,216,255,224,0,16,1,2,3,4,255,217]);
+const originalSource88='data:image/jpeg;base64,'+originalJpeg88.toString('base64');
+const originalHash88=createHash('sha256').update(originalJpeg88).digest('hex');
 const app=await readFile('public/app.js','utf8'),
  taxonomy=await readFile('public/taxonomy.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
@@ -15,6 +21,12 @@ const source=extract('function node(', 'function cropClothingPhoto(')+
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
  "let items=[],batch=[],stream=null,cameraOpening=false;",
+ // Keep the browser's original P846 native Adjust source, but provide the
+ // same signed owner/IDB transaction boundary required by the new P88 guard.
+ "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {put(value){if(name==='items'){window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
+ "const queued=async fn=>{await window.beforeWriteTest?.();return fn();};",
+ "const originalSource88="+JSON.stringify(originalSource88),
+ "const sourceHash88="+JSON.stringify(originalHash88),
  "const localPending=new Set(),sessionCapturedIds=new Set();",
  "const checkPhoto=async()=>({colorEstimate:null});",
  "window.closetAuth={user:{id:'owner-A'}};",
@@ -28,14 +40,14 @@ const harness=[
  "const queueAutomatic=()=>{};",
  "const message=x=>window.messageText=x;",
  "const sh=n=>Number(n).toString(16).padStart(64,'0');",
- "const receipt=(owner,m)=>({ownerId:owner,sourceSha256:sh(10),maskSha256:sh(m)});",
+ "const receipt=(owner,m)=>({ownerId:owner,sourceSha256:sourceHash88,maskSha256:sh(m)});",
  "window.setup846=(status='paired_confirmed',account='owner-A',dup=false)=>{",
  "  for(const old of document.querySelectorAll('dialog'))old.remove();",
  "  window.closetAuth.user.id=account;window.writeCount=0;window.stored=[];window.completions=[];window.messageText='';",
  "  const item={id:'pair',image:'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLttAAAAABJRU5ErkJggg==',",
  "    name:'Black shoes',category:'Shoes',itemType:'Sneakers',color:'Black',",
  "    colorSource:'photo-estimate',seasons:[],userAdjusted:false,outfitSourceId:'outfit-source',",
- "    requiresOwnershipConfirmation:true,reconciliation70Status:status,reconciliation70:receipt('owner-A',11),",
+ "    originalPhoto:{image:originalSource88},requiresOwnershipConfirmation:true,reconciliation70Status:status,reconciliation70:receipt('owner-A',11),",
  "    shoePair:{confirmedByOwner:true,companion:{image:'data:image/jpeg;base64,QUJDRA==',reconciliation70:receipt('owner-A',12)}}};",
  "  batch=[item];items=dup?[{id:'old',image:'data:image/jpeg;base64,QUJD',category:'Shoes',itemType:'Sneakers',color:'Black',reconciliation70:receipt('owner-A',12)}]:[];",
  "  adjustPhoto(item);return item;",
@@ -67,6 +79,9 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    await page.evaluate(()=>window.setup846('paired_confirmed','owner-A',false));
    assert.equal(await page.getByAltText(/Second original garment region confirmed/).count(),1);
    await approve();await submit(2);
+   // SHA-256 is asynchronous. Wait for actual source-bound IDB arrival, not
+   // merely for synchronous form dispatch to return.
+   await page.waitForFunction(()=>window.writeCount===1,{timeout:10000});
    assert.equal(await page.evaluate(()=>window.writeCount),1);
    assert.equal(await page.getByRole('button',{name:'Saving…'}).isDisabled(),true);
    await page.evaluate(()=>window.completions.shift().resolve());
