@@ -4,6 +4,19 @@ import {digestBytes,jpegBytes} from '../../public/native-canonical-photo-source-
 const fields=['category','itemType','pattern','sleeveLength','fit','color','material','brand','size','occasion','notes','seasons','name'];
 const fail=reason=>{throw Error('P87 '+reason);};
 const clone=x=>structuredClone(x);
+function unitLineage(record,sourceValid){
+ const pair=record.shoePair,fragments=record.combinedFragments70;
+ const grouping=pair||fragments;
+ const receipts=[record.reconciliation70,grouping?.companion?.reconciliation70].filter(Boolean);
+ const bound=receipts.length===2&&receipts.every(r=>r.ownerId===record.ownerId&&r.sourceSha256===record.sourceSHA256&&/^[a-f0-9]{64}$/.test(r.maskSha256||''))&&receipts[0].maskSha256!==receipts[1].maskSha256;
+ const confirmed=sourceValid&&bound&&grouping?.confirmedByOwner===true&&
+  record.reconciliation70Status===(pair?'paired_confirmed':'fragments_confirmed')&&
+  record.requiresOwnershipConfirmation!==true;
+ return {kind:pair?'shoe-pair':fragments?'garment-fragments':'item',
+  ownerConfirmed:!!confirmed,status:record.reconciliation70Status??null,
+  componentIds:clone(grouping?.componentIds??[]),
+  sourceMaskReceipts:receipts.map(r=>({ownerId:r.ownerId,sourceSHA256:r.sourceSha256,maskSHA256:r.maskSha256}))};
+}
 function reviewed(record){
  const out={...record};
  for(const key of fields){
@@ -12,6 +25,7 @@ function reviewed(record){
   const colorReviewed=key==='color'&&record.colorSource==='user'&&record.confirmedColor===true;
   if(!colorReviewed&&(evidence===undefined||JSON.stringify(evidence)!==JSON.stringify(record[key])))delete out[key];
  }
+ if(record.requiresOwnershipConfirmation===true||record.reconciliation70Status==='unresolved'){delete out.category;delete out.itemType;}
  return out;
 }
 /** Session provider must return authoritative current owner/db/session/revision lease.
@@ -52,6 +66,8 @@ export function createCatalogCrosswalk({lease,readSavedItems,cryptoProvider=glob
    return Object.freeze({ ...row, garmentId:record.garmentId??null,pairId:record.pairId??null,
     duplicateCandidate:clone(record.possibleDuplicate??null),
     sourceReferences:clone(record.sourceReferences??[]),
+    sourceId:record.sourceId??null,outfitSourceId:record.outfitSourceId??null,
+    unit:unitLineage(record,!!image),
     state:image&&record.researchArtifact?.sourceSHA256===row.source?'3D_RESEARCH_CANDIDATE':'2D_ONLY',
     fallbackCause:image?'consumer-3d-admission-unproven':'original-source-unavailable',
     fallback:image?Object.freeze({itemId:id,image,sourceSHA256:record.sourceSHA256}):null,
