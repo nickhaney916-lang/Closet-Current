@@ -26,6 +26,7 @@ export async function checkSavedSwitch90(page,engine){
    },{selected,mode},{timeout:150000}).catch(async e=>{
     console.error('P90_SWITCH_DIAGNOSTIC',await page.evaluate(()=>({status:document.getElementById('native3D05Status')?.textContent,donor:document.getElementById('outfit3D01Status')?.textContent,state:window.native3D05Bridge.state()})));throw e;
    });
+   if(i>1)assert.equal(await page.locator('#outfit3D01Model').inputValue(),figure,'outfit switching retains chosen rig');
    if(await page.locator('#outfit3D01Model').inputValue()!==figure)
     await page.selectOption('#outfit3D01Model',figure);
    await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:120000});

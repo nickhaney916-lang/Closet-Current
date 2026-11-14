@@ -147,11 +147,18 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
+ let preferredFigure90='female';
  let displayedSelection89=null,displayedSources91=null,displayedRevision93=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
+  // Preserve only a validated UI avatar choice inside this owner lease.
+  // No meshes, texture, source receipt or old-account state are reused.
+  if(revoke)preferredFigure90='female';
+  else try{const figure=panel?.state()?.figure;
+   if(figure==='male'||figure==='female')preferredFigure90=figure;
+  }catch{}
   const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
@@ -322,6 +329,8 @@ export async function mountNative3D05({
    requireFresh(); // Do not open a donor after the native outfit changed.
    lockDonorEditing();
    opened=selected.id;
+   const figure90=doc.getElementById('outfit3D01Model');
+   if(figure90)figure90.value=preferredFigure90;
    await panel.open(); // genuine anatomical WebGL rig and source-verified loaders
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
