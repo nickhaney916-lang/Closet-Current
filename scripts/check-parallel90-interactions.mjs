@@ -5,6 +5,17 @@ export async function checkViewer90(page,width,engine){
  const camera=async()=>{const s=await state();assert.equal(s.bones,163);assert.ok(s.camera90);return s.camera90;};
  const settle=()=>page.waitForTimeout(350);
  const samples=[];
+ // The original and every fresh canvas must remain keyboard accessible.
+ const verifyCanvas=async()=>{
+  const a=await page.locator('#outfit3D01Canvas').evaluate(c=>({
+   touchAction:getComputedStyle(c).touchAction,tabIndex:c.tabIndex,
+   label:c.getAttribute('aria-label')
+  }));
+  assert.equal(a.touchAction,'pan-y','vertical scrolling must not be trapped over avatar');
+  assert.equal(a.tabIndex,0,'actual 3D canvas remains keyboard focusable');
+  assert.match(a.label||'',/Drag to rotate/);
+ };
+ await verifyCanvas();
  for(const figure of ['female','male']){
   await page.selectOption('#outfit3D01Model',figure);
   await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:120000});
@@ -33,6 +44,32 @@ export async function checkViewer90(page,width,engine){
   // are captured through the existing authenticated read-only panel).
   samples.push({figure,width,engine,before,after,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
+ // Browser-emulated phone landscape; physical finger/hardware remains NOT TESTED.
+ // Keep the exact already admitted rig and garment while resizing the viewer.
+ const originalViewport=page.viewportSize();
+ let landscape=null;
+ try{
+  await page.setViewportSize({width:780,height:390});
+  await settle();
+  await verifyCanvas();
+  landscape=await page.evaluate(()=>{
+   const canvas=document.getElementById('outfit3D01Canvas');
+   const button=document.getElementById('outfit3D01Right90');
+   const rect=button.getBoundingClientRect();
+   return {viewport:[innerWidth,innerHeight],canvas:[canvas.clientWidth,canvas.clientHeight],
+    rotateButton:[rect.width,rect.height],touchAction:getComputedStyle(canvas).touchAction};
+  });
+  assert.ok(landscape.canvas[0]>0&&landscape.canvas[1]>=200,'landscape must retain usable 3D canvas');
+  assert.ok(landscape.rotateButton.every(v=>v>=43),'landscape rotate control must remain touch-sized');
+  await page.locator('#outfit3D01Reset90').click();await settle();
+  const a=(await camera()).angle;
+  await page.locator('#outfit3D01Right90').click();await settle();
+  const b=(await camera()).angle;
+  assert.ok(Math.abs(((b-a+540)%360)-180)>5,'landscape rotation changes real camera');
+  assert.equal((await state()).bones,163);
+ }finally{
+  await page.setViewportSize(originalViewport);await settle();
+ }
  await page.locator('#outfit3D01Reset90').click();
  await mkdir('benchmark/parallel90/'+engine,{recursive:true});
  await page.screenshot({path:'benchmark/parallel90/'+engine+'/'+width+'-interactive.png'});
@@ -46,8 +83,16 @@ export async function checkViewer90(page,width,engine){
  await page.waitForFunction(()=>!window.native3D05Bridge.state().active);
  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
- await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
+ await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,landscape,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
  // Reopen requires actual owner/source re-attestation and a new renderer.
  await page.locator('#native3D05Preview').click();
  await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:150000});
+ await verifyCanvas();
+ await page.locator('#outfit3D01Reset90').click();await settle();
+ const beforeKey=(await camera()).angle;
+ await page.locator('#outfit3D01Canvas').focus();
+ await page.keyboard.press('ArrowRight');await settle();
+ const afterKey=(await camera()).angle;
+ assert.ok(Math.abs(((afterKey-beforeKey+540)%360)-180)>5,
+  'reopened real WebGL canvas must retain working keyboard orbit');
 }
