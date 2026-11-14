@@ -57,6 +57,14 @@ assert.equal(oldP93Changes,12961);
 assert.equal(extra,receipt.additionalAlphaPixelsProposed??0);
 await mkdir(dir,{recursive:true});
 for(let i=0;i<3;i++)await copyFile(join(from,files[i]),join(dir,files[i]));
+// Preserve the two exact original-P93 diagnostic frames also referenced by
+// the M42 eight-image offline comparison. Never substitute a generated stand-in.
+for(const existing of ['neckline-comparison.jpg','removed-alpha-overlay.png'])
+ await copyFile(join(from,existing),join(dir,existing));
+const sourceReceipt=JSON.parse(await readFile(join(from,'measured-source-contour-receipt.json'),'utf8'));
+assert.equal(sourceReceipt.originalJpegSha256,M42_SOURCE_SHA);
+assert.equal(sourceReceipt.originalPublicLicense,'CC BY 4.0');
+assert.ok(sourceReceipt.originalPublicSource?.startsWith('https://commons.wikimedia.org/'));
 const candidatePNG=await sharp(candidate,{
  raw:{width:si.width,height:si.height,channels:4}
 }).png({compressionLevel:9}).toBuffer();
@@ -98,6 +106,9 @@ const report={...receipt};delete report.candidateRGBA;
 const record={
  ...report,
  originalSourceId:'commons-0053',
+ originalPublicLicense:sourceReceipt.originalPublicLicense,
+ originalPublicSource:sourceReceipt.originalPublicSource,
+ originalPublicAttribution:sourceReceipt.sourceCredit,
  sourceJpegSHA256:M42_SOURCE_SHA,
  work47PngSHA256:M42_BASELINE_SHA,
  p93ProvisionalPngSHA256:M42_P93_TRIAL_SHA,
