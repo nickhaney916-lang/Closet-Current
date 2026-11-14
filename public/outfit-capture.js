@@ -77,7 +77,7 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
  if(busy||outfitSplitJob)return;
  stopCamera();busy=true;controls(true);outfitActiveId=sourceId;lastOutfitPhoto=image;$('outfitRetry').hidden=true;$('outfitSaveStatus').textContent='';
  if(typeof recordDeviceEvent==='function')recordDeviceEvent('outfit_split_start');
- const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
+ const job={id:crypto.randomUUID(),sourceId,ownerId:unit70Owner(),ownerRef88:outfitInstances840&&typeof window!=='undefined'?window.closetAuth?.user:null,started:Date.now(),phase:'loading',worker:null,timer:null,added:0,colorNotes:[],messageQueue:Promise.resolve(),sourceDigest:outfitColor76?originalSha256ForColor76(image):null};outfitSplitJob=job;
  const timeout=()=>finishOutfitSplit(job,'Outfit separation timed out. Your existing and separated photos are kept. Try again with one person, head to toe.',true);
  const touch=()=>{clearTimeout(job.timer);const remaining=300000-(Date.now()-job.started);job.timer=setTimeout(timeout,Math.max(0,Math.min(60000,remaining)));};touch();
  $('outfitSplitStatus').textContent='Preparing…';
@@ -85,7 +85,15 @@ function startOutfitSplit(image,sourceId=crypto.randomUUID()){
   const version=recognitionAssetVersion?'?v='+recognitionAssetVersion:'';job.worker=new Worker('outfit-worker.mjs'+version,{type:'module'});
   const handleOutfitMessage=async event=>{
    if(job!==outfitSplitJob)return;const data=event.data;if(!data||data.id!==job.id)return;
-   if(outfitUnits70&&job.ownerId!==unit70Owner()){finishOutfitSplit(job,'Owner session changed. No pieces were added.',true);return;}
+   // P88: the opt-in instance split is tied to its original signed owner
+   // reference, not only the optional physical shoe-unit reconciliation.
+   // Replaced/revoked session objects with the same user ID are stale too.
+   if((outfitUnits70||outfitInstances840)&&
+    (job.ownerId!==unit70Owner()||
+     (outfitInstances840&&job.ownerRef88&&
+      (typeof window==='undefined'||window.closetAuth?.user!==job.ownerRef88)))){
+    finishOutfitSplit(job,'Owner session changed. Further garment drafts were not accepted.',true);return;
+   }
    if(data.type==='progress'){
     if(data.phase==='separating'&&job.phase!=='separating'){job.phase='separating';clearTimeout(job.timer);job.timer=setTimeout(timeout,60000);}
     else if(job.phase==='loading')touch();
