@@ -126,6 +126,7 @@ jobs:
           node --expose-gc research/mission1-parallel88/run-public-validation-88.mjs
           python research/mission1-parallel88/score-public-validation-88.py
           grep -Fq '"shoeOnly68": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
+          grep -Fq '"p88Safe": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           grep -Fq '"deltaP88VsShoeOnlyRecall"' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           test -s benchmark/p88-real-validation-masks/real-validation-measured-88.json
           grep -Fq '"newSealedAcceptance": false' benchmark/p88-real-validation-masks/real-validation-measured-88.json
