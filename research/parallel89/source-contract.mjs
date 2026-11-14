@@ -6,6 +6,7 @@
 import {createHash} from 'node:crypto';
 import {buildObservedPhotoPanel86} from '../mission2-p86/photo-panel.mjs';
 const digest=x=>createHash('sha256').update(x).digest('hex');
+const attestedReceipts=new WeakSet();
 const hex=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const fallback=reason=>Object.freeze({status:'ORIGINAL_PHOTO_2D_REQUIRED',reason,
   research3DReady:false,consumer3DAdmitted:false,independentlyReviewed:false,
@@ -34,18 +35,19 @@ export function attestOriginalSource89({sourceId,originalBytes,lockedRecord}={})
     throw Error('actual-original-jpeg-bytes-required');
   if(!hex(expected.sha)||digest(originalBytes)!==expected.sha)
     throw Error('original-photo-sha-mismatch');
-  return Object.freeze({schema:'M2-P89-public-original-jpeg-attestation-v1',status:'ORIGINAL_JPEG_VERIFIED',
+  const verified=Object.freeze({schema:'M2-P89-public-original-jpeg-attestation-v1',status:'ORIGINAL_JPEG_VERIFIED',
     sourceId,originalSHA256:expected.sha,category:expected.category,slot:expected.slot,
     license:expected.license,originalByteCount:originalBytes.byteLength,
-    observedViews:Object.freeze(['front']),sideSource:'UNOBSERVED',rearSource:'UNOBSERVED',
+    observedViews:Object.freeze(['single-published-view-angle-unadjudicated']),sideSource:'UNOBSERVED',rearSource:'UNOBSERVED',
     photoIsPublicBenchmark:true,ownerApproved:false,sourceMaskApproved:false,
     actual163BoneFitProved:false,realSourceTextureTransferProved:false,
     consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+  attestedReceipts.add(verified);return verified;
  }catch(e){return fallback(['source-license-or-registry-mismatch','actual-original-jpeg-bytes-required',
    'original-photo-sha-mismatch'].includes(e.message)?e.message:'invalid-source-evidence');}
 }
 export function buildSourceObservedFront89({sourceReceipt,alpha,width,height,sourceMaskSHA256}={}){
- if(sourceReceipt?.status!=='ORIGINAL_JPEG_VERIFIED'||
+ if(!attestedReceipts.has(sourceReceipt)||sourceReceipt?.status!=='ORIGINAL_JPEG_VERIFIED'||
    SOURCE_CLASSES89[sourceReceipt.sourceId]?.sha!==sourceReceipt.originalSHA256||
    sourceReceipt.familyAlpha!=='HOLD'||sourceReceipt.consumer3DAdmitted!==false||
    !(alpha instanceof Uint8Array)||!hex(sourceMaskSHA256)||
@@ -60,7 +62,7 @@ export function buildSourceObservedFront89({sourceReceipt,alpha,width,height,sou
    rawMaskSHA256:sourceMaskSHA256,
    positions:panel.positions,uv:panel.uv,indices:panel.indices,
    triangles:panel.receipt.triangles,foregroundPixels:panel.receipt.foregroundPixels,
-   frontOnly:true,depthMeasured:false,sourceBackObserved:false,
+   frontOnly:true,frontCameraIndependentlyVerified:false,depthMeasured:false,sourceBackObserved:false,
    textureIsOriginalRGBTransferred:false,maskOwnerApproved:false,
    actual163BoneFitProved:false,collisionClearanceCertified:false,
    releaseAuthorized:false,familyAlpha:'HOLD'});
@@ -72,7 +74,7 @@ export function auditSourceOutfit89({pieces,avatar,contactReceipt}={}){
  const seen=new Set(),slots=new Set();
  for(const p of pieces){
   const source=SOURCE_CLASSES89[p?.sourceId];
-  if(!source||p?.status!=='ORIGINAL_JPEG_VERIFIED'||
+  if(!source||!attestedReceipts.has(p)||p?.status!=='ORIGINAL_JPEG_VERIFIED'||
    p.originalSHA256!==source.sha||p.category!==source.category||
    p.slot!==source.slot||seen.has(p.sourceId)||slots.has(p.slot)||
    p.familyAlpha!=='HOLD'||p.releaseAuthorized!==false)
@@ -87,7 +89,7 @@ export function auditSourceOutfit89({pieces,avatar,contactReceipt}={}){
  // zero strict crossings never becomes physical cloth clearance.
  if(contactReceipt?.anyCrossingVeto===true||contactReceipt?.strictTransverseCrossings>0)
   return fallback('measured-intergarment-crossing-veto');
- const hasMeasuredContact=contactReceipt?.schema==='parallel84-distinct-source-layer-contact/v1'&&
+ const externalContactShapeOnly=contactReceipt?.schema==='parallel84-distinct-source-layer-contact/v1'&&
     contactReceipt?.budgetComplete===true&&
     contactReceipt?.contactClearanceProved===false&&
     contactReceipt?.releaseAuthorized===false;
@@ -97,8 +99,9 @@ export function auditSourceOutfit89({pieces,avatar,contactReceipt}={}){
   categories:Object.freeze(pieces.map(p=>p.category)),
   originalSourceJPEGsVerified:pieces.length,
   distinctSourceCategories:new Set(pieces.map(p=>p.category)).size,
-  independentLayerContactMeasured:hasMeasuredContact,
-  contactStatus:hasMeasuredContact?contactReceipt.status:'NOT_TESTED',
+  independentLayerContactMeasured:false,
+  externalContactReceiptUnverified:externalContactShapeOnly,
+  contactStatus:externalContactShapeOnly?'UNVERIFIED_EXTERNAL_RECEIPT':'NOT_TESTED',
   actualPairedSkinnedMeshesValidated:false,
   sourceObservedSideAndRear:false,
   independentHumanRealismAccepted:false,
