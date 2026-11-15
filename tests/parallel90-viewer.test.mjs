@@ -130,3 +130,16 @@ test('P90 M11 reuses only authentic original body BVH inside candidate pose-cont
  assert.ok(source.includes("if(!c.count)"),
   'real collision termination is NOT bypassed');
 });
+
+test('P90 M11 real collision scalar parity is owner gated and required by browser baseline',()=>{
+ const bridge=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ const benchmark=readFileSync('scripts/benchmark-parallel90-startup.mjs','utf8');
+ const switches=readFileSync('scripts/check-parallel90-saved-switch.mjs','utf8');
+ const lifecycle=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ assert.ok(source.includes("contactEvidence90:view.outfit?.shirt?.poseTriangleContact?{"));
+ assert.match(bridge,/contactEvidence90:active\?data\.contactEvidence90\|\|null:null/);
+ assert.ok(benchmark.includes("assert.deepEqual(rows[i].contactEvidence,original.contactEvidence"));
+ for(const key of ['beforeCount','afterCount','steps','correctedVertices','maximumWorldCorrection'])
+  assert.ok(switches.includes(key),'real source collision witness required: '+key);
+ assert.ok(lifecycle.includes("contactEvidence90,null"));
+});
