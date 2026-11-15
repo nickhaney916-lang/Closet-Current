@@ -420,17 +420,13 @@ function selectBoardPiece(slotId,itemId){
 // on the owner-private photo picker BEFORE the item is selected. An edited
 // crop or claimed single-piece flag is not independent geometry/3D evidence.
 function boardPhotoRequiresUnitReview(item){
- // M75: an owner/source receipt can claim many positive booleans but still
- // explicitly withhold independently verified physical-unit and rig evidence.
- // Until accepted independent garment evidence is integrated into the same
- // build, these flags alone must NEVER hide the normal 2D source warning.
- return !!item&&(item.ownerSourceReview88!=null||
-  item.independentPhysicalItemVerified!==true||
-  item.threeDReady!==true||
-  item.singleGarmentVerified!==true||item.photoOnly===true||
-  item.segmentHint?.clipped===true||item.segmentHint?.verified===false||
-  item.sourceHashVerified!==true||
-  item.segmentHint?.rawMaskPixelsIndependentlyVerified!==true);
+ // M76: no independent, source-bound physical-unit/mask/3D admission receipt
+ // is consumed by this normal owner 2D board. An absent P88 review receipt
+ // is NOT affirmative physical proof; imported/editable positive flags and
+ // model predictions cannot hide the 2D original-photo warning either.
+ // Future trusted admission must check its own live owner/source/revision
+ // contract here, not accept the existing optimistic garment booleans.
+ return !!item;
 }
 // M74: Mission 1 owner-source-review/v1 is an owner DECISION record, never
 // independent proof of a physical unit, a sound pixel mask, or fitted 3D.

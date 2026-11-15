@@ -158,6 +158,28 @@ test('atomic outfit state transaction verifies selected evidence against durable
  assert.match(source,/const tx=ownerDB\.transaction\(candidate\|\|proof33\?/);
  assert.match(source,/const expectedClothing=Object\.fromEntries\(/);
 });
+test('M76 positive flags without owner receipt remain 2D source-only in both entrypoints',()=>{
+ const f=fixture();
+ Object.assign(f.item,{
+  ownerSourceReview88:undefined,independentPhysicalItemVerified:true,
+  singleGarmentVerified:true,threeDReady:true,photoOnly:false,
+  sourceHashVerified:true,sourceCropReviewed:true,
+  segmentHint:{clipped:false,verified:true,rawMaskPixelsIndependentlyVerified:true}
+ });
+ assert.equal(f.ctx.boardPhotoRequiresUnitReview(f.item),true,
+  'editable optimistic booleans alone cannot prove one physical garment');
+ const picker=f.makePicker();
+ assert.equal(picker.classList.contains('source-unverified'),true);
+ assert.match(picker.getAttribute('aria-label')||'',/outline unverified.*2D outfit/i);
+ f.element('boardTarget').value='top';
+ f.ctx.renderBoardSuggestions();
+ const alt=f.element('boardOwnedOptions').children.find(x=>x.className==='board-owned-pick');
+ assert.ok(alt,'normal alternative not shown');
+ assert.equal(alt.classList.contains('source-unverified'),true);
+ assert.match(alt.getAttribute('aria-label')||'',/outline unverified.*2D outfit/i);
+ f.calls.length=0;alt.onclick();
+ assert.deepEqual(f.calls,['select:top:owner-a-garment']);
+});
 test('real default photo picker allows originating owner to select source',()=>{
  const f=fixture(),button=f.makePicker();f.calls.length=0;
  button.onclick();assert.deepEqual(f.calls,['select:top:owner-a-garment','picker-close']);
