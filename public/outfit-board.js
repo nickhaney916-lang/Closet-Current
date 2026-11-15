@@ -809,32 +809,56 @@ if(mission4Preview1054Active){
    const photos=document.createElement('div');
    photos.id='mission4Preview1054Photos';
    section.append(button,status,photos);builder.append(section);
+   // M65: the import and source recheck are asynchronous. An A-session
+   // callback must not clear a B-session viewer/status or re-enable B's
+   // in-progress click after account switch. Keep one owner-bound ticket.
+   let photoGalleryClickSerial59=0;
    button.onclick=async()=>{
+    const ownerLease=beginOwnerBoardUiLease();
+    if(!ownerLease||button.disabled||!button.isConnected)return;
+    const serial=++photoGalleryClickSerial59;
+    const live=()=>serial===photoGalleryClickSerial59&&
+     ownerLease.current()&&button.isConnected;
     button.disabled=true;photos.replaceChildren();
-    status.textContent='Verifying the signed owner, source photographs and selected outfit…';
+    section.dataset.render3d='denied';
+    status.textContent='Checking signed owner, private saved photographs and selected outfit…';
     try{
      if(typeof currentPhotoOwnerSession167!=='function'||
         typeof signedOwnerSavedRows167!=='function')
-      throw Error('Native signed photo source unavailable');
-     const {mountOwnerOutfitPhotoPreview1054}=await import(
-      '../research/main-thread-integration-1054/native-2d-preview.mjs');
-     if(!mission4Preview1054Viewer)
-      mission4Preview1054Viewer=mountOwnerOutfitPhotoPreview1054({
+      throw Error('Native owner-backed source unavailable');
+     const {mountReviewedPhotoOnlyGallery59}=await import(
+      '../research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs');
+     if(!live())return;
+     if(!mission4PhotoOnly59Viewer)
+      mission4PhotoOnly59Viewer=mountReviewedPhotoOnlyGallery59({
        target:photos,
        getSession:currentPhotoOwnerSession167,
        readOwnerItems:signedOwnerSavedRows167,
        getBoard:()=>nativeLossless04Active
-        ?nativeLossless04?.view():structuredClone(currentBoard),
+        ?structuredClone(nativeLossless04?.view()):structuredClone(currentBoard),
        cleanBoard:cleanOutfitBoard,
        events:window,doc:document
       });
-     const result=await mission4Preview1054Viewer.refresh();
-     status.textContent=result.slotCount+
-      ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
+     const viewer=mission4PhotoOnly59Viewer;
+     const result=await viewer.refresh();
+     if(!live()||mission4PhotoOnly59Viewer!==viewer)return;
+     if(result.renderAuthorized3D!==false||
+        result.fittedOutfitAuthorized!==false||
+        result.releaseAuthorized!==false)
+      throw Error('Unverified photo claimed fitted-garment authority');
+     section.dataset.render3d='denied';
+     status.textContent=result.photoCount+
+      ' original source photo(s) displayed. Physical garment units unverified; 3D denied.';
     }catch{
+     if(!live())return;
+     mission4PhotoOnly59Viewer?.clear();
      photos.replaceChildren();
-     status.textContent='Preview refused. Recheck the signed account, garment review, original photographs and outfit slots.';
-    }finally{button.disabled=false;}
+     status.textContent='Photo-only gallery refused. Recheck this account, review, original source and selected outfit.';
+    }finally{
+     // A stale A callback must never change the disabled state of B's newer
+     // request, but may unlock its own button if no later request exists.
+     if(serial===photoGalleryClickSerial59&&button.isConnected)button.disabled=false;
+    }
    };
    window.addEventListener('closet:session-locked',()=>{
     mission4Preview1054Viewer?.clear();photos.replaceChildren();
@@ -906,9 +930,11 @@ if(mission4PhotoOnly59Active){
     }finally{button.disabled=false;}
    };
    window.addEventListener('closet:session-locked',()=>{
+    ++photoGalleryClickSerial59;
     try{mission4PhotoOnly59Viewer?.dispose();}catch{}
     mission4PhotoOnly59Viewer=null;
     photos.replaceChildren();
+    button.disabled=false;
     status.textContent='Private original photos cleared after owner-session change.';
    });
   }catch{
