@@ -21,7 +21,16 @@ export function intakeProposal58(raw,pieces,received){
     !SEGMENT_KEY58.test(raw.instanceKey)||!validCrop24(raw.cropBounds)||
     pieces.some(p=>p.instanceKey===raw.instanceKey))
   return {accepted:false,reason:'invalid-or-duplicate-proposal'};
- const hint=sanitizeSegmentHint50(raw.hint);
+ // MAIN54: Mission #88 worker emits instanceMethod at the TOP LEVEL,
+ // not within hint. Carry only its negative semantic-mask veto into the
+ // bounded private owner review, never raw mask/pixels/worker metadata.
+ // Other/future methods fail closed at the final owner save boundary.
+ const proposalHint=raw.hint&&typeof raw.hint==='object'&&!Array.isArray(raw.hint)?
+  {...raw.hint,
+   ...(Object.hasOwn(raw,'instanceMethod')?{instanceMethod:raw.instanceMethod}:{}),
+   ...(Object.hasOwn(raw,'componentReviewStatus')?
+    {componentReviewStatus:raw.componentReviewStatus}:{})}:raw.hint;
+ const hint=sanitizeSegmentHint50(proposalHint);
  if(!hint?.categories?.length)return {accepted:false,reason:'no-supported-category'};
  // Only bounded, understood fields cross the untrusted model → UI boundary.
  // No arbitrary worker data, nested metadata, original JPEG or owner IDs.
