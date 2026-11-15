@@ -138,6 +138,15 @@ export async function checkViewer90(page,width,engine){
   if(width===390){
    await page.locator('#outfit3D01Reset90').click();await settle();
    const previous=await state();
+   // A manual Reset must flush residual OrbitControls drag inertia before
+   // the user navigates to original photos. Keep the strict 0.01 degree
+   // source-gallery camera invariant; diagnose any pre-existing drift.
+   await page.waitForTimeout(220);
+   const idling=await state();
+   const idleDrift=Math.abs(((idling.camera90.angle-
+    previous.camera90.angle+540)%360)-180);
+   assert.ok(idleDrift<.01,
+    'original camera reset still has residual inertial drift: '+idleDrift);
    const photoCount=await page.locator('#outfit3D01Photos img').count();
    assert.ok(photoCount>=1,'actual original saved photos must be present');
    const button=page.locator('#outfit3D01Originals90');
@@ -167,8 +176,10 @@ export async function checkViewer90(page,width,engine){
    assert.deepEqual(afterShortcut.garmentSources90,previous.garmentSources90);
    assert.deepEqual(afterShortcut.resources90.geometries,previous.resources90.geometries);
    assert.deepEqual(afterShortcut.resources90.textures,previous.resources90.textures);
-   assert.ok(Math.abs(afterShortcut.camera90.angle-previous.camera90.angle)<.01,
-    'opening original saved photographs cannot rotate 3D behind the user');
+   const originalGalleryDrift=Math.abs(((afterShortcut.camera90.angle-
+    idling.camera90.angle+540)%360)-180);
+   assert.ok(originalGalleryDrift<.01,
+    'opening original saved photographs must not move 3D camera; measured '+originalGalleryDrift+' degrees');
    assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
    originalPhotosShortcut18={figure,engine,cssWidth:width,
     readOnlyOriginalGalleryFocused:true,originalPhotoSHAReattested:true,
