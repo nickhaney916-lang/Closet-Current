@@ -56,6 +56,14 @@ function persistUnit70Decision88(lease){
  if(!ownerDb||!sameUnit70OwnerLease88(lease))return Promise.reject(Error('Owner session changed before garment draft persistence.'));
  return queued(()=>{
   if(!sameUnit70OwnerLease88(lease)||db!==ownerDb||
+   // The signed draft snapshot includes ALL live photos, including photos
+   // appended while cloud preflight waited. Never persist a foreign owner's
+   // source-bound receipt into the current owner's private IndexedDB.
+   batch.some(x=>x.reconciliation70&&
+    (x.reconciliation70.ownerId!==lease.id||
+     x.outfitSourceId===lease.sourceId&&
+      (!/^[a-f0-9]{64}$/.test(x.reconciliation70.sourceSha256||'')||
+       !/^[a-f0-9]{64}$/.test(x.reconciliation70.maskSha256||''))))||
    staged.some(x=>!batch.includes(x.item)||
     x.item.outfitSourceId!==lease.sourceId||
     x.item.reconciliation70Status!==x.status||
