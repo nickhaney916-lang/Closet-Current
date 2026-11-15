@@ -53,6 +53,22 @@ test('provisional observed skirt source rows preserve bounded true mask taper an
  assert.equal(o.photoCameraAngleIndependentlyValidated,false);
  assert.equal(o.maskHumanApproved,false);assert.equal(o.releaseAuthorized,false);
 });
+test('separate photographed clothing regions cannot be fused into one fake 3D skirt',()=>{
+ const width=64,height=96,alpha=new Uint8Array(width*height);
+ // Both panels are individually skirt-sized and occupy every sampled band.
+ // A bbox/width-only silhouette mislabels them as one large skirt.
+ for(let y=10;y<=84;y++)for(const [start,end] of [[8,22],[41,55]])
+  for(let x=start;x<=end;x++)alpha[y*width+x]=255;
+ assert.throws(()=>sourceSkirtOutline89({alpha,width,height}),
+  /multiple disconnected garment-sized regions/);
+ const source=sourceAlpha();
+ source.alpha[40*source.width+4]=255; // isolated foreground dust, not another garment
+ const clean=sourceSkirtOutline89(source);
+ assert.equal(clean.sourceRowWidths.length,7,
+  'small disconnected photo-mask speck must not fabricate a new garment');
+ assert.equal(clean.releaseAuthorized,false);
+ assert.equal(clean.maskHumanApproved,false);
+});
 test('photographic skirt UV rows follow genuine source mask bands, not uniform proxy rings',()=>{
  const o=sourceSkirtOutline89(sourceAlpha());
  const rows=o.sourceRowWidths.map((band,i)=>sourceSkirtBandTextureV89(o,i));
