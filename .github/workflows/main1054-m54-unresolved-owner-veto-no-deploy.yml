@@ -42,10 +42,10 @@ jobs:
         run: node --test tests/main54-unresolved-multi-mask-owner-veto.test.mjs
       - name: Inherited M49 genuine original private closet and M51 source-admission guard
         run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs tests/segmentation-hint-sanitization-50.test.mjs tests/bounded-detection-review-58.test.mjs tests/multi-garment-capture-01.test.mjs
+      - name: Unchanged original consumer app build (required PWA manifest fixture)
+        run: node scripts/build.mjs
       - name: Full inherited native application regression, app unchanged
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
-      - name: Unchanged original consumer app build
-        run: node scripts/build.mjs
       - name: Verify no release, default consumer, licensed original or hosted database source change
         run: git diff --exit-code c4d425076fe853e876cf7d0a34b1b83623f90b85 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/ research/main-thread-integration-1054/
   m54-real-native-browser-owner-review:
