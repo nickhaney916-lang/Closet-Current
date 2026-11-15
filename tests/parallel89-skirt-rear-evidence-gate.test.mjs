@@ -19,6 +19,7 @@ function build(){
      sourceFrontPhotographedSurfaceTriangleCount:288,
      sourceUnphotographedRearTriangleCount:288,
      unphotographedRearMarkerPixels:rear,
+     unphotographedRearFractionOfFullWebGLViewport:round(rear/(390*690)),
      opaqueSourceMeshProjectedMarkerPixels:whole,
      inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt:round(rear/whole),
      opaqueFrontMarkerOverestimatesPhotographicAlphaCoverage:true,
@@ -30,7 +31,8 @@ function build(){
      inferredBackDoesNotBecomePhotographed:true,
      originalMaskOwnerApproved:false,
      sourcePhoto2DFallbackRequired:true,
-     consumer3DAdmitted:false,releaseAuthorized:false
+     dynamicClothAndCollisionCertified:false,humanAppearanceAccepted:false,
+     familyAlpha:'HOLD',consumer3DAdmitted:false,releaseAuthorized:false
     });
    }
  return {rows,sourceSHA256:sha,sourcePhotoRearObserved:false};
@@ -63,7 +65,11 @@ test('missing, repeated, forged or selfie/user rear evidence does NOT become ori
   {...original,rows:original.rows.map((r,i)=>i===0?{...r,sourceFrontPhotographedSurfaceTriangleCount:576}:r)},
   {...original,rows:original.rows.map((r,i)=>i===0?{...r,opaqueSourceMeshProjectedMarkerPixels:1}:r)},
   {...original,rows:original.rows.map((r,i)=>i===0?{...r,inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt:1}:r)},
-  {...original,rows:original.rows.map((r,i)=>i===5?{...r,unphotographedRearMarkerPixels:0,inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt:0}:r)}
+  {...original,rows:original.rows.map((r,i)=>i===0?{...r,unphotographedRearFractionOfFullWebGLViewport:1}:r)},
+  {...original,rows:original.rows.map((r,i)=>i===0?{...r,dynamicClothAndCollisionCertified:true}:r)},
+  {...original,rows:original.rows.map((r,i)=>i===0?{...r,humanAppearanceAccepted:true}:r)},
+  {...original,rows:original.rows.map((r,i)=>i===0?{...r,familyAlpha:'READY'}:r)},
+  {...original,rows:original.rows.map((r,i)=>i===5?{...r,unphotographedRearMarkerPixels:0,unphotographedRearFractionOfFullWebGLViewport:0,inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt:0}:r)}
  ];
  for(const b of bad){
   const r=summarizeOriginalSkirtUnphotographedRear89(b);
