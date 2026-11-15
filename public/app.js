@@ -1940,7 +1940,44 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
        tagged.ownerId!==signedImportOwner)
      throw Error('Backup belongs to another account. No clothing was imported.');
    }
-   return normalizeClothing({...x,id:normalizedId,image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}// Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
+   return normalizeClothing({...x,id:normalizedId,image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}// Validate supplied source-original JPEG receipts BEFORE the first default
+  // legacy write. A cutout can be a valid garment preview but never silently
+  // substitute for an original whose SHA-256 is asserted in the backup.
+  for(const row of data.items){
+   const original=row.originalPhoto,claimed=row.sourceSHA256,
+    photoClaim=original?.sha256,verified=row.sourceHashVerified===true;
+   if(original!==undefined&&original!==null&&
+      (typeof original!=='object'||Array.isArray(original)))
+    throw Error('Backup contains invalid original photo metadata. No clothing was imported.');
+   const sha=/^[a-f0-9]{64}$/;
+   if((claimed!==undefined&&!sha.test(claimed))||
+      (photoClaim!==undefined&&!sha.test(photoClaim))||
+      (verified&&!claimed)||(claimed&&photoClaim&&claimed!==photoClaim))
+    throw Error('Backup original photo receipt is inconsistent. No clothing was imported.');
+   const image=original?.image===undefined?row.image:original.image;
+   if(original?.image===undefined&&!claimed&&!photoClaim&&!verified)continue;
+   if(typeof image!=='string'||image.length>11200000||
+      !/^data:image\\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))
+    throw Error('Backup original JPEG is unavailable or invalid. No clothing was imported.');
+   let bytes;
+   try{bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),
+    byte=>byte.charCodeAt(0));}catch{
+    throw Error('Backup original JPEG cannot be decoded. No clothing was imported.');
+   }
+   if(bytes.length<4||bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)
+    throw Error('Backup original JPEG is invalid. No clothing was imported.');
+   if(claimed||photoClaim){
+    if(!crypto?.subtle?.digest)
+     throw Error('Original JPEG verification is unavailable. Nothing imported.');
+    const actual=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+     .map(byte=>byte.toString(16).padStart(2,'0')).join('');
+    assertImport();
+    if(actual!==(claimed||photoClaim))
+     throw Error('Backup original JPEG SHA-256 mismatch. No clothing was imported.');
+   }
+   assertImport();
+  }
+  // Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
   // Reject malformed or missing outfit references and live unsaved outfit edits
   // BEFORE the first garments write, rather than discovering invalid board
   // data only after clothing has already been imported.
