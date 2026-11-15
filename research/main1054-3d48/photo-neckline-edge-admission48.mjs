@@ -113,28 +113,47 @@ export function auditNativePhotoNecklinePhysicalEdge48(receipt,{expectedEngine}=
  if(keys.size!==36||physicalByPose.size!==12)
   deny('missing figure, pose, camera or original mask condition');
 
+ // M47 loops P93 -> M45 then M45 -> [M45, M45_HOLE]. Its
+ // SAME-BYTES M45__M45 row group is an independent 12-scene zero-change
+ // control, not evidence of real-world garment geometry or color.
  const comparisonSets=receipt.comparisons;
+ const expectedPairs=[
+  ['P93','M45'],['M45','M45'],['M45','M45_HOLE']
+ ];
+ const labels=expectedPairs.map(([a,b])=>a+'__'+b);
  if(!comparisonSets||typeof comparisonSets!=='object'||
-    !same(Object.keys(comparisonSets).sort(),['P93__M45','M45__M45_HOLE'].sort()))
-  deny('two authentic native screenshots comparisons required');
- for(const name of ['P93__M45','M45__M45_HOLE']){
-  const rows=comparisonSets[name];
+    !same(Object.keys(comparisonSets).sort(),[...labels].sort()))
+  deny('all three original native screenshot pairs, including zero-change control, required');
+ const totals={};
+ for(const [a,b] of expectedPairs){
+  const name=a+'__'+b,rows=comparisonSets[name];
   if(!Array.isArray(rows)||rows.length!==12)
-   deny('each source comparison must contain 12 camera/pose combinations');
+   deny('each original source photo comparison must contain 12 camera/pose combinations');
   const seen=new Set();
+  let total=0,visible=0;
   for(const row of rows){
    const k=[row.figure,row.pose,row.view].join('/');
    if(seen.has(k)||!figures.includes(row.figure)||!poses.includes(row.pose)||
       !views.includes(row.view)||!goodNum(row.changedRGBPixelsAbove8)||
+      row.sourceVariantA!==a||row.sourceVariantB!==b||
       row.changesOutsideObservedNecklineROI!==0||
       row.sourceNecklineScreenRegionChanges!==row.changedRGBPixelsAbove8||
       row.actualFragmentHoleIsNotPhysicalOpening!==true||
       row.originalJpegAndUVUnchanged!==true||
-      row.releaseAuthorized!==false)
-    deny('screen-change ROI, physical edge disclosure or 12-scene comparison invalid');
+      row.releaseAuthorized!==false||
+      (a===b&&row.changedRGBPixelsAbove8!==0))
+    deny('original-source ROI or zero-change same-byte control mismatch');
    seen.add(k);
+   total+=row.changedRGBPixelsAbove8;
+   if(row.changedRGBPixelsAbove8>0)visible++;
   }
+  totals[name]={total,visible};
  }
+ if(totals.P93__M45.total!==receipt.baselineSourceAlphaBlendChangedPixels||
+    totals.M45__M45.total!==0||
+    totals.M45__M45_HOLE.total!==receipt.incrementalTrueFragmentAlphaHoleChangedPixels||
+    totals.M45__M45_HOLE.visible!==receipt.actualViewsWithIncrementalShaderCutoutPixels)
+  deny('native original-photo browser totals or 12-view visual effect inconsistent');
  return Object.freeze({
   schema:M48.schema,engine:expectedEngine,originalPhotoSHA256:M48.sourceSHA256,
   genuineSourceScenesAudited:36,matchedNativePoseViews:12,
