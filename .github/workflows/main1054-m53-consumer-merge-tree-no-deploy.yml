@@ -26,13 +26,15 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/ research/main-thread-integration-1054/
           git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
             case "$p" in
-              scripts/audit-main53-consumer-merge-tree.mjs|research/master-consolidation-1054/MILESTONE53.md|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/main59-reviewed-photo-only-handoff.test.mjs|.github/workflows/main1054-m53-consumer-merge-tree-no-deploy.yml) ;;
+              scripts/audit-main53-consumer-merge-tree.mjs|research/master-consolidation-1054/MILESTONE53.md|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|tests/main59-reviewed-photo-only-handoff.test.mjs|scripts/test-main59-actual-native-photo-only-gallery-browser.mjs|.github/workflows/main1054-m53-consumer-merge-tree-no-deploy.yml) ;;
               *) echo "BLOCKED M53 unexpected changed source $p";exit 1;;
             esac
           done
           node --check scripts/audit-main53-consumer-merge-tree.mjs
           node --check research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs
           node --check tests/main59-reviewed-photo-only-handoff.test.mjs
+          node --check research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs
+          node --check scripts/test-main59-actual-native-photo-only-gallery-browser.mjs
       - name: Actual independent Git three-way merger conflict calculation, do NOT commit/merge
         run: node scripts/audit-main53-consumer-merge-tree.mjs
       - name: Preserve unchanged main M51 application original owner/2D source
@@ -55,5 +57,71 @@ jobs:
         with:
           name: main1054-m53-real-merge-conflicts-NO-MERGE-NOT-RELEASE
           path: benchmark/main53-source-merge-audit/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  m59-actual-native-photo-only-gallery:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M59_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact original M53 parent, unchanged original JPEG, consumer and cloud scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          BASE=f33e6e328ca8e6c98e036b57defa847efd0213ba
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          node --check research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs
+          node --check research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs
+          node --check scripts/test-main59-actual-native-photo-only-gallery-browser.mjs
+      - name: Install pinned no-deploy Playwright owner-only browser prerequisites
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual native app owner reviewed private original JPEG gallery, board revocation, A to B isolation
+        run: node scripts/test-main59-actual-native-photo-only-gallery-browser.mjs
+      - name: Assert source-safe result is real browser 320,390,430 and not 3D/hosted release
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'JS'
+          import fs from 'node:fs';
+          const e=process.env.M59_ENGINE;
+          const path='benchmark/main59-native-photo-only/'+e+'/M59-REAL-NATIVE-PHOTO-ONLY-GALLERY-NOT-RELEASE.json';
+          const r=JSON.parse(fs.readFileSync(path,'utf8'));
+          if(r.engine!==e||r.realNativeApp!==true||r.humanTruthSynthetic!==true||
+             r.actualPrivateBrowserIndexedDB!==true||r.releaseAuthorized!==false||
+             r.familyAlpha!=='HOLD'||r.cases.length!==3||
+             r.cases.map(x=>x.width).join(',')!=='320,390,430'||
+             r.cases.some(x=>x.ownerAAtomicSavedRow!==1||x.ownerBPrivateRows!==0||
+              x.exactOriginalRendered!==true||x.threeDAdmitted!==false||
+              x.logoutPhotoRevoked!==true||x.ownerBOriginalLeak!==false))
+           throw Error('M59 actual native browser photo-only owner privacy receipt invalid');
+          console.log('M59 native owner photo-only source evidence PASS',e);
+          JS
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git diff --exit-code f33e6e328ca8e6c98e036b57defa847efd0213ba HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/
+      - name: Archive counts only, never private photos or owner credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m59-native-${{ matrix.engine }}-photo-only-not-release
+          path: benchmark/main59-native-photo-only/${{ matrix.engine }}/M59-REAL-NATIVE-PHOTO-ONLY-GALLERY-NOT-RELEASE.json
           retention-days: 14
           if-no-files-found: ignore
