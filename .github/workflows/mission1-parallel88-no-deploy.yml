@@ -215,8 +215,10 @@ jobs:
           assert d['exposedResearchNoModelOrAutoSavePromotion'] is True
           assert d['exposedResearchPixelGateParameters']=={
             'researchLoose65':{'pixelConfidence':0.65,'pixelMargin':0.12},
-            'researchLoose55':{'pixelConfidence':0.55,'pixelMargin':0.08}}
-          for name in ('researchLoose65','researchLoose55'):
+            'researchLoose55':{'pixelConfidence':0.55,'pixelMargin':0.08},
+            'researchLoose65ShoeSplit':{'pixelConfidence':0.65,'pixelMargin':0.12,
+                                        'conservativeShoeComponentReview':True}}
+          for name in ('researchLoose65','researchLoose55','researchLoose65ShoeSplit'):
             candidate=d[name]
             assert candidate['classAgnostic']['human']==53
             assert candidate['categoryCompatible']['human']==53
@@ -226,8 +228,13 @@ jobs:
             assert delta['addedProposals']==candidate['classAgnostic']['predicted']-safe['predicted']
             assert delta['newClassAgnosticMatches']==candidate['classAgnostic']['matched']-safe['matched']
             assert delta['notSealedAccuracy'] is True and delta['notProductionPromotion'] is True
+          split=d['researchShoeComponentRescueVsLoose65']
+          assert split['extraProposals']==d['researchLoose65ShoeSplit']['classAgnostic']['predicted']-d['researchLoose65']['classAgnostic']['predicted']
+          assert split['extraCategoryMatches']==d['researchLoose65ShoeSplit']['categoryCompatible']['matched']-d['researchLoose65']['categoryCompatible']['matched']
+          assert split['notBlindGeneralization'] is True
+          assert split['notDeploymentPermission'] is True
           print('P88_EXPOSED_PIXEL_GATE_RESEARCH_ONLY',d['researchOnlyPixelGateDiffVsSafe'],
-                'no threshold promotion; not blind')
+                'shoeRescue',split,'no threshold promotion; not blind')
           assert diag[0]['retainedProposals']==safe['predicted']
           assert diag[0]['retainedPriorCategoryCompatibleMatches']==d['p88Safe']['categoryCompatible']['matched']
           print('P88_EXPOSED_SAFE_MASK_COUNTS_ONLY',safe, 'not human subtype/color or release acceptance')
