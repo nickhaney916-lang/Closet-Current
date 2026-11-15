@@ -18,20 +18,22 @@ const app=await readFile('public/app.js','utf8'),
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
  assert.ok(i>=0&&j>i,'P846 source segment missing '+a);return app.slice(i,j);}
 const source=extract('function node(', 'function cropClothingPhoto(')+
+ extract('function hasSourceBoundMask88(', '// P846:')+
  extract('function unit70Receipts(', 'function renderRecognitionNotice(');
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
- "let items=[],batch=[],stream=null,cameraOpening=false;",
+ "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true;",
  // Keep the browser's original P846 native Adjust source, but provide the
  // same signed owner/IDB transaction boundary required by the new P88 guard.
- "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {put(value){if(name==='items'){window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
+ "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {put(value){if(name==='items'){window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next)window.draftSnapshots.push(tx.next);window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
  "const queued=async fn=>{await window.beforeWriteTest?.();return fn();};",
  "const originalSource88="+JSON.stringify(originalSource88),
  "const sourceHash88="+JSON.stringify(originalHash88),
  "const localPending=new Set(),sessionCapturedIds=new Set();",
- "const checkPhoto=async()=>({colorEstimate:null});",
+ "const checkPhoto=async()=>({colorEstimate:null,signature:[],aspect:1});",
+ "const openPhotoCrop=(item,callbacks)=>{window.crop88Editor=callbacks;return Promise.resolve();};",
  "window.closetAuth={user:{id:'owner-A'}};",
- "window.writeCount=0;window.stored=[];window.completions=[];window.messageText='';",
+ "window.writeCount=0;window.stored=[];window.completions=[];window.draftSnapshots=[];window.messageText='';",
  "const savePiece=(v,b)=>{window.writeCount++;return new Promise((resolve,reject)=>window.completions.push({resolve:()=>{window.stored.push(structuredClone(v));resolve();},reject}));};",
  "const removeItem=async()=>{};",
  "const persistDraft=async()=>{};",
@@ -52,6 +54,14 @@ const harness=[
  "    shoePair:{confirmedByOwner:true,companion:{image:'data:image/jpeg;base64,QUJDRA==',reconciliation70:receipt('owner-A',12)}}};",
  "  batch=[item];items=dup?[{id:'old',image:'data:image/jpeg;base64,QUJD',category:'Shoes',itemType:'Sneakers',color:'Black',reconciliation70:receipt('owner-A',12)}]:[];",
  "  adjustPhoto(item);return item;",
+ "};",
+ "window.setupCrop88=()=>{",
+ "  for(const old of document.querySelectorAll('dialog'))old.remove();",
+ "  window.closetAuth.user={id:'owner-A'};window.beforeWriteTest=null;window.releaseCrop88=null;",
+ "  window.draftSnapshots=[];window.completions=[];window.stored=[];window.crop88Editor=null;window.messageText='';",
+ "  const item={id:'crop-88',image:originalSource88,name:'Blue shirt',category:'Tops',itemType:'T-Shirt',color:'Blue',",
+ "   seasons:[],userAdjusted:false,requiresOwnershipConfirmation:true};",
+ "  batch=[item];items=[];cropClothingPhoto(item);return item;",
  "};"
 ].join('\n');
 // Web Crypto is intentionally unavailable at insecure about:blank. The same
@@ -119,6 +129,62 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.equal(result.ownerReceipt?.independentPhysicalItemVerified,false);
    assert.equal(result.ownerReceipt?.singleGarmentVerified,false);
    assert.equal(result.ownerReceipt?.threeDReady,false);
+   // Source-execute the actual native Crop controller in real Chromium and
+   // WebKit. The crop editor transport and signed owner are synthetic; no
+   // real model inference or private owner is claimed by these checks.
+   await page.evaluate(()=>window.setupCrop88());
+   await page.evaluate(()=>{
+    window.beforeWriteTest=()=>new Promise(resolve=>{window.releaseCrop88=resolve;});
+    window.cropPromise88=window.crop88Editor.save({
+     image:'data:image/jpeg;base64,TkVXUElYRUxT',
+     cropBounds:{x:0,y:0,width:1,height:1}
+    },null);
+   });
+   await page.waitForFunction(()=>typeof window.releaseCrop88==='function');
+   await page.evaluate(()=>{
+    batch.push({id:'second-photo-88',image:'data:image/jpeg;base64,TkVYVA=='});
+    window.releaseCrop88();
+   });
+   await page.waitForFunction(()=>window.completions.length===1);
+   await page.evaluate(()=>window.completions.shift().resolve());
+   await page.evaluate(()=>window.cropPromise88);
+   const cropResult=await page.evaluate(()=>({
+    savedImage:batch[0]?.image,
+    noItemAutoSaved:items.length===0,
+    retainedNewDraft:batch.some(x=>x.id==='second-photo-88'),
+    savedDraftImages:window.draftSnapshots.at(-1)?.batch.map(x=>x.image),
+    reviewStillRequired:batch[0]?.requiresOwnershipConfirmation===true
+   }));
+   assert.equal(cropResult.savedImage,'data:image/jpeg;base64,TkVXUElYRUxT');
+   assert.equal(cropResult.noItemAutoSaved,true);
+   assert.equal(cropResult.retainedNewDraft,true);
+   assert.equal(cropResult.savedDraftImages.length,2);
+   assert.equal(cropResult.reviewStillRequired,true);
+   // A renewed same-ID account during queued crop cannot use an old photo
+   // or write into the signed owner's IndexedDB.
+   await page.evaluate(()=>window.setupCrop88());
+   await page.evaluate(()=>{
+    window.beforeWriteTest=()=>new Promise(resolve=>{window.releaseCrop88=resolve;});
+    window.cropPromise88=window.crop88Editor.save({
+     image:'data:image/jpeg;base64,TkVXUElYRUxT',
+     cropBounds:{x:0,y:0,width:1,height:1}
+    },null).then(()=>({status:'accepted'}),e=>({status:'blocked',error:e.message}));
+   });
+   await page.waitForFunction(()=>typeof window.releaseCrop88==='function');
+   await page.evaluate(()=>{
+    window.closetAuth.user={id:'owner-A'};
+    window.releaseCrop88();
+   });
+   const revokedCrop=await page.evaluate(()=>window.cropPromise88);
+   assert.equal(revokedCrop.status,'blocked');
+   assert.match(revokedCrop.error,/P88_STALE_CROP_OWNER_OR_SOURCE/);
+   assert.equal(await page.evaluate(()=>window.completions.length),0);
+   assert.equal(await page.evaluate(()=>batch[0].image),originalSource88);
+   console.log('M1_P88_BROWSER_SIGNED_CROP',JSON.stringify({
+    browser:browserName,width,sourceBoundOriginalPreserved:true,
+    lateSecondDraftPreserved:true,sameIdSessionReplayBlocked:true,
+    noAutomaticClosetSave:true,pageErrors:errors.length
+   }));
    assert.deepEqual(errors,[]);
    console.log('M1_P846_BROWSER_OWNER_UNIT_REVIEW',JSON.stringify({
     browser:browserName,width,unresolvedBlocked:true,crossOwnerBlocked:true,
