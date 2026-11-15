@@ -539,7 +539,15 @@ try{
  // This proves local owner-to-owner view isolation, NOT hosted signed RLS.
  stage='same-browser-native-owner-A-logout';
  await page.locator('.account-menu summary').click();
+ // AUTH's logout handler locks the UI immediately, but only reloads after
+ // awaiting /auth/v1/logout. Waiting for authGate alone races that reload
+ // and can destroy a B-session page.evaluate many steps later.
+ const logoutReloadA=page.waitForEvent('framenavigated',{
+  predicate:frame=>frame===page.mainFrame(),timeout:30000
+ });
  await page.locator('#logout').click();
+ await logoutReloadA;
+ await page.waitForLoadState('domcontentloaded');
  await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
   null,{timeout:30000});
  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
@@ -648,7 +656,12 @@ try{
  // Neither B nor A re-logins re-run the worker or seed a synthetic record.
  stage='same-browser-owner-B-logout-return-owner-A-private-recovery';
  await page.locator('.account-menu summary').click();
+ const logoutReloadB=page.waitForEvent('framenavigated',{
+  predicate:frame=>frame===page.mainFrame(),timeout:30000
+ });
  await page.locator('#logout').click();
+ await logoutReloadB;
+ await page.waitForLoadState('domcontentloaded');
  await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
   null,{timeout:30000});
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
