@@ -327,6 +327,7 @@ function sourceSaveLease88(item){
  return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
   sourceId:item.outfitSourceId,source:item.reconciliation70.sourceSha256,
   mask:item.reconciliation70.maskSha256,receipt:item.reconciliation70,
+  receiptRevision:JSON.stringify(item.reconciliation70),
   status:item.reconciliation70Status,
   original:item.originalPhoto?.image,image:item.image,
   review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70,
@@ -342,6 +343,7 @@ function sourceSaveLeaseLive88(lease){
   (lease.wasDraft?batch.includes(item):items.includes(item))&&
   item.outfitSourceId===lease.sourceId&&
   item.reconciliation70===lease.receipt&&
+  JSON.stringify(item.reconciliation70)===lease.receiptRevision&&
   item.reconciliation70?.sourceSha256===lease.source&&
   item.reconciliation70?.maskSha256===lease.mask&&
   item.reconciliation70?.ownerId===lease.ownerId&&
@@ -380,11 +382,9 @@ async function sourceSavePhotoVerified88(lease){
   !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(lease.original)||
   !/^[a-f0-9]{64}$/.test(lease.source)||!crypto?.subtle)return false;
  try{
-  const raw=atob(lease.original.slice('data:image/jpeg;base64,'.length));
-  const bytes=new Uint8Array(raw.length);
-  for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
-  const hash=await crypto.subtle.digest('SHA-256',bytes);
-  const actual=[...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
+  // Verify JPEG framing, not just a hash of arbitrarily labeled bytes.
+  // Pixel/content semantics still require independent human evidence.
+  const actual=await ownerCropPhotoDigest88(lease.original);
   if(actual!==lease.source||!sourceSaveLeaseLive88(lease))return false;
   const cropDigest=await ownerCropPhotoDigest88(lease.image);
   if(!cropDigest||!sourceSaveLeaseLive88(lease))return false;
@@ -448,7 +448,17 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
  if(!sourceSaveLeaseLive88(lease))return Promise.reject(Error('P88_STALE_SOURCE_OWNER'));
  return queued(()=>{
   if(!sourceSaveLeaseLive88(lease)||
+   value.id!==lease.item.id||
    value.originalPhoto?.image!==lease.original||value.image!==lease.image||
+   value.recognitionPhoto?.image!==lease.review||
+   JSON.stringify(value.cropBounds??null)!==lease.cropRevision||
+   JSON.stringify(value.segmentHint??null)!==lease.hintRevision||
+   JSON.stringify(value.reconciliation70??null)!==lease.receiptRevision||
+   // A model region or owner checkbox never certifies one physical garment.
+   value.singleGarmentVerified===true||value.threeDReady===true||
+   value.independentPhysicalItemVerified===true||
+   value.segmentHint?.verified===true||
+   value.segmentHint?.ownerReviewedInstance===true||
    value.reconciliation70?.sourceSha256!==lease.source||
    value.reconciliation70?.maskSha256!==lease.mask||
    value.reconciliation70?.ownerId!==lease.ownerId||

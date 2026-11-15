@@ -1238,6 +1238,42 @@ test('P88 changed original JPEG or mask receipt cannot use earlier owner photo p
  assert.equal(writes.length,0);
 });
 
+test('P88 source private-save refuses switched item IDs, crop and unapproved 3D flags',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ for(const change of [
+  x=>{x.id='other-item';},
+  x=>{x.cropBounds={x:0,y:0,width:0.5,height:1};},
+  x=>{x.segmentHint={verified:true};},
+  x=>{x.recognitionPhoto={image:'data:image/jpeg;base64,Rk9SR0VE'};},
+  x=>{x.singleGarmentVerified=true;},
+  x=>{x.threeDReady=true;},
+  x=>{x.independentPhysicalItemVerified=true;},
+  x=>{x.segmentHint={ownerReviewedInstance:true};}
+ ]){
+  const value=reviewedForSave88(c,structuredClone(item),lease);
+  change(value);
+  await assert.rejects(c.saveSourceBoundPiece88(value,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ }
+ assert.equal(writes.length,0,'forged source/3D status cannot enter private wardrobe');
+});
+test('P88 queued source save refuses in-place mutated model mask receipt metadata',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ const value=reviewedForSave88(c,structuredClone(item),lease);
+ c.beforeWrite=async()=>{item.reconciliation70.instanceOrdinal=99;};
+ await assert.rejects(c.saveSourceBoundPiece88(value,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0);
+});
+test('P88 cryptographic original JPEG proof refuses mislabeled non-JPEG bytes',async()=>{
+ const {c,item,writes}=sourceSaveHarness88();
+ const raw=Buffer.from('NOT A JPEG');
+ item.originalPhoto.image='data:image/jpeg;base64,'+raw.toString('base64');
+ item.reconciliation70.sourceSha256=createHash('sha256').update(raw).digest('hex');
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),false);
+ assert.equal(writes.length,0);
+});
 test('P88 owner-approved shoe category permits paired save, but pre-edit category cannot falsely veto it',async()=>{
  const {c,item,writes,secondJpeg}=sourceSaveHarness88();
  item.category='Uncategorized';
