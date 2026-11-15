@@ -308,7 +308,9 @@ test('legacy import refuses foreign owner claim hidden in saved outfit metadata'
 });
 test('legacy import refuses deep foreign owner claim in inspiration before any garment write',async()=>{
  const f=legacyFixture();
- f.ctx.validLook=x=>x;
+ // Production validLook sanitizes unknown metadata; security check must run
+ // against the raw backup BEFORE sanitization could discard owner claims.
+ f.ctx.validLook=x=>({id:x.id,pieces:x.pieces});
  const json=JSON.stringify({format:'closet-current',version:3,items:[simpleLegacyRow],
   looks:[{id:'unsafe-look',pieces:[],extras:[{source:{ownerId:'owner-b'}}]}]});
  await f.run({size:json.length,text:async()=>json});
