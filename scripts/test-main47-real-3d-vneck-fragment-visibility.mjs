@@ -104,7 +104,8 @@ const server=createServer(async(req,res)=>{
   }else throw Error('private or non-original source disallowed');
   const file=resolve(root,filename);
   if(!file.startsWith(root+'/'))throw Error('escaped original research root');
-  const data=await readFile(file);
+  const data=pathname==='/research/mission2-p91/native-drape-review.html'?
+   Buffer.from(inspectedHtml):await readFile(file);
   res.setHeader('content-type',mime[extname(file)]||'application/octet-stream');
   res.setHeader('cache-control','no-store');
   res.end(data);
@@ -175,9 +176,8 @@ try{
    return route.abort();
   });
   // Two ephemeral read-only responses; actual donor HTML and dress shader remain byte-exact on disk.
-  await page.route('**/research/mission2-p91/native-drape-review.html',route=>route.fulfill({
-   status:200,contentType:'text/html',body:inspectedHtml
-  }));
+  // The local HTTP server serves an in-memory read-only original source HTML
+  // measurement rather than depending on browser interception ordering.
   if(variant==='M45_HOLE')await page.route('**/donor/research/three-d-14/dress-shell.mjs',route=>route.fulfill({
    status:200,contentType:'text/javascript',body:visibilityPatch.patchedResearchModuleText
   }));
@@ -194,7 +194,7 @@ try{
     'REAL original-source 3D licensed mask setup failed');
    const crop=await page.evaluate(()=>window.__m47OriginalSourceCropRect);
    assert.ok(Array.isArray(crop)&&crop.length===4&&crop.every(Number.isFinite),
-    'actual source JPEG/alpha shader crop was not captured');
+    'actual original source crop missing: '+JSON.stringify({variant,crop,reviewReady:true,manifestRequests:seen.manifest,cutoutRequests:seen.cutout}));
    result.sourceCropRects[variant]=crop;
    assert.ok(seen.manifest>=1&&seen.cutout>=1,
     'original source renderer did not actually fetch the transient source-bound mask');
