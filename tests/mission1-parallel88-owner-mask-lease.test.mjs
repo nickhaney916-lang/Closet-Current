@@ -1058,14 +1058,37 @@ function sourceSaveHarness88(){
  vm.runInContext(appSource.slice(start,end),c);
  return {c,user,db,item,jpeg,hash,writes};
 }
+// Reproduce the REAL native Adjust owner's physical-unit receipt for positive
+// private-save fixtures. Do not bypass the new fail-closed receipt at the DB
+// boundary; negative cases still test source/owner revocation independently.
+function reviewedForSave88(c,value,lease){
+ return {...value,ownerSourceReview88:c.reviewedSourceReceipt88(value,lease)};
+}
 test('P88 owner source lease independently hashes original JPEG before atomic private save',async()=>{
  const {c,item,writes}=sourceSaveHarness88();
  const lease=c.sourceSaveLease88(item);
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
- await c.saveSourceBoundPiece88({...item},[],lease);
+ await c.saveSourceBoundPiece88(reviewedForSave88(c,{...item},lease),[],lease);
  assert.deepEqual(writes.map(x=>x.name),['items','state']);
  assert.equal(writes[0].value.originalPhoto.image,item.originalPhoto.image);
+ assert.equal(writes[0].value.ownerSourceReview88.schema,'p88-owner-source-review/v1');
+ assert.equal(writes[0].value.ownerSourceReview88.ownerReviewed,true);
+ assert.equal(writes[0].value.ownerSourceReview88.originalPhotoSha256,
+  item.reconciliation70.sourceSha256);
+ assert.equal(writes[0].value.ownerSourceReview88.singleGarmentVerified,false);
+ assert.equal(writes[0].value.ownerSourceReview88.threeDReady,false);
  assert.equal(writes[1].value.batch.length,0);
+});
+test('P88 private source save rejects an absent or tampered owner review receipt',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),
+  /P88_REVOKED_SOURCE_SAVE/);
+ const reviewed=reviewedForSave88(c,structuredClone(item),lease);
+ reviewed.ownerSourceReview88.color='unapproved-change';
+ await assert.rejects(c.saveSourceBoundPiece88(reviewed,[],lease),
+  /P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0,'unreviewed or forged provenance never enters private DB');
 });
 test('P88 same-ID owner replacement during JPEG hash refuses original session save',async()=>{
  const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
@@ -1077,14 +1100,14 @@ test('P88 same-ID owner replacement during JPEG hash refuses original session sa
  c.window.closetAuth.user={id:'owner-a'};
  release();
  assert.equal(await verifying,false);
- await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_STALE_SOURCE_OWNER/);
+ await assert.rejects(c.saveSourceBoundPiece88(reviewedForSave88(c,{...item},lease),[],lease),/P88_STALE_SOURCE_OWNER/);
  assert.equal(writes.length,0);
 });
 test('P88 queued cloud preflight rechecks signed owner and actual IDB handle before transaction',async()=>{
  const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
  c.beforeWrite=async()=>{c.db={name:'closet-current-user-owner-a'};};
- await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ await assert.rejects(c.saveSourceBoundPiece88(reviewedForSave88(c,{...item},lease),[],lease),/P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0);
 });
 test('P88 changed original JPEG or mask receipt cannot use earlier owner photo proof',async()=>{
@@ -1093,7 +1116,7 @@ test('P88 changed original JPEG or mask receipt cannot use earlier owner photo p
  assert.equal(await c.sourceSavePhotoVerified88(lease),false);
  item.originalPhoto={image:jpeg};
  item.reconciliation70={...item.reconciliation70,maskSha256:'b'.repeat(64)};
- await assert.rejects(c.saveSourceBoundPiece88({...item},[],lease),/P88_STALE_SOURCE_OWNER/);
+ await assert.rejects(c.saveSourceBoundPiece88(reviewedForSave88(c,{...item},lease),[],lease),/P88_STALE_SOURCE_OWNER/);
  assert.equal(writes.length,0);
 });
 
@@ -1105,7 +1128,7 @@ test('P88 owner-approved shoe category permits paired save, but pre-edit categor
   ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,maskSha256:'b'.repeat(64)}}};
  const lease=c.sourceSaveLease88(item);
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
- await c.saveSourceBoundPiece88({...item,category:'Shoes'},[],lease);
+ await c.saveSourceBoundPiece88(reviewedForSave88(c,{...item,category:'Shoes'},lease),[],lease);
  assert.deepEqual(writes.map(x=>x.name),['items','state']);
 });
 test('P88 paired physical unit refuses mismatched owner category at private write',async()=>{
@@ -1115,7 +1138,7 @@ test('P88 paired physical unit refuses mismatched owner category at private writ
  item.shoePair={confirmedByOwner:true};
  const lease=c.sourceSaveLease88(item);
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
- await assert.rejects(c.saveSourceBoundPiece88({...item,category:'Tops'},[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ await assert.rejects(c.saveSourceBoundPiece88(reviewedForSave88(c,{...item,category:'Tops'},lease),[],lease),/P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0);
 });
 
@@ -1134,7 +1157,7 @@ test('P88 nested companion mask edited in place during cloud preflight revokes s
   // The pair object reference remains identical, as does the main source mask.
   item.shoePair.companion.reconciliation70.maskSha256='c'.repeat(64);
  };
- await assert.rejects(c.saveSourceBoundPiece88(approved,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ await assert.rejects(c.saveSourceBoundPiece88(reviewedForSave88(c,approved,lease),[],lease),/P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0,'never save mutated physical-pair evidence');
 });
 
@@ -1146,7 +1169,7 @@ test('P88 newly saved duplicate mask during queued cloud preflight vetoes privat
    sourceSha256:item.reconciliation70.sourceSha256,
    maskSha256:item.reconciliation70.maskSha256}
  });
- await assert.rejects(c.saveSourceBoundPiece88(structuredClone(item),[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ await assert.rejects(c.saveSourceBoundPiece88(reviewedForSave88(c,structuredClone(item),lease),[],lease),/P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0,'same original mask can enter closet only once');
 });
 
@@ -1155,7 +1178,7 @@ test('P88 queued original save preserves unrelated new photo draft added during 
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
  const second={id:'independent-new-photo',image:'data:image/jpeg;base64,SU5ERVBFTkRFTlQ='};
  c.beforeWrite=async()=>c.batch.push(second);
- await c.saveSourceBoundPiece88(structuredClone(item),[],lease);
+ await c.saveSourceBoundPiece88(reviewedForSave88(c,structuredClone(item),lease),[],lease);
  assert.deepEqual(writes.map(x=>x.name),['items','state']);
  assert.equal(writes[1].value.batch.length,1);
  assert.equal(writes[1].value.batch[0].id,second.id);
