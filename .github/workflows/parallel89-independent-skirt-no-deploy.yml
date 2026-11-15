@@ -26,7 +26,7 @@ jobs:
           git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           git diff --name-only e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD | while IFS= read -r path; do
             case "$path" in
-              research/parallel89/*|scripts/audit-parallel89-public-source.mjs|scripts/verify-parallel89-real-pair.mjs|scripts/verify-parallel89-real-poses.mjs|scripts/probe-parallel89-real-skirt.mjs|scripts/test-parallel89-real-skirt-browser.mjs|tests/parallel89-*.test.mjs|.github/workflows/parallel89-multicategory-source-no-deploy.yml|.github/workflows/parallel89-independent-skirt-no-deploy.yml) ;;
+              research/parallel89/*|scripts/audit-parallel89-public-source.mjs|scripts/verify-parallel89-real-pair.mjs|scripts/verify-parallel89-real-poses.mjs|scripts/probe-parallel89-real-skirt.mjs|scripts/test-parallel89-real-skirt-browser.mjs|scripts/install-parallel89-source-gap.mjs|scripts/test-parallel89-source-gap-browser.mjs|tests/parallel89-*.test.mjs|.github/workflows/parallel89-multicategory-source-no-deploy.yml|.github/workflows/parallel89-independent-skirt-no-deploy.yml|.github/workflows/parallel89-static-source-gap-no-deploy.yml) ;;
               *) echo "P89 unrelated/consumer edit: $path"; exit 1;;
             esac
           done
