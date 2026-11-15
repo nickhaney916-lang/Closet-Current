@@ -1,0 +1,108 @@
+name: MAIN1054 M52 exact donor source contract joint trial NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m52-crossmission-source-contract-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  m52-immutable-donor-compatibility:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate exact M51 research parent, exact donor ancestry and bounded additive M52 files only
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=22f3db9f9d5dd34ff2d1323e59d3848935e65f4f
+          M88=a5d21d55390449f75a35c95463a9e5700b51d4e3
+          M89=ebcada11357caaf3ba3aa53a1b5df7f6e2b7a289
+          M90=1b6fb1a2019e9b1e8e5ed55cc1f847809460ced9
+          git merge-base --is-ancestor "$BASE" HEAD
+          git cat-file -e "$M88^{commit}"
+          git cat-file -e "$M89^{commit}"
+          git cat-file -e "$M90^{commit}"
+          test "$(git merge-base "$BASE" "$M88")" = 39deed987afe2e5668d64e145835ad43ad14c7be
+          test "$(git merge-base "$BASE" "$M89")" = faac51857d57356fb5568f035566a171cadaa418
+          test "$(git merge-base "$BASE" "$M90")" = 271f25b4435f74c753df705490d2bf6b538aaee2
+          for SHA in "$M88" "$M89" "$M90"; do
+            if git merge-base --is-ancestor "$SHA" "$BASE"; then
+              echo "FAIL: donor is not an independent competing research head"; exit 1
+            fi
+          done
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/ research/main-thread-integration-1054/
+          git diff --name-only "$BASE" HEAD | while IFS= read -r file; do
+            case "$file" in
+              research/master-consolidation-1054/main52-crossmission-source-contract.test.mjs|research/master-consolidation-1054/MILESTONE52.md|.github/workflows/main1054-m52-crossmission-exact-source-no-deploy.yml) ;;
+              *) echo "M52 blocked unexpected changed file $file"; exit 1;;
+            esac
+          done
+          node --check research/master-consolidation-1054/main52-crossmission-source-contract.test.mjs
+      - name: Safely assemble temporary source-only exact-head tri-mission test (NO merge)
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=22f3db9f9d5dd34ff2d1323e59d3848935e65f4f
+          M88=a5d21d55390449f75a35c95463a9e5700b51d4e3
+          M89=ebcada11357caaf3ba3aa53a1b5df7f6e2b7a289
+          M90=1b6fb1a2019e9b1e8e5ed55cc1f847809460ced9
+          ROOT="$PWD"
+          SCRATCH="$ROOT/.m52-source-join-NOT-MERGED"
+          git worktree add --detach "$SCRATCH" "$BASE"
+          take() {
+            local sha="$1" file="$2"
+            mkdir -p "$SCRATCH/$(dirname "$file")"
+            git show "$sha:$file" > "$SCRATCH/$file"
+            test -s "$SCRATCH/$file"
+            test "$(git hash-object "$SCRATCH/$file")" = "$(git rev-parse "$sha:$file")"
+          }
+          # Exact modules from ALL THREE latest draft PR heads, with no
+          # public/app.js, outfit-capture.js or other consumer file overwritten.
+          take "$M88" public/outfit-instance-review-840.mjs
+          take "$M89" research/parallel89/source-contract.mjs
+          take "$M89" research/mission2-p86/photo-panel.mjs
+          take "$M89" tests/parallel89-source-contract.test.mjs
+          take "$M90" research/native-3d-05/native-preview-bridge.mjs
+          cp "$ROOT/research/master-consolidation-1054/main52-crossmission-source-contract.test.mjs" \
+             "$SCRATCH/research/master-consolidation-1054/main52-crossmission-source-contract.test.mjs"
+          echo 'M52 exact donor code staged in detached disposable local worktree; NOT committed or merged'
+          (cd "$SCRATCH" && node --test \
+            research/master-consolidation-1054/main52-crossmission-source-contract.test.mjs \
+            tests/parallel89-source-contract.test.mjs)
+          mkdir -p benchmark/main52-crossmission
+          printf '{"schema":"MAIN1054_M52_EXACT_THREE_DONOR_SOURCE_JOINT_TRIAL/v1","m51":"%s","m88":"%s","m89":"%s","m90":"%s","sourceConsumerAppChanged":false,"realHostedOwnerVerified":false,"realCloth3DApproved":false,"fullyIntegratedApp":false,"releaseAuthorized":false,"familyAlpha":"HOLD"}\n' \
+             "$BASE" "$M88" "$M89" "$M90" > benchmark/main52-crossmission/M52-TRI-MISSION-JOINT-SOURCE-NOT-RELEASE.json
+          git -C "$SCRATCH" diff --name-only | while IFS= read -r file; do
+            case "$file" in
+              research/native-3d-05/native-preview-bridge.mjs) ;;
+              *) echo "BLOCKED source-modified scratch file $file"; exit 1;;
+            esac
+          done
+      - name: Verify unchanged application build with only isolated M52 records
+        run: node scripts/build.mjs
+      - name: Install regression dependencies without consumer deployment
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Recheck authentic licensed photo → owner-reviewed private saved wardrobe → original 2D baseline
+        run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs
+      - name: Full inherited native application source-only regression unchanged
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No consumer, family, original photos or hosted source edits
+        shell: bash
+        run: |
+          git diff --exit-code 22f3db9f9d5dd34ff2d1323e59d3848935e65f4f HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/ research/main-thread-integration-1054/
+          test -s benchmark/main52-crossmission/M52-TRI-MISSION-JOINT-SOURCE-NOT-RELEASE.json
+      - name: Upload SHA-pinned source-only compatibility result, NOT a release receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m52-tri-mission-donors-source-NO-MERGE-HOLD
+          path: benchmark/main52-crossmission/
+          retention-days: 14
+          if-no-files-found: ignore
