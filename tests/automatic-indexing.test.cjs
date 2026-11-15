@@ -57,6 +57,18 @@ function setup({result={strong:true,choices:[choice],details:{color:'Blue',patte
       });
       return req;
      },
+     getAll(){
+      // M86: the actual auto writer performs a durable owner-source scan
+      // before inserting. It must see committed saved rows asynchronously.
+      assert.equal(name,'items');
+      const req={result:undefined,onsuccess:null,onerror:null};
+      queueMicrotask(()=>{
+       if(aborted)return;
+       req.result=stored.map(value=>structuredClone(value));
+       req.onsuccess?.();
+      });
+      return req;
+     },
      add(value){
       if(name!=='items')throw Error('Unexpected item insert');
       pending.push({name,value:structuredClone(value),add:true});schedule();

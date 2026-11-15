@@ -44,6 +44,17 @@ function fixture({draft=[row,foreignDraft],savedItems=[],holdQueue=false}={}){
       req.onsuccess?.();
      });return req;
     },
+    getAll(){
+     // M86: mirror real asynchronous owner items.getAll in the SAME
+     // readwrite transaction; never use an earlier in-memory UI snapshot.
+     assert.equal(name,'items');
+     const req={result:undefined,onsuccess:null,onerror:null};
+     queueMicrotask(()=>{
+      if(aborted)return;
+      req.result=[...stored.values()].map(value=>structuredClone(value));
+      req.onsuccess?.();
+     });return req;
+    },
     add(value){assert.equal(name,'items');calls.push('add');pending.push({name,value:structuredClone(value),add:true});schedule();},
     put(value){calls.push('put:'+name);pending.push({name,value:structuredClone(value)});schedule();}
    };},
@@ -94,6 +105,30 @@ test('eligible auto-index adds exactly one garment and preserves other tab origi
  assert.equal(f.ctx.batch.length,0);
  assert.deepEqual(f.calls,['add','put:state','refresh']);
 });
+test('same source original with different crop and saved ID blocks auto-index without losing drafts',async()=>{
+ const saved={...row,id:'already-existing',image:'data:image/jpeg;base64,Y3JvcHBlZA==',
+  originalPhoto:{image:photo,sha256:'a'.repeat(64)},sourceSHA256:'a'.repeat(64)};
+ const f=fixture({savedItems:[saved]});
+ const draftBefore=f.draft;
+ await assert.rejects(f.index(),/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.equal(f.stored.size,1);
+ assert.deepEqual(f.draft,draftBefore,'both original drafts remain');
+ assert.equal(f.commits,0);
+ assert.equal(f.aborts,1);
+ assert.deepEqual(f.calls,[]);
+});
+
+test('different verified original hash can still auto-save beside an existing owned original',async()=>{
+ const different={...row,id:'other-owned-original',image:'data:image/jpeg;base64,b3RoZXI=',
+  originalPhoto:{image:'data:image/jpeg;base64,b3RoZXI=',sha256:'c'.repeat(64)},
+  sourceSHA256:'c'.repeat(64)};
+ const f=fixture({savedItems:[different]});
+ assert.equal(await f.index(),true);
+ assert.equal(f.stored.size,2);
+ assert.equal(f.stored.get(row.id).sourceSHA256,'a'.repeat(64));
+ assert.deepEqual(f.draft,[foreignDraft]);
+});
+
 test('saved item ID from second tab blocks auto-index and keeps all drafts',async()=>{
  const saved={...row,color:'Purple',originalPhoto:{...original,sha256:'c'.repeat(64)}};
  const f=fixture({savedItems:[saved]});
