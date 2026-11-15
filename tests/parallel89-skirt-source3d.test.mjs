@@ -62,10 +62,17 @@ test('separate photographed clothing regions cannot be fused into one fake 3D sk
  assert.throws(()=>sourceSkirtOutline89({alpha,width,height}),
   /multiple disconnected garment-sized regions/);
  const source=sourceAlpha();
+ const unchanged=sourceSkirtOutline89(source);
  source.alpha[40*source.width+4]=255; // isolated foreground dust, not another garment
  const clean=sourceSkirtOutline89(source);
  assert.equal(clean.sourceRowWidths.length,7,
   'small disconnected photo-mask speck must not fabricate a new garment');
+ assert.deepEqual(clean.crop,unchanged.crop,
+  'detached alpha dust must NOT shift actual photographed skirt UV crop');
+ assert.deepEqual(clean.sourceRowWidths,unchanged.sourceRowWidths,
+  'detached alpha dust must NOT shift the original fabric pattern alignment');
+ assert.equal(clean.pixelForegroundCount,unchanged.pixelForegroundCount,
+  'only actual dominant garment pixels can claim photographic source evidence');
  assert.equal(clean.releaseAuthorized,false);
  assert.equal(clean.maskHumanApproved,false);
 });
