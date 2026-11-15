@@ -6,7 +6,7 @@ Mobile browsers commonly dispose or lose graphics contexts after tab switches, p
 
 ## Source boundaries and scope
 
-Isolated M21 is stacked on M20 exact head `acd5e25e7c38c83dc036409ab69f1aa374e25746` ([M20 draft #1201](https://github.com/nickhaney916-lang/Closet-Current/pull/1201)); M20 itself stacks on prior M19/M18/M17/M16/M15 research. This test exercises the **unchanged** source-pinned PR541 original anatomical male and female 163-bone WebGL rigs and genuine licensed JPEG photo SHA. Changes are restricted to opt-in existing P90 browser acceptance script, Node source guard, branch allowlist in no-deploy workflow, and this research report. No changes to original garment photo, mesh geometry, original wardrobe, UVs, skin weights, auth/RLS, source, asset storage, `public/`, `supabase/`, hosted accounts, production/staging or any sibling mission. No merge, no deploy.
+Isolated M21 is stacked on M20 exact head `0152094c507070b606066f3934efd12820b951aa` ([M20 draft #1201](https://github.com/nickhaney916-lang/Closet-Current/pull/1201)); M20 itself stacks on prior M19/M18/M17/M16/M15 research. This test exercises the **unchanged** source-pinned PR541 original anatomical male and female 163-bone WebGL rigs and genuine licensed JPEG photo SHA. Changes are restricted to opt-in existing P90 browser acceptance script, Node source guard, branch allowlist in no-deploy workflow, and this research report. No changes to original garment photo, mesh geometry, original wardrobe, UVs, skin weights, auth/RLS, source, asset storage, `public/`, `supabase/`, hosted accounts, production/staging or any sibling mission. No merge, no deploy.
 
 ## Real browser proof added
 
