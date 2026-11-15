@@ -1003,12 +1003,35 @@ function difference(a,b){if(!a||!b)return 255;let total=0;for(let i=0;i<a.length
 function snap(){if(!video.videoWidth||video.readyState<2)throw Error('The camera has not provided a usable frame yet.');const scale=Math.min(1,2048/Math.max(video.videoWidth,video.videoHeight));canvas.width=Math.max(1,Math.round(video.videoWidth*scale));canvas.height=Math.max(1,Math.round(video.videoHeight*scale));canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.94);}
 function beep(){if(!$('sound').checked||!audio)return;try{const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=740;g.gain.value=.04;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.12);}catch{}}
 function candidate(image,options={}){
- if([...items,...batch].some(item=>item.image===image)){if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');message('Exact duplicate skipped. Show the next garment.');return false;}
- const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',localStatus:'Reading photo…'});
- if(typeof recordDeviceEvent==='function')recordDeviceEvent('photo_queued');
+ // P88: do not silently lose a newly photographed physical item merely
+ // because its JPEG bytes equal a photo already SAVED in this owner's closet.
+ // Identical pending frames are still coalesced to avoid auto-camera floods:
+ // ask for a fresh angle if this is a genuinely separate garment.
+ if(batch.some(item=>item.image===image)){
+  if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_pending_frame_awaits_review');
+  message('That exact frame is already waiting in Photo results. If this is a different physical garment, take its own photo from another angle.');
+  return false;
+ }
+ const exactSaved=items.some(item=>item.image===image);
+ // Preserve inherited legacy automatic-indexing behavior in non-review mode;
+ // actual native Mission 1 review-first mode must retain intentional rescans.
+ if(exactSaved&&!(typeof reviewFirst836!=='undefined'&&reviewFirst836)){
+  if(typeof recordDeviceEvent==='function')recordDeviceEvent('exact_duplicate_skipped');
+  message('Exact duplicate skipped. Show the next garment.');return false;
+ }
+ const item=normalizeClothing({id:crypto.randomUUID(),image,name:'',category:'Uncategorized',color:'',notes:'',
+  localStatus:exactSaved?'This original photo exactly matches a saved closet photo. Original kept unsaved for owner comparison. Confirm whether it is a different physical garment or remove this new draft.':'Reading photo…'});
+ if(typeof recordDeviceEvent==='function')recordDeviceEvent(exactSaved?'exact_saved_photo_retained_for_review':'photo_queued');
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.reconciliation70){item.reconciliation70=options.reconciliation70;item.reconciliation70Status=options.reconciliation70Status||'unresolved';}if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
+ if(exactSaved){
+  // No unverified classifier/model decision may resolve two identical JPEGs
+  // into distinct owned garments; preserve the raw source for a PERSON.
+  item.possibleDuplicate=true;item.requiresOwnershipConfirmation=true;
+  item.localAnalyzed=true;
+ }
  batch.push(item);sessionCapturedIds.add(item.id);persistDraft();session++;$('sessionCount').textContent=session;$('reviewCount').textContent=batch.length;$('lastCaptureImage').src=image;$('lastCaptureImage').hidden=false;
- queueAutomatic(item);return true;
+ if(!exactSaved)queueAutomatic(item);
+ return true;
 }
 function queueAutomatic(item){
  // An older queued photo may have been replaced by another object with this
