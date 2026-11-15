@@ -46,11 +46,12 @@ function run(x,mode='reduce',overrides={}){
     geom=x.mesh.geometry,base=x.photoPositions;
    const dz=geom.getAttribute('position').array[2]-base[2];
    let pairs=['0|45','1|58','2|72','3|99'];
-   if(changed&&mode==='reduce'&&dz>.01)pairs=['0|45','1|58'];
+   if(changed&&mode==='quarter-new'&&['blend-25','blend-75'].includes(activePose)&&dz>.01)
+    pairs=['0|45','1|58','2|72','3|99','5|108'];
+   else if(changed&&['reduce','quarter-new'].includes(mode)&&dz>.01)
+    pairs=['0|45','1|58'];
    else if(changed&&mode==='introduce')pairs=['0|45','1|58','3|99','5|108'];
    else if(changed&&mode==='depth')pairs=['0|45'];
-   else if(changed&&mode==='quarter-new'&&['blend-25','blend-75'].includes(activePose))
-    pairs=['0|45','1|58','2|72','3|99','5|108'];
    return {count:pairs.length,pairs:new Set(pairs),
     maxDepth:changed&&mode==='depth'?.02:.001,trueOriginalSkirtTriangleIndexStable:true,
     trueOriginalBodyTriangleIndexStable:true,
