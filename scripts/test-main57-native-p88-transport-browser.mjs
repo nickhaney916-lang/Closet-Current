@@ -269,7 +269,7 @@ try{
       row.ownerReviewed===true||row.sourcePhotoOriginal===true)
     throw Error('MULTI24 photo-only human save contract was silently promoted');
    const encoded=row.originalPhoto.image;
-   if(!/^data:image\\/jpeg;base64,/.test(encoded))throw Error('missing original JPEG envelope');
+   if(!/^data:image\/jpeg;base64,/.test(encoded))throw Error('missing original JPEG envelope');
    const binary=Uint8Array.from(atob(encoded.split(',')[1]),c=>c.charCodeAt(0));
    const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',binary)),
     b=>b.toString(16).padStart(2,'0')).join('');
@@ -292,7 +292,7 @@ try{
   const boardPhoto=await page.locator('#boardSlots .board-slot-top.owned img')
    .evaluate(img=>({decoded:img.naturalWidth>0,src:img.getAttribute('src')}));
   assert.equal(boardPhoto.decoded,true);
-  assert.match(boardPhoto.src,/^data:image\\/jpeg;base64,/);
+  assert.match(boardPhoto.src,/^data:image\/jpeg;base64,/);
   // The stricter source-certification preview MUST still refuse this
   // honest single-source/crop-unverified MULTI24 row. Outfit Board can show
   // its saved user-reviewed 2D photograph, but no invented 3D authority.
