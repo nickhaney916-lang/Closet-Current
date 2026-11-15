@@ -50,3 +50,19 @@ require a single-transaction migration / independent acceptance. Physical
 devices and actual hosted four-account restore remain blocked; Family Alpha
 #255 stays HOLD. Do not interpret new code as tested until its exact-head
 workflow finishes.
+
+### Legacy garment identity and owner-tag preflight
+
+Default v1–v3 import additionally rejects repeat garment IDs **after** the
+legacy 100-character normalization (two original IDs could previously collapse
+to one local record), explicit `ownerId` values not matching the importing
+signed owner, and a foreign `originalPhoto.ownerId`. These checks run while
+constructing the imported set and before the first wardrobe write. Three
+further exact-source synthetic regressions cover normalized duplicate IDs
+and both owner mismatch placements. Unknown/untagged historical backups are
+not claimed to be independently ownership-proven; their owner still must
+explicitly choose import. Final latest-head dedicated CI receipt is required.
+
+Remaining: default legacy multi-store restore is **still non-atomic**,
+meaning post-write failure is not rolled back. The separate research atomic
+restore module requires safe compatible migration rather than a shortcut.
