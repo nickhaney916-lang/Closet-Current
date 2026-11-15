@@ -25,7 +25,7 @@ export function auditOriginalAnatomicalBodyIndexTopology89(geometry){
    !valid(pos.count)||pos.count<4||pos.count>bound.maxVertices||
    (idx&&idx.itemSize!==1))throw Error('original-source-position-index-inventory-required');
   const total=idx?.count??pos.count;
-  if(!valid(total)||total<12||total%3||total/3>bound.maxFaces)
+  if(!valid(total)||total<3||total%3||total/3>bound.maxFaces)
    throw Error('original-body-triangle-inventory-invalid');
   for(let i=0;i<pos.count;i++)
    for(let j=0;j<3;j++)if(!Number.isFinite(pos.getComponent(i,j)))
