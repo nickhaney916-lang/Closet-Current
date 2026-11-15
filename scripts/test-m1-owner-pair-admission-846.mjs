@@ -17,7 +17,7 @@ const app=await readFile('public/app.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
  assert.ok(i>=0&&j>i,'P846 source segment missing '+a);return app.slice(i,j);}
-const source=extract('function node(', 'function cropClothingPhoto(')+
+const source=extract('function node(', 'function hasSourceBoundMask88(')+
  extract('function hasSourceBoundMask88(', '// P846:')+
  extract('function unit70Receipts(', 'function renderRecognitionNotice(');
 const harness=[
