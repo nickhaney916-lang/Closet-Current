@@ -18,7 +18,7 @@ s=replace(s,'createSourceTrueOutfit3D01Viewer} from', 'createSourceTrueOutfit3D0
 s=replace(s,'mountOutfit3D01Research({doc=document,auth=window.closetAuth}={})',
  'mountOutfit3D01Research({doc=document,auth=window.closetAuth,nativeTopSource90=null,nativeBottomEmpty90=false}={})');
 
-s=replace(s,"[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Rotate']]","[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Auto rotate'],['Left90','Rotate left'],['Right90','Rotate right'],['ZoomIn90','Zoom in'],['ZoomOut90','Zoom out'],['Reset90','Reset view']]");
+s=replace(s,"[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Rotate']]","[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Auto rotate'],['Stop90','Pause rotation'],['Left90','Rotate left'],['Right90','Rotate right'],['ZoomIn90','Zoom in'],['ZoomOut90','Zoom out'],['Reset90','Reset view']]");
 s=replace(s," left.append(views);body.append(left);",` left.append(views);
  const sourceNotice90=el('p','outfit3D01SourceNotice90');
  sourceNotice90.className='cc3d-note';
@@ -56,6 +56,13 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);
  };
  for(const action of ['Left90','Right90','ZoomIn90','ZoomOut90','Reset90'])
   views.querySelector('#outfit3D01'+action).onclick=()=>command90(action);
+ const pause90=views.querySelector('#outfit3D01Stop90');
+ pause90.type='button';
+ pause90.setAttribute('aria-label','Pause automatic avatar rotation without changing clothing');
+ pause90.onclick=()=>{
+  try{current();if(ready&&scene)scene.setSpin(false);}
+  catch{clearPrivate();}
+ };
  dialog.addEventListener('keydown',e=>{
   if(e.target!==canvas)return;
   const key={ArrowLeft:'Left90',ArrowRight:'Right90','+':'ZoomIn90','=':'ZoomIn90','-':'ZoomOut90',Home:'Reset90'}[e.key];
