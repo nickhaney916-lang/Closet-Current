@@ -3,6 +3,14 @@ import {createHash} from 'node:crypto';
 await rm('dist',{recursive:true,force:true});
 await mkdir('dist',{recursive:true});
 await cp('public','dist',{recursive:true});
+// The owner-private legacy atomic-import helper is referenced by the existing
+// opt-in app import URL ../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs.
+// Publish ONLY that audited module so a built/offline app never resolves a
+// missing research asset. No default import behavior is enabled here.
+const atomicModule='research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs';
+const atomicBytes=await readFile(atomicModule);
+await mkdir('dist/research/mission3-legacy-atomic-import',{recursive:true});
+await writeFile('dist/'+atomicModule,atomicBytes);
 async function files(directory,prefix=''){
  const result=[];
  for(const entry of await readdir(directory,{withFileTypes:true})){
@@ -14,6 +22,7 @@ async function files(directory,prefix=''){
 }
 const assets=await files('public'),hash=createHash('sha256');
 for(const asset of assets)hash.update(asset).update(await readFile('public/'+asset));
+hash.update(atomicModule).update(atomicBytes);
 const template=await readFile('public/sw.js','utf8');
 hash.update(template);
 const version=hash.digest('hex').slice(0,12);
@@ -32,5 +41,5 @@ await writeFile('dist/index.html',builtIndex);
 const photoCheck=await readFile('public/phone-photo-check.html','utf8');
 const recognitionIndex=JSON.parse(await readFile('public/recognition-vectors.json','utf8')).sha256;
 await writeFile('dist/phone-photo-check.html',photoCheck.replace('__RELEASE__',version).replace('__RECOGNITION_INDEX__',recognitionIndex).replace(/(src|href)="([^"]+\.(?:js|mjs|css))"/g,(match,attribute,asset)=>assets.includes(asset)?attribute+'="'+asset+'?v='+version+'"':match));
-await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,...versionedAssets])));
+await writeFile('dist/sw.js',template.replace('__VERSION__',version).replace('__ASSETS__',JSON.stringify([...assets,atomicModule,...versionedAssets])));
 console.log('Built closet inventory without paid AI services.');
