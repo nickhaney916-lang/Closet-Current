@@ -520,3 +520,28 @@ test('P88 private reserve CLI remains forbidden inside GitHub Actions',()=>{
  assert.match(result.stderr,/PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI/);
  assert.equal(result.stdout,'');
 });
+
+test('P88 private-file and ledger trust anchors remain checkout-bound from an external working directory',async()=>{
+ const outside=await mkdtemp(join(tmpdir(),'p88-other-working-dir-'));
+ try{
+  const moduleUrl=new URL('../research/mission1-parallel88/blind-evaluator-handoff-88.mjs',import.meta.url).href;
+  const file=resolve('research/mission1-parallel88/blind-evaluator-handoff-88.mjs');
+  const directory=resolve('research/mission1-parallel88');
+  const program=`
+   import {externalPrivateFile88,externalPrivateLedgerDirectory88} from ${JSON.stringify(moduleUrl)};
+   for(const [name,fn,path,reason] of [
+    ['file',externalPrivateFile88,${JSON.stringify(file)},'PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT'],
+    ['ledger',externalPrivateLedgerDirectory88,${JSON.stringify(directory)},'PRIVATE_LEDGER_MUST_STAY_OUTSIDE_GIT']
+   ]){
+    try{await fn(path);throw new Error(name+'_ACCEPTED_REPOSITORY_PATH');}
+    catch(e){if(e.message!==reason)throw e;}
+   }
+   console.log('P88_CROSS_CWD_TRUST_ANCHOR_PASS');
+  `;
+  const result=spawnSync(process.execPath,['--input-type=module','-e',program],{
+   cwd:outside,encoding:'utf8',env:{...process.env}
+  });
+  assert.equal(result.status,0,result.stderr);
+  assert.match(result.stdout,/P88_CROSS_CWD_TRUST_ANCHOR_PASS/);
+ }finally{await rm(outside,{recursive:true,force:true});}
+});
