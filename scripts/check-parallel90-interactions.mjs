@@ -83,6 +83,71 @@ export async function checkViewer90(page,width,engine){
   // are captured through the existing authenticated read-only panel).
   samples.push({figure,width,engine,before,after,touchButtons90,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
+ // M15: end the original, signed-in, source-attested WebGL session while
+ // an ACTUAL browser pointer is held down on the anatomical viewer.
+ // Releasing the gesture must never revive old-account/old-source imagery,
+ // and reopening must re-attest the original photo and construct a NEW canvas.
+ // This tests browser pointer input, NOT a physical-finger swipe.
+ let midDragRevocation90=null;
+ if(width===390){
+  await page.locator('#outfit3D01Reset90').click();await settle();
+  const sourceBefore=await state();
+  assert.equal(sourceBefore.modelReady,true);
+  assert.equal(sourceBefore.bones,163);
+  const oldCanvas=page.locator('#outfit3D01Canvas');
+  const rect=await oldCanvas.boundingBox();
+  assert.ok(rect&&rect.width>80&&rect.height>180);
+  const startX=rect.x+rect.width*.45,startY=rect.y+rect.height*.5;
+  await page.mouse.move(startX,startY);
+  await page.mouse.down();
+  await page.mouse.move(startX+Math.min(rect.width*.18,65),startY,{steps:8});
+  await settle();
+  const dragged=await camera();
+  assert.ok(Math.abs(((dragged.angle+540)%360)-180)>3,
+   'live source-attested anatomical camera must move before revocation');
+  // Existing native selection API is the only selection writer here.
+  // The 3D preview is read-only; the saved wardrobe store is untouched.
+  await page.evaluate(()=>{
+   window.__p90DragCanvas=document.getElementById('outfit3D01Canvas');
+   window.nativeLossless04Bridge.selectSaved(1);
+  });
+  await page.waitForFunction(()=>{
+   const s=window.native3D05Bridge.state();
+   return s.active===false&&document.querySelectorAll('#outfit3D01Photos img').length===0;
+  },null,{timeout:30000});
+  await page.mouse.up();
+  const revoked=await state();
+  assert.equal(revoked.active,false,'pointerup cannot reanimate revoked WebGL');
+  assert.equal(revoked.contactEvidence90,null);
+  assert.equal(revoked.sceneShirtStages90,null);
+  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),
+   true,'revoking a 3D pointer gesture must retain the valid private 2D session');
+  assert.equal(await page.evaluate(()=>document.contains(window.__p90DragCanvas)),false,
+   'stale original 3D canvas must be disconnected from page after owner selection change');
+  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
+  await page.evaluate(()=>window.nativeLossless04Bridge.selectSaved(0));
+  await page.locator('#native3D05Preview').click();
+  await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady&&
+   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+  await verifyCanvas();
+  const reopened=await state();
+  assert.deepEqual(reopened.garmentSources90,sourceBefore.garmentSources90,
+   'explicit reopen must re-attest the original source-photographed garment');
+  assert.equal(await page.locator('#outfit3D01Canvas').evaluate(c=>
+   c===window.__p90DragCanvas),false,'reopened renderer must use a fresh canvas');
+  await page.locator('#outfit3D01Reset90').click();await settle();
+  const reopenAngle=(await camera()).angle;
+  await page.locator('#outfit3D01Right90').click();await settle();
+  const turnedAngle=(await camera()).angle;
+  assert.ok(Math.abs(((turnedAngle-reopenAngle+540)%360)-180)>5,
+   'new owner-reverified camera remains interactive after mid-drag cancellation');
+  await page.evaluate(()=>{delete window.__p90DragCanvas;});
+  midDragRevocation90={engine,cssWidth:width,bones:163,
+   pointerHeldDuringNativeSelection:true,oldCanvasRemoved:true,
+   staleOriginalPhotosCleared:true,private2DSessionKept:true,
+   newSourceAttestedCanvas:true,mouseBrowserGesture:true,
+   physicalFingerSwipeVerified:false};
+ }
  // Browser-emulated phone landscape; physical finger/hardware remains NOT TESTED.
  // Keep the exact already admitted rig and garment while resizing the viewer.
  const originalViewport=page.viewportSize();
@@ -126,7 +191,7 @@ export async function checkViewer90(page,width,engine){
  assert.equal((await state()).contactEvidence90,null,'revoked original source cannot expose stale cloth crossing witnesses');
  assert.equal(await page.locator('#outfit3D01Photos img').count(),0);
  assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
- await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,landscape,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
+ await writeFile('benchmark/parallel90/'+engine+'/'+width+'.json',JSON.stringify({samples,midDragRevocation90,landscape,contextLossSimulation:'PASS_WEBGL_lose_context',physicalPhone:false,familyAlpha:'HOLD'},null,2));
  // Reopen requires actual owner/source re-attestation and a new renderer.
  await page.locator('#native3D05Preview').click();
  await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:150000});
