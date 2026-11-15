@@ -68,6 +68,30 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);
   const key={ArrowLeft:'Left90',ArrowRight:'Right90','+':'ZoomIn90','=':'ZoomIn90','-':'ZoomOut90',Home:'Reset90'}[e.key];
   if(key){e.preventDefault();command90(key);}
  });`);
+// M20: source-pinned viewer only. Respect owner operating-system reduced
+// motion without weakening any manual orbit/source-photo controls.
+s=replace(s," doc.getElementById('outfit3D01Rotate').onclick=()=>{\\n  try{current();if(ready)scene.setSpin(true);}catch{clearPrivate();}\\n };".replaceAll('\\n','\n'),` const reducedMotion90=doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')||null;
+ const onReducedMotion90=()=>{
+  if(!reducedMotion90?.matches||!ready||!scene)return;
+  try{
+   current();
+   scene.setSpin(false);
+   putStatus('Reduced motion preference: automatic rotation paused. Manual 3D rotation is available.');
+  }catch{clearPrivate();}
+ };
+ reducedMotion90?.addEventListener?.('change',onReducedMotion90);
+ doc.getElementById('outfit3D01Rotate').onclick=()=>{
+  try{
+   current();
+   if(!ready||!scene)return;
+   if(reducedMotion90?.matches){
+    scene.setSpin(false);
+    putStatus('Reduced motion preference: automatic rotation paused. Manual 3D rotation is available.');
+   }else scene.setSpin(true);
+  }catch{clearPrivate();}
+ };`);
+s=replace(s,"  window.removeEventListener('pagehide',change);",
+ "  window.removeEventListener('pagehide',change);\\n  reducedMotion90?.removeEventListener?.('change',onReducedMotion90);".replaceAll('\\n','\n'));
 s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    startup90:{...startupTimings90,...view.startup90},
     renderStages90:rendered?.renderStages90||null,
     sceneApplyStages90:view.applyStages90||null,
