@@ -390,6 +390,15 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
   const jpeg='data:image/jpeg;base64,'+(await sharp({create:{width:64,height:64,
    channels:3,background:{r:72,g:132,b:181}}}).jpeg().toBuffer()).toString('base64');
   const sha=createHash('sha256').update(Buffer.from(jpeg.slice('data:image/jpeg;base64,'.length),'base64')).digest('hex');
+  // A genuine, high-entropy JPEG bigger than the preview's 3 MB encoded cap.
+  // Legacy back-ups may carry a larger lossless original alongside a small
+  // reviewed preview. Both browser engines must round-trip this original.
+  const largeSourceBytes=await sharp(require('node:crypto').randomBytes(2000*2000*3),
+   {raw:{width:2000,height:2000,channels:3}}).jpeg({quality:90}).toBuffer();
+  assert.ok(largeSourceBytes.length>2_250_000&&largeSourceBytes.length<8*1024*1024,
+   'fixture must exercise the separate, bounded original JPEG allowance');
+  const largeOriginal='data:image/jpeg;base64,'+largeSourceBytes.toString('base64');
+  const largeSHA=createHash('sha256').update(largeSourceBytes).digest('hex');
   const server=createServer(async(req,res)=>{
    try{
     const url=new URL(req.url,'http://127.0.0.1');
@@ -437,7 +446,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       page.on('pageerror',error=>errors.push(String(error)));
       await page.goto(origin+'/',{waitUntil:'domcontentloaded'});
       await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
-      const result=await page.evaluate(async({owner,jpeg,sha})=>{
+      const result=await page.evaluate(async({owner,jpeg,sha,largeOriginal,largeSHA})=>{
        const input={format:'closet-current',version:3,items:[{
         id:'built-photo',ownerId:owner,name:'Original intact',category:'Tops',itemType:'T-shirt',
         color:'Blue',image:jpeg,sourceHashVerified:true,sourceSHA256:sha,
@@ -476,7 +485,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
        window.confirm=()=>true;
        const legacyId='h'.repeat(100)+'-historical-long-tail';
        const legacyBackup={format:'closet-current',version:1,items:[{
-        id:legacyId,category:'Tops',name:'Historical import',image:jpeg
+        id:legacyId,category:'Tops',name:'Historical import',image:jpeg,
+        sourceHashVerified:true,sourceSHA256:largeSHA,
+        originalPhoto:{image:largeOriginal,sha256:largeSHA,ownerId:owner}
        }]};
        const legacyJSON=JSON.stringify(legacyBackup);
        await document.getElementById('import').onchange({target:{
@@ -485,6 +496,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
        const historicalState=Object.fromEntries(historicalRows.state.map(row=>[row.id,row]));
        const legacyIdNormalized=historicalRows.items.some(row=>row.id===legacyId.slice(0,100))&&
         !historicalRows.items.some(row=>row.id===legacyId);
+       const largeOriginalRetained=historicalRows.items.some(row=>
+        row.id===legacyId.slice(0,100)&&row.originalPhoto?.image===largeOriginal&&
+        row.sourceSHA256===largeSHA&&row.sourceHashVerified===true);
        const originalAndLooksPreserved=
         historicalRows.items.some(row=>row.id==='built-photo'&&row.originalPhoto?.image===jpeg)&&
         historicalState.looks?.looks?.some(row=>row.id==='built-look')&&
@@ -498,10 +512,10 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         revision:byId['cloud-sync']?.localRevision,
         dirty:byId['cloud-sync']?.dirty,
         message:document.getElementById('message')?.textContent,
-        invalidRollback,cancelledUnchanged,legacyIdNormalized,originalAndLooksPreserved,
+        invalidRollback,cancelledUnchanged,legacyIdNormalized,largeOriginalRetained,originalAndLooksPreserved,
         afterLegacyRevision:historicalState['cloud-sync']?.localRevision,
         changed:changesBeforeHistorical,afterLegacyCloudChanged:window.__privateCloudDirty||0};
-      },{owner,jpeg,sha});
+      },{owner,jpeg,sha,largeOriginal,largeSHA});
       assert.deepEqual(result.items,[{id:'built-photo',ownerId:owner,
        originalPhoto:jpeg,sourceSHA256:sha}],name+' original custody');
       assert.deepEqual(result.looks,['built-look'],name+' inspiration');
@@ -513,6 +527,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.invalidRollback,true,name+' rejected malformed backup without partial writes');
       assert.equal(result.cancelledUnchanged,true,name+' retained all private data on cancellation');
       assert.equal(result.legacyIdNormalized,true,name+' truncates historical long IDs without losing the garment');
+      assert.equal(result.largeOriginalRetained,true,name+' preserves a genuine >3 MB encoded original JPEG');
       assert.equal(result.originalAndLooksPreserved,true,name+' preserves existing outfits and JPEG');
       assert.equal(result.afterLegacyRevision,2,name+' increments cloud revision in atomic transaction');
       assert.equal(result.afterLegacyCloudChanged,2,name+' signals private backup after commit');
