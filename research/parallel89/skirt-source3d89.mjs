@@ -14,7 +14,9 @@ export const SKIRT_SOURCE89=Object.freeze({
  alphaStatus:'REVIEW',rearObserved:false,physicalFitCertified:false,
  releaseAuthorized:false,familyAlpha:'HOLD'
 });
-const approved=new WeakSet();
+// The trusted cutout raster is private to its exact byte-attested receipt.
+ // A caller-provided image buffer is never source evidence for a 3D texture.
+const approved=new WeakMap();
 const sha=async x=>{
  if(!globalThis.crypto?.subtle)throw Error('Secure source SHA-256 unavailable');
  const bytes=await globalThis.crypto.subtle.digest('SHA-256',x);
@@ -23,6 +25,39 @@ const sha=async x=>{
 const hex=x=>typeof x==='string'&&/^[a-f0-9]{64}$/.test(x);
 const fail=reason=>Object.freeze({status:'ORIGINAL_SKIRT_PHOTO_2D_REQUIRED',reason,
  consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+/** Decode from the SAME PNG bytes whose SHA was attested. No separately
+ * supplied raster can replace the public photo material after attestation.
+ * Browser and Node's native sharp decoder are used only on this public-source
+ * fixture; any missing decoder or impossible image fails to 2D.
+ */
+async function decodeAttestedSourceRaster89(png){
+ let data,width,height;
+ if(typeof document!=='undefined'&&typeof createImageBitmap==='function'){
+  const bitmap=await createImageBitmap(new Blob([png],{type:'image/png'}),
+   {premultiplyAlpha:'none',colorSpaceConversion:'none'});
+  try{
+   width=bitmap.width;height=bitmap.height;
+   if(width<64||height<64||width*height>9_000_000)
+    throw Error('attested-skirt-cutout-raster-dimensions-invalid');
+   const canvas=document.createElement('canvas');
+   canvas.width=width;canvas.height=height;
+   const ctx=canvas.getContext('2d',{willReadFrequently:true});
+   if(!ctx)throw Error('attested-skirt-cutout-raster-canvas-unavailable');
+   ctx.clearRect(0,0,width,height);ctx.drawImage(bitmap,0,0);
+   data=new Uint8Array(ctx.getImageData(0,0,width,height).data);
+  }finally{bitmap.close();}
+ }else if(typeof process!=='undefined'&&process.versions?.node){
+  const {default:sharp}=await import('sharp');
+  const out=await sharp(png).ensureAlpha().raw().toBuffer({resolveWithObject:true});
+  width=out.info.width;height=out.info.height;
+  data=new Uint8Array(out.data);
+ }else throw Error('attested-skirt-cutout-raster-decoder-missing');
+ if(!Number.isSafeInteger(width)||!Number.isSafeInteger(height)||
+  width<64||height<64||width*height>9_000_000||
+  !(data instanceof Uint8Array)||data.length!==width*height*4)
+  throw Error('attested-skirt-cutout-raster-dimensions-invalid');
+ return {data,width,height};
+}
 /** Source attestation is byte-bound, process-local and intentionally NOT owner
  * approval; neither forged metadata nor same-category dress is admissible.
  */
@@ -47,6 +82,8 @@ export async function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47
     cutoutBytes.slice(0,8).some((v,i)=>v!==[137,80,78,71,13,10,26,10][i])||
     await sha(cutoutBytes)!==work47.cutoutSHA256)
    throw Error('exact-source-skirt-review-alpha-sha-required');
+  // Decode only AFTER actual source PNG bytes passed immutable SHA/rights.
+  const trustedRaster=await decodeAttestedSourceRaster89(cutoutBytes);
   const receipt=Object.freeze({schema:'P89-authentic-independent-source-skirt-photo-and-review-mask/v1',
    status:'SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED',
    sourceId:SKIRT_SOURCE89.id,originalSHA256:SKIRT_SOURCE89.originalSHA256,
@@ -55,7 +92,7 @@ export async function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47
    photographSource:SKIRT_SOURCE89.photograph,license:SKIRT_SOURCE89.license,
    actual163BoneSkirtMeshFitted:false,sourceBacksideObserved:false,
    releaseAuthorized:false,familyAlpha:'HOLD'});
-  approved.add(receipt);return receipt;
+  approved.set(receipt,trustedRaster);return receipt;
  }catch(e){return fail(e.message);}
 }
 /** Inspect the actual ORIGINAL cutout alpha rows without estimating fabric
@@ -183,18 +220,19 @@ function sourceSkeleton(root){
  * and immutable original-PNG photo front. The neutral back is openly inferred.
  * Anatomical scene and photo asset must be independently SHA-verified first.
  */
-export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutImage,
+export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
   skirtLengthMeters=.65,waistHalfWidthMeters=.23,segments=48}={}){
- if(!approved.has(receipt)||receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'||
+ const trustedRaster=approved.get(receipt);
+ if(!trustedRaster||receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'||
    outline?.schema!=='P89-source-measured-skirt-silhouette/v1'||
-   receipt.sourceId!=='commons-0043'||!cutoutImage||
+   receipt.sourceId!=='commons-0043'||
    !Number.isInteger(segments)||segments<24||segments>96||segments%4!==0||
    !Number.isFinite(skirtLengthMeters)||skirtLengthMeters<.4||skirtLengthMeters>.9||
    !Number.isFinite(waistHalfWidthMeters)||waistHalfWidthMeters<.16||waistHalfWidthMeters>.32||
-   !(cutoutImage?.data instanceof Uint8Array)||
-   !Number.isSafeInteger(cutoutImage.width)||!Number.isSafeInteger(cutoutImage.height)||
-   cutoutImage.width<32||cutoutImage.height<32||
-   cutoutImage.data.length!==cutoutImage.width*cutoutImage.height*4)
+   !(trustedRaster?.data instanceof Uint8Array)||
+   !Number.isSafeInteger(trustedRaster.width)||!Number.isSafeInteger(trustedRaster.height)||
+   trustedRaster.width<64||trustedRaster.height<64||
+   trustedRaster.data.length!==trustedRaster.width*trustedRaster.height*4)
   return fail('source-skeleton-or-original-mask-capability-missing');
  let mesh=null,geo=null,texture=null,materials=null;
  try{
@@ -242,7 +280,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
   geo.setAttribute('skinWeight',new THREE.Float32BufferAttribute(weights,4));
   geo.setIndex(tris);geo.computeVertexNormals();
   for(const group of seams)geo.addGroup(group.start,group.count,group.materialIndex);
-  texture=new THREE.DataTexture(cutoutImage.data,cutoutImage.width,cutoutImage.height,THREE.RGBAFormat);
+  texture=new THREE.DataTexture(trustedRaster.data.slice(),trustedRaster.width,trustedRaster.height,THREE.RGBAFormat);
   texture.colorSpace=THREE.SRGBColorSpace;texture.flipY=true;texture.needsUpdate=true;
   materials=[
    new THREE.MeshStandardMaterial({map:texture,color:0xffffff,roughness:.95,
@@ -270,6 +308,8 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,cutoutIm
    sourceAlphaHumanApproved:false,interlayerContactPassed:false,
    bodyPenetrationUnmeasured:true,clothDrapeDynamics:false,
    sourceRGBADataTextureBoundToFrontOnly:true,
+   sourceRGBAWasDecodedFromExactAttestedCutoutPNG:true,
+   callerSuppliedTexturePixelsAreNotTrusted:true,
    genuinePhotoShaderWebGLNotYetMeasured:true,triangleCount:tris.length/3,
    originalHumanVisualRealismAccepted:false,consumer3DAdmitted:false,
    originalPhoto2DFallbackRequired:true,releaseAuthorized:false,familyAlpha:'HOLD'
