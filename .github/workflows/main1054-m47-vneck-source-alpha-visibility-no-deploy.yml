@@ -57,7 +57,7 @@ jobs:
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
-      M46_ENGINE: ${{ matrix.engine }}
+      M47_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
