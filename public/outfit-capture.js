@@ -128,7 +128,7 @@ function updateUnit70(decision,ids,lease=unit70OwnerLease88()){
  return result;
 }
 async function applyUnit70Decision88(decision,ids,lease){
- let previousBatch=null,assignedBatch=null,companionToReview88=null;
+ let previousBatch=null,assignedBatch=null,assignedIds88=null,companionToReview88=null;
  try{
   if(!sameUnit70OwnerLease88(lease))
    throw Error('The signed owner or outfit changed. Reopen Review for this account.');
@@ -161,7 +161,7 @@ async function applyUnit70Decision88(decision,ids,lease){
    companionToReview88=detachedUnit70Companion88(candidateItem,parts.companion,lease);
    batch=[...batch.map(x=>x.id===ids[0]?parts.first:x),companionToReview88];
   }else throw Error('Unknown garment review decision.');
-  assignedBatch=batch;
+  assignedBatch=batch;assignedIds88=new Set(batch.map(x=>x.id));
   if(!sameUnit70OwnerLease88(lease))
    throw Error('The signed owner changed during garment review.');
   await persistUnit70Decision88(lease);
@@ -181,7 +181,15 @@ async function applyUnit70Decision88(decision,ids,lease){
  }catch(error){
   // Do not let a revoked account's pre-persist in-memory decision remain in
   // the active draft, and never roll back a newer session's replacement batch.
-  if(previousBatch&&assignedBatch&&batch===assignedBatch)batch=previousBatch;
+  if(previousBatch&&assignedBatch&&batch===assignedBatch){
+   // If a second photograph was captured while cloud preflight was pending,
+   // roll back the failed signed physical-unit action WITHOUT dropping that
+   // unrelated newly captured draft. The action-created unpair companion was
+   // included in assignedIds88 and must not survive a failed transaction.
+   const newlyCaptured=batch.filter(x=>!assignedIds88?.has(x.id)&&
+    !previousBatch.some(prior=>prior.id===x.id));
+   batch=[...previousBatch,...newlyCaptured];
+  }
   if(!sameUnit70OwnerLease88(lease))return;
   outfitUnit70Error=error?.message||'Review decision could not be saved.';
   renderOutfitCapture();
