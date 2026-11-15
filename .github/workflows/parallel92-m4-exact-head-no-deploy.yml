@@ -91,10 +91,10 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
-          test "$(git merge-base 3f456c893643e071aa3dd37acc6d766479a285df HEAD)" = 3f456c893643e071aa3dd37acc6d766479a285df
+          test "$(git merge-base 878d624d8963109143c8775bb156bda4ba12a196 HEAD)" = 878d624d8963109143c8775bb156bda4ba12a196
           test "$(git rev-parse HEAD:public/app.js)" = d259d0b77a006d032699be50536adb2ebca459dd
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
-          git diff --name-only 3f456c893643e071aa3dd37acc6d766479a285df HEAD | while IFS= read -r p; do
+          git diff --name-only 878d624d8963109143c8775bb156bda4ba12a196 HEAD | while IFS= read -r p; do
             case "$p" in
               scripts/test-parallel92-exact-head.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;

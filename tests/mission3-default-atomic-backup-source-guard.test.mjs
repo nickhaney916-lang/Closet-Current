@@ -258,3 +258,83 @@ test('legacy backup without owner ID is stamped only into the current signed own
   assert.equal(after.ownerId,f.owner);
  }finally{f.close();}
 });
+
+// MAIN1054 M87: native legacy import must not silently downgrade a signed
+// original's owner receipt, genuine source-review provenance, or saved slots.
+test('M87 legacy same-ID import cannot erase an existing owner or camera-original claim',async()=>{
+ const f=await fixture();
+ try{
+  const protectedRow={...row(f.owner,'shirt'),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{ownerId:f.owner,image:jpeg,sha256:sha}};
+  await replace(f.db,'items',protectedRow);
+  const before=await snapshot(f.db);
+  const noOwner={...protectedRow,color:'Purple'};delete noOwner.ownerId;
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[noOwner]}),
+   /LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT/);
+  const noCameraOwner={...protectedRow,color:'Purple',
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[noCameraOwner]}),
+   /LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M87 verified same-source owner-preserving metadata merge remains accepted',async()=>{
+ const f=await fixture();
+ try{
+  const protectedRow={...row(f.owner,'shirt'),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{ownerId:f.owner,image:jpeg,sha256:sha}};
+  await replace(f.db,'items',protectedRow);
+  const approved={...protectedRow,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[approved]});
+  await commit(f,plan);
+  const result=(await snapshot(f.db)).items.find(x=>x.id==='shirt');
+  assert.equal(result.color,'Purple');
+  assert.equal(result.ownerId,f.owner);
+  assert.equal(result.originalPhoto.ownerId,f.owner);
+  assert.equal(result.originalPhoto.image,jpeg);
+  assert.equal(result.sourceSHA256,sha);
+ }finally{f.close();}
+});
+test('M87 same original cannot downgrade a verified SHA or source-review receipt',async()=>{
+ const f=await fixture();
+ try{
+  const protectedRow={...row(f.owner,'shirt'),sourceSHA256:sha,sourceHashVerified:true,
+   sourcePieceKey:'original-01',ownerSourceReview88:{verified:true,instance:'one'},
+   originalPhoto:{ownerId:f.owner,image:jpeg,sha256:sha}};
+  await replace(f.db,'items',protectedRow);
+  const before=await snapshot(f.db);
+  for(const change of [
+   {sourceHashVerified:false},
+   {sourcePieceKey:null},
+   {ownerSourceReview88:null}
+  ]){
+   const incoming={...protectedRow,...change};
+   await assert.rejects(prep(f,{format:'closet-current',version:3,items:[incoming]}),
+    /LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+   assert.deepEqual(await snapshot(f.db),before);
+  }
+ }finally{f.close();}
+});
+test('M87 no-replacement-board import refuses same-ID slot category drift',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  const changed={format:'closet-current',version:3,
+   items:[row(f.owner,'shirt','Shoes')]};
+  await assert.rejects(prep(f,changed),/LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M87 compatible same-ID metadata import retains existing saved outfit',async()=>{
+ const f=await fixture();
+ try{
+  const updated={...row(f.owner,'shirt'),color:'Orange'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[updated]});
+  await commit(f,plan);
+  const snapshotAfter=await snapshot(f.db);
+  const saved=snapshotAfter.state.find(x=>x.id==='outfit-board');
+  assert.equal(snapshotAfter.items.find(x=>x.id==='shirt').color,'Orange');
+  assert.equal(saved.current.slots.top,'shirt');
+  assert.equal(saved.saved[0].slots.top,'shirt');
+ }finally{f.close();}
+});

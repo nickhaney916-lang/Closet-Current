@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
 import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
 import {join} from 'node:path';
-const base='3f456c893643e071aa3dd37acc6d766479a285df';
+const base='878d624d8963109143c8775bb156bda4ba12a196';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok(trial===1||trial===2);
@@ -21,6 +21,7 @@ const pins={
  'public/native-owner-wardrobe-index-167.mjs':'b940b6c4ec040464d7d8b6686c45b5c3767fb859',
  'public/native-canonical-photo-source-167.mjs':'526d6d984bdb27cf775497132d2cf581ea2d3195',
  'research/main-thread-integration-1054/source-to-outfit.mjs':'5ea1e0e9b9f938fd98e7cb8875cc8ed8b68324b9',
+ 'public/native-default-atomic-import-m3.mjs':'8d0153671de7b7542b0178c4ed616c68da24cb95',
  'scripts/test-main51-real-app-owner-original-2d.mjs':'1150a6db461b1d5968183d1c9e798cac7ae88478',
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353'
 };

@@ -4,7 +4,7 @@ Tracking: [#1215](https://github.com/nickhaney916-lang/Closet-Current/issues/121
 
 ## Frozen exact source
 
-- Mission 4 [#1210](https://github.com/nickhaney916-lang/Closet-Current/pull/1210) baseline `3f456c893643e071aa3dd37acc6d766479a285df` on `research/main1054-m58-real-p88-browser-worker-HOLD`. New P92 native acceptance script refuses modifications to pinned consumer, research data contract, and pre-existing test source blobs. Test workflow explicitly checks out actual SHA, never GitHub's synthesized PR merge ref.
+- Mission 4 [#1210](https://github.com/nickhaney916-lang/Closet-Current/pull/1210) baseline `878d624d8963109143c8775bb156bda4ba12a196` on `research/main1054-m58-real-p88-browser-worker-HOLD`. New P92 native acceptance script refuses modifications to pinned consumer, research data contract, and pre-existing test source blobs. Test workflow explicitly checks out actual SHA, never GitHub's synthesized PR merge ref.
 - Native `public/outfit-board.js` stores `currentBoard.slots` with saved `item.id` values, and persists `outfit-board` state. A speculative adapter with `items: [{accountId,...}]` does not represent this native shape.
 - `public/app.js`: native manual `savePiece` and automatic `saveIndexed` use owner/session/source and durable IndexedDB controls, prevent duplicated originals sharing SHA or original image despite distinct displayed crops. Saved source fields include `ownerId`, `sourceSHA256`, `originalPhoto.image`, `originalPhoto.sha256`, review/crop status, source and row identity.
 - `research/main-thread-integration-1054/source-to-outfit.mjs` owner/private source preflight returns **2D only**, `renderAuthorized3D:false`. Model or synthetic owner review never independently establishes physical garment geometry.
@@ -48,3 +48,7 @@ CI runs **trial 1 then trial 2 sequentially in fresh browser processes on the SA
 ## Integration handoff
 
 The main #1054 controller may **selectively copy this test-only P92 commit** into a newer main M4 integration branch after exact-SHA re-audit. If consumer code changes, update pins only after reviewing new source and rerunning tests; do not loosen security/identity/3D or owner-receipt assertions merely to produce green CI. Preserve Family Alpha #255 HOLD, and do not merge/deploy.
+
+## Concurrent M87 source advancement
+
+M4 advanced from the initial frozen 3f456c89 to verified-read HEAD `878d624d8963109143c8775bb156bda4ba12a196` (M87) while P92 work was in progress. GitHub comparison confirmed exactly one forward commit: `public/native-default-atomic-import-m3.mjs`, its source-fence test, and M58 no-deploy workflow. P92 incorporated this **whole new M4 commit unchanged via a two-parent ancestry-preserving merge on P92 alone**. New full-suite tests cover M87 import; native M58 original/owner/source remains pinned. No files were written on the M4 branch. Older P92 runs prior to this updated head are not valid final-head evidence.
