@@ -272,27 +272,35 @@ function clothingFields(body,item,onChange=()=>{}){
  const completion=node('p',null,'fine'),fillPhoto=node('button','Fill missing details from photo','secondary');fillPhoto.type='button';
  const refreshCompletion=()=>{const missing=ClothingDetails.missing(item);completion.textContent=(item.colorSource==='photo-estimate'?'Color estimated from photo · confirm '+item.color+'. ':'')+(missing.length?'Details to confirm: '+missing.join(', ')+'.':'Core details complete. Brand, size and fabric can be added from the label.');};refreshCompletion();body.append(completion);
  if(item.image){body.append(fillPhoto,node('p','Confirm seasons for how you wear it. Enter brand, size and fabric from the label.','fine'));}
- if(typeof ClothingMemory!=='undefined'&&!learningMode72()){const suggestion=ClothingMemory.suggest(item,items)||ClothingMemory.weekly(item);if(suggestion){const memory=node('details',null,'clothing-details');memory.append(node('summary',suggestion.sourceIds?.length?'Suggestions from your confirmed clothes':'Recognition review suggestions'),node('p',(suggestion.sourceIds?.length?'Similar pieces suggest: ':'A fresh recognition check suggests: ')+Object.entries(suggestion.fields).map(([k,v])=>v).join(' · ')+'. Compare with this photo before using them.','fine'));const use=node('button','Use suggested details','secondary');use.type='button';use.onclick=()=>{Object.assign(item,ClothingMemory.apply(item,suggestion));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();edited88();use.disabled=true;};memory.append(use);body.append(memory);}}
+ if(typeof ClothingMemory!=='undefined'&&!learningMode72()){const suggestionLease88=photoFieldLease88();const suggestion=ClothingMemory.suggest(item,items)||ClothingMemory.weekly(item);if(suggestion){const memory=node('details',null,'clothing-details');memory.append(node('summary',suggestion.sourceIds?.length?'Suggestions from your confirmed clothes':'Recognition review suggestions'),node('p',(suggestion.sourceIds?.length?'Similar pieces suggest: ':'A fresh recognition check suggests: ')+Object.entries(suggestion.fields).map(([k,v])=>v).join(' · ')+'. Compare with this photo before using them.','fine'));const use=node('button','Use suggested details','secondary');use.type='button';use.onclick=()=>{if(!photoFieldLive88(suggestionLease88))return;Object.assign(item,ClothingMemory.apply(item,suggestion));fields.category.value=item.category;fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));for(const [key,input]of Object.entries(fields))input.value=item[key]||'';refreshCompletion();edited88();use.disabled=true;};memory.append(use);body.append(memory);}}
  if(typeof ClothingMemory!=='undefined'&&learningMode72()&&learningScope72()){
   const scope=learningScope72();
+  const suggestionLease88=photoFieldLease88();
   ClothingMemory.suggest72(item,items,scope).then(suggestion=>{
    // The offline SHA digest can finish before the editor is attached; append
    // to the same detached form, which will be shown only if still open.
-   if(!suggestion||scope!==learningScope72()||!body.isConnected)return;
+   if(!suggestion||scope!==learningScope72()||!photoFieldLive88(suggestionLease88))return;
    const memory=node('details',null,'clothing-details');
    memory.open=true; // The source-confirmed suggestion needs a visible review action.
    memory.append(node('summary','Owner-confirmed local learning (review only)'),
     node('p','Previously reviewed garments suggest: '+Object.values(suggestion.fields).join(' · ')+'. Verify against the original photo before applying.','fine'));
    const use=node('button','Use owner-confirmed suggestion','secondary');
    use.type='button';use.onclick=async()=>{
+    // Suggestions remain review-only and may not replace a later owner's edit
+    // or cross the exact source-photo, IDB, mask and signed-session boundary.
+    if(!photoFieldLive88(suggestionLease88)||scope!==learningScope72())return;
     use.disabled=true;
-    const updated=await ClothingMemory.apply72(item,suggestion,scope,{ownerChecked:true});
-    if(scope!==learningScope72()||!body.isConnected)return;
-    Object.assign(item,updated);
-    fields.category.value=item.category;
-    fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));
-    for(const [key,input]of Object.entries(fields))input.value=item[key]||'';
-    refreshCompletion();edited88();
+    try{
+     const updated=await ClothingMemory.apply72(item,suggestion,scope,{ownerChecked:true});
+     if(scope!==learningScope72()||!photoFieldLive88(suggestionLease88))return;
+     Object.assign(item,updated);
+     fields.category.value=item.category;
+     fields.itemType.replaceChildren(...['Unknown',...(clothingSchema.types[item.category]||[])].map(x=>node('option',x)));
+     for(const [key,input]of Object.entries(fields))input.value=item[key]||'';
+     refreshCompletion();edited88();
+    }catch{
+     // A rejected private suggestion never becomes a user-visible correction.
+    }finally{use.disabled=false;}
    };
    memory.append(use);body.append(memory);
   }).catch(()=>{}); // No diagnostic source identity or embeddings in UI/logs
