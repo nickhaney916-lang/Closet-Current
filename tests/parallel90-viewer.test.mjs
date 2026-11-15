@@ -353,3 +353,27 @@ test('P90 M20 system reduced-motion stops real auto-spin without changing admitt
  assert.match(browser,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\breducedMotion20\b/);
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });
+
+test('P90 M21 repeated real owner-sourced WebGL reopen forces actual context loss and removes stale canvases',()=>{
+ const browser=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const fixture=readFileSync('scripts/test-native-3d-05-browser.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(browser.includes("for(let n=1;n<=4;n++){"));
+ assert.ok(browser.includes("window.native3D05Bridge.close()"));
+ assert.ok(browser.includes("window.__p90M21OldCanvas"));
+ assert.ok(browser.includes("gl?.isContextLost()===true"));
+ assert.ok(browser.includes("window.nativeLossless04Bridge.status().active"));
+ assert.ok(browser.includes("oldDisconnected"));
+ assert.ok(browser.includes("oldContextStillLost"));
+ assert.ok(browser.includes("await page.locator('#native3D05Preview').click()"));
+ assert.ok(browser.includes("window.native3D05Bridge.state().bones===163"));
+ assert.ok(browser.includes("opened.garmentSources90,admittedSource"));
+ assert.ok(browser.includes("opened.resources90.geometries,initial.resources90.geometries"));
+ assert.ok(browser.includes("opened.resources90.textures,initial.resources90.textures"));
+ assert.ok(browser.includes("retired.selected2D,ownerSelection.selected"));
+ assert.ok(browser.includes("390-reopen-resource.json"));
+ assert.ok(browser.includes("hardwareGPUBytesMeasured:false"));
+ assert.ok(browser.includes("physicalPhone:false"));
+ assert.ok(fixture.includes("NATIVE92"));
+ assert.ok(workflow.includes('engine: [chromium, webkit]'));
+});

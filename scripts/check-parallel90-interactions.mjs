@@ -474,4 +474,99 @@ export async function checkViewer90(page,width,engine){
  const afterKey=(await camera()).angle;
  assert.ok(Math.abs(((afterKey-beforeKey+540)%360)-180)>5,
   'reopened real WebGL canvas must retain working keyboard orbit');
+ // M21: repeated real WebGL close/reopen on the same signed-in owner
+ // (not merely outfit swapping) must force-lose each old GPU context,
+ // disconnect old original-photo canvas, clear private photos and perform
+ // independent NATIVE92 source-byte admission on every fresh open.
+ // Measured in the actual 390px Chromium/WebKit simulated mobile browser;
+ // GPU hardware RAM and phone thermal behavior remain unverified.
+ if(width===390){
+  const initial=await state();
+  assert.equal(initial.bones,163);
+  assert.equal(initial.modelReady,true);
+  const admittedSource=initial.garmentSources90;
+  const ownerSelection=await page.evaluate(()=>({
+   active:window.nativeLossless04Bridge.status().active,
+   selected:window.nativeLossless04Bridge.selected
+  }));
+  assert.equal(ownerSelection.active,true);
+  const rounds=[];
+  for(let n=1;n<=4;n++){
+   const last=await state();
+   assert.equal(last.modelReady,true);
+   assert.deepEqual(last.garmentSources90,admittedSource);
+   await page.evaluate(()=>{
+    window.__p90M21OldCanvas=document.getElementById('outfit3D01Canvas');
+    window.native3D05Bridge.close();
+   });
+   assert.equal((await state()).active,false,
+    '3D preview must be revoked before any new owner source is loaded');
+   assert.equal(await page.locator('#outfit3D01Photos img').count(),0,
+    'closing the verified preview must synchronously clear old private photos');
+   const retired=await page.evaluate(()=>{
+    const old=window.__p90M21OldCanvas;
+    const gl=old?.getContext('webgl2');
+    return {oldDisconnected:!!old&&!document.contains(old),
+     lost:gl?.isContextLost()===true,
+     active2D:window.nativeLossless04Bridge.status().active,
+     selected2D:window.nativeLossless04Bridge.selected};
+   });
+   assert.equal(retired.oldDisconnected,true,
+    'closed scene cannot retain a DOM-attached old owner source canvas');
+   assert.equal(retired.lost,true,
+    'original renderer must force GPU context loss on every close');
+   assert.equal(retired.active2D,true,
+    '3D close must leave valid native owner 2D closet active');
+   assert.equal(retired.selected2D,ownerSelection.selected,
+    '3D reopening may not change selected saved wardrobe outfit');
+   // Genuine user button triggers original native owner lease +
+   // original JPEG byte re-attestation, never donor editor access.
+   await page.locator('#native3D05Preview').click();
+   await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady&&
+    window.native3D05Bridge.state().bones===163,
+    null,{timeout:150000});
+   await verifyCanvas();
+   const opened=await state();
+   assert.deepEqual(opened.garmentSources90,admittedSource,
+    'reopened viewer must verify the SAME original photo SHA');
+   assert.equal(opened.figure90,initial.figure90);
+   assert.equal(opened.resources90.geometries,initial.resources90.geometries,
+    'reopened outfit should not accumulate extra scene geometries');
+   assert.equal(opened.resources90.textures,initial.resources90.textures,
+    'reopened outfit should not accumulate extra scene textures');
+   const fresh=await page.evaluate(()=>{
+    const newCanvas=document.getElementById('outfit3D01Canvas');
+    const old=window.__p90M21OldCanvas;
+    const result={fresh:!!newCanvas&&newCanvas!==old,
+     retiredStillGone:!document.contains(old),
+     oldContextStillLost:old.getContext('webgl2')?.isContextLost()===true};
+    delete window.__p90M21OldCanvas;
+    return result;
+   });
+   assert.equal(fresh.fresh,true,
+    'every new original-photo 3D session must create a NEW canvas');
+   assert.equal(fresh.retiredStillGone,true);
+   assert.equal(fresh.oldContextStillLost,true);
+   const front=await camera();
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   await page.locator('#outfit3D01Right90').click();await settle();
+   const changed=await camera();
+   assert.ok(Math.abs(((changed.angle-front.angle+540)%360)-180)>5 ||
+    Math.abs(((changed.angle+540)%360)-180)>5,
+    'reopened actual original 163-bone source must remain camera-interactive');
+   rounds.push({round:n,oldContextLost:retired.lost,
+    oldCanvasDisconnected:retired.oldDisconnected,
+    newCanvas: fresh.fresh,owner2DActive:retired.active2D,
+    originalSourceSHAReattested:true,
+    geometryCount:opened.resources90.geometries,
+    textureCount:opened.resources90.textures,
+    original163Bones:true});
+  }
+  await writeFile('benchmark/parallel90/'+engine+'/390-reopen-resource.json',
+   JSON.stringify({engine,cssWidth:width,
+    actualSourcePinnedRigs:true,realWebGL:true,
+    rounds,roundsPassed:4,sourceSHAStable:true,
+    hardwareGPUBytesMeasured:false,physicalPhone:false,
+    realHostedOwnerRLS:false,releaseAuthorized:false,familyAlpha:'HOLD'},null,2));
+ }
 }
