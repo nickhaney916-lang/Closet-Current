@@ -57,3 +57,86 @@ export function exposedPixelGateMap88(data,dims,settings){
    limbs>=Math.max(8,Math.ceil(area*.02)));
  return {labels,confidence,width,height,personDetected};
 }
+
+
+// Research-only COCO detection coverage. The candidate tiny YOLOS is
+// COCO-2017 object-detection trained; it is NOT Fashionpedia fine accessory
+// recognition and NEVER authorizes saving a wardrobe item.
+export const COCO_ACCESSORY_FASHIONPEDIA88=Object.freeze({
+  16:'tie',24:'bag',26:'umbrella'
+});
+const COCO_ALIASES88=Object.freeze({
+  tie:'tie',handbag:'bag',backpack:'bag',suitcase:'bag',umbrella:'umbrella'
+});
+export function cocoAccessoryLabel88(label){
+ return typeof label==='string' ? COCO_ALIASES88[label.toLowerCase()]||null : null;
+}
+export function accessoryBoxIoU88(a,b){
+ const values=[a?.xmin,a?.ymin,a?.xmax,a?.ymax,b?.xmin,b?.ymin,b?.xmax,b?.ymax];
+ if(values.some(v=>typeof v!=='number'||!Number.isFinite(v)) ||
+    a.xmin<0||a.ymin<0||b.xmin<0||b.ymin<0||
+    a.xmax<=a.xmin||a.ymax<=a.ymin||
+    b.xmax<=b.xmin||b.ymax<=b.ymin)
+   throw Error('P88_INVALID_BOX');
+ const aw=(a.xmax-a.xmin)*(a.ymax-a.ymin);
+ const bw=(b.xmax-b.xmin)*(b.ymax-b.ymin);
+ const ix=Math.max(0,Math.min(a.xmax,b.xmax)-Math.max(a.xmin,b.xmin));
+ const iy=Math.max(0,Math.min(a.ymax,b.ymax)-Math.max(a.ymin,b.ymin));
+ const intersection=ix*iy;
+ return intersection/(aw+bw-intersection);
+}
+export function evaluateCocoAccessoryBoxes88(groundTruth,detections,{iouThreshold=0.5}={}){
+ if(!Array.isArray(groundTruth)||!Array.isArray(detections)||
+    groundTruth.length>100||detections.length>100||
+    typeof iouThreshold!=='number'||!Number.isFinite(iouThreshold)||
+    iouThreshold<0.1||iouThreshold>1)throw Error('P88_INVALID_BOX_BENCHMARK');
+ const supported=[],unsupported=[];
+ for(const gt of groundTruth){
+  if(!Number.isInteger(gt.category_id)||gt.category_id<13||gt.category_id>26||
+     gt.category_id===21||gt.category_id===23)throw Error('P88_EXPECTED_ACCESSORY_TRUTH_ONLY');
+  const kind=COCO_ACCESSORY_FASHIONPEDIA88[gt.category_id];
+  if(kind){accessoryBoxIoU88(gt.box,gt.box);supported.push({...gt,kind});}
+  else unsupported.push(gt);
+ }
+ const proposals=[];
+ for(const p of detections){
+  const kind=cocoAccessoryLabel88(p.label);
+  if(!kind)continue; // COCO person/other objects are never garments
+  if(typeof p.score!=='number'||!Number.isFinite(p.score)||p.score<0||p.score>1)
+   throw Error('P88_INVALID_COCO_CONFIDENCE');
+  accessoryBoxIoU88(p.box,p.box);
+  proposals.push({...p,kind});
+ }
+ // Maximum-cardinality (not greedy confidence) 1:1 same-class bbox IoU.
+ const edges=supported.map(t=>proposals.map((p,j)=>({
+  j,iou:t.kind===p.kind?accessoryBoxIoU88(t.box,p.box):0
+ })).filter(v=>v.iou>=iouThreshold).sort((a,b)=>b.iou-a.iou||a.j-b.j));
+ const owners=new Map();
+ function assign(i,seen){
+  for(const v of edges[i]){
+   if(seen.has(v.j))continue;seen.add(v.j);
+   if(!owners.has(v.j)||assign(owners.get(v.j),seen)){
+    owners.set(v.j,i);return true;
+   }
+  }
+  return false;
+ }
+ for(let i=0;i<supported.length;i++)assign(i,new Set());
+ const matches=Array.from(owners.entries()).map(([predictionIndex,truthIndex])=>({
+  truthIndex,predictionIndex,iou:accessoryBoxIoU88(
+   supported[truthIndex].box,proposals[predictionIndex].box)
+ })).sort((a,b)=>a.truthIndex-b.truthIndex);
+ return {
+  supportedHuman:supported.length,
+  unsupportedHuman:unsupported.length,
+  proposals:proposals.length,
+  matches,
+  matched:matches.length,
+  falsePositives:proposals.length-matches.length,
+  falseNegatives:supported.length-matches.length,
+  unsupportedFashionpediaIds:unsupported.map(x=>x.category_id),
+  bboxOnlyNotMaskIoU:true,
+  notNewIndependentHumanTruth:true,
+  noSaveOrModelPromotion:true
+ };
+}
