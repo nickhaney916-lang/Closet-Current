@@ -413,12 +413,26 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
        const json=JSON.stringify(input);
        await document.getElementById('import').onchange({target:{
         files:[{size:json.length,text:async()=>json}],value:'selected'}});
-       const rows=await new Promise((done,reject)=>{
+       const readSnapshot=()=>new Promise((done,reject)=>{
         const tx=db.transaction(['items','state'],'readonly');
         const items=tx.objectStore('items').getAll(),state=tx.objectStore('state').getAll();
         tx.oncomplete=()=>done({items:items.result,state:state.result});
         tx.onerror=()=>reject(tx.error);
        });
+       const rows=await readSnapshot(),fingerprint=JSON.stringify(rows);
+       // An invalid saved outfit after the first valid import must not partially
+       // write the new garment, inspiration or cloud revision in built PWA.
+       const invalid=structuredClone(input);
+       invalid.items[0].id='should-never-appear';
+       invalid.outfitBoard.saved[0].slots.top='unavailable-owner-garment';
+       const badJSON=JSON.stringify(invalid);
+       await document.getElementById('import').onchange({target:{
+        files:[{size:badJSON.length,text:async()=>badJSON}],value:'selected'}});
+       const invalidRollback=JSON.stringify(await readSnapshot())===fingerprint;
+       window.confirm=()=>false;
+       await document.getElementById('import').onchange({target:{
+        files:[{size:json.length,text:async()=>json}],value:'selected'}});
+       const cancelledUnchanged=JSON.stringify(await readSnapshot())===fingerprint;
        const byId=Object.fromEntries(rows.state.map(row=>[row.id,row]));
        return {items:rows.items.map(item=>({id:item.id,ownerId:item.ownerId,
         originalPhoto:item.originalPhoto?.image,sourceSHA256:item.sourceSHA256})),
@@ -428,6 +442,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         revision:byId['cloud-sync']?.localRevision,
         dirty:byId['cloud-sync']?.dirty,
         message:document.getElementById('message')?.textContent,
+        invalidRollback,cancelledUnchanged,
         changed:window.__privateCloudDirty||0};
       },{owner,jpeg,sha});
       assert.deepEqual(result.items,[{id:'built-photo',ownerId:owner,
@@ -438,7 +453,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.revision,1);
       assert.equal(result.dirty,true);
       assert.equal(result.changed,1);
-      assert.match(result.message,/imported atomically/i);
+      assert.equal(result.invalidRollback,true,name+' rejected malformed backup without partial writes');
+      assert.equal(result.cancelledUnchanged,true,name+' retained all private data on cancellation');
+      assert.match(result.message,/canceled|imported atomically/i);
       assert.deepEqual(errors,[]);
       assert.equal(blocked.some(request=>request.method!=='GET'),false,
        'Built private import must never attempt an external write');
