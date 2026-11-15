@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import * as T from 'three';
 import {compareActualMeasuredSkirtFit89} from '../research/parallel89/skirt-body-measured-fit89.mjs';
 const P=['source','blend-50','relaxed'];
+const Q=['blend-25','blend-75'];
 function createSyntheticBodyAndSkirt(){
  const root=new T.Group(),g=new T.BufferGeometry(),pos=[],rest=[],uv=[],skin=[],weight=[],index=[];
  const segments=48;
@@ -58,7 +59,7 @@ function testBVHShape(mesh,original,mode='reduce'){
 function trial(x,overrides={}){
  return compareActualMeasuredSkirtFit89({
   root:x.root,mesh:x.mesh,avatar:'female',
-  applyPose:pose=>assert.ok(P.includes(pose),'only 3 synthetic pose names'),
+  applyPose:pose=>assert.ok([...P,...Q].includes(pose),'five source pose names only'),
   sampleBodySkinnedWorld:()=>x.sourceBodyPositions,
   sampleContact:()=>testBVHShape(x.mesh,x.originalGeometry),
   ...overrides
@@ -71,6 +72,8 @@ test('source-bound seven-band anatomy fitted only provisionally; every source ve
  assert.equal(r.nativeSkinnedRigBones,163);
  assert.equal(r.actualBodyMeasurementsFromOriginalPublicGLBsOnly,true);
  assert.deepEqual(r.sampledActualBonePoses,P);
+ assert.deepEqual(r.additionalOriginalSourceBodyContactPoses,Q);
+ assert.equal(r.completeFivePoseStaticContactCheck,true);
  assert.equal(r.radialSourceBands,7);
  assert.equal(r.sectorCount,48);
  assert.equal(r.candidateRegimes.length,3);
@@ -84,6 +87,10 @@ test('source-bound seven-band anatomy fitted only provisionally; every source ve
   assert.equal(v.photoMotifStretchHasNoHumanAcceptance,true);
   assert.equal(v.releaseAuthorized,false);
   assert.ok(v.maximumWorldSkirtAdjustmentMeters<=.09501);
+  assert.equal(v.intermediateStrictContactVetoEnforced,true);
+  assert.equal(v.actualIntermediateSourcePoseContacts.length,2);
+  assert.ok(v.actualIntermediateSourcePoseContacts.every(x=>
+   x.addedCrossingPairIDs===0&&!x.contactPlaneDepthWorsened));
  }
  assert.equal(r.originalPhotographedFrontColorAndUVPreserved,true);
  assert.equal(r.allTestsRevertedNoConsumerGeometryChanged,true);
@@ -104,6 +111,31 @@ test('ANY new source/body crossing witness is a hard research veto despite possi
    assert.ok(v.refusedReasons.includes('new-body-skirt-original-triangle-crossing-IDs'));
  assert.equal(r.originalSkirtSourceBuffersUntouched,true);
  assert.equal(r.photoSkirtConsumer3DAdmitted,false);
+});
+test('an apparently improved 3-pose anatomical fit is vetoed by a new quarter-pose crossing',()=>{
+ const x=createSyntheticBodyAndSkirt();
+ let activePose='source';
+ const r=trial(x,{
+  applyPose:pose=>{assert.ok([...P,...Q].includes(pose));activePose=pose;},
+  sampleContact:()=>{
+   const e=testBVHShape(x.mesh,x.originalGeometry);
+   if(x.mesh.geometry!==x.originalGeometry&&activePose==='blend-25')
+    return {count:4,pairs:new Set(['0|100','1|101','2|102','7|107']),maxDepth:.0005};
+   return e;
+  }
+ });
+ assert.notEqual(r.status,'BODY_MEASURED_SOURCE_GEOMETRY_REJECTED',r.reason);
+ assert.equal(r.bestProvisionalStructuralAB,null);
+ for(const v of r.candidateRegimes){
+  assert.ok(v.refusedReasons.includes('new-intermediate-body-skirt-original-triangle-crossing-IDs'));
+  assert.ok(v.actualIntermediateSourcePoseContacts.some(q=>q.addedCrossingPairIDs>0));
+  assert.equal(v.acceptedForResearchA_BOnly,false);
+ }
+ assert.equal(x.mesh.geometry,x.originalGeometry);
+ assert.deepEqual(x.mesh.geometry.getAttribute('position').array,x.sourcePositionBytes);
+ assert.deepEqual(x.mesh.geometry.getAttribute('uv').array,x.sourceUVBytes);
+ assert.equal(r.photoSkirtConsumer3DAdmitted,false);
+ assert.equal(r.releaseAuthorized,false);
 });
 test('original anatomical cross-sections must be genuine bounded typed vertex data',()=>{
  const x=createSyntheticBodyAndSkirt();
