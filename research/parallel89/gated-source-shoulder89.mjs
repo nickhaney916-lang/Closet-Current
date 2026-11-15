@@ -20,7 +20,8 @@ function sourceSnapshot89(meshes){
   if(!m?.isSkinnedMesh||m.skeleton?.bones?.length!==163||!p||!n||
    p.itemSize!==3||n.itemSize!==3||p.count!==n.count)
    throw Error('actual-licensed-163bone-source-required');
-  return {m,g,p,n,index:g.index,material:m.material,
+  return {m,g,p,n,index:g.index,
+   indexData:g.index?.array.slice()??null,material:m.material,
    originalPosition:p.array.slice(),originalNormals:n.array.slice(),
    originalProtected:Object.entries(g.attributes).filter(([name])=>
     name!=='position'&&name!=='normal').map(([name,attr])=>
@@ -28,9 +29,11 @@ function sourceSnapshot89(meshes){
  });
 }
 function protectedUnchanged89(records){
- return records.every(({m,g,p,n,index,material,originalProtected})=>
+ return records.every(({m,g,p,n,index,indexData,material,originalProtected})=>
   m.geometry===g&&g.getAttribute('position')===p&&
   g.getAttribute('normal')===n&&g.index===index&&m.material===material&&
+  (indexData===null||(index?.array.length===indexData.length&&
+   indexData.every((value,i)=>Object.is(value,index.array[i]))))&&
   originalProtected.every(({name,attr,data})=>
    g.getAttribute(name)===attr&&attr.array.length===data.length&&
    data.every((v,i)=>Object.is(v,attr.array[i]))));
