@@ -50,18 +50,26 @@ const external=[],rejected=[],issues=[],modelResponses=[];
 const navigationReasonsM69=[],mainFrameNavigationsM69=[];
 let browser,stage='startup';
 const started=performance.now();
+// M72: a real page reload runs the native refresh-token flow. This disposable
+// auth fixture must support ONLY tokens it previously issued via a validated
+// synthetic password login. Never accept a guessed owner from a refresh body.
+const issuedSyntheticRefreshM72=new Map();
 function authFixture(route){
  const req=route.request(),url=new URL(req.url());
  if(url.pathname==='/auth/v1/logout')return route.fulfill({status:204,body:''});
  if(url.pathname==='/auth/v1/token'){
   const info=JSON.parse(req.postData()||'{}');
-  const owner=url.searchParams.get('grant_type')==='password'&&
+  const grant=url.searchParams.get('grant_type');
+  const owner=grant==='password'&&
    /^m58-[AB]@example\.test$/.test(info.email||'')?
-    info.email.split('@')[0]:null;
+    info.email.split('@')[0]:
+    grant==='refresh_token'?issuedSyntheticRefreshM72.get(info.refresh_token):null;
   if(!owner)return route.fulfill({status:401,contentType:'application/json',body:'{"error":"fixture-only"}'});
+  const token='synthetic-m58-refresh-'+owner;
+  issuedSyntheticRefreshM72.set(token,owner);
   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
    user:{id:owner,email:owner+'@example.test'},access_token:'synthetic-'+owner,
-   refresh_token:'synthetic-m58-refresh-'+owner,expires_in:3600
+   refresh_token:token,expires_in:3600
   })});
  }
  issues.push('unexpected-auth-endpoint');return route.abort();
