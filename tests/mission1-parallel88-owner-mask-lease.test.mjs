@@ -1149,7 +1149,7 @@ test("P88 queued P70 owner decision refuses another signed owner\'s newly append
  assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
  assert.equal(c.renderCalls,0,'invalid foreign owner batch never passes signed action');
  assert.equal(c.batch.some(x=>x.id==='foreign-owner-late-photo'),false,
-  'foreign owner's photo may not remain in current owner's review draft after veto');
+  "foreign owner photo must not remain in current owner review draft after veto");
 });
 
 test('P88 queued P70 decision refuses malformed same-source mask appended after preflight starts',async()=>{
