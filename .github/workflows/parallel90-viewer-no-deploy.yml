@@ -1,10 +1,16 @@
 name: Parallel 90 interactive native viewer NO DEPLOY
 on:
   push:
-    branches: [research/parallel90-interactive-viewer-HOLD, research/parallel90-m15-drag-revoke-HOLD, research/parallel90-m16-chromium-touch-swipe-HOLD, research/parallel90-m17-source-honest-360-HOLD, research/parallel90-m18-original-photo-shortcut-HOLD, research/parallel90-m19-auto-rotate-pause-HOLD]
+    branches: [research/parallel90-interactive-viewer-HOLD, research/parallel90-m15-drag-revoke-HOLD, research/parallel90-m16-chromium-touch-swipe-HOLD, research/parallel90-m17-source-honest-360-HOLD, research/parallel90-m18-original-photo-shortcut-HOLD, research/parallel90-m19-auto-rotate-pause-HOLD, research/parallel90-m20-reduced-motion-HOLD]
   workflow_dispatch: {}
 permissions:
   contents: read
+# Only the most recent candidate on each isolated research branch needs the
+# expensive actual Chromium/WebKit 163-bone/source evidence. Never cancel
+# another mission or a different research branch.
+concurrency:
+  group: parallel90-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   native-viewer:
     runs-on: ubuntu-24.04

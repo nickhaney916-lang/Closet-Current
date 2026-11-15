@@ -68,6 +68,33 @@ s=replace(s," left.append(views);body.append(left);",` left.append(views);
   const key={ArrowLeft:'Left90',ArrowRight:'Right90','+':'ZoomIn90','=':'ZoomIn90','-':'ZoomOut90',Home:'Reset90'}[e.key];
   if(key){e.preventDefault();command90(key);}
  });`);
+// M20: source-pinned viewer only. Respect owner operating-system reduced
+// motion without weakening any manual orbit/source-photo controls.
+s=replace(s,` doc.getElementById('outfit3D01Rotate').onclick=()=>{
+  try{current();if(ready)scene.setSpin(true);}catch{clearPrivate();}
+ };`,` const reducedMotion90=doc.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)')||null;
+ const onReducedMotion90=()=>{
+  if(!reducedMotion90?.matches||!ready||!scene)return;
+  try{
+   current();
+   scene.setSpin(false);
+   putStatus('Reduced motion preference: automatic rotation paused. Manual 3D rotation is available.');
+  }catch{clearPrivate();}
+ };
+ reducedMotion90?.addEventListener?.('change',onReducedMotion90);
+ doc.getElementById('outfit3D01Rotate').onclick=()=>{
+  try{
+   current();
+   if(!ready||!scene)return;
+   if(reducedMotion90?.matches){
+    scene.setSpin(false);
+    putStatus('Reduced motion preference: automatic rotation paused. Manual 3D rotation is available.');
+   }else scene.setSpin(true);
+  }catch{clearPrivate();}
+ };`);
+s=replace(s,"  window.removeEventListener('pagehide',change);",
+ `  window.removeEventListener('pagehide',change);
+  reducedMotion90?.removeEventListener?.('change',onReducedMotion90);`);
 s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,",`    startup90:{...startupTimings90,...view.startup90},
     renderStages90:rendered?.renderStages90||null,
     sceneApplyStages90:view.applyStages90||null,
@@ -145,10 +172,23 @@ s=replace(s,'  camera.aspect=width/height;camera.updateProjectionMatrix();',`  c
    const offset=camera.position.clone().sub(controls.target).setLength(fit);
    camera.position.copy(controls.target).add(offset);controls.update();dirty=true;
   }`);
-s=replace(s,' const front=()=>{group.rotation.y=0;'," const front=()=>{spin=false;group.rotation.y=0;");
+// Flush residual OrbitControls damping before an explicit camera command.
+// Otherwise a former touch/pointer inertia can move the real camera after a
+// reset or when an owner navigates to the original-photo gallery.
+s=replace(s,' const front=()=>{group.rotation.y=0;',` const clearCameraInertia90=()=>{
+  if(!premiumTurntable67)return;
+  const savedDamping=controls.enableDamping;
+  controls.enableDamping=false;
+  controls.update();
+  controls.enableDamping=savedDamping;
+ };
+ const front=()=>{clearCameraInertia90();spin=false;group.rotation.y=0;`);
+s=replace(s,'const side=()=>{group.rotation.y=0;','const side=()=>{clearCameraInertia90();group.rotation.y=0;');
+s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{clearCameraInertia90();group.rotation.y=0;');
+s=replace(s,' const rotate=degrees=>{',' const rotate=degrees=>{\\n  clearCameraInertia90();'.replaceAll('\\n','\n'));
 s=replace(s,'{radius:4.25,elevation:0});else{camera.position.set(0,1.04,4.25);',"{radius:Math.max(4.25,1.25/(Math.tan(camera.fov*Math.PI/360)*Math.min(1,camera.aspect))),elevation:0});else{camera.position.set(0,1.04,4.25);");
-s=replace(s,'const side=()=>{group.rotation.y=0;','const side=()=>{spin=false;group.rotation.y=0;');
-s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{spin=false;group.rotation.y=0;');
+s=replace(s,'const side=()=>{clearCameraInertia90();group.rotation.y=0;','const side=()=>{clearCameraInertia90();spin=false;group.rotation.y=0;');
+s=replace(s,'const back=()=>{clearCameraInertia90();group.rotation.y=0;','const back=()=>{clearCameraInertia90();spin=false;group.rotation.y=0;');
 for(const angle of [90,180])s=replace(s,'setAnatomicalCameraView(camera,controls,'+angle+', {radius:4.25,elevation:0})'.replace(', {',',{'),
  'setAnatomicalCameraView(camera,controls,'+angle+',{radius:Math.max(4.25,1.25/(Math.tan(camera.fov*Math.PI/360)*Math.min(1,camera.aspect))),elevation:0})');
 await writeFile(showroom,s);
