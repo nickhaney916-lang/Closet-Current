@@ -606,6 +606,25 @@ export async function checkViewer90(page,width,engine){
     'GPU-unavailable native owner must NEVER claim verified 3D is running');
    assert.equal(unsupported.bones,0,
     'no unverified/generic anatomical mesh may substitute for missing GPU');
+   // The GPU probe reports its fallback synchronously, but the native
+   // saved-board bridge selects the photo cards through an asynchronously
+   // queued donor UI update. Do not mistake "status visible" for "four
+   // owner photos admitted". Require BOTH; never weaken the 4-photo/SHA gate.
+   await page.waitForFunction(()=>window.native3D05Bridge?.state()?.active===true&&
+    document.querySelectorAll('#outfit3D01Photos img').length===4,
+    null,{timeout:30000}).catch(async e=>{
+     const diagnostic=await page.evaluate(()=>({
+      fallbackStatus:document.getElementById('outfit3D01Status')?.textContent,
+      nativeStatus:document.getElementById('native3D05Status')?.textContent,
+      nativeActive:window.native3D05Bridge?.state()?.active,
+      modelReady:window.native3D05Bridge?.state()?.modelReady,
+      photos:document.querySelectorAll('#outfit3D01Photos img').length,
+      owner2DActive:window.nativeLossless04Bridge?.status()?.active,
+      selected:window.nativeLossless04Bridge?.selected
+     }));
+     console.error('P90_M22_FALLBACK_DIAGNOSTIC',JSON.stringify(diagnostic));
+     throw e;
+    });
    assert.equal(await page.locator('#outfit3D01Photos img').count(),4,
     'all actual original saved owner clothing photos must remain available');
    const photoSHA=await page.locator('#outfit3D01Photos img').first().evaluate(async img=>{
