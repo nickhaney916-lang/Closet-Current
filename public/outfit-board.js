@@ -809,9 +809,70 @@ if(mission4Preview1054Active){
    const photos=document.createElement('div');
    photos.id='mission4Preview1054Photos';
    section.append(button,status,photos);builder.append(section);
-   // M65: the import and source recheck are asynchronous. An A-session
-   // callback must not clear a B-session viewer/status or re-enable B's
-   // in-progress click after account switch. Keep one owner-bound ticket.
+   button.onclick=async()=>{
+    button.disabled=true;photos.replaceChildren();
+    status.textContent='Verifying the signed owner, source photographs and selected outfit…';
+    try{
+     if(typeof currentPhotoOwnerSession167!=='function'||
+        typeof signedOwnerSavedRows167!=='function')
+      throw Error('Native signed photo source unavailable');
+     const {mountOwnerOutfitPhotoPreview1054}=await import(
+      '../research/main-thread-integration-1054/native-2d-preview.mjs');
+     if(!mission4Preview1054Viewer)
+      mission4Preview1054Viewer=mountOwnerOutfitPhotoPreview1054({
+       target:photos,
+       getSession:currentPhotoOwnerSession167,
+       readOwnerItems:signedOwnerSavedRows167,
+       getBoard:()=>nativeLossless04Active
+        ?nativeLossless04?.view():structuredClone(currentBoard),
+       cleanBoard:cleanOutfitBoard,
+       events:window,doc:document
+      });
+     const result=await mission4Preview1054Viewer.refresh();
+     status.textContent=result.slotCount+
+      ' owner-confirmed original photo(s) verified. 2D only; realistic 3D fit is not established.';
+    }catch{
+     photos.replaceChildren();
+     status.textContent='Preview refused. Recheck the signed account, garment review, original photographs and outfit slots.';
+    }finally{button.disabled=false;}
+   };
+   window.addEventListener('closet:session-locked',()=>{
+    mission4Preview1054Viewer?.clear();photos.replaceChildren();
+    status.textContent='Private preview cleared on account-session change.';
+   });
+  }catch{
+   // No UI or photo disclosure if the isolated research mount is unavailable.
+  }
+ })();
+}
+
+/**
+ * M62 opt-in ORIGINAL PHOTO ONLY (no garment-boundary proof or 3D fitting).
+ * The verified M59 read-only admission/gallery modules remain independent
+ * of the stricter MAIN1054 M51 certified-source preview.
+ * This panel is lazy, signed-owner-scoped and entirely disabled by default.
+ */
+if(mission4PhotoOnly59Active){
+ (async()=>{
+  try{
+   await outfitBoardReady;
+   const builder=$('builder');
+   if(!builder)return;
+   const section=document.createElement('section');
+   section.id='mission4PhotoOnly59Section';
+   section.dataset.researchOnly='true';
+   section.dataset.render3d='denied';
+   const button=document.createElement('button');
+   button.type='button';button.className='secondary';
+   button.id='mission4PhotoOnly59Open';
+   button.textContent='View reviewed original photos only (research)';
+   const status=document.createElement('p');
+   status.id='mission4PhotoOnly59Status';status.setAttribute('role','status');
+   status.textContent='Research only: photo boundaries are unverified. No fitted 3D clothing.';
+   const photos=document.createElement('div');photos.id='mission4PhotoOnly59Photos';
+   section.append(button,status,photos);builder.append(section);
+   // M65: bind the photo-only async request to one exact signed-owner
+   // session. Stale A callbacks must not overwrite B's gallery controls.
    let photoGalleryClickSerial59=0;
    button.onclick=async()=>{
     const ownerLease=beginOwnerBoardUiLease();
@@ -855,79 +916,10 @@ if(mission4Preview1054Active){
      photos.replaceChildren();
      status.textContent='Photo-only gallery refused. Recheck this account, review, original source and selected outfit.';
     }finally{
-     // A stale A callback must never change the disabled state of B's newer
-     // request, but may unlock its own button if no later request exists.
+     // A stale request may unlock its own button only until B starts another
+     // request. The session-lock callback also restores the enabled state.
      if(serial===photoGalleryClickSerial59&&button.isConnected)button.disabled=false;
     }
-   };
-   window.addEventListener('closet:session-locked',()=>{
-    mission4Preview1054Viewer?.clear();photos.replaceChildren();
-    status.textContent='Private preview cleared on account-session change.';
-   });
-  }catch{
-   // No UI or photo disclosure if the isolated research mount is unavailable.
-  }
- })();
-}
-
-/**
- * M62 opt-in ORIGINAL PHOTO ONLY (no garment-boundary proof or 3D fitting).
- * The verified M59 read-only admission/gallery modules remain independent
- * of the stricter MAIN1054 M51 certified-source preview.
- * This panel is lazy, signed-owner-scoped and entirely disabled by default.
- */
-if(mission4PhotoOnly59Active){
- (async()=>{
-  try{
-   await outfitBoardReady;
-   const builder=$('builder');
-   if(!builder)return;
-   const section=document.createElement('section');
-   section.id='mission4PhotoOnly59Section';
-   section.dataset.researchOnly='true';
-   section.dataset.render3d='denied';
-   const button=document.createElement('button');
-   button.type='button';button.className='secondary';
-   button.id='mission4PhotoOnly59Open';
-   button.textContent='View reviewed original photos only (research)';
-   const status=document.createElement('p');
-   status.id='mission4PhotoOnly59Status';status.setAttribute('role','status');
-   status.textContent='Research only: photo boundaries are unverified. No fitted 3D clothing.';
-   const photos=document.createElement('div');photos.id='mission4PhotoOnly59Photos';
-   section.append(button,status,photos);builder.append(section);
-   button.onclick=async()=>{
-    button.disabled=true;photos.replaceChildren();
-    section.dataset.render3d='denied';
-    status.textContent='Checking signed owner, private saved photographs and selected outfit…';
-    try{
-     if(typeof currentPhotoOwnerSession167!=='function'||
-        typeof signedOwnerSavedRows167!=='function')
-      throw Error('Native owner-backed source unavailable');
-     const {mountReviewedPhotoOnlyGallery59}=await import(
-      '../research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs');
-     if(!mission4PhotoOnly59Viewer)
-      mission4PhotoOnly59Viewer=mountReviewedPhotoOnlyGallery59({
-       target:photos,
-       getSession:currentPhotoOwnerSession167,
-       readOwnerItems:signedOwnerSavedRows167,
-       getBoard:()=>nativeLossless04Active
-        ?structuredClone(nativeLossless04?.view()):structuredClone(currentBoard),
-       cleanBoard:cleanOutfitBoard,
-       events:window,doc:document
-      });
-     const result=await mission4PhotoOnly59Viewer.refresh();
-     if(result.renderAuthorized3D!==false||
-        result.fittedOutfitAuthorized!==false||
-        result.releaseAuthorized!==false)
-      throw Error('Unverified photo claimed fitted-garment authority');
-     section.dataset.render3d='denied';
-     status.textContent=result.photoCount+
-      ' original source photo(s) displayed. Physical garment units unverified; 3D denied.';
-    }catch{
-     mission4PhotoOnly59Viewer?.clear();
-     photos.replaceChildren();
-     status.textContent='Photo-only gallery refused. Recheck this account, review, original source and selected outfit.';
-    }finally{button.disabled=false;}
    };
    window.addEventListener('closet:session-locked',()=>{
     ++photoGalleryClickSerial59;
