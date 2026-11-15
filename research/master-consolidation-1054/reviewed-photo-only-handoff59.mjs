@@ -9,7 +9,20 @@
  */
 import {buildOwnerWardrobeIndex} from '../../public/native-owner-wardrobe-index-167.mjs';
 import {jpegBytes,digestBytes} from '../../public/native-canonical-photo-source-167.mjs';
-import {unresolvedSegmentation54} from '../multi-garment-capture-01/atomic-group.mjs';
+// M53 predates M54's export. Duplicate only the bounded NEGATIVE safety
+// predicate here; do not import/replace an incompatible worker or saved schema.
+// Absence of a negative flag is NEVER evidence of one correct physical item.
+const knownMethods=new Set(['native_semantic_group',
+ 'connected_footwear_component','connected_semantic_component_unverified']);
+function unresolvedSegmentation59(hint){
+ if(hint===null||hint===undefined)return false;
+ if(typeof hint!=='object'||Array.isArray(hint))return true;
+ const status=hint.componentReviewStatus,method=hint.instanceMethod;
+ return status==='unresolved_fragments_keep_source_mask'||
+  method==='native_semantic_group_unresolved_fragments'||
+  status!==undefined&&status!=='owner_must_confirm_garment_units'||
+  method!==undefined&&!knownMethods.has(method);
+}
 
 const SLOTS=new Set(['top','bottom','layer','layer2','layer3','shoes','bag','accessory','finish']);
 const SHA=/^[0-9a-f]{64}$/;
@@ -73,7 +86,7 @@ function approvedPhotoOnly(row,indexRow,owner){
   row?.singleGarmentVerified!==false||
   row?.requiresOwnershipConfirmation!==false||
   row?.possibleDuplicate!==false||
-  unresolvedSegmentation54(row.segmentHint)||
+  unresolvedSegmentation59(row.segmentHint)||
   !SHA.test(row?.sourceSHA256||'')||
   row?.originalPhoto?.sha256!==row.sourceSHA256||
   typeof row.originalPhoto.image!=='string'||
