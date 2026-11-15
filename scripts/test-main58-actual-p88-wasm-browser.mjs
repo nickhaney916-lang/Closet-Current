@@ -112,7 +112,7 @@ try{
   }
  });
  stage='sign-in';
- const params='multi24=research&p88Transport57=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
+ const params='multi24=research&p88Transport57=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research&mission4Preview=research';
  await page.goto(origin+'/public/index.html?'+params,{waitUntil:'domcontentloaded'});
  await page.locator('#authEmail').fill('m58-A@example.test');
  await page.locator('#authPassword').fill('fixture-only');
@@ -247,6 +247,7 @@ try{
    sourcePhotoOriginal:item.sourcePhotoOriginal===true,
    photoOnly:item.photoOnly===true,threeDReady:item.threeDReady===true,
    sourceKind:unit?.sourceKind||'not-indexed',
+   savedItemId:item.id,
    reviewedCategory:item.category,reviewedSubtype:item.itemType,
    admitted,refusal:refusal.slice(0,150)
   };
@@ -268,6 +269,34 @@ try{
  assert.equal(handoff.admitted,false,
   'M51 must refuse a MULTI24 row lacking independently verified physical-unit evidence');
  assert.match(handoff.refusal,/MAIN1054/,'source-to-outfit preflight did not issue its own refusal');
+ // A deliberately source-unverified MULTI24 row is STILL usable as an honest
+ // original-photo-derived 2D card in the actual authenticated native builder.
+ // Certification of the private photo or realistic 3D is a SEPARATE gate.
+ stage='native owner saved outfit uses photo-only 2D fallback after real model';
+ await page.evaluate(()=>switchView('builder'));
+ await page.locator('#boardSlots .board-slot-top').click();
+ await page.locator('#boardPicker').waitFor({state:'visible',timeout:20000});
+ const ownedChoice=page.locator('#boardPickerItems button.board-pick').first();
+ await ownedChoice.waitFor({timeout:20000});
+ await ownedChoice.click();
+ await page.waitForFunction(id=>{
+  const node=document.querySelector('#boardSlots .board-slot-top.owned img');
+  return currentBoard.slots?.top===id&&!!node&&node.complete&&node.naturalWidth>0;
+ },handoff.savedItemId,{timeout:30000});
+ const normal2D=await page.locator('#boardSlots .board-slot-top.owned img')
+  .evaluate(img=>({decoded:img.naturalWidth>0,
+   sourceIsLocalJpeg:/^data:image\\/jpeg;base64,/.test(img.getAttribute('src')||'')}));
+ assert.equal(normal2D.decoded,true,'owner's original-photo-derived 2D outfit image was not decoded');
+ assert.equal(normal2D.sourceIsLocalJpeg,true,'native photo card did not retain local JPEG');
+ stage='strict verified original preview and unsupported 3D must stay blocked';
+ await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});
+ await page.locator('#mission4Preview1054Section button').click();
+ await page.waitForFunction(()=>document.getElementById('mission4Preview1054Status')
+  ?.textContent.includes('Preview refused'),null,{timeout:20000});
+ assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
+  'ambiguous physical source was incorrectly certified as exact verified garment');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'unverified garment was incorrectly admitted to original/photo 3D');
  assert.deepEqual(rejected,[],'explicit local owner save caused forbidden external request');
  assert.deepEqual(issues,[],'explicit synthetic owner review caused browser runtime error');
  console.log('M58_SYNTHETIC_OWNER_NATIVE_SAVE_TO_M51_FAIL_CLOSED',JSON.stringify({
@@ -275,6 +304,7 @@ try{
   syntheticOwnerManualCropAndConfirm:true,localExplicitSaveCount:1,
   sourceKind:handoff.sourceKind,verifiedOutfitAdmitted:false,
   sourceOriginalRehashed:true,sourcePhoto2DOnly:true,
+  nativePrivate2DOutfitSelected:true,strictVerifiedPhotoPreviewRefused:true,
   ownerLabelsAreHumanGroundTruth:false,hostedRLS:false,physicalPhone:false,
   familyAlpha:'HOLD'
  }));
