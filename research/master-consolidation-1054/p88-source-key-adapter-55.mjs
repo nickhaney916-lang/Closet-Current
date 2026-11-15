@@ -68,7 +68,7 @@ export async function openP88SourceIntake55({
    return {accepted:false,reason:'invalid-P88-source-mask-receipt'};
   // Full mask SHA, not truncated and not an owner-controlled box/label.
   // Same mask with a forged second ordinal cannot become another garment.
-  const instanceKey='seg-'+receipt.maskSha256;
+  const instanceKey='seg-'+BigInt('0x'+receipt.maskSha256).toString(10);
   if(usedMasks.has(receipt.maskSha256))
    return {accepted:false,reason:'duplicate-source-mask'};
   const candidate={
