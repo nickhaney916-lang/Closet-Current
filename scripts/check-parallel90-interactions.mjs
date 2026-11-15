@@ -261,6 +261,76 @@ export async function checkViewer90(page,width,engine){
     sourceAndResourcesUnchanged:true,photosUnchanged:true,
     owner2DSessionPreserved:true,physicalPhone:false};
   }
+  // M20: respect system reduced-motion preference. Auto-spin remains an
+  // opt-in manual operation, but must not run when the preference says reduce.
+  // A preference changed during an active spin must immediately stop motion
+  // while the real photograph, owner session, 163-bone rig and 2D stay intact.
+  let reducedMotion20=null;
+  if(width===390){
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const original=await state();
+   await page.emulateMedia({reducedMotion:'reduce'});
+   try{
+    assert.equal(await page.evaluate(()=>
+     matchMedia('(prefers-reduced-motion: reduce)').matches),true,
+     'the browser must genuinely be in reduced-motion mode');
+    await page.locator('#outfit3D01Rotate').click();
+    const blocked=await state();
+    await page.waitForTimeout(750);
+    const afterBlock=await state();
+    const unintendedDrift=Math.abs(((afterBlock.camera90.angle-
+     blocked.camera90.angle+540)%360)-180);
+    assert.ok(unintendedDrift<2,
+     'OS reduced-motion must prevent automatic camera spin');
+    assert.match(await page.locator('#outfit3D01Status').innerText(),
+     /Reduced motion preference: automatic rotation paused/);
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.locator('#outfit3D01Rotate').click();
+    await page.waitForFunction(start=>{
+     const now=window.native3D05Bridge.state();
+     return !!now.modelReady&&Number.isFinite(now.camera90?.angle)&&
+      Math.abs(((now.camera90.angle-start+540)%360)-180)>5;
+    },afterBlock.camera90.angle,{timeout:8000});
+    await page.emulateMedia({reducedMotion:'reduce'});
+    await settle();
+    const liveStopped=await state();
+    await page.waitForTimeout(750);
+    const afterPreferenceChanged=await state();
+    const driftAfterChange=Math.abs(((afterPreferenceChanged.camera90.angle-
+     liveStopped.camera90.angle+540)%360)-180);
+    assert.ok(driftAfterChange<2,
+     'changing OS to reduce motion must stop an already-spinning avatar');
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    const notRestarted=await state();
+    await page.waitForTimeout(600);
+    const finalStopped=await state();
+    assert.ok(Math.abs(((finalStopped.camera90.angle-
+     notRestarted.camera90.angle+540)%360)-180)<2,
+     'restoring no-preference must not silently restart automatic motion');
+    await page.locator('#outfit3D01Reset90').click();await settle();
+    const beforeManual=(await camera()).angle;
+    await page.locator('#outfit3D01Right90').click();await settle();
+    const afterManual=(await camera()).angle;
+    assert.ok(Math.abs(((afterManual-beforeManual+540)%360)-180)>5,
+     'manual orbit must work independently of system motion settings');
+    const final=await state();
+    assert.equal(final.bones,163);
+    assert.deepEqual(final.garmentSources90,original.garmentSources90);
+    assert.equal(final.resources90.geometries,original.resources90.geometries);
+    assert.equal(final.resources90.textures,original.resources90.textures);
+    assert.equal(await page.evaluate(()=>
+     window.nativeLossless04Bridge.status().active),true);
+    reducedMotion20={figure,engine,cssWidth:width,
+     autoSpinBlockedDuringReducedMotion:true,
+     activeSpinStoppedOnPreferenceChange:true,
+     returningPreferenceDoesNotRestart:true,
+     manualOrbitRetained:true,sourceAndResourcesUnchanged:true,
+     owner2DSessionIntact:true,physicalPhone:false};
+   }finally{
+    await page.emulateMedia({reducedMotion:'no-preference'});
+    await page.locator('#outfit3D01Reset90').click();await settle();
+   }
+  }
   // Repeated camera work must neither rebuild textures nor deform skeletons.
   const baseline=await state();const durations=[];
   for(let i=0;i<16;i++){
@@ -271,7 +341,7 @@ export async function checkViewer90(page,width,engine){
   assert.equal(final.resources90.textures,baseline.resources90.textures);
   // Camera work does not load new garments or textures (renderer metrics
   // are captured through the existing authenticated read-only panel).
-  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,originalPhotosShortcut18,autoSpinPause19,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
+  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,originalPhotosShortcut18,autoSpinPause19,reducedMotion20,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
  // M15: end the original, signed-in, source-attested WebGL session while
  // an ACTUAL browser pointer is held down on the anatomical viewer.
