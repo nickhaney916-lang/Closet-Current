@@ -72,7 +72,7 @@ const countRows=page=>page.evaluate(()=>new Promise((resolve,reject)=>{
 try{
  browser=await browserType.launch(engine==='chromium'?{headless:true,args:['--no-sandbox']}:{headless:true});
  const context=await browser.newContext({
-  viewport:{width:390,height:920},isMobile:true,hasTouch:true,
+  viewport:{width:390,height:920},isMobile:true,hasTouch:true,acceptDownloads:true,
   serviceWorkers:'block'
  });
  await context.route('**/*',route=>{
@@ -345,6 +345,145 @@ try{
  await page.evaluate(value=>{currentBoard.occasion=value;},previousOccasion);
  const galleryAgain=await page.evaluate(()=>window.m58M59Gallery.refresh());
  assert.equal(galleryAgain.photoCount,1,'M59 failed to re-admit same reviewed original');
+
+ // M61 — ONE ACTUAL native app session, continuing from a genuine P88 WASM
+ // inference, owner-manual crop/explicit private save, native Outfit Builder
+ // and strict 2D gallery. No separate synthetic re-seeding of saved garments.
+ // Toggle the existing V4 handler at call-time (restoreAtomic01's opt-in
+ // export handler has precedence, so turn that flag off, without reloading
+ // or replacing the actual authenticated owner/session/IndexedDB).
+ stage='same-real-worker-session-native-lossless-v4-export';
+ await page.evaluate(()=>{
+  const params=new URLSearchParams(location.search);
+  params.delete('restoreAtomic01');
+  params.set('losslessV4M3','research');
+  history.replaceState(null,'',location.pathname+'?'+params.toString());
+ });
+ const downloadEvent=page.waitForEvent('download',{timeout:30000});
+ const v4Notice=await page.evaluate(async()=>{
+  await document.getElementById('export').onclick();
+  return document.getElementById('message')?.textContent||'';
+ });
+ assert.match(v4Notice,/Complete private v4 backup exported/,
+  'native signed-owner V4 export refused real-model-session private original');
+ const download=await downloadEvent;
+ assert.match(download.suggestedFilename(),/owner-backup-v4\.json/);
+ const v4=JSON.parse(await readFile(await download.path(),'utf8'));
+ assert.equal(v4.version,4);
+ assert.equal(v4.ownerId,'m58-A');
+ assert.equal(v4.items.length,1);
+ const savedPhoto=v4.items[0];
+ assert.equal(savedPhoto.id,handoff.savedItemId);
+ assert.equal(savedPhoto.originalPhoto?.image,'data:image/jpeg;base64,'+file.toString('base64'));
+ assert.equal(savedPhoto.sourceSHA256,sha);
+ assert.equal(savedPhoto.originalPhoto.sha256,sha);
+ assert.equal(savedPhoto.photoOnly,true);
+ assert.equal(savedPhoto.sourceCropReviewed,true);
+ assert.equal(savedPhoto.singleGarmentVerified,false);
+ assert.equal(savedPhoto.threeDReady,false);
+ assert.equal(v4.state?.['outfit-board']?.current?.slots?.top,handoff.savedItemId,
+  'native builder selection was not included in same-session v4 backup');
+ const submitBackup=async(data,approved)=>page.evaluate(async({data,approved})=>{
+  window.confirm=()=>approved;
+  const json=JSON.stringify(data);
+  await document.getElementById('import').onchange({
+   target:{files:[{size:json.length,text:async()=>json}],value:'m61-private-backup'}
+  });
+  return document.getElementById('message')?.textContent||'';
+ },{data,approved});
+ const ownerSnapshot=()=>page.evaluate(async()=>{
+  const tx=db.transaction(['items','state'],'readonly');
+  return new Promise((resolve,reject)=>{
+   const a=tx.objectStore('items').getAll();
+   const b=tx.objectStore('state').get('outfit-board');
+   const c=tx.objectStore('state').get('cloud-sync');
+   tx.oncomplete=()=>resolve({
+    owner:window.closetAuth?.user?.id,items:a.result.map(item=>({
+     id:item.id,color:item.color,sourceSHA256:item.sourceSHA256,
+     originalSHA:item.originalPhoto?.sha256,
+     photoOnly:item.photoOnly,sourceCropReviewed:item.sourceCropReviewed,
+     singleGarmentVerified:item.singleGarmentVerified,threeDReady:item.threeDReady
+    })),
+    top:b.result?.current?.slots?.top||null,cloudDirty:c.result?.dirty===true
+   });
+   tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+ });
+ const initial=await ownerSnapshot();
+ const tampered=structuredClone(v4);
+ tampered.items[0].originalPhoto.sha256='f'.repeat(64);
+ const rejectedSHA=await submitBackup(tampered,true);
+ assert.match(rejectedSHA,/source|sha|jpeg|mismatch|M3_V4/i);
+ assert.deepEqual(await ownerSnapshot(),initial,
+  'v4 source tamper changed M58 owner/session wardrobe or outfit');
+ const wrongOwner=structuredClone(v4);
+ wrongOwner.ownerId='m58-B';
+ const rejectedOwner=await submitBackup(wrongOwner,true);
+ assert.match(rejectedOwner,/owner|bound|account/i);
+ assert.deepEqual(await ownerSnapshot(),initial,
+  'foreign-owner v4 restore changed M58 authenticated private rows');
+ const declined=await submitBackup(v4,false);
+ assert.match(declined,/cancel/i);
+ assert.deepEqual(await ownerSnapshot(),initial,
+  'native v4 cancellation changed genuine-model session private source');
+ stage='same-real-worker-session-native-v4-atomic-restore';
+ await page.evaluate(async id=>{
+  const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
+  const record=await new Promise((resolve,reject)=>{
+   const req=store.get(id);
+   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+  if(!record)throw Error('M61 lost actual reviewed model-session source');
+  record.color='Disposable synthetic edit';
+  store.put(record);
+  await new Promise((resolve,reject)=>{
+   tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+  window.m58M59Gallery.clear();
+ },handoff.savedItemId);
+ assert.equal((await ownerSnapshot()).items[0].color,'Disposable synthetic edit');
+ assert.equal(await page.locator('#m58M59OriginalGallery img').count(),0);
+ const restoredNotice=await submitBackup(v4,true);
+ assert.match(restoredNotice,/restored.*v4|v4.*restored/i,
+  'native V4 restore did not commit original in same P88-inference session');
+ const after=await ownerSnapshot();
+ assert.equal(after.owner,'m58-A');
+ assert.equal(after.items.length,1);
+ assert.equal(after.items[0].id,handoff.savedItemId);
+ assert.equal(after.items[0].color,savedPhoto.color);
+ assert.equal(after.items[0].sourceSHA256,sha);
+ assert.equal(after.items[0].originalSHA,sha);
+ assert.equal(after.items[0].photoOnly,true);
+ assert.equal(after.items[0].sourceCropReviewed,true);
+ assert.equal(after.items[0].singleGarmentVerified,false);
+ assert.equal(after.items[0].threeDReady,false);
+ assert.equal(after.top,handoff.savedItemId);
+ assert.equal(after.cloudDirty,true);
+ const restoredGallery=await page.evaluate(async()=>{
+  const gallery=window.m58M59Gallery;
+  if(!gallery)throw Error('M61 owner original gallery missing');
+  const result=await gallery.refresh();
+  const image=document.querySelector('#m58M59OriginalGallery img');
+  const warning=document.querySelector('#m58M59OriginalGallery [data-physical-garment-unit]');
+  return {count:result.photoCount,fit:result.fittedOutfitAuthorized,
+   threeD:result.renderAuthorized3D,src:image?.getAttribute('src'),
+   warning:warning?.textContent||''};
+ });
+ assert.equal(restoredGallery.count,1);
+ assert.equal(restoredGallery.fit,false);
+ assert.equal(restoredGallery.threeD,false);
+ assert.equal(restoredGallery.src,'data:image/jpeg;base64,'+file.toString('base64'));
+ assert.match(restoredGallery.warning,/physical garment boundaries/i);
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
+ console.log('M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS',
+  JSON.stringify({engine,modelExecuted:true,manualSyntheticOwnerConfirmed:true,
+   ownerPrivateSaved:1,exactOriginalSHA256:sha,realNativeOutfit:true,
+   actualV4BrowserDownload:true,tamperDenied:true,otherOwnerDenied:true,
+   cancelledRestoreUnchanged:true,atomicRestore:true,
+   restoredOriginalPhotoGallery:true,physicalGarmentUnitsVerified:false,
+   threeDAuthorized:false,hostedRLS:false,physicalPhone:false,
+   familyAlpha:'HOLD',releaseAuthorized:false}));
+
  // After the REAL Worker + one explicitly synthetic owner A save + actual
  // 2D board selection, exercise the native LOGOUT/login B UI in this SAME
  // browser. No new model run, source mock or direct IndexedDB insertion.
