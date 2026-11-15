@@ -187,6 +187,90 @@ test('compatible garment update keeps existing saved outfit slots without import
   assert.equal(saved.saved[0].slots.top,'shirt');
  }finally{f.close();}
 });
+test('legacy same-ID merge cannot overwrite an existing verified original JPEG',async()=>{
+ const f=await fixture();
+ try{
+  const protectedRow={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',protectedRow);
+  const before=await snapshot(f.db);
+  const replacementImage='data:image/jpeg;base64,'+
+   Buffer.from([255,216,0,255,217]).toString('base64');
+  const replacementHash=createHash('sha256')
+   .update(Buffer.from([255,216,0,255,217])).digest('hex');
+  const changed={...row(f.owner),image:replacementImage,
+   originalPhoto:{image:replacementImage,sha256:replacementHash},
+   sourceSHA256:replacementHash,sourceHashVerified:true};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[changed]}),
+   /LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID backup cannot omit an existing saved original',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}});
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[row(f.owner)]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID backup cannot silently downgrade verified source attestation',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}});
+  const before=await snapshot(f.db);
+  const unverified={...row(f.owner),sourceSHA256:sha,
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[unverified]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID backup protects source piece key and owner review receipt',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner),sourceSHA256:sha,
+   sourceHashVerified:true,sourcePieceKey:'item-one',
+   ownerSourceReview88:{schema:'p88-owner-source-review/v1',sourceId:'source-one'},
+   originalPhoto:{image:jpeg,sha256:sha}});
+  const before=await snapshot(f.db);
+  const proposed={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   sourcePieceKey:'item-two',
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[proposed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+  proposed.sourcePieceKey='item-one';
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[proposed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID source-preserving color edit keeps exact original and saved outfit',async()=>{
+ const f=await fixture();
+ try{
+  const pinned={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   sourcePieceKey:'piece-one',ownerSourceReview88:{sourceId:'source-one'},
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',pinned);
+  const update={...pinned,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[update]});
+  await commit(f,plan);
+  const after=await snapshot(f.db),item=after.items.find(x=>x.id==='shirt');
+  assert.equal(item.color,'Purple');
+  assert.equal(item.originalPhoto.image,jpeg);
+  assert.equal(item.sourceSHA256,sha);
+  assert.equal(item.sourceHashVerified,true);
+  assert.deepEqual(item.ownerSourceReview88,pinned.ownerSourceReview88);
+  const saved=after.state.find(x=>x.id==='outfit-board');
+  assert.equal(saved.current.slots.top,'shirt');
+  assert.equal(saved.saved[0].slots.top,'shirt');
+ }finally{f.close();}
+});
 test('duplicate clothing IDs block preflight without touching wardrobe',async()=>{
  const f=await fixture();
  try{

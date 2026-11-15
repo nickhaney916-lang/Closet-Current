@@ -119,6 +119,26 @@ export async function prepareLegacyAtomicM3({
  for(const row of rows.items)if(row.ownerId!==undefined&&row.ownerId!==ownerId)
   throw Error('LEGACY_ATOMIC_EXISTING_FOREIGN_OWNER');
  const allItems=new Map(rows.items.map(row=>[row.id,row]));
+ // Legacy imports are merges, not permission to replace an owner's
+ // independently saved camera original or provenance receipt. An incoming
+ // row may update color/metadata or add a genuinely new ID, but collisions
+ // with an existing source-pinned garment must retain its exact bytes and
+ // source identity. Refuse before creating any write transaction.
+ for(const row of incoming){
+  const saved=allItems.get(row.id);
+  if(!saved)continue;
+  if((saved.originalPhoto?.image&&
+       saved.originalPhoto.image!==row.originalPhoto?.image)||
+     (saved.originalPhoto?.sha256&&
+       saved.originalPhoto.sha256!==row.originalPhoto?.sha256)||
+     (saved.sourceSHA256&&saved.sourceSHA256!==row.sourceSHA256)||
+     (saved.sourceHashVerified===true&&row.sourceHashVerified!==true)||
+     (saved.sourcePieceKey&&saved.sourcePieceKey!==row.sourcePieceKey)||
+     (saved.ownerSourceReview88&&
+       JSON.stringify(saved.ownerSourceReview88)!==
+       JSON.stringify(row.ownerSourceReview88)))
+    throw Error('LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT');
+ }
  for(const row of incoming)allItems.set(row.id,row);
  if(allItems.size>1000)throw Error('LEGACY_ATOMIC_CLOSET_LIMIT');
  const ids=new Set(allItems.keys());
