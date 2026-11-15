@@ -187,6 +187,27 @@ test('compatible garment update keeps existing saved outfit slots without import
   assert.equal(saved.saved[0].slots.top,'shirt');
  }finally{f.close();}
 });
+test('same legacy ID without source hash cannot silently replace its only saved JPEG',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  // Keep the same ID, garment category, owner and outfit slots. Without an
+  // original-photo receipt, the saved preview is the only source identity.
+  const changed={...row(f.owner),image:'data:image/jpeg;base64-'+
+   Buffer.from([255,216,1,255,217]).toString('base64')};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[changed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+  // Identical bytes with a metadata-only update remain compatible.
+  const safe={...row(f.owner),color:'Orange'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[safe]});
+  await commit(f,plan);
+  const after=await snapshot(f.db);
+  assert.equal(after.items.find(x=>x.id==='shirt').image,jpeg);
+  assert.equal(after.items.find(x=>x.id==='shirt').color,'Orange');
+  assert.equal(after.state.find(x=>x.id==='outfit-board').current.slots.top,'shirt');
+ }finally{f.close();}
+});
 test('legacy same-ID merge cannot overwrite an existing verified original JPEG',async()=>{
  const f=await fixture();
  try{
