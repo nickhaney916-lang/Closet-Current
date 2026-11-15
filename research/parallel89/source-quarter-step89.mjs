@@ -24,7 +24,7 @@ const out=Object.freeze({
  consumer3DAuthorized:false,releaseAuthorized:false,familyAlpha:'HOLD'
 });
 const deny=reason=>Object.freeze({...out,status:'UNVERIFIED_STATIC_QUARTERSTEP',
- reason,authenticQuarterPoseCount:0,poseWitesses:[]});
+ reason,authenticQuarterPoseCount:0,poseWitnesses:[]});
 export function auditActualSourceQuarterStepSurfaceGaps89({
  root,shirt,pants,avatar,applyPose
 }={}){
