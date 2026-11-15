@@ -540,4 +540,109 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
    }
   }finally{server.close();}
  });
+
+ test('DEFAULT atomic backup restores under scoped subdirectory deployment in Chromium and WebKit',async()=>{
+  const {createServer}=require('node:http');
+  const {readFile}=require('node:fs/promises');
+  const {resolve,extname}=require('node:path');
+  const {chromium,webkit}=require('playwright');
+  const sharp=require('sharp');
+  const jpeg='data:image/jpeg;base64,'+(await sharp({create:{
+   width:48,height:48,channels:3,background:{r:71,g:130,b:182}
+  }}).jpeg().toBuffer()).toString('base64');
+  const root=resolve('dist'),scoped='/closet-current/';
+  const moduleRequests=[];
+  const server=createServer(async(req,res)=>{
+   try{
+    const url=new URL(req.url,'http://127.0.0.1');
+    // Intentionally do NOT serve /research from the root. The import must
+    // stay within /closet-current/ or the deployed subpath is broken.
+    if(!url.pathname.startsWith(scoped))throw Error('Outside scoped PWA');
+    const relative=decodeURIComponent(url.pathname.slice(scoped.length))||'index.html';
+    const full=resolve(root,relative);
+    if(!full.startsWith(root+'/'))throw Error('Outside distribution');
+    if(relative==='research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs')
+     moduleRequests.push(url.pathname);
+    const data=await readFile(full);
+    const type=extname(full)==='.html'?'text/html':
+     /\.(?:js|mjs)$/.test(full)?'text/javascript':'application/octet-stream';
+    res.writeHead(200,{'content-type':type,'cache-control':'no-store'});res.end(data);
+   }catch{res.writeHead(404);res.end('not found');}
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  const origin='http://127.0.0.1:'+server.address().port;
+  try{
+   for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
+    const browser=await engine.launch({headless:true,args:name==='chromium'?['--no-sandbox']:[]});
+    try{
+     const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,
+      hasTouch:true,serviceWorkers:'block'});
+     try{
+      const owner='scoped-atomic-'+name;
+      await ctx.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
+       "window.closetAuth={user:{id:'"+owner+"'},ready:Promise.resolve(),getAccessToken:async()=>'synthetic',assertCurrent:()=>{}};document.getElementById('authGate').hidden=true;document.getElementById('appShell').hidden=false;"}));
+      await ctx.route('**/cloud-backup.js*',route=>route.fulfill({contentType:'text/javascript',body:
+       'window.closetCloud={start:async()=>({started:true}),beforeWrite:async()=>{},changed:()=>{}};'}));
+      const external=[];
+      await ctx.route('**/*',route=>{
+       const url=new URL(route.request().url());
+       if(url.hostname==='127.0.0.1'||url.protocol==='data:'||url.protocol==='blob:')
+        return route.fallback();
+       external.push({method:route.request().method(),url:url.href});return route.abort();
+      });
+      await ctx.addInitScript(()=>{
+       class OfflineWorker{
+        constructor(){this.onmessage=null;this.terminated=false;}
+        postMessage(m){setTimeout(()=>{if(!this.terminated)this.onmessage?.({data:{
+         id:m.id,type:m.type==='load'?'ready':'result',choices:[],strong:false,details:{}
+        }});},0);}
+        terminate(){this.terminated=true;}
+       }
+       Object.defineProperty(window,'Worker',{configurable:true,value:OfflineWorker});
+      });
+      const page=await ctx.newPage(),errors=[];
+      page.on('pageerror',error=>errors.push(String(error)));
+      await page.goto(origin+scoped,{waitUntil:'domcontentloaded'});
+      await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
+      const answer=await page.evaluate(async({owner,jpeg})=>{
+       const backup={format:'closet-current',version:3,
+        items:[{id:'scoped-shirt',ownerId:owner,name:'Scoped shirt',category:'Tops',
+         itemType:'T-shirt',color:'Blue',image:jpeg}],
+        looks:[{id:'scoped-look',title:'Scoped inspiration',pieces:[]}],
+        outfitBoard:{current:{name:'Scoped outfit',slots:{top:'scoped-shirt'}},
+         saved:[{name:'Scoped saved outfit',slots:{top:'scoped-shirt'}}]}};
+       window.confirm=()=>true;
+       const json=JSON.stringify(backup);
+       await document.getElementById('import').onchange({target:{
+        files:[{size:json.length,text:async()=>json}],value:'selected'}});
+       const rows=await new Promise((resolve,reject)=>{
+        const tx=db.transaction(['items','state'],'readonly');
+        const items=tx.objectStore('items').getAll(),state=tx.objectStore('state').getAll();
+        tx.oncomplete=()=>resolve({items:items.result,state:state.result});
+        tx.onerror=()=>reject(tx.error);
+       });
+       const state=Object.fromEntries(rows.state.map(x=>[x.id,x]));
+       return {photos:rows.items.map(x=>({id:x.id,owner:x.ownerId})),
+        looks:state.looks?.looks?.map(x=>x.id),
+        board:state['outfit-board']?.current?.slots?.top,
+        saved:state['outfit-board']?.saved?.[0]?.slots?.top,
+        revision:state['cloud-sync']?.localRevision,dirty:state['cloud-sync']?.dirty,
+        message:document.getElementById('message').textContent};
+      },{owner,jpeg});
+      assert.deepEqual(answer.photos,[{id:'scoped-shirt',owner}]);
+      assert.deepEqual(answer.looks,['scoped-look']);
+      assert.equal(answer.board,'scoped-shirt');
+      assert.equal(answer.saved,'scoped-shirt');
+      assert.equal(answer.revision,1);assert.equal(answer.dirty,true);
+      assert.match(answer.message,/imported atomically/i);
+      assert.deepEqual(errors,[]);
+      assert.equal(external.some(x=>x.method!=='GET'),false,'No external private writes');
+     }finally{await ctx.close();}
+    }finally{await browser.close();}
+   }
+   assert.equal(moduleRequests.length,2,'Each engine loaded the module from its scoped PWA folder');
+   assert.ok(moduleRequests.every(x=>x===scoped+
+    'research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs'));
+  }finally{server.close();}
+ });
 }
