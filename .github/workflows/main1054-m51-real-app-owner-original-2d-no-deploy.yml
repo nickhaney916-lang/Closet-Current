@@ -1,0 +1,93 @@
+name: MAIN1054 M51 actual authenticated native app original licensed 2D NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m51-native-app-original-owner-handoff-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  m50-source-and-no-deploy-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M50 verified parent and strict research-only M51 source allowlist
+        shell: bash
+        run: |
+          set -euo pipefail
+          PARENT=2c1b7e8689391e539c316996c41c04657a31e317
+          git merge-base --is-ancestor "$PARENT" HEAD
+          for path in public/native-reviewed-private-save-167.mjs public/native-canonical-photo-source-167.mjs public/outfit-board-engine.js research/main-thread-integration-1054/native-2d-preview.mjs research/main-thread-integration-1054/source-to-outfit.mjs tests/main49-licensed-original-photo-private-outfit-2d.test.mjs; do
+            test "$(git rev-parse HEAD:$path)" = "$(git rev-parse $PARENT:$path)"
+          done
+          git diff --exit-code "$PARENT" HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/main-thread-integration-1054/
+          git diff --name-only "$PARENT" HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/test-main51-real-app-owner-original-2d.mjs|research/master-consolidation-1054/MILESTONE51.md|.github/workflows/main1054-m51-real-app-owner-original-2d-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected M51 change $path"; exit 1;;
+            esac
+          done
+          node --check scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Install local source-test dependencies without production release
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Unchanged original consumer application source build
+        run: node scripts/build.mjs
+      - name: Recheck genuine licensed original reviewed private 2D chain
+        run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs
+      - name: Full application no-deploy Node regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Original photographs/owner application/3D donors/hosted source unchanged
+        run: git diff --exit-code 2c1b7e8689391e539c316996c41c04657a31e317 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/main-thread-integration-1054/
+  m50-genuine-native-browser:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M51_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install pinned browser and source-only dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Real Chromium/WebKit source JPEG to native browser IndexedDB and original photo 2D view
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Assert exact real browser screenshots and no physical 3D grant
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Playwright Docker checkout may be owned by a different UID; the
+          # original M47 native CI also explicitly trusts its own checkout.
+          # Without this, git reports "Not a git repository" (exit 129).
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          DIR="benchmark/main51-real-app-owner-2d/${{ matrix.engine }}"
+          test -f "$DIR/M51-native-owner-source-2d-NOT-RELEASE.json"
+          for width in 320 390 430; do
+            test -s "$DIR/${{ matrix.engine }}-$width-native-owned-licensed-2d.png"
+          done
+          git diff --exit-code 2c1b7e8689391e539c316996c41c04657a31e317 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/main-thread-integration-1054/
+      - name: Store true browser source-safe 2D previews and revocation verdict (research not approved)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m51-real-native-${{ matrix.engine }}-original-photo-2D-NO-3D-HOLD
+          path: benchmark/main51-real-app-owner-2d/${{ matrix.engine }}/
+          retention-days: 14
+          if-no-files-found: ignore
