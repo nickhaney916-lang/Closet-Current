@@ -64,6 +64,8 @@ function readDraft(){return new Promise((resolve,reject)=>{const r=db.transactio
 function savePiece(value,nextBatch,lease){
  if(!reviewedSaveLeaseLive88(lease))
   return Promise.reject(Error('P88_STALE_REVIEWED_OWNER'));
+ if(!reviewedDistinctPhotoReceiptValid88(value,lease))
+  return Promise.reject(Error('P88_DISTINCT_OWNER_DECISION_REQUIRED'));
  return queued(()=>{
   if(!reviewedSaveLeaseLive88(lease)||value.id!==lease.item.id||
    value.image!==lease.image||value.originalPhoto?.image!==lease.original||
@@ -72,7 +74,8 @@ function savePiece(value,nextBatch,lease){
    JSON.stringify(value.segmentHint??null)!==lease.maskRevision||
    JSON.stringify(value.cropBounds??null)!==lease.cropRevision||
    !lease.evidenceRevision||
-   ordinarySourceEvidence88(value)!==lease.evidenceRevision)
+   ordinarySourceEvidence88(value)!==lease.evidenceRevision||
+   !reviewedDistinctPhotoReceiptValid88(value,lease))
    throw Error('P88_REVOKED_REVIEWED_SAVE');
   // Compute the surviving drafts after cloud preflight. An older save must
   // never drop an unrelated garment captured while that await was pending.
@@ -88,6 +91,31 @@ function savePiece(value,nextBatch,lease){
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 // Keep exact-owner review helpers in the actual native Adjust source segment
 // also exercised by isolated P82/P846 Chromium and WebKit harnesses.
+// An exact JPEG match is neither proof of one physical item nor proof of two.
+// Freeze all saved same-image peers for explicit owner confirmation.
+function reviewedExactPhotoPeers88(item){
+ return items.filter(x=>x&&x!==item&&x.id!==item?.id&&x.image===item?.image);
+}
+function reviewedDistinctPhotoReceipt88(lease){
+ return {schema:'p88-distinct-physical-owner-attestation/v1',
+  ownerId:lease.ownerId,reviewedPhotoId:lease.item.id,
+  identicalSavedPhotoItemIds:lease.exactPhotoPeers88.map(x=>x.id),
+  identicalSourceBytesObserved:true,ownerAttestedDistinctPhysicalItem:true,
+  independentPhysicalItemVerified:false,singleGarmentVerified:false,threeDReady:false};
+}
+function reviewedDistinctPhotoReceiptValid88(value,lease){
+ if(!lease?.wasDraft)return true;
+ const peers=lease.exactPhotoPeers88||[],marked=lease.exactSavedMarker88!=='null';
+ if(!marked&&!peers.length)return value.ownerDuplicateReview88==null;
+ const r=value.ownerDuplicateReview88;
+ return Boolean(peers.length&&r&&r.schema==='p88-distinct-physical-owner-attestation/v1'&&
+  r.ownerId===lease.ownerId&&r.reviewedPhotoId===lease.item.id&&
+  r.identicalSourceBytesObserved===true&&r.ownerAttestedDistinctPhysicalItem===true&&
+  r.independentPhysicalItemVerified===false&&r.singleGarmentVerified===false&&
+  r.threeDReady===false&&Array.isArray(r.identicalSavedPhotoItemIds)&&
+  r.identicalSavedPhotoItemIds.length===peers.length&&
+  peers.every((p,i)=>r.identicalSavedPhotoItemIds[i]===p.id));
+}
 function reviewedSaveLease88(item){
  const user=window.closetAuth?.user;
  return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
@@ -95,6 +123,8 @@ function reviewedSaveLease88(item){
   recognition:item?.recognitionPhoto?.image,sourceId:item?.outfitSourceId,
   maskRevision:JSON.stringify(item?.segmentHint??null),
   cropRevision:JSON.stringify(item?.cropBounds??null),
+  exactSavedMarker88:JSON.stringify(item?.exactSavedPhotoMatch88??null),
+  exactPhotoPeers88:reviewedExactPhotoPeers88(item).map(x=>({item:x,id:x.id,image:x.image})),
   evidenceRevision:ordinarySourceEvidence88(item)};
 }
 // A manual photo review permits category/type/color edits; it is not
@@ -128,7 +158,11 @@ function reviewedSaveLeaseLive88(lease){
    item.outfitSourceId===lease.sourceId&&
    JSON.stringify(item.segmentHint??null)===lease.maskRevision&&
    JSON.stringify(item.cropBounds??null)===lease.cropRevision&&
-   !!lease.evidenceRevision&&ordinarySourceEvidence88(item)===lease.evidenceRevision);
+   !!lease.evidenceRevision&&ordinarySourceEvidence88(item)===lease.evidenceRevision&&
+   JSON.stringify(item.exactSavedPhotoMatch88??null)===lease.exactSavedMarker88&&
+   reviewedExactPhotoPeers88(item).length===lease.exactPhotoPeers88.length&&
+   reviewedExactPhotoPeers88(item).every((x,i)=>x===lease.exactPhotoPeers88[i].item&&
+    x.id===lease.exactPhotoPeers88[i].id&&x.image===lease.exactPhotoPeers88[i].image));
  }catch{return false;}
 }
 
@@ -542,11 +576,13 @@ function adjustPhoto(item){
  // #77 OFF by default. Comparison may ONLY inspect this owner's loaded
  // local wardrobe. "Same" creates an unpersisted intent, never a second item.
  let cross77Pending=false,cross77Proposal=null,cross77Decision=null,cross77Scope=null;
- let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null;
+ let confirmReview=null,save=null,reviewStatus=null,learningCheck72=null,distinctPhotoCheck88=null;
  const reviewedKeys72=new Set(['category','itemType']);
  const form=node('form'),draft=structuredClone(item);
  const sourceLease88=sourceSaveLease88(item);
  const reviewLease88=reviewedSaveLease88(item);
+ const distinctPhotoRequired88=Boolean(pendingDraft&&
+  (reviewLease88.exactPhotoPeers88.length||item.exactSavedPhotoMatch88));
  const reviewedCore=()=>{
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
@@ -558,7 +594,9 @@ function adjustPhoto(item){
  };
  const canSaveReview=()=>{
   if(!explicitReview)return true;
-  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
+  const valid=Boolean(confirmReview?.checked&&reviewedCore()&&
+   (!distinctPhotoRequired88||(distinctPhotoCheck88?.checked&&
+    reviewedSaveLeaseLive88(reviewLease88)&&reviewLease88.exactPhotoPeers88.length>0))&&!cross77Pending&&(!cross77Scope||CrossCaptureDuplicate77.valid(cross77Scope))&&(!cross77Proposal||cross77Decision?.action==='different'));
   if(save)save.disabled=saveInFlight||!valid;
   if(reviewStatus)reviewStatus.textContent=reviewedCore()?
    'Confirm that the category, specific type (or Unknown), and color match the garment photo.':
@@ -570,6 +608,7 @@ function adjustPhoto(item){
   // programmatically, so the optional model panel must clear immediately.
   dual82Panel?.invalidate();
   if(confirmReview)confirmReview.checked=false;
+  if(distinctPhotoCheck88)distinctPhotoCheck88.checked=false;
   if(learningCheck72)learningCheck72.checked=false;
   if(['pattern','sleeveLength','fit'].includes(key))reviewedKeys72.add(key);
   canSaveReview();
@@ -623,6 +662,24 @@ function adjustPhoto(item){
   reviewStatus=node('p',null,'fine');
   confirmReview.onchange=canSaveReview;
   form.append(approval,reviewStatus);canSaveReview();
+ }
+ if(distinctPhotoRequired88){
+  const panel=node('section',null,'duplicate-review-88');
+  panel.setAttribute('aria-label','Exact saved photograph physical garment decision');
+  panel.append(node('p',
+   reviewLease88.exactPhotoPeers88.length+
+   ' saved closet item(s) use this exact photo. A matching picture cannot prove another physical garment. Compare the real items and leave this photo unsaved if uncertain.','fine'));
+  if(reviewLease88.exactPhotoPeers88[0]){
+   const matching=node('img');matching.src=reviewLease88.exactPhotoPeers88[0].image;
+   matching.alt='Already saved photograph exactly matching this new photo';panel.append(matching);
+  }
+  const label=node('label',null,'review-acknowledgement');
+  distinctPhotoCheck88=node('input');distinctPhotoCheck88.type='checkbox';
+  distinctPhotoCheck88.setAttribute('aria-label','I physically checked this is a different owned garment from every matching saved item');
+  label.append(distinctPhotoCheck88,document.createTextNode(
+   'I checked my actual clothing and confirm this is a physically different garment from every saved item using this exact photo. This is my decision, not independent model verification.'));
+  distinctPhotoCheck88.onchange=canSaveReview;
+  panel.append(label);form.prepend(panel);canSaveReview();
  }
  learningCheck72=attachLearningConsent72(form,learningScope72());
  // The experimental flow requires a deliberate URL opt-in and a live, exact
@@ -682,6 +739,11 @@ function adjustPhoto(item){
    message('Resolve the possible owned-garment comparison for this signed owner first, or keep the original unsaved.');
    return;
   }
+  if(distinctPhotoRequired88&&(!distinctPhotoCheck88?.checked||
+   !reviewedSaveLeaseLive88(reviewLease88)||!reviewLease88.exactPhotoPeers88.length)){
+   message('This photo matches a saved item. Compare the actual garments and explicitly confirm this is a different owned item.');
+   return;
+  }
   if(explicitReview&&!canSaveReview()){
    message('Confirm the garment category and color against the photo, then check the review box before saving.');
    return;
@@ -714,6 +776,11 @@ function adjustPhoto(item){
     throw Error('P77_STALE_DECISION');
   }
   const reviewed72=await confirmedLearningValue72(value,consent72,scope72,[...reviewedKeys72]);
+  // A matching JPEG decision is owner attestation, never a 3D-ready mask.
+  if(!sourceLease88&&distinctPhotoRequired88){
+   if(!distinctPhotoCheck88?.checked)throw Error('P88_DUPLICATE_OWNER_DECISION_REVOKED');
+   reviewed72.ownerDuplicateReview88=reviewedDistinctPhotoReceipt88(reviewLease88);
+  }
   if(learningMode72()&&(!dialog.open||scope72!==learningScope72()||
     source72!==item.image||origin72!==item.recognitionPhoto?.image||
     unit72!==item.reconciliation70?.maskSha256||
@@ -1035,7 +1102,8 @@ function candidate(image,options={}){
   message('That exact frame is already waiting in Photo results. If this is a different physical garment, take its own photo from another angle.');
   return false;
  }
- const exactSaved=items.some(item=>item.image===image);
+ const exactSavedItem=items.find(item=>item.image===image);
+ const exactSaved=Boolean(exactSavedItem);
  // Preserve inherited legacy automatic-indexing behavior in non-review mode;
  // actual native Mission 1 review-first mode must retain intentional rescans.
  if(exactSaved&&!(typeof reviewFirst836!=='undefined'&&reviewFirst836)){
@@ -1047,6 +1115,7 @@ function candidate(image,options={}){
  if(typeof recordDeviceEvent==='function')recordDeviceEvent(exactSaved?'exact_saved_photo_retained_for_review':'photo_queued');
  if(options.outfitSourceId){item.outfitSourceId=options.outfitSourceId;item.requiresOwnershipConfirmation=true;item.segmentHint=options.segmentHint;item.recognitionPhoto=options.recognitionPhoto;item.originalPhoto=options.originalPhoto;item.cropBounds=options.cropBounds;if(options.reconciliation70){item.reconciliation70=options.reconciliation70;item.reconciliation70Status=options.reconciliation70Status||'unresolved';}if(options.colorEstimate){Object.assign(item,ClothingDetails.fillColor(item,options.colorEstimate));if(item.colorSource==='photo-estimate')item.colorMethod='garment-mask';}}
  if(exactSaved){
+  item.exactSavedPhotoMatch88={savedItemId:exactSavedItem.id};
   // No unverified classifier/model decision may resolve two identical JPEGs
   // into distinct owned garments; preserve the raw source for a PERSON.
   item.possibleDuplicate=true;item.requiresOwnershipConfirmation=true;
