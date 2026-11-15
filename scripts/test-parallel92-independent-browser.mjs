@@ -10,7 +10,7 @@ const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
 assert.ok(['chromium','webkit'].includes(engine));
 assert.ok([1,2].includes(trial));
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
-const exact=git('rev-parse','HEAD'),base='45ef228ff5f5a57d840dfe65cdc41d92c71936ff';
+const exact=git('rev-parse','HEAD'),base='7710fafdb03fd64a1de0cc6419a9aa1e0883f2c1';
 assert.equal(exact,process.env.P92_CHECKOUT_SHA);
 assert.equal(git('merge-base',base,exact),base);
 const files=git('diff','--name-only',base,exact).split('\n').filter(Boolean);

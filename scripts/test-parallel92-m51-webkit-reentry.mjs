@@ -1,7 +1,7 @@
 /**
- * P92 independent native WebKit focus/reentry stress of EXACT M88 M51 source.
+ * P92 independent native WebKit focus/reentry stress of EXACT M89 M51 source.
  * Real app, source JPEG, signed synthetic local DB and original assertions.
- * M88 owns failure classification; this test ONLY runs its unchanged script
+ * M89 owns failure classification; this test ONLY runs its unchanged script
  * repeatedly without retries, synthetic preview, product patches or image logs.
  */
 import assert from 'node:assert/strict';
@@ -11,20 +11,21 @@ import {join} from 'node:path';
 const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const sha=git('rev-parse','HEAD');
 assert.equal(sha,process.env.P92_CHECKOUT_SHA,'must execute exact checked-out SHA');
-const m88='45ef228ff5f5a57d840dfe65cdc41d92c71936ff';
-assert.equal(git('merge-base',m88,sha),m88,'current M88 source not in ancestry');
+const m90='7710fafdb03fd64a1de0cc6419a9aa1e0883f2c1';
+assert.equal(git('merge-base',m90,sha),m90,'current M90 source not in ancestry');
 const script='scripts/test-main51-real-app-owner-original-2d.mjs';
 assert.equal(git('rev-parse','HEAD:'+script),
- '5f59269341247fa14ba346367549cb88f45e0843',
- 'M88 native M51 source changed');
+ '16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
+ 'M89 native M51 source changed');
 assert.equal(git('rev-parse','HEAD:public/app.js'),
  'd259d0b77a006d032699be50536adb2ebca459dd',
  'consumer changed outside test ownership');
 assert.equal(git('rev-parse','HEAD:public/outfit-board.js'),
  '153455379b0b6d777eff8c1c508c129208c7fadc',
  'Outfit Builder changed outside test ownership');
-assert.ok(readFileSync(script,'utf8').includes('M88_SOURCE_SAFE_WEBKIT_PREVIEW_REFUSAL'),
- 'Missing main-owned source-safe refusal diagnostics');
+assert.ok(readFileSync(script,'utf8').includes('M88_SOURCE_SAFE_WEBKIT_PREVIEW_REFUSAL')&&
+ readFileSync(script,'utf8').includes('__m89PreviewFailure'),
+ 'Missing main-owned M89 source-safe refusal diagnostics');
 const total=Number(process.env.P92_REENTRY_RUNS||8);
 assert.ok(Number.isSafeInteger(total)&&total>=2&&total<=12);
 const path='benchmark/parallel92-webkit-reentry';
@@ -47,6 +48,9 @@ for(let trial=1;trial<=total;trial++){
     if(marker.startsWith('M88'))
      return {kind:'native-refusal',viewerPhase:v.viewerPhase||'unknown',
       preflight:v.preflight||'unknown',preflightCategory:v.preflightCategory||null,
+      internalFailureCategory:v.internalRefusal?.category||null,
+      internalFailureType:v.internalRefusal?.type||null,
+      internalTicketCurrent:v.internalRefusal?.ticketCurrent===true,
       boardInitialized:v.boardInitialized===true,
       boardHasSelection:v.boardHasSelection===true,
       eligibleSlots:Number.isFinite(v.eligibleSlots)?v.eligibleSlots:null};
@@ -60,17 +64,17 @@ for(let trial=1;trial<=total;trial++){
   elapsedMs:Date.now()-started,status:r.status===0?'PASS':'FAIL',
   sourceSafeRefusals:safe};
  runs.push(row);
- console.log('P92_M88_NATIVE_WEBKIT_REENTRY_TRIAL',JSON.stringify(row));
+ console.log('P92_M90_NATIVE_WEBKIT_REENTRY_TRIAL',JSON.stringify(row));
  if(r.error||r.status!==0){
-  console.error('P92_M88_REENTRY_FAIL',JSON.stringify({
+  console.error('P92_M90_REENTRY_FAIL',JSON.stringify({
    trial,errorName:r.error?.name||null,exitCode:r.status,
    sourceSafeRefusals:safe}));
   break; // no retry masking
  }
 }
-const receipt={schema:'P92_M88_UNCHANGED_M51_REAL_WEBKIT_REENTRY/v2',
- exactHead:sha,mainSourceM88:m88,
- nativeSourceBlob:'5f59269341247fa14ba346367549cb88f45e0843',
+const receipt={schema:'P92_M90_UNCHANGED_M89_M51_REAL_WEBKIT_REENTRY/v3',
+ exactHead:sha,mainSourceM90:m90,
+ nativeSourceBlob:'16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167',
  expected:total,attempted:runs.length,
  result:runs.length===total&&runs.every(r=>r.status==='PASS')?'PASS':'FAIL',
  noSyntheticPreviewOrModel:true,realBrowser:true,realOriginalJPEG:true,
@@ -78,7 +82,7 @@ const receipt={schema:'P92_M88_UNCHANGED_M51_REAL_WEBKIT_REENTRY/v2',
  independentHumanAccuracy:false,physicalPhone:false,full3DFitted:false,
  familyAlpha:'HOLD',releaseAllowed:false,runs};
 writeFileSync(join(path,'result.json'),JSON.stringify(receipt,null,2)+'\n');
-assert.equal(receipt.result,'PASS','real M88 WebKit M51 failed; do not hide or auto-retry');
-console.log('P92_M88_REAL_WEBKIT_REENTRY_STRESS_PASS',JSON.stringify({
+assert.equal(receipt.result,'PASS','real M89 WebKit M51 failed; do not hide or auto-retry');
+console.log('P92_M90_REAL_WEBKIT_REENTRY_STRESS_PASS',JSON.stringify({
  exactHead:sha,repetitions:total,widths:[320,390,430],
  photoSourceUnchanged:true,familyAlpha:'HOLD'}));

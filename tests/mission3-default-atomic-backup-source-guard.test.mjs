@@ -338,3 +338,70 @@ test('M87 compatible same-ID metadata import retains existing saved outfit',asyn
   assert.equal(saved.saved[0].slots.top,'shirt');
  }finally{f.close();}
 });
+
+// M90: default legacy import must share the normal saved-original fence.
+// A new ID is not evidence of a distinct physical garment when original SHA
+// or bytes belong to an existing owner-reviewed saved garment.
+test('M90 same verified JPEG under a new ID cannot bypass original-source ownership',async()=>{
+ const f=await fixture();
+ try{
+  const saved={...row(f.owner,'shirt'),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',saved);
+  const incoming={...row(f.owner,'different-id'),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}};
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[incoming]}),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M90 a cropped preview or missing incoming SHA cannot relabel a verified original',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner,'shirt'),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}});
+  const crop='data:image/jpeg;base64,'+Buffer.from([255,216,42,43,255,217]).toString('base64');
+  const alias={...row(f.owner,'new-crop'),image:crop,
+   originalPhoto:{image:jpeg}};
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[alias]}),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M90 two colliding verified originals in same incoming backup fail atomically',async()=>{
+ const f=await fixture();
+ try{
+  // Distinct from fixture shirt: prove two INCOMING new IDs collide.
+  const sourceBytes=Buffer.from([255,216,14,15,255,217]);
+  const sourceImage='data:image/jpeg;base64,'+sourceBytes.toString('base64');
+  const sourceHash=createHash('sha256').update(sourceBytes).digest('hex');
+  const first={...row(f.owner,'first-import'),image:sourceImage,
+   sourceSHA256:sourceHash,sourceHashVerified:true,
+   originalPhoto:{image:sourceImage,sha256:sourceHash}};
+  const second={...first,id:'second-import'};
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[first,second]}),
+   /LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('M90 a genuinely different verified owner original remains importable',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner,'shirt'),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}});
+  const bytes=Buffer.from([255,216,11,12,255,217]);
+  const different='data:image/jpeg;base64,'+bytes.toString('base64');
+  const differentSha=createHash('sha256').update(bytes).digest('hex');
+  const incoming={...row(f.owner,'genuinely-new'),image:different,
+   sourceSHA256:differentSha,sourceHashVerified:true,
+   originalPhoto:{image:different,sha256:differentSha}};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[incoming]});
+  await commit(f,plan);
+  const s=await snapshot(f.db);
+  assert.equal(s.items.find(x=>x.id==='genuinely-new').originalPhoto.image,different);
+  assert.equal(s.items.find(x=>x.id==='shirt').sourceSHA256,sha);
+ }finally{f.close();}
+});
