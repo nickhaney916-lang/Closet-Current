@@ -5,6 +5,10 @@
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {chromium,webkit} from 'playwright';
+import {createServer} from 'node:http';
+const server=createServer((req,res)=>{res.writeHead(200,{'content-type':'text/html'});res.end('<!doctype html><title>MAIN1054 IndexedDB fixture</title>');});
+await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const url='http://127.0.0.1:'+server.address().port+'/';
 const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const start=source.indexOf('function savePiece('),end=source.indexOf('\nfunction node(',start);
 assert.ok(start>=0&&end>start);
@@ -13,7 +17,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
  const browser=await engine.launch({headless:true});
  try{
   const page=await browser.newPage();
-  await page.goto('about:blank');
+  await page.goto(url);
   const result=await page.evaluate(async code=>{
    const owner='main1054-fixture',photo='data:image/jpeg;base64,ZmFrZQ==';
    const open=indexedDB.open('closet-current-user-'+owner,1);
@@ -49,3 +53,5 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   console.log(name+' real IndexedDB transaction PASS',JSON.stringify(result));
  }finally{await browser.close();}
 }
+
+server.close();
