@@ -25,6 +25,11 @@ jobs:
           P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
           git merge-base --is-ancestor "$BASE" HEAD
           git cat-file -e "$P88^{commit}"
+          # Re-run the already-shipped M51 native private original-photo -> 2D
+          # Outfit Builder proof at this exact M57 source head (not a cross-PR merge).
+          M51=22f3db9f9d5dd34ff2d1323e59d3848935e65f4f
+          git merge-base --is-ancestor "$M51" HEAD
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = "$(git rev-parse "$M51:scripts/test-main51-real-app-owner-original-2d.mjs")"
           test "$(git rev-parse "$P88:public/outfit-worker.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
           test "$(git rev-parse "$P88:public/outfit-segmentation.mjs")" = d357955dd8fdab7c0cb727ea597c270edd9309ac
           test "$(git rev-parse "$P88:public/outfit-instance-review-840.mjs")" = 6324d8eda33024f166311f424392ed83363e4942
@@ -37,6 +42,7 @@ jobs:
           done
           node --check research/multi-garment-capture-01/review-ui.mjs
           node --check scripts/test-main57-native-p88-transport-browser.mjs
+          node --check scripts/test-main51-real-app-owner-original-2d.mjs
       - name: Install source-only regression dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: P88 source and known M54/M55/M56 no-silent-save guards
@@ -61,6 +67,7 @@ jobs:
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
       M57_ENGINE: ${{ matrix.engine }}
+      M51_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -88,7 +95,9 @@ jobs:
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
       - name: Native app real original with synthetic P88-shaped source/mask receipt and negative owner veto
         run: node scripts/test-main57-native-p88-transport-browser.mjs
-      - name: Verify three browser widths, no wardrobe saves and source boundaries
+      - name: Re-run inherited actual native PHOTO119 private owner save to real Outfit Builder original-photo 2D
+        run: node scripts/test-main51-real-app-owner-original-2d.mjs
+      - name: Verify both actual app journeys on the same source head, with no unapproved 3D
         shell: bash
         run: |
           set -euo pipefail
@@ -98,12 +107,34 @@ jobs:
           for width in 320 390 430; do
             test -s "$DIR/${{ matrix.engine }}-$width-source-bound-P88-unresolved-review.png"
           done
+          # Separate same-head native app acceptance: synthetic human owner
+          # confirms original JPEG to private IDB -> saved outfit -> 2D source.
+          DIR51="benchmark/main51-real-app-owner-2d/${{ matrix.engine }}"
+          test -s "$DIR51/M51-native-owner-source-2d-NOT-RELEASE.json"
+          for width in 320 390 430; do
+            test -s "$DIR51/${{ matrix.engine }}-$width-native-owned-licensed-2d.png"
+          done
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const e=process.env.M57_ENGINE;
+          const m57=JSON.parse(fs.readFileSync(`benchmark/main57-native-p88-source-transport/${e}/M57-NATIVE-P88-RECEIPT-NO-SILENT-SAVE.json`));
+          const m51=JSON.parse(fs.readFileSync(`benchmark/main51-real-app-owner-2d/${e}/M51-native-owner-source-2d-NOT-RELEASE.json`));
+          if(m57.cases.length!==3||m57.cases.some(x=>x.savedRows!==0||x.releaseAuthorized!==false)||m57.familyAlpha!=='HOLD')
+            throw Error('P88 unresolved-mask veto/source-owner receipt missing');
+          if(m51.cases.length!==3||m51.cases.some(x=>x.actualPhoto119Save!==true||
+            x.originalPhoto2DOnly!==true||x.ownerBDeniedOldOwnerPhoto!==true||
+            x.consumer3D!==false||x.releaseAuthorized!==false)||m51.familyAlpha!=='HOLD')
+            throw Error('M51 actual native photo-save, owned outfit or 2D fallback regression');
+          console.log('MAIN1054 SAME_HEAD TWO NATIVE PATHS:',e,'3 P88 veto / 3 M51 owner saved outfit 2D / no consumer 3D / HOLD');
+          JS
           git diff --exit-code 1bf7137dedefcc974917144f11c154d119898971 HEAD -- public/ supabase/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Archive synthetic-login browser review evidence, never private owner photos
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: main1054-m57-native-${{ matrix.engine }}-source-bound-P88-HOLD
-          path: benchmark/main57-native-p88-source-transport/${{ matrix.engine }}/
+          path: |
+            benchmark/main57-native-p88-source-transport/${{ matrix.engine }}/
+            benchmark/main51-real-app-owner-2d/${{ matrix.engine }}/
           retention-days: 14
           if-no-files-found: ignore
