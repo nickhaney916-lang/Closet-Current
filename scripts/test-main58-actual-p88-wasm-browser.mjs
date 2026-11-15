@@ -307,6 +307,16 @@ try{
  await page.locator('#boardPicker').waitFor({state:'visible',timeout:20000});
  const ownedChoice=page.locator('#boardPickerItems button.board-pick').first();
  await ownedChoice.waitFor({timeout:20000});
+ // M73: owner sees uncertainty before pressing the actual private picker
+ // selection button. The app must not imply an uncertified cutout is fitted 3D.
+ assert.match(await ownedChoice.innerText(),
+  /Photo reference only.*garment outline unverified/i,
+  'native closet picker concealed unverified garment outline');
+ assert.match(await ownedChoice.getAttribute('aria-label'),
+  /individual garment outline unverified.*Select for 2D outfit/i,
+  'native picker accessibility name concealed source-only limitation');
+ assert.equal(await ownedChoice.evaluate(e=>e.classList.contains('source-unverified')),
+  true,'native picker lost the owner-photo source-only warning');
  await ownedChoice.click();
  await page.waitForFunction(id=>{
   const node=document.querySelector('#boardSlots .board-slot-top.owned img');
