@@ -575,6 +575,24 @@ try{
  assert.equal(bView.strictPreviewOriginals,0,'B has A strict preview source');
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
   'owner B can view owner A M59 research-gallery source');
+ // M63: re-use the ACTUAL v4 JSON downloaded after A's genuine model/
+ // explicitly reviewed private save. A valid, uncompromised A backup must
+ // never be importable by newly signed-in B, even with B's consent. This
+ // exercises the native import control rather than a standalone fixture.
+ stage='same-browser-owner-B-must-reject-valid-owner-A-original-v4-backup';
+ const ownerBBeforeForeignRestore=await ownerSnapshot();
+ assert.equal(ownerBBeforeForeignRestore.owner,'m58-B');
+ assert.equal(ownerBBeforeForeignRestore.items.length,0);
+ assert.equal(ownerBBeforeForeignRestore.savedOutfitCount,0);
+ const bForeignRestoreNotice=await submitBackup(v4,true);
+ assert.match(bForeignRestoreNotice,/owner|account|bound|mismatch|private/i,
+  'native v4 import did not explain refusal of genuine owner A backup to B');
+ assert.deepEqual(await ownerSnapshot(),ownerBBeforeForeignRestore,
+  'owner B changed after attempting to restore owner A valid private source');
+ assert.equal(await page.locator('#boardSlots .owned img').count(),0,
+  'owner B displayed A garment after rejected original v4 import');
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
+  'owner B displayed A original after rejected cross-account v4 import');
  assert.deepEqual(rejected,[],'synthetic owner switch caused forbidden external request');
  assert.deepEqual(issues,[],'native owner switch caused browser runtime error');
  console.log('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',JSON.stringify({
