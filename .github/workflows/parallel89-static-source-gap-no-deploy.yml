@@ -1,0 +1,100 @@
+name: P89 genuine source avatar shirt-denim unsigned contact gap NO DEPLOY
+on:
+  push:
+    branches: [research/parallel89-multicategory-source-contract-20261114-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  pure-source-gap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original P92 ancestry and no application/privacy source writes
+        shell: bash
+        run: |
+          set -eu
+          git merge-base --is-ancestor e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          node --check research/parallel89/unsigned-surface-core89.mjs
+          node --check research/parallel89/source-static-gap89.mjs
+          node --check scripts/install-parallel89-source-gap.mjs
+          node --check scripts/test-parallel89-source-gap-browser.mjs
+      - name: Install only pinned research math dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Independent exact BVH closest surface point and adversarial refusal tests
+        run: node --test tests/parallel89-unsigned-surface-core.test.mjs
+      - name: No shipping or private data modified
+        run: git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+  actual-source-163bone-native-gap:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P89_BROWSER: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: No-deploy branch and exact original source ancestry
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+      - name: Install pinned test-only native libraries
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 three@0.180.0 three-mesh-bvh@0.9.2
+      - name: Create immutable exact donor worktrees, with disposable P541 scene only
+        shell: bash
+        run: |
+          set -eu
+          git worktree add --detach .p89-readonly-p84 8385c308df215bcf80eb95b8c37660307dc80536
+          git worktree add --detach .p89-disposable-p541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          for dir in .p89-readonly-p84 .p89-disposable-p541; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$dir"
+            ln -s ../node_modules "$dir/node_modules"
+          done
+          test "$(git -C .p89-readonly-p84 rev-parse HEAD)" = 8385c308df215bcf80eb95b8c37660307dc80536
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          cd .p89-disposable-p541
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Install pinned P84 original research helper in disposable source, then P89 gap hook
+        run: |
+          (cd .p89-readonly-p84 && node scripts/install-parallel84-real-source-layer.mjs ../.p89-disposable-p541)
+          node scripts/install-parallel89-source-gap.mjs .p89-disposable-p541
+          node --check .p89-disposable-p541/research/parallel89/source-static-gap89.mjs
+          node --check .p89-disposable-p541/research/dress-mobile-01/dress-outfit-controller.mjs
+      - name: Real public original photos + anatomical male/female static signed-UNKNOWN BVH distance, no owner release
+        run: node scripts/test-parallel89-source-gap-browser.mjs .p89-disposable-p541
+      - name: Exact donors unchanged, no consumer edits or release
+        run: |
+          git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
+          test "$(git -C .p89-readonly-p84 rev-parse HEAD)" = 8385c308df215bcf80eb95b8c37660307dc80536
+          test "$(git -C .p89-disposable-p541 rev-parse HEAD)" = df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: P89-real-original-public-photo-static-source-gap-${{ matrix.engine }}-HOLD
+          path: benchmark/parallel89-source-static-gap/${{ matrix.engine }}/
+          retention-days: 14
+          if-no-files-found: warn
