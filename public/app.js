@@ -1977,6 +1977,32 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
    }
    assertImport();
   }
+  // JSON backups may carry owner claims deep inside photo, look or outfit
+  // metadata. Validate the complete untrusted tree before the first write,
+  // not merely top-level clothing rows. Reject prototype-pollution keys.
+  const preflightLegacyMetadata=(root)=>{
+   const visited=new WeakSet();
+   const walk=(value,depth)=>{
+    if(depth>32)throw Error('Backup metadata nesting is unsafe. No clothing was imported.');
+    if(value===null||typeof value!=='object')return;
+    if(visited.has(value))
+     throw Error('Backup metadata contains repeated references. No clothing was imported.');
+    visited.add(value);
+    const keys=Object.keys(value);
+    if(keys.length>1600)
+     throw Error('Backup metadata exceeds safe limits. No clothing was imported.');
+    for(const key of keys){
+     if(key==='__proto__'||key==='constructor'||key==='prototype')
+      throw Error('Backup contains unsafe metadata. No clothing was imported.');
+     if(key==='ownerId'&&value[key]!==null&&value[key]!==signedImportOwner)
+      throw Error('Backup belongs to another account. No clothing was imported.');
+     walk(value[key],depth+1);
+    }
+    visited.delete(value);
+   };
+   walk(root,0);
+  };
+  preflightLegacyMetadata(data);
   // Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
   // Reject malformed or missing outfit references and live unsaved outfit edits
   // BEFORE the first garments write, rather than discovering invalid board
