@@ -30,7 +30,7 @@ const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html'
 const server=createServer(async(req,res)=>{
  try{
   const path=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
-  if(req.method!=='GET'||!/^\/(public|research|benchmark|node_modules)\//.test(path)||
+  if(req.method!=='GET'||!/^\/(public|research|benchmark|node_modules|\.m57-exact-p88-donor)\//.test(path)||
       path.includes('\\')||path.includes('\0')||path.split('/').includes('..'))
    throw Error('read-only test-only asset');
   const absolute=resolve(root,'.'+path);
