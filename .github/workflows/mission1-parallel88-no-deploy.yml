@@ -28,10 +28,10 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 13
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 14
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/run-coco-accessory-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
@@ -46,6 +46,7 @@ jobs:
           node --check scripts/test-m1-owner-pair-admission-846.mjs
           node --check research/mission1-parallel88/run-public-validation-88.mjs
           node --check research/mission1-parallel88/exposed-threshold-probes-88.mjs
+          node --check research/mission1-parallel88/run-coco-accessory-88.mjs
           python -m py_compile research/mission1-parallel88/recover-public-validation-88.py research/mission1-parallel88/score-public-validation-88.py
           # Source-execute the actual stdlib-only confidence-retention
           # research function without requiring a model, private photos or COCO.
@@ -195,6 +196,24 @@ jobs:
           set -euo pipefail
           node --expose-gc research/mission1-parallel88/run-public-validation-88.mjs
           python research/mission1-parallel88/score-public-validation-88.py
+          # Independent COCO-trained secondary detector ONLY for bags/ties/umbrellas.
+          # Unsupported watch/belt/hat/glasses are not guessed; no product integration.
+          node research/mission1-parallel88/run-coco-accessory-88.mjs
+          python - <<'PY'
+          import json
+          p='benchmark/p88-real-validation-masks/real-public-coco-accessory-88.json'
+          d=json.load(open(p))
+          assert d['model']=='Xenova/yolos-tiny' and d['dtype']=='q4'
+          assert d['photoManifestSha256']=='b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd'
+          assert d['aggregate']['humanAccessoryInstances']==13
+          assert d['aggregate']['supportedHumanAccessoryInstances']==2
+          assert d['aggregate']['unsupportedHumanAccessoryInstances']==11
+          assert d['aggregate']['supportedAccessoryMatches']<=2
+          assert d['noProductModelPromotion'] is True
+          assert d['noAutomaticSaveAuthority'] is True
+          assert d['newBlindHoldout'] is False and d['physicalPhoneAcceptance'] is False
+          print('P88_GENUINE_COCO_ACCESSORY_EVIDENCE',d['aggregate'],'research-only bounding boxes')
+          PY
           grep -Fq '"shoeOnly68": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           grep -Fq '"p88Safe": {' benchmark/p88-real-validation-masks/real-validation-measured-88.json
           python - <<'PY'
@@ -250,5 +269,6 @@ jobs:
           path: |
             benchmark/p88-real-validation-masks/real-validation-measured-88.json
             benchmark/p88-real-validation-masks/real-validation-predictions-88.json
+            benchmark/p88-real-validation-masks/real-public-coco-accessory-88.json
           if-no-files-found: error
           retention-days: 14
