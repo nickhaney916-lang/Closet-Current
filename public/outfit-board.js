@@ -401,6 +401,14 @@ function selectBoardPiece(slotId,itemId){
  if(itemId)currentBoard.slots[slotId]=itemId;else delete currentBoard.slots[slotId];
  currentBoard=cleanOutfitBoard(currentBoard,items);renderOutfitBoard();return storeBoard();
 }
+// M73: identical provenance cue on the selected native outfit card and
+// on the owner-private photo picker BEFORE the item is selected. An edited
+// crop or claimed single-piece flag is not independent geometry/3D evidence.
+function boardPhotoRequiresUnitReview(item){
+ return !!item&&(item.singleGarmentVerified!==true||item.photoOnly===true||
+  item.segmentHint?.clipped===true||item.segmentHint?.verified===false||
+  item.sourceHashVerified!==true||item.segmentHint?.rawMaskPixelsIndependentlyVerified!==true);
+}
 function openBoardPicker(slotId){
  // A picker can remain queued or be retained by an old card after sign-out.
  // Its clothing thumbnails belong to the exact session that opened it.
@@ -410,7 +418,15 @@ function openBoardPicker(slotId){
  const grid=$('boardPickerItems');grid.replaceChildren();const options=items.filter(item=>slotAllows(slot,item));
  if(!options.length){grid.append(node('p','No saved pieces for this space yet. Add clothes or adjust their category in My closet.'));const add=node('button','Add clothing photos','secondary');add.onclick=()=>{if(!pickerLease.current()||add.isConnected===false)return;
   $('boardPicker').close();switchView('scan');};grid.append(add);}
- for(const item of options){const b=node('button',null,'board-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('strong',item.name||'Closet piece'),node('span',[item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · ')));b.onclick=()=>{
+ for(const item of options){const b=node('button',null,'board-pick');b.type='button';const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('strong',item.name||'Closet piece'),node('span',[item.itemType,item.color].filter(x=>x&&x!=='Unknown').join(' · ')));
+  // Keep styling a source-only image possible; never imply a 3D-ready mask.
+  if(boardPhotoRequiresUnitReview(item)){
+   b.classList.add('source-unverified');
+   b.append(node('small','Photo reference only · garment outline unverified'));
+   b.setAttribute('aria-label',(item.name||'Closet piece')+
+    ' · Photo reference only; individual garment outline unverified. Select for 2D outfit');
+  }
+  b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
    if(typeof ownerPicker33Active!=='undefined'&&ownerPicker33Active){void ownerPicker33Choose(slotId,item.id,b,pickerLease,{closePicker:true});return;}
    selectBoardPiece(slotId,item.id);$('boardPicker').close();
@@ -438,9 +454,7 @@ function renderOutfitBoard(){
   // M70: selecting an owner-reviewed crop is NOT evidence of one independently
   // verified physical garment. Keep the normal native Outfit Builder useful,
   // but make the 2D source-only limitation visible without opening research UI.
-  const unverifiedPhysicalUnit=!!item&&
-   (item.singleGarmentVerified!==true||item.photoOnly===true||
-    item.segmentHint?.clipped===true||item.segmentHint?.verified===false);
+  const unverifiedPhysicalUnit=boardPhotoRequiresUnitReview(item);
   const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(unverifiedPhysicalUnit?' source-unverified':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+(unverifiedPhysicalUnit?' · Photo reference only; individual garment outline unverified':'')+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
   if(item){const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span',item.name||item.itemType,'slot-name'));
