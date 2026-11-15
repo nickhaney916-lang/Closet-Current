@@ -1357,7 +1357,9 @@ const closetReady=(async()=>{
   batch=loadedBatch.map(normalizeClothing);
   if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);
  }catch{
-  if(!live()||db!==ownerDb){revoked();return;}
+  // A genuine same-owner storage failure should still be surfaced. Only an
+  // owner/session/IDB replacement suppresses the old owner's warning.
+  if(!live()||(ownerDb&&db!==ownerDb)){revoked();return;}
   message('Browser storage is unavailable. Use a regular browser to save your closet.');
  }
  if(!live()||db!==ownerDb){revoked();return;}
