@@ -338,6 +338,23 @@ try{
    .evaluate(img=>({decoded:img.naturalWidth>0,src:img.getAttribute('src')}));
   assert.equal(boardPhoto.decoded,true);
   assert.match(boardPhoto.src,/^data:image\/jpeg;base64,/);
+  // Same native builder: a human-reviewed Dress occupies the top/dress
+  // slot and visibly covers the bottoms, without changing the original
+  // saved item or promoting this uncertain model mask into 3D authority.
+  const dressedTop=page.locator('#boardSlots .board-slot-top.owned.dress');
+  const coveredBottom=page.locator('#boardSlots .board-slot-bottom.covered');
+  assert.equal(await dressedTop.count(),1,
+   'reviewed dress not presented as a dress on the real owner outfit figure');
+  assert.equal(await coveredBottom.count(),1,
+   'native Outfit Builder did not cover bottom slot under saved dress');
+  assert.equal(await coveredBottom.isDisabled(),true,
+   'bottom slot remains selectable beneath an owned dress');
+  assert.equal(await coveredBottom.getAttribute('aria-label'),
+   'Bottoms covered by your dress',
+   'screen-reader cannot distinguish dress-over-bottom coverage');
+  assert.match(await page.locator('#boardSummary').innerText(),
+   /dress covers top and bottoms/,
+   'user does not see dress coverage in native Outfit Builder');
   // The stricter source-certification preview MUST still refuse this
   // honest single-source/crop-unverified MULTI24 row. Outfit Board can show
   // its saved user-reviewed 2D photograph, but no invented 3D authority.
@@ -379,7 +396,8 @@ try{
    inheritedItem:currentBoard?.slots?.top===id,
    inheritedImages:document.querySelectorAll('#boardSlots .owned img').length,
    staleReviewSource:document.querySelectorAll('#multi24Research img[src^="data:image/"]').length,
-   staleStrictPreview:document.querySelectorAll('#mission4Preview1054Photos img').length
+   staleStrictPreview:document.querySelectorAll('#mission4Preview1054Photos img').length,
+   staleDressCoverage:document.querySelectorAll('#boardSlots .board-slot-top.dress, #boardSlots .board-slot-bottom.covered').length
   }),stored.id);
   assert.equal(bState.owner,'m54-B');
   assert.equal(bState.dbName,'closet-current-user-m54-B');
@@ -387,6 +405,8 @@ try{
   assert.equal(bState.inheritedImages,0,'B inherited A private 2D garment photo');
   assert.equal(bState.staleReviewSource,0,'B retained A model proposal source');
   assert.equal(bState.staleStrictPreview,0,'B retained A strict original');
+  assert.equal(bState.staleDressCoverage,0,
+   'B inherited visual dress/bottom coverage from A private outfit');
   cases.push({engine,width,actualNativeApp:true,
    licensedSourceSHA:sourceSHA,realBrowserCrypto:true,
    p88UnresolvedWorkerReplaySynthetic:true,p88ReceiptSourceBound:true,
@@ -397,7 +417,9 @@ try{
    savedRows:0,manualOwnerReviewedSecondSource:true,
    sourceBoundModelProposalHumanReviewed:true,
    sourceMaskNotCertified:stored.sourceMaskNotCertified,
+   nativeOwnedDressCoversBottoms:true,
    secondOwnerPrivateIsolation:true,revokedOldSourceOnLogout:true,
+   secondOwnerDressCoverageRevoked:true,
    secondOriginalSourceShaVerified:stored.sourceVerified,
    verifiedOriginalBytesRetained:stored.originalSha===dressSHA,
    oneOwnerPrivateGarmentRow:true,
