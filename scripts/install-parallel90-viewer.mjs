@@ -208,6 +208,9 @@ await writeFile(sourceOutfitController,s);
 // original pose, outward correction, rollback and reported contacts remain.
 const posedContact90=donor+'/research/three-d-42/posed-contact.mjs';
 s=await readFile(posedContact90,'utf8');
+// Fail closed if the immutable donor removed the actual iterative collision solver.
+assert.ok(s.includes('for(let pass=0;pass<12;pass++)'));
+assert.ok(s.includes('if(!c.count)'));
 if(startupVariant90==='candidate'){
  s=replace(s,"export function triangleContacts(a,b,{collect=false}={}){","export function triangleContacts(a,b,{collect=false,bodyTree90=null}={}){");
  s=replace(s,"const ba=new MeshBVH(a),bb=new MeshBVH(b),line=","const ba=new MeshBVH(a),bb=bodyTree90||new MeshBVH(b),line=");
