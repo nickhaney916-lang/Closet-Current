@@ -805,7 +805,7 @@ test('P88 queued physical decision failure rolls back before next valid decision
  const persisted=c.storageWrites[0].batch;
  assert.deepEqual(persisted.map(x=>x.reconciliation70Status),
   ['unresolved','separate_confirmed']);
- assert.deepEqual(c.batch.map(x=>x.reconciliation70Status),
+ assert.deepEqual(Array.from(c.batch,x=>x.reconciliation70Status),
   ['unresolved','separate_confirmed']);
  assert.equal(c.autoQueue.length,0);
 });
@@ -1097,7 +1097,7 @@ test('P88 queued P70 owner keep after cloud preflight preserves a newly captured
  c.batch.push(independent);
  release();await pending;
  assert.equal(c.storageWrites.length,1);
- assert.deepEqual(c.storageWrites[0].batch.map(x=>x.id),['part-A','new-photo']);
+ assert.deepEqual(Array.from(c.storageWrites[0].batch,x=>x.id),['part-A','new-photo']);
  assert.equal(c.storageWrites[0].batch[0].reconciliation70Status,'separate_confirmed');
  assert.equal(c.storageWrites[0].batch[1].outfitSourceId,'another-original');
  assert.equal(c.batch.length,2,'the independently captured draft remains visible');
@@ -1112,7 +1112,7 @@ test('P88 rejected P70 owner decision restores original region but keeps new pho
  rejectGate(Error('cloud.beforeWrite deliberately refused this owner action'));
  await pending;
  assert.equal(c.storageWrites.length,0,'failed owner action cannot write a draft');
- assert.deepEqual(c.batch.map(x=>x.id),['part-A','new-photo']);
+ assert.deepEqual(Array.from(c.batch,x=>x.id),['part-A','new-photo']);
  assert.equal(c.batch[0].reconciliation70Status,'unresolved',
   'only the uncommitted physical-unit owner action was rolled back');
  assert.equal(c.batch[1].outfitSourceId,'another-original',
