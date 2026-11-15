@@ -43,5 +43,47 @@ text=text.replace(trialAnchor,
 const marker="  globalThis.__parallel84SetStaticPose=name=>{\n   if(!['source','blend-50','relaxed'].includes(name))throw Error('Invalid P84 research pose');\n   return setResearchPose(root,name);\n  };\n}";
 assert.equal(text.split(marker).length,2,'original P84 static source-pose controller anchor changed');
 text=text.replace(marker,marker+"\nif(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'&&\n new URLSearchParams(globalThis.location.search).get('parallel89Gap')==='audit'){\n globalThis.__parallel89GapAudit=()=>auditActualOriginalSourcePoseSurfaceGaps89({\n  root,shirt:built.shirt,pants:built.pants,\n  avatar:globalThis.document?.getElementById('model')?.value,\n  applyPose:researchPose=>setResearchPose(root,researchPose),\n  poseContactReceipt:globalThis.__parallel84PoseResult\n });\n}");
+// Standalone actual-geometry byte digest in the disposable original P541
+// controller. This is independent of the P89 rollback gate's own assertions.
+// Only fixed research SHA, no owner data or raw positions leave the browser.
+const digestAnchor="  globalThis.__parallel89GapAudit=()=>auditActualOriginalSourcePoseSurfaceGaps89({";
+assert.equal(text.split(digestAnchor).length,2,'P89 genuine source-gap hook missing');
+const digestGuard=[
+ "if(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'&&",
+ " new URLSearchParams(globalThis.location.search).get('parallel89Gap')==='audit'){",
+ " globalThis.__parallel89RealShirtGeometryDigest=async()=>{",
+ "  const meshes=built?.shirt?.meshes;",
+ "  if(built?.shirt?.stats?.sourceSHA256!==",
+ "   'cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64'||",
+ "   !Array.isArray(meshes)||meshes.length<1||",
+ "   meshes.some(m=>!m?.isSkinnedMesh||m.skeleton?.bones?.length!==163))",
+ "   throw Error('real-public-photographed-163bone-source-only');",
+ "  const byteHex=bytes=>Array.from(bytes,b=>b.toString(16).padStart(2,'0')).join('');",
+ "  const original=[];",
+ "  for(const m of meshes){",
+ "   const p=m.geometry.getAttribute('position'),n=m.geometry.getAttribute('normal');",
+ "   if(!p||!n||!m.geometry.index)throw Error('real-source-buffer-missing');",
+ "   for(const data of [p.array,n.array,m.geometry.index.array]){",
+ "    const raw=new Uint8Array(data.buffer,data.byteOffset,data.byteLength);",
+ "    original.push(new Uint8Array(raw));",
+ "   }",
+ "  }",
+ "  const total=original.reduce((n,b)=>n+b.length,0);",
+ "  if(total<100||total>50000000)throw Error('original-source-research-budget');",
+ "  const packed=new Uint8Array(total);let offset=0;",
+ "  for(const bytes of original){packed.set(bytes,offset);offset+=bytes.length;}",
+ "  const digest=await crypto.subtle.digest('SHA-256',packed);",
+ "  return Object.freeze({",
+ "   schema:'P89-actual-public-original-shirt-position-normal-index-sha256/v1',",
+ "   originalShirtSHA256:built.shirt.stats.sourceSHA256,",
+ "   meshCount:meshes.length,combinedBufferBytes:total,",
+ "   originalRenderedSourceBufferSHA256:byteHex(new Uint8Array(digest)),",
+ "   originalPhotoOwnerReleaseAuthorized:false,",
+ "   originalSource2DFallbackRequired:true",
+ "  });",
+ " };",
+ "}"
+].join('\n');
+text=text.replace(digestAnchor,digestGuard+"\n"+digestAnchor);
 await writeFile(p,text);
 console.log('P89_SOURCE_UNSIGNED_WORLD_TRIANGLE_GAP_HOOK_ON_DISPOSABLE_PUBLIC_DONOR_ONLY');
