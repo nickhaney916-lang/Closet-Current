@@ -63,7 +63,7 @@ function footwearOnly68(map) {
   }
   return output;
 }
-const allModes=['baseline','shoeOnly68','p88Safe','p88',...Object.keys(P88_EXPOSED_PIXEL_PROBES)];
+const allModes=['baseline','shoeOnly68','p88Safe','p88',...Object.keys(P88_EXPOSED_PIXEL_PROBES),'researchLoose65ShoeSplit'];
 const reports = Object.fromEntries(allModes.map(mode => [mode, {
   schema: 'closet-current-p88-real-public-human-mask-inference/v1',
   method: mode,
@@ -79,7 +79,9 @@ const reports = Object.fromEntries(allModes.map(mode => [mode, {
   humanColorLabelsAvailable: false,
   sourceDisjointFromP68Development: false, // exact same previously EXPOSED P68 16-photo validation set
   notSealedNovelAcceptance: true,
-  researchOnlyPixelGate: P88_EXPOSED_PIXEL_PROBES[mode] || null,
+  researchOnlyPixelGate: P88_EXPOSED_PIXEL_PROBES[mode] ||
+   (mode==='researchLoose65ShoeSplit'?P88_EXPOSED_PIXEL_PROBES.researchLoose65:null),
+  researchOnlyShoeComponentReview:mode==='researchLoose65ShoeSplit',
   automaticSave: false,
   physicalDevice: false,
   rows: []
@@ -132,7 +134,8 @@ try {
       p88Safe: map.personDetected ? clothingReviewInstances840(map) : [],
       p88: map.personDetected ? clothingReviewInstances840(map,{splitNonFootwear:true}) : [],
       researchLoose65: map.personDetected ? clothingMaskGroups(probeMaps.researchLoose65) : [],
-      researchLoose55: map.personDetected ? clothingMaskGroups(probeMaps.researchLoose55) : []
+      researchLoose55: map.personDetected ? clothingMaskGroups(probeMaps.researchLoose55) : [],
+      researchLoose65ShoeSplit: map.personDetected ? clothingReviewInstances840(probeMaps.researchLoose65) : []
     };
     for (const mode of allModes) {
       const groups = groupsByMode[mode], regions = [];
@@ -177,6 +180,7 @@ try {
       candidateMasks: groupsByMode.p88.length,
       loose65ResearchMasks:groupsByMode.researchLoose65.length,
       loose55ResearchMasks:groupsByMode.researchLoose55.length,
+      loose65ShoeSplitResearchMasks:groupsByMode.researchLoose65ShoeSplit.length,
       inferenceMs: Math.round(inferenceMs),
       experimentalPixelGateMs:Math.round(experimentalPixelGateMs)
     }));
@@ -192,6 +196,7 @@ try {
     p88Safe: reports.p88Safe, p88: reports.p88,
     researchLoose65: reports.researchLoose65,
     researchLoose55: reports.researchLoose55,
+    researchLoose65ShoeSplit:reports.researchLoose65ShoeSplit,
     pixelGateResearchOnly:true,
     pixelGatePreservesOriginalPersonDetector:true,
     pixelGateNativeControlParityVerified:true,
