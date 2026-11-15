@@ -503,6 +503,22 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         historicalRows.items.some(row=>row.id==='built-photo'&&row.originalPhoto?.image===jpeg)&&
         historicalState.looks?.looks?.some(row=>row.id==='built-look')&&
         historicalState['outfit-board']?.current?.slots?.top==='built-photo';
+       // Some v1-v3 exports carry explicit null owner tags because owner
+       // attestation was not yet part of that version. Do not reject them as
+       // a foreign account or falsely mark their original JPEG as verified.
+       const unclaimed={format:'closet-current',version:2,items:[{
+        id:'unclaimed-legacy-source',ownerId:null,category:'Tops',image:jpeg,
+        originalPhoto:{ownerId:null,image:jpeg}
+       }]};
+       const unclaimedJSON=JSON.stringify(unclaimed);
+       await document.getElementById('import').onchange({target:{
+        files:[{size:unclaimedJSON.length,text:async()=>unclaimedJSON}],value:'selected'}});
+       const nullOwnerRows=await readSnapshot();
+       const unclaimedSaved=nullOwnerRows.items.find(row=>row.id==='unclaimed-legacy-source');
+       const unclaimedOwnerAccepted=unclaimedSaved?.ownerId===null&&
+        unclaimedSaved.originalPhoto?.ownerId===null&&unclaimedSaved.originalPhoto?.image===jpeg&&
+        unclaimedSaved.sourceHashVerified!==true;
+       const nullOwnerState=Object.fromEntries(nullOwnerRows.state.map(row=>[row.id,row]));
        const byId=Object.fromEntries(rows.state.map(row=>[row.id,row]));
        return {items:rows.items.map(item=>({id:item.id,ownerId:item.ownerId,
         originalPhoto:item.originalPhoto?.image,sourceSHA256:item.sourceSHA256})),
@@ -513,6 +529,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         dirty:byId['cloud-sync']?.dirty,
         message:document.getElementById('message')?.textContent,
         invalidRollback,cancelledUnchanged,legacyIdNormalized,largeOriginalRetained,originalAndLooksPreserved,
+        unclaimedOwnerAccepted,afterUnclaimedRevision:nullOwnerState['cloud-sync']?.localRevision,
         afterLegacyRevision:historicalState['cloud-sync']?.localRevision,
         changed:changesBeforeHistorical,afterLegacyCloudChanged:window.__privateCloudDirty||0};
       },{owner,jpeg,sha,largeOriginal,largeSHA});
@@ -530,7 +547,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.largeOriginalRetained,true,name+' preserves a genuine >3 MB encoded original JPEG');
       assert.equal(result.originalAndLooksPreserved,true,name+' preserves existing outfits and JPEG');
       assert.equal(result.afterLegacyRevision,2,name+' increments cloud revision in atomic transaction');
-      assert.equal(result.afterLegacyCloudChanged,2,name+' signals private backup after commit');
+      assert.equal(result.afterLegacyCloudChanged,3,name+' signals private backup after each atomic commit');
+      assert.equal(result.unclaimedOwnerAccepted,true,name+' restores v2 unclaimed owner photo without false proof');
+      assert.equal(result.afterUnclaimedRevision,3,name+' records unclaimed import in private cloud revision');
       assert.match(result.message,/canceled|imported atomically/i);
       assert.deepEqual(errors,[]);
       assert.equal(blocked.some(request=>request.method!=='GET'),false,
