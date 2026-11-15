@@ -64,8 +64,12 @@ const {root,body}=syntheticRig();
 // Adversarial caller passes a different full-size RGBA raster. It MUST NOT
 // replace the original SHA-attested decoded PNG used for the material.
 const swappedRGBA=new Uint8Array(originalCutoutRGBA.data.length).fill(255);
+const forgedOutline={...outline,
+ sourceHemToWaistWidthRatio:99,
+ sourceRowWidths:outline.sourceRowWidths.map(row=>({...row,
+  widthPixels:row.widthPixels*3,centerPixels:1}))};
 const candidate=buildOriginalPhotoSkirtProposal89({
- root,receipt,outline,cutoutImage:{data:swappedRGBA,
+ root,receipt,outline:forgedOutline,cutoutImage:{data:swappedRGBA,
   width:originalCutoutRGBA.info.width,height:originalCutoutRGBA.info.height}
 });
 if(candidate?.receipt?.status!=='ACTUAL_SOURCE_SKIRT_VISIBLE_FRONT_PROPOSAL_NOT_FITTED_OR_ACCEPTED')
@@ -81,6 +85,9 @@ if(mesh.skeleton!==body.skeleton||mesh.skeleton.bones.length!==163||
     Buffer.from(mesh.material[0].map.image.data).equals(Buffer.from(swappedRGBA))||
     candidate.receipt.sourceRGBAWasDecodedFromExactAttestedCutoutPNG!==true||
     candidate.receipt.callerSuppliedTexturePixelsAreNotTrusted!==true||
+    candidate.receipt.originalMaskShapeDerivedFromExactAttestedCutoutPNG!==true||
+    candidate.receipt.callerSuppliedSilhouetteIsNotTrusted!==true||
+    candidate.receipt.extractedSourceHemToWaistRatio!==outline.sourceHemToWaistWidthRatio||
     g.getAttribute('skinIndex').count!==g.getAttribute('position').count||
     g.getAttribute('sourceSkirt89Rest').count!==g.getAttribute('position').count||
     g.getAttribute('uv').array.some(x=>!Number.isFinite(x)||x<0||x>1)||
@@ -99,6 +106,7 @@ const report={schema:'P89-actual-independent-licensed-skirt-alpha-to-THREE-shell
  originalSourceRGBAActuallyBoundTo3DFrontTexture:true,
  sourcePNGDecodeIndependentOfCallerSuppliedFakeRGBA:true,
  originalTexturePixelBytesEqualToIndependentSharpSourceDecode:true,
+ originalMaskShapeWasIndependentOfFakeCallerSilhouette:true,
  originalSourceRGBProjectedIntoNativeBrowser:false,
  originalSourcePhotoFrameModified:false,realAnatomicalAvatarTested:false,
  synthetic163BoneRigOnly:true,observedSkirtBack:false,
