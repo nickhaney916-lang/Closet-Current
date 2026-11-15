@@ -3,8 +3,11 @@
 import test from 'node:test';
 import {generateKeyPairSync,sign as edSign,createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {mkdtemp,writeFile,symlink,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join,resolve} from 'node:path';
 import {P88_FROZEN_CANDIDATE,frozenCandidateDigest88,canonicalP88,sha256,
- verifyBlindEvaluatorHandoff88} from '../research/mission1-parallel88/blind-evaluator-handoff-88.mjs';
+ verifyBlindEvaluatorHandoff88,externalPrivateFile88} from '../research/mission1-parallel88/blind-evaluator-handoff-88.mjs';
 import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups} from '../public/outfit-segmentation.mjs';
 import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES,accessoryBoxIoU88,evaluateCocoAccessoryBoxes88,cocoAccessoryLabel88} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
@@ -406,4 +409,38 @@ test('P88 signed private blind envelope inspection refuses execution inside CI',
  assert.notEqual(result.status,0);
  assert.match(result.stderr,/PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI/);
  assert.equal(result.stdout,'','never print private labels, photos or trust material');
+});
+
+test('P88 private blind custody path refuses symlinks into checkout, special files and oversized input',async()=>{
+ // Only disposable synthetic files. No human labels, photos, real blind truth or keys.
+ const dir=await mkdtemp(join(tmpdir(),'p88-private-path-'));
+ try{
+  const safe=join(dir,'synthetic-envelope.json');
+  await writeFile(safe,'{}',{mode:0o600});
+  assert.equal(await externalPrivateFile88(safe),safe);
+  await assert.rejects(externalPrivateFile88('synthetic-envelope.json'),
+   /PRIVATE_ABSOLUTE_PATH_REQUIRED/);
+  await assert.rejects(externalPrivateFile88(resolve('package.json')),
+   /PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT/);
+  await assert.rejects(externalPrivateFile88(dir),
+   /PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED/);
+  const oversized=join(dir,'oversized.json');
+  await writeFile(oversized,'x'.repeat(50001),{mode:0o600});
+  await assert.rejects(externalPrivateFile88(oversized),
+   /PRIVATE_HANDOFF_TOO_LARGE/);
+  const alias=join(dir,'outside-file-link');
+  await symlink(safe,alias);
+  await assert.rejects(externalPrivateFile88(alias),
+   /PRIVATE_HANDOFF_SYMLINK_PATH_FORBIDDEN/);
+  const checkoutAlias=join(dir,'checkout-dir-alias');
+  await symlink(process.cwd(),checkoutAlias,'dir');
+  await assert.rejects(externalPrivateFile88(join(checkoutAlias,'package.json')),
+   /PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT/);
+  const repoFileAlias=join(dir,'checkout-file-alias');
+  await symlink(resolve('package.json'),repoFileAlias);
+  await assert.rejects(externalPrivateFile88(repoFileAlias),
+   /PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT/);
+ }finally{
+  await rm(dir,{recursive:true,force:true});
+ }
 });
