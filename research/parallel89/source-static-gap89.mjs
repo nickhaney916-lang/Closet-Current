@@ -6,6 +6,7 @@
  * Never exposes vertices/face IDs, original JPEG bytes, or owner data.
  */
 import {unsignedStaticSourceSurfaceGap89} from './unsigned-surface-core89.mjs';
+import {auditOriginalAnatomicalBodyIndexTopology89} from './body-topology89.mjs';
 import {posedSource84} from '../parallel84-real-photo-layers/source-bone-yoke-trial84.mjs';
 const POSES=['source','blend-50','relaxed'];
 const SHIRT='cb909d7ad9c3940bfa4db0cc50b2ea7025faebe3dcec8fe80067f900760bba64';
@@ -57,7 +58,7 @@ export function auditActualOriginalSourcePoseSurfaceGaps89({
   m,g:m.geometry,position:m.geometry.getAttribute('position'),
   material:m.material,index:m.geometry.index
  }));
- const reports=[];
+ const reports=[];let bodyIndexTopology;
  try{
   for(const pose of POSES){
    applyPose(pose);root.updateMatrixWorld(true);
@@ -65,6 +66,11 @@ export function auditActualOriginalSourcePoseSurfaceGaps89({
    try{
     for(const [key,meshes] of [['shirt',shirt.meshes],['body',bodies],['denim',pants.meshes]])
      prepared[key]=posedSource84(meshes).g;
+    if(pose==='source'){
+     bodyIndexTopology=auditOriginalAnatomicalBodyIndexTopology89(prepared.body);
+     if(bodyIndexTopology.status==='BODY_INDEX_TOPOLOGY_UNVERIFIED')
+      throw Error('original-anatomy-source-triangle-topology-unverified');
+    }
     const distances={};
     for(const [label,left,right] of [
      ['shirtBody','shirt','body'],['denimBody','denim','body'],['shirtDenim','shirt','denim']])
@@ -97,6 +103,8 @@ export function auditActualOriginalSourcePoseSurfaceGaps89({
    avatar,actualAnatomical163Bones:true,
    originalSourcePoses:POSES.length,sourcePoseMeasurements:reports,
    exactOriginalWorldSpaceTrianglesMeasured:true,
+   originalAnatomicalBodyIndexTopology:bodyIndexTopology,
+   originalBodyTopologyDoesNotCertifySignedClothClearance:true,
    independentSignedDistanceOrBodyContainmentVerified:false,
    dynamicSweptClothContactVerified:false,
    independentPhotorealismApproved:false,
