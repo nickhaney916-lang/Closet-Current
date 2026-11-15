@@ -55,11 +55,12 @@ function authFixture(route){
  if(url.pathname==='/auth/v1/token'){
   const info=JSON.parse(req.postData()||'{}');
   const owner=url.searchParams.get('grant_type')==='password'&&
-   info.email==='m58-A@example.test'?'m58-A':null;
+   /^m58-[AB]@example\.test$/.test(info.email||'')?
+    info.email.split('@')[0]:null;
   if(!owner)return route.fulfill({status:401,contentType:'application/json',body:'{"error":"fixture-only"}'});
   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({
-   user:{id:owner,email:'m58-A@example.test'},access_token:'synthetic-m58-A',
-   refresh_token:'synthetic-m58-refresh-A',expires_in:3600
+   user:{id:owner,email:owner+'@example.test'},access_token:'synthetic-'+owner,
+   refresh_token:'synthetic-m58-refresh-'+owner,expires_in:3600
   })});
  }
  issues.push('unexpected-auth-endpoint');return route.abort();
@@ -297,8 +298,53 @@ try{
   'ambiguous physical source was incorrectly certified as exact verified garment');
  assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
   'unverified garment was incorrectly admitted to original/photo 3D');
- assert.deepEqual(rejected,[],'explicit local owner save caused forbidden external request');
- assert.deepEqual(issues,[],'explicit synthetic owner review caused browser runtime error');
+ // After the REAL Worker + one explicitly synthetic owner A save + actual
+ // 2D board selection, exercise the native LOGOUT/login B UI in this SAME
+ // browser. No new model run, source mock or direct IndexedDB insertion.
+ // This proves local owner-to-owner view isolation, NOT hosted signed RLS.
+ stage='same-browser-native-owner-A-logout';
+ await page.locator('.account-menu summary').click();
+ await page.locator('#logout').click();
+ await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
+  null,{timeout:30000});
+ assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
+  'owner A strict preview image remained after logout');
+ assert.equal(await page.locator('#multi24Research img[src^="data:image/"]').count(),0,
+  'owner A review original remained in the DOM after logout');
+ stage='same-browser-native-owner-B-private-indexeddb';
+ await page.locator('#authEmail').fill('m58-B@example.test');
+ await page.locator('#authPassword').fill('fixture-only');
+ await page.locator('#authSubmit').click();
+ await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-B'&&
+   db?.name==='closet-current-user-m58-B'&&
+   document.getElementById('appShell')?.hidden===false,null,{timeout:30000});
+ assert.equal(await countRows(page),0,
+  'synthetic owner B can read source owner A private wardrobe rows');
+ await page.evaluate(()=>switchView('builder'));
+ await page.waitForFunction(()=>typeof currentBoard!=='undefined'&&
+  document.getElementById('boardSlots')!==null,null,{timeout:20000});
+ const bView=await page.evaluate(oldItemId=>({
+  account:window.closetAuth?.user?.id,dbName:db?.name,
+  oldOutfitSelected:currentBoard?.slots?.top===oldItemId,
+  ownerOwnedPhotoCards:document.querySelectorAll('#boardSlots .owned img').length,
+  ownerReviewOriginals:document.querySelectorAll('#multi24Research img[src^="data:image/"]').length,
+  strictPreviewOriginals:document.querySelectorAll('#mission4Preview1054Photos img').length
+ }),handoff.savedItemId);
+ assert.equal(bView.account,'m58-B');
+ assert.equal(bView.dbName,'closet-current-user-m58-B');
+ assert.equal(bView.oldOutfitSelected,false,'B inherited A private outfit selection');
+ assert.equal(bView.ownerOwnedPhotoCards,0,'B has A private photo in its outfit UI');
+ assert.equal(bView.ownerReviewOriginals,0,'B has A private review source');
+ assert.equal(bView.strictPreviewOriginals,0,'B has A strict preview source');
+ assert.deepEqual(rejected,[],'synthetic owner switch caused forbidden external request');
+ assert.deepEqual(issues,[],'native owner switch caused browser runtime error');
+ console.log('M58_GENUINE_WORKER_SAVED_2D_OWNER_SWITCH_PRIVACY',JSON.stringify({
+  engine,realWorkerFirst:true,explicitOwnerASave:1,ownerBPrivateRows:0,
+  ownerAOriginalNotVisibleToB:true,ownerAOutfitNotVisibleToB:true,
+  localIndexedDBOnly:true,syntheticAuth:true,hostedRLS:false,
+  independentHumanLabelAccuracy:false,physicalPhone:false,
+  familyAlpha:'HOLD',releaseAllowed:false
+ }));
  console.log('M58_SYNTHETIC_OWNER_NATIVE_SAVE_TO_M51_FAIL_CLOSED',JSON.stringify({
   engine,originalSHA256:sha,actualP88InferenceFirst:true,
   syntheticOwnerManualCropAndConfirm:true,localExplicitSaveCount:1,
