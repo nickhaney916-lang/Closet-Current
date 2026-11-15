@@ -250,7 +250,7 @@ test('P90 M16 continuous Chromium browser touch drag rotates pinned source rigs 
  assert.ok(browser.includes('swipeAfter.resources90.geometries,swipeBefore.resources90.geometries'));
  assert.ok(browser.includes('swipeAfter.resources90.textures,swipeBefore.resources90.textures'));
  assert.ok(browser.includes('Math.abs(scrollAfter-scrollBefore)<=2'));
- assert.ok(browser.includes('touchSwipe16,finalCamera'));
+ assert.match(browser,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\btouchSwipe16\b/);
  assert.ok(browser.includes('webkitTouchSwipeVerified:false'));
  assert.ok(browser.includes('physicalPhone:false'));
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
@@ -276,7 +276,7 @@ test('P90 M17 full 360-degree real-source orbit and visible rear provenance warn
  assert.ok(interactions.includes("await page.locator('#outfit3D01Back').click()"));
  assert.ok(interactions.includes("await page.locator('#outfit3D01Front').click()"));
  assert.ok(interactions.includes("rearOriginalPhotoVerified:false"));
- assert.ok(interactions.includes("fullCycle17,finalCamera"));
+ assert.match(interactions,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\bfullCycle17\b/);
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });
 
@@ -298,6 +298,6 @@ test('P90 M18 real owner original-photo evidence shortcut is focusable and read-
  assert.ok(interactions.includes("afterShortcut.garmentSources90,previous.garmentSources90"));
  assert.ok(interactions.includes("afterShortcut.resources90.geometries,previous.resources90.geometries"));
  assert.ok(interactions.includes("owner2DSessionRetained:true"));
- assert.ok(interactions.includes("originalPhotosShortcut18,finalCamera"));
+ assert.match(interactions,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\boriginalPhotosShortcut18\b/);
  assert.ok(flow.includes("engine: [chromium, webkit]"));
 });
