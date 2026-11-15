@@ -115,10 +115,14 @@ async function harness(action){
 }
 const shown=ctx=>ctx.target.querySelectorAll('img');
 function assertNoSource(ctx){
+ // The native preview's status getter is a synchronous owner/session/board
+ // recheck; it revokes exposed image nodes before returning the status.
+ // Real callers poll status or receive focus/visibility/session-lock events.
+ const status=ctx.preview.status;
+ assert.equal(status.hasOwnerPhotos,false);
  assert.equal(shown(ctx).length,0);
- assert.equal(ctx.preview.status.hasOwnerPhotos,false);
- assert.equal(ctx.preview.status.renderAuthorized3D,false);
- assert.equal(ctx.preview.status.releaseAuthorized,false);
+ assert.equal(status.renderAuthorized3D,false);
+ assert.equal(status.releaseAuthorized,false);
 }
 test('M49 original licensed photo bytes match real M47 source and public research has NO 3D approval',()=>{
  assert.equal(digest,M48.sourceSHA256);
