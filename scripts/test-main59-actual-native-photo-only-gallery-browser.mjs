@@ -185,7 +185,7 @@ try{
     target:host,getSession:currentPhotoOwnerSession167,
     readOwnerItems:signedOwnerSavedRows167,
     getBoard:()=>structuredClone(currentBoard),
-    cleanBoard,events:window,doc:document
+    cleanBoard:cleanOutfitBoard,events:window,doc:document
    });
    window.m59GalleryResearch=gallery;
    const result=await gallery.refresh();
