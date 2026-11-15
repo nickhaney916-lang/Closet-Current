@@ -122,6 +122,20 @@ s=replace(s,'   const actual=presenter.present(plan);rendered=actual;',
  '   const presentStart90=performance.now();const actual=presenter.present(plan);startupTimings90.presentMs+=performance.now()-presentStart90;rendered=actual;');
 // Reopened canvases must retain keyboard support too.
 s=replace(s,"  canvas.replaceWith(fresh);canvas=fresh;","  fresh.tabIndex=0;fresh.setAttribute('aria-label',canvas.getAttribute('aria-label')||'3D anatomical outfit');canvas.replaceWith(fresh);canvas=fresh;");
+// M22: a missing WebGL2 device is not "still verifying" after the source
+// donor correctly falls back to original photographs. Subsequent native
+// saved-outfit UI updates must preserve the specific NO-GPU fallback reason;
+// a new owner load or privacy cleanup must reset the failure state.
+s=replace(s,' function update(){',
+ ' let lastGraphicsFailure90=null;\\n function update(){'.replaceAll('\\n','\n'));
+s=replace(s,"  if(!ready||!presenter){putStatus('Private wardrobe ready; verifying 3D. Original photographs remain available.');return;}",
+ "  if(!ready||!presenter){putStatus(lastGraphicsFailure90?'Original-photo/2D fallback: '+lastGraphicsFailure90:'Private wardrobe ready; verifying 3D. Original photographs remain available.');return;}");
+s=replace(s,"  putStatus('Loading actual photographed source candidates and anatomical rig…');",
+ "  lastGraphicsFailure90=null;putStatus('Loading actual photographed source candidates and anatomical rig…');");
+s=replace(s,"   putStatus('Original-photo/2D fallback: '+String(e.message||e));",
+ "   lastGraphicsFailure90=String(e.message||e);putStatus('Original-photo/2D fallback: '+lastGraphicsFailure90);");
+s=replace(s,' function clearPrivate(){',
+ ' function clearPrivate(){\\n  lastGraphicsFailure90=null;'.replaceAll('\\n','\n'));
 await writeFile(panel,s);
 const showroom=donor+'/research/dress-mobile-01/dress-mobile-showroom.mjs';
 s=await readFile(showroom,'utf8');
