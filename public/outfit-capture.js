@@ -195,7 +195,12 @@ async function applyUnit70Decision88(decision,ids,lease){
    // unrelated newly captured draft. The action-created unpair companion was
    // included in assignedIds88 and must not survive a failed transaction.
    const newlyCaptured=batch.filter(x=>!assignedIds88?.has(x.id)&&
-    !previousBatch.some(prior=>prior.id===x.id));
+    !previousBatch.some(prior=>prior.id===x.id)&&
+    // A revoked foreign-owner or malformed signed mask cannot be rescued
+    // into the current user's in-memory private Review during rollback.
+    (!x.reconciliation70||(x.reconciliation70.ownerId===lease.id&&
+     /^[a-f0-9]{64}$/.test(x.reconciliation70.sourceSha256||'')&&
+     /^[a-f0-9]{64}$/.test(x.reconciliation70.maskSha256||''))));
    batch=[...previousBatch,...newlyCaptured];
   }
   if(!sameUnit70OwnerLease88(lease))return;
