@@ -12,6 +12,9 @@ function extract(start,end){
  return source.slice(i,j);
 }
 const lease=extract('function beginOwnerBoardUiLease(){','function beginNativeBoardMountLease(){');
+// The native suggestions consume the same provenance helpers as the picker.
+// Execute their exact production source rather than mocking source review.
+const photoSource=extract('function boardPhotoRequiresUnitReview(item){','function openBoardPicker(slotId){');
 const suggestions=extract('function renderBoardSuggestions(){','function renderSavedOutfitBoards(){');
 function fixture({native=false,controllerActive=true}={}){
  const calls=[],dom={},auth={user:{id:'owner-a'},assertCurrent(){if(auth.revoked)throw Error('revoked')}};
@@ -30,7 +33,12 @@ function fixture({native=false,controllerActive=true}={}){
  const controller={active:controllerActive,status(){return {active:this.active}},
   setIdea(target,value){calls.push('native-idea:'+target+':'+value.type)}};
  function node(tag,label,className){
+  const classes=new Set(String(className||'').split(/\s+/).filter(Boolean));
+  const attrs=new Map();
   return {tag,label,className,isConnected:true,textContent:label??'',type:'',children:[],
+   classList:{add(value){classes.add(value)},contains(value){return classes.has(value)}},
+   setAttribute(key,value){attrs.set(key,String(value))},
+   getAttribute(key){return attrs.get(key)||null},
    append(...children){this.children.push(...children)},
    replaceChildren(){this.children=[]}};
  }
@@ -50,7 +58,7 @@ function fixture({native=false,controllerActive=true}={}){
   storeBoard(){calls.push('store');return Promise.resolve(true)}
  };
  vm.createContext(ctx);
- vm.runInContext(lease+suggestions,ctx,{timeout:1000});
+ vm.runInContext(lease+photoSource+suggestions,ctx,{timeout:1000});
  function find(node,condition){
   if(condition(node))return node;
   for(const child of node.children||[]){
