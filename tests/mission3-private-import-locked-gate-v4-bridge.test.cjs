@@ -560,7 +560,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
   }finally{server.close();}
  });
 
- test('DEFAULT atomic backup restores under scoped subdirectory deployment in Chromium and WebKit',async()=>{
+ test('DEFAULT atomic backup restores offline from installed scoped PWA cache in Chromium and WebKit',async()=>{
   const {createServer}=require('node:http');
   const {readFile}=require('node:fs/promises');
   const {resolve,extname}=require('node:path');
@@ -595,7 +595,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
     const browser=await engine.launch({headless:true,args:name==='chromium'?['--no-sandbox']:[]});
     try{
      const ctx=await browser.newContext({viewport:{width:390,height:844},isMobile:true,
-      hasTouch:true,serviceWorkers:'block'});
+      hasTouch:true,serviceWorkers:'allow'});
      try{
       const owner='scoped-atomic-'+name;
       await ctx.route('**/auth.js*',route=>route.fulfill({contentType:'text/javascript',body:
@@ -623,6 +623,25 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       page.on('pageerror',error=>errors.push(String(error)));
       await page.goto(origin+scoped,{waitUntil:'domcontentloaded'});
       await page.evaluate(()=>Promise.all([closetReady,outfitBoardReady,inspirationReady]));
+      // This is the real built PWA service worker, not a mocked network
+      // route. Allow its install/precache to finish and claim the page first.
+      await page.evaluate(()=>navigator.serviceWorker.ready);
+      await page.waitForFunction(()=>navigator.serviceWorker.controller!==null,null,
+       {timeout:30000});
+      const helperCache=await page.evaluate(async()=>{
+       const target=new URL('research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs',
+        navigator.serviceWorker.controller.scriptURL);
+       const cachesList=await caches.keys();
+       for(const name of cachesList){
+        const cached=await caches.open(name);
+        if(await cached.match(target.href))return {present:true,cache:name};
+       }
+       return {present:false,caches:cachesList};
+      });
+      assert.equal(helperCache.present,true,name+' scoped offline cache includes atomic module');
+      // The import module has NOT yet been fetched by the app script itself.
+      // Cut the network now: onChange must load it from service-worker cache.
+      await ctx.setOffline(true);
       const answer=await page.evaluate(async({owner,jpeg})=>{
        const backup={format:'closet-current',version:3,
         items:[{id:'scoped-shirt',ownerId:owner,name:'Scoped shirt',category:'Tops',
@@ -656,6 +675,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.match(answer.message,/imported atomically/i);
       assert.deepEqual(errors,[]);
       assert.equal(external.some(x=>x.method!=='GET'),false,'No external private writes');
+      await ctx.setOffline(false);
      }finally{await ctx.close();}
     }finally{await browser.close();}
    }
