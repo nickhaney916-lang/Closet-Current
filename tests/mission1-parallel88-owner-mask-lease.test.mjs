@@ -380,7 +380,7 @@ test('P88 unit70 cannot accept receipts if original JPEG digest is unavailable o
 function cropHarness88({saved=false,checkPhoto=null}={}){
  const start=appSource.indexOf('function hasSourceBoundMask88(');
  const end=appSource.indexOf('// P846:',start);
- const leaseStart=appSource.indexOf('function reviewedSaveLease88(');
+ const leaseStart=appSource.indexOf('function reviewedExactPhotoPeers88(');
  const leaseEnd=appSource.indexOf('function empty(',leaseStart);
  assert.ok(start>=0&&end>start&&leaseStart>=0&&leaseEnd>leaseStart,
   'P88 native crop and reviewed owner lease available');
@@ -1630,7 +1630,7 @@ test('P88 legacy non-review indexing source policy still skips an exact saved JP
 test('P88 ordinary review save holds exact owner, image and IDB after cloud preflight',async()=>{
  const saveBegin=appSource.indexOf('function savePiece(');
  const saveEnd=appSource.indexOf('function node(',saveBegin);
- const begin=appSource.indexOf('function reviewedSaveLease88(');
+ const begin=appSource.indexOf('function reviewedExactPhotoPeers88(');
  const end=appSource.indexOf('function empty(',begin);
  assert.ok(saveBegin>=0&&saveEnd>saveBegin&&begin>saveEnd&&end>begin,
   'native reviewed save source is present');
