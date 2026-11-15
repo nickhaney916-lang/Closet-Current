@@ -83,6 +83,35 @@ test('synthetic three-pose proof-shape only: separate actual PNG proof requires 
   row.sourcePhoto2DFallbackRequired===true&&row.consumer3DAuthorized===false&&
   row.candidateStrictSourceCrossingsByLayer.denimBody===6));
  assert.equal(receipt.originalPhotoTwoPieceClearanceProved,false);
+ assert.ok(receipt.sourcePairContactLedger.every(row=>
+  row.originalSourcePoseContactWitnesses.length===3&&
+  row.originalSourcePoseContactWitnesses.every(p=>
+   p.staticSurfaceCrossingsOnly===true&&p.continuousContactNotMeasured===true&&
+   p.candidate.denimBody===2&&p.baseline.denimBody===2&&p.perLayerDelta.denimBody===0)&&
+  row.zeroStaticTriangleCrossingsStillNotPhysicalClearance===true&&
+  row.signedDistanceAndBodyContainmentNotMeasured===true&&
+  row.physicallySweptInterposeMotionNotMeasured===true));
+});
+test('all-zero measured static photo/rig crossings still cannot prove true garment clearance or admit consumer 3D',()=>{
+ const row=mock();
+ for(const outfit of row.result.samples)for(const pose of outfit.poseWitnesses){
+  for(const key of ['shirtBody','denimBody','shirtDenim']){
+   pose.baseline[key]=0;pose.refined[key]=0;pose.contactPairCountDeltas[key]=0;
+  }
+ }
+ const receipt=auditActualPhotoPoseAB89(row);
+ assert.equal(receipt.status,'ACTUAL_THREE_RIG_POSES_REHASHED_NOT_MOTION_CLEARED');
+ assert.equal(receipt.fittedCrossingPairSumAcrossNineLayerPoseTypes,0);
+ assert.ok(receipt.sourcePairContactLedger.every(x=>
+  x.candidateStaticCrossingsRemain===false&&
+  x.zeroStaticTriangleCrossingsStillNotPhysicalClearance===true&&
+  x.originalSourcePoseContactWitnesses.every(p=>
+   Object.values(p.candidate).every(v=>v===0))));
+ assert.equal(receipt.originalPhotoTwoPieceClearanceProved,false);
+ assert.equal(receipt.continuousClothDynamicsProved,false);
+ assert.equal(receipt.sweptCollisionCertified,false);
+ assert.equal(receipt.consumer3DAuthorized,false);
+ assert.equal(receipt.sourcePhoto2DFallbackRequired,true);
 });
 const negative=[
  ['fake human realism',x=>x.result.humanRealismApproved=true],
