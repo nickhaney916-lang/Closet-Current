@@ -704,7 +704,21 @@ function savePiece(value,nextBatch,{expectedSavedRow=null,expectedDraftRow=null}
         savedRequest.onsuccess=()=>{
          try{
           requireLease();
-          if(savedRequest.result.some(row=>row.id!==value.id&&row.image===value.image))
+          // Cropped or resized previews are not new physical garments.
+          // Until P88 distinct-item reconciliation is integrated with a
+          // source-bound owner approval, matching original bytes OR a valid
+          // original SHA is ambiguous even if the visible crop differs.
+          // Query the persisted owner wardrobe within this SAME write lock.
+          if(savedRequest.result.some(row=>{
+           if(row.id===value.id)return false;
+           if(row.image===value.image)return true;
+           if(typeof row.originalPhoto?.image==='string'&&
+              row.originalPhoto.image.length>0&&
+              row.originalPhoto.image===value.originalPhoto?.image)return true;
+           return [row.sourceSHA256,row.originalPhoto?.sha256].some(hash=>
+            typeof hash==='string'&&/^[a-f0-9]{64}$/.test(hash)&&
+            (hash===value.sourceSHA256||hash===value.originalPhoto?.sha256));
+          }))
            throw Error('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
           store.add(value);
           draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
@@ -1005,6 +1019,8 @@ function adjustPhoto(item){
     'Another tab changed this garment. Your changes were not saved. Reload My Closet, then reopen Adjust details.':
    String(error?.message||error).includes('CLOSET_ALREADY_SAVED_RELOAD_WARDROBE')?
     'This photo was already saved in another tab. Reload My Closet and review the existing piece.':
+   String(error?.message||error).includes('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW')?
+    'This original photo is already linked to a saved closet piece. Nothing new was saved and your photo is still in Photo results. Review the existing item in My Closet; separate garments from one photo need owner item review.':
    'Could not save changes. Try again.');
  }};
  dialog.onclose=()=>{if(editorSession.current()&&batch.includes(item)&&!wasAdjusted){item.userAdjusted=false;if(wasScanning&&item.localAnalyzed&&!localPending.has(item.id)){item.localAnalyzed=false;queueAutomatic(item);}}dialog.remove();};

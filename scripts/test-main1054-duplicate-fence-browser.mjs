@@ -43,6 +43,30 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
    await save(unique,[],{expectedDraftRow:unique});
    output.uniqueSaved=!!(await get('items','different-photo'));
    output.uniqueDraftRemoved=(await get('state','draft')).batch.length===0;
+   // M82: a cropped preview is NOT a second original. Verify in real
+   // IndexedDB with the exact same original bytes and source SHA, but
+   // a different displayed crop and garment ID. Rejected draft survives.
+   const original='data:image/jpeg;base64,b3JpZ2luYWw=';
+   const cropSha='a'.repeat(64);
+   const cropped=id=>({...row(id),image:'data:image/jpeg;base64,Y3JvcC0'+(id==='crop-first'?'x':'y'),
+    originalPhoto:{image:original,sha256:cropSha},sourceSHA256:cropSha});
+   const firstCrop=cropped('crop-first'),secondCrop=cropped('crop-second');
+   await put('items',firstCrop);
+   await put('state',{id:'draft',batch:[secondCrop]});
+   try{await save(secondCrop,[],{expectedDraftRow:secondCrop});output.croppedOriginal='unexpected success';}
+   catch(e){output.croppedOriginal=e.message;}
+   output.croppedDraftRetained=(await get('state','draft')).batch.some(x=>x.id===secondCrop.id);
+   output.croppedSavedAbsent=!(await get('items',secondCrop.id));
+   // A forged, legacy, or transformed row could retain the genuine SHA but
+   // omit original bytes. Reuse of that original still fails closed.
+   const shaOnly={...firstCrop,id:'sha-only-original',originalPhoto:{image:'data:image/jpeg;base64,c3RyaXBwZWQ=',sha256:cropSha}};
+   await put('items',shaOnly);
+   const sameSha={...secondCrop,id:'same-sha-other-bytes',originalPhoto:{image:'data:image/jpeg;base64,YW5vdGhlcg==',sha256:cropSha}};
+   await put('state',{id:'draft',batch:[sameSha]});
+   try{await save(sameSha,[],{expectedDraftRow:sameSha});output.hashOnly='unexpected success';}
+   catch(e){output.hashOnly=e.message;}
+   output.hashOnlyDraftRetained=(await get('state','draft')).batch.some(x=>x.id===sameSha.id);
+   output.hashOnlySavedAbsent=!(await get('items',sameSha.id));
    // Two independent IndexedDB connections simulate separate open tabs,
    // each with a stale in-memory wardrobe snapshot and the same pending JPEG.
    // Both call the actual savePiece implementation concurrently.
@@ -74,6 +98,12 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   assert.equal(result.savedCount,1,name+' duplicate does not insert');
   assert.equal(result.uniqueSaved,true,name+' unique saves');
   assert.equal(result.uniqueDraftRemoved,true,name+' unique removes draft');
+  assert.match(result.croppedOriginal,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/,name);
+  assert.equal(result.croppedDraftRetained,true,name+' cropped source retains draft');
+  assert.equal(result.croppedSavedAbsent,true,name+' cropped source cannot save');
+  assert.match(result.hashOnly,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/,name);
+  assert.equal(result.hashOnlyDraftRetained,true,name+' repeated source SHA retains draft');
+  assert.equal(result.hashOnlySavedAbsent,true,name+' repeated source SHA cannot save');
   assert.equal(result.raceFulfilled,1,name+' one competing connection wins');
   assert.equal(result.raceRejected,1,name+' competing duplicate rejected');
   assert.equal(result.raceSaved,1,name+' exactly one racing JPEG saved');

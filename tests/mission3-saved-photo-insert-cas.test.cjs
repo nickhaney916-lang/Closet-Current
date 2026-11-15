@@ -146,6 +146,28 @@ test('new source with an identical saved JPEG keeps its draft and rejects duplic
  assert.deepEqual(f.calls,[],'transaction must not publish a partial write');
 });
 
+test('different crop of same original JPEG is not silently saved as a second physical piece',async()=>{
+ const f=fixture({exists:false});
+ const cropped={...structuredClone(old),id:'another-id',image:'data:image/jpeg;base64,Y3JvcHBlZA=='};
+ f.saved.set(cropped.id,cropped);
+ const expectedDraft=structuredClone(f.state.get('draft'));
+ await assert.rejects(f.attempt(),/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.equal(f.saved.size,1);
+ assert.deepEqual(f.state.get('draft'),expectedDraft);
+ assert.deepEqual(f.calls,[]);
+});
+
+test('same verified original SHA blocks a second saved item even when cropped bytes differ',async()=>{
+ const f=fixture({exists:false});
+ const cropped={...structuredClone(old),id:'other-crop',
+  image:'data:image/jpeg;base64,ZGlmZmVyZW50',
+  originalPhoto:{image:'data:image/jpeg;base64,b3RoZXI=',sha256:'a'.repeat(64)}};
+ f.saved.set(cropped.id,cropped);
+ await assert.rejects(f.attempt(),/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.equal(f.saved.size,1);
+ assert.equal(f.state.get('draft').batch.some(x=>x.id===old.id),true);
+});
+
 test('frozen expected snapshot ignores caller changes made during asynchronous work',async()=>{
  const f=fixture(),expected=structuredClone(old);
  const pending=f.attempt({expected});

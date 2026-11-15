@@ -27,7 +27,10 @@ test('saved JPEG comparison occurs inside same owner items/state write transacti
  const remove=save.indexOf("draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)})",callback);
  assert.ok(transaction>=0&&scan>transaction&&callback>scan);
  assert.ok(rejection>callback&&add>rejection&&remove>add);
- assert.match(save.slice(callback,add),/row\.id!==value\.id&&row\.image===value\.image/);
+ assert.match(save.slice(callback,add),/row\.image===value\.image/);
+ assert.match(save.slice(callback,add),/row\.originalPhoto\.image===value\.originalPhoto\?\.image/);
+ assert.match(save.slice(callback,add),/row\.sourceSHA256,row\.originalPhoto\?\.sha256/);
+ assert.match(save.slice(callback,add),/\^\[a-f0-9\]\{64\}/);
 });
 
 test('failure aborts transaction and never consumes draft before successful saved comparison',()=>{
@@ -43,4 +46,11 @@ test('failure aborts transaction and never consumes draft before successful save
 test('saved-row edit retains independent compare-and-swap',()=>{
  assert.match(save,/if\(expected\)\{[\s\S]*?CLOSET_STALE_SAVED_GARMENT_REOPEN_EDITOR/);
  assert.match(save,/if\(expected\)\{\s*\/\/ Editing a saved row[\s\S]*?store\.put\(value\)/);
+});
+
+
+test('owner editor clearly refuses cropped original duplication without losing draft',()=>{
+ assert.match(source,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.match(source,/This original photo is already linked to a saved closet piece/);
+ assert.match(source,/Nothing new was saved and your photo is still in Photo results/);
 });
