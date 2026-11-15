@@ -1636,7 +1636,9 @@ function exactDuplicateOwnerSaveHarness88(){
  assert.ok(saveBegin>=0&&saveEnd>saveBegin&&helpers>saveEnd&&end>helpers);
  const records=[],user={id:'owner-A'};
  const ownerDb={name:'closet-current-user-owner-A',transaction(){
-  const tx={objectStore(store){return {put(value){records.push({store,value:structuredClone(value)});}}};
+  const tx={objectStore(store){
+   return {put(value){records.push({store,value:structuredClone(value)});}};
+  }};
   queueMicrotask(()=>tx.oncomplete?.());return tx;
  }};
  const photo='data:image/jpeg;base64,UEhPVE8=',existing={id:'already-owned',image:photo,category:'Tops'},
