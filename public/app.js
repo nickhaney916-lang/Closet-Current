@@ -1997,8 +1997,14 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
   const {prepareLegacyAtomicM3,commitLegacyAtomicM3}=await mission3AtomicImporter();
   assertImport();
   const ownerId=window.closetAuth?.user?.id;
+  // Preserve the original v1-v3 import contract: long historical garment
+  // IDs are normalized to 100 characters before the atomic module validates
+  // the incoming rows. Duplicate IDs after truncation were already rejected
+  // above, so no second piece can overwrite the first one by accident.
+  // Preserve raw outfit references; an invalid or now-missing link must fail
+  // closed rather than silently change a saved outfit.
   const prepared=await prepareLegacyAtomicM3({
-   data,ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+   data:{...data,items:valid},ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
    normalizeClothing,validLook,cleanOutfitBoard
   });
   assertImport();
