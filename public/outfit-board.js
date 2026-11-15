@@ -321,12 +321,27 @@ async function persistBoardState({appendSaved=null,replaceSaved=null,replaceDraf
 }
 function outfitSavedItemFacts(item){
  const row=normalizeClothing(item);
- // Flat immutable values retain image string references without hashing or
- // copying full-resolution JPEGs just to compare a selected saved garment.
+ // M76: the atomic save must reject a same-owner source-review/mask change
+ // even when the JPEG thumbnail, name and category remain identical. This
+ // fingerprint is compared again against the durable IDB item inside the
+ // outfit write transaction. Never infer 3D fitness from owner review.
+ // Preserve full original JPEG *references* (no extra image copy/rehash);
+ // stringify only bounded source/receipt metadata.
  return [row.id,row.ownerId||null,row.category,row.itemType,row.color,row.colorSource,
   row.pattern,row.sleeveLength,row.fit,row.material,row.occasion,
   [...row.seasons].sort().join('|'),row.image,row.sourceSHA256,
-  row.sourcePieceKey,row.originalPhoto?.image,row.originalPhoto?.sha256];
+  row.sourcePieceKey,row.originalPhoto?.image,row.originalPhoto?.sha256,
+  row.photoOnly===true,row.sourceHashVerified===true,
+  row.sourceCropReviewed===true,row.ownerReviewed===true,
+  row.sourcePhotoOriginal===true,row.singleGarmentVerified===true,
+  row.independentPhysicalItemVerified===true,row.threeDReady===true,
+  row.segmentHint?.clipped===true,row.segmentHint?.verified===true,
+  row.segmentHint?.rawMaskPixelsIndependentlyVerified===true,
+  JSON.stringify(row.cropBounds??null),
+  row.reconciliation70Status??null,row.reconciliation70?.maskSha256??null,
+  row.shoePair?.companion?.reconciliation70?.maskSha256??null,
+  row.combinedFragments70?.companion?.reconciliation70?.maskSha256??null,
+  JSON.stringify(row.ownerSourceReview88??null)];
 }
 function outfitWardrobeChanged(){
  const error=Error('Selected clothing changed in another tab. Refresh your closet and create this outfit again.');
