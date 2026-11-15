@@ -19,7 +19,12 @@ s=replace(s,'mountOutfit3D01Research({doc=document,auth=window.closetAuth}={})',
  'mountOutfit3D01Research({doc=document,auth=window.closetAuth,nativeTopSource90=null,nativeBottomEmpty90=false}={})');
 
 s=replace(s,"[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Rotate']]","[['Front','Front'],['Side','Side'],['Back','Back'],['Rotate','Auto rotate'],['Left90','Rotate left'],['Right90','Rotate right'],['ZoomIn90','Zoom in'],['ZoomOut90','Zoom out'],['Reset90','Reset view']]");
-s=replace(s," left.append(views);body.append(left);",` left.append(views);body.append(left);
+s=replace(s," left.append(views);body.append(left);",` left.append(views);
+ const sourceNotice90=el('p','outfit3D01SourceNotice90');
+ sourceNotice90.className='cc3d-note';
+ sourceNotice90.setAttribute('aria-label','3D original photograph limitations');
+ sourceNotice90.textContent='Original front photographs are authoritative. Side and rear garment details are not photograph-verified. Unsupported outfit pieces remain original-photo-only.';
+ left.append(sourceNotice90);body.append(left);
  const style90=el('style');style90.textContent='.cc3d-controls{display:flex;flex-wrap:wrap;gap:4px}.cc3d-controls button{min-width:44px;min-height:44px;flex:1 1 25%;touch-action:manipulation}.cc3d-viewer canvas:focus-visible{outline:3px solid #155db4}';dialog.append(style90);
  canvas.tabIndex=0;
  canvas.setAttribute('aria-label','3D anatomical outfit. Drag to rotate. Arrow keys rotate, plus and minus zoom, Home resets. Rear photograph unverified.');
