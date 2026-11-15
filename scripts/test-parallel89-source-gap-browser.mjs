@@ -123,10 +123,22 @@ try{
    assert.equal(shapeProof.status,'BASELINE_UNMODIFIED');
    assert.equal(shapeProof.trialApplied,false);
   }
-  byVariant[variant]={gap:report,shoulder:shapeProof};
+  // Original public-source geometry, real native WebGL rendering. PNG hashes
+  // are evidence snapshots for independent human review, never fake approval.
+  const png=await page.locator('#avatar').screenshot({animations:'disabled'});
+  assert.ok(png.length>1500&&png.length<10_000_000&&
+   png.subarray(0,8).toString('hex')==='89504e470d0a1a0a',
+   'genuine source native avatar screenshot missing');
+  const pngName=['P89','public','source-gap',engine,avatar,variant,'0'].join('-')+'.png';
+  await writeFile(join(out,pngName),png);
+  byVariant[variant]={gap:report,shoulder:shapeProof,
+   screenshotSHA256:hash(png),screenshotName:pngName};
   receipts.push({...report,researchShoulderMode:variant,
    researchShoulderApplied:shapeProof.trialApplied,
-   researchShoulderStatus:shapeProof.status});
+   researchShoulderStatus:shapeProof.status,
+   actualPublicSourceNativeWebGLScreenshotPNG:byVariant[variant].screenshotName,
+   actualPublicSourceNativeWebGLScreenshotSHA256:byVariant[variant].screenshotSHA256,
+   humanAppearanceAcceptanceWasNotPerformed:true});
   await page.close();
   }
   const candidates=['trial','low-drop','low-drop-outward'];
@@ -159,6 +171,8 @@ try{
    originalBaselineClosestShirtBodyMeters:baselineClosest,
    referenceResearchOnlyVariant:selected?.variant??'baseline',
    referenceResearchOnlyClosestShirtBodyMeters:selected?.closestShirtBodyMeters??baselineClosest,
+   referenceResearchOnlyNativeWebGLScreenshotName:byVariant[selected?.variant??'baseline'].screenshotName,
+   referenceResearchOnlyNativeWebGLScreenshotSHA256:byVariant[selected?.variant??'baseline'].screenshotSHA256,
    signedExteriorClearanceCertified:false,
    continuousClothCertified:false,
    humanOriginalPhotoRealismApproved:false,
@@ -172,6 +186,8 @@ try{
   engine,sourcePhotoOriginalVerified:true,
   sourceSHA256:SHA,scenes:receipts,shoulderContrasts,researchSelections,
   comparativeOriginalSourceShoulderFitIsResearchOnly:true,
+  actualNativeOriginalPublicSourcePNGVisualComparisonsArchived:true,
+  humanReviewerApprovalReceived:false,
   originalPhoto2DFallbackRequired:true,
   signedClearanceCertified:false,realWorldGarmentFitApproved:false,
   humanRealismReviewed:false,physicalPhoneAccepted:false,
