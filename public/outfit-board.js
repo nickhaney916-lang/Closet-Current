@@ -435,9 +435,16 @@ function renderOutfitBoard(){
   const item=items.find(x=>x.id===currentBoard.slots[slot.id]),idea=currentBoard.ideas[slot.id],covered=dress&&slot.id==='bottom';
   const retainedId=nativeLossless04Active&&!item?currentBoard.slots[slot.id]:null;
   const needsReview=nativeLossless04Active&&item&&!slotAllows(slot,item);
-  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+'. Choose a piece');
+  // M70: selecting an owner-reviewed crop is NOT evidence of one independently
+  // verified physical garment. Keep the normal native Outfit Builder useful,
+  // but make the 2D source-only limitation visible without opening research UI.
+  const unverifiedPhysicalUnit=!!item&&
+   (item.singleGarmentVerified!==true||item.photoOnly===true||
+    item.segmentHint?.clipped===true||item.segmentHint?.verified===false);
+  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(unverifiedPhysicalUnit?' source-unverified':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+(unverifiedPhysicalUnit?' · Photo reference only; individual garment outline unverified':'')+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
   if(item){const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span',item.name||item.itemType,'slot-name'));
+   if(unverifiedPhysicalUnit)b.append(node('small','Photo reference only · garment outline unverified'));
    if(needsReview)b.append(node('small','Review category · original reference kept'));}
   else if(retainedId)b.append(node('span','Missing saved clothing','slot-name'),node('small','Original ID retained · replace this piece'));
   else if(covered)b.append(node('span','Covered by dress','slot-name'));
