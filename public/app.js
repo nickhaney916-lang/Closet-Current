@@ -1841,7 +1841,9 @@ $('export').onclick=async()=>{
 // A single importer is used in the default legacy path and the original
 // research acceptance harness; keep module resolution testable separately.
 async function mission3AtomicImporter(){
- return import('../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs');
+ // Resolve inside the built app's own folder, including /subpath/ hosting.
+ // ../research would escape a scoped install and break default restoration.
+ return import('./research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs');
 }
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
