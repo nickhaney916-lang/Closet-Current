@@ -13,6 +13,15 @@ self.addEventListener('fetch',event=>{
  if(!isHome&&!urls.includes(url.href))return;
  event.respondWith((async()=>{
   const cache=await caches.open(CACHE);
+  // Atomic restoration is an immutable, build-hashed script dependency.
+  // Read it from this exact version's pre-cache FIRST: WebKit can refuse
+  // offline network-first module fetches before reaching the catch path.
+  // A new build changes CACHE and refreshes the helper atomically.
+  if(url.href===new URL('research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs',
+    self.registration.scope).href){
+   const offlineModule=await cache.match(event.request);
+   if(offlineModule)return offlineModule;
+  }
   try{const response=await fetch(event.request);if(response.ok&&!response.redirected&&response.type==='basic')await cache.put(isHome?index:event.request,response.clone());return response;}
   catch{const saved=await cache.match(isHome?index:event.request);return saved||new Response('Reconnect to load Closet Current.',{status:503});}
  })());
