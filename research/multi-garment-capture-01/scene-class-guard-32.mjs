@@ -13,6 +13,7 @@
  * records. Every proposed garment still needs a human category, subtype,
  * color, a user-reviewed crop, and an explicit confirmation.
  */
+import {unresolvedSegmentation54} from './atomic-group.mjs';
 export const SCENE32_MIN_UNCALIBRATED_MASK_SCORE=0.95;
 const VALID_CATEGORIES=new Set(['Tops','Bottoms','Dresses','Outerwear','Shoes']);
 // COLOR77: native confirmation must agree with the authoritative final
@@ -43,7 +44,9 @@ export function sceneReviewDefaults32(raw) {
 
 export function canConfirmScene32(piece,schema) {
  const types=schema?.types?.[piece?.category];
- return !!(piece&&VALID_CATEGORIES.has(piece.category)&&
+ // MAIN54: owner-confirmed labels do not cure a mask that may contain
+ // multiple physical garments. Keep this source proposal unsaveable.
+ return !!(piece&&!unresolvedSegmentation54(piece.hint)&&VALID_CATEGORIES.has(piece.category)&&
   Array.isArray(types)&&types.includes(piece.itemType)&&
   cleanColor(piece.color)&&piece.cropReviewed===true);
 }
