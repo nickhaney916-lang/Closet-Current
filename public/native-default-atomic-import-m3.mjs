@@ -78,12 +78,15 @@ export async function prepareDefaultAtomicM3({
     !Array.isArray(input.items)||input.items.length>1000||
     (input.looks!==undefined&&(!Array.isArray(input.looks)||input.looks.length>100)))
   throw Error('LEGACY_ATOMIC_INVALID_BACKUP');
- const seen=new Set(),incoming=[];
+ const seen=new Set(),incoming=[],rawOwnerClaims=new Map();
  for(const row of input.items){
   if(!plain(row)||!safeId(row.id)||seen.has(row.id)||
    typeof row.image!=='string'||row.image.length>3_000_000)
    throw Error('LEGACY_ATOMIC_INVALID_GARMENT');
   seen.add(row.id);
+  // A legacy missing owner is allowed on a NEW item but must never
+  // silently replace an existing signed garment sharing its ID.
+  rawOwnerClaims.set(row.id,own(row,'ownerId')?row.ownerId:null);
   await verifyImage(row.image,(!row.originalPhoto?.image||row.originalPhoto.image===row.image)
    ?row.sourceSHA256||row.originalPhoto?.sha256||null:null);
   if(row.originalPhoto?.image){
@@ -109,6 +112,21 @@ export async function prepareDefaultAtomicM3({
  for(const row of incoming){
   const prior=allItems.get(row.id);
   if(prior){
+   // Normalization stamps a new legacy record into the signed DB. For an
+   // existing same-ID row, that stamp must NOT turn a missing legacy owner
+   // claim into proof that the original saved owner/camera claim survived.
+   if((prior.ownerId===ownerId&&rawOwnerClaims.get(row.id)!==ownerId)||
+      (prior.originalPhoto?.ownerId===ownerId&&
+       row.originalPhoto?.ownerId!==ownerId))
+    throw Error('LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT');
+   // The same JPEG bytes do not authorize dropping verified-source or
+   // independently recorded source-instance review provenance.
+   if((prior.sourceHashVerified===true&&row.sourceHashVerified!==true)||
+      (prior.sourcePieceKey&&prior.sourcePieceKey!==row.sourcePieceKey)||
+      (prior.ownerSourceReview88&&
+       JSON.stringify(prior.ownerSourceReview88)!==
+       JSON.stringify(row.ownerSourceReview88)))
+    throw Error('LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT');
    const photoIdentity=value=>JSON.stringify([
     value.image,value.originalPhoto?.image||null,
     value.sourceSHA256||null,value.originalPhoto?.sha256||null
@@ -136,6 +154,29 @@ export async function prepareDefaultAtomicM3({
   verifySlotsUnchanged(input.outfitBoard.current||{},cleanCurrent);
   input.outfitBoard.saved.forEach((row,i)=>verifySlotsUnchanged(row,cleanSaved[i]));
   board={id:'outfit-board',current:cleanCurrent,saved:cleanSaved};
+ }
+ // An import without a replacement board must preserve all current/saved
+ // outfit slots when a same-ID garment changes metadata. A T-shirt renamed
+ // to a shoe or dress cannot silently invalidate a saved top or hide bottoms.
+ if(board===null && incoming.length){
+  const existingIDs=new Set(rows.items.map(row=>row.id));
+  const replaced=new Set(incoming.filter(row=>existingIDs.has(row.id)).map(row=>row.id));
+  const savedBoard=states.get('outfit-board');
+  if(savedBoard&&replaced.size){
+   const beforeCloset=rows.items.map(normalizeClothing);
+   const afterCloset=[...allItems.values()].map(normalizeClothing);
+   const outfits=[savedBoard.current,
+    ...(Array.isArray(savedBoard.saved)?savedBoard.saved:[])];
+   for(const outfit of outfits){
+    if(!plain(outfit)||!plain(outfit.slots)||
+       !Object.values(outfit.slots).some(id=>replaced.has(id)))continue;
+    const before=cleanOutfitBoard(outfit,beforeCloset);
+    const after=cleanOutfitBoard(outfit,afterCloset);
+    for(const [slot,id] of Object.entries(before.slots))
+     if(after.slots?.[slot]!==id)
+      throw Error('LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT');
+   }
+  }
  }
  const marker=states.get('cloud-sync')||{id:'cloud-sync',baseVersion:0,
   baseDocument:null,localRevision:0,dirty:false};
