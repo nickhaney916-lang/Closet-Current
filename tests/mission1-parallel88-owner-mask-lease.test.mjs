@@ -1167,3 +1167,36 @@ test('P88 queued P70 decision refuses malformed same-source mask appended after 
   'corrupt late-source receipt must not survive a failed owner decision');
  assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
 });
+
+
+test('P88 queued owner keep refuses paired companion mask edited in place',async()=>{
+ const h=unitDecisionHarness88(),c=h.c;
+ await makeConfirmedPair88(h);
+ assert.equal(c.batch[0].shoePair?.confirmedByOwner,true);
+ const originalWrites=c.storageWrites.length;
+ c.batch.push(h.ownerDraft('part-C'));
+ let release;c.queueGate=new Promise(resolve=>{release=resolve;});
+ const pending=vm.runInContext("updateUnit70('keep',['part-C'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ const first=c.batch.find(x=>x.id==='part-A');
+ assert.equal(first.shoePair?.confirmedByOwner,true);
+ first.shoePair.companion.reconciliation70.maskSha256='f'.repeat(64);
+ release();await pending;
+ assert.equal(c.storageWrites.length,originalWrites,
+  'changing companion mask of another confirmed pair forbids an unrelated queued write');
+ assert.equal(c.batch.find(x=>x.id==='part-C').reconciliation70Status,'unresolved');
+ assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
+});
+
+test('P88 queued owner decision refuses modified original JPEG while preflight waits',async()=>{
+ let release;const gate=new Promise(resolve=>{release=resolve;});
+ const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
+ c.batch[0].originalPhoto={image:'data:image/jpeg;base64,T1JJR0lOQUw='};
+ const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
+ for(let n=0;n<12;n++)await Promise.resolve();
+ c.batch[0].originalPhoto.image='data:image/jpeg;base64,TU9ESUZJRUQ=';
+ release();await pending;
+ assert.equal(c.storageWrites.length,0);
+ assert.equal(c.batch.find(x=>x.id==='part-A').reconciliation70Status,'unresolved');
+ assert.match(c.outfitUnit70Error,/Owner or source garment changed before draft persistence/);
+});
