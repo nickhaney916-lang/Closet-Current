@@ -269,6 +269,8 @@ function sourceSaveLease88(item){
   status:item.reconciliation70Status,
   original:item.originalPhoto?.image,image:item.image,
   review:item.recognitionPhoto?.image,shoe:item.shoePair,fragments:item.combinedFragments70,
+  cropRevision:JSON.stringify(item.cropBounds??null),
+  hintRevision:JSON.stringify(item.segmentHint??null),
   groupRevision:sourceGroupRevision88(item)};
 }
 function sourceSaveLeaseLive88(lease){
@@ -287,6 +289,8 @@ function sourceSaveLeaseLive88(lease){
   item.originalPhoto?.image===lease.original&&item.image===lease.image&&
   item.recognitionPhoto?.image===lease.review&&
   item.shoePair===lease.shoe&&item.combinedFragments70===lease.fragments&&
+  JSON.stringify(item.cropBounds??null)===lease.cropRevision&&
+  JSON.stringify(item.segmentHint??null)===lease.hintRevision&&
   lease.groupRevision!==''&&sourceGroupRevision88(item)===lease.groupRevision);
 }
 async function sourceSavePhotoVerified88(lease){
@@ -303,6 +307,36 @@ async function sourceSavePhotoVerified88(lease){
   return actual===lease.source&&sourceSaveLeaseLive88(lease);
  }catch{return false;}
 }
+// A personally confirmed source/crop/physical-unit decision is not a blind
+// independent model score or a M4 certified-single/3D admission token.
+// Retain that distinction in the saved per-item provenance shape.
+function reviewedSourceReceipt88(value,lease){
+ const companion=value.shoePair?.companion||value.combinedFragments70?.companion;
+ return {schema:'p88-owner-source-review/v1',ownerId:lease.ownerId,
+  itemId:value.id,sourceId:lease.sourceId,originalPhotoSha256:lease.source,
+  selectedMaskSha256:lease.mask,
+  companionMaskSha256:companion?.reconciliation70?.maskSha256||null,
+  cropBounds:structuredClone(value.cropBounds??null),
+  category:value.category,itemType:value.itemType||'Unknown',color:value.color,
+  physicalUnitDecision:value.reconciliation70Status,
+  ownerReviewed:true,sourcePhotoOriginal:true,
+  independentPhysicalItemVerified:false,singleGarmentVerified:false,
+  threeDReady:false};
+}
+function reviewedSourceReceiptValid88(value,lease){
+ const r=value.ownerSourceReview88;
+ const companion=value.shoePair?.companion||value.combinedFragments70?.companion;
+ return Boolean(r?.schema==='p88-owner-source-review/v1'&&
+  r.ownerReviewed===true&&r.sourcePhotoOriginal===true&&
+  r.singleGarmentVerified===false&&r.threeDReady===false&&
+  r.independentPhysicalItemVerified===false&&
+  r.ownerId===lease.ownerId&&r.itemId===value.id&&r.sourceId===lease.sourceId&&
+  r.originalPhotoSha256===lease.source&&r.selectedMaskSha256===lease.mask&&
+  r.companionMaskSha256===(companion?.reconciliation70?.maskSha256||null)&&
+  JSON.stringify(r.cropBounds??null)===lease.cropRevision&&
+  r.category===value.category&&r.itemType===(value.itemType||'Unknown')&&
+  r.color===value.color&&r.physicalUnitDecision===lease.status);
+}
 function saveSourceBoundPiece88(value,nextBatch,lease){
  // Recheck inside queued(), AFTER cloud.beforeWrite, just before the DB write.
  // The exact original-photo digest is independently checked before enqueueing.
@@ -316,6 +350,7 @@ function saveSourceBoundPiece88(value,nextBatch,lease){
    value.reconciliation70Status!==lease.status||
    value.outfitSourceId!==lease.sourceId||
    sourceGroupRevision88(value)!==lease.groupRevision||
+   !reviewedSourceReceiptValid88(value,lease)||
    !unit70OwnerEvidenceValid({...lease.item,category:value.category})||
    duplicateUnit70InCloset(value,items))
    throw Error('P88_REVOKED_SOURCE_SAVE');
@@ -401,6 +436,15 @@ function adjustPhoto(item){
   if(['pattern','sleeveLength','fit'].includes(key))reviewedKeys72.add(key);
   canSaveReview();
  });
+ if(sourceLease88?.original){
+  // Show the original outfit as well as the cutout; only the owner can
+  // attest whether the crop is one real garment, fragments, or a shoe pair.
+  const proof=node('figure',null,'clothing-reference'),image=node('img');
+  image.src=sourceLease88.original;
+  image.alt='Original complete outfit photo for physical garment comparison';
+  proof.append(image,node('figcaption','Original complete photo · compare with the cropped garment before confirming its physical identity'));
+  form.prepend(proof);
+ }
  const evidence=item.recognitionDiagnostics?.outerwearRecovery;
  if(evidence?.outerwearReviewSuggested&&draft.category!=='Outerwear'){
   const suggestion=node('div',null,'recognition-review-suggestion');
@@ -435,7 +479,9 @@ function adjustPhoto(item){
   const approval=node('label',null,'review-acknowledgement');
   confirmReview=node('input');confirmReview.type='checkbox';confirmReview.required=true;
   confirmReview.setAttribute('aria-label','I checked the clothing photo and confirmed the category type and color');
-  approval.append(confirmReview,document.createTextNode('I checked the garment photo and confirmed its category, specific type (or Unknown), and color.'));
+  approval.append(confirmReview,document.createTextNode(sourceLease88?
+   'I compared the original complete photo with the crop, confirmed its physical garment or shoe-pair grouping, and checked the category, specific type (or Unknown), and color.':
+   'I checked the garment photo and confirmed its category, specific type (or Unknown), and color.'));
   reviewStatus=node('p',null,'fine');
   confirmReview.onchange=canSaveReview;
   form.append(approval,reviewStatus);canSaveReview();
@@ -564,18 +610,18 @@ function adjustPhoto(item){
   if(!reviewedSaveLeaseLive88(reviewLease88))throw Error('P88_REVIEW_OWNER_OR_PHOTO_CHANGED');
   if(sourceLease88&&!(await sourceSavePhotoVerified88(sourceLease88)))
    throw Error('P88_ORIGINAL_JPEG_OR_OWNER_CHANGED');
-  if(sourceLease88)
+  if(sourceLease88){
+   reviewed72.ownerSourceReview88=reviewedSourceReceipt88(reviewed72,sourceLease88);
    await saveSourceBoundPiece88(reviewed72,batch.filter(x=>x.id!==item.id),sourceLease88);
-  else await savePiece(reviewed72,batch.filter(x=>x.id!==item.id),reviewLease88);
+  }else await savePiece(reviewed72,batch.filter(x=>x.id!==item.id),reviewLease88);
   // If the authenticated session changed while IDB committed, do not mutate
   // the newly active owner's in-memory wardrobe after the old transaction.
   if(!reviewedSaveLeaseLive88(reviewLease88)||
      (sourceLease88&&!sourceSaveLeaseLive88(sourceLease88))){dialog.close();return;}
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);
-  // The source-bound transaction already atomically wrote items + draft.
-  // Never queue a second generic backup against a potentially newer session.
-  if(!sourceLease88)await persistDraft();
+  // Both reviewed saves already committed items + the live draft atomically.
+  // A second queued persistDraft could write into a newly switched account.
   dialog.close();render();scheduleMemoryReview();
  }catch{
   saveInFlight=false;
