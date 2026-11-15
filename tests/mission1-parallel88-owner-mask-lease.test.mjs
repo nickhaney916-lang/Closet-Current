@@ -2240,3 +2240,16 @@ test('P88 rejected old-owner draft read after account switch cannot display stor
  assert.equal(h.renders.length,0);
  assert.equal(h.batch.length,0);
 });
+
+test('P88 active owner still sees meaningful browser storage error when initial IDB open fails',async()=>{
+ const h=ownerBootRevokeHarness88();
+ await h.starts.open.promise;
+ h.gates.open.reject(Error('IndexedDB disabled'));
+ await h.complete;
+ assert.equal(h.calls.length,1);
+ assert.equal(h.messages.length,1,'a real current-owner storage failure remains visible');
+ assert.match(h.messages[0],/Browser storage is unavailable/);
+ assert.equal(h.batch.length,0);
+ assert.equal(h.items.length,0);
+ assert.equal(h.scans.length,0);
+});
