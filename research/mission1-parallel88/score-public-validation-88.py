@@ -278,12 +278,28 @@ def main():
             sum(len(r["annotations"]) for r in truth["rows"]) != 53:
         raise ValueError("Human truth source changed")
     data = json.loads((MASKS / "real-validation-predictions-88.json").read_text())
+    research_modes = ("researchLoose65", "researchLoose55")
+    all_modes = ("baseline", "shoeOnly68", "p88Safe", "p88") + research_modes
     if (data.get("schema") != "closet-current-p88-exposed-real-photo-comparison/v1" or
+        data.get("pixelGateResearchOnly") is not True or
+        data.get("pixelGatePreservesOriginalPersonDetector") is not True or
+        data.get("pixelGateNativeControlParityVerified") is not True or
+        data.get("noProductionThresholdChange") is not True or
+        data.get("newSealedBlindAcceptance") is not False or
         any(data[x].get("manifestSha256") != EXPECTED or
-            data[x].get("automaticSave") is not False for x in ("baseline", "shoeOnly68", "p88Safe", "p88"))):
-        raise ValueError("Real model receipt is not from the frozen source")
-    baseline, shoes, safe, candidate = (measure(truth, data[mode])
-        for mode in ("baseline", "shoeOnly68", "p88Safe", "p88"))
+            data[x].get("automaticSave") is not False or
+            data[x].get("sourceDisjointFromP68Development") is not False
+            for x in all_modes)):
+        raise ValueError("Real model or research gate receipt is not from unchanged exposed source")
+    if (data["researchLoose65"].get("researchOnlyPixelGate") !=
+            {"pixelConfidence": 0.65, "pixelMargin": 0.12} or
+        data["researchLoose55"].get("researchOnlyPixelGate") !=
+            {"pixelConfidence": 0.55, "pixelMargin": 0.08} or
+        any(data[x].get("researchOnlyPixelGate") is not None
+            for x in ("baseline", "shoeOnly68", "p88Safe", "p88"))):
+        raise ValueError("Research threshold definition altered")
+    baseline, shoes, safe, candidate, loose65, loose55 = (
+        measure(truth, data[mode]) for mode in all_modes)
     result = {
         "schema": "closet-current-p88-exposed-human-instance-iou/v1",
         "source": "Exact official Fashionpedia JPEGs, independently annotated public P68 validation",
@@ -294,12 +310,30 @@ def main():
         "fineSubtypeAccuracy": "NO_INDEPENDENT_HUMAN_SUBTYPE_TRUTH",
         "primaryColorAccuracy": "NO_INDEPENDENT_HUMAN_COLOR_TRUTH",
         "autoSaveAcceptance": "BLOCKED_NOT_CALIBRATED",
+        "exposedResearchPixelGateControlParity": True,
+        "exposedResearchReusesSameHumanSource": True,
+        "exposedResearchNoModelOrAutoSavePromotion": True,
+        "exposedResearchPixelGateParameters": {
+            "researchLoose65": {"pixelConfidence": 0.65, "pixelMargin": 0.12},
+            "researchLoose55": {"pixelConfidence": 0.55, "pixelMargin": 0.08}
+        },
         "confidenceRetentionResearchOnly": retained_fixed_match_diagnostic(safe["rows"]),
         "categoryFailureAttributionResearchOnly": source_category_failure_diagnostic(safe["rows"]),
         "confidenceRetentionMethod": "fixed prior one-to-one matches; candidate masks NOT re-matched",
         "confidenceCutoffPromotionAllowed": False,
         "physicalDevice": False, "privateAccountTouched": False,
         "baseline": baseline, "shoeOnly68": shoes, "p88Safe": safe, "p88": candidate,
+        "researchLoose65": loose65, "researchLoose55": loose55,
+        "researchOnlyPixelGateDiffVsSafe": {
+            x: {
+                "addedProposals": value["classAgnostic"]["predicted"]-safe["classAgnostic"]["predicted"],
+                "newClassAgnosticMatches": value["classAgnostic"]["matched"]-safe["classAgnostic"]["matched"],
+                "newCategoryCompatibleMatches": value["categoryCompatible"]["matched"]-safe["categoryCompatible"]["matched"],
+                "deltaUnmatchedProposals": value["classAgnostic"]["falsePositives"]-safe["classAgnostic"]["falsePositives"],
+                "notSealedAccuracy": True, "notProductionPromotion": True
+            }
+            for x, value in (("researchLoose65",loose65),("researchLoose55",loose55))
+        },
         "deltaClassAgnosticRecall": candidate["classAgnostic"]["recall"] - baseline["classAgnostic"]["recall"],
         "deltaCategoryCompatibleRecall": candidate["categoryCompatible"]["recall"] - baseline["categoryCompatible"]["recall"],
         "deltaP88VsShoeOnlyRecall": candidate["classAgnostic"]["recall"] - shoes["classAgnostic"]["recall"],
@@ -313,6 +347,18 @@ def main():
     }, separators=(",", ":")))
     print("P88_EXPOSED_CATEGORY_FAILURES_RESEARCH", json.dumps(
         result["categoryFailureAttributionResearchOnly"],separators=(",", ":")))
+    print("P88_EXPOSED_SAME_LOGIT_PIXEL_GATE_RESEARCH",json.dumps({
+        "manifestSha256":EXPECTED,"photos":16,"humanInstances":53,
+        "nativeThresholdsUnchanged":True,"newBlindTruth":False,
+        "baseline": {"agnostic":safe["classAgnostic"],
+                     "category":safe["categoryCompatible"]},
+        "probes": {x:{
+            "agnostic":result[x]["classAgnostic"],
+            "category":result[x]["categoryCompatible"],
+            "delta":result["researchOnlyPixelGateDiffVsSafe"][x],
+            "perCategory":result[x]["perCategory"]}
+             for x in research_modes}
+    },separators=(",",":")))
     print("P88_EXPOSED_FIXED_MATCH_CONFIDENCE_RESEARCH", json.dumps({
         "sourceDigest": EXPECTED,
         "rows": 16, "humanInstances": 53,
