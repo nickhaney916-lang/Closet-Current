@@ -50,7 +50,7 @@ try{
  for(const width of [320,390,430]){
   currentWidth=width;
   const context=await browser.newContext({viewport:{width,height:880},
-   isMobile:true,hasTouch:true,serviceWorkers:'block'});
+   isMobile:true,hasTouch:true,acceptDownloads:true,serviceWorkers:'block'});
   await context.route('**/*',route=>{
    const request=route.request(),url=new URL(request.url());
    if(url.href===origin+'/public/cloud-backup.js')
@@ -93,7 +93,7 @@ try{
     document.getElementById('appShell')?.hidden===false,who,{timeout:45000});
   };
   stage='native login';
-  await page.goto(origin+'/public/index.html?mission4Preview=research',
+  await page.goto(origin+'/public/index.html?mission4Preview=research&losslessV4M3=research',
    {waitUntil:'domcontentloaded'});
   await signin('m59-A');
   stage='real atomic owner-reviewed manual private save';
@@ -210,6 +210,154 @@ try{
   await page.evaluate(()=>{currentBoard.occasion='Casual';});
   const restored=await page.evaluate(()=>window.m59GalleryResearch.refresh());
   assert.equal(restored.photoCount,1);
+
+  stage='actual native v4 full owner photo-only backup export';
+  const pendingDownload=page.waitForEvent('download',{timeout:30000});
+  const exportMessage=await page.evaluate(async()=>{
+   await document.getElementById('export').onclick();
+   return document.getElementById('message')?.textContent||'';
+  });
+  assert.match(exportMessage,/Complete private v4 backup exported/i,
+   'native v4 export did not run after actual photo-only save');
+  const downloaded=await pendingDownload;
+  assert.match(downloaded.suggestedFilename(),/owner-backup-v4\.json/);
+  const backup=JSON.parse(await readFile(await downloaded.path(),'utf8'));
+  assert.equal(backup.format,'closet-current');
+  assert.equal(backup.version,4);
+  assert.equal(backup.ownerId,'m59-A');
+  assert.equal(backup.items.length,1);
+  const backedUp=backup.items[0];
+  assert.equal(backedUp.id,'m59-A-reviewed-public-photo');
+  assert.equal(backedUp.originalPhoto?.image,image);
+  assert.equal(backedUp.originalPhoto?.sha256,sha);
+  assert.equal(backedUp.sourceSHA256,sha);
+  assert.equal(backedUp.ownerId,'m59-A');
+  assert.equal(backedUp.photoOnly,true);
+  assert.equal(backedUp.sourceCropReviewed,true);
+  assert.equal(backedUp.singleGarmentVerified,false);
+  assert.equal(backedUp.threeDReady,false);
+  assert.equal(backup.state?.['outfit-board']?.current?.slots?.top,backedUp.id);
+  // This helper invokes the ACTUAL native input handler; unlike a direct
+  // module call it exercises app owner leases, validation, and confirmation.
+  const importFile=async(data,accept)=>page.evaluate(async({data,accept})=>{
+   window.confirm=()=>accept;
+   const json=JSON.stringify(data);
+   await document.getElementById('import').onchange({
+    target:{files:[{size:json.length,text:async()=>json}],value:'m59-research-import'}
+   });
+   return document.getElementById('message')?.textContent||'';
+  },{data,accept});
+  const ownerSnapshot=()=>page.evaluate(async()=>{
+   const owner=window.closetAuth?.user?.id;
+   const transaction=db.transaction(['items','state'],'readonly');
+   return new Promise((resolve,reject)=>{
+    const item=transaction.objectStore('items').get('m59-A-reviewed-public-photo');
+    const board=transaction.objectStore('state').get('outfit-board');
+    const marker=transaction.objectStore('state').get('cloud-sync');
+    transaction.oncomplete=()=>resolve({
+     owner,itemExists:!!item.result,
+     sourceSHA256:item.result?.sourceSHA256,
+     originalSHA256:item.result?.originalPhoto?.sha256,
+     color:item.result?.color,photoOnly:item.result?.photoOnly,
+     cropReviewed:item.result?.sourceCropReviewed,
+     physicalUnitVerified:item.result?.singleGarmentVerified,
+     threeDReady:item.result?.threeDReady,
+     boardTop:board.result?.current?.slots?.top||null,
+     cloudDirty:marker.result?.dirty===true
+    });
+    transaction.onerror=transaction.onabort=()=>reject(transaction.error);
+   });
+  });
+  const beforeImport=await ownerSnapshot();
+  const corrupted=structuredClone(backup);
+  corrupted.items[0].originalPhoto.sha256='f'.repeat(64);
+  const badNotice=await importFile(corrupted,true);
+  assert.match(badNotice,/source|sha|jpeg|M3_V4|identity|mismatch/i,
+   'native v4 import failed to reject source hash tampering');
+  assert.deepEqual(await ownerSnapshot(),beforeImport,
+   'tampered v4 backup changed private owner record or native outfit');
+  const foreign=structuredClone(backup);
+  foreign.ownerId='m59-B';
+  const wrongOwnerNotice=await importFile(foreign,true);
+  assert.match(wrongOwnerNotice,/owner|bound|account/i,
+   'native v4 import accepted another principal');
+  assert.deepEqual(await ownerSnapshot(),beforeImport,
+   'foreign-owner backup modified owner A wardrobe');
+  const cancelled=await importFile(backup,false);
+  assert.match(cancelled,/cancel/i,'real owner cancellation was ignored');
+  assert.deepEqual(await ownerSnapshot(),beforeImport);
+  stage='simulate local test-owner edit then actual v4 restore';
+  await page.evaluate(async()=>{
+   // Make an original-free metadata-only local edit in our disposable
+   // synthetic A IDB. The verified backup must undo it exactly.
+   const tx=db.transaction('items','readwrite');
+   const store=tx.objectStore('items');
+   const row=await new Promise((resolve,reject)=>{
+    const r=store.get('m59-A-reviewed-public-photo');
+    r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);
+   });
+   if(!row)throw Error('M59 expected synthetic original row missing');
+   row.color='Temporary edited color';
+   store.put(row);
+   await new Promise((resolve,reject)=>{
+    tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
+   });
+   window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
+  });
+  assert.equal(await page.locator('#main59Gallery img').count(),0,
+   'research gallery retained stale JPEG after private wardrobe mutation');
+  assert.equal((await ownerSnapshot()).color,'Temporary edited color');
+  const restoreMessage=await importFile(backup,true);
+  assert.match(restoreMessage,/restored.*v4|v4.*restored/i,
+   'native v4 import did not commit the owner-bound original');
+  const afterRestore=await ownerSnapshot();
+  assert.equal(afterRestore.owner,'m59-A');
+  assert.equal(afterRestore.color,'Black');
+  assert.equal(afterRestore.sourceSHA256,sha);
+  assert.equal(afterRestore.originalSHA256,sha);
+  assert.equal(afterRestore.photoOnly,true);
+  assert.equal(afterRestore.cropReviewed,true);
+  assert.equal(afterRestore.physicalUnitVerified,false);
+  assert.equal(afterRestore.threeDReady,false);
+  assert.equal(afterRestore.boardTop,backedUp.id);
+  assert.equal(afterRestore.cloudDirty,true);
+  // Reload the REAL app after its atomic restore. All bridge references must
+  // be reacquired, not carried over from the old owner/DB session.
+  stage='reopen original photo-only native board after same-owner v4 restore';
+  await page.reload({waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>window.closetAuth?.user?.id==='m59-A'&&
+   db?.name==='closet-current-user-m59-A'&&
+   typeof currentBoard!=='undefined'&&
+   currentBoard.slots?.top==='m59-A-reviewed-public-photo',
+   null,{timeout:45000});
+  const afterGallery=await page.evaluate(async()=>{
+   switchView('builder');
+   const host=document.createElement('section');
+   host.id='main59Gallery';
+   const builder=document.getElementById('mission4Preview1054Section');
+   if(!builder)throw Error('M59 restored native builder unavailable');
+   builder.append(host);
+   const {mountReviewedPhotoOnlyGallery59}=await import(
+    '/research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs');
+   const mounted=mountReviewedPhotoOnlyGallery59({
+    target:host,getSession:currentPhotoOwnerSession167,
+    readOwnerItems:signedOwnerSavedRows167,
+    getBoard:()=>structuredClone(currentBoard),
+    cleanBoard:cleanOutfitBoard,events:window,doc:document
+   });
+   window.m59GalleryResearch=mounted;
+   const info=await mounted.refresh();
+   const img=host.querySelector('img');
+   return {info,original:img?.src,
+    warning:host.querySelector('[data-physical-garment-unit]')?.textContent};
+  });
+  assert.equal(afterGallery.info.photoCount,1);
+  assert.equal(afterGallery.info.renderAuthorized3D,false);
+  assert.equal(afterGallery.info.fittedOutfitAuthorized,false);
+  assert.equal(afterGallery.original,image,
+   'native source view did not preserve original JPEG after v4 restore');
+  assert.match(afterGallery.warning,/physical garment boundaries/i);
+  assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
   await page.locator('.account-menu summary').click();
   await page.locator('#logout').click();
   await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
@@ -234,7 +382,12 @@ try{
    exactOriginalRendered:true,syntheticOwnerReview:true,
    physicalUnitIdentityVerified:false,threeDAdmitted:false,
    staleBoardRevoked:true,logoutPhotoRevoked:true,
-   ownerBOriginalLeak:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+   ownerBOriginalLeak:false,realV4BackupDownload:true,
+   tamperedV4SourceRejected:true,foreignV4OwnerRejected:true,
+   nativeOwnerCanceledV4Unchanged:true,atomicV4OwnerRestore:true,
+   originalJPEGAndFlagsRestored:true,restoredNativeGallery:true,
+   cloudRevisionDirtyAfterRestore:true,
+   releaseAuthorized:false,familyAlpha:'HOLD'});
   await context.close();
  }
  assert.deepEqual(issues,[]);
@@ -247,7 +400,7 @@ try{
    realIndependentLabelAccuracy:false,modelInferenceInThisWorkflow:false,
    threeDAuthorized:false,actualHostedRLS:false,physicalPhone:false,
    familyAlpha:'HOLD',releaseAuthorized:false,cases},null,2)+'\n');
- console.log('M59_ACTUAL_NATIVE_PHOTO_ONLY_REVIEWED_GALLERY_PASS',
+ console.log('M60_ACTUAL_NATIVE_PHOTO_ONLY_V4_RESTORED_GALLERY_PASS',
   JSON.stringify({engine,widths:cases.map(c=>c.width),
    originalSHA256:sha,ownerPrivateSave:true,
    photoOnlyGallery:true,ownerBLeak:false,threeD:false,familyAlpha:'HOLD'}));
