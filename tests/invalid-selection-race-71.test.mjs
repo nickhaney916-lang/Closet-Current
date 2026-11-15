@@ -27,7 +27,7 @@ test('RACE71: current owner/review and confirmation data are not cleared to reje
 });
 test('RACE71: invalid pick shares the same source epoch monotonicity and logout revocation',()=>{
  const s=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
- assert.match(s,/selectionEpoch70\+\+;job\?\.worker\?\.terminate/);
+ assert.match(s,/selectionEpoch70\+\+;job\?\.p88Intake57\?\.close\(\);job\?\.worker\?\.terminate/);
  assert.match(s,/selection,currentSelection:selectionEpoch70/);
  assert.match(s,/currentReviewEpoch:renderVersion/);
  assert.match(s,/getDb\(\)\?\.name,submitting/);
