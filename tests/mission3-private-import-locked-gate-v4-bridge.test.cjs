@@ -469,6 +469,26 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
        await document.getElementById('import').onchange({target:{
         files:[{size:json.length,text:async()=>json}],value:'selected'}});
        const cancelledUnchanged=JSON.stringify(await readSnapshot())===fingerprint;
+       const changesBeforeHistorical=window.__privateCloudDirty||0;
+       // Earlier v1-v3 imports accepted long garment IDs and truncated them
+       // at 100 characters. Verify the new default atomic route preserves that
+       // exact contract in the BUILT app, without a separate research server.
+       window.confirm=()=>true;
+       const legacyId='h'.repeat(100)+'-historical-long-tail';
+       const legacyBackup={format:'closet-current',version:1,items:[{
+        id:legacyId,category:'Tops',name:'Historical import',image:jpeg
+       }]};
+       const legacyJSON=JSON.stringify(legacyBackup);
+       await document.getElementById('import').onchange({target:{
+        files:[{size:legacyJSON.length,text:async()=>legacyJSON}],value:'selected'}});
+       const historicalRows=await readSnapshot();
+       const historicalState=Object.fromEntries(historicalRows.state.map(row=>[row.id,row]));
+       const legacyIdNormalized=historicalRows.items.some(row=>row.id===legacyId.slice(0,100))&&
+        !historicalRows.items.some(row=>row.id===legacyId);
+       const originalAndLooksPreserved=
+        historicalRows.items.some(row=>row.id==='built-photo'&&row.originalPhoto?.image===jpeg)&&
+        historicalState.looks?.looks?.some(row=>row.id==='built-look')&&
+        historicalState['outfit-board']?.current?.slots?.top==='built-photo';
        const byId=Object.fromEntries(rows.state.map(row=>[row.id,row]));
        return {items:rows.items.map(item=>({id:item.id,ownerId:item.ownerId,
         originalPhoto:item.originalPhoto?.image,sourceSHA256:item.sourceSHA256})),
@@ -478,8 +498,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         revision:byId['cloud-sync']?.localRevision,
         dirty:byId['cloud-sync']?.dirty,
         message:document.getElementById('message')?.textContent,
-        invalidRollback,cancelledUnchanged,
-        changed:window.__privateCloudDirty||0};
+        invalidRollback,cancelledUnchanged,legacyIdNormalized,originalAndLooksPreserved,
+        afterLegacyRevision:historicalState['cloud-sync']?.localRevision,
+        changed:changesBeforeHistorical,afterLegacyCloudChanged:window.__privateCloudDirty||0};
       },{owner,jpeg,sha});
       assert.deepEqual(result.items,[{id:'built-photo',ownerId:owner,
        originalPhoto:jpeg,sourceSHA256:sha}],name+' original custody');
@@ -491,6 +512,10 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.changed,1);
       assert.equal(result.invalidRollback,true,name+' rejected malformed backup without partial writes');
       assert.equal(result.cancelledUnchanged,true,name+' retained all private data on cancellation');
+      assert.equal(result.legacyIdNormalized,true,name+' truncates historical long IDs without losing the garment');
+      assert.equal(result.originalAndLooksPreserved,true,name+' preserves existing outfits and JPEG');
+      assert.equal(result.afterLegacyRevision,2,name+' increments cloud revision in atomic transaction');
+      assert.equal(result.afterLegacyCloudChanged,2,name+' signals private backup after commit');
       assert.match(result.message,/canceled|imported atomically/i);
       assert.deepEqual(errors,[]);
       assert.equal(blocked.some(request=>request.method!=='GET'),false,
