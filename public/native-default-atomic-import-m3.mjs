@@ -109,8 +109,26 @@ export async function prepareDefaultAtomicM3({
  // A matching ID is not proof of the same physical garment. Never overwrite
  // an already owned original photograph, even with an explicit bulk-import
  // confirmation, unless the imported photo has the same canonical identity.
+ // A v1-v3 import must never bypass the normal owner photo writers'
+ // same-original duplicate fence simply by assigning a different garment ID.
+ // P88 distinct photographed units still require a separately verified owner
+ // instance receipt; legacy imports cannot mint one silently. All checks are
+ // read-only preflight, before the single atomic items/state transaction.
+ const samePinnedOriginal=(left,right)=>{
+  if(left.sourceHashVerified!==true&&right.sourceHashVerified!==true)return false;
+  const pins=value=>[value.sourceSHA256,value.originalPhoto?.sha256]
+   .filter(hash=>typeof hash==='string'&&sha.test(hash));
+  const rightPins=new Set(pins(right));
+  if(pins(left).some(hash=>rightPins.has(hash)))return true;
+  const pictures=value=>[value.image,value.originalPhoto?.image]
+   .filter(image=>typeof image==='string'&&image.length>0);
+  const rightPictures=new Set(pictures(right));
+  return pictures(left).some(image=>rightPictures.has(image));
+ };
  for(const row of incoming){
   const prior=allItems.get(row.id);
+  if(!prior&&[...allItems.values()].some(saved=>samePinnedOriginal(saved,row)))
+   throw Error('LEGACY_ATOMIC_DUPLICATE_ORIGINAL_REQUIRES_OWNER_REVIEW');
   if(prior){
    // Normalization stamps a new legacy record into the signed DB. For an
    // existing same-ID row, that stamp must NOT turn a missing legacy owner
