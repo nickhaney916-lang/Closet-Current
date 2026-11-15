@@ -1998,7 +1998,8 @@ test('P88 existing saved item deletion is scoped to original owner and IDB row',
  const h=savedDetailsHarness88();
  assert.match(appSource,/await removeExistingPiece88\(deleteLease\)/,
   'native Adjust and Closet actions must invoke signed saved deletion');
- assert.match(appSource,/await removeExistingPiece88\(deleteLease88\)/);
+ assert.equal((appSource.match(/await removeExistingPiece88\(deleteLease\)/g)||[]).length,2,
+  'both existing garment Delete entry points must call the signed helper');
  await h.c.removeExistingPiece88(h.lease);
  assert.deepEqual(h.deletes,['saved-1']);
  assert.equal(h.writes.length,0);
