@@ -196,3 +196,20 @@ test('P90 M13 authentic research owner-photo mobile background/freeze revoke on 
  assert.ok(bridge.includes("cleanup('Browser backgrounded"));
  assert.ok(bridge.includes("cleanup('Browser frozen"));
 });
+
+test('P90 M14 mobile touchscreen buttons on actual original source 163-bone viewer in both engines',()=>{
+ const live=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const flow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ const fixture=readFileSync('scripts/test-native-3d-05-browser.mjs','utf8');
+ assert.ok(fixture.includes('isMobile:true,hasTouch:true'));
+ assert.ok(flow.includes('matrix:'));
+ assert.ok(flow.includes('engine: [chromium, webkit]'));
+ assert.ok(live.includes("if(width===390){"));
+ assert.ok(live.includes("await page.touchscreen.tap("));
+ for(const action of ['Right90','ZoomIn90','Reset90'])
+  assert.ok(live.includes("await tap90('#outfit3D01"+action+"')"),'actual touch event '+action);
+ assert.ok(live.includes('afterReset.bones,163'));
+ assert.ok(live.includes('afterReset.garmentSources90,touchBefore.garmentSources90'));
+ assert.ok(live.includes('afterReset.resources90,touchBefore.resources90'));
+ assert.ok(live.includes('realTouchscreenTap:true'));
+});

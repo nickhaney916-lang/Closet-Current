@@ -32,6 +32,41 @@ export async function checkViewer90(page,width,engine){
   await page.mouse.move(box.x+box.width*.4,box.y+box.height*.5);
   await page.mouse.down();await page.mouse.move(box.x+box.width*.7,box.y+box.height*.5,{steps:12});await page.mouse.up();await settle();
   assert.ok(Math.abs((await camera()).angle)>5,'actual pointer drag changes camera');
+  // M14: REAL touch-generated button taps in a mobile+touch Playwright context
+  // on both browsers. Do not substitute mouse click for this mobile input path.
+  let touchButtons90=null;
+  if(width===390){
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const touchBefore=await state();
+   const tap90=async id=>{
+    const button=page.locator(id);await button.scrollIntoViewIfNeeded();
+    const bounds=await button.boundingBox();
+    assert.ok(bounds&&bounds.width>=43&&bounds.height>=43,
+     'touch target must be visible and at least 43 CSS pixels: '+id);
+    await page.touchscreen.tap(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
+    await settle();
+   };
+   await tap90('#outfit3D01Right90');
+   const afterRight=await state();
+   assert.ok(Math.abs(((afterRight.camera90.angle-touchBefore.camera90.angle+540)%360)-180)>5,
+    'real mobile touchscreen rotate-right button changes original avatar camera');
+   await tap90('#outfit3D01ZoomIn90');
+   const afterZoom=await state();
+   assert.ok(afterZoom.camera90.distance<afterRight.camera90.distance,
+    'real touchscreen zoom-in changes original avatar camera distance');
+   await tap90('#outfit3D01Reset90');
+   const afterReset=await state();
+   assert.ok(Math.min(afterReset.camera90.angle,360-afterReset.camera90.angle)<1,
+    'real touchscreen reset returns original front view');
+   assert.equal(afterReset.bones,163);
+   assert.deepEqual(afterReset.garmentSources90,touchBefore.garmentSources90,
+    'touch input must not change source-photograph outfit identity');
+   assert.deepEqual(afterReset.resources90,touchBefore.resources90,
+    'touch input must not allocate additional mesh/texture resources');
+   touchButtons90={figure,cssWidth:width,rotate:true,zoom:true,reset:true,
+    realTouchscreenTap:true,sourceIdentitySame:true,resourceCountsSame:true,
+    physicalPhone:false};
+  }
   // Repeated camera work must neither rebuild textures nor deform skeletons.
   const baseline=await state();const durations=[];
   for(let i=0;i<16;i++){
@@ -42,7 +77,7 @@ export async function checkViewer90(page,width,engine){
   assert.equal(final.resources90.textures,baseline.resources90.textures);
   // Camera work does not load new garments or textures (renderer metrics
   // are captured through the existing authenticated read-only panel).
-  samples.push({figure,width,engine,before,after,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
+  samples.push({figure,width,engine,before,after,touchButtons90,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
  // Browser-emulated phone landscape; physical finger/hardware remains NOT TESTED.
  // Keep the exact already admitted rig and garment while resizing the viewer.
