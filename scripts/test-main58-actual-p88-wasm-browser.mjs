@@ -683,6 +683,65 @@ try{
   noUnverified3D:true,syntheticAuthOnly:true,hostedRLS:false,
   physicalPhone:false,familyAlpha:'HOLD'
  }));
+ // M67: A real browser-indexed private original can change AFTER the photo
+ // has been displayed. The read-only gallery must invalidate that image and
+ // refuse reentry when actual JPEG BYTES no longer match their saved SHA.
+ // Restore only from A's original owner-scoped v4 export afterwards.
+ stage='same-owner-original-jpeg-byte-tamper-gallery-must-fail-closed';
+ await page.evaluate(async id=>{
+  const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
+  const row=await new Promise((resolve,reject)=>{
+   const req=store.get(id);
+   req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+  });
+  if(!row||row.ownerId!=='m58-A')throw Error('M67 owner item missing');
+  const image=row.originalPhoto?.image;
+  if(typeof image!=='string'||!image.startsWith('data:image/jpeg;base64,')||
+     image.length<500)throw Error('M67 original source missing');
+  const i=Math.floor(image.length*0.65);
+  row.originalPhoto.image=image.slice(0,i)+(image[i]==='A'?'B':'A')+image.slice(i+1);
+  store.put(row);
+  await new Promise((resolve,reject)=>{
+   tx.oncomplete=resolve;tx.onerror=tx.onabort=()=>reject(tx.error);
+  });
+  window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
+ },handoff.savedItemId);
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===0,null,{timeout:20000});
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.getElementById('mission4PhotoOnly59Status')
+  ?.textContent.includes('Photo-only gallery refused'),null,{timeout:30000});
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
+  'edited original JPEG bytes were displayed despite stored source SHA mismatch');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'byte-tampered original improperly obtained fitted 3D permission');
+ assert.equal(await countRows(page),1,
+  'read-only gallery attempted to delete or rewrite corrupt private item');
+ stage='same-owner-atomic-v4-recovery-after-original-jpeg-tamper';
+ const aRestoredNotice=await submitBackup(v4,true);
+ assert.match(aRestoredNotice,/restored.*v4|v4.*restored/i,
+  'native owner v4 restore did not recover byte-tampered source');
+ await page.waitForFunction(id=>window.nativeLossless04Bridge?.status()?.active&&
+  window.nativeLossless04Bridge.readOnlySnapshot().saved.some(b=>b.slots?.top===id)&&
+  !!document.querySelector('#savedBoards button'),handoff.savedItemId,{timeout:30000});
+ await page.locator('#savedBoards button').first().click();
+ await page.waitForFunction(id=>currentBoard?.slots?.top===id,
+  handoff.savedItemId,{timeout:30000});
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
+ const restoredAfterTamper=await page.locator('#mission4PhotoOnly59Photos img')
+  .first().getAttribute('src');
+ assert.equal(restoredAfterTamper,'data:image/jpeg;base64,'+file.toString('base64'),
+  'authenticated owner v4 restore did not recover original immutable photo');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'original-photo-only recovery obtained unsupported fitted 3D permission');
+ console.log('M67_SOURCE_BYTE_TAMPER_REFUSED_AND_OWNER_V4_RECOVERY',JSON.stringify({
+  engine,originalSourceRehashed:true,tamperedJPEGRefused:true,
+  originalOwnerRestoredByRealApp:true,restoredJpegSHA256:sha,
+  originalPhotoOnly:true,fitted3D:false,syntheticAuthOnly:true,
+  hostedRLS:false,physicalPhone:false,familyAlpha:'HOLD'
+ }));
  await context.close();
 }catch(e){
  console.error('M58_REAL_P88_WORKER_FAIL',JSON.stringify({
