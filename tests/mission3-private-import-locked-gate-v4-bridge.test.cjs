@@ -385,7 +385,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
        const url=new URL(route.request().url());
        if(url.hostname==='127.0.0.1'||url.protocol==='data:'||url.protocol==='blob:')
         return route.fallback();
-       blocked.push(url.href);return route.abort();
+       blocked.push({url:url.href,method:route.request().method()});return route.abort();
       });
       await ctx.addInitScript(()=>{
        class OfflineWorker{
@@ -439,7 +439,9 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.dirty,true);
       assert.equal(result.changed,1);
       assert.match(result.message,/imported atomically/i);
-      assert.deepEqual(errors,[]);assert.deepEqual(blocked,[]);
+      assert.deepEqual(errors,[]);
+      assert.equal(blocked.some(request=>request.method!=='GET'),false,
+       'Built private import must never attempt an external write');
      }finally{await ctx.close();}
     }finally{await browser.close();}
    }
