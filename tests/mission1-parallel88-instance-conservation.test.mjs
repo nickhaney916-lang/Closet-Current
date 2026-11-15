@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups} from '../public/outfit-segmentation.mjs';
-import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
+import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES,accessoryBoxIoU88,evaluateCocoAccessoryBoxes88,cocoAccessoryLabel88} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
 import {clothingReviewInstances840} from '../public/outfit-instance-review-840.mjs';
 
 function fixture(width=48,height=48){
@@ -171,4 +171,53 @@ test('P88 research source loose shoe mask conserves both physical-region proposa
   x.componentReviewStatus==='owner_must_confirm_garment_units'),true);
  proveConservation(group[0],review);
  assert.equal(review.reduce((sum,r)=>sum+r.count,0),180);
+});
+
+
+test('P88 COCO model bag scope cannot explain unsupported watch, belt, glasses or hats',()=>{
+ assert.equal(cocoAccessoryLabel88('handbag'),'bag');
+ assert.equal(cocoAccessoryLabel88('backpack'),'bag');
+ assert.equal(cocoAccessoryLabel88('tie'),'tie');
+ assert.equal(cocoAccessoryLabel88('umbrella'),'umbrella');
+ for(const label of ['watch','belt','glasses','hat','person','shoe','shirt',null])
+  assert.equal(cocoAccessoryLabel88(label),null);
+ const gt=[
+  {category_id:24,box:{xmin:5,ymin:5,xmax:15,ymax:15}},
+  {category_id:18,box:{xmin:20,ymin:5,xmax:24,ymax:9}},
+  {category_id:19,box:{xmin:5,ymin:20,xmax:18,ymax:25}},
+  {category_id:13,box:{xmin:30,ymin:8,xmax:42,ymax:14}},
+  {category_id:14,box:{xmin:25,ymin:25,xmax:45,ymax:36}},
+  {category_id:15,box:{xmin:2,ymin:30,xmax:10,ymax:40}}
+ ];
+ const p=[{label:'handbag',score:.98,box:{xmin:5,ymin:5,xmax:15,ymax:15}},
+  {label:'person',score:.99,box:{xmin:0,ymin:0,xmax:48,ymax:48}}];
+ const result=evaluateCocoAccessoryBoxes88(gt,p);
+ assert.equal(result.supportedHuman,1);
+ assert.equal(result.unsupportedHuman,5);
+ assert.equal(result.matched,1);
+ assert.equal(result.proposals,1);
+ assert.equal(result.falsePositives,0);
+ assert.deepEqual(result.unsupportedFashionpediaIds,[18,19,13,14,15]);
+ assert.equal(result.noSaveOrModelPromotion,true);
+});
+test('P88 accessory COCO boxes use source-bound per-class 1:1 IoU not duplicated detections',()=>{
+ const gt=[{category_id:24,box:{xmin:0,ymin:0,xmax:10,ymax:10}},
+           {category_id:24,box:{xmin:25,ymin:25,xmax:35,ymax:35}}];
+ const seen=[{label:'handbag',score:.9,box:{xmin:0,ymin:0,xmax:10,ymax:10}},
+             {label:'backpack',score:.8,box:{xmin:0,ymin:0,xmax:10,ymax:10}},
+             {label:'umbrella',score:.8,box:{xmin:25,ymin:25,xmax:35,ymax:35}}];
+ const r=evaluateCocoAccessoryBoxes88(gt,seen);
+ assert.equal(r.matched,1,'identical overlapping bags cannot match two human physical instances');
+ assert.equal(r.falsePositives,2);
+ assert.equal(r.falseNegatives,1);
+ assert.ok(Math.abs(accessoryBoxIoU88(
+  {xmin:0,ymin:0,xmax:10,ymax:10},
+  {xmin:5,ymin:5,xmax:15,ymax:15})-1/7)<.0000001);
+ assert.throws(()=>evaluateCocoAccessoryBoxes88(
+  [{category_id:23,box:gt[0].box}],[]),/P88_EXPECTED_ACCESSORY_TRUTH_ONLY/);
+ assert.throws(()=>evaluateCocoAccessoryBoxes88(gt,[
+  {label:'handbag',score:NaN,box:gt[0].box}]),/P88_INVALID_COCO_CONFIDENCE/);
+ assert.throws(()=>evaluateCocoAccessoryBoxes88(gt,[
+  {label:'handbag',score:.6,box:{xmin:0,ymin:0,xmax:0,ymax:10}}]),
+ /P88_INVALID_BOX/);
 });
