@@ -419,6 +419,13 @@ try{
     assert.equal(neutralRear.sourceFrontPhotographedSurfaceTriangleCount,288);
     assert.equal(neutralRear.sourceUnphotographedRearTriangleCount,288);
     assert.ok(neutralRear.unphotographedRearMarkerPixels>=0);
+    assert.ok(neutralRear.opaqueSourceMeshProjectedMarkerPixels>=
+      neutralRear.unphotographedRearMarkerPixels);
+    assert.ok(neutralRear.opaqueSourceMeshProjectedMarkerPixels>0);
+    assert.ok(neutralRear.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt>=0&&
+      neutralRear.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt<=1);
+    assert.equal(neutralRear.opaqueFrontMarkerOverestimatesPhotographicAlphaCoverage,true);
+    assert.equal(neutralRear.projectedSourceDenominatorNotTruePhotographedVisiblePixels,true);
     assert.equal(neutralRear.temporaryAttributionMaterialDisposedAndRestored,true);
     assert.equal(neutralRear.originalPhotoFrontUVAndRGBUnchanged,true);
     assert.equal(neutralRear.originalRearPhotoObserved,false);
@@ -434,6 +441,9 @@ try{
      'actual 90-degree original skirt side view must disclose visible unphotographed rear');
     if(angle===180)assert.ok(neutralRear.unphotographedRearMarkerPixels>2000,
      'actual original 180-degree rear source view must disclose substantial inferred non-photographic back');
+    if(angle===180)assert.ok(
+     neutralRear.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt>.70,
+     'even under source photo alpha-conservative overcount, genuine rear source camera must show dominant inferred back');
     results.originalPublicUnphotographedRearVisibilityReports.push(neutralRear);
     poses.push({angle,changedRGBChannelsAbove12:changedRGB});
     results.research45OnlyPreviewScreenshots.push({
@@ -560,6 +570,8 @@ try{
    originalPhotoCreamFrontCoverageWitnesses:results.originalPhoto45FrontVisibilityReports.length,
    originalUnphotographedRearSourceViewAudits:results.originalPublicUnphotographedRearVisibilityReports.length,
    original180DegreeNeutralOnlyRearPixels:results.originalPublicUnphotographedRearVisibilityReports.filter(x=>x.viewAngle===180).map(x=>x.unphotographedRearMarkerPixels),
+   original180DegreeRearLowerBoundShareOfWholeProjectedSkirt:
+    results.originalPublicUnphotographedRearVisibilityReports.filter(x=>x.viewAngle===180).map(x=>x.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt),
    originalCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.originalCenterFrontalVisibleMannequinFraction),
    rigid45mmCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
