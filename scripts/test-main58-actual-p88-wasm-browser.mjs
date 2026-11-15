@@ -627,6 +627,62 @@ try{
   ownerLabelsAreHumanGroundTruth:false,hostedRLS:false,physicalPhone:false,
   familyAlpha:'HOLD'
  }));
+ // M66: A->B denial is not sufficient if the signed original owner
+ // cannot recover their own verified local originals/outfit afterwards.
+ // Use the ACTUAL native logout and login UI, same browser/IndexedDB, and
+ // exactly the original single public JPEG saved earlier in this session.
+ // Neither B nor A re-logins re-run the worker or seed a synthetic record.
+ stage='same-browser-owner-B-logout-return-owner-A-private-recovery';
+ await page.locator('.account-menu summary').click();
+ await page.locator('#logout').click();
+ await page.waitForFunction(()=>document.getElementById('authGate')?.hidden===false,
+  null,{timeout:30000});
+ assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
+  'B logout retained a prior owner original in the gallery');
+ await page.locator('#authEmail').fill('m58-A@example.test');
+ await page.locator('#authPassword').fill('fixture-only');
+ await page.locator('#authSubmit').click();
+ await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-A'&&
+  db?.name==='closet-current-user-m58-A'&&
+  document.getElementById('appShell')?.hidden===false,null,{timeout:30000});
+ await page.waitForFunction(()=>window.nativeLossless04Bridge?.status()?.active===true,
+  null,{timeout:30000});
+ const returnA=await ownerSnapshot();
+ assert.equal(returnA.owner,'m58-A');
+ assert.equal(returnA.items.length,1,
+  'original owner lost manually confirmed private garment after B was denied');
+ assert.equal(returnA.items[0].id,handoff.savedItemId);
+ assert.equal(returnA.items[0].sourceSHA256,sha);
+ assert.equal(returnA.items[0].originalSHA,sha);
+ assert.equal(returnA.items[0].color,savedPhoto.color);
+ assert.equal(returnA.items[0].singleGarmentVerified,false);
+ assert.equal(returnA.items[0].threeDReady,false);
+ assert.equal(returnA.savedOutfitCount,1,
+  'original owner lost authentic native saved outfit after B import denial');
+ assert.equal(returnA.top,handoff.savedItemId);
+ await page.evaluate(()=>switchView('builder'));
+ await page.waitForFunction(id=>window.nativeLossless04Bridge?.status()?.active&&
+  window.nativeLossless04Bridge.readOnlySnapshot().saved.some(b=>b.slots?.top===id)&&
+  !!document.querySelector('#savedBoards button'),handoff.savedItemId,{timeout:30000});
+ await page.locator('#savedBoards button').first().click();
+ await page.waitForFunction(id=>currentBoard?.slots?.top===id,
+  handoff.savedItemId,{timeout:30000});
+ await page.locator('#mission4PhotoOnly59Open').click();
+ await page.waitForFunction(()=>document.querySelectorAll(
+  '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
+ const recoveredOriginal=await page.locator('#mission4PhotoOnly59Photos img')
+  .first().getAttribute('src');
+ assert.equal(recoveredOriginal,'data:image/jpeg;base64,'+file.toString('base64'),
+  'returning signed owner A did not recover byte-identical original JPEG');
+ assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+  'returning owner original-photo-only gallery promoted unproven 3D');
+ console.log('M66_OWNER_A_RETURN_PRIVATE_SOURCE_RECOVERY',JSON.stringify({
+  engine,actualSourceWorkerRanOnce:true,ownerBImportRefused:true,
+  ownerAReturnOriginalPhotoSHA256:sha,originalPrivateItems:1,
+  savedOutfits:1,exactOriginalPhotoRecovered:true,
+  noUnverified3D:true,syntheticAuthOnly:true,hostedRLS:false,
+  physicalPhone:false,familyAlpha:'HOLD'
+ }));
  await context.close();
 }catch(e){
  console.error('M58_REAL_P88_WORKER_FAIL',JSON.stringify({
