@@ -46,6 +46,38 @@ jobs:
           node --check scripts/test-m1-owner-pair-admission-846.mjs
           node --check research/mission1-parallel88/run-public-validation-88.mjs
           python -m py_compile research/mission1-parallel88/recover-public-validation-88.py research/mission1-parallel88/score-public-validation-88.py
+          # Source-execute the actual stdlib-only confidence-retention
+          # research function without requiring a model, private photos or COCO.
+          python - <<'PY'
+          import ast, math
+          from pathlib import Path
+          p=Path("research/mission1-parallel88/score-public-validation-88.py")
+          tree=ast.parse(p.read_text())
+          f=next(n for n in tree.body if isinstance(n,ast.FunctionDef)
+                 and n.name=="retained_fixed_match_diagnostic")
+          scope={"math":math}
+          exec(compile(ast.Module(body=[f],type_ignores=[]),str(p),"exec"),scope)
+          calc=scope["retained_fixed_match_diagnostic"]
+          row={"truth":2,"predicted":3,
+               "predictedRegions":[{"confidence":.83},{"confidence":.96},{"confidence":.93}],
+               "classAgnosticMatches":[{"predictionIndex":0},{"predictionIndex":2}],
+               "categoryCompatibleMatches":[{"predictionIndex":0}]}
+          out=calc([row],(.8,.9,.95))
+          assert [x["retainedProposals"] for x in out]==[3,2,1]
+          assert [x["retainedPriorClassAgnosticMatches"] for x in out]==[2,1,0]
+          assert [x["retainedPriorCategoryCompatibleMatches"] for x in out]==[1,0,0]
+          assert all(x["notRematchedIoU"] and x["notNovelCalibration"] and
+                     x["noAutoSaveAuthority"] for x in out)
+          for changed in ({**row,"predicted":2},
+                          {**row,"predictedRegions":[{"confidence":float("nan")},
+                              *row["predictedRegions"][1:]]},
+                          {**row,"classAgnosticMatches":[{"predictionIndex":0},
+                              {"predictionIndex":0}]}):
+              try: calc([changed])
+              except ValueError: continue
+              raise AssertionError("Invalid original public-score receipt accepted")
+          print("P88_FIXED_MATCH_DIAGNOSTIC_SELFTEST PASS; research only, no model promotion")
+          PY
           python research/mission1-parallel88/recover-public-validation-88.py --verify-manifest-only
           python research/mission1-parallel88/recover-public-validation-88.py --audit-accessory-ontology | tee /tmp/p88-human-accessory-ontology
           grep -Fq '"humanAccessoryInstances":13' /tmp/p88-human-accessory-ontology
