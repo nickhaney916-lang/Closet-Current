@@ -22,12 +22,14 @@ function fixture(engine='chromium'){
    photo2DFallbackRequired:true,releaseAuthorized:false
   });
  const comparisons={};
- for(const [before,after] of [['P93','M45'],['M45','M45_HOLE']]){
+ for(const [before,after] of [['P93','M45'],['M45','M45'],['M45','M45_HOLE']]){
+  const delta=before===after?0:before==='P93'?74:73;
   comparisons[before+'__'+after]=[];
   for(const figure of figures)for(const pose of poses)for(const view of views)
    comparisons[before+'__'+after].push({
-    figure,pose,view,changedRGBPixelsAbove8:73,
-    sourceNecklineScreenRegionChanges:73,
+    figure,pose,view,sourceVariantA:before,sourceVariantB:after,
+    changedRGBPixelsAbove8:delta,
+    sourceNecklineScreenRegionChanges:delta,
     changesOutsideObservedNecklineROI:0,
     actualFragmentHoleIsNotPhysicalOpening:true,
     originalJpegAndUVUnchanged:true,releaseAuthorized:false
@@ -52,7 +54,8 @@ function fixture(engine='chromium'){
   variants,figures,poses,views,
   originalSourceP93AlphaChanged:12961,
   m45ExtraSourceAlphaTransparent:4890,
-  incrementalTrueFragmentAlphaHoleChangedPixels:881,
+  baselineSourceAlphaBlendChangedPixels:888,
+  incrementalTrueFragmentAlphaHoleChangedPixels:876,
   actualViewsWithIncrementalShaderCutoutPixels:12,
   sourceVisibilitySafety47:{
    schema:'MAIN1054_M47_AUTHENTIC_SOURCE_ALPHA_VISIBILITY_COMPARISON_CHECK/v1',
@@ -74,7 +77,7 @@ test('M48 synthetic valid source contract still denies any physical garment prom
   const verdict=auditNativePhotoNecklinePhysicalEdge48(fixture(engine),{expectedEngine:engine});
   assert.equal(verdict.schema,M48.schema);
   assert.equal(verdict.genuineSourceScenesAudited,36);
-  assert.equal(verdict.observedFragmentVisibilityPixels,881);
+  assert.equal(verdict.observedFragmentVisibilityPixels,876);
   assert.equal(verdict.documentedTransparentSourceVs3DPhysicalEdgeGap,true);
   assert.equal(verdict.actualSewnCollarEdgeReconstructed,false);
   assert.equal(verdict.originalBacksidePhotographicallyObserved,false);
@@ -110,6 +113,13 @@ test('M48 rejects missing real source scenes, fake cropped ROI and changed geome
   {...base,scenes:base.scenes.map((s,i)=>i===8?{...s,fittedVertices:13000}:s)},
   {...base,scenes:base.scenes.map((s,i)=>i===2?{...s,screenshotSHA256:'x'}:s)},
   {...base,sourceCropRects:{...base.sourceCropRects,M45:[.16,.12,.70,.81]}},
+  {...base,comparisons:{...base.comparisons,
+   M45__M45:base.comparisons.M45__M45.map((r,i)=>i===0?
+    {...r,changedRGBPixelsAbove8:1,sourceNecklineScreenRegionChanges:1}:r)}},
+  {...base,comparisons:{...base.comparisons,
+   M45__M45_HOLE:base.comparisons.M45__M45_HOLE.map((r,i)=>i===1?
+    {...r,sourceVariantB:'P93'}:r)}},
+  {...base,incrementalTrueFragmentAlphaHoleChangedPixels:1},
   {...base,sourceVisibilitySafety47:{...base.sourceVisibilitySafety47,contactSweepContinuousNotCertified:false}},
   {...base,comparisons:{...base.comparisons,
    M45__M45_HOLE:base.comparisons.M45__M45_HOLE.map((r,i)=>i===3?
