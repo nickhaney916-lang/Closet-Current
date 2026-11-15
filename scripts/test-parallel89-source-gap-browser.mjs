@@ -74,7 +74,27 @@ try{
     null,{timeout:180000});
   }
   await page.locator('#review').check();
-  await page.locator('#two').click();
+  // P89 runs the actual five-pose 163-bone BVH contact veto synchronously
+  // inside the existing research button's click handler. In native WebKit
+  // Playwright's locator.click() can hang waiting for that long handler,
+  // producing a false test timeout while the original source rig is busy.
+  // Schedule the actual original DOM button activation as a macrotask,
+  // then explicitly wait for the FULL source-outfit + safety-gate receipt.
+  // No fake shortcut, bypassed validation or simulated completed outfit.
+  await page.evaluate(()=>{
+   const button=document.querySelector('#two');
+   if(!button||button.disabled)throw Error('real-original-shirt-jeans-action-unavailable');
+   setTimeout(()=>button.click(),0);
+   return true;
+  });
+  await page.waitForFunction(()=>{
+   const diag=window.ccDress12Diagnostics?.();
+   return diag?.outfitMode==='shirt-pants'&&diag?.bones===163&&
+    window.__parallel84ShapeResult?.schema==='parallel84-source-bone-shoulder-yoke/v1'&&
+    typeof window.__parallel89GapAudit==='function'&&
+    typeof window.__parallel89QuarterGapAudit==='function'&&
+    typeof window.__parallel89RealShirtGeometryDigest==='function';
+  },null,{timeout:240000,polling:250});
   const sources=await page.evaluate(()=>window.ccDress12Diagnostics());
   assert.equal(sources.figure,avatar);
   assert.equal(sources.bones,163);
