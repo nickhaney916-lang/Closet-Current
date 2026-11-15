@@ -301,6 +301,7 @@ function privateP75P71Fixture88(){
   dualHumanReviewedCount:60,verifiedIndependentHumanReviewers:2,
   unresolvedDisagreements:0,historicalExposureComplete:true,
   prospectiveSourceAndPhotographerDisjoint:true,
+  pretrainedModelTrainingDisjointnessVerified:true,
   fullSourceBytesAndLicenseVerified:true,humanRightsAndConsentApproved:true,
   sourceGroupsIndependentlyVerified:true,noPriorModelOrAnswerExposure:true,
   answerKeysOutsideRepository:true,
@@ -383,6 +384,7 @@ test('P88 blind handoff denies synthetic unlabeled development sources even if s
   {verifiedIndependentHumanReviewers:1},{sourceGroupCount:59},
   {unresolvedDisagreements:1},{noPriorModelOrAnswerExposure:false},
   {prospectiveSourceAndPhotographerDisjoint:false},
+  {pretrainedModelTrainingDisjointnessVerified:false},
   {humanRightsAndConsentApproved:false},
   {historicalExposureComplete:false},
   {sealedBlindCommitment:P88_FROZEN_CANDIDATE.originalExposedPhotoManifestSha256}
