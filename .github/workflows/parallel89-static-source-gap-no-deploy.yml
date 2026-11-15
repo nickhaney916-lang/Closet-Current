@@ -26,6 +26,7 @@ jobs:
           node --check research/parallel89/unsigned-surface-core89.mjs
           node --check research/parallel89/source-static-gap89.mjs
           node --check research/parallel89/source-gap-contrast89.mjs
+          node --check research/parallel89/gated-source-shoulder89.mjs
           node --check scripts/install-parallel89-source-gap.mjs
           node --check scripts/test-parallel89-source-gap-browser.mjs
       - name: Install only pinned research math dependencies
@@ -84,6 +85,7 @@ jobs:
           (cd .p89-readonly-p84 && node scripts/install-parallel84-real-source-layer.mjs ../.p89-disposable-p541)
           node scripts/install-parallel89-source-gap.mjs .p89-disposable-p541
           node --check .p89-disposable-p541/research/parallel89/source-static-gap89.mjs
+          node --check .p89-disposable-p541/research/parallel89/gated-source-shoulder89.mjs
           node --check .p89-disposable-p541/research/dress-mobile-01/dress-outfit-controller.mjs
       - name: Real public original photos + anatomical male/female static signed-UNKNOWN BVH distance, no owner release
         run: node scripts/test-parallel89-source-gap-browser.mjs .p89-disposable-p541
