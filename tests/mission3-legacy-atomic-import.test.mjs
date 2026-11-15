@@ -193,7 +193,7 @@ test('same legacy ID without source hash cannot silently replace its only saved 
   const before=await snapshot(f.db);
   // Keep the same ID, garment category, owner and outfit slots. Without an
   // original-photo receipt, the saved preview is the only source identity.
-  const changed={...row(f.owner),image:'data:image/jpeg;base64-'+
+  const changed={...row(f.owner),image:'data:image/jpeg;base64,'+
    Buffer.from([255,216,1,255,217]).toString('base64')};
   await assert.rejects(prep(f,{format:'closet-current',version:3,
    items:[changed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
