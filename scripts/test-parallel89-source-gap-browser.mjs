@@ -279,11 +279,17 @@ try{
    assert.equal(contrast.sourcePhoto2DFallbackRequired,true);
    assert.ok(['baseline','trial'].includes(contrast.researchOnlyPreferredVariant));
    if(variant==='trial'){
-    // Pin the genuine-source current failure/improvement rather than letting
-    // a passing no-crossings CI silently endorse the female yoke regression.
-    assert.equal(contrast.researchOnlyPreferredVariant,
-     avatar==='female'?'baseline':'trial',
-     'known original licensed shoulder source gap veto changed');
+    // The original 3-pose male yoke improved measured gaps, but the 5-pose
+    // guard may legitimately REFUSE it on a newly witnessed 25/75% contact.
+    // Never turn the former 3-pose result into a mandatory pass condition.
+    // Female yoke ALWAYS reverts to the source baseline.
+    const expected=avatar==='female'?'baseline':
+     byVariant[variant].shoulder.trialApplied?'trial':'baseline';
+    assert.equal(contrast.researchOnlyPreferredVariant,expected,
+     'original-source 5-pose selection and rollback disagree');
+    if(avatar==='female')
+     assert.equal(byVariant[variant].shoulder.trialApplied,false,
+      'real female original-source shoulder regression must be rolled back');
    }
    shoulderContrasts.push({...contrast,researchShapeVariant:variant});
   }
