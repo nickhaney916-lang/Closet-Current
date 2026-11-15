@@ -713,3 +713,14 @@ No model weights, thresholds, actual accuracy or physical item certification
 were changed. New exact-head CI must be verified; independent human-photo,
 physical Android/iOS and hosted owner acceptance remain BLOCKED.
 **FAMILY ALPHA HOLD #255 OPEN — DRAFT ONLY, NO MERGE/DEPLOY.**
+
+**CI correction:** the first post-fix commit `0c41490` failed one inherited
+`tests/clothing-memory.test.cjs` fixture: that historical Node VM extracts
+only `saveMemoryReview` and has no browser Window or companion function.
+It exercises the original image-only *synthetic* merge contract and expects
+new recognition-memory features to preserve its latest manually corrected
+subtype and color. The native browser path remains strictly owner/IDB/source
+fenced. The extracted *nonbrowser* fixture only keeps its prior semantics,
+so the inherited source test can run without relaxing any real browser lease.
+The first run's 841/842 full Node result is **FAIL**, not accepted; verify
+this revised exact-head CI before claiming a green receipt.

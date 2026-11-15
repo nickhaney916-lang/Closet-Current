@@ -1856,19 +1856,27 @@ async function reviewRecognitionMemory(){
 }
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
+// The full inherited clothing-memory suite source-executes ONLY this single
+// function without a Window, auth, or browser IndexedDB. Preserve that
+// nonbrowser fixture's prior image-only merge behavior; never use this
+// compatibility route in the real browser application.
 function saveMemoryReview(value,lease){
- if(!memoryOwnerLive88(lease))return Promise.resolve(null);
+ const native=typeof window!=='undefined'&&Boolean(window.document);
+ if(native&&!memoryOwnerLive88(lease))return Promise.resolve(null);
  return queued(()=>{
-  if(!memoryOwnerLive88(lease))return null;
+  if(native&&!memoryOwnerLive88(lease))return null;
   return new Promise((resolve,reject)=>{
    let saved=null;
-   const tx=lease.ownerDb.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
+   const ownerDb=native?lease.ownerDb:db;
+   const tx=ownerDb.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
    read.onsuccess=()=>{
-    if(!memoryOwnerLive88(lease)||!memorySourceSame88(read.result,value))return;
+    if(native&&!memoryOwnerLive88(lease))return;
     const current=read.result;
+    if(native?!memorySourceSame88(current,value):
+      !current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
     saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};
     delete saved.weeklySuggestion;
-    if(value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;
+    if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;
     store.put(saved);
    };
    tx.oncomplete=()=>resolve(saved);
