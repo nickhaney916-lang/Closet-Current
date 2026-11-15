@@ -2253,3 +2253,195 @@ test('P88 active owner still sees meaningful browser storage error when initial 
  assert.equal(h.items.length,0);
  assert.equal(h.scans.length,0);
 });
+
+// P88: source-execute the actual native photo and closet-video import paths
+// with gated decode / seek promises. These are synthetic files and fake owner
+// IDs; they cannot establish physical mobile camera or hosted-account privacy.
+function pendingImportEvent88(){
+ let resolve,reject;
+ const promise=new Promise((a,b)=>{resolve=a;reject=b;});
+ return {promise,resolve,reject};
+}
+async function importWait88(check){
+ for(let i=0;i<30;i++){
+  if(check())return;
+  await new Promise(resolve=>setImmediate(resolve));
+ }
+ assert.fail('expected native import await not reached');
+}
+function photoFileImportHarness88(){
+ const start=appSource.indexOf('async function importClothingPhotos(files){');
+ const end=appSource.indexOf("$('clothingPhotos').onchange",start);
+ assert.ok(start>0&&end>start,'actual native photo importer exists');
+ const owner={id:'owner-A'},ownerDb={name:'closet-current-user-owner-A'};
+ const gates=[],accepted=[],messages=[],views=[],controls=[],resultPhotos=[];
+ const c={window:{document:{},closetAuth:{user:owner}},db:ownerDb,
+  busy:false,session:0,batch:[],items:[],
+  stopCamera(){},controls(x){controls.push(x);},message(x){messages.push(x);},
+  switchView(x){views.push(x);},candidate(image){
+   accepted.push(image);c.batch.push({id:'draft-'+accepted.length,image});return true;
+  },
+  photoToJPEG(file){const d=pendingImportEvent88();gates.push({file,...d});return d.promise;},
+  readPhotoBatch:async(files,decode,onPhoto)=>{
+   const errors=[],results=[];let added=0;
+   for(const file of files){
+    try{
+     const photo=await decode(file);
+     const accepted=await onPhoto(photo,file);
+     if(accepted===false)results.push({name:file.name,status:'duplicate'});
+     else{added++;resultPhotos.push(photo);results.push({name:file.name,status:'added'});}
+    }catch(error){
+     errors.push(file.name+': could not open; try JPEG or PNG');
+     results.push({name:file.name,status:'error',reason:error.message});
+    }
+   }
+   return {added,errors,results};
+  }};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+ return {c,owner,ownerDb,gates,accepted,messages,views,controls,resultPhotos};
+}
+test('P88 local photo decode cannot admit owner A original JPEG to a replacement B session',async()=>{
+ const h=photoFileImportHarness88();
+ const task=h.c.importClothingPhotos([{name:'A-private.jpg',size:123}]);
+ await importWait88(()=>h.gates.length===1);
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.batch=[{id:'B-existing',image:'data:image/jpeg;base64,QkJC'}];
+ h.gates[0].resolve('data:image/jpeg;base64,QUFB');
+ await task;
+ assert.deepEqual(h.c.batch.map(x=>x.id),['B-existing']);
+ assert.equal(h.accepted.length,0);
+ assert.equal(h.views.length,0);
+ assert.equal(h.messages.length,0);
+ assert.equal(h.c.window.__lastPhotoImportResult,undefined);
+});
+test('P88 same-ID renewed owner login and replacement IDB each revoke pending photo decode',async()=>{
+ for(const change of ['same-id-login','same-id-db']){
+  const h=photoFileImportHarness88();
+  const task=h.c.importClothingPhotos([{name:'A-private.png',size:123}]);
+  await importWait88(()=>h.gates.length===1);
+  if(change==='same-id-login')h.c.window.closetAuth.user={id:'owner-A'};
+  else h.c.db={name:'closet-current-user-owner-A'};
+  h.gates[0].resolve('data:image/jpeg;base64,QUFB');
+  await task;
+  assert.equal(h.accepted.length,0);
+  assert.equal(h.c.batch.length,0);
+  assert.equal(h.views.length,0);
+  assert.equal(h.messages.length,0);
+ }
+});
+test('P88 import may retain already accepted owner A photo but never append later frame to owner B',async()=>{
+ const h=photoFileImportHarness88();
+ const task=h.c.importClothingPhotos([
+  {name:'first.jpg',size:100},{name:'second.jpg',size:100}]);
+ await importWait88(()=>h.gates.length===1);
+ h.gates[0].resolve('data:image/jpeg;base64,RklSU1Q=');
+ await importWait88(()=>h.gates.length===2);
+ assert.equal(h.accepted.length,1,'first image accepted only in original signed session');
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.batch=[{id:'B-original',image:'data:image/jpeg;base64,QkJC'}];
+ h.gates[1].resolve('data:image/jpeg;base64,U0VDT05E');
+ await task;
+ assert.deepEqual(h.c.batch.map(x=>x.id),['B-original']);
+ assert.equal(h.accepted.length,1);
+ assert.equal(h.views.length,0);
+ assert.equal(h.messages.length,0);
+});
+test('P88 same owner photo import still returns two distinct original JPEG review drafts',async()=>{
+ const h=photoFileImportHarness88();
+ const task=h.c.importClothingPhotos([
+  {name:'one.jpg',size:100},{name:'two.jpg',size:100}]);
+ await importWait88(()=>h.gates.length===1);
+ h.gates[0].resolve('data:image/jpeg;base64,T05F');
+ await importWait88(()=>h.gates.length===2);
+ h.gates[1].resolve('data:image/jpeg;base64,VFdP');
+ await task;
+ assert.deepEqual(h.c.batch.map(x=>x.image),['data:image/jpeg;base64,T05F','data:image/jpeg;base64,VFdP']);
+ assert.deepEqual(h.c.batch.map(x=>x.importFilename),['one.jpg','two.jpg']);
+ assert.deepEqual(h.views,['review']);
+ assert.equal(h.c.window.__lastPhotoImportResult.added,2);
+ assert.equal(h.c.busy,false);
+});
+function videoFrameImportHarness88(){
+ const start=appSource.indexOf('async function upload(file){');
+ const end=appSource.indexOf("$('upload').onchange",start);
+ assert.ok(start>0&&end>start,'actual native video importer exists');
+ const owner={id:'owner-A'},ownerDb={name:'closet-current-user-owner-A'};
+ const events=[],frames=[],views=[],messages=[],revoked=[],controls=[],renders=[];
+ const elements={placeholder:{hidden:true},interval:{value:'1'},
+  captureState:{textContent:''}};
+ const video={src:'',duration:1.5,currentTime:0,classList:{add(){}},
+  removeAttribute(name){if(name==='src')this.src='';},load(){}};
+ const c={window:{document:{},closetAuth:{user:owner}},
+  db:ownerDb,busy:false,session:0,batch:[],items:[],video,
+  URL:{createObjectURL(){return 'blob:owner-A-video';},
+   revokeObjectURL(url){revoked.push(url);}},
+  waitEvent(_,type){const d=pendingImportEvent88();events.push({type,...d});return d.promise;},
+  snap(){const image='data:image/jpeg;base64,RlJBTUU'+(frames.length+1);
+   return image;},
+  candidate(photo){frames.push(photo);c.batch.push({id:'frame-'+frames.length,image:photo});return true;},
+  stopCamera(){},controls(v){controls.push(v);},message(m){messages.push(m);},
+  switchView(view){views.push(view);},render(){renders.push('render');},
+  $(id){return elements[id]||(elements[id]={textContent:'',hidden:true});}};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+ return {c,owner,ownerDb,events,frames,views,messages,revoked,controls,renders};
+}
+test('P88 signed owner changed during video metadata decode never paints old JPEG frames to B',async()=>{
+ const h=videoFrameImportHarness88(),task=h.c.upload({size:100});
+ await importWait88(()=>h.events.length===1);
+ assert.equal(h.events[0].type,'loadedmetadata');
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.batch=[{id:'B-current',image:'data:image/jpeg;base64,QkJC'}];
+ h.events[0].resolve();
+ await task;
+ assert.deepEqual(h.c.batch.map(x=>x.id),['B-current']);
+ assert.equal(h.frames.length,0);
+ assert.equal(h.views.length,0);
+ assert.equal(h.messages.length,0);
+ assert.deepEqual(h.revoked,['blob:owner-A-video']);
+});
+test('P88 renewed same-ID session or replaced IDB during video seek cannot capture old owner frame',async()=>{
+ for(const change of ['renew','db']){
+  const h=videoFrameImportHarness88(),task=h.c.upload({size:100});
+  await importWait88(()=>h.events.length===1);h.events[0].resolve();
+  await importWait88(()=>h.events.length===2);
+  assert.equal(h.events[1].type,'seeked');
+  if(change==='renew')h.c.window.closetAuth.user={id:'owner-A'};
+  else h.c.db={name:'closet-current-user-owner-A'};
+  h.events[1].resolve();await task;
+  assert.equal(h.frames.length,0);
+  assert.equal(h.c.batch.length,0);
+  assert.equal(h.views.length,0);
+  assert.equal(h.messages.length,0);
+ }
+});
+test('P88 same-owner video import retains distinct extracted frames for manual review',async()=>{
+ const h=videoFrameImportHarness88(),task=h.c.upload({size:100});
+ await importWait88(()=>h.events.length===1);h.events[0].resolve();
+ await importWait88(()=>h.events.length===2);h.events[1].resolve();
+ await importWait88(()=>h.events.length===3);h.events[2].resolve();
+ await task;
+ assert.equal(h.frames.length,2);
+ assert.equal(h.c.batch.length,2);
+ assert.deepEqual(h.views,['review']);
+ assert.equal(h.c.busy,false);
+ assert.equal(h.c.video.src,'');
+ assert.deepEqual(h.revoked,['blob:owner-A-video']);
+});
+test('P88 video import must stop after owner changes between two decoded frames',async()=>{
+ const h=videoFrameImportHarness88(),task=h.c.upload({size:100});
+ await importWait88(()=>h.events.length===1);h.events[0].resolve();
+ await importWait88(()=>h.events.length===2);h.events[1].resolve();
+ await importWait88(()=>h.events.length===3);
+ assert.equal(h.frames.length,1);
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.batch=[{id:'B-current',image:'data:image/jpeg;base64,QkJC'}];
+ h.events[2].resolve();await task;
+ assert.equal(h.frames.length,1);
+ assert.deepEqual(h.c.batch.map(x=>x.id),['B-current']);
+ assert.equal(h.views.length,0);
+ assert.equal(h.messages.length,0);
+});
