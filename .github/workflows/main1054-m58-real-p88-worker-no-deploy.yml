@@ -9,11 +9,16 @@ jobs:
   m58-real-browser-worker-and-mask-source:
     runs-on: ubuntu-24.04
     timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
     container:
       image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
       options: --shm-size=1gb
     env:
       PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M58_ENGINE: ${{ matrix.engine }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -63,9 +68,11 @@ jobs:
           set -euo pipefail
           node --input-type=module - <<'JS'
           import fs from 'node:fs';
-          const p='benchmark/main58-real-p88-browser-worker/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json';
+          const engine=process.env.M58_ENGINE;
+          if(!['chromium','webkit'].includes(engine))throw Error('M58 unknown browser engine');
+          const p=`benchmark/main58-real-p88-browser-worker/${engine}/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json`;
           const r=JSON.parse(fs.readFileSync(p,'utf8'));
-          if(r.actualP88ModuleWorkerExecuted!==true||r.noSyntheticWorker!==true||
+          if(r.actualBrowser!==engine||r.actualP88ModuleWorkerExecuted!==true||r.noSyntheticWorker!==true||
              r.sourceVerified!==true||r.actualNativeApp!==true||
              r.sourceGroupsUnverified<1||r.sourceGroupsUnverified>12||
              r.ownerPrivateSaves!==0||r.humanAccuracyMeasured!==false||
@@ -80,7 +87,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: main1054-m58-real-p88-browser-wasm-original-JPEG-owner-HOLD
-          path: benchmark/main58-real-p88-browser-worker/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json
+          name: main1054-m58-${{ matrix.engine }}-real-p88-browser-wasm-original-JPEG-owner-HOLD
+          path: benchmark/main58-real-p88-browser-worker/${{ matrix.engine }}/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json
           retention-days: 14
           if-no-files-found: ignore

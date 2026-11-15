@@ -13,15 +13,17 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,join,extname} from 'node:path';
 import {performance} from 'node:perf_hooks';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
 const file=await readFile('benchmark/fixtures/commons-0003.jpg');
 const sha=createHash('sha256').update(file).digest('hex');
 const locked=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'))
  .find(x=>x.id==='commons-0003');
 assert.ok(locked?.verified&&locked.sha256===sha);
 assert.equal(file[0],255);assert.equal(file[1],216);
-const engine='chromium';
-const out=resolve('benchmark/main58-real-p88-browser-worker');
+const engine=process.env.M58_ENGINE||'chromium';
+assert.ok(['chromium','webkit'].includes(engine),'Only the two pinned browser engines are allowed');
+const browserType=engine==='webkit'?webkit:chromium;
+const out=resolve('benchmark/main58-real-p88-browser-worker',engine);
 await mkdir(out,{recursive:true});
 const root=resolve('.');
 const mime={'.js':'text/javascript','.mjs':'text/javascript','.html':'text/html',
@@ -67,7 +69,7 @@ const countRows=page=>page.evaluate(()=>new Promise((resolve,reject)=>{
  req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
 }));
 try{
- browser=await chromium.launch({headless:true,args:['--no-sandbox']});
+ browser=await browserType.launch(engine==='chromium'?{headless:true,args:['--no-sandbox']}:{headless:true});
  const context=await browser.newContext({
   viewport:{width:390,height:920},isMobile:true,hasTouch:true,
   serviceWorkers:'block'
@@ -159,7 +161,7 @@ try{
   schema:'MAIN1054_M58_UNMODIFIED_P88_REAL_BROWSER_WASM_OWNER_REVIEW/v1',
   source:'commons-0003',sourceSHA256:sha,originalJPEGBytes:file.length,
   sourceLicense:locked.attribution?.license,sourceVerified:true,
-  actualBrowser:'chromium',viewportWidth:390,actualNativeApp:true,
+  actualBrowser:engine,viewportWidth:390,actualNativeApp:true,
   actualP88ModuleWorkerExecuted:true,noSyntheticWorker:true,
   actualModel:'Xenova/segformer_b0_clothes',modelRevision:'a2489ea8e7ec1ee912190546bad31a4906ccca76',
   browserModelRuntime:'wasm-fp32',
