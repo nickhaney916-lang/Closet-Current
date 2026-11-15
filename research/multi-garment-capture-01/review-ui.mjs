@@ -283,6 +283,14 @@ export function mountMultiGarmentCapture24({
      '. These are not confirmed. Select the correct category, type and color yourself.','fine');
     note.dataset.modelHint59='unverified';card.append(note);
    }
+   if(p.hint?.componentReviewStatus==='unresolved_fragments_keep_source_mask'){
+    // P88 found that an accepted semantic class can contain multiple physical
+    // garments. Even a human-selected category/color cannot grant one-piece
+    // source identity for this mask; remove and recapture separately.
+    const warning=el('p','This proposed region may contain more than one garment or unresolved fragments. It cannot be saved from this extraction. Remove this proposal and photograph each physical garment separately. Other independently confirmed pieces remain available.','fine');
+    warning.dataset.maskReview54='recapture-required';
+    warning.setAttribute('role','status');card.append(warning);
+   }
    if(p.cropReviewed!==true){
     const cropWarning=el('p','Unverified detection: inspect the original and use Adjust crop/mask before you can confirm or save this garment. Model confidence is not garment accuracy.','fine');
     cropWarning.dataset.cropReview55='required';cropWarning.setAttribute('role','status');
