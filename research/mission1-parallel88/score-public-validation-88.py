@@ -106,7 +106,8 @@ def measure(manifest, report):
             "perHumanCategory": [category(t["category_id"]) for t in truth],
             "predictedRegions": [
                 {"method": p["instanceMethod"], "categories": p["categories"],
-                 "maskSha256": p["maskSha256"]} for p in observed["regions"]
+                 "maskSha256": p["maskSha256"], "confidence": p["confidence"]}
+                for p in observed["regions"]
             ],
             "inferenceMs": observed["inferenceMs"]
         })
@@ -135,6 +136,54 @@ def measure(manifest, report):
     }
 
 
+def retained_fixed_match_diagnostic(rows, thresholds=(0.80, 0.85, 0.90, 0.95)):
+    """Retain originally matched proposals by confidence; NOT rematched IoU.
+
+    Research-only, previously EXPOSED P68 validation. Removing candidates may
+    change optimal one-to-one matching; these are *retained existing matches*,
+    not independently recomputed precision/recall or a safe release cutoff.
+    """
+    if not rows or not all(isinstance(t, (int, float)) and math.isfinite(t) and
+                           0 <= t <= 1 for t in thresholds):
+        raise ValueError("Invalid diagnostic rows or thresholds")
+    truth = sum(row["truth"] for row in rows)
+    if truth <= 0: raise ValueError("No human truth for confidence diagnostic")
+    result = []
+    for threshold in thresholds:
+        proposals = agnostic = compatible = 0
+        for row in rows:
+            regions = row["predictedRegions"]
+            if row["predicted"] != len(regions):
+                raise ValueError("Predicted proposal count altered")
+            kept = set()
+            for index, region in enumerate(regions):
+                score = region.get("confidence")
+                if not isinstance(score, (int, float)) or not math.isfinite(score) or not 0 <= score <= 1:
+                    raise ValueError("Missing or invalid real model confidence")
+                if score >= threshold: kept.add(index)
+            proposals += len(kept)
+            for key in ("classAgnosticMatches", "categoryCompatibleMatches"):
+                matches = row[key]
+                used = [m["predictionIndex"] for m in matches]
+                if len(used) != len(set(used)) or any(not isinstance(i, int) or i < 0 or i >= len(regions) for i in used):
+                    raise ValueError("Untrusted original one-to-one match indices")
+            agnostic += sum(m["predictionIndex"] in kept for m in row["classAgnosticMatches"])
+            compatible += sum(m["predictionIndex"] in kept for m in row["categoryCompatibleMatches"])
+        if compatible > agnostic or agnostic > proposals:
+            raise ValueError("Retained match invariants violated")
+        result.append({
+            "threshold": threshold, "originalHumanInstances": truth,
+            "retainedProposals": proposals,
+            "retainedPriorClassAgnosticMatches": agnostic,
+            "retainedPriorCategoryCompatibleMatches": compatible,
+            "retainedPriorCategoryCompatibleFraction": compatible/proposals if proposals else None,
+            "retainedPriorCategoryCompatibleHumanCoverage": compatible/truth,
+            "notRematchedIoU": True,
+            "notNovelCalibration": True, "noAutoSaveAuthority": True
+        })
+    return result
+
+
 def main():
     manifest_bytes = MANIFEST.read_bytes()
     if hashlib.sha256(manifest_bytes).hexdigest() != EXPECTED:
@@ -160,6 +209,9 @@ def main():
         "fineSubtypeAccuracy": "NO_INDEPENDENT_HUMAN_SUBTYPE_TRUTH",
         "primaryColorAccuracy": "NO_INDEPENDENT_HUMAN_COLOR_TRUTH",
         "autoSaveAcceptance": "BLOCKED_NOT_CALIBRATED",
+        "confidenceRetentionResearchOnly": retained_fixed_match_diagnostic(safe["rows"]),
+        "confidenceRetentionMethod": "fixed prior one-to-one matches; candidate masks NOT re-matched",
+        "confidenceCutoffPromotionAllowed": False,
         "physicalDevice": False, "privateAccountTouched": False,
         "baseline": baseline, "shoeOnly68": shoes, "p88Safe": safe, "p88": candidate,
         "deltaClassAgnosticRecall": candidate["classAgnostic"]["recall"] - baseline["classAgnostic"]["recall"],
@@ -172,6 +224,12 @@ def main():
     (MASKS / "real-validation-measured-88.json").write_text(json.dumps(result, indent=2)+"\n")
     print("P88_GENUINE_HUMAN_MASK_EVALUATION", json.dumps({
         k: v for k, v in result.items() if k not in ("baseline", "shoeOnly68", "p88Safe", "p88")
+    }, separators=(",", ":")))
+    print("P88_EXPOSED_FIXED_MATCH_CONFIDENCE_RESEARCH", json.dumps({
+        "sourceDigest": EXPECTED,
+        "rows": 16, "humanInstances": 53,
+        "thresholds": result["confidenceRetentionResearchOnly"],
+        "newBlindEvidence": False, "safeThresholdPromotion": False
     }, separators=(",", ":")))
     for mode in ("baseline", "shoeOnly68", "p88"):
         print(mode.upper()+"_EXPOSED_VALIDATION", json.dumps({
