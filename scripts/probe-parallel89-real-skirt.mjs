@@ -23,10 +23,18 @@ const cutout=await readFile(join(donor,'benchmark/work47/assets/commons-0043.png
 if(sha(original)!==SKIRT_SOURCE89.originalSHA256||!original.equals(donorOriginal))
  throw Error('Source identity mismatch between exact P89 original and immutable P541 Work47');
 const row=manifest.rows.find(x=>x.id==='commons-0043');
-const receipt=await attestActualSkirt89({originalBytes:original,cutoutBytes:cutout,
+// Give the attester MUTABLE copies, then destroy them after it returns.
+ // A true byte-locked receipt must still build from its private copy of
+ // the exact original public PNG, not from these mutable caller buffers.
+const hostileOriginal=Uint8Array.from(original),hostileCutout=Uint8Array.from(cutout);
+const receipt=await attestActualSkirt89({originalBytes:hostileOriginal,cutoutBytes:hostileCutout,
  lock:locked.find(x=>x.id==='commons-0043'),work47:row});
-if(receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED')
+if(receipt.status!=='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'||
+ receipt.immutableVerifiedInputSnapshotUsed!==true)
  throw Error('Independent real source skirt or REVIEW mask not byte verified: '+receipt.reason);
+hostileOriginal.fill(0);hostileCutout.fill(0);
+if(hostileCutout.some(x=>x!==0)||hostileOriginal.some(x=>x!==0))
+ throw Error('mutable caller JPEG/PNG destruction did not execute');
 const originalCutoutRGBA=await sharp(cutout).ensureAlpha().raw().toBuffer({resolveWithObject:true});
 // Preserve exact relative source coordinates without letterbox padding:
 const factor=Math.min(240/originalCutoutRGBA.info.width,240/originalCutoutRGBA.info.height);
@@ -84,6 +92,7 @@ if(mesh.skeleton!==body.skeleton||mesh.skeleton.bones.length!==163||
     !Buffer.from(mesh.material[0].map.image.data).equals(originalCutoutRGBA.data)||
     Buffer.from(mesh.material[0].map.image.data).equals(Buffer.from(swappedRGBA))||
     candidate.receipt.sourceRGBAWasDecodedFromExactAttestedCutoutPNG!==true||
+    candidate.receipt.sourceInputBytesSnapshottedBeforeAsyncVerification!==true||
     candidate.receipt.callerSuppliedTexturePixelsAreNotTrusted!==true||
     candidate.receipt.originalMaskShapeDerivedFromExactAttestedCutoutPNG!==true||
     candidate.receipt.callerSuppliedSilhouetteIsNotTrusted!==true||
@@ -107,6 +116,7 @@ const report={schema:'P89-actual-independent-licensed-skirt-alpha-to-THREE-shell
  sourcePNGDecodeIndependentOfCallerSuppliedFakeRGBA:true,
  originalTexturePixelBytesEqualToIndependentSharpSourceDecode:true,
  originalMaskShapeWasIndependentOfFakeCallerSilhouette:true,
+ originalJPEGPngMutableCallerBuffersDestroyedBeforeGeometry:true,
  originalSourceRGBProjectedIntoNativeBrowser:false,
  originalSourcePhotoFrameModified:false,realAnatomicalAvatarTested:false,
  synthetic163BoneRigOnly:true,observedSkirtBack:false,
