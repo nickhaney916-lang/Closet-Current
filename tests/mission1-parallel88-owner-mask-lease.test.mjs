@@ -2030,3 +2030,101 @@ test('P88 saved delete refuses stale source, reintroduced ID, or edited owner ph
   assert.equal(h.deletes.length,0,'stale deletion cannot remove or recreate a different row');
  }
 });
+
+// P88: exercise the ACTUAL native asynchronous closetReady reload, not a
+// handwritten replica of its physical-garment and duplicate draft policy.
+async function reloadedOwnerDraftHarness88(drafts){
+ const start=appSource.indexOf('function restoreMission1Draft88(');
+ const end=appSource.indexOf('for(const c of categories.slice(1))',start);
+ assert.ok(start>=0&&end>start,'native owner review reload source exists');
+ const scans=[],alerts=[],renders=[];
+ const c={window:{closetAuth:{ready:Promise.resolve(),user:{id:'owner-A'}}},
+  openDB:async()=>({name:'closet-current-user-owner-A'}),
+  readAll:async()=>[],readDraft:async()=>structuredClone(drafts),
+  normalizeClothing:x=>x,
+  render:()=>renders.push(true),message:x=>alerts.push(x),
+  queueAutomatic:item=>scans.push(item),Promise};
+ vm.createContext(c);
+ vm.runInContext('let db,items=[],batch=[];\n'+appSource.slice(start,end),c);
+ await vm.runInContext('closetReady',c);
+ return {c,scans,alerts,renders,batch:vm.runInContext('batch',c),
+  saved:vm.runInContext('items',c)};
+}
+test('P88 app reload preserves outfit original, owner confirmation and existing model/owner review fields',async()=>{
+ const source={id:'outfit-shirt',image:'data:image/jpeg;base64,T1VURklU',outfitSourceId:'whole-1',
+  category:'Tops',itemType:'T-shirt',color:'Blue',userAdjusted:true,localAnalyzed:true,
+  requiresOwnershipConfirmation:true,originalPhoto:{image:'data:image/jpeg;base64,T1JJR0lO'},
+  segmentHint:{clipped:false,categories:['Tops'],componentReviewStatus:'owner_must_confirm_garment_units'},
+  reconciliation70Status:'paired_confirmed',
+  reconciliation70:{sourceSha256:'a'.repeat(64),maskSha256:'b'.repeat(64),ownerId:'owner-A'}};
+ const h=await reloadedOwnerDraftHarness88([source]);
+ assert.equal(h.batch.length,1);
+ assert.equal(h.batch[0].image,source.image,'original photo region retained in owner draft');
+ assert.equal(h.batch[0].originalPhoto.image,source.originalPhoto.image);
+ assert.equal(h.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(h.batch[0].localAnalyzed,true,'do not forcibly revoke prior scan state');
+ assert.equal(h.batch[0].userAdjusted,true,'owner-corrected class cannot be reset by page restart');
+ assert.equal(h.batch[0].itemType,'T-shirt');
+ assert.equal(h.batch[0].reconciliation70.maskSha256,source.reconciliation70.maskSha256);
+ assert.equal(h.scans.length,0,'restored outfit mask cannot silently start fresh whole-photo reclassification');
+ assert.equal(h.saved.length,0);
+});
+test('P88 a pending unresolved segmented outfit stays unsaved and owner-review-required on restart',async()=>{
+ const h=await reloadedOwnerDraftHarness88([{id:'ambiguous',image:'data:image/jpeg;base64,QUJD',
+  outfitSourceId:'original-ambiguous',localAnalyzed:false,requiresOwnershipConfirmation:false,
+  segmentHint:{componentReviewStatus:'unresolved_fragments_keep_source_mask'}}]);
+ assert.equal(h.batch.length,1);
+ assert.equal(h.batch[0].requiresOwnershipConfirmation,true);
+ assert.equal(h.batch[0].localAnalyzed,false);
+ assert.match(h.batch[0].localStatus,/Restored source-bound or duplicate photograph/);
+ assert.equal(h.scans.length,0);
+ assert.equal(h.saved.length,0);
+});
+test('P88 exact saved-photo and visual duplicate hints preserve review on reload without reclassification',async()=>{
+ const h=await reloadedOwnerDraftHarness88([
+  {id:'same-saved',image:'data:image/jpeg;base64,QUFB',
+   exactSavedPhotoMatch88:{savedItemId:'prior'},possibleDuplicate:true,localAnalyzed:true,
+   requiresOwnershipConfirmation:true},
+  {id:'lookalike',image:'data:image/jpeg;base64,QkJC',
+   possibleDuplicate:true,localAnalyzed:false,requiresOwnershipConfirmation:false},
+  {id:'same-source',image:'data:image/jpeg;base64,Q0ND',
+   ownerDuplicateReview88:{ownerAttestedDistinctPhysicalItem:true},
+   localAnalyzed:false,requiresOwnershipConfirmation:false}
+ ]);
+ assert.equal(h.batch.length,3);
+ assert.equal(h.scans.length,0);
+ assert.ok(h.batch.every(i=>i.requiresOwnershipConfirmation===true));
+ assert.equal(h.batch[0].exactSavedPhotoMatch88.savedItemId,'prior');
+ assert.equal(h.batch[0].localAnalyzed,true);
+ assert.equal(h.saved.length,0);
+});
+test('P88 ordinary new single-photo drafts resume scanning but manually corrected photos do not',async()=>{
+ const h=await reloadedOwnerDraftHarness88([
+  {id:'new-original',image:'data:image/jpeg;base64,TkVX',localAnalyzed:false,
+   userAdjusted:false,requiresOwnershipConfirmation:false},
+  {id:'manually-adjusted',image:'data:image/jpeg;base64,TUFOVUFM',localAnalyzed:false,
+   userAdjusted:true,category:'Outerwear',itemType:'Coat',color:'Black'},
+  {id:'already-scanned',image:'data:image/jpeg;base64,U0NBTk5FRA==',localAnalyzed:true,
+   category:'Tops',itemType:'T-shirt',color:'Blue',requiresOwnershipConfirmation:true}
+ ]);
+ assert.deepEqual(h.scans.map(x=>x.id),['new-original']);
+ assert.equal(h.batch[1].itemType,'Coat');
+ assert.equal(h.batch[2].requiresOwnershipConfirmation,true);
+ assert.equal(h.renders.length,1);
+ assert.equal(h.saved.length,0,'reload must not auto-admit any garment');
+});
+test('P88 original shoe-pair and source-bound fragment receipts survive app reload',async()=>{
+ const h=await reloadedOwnerDraftHarness88([
+  {id:'pair-1',image:'data:image/jpeg;base64,U0hPRVM=',localAnalyzed:false,
+   shoePair:{confirmedByOwner:true,companion:{image:'data:image/jpeg;base64,UklHSFQ='}}},
+  {id:'fragments',image:'data:image/jpeg;base64,RlJBRw==',
+   combinedFragments70:{confirmedByOwner:true,companion:{image:'data:image/jpeg;base64,Q1JPUA=='}}},
+  {id:'unresolved',image:'data:image/jpeg;base64,VU5SRVM=',
+   reconciliation70Status:'unresolved'}
+ ]);
+ assert.equal(h.scans.length,0);
+ assert.ok(h.batch.every(x=>x.requiresOwnershipConfirmation===true));
+ assert.equal(h.batch[0].shoePair.companion.image,'data:image/jpeg;base64,UklHSFQ=');
+ assert.equal(h.batch[1].combinedFragments70.confirmedByOwner,true);
+ assert.equal(h.batch[2].reconciliation70Status,'unresolved');
+});
