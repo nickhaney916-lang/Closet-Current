@@ -414,6 +414,7 @@ test('P88 signed private blind envelope inspection refuses execution inside CI',
 
 test('P88 private blind custody path refuses symlinks into checkout, special files and oversized input',async()=>{
  // Only disposable synthetic files. No human labels, photos, real blind truth or keys.
+ const checkoutFixture=resolve('research/mission1-parallel88/blind-evaluator-handoff-88.mjs');
  const dir=await mkdtemp(join(tmpdir(),'p88-private-path-'));
  try{
   const safe=join(dir,'synthetic-envelope.json');
@@ -421,7 +422,7 @@ test('P88 private blind custody path refuses symlinks into checkout, special fil
   assert.equal(await externalPrivateFile88(safe),safe);
   await assert.rejects(externalPrivateFile88('synthetic-envelope.json'),
    /PRIVATE_ABSOLUTE_PATH_REQUIRED/);
-  await assert.rejects(externalPrivateFile88(resolve('package.json')),
+  await assert.rejects(externalPrivateFile88(checkoutFixture),
    /PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT/);
   await assert.rejects(externalPrivateFile88(dir),
    /PRIVATE_HANDOFF_REGULAR_FILE_REQUIRED/);
@@ -435,10 +436,10 @@ test('P88 private blind custody path refuses symlinks into checkout, special fil
    /PRIVATE_HANDOFF_SYMLINK_PATH_FORBIDDEN/);
   const checkoutAlias=join(dir,'checkout-dir-alias');
   await symlink(process.cwd(),checkoutAlias,'dir');
-  await assert.rejects(externalPrivateFile88(join(checkoutAlias,'package.json')),
+  await assert.rejects(externalPrivateFile88(join(checkoutAlias,'research/mission1-parallel88/blind-evaluator-handoff-88.mjs')),
    /PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT/);
   const repoFileAlias=join(dir,'checkout-file-alias');
-  await symlink(resolve('package.json'),repoFileAlias);
+  await symlink(checkoutFixture,repoFileAlias);
   await assert.rejects(externalPrivateFile88(repoFileAlias),
    /PRIVATE_CUSTODY_MUST_STAY_OUTSIDE_GIT/);
  }finally{
