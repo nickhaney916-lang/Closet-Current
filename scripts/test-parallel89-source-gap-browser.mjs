@@ -58,6 +58,12 @@ try{
   const page=await ctx.newPage();
   page.on('pageerror',e=>errors.push(String(e.message).slice(0,180)));
   page.on('crash',()=>errors.push('original-webgl-browser-crashed'));
+  page.on('requestfailed',request=>{
+   // Only local original-source paths, never public internet or private data.
+   if(request.url().startsWith(origin))
+    errors.push('local-source-request-failed:'+new URL(request.url()).pathname.slice(0,120)+':'+
+     (request.failure()?.errorText??'unknown').slice(0,90));
+  });
   await page.route('**/*',route=>{
    const u=route.request().url();
    if(u.startsWith(origin)||u.startsWith('data:')||u.startsWith('blob:'+origin))
@@ -66,8 +72,22 @@ try{
   });
   await page.goto(origin+'/research/dress-mobile-01/index.html?parallel84Poses=audit&parallel84Denim=gated&parallel89Gap=audit&parallel84Shape='+(variant==='baseline'?'baseline':'trial')+'&parallel89ShapeVariant='+variant,
    {waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.ccDress12Diagnostics?.()?.phase==='ready',
-   null,{timeout:180000});
+  try{
+   await page.waitForFunction(()=>window.ccDress12Diagnostics?.()?.phase==='ready',
+    null,{timeout:180000});
+  }catch(e){
+   // Readiness remains mandatory. Collect only original source research
+   // startup status, never dump owner pixels, photographed JPEGs or vertices.
+   const state=await page.evaluate(()=>({
+    documentState:document.readyState,
+    hasOriginalDiagnostics:typeof window.ccDress12Diagnostics==='function',
+    phase:window.ccDress12Diagnostics?.()?.phase??null,
+    glCanvasCount:document.querySelectorAll('canvas').length
+   })).catch(()=>({pageUnresponsive:true}));
+   throw Error('P89 genuine original 163bone research startup incomplete: '+
+    JSON.stringify({engine,avatar,variant,state,
+     observedErrors:errors.slice(-6),failure:String(e).slice(0,130)}));
+  }
   if(avatar==='male'){
    await page.locator('#model').selectOption('male');
    await page.waitForFunction(()=>window.ccDress12Diagnostics?.()?.phase==='ready',
