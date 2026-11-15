@@ -227,6 +227,42 @@ test('same-source verified garment permits new cropped preview without replacing
   assert.equal(after.state.find(x=>x.id==='outfit-board').current.slots.top,'shirt');
  }finally{f.close();}
 });
+test('same-ID legacy unclaimed import cannot erase a saved private garment owner receipt',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  for(const unclaimed of [null,'missing']){
+   const incoming={...row(f.owner)};
+   if(unclaimed===null)incoming.ownerId=null;
+   else delete incoming.ownerId;
+   await assert.rejects(prep(f,{format:'closet-current',version:3,
+    items:[incoming]}),/LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT/);
+   assert.deepEqual(await snapshot(f.db),before);
+  }
+ }finally{f.close();}
+});
+test('same-ID original photo owner receipt survives identical-JPEG metadata-only imports',async()=>{
+ const f=await fixture();
+ try{
+  const saved={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{ownerId:f.owner,image:jpeg,sha256:sha}};
+  await replace(f.db,'items',saved);
+  const before=await snapshot(f.db);
+  const downgrading={...saved,color:'Purple',
+   originalPhoto:{...saved.originalPhoto,ownerId:null}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[downgrading]}),/LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+  const safe={...saved,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[safe]});
+  await commit(f,plan);
+  const preserved=(await snapshot(f.db)).items.find(x=>x.id==='shirt');
+  assert.equal(preserved.ownerId,f.owner);
+  assert.equal(preserved.originalPhoto.ownerId,f.owner);
+  assert.equal(preserved.originalPhoto.image,jpeg);
+  assert.equal(preserved.color,'Purple');
+ }finally{f.close();}
+});
 test('legacy same-ID merge cannot overwrite an existing verified original JPEG',async()=>{
  const f=await fixture();
  try{
