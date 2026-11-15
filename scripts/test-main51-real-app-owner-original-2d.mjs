@@ -124,7 +124,15 @@ try{
     return route.continue();
    }
    if(url.startsWith(authHost+'/auth/v1/'))return authRoute(route);
-   network.push({engine,width,kind:'unexpected-remote',host:new URL(url).hostname});
+   // Native app styles/trends may request public optional assets. Never
+   // allow them to touch the network in CI, but a blocked GET attempt is
+   // not evidence of a user-photo exfiltration or failed local app login.
+   const hostname=new URL(url).hostname;
+   if(route.request().method()==='GET'&&
+      ['fonts.googleapis.com','raw.githubusercontent.com'].includes(hostname))
+    return route.abort();
+   network.push({engine,width,kind:'unexpected-remote',host:hostname,
+    method:route.request().method()});
    return route.abort();
   });
   const page=await context.newPage();
@@ -258,16 +266,27 @@ try{
   await page.evaluate(()=>window.dispatchEvent(new Event('closet:session-locked')));
   await blank(page,'native signed owner session locked');
   stage='tampered-actual-original-source-sha';
+  // The real app revoked its live private DB after session lock. Reopen
+  // ONLY the disposable synthetic owner A test IndexedDB, as original M18
+  // does; never revive the revoked native app database/session lease.
   await page.evaluate(()=>new Promise((resolve,reject)=>{
-   const tx=db.transaction('items','readwrite');
-   const store=tx.objectStore('items'),r=store.get('m51-A-licensed-dress');
-   r.onsuccess=()=>{
-    const item=r.result;
-    if(!item)return reject(Error('missing saved licensed original'));
-    item.originalPhoto.sha256='0'.repeat(64);
-    store.put(item);
+   const open=indexedDB.open('closet-current-user-m51-A',2);
+   open.onerror=()=>reject(open.error);
+   open.onsuccess=()=>{
+    const conn=open.result;
+    let tx;
+    try{tx=conn.transaction('items','readwrite');}
+    catch(error){conn.close();reject(error);return;}
+    const store=tx.objectStore('items'),r=store.get('m51-A-licensed-dress');
+    r.onsuccess=()=>{
+     const item=r.result;
+     if(!item){conn.close();reject(Error('missing saved licensed original'));return;}
+     item.originalPhoto.sha256='0'.repeat(64);
+     store.put(item);
+    };
+    tx.oncomplete=()=>{conn.close();resolve();};
+    tx.onabort=tx.onerror=()=>{conn.close();reject(tx.error);};
    };
-   tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error);
   }));
   await page.reload({waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.closetAuth?.user?.id==='m51-A'&&
