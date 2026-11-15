@@ -221,9 +221,12 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/ supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install isolated inherited native test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      # tests/pwa.test.mjs reads dist/manifest.webmanifest and dist/sw.js.
+      # Generate these offline artifacts BEFORE the inherited test suite;
+      # previously 2776/2777 passed but PWA failed on ENOENT (no dist build).
+      - name: Offline application source build before PWA regression (no deploy)
+        run: node scripts/build.mjs
       - name: Run exact-head all inherited application and recognition tests
         run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
-      - name: Offline application source build (no deploy)
-        run: node scripts/build.mjs
       - name: Final protected source and branch boundaries
         run: git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ supabase/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
