@@ -217,6 +217,9 @@ async function load(avatar){
  // No caller-supplied RGBA is allowed to substitute a different fabric.
  const sourceTextureImage=candidate.mesh.material[0]?.map?.image;
  check(candidate.receipt.sourceRGBAWasDecodedFromExactAttestedCutoutPNG===true&&
+  candidate.receipt.originalMaskShapeDerivedFromExactAttestedCutoutPNG===true&&
+  candidate.receipt.callerSuppliedSilhouetteIsNotTrusted===true&&
+  candidate.receipt.extractedSourceHemToWaistRatio===outline.sourceHemToWaistWidthRatio&&
   sourceTextureImage?.data instanceof Uint8Array&&
   sourceTextureImage.width===image.width&&sourceTextureImage.height===image.height&&
   await sha(sourceTextureImage.data)===await sha(image.data),
