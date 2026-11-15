@@ -2883,7 +2883,7 @@ function nativeCameraLeaseHarness88({audioGate=null,permissionGate=null,playGate
    resume(){audios++;return audioGate?audioGate.promise:Promise.resolve();}
   }},
   navigator:{mediaDevices:{getUserMedia(){permissions++;return permissionGate?permissionGate.promise:Promise.resolve(mediaStream);}}},
-  db,busy:false,stream:null,cameraOwnerLease88:null,cameraRequest:0,
+  db,batch:[],busy:false,stream:null,cameraOwnerLease88:null,cameraRequest:0,
   cameraOpening:false,cameraMode:null,timer:null,video,audio:null,
   session:0,lastCapture:0,lastSaved:null,stable:0,sessionCapturedIds:new Set(),
   cadence:null,canvas:{},lastPixels:null,
