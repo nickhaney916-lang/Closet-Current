@@ -17,10 +17,18 @@ const engine=process.env.M57_ENGINE;
 assert.ok(['chromium','webkit'].includes(engine),'M57_ENGINE must select real browser');
 const original=await readFile('benchmark/fixtures/commons-0003.jpg');
 const sourceSHA=createHash('sha256').update(original).digest('hex');
+// A SECOND genuine independently locked dress original is used only for
+// source-honest manual owner review and native 2D outfit selection.
+const dressOriginal=await readFile('benchmark/fixtures/commons-0053.jpg');
+const dressSHA=createHash('sha256').update(dressOriginal).digest('hex');
 const lock=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'))
  .find(r=>r.id==='commons-0003');
 assert.equal(lock?.verified,true);
 assert.equal(sourceSHA,lock.sha256);
+const dressLock=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'))
+ .find(r=>r.id==='commons-0053');
+assert.equal(dressLock?.verified,true);
+assert.equal(dressSHA,dressLock.sha256);
 const root=resolve('.');
 const out=join('benchmark','main57-native-p88-source-transport',engine);
 await mkdir(out,{recursive:true});
@@ -151,7 +159,7 @@ try{
   page.on('crash',()=>issues.push('browser-crash'));
   await page.addInitScript({content:workerFixture});
   stage='auth';
-  const params='multi24=research&p88Transport57=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
+  const params='multi24=research&p88Transport57=research&mission4Preview=research&captureProof01=after&index04=after&nativeLossless04=research&nativeIndex07=research&index02=after&restoreAtomic01=research&styleOwned03=research&nativeCorrection10=research';
   await page.goto(origin+'/public/index.html?'+params,{waitUntil:'domcontentloaded'});
   await page.locator('#authEmail').fill('m54-A@example.test');
   await page.locator('#authPassword').fill('fixture-only');
@@ -205,6 +213,101 @@ try{
   await card.getByRole('button',{name:'Remove detection'}).click();
   assert.equal(await page.locator('#multi24Grid .multi24-card').count(),0);
   assert.equal(await countRows(page),0);
+
+  // MAIN1054 finish-line positive journey in the SAME actual browser app:
+  // replace the rejected source with a second registered public original,
+  // reject the old P88 packet whose source SHA is now stale, and exercise
+  // an explicitly MANUAL crop/review/save and native 2D outfit selection.
+  // This is NOT model accuracy, human truth or a verified 3D garment.
+  stage='native owner-positive manually reviewed second original';
+  await page.locator('#outfitUpload').setInputFiles({
+   name:'commons-0053.jpg',mimeType:'image/jpeg',buffer:dressOriginal
+  });
+  await page.waitForFunction(sha=>window.multi24Research?.debug().sourceSHA256===sha,
+   dressSHA,{timeout:30000});
+  await page.waitForFunction(()=>window.multi24Research?.debug().working===false,
+   null,{timeout:30000});
+  assert.equal(await page.locator('#multi24Grid .multi24-card').count(),0,
+   'stale P88 worker packet from previous original was accepted into new original');
+  await page.locator('#multi24Research').getByRole('button',{name:'Add missed piece'}).click();
+  const manual=page.locator('#multi24Grid .multi24-card').first();
+  await manual.waitFor({timeout:15000});
+  await manual.getByRole('button',{name:'Adjust crop/mask'}).click();
+  const manualEditor=page.locator('dialog.photo-crop-editor');
+  await manualEditor.waitFor({state:'visible'});
+  await manualEditor.getByRole('button',{name:'Save crop'}).click();
+  await manualEditor.waitFor({state:'hidden'});
+  await manual.getByLabel('Main category').selectOption('Dresses');
+  await manual.getByLabel('Specific type').selectOption('Casual dress');
+  await manual.getByLabel('Color (confirm visually)').fill('Black');
+  await manual.getByLabel('I confirm this visible garment, category and color').check();
+  assert.equal(await countRows(page),0,
+   'manually corrected category and checkbox must not save without explicit Save');
+  await page.locator('#multi24Research').getByRole('button',
+   {name:'Save confirmed pieces together'}).click();
+  await page.waitForFunction(async()=>{
+   if(!db||db.name!=='closet-current-user-m54-A')return false;
+   const count=await new Promise((resolve,reject)=>{
+    const req=db.transaction('items','readonly').objectStore('items').count();
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+   return count===1;
+  },null,{timeout:30000});
+  stage='original bytes and deliberate noncertification';
+  const stored=await page.evaluate(async expected=>{
+   const rows=await new Promise((resolve,reject)=>{
+    const req=db.transaction('items','readonly').objectStore('items').getAll();
+    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+   if(rows.length!==1)throw Error('exactly one explicitly confirmed private garment required');
+   const row=rows[0];
+   if(row.ownerId!=='m54-A'||row.sourceSHA256!==expected||
+      row.originalPhoto?.sha256!==expected||row.sourceHashVerified!==true||
+      row.sourceCropReviewed!==true||row.extractionReview!=='human-confirmed'||
+      row.photoOnly!==true||row.threeDReady!==false||
+      row.singleGarmentVerified!==false||
+      row.ownerReviewed===true||row.sourcePhotoOriginal===true)
+    throw Error('MULTI24 photo-only human save contract was silently promoted');
+   const encoded=row.originalPhoto.image;
+   if(!/^data:image\\/jpeg;base64,/.test(encoded))throw Error('missing original JPEG envelope');
+   const binary=Uint8Array.from(atob(encoded.split(',')[1]),c=>c.charCodeAt(0));
+   const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',binary)),
+    b=>b.toString(16).padStart(2,'0')).join('');
+   if(digest!==expected)throw Error('saved original JPEG bytes were modified');
+   return {id:row.id,sourceVerified:true,originalSha:digest,
+    unverifiedPhysicalUnit:true,manuallyConfirmed:true};
+  },dressSHA);
+  stage='actual native owner private Outfit Builder selection';
+  await page.evaluate(()=>switchView('builder'));
+  await page.locator('#boardSlots .board-slot-top').click();
+  const picker=page.locator('#boardPicker');
+  await picker.waitFor({state:'visible'});
+  const choice=page.locator('#boardPickerItems button.board-pick').first();
+  await choice.waitFor();
+  await choice.click();
+  await page.waitForFunction(id=>{
+   const slot=document.querySelector('#boardSlots .board-slot-top.owned img');
+   return currentBoard.slots.top===id&&!!slot&&slot.complete&&slot.naturalWidth>0;
+  },stored.id,{timeout:20000});
+  const boardPhoto=await page.locator('#boardSlots .board-slot-top.owned img')
+   .evaluate(img=>({decoded:img.naturalWidth>0,src:img.getAttribute('src')}));
+  assert.equal(boardPhoto.decoded,true);
+  assert.match(boardPhoto.src,/^data:image\\/jpeg;base64,/);
+  // The stricter source-certification preview MUST still refuse this
+  // honest single-source/crop-unverified MULTI24 row. Outfit Board can show
+  // its saved user-reviewed 2D photograph, but no invented 3D authority.
+  await page.locator('#mission4Preview1054Section button').click();
+  await page.waitForFunction(()=>document.getElementById('mission4Preview1054Status')
+   ?.textContent.includes('Preview refused'),null,{timeout:20000});
+  assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
+   'unverified physical garment source cannot enter strict original-photo certification');
+  assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
+   'manually reviewed MULTI24 source falsely authorized 3D');
+  const positivePng=await page.locator('#outfitFigure').screenshot();
+  const positiveFile=engine+'-'+width+'-positive-manual-source-to-private-2d-board.png';
+  await writeFile(join(out,positiveFile),positivePng);
+  screenshots.push({filename:positiveFile,width,
+   sha256:createHash('sha256').update(positivePng).digest('hex')});
   cases.push({engine,width,actualNativeApp:true,
    licensedSourceSHA:sourceSHA,realBrowserCrypto:true,
    p88UnresolvedWorkerReplaySynthetic:true,p88ReceiptSourceBound:true,
@@ -212,7 +315,15 @@ try{
    spoofedSourceIgnored:true,lateDoneEventIgnored:true,
    ownerConfirmDisabled:true,ownerTypedCategorySubtypeColorStillDenied:true,
    ownerCropDoesNotOverrideVeto:true,unsafeProposalRemoved:true,
-   savedRows:0,consumer3D:false,releaseAuthorized:false,familyAlpha:'HOLD'});
+   savedRows:0,manualOwnerReviewedSecondSource:true,
+   secondOriginalSourceShaVerified:stored.sourceVerified,
+   verifiedOriginalBytesRetained:stored.originalSha===dressSHA,
+   oneOwnerPrivateGarmentRow:true,
+   actualNativeOutfitBoard2DPhoto:true,
+   strictSourceCertifiedPreviewRefused:true,
+   misleadingSingleGarmentCertification:false,
+   positivePathModelPrediction:false,positivePathHumanTruthSynthetic:true,
+   consumer3D:false,releaseAuthorized:false,familyAlpha:'HOLD'});
   await context.close();
  }
  assert.deepEqual(issues,[],'unknown network request or runtime browser failures');
