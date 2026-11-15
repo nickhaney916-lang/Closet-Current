@@ -3,7 +3,7 @@
 // Actual native owner-local save/outfit, source-safe 2D, owner A/B/A and v4 restore.
 import assert from 'node:assert/strict';
 import {execFileSync,spawnSync} from 'node:child_process';
-import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,rmSync} from 'node:fs';
 import {join} from 'node:path';
 const base='878d624d8963109143c8775bb156bda4ba12a196';
 const engine=process.env.P92_ENGINE,trial=Number(process.env.P92_TRIAL);
@@ -26,6 +26,19 @@ const pins={
  'scripts/test-main58-actual-p88-wasm-browser.mjs':'96ba2f5ee2420de52f45911881fdcc139455c353'
 };
 for(const [p,blob] of Object.entries(pins))assert.equal(git('rev-parse','HEAD:'+p),blob,'source changed: '+p);
+// Standalone-safe: reconstruct byte-for-byte immutable Worker import graph.
+// Never substitute default branch models or synthetic worker events.
+const donor='cc4554ef0104506a72bf0a28423fee52b6e4fff2';
+git('cat-file','-e',donor+'^{commit}');
+const donorDir='.m57-exact-p88-donor/public';
+mkdirSync(donorDir,{recursive:true});
+for(const name of ['outfit-worker.mjs','outfit-segmentation.mjs','outfit-instance-review-840.mjs','photo-color.js']){
+ const blob=execFileSync('git',['show',donor+':public/'+name],{maxBuffer:8*1024*1024});
+ const target=join(donorDir,name);
+ writeFileSync(target,blob);
+ assert.equal(git('hash-object',target),git('rev-parse',donor+':public/'+name),'P88 donor changed: '+name);
+}
+assert.equal(git('hash-object',join(donorDir,'outfit-worker.mjs')),'ab7d3837139c5b7d693383f9d6617e199ec8de4f');
 function run(path,args=[],env={}){
  console.log('P92_RUN',JSON.stringify({engine,trial,path}));
  const p=spawnSync(process.execPath,[path,...args],{stdio:'inherit',env:{...process.env,...env},timeout:3900000});
@@ -35,6 +48,10 @@ function run(path,args=[],env={}){
 const read=p=>JSON.parse(readFileSync(p,'utf8'));
 const started=Date.now(),out=join('benchmark','parallel92',engine,'trial-'+trial);
 mkdirSync(out,{recursive:true});
+// Require fresh receipts for every trial; never reuse stale previous-trial files.
+for(const name of ['M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json','P91-LIFECYCLE.json'])
+ rmSync(join('benchmark','main58-real-p88-browser-worker',engine,name),{force:true});
+rmSync(join('benchmark','main51-real-app-owner-2d',engine,'M51-native-owner-source-2d-NOT-RELEASE.json'),{force:true});
 run('scripts/test-browser-owner-mutation91.mjs',[],{P91_ENGINE:engine});
 run('scripts/test-main58-actual-p88-wasm-browser.mjs',[],{M58_ENGINE:engine});
 const m=read(join('benchmark','main58-real-p88-browser-worker',engine,'M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json'));
