@@ -22,10 +22,12 @@ function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
  assert.ok(i>=0&&j>i,'P846 source segment missing '+a);return app.slice(i,j);}
 const source=extract('function node(', 'function hasSourceBoundMask88(')+
  extract('function hasSourceBoundMask88(', '// P846:')+
- extract('function unit70Receipts(', 'function renderRecognitionNotice(');
+ extract('function unit70Receipts(', 'function renderRecognitionNotice(')+
+ extract('function candidate(', 'function queueAutomatic(');
 const harness=[
  "const categories=['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'];",
- "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true;",
+ "let items=[],batch=[],stream=null,cameraOpening=false,busy=false,localReady=true,session=0;",
+ "const reviewFirst836=true;const ui88={};const $=id=>(ui88[id]??={hidden:false,textContent:'',src:''});",
  // Keep the browser's original P846 native Adjust source, but provide the
  // same signed owner/IDB transaction boundary required by the new P88 guard.
  "let db={name:'closet-current-user-owner-A',transaction(stores,mode){if(mode!=='readwrite')throw Error('P88_EXPECTED_WRITE');const tx={objectStore(name){return {put(value){if(name==='items'){window.writeCount++;tx.saved=structuredClone(value);}else if(name==='state')tx.next=structuredClone(value);else throw Error('UNKNOWN_STORE');}}}};window.completions.push({resolve(){if(tx.next)window.draftSnapshots.push(tx.next);window.stored.push(tx.saved);tx.oncomplete?.();},reject(error){tx.error=error||Error('REJECT');tx.onerror?.();}});return tx;}};",
@@ -40,11 +42,11 @@ const harness=[
  "window.writeCount=0;window.stored=[];window.completions=[];window.draftSnapshots=[];window.messageText='';",
  "const savePiece=(v,b)=>{window.writeCount++;return new Promise((resolve,reject)=>window.completions.push({resolve:()=>{window.stored.push(structuredClone(v));resolve();},reject}));};",
  "const removeItem=async()=>{};",
- "const persistDraft=async()=>{};",
+ "const persistDraft=async()=>{window.persistDraftCount=(window.persistDraftCount||0)+1;};",
  "const render=()=>{};",
  "const scheduleMemoryReview=()=>{};",
  "const stopCamera=()=>{};",
- "const queueAutomatic=()=>{};",
+ "const queueAutomatic=()=>{window.autoQueueCount=(window.autoQueueCount||0)+1;};",
  "const message=x=>window.messageText=x;",
  "const sh=n=>Number(n).toString(16).padStart(64,'0');",
  "const receipt=(owner,m)=>({ownerId:owner,sourceSha256:sourceHash88,maskSha256:sh(m)});",
@@ -58,6 +60,11 @@ const harness=[
  "    shoePair:{confirmedByOwner:true,companion:{image:companionPhoto88,reconciliation70:receipt('owner-A',12)}}};",
  "  batch=[item];items=dup?[{id:'old',image:'data:image/jpeg;base64,QUJD',category:'Shoes',itemType:'Sneakers',color:'Black',reconciliation70:receipt('owner-A',12)}]:[];",
  "  adjustPhoto(item);return item;",
+ "};",
+ "window.setupExactSaved88=()=>{",
+ "  window.closetAuth.user={id:'owner-A'};session=0;window.autoQueueCount=0;window.persistDraftCount=0;",
+ "  items=[{id:'already-owned',image:originalSource88,category:'Tops',itemType:'T-shirt',color:'Blue'}];",
+ "  batch=[];return candidate(originalSource88);",
  "};",
  "window.setupCrop88=()=>{",
  "  for(const old of document.querySelectorAll('dialog'))old.remove();",
@@ -135,6 +142,41 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.equal(result.ownerReceipt?.independentPhysicalItemVerified,false);
    assert.equal(result.ownerReceipt?.singleGarmentVerified,false);
    assert.equal(result.ownerReceipt?.threeDReady,false);
+   // The *native* camera entry must retain an intentional re-capture of an
+   // already-saved original as UNSAVED owner-reviewed physical-unit evidence,
+   // never silently dismiss it or auto-index an identical owned garment.
+   const capturedAgain=await page.evaluate(()=>window.setupExactSaved88());
+   assert.equal(capturedAgain,true);
+   const identicalCapture=await page.evaluate(()=>({
+    originalItemCount:items.length,
+    existingId:items[0].id,
+    pending:batch.length,
+    identicalBytes:batch[0]?.image===items[0]?.image,
+    unclassified:batch[0]?.category==='Uncategorized',
+    requiresHuman:batch[0]?.requiresOwnershipConfirmation===true,
+    possibleDuplicate:batch[0]?.possibleDuplicate===true,
+    localAnalyzed:batch[0]?.localAnalyzed===true,
+    status:batch[0]?.localStatus,
+    scannerCalls:window.autoQueueCount,backups:window.persistDraftCount,
+    duplicatePendingAccepted:candidate(originalSource88)
+   }));
+   assert.equal(identicalCapture.originalItemCount,1);
+   assert.equal(identicalCapture.existingId,'already-owned');
+   assert.equal(identicalCapture.pending,1);
+   assert.equal(identicalCapture.identicalBytes,true);
+   assert.equal(identicalCapture.unclassified,true);
+   assert.equal(identicalCapture.requiresHuman,true);
+   assert.equal(identicalCapture.possibleDuplicate,true);
+   assert.equal(identicalCapture.localAnalyzed,true);
+   assert.match(identicalCapture.status,/Original kept unsaved for owner comparison/);
+   assert.equal(identicalCapture.scannerCalls,0);
+   assert.equal(identicalCapture.backups,1);
+   assert.equal(identicalCapture.duplicatePendingAccepted,false);
+   console.log('M1_P88_BROWSER_EXACT_PHOTO_OWNER_REVIEW',JSON.stringify({
+    browser:browserName,width,savedOriginalRetained:true,
+    duplicateRescanKeptUnsaved:true,secondPendingFrameCoalesced:true,
+    noModelAutoClassification:true,noAutoSave:true,pageErrors:errors.length
+   }));
    // Source-execute the actual native Crop controller in real Chromium and
    // WebKit. The crop editor transport and signed owner are synthetic; no
    // real model inference or private owner is claimed by these checks.
