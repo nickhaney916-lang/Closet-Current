@@ -182,13 +182,13 @@ s=replace(s,' const front=()=>{group.rotation.y=0;',` const clearCameraInertia90
   controls.update();
   controls.enableDamping=savedDamping;
  };
- const front=()=>{clearCameraInertia90();group.rotation.y=0;`);
+ const front=()=>{clearCameraInertia90();spin=false;group.rotation.y=0;`);
 s=replace(s,'const side=()=>{group.rotation.y=0;','const side=()=>{clearCameraInertia90();group.rotation.y=0;');
 s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{clearCameraInertia90();group.rotation.y=0;');
 s=replace(s,' const rotate=degrees=>{',' const rotate=degrees=>{\\n  clearCameraInertia90();'.replaceAll('\\n','\n'));
 s=replace(s,'{radius:4.25,elevation:0});else{camera.position.set(0,1.04,4.25);',"{radius:Math.max(4.25,1.25/(Math.tan(camera.fov*Math.PI/360)*Math.min(1,camera.aspect))),elevation:0});else{camera.position.set(0,1.04,4.25);");
-s=replace(s,'const side=()=>{group.rotation.y=0;','const side=()=>{spin=false;group.rotation.y=0;');
-s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{spin=false;group.rotation.y=0;');
+s=replace(s,'const side=()=>{clearCameraInertia90();group.rotation.y=0;','const side=()=>{clearCameraInertia90();spin=false;group.rotation.y=0;');
+s=replace(s,'const back=()=>{clearCameraInertia90();group.rotation.y=0;','const back=()=>{clearCameraInertia90();spin=false;group.rotation.y=0;');
 for(const angle of [90,180])s=replace(s,'setAnatomicalCameraView(camera,controls,'+angle+', {radius:4.25,elevation:0})'.replace(', {',',{'),
  'setAnatomicalCameraView(camera,controls,'+angle+',{radius:Math.max(4.25,1.25/(Math.tan(camera.fov*Math.PI/360)*Math.min(1,camera.aspect))),elevation:0})');
 await writeFile(showroom,s);
