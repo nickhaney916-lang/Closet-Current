@@ -83,7 +83,8 @@ try{
   // Strict public model asset egress only, and NEVER a POST from original.
   const h=url.hostname;
   const lib=h==='cdn.jsdelivr.net'&&
-   url.pathname==='/npm/@huggingface/transformers@3.8.1/dist/transformers.min.js';
+   url.pathname.startsWith('/npm/@huggingface/transformers@3.8.1/dist/')&&
+   /\\.(?:js|mjs|wasm)$/.test(url.pathname);
   const hub=h==='huggingface.co'&&
    url.pathname.startsWith('/Xenova/segformer_b0_clothes/');
   const weights=h==='cdn-lfs.huggingface.co'||h.endsWith('.hf.co')||
