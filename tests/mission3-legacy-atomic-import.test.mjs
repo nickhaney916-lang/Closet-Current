@@ -208,6 +208,25 @@ test('same legacy ID without source hash cannot silently replace its only saved 
   assert.equal(after.state.find(x=>x.id==='outfit-board').current.slots.top,'shirt');
  }finally{f.close();}
 });
+test('same-source verified garment permits new cropped preview without replacing original',async()=>{
+ const f=await fixture();
+ try{
+  const pinned={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',pinned);
+  const editedPreview='data:image/jpeg;base64,'+
+   Buffer.from([255,216,3,255,217]).toString('base64');
+  const update={...pinned,image:editedPreview,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[update]});
+  await commit(f,plan);
+  const after=await snapshot(f.db),saved=after.items.find(x=>x.id==='shirt');
+  assert.equal(saved.image,editedPreview);
+  assert.equal(saved.originalPhoto.image,jpeg);
+  assert.equal(saved.originalPhoto.sha256,sha);
+  assert.equal(saved.sourceHashVerified,true);
+  assert.equal(after.state.find(x=>x.id==='outfit-board').current.slots.top,'shirt');
+ }finally{f.close();}
+});
 test('legacy same-ID merge cannot overwrite an existing verified original JPEG',async()=>{
  const f=await fixture();
  try{
