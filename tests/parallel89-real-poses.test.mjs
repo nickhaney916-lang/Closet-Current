@@ -76,6 +76,13 @@ test('synthetic three-pose proof-shape only: separate actual PNG proof requires 
  assert.equal(receipt.consumer3DAuthorized,false);
  assert.equal(receipt.sweptCollisionCertified,false);
  assert.equal(receipt.fittedCrossingPairSumAcrossNineLayerPoseTypes,24);
+ assert.deepEqual(receipt.nativeSourcePoseFrameDimensions,{width:390,height:600});
+ assert.equal(receipt.sourcePairContactLedger.length,4);
+ assert.ok(receipt.sourcePairContactLedger.every(row=>
+  row.originalSourcePoseCount===3&&row.candidateStaticCrossingsRemain===true&&
+  row.originalPhoto2DFallbackRequired===true&&row.consumer3DAuthorized===false&&
+  row.candidateStrictSourceCrossingsByLayer.denimBody===6));
+ assert.equal(receipt.originalPhotoTwoPieceClearanceProved,false);
 });
 const negative=[
  ['fake human realism',x=>x.result.humanRealismApproved=true],
@@ -84,6 +91,13 @@ const negative=[
  ['incorrect source photo owner',x=>x.result.productionChanged=true],
  ['incorrect source rights',x=>x.result.sourceNeutralRearOnly=false],
  ['missing real frame',x=>x.result.captures.pop()],
+ ['inconsistent native screenshot dimensions',x=>x.images[x.result.captures[0].name].height=610],
+ ['fabric fit asserted without a boolean trial decision',x=>x.result.samples[0].shapeTrialApplied='true'],
+ ['applied fit has newly increased witnessed collision counts',x=>{
+   const row=x.result.samples[0],w=row.poseWitnesses[0];
+   w.refined.shirtDenim=1;w.contactPairCountDeltas.shirtDenim=1;
+   w.anyIncreaseOverBaseline=true;row.additionalStaticPoseContactReleaseBlock=true;
+ }],
  ['duplicate original image',x=>x.result.captures[0]=x.result.captures[1]],
  ['mismatched source PNG hash',x=>x.images[x.result.captures[0].name].sha256='b'.repeat(64)],
  ['wrong photograph pose',x=>x.result.captures[0].pose='walking'],
@@ -126,4 +140,6 @@ test('a measured original crossing is recorded as failure of original clearance,
  assert.equal(report.status,'ACTUAL_THREE_RIG_POSES_REHASHED_NOT_MOTION_CLEARED');
  assert.equal(report.increasedContactPoseWitnesses,1);
  assert.equal(report.consumer3DAuthorized,false);
+ assert.equal(report.sourcePairContactLedger[0].witnessedIncreasedContactAtAnyPose,true);
+ assert.equal(report.sourcePairContactLedger[0].candidateStrictSourceCrossingsByLayer.shirtDenim,3);
 });
