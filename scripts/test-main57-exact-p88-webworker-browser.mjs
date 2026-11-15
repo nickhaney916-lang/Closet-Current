@@ -184,7 +184,10 @@ try{
    const reviewed=negative.adapter.intake(negative.pieces[0]);
    if(!reviewed.accepted||reviewed.piece?.hint?.componentReviewStatus!==UNRESOLVED_SEGMENT_STATUS54)
     throw Error('P88 worker unresolved mask bypassed M54 source veto');
-   const candidate={...reviewed.piece,image,confirmed:true,cropReviewed:true,manual:true,
+   // Include a valid synthetic item ID so the final authoritative source
+   // gate (not the unrelated missing-id guard) must reject this mask.
+   const candidate={...reviewed.piece,id:'m57-synthetic-reviewed-item',image,
+    confirmed:true,cropReviewed:true,manual:true,
     category:'Tops',itemType:'T-shirt',color:'Blue'};
    if(canConfirmScene32(candidate,{types:{Tops:['T-shirt']}}))
     throw Error('Human category/crop override silently cleared P88 mask veto');
