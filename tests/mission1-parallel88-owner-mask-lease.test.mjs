@@ -1133,7 +1133,7 @@ test('P88 changed signed unit mask during P70 preflight is not persisted as an a
 });
 
 
-test('P88 queued P70 owner decision refuses another signed owner's newly appended source photo',async()=>{
+test("P88 queued P70 owner decision refuses another signed owner\'s newly appended source photo",async()=>{
  let release;const gate=new Promise(resolve=>{release=resolve;});
  const h=unitDecisionHarness88({queueBeforeWrite:gate}),c=h.c;
  const pending=vm.runInContext("updateUnit70('keep',['part-A'])",c);
