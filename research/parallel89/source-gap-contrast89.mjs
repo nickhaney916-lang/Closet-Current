@@ -122,6 +122,18 @@ export function compareOriginalSourceShoulderGapAB89({
    measurements.push(Object.freeze({pose:POSES[i],
     unsignedSeparationChanges:Object.freeze(distanceChange)}));
   }
+  // A crossing-free original-source YOKE can still make actual source surfaces
+  // critically closer together (as measured on female research avatar).
+  // Prefer an alternative only for controlled research presentation, NEVER
+  // authorize consumer 3D, signed outward clearance or cloth motion.
+  const researchCandidateRetained=trialShoulder.trialApplied&&
+   !geometryWorsened&&!newContactWorsening&&improved>0;
+  const researchOnlyPreferredVariant=researchCandidateRetained?'trial':'baseline';
+  const researchSourceGapVetoReason=!trialShoulder.trialApplied?
+   'TRIAL_REFUSED_BY_ORIGINAL_SOURCE_GATE':
+   newContactWorsening?'NEW_STRICT_SOURCE_CROSSING':
+   geometryWorsened?'ANY_SAMPLED_SOURCE_GAP_DECREASED_AT_LEAST_025MM':
+   !improved?'NO_MEASURED_GAP_GAIN_AT_LEAST_05MM':null;
   return Object.freeze({
    schema:'P89-source-shoulder-unsigned-gap-AB/v1',
    status:'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED',
@@ -135,6 +147,11 @@ export function compareOriginalSourceShoulderGapAB89({
    candidateStillNear2mmPairPoseCount:stillNear,
    someStaticCrossingCountWorsened:newContactWorsening,
    someUnsignedSurfaceGapWorsened:geometryWorsened,
+   researchOnlyPreferredVariant,
+   researchCandidateRetainedForStudy:researchCandidateRetained,
+   researchSourceGapVetoReason,
+   originalPhotoResearchBaselineRequired:!researchCandidateRetained,
+   referencePreviewIsNotPhysicalFitApproval:true,
    candidateResearchFitDoesNotProveOutsideBody:true,
    unphotographedRearNotReconstructed:true,
    originalSourcePhotosPreserved:true,
