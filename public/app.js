@@ -2561,6 +2561,8 @@ async function recognizeItem(item){
    recognitionState.phase='save-failed';
    item.localStatus=String(error?.message||error).includes('CLOSET_AUTO_INDEX_STALE_REVIEW')
     ?'Another tab changed this garment while recognition was running. Your original photo and newer edits were kept. Refresh Photo results before reviewing or saving.'
+    :String(error?.message||error).includes('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW')
+    ?'This original photo is already linked to a saved closet piece. No duplicate was saved; your original photo remains in Photo results. Open My Closet to review the saved piece, or use Adjust for separate-garment review.'
     :'Could not save this piece. Keep this page open, check device storage, then try again or use Adjust.';
   }
   else if(!item.visualSignature)item.localStatus='Could not read this photo. Retake it or adjust details.';

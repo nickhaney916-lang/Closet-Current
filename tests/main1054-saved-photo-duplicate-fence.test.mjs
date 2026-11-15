@@ -75,3 +75,12 @@ test('automatic Index04 indexes only after the same transaction checks saved ori
  assert.match(guard,/CLOSET_AUTO_INDEX_STALE_REVIEW/);
  assert.match(auto,/savedRequest\.onerror=\(\)=>abort/);
 });
+
+test('automatic duplicate-source save explains owner review instead of pretending storage failed',()=>{
+ const start=source.indexOf('async function recognizeItem(');
+ const relevant=source.slice(start);
+ assert.ok(start>0);
+ assert.match(relevant,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/);
+ assert.match(relevant,/No duplicate was saved; your original photo remains in Photo results/);
+ assert.match(relevant,/Open My Closet to review the saved piece/);
+});
