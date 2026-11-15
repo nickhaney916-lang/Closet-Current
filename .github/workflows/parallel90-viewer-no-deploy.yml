@@ -5,6 +5,12 @@ on:
   workflow_dispatch: {}
 permissions:
   contents: read
+# Only the most recent candidate on each isolated research branch needs the
+# expensive actual Chromium/WebKit 163-bone/source evidence. Never cancel
+# another mission or a different research branch.
+concurrency:
+  group: parallel90-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   native-viewer:
     runs-on: ubuntu-24.04
