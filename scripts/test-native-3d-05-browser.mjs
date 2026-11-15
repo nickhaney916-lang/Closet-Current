@@ -8,9 +8,15 @@ import {createServer} from 'node:http';
 import {mkdir,readFile,writeFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {resolve,extname} from 'node:path';
-import {chromium} from 'playwright';
+import {chromium,webkit} from 'playwright';
+import {checkViewer90} from './check-parallel90-interactions.mjs';
+import {checkSavedSwitch90} from './check-parallel90-saved-switch.mjs';
+const engine90=process.env.P90_ENGINE||'chromium';
+const widths90=process.env.P90_WIDTH?[Number(process.env.P90_WIDTH)]:[320,390,430];
+assert.ok(widths90.every(x=>[320,390,430].includes(x)));
+assert.ok(['chromium','webkit'].includes(engine90));
 import sharp from 'sharp';
-const root=resolve('.'),donor=resolve('.native05-donor-541'),dir='benchmark/native-3d-05';
+const root=resolve('.'),donor=resolve('.native05-donor-541'),dir=process.env.P90_PROFILE_VARIANT?'benchmark/parallel90-profile/'+engine90+'/'+(process.env.P90_PROFILE_OUTPUT||process.env.P90_PROFILE_VARIANT)+'/native':process.env.P90_ENGINE==='webkit'?'benchmark/native-3d-05-webkit':'benchmark/native-3d-05';
 await mkdir(dir,{recursive:true});
 const digest=b=>createHash('sha256').update(b).digest('hex');
 const locks=JSON.parse(await readFile('benchmark/locked-photo-sources.json','utf8'));
@@ -82,7 +88,11 @@ function fixture(owner){
     {id:owner+'-missing-saved',outfit3dId:owner+'-missing-3D',
      ownerId:owner,name:'Missing lower garment',
      slots:{top:owner+'-shirt',bottom:owner+'-lost-denim',shoes:owner+'-shoes'},
-     futureSourceKeys:{ver:2}}],
+     futureSourceKeys:{ver:2}},
+    ...(process.env.P90SWAPS==='1'?[{id:owner+'-shirt-saved',
+     outfit3dId:owner+'-verified-shirt-3D',ownerId:owner,
+     name:'Source-true shirt with photo-only outerwear',
+     slots:{top:owner+'-shirt',layer2:owner+'-jacket',layer3:owner+'-coat',shoes:owner+'-shoes'}}]:[])],
    futureBoardVersion:'never-drop'}
  };
 }
@@ -111,7 +121,7 @@ async function take(page,width,stage){
  const meta=await sharp(png).metadata(),stat=await sharp(png).stats();
  assert.equal(meta.width,width);assert.ok(meta.height>=880&&png.length>4500);
  assert.ok(stat.channels.some(x=>x.stdev>7),'Actual mobile canvas/image blank');
- const name='chromium-'+width+'-'+stage+'.png';
+ const name=engine90+'-'+width+'-'+stage+'.png';
  await writeFile(dir+'/'+name,png);
  screens.push({name,width,stage,sha256:digest(png)});
 }
@@ -135,11 +145,11 @@ function authHttp(route){
  external.push({kind:'unrecognized-auth',method:req.method()});return route.abort();
 }
 try{
- for(const width of [320,390,430]){
+ for(const width of widths90){
   // A fresh Chromium/GPU process per real WebGL width avoids stale prior
   // 163-bone canvas contexts, renderer memory and stale browser navigation.
-  browser=await chromium.launch({headless:true,args:[
-   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+  browser=await ({chromium,webkit})[engine90].launch({headless:true,args:engine90==='chromium'?[
+   '--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']:[]});
   const ctx=await browser.newContext({viewport:{width,height:920},deviceScaleFactor:1,
    isMobile:true,hasTouch:true,serviceWorkers:'block'});
   await ctx.route('**/*',route=>{
@@ -262,9 +272,10 @@ try{
   // page.evaluate() open promise while WebGL imports/contexts are created.
   // Native PR541 itself drives its browser test by DOM click + state wait.
   await page.locator('#native3D05Preview').click();
+  if(process.env.P90==='1')page.on('console',m=>{if(m.type()==='error')console.error('P90 console',m.text());});
   await page.waitForFunction(()=>window.native3D05Bridge?.state().modelReady&&
    window.native3D05Bridge.state().viewerMode==='dress'&&
-   window.native3D05Bridge.state().bones===163,null,{timeout:150000});
+   window.native3D05Bridge.state().bones===163,null,{timeout:150000}).catch(async e=>{console.error('P90_LOAD_DIAGNOSTIC',await page.evaluate(()=>({native:document.getElementById('native3D05Status')?.textContent,donor:document.getElementById('outfit3D01Status')?.textContent,state:window.native3D05Bridge?.state()})));throw e;});
   assert.equal(await page.evaluate(()=>window.native3D05Bridge.state().opened),
    'native05-A-verified-dress-3D');
   const state=await page.evaluate(()=>window.native3D05Bridge.state());
@@ -283,6 +294,11 @@ try{
   await take(page,width,'03-genuine-163-bone-side-dress');
   await page.locator('#outfit3D01Back').click();
   await take(page,width,'04-genuine-163-bone-rear-neutral');
+  if(process.env.P90==='1')await checkViewer90(page,width,engine90);
+  if(process.env.P90SWAPS==='1'&&width===390){
+   await checkSavedSwitch90(page,engine90);
+   assert.deepEqual(await readBoard(page),ownerOriginal,'Repeated previews never write saved outfits');
+  }
   if(native89&&width===390){
    // NATIVE89: actual source/owner viewer is already WebGL READY. A native
    // saved outfit selection change must revoke its previously visible
@@ -454,9 +470,11 @@ try{
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
   if(native102&&width===390){
+   const sourceLifecycleOut102='benchmark/native-3d-102'+(engine90==='webkit'?'-webkit':'');
+   const sourceLifecycleReceipt102=engine90==='webkit'?'benchmark/native-3d-102-webkit/acceptance.json':'benchmark/native-3d-102/acceptance.json';
    // Genuine photo-backed original 163-bone donor MUST be visible before the
    // simulated mobile tab-hidden lifecycle event. Browser API lifecycle is
-   // emulated through real Chromium DOM events; NOT a physical phone test.
+   // emulated through Chromium/WebKit DOM events; NOT a physical phone test.
    const before102=await page.evaluate(()=>window.native3D05Bridge.state());
    assert.equal(before102.modelReady,true);
    assert.equal(before102.bones,163);
@@ -480,8 +498,8 @@ try{
    const background=await page.screenshot({fullPage:false,animations:'disabled'});
    const bgMeta=await sharp(background).metadata();
    assert.equal(bgMeta.width,390);
-   await mkdir('benchmark/native-3d-102',{recursive:true});
-   await writeFile('benchmark/native-3d-102/background-source-revoked-390.png',background);
+   await mkdir(sourceLifecycleOut102,{recursive:true});
+   await writeFile(sourceLifecycleOut102+'/background-source-revoked-390.png',background);
    await page.evaluate(()=>{
     delete document.hidden;delete document.visibilityState;
    });
@@ -509,15 +527,16 @@ try{
    const freezePng=await page.screenshot({fullPage:false,animations:'disabled'});
    const freezeMeta=await sharp(freezePng).metadata();
    assert.equal(freezeMeta.width,390);
-   await writeFile('benchmark/native-3d-102/freeze-source-revoked-390.png',freezePng);
-   await writeFile('benchmark/native-3d-102/acceptance.json',
+   await writeFile(sourceLifecycleOut102+'/freeze-source-revoked-390.png',freezePng);
+   await writeFile(sourceLifecycleReceipt102,
     JSON.stringify({
      priority:'NATIVE-MOBILE-VISIBILITY-SOURCE-REVOKE-102',
-     browser:'Chromium',simulatedBrowserVisibility:true,
+     browser:engine90,simulatedBrowserVisibility:true,
      actualPhysicalAndroidIPhone:false,viewportCSSWidth:390,
      authenticSourceJPEG:true,realOriginalWebGLBones:163,
      hiddenEventClosedSourceBeforeStateRead:true,
-     hiddenOpenBlocked:true,sourceReopenPassedActualNATIVE92OriginalBytes:true,
+     hiddenOpenBlocked:true,sourceReopenPassedActualNATIVE92OriginalBytes:native92,
+     sourceReopenOwnerOriginalPhotoAdmission:true,
      freezeEventClosedSourceBeforeStateRead:true,
      originalOwnerSavedOutfitUnchanged:true,signedOwnerStillActive:true,
      originalPhotographsInArtifacts:false,
@@ -582,12 +601,12 @@ try{
   await browser.close();browser=null;
  }
  assert.equal(crashes.length,0,'No real WebGL viewport may crash');
- assert.equal(cases.length,3);assert.equal(screens.length,15);
+ assert.equal(cases.length,widths90.length);assert.equal(screens.length,5*widths90.length);
  assert.deepEqual(errors,[]);
  assert.deepEqual(external.filter(x=>x.method!=='GET'),[]);
  for(const entry of screens)assert.equal(digest(await readFile(dir+'/'+entry.name)),entry.sha256);
- const result={priority:'NATIVE-3D-05',cases:3,screenshots:15,
-  browser:'chromium',widths:[320,390,430],
+ const result={priority:'NATIVE-3D-05',cases:cases.length,screenshots:screens.length,
+  browser:engine90,widths:widths90,
   originalNativeAuthHTTPOnlyMocked:true,realWebGL:true,
   pinnedDonorSourceSHA:'df6885d6011cb33fb22dceb81a08f35a0ac4dd61',
   realSignedRLS:false,originalUserSavedStateUnmodified:true,
@@ -596,8 +615,8 @@ try{
   evidence:cases,screens,errors,external,
   navigations,crashes,isolatedChromiumProcessPerWidth:true};
  await writeFile(dir+'/results.json',JSON.stringify(result,null,2));
- console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:3,
-   real163BoneWebGL:true,realMobileScreenshots:15,familyAlpha:'HOLD'}));
+ console.log('NATIVE05_BROWSER_3D_VERIFIED',JSON.stringify({cases:cases.length,
+   real163BoneWebGL:true,realMobileScreenshots:screens.length,familyAlpha:'HOLD'}));
 }catch(error){
  await writeFile(dir+'/ERROR.json',JSON.stringify({
   message:String(error?.stack||error),cases:cases.length,

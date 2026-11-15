@@ -147,11 +147,18 @@ export async function mountNative3D05({
   throw Error('NATIVE05 requires verified normal consumer Save Changes controls');
  anchor.after(button);button.after(status);
  let epoch=null,panel=null,opened=null,closed=false,attempt=0,cleaning=false,opening=false;
+ let preferredFigure90='female';
  let displayedSelection89=null,displayedSources91=null,displayedRevision93=null;
  const notify=value=>{const s=String(value);status.textContent=s;onStatus(s);};
  function cleanup(reason='Saved outfit preview closed',{revoke=false}={}){
   if(cleaning)return;
   cleaning=true;attempt++;
+  // Preserve only a validated UI avatar choice inside this owner lease.
+  // No meshes, texture, source receipt or old-account state are reused.
+  if(revoke)preferredFigure90='female';
+  else try{const figure=panel?.state()?.figure;
+   if(figure==='male'||figure==='female')preferredFigure90=figure;
+  }catch{}
   const oldPanel=panel;panel=null;opened=null;displayedSelection89=null;displayedSources91=null;displayedRevision93=null;
   const oldEpoch=revoke?epoch:null;
   if(revoke)epoch=null;
@@ -216,6 +223,13 @@ export async function mountNative3D05({
  };
  doc.addEventListener('visibilitychange',onBackground102);
  doc.addEventListener('freeze',onFreeze102);
+ // Context loss ends photo admission; explicit reopen re-attests source.
+ const onContextLost90=e=>{
+  if(e.target?.id!=='outfit3D01Canvas'||closed||cleaning)return;
+  e.preventDefault();
+  cleanup('3D graphics interrupted · original-photo Outfit Builder preserved; reopen to verify source');
+ };
+ doc.addEventListener('webglcontextlost',onContextLost90,true);
  win.addEventListener('closet:alpha-session-changed',invalidate);
  win.addEventListener('pagehide',invalidate);
  doc.getElementById('logout').addEventListener('click',logout,true);
@@ -236,6 +250,38 @@ export async function mountNative3D05({
     }
    },true);
   }
+ }
+ // P90 M2: use only the existing native selection path, never donor writes.
+ async function switchSaved(index){
+  if(closed||opening)throw Error('NATIVE90 viewer busy or disposed');
+  requireNative3D05Visible102({doc});
+  validateNative3D05Selection({consumer,originalNativeAuth:nativeAuth,win,doc});
+  const rows=consumer.readOnlySnapshot().saved;
+  if(!Number.isInteger(index)||index<0||index>=rows.length||
+     !goodId(rows[index]?.id)||
+     (rows[index].ownerId!==undefined&&rows[index].ownerId!==nativeAuth.user.id))
+   throw Error('NATIVE90 invalid owner saved outfit');
+  cleanup('Verifying selected saved outfit…');
+  consumer.selectSaved(index); // guarded native draft selection; no DB writes
+  return open(); // all original-byte, owner, slot and wardrobe checks repeat
+ }
+ function installSavedSwitch90(){
+  const dialog=doc.getElementById('outfit3D01Dialog');
+  if(!dialog||doc.getElementById('native3D90Saved'))return;
+  const label=doc.createElement('label');label.textContent='View another saved outfit';
+  const select=doc.createElement('select');select.id='native3D90Saved';
+  select.style.cssText='display:block;width:100%;min-height:44px';
+  const rows=consumer.readOnlySnapshot().saved;
+  for(let i=0;i<rows.length;i++){
+   const option=doc.createElement('option');option.value=String(i);
+   option.textContent=rows[i].name||'Saved outfit '+(i+1);select.append(option);
+  }
+  select.value=String(consumer.selected);
+  select.onchange=()=>{select.disabled=true;switchSaved(Number(select.value)).catch(e=>{
+   if(select.isConnected){try{select.disabled=false;select.value=String(consumer.selected);}catch{}}
+   notify('3D unavailable · original-photo board preserved. '+String(e.message||e));
+  });};
+  label.append(select);dialog.querySelector('.cc3d-viewer')?.append(label);
  }
  async function open(){
   if(closed)throw Error('NATIVE05 private preview disposed');
@@ -279,10 +325,14 @@ export async function mountNative3D05({
    requireFresh(); // The user may switch outfits or edit slots during lazy import.
    if(typeof donor?.mountOutfit3D01Research!=='function')
     throw Error('NATIVE05 exact pinned 3D donor not available');
-   panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth});
+   panel=await donor.mountOutfit3D01Research({doc,auth:epoch.auth,
+    nativeTopSource90:selectedSources91.sources.find(x=>x.id===selected.slots.top)?.sha256||null,
+    nativeBottomEmpty90:!Object.hasOwn(selected.slots,'bottom')});
    requireFresh(); // Do not open a donor after the native outfit changed.
    lockDonorEditing();
    opened=selected.id;
+   const figure90=doc.getElementById('outfit3D01Model');
+   if(figure90)figure90.value=preferredFigure90;
    await panel.open(); // genuine anatomical WebGL rig and source-verified loaders
    if(request!==attempt||!epoch.status().active)
     throw Error('NATIVE05 owner/session changed while loading WebGL');
@@ -308,6 +358,7 @@ export async function mountNative3D05({
    // always re-check before announcing success.
    revokeChangedSource89();
    if(!displayedSelection89)throw Error('NATIVE89 saved outfit changed as 3D became visible');
+   installSavedSwitch90();
    notify('Research 3D viewer opened · unsupported garments stay original-photo-only');
    return {opened:true,ownerAuthenticated:true,sourceTrue:true,
     originalSlotsPreserved:true,ready:panel.state().viewerReady,
@@ -334,6 +385,15 @@ export async function mountNative3D05({
    meshCount:active?data.meshCount||0:0,
    viewerMode:active?data.viewerMode||'none':'none',
    fallbackCount:active?data.fallbackCount||0:0,
+   startup90:active?data.startup90||null:null,
+   renderStages90:active?data.renderStages90||null:null,
+   sceneApplyStages90:active?data.sceneApplyStages90||null:null,
+   sceneShirtStages90:active?data.sceneShirtStages90||null:null,
+   contactEvidence90:active?data.contactEvidence90||null:null,
+   camera90:active?data.camera90||null:null,
+   figure90:active?data.figure||null:null,
+   garmentSources90:active?data.garmentSources90||null:null,
+   resources90:active?{geometries:data.geometries,textures:data.textures,frames:data.frames}:null,
    photoOnlyUnsupported:true,donorWriteControlsDisabled:true,
    actualConsumerSavePathUnchanged:true,productionEnabled:false,
    realSignedAccountsVerified:false,releaseAuthorized:false,familyAlpha:'HOLD'});
@@ -343,6 +403,7 @@ export async function mountNative3D05({
   if(closed)return;closed=true;
   doc.removeEventListener('visibilitychange',onBackground102);
   doc.removeEventListener('freeze',onFreeze102);
+  doc.removeEventListener('webglcontextlost',onContextLost90,true);
   win.removeEventListener('closet:alpha-session-changed',invalidate);
   win.removeEventListener('pagehide',invalidate);
   doc.getElementById('logout').removeEventListener('click',logout,true);
@@ -351,5 +412,5 @@ export async function mountNative3D05({
   button.remove();status.remove();
  };
  notify('Choose a saved outfit, then preview verified 3D (unsaved edits must be saved).');
- return Object.freeze({open,close,dispose,state,researchOnly:true,releaseAuthorized:false});
+ return Object.freeze({open,switchSaved,close,dispose,state,researchOnly:true,releaseAuthorized:false});
 }
