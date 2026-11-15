@@ -409,6 +409,43 @@ function boardPhotoRequiresUnitReview(item){
   item.segmentHint?.clipped===true||item.segmentHint?.verified===false||
   item.sourceHashVerified!==true||item.segmentHint?.rawMaskPixelsIndependentlyVerified!==true);
 }
+// M74: Mission 1 owner-source-review/v1 is an owner DECISION record, never
+// independent proof of a physical unit, a sound pixel mask, or fitted 3D.
+// Show that difference in the normal UI only when the live owner's entire
+// locally available receipt still refers to the SAME saved source/crop.
+// No private JPEG bytes or owner receipt are sent to other services.
+function boardHasMatchingOwnerSourceReview88(item){
+ const r=item?.ownerSourceReview88,owner=window.closetAuth?.user?.id;
+ if(!item||!r||typeof r!=='object'||Array.isArray(r)||!owner||
+    db?.name!=='closet-current-user-'+owner||
+    item.ownerId!==owner||r.schema!=='p88-owner-source-review/v1'||
+    r.ownerId!==owner||r.itemId!==item.id||
+    r.sourceId!==item.outfitSourceId||
+    r.originalPhotoSha256!==item.sourceSHA256||
+    item.originalPhoto?.sha256!==item.sourceSHA256||
+    !/^[a-f0-9]{64}$/.test(item.sourceSHA256||'')||
+    !/^[a-f0-9]{64}$/.test(r.derivedImageSha256||'')||
+    r.derivedImageBytesVerified!==true||
+    r.selectedMaskSha256!==item.reconciliation70?.maskSha256||
+    !/^[a-f0-9]{64}$/.test(r.selectedMaskSha256||'')||
+    r.physicalUnitDecision!==item.reconciliation70Status||
+    r.category!==item.category||r.itemType!==(item.itemType||'Unknown')||
+    r.color!==item.color||
+    JSON.stringify(r.cropBounds??null)!==JSON.stringify(item.cropBounds??null)||
+    r.ownerReviewed!==true||r.sourcePhotoOriginal!==true||
+    r.rawMaskPixelsIndependentlyVerified!==false||
+    r.independentPhysicalItemVerified!==false||
+    r.singleGarmentVerified!==false||r.threeDReady!==false)
+  return false;
+ return true;
+}
+function boardPhotoSourceNotice88(item){
+ // A valid owner-review receipt changes wording only. Never change the
+ // default 2D/unverified class or 3D admission based on this metadata.
+ return boardHasMatchingOwnerSourceReview88(item)?
+  'Owner-reviewed photo · independent garment outline unverified':
+  'Photo reference only · garment outline unverified';
+}
 function openBoardPicker(slotId){
  // A picker can remain queued or be retained by an old card after sign-out.
  // Its clothing thumbnails belong to the exact session that opened it.
@@ -422,9 +459,9 @@ function openBoardPicker(slotId){
   // Keep styling a source-only image possible; never imply a 3D-ready mask.
   if(boardPhotoRequiresUnitReview(item)){
    b.classList.add('source-unverified');
-   b.append(node('small','Photo reference only · garment outline unverified'));
+   b.append(node('small',boardPhotoSourceNotice88(item)));
    b.setAttribute('aria-label',(item.name||'Closet piece')+
-    ' · Photo reference only; individual garment outline unverified. Select for 2D outfit');
+    ' · '+boardPhotoSourceNotice88(item)+'. Select for 2D outfit');
   }
   b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
@@ -455,10 +492,10 @@ function renderOutfitBoard(){
   // verified physical garment. Keep the normal native Outfit Builder useful,
   // but make the 2D source-only limitation visible without opening research UI.
   const unverifiedPhysicalUnit=boardPhotoRequiresUnitReview(item);
-  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(unverifiedPhysicalUnit?' source-unverified':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+(unverifiedPhysicalUnit?' · Photo reference only; individual garment outline unverified':'')+'. Choose a piece');
+  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(unverifiedPhysicalUnit?' source-unverified':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+(unverifiedPhysicalUnit?' · '+boardPhotoSourceNotice88(item):'')+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
   if(item){const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span',item.name||item.itemType,'slot-name'));
-   if(unverifiedPhysicalUnit)b.append(node('small','Photo reference only · garment outline unverified'));
+   if(unverifiedPhysicalUnit)b.append(node('small',boardPhotoSourceNotice88(item)));
    if(needsReview)b.append(node('small','Review category · original reference kept'));}
   else if(retainedId)b.append(node('span','Missing saved clothing','slot-name'),node('small','Original ID retained · replace this piece'));
   else if(covered)b.append(node('span','Covered by dress','slot-name'));
