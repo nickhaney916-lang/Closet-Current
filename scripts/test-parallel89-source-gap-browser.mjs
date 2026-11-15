@@ -45,7 +45,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const origin='http://127.0.0.1:'+server.address().port;
 let browser;
-const receipts=[],shoulderContrasts=[],quarterContrasts=[],researchSelections=[],errors=[],offsite=[];
+const receipts=[],shoulderContrasts=[],quarterContrasts=[],researchSelections=[],errors=[],offsite=[],rigLoadsCancelled=[];
 try{
  browser=await ({chromium,webkit})[engine].launch({headless:true,...(
   engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader',
@@ -59,10 +59,19 @@ try{
   page.on('pageerror',e=>errors.push(String(e.message).slice(0,180)));
   page.on('crash',()=>errors.push('original-webgl-browser-crashed'));
   page.on('requestfailed',request=>{
-   // Only local original-source paths, never public internet or private data.
-   if(request.url().startsWith(origin))
-    errors.push('local-source-request-failed:'+new URL(request.url()).pathname.slice(0,120)+':'+
-     (request.failure()?.errorText??'unknown').slice(0,90));
+   // Switching or closing a successfully verified source avatar can abort an
+   // obsolete *local public GLB* request. Keep other failures fatal; require
+   // complete, actual 163-bone+source-photo+PNG proof in all eight scenes.
+   if(!request.url().startsWith(origin))return;
+   const path=new URL(request.url()).pathname;
+   const failure=request.failure()?.errorText??'unknown';
+   if(failure==='net::ERR_ABORTED'&&
+    /^\/research\/three-d-06\/models\/(female|male)-cc0-rigged\.glb$/.test(path)){
+    rigLoadsCancelled.push({avatar,variant,model:path.slice(path.lastIndexOf('/')+1)});
+   }else{
+    errors.push('local-source-request-failed:'+path.slice(0,120)+':'+
+     failure.slice(0,90));
+   }
   });
   await page.route('**/*',route=>{
    const u=route.request().url();
@@ -353,11 +362,18 @@ try{
    consumer3DAuthorized:false,releaseAuthorized:false,familyAlpha:'HOLD'
   });
  }
- assert.deepEqual(errors,[]);
+ assert.equal(receipts.length,8,
+  'both actual original male/female 163-bone source outfits must finish all four variants');
+ assert.ok(rigLoadsCancelled.length<=16,
+  'repeated local avatar model aborts exceed bounded source-scene switching');
+ assert.deepEqual(errors,[],
+  'non-cancelled public original source failures must remain fatal');
  assert.deepEqual(offsite,[]);
  await writeFile(join(out,'receipt.json'),JSON.stringify({schema:'P89-authentic-licensed-shirt-denim-actual-163bone-static-unsigned-gap-browser/v3',
   engine,sourcePhotoOriginalVerified:true,
   sourceSHA256:SHA,scenes:receipts,shoulderContrasts,quarterContrasts,researchSelections,
+  cancelledObsoletePublicAvatarGLBRequests:rigLoadsCancelled,
+  cancellationAllowanceRequiresEightCompleteActualSourceScenes:true,
   comparativeOriginalSourceShoulderFitIsResearchOnly:true,
   actualNativeOriginalPublicSourcePNGVisualComparisonsArchived:true,
   humanReviewerApprovalReceived:false,
