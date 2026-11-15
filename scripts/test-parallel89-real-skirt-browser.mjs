@@ -14,6 +14,8 @@ import {chromium,webkit} from 'playwright';
 import sharp from 'sharp';
 import {auditOriginalSkirtResearchFrontCoverage89}
  from '../research/parallel89/skirt-original-front-visibility89.mjs';
+import {summarizeOriginalSkirtUnphotographedRear89}
+ from '../research/parallel89/skirt-rear-evidence-gate89.mjs';
 const [donorArg,p84Arg]=process.argv.slice(2);
 const donor=resolve(donorArg||'.'),p84=resolve(p84Arg||'.'),here=resolve('.');
 const engine=process.env.P89_BROWSER||'chromium';
@@ -78,7 +80,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],verifiedOriginalSourceRearEvidenceSummary:null,errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -528,6 +530,20 @@ try{
  assert.equal(results.originalPublicUnphotographedRearVisibilityReports.length,18);
  assert.ok(results.originalPublicUnphotographedRearVisibilityReports.filter(x=>
   x.viewAngle===180&&x.unphotographedRearMarkerPixels>2000).length===6);
+ const rearProof=summarizeOriginalSkirtUnphotographedRear89({
+  rows:results.originalPublicUnphotographedRearVisibilityReports,
+  sourceSHA256:required.skirt,sourcePhotoRearObserved:false
+ });
+ assert.equal(rearProof.schema,'P89-original-photo-source-rear-material-360-evidence/v1');
+ assert.equal(rearProof.status,'ORIGINAL_SKIRT_ONLY_FRONT_PHOTOGRAPHED_REAR_NOT_SOURCE_VERIFIED',
+  'source-authentic screenshot and original material ID receipt failed: '+JSON.stringify(rearProof));
+ assert.equal(rearProof.actualNativeOriginalPhotoViewReports,18);
+ assert.equal(rearProof.originalRearPhotoVerified,false);
+ assert.equal(rearProof.substantialUnphotographedBackVisibleAtActualSideAndRearAngles,true);
+ assert.equal(rearProof.sourcePhoto2DFallbackRequired,true);
+ assert.equal(rearProof.consumer3DAdmitted,false);
+ assert.equal(rearProof.releaseAuthorized,false);
+ results.verifiedOriginalSourceRearEvidenceSummary=rearProof;
  assert.equal(results.research45OnlyPoseBVHChecks.length,6);
  assert.equal(results.waistAnchorLandmarkReports.length,2);
  assert.equal(results.registrationTrials.length,2);
@@ -569,6 +585,7 @@ try{
    researchOnly45mmScreenshots:results.research45OnlyPreviewScreenshots.length,
    originalPhotoCreamFrontCoverageWitnesses:results.originalPhoto45FrontVisibilityReports.length,
    originalUnphotographedRearSourceViewAudits:results.originalPublicUnphotographedRearVisibilityReports.length,
+   rearActualOriginalPhotoSourceEvidenceStatus:results.verifiedOriginalSourceRearEvidenceSummary?.status||null,
    original180DegreeNeutralOnlyRearPixels:results.originalPublicUnphotographedRearVisibilityReports.filter(x=>x.viewAngle===180).map(x=>x.unphotographedRearMarkerPixels),
    original180DegreeRearLowerBoundShareOfWholeProjectedSkirt:
     results.originalPublicUnphotographedRearVisibilityReports.filter(x=>x.viewAngle===180).map(x=>x.inferredRearLowerBoundShareOfOpaqueProjectedOriginalSkirt),
