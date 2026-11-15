@@ -630,3 +630,67 @@ Fashionpedia ONNX accessory result is still **8/13 exact category boxes**,
 not a same-metric SegFormer segmentation uplift. The 65%/35%
 Mission 1 planning rubric is unchanged pending proven integrated acceptance.
 Family Alpha issue #255 stays OPEN/HOLD.
+
+
+## 2026-11-15 M1 native crop photo account/source lease — verified source update, release still HOLD
+
+**Original code defect:** Outside the original P70 mask-crop veto, the native
+`public/app.js` `cropClothingPhoto` callback previously awaited asynchronous
+photo-quality / optional classifier work and passed the final private crop save
+through generic `writeAll` or queued draft writes using mutable global `db`.
+An account A→B switch or same-ID renewed login during that wait could change the
+write target or let a stale crop overwrite a different owner's draft. This is
+a source-observed potential race, **not evidence that live users were exposed**.
+
+**Existing PR #1175 source fix:** `reviewedSaveLease88` now freezes the signed
+user-object reference and ID, per-owner IDB handle, exact saved/draft object,
+original crop, recognition source, segmentation and crop revisions *before*
+opening the native crop editor. Both optional classifier and photo-quality
+awaits revalidate the same object and unmasked source; the final save rechecks
+**inside** `queued()` after async `cloud.beforeWrite()`. Only the captured
+original owner IDB can receive a committed edit. Saved-crop edits write only
+the owner-bound item; unsaved draft crops write a **live** batch snapshot to
+the owner-bound draft state, preserving new photographs captured during the
+preflight. After the transaction an old/replaced owner cannot repaint another
+user's UI. Crops cannot supply a second item ID, physical mask receipt or
+owner-source verified receipt. Any late `reconciliation70`, shoe pair, merged
+fragment or unrecognized segmentation status remains blocked.
+
+**Source-executed negative coverage:** existing P88 test file now exercises
+actual native crop guards for A→B during photo-quality, same-ID renewed login
+after cloud preflight, source/mask added during crop or queue wait, identity or
+physical metadata forgery and stale optional worker classification. Positive
+case proves a separate concurrently captured draft survives one owner's
+queued crop write; the reviewed photo stays pending **unsaved in closet**
+until explicit Adjust owner confirmation.
+
+**Chromium/WebKit browser-path coverage:** existing
+`scripts/test-m1-owner-pair-admission-846.mjs` now additionally executes
+the actual source crop controller in browser engines at 320/390/430 CSS widths
+with synthetic signed-owner/crop-editor/IDB transport. It exercises permitted
+crop edits with an appended second draft and source-photo review still required,
+then denies same-ID replacement account before queued crop commit. These are
+**synthetic transport tests**, not mobile-device photos, genuine human crop
+acceptance, hosted two-account RLS, physical phones or blind model accuracy.
+
+**Exact commit/test policy:** starting prior green source head
+`025f1a57bd5bf92185c6c0cf55dbec1600afc3ef`,
+[no-deploy #43731446902](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43731446902).
+Crop implementation commit `dea517b5b0c458e71347d55ec55952e3b96fe387`,
+expanded source-executed crop tests `1b78e46251bea9528c0cb391ee3a8abc86adc4e6`
+([no-deploy #43732238211](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43732238211)),
+and browser-source test extraction correction
+`9982ebe2b13e8311a4ea7f07674b3591289160a0`
+([no-deploy #43732451667](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43732451667)).
+The latter exact code-head check is **IN PROGRESS at this documentation
+checkpoint**; do not transfer a prior green run or claim browser acceptance
+until final jobs finish.
+
+**No product promotion:** genuine prospective photographer/model-training-
+disjoint double-human annotations, subtype/color/instance benchmarks,
+physical garment unit identity, Android Chrome/iPhone Safari, signed hosted
+RLS and M4 certified single-garment acceptance remain blocked/unknown.
+The per-item `p88-owner-source-review/v1` remains **owner-attested but
+`singleGarmentVerified:false`, `threeDReady:false`**. Planning baseline
+still 65% complete / 35% remaining. Exactly the existing Mission 1 branch,
+no merge/deploy, #255 OPEN/HOLD.
