@@ -1,0 +1,93 @@
+name: MAIN1054 M54 unresolved multi-item mask owner veto NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m54-unresolved-mask-owner-veto-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  m54-atomic-source-review-and-inherited:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact verified M52 parent; only research MULTI24 owner-veto changes, never default app source
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=c4d425076fe853e876cf7d0a34b1b83623f90b85
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/parallel89/ research/mission1-parallel88/ research/native-3d-05/ research/main-thread-integration-1054/
+          git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
+            case "$p" in
+              research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/scene-class-guard-32.mjs|research/multi-garment-capture-01/review-ui.mjs|tests/main54-unresolved-multi-mask-owner-veto.test.mjs|scripts/test-main54-native-unresolved-owner-browser.mjs|research/master-consolidation-1054/MILESTONE54.md|.github/workflows/main1054-m54-unresolved-owner-veto-no-deploy.yml) ;;
+              *) echo "M54 blocked unexpected modified path $p"; exit 1;;
+            esac
+          done
+          node --check research/multi-garment-capture-01/atomic-group.mjs
+          node --check research/multi-garment-capture-01/scene-class-guard-32.mjs
+          node --check research/multi-garment-capture-01/review-ui.mjs
+          node --check tests/main54-unresolved-multi-mask-owner-veto.test.mjs
+          node --check scripts/test-main54-native-unresolved-owner-browser.mjs
+      - name: Install exact source-only regression dependencies, no hosted deploy
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: M54 original licensed JPEG, untrusted P88 unresolved component and atomic owner save VETO
+        run: node --test tests/main54-unresolved-multi-mask-owner-veto.test.mjs
+      - name: Inherited M49 genuine original private closet and M51 source-admission guard
+        run: node --test tests/main49-licensed-original-photo-private-outfit-2d.test.mjs tests/segmentation-hint-sanitization-50.test.mjs tests/bounded-detection-review-58.test.mjs tests/multi-garment-capture-01.test.mjs
+      - name: Full inherited native application regression, app unchanged
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Unchanged original consumer app build
+        run: node scripts/build.mjs
+      - name: Verify no release, default consumer, licensed original or hosted database source change
+        run: git diff --exit-code c4d425076fe853e876cf7d0a34b1b83623f90b85 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/ research/main-thread-integration-1054/
+  m54-real-native-browser-owner-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M54_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install native Chromium/WebKit support
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Actual authenticated app and public licensed photo with synthetic unresolved P88 worker
+        run: node scripts/test-main54-native-unresolved-owner-browser.mjs
+      - name: Verify actual browser screenshots and protected original/no-deploy source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          DIR="benchmark/main54-native-unresolved-source-review/${{ matrix.engine }}"
+          test -s "$DIR/M54-ACTUAL-NATIVE-OWNER-REVIEW-NO-SILENT-SAVE.json"
+          for width in 320 390 430; do
+            test -s "$DIR/${{ matrix.engine }}-$width-unresolved-native-owner-review.png"
+          done
+          git diff --exit-code c4d425076fe853e876cf7d0a34b1b83623f90b85 HEAD -- public/ supabase/ benchmark/ research/parallel89/ research/mission1-parallel88/ research/native-3d-05/ research/main-thread-integration-1054/
+      - name: Archive real app source-safe original-photo unresolved warning, NEVER family photo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m54-native-${{ matrix.engine }}-unresolved-mask-owner-HOLD
+          path: benchmark/main54-native-unresolved-source-review/${{ matrix.engine }}/
+          retention-days: 14
+          if-no-files-found: ignore
