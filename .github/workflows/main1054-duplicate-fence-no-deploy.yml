@@ -5,12 +5,15 @@ on:
       - 'public/app.js'
       - 'tests/main1054-saved-photo-duplicate-fence.test.mjs'
       - '.github/workflows/main1054-duplicate-fence-no-deploy.yml'
+      - 'scripts/test-main1054-duplicate-fence-browser.mjs'
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   source-regression-only:
     runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.58.2-noble
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -23,3 +26,7 @@ jobs:
         run: |
           node --check public/app.js
           node --test tests/main1054-saved-photo-duplicate-fence.test.mjs
+      - name: Real Chromium and WebKit IndexedDB synthetic-owner transaction
+        run: |
+          npm install --no-save --no-package-lock playwright@1.58.2
+          node scripts/test-main1054-duplicate-fence-browser.mjs
