@@ -380,29 +380,44 @@ test('P88 unit70 cannot accept receipts if original JPEG digest is unavailable o
 function cropHarness88({saved=false,checkPhoto=null}={}){
  const start=appSource.indexOf('function hasSourceBoundMask88(');
  const end=appSource.indexOf('// P846:',start);
- assert.ok(start>=0&&end>start,'P88 native crop controller available');
+ const leaseStart=appSource.indexOf('function reviewedSaveLease88(');
+ const leaseEnd=appSource.indexOf('function empty(',leaseStart);
+ assert.ok(start>=0&&end>start&&leaseStart>=0&&leaseEnd>leaseStart,
+  'P88 native crop and reviewed owner lease available');
  const c={
   localPending:new Set(),busy:false,stream:null,cameraOpening:false,
-  stopCamera(){},originalSourceOnly:true,
+  stopCamera(){},originalSourceOnly:true,localReady:true,
   node:(_,label)=>({label,disabled:false,type:''}),messages:[],
   message(s){c.messages.push(s);},openPhotoCrop(_,callbacks){c.editor=callbacks;return Promise.resolve();},
-  structuredClone, checkPhoto:checkPhoto||(async()=>({colorEstimate:null,signature:[],aspect:1})),
+  structuredClone,checkPhoto:checkPhoto||(async()=>({colorEstimate:null,signature:[],aspect:1})),
   ClothingDetails:{fillColor:()=>({})},
-  items:saved?[{id:'garment'}]:[],batch:[{id:'garment'}],writeCount:0,
-  writeAll:async()=>{c.writeCount++},render(){},
-  queued:async fn=>{c.writeCount++;return fn();},
-  db:{transaction(){return {objectStore:()=>({put(){}}),set oncomplete(fn){fn()}}}},
+  items:[],batch:[],writeCount:0,written:[],render(){c.renderCount++;},renderCount:0,
+  queued:async fn=>{await c.beforeWrite?.();const result=fn();c.writeCount++;return result;},
+  db:{name:'closet-current-user-owner-A',transaction(stores,mode){
+   assert.equal(mode,'readwrite');
+   const tx={objectStore(store){return {put(value){
+    c.written.push({store,value:structuredClone(value)});
+   }}}};
+   queueMicrotask(()=>tx.oncomplete?.());return tx;
+  }},
   applyLocalChoice(){throw Error('unexpected suggestion')},
   window:{closetAuth:{user:{id:'owner-A'}}}
  };
  vm.createContext(c);
- // Execute the ACTUAL native same-source/mask duplicate policy in addition
- // to the source-bound private save; do not replace it with a mock predicate.
+ // Verify the actual native signed-owner lease along with the same-source
+ // mask/crop guards, not a permissive mock of the private storage boundary.
+ vm.runInContext(appSource.slice(leaseStart,leaseEnd),c);
  const receiptStart=appSource.indexOf('function unit70Receipts(');
  const receiptEnd=appSource.indexOf('function unit70OwnerEvidenceValid(',receiptStart);
  assert.ok(receiptStart>=0&&receiptEnd>receiptStart);
  vm.runInContext(appSource.slice(receiptStart,receiptEnd),c);
  vm.runInContext(appSource.slice(start,end),c);
+ const nativeCrop=c.cropClothingPhoto;
+ c.cropClothingPhoto=item=>{
+  // Match the exact object identity of the native saved closet or draft.
+  if(saved){c.items=[item];c.batch=[];}else{c.items=[];c.batch=[item];}
+  return nativeCrop(item);
+ };
  return c;
 }
 const sampleSource88=()=>({id:'garment',image:'data:image/jpeg;base64,T1JJR0lOQUw=',category:'Tops',color:'Blue',
