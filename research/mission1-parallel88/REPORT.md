@@ -694,3 +694,22 @@ The per-item `p88-owner-source-review/v1` remains **owner-attested but
 `singleGarmentVerified:false`, `threeDReady:false`**. Planning baseline
 still 65% complete / 35% remaining. Exactly the existing Mission 1 branch,
 no merge/deploy, #255 OPEN/HOLD.
+
+
+## 2026-11-15 — P88 native background learning exact-owner/source fence
+
+Native `reviewRecognitionMemory` / `saveMemoryReview` originally used mutable
+global `db` after an asynchronous model and cloud-beforeWrite; old-owner
+learning could target a replaced session and the completed callback could
+repaint a later owner's interface. A manual subtype edit could also conflict
+with old learning metadata. Existing PR #1175 now freezes exact signed user
+object, owner ID and per-user IDB, plus original/photo/mask and category/type/
+color before saving review-only weekly suggestion. It rechecks after model,
+inside queued preflight and inside async IDB read callback. Stale results are
+not saved or shown. Seven source-executed synthetic promise/IDB cases exercise
+same-owner success, account A→B, renewed same-ID login and DB switch,
+preflight switch, delayed IDB read, in-memory and saved type corrections.
+No model weights, thresholds, actual accuracy or physical item certification
+were changed. New exact-head CI must be verified; independent human-photo,
+physical Android/iOS and hosted owner acceptance remain BLOCKED.
+**FAMILY ALPHA HOLD #255 OPEN — DRAFT ONLY, NO MERGE/DEPLOY.**

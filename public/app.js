@@ -1784,35 +1784,97 @@ async function importClothingPhotos(files){
 }
 $('clothingPhotos').onchange=event=>{const files=Array.from(event.target.files);event.target.value='';importClothingPhotos(files);};
 
+// P88: a background learning suggestion cannot cross auth, IDB, or source
+// revisions while model inference, cloud preflight or IDB read is pending.
 let memoryReviewTimer=null,memoryReviewRunning=false;
 function scheduleMemoryReview(){
  if(typeof ClothingMemory==='undefined'||memoryReviewTimer||memoryReviewRunning)return;
  memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},1500);
 }
+function memoryOwnerLease88(){
+ const owner=window.closetAuth?.user,id=owner?.id,ownerDb=db;
+ return id&&ownerDb?.name==='closet-current-user-'+id?{owner,id,ownerDb}:null;
+}
+function memoryOwnerLive88(lease){
+ return Boolean(lease?.owner&&window.closetAuth?.user===lease.owner&&
+  lease.owner.id===lease.id&&db===lease.ownerDb&&
+  lease.ownerDb.name==='closet-current-user-'+lease.id);
+}
+function memorySourceSame88(a,b){
+ return Boolean(a&&b&&a.id===b.id&&a.image===b.image&&
+  a.originalPhoto?.image===b.originalPhoto?.image&&
+  a.recognitionPhoto?.image===b.recognitionPhoto?.image&&
+  a.outfitSourceId===b.outfitSourceId&&a.category===b.category&&
+  a.itemType===b.itemType&&a.color===b.color&&
+  JSON.stringify(a.segmentHint??null)===JSON.stringify(b.segmentHint??null)&&
+  JSON.stringify(a.cropBounds??null)===JSON.stringify(b.cropBounds??null)&&
+  JSON.stringify(a.ownerSourceReview88??null)===JSON.stringify(b.ownerSourceReview88??null));
+}
 async function reviewRecognitionMemory(){
  if(typeof ClothingMemory==='undefined'||!db||memoryReviewRunning||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))return;
+ const lease=memoryOwnerLease88();
+ if(!memoryOwnerLive88(lease))return;
  const week=ClothingMemory.week(),targets=items.filter(x=>(x.confirmedDetails||ClothingMemory.valid(x.recognitionMemory))&&(x.learningReviewedWeek!==week||!ClothingMemory.valid(x.recognitionMemory))).slice(0,8);
  if(!targets.length)return;
  memoryReviewRunning=true;let completed=0;
- try{if(!localReady)await enableLocal();for(const target of targets){
-  if(busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
-  const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
-  try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
-  const current=items.find(x=>x.id===target.id);if(!current||JSON.stringify(current)!==before)continue;
-  if(!ClothingMemory.valid(result.recognitionMemory))continue;
-  const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};delete value.weeklySuggestion;const choice=result.choices?.[0];if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};delete fields.color;value.weeklySuggestion={fields,requiresConfirmation:true,week};}const saved=await saveMemoryReview(value);if(saved&&(current.recognitionPhoto?.image||current.image)===image){completed++;current.recognitionMemory=saved.recognitionMemory;current.learningReviewedWeek=saved.learningReviewedWeek;if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;else delete current.weeklySuggestion;}
+ try{
+  if(!localReady)await enableLocal();
+  if(!memoryOwnerLive88(lease))return;
+  for(const target of targets){
+   if(!memoryOwnerLive88(lease)||busy||automaticRunning||localPending.size||document.hidden||document.querySelector('dialog[open]'))break;
+   const before=JSON.stringify(target),image=target.recognitionPhoto?.image||target.image;let result;
+   try{result=await localRequest(target.itemType==='Unknown'||!target.color?'classify':'features',image,null,target.segmentHint);}catch{break;}
+   if(!memoryOwnerLive88(lease))break;
+   const current=items.find(x=>x===target);
+   if(!current||JSON.stringify(current)!==before)continue;
+   if(!ClothingMemory.valid(result.recognitionMemory))continue;
+   const value={...current,recognitionMemory:result.recognitionMemory,learningReviewedWeek:week};
+   delete value.weeklySuggestion;
+   const choice=result.choices?.[0];
+   if(result.strong&&choice&&segmentationAllows(current,choice)&&current.category===choice.category){
+    const fields={itemType:choice.itemType,...ClothingDetails.recognizedFields(choice,result.details)};
+    delete fields.color;
+    value.weeklySuggestion={fields,requiresConfirmation:true,week};
+   }
+   const saved=await saveMemoryReview(value,lease);
+   if(!memoryOwnerLive88(lease))break;
+   if(saved&&items.includes(current)&&memorySourceSame88(current,saved)&&
+      (current.recognitionPhoto?.image||current.image)===image){
+    completed++;current.recognitionMemory=saved.recognitionMemory;
+    current.learningReviewedWeek=saved.learningReviewedWeek;
+    if(saved.weeklySuggestion)current.weeklySuggestion=saved.weeklySuggestion;
+    else delete current.weeklySuggestion;
+   }
+  }
+ }finally{
+  memoryReviewRunning=false;
+  if(memoryOwnerLive88(lease)){
+   render();
+   if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);
+  }
  }
- }finally{memoryReviewRunning=false;render();if(completed===8&&!memoryReviewTimer)memoryReviewTimer=setTimeout(()=>{memoryReviewTimer=null;reviewRecognitionMemory().catch(()=>{});},20000);}
 }
 closetReady.then(scheduleMemoryReview);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleMemoryReview();});
-
-function saveMemoryReview(value){return queued(()=>new Promise((resolve,reject)=>{
- let saved=null;const tx=db.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
- read.onsuccess=()=>{const current=read.result;if(!current||(current.recognitionPhoto?.image||current.image)!==(value.recognitionPhoto?.image||value.image))return;
- saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};delete saved.weeklySuggestion;
- if(current.category===value.category&&value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;store.put(saved);
- };tx.oncomplete=()=>resolve(saved);tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
-}));}
-
+function saveMemoryReview(value,lease){
+ if(!memoryOwnerLive88(lease))return Promise.resolve(null);
+ return queued(()=>{
+  if(!memoryOwnerLive88(lease))return null;
+  return new Promise((resolve,reject)=>{
+   let saved=null;
+   const tx=lease.ownerDb.transaction('items','readwrite'),store=tx.objectStore('items'),read=store.get(value.id);
+   read.onsuccess=()=>{
+    if(!memoryOwnerLive88(lease)||!memorySourceSame88(read.result,value))return;
+    const current=read.result;
+    saved={...current,recognitionMemory:value.recognitionMemory,learningReviewedWeek:value.learningReviewedWeek};
+    delete saved.weeklySuggestion;
+    if(value.weeklySuggestion)saved.weeklySuggestion=value.weeklySuggestion;
+    store.put(saved);
+   };
+   tx.oncomplete=()=>resolve(saved);
+   tx.onerror=()=>reject(tx.error);
+   tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
 setInterval(scheduleMemoryReview,60*60*1000);

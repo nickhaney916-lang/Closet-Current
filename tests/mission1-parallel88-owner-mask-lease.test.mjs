@@ -2752,3 +2752,110 @@ test('P88 missed-item action cannot carry source or owner permissions into a rep
  h.c.renderOutfitCapture();assert.equal(button.hidden,true);
  assert.equal(navigation,0);
 });
+
+
+// P88 source-executed native background learning + exact signed-owner IDB
+// tests. Synthetic fixtures; no blind human label / real account evidence.
+function memoryLearningHarness88({modelGate=null,preflightGate=null,readGate=null}={}){
+ const start=appSource.indexOf('let memoryReviewTimer=null,memoryReviewRunning=false;');
+ const tag='setInterval(scheduleMemoryReview,60*60*1000);';
+ const stop=appSource.indexOf(tag,start)+tag.length;
+ assert.ok(start>0&&stop>start);
+ const transactions=[],writes=[],reads=[],renders=[],modelCalls=[],queued=[];
+ function makeDb(id,record){
+  const rows=new Map([[record.id,structuredClone(record)]]);
+  const db={name:'closet-current-user-'+id,rows,transaction(storeName,mode){
+   transactions.push({db,storeName,mode});let store;
+   const tx={oncomplete:null,onerror:null,onabort:null,objectStore(){
+    return store??=(function(){
+     return {get(key){
+      const request={onsuccess:null,result:null};reads.push({db,key});
+      Promise.resolve(readGate?.promise).then(()=>{
+       request.result=rows.get(key);request.onsuccess?.();
+       queueMicrotask(()=>tx.oncomplete?.());
+      });return request;
+     },put(value){const copy=structuredClone(value);writes.push({db,value:copy});rows.set(copy.id,copy);}};
+    })();
+   }};
+   return tx;
+  }};
+  return db;
+ }
+ const owner={id:'A'},item={id:'garment-1',image:'data:image/jpeg;base64,QUFB',
+  originalPhoto:{image:'data:image/jpeg;base64,QUFB'},
+  recognitionPhoto:{image:'data:image/jpeg;base64,QUFB'},
+  category:'Tops',itemType:'T-shirt',color:'Blue',confirmedDetails:true,
+  recognitionMemory:null,learningReviewedWeek:'old'};
+ const ownerDb=makeDb('A',item),otherDb=makeDb('B',item);
+ const result={recognitionMemory:{good:true},strong:true,
+  choices:[{category:'Tops',itemType:'T-shirt'}],details:{}};
+ const c={window:{closetAuth:{user:owner}},db:ownerDb,items:[item],
+  ClothingMemory:{week:()=> 'new-week',valid:x=>!!x?.good},
+  ClothingDetails:{recognizedFields:()=>({})},
+  busy:false,automaticRunning:false,localPending:new Set(),localReady:true,
+  document:{hidden:false,querySelector(){return null;},addEventListener(){}},
+  closetReady:{then(){}},enableLocal:async()=>true,
+  localRequest(type,image){modelCalls.push({type,image});return modelGate?modelGate.promise:Promise.resolve(result);},
+  segmentationAllows:()=>true,
+  queued(work){queued.push(true);return Promise.resolve(preflightGate?.promise).then(work);},
+  render(){renders.push(true);},setTimeout(){return 1;},setInterval(){},
+  Promise,JSON,structuredClone,queueMicrotask};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,stop),c);
+ return {c,owner,item,ownerDb,otherDb,result,writes,transactions,reads,renders,modelCalls,queued};
+}
+test('P88 background learning saves owner-review-only metadata in original owner database',async()=>{
+ const h=memoryLearningHarness88();await h.c.reviewRecognitionMemory();
+ assert.equal(h.writes.length,1);assert.equal(h.writes[0].db,h.ownerDb);
+ assert.equal(h.writes[0].value.weeklySuggestion.requiresConfirmation,true);
+ assert.equal(h.writes[0].value.itemType,'T-shirt');
+ assert.equal(h.renders.length,1);
+});
+test('P88 late learning worker result cannot change account or show old clothing in B',async()=>{
+ const gate=photoFillGated88(),h=memoryLearningHarness88({modelGate:gate});
+ const task=h.c.reviewRecognitionMemory();
+ await photoFillReached88(()=>h.modelCalls.length===1);
+ h.c.window.closetAuth.user={id:'B'};h.c.db=h.otherDb;h.c.items=[{...h.item,category:'Shoes'}];
+ gate.resolve(h.result);await task;
+ assert.equal(h.writes.length,0);assert.equal(h.transactions.length,0);
+ assert.equal(h.renders.length,0);assert.equal(h.c.items[0].category,'Shoes');
+});
+test('P88 same-ID login renewal and IDB replacement revoke pending learning worker',async()=>{
+ for(const changed of ['owner','database']){
+  const gate=photoFillGated88(),h=memoryLearningHarness88({modelGate:gate});
+  const task=h.c.reviewRecognitionMemory();
+  await photoFillReached88(()=>h.modelCalls.length===1);
+  if(changed==='owner')h.c.window.closetAuth.user={id:'A'};
+  else h.c.db={name:'closet-current-user-A',transaction(){assert.fail('stale database');}};
+  gate.resolve(h.result);await task;
+  assert.equal(h.writes.length,0,changed);assert.equal(h.transactions.length,0,changed);
+  assert.equal(h.renders.length,0,changed);
+ }
+});
+test('P88 cloud preflight invalidates old signed owner before learning IDB write',async()=>{
+ const gate=photoFillGated88(),h=memoryLearningHarness88({preflightGate:gate});
+ const task=h.c.reviewRecognitionMemory();
+ await photoFillReached88(()=>h.queued.length===1);
+ h.c.window.closetAuth.user={id:'B'};h.c.db=h.otherDb;gate.resolve();await task;
+ assert.equal(h.transactions.length,0);assert.equal(h.writes.length,0);assert.equal(h.renders.length,0);
+});
+test('P88 switch during delayed IDB get cannot persist old account learning',async()=>{
+ const gate=photoFillGated88(),h=memoryLearningHarness88({readGate:gate});
+ const task=h.c.reviewRecognitionMemory();
+ await photoFillReached88(()=>h.reads.length===1);
+ h.c.window.closetAuth.user={id:'B'};h.c.db=h.otherDb;
+ gate.resolve();await task;
+ assert.equal(h.transactions.length,1);assert.equal(h.writes.length,0);assert.equal(h.renders.length,0);
+});
+test('P88 owner corrected type while model runs defeats stale weekly suggestion',async()=>{
+ const gate=photoFillGated88(),h=memoryLearningHarness88({modelGate:gate});
+ const task=h.c.reviewRecognitionMemory();await photoFillReached88(()=>h.modelCalls.length===1);
+ h.item.itemType='Blouse';gate.resolve(h.result);await task;
+ assert.equal(h.writes.length,0);assert.equal(h.item.itemType,'Blouse');
+});
+test('P88 private saved record changed subtype during queue: stale learning cannot commit',async()=>{
+ const gate=photoFillGated88(),h=memoryLearningHarness88({preflightGate:gate});
+ const task=h.c.reviewRecognitionMemory();await photoFillReached88(()=>h.queued.length===1);
+ h.ownerDb.rows.get('garment-1').itemType='Blouse';gate.resolve();await task;
+ assert.equal(h.transactions.length,1);assert.equal(h.writes.length,0);
+ assert.equal(h.ownerDb.rows.get('garment-1').itemType,'Blouse');
+});
