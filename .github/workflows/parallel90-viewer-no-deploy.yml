@@ -1,7 +1,7 @@
 name: Parallel 90 interactive native viewer NO DEPLOY
 on:
   push:
-    branches: [research/parallel90-interactive-viewer-HOLD]
+    branches: [research/parallel90-interactive-viewer-HOLD, research/parallel90-m15-drag-revoke-HOLD]
   workflow_dispatch: {}
 permissions:
   contents: read

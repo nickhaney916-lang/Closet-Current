@@ -215,3 +215,21 @@ test('P90 M14 mobile touchscreen buttons on actual original source 163-bone view
  assert.ok(live.includes('afterReset.resources90.frames>=touchBefore.resources90.frames'));
  assert.ok(live.includes('realTouchscreenTap:true'));
 });
+
+
+test('P90 M15 mid-pointer source revocation releases stale photographed WebGL and reattests fresh rig',()=>{
+ const browser=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(browser.includes('if(width===390){'), 'mobile width must exercise held-pointer source change');
+ assert.ok(browser.includes('await page.mouse.down()'));
+ assert.ok(browser.includes('window.nativeLossless04Bridge.selectSaved(1)'));
+ assert.ok(browser.includes('await page.mouse.up()'));
+ assert.ok(browser.includes("document.contains(window.__p90DragCanvas)),false"));
+ assert.ok(browser.includes("window.nativeLossless04Bridge.status().active"));
+ assert.ok(browser.includes("revoked.sceneShirtStages90,null"));
+ assert.ok(browser.includes("staleOriginalPhotosCleared:true"));
+ assert.ok(browser.includes("newSourceAttestedCanvas:true"));
+ assert.ok(browser.includes("physicalFingerSwipeVerified:false"));
+ assert.ok(browser.includes('midDragRevocation90,landscape'));
+ assert.ok(workflow.includes('engine: [chromium, webkit]'));
+});
