@@ -17,7 +17,7 @@ const recognitionState={phase:'idle',percent:null,activeId:null};
 let writes=Promise.resolve();
 function queued(work){const result=writes.then(async()=>{await window.closetCloud?.beforeWrite(db);return work();});writes=result.catch(()=>{});result.then(()=>window.closetCloud?.changed()).catch(()=>{});return result;}
 let db,items=[],batch=[],stream,timer,busy=false,lastPixels=null,lastSaved=null,stable=0,lastCapture=0,session=0,audio,cadence;
-let cameraMode=null,cameraOpening=false,cameraRequest=0;
+let cameraMode=null,cameraOpening=false,cameraRequest=0,cameraOwnerLease88=null;
 // P845 brings in #73 ephemeral pixel advice, source-bound and opt-in only.
 // This must never become persisted clothing or authorize automatic admission.
 const photoQualityHints73=new Map();
@@ -1308,8 +1308,18 @@ async function drainAutomatic(){
   }
  }}finally{automaticRunning=false;render();scheduleMemoryReview();}
 }
+// The exact signed account and per-owner storage are bound BEFORE permission,
+// audio resume and video playback. No old-session camera frame may become B's
+// private draft after sign-out, renewed same-ID login, or IDB replacement.
+function cameraOwnerLive88(lease=cameraOwnerLease88){
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ return !browser||Boolean(lease?.owner?.id&&cameraOwnerLease88===lease&&
+  window.closetAuth?.user===lease.owner&&
+  lease.owner.id===lease.ownerId&&db===lease.ownerDb&&
+  lease.ownerDb?.name==='closet-current-user-'+lease.ownerId);
+}
 function stopCamera(){
- cameraRequest++;cameraOpening=false;clearInterval(timer);timer=null;
+ cameraRequest++;cameraOwnerLease88=null;cameraOpening=false;clearInterval(timer);timer=null;
  if(stream)stream.getTracks().forEach(t=>t.stop());
  stream=null;cameraMode=null;video.srcObject=null;video.classList.remove('visible');
  $('placeholder').hidden=false;$('cameraChoices').hidden=false;$('cameraActions').hidden=true;
@@ -1317,6 +1327,7 @@ function stopCamera(){
 }
 function controls(disabled){for(const id of ['start','startAuto','upload','interval','clothingPhotos','outfitCamera','outfitUpload','outfitRetry','captureSingle','captureOutfit'])$(id).disabled=disabled;}
 function finishScan(){
+ if(!cameraOwnerLive88()){stopCamera();return;}
  const wasManual=cameraMode==='manual';
  if(!wasManual&&stream&&session===0&&video.readyState>=2&&video.videoWidth){try{candidate(snap());}catch{}}
  stopCamera();
@@ -1326,6 +1337,7 @@ function finishScan(){
 }
 function captureTick(now=Date.now()){
  if(!stream||cameraMode!=='auto')return;
+ if(!cameraOwnerLive88()){stopCamera();return;}
  const ready=video.readyState>=2&&video.videoWidth>0;
  if(!cadence.due(now,ready)){
   if(!ready)$('captureState').textContent='Waiting for camera images…';
@@ -1338,22 +1350,37 @@ function captureTick(now=Date.now()){
 }
 function takePhoto(){
  if(!stream||cameraMode!=='manual')return;
+ if(!cameraOwnerLive88()){stopCamera();return;}
  try{candidate(snap());beep();$('captureState').textContent=`${session} photos taken · ready for the next piece`;if(session>=60){finishScan();message('60 photos collected. Review this batch before continuing.');}}
  catch{message('The camera is still getting ready. Wait a moment, then tap Take photo again.');}
 }
 async function startCamera(mode){
  if(busy||stream)return;
- const request=++cameraRequest;cameraOpening=true;busy=true;controls(true);
+ const browser=typeof window!=='undefined'&&Boolean(window.document);
+ const owner=browser?window.closetAuth?.user:null,ownerDb=db;
+ const lease={owner,ownerId:owner?.id,ownerDb};
+ if(browser&&(!owner?.id||ownerDb?.name!=='closet-current-user-'+owner.id))return;
+ const request=++cameraRequest;cameraOwnerLease88=lease;
+ cameraOpening=true;busy=true;controls(true);
  $('captureState').textContent='Opening camera…';
  try{audio=new(window.AudioContext||window.webkitAudioContext)();await audio.resume();}catch{}
+ if(request!==cameraRequest||!cameraOwnerLive88(lease)){
+  if(request===cameraRequest)stopCamera();
+  busy=false;return;
+ }
  try{
   if(!navigator.mediaDevices?.getUserMedia)throw Error('Camera access unavailable. Choose saved photos or a closet video instead.');
   const acquired=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1920},height:{ideal:1080}},audio:false});
-  if(request!==cameraRequest){acquired.getTracks().forEach(track=>track.stop());return;}
+  if(request!==cameraRequest||!cameraOwnerLive88(lease)){
+   acquired.getTracks().forEach(track=>track.stop());
+   if(request===cameraRequest)stopCamera();
+   return;
+  }
   stream=acquired;cameraMode=mode;
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
   await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   if(request!==cameraRequest)return;
+  if(!cameraOwnerLive88(lease)){stopCamera();return;}
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
@@ -1364,7 +1391,11 @@ async function startCamera(mode){
    message('Take each photo at your own pace. Tap Done when you are finished.');
   }
  }catch(e){
-  if(request===cameraRequest){stopCamera();message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));}
+  if(request===cameraRequest){
+   const stillOwner=cameraOwnerLive88(lease);
+   stopCamera();
+   if(stillOwner)message(e.name==='NotAllowedError'?'Camera permission was denied. Allow camera access in your browser, or choose saved photos.':(e.message||'Camera could not start. Choose saved photos or a closet video.'));
+  }
  }
  finally{busy=false;if(!stream)controls(false);}
 }

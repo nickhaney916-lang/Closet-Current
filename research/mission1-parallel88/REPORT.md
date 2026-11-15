@@ -731,3 +731,29 @@ cases accidentally exercised the deliberate nonbrowser compatibility path,
 not real native code. Add a DOM sentinel only to this existing source-executed
 fixture. Do not weaken native owner/data guards. The first run is **FAIL**;
 a newer exact-head CI is required.
+
+
+## 2026-11-15 — native signed camera-session lease across permission and capture
+
+**Observed source gap:** `startCamera()` originally checked camera-request
+cancellation but not the exact signed owner/IDB after `AudioContext.resume`,
+`getUserMedia` or `video.play`. Manual shutter, automatic timer and Done
+could use an old session's still-active camera after A→B sign-in or same-ID
+login renewal. The new lease is bound before permission to the exact owner
+object, owner ID and private IndexedDB. It is revoked by `stopCamera()`.
+Late camera permissions terminate their newly acquired tracks; delayed
+play cannot enable controls; active camera shutter, automatic timer and
+final fallback cannot create or display old-session originals in B. Revoked
+camera failures do not paint A's error into B's UI. Non-browser test
+fixtures retain their prior behavior; no model change/auto closet save.
+
+Six new native source-executed synthetic tests cover A→B during permission,
+same-ID renewed sign-in during playback, replaced DB during audio resume,
+valid manual original JPEG capture to review, active auto timer cancellation
+after account switch and revoked Done/review. No physical phones/accounts
+or genuine independent human photo annotation evidence are claimed.
+
+**Verification at commit creation:** new exact-head no-deploy CI PENDING.
+No merge/deploy/production/staging/hosted Supabase mutation; no previously
+unverified physical unit or 3D eligibility is promoted. Family Alpha #255
+OPEN/HOLD. Planning baseline 65%/35%, pending independent real acceptance.

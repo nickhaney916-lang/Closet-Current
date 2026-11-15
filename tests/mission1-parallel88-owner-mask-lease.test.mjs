@@ -2859,3 +2859,106 @@ test('P88 private saved record changed subtype during queue: stale learning cann
  assert.equal(h.transactions.length,1);assert.equal(h.writes.length,0);
  assert.equal(h.ownerDb.rows.get('garment-1').itemType,'Blouse');
 });
+
+
+// P88: execute exact native camera permission/play/capture handlers in a
+// signed browser facade. This is not a physical Android/iPhone camera run.
+function nativeCameraLeaseHarness88({audioGate=null,permissionGate=null,playGate=null}={}){
+ const start=appSource.indexOf('function cameraOwnerLive88(');
+ const stop=appSource.indexOf('function waitEvent(',start);
+ assert.ok(start>0&&stop>start,'native camera owner lease controller located');
+ const nodes=new Map(),photos=[],views=[],messages=[],intervals=[];
+ const el=id=>{if(!nodes.has(id))nodes.set(id,{id,value:id==='interval'?'1':'',
+  hidden:false,textContent:'',disabled:false,src:'',classList:{add(){},remove(){}}});return nodes.get(id);};
+ const originalOwner={id:'owner-A'};
+ const db={name:'closet-current-user-owner-A'};
+ const tracks=[{stops:0,stop(){this.stops++;}}];
+ const mediaStream={getTracks(){return tracks;}};
+ let permissions=0,plays=0,audios=0;
+ const video={readyState:3,videoWidth:1920,videoHeight:1080,srcObject:null,
+  removeAttribute(){},classList:{add(){},remove(){}},
+  play(){plays++;return playGate?playGate.promise:Promise.resolve();}};
+ const c={
+  window:{document:{},closetAuth:{user:originalOwner},AudioContext:class{
+   resume(){audios++;return audioGate?audioGate.promise:Promise.resolve();}
+  }},
+  navigator:{mediaDevices:{getUserMedia(){permissions++;return permissionGate?permissionGate.promise:Promise.resolve(mediaStream);}}},
+  db,busy:false,stream:null,cameraOwnerLease88:null,cameraRequest:0,
+  cameraOpening:false,cameraMode:null,timer:null,video,audio:null,
+  session:0,lastCapture:0,lastSaved:null,stable:0,sessionCapturedIds:new Set(),
+  cadence:null,canvas:{},lastPixels:null,
+  $:el,controls(disabled){for(const name of ['start','startAuto','upload'])el(name).disabled=disabled;},
+  snap(){return 'data:image/jpeg;base64,QUFB';},
+  candidate(photo){photos.push(photo);c.session++;return true;},
+  message(value){messages.push(value);},switchView(value){views.push(value);},
+  beep(){},render(){},CaptureCadence:class{
+   constructor(intervalMs,now){this.intervalMs=intervalMs;this.last=now;}
+   due(){return true;}captured(now){this.last=now;}
+  },
+  Date,Number,Math,Error,
+  clearInterval(){},setInterval(fn){intervals.push(fn);return intervals.length;},
+  setTimeout(){return 1;},clearTimeout(){},
+ };
+ vm.createContext(c);vm.runInContext(appSource.slice(start,stop),c);
+ return {c,el,db,originalOwner,mediaStream,tracks,photos,views,messages,
+  get permissions(){return permissions;},get audios(){return audios;},
+  get plays(){return plays;},intervals};
+}
+test('P88 pending camera permission may not admit A frame after owner switches to B',async()=>{
+ const gate=photoFillGated88(),h=nativeCameraLeaseHarness88({permissionGate:gate});
+ const task=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.permissions===1);
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ gate.resolve(h.mediaStream);await task;
+ assert.equal(h.tracks[0].stops,1);
+ assert.equal(h.photos.length,0);assert.equal(h.c.stream,null);
+ assert.equal(h.c.cameraMode,null);assert.equal(h.views.length,0);
+});
+test('P88 same-ID renewed login during video.play revokes obtained camera stream',async()=>{
+ const gate=photoFillGated88(),h=nativeCameraLeaseHarness88({playGate:gate});
+ const task=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.plays===1);
+ h.c.window.closetAuth.user={id:'owner-A'};
+ gate.resolve();await task;
+ assert.equal(h.tracks[0].stops,1);
+ h.c.takePhoto();
+ assert.equal(h.photos.length,0);assert.equal(h.c.cameraMode,null);
+});
+test('P88 swapped same-owner IDB during audio.resume stops before camera permission request',async()=>{
+ const gate=photoFillGated88(),h=nativeCameraLeaseHarness88({audioGate:gate});
+ const task=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.audios===1);
+ h.c.db={name:'closet-current-user-owner-A'};
+ gate.resolve();await task;
+ assert.equal(h.permissions,0);assert.equal(h.photos.length,0);
+ assert.equal(h.c.cameraMode,null);assert.equal(h.c.busy,false);
+});
+test('P88 active owner manual camera capture retains original only as review draft',async()=>{
+ const h=nativeCameraLeaseHarness88();
+ await h.c.startCamera('manual');
+ h.c.takePhoto();
+ assert.deepEqual(h.photos,['data:image/jpeg;base64,QUFB']);
+ assert.equal(h.c.session,1);
+ h.c.finishScan();
+ assert.deepEqual(h.views,['review']);assert.equal(h.tracks[0].stops,1);
+});
+test('P88 switched owner invalidates active automatic camera before next frame',async()=>{
+ const h=nativeCameraLeaseHarness88();
+ await h.c.startCamera('auto');
+ const initial=h.photos.length;assert.equal(initial,1);
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.captureTick();
+ assert.equal(h.photos.length,initial);
+ assert.equal(h.tracks[0].stops,1);
+ assert.equal(h.views.length,0);
+});
+test('P88 switched owner Done cannot snap or paint original camera Review under B',async()=>{
+ const h=nativeCameraLeaseHarness88();
+ await h.c.startCamera('manual');
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.finishScan();
+ assert.equal(h.photos.length,0);assert.equal(h.views.length,0);
+ assert.equal(h.tracks[0].stops,1);
+});
