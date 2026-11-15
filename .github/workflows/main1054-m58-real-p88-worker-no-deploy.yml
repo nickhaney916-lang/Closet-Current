@@ -172,7 +172,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Pin immutable M51 donor, M88 reporter and unchanged consumer
+      - name: Pin immutable M51 donor, M89 classified reporter and unchanged consumer
         shell: bash
         run: |
           set -euo pipefail
@@ -181,13 +181,13 @@ jobs:
           git cat-file -e "$M51^{commit}"
           # Preserve immutable M51 donor while pinning the additive failure reporter.
           test "$(git rev-parse "$M51:scripts/test-main51-real-app-owner-original-2d.mjs")" = 1150a6db461b1d5968183d1c9e798cac7ae88478
-          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 5f59269341247fa14ba346367549cb88f45e0843
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 16cd06bcc1b1ef6bf8a6df3e3790c9abe2785167
           node --check scripts/test-main51-real-app-owner-original-2d.mjs
           test "$(git rev-parse HEAD:public/native-default-atomic-import-m3.mjs)" = 8d0153671de7b7542b0178c4ed616c68da24cb95
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' ':(exclude)public/native-default-atomic-import-m3.mjs' supabase/ research/main-thread-integration-1054/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
       - name: Install pinned isolated application test dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
-      - name: Run M51 native owner-original 2D with M88 failure-only diagnostics
+      - name: Run M51 native owner-original 2D with M89 classified research-preview failure diagnostics
         run: node scripts/test-main51-real-app-owner-original-2d.mjs
       - name: Assert actual app three widths and no unjustified 3D or release
         shell: bash

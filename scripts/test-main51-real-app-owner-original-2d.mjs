@@ -97,6 +97,7 @@ async function clickPreview(page,{approved=true}={}){
   const evidence=await page.evaluate(async()=>{
    const current=typeof currentBoard!=='undefined'?currentBoard:null;
    const state={
+    internalRefusal:globalThis.__m89PreviewFailure||null,
     viewerPhase:typeof mission4Preview1054Viewer!=='undefined'?
      mission4Preview1054Viewer?.status?.phase||'absent':'unavailable',
     boardInitialized:typeof boardInitialized==='boolean'&&boardInitialized,
@@ -191,6 +192,15 @@ try{
     method:route.request().method()});
    return route.abort();
   });
+  // M89 test-only source-safe classification of an existing failure.
+  // The exact native preview implementation and assert/abort flow remain.
+  const previewText=await readFile('research/main-thread-integration-1054/native-2d-preview.mjs','utf8');
+  const originalCatch="   }catch(error){\n    if(ticket===revision&&!closed){clear();phase='refused';}\n    throw error;\n   }";
+  const classifiedCatch="   }catch(error){\n    const message=String(error?.message||'');\n    const categories=[\"signed owner or refresh changed\",\"native signed session unavailable\",\"source plan cannot authorize private image rendering\",\"private outfit changed during repeated verification\",\"unsafe sampled 3D research cannot authorize owner garment\",\"foreign or stale source item\",\"canonical saved JPEG unavailable\",\"original JPEG changed before preview\",\"selected owner item changed before showing photos\",\"outfit selection changed during preview\",\"outfit selection changed at photo presentation\",\"signed owner session and private database required\",\"owner session changed\",\"native outfit normalization would silently lose selected garment\",\"original JPEG SHA does not match saved source\",\"saved garment changed during source verification\",\"invalid or repeated outfit slot identity\"];\n    globalThis.__m89PreviewFailure={\n     category:categories.find(value=>message.includes(value))||'unclassified',\n     type:['Error','TypeError','AbortError','InvalidStateError'].includes(error?.name)?error.name:'other',\n     ticketCurrent:ticket===revision,closed,phaseBeforeCatch:phase\n    };\n    if(ticket===revision&&!closed){clear();phase='refused';}\n    throw error;\n   }";
+  if(!previewText.includes(originalCatch))throw Error('M89 preview module changed');
+  await context.route('**/research/main-thread-integration-1054/native-2d-preview.mjs',
+   route=>route.fulfill({status:200,contentType:'text/javascript',
+    body:previewText.replace(originalCatch,classifiedCatch)}));
   const page=await context.newPage();
   page.on('pageerror',e=>failures.push({engine,width,kind:'js-exception',name:e.name}));
   page.on('crash',()=>failures.push({engine,width,kind:'crash'}));
