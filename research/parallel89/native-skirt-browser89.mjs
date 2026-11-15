@@ -212,6 +212,15 @@ async function load(avatar){
  check(candidate.mesh.skeleton===bodies[0].skeleton&&
   candidate.mesh.skeleton.bones.length===163,
   'skirt not on true anatomical bones');
+ // Independently decode the real pinned source bytes in verifySource() and
+ // compare with the geometry builder's own SHA-attested PNG-only raster.
+ // No caller-supplied RGBA is allowed to substitute a different fabric.
+ const sourceTextureImage=candidate.mesh.material[0]?.map?.image;
+ check(candidate.receipt.sourceRGBAWasDecodedFromExactAttestedCutoutPNG===true&&
+  sourceTextureImage?.data instanceof Uint8Array&&
+  sourceTextureImage.width===image.width&&sourceTextureImage.height===image.height&&
+  await sha(sourceTextureImage.data)===await sha(image.data),
+  'native 3D photographed material does not match attested original cutout raster');
  current=avatar;phase='ready';pose='source';angle=0;originalBodyPositions();
  const view=inspectPose('source');render();
  status.textContent='Source-hash original Commons-0043 on REAL '+avatar+
