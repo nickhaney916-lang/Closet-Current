@@ -1,0 +1,110 @@
+name: MAIN1054 M57 exact real P88 Web Worker protocol NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m57-real-p88-webworker-protocol-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  m57-source-and-full-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M56 source ancestry; research only and no consumer/hosted data change
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=1bf7137dedefcc974917144f11c154d119898971
+          git merge-base --is-ancestor "$BASE" HEAD
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/
+          git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
+            case "$p" in
+              scripts/test-main57-exact-p88-webworker-browser.mjs|research/master-consolidation-1054/MILESTONE57.md|.github/workflows/main1054-m57-real-p88-webworker-no-deploy.yml) ;;
+              *) echo "M57 blocked unexpected source $p"; exit 1;;
+            esac
+          done
+          node --check scripts/test-main57-exact-p88-webworker-browser.mjs
+      - name: Install isolated app regression prerequisites
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Original licensed-photo P88 source-mask/owner-review admission and negative tests
+        run: node --test tests/main54-unresolved-multi-mask-owner-veto.test.mjs tests/main55-p88-source-key-lease.test.mjs tests/main56-source-mask-to-owner-intake.test.mjs
+      - name: Original unchanged native application PWA build
+        run: node scripts/build.mjs
+      - name: Full inherited app regression, not a stitched P88 production worker
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: Final strict consumer source scope, no merge, no deploy
+        run: git diff --exit-code 1bf7137dedefcc974917144f11c154d119898971 HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/
+  m57-real-native-original-p88-webworker:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M57_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact source copy of REAL P88 worker and its three dependencies — no app overwrite
+        shell: bash
+        run: |
+          set -euo pipefail
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          mkdir -p .m57-exact-p88-donor/public
+          for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
+            git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
+            test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
+          done
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-segmentation.mjs)" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-instance-review-840.mjs)" = 6324d8eda33024f166311f424392ed83363e4942
+          test "$(git hash-object .m57-exact-p88-donor/public/photo-color.js)" = c0c24aa3ce67dd1c114ab063c52b0bd451873fb3
+          node --check .m57-exact-p88-donor/public/outfit-worker.mjs
+      - name: Install pinned Playwright browser Node client
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Run exact P88 real Web Worker with EXPLICIT SYNTHETIC model/logits
+        run: node scripts/test-main57-exact-p88-webworker-browser.mjs
+      - name: Confirm three actual widths, worker source and no unknown network/consumer edits
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          FILE="benchmark/main57-native-p88-worker/${{ matrix.engine }}/M57-P88-REAL-WORKER-SYNTHETIC-LOGITS-NOT-ACCURACY.json"
+          test -s "$FILE"
+          node --input-type=module - "$FILE" <<'JS'
+          import fs from 'node:fs';
+          const x=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+          if(x.modelInferenceGenuine!==false||x.humanGroundTruth!==false||
+             x.realP88WorkerBlobPinned!==true||x.releaseAuthorized!==false||
+             x.familyAlpha!=='HOLD'||x.cases.length!==3||
+             x.cases.some(p=>p.syntheticModelAndImagePixels!==true||p.atomicSaveRejected!==true||
+              p.ownerEpochRevoked!==true||p.privateSavedRows!==0||p.realP88NativeWebWorkerExecuted!==true))
+           throw Error('M57 actual worker or explicit negative-evidence receipt invalid');
+          console.log('M57 real P88 native Worker/owner-source protocol, synthetic logits only: PASS');
+          JS
+          git diff --exit-code 1bf7137dedefcc974917144f11c154d119898971 HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/native-3d-05/ research/parallel89/ research/mission1-parallel88/
+      - name: Upload source-safe worker protocol metadata; NOT model accuracy
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m57-${{ matrix.engine }}-original-P88-worker-NOT-MODEL-ACCURACY-HOLD
+          path: benchmark/main57-native-p88-worker/${{ matrix.engine }}/M57-P88-REAL-WORKER-SYNTHETIC-LOGITS-NOT-ACCURACY.json
+          retention-days: 14
+          if-no-files-found: ignore
