@@ -250,8 +250,32 @@ test('P90 M16 continuous Chromium browser touch drag rotates pinned source rigs 
  assert.ok(browser.includes('swipeAfter.resources90.geometries,swipeBefore.resources90.geometries'));
  assert.ok(browser.includes('swipeAfter.resources90.textures,swipeBefore.resources90.textures'));
  assert.ok(browser.includes('Math.abs(scrollAfter-scrollBefore)<=2'));
- assert.ok(browser.includes('touchSwipe16,finalCamera'));
+ assert.match(browser,/samples\.push\(\{figure,width,engine,before,after,[^\n]*\btouchSwipe16\b/);
  assert.ok(browser.includes('webkitTouchSwipeVerified:false'));
  assert.ok(browser.includes('physicalPhone:false'));
+ assert.ok(workflow.includes('engine: [chromium, webkit]'));
+});
+
+
+test('P90 M17 full 360-degree real-source orbit and visible rear provenance warning in both browsers',()=>{
+ const installer=readFileSync('scripts/install-parallel90-viewer.mjs','utf8');
+ const interactions=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(installer.includes("const sourceNotice90=el('p','outfit3D01SourceNotice90')"));
+ assert.ok(installer.includes("sourceNotice90.setAttribute('aria-label','3D original photograph limitations')"));
+ assert.ok(installer.includes("Original front photographs are authoritative."));
+ assert.ok(installer.includes("Side and rear garment details are not photograph-verified."));
+ assert.ok(installer.includes("Unsupported outfit pieces remain original-photo-only."));
+ assert.ok(interactions.includes("sourceNotice90.isVisible()"));
+ assert.ok(interactions.includes("for(let step=0;step<24;step++)"));
+ assert.ok(interactions.includes("await page.locator('#outfit3D01Right90').click()"));
+ assert.ok(interactions.includes("angleDelta<3"));
+ assert.ok(interactions.includes("wrapped.camera90.distance-original.camera90.distance"));
+ assert.ok(interactions.includes("wrapped.garmentSources90,sourceSHA"));
+ assert.ok(interactions.includes("wrapped.resources90.textures,original.resources90.textures"));
+ assert.ok(interactions.includes("await page.locator('#outfit3D01Back').click()"));
+ assert.ok(interactions.includes("await page.locator('#outfit3D01Front').click()"));
+ assert.ok(interactions.includes("rearOriginalPhotoVerified:false"));
+ assert.ok(interactions.includes("fullCycle17,finalCamera"));
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });

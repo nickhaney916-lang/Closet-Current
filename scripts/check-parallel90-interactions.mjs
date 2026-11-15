@@ -16,6 +16,13 @@ export async function checkViewer90(page,width,engine){
   assert.match(a.label||'',/Drag to rotate/);
  };
  await verifyCanvas();
+ const sourceNotice90=page.locator('#outfit3D01SourceNotice90');
+ assert.equal(await sourceNotice90.isVisible(),true,
+  'source honesty must be visible beside original 3D controls at every mobile width');
+ const sourceNoticeText90=await sourceNotice90.innerText();
+ assert.match(sourceNoticeText90,/Original front photographs are authoritative/);
+ assert.match(sourceNoticeText90,/Side and rear garment details are not photograph-verified/);
+ assert.match(sourceNoticeText90,/Unsupported outfit pieces remain original-photo-only/);
  for(const figure of ['female','male']){
   await page.selectOption('#outfit3D01Model',figure);
   await page.waitForFunction(()=>window.native3D05Bridge.state().modelReady,null,{timeout:120000});
@@ -125,6 +132,46 @@ export async function checkViewer90(page,width,engine){
     realTouchscreenTap:true,sourceIdentitySame:true,resourceCountsSame:true,
     physicalPhone:false};
   }
+  // M17: 24 genuine 15-degree accessible controls complete one 360 turn.
+  // Validate anatomical camera return, source-photo identity and GPU counts
+  // in BOTH engines/rigs; a 360 claim cannot rest on a partial 16-click spin.
+  let fullCycle17=null;
+  if(width===390){
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const original=await state();
+   assert.equal(original.bones,163);
+   const sourceSHA=original.garmentSources90;
+   for(let step=0;step<24;step++){
+    await page.locator('#outfit3D01Right90').click();
+    await page.waitForTimeout(65);
+   }
+   await settle();
+   const wrapped=await state();
+   const angleDelta=Math.abs(((wrapped.camera90.angle-original.camera90.angle+540)%360)-180);
+   assert.ok(angleDelta<3,'24 original 15-degree camera commands must complete a full 360');
+   assert.ok(Math.abs(wrapped.camera90.distance-original.camera90.distance)<.05,
+    '360-degree camera rotation must preserve mobile fit/zoom distance');
+   assert.equal(wrapped.bones,163,'full camera orbit must preserve original anatomical bones');
+   assert.deepEqual(wrapped.garmentSources90,sourceSHA,
+    'full 360-degree orbit must never exchange the original source photograph');
+   assert.equal(wrapped.resources90.geometries,original.resources90.geometries);
+   assert.equal(wrapped.resources90.textures,original.resources90.textures);
+   await page.locator('#outfit3D01Back').click();await settle();
+   const back=await state();
+   assert.ok(Math.abs(back.camera90.angle-180)<3,'rear view must be a real anatomical camera angle');
+   assert.match(await sourceNotice90.innerText(),/rear garment details are not photograph-verified/,
+    'rear view must visibly warn that unobserved original photograph detail is not proven');
+   await page.locator('#outfit3D01Front').click();await settle();
+   const restored=await state();
+   assert.ok(Math.min(restored.camera90.angle,360-restored.camera90.angle)<3);
+   assert.deepEqual(restored.garmentSources90,sourceSHA);
+   assert.equal(restored.resources90.geometries,original.resources90.geometries);
+   assert.equal(restored.resources90.textures,original.resources90.textures);
+   fullCycle17={figure,engine,cssWidth:width,steps:24,
+    accumulatedCommandDegrees:360,returnedToFront:true,
+    sameSourceSHA:true,same163BoneRig:true,sameResources:true,
+    rearOriginalPhotoVerified:false,sourceNoticeVisible:true,physicalPhone:false};
+  }
   // Repeated camera work must neither rebuild textures nor deform skeletons.
   const baseline=await state();const durations=[];
   for(let i=0;i<16;i++){
@@ -135,7 +182,7 @@ export async function checkViewer90(page,width,engine){
   assert.equal(final.resources90.textures,baseline.resources90.textures);
   // Camera work does not load new garments or textures (renderer metrics
   // are captured through the existing authenticated read-only panel).
-  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
+  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
  // M15: end the original, signed-in, source-attested WebGL session while
  // an ACTUAL browser pointer is held down on the anatomical viewer.
