@@ -111,6 +111,8 @@ test('Mission 1 owner-source-review receipt stays 2D only in normal native picke
   schema:'p88-owner-source-review/v1',ownerId:'owner-a',
   itemId:f.item.id,sourceId:'source-a',originalPhotoSha256:photo,
   derivedImageSha256:crop,derivedImageBytesVerified:true,
+  companionImageSha256:null,companionImageBytesVerified:false,
+  companionMaskSha256:null,
   selectedMaskSha256:mask,physicalUnitDecision:'owner-confirmed-separate',
   category:f.item.category,itemType:f.item.itemType,color:f.item.color,
   cropBounds:{...f.item.cropBounds},ownerReviewed:true,
@@ -140,6 +142,8 @@ test('Mission 1 changed/foreign/forged owner-review receipts never certify garme
  const receipt={schema:'p88-owner-source-review/v1',ownerId:'owner-a',
   itemId:f.item.id,sourceId:'source-a',originalPhotoSha256:photo,
   derivedImageSha256:crop,derivedImageBytesVerified:true,
+  companionImageSha256:null,companionImageBytesVerified:false,
+  companionMaskSha256:null,
   selectedMaskSha256:mask,physicalUnitDecision:'owner-confirmed-separate',
   category:f.item.category,itemType:f.item.itemType,color:f.item.color,
   cropBounds:{...f.item.cropBounds},ownerReviewed:true,
@@ -154,7 +158,9 @@ test('Mission 1 changed/foreign/forged owner-review receipts never certify garme
   {label:'forged independent physical item',independentPhysicalItemVerified:true},
   {label:'forged 3D',threeDReady:true},
   {label:'forged raw pixels',rawMaskPixelsIndependentlyVerified:true},
-  {label:'missing crop bytes proof',derivedImageBytesVerified:false}
+  {label:'missing crop bytes proof',derivedImageBytesVerified:false},
+  {label:'forged companion image verification',companionImageBytesVerified:true},
+  {label:'orphan companion mask',companionMaskSha256:'d'.repeat(64)}
  ];
  for(const {label,...mutation} of cases){
   f.item.ownerSourceReview88={...receipt,...mutation};
@@ -164,6 +170,10 @@ test('Mission 1 changed/foreign/forged owner-review receipts never certify garme
   assert.equal(f.ctx.boardPhotoRequiresUnitReview(f.item),true,label);
  }
  f.item.ownerSourceReview88=receipt;
+ f.item.shoePair={companion:{reconciliation70:{maskSha256:'f'.repeat(64)}}};
+ assert.equal(f.ctx.boardHasMatchingOwnerSourceReview88(f.item),false,
+  'a new companion cannot reuse old one-physical-item owner review');
+ delete f.item.shoePair;
  f.swap();
  assert.equal(f.ctx.boardHasMatchingOwnerSourceReview88(f.item),false,
   'a previous owner receipt must not carry into another signed owner');
