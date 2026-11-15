@@ -226,4 +226,6 @@ if(startupVariant90==='candidate'){
  s=replace(s,"const current=posedGeometry(meshes);after=triangleContacts(current.g,body.g,{collect:true});","const current=posedGeometry(meshes);after=triangleContacts(current.g,body.g,{collect:true,bodyTree90});");
 }
 await writeFile(posedContact90,s);
+// Check independent actual triangle intersections against the single-body-BVH candidate.
+if(startupVariant90==='candidate')execFileSync(process.execPath,['scripts/check-parallel90-contact-bvh.mjs',donor],{stdio:'inherit'});
 console.log('P90 disposable PR541 viewer controls installed; source garments and rigs unchanged');
