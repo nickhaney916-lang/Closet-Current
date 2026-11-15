@@ -288,3 +288,54 @@ test('default legacy import revalidates exact login after asynchronous original 
  assert.equal(f.counts.boardWrites||0,0);
  assert.deepEqual(f.events,[]);
 });
+
+const simpleLegacyRow={id:'safe-source',image:'data:image/jpeg;base64,/9j/2Q==',category:'Tops'};
+test('legacy import refuses foreign owner claim nested inside original photo metadata before write',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyRowsFile([{
+  ...simpleLegacyRow,originalPhoto:{metadata:{capture:{ownerId:'owner-b'}}}
+ }]));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('another account')));
+});
+test('legacy import refuses foreign owner claim hidden in saved outfit metadata',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyRowsFile([simpleLegacyRow],{current:{slots:{top:'safe-source'}},
+  saved:[{name:'Cross-owner saved outfit',metadata:{ownerId:'owner-b'}}]}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.boardWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('another account')));
+});
+test('legacy import refuses deep foreign owner claim in inspiration before any garment write',async()=>{
+ const f=legacyFixture();
+ f.ctx.validLook=x=>x;
+ const json=JSON.stringify({format:'closet-current',version:3,items:[simpleLegacyRow],
+  looks:[{id:'unsafe-look',pieces:[],extras:[{source:{ownerId:'owner-b'}}]}]});
+ await f.run({size:json.length,text:async()=>json});
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('another account')));
+});
+test('legacy import rejects prototype-pollution keys in nested photo data',async()=>{
+ const f=legacyFixture();
+ const evil=JSON.parse('{"__proto__":{"polluted":true}}');
+ await f.run(legacyRowsFile([{...simpleLegacyRow,originalPhoto:{metadata:evil}}]));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('unsafe metadata')));
+ assert.equal({}.polluted,undefined);
+});
+test('legacy import accepts nested source owner metadata matching its exact signed owner',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyRowsFile([{...simpleLegacyRow,
+  originalPhoto:{metadata:{capture:{ownerId:'owner-a'}}}
+ }]));
+ assert.equal(f.counts.legacyWrites,1);
+ assert.ok(f.events.some(x=>x.includes('Backup imported.')));
+});
+test('legacy import rejects excessively nested metadata before any private storage mutation',async()=>{
+ const f=legacyFixture();
+ let nested={value:'leaf'};
+ for(let i=0;i<40;i++)nested={deep:nested};
+ await f.run(legacyRowsFile([{...simpleLegacyRow,metadata:nested}]));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('nesting is unsafe')));
+});
