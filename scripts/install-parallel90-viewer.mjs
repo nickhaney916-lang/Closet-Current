@@ -172,7 +172,20 @@ s=replace(s,'  camera.aspect=width/height;camera.updateProjectionMatrix();',`  c
    const offset=camera.position.clone().sub(controls.target).setLength(fit);
    camera.position.copy(controls.target).add(offset);controls.update();dirty=true;
   }`);
-s=replace(s,' const front=()=>{group.rotation.y=0;'," const front=()=>{spin=false;group.rotation.y=0;");
+// Flush residual OrbitControls damping before an explicit camera command.
+// Otherwise a former touch/pointer inertia can move the real camera after a
+// reset or when an owner navigates to the original-photo gallery.
+s=replace(s,' const front=()=>{group.rotation.y=0;',` const clearCameraInertia90=()=>{
+  if(!premiumTurntable67)return;
+  const savedDamping=controls.enableDamping;
+  controls.enableDamping=false;
+  controls.update();
+  controls.enableDamping=savedDamping;
+ };
+ const front=()=>{clearCameraInertia90();group.rotation.y=0;`);
+s=replace(s,'const side=()=>{group.rotation.y=0;','const side=()=>{clearCameraInertia90();group.rotation.y=0;');
+s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{clearCameraInertia90();group.rotation.y=0;');
+s=replace(s,' const rotate=degrees=>{',' const rotate=degrees=>{\\n  clearCameraInertia90();'.replaceAll('\\n','\n'));
 s=replace(s,'{radius:4.25,elevation:0});else{camera.position.set(0,1.04,4.25);',"{radius:Math.max(4.25,1.25/(Math.tan(camera.fov*Math.PI/360)*Math.min(1,camera.aspect))),elevation:0});else{camera.position.set(0,1.04,4.25);");
 s=replace(s,'const side=()=>{group.rotation.y=0;','const side=()=>{spin=false;group.rotation.y=0;');
 s=replace(s,'const back=()=>{group.rotation.y=0;','const back=()=>{spin=false;group.rotation.y=0;');
