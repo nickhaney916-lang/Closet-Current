@@ -41,7 +41,7 @@ function fixture(){
   color:'Blue',image:'data:image/jpeg;base64,/9j/AA==',category:'Tops'};
  const ctx={
   window:{closetAuth:auth},db:{name:'closet-current-user-owner-a'},
-  captureOperationEpoch:17,nativeLossless04Active:false,
+  captureOperationEpoch:17,nativeLossless04Active:false,nativeLossless04:null,
   currentBoard:{name:'DRAFT-A',slots:{}},savedOutfitBoards:[original],
   items:[item],outfitSlots:[{id:'top',label:'Top'}],choosingSlot:'top',
   $(id){return element(id)},
