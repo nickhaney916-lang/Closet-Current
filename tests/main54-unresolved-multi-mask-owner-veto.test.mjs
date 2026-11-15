@@ -41,10 +41,13 @@ const piece=(id,hint,opts={})=>({
  category:'Tops',itemType:'T-shirt',color:'Blue',
  hint,...opts
 });
-const worker=(hint=unresolved())=>({
+// #88 actual outfit-worker.mjs delivers instanceMethod at top level, and
+// its hint contains only categories/types/clipped/confidence.
+const worker=(method='native_semantic_group_unresolved_fragments')=>({
  instanceKey:'seg-4-10-12-45-45-1',
  cropBounds:{x:.09,y:.08,width:.42,height:.46},
- personDetected:true,colorEstimate:{color:'Blue'},hint
+ personDetected:true,colorEstimate:{color:'Blue'},
+ instanceMethod:method,hint:normalHint()
 });
 function dbOpen(owner){
  return new Promise((resolve,reject)=>{
@@ -121,6 +124,27 @@ test('M54 real model-to-review intake retains only negative P88 source flag and 
  assert.equal(Object.hasOwn(result.piece,'ownerId'),false);
  assert.equal(result.piece.hint.originalPhoto,undefined);
  assert.equal(result.piece.hint.categories[0],'Tops');
+ assert.equal(result.piece.hint.instanceMethod,undefined,
+  'only the bounded negative verdict may be persisted, not worker method text');
+});
+test('M54 P88 actual top-level safe method remains a review suggestion with no invented veto',()=>{
+ for(const method of ['native_semantic_group',
+  'connected_footwear_component','connected_semantic_component_unverified']){
+  const next=intakeProposal58(worker(method),[],1);
+  assert.equal(next.accepted,true);
+  assert.equal(next.piece.hint.componentReviewStatus,undefined);
+  assert.equal(next.piece.hint.confidence,.98);
+ }
+});
+test('M54 a new unsupported top-level P88 worker method is quarantined before owner save',()=>{
+ const next=intakeProposal58(worker('future_unknown_fragment_merger'),[],1);
+ assert.equal(next.accepted,true);
+ assert.equal(next.piece.hint.componentReviewStatus,UNRESOLVED_SEGMENT_STATUS54);
+ assert.equal(canConfirmScene32({...piece('10',next.piece.hint)},schema),false);
+});
+test('M54 malformed/array hint stays invalid even if a worker supplies a real source method',()=>{
+ const malformed={...worker(),hint:['Tops']};
+ assert.equal(intakeProposal58(malformed,[],1).accepted,false);
 });
 test('M54 owner category/type/color and crop review cannot confirm an unresolved multi-garment mask',()=>{
  const safe=piece('10',normalHint());
