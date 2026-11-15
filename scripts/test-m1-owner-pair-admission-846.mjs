@@ -12,6 +12,9 @@ import {readFile} from 'node:fs/promises';
 const originalJpeg88=Buffer.from([255,216,255,224,0,16,1,2,3,4,255,217]);
 const originalSource88='data:image/jpeg;base64,'+originalJpeg88.toString('base64');
 const originalHash88=createHash('sha256').update(originalJpeg88).digest('hex');
+const companionJpeg88=Buffer.from([255,216,255,224,21,22,23,255,217]);
+const companionPhoto88='data:image/jpeg;base64,'+companionJpeg88.toString('base64');
+const companionHash88=createHash('sha256').update(companionJpeg88).digest('hex');
 const app=await readFile('public/app.js','utf8'),
  taxonomy=await readFile('public/taxonomy.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
@@ -29,6 +32,7 @@ const harness=[
  "const queued=async fn=>{await window.beforeWriteTest?.();return fn();};",
  "const originalSource88="+JSON.stringify(originalSource88),
  "const sourceHash88="+JSON.stringify(originalHash88),
+ "const companionPhoto88="+JSON.stringify(companionPhoto88),
  "const localPending=new Set(),sessionCapturedIds=new Set();",
  "const checkPhoto=async()=>({colorEstimate:null,signature:[],aspect:1});",
  "const openPhotoCrop=(item,callbacks)=>{window.crop88Editor=callbacks;return Promise.resolve();};",
@@ -51,7 +55,7 @@ const harness=[
  "    name:'Black shoes',category:'Shoes',itemType:'Sneakers',color:'Black',",
  "    colorSource:'photo-estimate',seasons:[],userAdjusted:false,outfitSourceId:'outfit-source',",
  "    originalPhoto:{image:originalSource88},requiresOwnershipConfirmation:true,reconciliation70Status:status,reconciliation70:receipt('owner-A',11),",
- "    shoePair:{confirmedByOwner:true,companion:{image:'data:image/jpeg;base64,QUJDRA==',reconciliation70:receipt('owner-A',12)}}};",
+ "    shoePair:{confirmedByOwner:true,companion:{image:companionPhoto88,reconciliation70:receipt('owner-A',12)}}};",
  "  batch=[item];items=dup?[{id:'old',image:'data:image/jpeg;base64,QUJD',category:'Shoes',itemType:'Sneakers',color:'Black',reconciliation70:receipt('owner-A',12)}]:[];",
  "  adjustPhoto(item);return item;",
  "};",
@@ -122,6 +126,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.equal(result.ownerReceipt?.sourceId,'outfit-source');
    assert.equal(result.ownerReceipt?.originalPhotoSha256,originalHash88);
    assert.equal(result.ownerReceipt?.companionMaskSha256,result.secondMask);
+   assert.equal(result.ownerReceipt?.companionImageSha256,companionHash88);
+   assert.equal(result.ownerReceipt?.companionImageBytesVerified,true);
    assert.equal(result.ownerReceipt?.category,'Shoes');
    assert.equal(result.ownerReceipt?.physicalUnitDecision,'paired_confirmed');
    assert.equal(result.ownerReceipt?.ownerReviewed,true);

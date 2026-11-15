@@ -388,7 +388,14 @@ async function sourceSavePhotoVerified88(lease){
   if(actual!==lease.source||!sourceSaveLeaseLive88(lease))return false;
   const cropDigest=await ownerCropPhotoDigest88(lease.image);
   if(!cropDigest||!sourceSaveLeaseLive88(lease))return false;
+  // A reviewed second shoe/fragment image needs its OWN byte digest.
+  const companion=lease.item?.shoePair?.companion||
+   lease.item?.combinedFragments70?.companion;
+  const companionDigest=companion?
+   await ownerCropPhotoDigest88(companion.image):null;
+  if((companion&&!companionDigest)||!sourceSaveLeaseLive88(lease))return false;
   lease.derivedImageSha256=cropDigest;
+  lease.companionImageSha256=companionDigest;
   return true;
  }catch{return false;}
 }
@@ -402,6 +409,8 @@ function reviewedSourceReceipt88(value,lease){
   // Independently rehashed SAVED crop bytes, NOT the original semantic mask.
   derivedImageSha256:lease.derivedImageSha256||null,
   derivedImageBytesVerified:Boolean(lease.derivedImageSha256),
+  companionImageSha256:lease.companionImageSha256||null,
+  companionImageBytesVerified:companion?Boolean(lease.companionImageSha256):false,
   rawMaskPixelsIndependentlyVerified:false,
   selectedMaskSha256:lease.mask,
   companionMaskSha256:companion?.reconciliation70?.maskSha256||null,
@@ -423,6 +432,9 @@ function reviewedSourceReceiptValid88(value,lease){
   r.rawMaskPixelsIndependentlyVerified===false&&
   /^[a-f0-9]{64}$/.test(r.derivedImageSha256||'')&&
   r.derivedImageSha256===lease.derivedImageSha256&&
+  r.companionImageSha256===(companion?lease.companionImageSha256:null)&&
+  r.companionImageBytesVerified===Boolean(companion)&&
+  (!companion||/^[a-f0-9]{64}$/.test(r.companionImageSha256||''))&&
   r.ownerId===lease.ownerId&&r.itemId===value.id&&r.sourceId===lease.sourceId&&
   r.originalPhotoSha256===lease.source&&r.selectedMaskSha256===lease.mask&&
   r.companionMaskSha256===(companion?.reconciliation70?.maskSha256||null)&&

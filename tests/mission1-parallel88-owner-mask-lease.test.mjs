@@ -1119,6 +1119,7 @@ function sourceSaveHarness88(){
  const end=appSource.indexOf('// Mission 1 #88: unresolved SegFormer fragments',start);
  assert.ok(start>=0&&end>start,'native source lease must be present');
  const jpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,225,7,255,217]).toString('base64');
+ const secondJpeg='data:image/jpeg;base64,'+Buffer.from([255,216,255,224,8,255,217]).toString('base64');
  const hash=createHash('sha256').update(Buffer.from([255,216,255,225,7,255,217])).digest('hex');
  const user={id:'owner-a'},writes=[],db={
   name:'closet-current-user-owner-a',
@@ -1154,7 +1155,7 @@ function sourceSaveHarness88(){
  assert.ok(receiptsStart>=0&&receiptsEnd>receiptsStart);
  vm.runInContext(appSource.slice(receiptsStart,receiptsEnd),c);
  vm.runInContext(appSource.slice(start,end),c);
- return {c,user,db,item,jpeg,hash,writes};
+ return {c,user,db,item,jpeg,secondJpeg,hash,writes};
 }
 // Reproduce the REAL native Adjust owner's physical-unit receipt for positive
 // private-save fixtures. Do not bypass the new fail-closed receipt at the DB
@@ -1238,15 +1239,47 @@ test('P88 changed original JPEG or mask receipt cannot use earlier owner photo p
 });
 
 test('P88 owner-approved shoe category permits paired save, but pre-edit category cannot falsely veto it',async()=>{
- const {c,item,writes}=sourceSaveHarness88();
+ const {c,item,writes,secondJpeg}=sourceSaveHarness88();
  item.category='Uncategorized';
  item.reconciliation70Status='paired_confirmed';
- item.shoePair={confirmedByOwner:true,companion:{reconciliation70:{
+ item.shoePair={confirmedByOwner:true,companion:{image:secondJpeg,reconciliation70:{
   ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,maskSha256:'b'.repeat(64)}}};
  const lease=c.sourceSaveLease88(item);
  assert.equal(await c.sourceSavePhotoVerified88(lease),true);
  await c.saveSourceBoundPiece88(reviewedForSave88(c,{...item,category:'Shoes'},lease),[],lease);
  assert.deepEqual(writes.map(x=>x.name),['items','state']);
+ const proof=writes[0].value.ownerSourceReview88;
+ assert.equal(proof.companionImageSha256,
+  createHash('sha256').update(Buffer.from(secondJpeg.split(',')[1],'base64')).digest('hex'));
+ assert.equal(proof.companionImageBytesVerified,true);
+ assert.equal(proof.rawMaskPixelsIndependentlyVerified,false);
+});
+test('P88 malformed paired companion image is refused before private save',async()=>{
+ const {c,item,writes,secondJpeg}=sourceSaveHarness88();
+ item.category='Shoes';item.reconciliation70Status='paired_confirmed';
+ item.shoePair={confirmedByOwner:true,companion:{image:secondJpeg,reconciliation70:{
+  ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,maskSha256:'b'.repeat(64)}}};
+ const lease=c.sourceSaveLease88(item);
+ item.shoePair.companion.image='data:image/jpeg;base64,Tk9UIEpQRUc=';
+ assert.equal(await c.sourceSavePhotoVerified88(lease),false);
+ item.shoePair.companion.image=secondJpeg;
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ const val=reviewedForSave88(c,structuredClone(item),lease);
+ val.ownerSourceReview88.companionImageSha256='0'.repeat(64);
+ await assert.rejects(c.saveSourceBoundPiece88(val,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0);
+});
+test('P88 companion crop replaced during queued private preflight revokes entire pair',async()=>{
+ const {c,item,writes,secondJpeg,jpeg}=sourceSaveHarness88();
+ item.category='Shoes';item.reconciliation70Status='paired_confirmed';
+ item.shoePair={confirmedByOwner:true,companion:{image:secondJpeg,reconciliation70:{
+  ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,maskSha256:'b'.repeat(64)}}};
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ const val=reviewedForSave88(c,structuredClone(item),lease);
+ c.beforeWrite=async()=>{item.shoePair.companion.image=jpeg;};
+ await assert.rejects(c.saveSourceBoundPiece88(val,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0);
 });
 test('P88 paired physical unit refuses mismatched owner category at private write',async()=>{
  const {c,item,writes}=sourceSaveHarness88();
@@ -1261,10 +1294,10 @@ test('P88 paired physical unit refuses mismatched owner category at private writ
 
 
 test('P88 nested companion mask edited in place during cloud preflight revokes shoe save',async()=>{
- const {c,item,writes}=sourceSaveHarness88();
+ const {c,item,writes,secondJpeg}=sourceSaveHarness88();
  item.category='Shoes';item.reconciliation70Status='paired_confirmed';
  item.shoePair={confirmedByOwner:true,componentIds:['left','right'],
-  companion:{image:'data:image/jpeg;base64,QUJDRA==',
+  companion:{image:secondJpeg,
    reconciliation70:{ownerId:'owner-a',sourceSha256:item.reconciliation70.sourceSha256,
     maskSha256:'b'.repeat(64)}}};
  const lease=c.sourceSaveLease88(item);
