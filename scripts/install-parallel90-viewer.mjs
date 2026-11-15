@@ -201,4 +201,19 @@ s=replace(s,"if(independentGarments&&built.shirt){builtContact=poseConditionedSl
 s=replace(s,"finally{setResearchPose(root,pose);}","finally{timeShirt90('poseRestore',()=>setResearchPose(root,pose));}");
 s=replace(s,"contact?.dispose();Object.values(parts).forEach(g=>g.dispose());parts=built;mode=next;contact=builtContact;changes++;shirtBuildStages90=Object.freeze({...shirtClock90});return summarize();","timeShirt90('previousRelease',()=>{contact?.dispose();Object.values(parts).forEach(g=>g.dispose());});parts=built;mode=next;contact=builtContact;changes++;shirtBuildStages90=Object.freeze({...shirtClock90});return summarize();");
 await writeFile(sourceOutfitController,s);
+// M11 candidate-only BVH reuse on the exact pinned original posed cloth
+// solver. The BODY is immutable within one pose-contact fit: its BVH is
+// constructed once per fit rather than for each of the existing 12+final
+// actual triangle crossing checks. Garment BVH and every collision test,
+// original pose, outward correction, rollback and reported contacts remain.
+const posedContact90=donor+'/research/three-d-42/posed-contact.mjs';
+s=await readFile(posedContact90,'utf8');
+if(startupVariant90==='candidate'){
+ s=replace(s,"export function triangleContacts(a,b,{collect=false}={}){","export function triangleContacts(a,b,{collect=false,bodyTree90=null}={}){");
+ s=replace(s,"const ba=new MeshBVH(a),bb=new MeshBVH(b),line=","const ba=new MeshBVH(a),bb=bodyTree90||new MeshBVH(b),line=");
+ s=replace(s,"const began=performance.now();restore(base);const body=posedGeometry(bodies),groups=new Map(),membership=new Map();","const began=performance.now();restore(base);const body=posedGeometry(bodies),bodyTree90=new MeshBVH(body.g),groups=new Map(),membership=new Map();");
+ s=replace(s,"const current=posedGeometry(meshes),c=triangleContacts(current.g,body.g,{collect:true});","const current=posedGeometry(meshes),c=triangleContacts(current.g,body.g,{collect:true,bodyTree90});");
+ s=replace(s,"const current=posedGeometry(meshes);after=triangleContacts(current.g,body.g,{collect:true});","const current=posedGeometry(meshes);after=triangleContacts(current.g,body.g,{collect:true,bodyTree90});");
+}
+await writeFile(posedContact90,s);
 console.log('P90 disposable PR541 viewer controls installed; source garments and rigs unchanged');
