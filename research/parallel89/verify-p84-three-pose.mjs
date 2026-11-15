@@ -89,6 +89,7 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
    const expectedPoses=new Set(poses),expectedPixels=new Set();
    const perLayerBaseline={shirtBody:0,denimBody:0,shirtDenim:0};
    const perLayerRefined={shirtBody:0,denimBody:0,shirtDenim:0};
+   const perPoseContactWitnesses=[];
    let localIncreased=false;
    for(const witness of row.poseWitnesses){
     require89(expectedPoses.delete(witness?.pose)&&
@@ -109,6 +110,18 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
     require89(witness.anyIncreaseOverBaseline===increase,'hidden-contact-worsening');
     if(increase)increasedPoseWitnesses++;
     localIncreased||=increase;
+    perPoseContactWitnesses.push(Object.freeze({
+     pose:witness.pose,
+     baseline:Object.freeze({shirtBody:witness.baseline.shirtBody,
+      denimBody:witness.baseline.denimBody,shirtDenim:witness.baseline.shirtDenim}),
+     candidate:Object.freeze({shirtBody:witness.refined.shirtBody,
+      denimBody:witness.refined.denimBody,shirtDenim:witness.refined.shirtDenim}),
+     perLayerDelta:Object.freeze({shirtBody:witness.contactPairCountDeltas.shirtBody,
+      denimBody:witness.contactPairCountDeltas.denimBody,
+      shirtDenim:witness.contactPairCountDeltas.shirtDenim}),
+     witnessedIncrease:increase,
+     staticSurfaceCrossingsOnly:true,continuousContactNotMeasured:true
+    }));
    }
    require89(expectedPoses.size===0&&
     row.additionalStaticPoseContactReleaseBlock===localIncreased&&
@@ -152,9 +165,13 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
    pairContactLedger.push(Object.freeze({
     avatar:row.figure,denimSource:row.denim,
     originalSourcePoseCount:3,
+    originalSourcePoseContactWitnesses:Object.freeze(perPoseContactWitnesses),
     baselineStrictSourceCrossingsByLayer:Object.freeze(perLayerBaseline),
     candidateStrictSourceCrossingsByLayer:Object.freeze(perLayerRefined),
     candidateStaticCrossingsRemain:Object.values(perLayerRefined).some(n=>n>0),
+    zeroStaticTriangleCrossingsStillNotPhysicalClearance:true,
+    signedDistanceAndBodyContainmentNotMeasured:true,
+    physicallySweptInterposeMotionNotMeasured:true,
     witnessedIncreasedContactAtAnyPose:localIncreased,
     researchTrialApplied:row.shapeTrialApplied,
     sourcePhoto2DFallbackRequired:true,continuousMotionSafetyProved:false,
