@@ -50,6 +50,10 @@ function restore89(records){
   throw Error('original-source-research-rollback-incomplete');
 }
 const fixed=(result,reason,extras={})=>Object.freeze({
+ schema:'parallel84-source-bone-shoulder-yoke/v1',
+ sourcePhotoPreserved:true,sourceSkinUVPreserved:true,
+ originalBodyUnchanged:true,sourceBackUnphotographed:true,
+ continuousClothPhysicsValidated:false,humanVisualRealismApproved:false,
  ...result,status:'REFUSED_NEW_CONTACT',reason,
  trialApplied:false,sourceGeometryRestored:true,
  p89SourceGapGate:'REFUSED_AND_ORIGINAL_GEOMETRY_RESTORED',
@@ -132,7 +136,12 @@ export function gateOriginalPhotoShoulderResearchTrial89({
   if(originals){
    // Failure should never leave the original photo-source garment geometry
    // in a partial research deformation state.
-   try{restore89(originals);}catch{return fixed({},'P89_ORIGINAL_SOURCE_ROLLBACK_UNVERIFIED');}
+   try{restore89(originals);}catch{
+    // Do not falsely claim an exact rollback; fail actual CI before use.
+    return Object.freeze({...fixed({},'P89_ORIGINAL_SOURCE_ROLLBACK_UNVERIFIED'),
+     status:'SOURCE_ROLLBACK_UNVERIFIED',sourceGeometryRestored:false,
+     p89SourceGapGate:'SOURCE_ROLLBACK_UNVERIFIED'});
+   }
   }
   return fixed({},'P89_SOURCE_SHOULDER_GAP_AUDIT_FAILED_CLOSED');
  }
