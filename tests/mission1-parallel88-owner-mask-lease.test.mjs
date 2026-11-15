@@ -1420,6 +1420,83 @@ test('P88 queued owner decision refuses modified original JPEG while preflight w
 });
 
 
+// Real app.js backup function, not a duplicate fake helper. The queue
+// is held across simulated cloud preflight and source/camera revision.
+function privateDraftBackupHarness88(){
+ const start=appSource.indexOf('function persistDraft(){');
+ const end=appSource.indexOf('function readDraft()',start);
+ assert.ok(start>=0&&end>start,'native signed-owner persistDraft found');
+ const writes=[],alerts=[],user={id:'owner-A'},state={
+  window:{closetAuth:{user}},db:null,batch:[],structuredClone,
+  message:msg=>alerts.push(msg)
+ };
+ const idb={name:'closet-current-user-owner-A',transaction(store,mode){
+  assert.equal(store,'state');assert.equal(mode,'readwrite');
+  const tx={objectStore(name){assert.equal(name,'state');return {put(v){writes.push(structuredClone(v));}}}};
+  queueMicrotask(()=>tx.oncomplete?.());return tx;
+ }};
+ state.db=idb;
+ let waiting=null;
+ state.queued=async fn=>{
+  if(waiting)await waiting;
+  return fn();
+ };
+ vm.createContext(state);
+ vm.runInContext(appSource.slice(start,end),state);
+ const pause=()=>{let release,entered;
+  const started=new Promise(resolve=>{entered=resolve;});
+  waiting=new Promise(resolve=>{release=resolve;entered();});
+  return {started,release:()=>{waiting=null;release();}};
+ };
+ return {state,user,idb,writes,alerts,pause};
+}
+test('P88 queued private backup must not persist prior-owner photo to account B',async()=>{
+ const h=privateDraftBackupHarness88();
+ h.state.batch=[{id:'only-owner-A',image:'data:image/jpeg;base64,QUFB'}];
+ const gate=h.pause();
+ const pending=h.state.persistDraft();await gate.started;
+ h.state.window.closetAuth.user={id:'owner-B'};
+ h.state.db={name:'closet-current-user-owner-B',transaction(){throw Error('FOREIGN_OWNER_BACKUP');}};
+ h.state.batch=[{id:'only-owner-B',image:'data:image/jpeg;base64,QkJC'}];
+ gate.release();await pending;
+ assert.equal(h.writes.length,0,'no photo or metadata from A written to B');
+ assert.equal(h.alerts.length,0,'old owner backup does not show warning in B account');
+});
+test('P88 queued private backup also rejects same-ID renewed login and same-ID new IDB',async()=>{
+ for(const change of ['renew-login','replace-db']){
+  const h=privateDraftBackupHarness88();
+  h.state.batch=[{id:'owner-A-original',image:'data:image/jpeg;base64,QUFB'}];
+  const gate=h.pause(),pending=h.state.persistDraft();await gate.started;
+  if(change==='renew-login')h.state.window.closetAuth.user={id:'owner-A'};
+  else h.state.db={name:'closet-current-user-owner-A',transaction(){throw Error('STALE_IDB');}};
+  gate.release();await pending;
+  assert.equal(h.writes.length,0,'replaced private session never receives stale draft');
+  assert.equal(h.alerts.length,0);
+ }
+});
+test('P88 queued private backup commits exact newest same-owner capture and edit, not stale frozen batch',async()=>{
+ const h=privateDraftBackupHarness88();
+ const original={id:'first',image:'data:image/jpeg;base64,T0xE'};
+ h.state.batch=[original];
+ const gate=h.pause(),pending=h.state.persistDraft();await gate.started;
+ original.image='data:image/jpeg;base64,TkVX';
+ h.state.batch.push({id:'second',image:'data:image/jpeg;base64,U0VDT05E'});
+ gate.release();await pending;
+ assert.equal(h.writes.length,1);
+ assert.equal(h.writes[0].id,'draft');
+ assert.deepEqual(h.writes[0].batch.map(x=>x.id),['first','second']);
+ assert.equal(h.writes[0].batch[0].image,'data:image/jpeg;base64,TkVX');
+ assert.equal(h.writes[0].batch[1].image,'data:image/jpeg;base64,U0VDT05E');
+});
+test('P88 queued private backup honors an owner-approved removal while queued',async()=>{
+ const h=privateDraftBackupHarness88();
+ h.state.batch=[{id:'confirmed-and-removed',image:'data:image/jpeg;base64,T0xE'}];
+ const gate=h.pause(),pending=h.state.persistDraft();await gate.started;
+ h.state.batch=[];
+ gate.release();await pending;
+ assert.equal(h.writes.length,1);
+ assert.equal(h.writes[0].batch.length,0,'removed photo cannot return after slow queued backup');
+});
 test('P88 ordinary review save holds exact owner, image and IDB after cloud preflight',async()=>{
  const saveBegin=appSource.indexOf('function savePiece(');
  const saveEnd=appSource.indexOf('function node(',saveBegin);
