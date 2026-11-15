@@ -4,6 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups} from '../public/outfit-segmentation.mjs';
 import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES,accessoryBoxIoU88,evaluateCocoAccessoryBoxes88,cocoAccessoryLabel88} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
+import {FASHION_MAIN_LABELS88,FASHION_ACCESSORY_IDS88,decodeFashionYolo88,scoreFashionAccessory88,fashionBoxNms88} from '../research/mission1-parallel88/fashion-onnx-probes-88.mjs';
 import {clothingReviewInstances840} from '../public/outfit-instance-review-840.mjs';
 
 function fixture(width=48,height=48){
@@ -220,4 +221,64 @@ test('P88 accessory COCO boxes use source-bound per-class 1:1 IoU not duplicated
  assert.throws(()=>evaluateCocoAccessoryBoxes88(gt,[
   {label:'handbag',score:.6,box:{xmin:0,ymin:0,xmax:0,ymax:10}}]),
  /P88_INVALID_BOX/);
+});
+
+
+test('P88 Fashionpedia ONNX decoder retains watch belt headwear rather than COCO erasure',()=>{
+ assert.equal(FASHION_MAIN_LABELS88.length,27);
+ assert.deepEqual([13,14,15,18,19,24].map(i=>FASHION_MAIN_LABELS88[i]),
+  ['glasses','hat','headband, head covering, hair accessory','watch','belt','bag, wallet']);
+ assert.equal(FASHION_ACCESSORY_IDS88.includes(18),true);
+ const channels=50,anchors=3,arr=new Float32Array(channels*anchors);
+ const set=(ch,j,value)=>{arr[ch*anchors+j]=value;};
+ // Each bounding box is native 640 letterbox space, original source 1000 x 500.
+ for(const [j,cls,cx,cy] of [[0,18,320,320],[1,19,160,240],[2,23,480,320]]){
+  set(0,j,cx);set(1,j,cy);set(2,j,64);set(3,j,64);
+  set(4+cls,j,.95);
+ }
+ const geom={inputSize:640,width:640,height:320,padX:0,padY:160};
+ const out=decodeFashionYolo88(arr,[1,50,3],1000,500,geom);
+ assert.deepEqual(out.map(x=>x.category_id),[18,19]);
+ assert.equal(out[0].box.xmin,450);
+ assert.equal(out[0].box.ymin,200);
+ assert.equal(out[0].box.xmax,550);
+ assert.equal(out[0].box.ymax,300);
+ const scored=scoreFashionAccessory88([
+  {category_id:18,box:{xmin:450,ymin:200,xmax:550,ymax:300}},
+  {category_id:19,box:{xmin:200,ymin:75,xmax:300,ymax:175}}
+ ],out);
+ assert.equal(scored.human,2);
+ assert.equal(scored.matched,2);
+ assert.equal(scored.proposals,2);
+ assert.equal(scored.noOwnerSave,true);
+});
+test('P88 Fashionpedia ONNX rejects forged outputs and duplicate overlapping watches',()=>{
+ const boxes=[
+  {category_id:18,score:.9,box:{xmin:2,ymin:2,xmax:20,ymax:20}},
+  {category_id:18,score:.8,box:{xmin:2,ymin:2,xmax:20,ymax:20}},
+  {category_id:19,score:.8,box:{xmin:2,ymin:2,xmax:20,ymax:20}}
+ ];
+ assert.deepEqual(fashionBoxNms88(boxes).map(x=>x.category_id),[18,19]);
+ assert.throws(()=>scoreFashionAccessory88([{category_id:23,box:boxes[0].box}],[]),
+  /P88_FASHION_UNSUPPORTED_HUMAN_ACCESSORY/);
+ assert.throws(()=>scoreFashionAccessory88([{category_id:18,box:boxes[0].box}],
+  [{...boxes[0],score:NaN}]),/P88_FASHION_INVALID_ACCESSORY_PROPOSAL/);
+ assert.throws(()=>decodeFashionYolo88(new Float32Array(100),
+  [1,51,2],640,640,{inputSize:640,width:640,height:640,padX:0,padY:0}),
+ /P88_FASHION_INVALID_TENSOR/);
+ const invalid=new Float32Array(50*2);invalid[49*2]=NaN;
+ assert.throws(()=>decodeFashionYolo88(invalid,[1,50,2],640,640,
+  {inputSize:640,width:640,height:640,padX:0,padY:0}),/P88_FASHION_NONFINITE_LOGITS/);
+});
+test('P88 Fashionpedia ONNX does not invent labels from clothing part or shoe boxes',()=>{
+ const channels=50,anchors=2,arr=new Float32Array(channels*anchors);
+ for(let i=0;i<anchors;i++){
+  arr[i]=320;arr[anchors+i]=320;
+  arr[2*anchors+i]=64;arr[3*anchors+i]=64;
+ }
+ arr[(4+23)*anchors]=.9; // source shoe, not a watch accessory
+ arr[(4+42)*anchors+1]=.9; // source rivet/clothing part, not independent outfit item
+ const out=decodeFashionYolo88(arr,[1,50,2],640,640,
+  {inputSize:640,width:640,height:640,padX:0,padY:0});
+ assert.deepEqual(out,[]);
 });
