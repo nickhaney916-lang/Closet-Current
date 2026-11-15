@@ -41,6 +41,13 @@ s=replace(s,"    geometries:view.geometries||0,textures:view.textures||0,frames:
     renderStages90:rendered?.renderStages90||null,
     sceneApplyStages90:view.applyStages90||null,
     sceneShirtStages90:view.outfit?.shirtBuildStages90||null,
+    contactEvidence90:view.outfit?.shirt?.poseTriangleContact?{
+     beforeCount:view.outfit.shirt.poseTriangleContact.before?.count??null,
+     afterCount:view.outfit.shirt.poseTriangleContact.after?.count??null,
+     steps:view.outfit.shirt.poseTriangleContact.steps,
+     correctedVertices:view.outfit.shirt.poseTriangleContact.correctedVertices,
+     maximumWorldCorrection:view.outfit.shirt.poseTriangleContact.maximumWorldCorrection
+    }:null,
     garmentSources90:{dress:view.outfit?.dress?.sourceSHA256||null,shirt:view.outfit?.shirt?.sourceSHA256||null,pants:view.outfit?.pants?.sourceSHA256||null},
     camera90:{angle:view.viewAngle,distance:view.cameraDistance,position:view.cameraPosition,target:view.cameraTarget,loadMs:view.loadMs,lastRenderMs:view.lastRenderMs,pixelRatio:view.pixelRatio,drawPixels:view.drawPixels},
     geometries:view.geometries||0,textures:view.textures||0,frames:view.frames||0,`);
