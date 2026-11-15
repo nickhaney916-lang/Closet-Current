@@ -2789,7 +2789,7 @@ function memoryLearningHarness88({modelGate=null,preflightGate=null,readGate=nul
  const ownerDb=makeDb('A',item),otherDb=makeDb('B',item);
  const result={recognitionMemory:{good:true},strong:true,
   choices:[{category:'Tops',itemType:'T-shirt'}],details:{}};
- const c={window:{closetAuth:{user:owner}},db:ownerDb,items:[item],
+ const c={window:{document:{},closetAuth:{user:owner}},db:ownerDb,items:[item],
   ClothingMemory:{week:()=> 'new-week',valid:x=>!!x?.good},
   ClothingDetails:{recognizedFields:()=>({})},
   busy:false,automaticRunning:false,localPending:new Set(),localReady:true,

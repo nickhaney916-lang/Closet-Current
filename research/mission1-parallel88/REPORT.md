@@ -724,3 +724,10 @@ fenced. The extracted *nonbrowser* fixture only keeps its prior semantics,
 so the inherited source test can run without relaxing any real browser lease.
 The first run's 841/842 full Node result is **FAIL**, not accepted; verify
 this revised exact-head CI before claiming a green receipt.
+**Targeted fixture correction:** the first corrected-source CI #43766633728
+reported 196/199 focused tests passing (3 new scenarios failing). The
+synthetic `memoryLearningHarness88` lacked `window.document`, so three
+cases accidentally exercised the deliberate nonbrowser compatibility path,
+not real native code. Add a DOM sentinel only to this existing source-executed
+fixture. Do not weaken native owner/data guards. The first run is **FAIL**;
+a newer exact-head CI is required.
