@@ -1,0 +1,85 @@
+name: MAIN1054 M58 actual P88 browser WASM model to native private review NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m58-real-p88-browser-worker-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  m58-real-browser-worker-and-mask-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin EXACT M57 parent, immutable P88 source and strict no-merge path allowance
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE=8eed18265db2191afdb553147330e2db7e412750
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          git merge-base --is-ancestor "$BASE" HEAD
+          git cat-file -e "$P88^{commit}"
+          test "$(git rev-parse "$P88:public/outfit-worker.mjs")" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+          test "$(git rev-parse "$P88:public/outfit-segmentation.mjs")" = d357955dd8fdab7c0cb727ea597c270edd9309ac
+          test "$(git rev-parse "$P88:public/outfit-instance-review-840.mjs")" = 6324d8eda33024f166311f424392ed83363e4942
+          git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+          git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
+            case "$path" in
+              scripts/test-main58-actual-p88-wasm-browser.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml) ;;
+              *) echo "MAIN58 blocked unexpected change: $path"; exit 1;;
+            esac
+          done
+          node --check scripts/test-main58-actual-p88-wasm-browser.mjs
+      - name: Extract exact immutable P88 browser worker + import graph (NO default public change)
+        shell: bash
+        run: |
+          set -euo pipefail
+          P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
+          mkdir -p .m57-exact-p88-donor/public
+          for file in outfit-worker.mjs outfit-segmentation.mjs outfit-instance-review-840.mjs photo-color.js; do
+            git show "$P88:public/$file" > ".m57-exact-p88-donor/public/$file"
+            test "$(git hash-object ".m57-exact-p88-donor/public/$file")" = "$(git rev-parse "$P88:public/$file")"
+          done
+          test "$(git hash-object .m57-exact-p88-donor/public/outfit-worker.mjs)" = ab7d3837139c5b7d693383f9d6617e199ec8de4f
+      - name: Install isolated native browser dependencies (NO paid API/deploy)
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Live original JPEG, native owner WebCrypto, exact P88 Worker, browser SegFormer WASM, NO SAVE
+        run: node scripts/test-main58-actual-p88-wasm-browser.mjs
+      - name: Verify source-safe actual worker receipt, zero private saves and immutable donor
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module - <<'JS'
+          import fs from 'node:fs';
+          const p='benchmark/main58-real-p88-browser-worker/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json';
+          const r=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(r.actualP88ModuleWorkerExecuted!==true||r.noSyntheticWorker!==true||
+             r.sourceVerified!==true||r.actualNativeApp!==true||
+             r.sourceGroupsUnverified<1||r.sourceGroupsUnverified>12||
+             r.ownerPrivateSaves!==0||r.humanAccuracyMeasured!==false||
+             r.physicalDevice!==false||r.hostedSignedRLS!==false||
+             r.familyAlpha!=='HOLD'||r.releaseAllowed!==false||
+             r.unexpectedOutbound.length!==0)
+            throw Error('M58 actual model worker or no-silent-save receipt is invalid');
+          console.log('M58 actual live browser donor worker real source proposals',r.sourceGroupsUnverified);
+          JS
+          git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ supabase/ benchmark/ research/multi-garment-capture-01/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
+      - name: Archive metrics ONLY (NO private photos, masked crops, model weights)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m58-real-p88-browser-wasm-original-JPEG-owner-HOLD
+          path: benchmark/main58-real-p88-browser-worker/M58-ACTUAL-P88-BROWSER-NO-SILENT-SAVE.json
+          retention-days: 14
+          if-no-files-found: ignore
