@@ -143,6 +143,7 @@ function legacyFixture(){
  f.ctx.categories=['Tops','Uncategorized'];
  f.ctx.items=[{id:'existing-shoe',category:'Shoes'}];
  f.ctx.normalizeClothing=x=>x;
+ f.ctx.validLook=x=>x;
  // VM executes the real default app import handler; the real atomic module
  // is exercised separately against native IndexedDB in the built-PWA test.
  // A constrained module double here observes the transaction boundary.
