@@ -147,3 +147,28 @@ test('P88 research pixel-gate never invents an unsourced clothing label or owner
  assert.deepEqual(clothingMaskGroups(broad),[]);
  assert.equal(Array.from(broad.labels).some(x=>x!==0),false);
 });
+
+
+test('P88 research source loose shoe mask conserves both physical-region proposals',()=>{
+ const width=48,height=48,area=width*height,data=new Float32Array(area*18);
+ data.fill(-100);
+ for(let i=0;i<area;i++)data[i]=0;
+ const shoe=(left,top)=>{
+  for(let y=top;y<top+10;y++)for(let x=left;x<left+9;x++)
+   data[9*area+y*width+x]=4;
+ };
+ shoe(4,29);shoe(32,29);
+ const native=clothingLabelMap(data,[1,18,height,width]),
+  relaxed=exposedPixelGateMap88(data,[1,18,height,width],
+   P88_EXPOSED_PIXEL_PROBES.researchLoose65);
+ const base=clothingMaskGroups(native),group=clothingMaskGroups(relaxed);
+ assert.equal(base.length,1);
+ assert.equal(group.length,1,'semantic union still represents two shoes as one source class');
+ const review=clothingReviewInstances840(relaxed);
+ assert.equal(review.length,2,'existing conservative physical shoe review restores source components');
+ assert.equal(review.every(x=>x.requiresReview===true &&
+  x.instanceMethod==='connected_footwear_component' &&
+  x.componentReviewStatus==='owner_must_confirm_garment_units'),true);
+ proveConservation(group[0],review);
+ assert.equal(review.reduce((sum,r)=>sum+r.count,0),180);
+});
