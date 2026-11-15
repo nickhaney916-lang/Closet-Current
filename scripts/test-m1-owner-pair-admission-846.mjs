@@ -20,7 +20,8 @@ const app=await readFile('public/app.js','utf8'),
  details=await readFile('public/clothing-details.js','utf8');
 function extract(a,b){const i=app.indexOf(a),j=app.indexOf(b,i+a.length);
  assert.ok(i>=0&&j>i,'P846 source segment missing '+a);return app.slice(i,j);}
-const source=extract('function node(', 'function hasSourceBoundMask88(')+
+const source=extract('function savePiece(', 'function node(')+
+ extract('function node(', 'function hasSourceBoundMask88(')+
  extract('function hasSourceBoundMask88(', '// P846:')+
  extract('function unit70Receipts(', 'function renderRecognitionNotice(')+
  extract('function candidate(', 'function queueAutomatic(');
@@ -40,7 +41,6 @@ const harness=[
  "const openPhotoCrop=(item,callbacks)=>{window.crop88Editor=callbacks;return Promise.resolve();};",
  "window.closetAuth={user:{id:'owner-A'}};",
  "window.writeCount=0;window.stored=[];window.completions=[];window.draftSnapshots=[];window.messageText='';",
- "const savePiece=(v,b)=>{window.writeCount++;return new Promise((resolve,reject)=>window.completions.push({resolve:()=>{window.stored.push(structuredClone(v));resolve();},reject}));};",
  "const removeItem=async()=>{};",
  "const persistDraft=async()=>{window.persistDraftCount=(window.persistDraftCount||0)+1;};",
  "const render=()=>{};",
@@ -176,6 +176,40 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
     browser:browserName,width,savedOriginalRetained:true,
     duplicateRescanKeptUnsaved:true,secondPendingFrameCoalesced:true,
     noModelAutoClassification:true,noAutoSave:true,pageErrors:errors.length
+   }));
+   // The owner must provide a SECOND, explicit physical-item decision for
+   // exact saved JPEGs. Main category, color and the general review checkbox
+   // alone are not distinct physical-garment evidence.
+   await page.evaluate(()=>adjustPhoto(batch[0]));
+   assert.equal(await page.getByAltText(/Already saved photograph exactly matching/).count(),1);
+   const savedPreview=page.locator('dialog');
+   await savedPreview.getByLabel('Main category').selectOption('Tops');
+   await savedPreview.getByLabel('Color').fill('Blue');
+   await approve();
+   assert.equal(await page.getByRole('button',{name:'Save changes'}).isDisabled(),true,
+    'general model/owner review cannot bypass identical saved source');
+   await submit();
+   assert.equal(await page.evaluate(()=>window.writeCount),0);
+   await savedPreview.getByRole('checkbox',{
+    name:/I physically checked this is a different owned garment/
+   }).check();
+   assert.equal(await page.getByRole('button',{name:'Save changes'}).isEnabled(),true);
+   await submit(2);
+   await page.waitForFunction(()=>window.writeCount===1);
+   await page.evaluate(()=>window.completions.shift().resolve());
+   await page.waitForFunction(()=>window.stored.length===1&&items.length===2&&batch.length===0);
+   const distinctReceipt=await page.evaluate(()=>items[1]?.ownerDuplicateReview88);
+   assert.equal(distinctReceipt?.schema,'p88-distinct-physical-owner-attestation/v1');
+   assert.deepEqual(distinctReceipt?.identicalSavedPhotoItemIds,['already-owned']);
+   assert.equal(distinctReceipt?.ownerAttestedDistinctPhysicalItem,true);
+   assert.equal(distinctReceipt?.independentPhysicalItemVerified,false);
+   assert.equal(distinctReceipt?.singleGarmentVerified,false);
+   assert.equal(distinctReceipt?.threeDReady,false);
+   console.log('M1_P88_BROWSER_EXACT_PHYSICAL_OWNER_GATE',JSON.stringify({
+    browser:browserName,width,generalReviewAloneRejected:true,
+    exactSavedPeerPhotoVisible:true,distinctPhysicalItemOwnerConfirmed:true,
+    duplicateStoredOnlyAfterSeparateAttestation:true,threeDAuthority:false,
+    pageErrors:errors.length
    }));
    // Source-execute the actual native Crop controller in real Chromium and
    // WebKit. The crop editor transport and signed owner are synthetic; no
