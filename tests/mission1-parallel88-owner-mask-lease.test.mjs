@@ -2445,3 +2445,167 @@ test('P88 video import must stop after owner changes between two decoded frames'
  assert.equal(h.views.length,0);
  assert.equal(h.messages.length,0);
 });
+
+// P88: source-execute the actual "Fill missing details from photo" editor
+// controller against a small DOM/worker facade. Stale results cannot silently
+// overwrite owner-confirmed subtype/color or migrate across signed sessions.
+// These tests do not claim real camera accuracy or authenticated hosted RLS.
+function photoFillGated88(){
+ let resolve,reject;
+ const promise=new Promise((a,b)=>{resolve=a;reject=b;});
+ return {promise,resolve,reject};
+}
+async function photoFillReached88(predicate){
+ for(let i=0;i<30;i++){
+  if(predicate())return;
+  await new Promise(resolve=>setImmediate(resolve));
+ }
+ assert.fail('native photo-fill await was not reached');
+}
+function photoFillHarness88({itemValues={},auto=false}={}){
+ const start=appSource.indexOf('function clothingFields(body,item,onChange=()=>{}){');
+ const end=appSource.indexOf('// P88: an owner photo crop',start);
+ assert.ok(start>0&&end>start,'native source editor and photo-fill callback exists');
+ const owner={id:'owner-A'},ownerDb={name:'closet-current-user-owner-A'};
+ const nodes=[],photoCalls=[],modelCalls=[],ownerEdits=[];
+ const make=(tag,text)=>{
+  const el={tag,textContent:text||'',value:'',disabled:false,isConnected:true,
+   children:[],options:[],className:'',checked:false,src:'',alt:'',
+   append(...values){this.children.push(...values);},
+   prepend(...values){this.children.unshift(...values);},
+   replaceChildren(...values){this.children=[...values];this.options=[...values];},
+   setAttribute(key,val){this[key==='aria-label'?'ariaLabel':key]=val;}};
+  nodes.push(el);return el;
+ };
+ const field=(body,title,value,type='input')=>{
+  const label=make('label',title),input=make(type);
+  input.setAttribute('aria-label',title);input.value=value||'';
+  label.append(input);body.append(label);return input;
+ };
+ const choice=(body,title,value,options)=>{
+  const label=make('label',title),input=make('select');
+  input.setAttribute('aria-label',title);
+  input.options=options.map(x=>{const o=make('option',x);o.value=x;return o;});
+  input.value=options.includes(value)?value:options[0];
+  label.append(input);body.append(label);return input;
+ };
+ const item={id:'draft-1',image:'data:image/jpeg;base64,QUFB',
+  name:'',category:'Tops',itemType:'Unknown',color:'Blue',colorSource:'user',
+  seasons:[],notes:'',pattern:'Unknown',sleeveLength:'Unknown',fit:'Unknown',
+  ...itemValues};
+ const c={window:{document:{},closetAuth:{user:owner}},db:ownerDb,
+  item,nodes,make,node:make,field,choice,
+  normalizeClothing:x=>({seasons:[],...x}),
+  learningMode72:()=>false,
+  localReady:true,
+  items:[],
+  categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
+  clothingSchema:{types:{Uncategorized:[],Tops:['T-shirt','Blouse','Tunic'],Bottoms:['Jeans'],
+   Dresses:['Casual dress'],Outerwear:['Coat'],Shoes:['Sneakers'],Accessories:['Bag']},
+   seasons:['Summer','Winter'],sleeve:['Unknown','Short sleeve','Long sleeve'],
+   pattern:['Unknown','Solid'],fit:['Unknown','Regular']},
+  ClothingDetails:{
+   missing:()=>[],
+   fillColor:(value,estimate)=>estimate?{color:estimate,colorSource:'photo-estimate'}:{},
+   fill:(value,choice,details)=>({sleeveLength:details?.sleeveLength||'Short sleeve'})
+  },
+  checkPhoto:()=>{const gate=photoFillGated88();photoCalls.push(gate);return gate.promise;},
+  localRequest:()=>{const gate=photoFillGated88();modelCalls.push(gate);return gate.promise;},
+  segmentationAllows:()=>true,
+  applyLocalChoice:(value,choice)=>{value.category=choice.category;value.itemType=choice.itemType;},
+  enableLocal:async()=>true
+ };
+ const body=make('form');vm.createContext(c);
+ vm.runInContext(appSource.slice(start,end),c);
+ c.collect=c.clothingFields(body,item,key=>ownerEdits.push(key));
+ const find=label=>nodes.find(x=>x.ariaLabel===label);
+ const fill=nodes.find(x=>x.textContent==='Fill missing details from photo');
+ assert.ok(fill&&typeof fill.onclick==='function');
+ return {c,item,owner,ownerDb,nodes,body,photoCalls,modelCalls,ownerEdits,fill,find};
+}
+test('P88 late photo color detection may not overwrite an owner-entered color while decoding',async()=>{
+ const h=photoFillHarness88();
+ const task=h.fill.onclick();await photoFillReached88(()=>h.photoCalls.length===1);
+ const color=h.find('Color');color.value='Orange';color.oninput();
+ h.photoCalls[0].resolve({colorEstimate:'Blue'});
+ await task;
+ assert.equal(h.item.color,'Orange');
+ assert.equal(h.item.colorSource,'user');
+ assert.equal(h.modelCalls.length,0,'stale photo must not proceed to model inference');
+ assert.deepEqual(h.ownerEdits,['color']);
+});
+test('P88 late recognition result cannot replace owner-corrected T-shirt versus blouse subtype',async()=>{
+ const h=photoFillHarness88();
+ const task=h.fill.onclick();await photoFillReached88(()=>h.photoCalls.length===1);
+ h.photoCalls[0].resolve({colorEstimate:null});
+ await photoFillReached88(()=>h.modelCalls.length===1);
+ const type=h.find('Item type');type.value='Blouse';type.oninput();
+ h.modelCalls[0].resolve({strong:true,choices:[{category:'Tops',itemType:'T-shirt'}],details:{}});
+ await task;
+ assert.equal(h.item.itemType,'Blouse');
+ assert.equal(h.item.category,'Tops');
+ assert.deepEqual(h.ownerEdits,['itemType']);
+});
+test('P88 late model suggestion never crosses owner A to B, even renewed same-ID login and DB',async()=>{
+ for(const kind of ['different-owner','renewed-login','new-db']){
+  const h=photoFillHarness88(),task=h.fill.onclick();
+  await photoFillReached88(()=>h.photoCalls.length===1);
+  h.photoCalls[0].resolve({colorEstimate:null});
+  await photoFillReached88(()=>h.modelCalls.length===1);
+  if(kind==='different-owner'){
+   h.c.window.closetAuth.user={id:'owner-B'};h.c.db={name:'closet-current-user-owner-B'};
+  }else if(kind==='renewed-login')h.c.window.closetAuth.user={id:'owner-A'};
+  else h.c.db={name:'closet-current-user-owner-A'};
+  h.modelCalls[0].resolve({strong:true,choices:[{category:'Tops',itemType:'T-shirt'}],details:{}});
+  await task;
+  assert.equal(h.item.itemType,'Unknown',kind);
+  assert.equal(h.item.color,'Blue',kind);
+  assert.equal(h.ownerEdits.length,0,kind);
+ }
+});
+test('P88 late photo-fill suggestion ignores a replaced source photo or source-bound segmentation mask',async()=>{
+ for(const kind of ['jpeg','recognition','mask','dialog-closed']){
+  const h=photoFillHarness88(),task=h.fill.onclick();
+  await photoFillReached88(()=>h.photoCalls.length===1);
+  h.photoCalls[0].resolve({colorEstimate:null});
+  await photoFillReached88(()=>h.modelCalls.length===1);
+  if(kind==='jpeg')h.item.image='data:image/jpeg;base64,TkVX';
+  else if(kind==='recognition')h.item.recognitionPhoto={image:'data:image/jpeg;base64,RlJBRw=='};
+  else if(kind==='mask')h.item.segmentHint={componentReviewStatus:'unresolved'};
+  else h.body.isConnected=false;
+  h.modelCalls[0].resolve({strong:true,choices:[{category:'Tops',itemType:'T-shirt'}],details:{}});
+  await task;
+  assert.equal(h.item.itemType,'Unknown',kind);
+  assert.equal(h.ownerEdits.length,0,kind);
+ }
+});
+test('P88 same owner photo-fill can still suggest subtype, while clearing prior photo review approval',async()=>{
+ const h=photoFillHarness88({itemValues:{category:'Uncategorized',color:'Unknown',colorSource:'photo-estimate'}});
+ // Construction starts one optional color estimate; resolve it first.
+ await photoFillReached88(()=>h.photoCalls.length===1);
+ h.photoCalls[0].resolve({colorEstimate:null});
+ await photoFillReached88(()=>h.photoCalls.length===1);
+ const task=h.fill.onclick();
+ await photoFillReached88(()=>h.photoCalls.length===2);
+ h.photoCalls[1].resolve({colorEstimate:'Blue'});
+ await photoFillReached88(()=>h.modelCalls.length===1);
+ h.modelCalls[0].resolve({strong:true,choices:[{category:'Tops',itemType:'T-shirt'}],
+  details:{sleeveLength:'Short sleeve'}});
+ await task;
+ assert.equal(h.item.category,'Tops');
+ assert.equal(h.item.itemType,'T-shirt');
+ assert.equal(h.item.color,'Blue');
+ assert.ok(h.ownerEdits.includes('color'),'model-estimated color revokes prior owner review');
+ assert.ok(h.ownerEdits.length>=2,'model-filled subtype revokes previous acknowledgement');
+ assert.equal(h.fill.disabled,false);
+});
+test('P88 background photo-color estimate cannot override an owner edit while pending',async()=>{
+ const h=photoFillHarness88({itemValues:{color:'Unknown',colorSource:'photo-estimate'}});
+ await photoFillReached88(()=>h.photoCalls.length===1);
+ const color=h.find('Color');color.value='Red';color.oninput();
+ h.photoCalls[0].resolve({colorEstimate:'Green'});
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(h.item.color,'Red');
+ assert.equal(h.item.colorSource,'user');
+ assert.deepEqual(h.ownerEdits,['color']);
+});
