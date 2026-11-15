@@ -173,3 +173,24 @@ test('P90 M12 isolates same source-loader and original geometry while toggling o
  assert.ok(ab.includes("for(const figure of ['female','male'])"));
  assert.ok(workflow.includes("node scripts/benchmark-parallel90-bvh-ab.mjs"));
 });
+
+test('P90 M13 authentic research owner-photo mobile background/freeze revoke on both browser engines',()=>{
+ const browser=readFileSync('scripts/test-native-3d-05-browser.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ const bridge=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ assert.match(workflow,/NATIVE102: '1'/);
+ assert.ok(workflow.includes('benchmark/native-3d-102-webkit/'));
+ assert.ok(workflow.includes('benchmark/native-3d-102/'));
+ assert.ok(browser.includes("sourceLifecycleOut102='benchmark/native-3d-102'+(engine90==='webkit'?'-webkit':'')"));
+ assert.ok(browser.includes("browser:engine90,simulatedBrowserVisibility:true"));
+ assert.ok(browser.includes("sourceReopenPassedActualNATIVE92OriginalBytes:native92"));
+ assert.ok(browser.includes("document.dispatchEvent(new Event('visibilitychange'))"));
+ assert.ok(browser.includes("document.dispatchEvent(new Event('freeze'))"));
+ assert.ok(browser.includes("assert.equal(hidden.photos,0"));
+ assert.ok(browser.includes("assert.equal(frozen.photos,0"));
+ assert.ok(browser.includes("assert.deepEqual(await readBoard(page),ownerOriginal)"));
+ assert.ok(bridge.includes("doc.addEventListener('visibilitychange',onBackground102)"));
+ assert.ok(bridge.includes("doc.addEventListener('freeze',onFreeze102)"));
+ assert.ok(bridge.includes("cleanup('Browser backgrounded"));
+ assert.ok(bridge.includes("cleanup('Browser frozen"));
+});

@@ -45,9 +45,10 @@ jobs:
           P90_ENGINE: ${{ matrix.engine }}
           P90SWAPS: '1'
           P90: '1'
+          NATIVE102: '1'
         run: |
           if [ "$P90_ENGINE" = chromium ]; then
-            export NATIVE88=1 NATIVE89=1 NATIVE91=1 NATIVE92=1 NATIVE93=1 NATIVE102=1
+            export NATIVE88=1 NATIVE89=1 NATIVE91=1 NATIVE92=1 NATIVE93=1
           fi
           node scripts/test-native-3d-05-browser.mjs
       - name: Same-host baseline candidate restored startup and final-source-frame comparison
@@ -67,3 +68,5 @@ jobs:
             benchmark/parallel90-profile/
             benchmark/native-3d-05/
             benchmark/native-3d-05-webkit/
+            benchmark/native-3d-102/
+            benchmark/native-3d-102-webkit/

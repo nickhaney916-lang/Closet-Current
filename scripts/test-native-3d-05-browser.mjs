@@ -470,9 +470,10 @@ try{
    assert.deepEqual(await readBoard(page),ownerOriginal);
   }
   if(native102&&width===390){
+   const sourceLifecycleOut102='benchmark/native-3d-102'+(engine90==='webkit'?'-webkit':'');
    // Genuine photo-backed original 163-bone donor MUST be visible before the
    // simulated mobile tab-hidden lifecycle event. Browser API lifecycle is
-   // emulated through real Chromium DOM events; NOT a physical phone test.
+   // emulated through Chromium/WebKit DOM events; NOT a physical phone test.
    const before102=await page.evaluate(()=>window.native3D05Bridge.state());
    assert.equal(before102.modelReady,true);
    assert.equal(before102.bones,163);
@@ -496,8 +497,8 @@ try{
    const background=await page.screenshot({fullPage:false,animations:'disabled'});
    const bgMeta=await sharp(background).metadata();
    assert.equal(bgMeta.width,390);
-   await mkdir('benchmark/native-3d-102',{recursive:true});
-   await writeFile('benchmark/native-3d-102/background-source-revoked-390.png',background);
+   await mkdir(sourceLifecycleOut102,{recursive:true});
+   await writeFile(sourceLifecycleOut102+'/background-source-revoked-390.png',background);
    await page.evaluate(()=>{
     delete document.hidden;delete document.visibilityState;
    });
@@ -525,15 +526,16 @@ try{
    const freezePng=await page.screenshot({fullPage:false,animations:'disabled'});
    const freezeMeta=await sharp(freezePng).metadata();
    assert.equal(freezeMeta.width,390);
-   await writeFile('benchmark/native-3d-102/freeze-source-revoked-390.png',freezePng);
-   await writeFile('benchmark/native-3d-102/acceptance.json',
+   await writeFile(sourceLifecycleOut102+'/freeze-source-revoked-390.png',freezePng);
+   await writeFile(sourceLifecycleOut102+'/acceptance.json',
     JSON.stringify({
      priority:'NATIVE-MOBILE-VISIBILITY-SOURCE-REVOKE-102',
-     browser:'Chromium',simulatedBrowserVisibility:true,
+     browser:engine90,simulatedBrowserVisibility:true,
      actualPhysicalAndroidIPhone:false,viewportCSSWidth:390,
      authenticSourceJPEG:true,realOriginalWebGLBones:163,
      hiddenEventClosedSourceBeforeStateRead:true,
-     hiddenOpenBlocked:true,sourceReopenPassedActualNATIVE92OriginalBytes:true,
+     hiddenOpenBlocked:true,sourceReopenPassedActualNATIVE92OriginalBytes:native92,
+     sourceReopenOwnerOriginalPhotoAdmission:true,
      freezeEventClosedSourceBeforeStateRead:true,
      originalOwnerSavedOutfitUnchanged:true,signedOwnerStillActive:true,
      originalPhotographsInArtifacts:false,
