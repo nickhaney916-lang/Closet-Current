@@ -548,6 +548,24 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         unclaimedSaved.originalPhoto?.ownerId===null&&unclaimedSaved.originalPhoto?.image===jpeg&&
         unclaimedSaved.sourceHashVerified!==true;
        const nullOwnerState=Object.fromEntries(nullOwnerRows.state.map(row=>[row.id,row]));
+       // Execute the actual DEFAULT built application import handler on an
+       // existing owner-bound JPEG. Legacy null owner tags are permitted for
+       // new physical garments, but cannot downgrade saved signed receipts.
+       const messageBeforeOwnerConflicts=document.getElementById('message')?.textContent;
+       const beforeOwnerConflicts=JSON.stringify(nullOwnerRows);
+       const ownerDowngradeChecks=[];
+       for(const level of ['item','original']){
+        const changed=structuredClone(input);
+        delete changed.looks;delete changed.outfitBoard;
+        if(level==='item')changed.items[0].ownerId=null;
+        else changed.items[0].originalPhoto.ownerId=null;
+        const changedJSON=JSON.stringify(changed);
+        await document.getElementById('import').onchange({target:{
+         files:[{size:changedJSON.length,text:async()=>changedJSON}],value:'selected'}});
+        ownerDowngradeChecks.push(JSON.stringify(await readSnapshot())===beforeOwnerConflicts&&
+         document.getElementById('message')?.textContent?.includes(
+          'LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT'));
+       }
        const byId=Object.fromEntries(rows.state.map(row=>[row.id,row]));
        return {items:rows.items.map(item=>({id:item.id,ownerId:item.ownerId,
         originalPhoto:item.originalPhoto?.image,sourceSHA256:item.sourceSHA256})),
@@ -556,7 +574,7 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         saved:byId['outfit-board']?.saved?.[0]?.slots?.top,
         revision:byId['cloud-sync']?.localRevision,
         dirty:byId['cloud-sync']?.dirty,
-        message:document.getElementById('message')?.textContent,
+        message:messageBeforeOwnerConflicts,ownerDowngradeChecks,
         invalidRollback,cancelledUnchanged,legacyIdNormalized,largeOriginalRetained,originalAndLooksPreserved,
         unclaimedOwnerAccepted,afterUnclaimedRevision:nullOwnerState['cloud-sync']?.localRevision,
         afterLegacyRevision:historicalState['cloud-sync']?.localRevision,
@@ -578,6 +596,8 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.equal(result.afterLegacyRevision,2,name+' increments cloud revision in atomic transaction');
       assert.equal(result.afterLegacyCloudChanged,3,name+' signals private backup after each atomic commit');
       assert.equal(result.unclaimedOwnerAccepted,true,name+' restores v2 unclaimed owner photo without false proof');
+      assert.deepEqual(result.ownerDowngradeChecks,[true,true],
+       name+' blocks same-ID item and camera-original owner claim downgrades without partial writes');
       assert.equal(result.afterUnclaimedRevision,3,name+' records unclaimed import in private cloud revision');
       assert.match(result.message,/canceled|imported atomically/i);
       assert.deepEqual(errors,[]);
