@@ -90,6 +90,7 @@ export function compareOriginalSourceShoulderGapAB89({
    ['REFUSED_UNCHANGED','REFUSED_NEW_CONTACT'].includes(trialShoulder.status),
    'falsified-photo-preserving-source-shape-acceptance');
   const measurements=[];let newContactWorsening=false,geometryWorsened=false;
+  let significantAnyGapShrink=false,mostNegativeGapDeltaMeters=0;
   let improved=0,worsened=0,stillNear=0;
   for(let i=0;i<3;i++){
    const a=baseline.sourcePoseMeasurements[i],b=trial.sourcePoseMeasurements[i];
@@ -106,6 +107,7 @@ export function compareOriginalSourceShoulderGapAB89({
      candidateSurfaceNear2mm:candidate<=.002,
      researchGapImprovedAtLeastHalfMm:delta>=.0005,
      researchGapWorsenedAtLeastQuarterMm:delta<=-.00025,
+     researchGapShrinkExceeds50Microns:delta<-.00005,
      strictTriangleCrossingsOriginal:a.originalTriangleCrossings[k],
      strictTriangleCrossingsCandidate:b.originalTriangleCrossings[k],
      strictlyMoreCrossingWitnesses:crossingDelta>0
@@ -115,6 +117,8 @@ export function compareOriginalSourceShoulderGapAB89({
     if(candidate<=.002)stillNear++;
     newContactWorsening||=crossingDelta>0;
     geometryWorsened||=delta<=-.00025;
+    significantAnyGapShrink||=delta<-.00005;
+    mostNegativeGapDeltaMeters=Math.min(mostNegativeGapDeltaMeters,delta);
     if(!trialShoulder.trialApplied)
      check(Math.abs(delta)<=.00002&&crossingDelta===0,
       'refused-original-research-trial-must-restore-all-original-geometry');
@@ -127,12 +131,13 @@ export function compareOriginalSourceShoulderGapAB89({
   // Prefer an alternative only for controlled research presentation, NEVER
   // authorize consumer 3D, signed outward clearance or cloth motion.
   const researchCandidateRetained=trialShoulder.trialApplied&&
-   !geometryWorsened&&!newContactWorsening&&improved>0;
+   !significantAnyGapShrink&&!newContactWorsening&&improved>0;
   const researchOnlyPreferredVariant=researchCandidateRetained?'trial':'baseline';
   const researchSourceGapVetoReason=!trialShoulder.trialApplied?
    'TRIAL_REFUSED_BY_ORIGINAL_SOURCE_GATE':
    newContactWorsening?'NEW_STRICT_SOURCE_CROSSING':
    geometryWorsened?'ANY_SAMPLED_SOURCE_GAP_DECREASED_AT_LEAST_025MM':
+   significantAnyGapShrink?'ANY_SAMPLED_SOURCE_GAP_SHRINK_EXCEEDS_005MM':
    !improved?'NO_MEASURED_GAP_GAIN_AT_LEAST_05MM':null;
   return Object.freeze({
    schema:'P89-source-shoulder-unsigned-gap-AB/v1',
@@ -147,6 +152,9 @@ export function compareOriginalSourceShoulderGapAB89({
    candidateStillNear2mmPairPoseCount:stillNear,
    someStaticCrossingCountWorsened:newContactWorsening,
    someUnsignedSurfaceGapWorsened:geometryWorsened,
+   someUnsignedSurfaceGapShrinkExceeds50Microns:significantAnyGapShrink,
+   minimumMeasuredGapDeltaMeters:mostNegativeGapDeltaMeters,
+   studyCandidateMaximumAllowedGapDecreaseMeters:.00005,
    researchOnlyPreferredVariant,
    researchCandidateRetainedForStudy:researchCandidateRetained,
    researchSourceGapVetoReason,
