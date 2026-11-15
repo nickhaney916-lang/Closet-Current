@@ -48,7 +48,7 @@ text=text.replace(marker,marker+"\nif(globalThis.location?.hostname==='127.0.0.1
 // Standalone actual-geometry byte digest in the disposable original P541
 // controller. This is independent of the P89 rollback gate's own assertions.
 // Only fixed research SHA, no owner data or raw positions leave the browser.
-const digestAnchor="  globalThis.__parallel89GapAudit=()=>auditActualOriginalSourcePoseSurfaceGaps89({";
+const digestAnchor=" globalThis.__parallel89GapAudit=()=>auditActualOriginalSourcePoseSurfaceGaps89({";
 assert.equal(text.split(digestAnchor).length,2,'P89 genuine source-gap hook missing');
 const digestGuard=[
  "if(globalThis.location?.hostname==='127.0.0.1'&&next==='shirt-pants'&&",
