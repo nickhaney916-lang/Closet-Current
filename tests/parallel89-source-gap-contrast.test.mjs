@@ -65,6 +65,10 @@ test('original license-locked 3-pose research gap contrast measures improvements
  assert.equal(r.changedGapWorsenedAtLeastQuarterMmCount,3);
  assert.equal(r.candidateStillNear2mmPairPoseCount,6);
  assert.equal(r.someUnsignedSurfaceGapWorsened,true);
+ assert.equal(r.researchOnlyPreferredVariant,'baseline');
+ assert.equal(r.researchCandidateRetainedForStudy,false);
+ assert.equal(r.researchSourceGapVetoReason,'ANY_SAMPLED_SOURCE_GAP_DECREASED_AT_LEAST_025MM');
+ assert.equal(r.originalPhotoResearchBaselineRequired,true);
  assert.equal(r.someStaticCrossingCountWorsened,false);
  assert.equal(r.existingP84ResearchYokeTrialApplied,true);
  assert.equal(r.measuredSourceGapChanges.length,3);
@@ -83,12 +87,39 @@ test('unapplied source shoulder geometry must produce exact unchanged BVH distan
  assert.equal(receipt.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED');
  assert.equal(receipt.existingP84ResearchYokeTrialApplied,false);
  assert.equal(receipt.changedGapImprovedAtLeastHalfMmCount,0);
+ assert.equal(receipt.researchOnlyPreferredVariant,'baseline');
+ assert.equal(receipt.researchSourceGapVetoReason,'TRIAL_REFUSED_BY_ORIGINAL_SOURCE_GATE');
 });
 test('new measured real-triangle crossing counts flagged as blocker even with positive unsigned gap',()=>{
  const x=mock();
  x.trial.sourcePoseMeasurements[1].originalTriangleCrossings.shirtBody=1;
  const receipt=compareOriginalSourceShoulderGapAB89(x);
  assert.equal(receipt.someStaticCrossingCountWorsened,true);
+ assert.equal(receipt.consumer3DAuthorized,false);
+ assert.equal(receipt.researchOnlyPreferredVariant,'baseline');
+ assert.equal(receipt.researchSourceGapVetoReason,'NEW_STRICT_SOURCE_CROSSING');
+});
+test('measured improvement in shirt distance with no pair worsening can retain research preview but never certify wearable 3D',()=>{
+ const x=mock();
+ for(const row of x.trial.sourcePoseMeasurements)
+  row.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=.00115;
+ const receipt=compareOriginalSourceShoulderGapAB89(x);
+ assert.equal(receipt.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED');
+ assert.equal(receipt.researchOnlyPreferredVariant,'trial');
+ assert.equal(receipt.researchCandidateRetainedForStudy,true);
+ assert.equal(receipt.researchSourceGapVetoReason,null);
+ assert.equal(receipt.originalPhotoResearchBaselineRequired,false);
+ assert.equal(receipt.referencePreviewIsNotPhysicalFitApproval,true);
+ assert.equal(receipt.consumer3DAuthorized,false);
+ assert.equal(receipt.sourcePhoto2DFallbackRequired,true);
+});
+test('small subthreshold gap changes without a meaningful gain still prefer the original source',()=>{
+ const x=mock();
+ for(const row of x.trial.sourcePoseMeasurements)
+  row.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters=.0004;
+ const receipt=compareOriginalSourceShoulderGapAB89(x);
+ assert.equal(receipt.researchOnlyPreferredVariant,'baseline');
+ assert.equal(receipt.researchSourceGapVetoReason,'NO_MEASURED_GAP_GAIN_AT_LEAST_05MM');
  assert.equal(receipt.consumer3DAuthorized,false);
 });
 const negatives=[
