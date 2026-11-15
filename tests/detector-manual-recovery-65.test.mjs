@@ -5,10 +5,14 @@ const ui=readFileSync('research/multi-garment-capture-01/review-ui.mjs','utf8');
 const browser=readFileSync('scripts/test-multi-garment-capture-01-browser.mjs','utf8');
 const injected=readFileSync('research/detector-recovery-65/failure-worker-fixture.js','utf8');
 test('RECOVERY65 worker startup and post exceptions cannot revoke original verified photo',()=>{
- assert.match(ui,/try\{\s*next\.worker=new Worker\('outfit-worker\.mjs'/);
- assert.match(ui,/next\.worker\.postMessage\(\{id:next\.id,image:inference,multi24:true\}\)/);
+ assert.match(ui,/try\{\s*if\(p88Transport57\)\{/);
+ assert.match(ui,/const p88Transport57=\['127\.0\.0\.1','localhost'\]\.includes\(window\.location\.hostname\)&&/);
+ assert.match(ui,/next\.p88Intake57=await openP88SourceIntake55\(/);
+ assert.match(ui,/next\.worker=new Worker\(p88Transport57\?/);
+ assert.match(ui,/'\.\.\/\.m57-exact-p88-donor\/public\/outfit-worker\.mjs':\s*'outfit-worker\.mjs'\+/);
+ assert.match(ui,/next\.worker\.postMessage\(next\.p88Intake57\?\s*next\.p88Intake57\.workerRequest\(\):\{id:next\.id,image:inference,multi24:true\}\)/);
  assert.match(ui,/catch\(workerError\)\{\s*detectorFallback65\(next,'Local detection could not start\.'/);
- const w=ui.indexOf("next.worker=new Worker('outfit-worker.mjs'");
+ const w=ui.indexOf('next.worker=new Worker(p88Transport57?');
  const nativeException=ui.indexOf('}catch(workerError){',w);
  const proofCatch=ui.indexOf('}catch(error){',nativeException);
  assert.ok(w>0&&nativeException>w&&proofCatch>nativeException,
@@ -28,7 +32,8 @@ test('RECOVERY65 fallback preserves real original photo and existing reviewed re
 test('RECOVERY65 both runtime worker messageerror and onerror fall back safely',()=>{
  assert.match(ui,/next\.worker\.onerror=\(\)=>\{if\(job!==next\|\|submitting\)return;detectorFallback65\(next,'Local detection worker failed\.'/);
  assert.match(ui,/next\.worker\.onmessageerror=\(\)=>detectorFallback65\(next,'Local detection returned an unreadable message\.'/);
- assert.match(ui,/const next=\{id:crypto\.randomUUID\(\),worker:null,pending:\[\],timeout:null,received:0,ignored:0,terminal:false\}/);
+ assert.match(ui,/const next=\{id:crypto\.randomUUID\(\),worker:null,p88Intake57:null,pending:\[\],timeout:null,received:0,ignored:0,terminal:false\}/);
+ assert.match(ui,/running\.p88Intake57\?\.close\(\);\s*running\.worker\?\.terminate\(\)/);
 });
 test('RECOVERY65 stopped/terminal workers are unable to add late crop or progress proposals',()=>{
  assert.match(ui,/if\(job!==next\|\|submitting\|\|!sameOwner\(\)\)return;\s*\/\/ A completion/);

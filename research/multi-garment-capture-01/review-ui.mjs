@@ -8,6 +8,7 @@ import {organizeReview28,reviewTier28} from './review-triage-28.mjs';
 import {detectFlatlayFromImage29} from './flatlay-contrast-29.mjs';
 import {sceneReviewDefaults32,canConfirmScene32} from './scene-class-guard-32.mjs';
 import {intakeProposal58,MAX_TOTAL_REGIONS58} from './detection-intake-58.mjs';
+import {openP88SourceIntake55} from '../master-consolidation-1054/p88-source-key-adapter-55.mjs';
 import {snapshotConfirmations34,saveReceipt34} from './review-save-finality-34.mjs';
 import {shouldAskBeforePhotoSwitch68,DISCARD_PROMPT68} from '../photo-switch-guard-68/source-discard-guard.mjs';
 import {validReplacementFile70,sourcePreflightStillCurrent70} from '../verified-photo-switch-70/source-preflight.mjs';
@@ -60,6 +61,10 @@ export function mountMultiGarmentCapture24({
  if(!active||!getOwner()||!schema?.types)return {active:false};
  const host=$ (doc,'wholeOutfitCapture');
  if(!host)return {active:false};
+ // MAIN57: explicit research-only P88 donor transport, off for default app.
+ // The donor stays in a Git-hash-attested, disposable same-origin CI fixture.
+ const p88Transport57=['127.0.0.1','localhost'].includes(window.location.hostname)&&
+  new URLSearchParams(window.location.search).get('p88Transport57')==='research';
  const style=el('style');style.textContent=`
  .multi24{margin-top:1rem;display:grid;gap:.85rem;min-width:0}
  .multi24 .multi24-source{max-width:100%;max-height:260px;object-fit:contain;border-radius:9px}
@@ -132,7 +137,7 @@ export function mountMultiGarmentCapture24({
  }
  let classification42;
  function cancelClassification42(){classification42?.controller.abort();classification42=null;}
- function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;closeMixedConsent80?.();}
+ function revoke(){cancelClassification42();canceled=true;renderVersion++;selectionEpoch70++;job?.p88Intake57?.close();job?.worker?.terminate();if(job)clearTimeout(job.timeout);job=null;state=null;original.removeAttribute('src');original.hidden=true;grid.replaceChildren();save.disabled=true;add.disabled=true;suggest.disabled=true;stop.disabled=true;cancel.disabled=false;closeMixedConsent80?.();}
  function reset(text){revoke();status.textContent=text||'No unconfirmed photos were saved.';}
  // WORKER-FINALITY-38: a confirmed Save is a one-way review boundary.
  // Terminate the detector and revoke its session identity BEFORE first async
@@ -141,6 +146,7 @@ export function mountMultiGarmentCapture24({
   if(!job)return false;
   const running=job;job=null;
   clearTimeout(running.timeout);
+  running.p88Intake57?.close();
   running.worker?.terminate();
   return true;
  }
@@ -520,12 +526,28 @@ export function mountMultiGarmentCapture24({
    state={owner,proof,decoded,pieces:[]};
    original.src=proof.image;original.hidden=false;redraw();
    if(!currentLoading(committedEpoch,owner))return;
-   const next={id:crypto.randomUUID(),worker:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
+   const next={id:crypto.randomUUID(),worker:null,p88Intake57:null,pending:[],timeout:null,received:0,ignored:0,terminal:false};job=next;
    // Real 300s model timeout. The standalone browser QA fixture can
    // accelerate this timer only in an isolated test page.
    next.timeout=setTimeout(()=>{if(job===next&&!submitting)detectorFallback65(next,'Local segmentation timed out.');},300000);
    try{
-    next.worker=new Worker('outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
+    if(p88Transport57){
+     // Verify original JPEG bytes and owner lease BEFORE starting the P88 worker.
+     // Recheck after asynchronous WebCrypto: source, review and auth may change.
+     next.p88Intake57=await openP88SourceIntake55({
+      proof,ownerId:owner,requestId:next.id,reviewEpoch:committedEpoch,
+      getOwner,getSourceSHA256:()=>state?.proof?.sourceSHA256,
+      getReviewEpoch:()=>renderVersion,getActiveRequestId:()=>job?.id,
+      getDbName:()=>getDb()?.name
+     });
+     if(job!==next||!currentLoading(committedEpoch,owner)){
+      next.p88Intake57.close();return;
+     }
+    }
+    // An explicit scratch-only URL must NEVER replace public/outfit-worker.mjs.
+    next.worker=new Worker(p88Transport57?
+     '../.m57-exact-p88-donor/public/outfit-worker.mjs':
+     'outfit-worker.mjs'+(recognitionAssetVersion?'?v='+recognitionAssetVersion:''),{type:'module'});
     next.worker.onmessage=event=>{
      if(job!==next||submitting||!sameOwner())return;
      // A completion/error message is final: no further piece, progress or
@@ -534,13 +556,18 @@ export function mountMultiGarmentCapture24({
      const data=event.data;if(data?.id!==next.id)return;
      if(data.type==='piece'){
       next.received++;
-      const accepted=intakeProposal58(data.piece,state?.pieces||[],next.received);
+      // P88 has no instanceKey. Only source-verified original + full mask
+      // receipt + active owner/request/epoch can mint its review-only key.
+      const accepted=next.p88Intake57?
+       next.p88Intake57.intake(data,state?.pieces||[]):
+       intakeProposal58(data.piece,state?.pieces||[],next.received);
       if(accepted.accepted)next.pending.push(addDetected(accepted.piece,next));
       else next.ignored++;
      }
      if(data.type==='progress')status.textContent=data.phase==='separating'?'Locating visible garment regions locally…':'Preparing local segmentation model…';
      if(data.type==='done'||data.type==='error'){
       next.terminal=true;
+      next.p88Intake57?.close();
       Promise.all(next.pending).finally(()=>{
        if(job!==next)return;
        const failed=data.type==='error';
@@ -556,7 +583,8 @@ export function mountMultiGarmentCapture24({
     next.worker.onerror=()=>{if(job!==next||submitting)return;detectorFallback65(next,'Local detection worker failed.');};
     next.worker.onmessageerror=()=>detectorFallback65(next,'Local detection returned an unreadable message.');
     // Worker construction and postMessage errors are NOT source proof errors.
-    next.worker.postMessage({id:next.id,image:inference,multi24:true});
+    next.worker.postMessage(next.p88Intake57?
+     next.p88Intake57.workerRequest():{id:next.id,image:inference,multi24:true});
     redraw();
    }catch(workerError){
     detectorFallback65(next,'Local detection could not start.');
@@ -681,5 +709,5 @@ export function mountMultiGarmentCapture24({
  window.addEventListener('closet:session-locked',()=>reset('Authenticated account session ended; unconfirmed photo and crops cleared.'));
  window.addEventListener('pagehide',()=>revoke());
  save.disabled=true;add.disabled=true;suggest.disabled=true;
- return {active:true,startFile,reset,debug:()=>({owner:state?.owner,sourceSHA256:state?.proof?.sourceSHA256,pieces:state?.pieces.map(x=>({id:x.id,instanceKey:x.instanceKey,category:x.category,color:x.color,confirmed:x.confirmed}))||[],working:!!job})};
+ return {active:true,startFile,reset,debug:()=>({owner:state?.owner,sourceSHA256:state?.proof?.sourceSHA256,pieces:state?.pieces.map(x=>({id:x.id,instanceKey:x.instanceKey,category:x.category,color:x.color,confirmed:x.confirmed}))||[],working:!!job,p88Transport57})};
 }
