@@ -8,6 +8,7 @@ import {performance} from 'node:perf_hooks';
 import {AutoModelForSemanticSegmentation, AutoProcessor, RawImage} from '@huggingface/transformers';
 import {clothingLabelMap, clothingMaskGroups} from '../../public/outfit-segmentation.mjs';
 import {clothingReviewInstances840} from '../../public/outfit-instance-review-840.mjs';
+import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES} from './exposed-threshold-probes-88.mjs';
 
 const ROOT = new URL('../../', import.meta.url);
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -62,7 +63,8 @@ function footwearOnly68(map) {
   }
   return output;
 }
-const reports = Object.fromEntries(['baseline', 'shoeOnly68', 'p88Safe', 'p88'].map(mode => [mode, {
+const allModes=['baseline','shoeOnly68','p88Safe','p88',...Object.keys(P88_EXPOSED_PIXEL_PROBES)];
+const reports = Object.fromEntries(allModes.map(mode => [mode, {
   schema: 'closet-current-p88-real-public-human-mask-inference/v1',
   method: mode,
   scope: 'previously exposed P68 validation only; unknown pretraining exposure',
@@ -102,6 +104,18 @@ try {
     const start = performance.now();
     const inputs = await processor(image), output = await model(inputs);
     const map = clothingLabelMap(output.logits.data, output.logits.dims);
+    // For causal comparability, the two experimental variants have exactly
+    // the SAME source JPEG, logits and original person-detection gate. Only
+    // their pixel confidence/class-margin selection differs. Crucially, the
+    // native product worker and threshold are NOT modified.
+    const control=exposedPixelGateMap88(output.logits.data,output.logits.dims,
+      {pixelConfidence:0.70,pixelMargin:0.15});
+    if(control.labels.length!==map.labels.length||
+      control.labels.some((value,i)=>value!==map.labels[i]||control.confidence[i]!==map.confidence[i])||
+      control.personDetected!==map.personDetected)
+      throw Error('P88_RESEARCH_PIXEL_GATE_NATIVE_PARITY_FAILED');
+    const probeMaps=Object.fromEntries(Object.entries(P88_EXPOSED_PIXEL_PROBES).map(
+      ([name,params])=>[name,exposedPixelGateMap88(output.logits.data,output.logits.dims,params)]));
     const inferenceMs = performance.now() - start;
     output.logits.dispose?.();
     for (const obj of Object.values(inputs)) obj?.dispose?.();
@@ -111,9 +125,11 @@ try {
       baseline: map.personDetected ? clothingMaskGroups(map) : [],
       shoeOnly68: map.personDetected ? footwearOnly68(map) : [],
       p88Safe: map.personDetected ? clothingReviewInstances840(map) : [],
-      p88: map.personDetected ? clothingReviewInstances840(map,{splitNonFootwear:true}) : []
+      p88: map.personDetected ? clothingReviewInstances840(map,{splitNonFootwear:true}) : [],
+      researchLoose65: map.personDetected ? clothingMaskGroups(probeMaps.researchLoose65) : [],
+      researchLoose55: map.personDetected ? clothingMaskGroups(probeMaps.researchLoose55) : []
     };
-    for (const mode of ['baseline', 'shoeOnly68', 'p88Safe', 'p88']) {
+    for (const mode of allModes) {
       const groups = groupsByMode[mode], regions = [];
       for (const [ordinal, group] of groups.entries()) {
         if (!(group.selected instanceof Uint8Array) ||
@@ -153,7 +169,10 @@ try {
       baselineMasks: groupsByMode.baseline.length,
       shoeOnlyMasks: groupsByMode.shoeOnly68.length,
       conservativeMasks: groupsByMode.p88Safe.length,
-      candidateMasks: groupsByMode.p88.length, inferenceMs: Math.round(inferenceMs)
+      candidateMasks: groupsByMode.p88.length,
+      loose65ResearchMasks:groupsByMode.researchLoose65.length,
+      loose55ResearchMasks:groupsByMode.researchLoose55.length,
+      inferenceMs: Math.round(inferenceMs)
     }));
     globalThis.gc?.();
   }
@@ -164,7 +183,14 @@ try {
   await writeFile(INDEX, JSON.stringify({
     schema: 'closet-current-p88-exposed-real-photo-comparison/v1',
     baseline: reports.baseline, shoeOnly68: reports.shoeOnly68,
-    p88Safe: reports.p88Safe, p88: reports.p88
+    p88Safe: reports.p88Safe, p88: reports.p88,
+    researchLoose65: reports.researchLoose65,
+    researchLoose55: reports.researchLoose55,
+    pixelGateResearchOnly:true,
+    pixelGatePreservesOriginalPersonDetector:true,
+    pixelGateNativeControlParityVerified:true,
+    noProductionThresholdChange:true,
+    newSealedBlindAcceptance:false
   }, null, 2) + '\n');
   console.log('P88_REAL_VALIDATION_PREDICTIONS', JSON.stringify({
     rows: 16, humanInstances: 53, originalSha256Verified: true,
