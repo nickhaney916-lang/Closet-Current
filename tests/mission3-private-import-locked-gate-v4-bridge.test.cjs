@@ -143,14 +143,30 @@ function legacyFixture(){
  f.ctx.categories=['Tops','Uncategorized'];
  f.ctx.items=[{id:'existing-shoe',category:'Shoes'}];
  f.ctx.normalizeClothing=x=>x;
- f.ctx.writeAll=async rows=>{
-  f.counts.legacyWrites=(f.counts.legacyWrites||0)+1;
-  f.ctx.items.push(...rows);
- };
- f.ctx.readAllFrom=async()=>f.ctx.items;
- f.ctx.importBoardBackup=async()=>{
-  f.counts.boardWrites=(f.counts.boardWrites||0)+1;
- };
+ // VM executes the real default app import handler; the real atomic module
+ // is exercised separately against native IndexedDB in the built-PWA test.
+ // A constrained module double here observes the transaction boundary.
+ f.ctx.writes=Promise.resolve();
+ f.ctx.cleanOutfitBoard=(x)=>x;
+ f.ctx.importBoardBackup=async()=>{throw Error('unsafe legacy separate board write')};
+ f.ctx.mission3AtomicImporter=async()=>({
+  prepareLegacyAtomicM3:async({data,assertLease})=>{
+   assertLease();
+   return {incoming:data.items,board:data.outfitBoard||null,
+    looks:data.looks||null,
+    counts:{garments:data.items.length,looks:data.looks?.length||0,
+     savedOutfits:data.outfitBoard?.saved?.length||0}};
+  },
+  commitLegacyAtomicM3:async({prepared,assertLease,confirmed})=>{
+   assertLease();assert.equal(confirmed,true);
+   f.counts.legacyWrites=(f.counts.legacyWrites||0)+1;
+   f.ctx.items.push(...prepared.incoming);
+   if(prepared.board)f.counts.boardWrites=(f.counts.boardWrites||0)+1;
+   return {committed:true,atomic:true};
+  }
+ });
+ f.ctx.mission3ReloadOwnerCloudView=async()=>{};
+ f.ctx.window.closetCloud={changed(){f.counts.cloudChanged=(f.counts.cloudChanged||0)+1}};
  f.ctx.render=()=>{};
  f.ctx.boardHasUnsavedDraft=()=>false;
  return f;
@@ -191,7 +207,7 @@ test('default legacy import still allows a valid saved outfit referring to a new
   saved:[{name:'My saved outfit',slots:{top:'new-shirt',shoes:'existing-shoe'}}]}));
  assert.equal(f.counts.legacyWrites,1);
  assert.equal(f.counts.boardWrites,1);
- assert.ok(f.events.some(x=>x.includes('Backup imported.')));
+ assert.ok(f.events.some(x=>x.includes('imported atomically.')));
 });
 
 function legacyRowsFile(rows,board={current:{},saved:[]}){
@@ -331,7 +347,7 @@ test('legacy import accepts nested source owner metadata matching its exact sign
   originalPhoto:{metadata:{capture:{ownerId:'owner-a'}}}
  }]));
  assert.equal(f.counts.legacyWrites,1);
- assert.ok(f.events.some(x=>x.includes('Backup imported.')));
+ assert.ok(f.events.some(x=>x.includes('imported atomically.')));
 });
 test('legacy import rejects excessively nested metadata before any private storage mutation',async()=>{
  const f=legacyFixture();
