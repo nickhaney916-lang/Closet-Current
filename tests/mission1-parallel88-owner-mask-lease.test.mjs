@@ -1304,10 +1304,13 @@ test('P88 queued owner decision refuses modified original JPEG while preflight w
 
 
 test('P88 ordinary review save holds exact owner, image and IDB after cloud preflight',async()=>{
+ const saveBegin=appSource.indexOf('function savePiece(');
+ const saveEnd=appSource.indexOf('function node(',saveBegin);
  const begin=appSource.indexOf('function reviewedSaveLease88(');
- const end=appSource.indexOf('function node(',begin);
- assert.ok(begin>0&&end>begin,'native reviewed save source is present');
- const native=appSource.slice(begin,end);
+ const end=appSource.indexOf('function empty(',begin);
+ assert.ok(saveBegin>=0&&saveEnd>saveBegin&&begin>saveEnd&&end>begin,
+  'native reviewed save source is present');
+ const native=appSource.slice(saveBegin,saveEnd)+appSource.slice(begin,end);
  const setup=()=>{
   let releaseGate,writeCount=0;
   const gate=new Promise(resolve=>{releaseGate=resolve;});
