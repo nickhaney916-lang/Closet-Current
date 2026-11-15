@@ -26,10 +26,11 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/parallel89/ research/mission1-parallel88/ research/native-3d-05/ research/main-thread-integration-1054/
           git diff --name-only "$BASE" HEAD | while IFS= read -r p; do
             case "$p" in
-              research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/scene-class-guard-32.mjs|research/multi-garment-capture-01/review-ui.mjs|tests/main54-unresolved-multi-mask-owner-veto.test.mjs|scripts/test-main54-native-unresolved-owner-browser.mjs|research/master-consolidation-1054/MILESTONE54.md|.github/workflows/main1054-m54-unresolved-owner-veto-no-deploy.yml) ;;
+              research/multi-garment-capture-01/atomic-group.mjs|research/multi-garment-capture-01/detection-intake-58.mjs|research/multi-garment-capture-01/scene-class-guard-32.mjs|research/multi-garment-capture-01/review-ui.mjs|tests/main54-unresolved-multi-mask-owner-veto.test.mjs|scripts/test-main54-native-unresolved-owner-browser.mjs|research/master-consolidation-1054/MILESTONE54.md|.github/workflows/main1054-m54-unresolved-owner-veto-no-deploy.yml) ;;
               *) echo "M54 blocked unexpected modified path $p"; exit 1;;
             esac
           done
+          node --check research/multi-garment-capture-01/detection-intake-58.mjs
           node --check research/multi-garment-capture-01/atomic-group.mjs
           node --check research/multi-garment-capture-01/scene-class-guard-32.mjs
           node --check research/multi-garment-capture-01/review-ui.mjs
