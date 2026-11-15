@@ -190,7 +190,7 @@ jobs:
       - name: Install pinned SegFormer native inference and human COCO IoU dependencies
         run: |
           set -euo pipefail
-          npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 sharp@0.34.3 onnxruntime-node@1.22.0
+          ONNXRUNTIME_NODE_INSTALL=skip npm install --no-save --no-package-lock --no-audit --no-fund @huggingface/transformers@3.8.1 sharp@0.34.3 onnxruntime-node@1.22.0
           python -m pip install --disable-pip-version-check numpy==2.2.6 pycocotools==2.0.10
       - name: Actual fp32 SegFormer on original validation JPEGs — no owner save
         shell: bash
