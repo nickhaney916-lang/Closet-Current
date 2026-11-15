@@ -26,6 +26,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           BASE=8eed18265db2191afdb553147330e2db7e412750
           P88=cc4554ef0104506a72bf0a28423fee52b6e4fff2
           git merge-base --is-ancestor "$BASE" HEAD
