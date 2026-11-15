@@ -14,7 +14,7 @@ test('P90 donor installer refuses another source HEAD before any write',()=>{
 });
 test('P90 installer limits writes to disposable panel, showroom, source loader and exact controller only',()=>{
  const writes=[...source.matchAll(/writeFile\((\w+),s\)/g)].map(x=>x[1]);
- assert.deepEqual(writes,['panel','showroom','sourceViewer','sourceOutfitController']);
+ assert.deepEqual(writes,['panel','showroom','sourceViewer','sourceOutfitController','posedContact90']);
  assert.match(source,/assert.equal\(s.split\(a\).length,2/);
 });
 test('P90 context-loss listener is captured and removed on bridge disposal',()=>{
@@ -93,11 +93,11 @@ test('P90 M9 profiles exact 20 genuine-shirt construction stages with no dropped
  assert.match(bridge,/revokeChangedSource89\(\)/);
 });
 
-test('P90 M9 paired baselines reset exact fourth original controller for each source variant',()=>{
+test('P90 pinned donor restores all five sources before every variant and final reset',()=>{
  const benchmark=readFileSync('scripts/benchmark-parallel90-startup.mjs','utf8');
- const command="run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs','research/dress-mobile-01/dress-outfit-controller.mjs']);";
+ const command="run('git',['-C',donor,'restore','--','research/outfit-3d-01/research-panel.mjs','research/dress-mobile-01/dress-mobile-showroom.mjs','research/outfit-3d-01/source-true-viewer.mjs','research/dress-mobile-01/dress-outfit-controller.mjs','research/three-d-42/posed-contact.mjs']);";
  assert.equal(benchmark.split(command).length-1,2,
-  'every paired variant and final rebuild must start from pristine PR541 original controller');
+  'each paired variant and final rebuild must restore all five pinned PR541 originals');
  assert.ok(benchmark.includes("for(const variant of ['baseline','candidate','restored'])"));
  assert.match(benchmark,/P90_COMPARE_ONLY/);
 });
@@ -113,4 +113,20 @@ test('P90 M10 attributes previously untimed original rig/pose/contact/release wo
  assert.ok(source.includes("contact?.dispose();Object.values(parts).forEach(g=>g.dispose())"));
  assert.ok(source.includes("setResearchPose(root,pose)"));
  assert.ok(source.includes("shirtBuildStages90=Object.freeze({...shirtClock90})"));
+});
+
+test('P90 M11 reuses only authentic original body BVH inside candidate pose-contact fit',()=>{
+ assert.match(source,/if\(startupVariant90==='candidate'\)\{/);
+ assert.match(source,/const posedContact90=donor\+'\/research\/three-d-42\/posed-contact\.mjs'/);
+ assert.ok(source.includes("bodyTree90||new MeshBVH(b)"));
+ assert.ok(source.includes("bodyTree90=new MeshBVH(body.g)"));
+ assert.ok(source.includes("triangleContacts(current.g,body.g,{collect:true,bodyTree90})"));
+ assert.ok(source.includes("after=triangleContacts(current.g,body.g,{collect:true,bodyTree90})"));
+ assert.match(source,/await writeFile\(posedContact90,s\)/);
+ assert.ok(source.includes("const ba=new MeshBVH(a),bb=bodyTree90||new MeshBVH(b)"),
+  'original garment BVH rebuilt per pass; body BVH reused only from unchanged pose');
+ assert.ok(source.includes("for(let pass=0;pass<12;pass++)"),
+  '12 original collision passes are NOT lowered');
+ assert.ok(source.includes("if(!c.count)"),
+  'real collision termination is NOT bypassed');
 });
