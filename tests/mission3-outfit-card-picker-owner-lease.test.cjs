@@ -14,6 +14,7 @@ function exact(a,b){
 const leaseSource=exact('function beginOwnerBoardUiLease(){','function beginNativeBoardMountLease(){');
 const savedSource=exact('function renderSavedOutfitBoards(){','async function importBoardBackup(');
 const pickerSource=exact('function boardPhotoRequiresUnitReview(item){','function renderOutfitBoard(){');
+const suggestionsSource=exact('function renderBoardSuggestions(){','function renderSavedOutfitBoards(){');
 const ownerModes=[
  ['different account',f=>f.swap()],
  ['same-ID new login',f=>f.relogin()],
@@ -56,6 +57,8 @@ function fixture(){
    return el;
   },
   slotAllows(){return true},
+  closetGapOptions(_target,_board,wardrobe){return wardrobe},
+  wardrobeGapIdeas(){return []},
   cleanOutfitBoard(value){return JSON.parse(JSON.stringify(value))},
   syncBoardInputs(){calls.push('sync')},
   renderOutfitBoard(){calls.push('render')},
@@ -65,7 +68,7 @@ function fixture(){
   nativeLossless04Edit(){throw Error('Should not use native research path')}
  };
  vm.createContext(ctx);
- vm.runInContext(leaseSource+pickerSource+savedSource,ctx,{timeout:1000});
+ vm.runInContext(leaseSource+pickerSource+suggestionsSource+savedSource,ctx,{timeout:1000});
  return {ctx,calls,dom,original,item,auth,element,
   makeSaved(){ctx.renderSavedOutfitBoards();return dom.savedBoards.children[0]},
   makePicker(){ctx.openBoardPicker('top');return dom.boardPickerItems.children.find(x=>x.tag==='button')},
@@ -85,6 +88,44 @@ test('real default saved outfit card selects and saves only while signed owner i
  const f=fixture(),button=f.makeSaved();button.onclick();
  assert.equal(f.ctx.currentBoard.name,'OWNER-A-PRIVATE-SAVED');
  assert.deepEqual(f.calls.slice(-3),['sync','render','save']);
+});
+test('normal owned alternative warns about unverified source before selection',()=>{
+ const f=fixture();
+ f.element('boardTarget').value='top';
+ f.ctx.renderBoardSuggestions();
+ const button=f.element('boardOwnedOptions').children.find(x=>x.className==='board-owned-pick');
+ assert.ok(button,'normal owned alternative not rendered');
+ assert.equal(button.classList.contains('source-unverified'),true);
+ assert.match(button.children.find(x=>x.tag==='small'&&
+  /outline unverified/.test(x.label||''))?.label||'',
+  /Photo reference only.*garment outline unverified/i);
+ assert.match(button.getAttribute('aria-label')||'',
+  /individual garment outline unverified.*2D outfit/i);
+ f.calls.length=0;button.onclick();
+ assert.deepEqual(f.calls,['select:top:owner-a-garment']);
+});
+test('stale owned alternative cannot select former owner JPEG after session switch',()=>{
+ const f=fixture();
+ f.element('boardTarget').value='top';
+ f.ctx.renderBoardSuggestions();
+ const button=f.element('boardOwnedOptions').children.find(x=>x.className==='board-owned-pick');
+ f.swap();f.calls.length=0;button.onclick();
+ assert.deepEqual(f.calls,[]);
+});
+test('positive model booleans cannot hide an unverified Mission 1 owner review',()=>{
+ const f=fixture();
+ Object.assign(f.item,{
+  singleGarmentVerified:true,independentPhysicalItemVerified:true,
+  threeDReady:true,photoOnly:false,sourceHashVerified:true,
+  segmentHint:{clipped:false,verified:true,rawMaskPixelsIndependentlyVerified:true},
+  ownerSourceReview88:{schema:'p88-owner-source-review/v1',ownerId:'owner-a',
+   independentPhysicalItemVerified:false,threeDReady:false}
+ });
+ assert.equal(f.ctx.boardPhotoRequiresUnitReview(f.item),true,
+  'owner source receipt cannot be promoted by optimistic model flags');
+ const button=f.makePicker();
+ assert.equal(button.classList.contains('source-unverified'),true);
+ assert.match(button.getAttribute('aria-label')||'',/garment outline unverified/i);
 });
 test('real default photo picker allows originating owner to select source',()=>{
  const f=fixture(),button=f.makePicker();f.calls.length=0;
