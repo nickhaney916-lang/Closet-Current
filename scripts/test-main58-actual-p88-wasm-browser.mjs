@@ -345,6 +345,27 @@ try{
  await page.evaluate(value=>{currentBoard.occasion=value;},previousOccasion);
  const galleryAgain=await page.evaluate(()=>window.m58M59Gallery.refresh());
  assert.equal(galleryAgain.photoCount,1,'M59 failed to re-admit same reviewed original');
+ // BOARD04 photo-only slot selection remains an unsaved private draft until
+ // the signed owner explicitly clicks native Save outfit. A v4 export must
+ // NOT claim it contains that unsaved selection. Save via the real app button
+ // and confirm the owner-bound saved outfit before any backup download.
+ stage='persist-native-owner-outfit-before-v4-export';
+ await page.locator('#saveBoard').click();
+ await page.waitForFunction(id=>{
+  const board=window.nativeLossless04Bridge;
+  if(!board?.status()?.active||board.status().dirty||
+     board.status().savedCount!==1)return false;
+  return board.readOnlySnapshot().saved.some(outfit=>outfit.slots?.top===id);
+ },handoff.savedItemId,{timeout:30000});
+ const actualSavedOutfit=await page.evaluate(()=>{
+  const saved=window.nativeLossless04Bridge.readOnlySnapshot().saved;
+  return {count:saved.length,top:saved[0]?.slots?.top,
+   originalPhotosRetained:window.nativeLossless04Bridge.status().active,
+   threeDAuthorized:false};
+ });
+ assert.equal(actualSavedOutfit.count,1);
+ assert.equal(actualSavedOutfit.top,handoff.savedItemId);
+ assert.equal(actualSavedOutfit.originalPhotosRetained,true);
 
  // M61 — ONE ACTUAL native app session, continuing from a genuine P88 WASM
  // inference, owner-manual crop/explicit private save, native Outfit Builder
@@ -381,8 +402,9 @@ try{
  assert.equal(savedPhoto.sourceCropReviewed,true);
  assert.equal(savedPhoto.singleGarmentVerified,false);
  assert.equal(savedPhoto.threeDReady,false);
- assert.equal(v4.state?.['outfit-board']?.current?.slots?.top,handoff.savedItemId,
-  'native builder selection was not included in same-session v4 backup');
+ assert.ok(v4.state?.['outfit-board']?.saved?.some(outfit=>
+  outfit.slots?.top===handoff.savedItemId),
+  'real saved owner outfit was not included in same-session v4 backup');
  const submitBackup=async(data,approved)=>page.evaluate(async({data,approved})=>{
   window.confirm=()=>approved;
   const json=JSON.stringify(data);
@@ -404,7 +426,9 @@ try{
      photoOnly:item.photoOnly,sourceCropReviewed:item.sourceCropReviewed,
      singleGarmentVerified:item.singleGarmentVerified,threeDReady:item.threeDReady
     })),
-    top:b.result?.current?.slots?.top||null,cloudDirty:c.result?.dirty===true
+    top:b.result?.saved?.[0]?.slots?.top||null,
+    savedOutfitCount:b.result?.saved?.length||0,
+    cloudDirty:c.result?.dirty===true
    });
    tx.onerror=tx.onabort=()=>reject(tx.error);
   });
@@ -458,6 +482,7 @@ try{
  assert.equal(after.items[0].singleGarmentVerified,false);
  assert.equal(after.items[0].threeDReady,false);
  assert.equal(after.top,handoff.savedItemId);
+ assert.equal(after.savedOutfitCount,1);
  assert.equal(after.cloudDirty,true);
  const restoredGallery=await page.evaluate(async()=>{
   const gallery=window.m58M59Gallery;
@@ -478,6 +503,7 @@ try{
  console.log('M61_GENUINE_P88_TO_PRIVATE_OWNER_V4_RESTORE_SAME_SESSION_PASS',
   JSON.stringify({engine,modelExecuted:true,manualSyntheticOwnerConfirmed:true,
    ownerPrivateSaved:1,exactOriginalSHA256:sha,realNativeOutfit:true,
+   savedOutfitOwnerAction:true,restoredSavedOutfitCount:1,
    actualV4BrowserDownload:true,tamperDenied:true,otherOwnerDenied:true,
    cancelledRestoreUnchanged:true,atomicRestore:true,
    restoredOriginalPhotoGallery:true,physicalGarmentUnitsVerified:false,
