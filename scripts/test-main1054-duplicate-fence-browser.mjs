@@ -43,6 +43,30 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
    await save(unique,[],{expectedDraftRow:unique});
    output.uniqueSaved=!!(await get('items','different-photo'));
    output.uniqueDraftRemoved=(await get('state','draft')).batch.length===0;
+   // Two independent IndexedDB connections simulate separate open tabs,
+   // each with a stale in-memory wardrobe snapshot and the same pending JPEG.
+   // Both call the actual savePiece implementation concurrently.
+   const photoRace='data:image/jpeg;base64,cmFjZQ==';
+   const race=id=>({...row(id),image:photoRace,originalPhoto:{image:photoRace,sha256:'fixture-sha'}});
+   const raceA=race('race-tab-a'),raceB=race('race-tab-b');
+   await put('state',{id:'draft',batch:[raceA,raceB]});
+   const otherOpen=indexedDB.open('closet-current-user-'+owner);
+   const otherDB=await new Promise((resolve,reject)=>{otherOpen.onsuccess=()=>resolve(otherOpen.result);otherOpen.onerror=()=>reject(otherOpen.error);});
+   const saveOther=new Function('db','captureOperationEpoch','queued','captureProofVerifyBeforeSave','normalizeClothing','nativeIndex07Refresh','commitOwnerCorrection10',code+';return savePiece;')(
+    otherDB,1,fn=>Promise.resolve().then(fn),async()=>{},v=>v,async()=>{},async()=>{throw Error('unexpected research mode');});
+   // Both closures have an independent database connection and see the same
+   // initial draft. The IDB readwrite lock serializes their actual commits.
+   const raceResults=await Promise.allSettled([
+    save(raceA,[],{expectedDraftRow:raceA}),
+    saveOther(raceB,[],{expectedDraftRow:raceB})
+   ]);
+   output.raceFulfilled=raceResults.filter(x=>x.status==='fulfilled').length;
+   output.raceRejected=raceResults.filter(x=>x.status==='rejected').length;
+   output.raceSaved=await new Promise((resolve,reject)=>{const q=db.transaction('items').objectStore('items').getAll();q.onsuccess=()=>resolve(q.result.filter(x=>x.image===photoRace).length);q.onerror=()=>reject(q.error);});
+   const raceDraft=(await get('state','draft')).batch;
+   output.raceRejectedDraftRetained=raceDraft.length===1&&
+    raceDraft.some(x=>x.id===(raceResults[0].status==='rejected'?raceA.id:raceB.id));
+   otherDB.close();
    db.close();return output;
   },implementation);
   assert.match(result.duplicate,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/,name);
@@ -50,6 +74,10 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   assert.equal(result.savedCount,1,name+' duplicate does not insert');
   assert.equal(result.uniqueSaved,true,name+' unique saves');
   assert.equal(result.uniqueDraftRemoved,true,name+' unique removes draft');
+  assert.equal(result.raceFulfilled,1,name+' one competing connection wins');
+  assert.equal(result.raceRejected,1,name+' competing duplicate rejected');
+  assert.equal(result.raceSaved,1,name+' exactly one racing JPEG saved');
+  assert.equal(result.raceRejectedDraftRetained,true,name+' losing draft retained');
   console.log(name+' real IndexedDB transaction PASS',JSON.stringify(result));
  }finally{await browser.close();}
 }
