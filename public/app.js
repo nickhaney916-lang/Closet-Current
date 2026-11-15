@@ -40,7 +40,52 @@ function writeAll(values){return queued(()=>new Promise((resolve,reject)=>{const
 function removeItem(id){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('items','readwrite');tx.objectStore('items').delete(id);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}));}
 function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction('state','readwrite');tx.objectStore('state').put({id:'draft',batch:snapshot});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);})).catch(()=>message('Your unfinished scan could not be backed up. Keep this page open and save or export your pieces.'));}
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
-function savePiece(value,nextBatch){return queued(()=>new Promise((resolve,reject)=>{const tx=db.transaction(['items','state'],'readwrite');tx.objectStore('items').put(value);tx.objectStore('state').put({id:'draft',batch:structuredClone(nextBatch)});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);}));}
+// P88: ordinary one-photo review must not save into a replacement account
+// while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
+function reviewedSaveLease88(item){
+ const user=window.closetAuth?.user;
+ return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
+  image:item?.image,original:item?.originalPhoto?.image,
+  recognition:item?.recognitionPhoto?.image,sourceId:item?.outfitSourceId,
+  maskRevision:JSON.stringify(item?.segmentHint??null),
+  cropRevision:JSON.stringify(item?.cropBounds??null)};
+}
+function reviewedSaveLeaseLive88(lease){
+ try{
+  const user=window.closetAuth?.user,item=lease?.item;
+  return Boolean(user&&lease?.user===user&&lease.ownerId===user.id&&
+   lease.ownerDb&&db===lease.ownerDb&&
+   db.name==='closet-current-user-'+lease.ownerId&&
+   (lease.wasDraft?batch.includes(item):items.includes(item))&&
+   item.image===lease.image&&item.originalPhoto?.image===lease.original&&
+   item.recognitionPhoto?.image===lease.recognition&&
+   item.outfitSourceId===lease.sourceId&&
+   JSON.stringify(item.segmentHint??null)===lease.maskRevision&&
+   JSON.stringify(item.cropBounds??null)===lease.cropRevision);
+ }catch{return false;}
+}
+function savePiece(value,nextBatch,lease){
+ if(!reviewedSaveLeaseLive88(lease))
+  return Promise.reject(Error('P88_STALE_REVIEWED_OWNER'));
+ return queued(()=>{
+  if(!reviewedSaveLeaseLive88(lease)||value.id!==lease.item.id||
+   value.image!==lease.image||value.originalPhoto?.image!==lease.original||
+   value.recognitionPhoto?.image!==lease.recognition||
+   value.outfitSourceId!==lease.sourceId||
+   JSON.stringify(value.segmentHint??null)!==lease.maskRevision||
+   JSON.stringify(value.cropBounds??null)!==lease.cropRevision)
+   throw Error('P88_REVOKED_REVIEWED_SAVE');
+  // Compute the surviving drafts after cloud preflight. An older save must
+  // never drop an unrelated garment captured while that await was pending.
+  const liveRemaining=lease.wasDraft?batch.filter(x=>x!==lease.item):batch;
+  return new Promise((resolve,reject)=>{
+   const tx=lease.ownerDb.transaction(['items','state'],'readwrite');
+   tx.objectStore('items').put(value);
+   tx.objectStore('state').put({id:'draft',batch:structuredClone(liveRemaining)});
+   tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);
+  });
+ });
+}
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
@@ -328,6 +373,7 @@ function adjustPhoto(item){
  const reviewedKeys72=new Set(['category','itemType']);
  const form=node('form'),draft=structuredClone(item);
  const sourceLease88=sourceSaveLease88(item);
+ const reviewLease88=reviewedSaveLease88(item);
  const reviewedCore=()=>{
   const color=String(draft.color||'').trim();
   return categories.includes(draft.category)&&draft.category!=='Uncategorized'&&
@@ -515,14 +561,16 @@ function adjustPhoto(item){
   if(dual82Enabled&&((window.closetAuth?.user!==dual82Owner||window.closetAuth?.user?.id!==dual82OwnerId)||!dialog.open||!batch.some(x=>x===item)||dual82Panel&&!dual82Panel.valid()))throw Error('P82_STALE_SAVE_SCOPE');
   // P88: even a fully checked form cannot bypass a replaced same-ID owner,
   // mutated original JPEG or swapped source-bound mask during asynchronous work.
+  if(!reviewedSaveLeaseLive88(reviewLease88))throw Error('P88_REVIEW_OWNER_OR_PHOTO_CHANGED');
   if(sourceLease88&&!(await sourceSavePhotoVerified88(sourceLease88)))
    throw Error('P88_ORIGINAL_JPEG_OR_OWNER_CHANGED');
   if(sourceLease88)
    await saveSourceBoundPiece88(reviewed72,batch.filter(x=>x.id!==item.id),sourceLease88);
-  else await savePiece(reviewed72,batch.filter(x=>x.id!==item.id));
+  else await savePiece(reviewed72,batch.filter(x=>x.id!==item.id),reviewLease88);
   // If the authenticated session changed while IDB committed, do not mutate
   // the newly active owner's in-memory wardrobe after the old transaction.
-  if(sourceLease88&&!sourceSaveLeaseLive88(sourceLease88)){dialog.close();return;}
+  if(!reviewedSaveLeaseLive88(reviewLease88)||
+     (sourceLease88&&!sourceSaveLeaseLive88(sourceLease88))){dialog.close();return;}
   const existing=items.find(x=>x.id===item.id);if(existing)Object.assign(existing,reviewed72);else items.push(reviewed72);
   batch=batch.filter(x=>x.id!==item.id);
   // The source-bound transaction already atomically wrote items + draft.
