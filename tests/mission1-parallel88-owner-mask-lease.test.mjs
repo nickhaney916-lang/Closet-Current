@@ -521,6 +521,68 @@ test('P88 default zero-region scan warns that a missing model detection is not a
  assert.equal(h.c.batch.length,0);
 });
 
+
+test('P88 default nonexperimental outfit worker rejects a replaced owner ID before admitting any garment',()=>{
+ const h=captureHarness({ownerId:'owner-A',href:'https://example.test/closet'});
+ assert.equal(h.c.worker.request.instanceReview840,undefined);
+ const original=h.c.worker;
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,UElFQ0U=',
+  hint:{categories:['Tops'],types:[],clipped:false},
+  instanceMethod:'native_semantic_group'
+ }});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+ assert.equal(original.closed,true);
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'');
+ assert.match(h.node('outfitSplitStatus').textContent,/Owner session changed/);
+});
+test('P88 default worker refuses different signed reference with same textual owner ID',()=>{
+ const h=captureHarness({ownerId:'owner-A',href:'https://example.test/closet'}),original=h.c.worker;
+ h.c.window.closetAuth.user={id:'owner-A'};
+ h.emit({type:'piece',piece:{
+  image:'data:image/jpeg;base64,UElFQ0U=',
+  hint:{categories:['Tops'],types:[],clipped:false}
+ }});
+ assert.equal(h.c.batch.length,0);
+ assert.equal(original.closed,true);
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'');
+});
+test('P88 default upload decode does not transfer old-owner JPEG across a late sign-in',async()=>{
+ let unblock;
+ const pending=new Promise(resolve=>{unblock=resolve;});
+ const h=captureHarness({autoStart:false,href:'https://example.test/closet',
+  decode:()=>pending});
+ const upload=h.c.readOutfitPhoto({size:420,type:'image/jpeg',name:'upload.jpg'});
+ h.c.window={closetAuth:{user:{id:'owner-B'}}};
+ unblock('data:image/jpeg;base64,T0xELU9XTkVSLVBIT1RP');
+ await upload;
+ assert.equal(h.c.worker,undefined);
+ assert.equal(h.c.batch.length,0);
+ assert.match(h.node('outfitSplitStatus').textContent,/session changed while opening this photo/);
+});
+test('P88 default signed owner retry may not replay previous same-ID session photo',()=>{
+ const h=captureHarness({ownerId:'owner-A',href:'https://example.test/closet'});
+ const first=h.c.worker;
+ h.emit({type:'error'});
+ h.c.window.closetAuth.user={id:'owner-A'};
+ h.node('outfitRetry').onclick();
+ assert.equal(h.c.worker,first);
+ assert.equal(vm.runInContext('lastOutfitPhoto',h.c),'');
+ assert.match(h.node('outfitSplitStatus').textContent,/previous photo belongs to another signed session/);
+});
+test('P88 default unchanged original owner can retry after worker error without auto saving',()=>{
+ const h=captureHarness({ownerId:'owner-A',href:'https://example.test/closet'});
+ const first=h.c.worker;
+ h.emit({type:'error'});
+ h.node('outfitRetry').onclick();
+ assert.notEqual(h.c.worker,first);
+ assert.equal(h.c.worker.request.image,'data:image/jpeg;base64,ORIGINAL');
+ assert.equal(h.c.worker.request.instanceReview840,undefined);
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.c.items.length,0);
+});
 function unitDecisionHarness88({ownerId='owner-A',sourceId='src-A',apiPromise=null,queueBeforeWrite=null}={}){
  const begin=captureSource.indexOf('function unit70Owner(){');
  const end=captureSource.indexOf('function renderOutfitCapture(){',begin);
