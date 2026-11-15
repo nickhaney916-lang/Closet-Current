@@ -757,3 +757,31 @@ or genuine independent human photo annotation evidence are claimed.
 No merge/deploy/production/staging/hosted Supabase mutation; no previously
 unverified physical unit or 3D eligibility is promoted. Family Alpha #255
 OPEN/HOLD. Planning baseline 65%/35%, pending independent real acceptance.
+
+## 2026-11-15 — delayed camera playback must not reset replacement-owner UI
+
+Continued on existing PR #1175 from immutable `5e4bf95477ae4e3c24eadbdee4d8ec90545acb35`.
+The previous camera lease checked after resetting `session`, the visible photo
+count and preview following `await video.play()`. A delayed old-owner callback
+therefore erased replacement-owner capture UI before rejecting the stale lease.
+Moved those resets after both request and exact signed-owner/database checks.
+No model, crop, save, source identity, garment certification or auth changes.
+
+The new actual-source regression reproduced FAIL (`0 !== 7`) before the fix
+and PASS afterward, retaining B's seven-photo count and visible preview.
+Local verification: 249/249 selected camera/instance/pair/release-policy tests;
+849/849 full Node tests with P79_REQUIRE_DECODER=1; native and no-account builds
+PASS. These are synthetic source/browser-facade and build checks, not a
+recognition-accuracy measurement. Local Playwright browser installation reported
+missing Linux WebKit shared libraries; exact new-head hosted browser CI is
+required and is not grandfathered from the parent.
+
+Release verifier still reports BLOCKED: zero externally signed evidence roles,
+zero independent blind human sources and zero physical device platforms.
+Remaining external acceptance requires authorized dual human ground truth on
+new source-disjoint originals (instances, subtype and color), actual Android
+Chrome and iPhone Safari 23-case evidence, and authorized two-owner hosted
+RLS/backup/restore evidence. Never upload private originals or signer keys to
+GitHub; use existing P75/P79 offline custody and P886/P851 signed summaries.
+This fix cannot supply those measurements or justify an accuracy increase.
+**FAMILY ALPHA HOLD #255 OPEN; DRAFT, NO MERGE, NO DEPLOY.**

@@ -2962,3 +2962,18 @@ test('P88 switched owner Done cannot snap or paint original camera Review under 
  assert.equal(h.photos.length,0);assert.equal(h.views.length,0);
  assert.equal(h.tracks[0].stops,1);
 });
+
+test('P88 stale camera playback cannot erase replacement owner capture count or preview',async()=>{
+ const gate=photoFillGated88(),h=nativeCameraLeaseHarness88({playGate:gate});
+ const task=h.c.startCamera('manual');
+ await photoFillReached88(()=>h.plays===1);
+ h.c.window.closetAuth.user={id:'owner-B'};
+ h.c.db={name:'closet-current-user-owner-B'};
+ h.c.session=7;h.el('sessionCount').textContent='7';
+ h.el('lastCaptureImage').hidden=false;
+ gate.resolve();await task;
+ assert.equal(h.c.session,7);
+ assert.equal(h.el('sessionCount').textContent,'7');
+ assert.equal(h.el('lastCaptureImage').hidden,false);
+ assert.equal(h.photos.length,0);assert.equal(h.views.length,0);
+});

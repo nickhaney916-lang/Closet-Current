@@ -1378,9 +1378,10 @@ async function startCamera(mode){
   }
   stream=acquired;cameraMode=mode;
   video.removeAttribute('src');video.srcObject=stream;video.classList.add('visible');$('placeholder').hidden=true;
-  await video.play();session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
+  await video.play();
   if(request!==cameraRequest)return;
   if(browser&&!cameraOwnerLive88(lease)){stopCamera();return;}
+  session=0;$('sessionCount').textContent='0';$('lastCaptureImage').hidden=true;
   cameraOpening=false;$('cameraChoices').hidden=true;$('cameraActions').hidden=false;$('takePhoto').hidden=mode!=='manual';
   if(mode==='auto'){
    cadence=new CaptureCadence(Number($('interval').value)*1000,Date.now());
