@@ -20,7 +20,8 @@ let text=await readFile(p,'utf8');
 const head="import {auditActualSkinnedOutfitLayers84} from '../parallel84-real-photo-layers/actual-skinned-layers84.mjs';";
 assert.equal(text.split(head).length,2,'actual pinned P84 installed native source required');
 text=text.replace(head,head+"\nimport {auditActualOriginalSourcePoseSurfaceGaps89} from '../parallel89/source-static-gap89.mjs';"+
- "\nimport {gateOriginalPhotoShoulderResearchTrial89} from '../parallel89/gated-source-shoulder89.mjs';");
+ "\nimport {gateOriginalPhotoShoulderResearchTrial89} from '../parallel89/gated-source-shoulder89.mjs';"+
+ "\nimport {auditActualSourceQuarterStepSurfaceGaps89} from '../parallel89/source-quarter-step89.mjs';");
 // P84 original research controller uses one static 10mm-down / 15mm-out
 // shoulder trial. P89 installs ONLY a small URL-whitelisted parameter sweep
 // in the disposable donor. No user-supplied coordinates, clothing uploads,
@@ -86,5 +87,16 @@ const digestGuard=[
  "}"
 ].join('\n');
 text=text.replace(digestAnchor,digestGuard+"\n"+digestAnchor);
+// Separate original 25%- and 75%-pose witnesses run AFTER the source fit,
+// independent of the guard's internal status report and triangle-test claims.
+const quarterHook=[
+ " globalThis.__parallel89QuarterGapAudit=()=>auditActualSourceQuarterStepSurfaceGaps89({",
+ "  root,shirt:built.shirt,pants:built.pants,",
+ "  avatar:globalThis.document?.getElementById('model')?.value,",
+ "  applyPose:researchPose=>setResearchPose(root,researchPose)",
+ " });"
+].join('\n');
+assert.equal(text.split(digestAnchor).length,2,'cannot safely install original quarter pose hook');
+text=text.replace(digestAnchor,quarterHook+"\n"+digestAnchor);
 await writeFile(p,text);
 console.log('P89_SOURCE_UNSIGNED_WORLD_TRIANGLE_GAP_HOOK_ON_DISPOSABLE_PUBLIC_DONOR_ONLY');
