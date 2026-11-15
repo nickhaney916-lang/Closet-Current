@@ -13,12 +13,16 @@ const source=readFileSync(new URL('../public/app.js',import.meta.url),'utf8');
 const start=source.indexOf('function savePiece('),end=source.indexOf('\nfunction node(',start);
 assert.ok(start>=0&&end>start);
 const implementation=source.slice(start,end);
+const autoStart=source.indexOf('async function saveIndexed('),
+ autoEnd=source.indexOf('\nasync function recognizeItem(',autoStart);
+assert.ok(autoStart>=0&&autoEnd>autoStart);
+const autoImplementation=source.slice(autoStart,autoEnd);
 for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
  const browser=await engine.launch({headless:true});
  try{
   const page=await browser.newPage();
   await page.goto(url);
-  const result=await page.evaluate(async code=>{
+  const result=await page.evaluate(async ({code,autoCode})=>{
    const owner='main1054-fixture',photo='data:image/jpeg;base64,ZmFrZQ==';
    const open=indexedDB.open('closet-current-user-'+owner,1);
    open.onupgradeneeded=()=>{open.result.createObjectStore('items',{keyPath:'id'});open.result.createObjectStore('state',{keyPath:'id'});};
@@ -67,6 +71,29 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
    catch(e){output.hashOnly=e.message;}
    output.hashOnlyDraftRetained=(await get('state','draft')).batch.some(x=>x.id===sameSha.id);
    output.hashOnlySavedAbsent=!(await get('items',sameSha.id));
+   // M83: source-equivalent cropped photos must also be refused by
+   // the ACTUAL automatic save writer in a real browser and real IDB.
+   async function autoSaveRecord(record){
+    const autoBatch=[record],autoItems=[];
+    const fn=new Function('db','captureOperationEpoch','queued','normalizeClothing','nativeIndex07Refresh','batch','items',autoCode+';return saveIndexed;')(
+     db,1,cb=>Promise.resolve().then(cb),v=>v,async()=>{},autoBatch,autoItems);
+    return fn(record,null,record);
+   }
+   const autoRepeated={...row('auto-repeated'),name:'Auto repeated source',ownerId:owner,
+    image:'data:image/jpeg;base64,YXV0b0Nyb3A=',sourceSHA256:cropSha,
+    originalPhoto:{image:original,sha256:cropSha}};
+   await put('state',{id:'draft',batch:[autoRepeated]});
+   try{await autoSaveRecord(autoRepeated);output.autoRepeated='unexpected success';}
+   catch(e){output.autoRepeated=e.message;}
+   output.autoRepeatedDraftRetained=(await get('state','draft')).batch.some(x=>x.id===autoRepeated.id);
+   output.autoRepeatedSavedAbsent=!(await get('items',autoRepeated.id));
+   const autoUnique={...row('auto-unique'),name:'Auto unique source',ownerId:owner,
+    image:'data:image/jpeg;base64,dW5pcXVlU3Jj',sourceSHA256:'b'.repeat(64),
+    originalPhoto:{image:'data:image/jpeg;base64,dW5pcXVlU3Jj',sha256:'b'.repeat(64)}};
+   await put('state',{id:'draft',batch:[autoUnique]});
+   output.autoUniqueSaved=await autoSaveRecord(autoUnique);
+   output.autoUniqueDurable=!!(await get('items',autoUnique.id));
+   output.autoUniqueDraftRemoved=(await get('state','draft')).batch.length===0;
    // Two independent IndexedDB connections simulate separate open tabs,
    // each with a stale in-memory wardrobe snapshot and the same pending JPEG.
    // Both call the actual savePiece implementation concurrently.
@@ -92,7 +119,7 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
     raceDraft.some(x=>x.id===(raceResults[0].status==='rejected'?raceA.id:raceB.id));
    otherDB.close();
    db.close();return output;
-  },implementation);
+  },{code:implementation,autoCode:autoImplementation});
   assert.match(result.duplicate,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/,name);
   assert.equal(result.draftRetained,true,name+' duplicate retains draft');
   assert.equal(result.savedCount,1,name+' duplicate does not insert');
@@ -104,6 +131,12 @@ for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]){
   assert.match(result.hashOnly,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/,name);
   assert.equal(result.hashOnlyDraftRetained,true,name+' repeated source SHA retains draft');
   assert.equal(result.hashOnlySavedAbsent,true,name+' repeated source SHA cannot save');
+  assert.match(result.autoRepeated,/CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW/,name);
+  assert.equal(result.autoRepeatedDraftRetained,true,name+' auto duplicate retains original draft');
+  assert.equal(result.autoRepeatedSavedAbsent,true,name+' auto duplicate not saved');
+  assert.equal(result.autoUniqueSaved,true,name+' auto unique source accepted');
+  assert.equal(result.autoUniqueDurable,true,name+' auto unique saved durably');
+  assert.equal(result.autoUniqueDraftRemoved,true,name+' auto unique draft removed');
   assert.equal(result.raceFulfilled,1,name+' one competing connection wins');
   assert.equal(result.raceRejected,1,name+' competing duplicate rejected');
   assert.equal(result.raceSaved,1,name+' exactly one racing JPEG saved');

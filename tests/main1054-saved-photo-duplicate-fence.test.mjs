@@ -54,3 +54,24 @@ test('owner editor clearly refuses cropped original duplication without losing d
  assert.match(source,/This original photo is already linked to a saved closet piece/);
  assert.match(source,/Nothing new was saved and your photo is still in Photo results/);
 });
+
+test('automatic Index04 indexes only after the same transaction checks saved original identity',()=>{
+ const start=source.indexOf('async function saveIndexed(');
+ const end=source.indexOf('\nasync function recognizeItem(',start);
+ assert.ok(start>=0&&end>start);
+ const auto=source.slice(start,end);
+ const tx=auto.indexOf("ownerDB.transaction(['items','state'],'readwrite')");
+ const persisted=auto.indexOf("draftStore.get('draft')");
+ const scan=auto.indexOf('const savedRequest=savedStore.getAll()');
+ const checked=auto.indexOf('savedRequest.onsuccess=()=>');
+ const reject=auto.indexOf('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW',checked);
+ const add=auto.indexOf('savedStore.add(value)',checked);
+ const remove=auto.indexOf("draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)})",checked);
+ assert.ok(tx>=0&&persisted>tx&&scan>persisted&&checked>scan&&reject>checked&&add>reject&&remove>add);
+ const guard=auto.slice(checked,add);
+ assert.match(guard,/row\.image===value\.image/);
+ assert.match(guard,/row\.originalPhoto\.image===value\.originalPhoto\?\.image/);
+ assert.match(guard,/row\.sourceSHA256,row\.originalPhoto\?\.sha256/);
+ assert.match(guard,/CLOSET_AUTO_INDEX_STALE_REVIEW/);
+ assert.match(auto,/savedRequest\.onerror=\(\)=>abort/);
+});

@@ -2401,11 +2401,33 @@ async function saveIndexed(item,index04ApprovedOwner=null,expectedDraftForIndex=
          draft.userAdjusted||draft.requiresOwnershipConfirmation||
          draft.colorSource==='user')
        throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
-      // ADD rather than PUT rejects any same-owner saved-item ID collision.
-      // Remove only this verified draft from the ACTUAL persisted list,
-      // preserving other tabs' original photos and review records.
-      savedStore.add(value);
-      draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+      // M83: automatic indexing must obey the same persisted-source gate
+      // as manually approved saves, not just an item-ID collision check.
+      const savedRequest=savedStore.getAll();
+      savedRequest.onsuccess=()=>{
+       try{
+        auth.assertCurrent?.();
+        if(!current()||!batch.includes(item)||item.userAdjusted||
+           item.requiresOwnershipConfirmation)
+         throw Error('CLOSET_AUTO_INDEX_STALE_REVIEW');
+        if(savedRequest.result.some(row=>{
+         if(row.id===value.id)return false;
+         if(row.image===value.image)return true;
+         if(typeof row.originalPhoto?.image==='string'&&
+            row.originalPhoto.image.length>0&&
+            row.originalPhoto.image===value.originalPhoto?.image)return true;
+         return [row.sourceSHA256,row.originalPhoto?.sha256].some(hash=>
+          typeof hash==='string'&&/^[a-f0-9]{64}$/.test(hash)&&
+          (hash===value.sourceSHA256||hash===value.originalPhoto?.sha256));
+        }))
+         throw Error('CLOSET_IDENTICAL_SAVED_PHOTO_REQUIRES_OWNER_REVIEW');
+        // ADD detects ID collisions; draft deletion is in the SAME owner
+        // transaction and cannot consume another tab's original/photo.
+        savedStore.add(value);
+        draftStore.put({id:'draft',batch:rows.filter(row=>row.id!==value.id)});
+       }catch(error){abort(error);}
+      };
+      savedRequest.onerror=()=>abort(savedRequest.error||Error('Saved source comparison failed'));
      }catch(error){abort(error);}
     };
     persisted.onerror=()=>abort(persisted.error||Error('Draft read failed'));

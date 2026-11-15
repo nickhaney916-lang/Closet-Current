@@ -49,9 +49,9 @@ jobs:
           DONOR=055f7a6569059c3845c0d8dc5960767fc944c6ac
           git cat-file -e "$DONOR^{commit}"
           test "$(git rev-parse "$DONOR:public/app.js")" = ce16b3e219ec9596ffd396264d882ade99590490
-          # M82: strict reviewed extension of the exact saved-photo donor,
+          # M83: strict reviewed extension of the exact saved-photo donor,
           # only source identity comparisons and duplicate UX may differ.
-          test "$(git rev-parse HEAD:public/app.js)" = e1298eb84efd2fb5b59f9ba947fd27f02fbe0d63
+          test "$(git rev-parse HEAD:public/app.js)" = 7c75c7271627098f457027155723b43ba9f8c66b
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
               scripts/test-main58-actual-p88-wasm-browser.mjs|scripts/lib/owner-item-mutation91.mjs|scripts/test-browser-owner-mutation91.mjs|research/master-consolidation-1054/MILESTONE58.md|.github/workflows/main1054-m58-real-p88-worker-no-deploy.yml|public/outfit-board.js|research/master-consolidation-1054/reviewed-photo-only-gallery59.mjs|research/master-consolidation-1054/reviewed-photo-only-handoff59.mjs|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs|tests/mission3-outfit-card-picker-owner-lease.test.cjs|tests/mission3-outfit-suggestion-owner-lease.test.cjs|public/app.js|scripts/test-main1054-duplicate-fence-browser.mjs|tests/main1054-saved-photo-duplicate-fence.test.mjs|tests/mission3-saved-photo-insert-cas.test.cjs) ;;
@@ -323,5 +323,5 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD:public/app.js)" = e1298eb84efd2fb5b59f9ba947fd27f02fbe0d63
+          test "$(git rev-parse HEAD:public/app.js)" = 7c75c7271627098f457027155723b43ba9f8c66b
           git diff --exit-code 8eed18265db2191afdb553147330e2db7e412750 HEAD -- public/ ':(exclude)public/outfit-board.js' ':(exclude)public/app.js' supabase/
