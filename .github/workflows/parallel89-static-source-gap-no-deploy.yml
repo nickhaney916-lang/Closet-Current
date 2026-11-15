@@ -25,12 +25,13 @@ jobs:
           git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
           node --check research/parallel89/unsigned-surface-core89.mjs
           node --check research/parallel89/source-static-gap89.mjs
+          node --check research/parallel89/source-gap-contrast89.mjs
           node --check scripts/install-parallel89-source-gap.mjs
           node --check scripts/test-parallel89-source-gap-browser.mjs
       - name: Install only pinned research math dependencies
         run: npm install --no-save --no-package-lock --no-audit --no-fund three@0.180.0 three-mesh-bvh@0.9.2
       - name: Independent exact BVH closest surface point and adversarial refusal tests
-        run: node --test tests/parallel89-unsigned-surface-core.test.mjs
+        run: node --test tests/parallel89-unsigned-surface-core.test.mjs tests/parallel89-source-gap-contrast.test.mjs
       - name: No shipping or private data modified
         run: git diff --exit-code e8170c9ebce19a189dd03ea2027f87717c821a76 HEAD -- public/ supabase/ benchmark/fixtures/ benchmark/locked-photo-sources.json
   actual-source-163bone-native-gap:
