@@ -223,3 +223,68 @@ test('default legacy restore also refuses foreign-owner tag inside original phot
  assert.equal(f.counts.legacyWrites||0,0);
  assert.ok(f.events.some(x=>x.includes('another account')));
 });
+
+const {webcrypto}=require('node:crypto');
+const originalJPEG='data:image/jpeg;base64,/9j/2Q==';
+const originalHash='32461d5bd1773012acef0ba15636752949bd7c2ce50f9172159d9f56cf0dd9af';
+function signedOriginalBackup({photo=originalJPEG,hash=originalHash,metadataHash=hash}={}){
+ return legacyRowsFile([{
+  id:'exact-original-photo',image:originalJPEG,category:'Tops',
+  sourceHashVerified:true,sourceSHA256:hash,
+  originalPhoto:{image:photo,sha256:metadataHash}
+ }]);
+}
+function signedPhotoFixture(){
+ const f=legacyFixture();
+ f.ctx.crypto=webcrypto;
+ f.ctx.atob=atob;
+ return f;
+}
+test('default legacy import preserves a matching original JPEG and SHA-256 receipt',async()=>{
+ const f=signedPhotoFixture();
+ await f.run(signedOriginalBackup());
+ assert.equal(f.counts.legacyWrites,1);
+ const row=f.ctx.items.find(x=>x.id==='exact-original-photo');
+ assert.equal(row.originalPhoto.image,originalJPEG);
+ assert.equal(row.originalPhoto.sha256,originalHash);
+ assert.equal(row.sourceSHA256,originalHash);
+ assert.equal(row.sourceHashVerified,true);
+});
+test('default legacy import rejects tampered original JPEG bytes before any record write',async()=>{
+ const f=signedPhotoFixture();
+ await f.run(signedOriginalBackup({photo:'data:image/jpeg;base64,/9j/2A=='}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('SHA-256 mismatch')));
+});
+test('default legacy import rejects internally inconsistent original SHA receipts',async()=>{
+ const f=signedPhotoFixture();
+ await f.run(signedOriginalBackup({metadataHash:'f'.repeat(64)}));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('receipt is inconsistent')));
+});
+test('default legacy import rejects a signed source whose original JPEG bytes are absent',async()=>{
+ const f=signedPhotoFixture();
+ const invalid=legacyRowsFile([{
+  id:'missing-source',category:'Tops',image:originalJPEG,
+  sourceHashVerified:true,sourceSHA256:originalHash,
+  originalPhoto:{image:null,sha256:originalHash}
+ }]);
+ await f.run(invalid);
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('original JPEG is unavailable')));
+});
+test('default legacy import revalidates exact login after asynchronous original SHA verification',async()=>{
+ const f=signedPhotoFixture();
+ let resume,entered;
+ const started=new Promise(resolve=>entered=resolve);
+ const digest=await webcrypto.subtle.digest('SHA-256',Uint8Array.from([255,216,255,217]));
+ f.ctx.crypto={subtle:{digest:async()=>{entered();return new Promise(resolve=>{resume=()=>resolve(digest)})}}};
+ const importing=f.run(signedOriginalBackup());
+ await started;
+ f.relogin();
+ resume();
+ await importing;
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.boardWrites||0,0);
+ assert.deepEqual(f.events,[]);
+});
