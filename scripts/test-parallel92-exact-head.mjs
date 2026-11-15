@@ -13,7 +13,7 @@ const git=(...args)=>execFileSync('git',args,{encoding:'utf8'}).trim();
 const head=git('rev-parse','HEAD');
 assert.equal(head,process.env.P92_CHECKOUT_SHA,'refuse unpinned or merge ref');
 assert.equal(git('merge-base',base,head),base,'M4 ancestry changed');
-const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-parallel92-independent-browser.mjs','.github/workflows/parallel92-m4-exact-head-no-deploy.yml','research/parallel92-integration/LEDGER.md']);
+const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-parallel92-independent-browser.mjs','scripts/test-parallel92-m51-webkit-reentry.mjs','.github/workflows/parallel92-m4-exact-head-no-deploy.yml','research/parallel92-integration/LEDGER.md']);
 for(const f of git('diff','--name-only',base,head).split('\n').filter(Boolean))assert.ok(allowed.has(f),'protected change: '+f);
 const pins={
  'public/app.js':'d259d0b77a006d032699be50536adb2ebca459dd',
