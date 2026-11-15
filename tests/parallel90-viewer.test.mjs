@@ -377,3 +377,31 @@ test('P90 M21 repeated real owner-sourced WebGL reopen forces actual context los
  assert.ok(fixture.includes("NATIVE92"));
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });
+
+test('P90 M22 source-honest original-photo fallback when WebGL2 is unavailable and native 3D reattestation after recovery',()=>{
+ const source=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const donor=readFileSync('scripts/install-parallel90-viewer.mjs','utf8');
+ const native=readFileSync('research/native-3d-05/native-preview-bridge.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(source.includes("window.__p90M22GetContext=HTMLCanvasElement.prototype.getContext"));
+ assert.ok(source.includes("if(type==='webgl2')return null"));
+ assert.ok(source.includes("window.native3D05Bridge.close()"));
+ assert.ok(source.includes("await page.locator('#native3D05Preview').click()"));
+ assert.ok(source.includes("Original-photo/2D fallback: WebGL2 unavailable"));
+ assert.ok(source.includes("unsupported.modelReady,false"));
+ assert.ok(source.includes("unsupported.bones,0"));
+ assert.ok(source.includes("await page.locator('#outfit3D01Photos img').count(),4"));
+ assert.ok(source.includes("crypto.subtle.digest('SHA-256',bytes)"));
+ assert.ok(source.includes("photoSHA,expectedSHA"));
+ assert.ok(source.includes("stillOwner,savedBefore"));
+ assert.ok(source.includes("finally{"));
+ assert.ok(source.includes("HTMLCanvasElement.prototype.getContext=window.__p90M22GetContext"));
+ assert.ok(source.includes("restored.garmentSources90.dress,expectedSHA"));
+ assert.ok(source.includes("restored.resources90.geometries,prior.resources90.geometries"));
+ assert.ok(source.includes("restored.resources90.textures,prior.resources90.textures"));
+ assert.ok(source.includes("390-webgl-unavailable-fallback.json"));
+ assert.ok(source.includes("realPhysicalGPUNoWebGLTested:false"));
+ assert.ok(donor.includes("if(!probe)throw Error('WebGL2 unavailable')"));
+ assert.ok(native.includes("await attestOriginalBytes92()"));
+ assert.ok(workflow.includes("engine: [chromium, webkit]"));
+});
