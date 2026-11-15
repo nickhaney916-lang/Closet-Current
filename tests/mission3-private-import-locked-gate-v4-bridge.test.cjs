@@ -606,9 +606,19 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       assert.deepEqual(result.ownerDowngradeChecks.map(x=>x.unchanged),[true,true],
        name+' preserves complete database snapshot on owner downgrade '+
        JSON.stringify(result.ownerDowngradeChecks));
+      // The built UI may refuse first at the live unsaved-outfit gate,
+      // *before* the independent atomic helper checks owner claims. Assert
+      // the observable security contract (no writes, unchanged owner and
+      // no false success); the helper's exact error is covered by native IDB.
       assert.deepEqual(result.ownerDowngradeChecks.map(x=>
-       x.message.includes('LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT')),[true,true],
-       name+' refuses same-ID ownership downgrade '+JSON.stringify(result.ownerDowngradeChecks));
+       x.itemOwner===result.items[0].ownerId&&
+       x.originalOwner===result.items[0].ownerId&&
+       x.actualRevision===x.originalRevision),[true,true],
+       name+' retains saved owner and cloud revision '+JSON.stringify(result.ownerDowngradeChecks));
+      assert.deepEqual(result.ownerDowngradeChecks.map(x=>
+       Boolean(x.message)&&!x.message.includes('imported atomically.')),[true,true],
+       name+' never reports a refused owner downgrade as imported '+
+       JSON.stringify(result.ownerDowngradeChecks));
       assert.equal(result.afterUnclaimedRevision,3,name+' records unclaimed import in private cloud revision');
       assert.match(result.message,/canceled|imported atomically/i);
       assert.deepEqual(errors,[]);
