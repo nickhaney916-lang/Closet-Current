@@ -32,6 +32,60 @@ export async function checkViewer90(page,width,engine){
   await page.mouse.move(box.x+box.width*.4,box.y+box.height*.5);
   await page.mouse.down();await page.mouse.move(box.x+box.width*.7,box.y+box.height*.5,{steps:12});await page.mouse.up();await settle();
   assert.ok(Math.abs((await camera()).angle)>5,'actual pointer drag changes camera');
+  // M16: browser-generated continuous touchStart/move/end on the genuine
+  // source-attested canvas. CDP provides this in Chromium; WebKit has no CDP.
+  // This is real browser touch input in a simulated viewport, never hardware.
+  let touchSwipe16=null;
+  if(width===390&&engine==='chromium'){
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const swipeBefore=await state();
+   const target=page.locator('#outfit3D01Canvas');
+   await target.scrollIntoViewIfNeeded();
+   const rect=await target.boundingBox();
+   assert.ok(rect&&rect.width>=150&&rect.height>=180,
+    'source-verified anatomical touch canvas must be visible');
+   const x=rect.x+rect.width*.36,y=rect.y+rect.height*.52;
+   const delta=Math.min(85,rect.width*.28);
+   const scrollBefore=await page.evaluate(()=>window.scrollY);
+   const session=await page.context().newCDPSession(page);
+   let started=false,ended=false;
+   try{
+    await session.send('Input.dispatchTouchEvent',{
+     type:'touchStart',touchPoints:[{x,y,radiusX:3,radiusY:3,force:1}]});
+    started=true;
+    for(let step=1;step<=12;step++){
+     await session.send('Input.dispatchTouchEvent',{
+      type:'touchMove',touchPoints:[{
+       x:x+delta*step/12,y,radiusX:3,radiusY:3,force:1}]});
+     await page.waitForTimeout(15);
+    }
+    await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    ended=true;
+   }finally{
+    if(started&&!ended)try{
+     await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+    }catch{}
+    await session.detach();
+   }
+   await settle();
+   const swipeAfter=await state();
+   const angleChange=Math.abs(((swipeAfter.camera90.angle-
+    swipeBefore.camera90.angle+540)%360)-180);
+   assert.ok(angleChange>5,'real Chromium touch-drag must rotate original avatar');
+   assert.equal(swipeAfter.bones,163);
+   assert.deepEqual(swipeAfter.garmentSources90,swipeBefore.garmentSources90,
+    'touch drag may not change verified original source garment');
+   assert.equal(swipeAfter.resources90.geometries,swipeBefore.resources90.geometries);
+   assert.equal(swipeAfter.resources90.textures,swipeBefore.resources90.textures);
+   const scrollAfter=await page.evaluate(()=>window.scrollY);
+   assert.ok(Math.abs(scrollAfter-scrollBefore)<=2,
+    'horizontal touch orbit must not inadvertently scroll the page vertically');
+   touchSwipe16={figure,engine,cssWidth:width,browserGeneratedTouch:true,
+    continuousTouchStartMoveEnd:true,angleChangeDegrees:angleChange,
+    sourceIdentitySame:true,resourceCountsSame:true,
+    horizontalPageScrollStable:true,physicalPhone:false,
+    webkitTouchSwipeVerified:false};
+  }
   // M14: REAL touch-generated button taps in a mobile+touch Playwright context
   // on both browsers. Do not substitute mouse click for this mobile input path.
   let touchButtons90=null;
@@ -81,7 +135,7 @@ export async function checkViewer90(page,width,engine){
   assert.equal(final.resources90.textures,baseline.resources90.textures);
   // Camera work does not load new garments or textures (renderer metrics
   // are captured through the existing authenticated read-only panel).
-  samples.push({figure,width,engine,before,after,touchButtons90,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
+  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
  // M15: end the original, signed-in, source-attested WebGL session while
  // an ACTUAL browser pointer is held down on the anatomical viewer.

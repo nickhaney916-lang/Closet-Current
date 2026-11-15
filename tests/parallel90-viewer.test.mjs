@@ -233,3 +233,25 @@ test('P90 M15 mid-pointer source revocation releases stale photographed WebGL an
  assert.ok(browser.includes('midDragRevocation90,landscape'));
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });
+
+
+test('P90 M16 continuous Chromium browser touch drag rotates pinned source rigs without source or GPU allocation change',()=>{
+ const browser=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const fixture=readFileSync('scripts/test-native-3d-05-browser.mjs','utf8');
+ const workflow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(browser.includes("if(width===390&&engine==='chromium'){"));
+ assert.ok(fixture.includes('isMobile:true,hasTouch:true'));
+ assert.ok(browser.includes("newCDPSession(page)"));
+ for(const kind of ['touchStart','touchMove','touchEnd'])
+  assert.ok(browser.includes("type:'"+kind+"'"),'original real browser touch event '+kind);
+ assert.ok(browser.includes('angleChange>5'));
+ assert.ok(browser.includes('swipeAfter.bones,163'));
+ assert.ok(browser.includes('swipeAfter.garmentSources90,swipeBefore.garmentSources90'));
+ assert.ok(browser.includes('swipeAfter.resources90.geometries,swipeBefore.resources90.geometries'));
+ assert.ok(browser.includes('swipeAfter.resources90.textures,swipeBefore.resources90.textures'));
+ assert.ok(browser.includes('Math.abs(scrollAfter-scrollBefore)<=2'));
+ assert.ok(browser.includes('touchSwipe16,finalCamera'));
+ assert.ok(browser.includes('webkitTouchSwipeVerified:false'));
+ assert.ok(browser.includes('physicalPhone:false'));
+ assert.ok(workflow.includes('engine: [chromium, webkit]'));
+});
