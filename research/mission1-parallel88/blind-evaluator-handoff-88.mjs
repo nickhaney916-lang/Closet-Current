@@ -49,6 +49,7 @@ const sourceFields=[
  'sealedBlindPhotoCount','approvedOriginalsCount','dualHumanReviewedCount',
  'verifiedIndependentHumanReviewers','unresolvedDisagreements',
  'historicalExposureComplete','prospectiveSourceAndPhotographerDisjoint',
+ 'pretrainedModelTrainingDisjointnessVerified',
  'fullSourceBytesAndLicenseVerified','humanRightsAndConsentApproved',
  'sourceGroupsIndependentlyVerified','noPriorModelOrAnswerExposure',
  'answerKeysOutsideRepository','auditedAt','expiresAt','signature'
@@ -116,11 +117,13 @@ export function verifyBlindEvaluatorHandoff88(packet,{
     a.verifiedIndependentHumanReviewers<2||
     a.unresolvedDisagreements!==0)errors.push('P75_BLIND_HUMAN_COVERAGE_INCOMPLETE');
  for(const k of ['historicalExposureComplete','prospectiveSourceAndPhotographerDisjoint',
+  'pretrainedModelTrainingDisjointnessVerified',
   'fullSourceBytesAndLicenseVerified','humanRightsAndConsentApproved',
   'sourceGroupsIndependentlyVerified','noPriorModelOrAnswerExposure',
   'answerKeysOutsideRepository'])
   if(a[k]!==true)errors.push('P75_REQUIRED_AUDIT_FLAG_'+k.toUpperCase());
- if(!ISO(a.auditedAt)||!ISO(a.expiresAt)||
+ if(!(now instanceof Date)||!Number.isFinite(now.getTime())||
+    !ISO(a.auditedAt)||!ISO(a.expiresAt)||
     Date.parse(a.auditedAt)>Date.parse(a.expiresAt)||
     Date.parse(a.expiresAt)-Date.parse(a.auditedAt)>7*86400000||
     now.getTime()<Date.parse(a.auditedAt)-60000||
