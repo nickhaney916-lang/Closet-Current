@@ -98,6 +98,76 @@ test('picker source-only photo warning is visible and accessible before selectio
  assert.match(button.getAttribute('aria-label'),
   /individual garment outline unverified.*Select for 2D outfit/i);
 });
+test('Mission 1 owner-source-review receipt stays 2D only in normal native picker',()=>{
+ const f=fixture(),photo='a'.repeat(64),crop='b'.repeat(64),mask='c'.repeat(64);
+ Object.assign(f.item,{
+  ownerId:'owner-a',outfitSourceId:'source-a',sourceSHA256:photo,
+  originalPhoto:{sha256:photo},reconciliation70:{maskSha256:mask},
+  reconciliation70Status:'owner-confirmed-separate',
+  cropBounds:{x:3,y:6,width:20,height:25},sourceHashVerified:true,
+  singleGarmentVerified:false,threeDReady:false,photoOnly:true
+ });
+ f.item.ownerSourceReview88={
+  schema:'p88-owner-source-review/v1',ownerId:'owner-a',
+  itemId:f.item.id,sourceId:'source-a',originalPhotoSha256:photo,
+  derivedImageSha256:crop,derivedImageBytesVerified:true,
+  selectedMaskSha256:mask,physicalUnitDecision:'owner-confirmed-separate',
+  category:f.item.category,itemType:f.item.itemType,color:f.item.color,
+  cropBounds:{...f.item.cropBounds},ownerReviewed:true,
+  sourcePhotoOriginal:true,rawMaskPixelsIndependentlyVerified:false,
+  independentPhysicalItemVerified:false,singleGarmentVerified:false,threeDReady:false
+ };
+ assert.equal(f.ctx.boardHasMatchingOwnerSourceReview88(f.item),true);
+ assert.equal(f.ctx.boardPhotoRequiresUnitReview(f.item),true,
+  'owner review cannot authorize physical unit or fitted 3D');
+ const button=f.makePicker();
+ assert.match(button.children.find(x=>x.tag==='small')?.label||'',
+  /Owner-reviewed photo.*independent garment outline unverified/i);
+ assert.match(button.getAttribute('aria-label')||'',
+  /physical garment outline not independently verified.*Select for 2D outfit/i);
+ f.calls.length=0;button.onclick();
+ assert.deepEqual(f.calls,['select:top:owner-a-garment','picker-close']);
+});
+test('Mission 1 changed/foreign/forged owner-review receipts never certify garment',()=>{
+ const f=fixture(),photo='a'.repeat(64),crop='b'.repeat(64),mask='c'.repeat(64);
+ Object.assign(f.item,{
+  ownerId:'owner-a',outfitSourceId:'source-a',sourceSHA256:photo,
+  originalPhoto:{sha256:photo},reconciliation70:{maskSha256:mask},
+  reconciliation70Status:'owner-confirmed-separate',
+  cropBounds:{x:1,y:2,width:3,height:4},sourceHashVerified:true,
+  singleGarmentVerified:false,threeDReady:false,photoOnly:true
+ });
+ const receipt={schema:'p88-owner-source-review/v1',ownerId:'owner-a',
+  itemId:f.item.id,sourceId:'source-a',originalPhotoSha256:photo,
+  derivedImageSha256:crop,derivedImageBytesVerified:true,
+  selectedMaskSha256:mask,physicalUnitDecision:'owner-confirmed-separate',
+  category:f.item.category,itemType:f.item.itemType,color:f.item.color,
+  cropBounds:{...f.item.cropBounds},ownerReviewed:true,
+  sourcePhotoOriginal:true,rawMaskPixelsIndependentlyVerified:false,
+  independentPhysicalItemVerified:false,singleGarmentVerified:false,threeDReady:false};
+ const cases=[
+  {label:'wrong owner',ownerId:'owner-b'},
+  {label:'changed source original',originalPhotoSha256:'e'.repeat(64)},
+  {label:'changed mask',selectedMaskSha256:'d'.repeat(64)},
+  {label:'changed subtype',itemType:'Boots'},
+  {label:'changed crop bounds',cropBounds:{...receipt.cropBounds,x:5}},
+  {label:'forged independent physical item',independentPhysicalItemVerified:true},
+  {label:'forged 3D',threeDReady:true},
+  {label:'forged raw pixels',rawMaskPixelsIndependentlyVerified:true},
+  {label:'missing crop bytes proof',derivedImageBytesVerified:false}
+ ];
+ for(const {label,...mutation} of cases){
+  f.item.ownerSourceReview88={...receipt,...mutation};
+  assert.equal(f.ctx.boardHasMatchingOwnerSourceReview88(f.item),false,label);
+  assert.match(f.ctx.boardPhotoSourceNotice88(f.item),
+   /Photo reference only.*garment outline unverified/i,label);
+  assert.equal(f.ctx.boardPhotoRequiresUnitReview(f.item),true,label);
+ }
+ f.item.ownerSourceReview88=receipt;
+ f.swap();
+ assert.equal(f.ctx.boardHasMatchingOwnerSourceReview88(f.item),false,
+  'a previous owner receipt must not carry into another signed owner');
+});
 for(const [reason,mutation] of ownerModes){
  test('former owner saved outfit card cannot touch new session after '+reason,()=>{
   const f=fixture(),b=f.makeSaved();mutation(f);f.resetNewOwner();b.onclick();
