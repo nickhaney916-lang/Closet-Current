@@ -3,11 +3,12 @@
 import test from 'node:test';
 import {generateKeyPairSync,sign as edSign,createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
-import {mkdtemp,writeFile,symlink,rm} from 'node:fs/promises';
+import {mkdtemp,writeFile,symlink,rm,chmod,readdir} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {P88_FROZEN_CANDIDATE,frozenCandidateDigest88,canonicalP88,sha256,
- verifyBlindEvaluatorHandoff88,externalPrivateFile88} from '../research/mission1-parallel88/blind-evaluator-handoff-88.mjs';
+ verifyBlindEvaluatorHandoff88,externalPrivateFile88,
+ externalPrivateLedgerDirectory88,reserveBlindEvaluatorHandoff88} from '../research/mission1-parallel88/blind-evaluator-handoff-88.mjs';
 import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups} from '../public/outfit-segmentation.mjs';
 import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES,accessoryBoxIoU88,evaluateCocoAccessoryBoxes88,cocoAccessoryLabel88} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
@@ -443,4 +444,78 @@ test('P88 private blind custody path refuses symlinks into checkout, special fil
  }finally{
   await rm(dir,{recursive:true,force:true});
  }
+});
+
+test('P88 synthetic signed blind-cohort authorization reserves exactly once in one private ledger',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'p88-private-reserve-'));
+ try{
+  const f=privateP75P71Fixture88();
+  assert.equal(await externalPrivateLedgerDirectory88(dir),dir);
+  const noLedger=await reserveBlindEvaluatorHandoff88(f.packet,f.trust);
+  assert.equal(noLedger.status,'BLOCKED');
+  assert.deepEqual(noLedger.errors,['PRIVATE_LEDGER_REQUIRED']);
+  const [a,b]=await Promise.all([
+   reserveBlindEvaluatorHandoff88(f.packet,{...f.trust,ledgerDir:dir}),
+   reserveBlindEvaluatorHandoff88(f.packet,{...f.trust,ledgerDir:dir})
+  ]);
+  const wins=[a,b].filter(x=>x.oneTimePrivateReservationCreated);
+  const denied=[a,b].filter(x=>x.status==='BLOCKED');
+  assert.equal(wins.length,1,'O_EXCL must allow exactly one reservation');
+  assert.equal(denied.length,1,'same sealed cohort cannot be evaluated twice');
+  assert.deepEqual(denied[0].errors,['PRIVATE_LEDGER_ALREADY_RESERVED']);
+  assert.equal(denied[0].canSendRestrictedHandoffToP71,false);
+  assert.equal(wins[0].releaseApproval,false);
+  assert.equal(wins[0].accuracyMeasured,false);
+  assert.equal(wins[0].automaticSaveAllowed,false);
+  const files=await readdir(dir);
+  assert.equal(files.length,1,'only one private digest marker; no photos/labels');
+  assert.match(files[0],/^consumed-[a-f0-9]{64}\.lock$/);
+  const replay=await reserveBlindEvaluatorHandoff88(f.packet,{...f.trust,ledgerDir:dir});
+  assert.equal(replay.status,'BLOCKED');
+  assert.deepEqual(replay.errors,['PRIVATE_LEDGER_ALREADY_RESERVED']);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('P88 private reservation denies forged signatures before any marker and rejects unsafe ledgers',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'p88-private-deny-'));
+ try{
+  const f=privateP75P71Fixture88();
+  const forged=structuredClone(f.packet);
+  forged.sourceAudit.dualHumanReviewedCount=0;
+  const denied=await reserveBlindEvaluatorHandoff88(forged,{...f.trust,ledgerDir:dir});
+  assert.equal(denied.status,'BLOCKED');
+  assert.equal(denied.oneTimePrivateReservationCreated,false);
+  assert.deepEqual(await readdir(dir),[],'failed signatures cannot consume a cohort');
+  const alias=join(dir,'ledger-symlink');
+  const external=await mkdtemp(join(tmpdir(),'p88-private-safe-'));
+  try{
+   await symlink(external,alias,'dir');
+   const aliasDenied=await reserveBlindEvaluatorHandoff88(f.packet,{
+    ...f.trust,ledgerDir:alias
+   });
+   assert.equal(aliasDenied.status,'BLOCKED');
+   assert.deepEqual(aliasDenied.errors,['PRIVATE_LEDGER_WRITE_OR_TRUST_FAILURE']);
+   await chmod(external,0o755);
+   const permissive=await reserveBlindEvaluatorHandoff88(f.packet,{
+    ...f.trust,ledgerDir:external
+   });
+   assert.equal(permissive.status,'BLOCKED');
+   assert.deepEqual(permissive.errors,['PRIVATE_LEDGER_WRITE_OR_TRUST_FAILURE']);
+   assert.deepEqual(await readdir(external),[]);
+  }finally{await rm(external,{recursive:true,force:true});}
+  const valid=await reserveBlindEvaluatorHandoff88(f.packet,{...f.trust,ledgerDir:dir});
+  assert.equal(valid.status,'SIGNED_CUSTODY_PREFLIGHT_ONLY');
+  assert.equal(valid.oneTimePrivateReservationCreated,true);
+ }finally{await rm(dir,{recursive:true,force:true});}
+});
+
+test('P88 private reserve CLI remains forbidden inside GitHub Actions',()=>{
+ const result=spawnSync(process.execPath,[
+  'research/mission1-parallel88/blind-evaluator-handoff-88.mjs',
+  'reserve','/tmp/p88-private-should-never-be-read.json'
+ ],{cwd:process.cwd(),env:{...process.env,GITHUB_ACTIONS:'true',CI:'true'},
+  encoding:'utf8'});
+ assert.notEqual(result.status,0);
+ assert.match(result.stderr,/PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI/);
+ assert.equal(result.stdout,'');
 });
