@@ -134,11 +134,39 @@ try{
   assert.equal(persisted.saved,1);
   stage='reload real native owner board';
   await page.reload({waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.closetAuth?.user?.id==='m59-A'&&
-    db?.name==='closet-current-user-m59-A'&&
-    typeof currentBoard!=='undefined'&&
-    currentBoard.slots?.top==='m59-A-reviewed-public-photo',
-    null,{timeout:45000});
+  try{
+   await page.waitForFunction(()=>window.closetAuth?.user?.id==='m59-A'&&
+     db?.name==='closet-current-user-m59-A'&&
+     typeof currentBoard!=='undefined'&&
+     currentBoard.slots?.top==='m59-A-reviewed-public-photo',
+     null,{timeout:12000});
+  }catch{
+   // Safe fixture-only diagnostics; NEVER log original pixels or tokens.
+   const diagnostic=await page.evaluate(async()=>{
+    const owner=window.closetAuth?.user?.id||null;
+    const dbName=typeof db!=='undefined'?db?.name:null;
+    const board=typeof currentBoard!=='undefined'?currentBoard:null;
+    const roster=typeof items!=='undefined'?items:null;
+    let stored=null,row=null;
+    try{
+     if(db){
+      const get=(store,id)=>new Promise((resolve,reject)=>{
+       const req=db.transaction(store).objectStore(store).get(id);
+       req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+      });
+      stored=await get('state','outfit-board');
+      row=await get('items','m59-A-reviewed-public-photo');
+     }
+    }catch{}
+    return {owner,dbName,boardInitialized:typeof boardInitialized!=='undefined'&&boardInitialized,
+     nativeCurrentSlots:board?.slots||null,storedBoardSlots:stored?.current?.slots||null,
+     nativeRosterCount:Array.isArray(roster)?roster.length:null,
+     nativeRosterContainsSaved:Array.isArray(roster)&&roster.some(x=>x.id==='m59-A-reviewed-public-photo'),
+     savedItemExists:!!row,savedItemPhotoOnly:row?.photoOnly===true,
+     savedItemCategory:row?.category||null,releaseAuthorized:false};
+   });
+   throw Error('M59 native saved lower-trust photo-only row reload gate blocked; safe diagnostic: '+JSON.stringify(diagnostic));
+  }
   stage='mount actual owner 2D research gallery';
   const mounted=await page.evaluate(async()=>{
    switchView('builder');
