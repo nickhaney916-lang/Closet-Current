@@ -1627,6 +1627,105 @@ test('P88 legacy non-review indexing source policy still skips an exact saved JP
  assert.equal(h.backups,0);
  assert.equal(h.scans,0);
 });
+// Execute the actual source queue/owner/identical-photo review helpers.
+// Synthetic photo bytes do NOT establish two physical garments; only a
+// deliberate owner attestation permits the second unsaved draft to be saved.
+function exactDuplicateOwnerSaveHarness88(){
+ const saveBegin=appSource.indexOf('function savePiece('),saveEnd=appSource.indexOf('function node(',saveBegin);
+ const helpers=appSource.indexOf('function reviewedExactPhotoPeers88('),end=appSource.indexOf('function empty(',helpers);
+ assert.ok(saveBegin>=0&&saveEnd>saveBegin&&helpers>saveEnd&&end>helpers);
+ const records=[],user={id:'owner-A'};
+ const ownerDb={name:'closet-current-user-owner-A',transaction(){
+  const tx={objectStore(store){return {put(value){records.push({store,value:structuredClone(value)});}}};
+  queueMicrotask(()=>tx.oncomplete?.());return tx;
+ }};
+ const photo='data:image/jpeg;base64,UEhPVE8=',existing={id:'already-owned',image:photo,category:'Tops'},
+  current={id:'new-capture',image:photo,category:'Tops',itemType:'T-shirt',color:'Blue',
+   exactSavedPhotoMatch88:{savedItemId:existing.id}};
+ const c={window:{closetAuth:{user}},items:[existing],batch:[current],db:ownerDb,
+  structuredClone,queued:async fn=>{await c.beforeWrite?.();return fn();}};
+ vm.createContext(c);
+ vm.runInContext(appSource.slice(saveBegin,saveEnd)+appSource.slice(helpers,end),c);
+ const lease=c.reviewedSaveLease88(current);
+ return {c,ownerDb,user,existing,current,lease,records,
+  value:()=>structuredClone(current),
+  reviewed:()=>({...structuredClone(current),ownerDuplicateReview88:c.reviewedDistinctPhotoReceipt88(lease)})};
+}
+test('P88 identical saved photo cannot be admitted by category/color review alone',async()=>{
+ const h=exactDuplicateOwnerSaveHarness88();
+ assert.equal(h.lease.exactPhotoPeers88.length,1);
+ assert.equal(h.c.reviewedDistinctPhotoReceiptValid88(h.value(),h.lease),false);
+ await assert.rejects(h.c.savePiece(h.value(),[],h.lease),/P88_DISTINCT_OWNER_DECISION_REQUIRED/);
+ assert.equal(h.records.length,0);
+});
+test('P88 explicit distinct-photo owner attestation stores only reviewed metadata, not physical or 3D certification',async()=>{
+ const h=exactDuplicateOwnerSaveHarness88(),v=h.reviewed();
+ assert.equal(h.c.reviewedDistinctPhotoReceiptValid88(v,h.lease),true);
+ await h.c.savePiece(v,[],h.lease);
+ assert.deepEqual(h.records.map(x=>x.store),['items','state']);
+ assert.equal(h.records[0].value.id,'new-capture');
+ assert.equal(h.records[0].value.image,h.existing.image);
+ assert.equal(h.records[0].value.ownerDuplicateReview88.schema,'p88-distinct-physical-owner-attestation/v1');
+ assert.deepEqual(h.records[0].value.ownerDuplicateReview88.identicalSavedPhotoItemIds,['already-owned']);
+ assert.equal(h.records[0].value.ownerDuplicateReview88.ownerAttestedDistinctPhysicalItem,true);
+ assert.equal(h.records[0].value.ownerDuplicateReview88.singleGarmentVerified,false);
+ assert.equal(h.records[0].value.ownerDuplicateReview88.threeDReady,false);
+ assert.equal(h.records[0].value.ownerDuplicateReview88.independentPhysicalItemVerified,false);
+ assert.equal(h.records[1].value.batch.length,0);
+});
+test('P88 forged duplicate-photo consent or independent garment verification flags cannot authorize save',async()=>{
+ for(const tamper of [
+  r=>{r.ownerId='owner-B';},
+  r=>{r.reviewedPhotoId='different';},
+  r=>{r.identicalSavedPhotoItemIds=['different'];},
+  r=>{r.identicalSavedPhotoItemIds=[];},
+  r=>{r.independentPhysicalItemVerified=true;},
+  r=>{r.singleGarmentVerified=true;},
+  r=>{r.threeDReady=true;},
+  r=>{r.ownerAttestedDistinctPhysicalItem=false;}
+ ]){
+  const h=exactDuplicateOwnerSaveHarness88(),v=h.reviewed();
+  tamper(v.ownerDuplicateReview88);
+  await assert.rejects(h.c.savePiece(v,[],h.lease),/P88_DISTINCT_OWNER_DECISION_REQUIRED/);
+  assert.equal(h.records.length,0);
+ }
+});
+test('P88 exact-photo consent expires if saved peer is replaced during cloud preflight',async()=>{
+ const h=exactDuplicateOwnerSaveHarness88();
+ h.c.beforeWrite=async()=>{h.c.items[0]={...h.existing};};
+ await assert.rejects(h.c.savePiece(h.reviewed(),[],h.lease),/P88_REVOKED_REVIEWED_SAVE/);
+ assert.equal(h.records.length,0);
+});
+test('P88 exact-photo consent expires on additional same-JPEG saved peer or changed photo',async()=>{
+ for(const alter of [
+  h=>h.c.items.push({id:'new-peer',image:h.existing.image}),
+  h=>{h.existing.image='data:image/jpeg;base64,Q0hBTkdF';}
+ ]){
+  const h=exactDuplicateOwnerSaveHarness88();
+  h.c.beforeWrite=async()=>alter(h);
+  await assert.rejects(h.c.savePiece(h.reviewed(),[],h.lease),/P88_REVOKED_REVIEWED_SAVE/);
+  assert.equal(h.records.length,0);
+ }
+});
+test('P88 identical photo original owner IDB/session and draft marker stay fixed while saving',async()=>{
+ for(const alter of [
+  h=>h.c.window.closetAuth.user={id:'owner-A'},
+  h=>h.c.db={name:'closet-current-user-owner-A',transaction(){throw Error('STALE_DB');}},
+  h=>{h.current.exactSavedPhotoMatch88.savedItemId='forged';},
+  h=>h.c.batch.splice(0)
+ ]){
+  const h=exactDuplicateOwnerSaveHarness88();
+  h.c.beforeWrite=async()=>alter(h);
+  await assert.rejects(h.c.savePiece(h.reviewed(),[],h.lease),/P88_REVOKED_REVIEWED_SAVE/);
+  assert.equal(h.records.length,0);
+ }
+});
+test('P88 stale saved-peer fingerprint rejects duplicate review even if captured match is gone',async()=>{
+ const h=exactDuplicateOwnerSaveHarness88();
+ h.c.items.splice(0);
+ await assert.rejects(h.c.savePiece(h.reviewed(),[],h.lease),/P88_STALE_REVIEWED_OWNER/);
+ assert.equal(h.records.length,0);
+});
 test('P88 ordinary review save holds exact owner, image and IDB after cloud preflight',async()=>{
  const saveBegin=appSource.indexOf('function savePiece(');
  const saveEnd=appSource.indexOf('function node(',saveBegin);
