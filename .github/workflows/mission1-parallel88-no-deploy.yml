@@ -28,10 +28,10 @@ jobs:
           BASE=ab68cbbbd54376bbc9c099fc3504d1cc00ba632c
           git merge-base --is-ancestor "$BASE" HEAD
           git diff --name-only "$BASE" HEAD | tee /tmp/m1-88-paths
-          test "$(wc -l < /tmp/m1-88-paths)" -eq 17
+          test "$(wc -l < /tmp/m1-88-paths)" -eq 18
           while IFS= read -r p; do
             case "$p" in
-              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/run-coco-accessory-88.mjs|research/mission1-parallel88/run-fashion-onnx-88.mjs|research/mission1-parallel88/fashion-onnx-probes-88.mjs|research/mission1-parallel88/blind-evaluator-handoff-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
+              public/outfit-instance-review-840.mjs|public/outfit-capture.js|public/app.js|tests/mission1-parallel88-instance-conservation.test.mjs|tests/mission1-parallel88-owner-mask-lease.test.mjs|scripts/test-m1-owner-pair-admission-846.mjs|scripts/test-p82-review-browser.mjs|research/mission1-parallel88/REPORT.md|research/mission1-parallel88/frozen-public-validation-68.json|research/mission1-parallel88/recover-public-validation-88.py|research/mission1-parallel88/run-public-validation-88.mjs|research/mission1-parallel88/exposed-threshold-probes-88.mjs|research/mission1-parallel88/run-coco-accessory-88.mjs|research/mission1-parallel88/run-fashion-onnx-88.mjs|research/mission1-parallel88/fashion-onnx-probes-88.mjs|research/mission1-parallel88/blind-evaluator-handoff-88.mjs|research/mission1-parallel88/score-public-validation-88.py|.github/workflows/mission1-parallel88-no-deploy.yml) ;;
               *) echo "P88_UNAUTHORIZED_PATH $p"; exit 1 ;;
             esac
           done < /tmp/m1-88-paths
@@ -44,6 +44,7 @@ jobs:
           node --check tests/mission1-parallel88-instance-conservation.test.mjs
           node --check tests/mission1-parallel88-owner-mask-lease.test.mjs
           node --check scripts/test-m1-owner-pair-admission-846.mjs
+          node --check scripts/test-p82-review-browser.mjs
           node --check research/mission1-parallel88/run-public-validation-88.mjs
           node --check research/mission1-parallel88/exposed-threshold-probes-88.mjs
           node --check research/mission1-parallel88/run-coco-accessory-88.mjs
