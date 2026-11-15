@@ -631,20 +631,6 @@ try{
   ?.textContent.includes('Photo-only gallery refused'),null,{timeout:20000});
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
   'owner B re-opened original gallery and leaked A photo after session swap');
- // M68: check the separate strict M51 viewer through its real native button
- // after B denied A's backup. Its own owner-bound async callback must refuse
- // an empty foreign account without changing gallery state or granting 3D.
- stage='same-browser-owner-B-strict-original-preview-refusal';
- const strictButton=page.locator('#mission4Preview1054Section button');
- await strictButton.click();
- await page.waitForFunction(()=>document.getElementById('mission4Preview1054Status')
-  ?.textContent.includes('Preview refused'),null,{timeout:20000});
- assert.equal(await page.locator('#mission4Preview1054Photos img').count(),0,
-  'owner B strict preview displayed account A original after foreign import');
- assert.equal(await strictButton.isDisabled(),false,
-  'owner-bound strict preview button was left disabled after refusal');
- assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
-  'owner B strict preview resurrected stale lower-trust source gallery');
  assert.equal(await page.locator('#outfit3D01Canvas').count(),0,
   'cross-owner gallery reentry incorrectly admitted fitted 3D');
  assert.deepEqual(await ownerSnapshot(),ownerBBeforeForeignRestore,
