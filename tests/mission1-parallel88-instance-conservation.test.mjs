@@ -1,6 +1,9 @@
 // Assignment #88: synthetic accepted-mask conservation, NOT independently
 // human-labeled image accuracy or evidence of actual SegFormer quality.
 import test from 'node:test';
+import {generateKeyPairSync,sign as edSign,createHash} from 'node:crypto';
+import {P88_FROZEN_CANDIDATE,frozenCandidateDigest88,canonicalP88,sha256,
+ verifyBlindEvaluatorHandoff88} from '../research/mission1-parallel88/blind-evaluator-handoff-88.mjs';
 import assert from 'node:assert/strict';
 import {clothingLabelMap,clothingMaskGroups} from '../public/outfit-segmentation.mjs';
 import {exposedPixelGateMap88,P88_EXPOSED_PIXEL_PROBES,accessoryBoxIoU88,evaluateCocoAccessoryBoxes88,cocoAccessoryLabel88} from '../research/mission1-parallel88/exposed-threshold-probes-88.mjs';
@@ -281,4 +284,112 @@ test('P88 Fashionpedia ONNX does not invent labels from clothing part or shoe bo
  const out=decodeFashionYolo88(arr,[1,50,2],640,640,
   {inputSize:640,width:640,height:640,padX:0,padY:0});
  assert.deepEqual(out,[]);
+});
+
+
+function privateP75P71Fixture88(){
+ const p75=generateKeyPairSync('ed25519'),p71=generateKeyPairSync('ed25519');
+ const pub=x=>x.publicKey.export({type:'spki',format:'pem'});
+ const pinned=x=>sha256(x.publicKey.export({type:'spki',format:'der'}));
+ const candidateDigest=frozenCandidateDigest88;
+ const now=new Date('2026-11-14T20:00:00.000Z');
+ const source={
+  schema:'p88-p75-signed-audit/v1',candidateDigest,
+  auditDigest:'a'.repeat(64),historicalExposureLedgerDigest:'b'.repeat(64),
+  sealedBlindCommitment:'c'.repeat(64),rightsEvidenceDigest:'d'.repeat(64),
+  sourceGroupCount:60,sealedBlindPhotoCount:60,approvedOriginalsCount:60,
+  dualHumanReviewedCount:60,verifiedIndependentHumanReviewers:2,
+  unresolvedDisagreements:0,historicalExposureComplete:true,
+  prospectiveSourceAndPhotographerDisjoint:true,
+  fullSourceBytesAndLicenseVerified:true,humanRightsAndConsentApproved:true,
+  sourceGroupsIndependentlyVerified:true,noPriorModelOrAnswerExposure:true,
+  answerKeysOutsideRepository:true,
+  auditedAt:'2026-11-14T19:55:00.000Z',expiresAt:'2026-11-14T20:55:00.000Z'
+ };
+ const sign=(x,key)=>edSign(null,Buffer.from(canonicalP88(x)),
+  key.privateKey).toString('base64');
+ const sourceAudit={...source,signature:sign(source,p75)};
+ const evaluator={
+  schema:'p88-p71-evaluator-authorization/v1',candidateDigest,
+  sourceAuditPayloadDigest:sha256(canonicalP88(source)),
+  sealedBlindCommitment:source.sealedBlindCommitment,
+  independentEvaluatorAuthorized:true,
+  independentFromModelDevelopment:true,willEvaluateBlindOnlyOnce:true,
+  answersNotPreviouslyExposed:true,
+  acceptedAt:'2026-11-14T19:56:00.000Z'
+ };
+ const packet={
+  schema:'p88-blind-evaluator-handoff/v1',sourceAudit,
+  sourceAuditPublicKey:pub(p75),
+  evaluatorApproval:{...evaluator,signature:sign(evaluator,p71)},
+  evaluatorPublicKey:pub(p71)
+ };
+ const trust={p75RegistrarFingerprint:pinned(p75),
+  p71EvaluatorFingerprint:pinned(p71),now};
+ return {packet,trust,sign,keys:{p75,p71},source,evaluator};
+}
+test('P88 blind evaluator handoff refuses untrusted human evidence and preserves release hold',()=>{
+ const f=privateP75P71Fixture88();
+ const out=verifyBlindEvaluatorHandoff88(f.packet,f.trust);
+ assert.equal(out.status,'SIGNED_CUSTODY_PREFLIGHT_ONLY',
+  'signed synthetic assertions only prove crypto/contract');
+ assert.equal(out.canSendRestrictedHandoffToP71,true);
+ assert.equal(out.independentBlindScorePerformed,false);
+ assert.equal(out.accuracyMeasured,false);
+ assert.equal(out.releaseApproval,false);
+ assert.equal(out.modelPromotionAllowed,false);
+ assert.equal(out.automaticSaveAllowed,false);
+ assert.equal(out.familyAlphaHold,true);
+ assert.equal(frozenCandidateDigest88,sha256(canonicalP88(P88_FROZEN_CANDIDATE)));
+ assert.equal(P88_FROZEN_CANDIDATE.modelOnnxSha256,
+  '6b581af3abe2b4ae97a84cbe9aef5ae37207a68ee966d22b0b8d7969d79e6920');
+ assert.equal(P88_FROZEN_CANDIDATE.originalExposedPhotoManifestSha256,
+  'b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd');
+});
+test('P88 blind handoff denies tampering, single-authority impersonation and replay',()=>{
+ const f=privateP75P71Fixture88(),packet=f.packet,trust=f.trust;
+ const checks=[
+  [structuredClone(packet),{...trust,p71EvaluatorFingerprint:trust.p75RegistrarFingerprint}],
+  [structuredClone(packet),{...trust,p75RegistrarFingerprint:'f'.repeat(64)}],
+  [structuredClone(packet),{...trust,now:new Date('2026-11-15T01:00:00Z')}]
+ ];
+ checks[0][0].sourceAudit.sealedBlindCommitment='e'.repeat(64);
+ checks.push([{...structuredClone(packet),labels:[{private:'not-in-public-bundle'}]},trust]);
+ for(const [p,t] of checks){
+  const r=verifyBlindEvaluatorHandoff88(p,t);
+  assert.equal(r.status,'BLOCKED');
+  assert.equal(r.canSendRestrictedHandoffToP71??false,false);
+  assert.equal(r.modelPromotionAllowed,false);
+  assert.equal(r.accuracyMeasured,false);
+  assert.equal(JSON.stringify(r).includes('private'),false,'never echo private labels or IDs');
+ }
+ const modified=structuredClone(packet);
+ modified.evaluatorApproval.candidateDigest='e'.repeat(64);
+ assert.equal(verifyBlindEvaluatorHandoff88(modified,trust).status,'BLOCKED');
+});
+test('P88 blind handoff denies synthetic unlabeled development sources even if signed',()=>{
+ const f=privateP75P71Fixture88();
+ function resigned(changes){
+  const source={...f.source,...changes};
+  const sourceAudit={...source,signature:f.sign(source,f.keys.p75)};
+  const evaluator={...f.evaluator,
+   sealedBlindCommitment:source.sealedBlindCommitment,
+   sourceAuditPayloadDigest:sha256(canonicalP88(source))};
+  return {...f.packet,sourceAudit,
+   evaluatorApproval:{...evaluator,signature:f.sign(evaluator,f.keys.p71)}};
+ }
+ for(const change of [
+  {dualHumanReviewedCount:0},{sealedBlindPhotoCount:0},
+  {verifiedIndependentHumanReviewers:1},{sourceGroupCount:59},
+  {unresolvedDisagreements:1},{noPriorModelOrAnswerExposure:false},
+  {prospectiveSourceAndPhotographerDisjoint:false},
+  {humanRightsAndConsentApproved:false},
+  {historicalExposureComplete:false},
+  {sealedBlindCommitment:P88_FROZEN_CANDIDATE.originalExposedPhotoManifestSha256}
+ ]){
+  const x=verifyBlindEvaluatorHandoff88(resigned(change),f.trust);
+  assert.equal(x.status,'BLOCKED',JSON.stringify(change));
+  assert.equal(x.canSendRestrictedHandoffToP71,false);
+  assert.equal(x.automaticSaveAllowed,false);
+ }
 });
