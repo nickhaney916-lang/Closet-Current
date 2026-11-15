@@ -1566,6 +1566,67 @@ test('P88 queued private backup honors an owner-approved removal while queued',a
  assert.equal(h.writes.length,1);
  assert.equal(h.writes[0].batch.length,0,'removed photo cannot return after slow queued backup');
 });
+// Execute the actual native camera candidate source. The test simulates
+// already-saved ORIGINAL JPEG bytes, not any model acceptance/accuracy metric.
+function exactSavedPhotoCaptureHarness88({reviewFirst=true}={}){
+ const start=appSource.indexOf('function candidate(image,options={})');
+ const end=appSource.indexOf('function queueAutomatic(',start);
+ assert.ok(start>=0&&end>start,'P88 actual native photo capture function found');
+ let count=0,backups=0,scans=0;
+ const c={items:[],batch:[],structuredClone,session:0,sessionCapturedIds:new Set(),
+  reviewFirst836:reviewFirst,crypto:{randomUUID:()=>String(++count)},
+  normalizeClothing:x=>structuredClone(x),records:[],
+  $:id=>{if(!c.views[id])c.views[id]={};return c.views[id];},
+  views:{},recordDeviceEvent:e=>c.records.push(e),message:s=>{c.status=s;},
+  persistDraft:()=>{backups++;},queueAutomatic:()=>{scans++;}};
+ vm.createContext(c);vm.runInContext(appSource.slice(start,end),c);
+ return {c,get backups(){return backups;},get scans(){return scans;}};
+}
+test('P88 a repeated *saved* original stays unsaved for physical-item owner review, not silently discarded',()=>{
+ const h=exactSavedPhotoCaptureHarness88();
+ const original={id:'saved-A',image:'data:image/jpeg;base64,UEhPVE8=',category:'Tops',itemType:'T-shirt'};
+ h.c.items=[original];
+ assert.equal(h.c.candidate(original.image),true);
+ assert.equal(h.c.items.length,1,'existing wardrobe must never be overwritten');
+ assert.equal(h.c.batch.length,1,'owner receives another unsaved draft');
+ const pending=h.c.batch[0];
+ assert.equal(pending.image,original.image,'original photo bytes are retained');
+ assert.equal(pending.requiresOwnershipConfirmation,true);
+ assert.equal(pending.possibleDuplicate,true);
+ assert.equal(pending.localAnalyzed,true);
+ assert.equal(pending.category,'Uncategorized','no unsupported garment type guess');
+ assert.match(pending.localStatus,/Original kept unsaved for owner comparison/);
+ assert.equal(h.scans,0,'identical original does not cause speculative re-inference');
+ assert.equal(h.backups,1);
+ assert.deepEqual(h.c.records,['exact_saved_photo_retained_for_review']);
+});
+test('P88 duplicate frames already awaiting review are coalesced with clear recapture instructions',()=>{
+ const h=exactSavedPhotoCaptureHarness88(),image='data:image/jpeg;base64,SEVMTE8=';
+ assert.equal(h.c.candidate(image),true);
+ assert.equal(h.c.candidate(image),false);
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.scans,1,'the existing scan remains, do not spawn duplicate model jobs');
+ assert.equal(h.backups,1);
+ assert.match(h.c.status,/already waiting in Photo results/);
+ assert.match(h.c.status,/different physical garment/);
+});
+test('P88 new different photo still enters the existing scanner without model or taxonomy modification',()=>{
+ const h=exactSavedPhotoCaptureHarness88();
+ h.c.items=[{id:'other',image:'data:image/jpeg;base64,T0xE'}];
+ assert.equal(h.c.candidate('data:image/jpeg;base64,TkVX'),true);
+ assert.equal(h.c.batch.length,1);
+ assert.equal(h.scans,1);
+ assert.equal(h.c.batch[0].requiresOwnershipConfirmation,undefined);
+ assert.equal(h.c.batch[0].possibleDuplicate,undefined);
+});
+test('P88 legacy non-review indexing source policy still skips an exact saved JPEG',()=>{
+ const h=exactSavedPhotoCaptureHarness88({reviewFirst:false});
+ h.c.items=[{id:'saved',image:'data:image/jpeg;base64,QUJD'}];
+ assert.equal(h.c.candidate('data:image/jpeg;base64,QUJD'),false);
+ assert.equal(h.c.batch.length,0);
+ assert.equal(h.backups,0);
+ assert.equal(h.scans,0);
+});
 test('P88 ordinary review save holds exact owner, image and IDB after cloud preflight',async()=>{
  const saveBegin=appSource.indexOf('function savePiece(');
  const saveEnd=appSource.indexOf('function node(',saveBegin);
