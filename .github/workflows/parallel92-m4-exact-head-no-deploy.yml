@@ -7,6 +7,7 @@ on:
     paths:
       - scripts/test-parallel92-exact-head.mjs
       - scripts/test-parallel92-independent-browser.mjs
+      - scripts/test-parallel92-m51-webkit-reentry.mjs
       - research/parallel92-integration/LEDGER.md
       - .github/workflows/parallel92-m4-exact-head-no-deploy.yml
 permissions:
@@ -140,6 +141,48 @@ jobs:
             benchmark/parallel92-independent/${{ matrix.engine }}/trial-2/receipt.json
             benchmark/parallel92-independent/${{ matrix.engine }}/trial-1/v4/results.json
             benchmark/parallel92-independent/${{ matrix.engine }}/trial-2/v4/results.json
+  webkit-m51-focus-reentry-diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      P92_CHECKOUT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      P92_REENTRY_RUNS: '8'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Pin exact native app and prior M51 test source; read-only diagnosis
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          test "$(git rev-parse HEAD)" = "$P92_CHECKOUT_SHA"
+          test "$(git rev-parse HEAD:scripts/test-main51-real-app-owner-original-2d.mjs)" = 1150a6db461b1d5968183d1c9e798cac7ae88478
+          test "$(git rev-parse HEAD:public/app.js)" = d259d0b77a006d032699be50536adb2ebca459dd
+          test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
+      - name: Install immutable local browser test dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund playwright@1.56.1 sharp@0.34.3 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Eight fresh same-source native WebKit trials including 320px focus reentry
+        run: |
+          node --check scripts/test-parallel92-m51-webkit-reentry.mjs
+          node scripts/test-parallel92-m51-webkit-reentry.mjs
+      - name: Retain source-safe failure-only diagnosis, no images or credentials
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p92-webkit-m51-owner-preview-reentry-diagnostic-HOLD
+          path: benchmark/parallel92-webkit-reentry/result.json
+          retention-days: 14
+          if-no-files-found: ignore
   inherited-full-native-regressions:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
@@ -164,7 +207,7 @@ jobs:
           test "$(git rev-parse HEAD:public/outfit-board.js)" = 153455379b0b6d777eff8c1c508c129208c7fadc
           git diff --name-only 878d624d8963109143c8775bb156bda4ba12a196 HEAD | while IFS= read -r p; do
             case "$p" in
-              scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
+              scripts/test-parallel92-exact-head.mjs|scripts/test-parallel92-independent-browser.mjs|scripts/test-parallel92-m51-webkit-reentry.mjs|research/parallel92-integration/LEDGER.md|.github/workflows/parallel92-m4-exact-head-no-deploy.yml) ;;
               *) echo "P92 REFUSED CONSUMER/DONOR CHANGE: $p"; exit 1 ;;
             esac
           done
