@@ -9,6 +9,8 @@ import {trialSourceBoneShoulderYoke84} from '../parallel84-real-photo-layers/sou
 import {auditRealSourceGarmentArmPoses84} from '../parallel84-real-photo-layers/source-pose-sweep84.mjs';
 import {auditActualOriginalSourcePoseSurfaceGaps89} from './source-static-gap89.mjs';
 import {compareOriginalSourceShoulderGapAB89} from './source-gap-contrast89.mjs';
+import {auditActualSourceQuarterStepSurfaceGaps89} from './source-quarter-step89.mjs';
+import {compareOriginalSourceQuarterStepAB89} from './source-quarter-compare89.mjs';
 
 function sourceSnapshot89(meshes){
  if(!Array.isArray(meshes)||meshes.length<1||meshes.length>12)
@@ -68,7 +70,7 @@ const baselineShape=Object.freeze({
  status:'BASELINE_UNMODIFIED',trialApplied:false,releaseAuthorized:false
 });
 /**
- * Synchronously reconstruct and independently measure 3 actual joint poses
+ * Synchronously reconstruct and independently measure 5 actual joint poses
  * before/after the existing P84 original-source source-yoke adjustment.
  * P89 is a SUPPLEMENTAL research veto, never a grant of real-life clothing fit.
  * NOTE: P84 caller already has genuine source JPEG SHA, original rig and
@@ -88,6 +90,10 @@ export function gateOriginalPhotoShoulderResearchTrial89({
    root,shirt,pants,avatar,applyPose,poseContactReceipt:originalPose});
   if(baseline?.status!=='THREE_ACTUAL_SOURCE_POSE_UNSIGNED_GAPS_MEASURED_NOT_CLEARANCE')
    throw Error('original-source-gap-audit-refused');
+  const baselineQuarter=auditActualSourceQuarterStepSurfaceGaps89({
+   root,shirt,pants,avatar,applyPose});
+  if(baselineQuarter.status!=='ACTUAL_PUBLIC_SOURCE_STATIC_QUARTERSTEP_MEASURED_NOT_SWEPT')
+   throw Error('original-source-real-quarterstep-audit-refused');
   const trial=trialSourceBoneShoulderYoke84({
    root,shirt,pants,avatar,requestedDropMeters,outwardClearanceMeters});
   if(!protectedUnchanged89(originals))
@@ -98,6 +104,7 @@ export function gateOriginalPhotoShoulderResearchTrial89({
     p89SourceGapGate:'ORIGINAL_P84_TRIAL_REFUSED',
     p89MeasuredGapCandidateNeverAuthorized:true,
     p89ResearchOnly:true,p89OriginalPhoto2DFallbackRequired:true,
+    p89FiveStaticPoseGuardCompleted:false,
     p89Consumer3DAuthorized:false,releaseAuthorized:false});
   }
   const candidatePose=auditRealSourceGarmentArmPoses84({root,shirt,pants,avatar,applyPose});
@@ -107,6 +114,15 @@ export function gateOriginalPhotoShoulderResearchTrial89({
    root,shirt,pants,avatar,applyPose,poseContactReceipt:candidatePose});
   if(candidate?.status!=='THREE_ACTUAL_SOURCE_POSE_UNSIGNED_GAPS_MEASURED_NOT_CLEARANCE')
    throw Error('candidate-source-gap-audit-refused');
+  const candidateQuarter=auditActualSourceQuarterStepSurfaceGaps89({
+   root,shirt,pants,avatar,applyPose});
+  if(candidateQuarter.status!=='ACTUAL_PUBLIC_SOURCE_STATIC_QUARTERSTEP_MEASURED_NOT_SWEPT')
+   throw Error('candidate-source-real-quarterstep-audit-refused');
+  const quarterComparison=compareOriginalSourceQuarterStepAB89({
+   avatar,baseline:baselineQuarter,trial:candidateQuarter});
+  if(!['QUARTER_STATIC_POSES_NO_NEW_WORSENING_NOT_SWEPT',
+    'QUARTER_STATIC_POSE_SOURCE_WORSENING_WITNESSED'].includes(quarterComparison.status))
+   throw Error('original-quarterstep-gap-compare-unverified');
   const comparison=compareOriginalSourceShoulderGapAB89({
    avatar,baseline,trial:candidate,baselineShoulder:baselineShape,
    trialShoulder:trial
@@ -116,10 +132,18 @@ export function gateOriginalPhotoShoulderResearchTrial89({
   // Stronger-than-P84 physical study constraint: refuse research preview
   // even if there is no strict transverse contact but some actual nearest
   // surface gap worsens over 50 microns at ANY pose/pair.
-  if(!comparison.researchCandidateRetainedForStudy){
+  if(!comparison.researchCandidateRetainedForStudy||
+     !quarterComparison.trialRetainedForResearchOnly){
    restore89(originals);
    return fixed(trial,'P89_MEASURED_SOURCE_SURFACE_GAP_VETO',{
-    p89GapVetoReason:comparison.researchSourceGapVetoReason,
+    p89GapVetoReason:comparison.researchSourceGapVetoReason||
+     (quarterComparison.quarterPoseNewTriangleCrossings?
+      'QUARTERSTEP_NEW_STRICT_TRIANGLE_CROSSING':
+      'QUARTERSTEP_SOURCE_SURFACE_GAP_SHRINK_EXCEEDS_005MM'),
+    p89FiveStaticPoseGuardCompleted:true,
+    p89QuarterStepPoseAuditCompleted:true,
+    p89QuarterPoseStrictCrossingWorsened:quarterComparison.quarterPoseNewTriangleCrossings,
+    p89QuarterPoseSurfaceGapWorsened:quarterComparison.quarterPoseGapShrinkExceeded50Microns,
     p89BestResearchReference:'baseline'});
   }
   return Object.freeze({...trial,
@@ -127,6 +151,10 @@ export function gateOriginalPhotoShoulderResearchTrial89({
    p89MeasuredGapCandidateNeverAuthorized:true,
    p89BestResearchReference:'trial',
    p89StudyCandidateOnly:true,p89ResearchOnly:true,
+   p89FiveStaticPoseGuardCompleted:true,
+   p89QuarterStepPoseAuditCompleted:true,
+   p89QuarterPoseStrictCrossingWorsened:false,
+   p89QuarterPoseSurfaceGapWorsened:false,
    p89OriginalPhoto2DFallbackRequired:true,
    p89FullSignedClearanceCertified:false,
    p89ContinuousMotionCertified:false,p89Consumer3DAuthorized:false,
