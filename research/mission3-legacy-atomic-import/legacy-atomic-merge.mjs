@@ -17,7 +17,9 @@ function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  if(typeof x!=='object'||seen.has(x))throw Error('LEGACY_ATOMIC_INVALID_METADATA');
  if(Object.keys(x).length>1600)throw Error('LEGACY_ATOMIC_METADATA_LIMIT');
  seen.add(x);
- if(plain(x)&&own(x,'ownerId')&&x.ownerId!==owner)
+ // Null is an unclaimed legacy owner tag, not an asserted second account.
+ // Match the default import's raw JSON ownership gate exactly.
+ if(plain(x)&&own(x,'ownerId')&&x.ownerId!==null&&x.ownerId!==owner)
   throw Error('LEGACY_ATOMIC_FOREIGN_OWNER');
  for(const [key,value] of Object.entries(x)){
   if(['__proto__','prototype','constructor'].includes(key))throw Error('LEGACY_ATOMIC_UNSAFE_KEY');
@@ -85,6 +87,15 @@ export async function prepareLegacyAtomicM3({
    typeof row.image!=='string'||row.image.length>3_000_000)
    throw Error('LEGACY_ATOMIC_INVALID_GARMENT');
   seen.add(row.id);
+  // Treat a verified provenance flag and both available SHA-256 receipts as
+  // one coherent claim. The atomic module is independently callable: it must
+  // not preserve contradictory provenance if a caller bypasses UI preflight.
+  const sourceHash=row.sourceSHA256,originalHash=row.originalPhoto?.sha256;
+  if((sourceHash!==undefined&&!sha.test(sourceHash))||
+     (originalHash!==undefined&&!sha.test(originalHash))||
+     (row.sourceHashVerified===true&&!sourceHash)||
+     (sourceHash&&originalHash&&sourceHash!==originalHash))
+   throw Error('LEGACY_ATOMIC_ORIGINAL_RECEIPT_CONFLICT');
   await verifyImage(row.image,(!row.originalPhoto?.image||row.originalPhoto.image===row.image)
    ?row.sourceSHA256||row.originalPhoto?.sha256||null:null);
   if(row.originalPhoto?.image){
