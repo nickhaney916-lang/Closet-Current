@@ -446,6 +446,11 @@ function boardPhotoSourceNotice88(item){
   'Owner-reviewed photo · independent garment outline unverified':
   'Photo reference only · garment outline unverified';
 }
+function boardPhotoSourceAria88(item){
+ return boardHasMatchingOwnerSourceReview88(item)?
+  'Owner-reviewed photo; physical garment outline not independently verified':
+  'Photo reference only; individual garment outline unverified';
+}
 function openBoardPicker(slotId){
  // A picker can remain queued or be retained by an old card after sign-out.
  // Its clothing thumbnails belong to the exact session that opened it.
@@ -461,7 +466,7 @@ function openBoardPicker(slotId){
    b.classList.add('source-unverified');
    b.append(node('small',boardPhotoSourceNotice88(item)));
    b.setAttribute('aria-label',(item.name||'Closet piece')+
-    ' · '+boardPhotoSourceNotice88(item)+'. Select for 2D outfit');
+    ' · '+boardPhotoSourceAria88(item)+'. Select for 2D outfit');
   }
   b.onclick=()=>{
    if(!pickerLease.current()||b.isConnected===false||!items.includes(item))return;
@@ -492,7 +497,7 @@ function renderOutfitBoard(){
   // verified physical garment. Keep the normal native Outfit Builder useful,
   // but make the 2D source-only limitation visible without opening research UI.
   const unverifiedPhysicalUnit=boardPhotoRequiresUnitReview(item);
-  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(unverifiedPhysicalUnit?' source-unverified':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+(unverifiedPhysicalUnit?' · '+boardPhotoSourceNotice88(item):'')+'. Choose a piece');
+  const b=node('button',null,'board-slot board-slot-'+slot.id+(item?' owned':retainedId?' missing':idea?' planned':' blank')+(needsReview?' review':'')+(unverifiedPhysicalUnit?' source-unverified':'')+(covered?' covered':'')+(dress&&slot.id==='top'?' dress':''));b.type='button';b.disabled=covered;b.setAttribute('aria-label',covered?'Bottoms covered by your dress':slot.label+': '+(needsReview?'Category needs review · ':'')+(item?.name||(retainedId?'Missing original '+retainedId:idea?idea.color+' '+idea.type:'empty'))+(unverifiedPhysicalUnit?' · '+boardPhotoSourceAria88(item):'')+'. Choose a piece');
   b.append(node('span',slot.label,'slot-label'));
   if(item){const im=node('img');im.src=item.image;im.alt=item.name;b.append(im,node('span',item.name||item.itemType,'slot-name'));
    if(unverifiedPhysicalUnit)b.append(node('small',boardPhotoSourceNotice88(item)));
