@@ -84,6 +84,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    // Genuine user acknowledgement with consistent owner/receipts creates exactly one unit.
    await page.evaluate(()=>window.setup846('paired_confirmed','owner-A',false));
    assert.equal(await page.getByAltText(/Second original garment region confirmed/).count(),1);
+   assert.equal(await page.getByAltText(/Original complete outfit photo/).count(),1,'the owner sees original source next to crop');
    await approve();await submit(2);
    // SHA-256 is asynchronous. Wait for actual source-bound IDB arrival, not
    // merely for synchronous form dispatch to return.
@@ -97,7 +98,8 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
      pairedOwner:items[0]?.shoePair?.confirmedByOwner,
      keptCompanion:Boolean(items[0]?.shoePair?.companion?.image),
      status:items[0]?.reconciliation70Status,
-     secondMask:items[0]?.shoePair?.companion?.reconciliation70?.maskSha256
+     secondMask:items[0]?.shoePair?.companion?.reconciliation70?.maskSha256,
+     ownerReceipt:items[0]?.ownerSourceReview88
    }));
    assert.equal(result.saved,1);
    assert.equal(result.finalClosetItems,1);
@@ -105,11 +107,23 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.equal(result.keptCompanion,true);
    assert.equal(result.status,'paired_confirmed');
    assert.match(result.secondMask,/^[a-f0-9]{64}$/);
+   assert.equal(result.ownerReceipt?.schema,'p88-owner-source-review/v1');
+   assert.equal(result.ownerReceipt?.ownerId,'owner-A');
+   assert.equal(result.ownerReceipt?.sourceId,'outfit-source');
+   assert.equal(result.ownerReceipt?.originalPhotoSha256,originalHash88);
+   assert.equal(result.ownerReceipt?.companionMaskSha256,result.secondMask);
+   assert.equal(result.ownerReceipt?.category,'Shoes');
+   assert.equal(result.ownerReceipt?.physicalUnitDecision,'paired_confirmed');
+   assert.equal(result.ownerReceipt?.ownerReviewed,true);
+   assert.equal(result.ownerReceipt?.sourcePhotoOriginal,true);
+   assert.equal(result.ownerReceipt?.independentPhysicalItemVerified,false);
+   assert.equal(result.ownerReceipt?.singleGarmentVerified,false);
+   assert.equal(result.ownerReceipt?.threeDReady,false);
    assert.deepEqual(errors,[]);
    console.log('M1_P846_BROWSER_OWNER_UNIT_REVIEW',JSON.stringify({
     browser:browserName,width,unresolvedBlocked:true,crossOwnerBlocked:true,
     companionDuplicateBlocked:true,pairedOneClosetUnit:true,sourceMasksRetained:true,
-    repeatedSubmitBlocked:true,pageErrors:0}));
+    repeatedSubmitBlocked:true,originalSourceShown:true,unpromotedOwnerReceipt:true,pageErrors:0}));
    await page.close();
   }
  }finally{await browser.close();}
