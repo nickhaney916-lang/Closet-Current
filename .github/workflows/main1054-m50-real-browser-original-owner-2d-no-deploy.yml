@@ -73,6 +73,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          # Playwright Docker checkout may be owned by a different UID; the
+          # original M47 native CI also explicitly trusts its own checkout.
+          # Without this, git reports "Not a git repository" (exit 129).
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           DIR="benchmark/main50-licensed-original-owner-2d/${{ matrix.engine }}"
           test -f "$DIR/M50-real-browser-original-owner-2d-NOT-RELEASE.json"
           for width in 320 390 430; do
