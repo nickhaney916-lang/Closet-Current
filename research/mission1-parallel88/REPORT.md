@@ -549,3 +549,84 @@ This is independent of any model confidence score or whether a category bounding
 **Source-executed tests `5b9e9db93961db7a01ccde1dcc91b78bb8bfd002`:** Five new tests cover the nonexperimental default path: old-owner model result denied after A→B, replaced same-ID session denied, late signed-in account prevented from receiving logged-out source JPEG after decoding, old-session retry denied, and unchanged owner retry works with no automatic closet write. Existing synthetic opt-in source/mask/physical-pair and desktop tests remain in CI. The prior separate commit `f9e49bf4dfa64c04153a4c8aa980b002c394ec5d` extends truthful missed-clothing/accessory warnings to default scan and Review; tests `a9c25186398dae519be21c2f12da7173315b07b9` cover one-region and zero-region scans. All remain in the same approved 17-path isolated branch scope.
 
 **Honest acceptance status:** This correction addresses code-demonstrable stale-session data flow; it is NOT a replacement for *two genuine users on independent authenticated devices*, hosted Supabase tenant isolation, RLS, real ONNX/SegFormer inference under sustained WebKit, or prospective blind subtype/instance/color accuracy. The output warning does NOT increase model recall. **Exact final-head CI must complete before calling new source/tests green.** No deploy/merge, no private family data accessed, Family Alpha #255 OPEN/HOLD.
+
+
+## P88 NOVEMBER 15 SOURCE-REVIEW AND DEFAULT SAVE HARDENING — EXACT-HEAD CI PENDING
+
+**Change scope:** existing draft PR #1175, same existing 17-file allowlist, no sibling
+branches, no new PR, no hosted Supabase, deploy, merge, production/staging or private
+owner/photo access. The starting exact head was
+`640de76cbefad4e325685dc5195e8c3eee2861c4`.
+This section records source implementation and synthetic regression assertions;
+**do not claim the latest exact-head Node, browser, or model CI PASS until a
+completed exact-commit job has been inspected**.
+
+1. **Normal single-photo review save source/owner race fixed in code:**
+   `public/app.js` `reviewedSaveLease88` now freezes the exact signed
+   `window.closetAuth.user` object, owner-scoped IndexedDB, pending garment
+   object, original/crop photos, source ID, segment hints and crop bounds.
+   `savePiece` rejects a changed session (including same-ID replacement),
+   replaced photo/crop and moved draft **inside** the queued write, after
+   `cloud.beforeWrite()`. It computes remaining drafts at commit time
+   instead of writing a snapshot captured before the queue; it does not wipe
+   a concurrently added garment. After that single atomic items+draft
+   transaction, Adjust no longer makes a redundant generic `persistDraft()`
+   call that could run after another account becomes active. Source-bound
+   P70 writes retain their existing separately checked identity and original
+   SHA verifier. No changes to recognition weights or confidence cutoffs.
+2. **Explicit original-photo physical-unit review evidence:**
+   For P70 source-bound captures the native Adjust form now shows **both**
+   the complete original outfit JPEG and isolated garment crop; its owner
+   checkbox explicitly includes checking the physical garment/shoe-pair
+   grouping, category, type (or Unknown), and color. Only after the actual
+   original JPEG SHA rehash matches its worker source SHA, the reviewed
+   private saved record receives nested `ownerSourceReview88`:
+   `schema: p88-owner-source-review/v1`, exact owner ID, saved item ID,
+   `outfitSourceId`, verified original JPEG SHA, selected source mask SHA,
+   optional companion mask SHA, crop bounds, reviewed category/type/color,
+   physical grouping status, `ownerReviewed:true`,
+   `sourcePhotoOriginal:true`. The receipt is checked again inside the
+   queued owner-scoped transaction. Crop bounds and segmentation hint
+   revisions are now frozen there too.
+3. **Critical non-promotion fields:** The new nested owner receipt
+   deliberately has `independentPhysicalItemVerified:false`,
+   `singleGarmentVerified:false` and `threeDReady:false`.
+   These are **NOT** optional assertions of successful model accuracy or
+   the M4 `verified-single` admission contract. Even a real-model
+   segmentation mask SHA represents the selected model pixels, not
+   independently proven one-physical-garment identity. The owner confirmation
+   is genuine only when an actual owner conducts it on actual photos; browser
+   fixtures remain simulated. Unresolved fragments/Unknown source groups
+   continue to require recapture and cannot be upgraded by flags.
+4. **Source-executed regression work added, not yet accepted as pass:**
+   `tests/mission1-parallel88-owner-mask-lease.test.mjs` asserts normal
+   reviewed save denial on A→B, same-ID session replacement, changed
+   segmentation evidence and crop substitution while cloud preflight waits,
+   and preservation of a concurrently added draft. The actual native Adjust
+   Chromium/WebKit browser harness
+   `scripts/test-m1-owner-pair-admission-846.mjs` asserts the original
+   full JPEG is visible and the saved synthetic-owner pair receipt preserves
+   source SHA/second mask/category/status yet has *no* certified
+   single-item/3D permissions.
+5. **Reproduction (no-deploy checkout on this branch):**
+   `node --test tests/mission1-parallel88-owner-mask-lease.test.mjs`;
+   `node scripts/test-m1-owner-pair-admission-846.mjs`;
+   then run existing P88 focused/full Node and desktop Chromium/WebKit
+   320/390/430 CI checks. These commands are **requested verification**,
+   not claimed run receipts here.
+6. **Remaining external blocker for Mission 4:** A
+   `p88-owner-source-review/v1` receipt is a useful owner-attested
+   original/mask/crop handoff but does not certify the independently observed
+   number of physical items within the mask. Do not set M4
+   `singleGarmentVerified:true` or permit 3D without an independently
+   validated item identity or a separately approved physical-item review
+   acceptance contract. Owner-reviewed source evidence can support
+   original-JPEG 2D **only** until that gate is resolved.
+
+**Accuracy/acceptance:** No new unseen dual-human labeled original, no
+new blind subtype/color comparison, no verified real Android/iPhone or hosted
+two-owner RLS test has been obtained here. Historical previously exposed
+Fashionpedia ONNX accessory result is still **8/13 exact category boxes**,
+not a same-metric SegFormer segmentation uplift. The 65%/35%
+Mission 1 planning rubric is unchanged pending proven integrated acceptance.
+Family Alpha issue #255 stays OPEN/HOLD.
