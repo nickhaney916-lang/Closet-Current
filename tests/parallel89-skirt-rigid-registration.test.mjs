@@ -48,7 +48,10 @@ function run(x,mode='reduce',overrides={}){
    let pairs=['0|45','1|58','2|72','3|99'];
    if(changed&&mode==='quarter-new'&&['blend-25','blend-75'].includes(activePose)&&dz>.01)
     pairs=['0|45','1|58','2|72','3|99','5|108'];
-   else if(changed&&['reduce','quarter-new'].includes(mode)&&dz>.01)
+   else if(changed&&mode==='quarter-rank'&&dz>.01&&
+    ['blend-25','blend-75'].includes(activePose)&&dz<.030)
+    pairs=['0|45','1|58','2|72'];
+   else if(changed&&['reduce','quarter-new','quarter-rank'].includes(mode)&&dz>.01)
     pairs=['0|45','1|58'];
    else if(changed&&mode==='introduce')pairs=['0|45','1|58','3|99','5|108'];
    else if(changed&&mode==='depth')pairs=['0|45'];
@@ -65,12 +68,24 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  const x=fixture(),row=run(x);
  assert.equal(row.schema,'P89-genuine-skirt-photo-rigid-registration-AB/v1');
  assert.equal(row.status,'RESEARCH_REGISTRATION_REDUCED_STATIC_PAIRS_NOT_WEARABLE');
- assert.equal(row.trials.length,7);
- assert.deepEqual(row.trials.map(x=>x.name),['front-15mm','front-30mm','front-45mm','front-60mm','back-15mm','up-20mm','down-20mm']);
+ assert.equal(row.trials.length,11);
+ assert.deepEqual(row.trials.map(x=>x.name),[
+  'front-15mm','front-30mm','front-35mm','front-40mm',
+  'front-45mm','front-50mm','front-55mm','front-60mm',
+  'back-15mm','up-20mm','down-20mm'
+ ]);
  assert.equal(row.maximumExploratoryOriginalWaistForwardRegistrationMeters,.06);
  assert.equal(row.photoRegistrationCandidatesRequireIndependentPhotoFidelityReview,true);
  assert.equal(row.bestResearchOnly.name,'front-15mm');
  assert.equal(row.candidateMustPassAllFiveSourcePoses,true);
+ assert.equal(row.allCandidateOriginalAndTrialFivePoseBVHSamplesObserved,true);
+ assert.equal(row.bestResearchCandidateSelectedByFivePosePairSumThenMinimumDisplacement,true);
+ assert.equal(row.originalFivePoseStrictCrossingPairSum,20);
+ assert.equal(row.bestResearchOnly.originalFivePoseStrictCrossingPairSum,20);
+ assert.equal(row.bestResearchOnly.trialFivePoseStrictCrossingPairSum,10);
+ assert.equal(row.bestResearchOnly.introducedFivePoseSourceFacePairIDs,0);
+ assert.ok(row.trials.every(t=>t.intermediatePoseContactChecks.length===2));
+ assert.equal(row.bestResearchOnly.displacementMeters,.015);
  assert.deepEqual(row.actualIntermediatePoseNamesChecked,['blend-25','blend-75']);
  assert.equal(row.originalIntermediatePoseStrictBodyCrossingPairs.length,2);
  assert.equal(row.bestResearchOnly.intermediatePoseContactChecks.length,2);
@@ -95,6 +110,23 @@ test('test-only photo-skirt rigid registration can find a reduction but never au
  assert.deepEqual(x.mesh.geometry.getAttribute('position').array,x.photoPositions);
  assert.deepEqual(x.mesh.geometry.getAttribute('uv').array,x.sourceUV);
  assert.deepEqual(x.mesh.geometry.getAttribute('skinWeight').array,x.weight);
+});
+test('five original poses choose minimum displaced garment with best total BVH score',()=>{
+ const x=fixture(),r=run(x,'quarter-rank');
+ assert.equal(r.status,'RESEARCH_REGISTRATION_REDUCED_STATIC_PAIRS_NOT_WEARABLE');
+ // Every positive frontal candidate has identical three-pose contact totals,
+ // but 15mm has more ORIGINAL quarter-pose body/skirt contacts than 30mm.
+ assert.equal(r.trials[0].trialThreePoseStrictCrossingPairSum,
+  r.trials[1].trialThreePoseStrictCrossingPairSum);
+ assert.ok(r.trials[0].trialFivePoseStrictCrossingPairSum>
+  r.trials[1].trialFivePoseStrictCrossingPairSum);
+ assert.equal(r.bestResearchOnly.name,'front-30mm');
+ assert.equal(r.bestResearchOnly.trialFivePoseStrictCrossingPairSum,10);
+ assert.equal(r.bestResearchOnly.originalFivePoseStrictCrossingPairSum,20);
+ assert.equal(r.bestResearchOnly.consumer3DAdmitted,false);
+ assert.equal(r.releaseAuthorized,false);
+ assert.equal(x.mesh.geometry,x.original);
+ assert.deepEqual(x.mesh.geometry.getAttribute('uv').array,x.sourceUV);
 });
 test('fake gross count decrease with new exact real-body pair is a rejected registration',()=>{
  const x=fixture(),row=run(x,'introduce');
