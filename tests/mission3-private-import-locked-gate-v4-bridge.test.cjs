@@ -306,6 +306,25 @@ test('default legacy import revalidates exact login after asynchronous original 
  assert.deepEqual(f.events,[]);
 });
 
+test('default atomic importer retains historical 100-character garment ID normalization',async()=>{
+ const f=legacyFixture(),longId='l'.repeat(100)+'-legacy-overflow';
+ await f.run(legacyRowsFile([{id:longId,category:'Tops',
+  image:'data:image/jpeg;base64,/9j/2Q=='}],null));
+ assert.equal(f.counts.legacyWrites,1,JSON.stringify(f.events));
+ assert.equal(f.ctx.items.some(x=>x.id==='l'.repeat(100)),true);
+ assert.equal(f.ctx.items.some(x=>x.id===longId),false);
+ assert.ok(f.events.some(x=>x.includes('imported atomically.')));
+});
+test('default atomic importer does not normalize a conflicting long ID into an existing second row',async()=>{
+ const f=legacyFixture(),common='q'.repeat(100);
+ await f.run(legacyRowsFile([
+  {id:common+'-first',image:'data:image/jpeg;base64,/9j/2Q=='},
+  {id:common+'-second',image:'data:image/jpeg;base64,/9j/2Q=='}
+ ],null));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('duplicate garment IDs')));
+});
+
 const simpleLegacyRow={id:'safe-source',image:'data:image/jpeg;base64,/9j/2Q==',category:'Tops'};
 test('legacy import refuses foreign owner claim nested inside original photo metadata before write',async()=>{
  const f=legacyFixture();
