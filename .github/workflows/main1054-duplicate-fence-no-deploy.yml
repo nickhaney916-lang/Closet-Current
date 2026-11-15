@@ -1,0 +1,25 @@
+name: MAIN1054 duplicate JPEG write fence source regression NO DEPLOY
+on:
+  pull_request:
+    paths:
+      - 'public/app.js'
+      - 'tests/main1054-saved-photo-duplicate-fence.test.mjs'
+      - '.github/workflows/main1054-duplicate-fence-no-deploy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-regression-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Parse application and run focused source invariants
+        run: |
+          node --check public/app.js
+          node --test tests/main1054-saved-photo-duplicate-fence.test.mjs
