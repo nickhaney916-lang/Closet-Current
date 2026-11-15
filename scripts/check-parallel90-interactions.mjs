@@ -132,6 +132,50 @@ export async function checkViewer90(page,width,engine){
     realTouchscreenTap:true,sourceIdentitySame:true,resourceCountsSame:true,
     physicalPhone:false};
   }
+  // M18: Give small-screen owners an immediate, read-only route back to
+  // the SAME authenticated original saved photos, never a recreated/faked mesh.
+  let originalPhotosShortcut18=null;
+  if(width===390){
+   await page.locator('#outfit3D01Reset90').click();await settle();
+   const previous=await state();
+   const photoCount=await page.locator('#outfit3D01Photos img').count();
+   assert.ok(photoCount>=1,'actual original saved photos must be present');
+   const button=page.locator('#outfit3D01Originals90');
+   const bounds=await button.boundingBox();
+   assert.ok(bounds&&bounds.width>=43&&bounds.height>=43,
+    'original-photo fallback shortcut must be accessible by touch');
+   await button.click();
+   const focus=await page.locator('#outfit3D01Photos').evaluate(n=>({
+    focused:document.activeElement===n,
+    role:n.getAttribute('role'),
+    label:n.getAttribute('aria-label'),
+    images:n.querySelectorAll('img').length
+   }));
+   assert.equal(focus.focused,true,'fallback button must focus real existing original photo gallery');
+   assert.equal(focus.role,'region');
+   assert.equal(focus.label,'Original saved clothing photographs');
+   assert.equal(focus.images,photoCount,'shortcut must neither add nor remove original photos');
+   const genuineFirstPhotoHash=await page.locator('#outfit3D01Photos img').first().evaluate(async img=>{
+    const data=await (await fetch(img.src)).arrayBuffer();
+    return [...new Uint8Array(await crypto.subtle.digest('SHA-256',data))]
+     .map(n=>n.toString(16).padStart(2,'0')).join('');
+   });
+   assert.equal(genuineFirstPhotoHash,previous.garmentSources90.dress,
+    'focused original image must retain the attested selected source SHA');
+   const afterShortcut=await state();
+   assert.equal(afterShortcut.bones,163);
+   assert.deepEqual(afterShortcut.garmentSources90,previous.garmentSources90);
+   assert.deepEqual(afterShortcut.resources90.geometries,previous.resources90.geometries);
+   assert.deepEqual(afterShortcut.resources90.textures,previous.resources90.textures);
+   assert.ok(Math.abs(afterShortcut.camera90.angle-previous.camera90.angle)<.01,
+    'opening original saved photographs cannot rotate 3D behind the user');
+   assert.equal(await page.evaluate(()=>window.nativeLossless04Bridge.status().active),true);
+   originalPhotosShortcut18={figure,engine,cssWidth:width,
+    readOnlyOriginalGalleryFocused:true,originalPhotoSHAReattested:true,
+    photoCountUnchanged:true,sourceAndResourcesUnchanged:true,
+    owner2DSessionRetained:true,physicalPhone:false};
+   await page.locator('#outfit3D01Canvas').scrollIntoViewIfNeeded();
+  }
   // M17: 24 genuine 15-degree accessible controls complete one 360 turn.
   // Validate anatomical camera return, source-photo identity and GPU counts
   // in BOTH engines/rigs; a 360 claim cannot rest on a partial 16-click spin.
@@ -182,7 +226,7 @@ export async function checkViewer90(page,width,engine){
   assert.equal(final.resources90.textures,baseline.resources90.textures);
   // Camera work does not load new garments or textures (renderer metrics
   // are captured through the existing authenticated read-only panel).
-  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
+  samples.push({figure,width,engine,before,after,touchButtons90,touchSwipe16,fullCycle17,originalPhotosShortcut18,finalCamera:final.camera90,buttonRoundTripMs:durations,baselineBones:baseline.bones,finalBones:final.bones,baselineResources:baseline.resources90,finalResources:final.resources90});
  }
  // M15: end the original, signed-in, source-attested WebGL session while
  // an ACTUAL browser pointer is held down on the anatomical viewer.
