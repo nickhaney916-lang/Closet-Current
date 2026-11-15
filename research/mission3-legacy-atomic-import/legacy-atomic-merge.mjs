@@ -127,7 +127,12 @@ export async function prepareLegacyAtomicM3({
  for(const row of incoming){
   const saved=allItems.get(row.id);
   if(!saved)continue;
-  if((saved.originalPhoto?.image&&
+  // Older saved pieces may have only a preview JPEG, with no original-photo
+  // receipt. That image is then the sole available source identity. Never
+  // silently replace its pixels under the same saved ID during a merge;
+  // require separate owner review rather than rewriting an existing outfit.
+  if((!saved.originalPhoto?.image&&saved.image!==row.image)||
+     (saved.originalPhoto?.image&&
        saved.originalPhoto.image!==row.originalPhoto?.image)||
      (saved.originalPhoto?.sha256&&
        saved.originalPhoto.sha256!==row.originalPhoto?.sha256)||
