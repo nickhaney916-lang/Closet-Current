@@ -2,6 +2,18 @@
 
 **Research-only; Family Alpha #255 OPEN/HOLD. DRAFT, unmerged, undeployed.** No production/staging, hosted Supabase, real photos, or private owner data accessed.
 
+## CURRENT MISSION 3 STATE — 2026-11-15 (supersedes historical interim notes below)
+
+- **Default built PWA v1–v3 import is now a single owner-private IndexedDB items+state atomic transaction**, including garment rows, inspiration, Outfit Builder current/saved selections and cloud dirty revision. It is **not** the older three-write partial restore described in historical checkpoints below. The exact built scoped-PWA dependency is packaged and service-worker cached; offline synthetic Chromium and unreachable-host WebKit tests previously passed at immutable commit `1785fdb57b2fa9b7590a32d5d2ebd71451007b84` (CI #43758330520). This is neither physical-device nor hosted-account evidence.
+- Before any transaction, exact-owner lease and private UI gate, full-tree foreign-owner/unsafe-key checks, item/photo/receipt digest checks, board-reference checks and existing saved-outfit conflict checks must pass; prepared state is fingerprinted and rechecked in a single readwrite transaction. A conflicting import aborts without partial garment/board/cloud writes.
+- Existing same-ID verified originals, SHA receipts, owner source-review records and source piece keys cannot be silently overwritten or downgraded. In addition, an existing older garment **without a separate camera original** now refuses a changed JPEG preview under the same ID; a verified camera original remains fixed while its legitimate derivative preview can change. Direct module tests assert both boundaries.
+- Unsaved Outfit Builder edits are now guarded even for a clothing-only legacy backup **without** an `outfitBoard` field; the live draft is checked before preview and again after owner consent, before commit. Source-executed tests cover dirty draft before and after confirmation plus a clean import positive control.
+- **Exact-head acceptance is required.** Historical green receipt #43761307995 applies to prior immutable HEAD `d4bc35faddd3f4104f23bd2e6ac98f0242faf367` only. A subsequent synthetic regression fixture initially used an invalid JPEG data URL, causing CI #43766095105 to fail its newly added test; the fixture was fixed and new compatibility/unsaved-draft regressions were added. The latest head's full dedicated no-deploy CI must finish before any claim of green acceptance.
+- Separate release evidence preflight DRAFT PR #1136 remains on a divergent Mission 3 parent; its synthetic checks **do not prove** the changes on this PR are reconciled into one released application. No new PR, cross-branch merge or deploy was performed.
+- Remaining **BLOCKED** release acceptance: physical Android Chrome and iPhone Safari, independently owner-authorized hosted four-account Auth/Postgres/Storage RLS and full backup/restore, genuine source-photo capture/recognition→private saved outfit→3D-gated/2D fallback integration, complete cross-mission exact-head acceptance, and an explicit Family Alpha approval. **#255 stays OPEN/HOLD.** Planning-only Mission 3 estimate 65% complete / 35% remaining, not a verified release metric.
+
+### Historical development notes follow (interim statements may be superseded)
+
 ## Starting point
 
 Exact source parent: PR #1126 at `44c4a30012478f63f8a7d6d66ae20f2d93af1695` (separately verified two-job no-deploy CI #43549672864). This branch changes only the import event path in `public/app.js`, a source-executed synthetic regression test, this report and a no-deploy workflow. All other mission branches remain independent.
