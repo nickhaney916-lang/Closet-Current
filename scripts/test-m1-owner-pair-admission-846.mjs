@@ -89,7 +89,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    assert.equal(await page.evaluate(()=>isSecureContext&&!!crypto.subtle),true,'real browser SHA-256 must be available');
    for(const s of [taxonomy,details,harness,source])await page.addScriptTag({content:s});
    const approve=async()=>page.getByRole('checkbox',{name:/I checked the clothing photo/}).check();
-   const submit=async(times=1)=>page.locator('dialog form').evaluate((form,n)=>{
+   const submit=async(times=1)=>page.locator('dialog[open] form').evaluate((form,n)=>{
     for(let i=0;i<n;i++)form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
    },times);
    // Unsafe unresolved unit: reviewed category/color alone cannot admit one of two shoe regions.
@@ -182,7 +182,7 @@ for(const [browserName,engine] of Object.entries({chromium,webkit})){
    // alone are not distinct physical-garment evidence.
    await page.evaluate(()=>adjustPhoto(batch[0]));
    assert.equal(await page.getByAltText(/Already saved photograph exactly matching/).count(),1);
-   const savedPreview=page.locator('dialog');
+   const savedPreview=page.locator('dialog[open]');
    await savedPreview.getByLabel('Main category').selectOption('Tops');
    await savedPreview.getByLabel('Color').fill('Blue');
    await approve();
