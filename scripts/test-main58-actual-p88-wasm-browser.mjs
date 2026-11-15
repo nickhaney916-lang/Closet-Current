@@ -504,7 +504,7 @@ try{
  assert.deepEqual(await ownerSnapshot(),initial,
   'native v4 cancellation changed genuine-model session private source');
  stage='same-real-worker-session-native-v4-atomic-restore';
- await page.evaluate(async id=>{
+ const editOwnerSourceForRestore=()=>page.evaluate(async id=>{
   const tx=db.transaction('items','readwrite'),store=tx.objectStore('items');
   const record=await new Promise((resolve,reject)=>{
    const req=store.get(id);
@@ -518,6 +518,49 @@ try{
   });
   window.dispatchEvent(new Event('closet:style-owned-inventory-committed'));
  },handoff.savedItemId);
+ let recoveredNavigationM77=false;
+ try{await editOwnerSourceForRestore();}
+ catch(error){
+  // M77: Chromium can finish the real, byte-verified private V4 export,
+  // then replace its document during the next IndexedDB mutation. Do not
+  // silently ignore this: recovery is permitted only for an OBSERVED same-
+  // path navigation, followed by a fresh native signed-owner, original
+  // source and exact private outfit verification. Any other error fails.
+  if(!/Execution context was destroyed|because of a navigation/i.test(String(error)))
+   throw error;
+  await page.waitForLoadState('domcontentloaded',{timeout:30000});
+  if(!mainFrameNavigationsM69.some(n=>
+    n.stage==='same-real-worker-session-native-lossless-v4-export'&&
+    n.path==='/public/index.html'))
+   throw error;
+  await page.waitForFunction(()=>window.closetAuth?.user?.id==='m58-A'&&
+   db?.name==='closet-current-user-m58-A'&&
+   document.getElementById('appShell')?.hidden===false&&
+   window.nativeLossless04Bridge?.status()?.active===true,
+   null,{timeout:30000});
+  const afterReload=await ownerSnapshot();
+  assert.equal(afterReload.owner,initial.owner,'navigation changed original owner');
+  assert.equal(afterReload.items.length,1,'navigation lost the reviewed garment');
+  assert.equal(afterReload.items[0].id,handoff.savedItemId);
+  assert.equal(afterReload.items[0].sourceSHA256,sha);
+  assert.equal(afterReload.items[0].originalSHA,sha);
+  assert.equal(afterReload.top,handoff.savedItemId);
+  assert.equal(afterReload.savedOutfitCount,initial.savedOutfitCount);
+  assert.equal(afterReload.items[0].singleGarmentVerified,false);
+  assert.equal(afterReload.items[0].threeDReady,false);
+  assert.ok([initial.items[0].color,'Disposable synthetic edit']
+   .includes(afterReload.items[0].color),
+   'navigation changed private garment unexpectedly');
+  if(afterReload.items[0].color==='Disposable synthetic edit')
+   await page.evaluate(()=>window.dispatchEvent(
+    new Event('closet:style-owned-inventory-committed')));
+  else await editOwnerSourceForRestore();
+  recoveredNavigationM77=true;
+  console.log('M77_ORIGINAL_SOURCE_RESTORED_AFTER_UNEXPECTED_NAVIGATION',
+   JSON.stringify({engine,ownerRetained:true,originalSHA256:sha,
+    savedOutfitRetained:true,realModelRetained:false,
+    recoverableDocumentNavigation:true,physicalPhone:false,release:'HOLD'}));
+ }
  assert.equal((await ownerSnapshot()).items[0].color,'Disposable synthetic edit');
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0);
  const restoredNotice=await submitBackup(v4,true);
