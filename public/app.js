@@ -1327,11 +1327,40 @@ function restoreMission1Draft88(item){
  // may resume local inference; already owner-edited photos never auto-repeat.
  return !item.localAnalyzed&&!item.userAdjusted;
 }
-const closetReady=(async()=>{await window.closetAuth.ready;try{
- db=await openDB();items=(await readAll()).map(normalizeClothing);
- batch=(await readDraft()).map(normalizeClothing);
- if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);
- }catch{message('Browser storage is unavailable. Use a regular browser to save your closet.');}
+// Never let an asynchronously restored A-account private photo or closet
+// list appear inside B's replacement session. OpenDB, readAll and readDraft
+// each await a user-owned IndexedDB operation; validate the exact signed user
+// object and database after EVERY await, before changing visible app state.
+// Review restoration itself remains owner-only and cannot auto-admit clothing.
+const closetReady=(async()=>{
+ await window.closetAuth.ready;
+ const owner=window.closetAuth?.user,ownerId=owner?.id;
+ const live=()=>Boolean(ownerId&&window.closetAuth?.user===owner&&owner.id===ownerId);
+ let ownerDb=null;
+ const revoked=()=>{
+  if(db===ownerDb)db=undefined;
+  try{ownerDb?.close?.();}catch{}
+ };
+ if(!live())return;
+ try{
+  ownerDb=await openDB();
+  if(!live()){revoked();return;}
+  if(ownerDb?.name!=='closet-current-user-'+ownerId)throw Error('P88_WRONG_OWNER_BOOT_DB');
+  db=ownerDb;
+  const loadedItems=await readAll();
+  if(!live()||db!==ownerDb){revoked();return;}
+  const loadedBatch=await readDraft();
+  if(!live()||db!==ownerDb){revoked();return;}
+  // Atomic in-memory reveal: both reads must belong to the same still-live
+  // signed user, not a mixed A wardrobe/B unfinished photo capture.
+  items=loadedItems.map(normalizeClothing);
+  batch=loadedBatch.map(normalizeClothing);
+  if(batch.length)message(`${batch.length} unfinished photos are waiting in More → Photo results.`);
+ }catch{
+  if(!live()||db!==ownerDb){revoked();return;}
+  message('Browser storage is unavailable. Use a regular browser to save your closet.');
+ }
+ if(!live()||db!==ownerDb){revoked();return;}
  const toResume=batch.filter(restoreMission1Draft88);
  render();for(const item of toResume)queueAutomatic(item);
 })();
