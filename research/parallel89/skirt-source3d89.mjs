@@ -103,20 +103,30 @@ export async function attestActualSkirt89({originalBytes,cutoutBytes,lock,work47
     work47.decision!=='REVIEW'||work47.hasCutout!==true)
    throw Error('provisional-skirt-mask-needs-review');
   if(!(originalBytes instanceof Uint8Array)||originalBytes.length<1000||
-    originalBytes[0]!==255||originalBytes[1]!==216||originalBytes[2]!==255||
-    await sha(originalBytes)!==SKIRT_SOURCE89.originalSHA256)
+    originalBytes.length>24_000_000||
+    originalBytes[0]!==255||originalBytes[1]!==216||originalBytes[2]!==255)
+   throw Error('authentic-original-skirt-jpeg-sha-required');
+  // Snapshot before the first async digest. Mutable caller-backed arrays
+  // cannot change the source being measured while verification yields.
+  const originalSnapshot=Uint8Array.from(originalBytes);
+  if(await sha(originalSnapshot)!==SKIRT_SOURCE89.originalSHA256)
    throw Error('authentic-original-skirt-jpeg-sha-required');
   if(!(cutoutBytes instanceof Uint8Array)||cutoutBytes.length<300||
-    cutoutBytes.slice(0,8).some((v,i)=>v!==[137,80,78,71,13,10,26,10][i])||
-    await sha(cutoutBytes)!==work47.cutoutSHA256)
+    cutoutBytes.length>24_000_000||
+    cutoutBytes.slice(0,8).some((v,i)=>v!==[137,80,78,71,13,10,26,10][i]))
    throw Error('exact-source-skirt-review-alpha-sha-required');
-  // Decode only AFTER actual source PNG bytes passed immutable SHA/rights.
-  const trustedAsset=await decodeAttestedSourceRaster89(cutoutBytes);
+  const cutoutSnapshot=Uint8Array.from(cutoutBytes);
+  if(await sha(cutoutSnapshot)!==work47.cutoutSHA256)
+   throw Error('exact-source-skirt-review-alpha-sha-required');
+  // Geometry and material are derived from the same immutable *snapshot*
+  // that passed SHA, never a caller buffer that can change after await.
+  const trustedAsset=await decodeAttestedSourceRaster89(cutoutSnapshot);
   const receipt=Object.freeze({schema:'P89-authentic-independent-source-skirt-photo-and-review-mask/v1',
    status:'SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED',
    sourceId:SKIRT_SOURCE89.id,originalSHA256:SKIRT_SOURCE89.originalSHA256,
-   cutoutSHA256:work47.cutoutSHA256,originalBytes:originalBytes.length,
+   cutoutSHA256:work47.cutoutSHA256,originalBytes:originalSnapshot.length,
    visibleRGBOriginalUntouched:true,alphaProposalStatus:'REVIEW',
+   immutableVerifiedInputSnapshotUsed:true,
    photographSource:SKIRT_SOURCE89.photograph,license:SKIRT_SOURCE89.license,
    actual163BoneSkirtMeshFitted:false,sourceBacksideObserved:false,
    releaseAuthorized:false,familyAlpha:'HOLD'});
@@ -339,6 +349,7 @@ export function buildOriginalPhotoSkirtProposal89({root,receipt,outline,
    bodyPenetrationUnmeasured:true,clothDrapeDynamics:false,
    sourceRGBADataTextureBoundToFrontOnly:true,
    sourceRGBAWasDecodedFromExactAttestedCutoutPNG:true,
+   sourceInputBytesSnapshottedBeforeAsyncVerification:true,
    callerSuppliedTexturePixelsAreNotTrusted:true,
    originalMaskShapeDerivedFromExactAttestedCutoutPNG:true,
    callerSuppliedSilhouetteIsNotTrusted:true,
