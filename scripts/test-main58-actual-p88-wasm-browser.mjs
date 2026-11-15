@@ -326,14 +326,24 @@ try{
   'M59 gallery did not display exact rights-locked original JPEG');
  assert.equal(await page.locator('#outfit3D01Canvas').count(),0);
  // The original-photo gallery must immediately revoke on a native board edit.
- const previousOccasion=await page.evaluate(()=>currentBoard.occasion);
- await page.evaluate(()=>{
-  currentBoard.occasion=currentBoard.occasion==='Dinner'?'Work':'Dinner';
-  window.dispatchEvent(new Event('focus'));
- });
+ const previousOccasion=await page.locator('#boardOccasion').inputValue();
+ const changedOccasion=previousOccasion==='Dinner'?'Work':'Dinner';
+ // In nativeLossless04 mode the authoritative board is the signed-owner
+ // controller, not an independent currentBoard JS variable. Trigger the REAL
+ // occasion-select UI and verify its state before testing photo revocation.
+ await page.locator('#boardOccasion').selectOption(changedOccasion);
+ await page.waitForFunction(value=>
+  window.nativeLossless04Bridge?.view()?.occasion===value,
+  changedOccasion,{timeout:20000});
+ await page.waitForFunction(()=>
+  document.querySelectorAll('#mission4PhotoOnly59Photos img').length===0,
+  null,{timeout:20000});
  assert.equal(await page.locator('#mission4PhotoOnly59Photos img').count(),0,
-  'stale owner source remained after outfit board mutation');
- await page.evaluate(value=>{currentBoard.occasion=value;},previousOccasion);
+  'actual owner outfit UI change retained stale reviewed original photo');
+ await page.locator('#boardOccasion').selectOption(previousOccasion);
+ await page.waitForFunction(value=>
+  window.nativeLossless04Bridge?.view()?.occasion===value,
+  previousOccasion,{timeout:20000});
  await page.locator('#mission4PhotoOnly59Open').click();
  await page.waitForFunction(()=>document.querySelectorAll(
   '#mission4PhotoOnly59Photos img').length===1,null,{timeout:30000});
