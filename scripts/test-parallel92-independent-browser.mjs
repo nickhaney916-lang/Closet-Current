@@ -14,7 +14,7 @@ const exact=git('rev-parse','HEAD'),base='878d624d8963109143c8775bb156bda4ba12a1
 assert.equal(exact,process.env.P92_CHECKOUT_SHA);
 assert.equal(git('merge-base',base,exact),base);
 const files=git('diff','--name-only',base,exact).split('\n').filter(Boolean);
-const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-parallel92-independent-browser.mjs',
+const allowed=new Set(['scripts/test-parallel92-exact-head.mjs','scripts/test-parallel92-independent-browser.mjs','scripts/test-parallel92-m51-webkit-reentry.mjs',
  '.github/workflows/parallel92-m4-exact-head-no-deploy.yml','research/parallel92-integration/LEDGER.md']);
 for(const f of files)assert.ok(allowed.has(f),'protected source change '+f);
 assert.equal(git('rev-parse','HEAD:public/app.js'),'d259d0b77a006d032699be50536adb2ebca459dd');
