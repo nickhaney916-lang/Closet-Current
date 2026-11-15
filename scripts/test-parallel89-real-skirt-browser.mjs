@@ -78,7 +78,7 @@ const results={schema:'P89-actual-independent-public-photo-skirt-native-163bone-
  originalPhoto2DShown:true,
  screenCaptureCountExpected:36,figurePoseSamplesExpected:6,
  researchOnlyRigid45ScreenCaptureCountExpected:18,
- captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],originalPhoto45FrontVisibilityReports:[],errors:[],offsite:[],
+ captures:[],poseSamples:[],diffs:[],neutralRearTrials:[],measuredBodyFitTrials:[],registrationTrials:[],waistAnchorLandmarkReports:[],research45OnlyPreviewScreenshots:[],research45OnlyPoseBVHChecks:[],research45OnlyQuarterPoseChecks:[],originalPhoto45FrontVisibilityReports:[],originalPublicUnphotographedRearVisibilityReports:[],errors:[],offsite:[],
  releaseAuthorized:false,familyAlpha:'HOLD'};
 let browser;
 async function screenshot(page,name){
@@ -406,6 +406,35 @@ try{
      assert.equal(visible.releaseAuthorized,false);
      results.originalPhoto45FrontVisibilityReports.push(visible);
     }
+    const neutralRear=await page.evaluate(()=>
+     window.nativeP89Skirt.auditOnlyUnobservedRearRenderedPixels());
+    assert.equal(neutralRear.schema,
+     'P89-actual-original-licensed-photo-visible-provisional-neutral-rear/v1');
+    assert.equal(neutralRear.status,
+     'ORIGINAL_PUBLIC_SKIRT_UNPHOTOGRAPHED_REAR_RENDERED_NOT_REAL_PHOTO');
+    assert.equal(neutralRear.avatar,avatar);
+    assert.equal(neutralRear.pose,testPose);
+    assert.equal(neutralRear.viewAngle,angle);
+    assert.equal(neutralRear.actual163BoneSourceRig,true);
+    assert.equal(neutralRear.sourceFrontPhotographedSurfaceTriangleCount,288);
+    assert.equal(neutralRear.sourceUnphotographedRearTriangleCount,288);
+    assert.ok(neutralRear.unphotographedRearMarkerPixels>=0);
+    assert.equal(neutralRear.temporaryAttributionMaterialDisposedAndRestored,true);
+    assert.equal(neutralRear.originalPhotoFrontUVAndRGBUnchanged,true);
+    assert.equal(neutralRear.originalRearPhotoObserved,false);
+    assert.equal(neutralRear.inferredBackDoesNotBecomePhotographed,true);
+    assert.equal(neutralRear.originalMaskOwnerApproved,false);
+    assert.equal(neutralRear.sourcePhoto2DFallbackRequired,true);
+    assert.equal(neutralRear.consumer3DAdmitted,false);
+    assert.equal(neutralRear.releaseAuthorized,false);
+    // In an actual 90/180 degree SOURCE native camera, the unphotographed
+    // back is visibly on screen. This is a mandatory BLOCKER, regardless
+    // of 0 strictly intersecting source body/skirt face pairs.
+    if(angle===90)assert.ok(neutralRear.unphotographedRearMarkerPixels>750,
+     'actual 90-degree original skirt side view must disclose visible unphotographed rear');
+    if(angle===180)assert.ok(neutralRear.unphotographedRearMarkerPixels>2000,
+     'actual original 180-degree rear source view must disclose substantial inferred non-photographic back');
+    results.originalPublicUnphotographedRearVisibilityReports.push(neutralRear);
     poses.push({angle,changedRGBChannelsAbove12:changedRGB});
     results.research45OnlyPreviewScreenshots.push({
      avatar,pose:testPose,angle,changedRGBChannelsAbove12:changedRGB,
@@ -486,6 +515,9 @@ try{
  assert.equal(results.research45OnlyQuarterPoseChecks.length,4);
  assert.equal(results.research45OnlyPreviewScreenshots.length,18);
  assert.equal(results.originalPhoto45FrontVisibilityReports.length,6);
+ assert.equal(results.originalPublicUnphotographedRearVisibilityReports.length,18);
+ assert.ok(results.originalPublicUnphotographedRearVisibilityReports.filter(x=>
+  x.viewAngle===180&&x.unphotographedRearMarkerPixels>2000).length===6);
  assert.equal(results.research45OnlyPoseBVHChecks.length,6);
  assert.equal(results.waistAnchorLandmarkReports.length,2);
  assert.equal(results.registrationTrials.length,2);
@@ -526,6 +558,8 @@ try{
    researchOnly45mmQuarterStepStrictPairs:results.research45OnlyQuarterPoseChecks.map(x=>x.rigid45OnlyStrictCrossingPairs),
    researchOnly45mmScreenshots:results.research45OnlyPreviewScreenshots.length,
    originalPhotoCreamFrontCoverageWitnesses:results.originalPhoto45FrontVisibilityReports.length,
+   originalUnphotographedRearSourceViewAudits:results.originalPublicUnphotographedRearVisibilityReports.length,
+   original180DegreeNeutralOnlyRearPixels:results.originalPublicUnphotographedRearVisibilityReports.filter(x=>x.viewAngle===180).map(x=>x.unphotographedRearMarkerPixels),
    originalCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.originalCenterFrontalVisibleMannequinFraction),
    rigid45mmCenterFrontalVisibleMannequinFractions:results.originalPhoto45FrontVisibilityReports.map(x=>x.rigid45mmCenterFrontalVisibleMannequinFraction),
    sourceSpine04ToSkirtRimVerticalOffsetMeters:results.waistAnchorLandmarkReports.map(x=>x.originalWaistRimAndSpine04HeightMismatchMeters),
