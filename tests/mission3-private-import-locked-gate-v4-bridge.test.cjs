@@ -642,6 +642,13 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
       // The import module has NOT yet been fetched by the app script itself.
       // Cut the network now: onChange must load it from service-worker cache.
       await ctx.setOffline(true);
+      const offlineProbe=await page.evaluate(async()=>{
+       const url=new URL('./research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs',location.href);
+       try{const res=await fetch(url.href,{cache:'no-store'});return {ok:res.ok,status:res.status,
+        swControlled:!!navigator.serviceWorker.controller,online:navigator.onLine};}
+       catch(error){return {error:String(error),swControlled:!!navigator.serviceWorker.controller,
+        online:navigator.onLine};}
+      });
       const answer=await page.evaluate(async({owner,jpeg})=>{
        const backup={format:'closet-current',version:3,
         items:[{id:'scoped-shirt',ownerId:owner,name:'Scoped shirt',category:'Tops',
@@ -667,7 +674,8 @@ if(process.env.M3_TEST_DIST_ATOMIC==='1'){
         revision:state['cloud-sync']?.localRevision,dirty:state['cloud-sync']?.dirty,
         message:document.getElementById('message').textContent};
       },{owner,jpeg});
-      assert.deepEqual(answer.photos,[{id:'scoped-shirt',owner}]);
+      assert.deepEqual(answer.photos,[{id:'scoped-shirt',owner}],
+       name+' offline SW probe '+JSON.stringify({probe:offlineProbe,answer,errors,external}));
       assert.deepEqual(answer.looks,['scoped-look']);
       assert.equal(answer.board,'scoped-shirt');
       assert.equal(answer.saved,'scoped-shirt');
