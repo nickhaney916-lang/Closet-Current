@@ -381,3 +381,30 @@ The loosened raw semantic masks lost **eight correct category matches** relative
 **Tests / execution condition:** Existing research-only JS module `exposed-threshold-probes-88.mjs` now supplies an independently testable strict COCO-to-Fashionpedia accessory whitelist, fail-closed 1:1 bounding-box IoU (no double-counting one physical bag), and exclusion of unsupported class labels. Existing mission 88 source tests validate the source score. CI's exact path allowlist expands from 13 to **14**, adding only the new research runner. A deliberately triggered real-source Actions job is required for real model evidence; until that job completes SUCCESS, **do not claim any YOLOS detection counts or accuracy**. This public dataset remains P68-exposed, not a novel photographer-disjoint sealed holdout or independent color/subtype truth. The second detector may produce **zero** useful bag detections and may be REJECTED by genuine evidence.
 
 **Remaining conditions to close Mission 1:** Rights-verified NEW originals and an independently sealed, dual-human-reviewed mask/category/subtype/color holdout (not cherry-picked once model results are seen); evaluation of fashion-trained small-object/instance recognition for the other **11/13 accessories**; mobile Android/iOS continuous real-model testing, signed hosted two-owner RLS/backup, original JPEG custody, no-silent-wrong saves, master compatible integration. **Family Alpha HOLD #255 OPEN. Mission #88 PR DRAFT/UNMERGED/UNDEPLOYED.**
+
+
+## P88 COCO ACCESSORY MODEL — VERIFIED REJECTION
+
+**Actual genuine-source result, NO simulated detection:** The pinned Apache-2.0/COCO-trained YOLOS-tiny model `Xenova/yolos-tiny` / revision `e2f9c7673f0fa61849efe2b56a0d7774779ebb9d`, CPU q4, ran on **all 16 original public Fashionpedia photos** with source JPEG SHA-256 checks and original human bounding boxes. [GitHub Actions real-model run #43663893151](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43663893151) actual public inference job **COMPLETED SUCCESS**; original public metrics/predictions artifact ID `14141112036`, `p88-exposed-validation-human-instance-metrics`, GitHub ZIP SHA-256 `6a2095ae83d1d197e28616ed491c25b60fde60e34aa2094c1cef5f0664108e60`. No originals or model asset files were uploaded to the artifact. Original public source P68 manifest SHA `b76e9890bda49c58c6adbbafb6f7dd738f4dcf604357fc56aa0b6e770ebe35bd`; original-image rights receipts were already verified and frozen for this cohort, not independently relicensed in this model run.
+
+### Bounding-box results — one-to-one category-matched IoU >=0.50
+
+| Measurement | Actual observed genuine YOLOS/COCO tiny |
+|:--|--:|
+| Original public JPEGs measured | 16 |
+| All independent Fashionpedia human accessory instances | 13 |
+| Human accessory instances expressible in COCO classes (bags) | **2/13** |
+| Other accessories omitted by COCO label ontology (watches 2, belts 4, headwear 4, glasses 1) | **11/13** |
+| Supported human bag bounding boxes correctly matched | **1/2** |
+| Total COCO accessory-class boxes proposed at research cutoff 0.10 | **9** |
+| Proposals that could not match any supported human accessory box | **8** |
+| Supported-bag bounding-box precision of proposals | **1/9 = 11.1%** |
+| Supported-bag bounding-box recall | **1/2 = 50%** |
+
+The matched bag occurred in `fashionpedia-val-18008` (1 supported GT bag, eight proposed accessory-class boxes in that photo); the second human bag in `fashionpedia-val-13339` had one proposed accessory-class box but **no** accepted IoU match. In the other 14 photographs, the COCO accessorized predictions (at cutoff 0.10) were zero. The 8/9 unmatched boxes do not prove every detection is visually fictitious—the official Fashionpedia ground truth may omit other boxes/instances; they are strictly **unmatched against the frozen annotations and category protocol**. This is **bounding-box IoU, not segmentation-mask IoU**, so it must **not** be called a direct accuracy increase relative to the native SegFormer 0/13 mask overlaps. YOLOS has no supported output classes for the other 11 human accesssories.
+
+**Decision: REJECT this COCO detector for consumer accessory recognition**. One correctly matched bag plus eight unmatched detections and an ontology that cannot represent 11 of 13 human accessories is not evidence of safe, strong accessory detection. Do not use it for automatic-save, category/subtype/color assertion, threshold promotion, or production runtime addition. It remains research-only `research/mission1-parallel88/run-coco-accessory-88.mjs` and pure scoring helpers in `research/mission1-parallel88/exposed-threshold-probes-88.mjs`.
+
+**No deploy changes:** Source & release checks on [#43663893151](https://github.com/nickhaney916-lang/Closet-Current/actions/runs/43663893151) passed with **98/98 targeted tests and 33/33 release-policy tests**. The full inherited desktop/Node CI was **IN PROGRESS at the time of documenting**; verify its final status separately. The original 16-photo SegFormer mask benchmark in the same run was separately executed and enforced its research-only constraints. No private owner, live app worker, model weights, hosted Supabase/auth, production or staging edits. The PR retains **14 exact scoped paths**, DRAFT/UNMERGED/UNDEPLOYED, **FAMILY ALPHA HOLD #255 OPEN**.
+
+**New priority after this rejection:** Use an appropriately licensed **Fashionpedia-category-capable small-object/instance model** with direct glasses, watch, belt, headwear and bag classes. Demand independent photographer/source-disjoint genuine original photos, separate dual-human mask/category/subtype/color labels, original photo custody, safe mobile inference and no-silent-wrong-save acceptance before any promotion. This historical exposed public cohort alone cannot validate selection, or 10/10 recognition.
