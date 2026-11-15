@@ -2,6 +2,7 @@
 // human-labeled image accuracy or evidence of actual SegFormer quality.
 import test from 'node:test';
 import {generateKeyPairSync,sign as edSign,createHash} from 'node:crypto';
+import {spawnSync} from 'node:child_process';
 import {P88_FROZEN_CANDIDATE,frozenCandidateDigest88,canonicalP88,sha256,
  verifyBlindEvaluatorHandoff88} from '../research/mission1-parallel88/blind-evaluator-handoff-88.mjs';
 import assert from 'node:assert/strict';
@@ -394,4 +395,15 @@ test('P88 blind handoff denies synthetic unlabeled development sources even if s
   assert.equal(x.canSendRestrictedHandoffToP71,false);
   assert.equal(x.automaticSaveAllowed,false);
  }
+});
+
+
+test('P88 signed private blind envelope inspection refuses execution inside CI',()=>{
+ const result=spawnSync(process.execPath,[
+  'research/mission1-parallel88/blind-evaluator-handoff-88.mjs',
+  'inspect','/tmp/p88-private-should-never-be-read.json'
+ ],{cwd:process.cwd(),env:{...process.env,CI:'true'},encoding:'utf8'});
+ assert.notEqual(result.status,0);
+ assert.match(result.stderr,/PRIVATE_BLIND_HANDOFF_FORBIDDEN_IN_CI/);
+ assert.equal(result.stdout,'','never print private labels, photos or trust material');
 });
