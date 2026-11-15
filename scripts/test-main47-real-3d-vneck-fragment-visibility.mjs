@@ -157,7 +157,7 @@ try{
    if(m.type()==='error'&&/WebGLProgram|shader error|ERROR: 0:/i.test(m.text()))
     result.browserErrors.push(m.text().slice(0,400));
   });
-  const seen={manifest:0,cutout:0};
+  const seen={manifest:0,cutout:0,ephemeralSourceShaderPatch:0};
   await page.route('**/*',route=>{
    const url=route.request().url();
    if(url===origin+'/benchmark/work47/manifest.json'){
@@ -178,9 +178,10 @@ try{
   // Two ephemeral read-only responses; actual donor HTML and dress shader remain byte-exact on disk.
   // The local HTTP server serves an in-memory read-only original source HTML
   // measurement rather than depending on browser interception ordering.
-  if(variant==='M45_HOLE')await page.route('**/donor/research/three-d-14/dress-shell.mjs',route=>route.fulfill({
-   status:200,contentType:'text/javascript',body:visibilityPatch.patchedResearchModuleText
-  }));
+  if(variant==='M45_HOLE')await page.route('**/donor/research/three-d-14/dress-shell.mjs',route=>{
+   seen.ephemeralSourceShaderPatch++;
+   return route.fulfill({status:200,contentType:'text/javascript',body:visibilityPatch.patchedResearchModuleText});
+  });
   const flags=['photoDress175','photoDressContact52','photoDressDistance53',
    'photoDressTopology54','photoDressEdges55','photoDressBoundaries56',
    'photoDressLandmarks57','photoDressContact58','photoDressBodyBands59',
@@ -198,6 +199,8 @@ try{
    result.sourceCropRects[variant]=crop;
    assert.ok(seen.manifest>=1&&seen.cutout>=1,
     'original source renderer did not actually fetch the transient source-bound mask');
+   assert.equal(seen.ephemeralSourceShaderPatch,variant==='M45_HOLE'?1:0,
+    'actual genuine shader was not patched exactly once in the M45_HOLE research page');
    const dir=join(root,variant);
    await mkdir(dir,{recursive:true});
    for(const figure of ['female','male']){
