@@ -13,6 +13,7 @@ function exact(a,b){
 }
 const leaseSource=exact('function beginOwnerBoardUiLease(){','function beginNativeBoardMountLease(){');
 const savedSource=exact('function renderSavedOutfitBoards(){','async function importBoardBackup(');
+const savedFactsSource=exact('function outfitSavedItemFacts(item){','function outfitWardrobeChanged(){');
 const pickerSource=exact('function boardPhotoRequiresUnitReview(item){','function renderOutfitBoard(){');
 const suggestionsSource=exact('function renderBoardSuggestions(){','function renderSavedOutfitBoards(){');
 const ownerModes=[
@@ -57,6 +58,7 @@ function fixture(){
    return el;
   },
   slotAllows(){return true},
+  normalizeClothing(item){return {...item,seasons:item.seasons||[]}},
   closetGapOptions(_target,_board,wardrobe){return wardrobe},
   wardrobeGapIdeas(){return []},
   cleanOutfitBoard(value){return JSON.parse(JSON.stringify(value))},
@@ -68,7 +70,7 @@ function fixture(){
   nativeLossless04Edit(){throw Error('Should not use native research path')}
  };
  vm.createContext(ctx);
- vm.runInContext(leaseSource+pickerSource+suggestionsSource+savedSource,ctx,{timeout:1000});
+ vm.runInContext(leaseSource+savedFactsSource+pickerSource+suggestionsSource+savedSource,ctx,{timeout:1000});
  return {ctx,calls,dom,original,item,auth,element,
   makeSaved(){ctx.renderSavedOutfitBoards();return dom.savedBoards.children[0]},
   makePicker(){ctx.openBoardPicker('top');return dom.boardPickerItems.children.find(x=>x.tag==='button')},
@@ -126,6 +128,35 @@ test('positive model booleans cannot hide an unverified Mission 1 owner review',
  const button=f.makePicker();
  assert.equal(button.classList.contains('source-unverified'),true);
  assert.match(button.getAttribute('aria-label')||'',/garment outline unverified/i);
+});
+test('atomic outfit facts detect changed owner source receipt even with unchanged photo',()=>{
+ const f=fixture(),base={...f.item,seasons:['Winter'],ownerId:'owner-a',
+  sourceHashVerified:true,sourceCropReviewed:true,ownerReviewed:true,
+  ownerSourceReview88:{schema:'p88-owner-source-review/v1',ownerId:'owner-a',
+   sourceId:'saved-source-a',selectedMaskSha256:'a'.repeat(64)}};
+ const facts=value=>JSON.stringify(f.ctx.outfitSavedItemFacts(value));
+ const initial=facts(base);
+ const revisions=[
+  ['owner receipt revised',{...base,ownerSourceReview88:{...base.ownerSourceReview88,selectedMaskSha256:'b'.repeat(64)}}],
+  ['owner receipt revoked',{...base,ownerSourceReview88:null}],
+  ['reviewed crop changed',{...base,cropBounds:{x:4,y:3,width:20,height:30}}],
+  ['mask source changed',{...base,reconciliation70:{maskSha256:'c'.repeat(64)}}],
+  ['physical unit decision changed',{...base,reconciliation70Status:'owner-confirmed-separate'}],
+  ['reviewer changed confirmation',{...base,ownerReviewed:false}],
+  ['photo-only protection changed',{...base,photoOnly:false,threeDReady:true}],
+  ['companion mask replaced',{...base,shoePair:{companion:{reconciliation70:{maskSha256:'d'.repeat(64)}}}}]
+ ];
+ for(const [label,changed] of revisions){
+  assert.notEqual(facts(changed),initial,
+   label+' must not reuse a stale selected garment on atomic outfit save');
+ }
+ assert.equal(facts({...base}),initial,'unchanged owner row must remain comparable');
+});
+test('atomic outfit state transaction verifies selected evidence against durable owner items',()=>{
+ assert.match(source,/candidate&&\(!expected\|\|!actual\|\|expected\.length!==actual\.length/);
+ assert.match(source,/!expected\.every\(\(v,i\)=>v===actual\[i\]\)/);
+ assert.match(source,/const tx=ownerDB\.transaction\(candidate\|\|proof33\?/);
+ assert.match(source,/const expectedClothing=Object\.fromEntries\(/);
 });
 test('real default photo picker allows originating owner to select source',()=>{
  const f=fixture(),button=f.makePicker();f.calls.length=0;
