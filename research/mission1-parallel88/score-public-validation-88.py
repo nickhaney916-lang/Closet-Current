@@ -5,6 +5,7 @@ No new human annotations are asserted. This is exposed validation research,
 never sealed, prospective, population, subtype/color or physical phone proof.
 """
 import gzip
+from collections import Counter
 import hashlib
 import json
 import math
@@ -184,6 +185,90 @@ def retained_fixed_match_diagnostic(rows, thresholds=(0.80, 0.85, 0.90, 0.95)):
     return result
 
 
+def source_category_failure_diagnostic(rows):
+    """Class error atlas from the ORIGINAL agnostic one-to-one mask matching.
+
+    A separately optimized category-compatible assignment may select different
+    pairs. Do not call these mismatches calibrated model error rates, root
+    causes, or novel/blind recognition acceptance.
+    """
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("Missing human instance rows")
+    missing, orphan, wrong_by_truth, wrong = Counter(), Counter(), Counter(), []
+    matched = supported = predictions = humans = separately_compatible = 0
+    for row in rows:
+        originals, regions = row["perHumanCategory"], row["predictedRegions"]
+        if row["truth"] != len(originals) or row["predicted"] != len(regions):
+            raise ValueError("Original human or region counts changed")
+        observed = row["classAgnosticMatches"]
+        independent = row["categoryCompatibleMatches"]
+        for matches in (observed, independent):
+            truth_ids, predicted_ids = [], []
+            for match in matches:
+                truth, pred, iou = (match["truthIndex"],
+                                   match["predictionIndex"], match["iou"])
+                if (not isinstance(truth,int) or isinstance(truth,bool) or
+                    not isinstance(pred,int) or isinstance(pred,bool) or
+                    truth < 0 or truth >= len(originals) or
+                    pred < 0 or pred >= len(regions) or
+                    not isinstance(iou,(int,float)) or not .5 <= iou <= 1):
+                    raise ValueError("Invalid original one-to-one IoU match")
+                truth_ids.append(truth)
+                predicted_ids.append(pred)
+            if (len(set(truth_ids)) != len(truth_ids) or
+                len(set(predicted_ids)) != len(predicted_ids)):
+                raise ValueError("Duplicate original mask assignment")
+        matched += len(observed)
+        separately_compatible += len(independent)
+        predictions += len(regions)
+        humans += len(originals)
+        localized_truth = {m["truthIndex"] for m in observed}
+        localized_pred = {m["predictionIndex"] for m in observed}
+        for i, category in enumerate(originals):
+            if i not in localized_truth: missing[category] += 1
+        for i, region in enumerate(regions):
+            categories = region.get("categories")
+            if (not isinstance(categories,list) or not categories or
+                any(not isinstance(c,str) or not c for c in categories)):
+                raise ValueError("Invalid original model category support")
+            if i not in localized_pred: orphan["|".join(categories)] += 1
+        for match in observed:
+            truth, pred = match["truthIndex"], match["predictionIndex"]
+            category = originals[truth]
+            types = regions[pred]["categories"]
+            if category not in types:
+                wrong_by_truth[category] += 1
+                wrong.append({
+                    "photoId":row["id"], "truthCategory":category,
+                    "proposalCategories":types, "iou":match["iou"],
+                    "truthIndex":truth, "predictionIndex":pred
+                })
+            else:
+                supported += 1
+    if not 0 <= supported <= matched <= min(humans,predictions):
+        raise ValueError("Original matching totals are inconsistent")
+    if sum(missing.values())+matched != humans or sum(orphan.values())+matched != predictions:
+        raise ValueError("Original unmatched counts are inconsistent")
+    return {
+        "schema":"closet-current-p88-exposed-error-attribution/v1",
+        "assignment":"previously observed class-agnostic one-to-one original-resolution IoU",
+        "photos":len(rows), "humanInstances":humans, "proposals":predictions,
+        "originalClassAgnosticMatches":matched,
+        "categorySupportedWithinAgnostic":supported,
+        "wrongCategoryWithinAgnostic":len(wrong),
+        "separatelyOptimizedCategoryCompatibleMatches":separately_compatible,
+        "humanWithoutIoUMatch":humans-matched,
+        "proposalWithoutIoUMatch":predictions-matched,
+        "humanWithoutIoUByCategory":dict(sorted(missing.items())),
+        "unmatchedProposalByModelCategorySet":dict(sorted(orphan.items())),
+        "wrongCategoryMatchedByHumanCategory":dict(sorted(wrong_by_truth.items())),
+        "wrongCategoryExamples":wrong,
+        "notNewBlindTruth":True,
+        "notRootCauseProven":True,
+        "doesNotAuthorizeModelChangesOrAutoSave":True
+    }
+
+
 def main():
     manifest_bytes = MANIFEST.read_bytes()
     if hashlib.sha256(manifest_bytes).hexdigest() != EXPECTED:
@@ -210,6 +295,7 @@ def main():
         "primaryColorAccuracy": "NO_INDEPENDENT_HUMAN_COLOR_TRUTH",
         "autoSaveAcceptance": "BLOCKED_NOT_CALIBRATED",
         "confidenceRetentionResearchOnly": retained_fixed_match_diagnostic(safe["rows"]),
+        "categoryFailureAttributionResearchOnly": source_category_failure_diagnostic(safe["rows"]),
         "confidenceRetentionMethod": "fixed prior one-to-one matches; candidate masks NOT re-matched",
         "confidenceCutoffPromotionAllowed": False,
         "physicalDevice": False, "privateAccountTouched": False,
@@ -225,6 +311,8 @@ def main():
     print("P88_GENUINE_HUMAN_MASK_EVALUATION", json.dumps({
         k: v for k, v in result.items() if k not in ("baseline", "shoeOnly68", "p88Safe", "p88")
     }, separators=(",", ":")))
+    print("P88_EXPOSED_CATEGORY_FAILURES_RESEARCH", json.dumps(
+        result["categoryFailureAttributionResearchOnly"],separators=(",", ":")))
     print("P88_EXPOSED_FIXED_MATCH_CONFIDENCE_RESEARCH", json.dumps({
         "sourceDigest": EXPECTED,
         "rows": 16, "humanInstances": 53,
