@@ -193,3 +193,33 @@ test('default legacy import still allows a valid saved outfit referring to a new
  assert.equal(f.counts.boardWrites,1);
  assert.ok(f.events.some(x=>x.includes('Backup imported.')));
 });
+
+function legacyRowsFile(rows,board={current:{},saved:[]}){
+ const content=JSON.stringify({format:'closet-current',version:3,items:rows,outfitBoard:board});
+ return {size:content.length,text:async()=>content};
+}
+test('default legacy restore refuses two physical garment IDs colliding after 100-char normalization',async()=>{
+ const f=legacyFixture(),same='x'.repeat(100);
+ const photo='data:image/jpeg;base64,/9j/2Q==';
+ await f.run(legacyRowsFile([{id:same+'A',image:photo},{id:same+'B',image:photo}]));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.equal(f.counts.boardWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('duplicate garment IDs')));
+});
+test('default legacy restore refuses a source record explicitly belonging to a different account',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyRowsFile([{
+  id:'old-owner-piece',ownerId:'owner-b',image:'data:image/jpeg;base64,/9j/2Q=='
+ }]));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('another account')));
+});
+test('default legacy restore also refuses foreign-owner tag inside original photo metadata',async()=>{
+ const f=legacyFixture();
+ await f.run(legacyRowsFile([{
+  id:'foreign-original',image:'data:image/jpeg;base64,/9j/2Q==',
+  originalPhoto:{ownerId:'owner-b',image:'data:image/jpeg;base64,/9j/2Q=='}
+ }]));
+ assert.equal(f.counts.legacyWrites||0,0);
+ assert.ok(f.events.some(x=>x.includes('another account')));
+});
