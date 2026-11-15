@@ -115,6 +115,41 @@ jobs:
               except ValueError: continue
               raise AssertionError("Untrusted original class-confusion receipt accepted")
           print("P88_SOURCE_CLASS_ERROR_ATLAS_SELFTEST PASS; no model/threshold promotion")
+          fn=next(n for n in tree.body if isinstance(n,ast.FunctionDef)
+                  and n.name=="confidence_failure_atlas88")
+          exec(compile(ast.Module(body=[fn],type_ignores=[]),str(p),"exec"),scope)
+          conf=scope["confidence_failure_atlas88"]
+          row={**atlas, "predictedRegions":[
+              {"categories":["Dresses"],"confidence":.83},
+              {"categories":["Tops","Outerwear"],"confidence":.96},
+              {"categories":["Shoes"],"confidence":.93}]}
+          actual=conf([row])
+          assert actual["notReoptimizedIoU"] is True
+          assert actual["notIndependentBlindSubtypeOrColorTruth"] is True
+          assert actual["notRealOwnerSaveErrorCount"] is True
+          observed=actual["thresholds"]
+          assert [(x["retainedProposals"],x["fixedAgnosticCategoryIncompatible"],
+                   x["originalIoUUnmatchedProposals"],x["fixedAssignmentHighRiskProposals"])
+                  for x in observed]==[(3,2,1,3),(2,1,1,2),(2,1,1,2),(1,1,0,1)]
+          assert all(x["noAutoSaveOrReleaseAuthority"] and x["noRetuningFromExposedCohort"]
+                     for x in observed)
+          good={**row,"predictedRegions":[
+              {"categories":["Bottoms"],"confidence":.83},
+              {"categories":["Dresses"],"confidence":.96},
+              {"categories":["Shoes"],"confidence":.93}],
+              "categoryCompatibleMatches":row["classAgnosticMatches"]}
+          assert conf([good])["thresholds"][0]["fixedAgnosticCategorySupported"]==2
+          for bad in (
+              {**row,"predictedRegions":[{"categories":["Shoes"],"confidence":float("nan")},
+                                         *row["predictedRegions"][1:]]},
+              {**row,"predicted":2},
+              {**row,"classAgnosticMatches":[row["classAgnosticMatches"][0]]*2},
+              {**row,"categoryCompatibleMatches":[{"truthIndex":0,"predictionIndex":0,"iou":.67}]}
+          ):
+              try: conf([bad])
+              except ValueError: continue
+              raise AssertionError("Untrusted high-confidence mask receipt accepted")
+          print("P88_FIXED_MASK_CONFIDENCE_RISK_SELFTEST PASS; exposed-only no save/threshold")
           PY
           python research/mission1-parallel88/recover-public-validation-88.py --verify-manifest-only
           python research/mission1-parallel88/recover-public-validation-88.py --audit-accessory-ontology | tee /tmp/p88-human-accessory-ontology
@@ -250,6 +285,17 @@ jobs:
                      and row['notNovelCalibration'] is True and row['noAutoSaveAuthority'] is True
                      for row in diag)
           assert d['confidenceCutoffPromotionAllowed'] is False
+          risk=d['confidenceFailureAtlasResearchOnly']
+          assert risk['photos']==16 and risk['humanInstances']==53
+          assert risk['notReoptimizedIoU'] is True
+          assert risk['notIndependentBlindSubtypeOrColorTruth'] is True
+          assert risk['notRealOwnerSaveErrorCount'] is True
+          assert [x['threshold'] for x in risk['thresholds']]==[.8,.85,.9,.95]
+          assert all(x['noAutoSaveOrReleaseAuthority'] and x['noRetuningFromExposedCohort']
+                     and x['fixedAssignmentHighRiskProposals']<=x['retainedProposals']
+                     and x['originalClassAgnosticIoUMatched']<=x['retainedProposals']
+                     for x in risk['thresholds'])
+          print('P88_REAL_HIGH_CONFIDENCE_FIXED_MASK_RISK',risk,'exposed research only')
           assert d['exposedResearchPixelGateControlParity'] is True
           assert d['exposedResearchReusesSameHumanSource'] is True
           assert d['exposedResearchNoModelOrAutoSavePromotion'] is True

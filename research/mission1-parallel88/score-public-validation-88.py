@@ -269,6 +269,111 @@ def source_category_failure_diagnostic(rows):
     }
 
 
+def confidence_failure_atlas88(rows, thresholds=(0.80, 0.85, 0.90, 0.95)):
+    """High-confidence risk on ORIGINAL fixed agnostic human-mask IoU pairs.
+
+    An IoU-unmatched proposal need not be a false real-world garment.
+    A category-incompatible agnostic IoU pair is not an owner-saved mistake.
+    Exposed cohort only, independent compatible rematching is NOT conflated
+    with this per-proposal classification. This cannot calibrate auto-save.
+    """
+    if (not isinstance(rows, list) or not rows or
+        not isinstance(thresholds, (list, tuple)) or not thresholds or
+        any(not isinstance(t, (float, int)) or isinstance(t, bool) or
+                not math.isfinite(t) or t < 0 or t > 1 for t in thresholds)):
+        raise ValueError("Invalid fixed-match confidence diagnostic")
+    counts = [dict(threshold=t, retainedProposals=0,
+                   originalClassAgnosticIoUMatched=0,
+                   fixedAgnosticCategorySupported=0,
+                   fixedAgnosticCategoryIncompatible=0,
+                   originalIoUUnmatchedProposals=0,
+                   independentlyRematchedCompatible=0) for t in thresholds]
+    photos, human = len(rows), 0
+    for row in rows:
+        categories = row.get("perHumanCategory")
+        regions = row.get("predictedRegions")
+        if (not isinstance(categories, list) or not isinstance(regions, list) or
+            row.get("truth") != len(categories) or row.get("predicted") != len(regions) or
+            any(not isinstance(x, str) or not x for x in categories)):
+            raise ValueError("Original human/proposal source shape altered")
+        human += len(categories)
+        normalized = []
+        for region in regions:
+            score = region.get("confidence") if isinstance(region, dict) else None
+            labels = region.get("categories") if isinstance(region, dict) else None
+            if (not isinstance(score, (float, int)) or isinstance(score, bool) or
+                not math.isfinite(score) or score < 0 or score > 1 or
+                not isinstance(labels, list) or not labels or
+                any(not isinstance(x, str) or not x for x in labels)):
+                raise ValueError("Original model confidence/category not verifiable")
+            normalized.append((score, labels))
+        index = {}
+        independent = set()
+        for key in ("classAgnosticMatches", "categoryCompatibleMatches"):
+            matches = row.get(key)
+            if not isinstance(matches, list):
+                raise ValueError("Original one-to-one matches missing")
+            used_t, used_p = set(), set()
+            for m in matches:
+                if not isinstance(m, dict):
+                    raise ValueError("Invalid original human match")
+                ti, pi, iou = m.get("truthIndex"), m.get("predictionIndex"), m.get("iou")
+                if (not isinstance(ti, int) or isinstance(ti, bool) or
+                    not isinstance(pi, int) or isinstance(pi, bool) or
+                    not 0 <= ti < len(categories) or not 0 <= pi < len(regions) or
+                    not isinstance(iou, (float, int)) or not math.isfinite(iou) or
+                    not .5 <= iou <= 1 or ti in used_t or pi in used_p):
+                    raise ValueError("Non-independent original IoU match")
+                used_t.add(ti)
+                used_p.add(pi)
+                if key == "classAgnosticMatches":
+                    index[pi] = ti
+                else:
+                    if categories[ti] not in normalized[pi][1]:
+                        raise ValueError("Incompatible match misrepresented as correct")
+                    independent.add(pi)
+        for summary in counts:
+            keep = [pi for pi, (score, _) in enumerate(normalized)
+                    if score >= summary["threshold"]]
+            summary["retainedProposals"] += len(keep)
+            summary["independentlyRematchedCompatible"] += sum(pi in independent for pi in keep)
+            for pi in keep:
+                if pi not in index:
+                    summary["originalIoUUnmatchedProposals"] += 1
+                elif categories[index[pi]] in normalized[pi][1]:
+                    summary["originalClassAgnosticIoUMatched"] += 1
+                    summary["fixedAgnosticCategorySupported"] += 1
+                else:
+                    summary["originalClassAgnosticIoUMatched"] += 1
+                    summary["fixedAgnosticCategoryIncompatible"] += 1
+    if human <= 0:
+        raise ValueError("No human masks in original fixed comparison")
+    for summary in counts:
+        summary["fixedAssignmentHighRiskProposals"] = (
+            summary["originalIoUUnmatchedProposals"] +
+            summary["fixedAgnosticCategoryIncompatible"])
+        summary["fixedAssignmentHighRiskShare"] = (
+            summary["fixedAssignmentHighRiskProposals"] / summary["retainedProposals"]
+            if summary["retainedProposals"] else None)
+        if (summary["retainedProposals"] !=
+            summary["originalIoUUnmatchedProposals"] +
+            summary["fixedAgnosticCategorySupported"] +
+            summary["fixedAgnosticCategoryIncompatible"] or
+            summary["originalClassAgnosticIoUMatched"] !=
+            summary["fixedAgnosticCategorySupported"] +
+            summary["fixedAgnosticCategoryIncompatible"] or
+            summary["independentlyRematchedCompatible"] > summary["retainedProposals"]):
+            raise ValueError("Untrusted confidence/error partition")
+        summary["noRetuningFromExposedCohort"] = True
+        summary["noAutoSaveOrReleaseAuthority"] = True
+    return {"schema": "p88-exposed-fixed-mask-high-confidence-risk/v1",
+            "photos": photos, "humanInstances": human,
+            "notReoptimizedIoU": True,
+            "notIndependentBlindSubtypeOrColorTruth": True,
+            "notRealOwnerSaveErrorCount": True,
+            "thresholds": counts}
+
+
 def main():
     manifest_bytes = MANIFEST.read_bytes()
     if hashlib.sha256(manifest_bytes).hexdigest() != EXPECTED:
@@ -326,6 +431,7 @@ def main():
         },
         "confidenceRetentionResearchOnly": retained_fixed_match_diagnostic(safe["rows"]),
         "categoryFailureAttributionResearchOnly": source_category_failure_diagnostic(safe["rows"]),
+        "confidenceFailureAtlasResearchOnly": confidence_failure_atlas88(safe["rows"]),
         "confidenceRetentionMethod": "fixed prior one-to-one matches; candidate masks NOT re-matched",
         "confidenceCutoffPromotionAllowed": False,
         "physicalDevice": False, "privateAccountTouched": False,
@@ -363,6 +469,8 @@ def main():
     }, separators=(",", ":")))
     print("P88_EXPOSED_CATEGORY_FAILURES_RESEARCH", json.dumps(
         result["categoryFailureAttributionResearchOnly"],separators=(",", ":")))
+    print("P88_EXPOSED_FIXED_MASK_CONFIDENCE_RISK", json.dumps(
+        result["confidenceFailureAtlasResearchOnly"], separators=(",", ":")))
     print("P88_EXPOSED_SAME_LOGIT_PIXEL_GATE_RESEARCH",json.dumps({
         "manifestSha256":EXPECTED,"photos":16,"humanInstances":53,
         "nativeThresholdsUnchanged":True,"newBlindTruth":False,
