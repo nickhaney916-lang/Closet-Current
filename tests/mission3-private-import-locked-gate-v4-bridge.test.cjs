@@ -205,7 +205,7 @@ test('default legacy import still allows a valid saved outfit referring to a new
  const f=legacyFixture();
  await f.run(legacyBackupFile({current:{slots:{top:'new-shirt',shoes:'existing-shoe'}},
   saved:[{name:'My saved outfit',slots:{top:'new-shirt',shoes:'existing-shoe'}}]}));
- assert.equal(f.counts.legacyWrites,1);
+ assert.equal(f.counts.legacyWrites,1,JSON.stringify(f.events));
  assert.equal(f.counts.boardWrites,1);
  assert.ok(f.events.some(x=>x.includes('imported atomically.')));
 });
@@ -259,7 +259,7 @@ function signedPhotoFixture(){
 test('default legacy import preserves a matching original JPEG and SHA-256 receipt',async()=>{
  const f=signedPhotoFixture();
  await f.run(signedOriginalBackup());
- assert.equal(f.counts.legacyWrites,1);
+ assert.equal(f.counts.legacyWrites,1,JSON.stringify(f.events));
  const row=f.ctx.items.find(x=>x.id==='exact-original-photo');
  assert.equal(row.originalPhoto.image,originalJPEG);
  assert.equal(row.originalPhoto.sha256,originalHash);
@@ -346,7 +346,7 @@ test('legacy import accepts nested source owner metadata matching its exact sign
  await f.run(legacyRowsFile([{...simpleLegacyRow,
   originalPhoto:{metadata:{capture:{ownerId:'owner-a'}}}
  }]));
- assert.equal(f.counts.legacyWrites,1);
+ assert.equal(f.counts.legacyWrites,1,JSON.stringify(f.events));
  assert.ok(f.events.some(x=>x.includes('imported atomically.')));
 });
 test('legacy import rejects excessively nested metadata before any private storage mutation',async()=>{
