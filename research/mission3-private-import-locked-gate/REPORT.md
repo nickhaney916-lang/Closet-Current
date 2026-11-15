@@ -1,0 +1,80 @@
+# Closet Current Mission 3 — locked import gate and exact v4 restore controller
+
+**Research-only; Family Alpha #255 OPEN/HOLD. DRAFT, unmerged, undeployed.** No production/staging, hosted Supabase, real photos, or private owner data accessed.
+
+## CURRENT MISSION 3 STATE — 2026-11-15 (supersedes historical interim notes below)
+
+- **Default built PWA v1–v3 import is now a single owner-private IndexedDB items+state atomic transaction**, including garment rows, inspiration, Outfit Builder current/saved selections and cloud dirty revision. It is **not** the older three-write partial restore described in historical checkpoints below. The exact built scoped-PWA dependency is packaged and service-worker cached; offline synthetic Chromium and unreachable-host WebKit tests previously passed at immutable commit `1785fdb57b2fa9b7590a32d5d2ebd71451007b84` (CI #43758330520). This is neither physical-device nor hosted-account evidence.
+- Before any transaction, exact-owner lease and private UI gate, full-tree foreign-owner/unsafe-key checks, item/photo/receipt digest checks, board-reference checks and existing saved-outfit conflict checks must pass; prepared state is fingerprinted and rechecked in a single readwrite transaction. A conflicting import aborts without partial garment/board/cloud writes.
+- Existing same-ID verified originals, SHA receipts, owner source-review records and source piece keys cannot be silently overwritten or downgraded. In addition, an existing older garment **without a separate camera original** now refuses a changed JPEG preview under the same ID; a verified camera original remains fixed while its legitimate derivative preview can change. Direct module tests assert both boundaries.
+- Unsaved Outfit Builder edits are now guarded even for a clothing-only legacy backup **without** an `outfitBoard` field; the live draft is checked before preview and again after owner consent, before commit. Source-executed tests cover dirty draft before and after confirmation plus a clean import positive control.
+- **Exact-head acceptance is required.** Historical green receipt #43761307995 applies to prior immutable HEAD `d4bc35faddd3f4104f23bd2e6ac98f0242faf367` only. A subsequent synthetic regression fixture initially used an invalid JPEG data URL, causing CI #43766095105 to fail its newly added test; the fixture was fixed and new compatibility/unsaved-draft regressions were added. The latest head's full dedicated no-deploy CI must finish before any claim of green acceptance.
+- Separate release evidence preflight DRAFT PR #1136 remains on a divergent Mission 3 parent; its synthetic checks **do not prove** the changes on this PR are reconciled into one released application. No new PR, cross-branch merge or deploy was performed.
+- Remaining **BLOCKED** release acceptance: physical Android Chrome and iPhone Safari, independently owner-authorized hosted four-account Auth/Postgres/Storage RLS and full backup/restore, genuine source-photo capture/recognition→private saved outfit→3D-gated/2D fallback integration, complete cross-mission exact-head acceptance, and an explicit Family Alpha approval. **#255 stays OPEN/HOLD.** Planning-only Mission 3 estimate 65% complete / 35% remaining, not a verified release metric.
+
+### Historical development notes follow (interim statements may be superseded)
+
+## Starting point
+
+Exact source parent: PR #1126 at `44c4a30012478f63f8a7d6d66ae20f2d93af1695` (separately verified two-job no-deploy CI #43549672864). This branch changes only the import event path in `public/app.js`, a source-executed synthetic regression test, this report and a no-deploy workflow. All other mission branches remain independent.
+
+## Source-observed risks addressed
+
+1. The `$('import').onchange` callback previously used `ownerWardrobeMutationLease()` to check the auth instance, DB and epoch, but **not** the `#authGate` and `#appShell` private UI state. An asynchronous selected-file read or v4 callback could proceed into confirmation after the app was locked without the principal changing first. Backup **export** already had the stricter visible-private-UI gate.
+2. `restoreAtomic01Bridge.importBackup()` was captured once but not reverified at owner confirmation or completion. A replaced asynchronous recovery controller could retain a pending consent callback or publish an outdated success status in the same signed session.
+
+## Patch
+
+- Extend the existing private `assertImport` to check visible signed-private UI at each existing preflight / post-await / confirmation / owner-lease boundary. Suppress stale private messages after lock via the existing `importMessage` wrapper.
+- Pin the exact `restoreAtomic01Bridge` identity throughout v4 owner confirmation and after asynchronous completion. Reject a detached/replaced bridge, preventing stale success publication and denying consent to old controllers before commit. A replaced controller **after** a commit cannot undo a finished transaction; the UI instead requires reopening My Closet to confirm the current result.
+- Keep the existing research-only v4 gate, local legacy atomic test path, genuine photo custody, signed-owner transaction policy, and original 2D fallback unchanged.
+
+## Test and remaining limits
+
+`tests/mission3-private-import-locked-gate-v4-bridge.test.cjs` executes the exact production import handler and owner lease with synthetic authenticated sessions, delayed file reads, locked gates, same-ID re-login, controller replacement before/during approval, and delayed return. The no-deploy workflow runs syntax and this source regression before the inherited full serial Node, two-owner **disposable** database RLS, Chromium/WebKit and original-photo custody suites.
+
+The first CI run exposed four inherited `tests/mission3-edit-backup-owner-lease.test.cjs` failures: its old synthetic import fixture provided only `#import` and asserted against access to any other element. The app's new required `#authGate` and `#appShell` checks therefore correctly stopped the synthetic import before it reached previous assertions. The historical test fixture now provides explicit authorized private-gate nodes, without changing its original signed-account test cases. A new exact-head no-deploy run is required before a passing claim.
+
+**No exact-head test status is claimed until the dedicated CI jobs finish.** Unit and browser tests are not physical Android/iPhone or authorized hosted-cloud acceptance.
+
+Release blockers remain the same as PR #1126's completion audit: independently authorized signed four-account hosted backup/restore, physical phone end-to-end, genuine human-confirmed garment recognition, source-photo 3D garment fit, integrated source-to-outfit journey, and explicit owner release decision. #255 must remain OPEN/HOLD.
+## November 15 continuation — default legacy outfit preflight (pending exact-head CI)
+
+The default v1–v3 import path still performs multiple local writes (items,
+inspiration, outfit board) and is **not** a fully atomic restore. A source-level
+partial-restore risk was identified: an invalid `outfitBoard` structure or a
+saved slot referencing a missing garment was detected only by
+`importBoardBackup()`, after `writeAll(valid)` could already have committed.
+Similarly, an unfinished board draft was not fenced before that write.
+
+The existing Mission 3 draft now preflights the backup's outfit structure,
+saved-list size and slot garment identity against the imported + currently
+saved owner rows; refuses a currently unsaved outfit draft; and repeats the
+preflight after the owner accepts the import, before the first garment write.
+The previous visible behavior is retained for valid backups. Five source-
+executed synthetic tests were added to the existing private-import test
+file; the existing strict five-path workflow includes the test automatically.
+
+**Acceptance limits:** This is a bounded prevent-before-first-write fix,
+not a claim of atomic default legacy import. A database failure after
+`writeAll`, or races with another tab during the individual writes, still
+require a single-transaction migration / independent acceptance. Physical
+devices and actual hosted four-account restore remain blocked; Family Alpha
+#255 stays HOLD. Do not interpret new code as tested until its exact-head
+workflow finishes.
+
+### Legacy garment identity and owner-tag preflight
+
+Default v1–v3 import additionally rejects repeat garment IDs **after** the
+legacy 100-character normalization (two original IDs could previously collapse
+to one local record), explicit `ownerId` values not matching the importing
+signed owner, and a foreign `originalPhoto.ownerId`. These checks run while
+constructing the imported set and before the first wardrobe write. Three
+further exact-source synthetic regressions cover normalized duplicate IDs
+and both owner mismatch placements. Unknown/untagged historical backups are
+not claimed to be independently ownership-proven; their owner still must
+explicitly choose import. Final latest-head dedicated CI receipt is required.
+
+Remaining: default legacy multi-store restore is **still non-atomic**,
+meaning post-write failure is not rolled back. The separate research atomic
+restore module requires safe compatible migration rather than a shortcut.

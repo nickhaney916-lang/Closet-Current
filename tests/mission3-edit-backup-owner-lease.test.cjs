@@ -14,13 +14,16 @@ function extract(a,b){
 const lease=extract('function ownerWardrobeMutationLease(){','function writeAll(values){');
 const edit=extract('function saveEditedGarment(updated,expected){','function removeItem(id,expected){');
 const backup=extract("$('import').onchange=async e=>","window.addEventListener('beforeunload'");
-const jpeg='data:image/jpeg;base64,/9j/';
+const jpeg='data:image/jpeg;base64,/9j/2Q==';
 const piece={id:'shared-row',image:jpeg,category:'Tops',color:'Blue',name:'Blue shirt'};
 const backupData={format:'closet-current',version:3,items:[piece]};
 const pause=()=>{let resolve;const promise=new Promise(r=>resolve=r);return {promise,resolve};};
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={}){
  const messages=[],writes=[],looks=[],boards=[],readGate=pause(),importInput={value:''};
+ // Keep the historical actual-source fixture aligned with the authenticated
+ // private UI gate now required by the import handler (not just the auth ID).
+ const nodes={import:importInput,authGate:{hidden:true},appShell:{hidden:false}};
  const a={name:'closet-current-user-A'},b={name:'closet-current-user-B'};
  const auth={user:{id:'A'},assertCurrent(){}};
  let confirmed=0,bridgeCalls=0;
@@ -31,15 +34,30 @@ function backupHarness({mode='',approve=true,holdFile=false,withLooks=false}={})
    return accepted?{cancelled:false}:{cancelled:true};
   }}},
   db:a,captureOperationEpoch:0,
-  $:id=>{assert.equal(id,'import');return importInput;},URLSearchParams,
+  $:id=>{assert.ok(Object.hasOwn(nodes,id),'unexpected DOM element '+id);return nodes[id];},URLSearchParams,
   location:{search:mode},categories:['Uncategorized','Tops','Bottoms','Dresses','Outerwear','Shoes','Accessories'],
-  normalizeClothing:value=>value,validLook:value=>value,
-  readAllFrom:async()=>writes.flat(),
-  writeAll:async values=>{writes.push(values);},importLooks:async values=>looks.push(values),
-  importBoardBackup:async value=>boards.push(value),render(){},
+  normalizeClothing:value=>value,validLook:value=>value,items:[],
+  cleanOutfitBoard:value=>value,boardHasUnsavedDraft:()=>false,writes:Promise.resolve(),
+  mission3AtomicImporter:async()=>({
+   prepareLegacyAtomicM3:async({data,assertLease})=>{
+    assertLease();
+    return {rows:data.items,looks:data.looks,board:data.outfitBoard,
+     counts:{garments:data.items.length,looks:data.looks?.length||0,
+      savedOutfits:data.outfitBoard?.saved?.length||0}};
+   },
+   commitLegacyAtomicM3:async({prepared,assertLease,confirmed})=>{
+    assertLease();assert.equal(confirmed,true);
+    writes.push(prepared.rows);
+    if(prepared.looks)looks.push(prepared.looks);
+    if(prepared.board)boards.push(prepared.board);
+    return {committed:true,atomic:true};
+   }
+  }),
+  mission3ReloadOwnerCloudView:async()=>{},render(){},
   confirm:()=>{confirmed++;if(typeof approve==='function')return approve(result);return approve;},
   message:value=>messages.push(String(value))
  };
+ ctx.window.closetCloud={changed(){}};
  vm.createContext(ctx);
  vm.runInContext(lease+'\n'+backup,ctx);
  const file={size:20,text:()=>holdFile?readGate.promise:Promise.resolve(JSON.stringify(
@@ -69,16 +87,16 @@ test('logging out and back in as the SAME owner revokes a delayed legacy backup 
 test('owner switching inside legacy backup confirmation fails closed before any write',async()=>{
  const f=backupHarness({approve:r=>{r.switchOwner();return true;}});
  await f.trigger();
- assert.equal(f.confirmed,1);assert.equal(f.writes.length,0);
+ assert.equal(f.confirmed,1,JSON.stringify(f.messages));assert.equal(f.writes.length,0);
  assert.deepEqual(f.messages,[]);
 });
 test('current owner can still import clothing, looks and outfit references',async()=>{
  const f=backupHarness({withLooks:true});
  await f.trigger();
- assert.equal(f.writes.length,1);
+ assert.equal(f.writes.length,1,JSON.stringify(f.messages));
  assert.equal(f.writes[0][0].id,'shared-row');
  assert.equal(f.looks.length,1);assert.equal(f.boards.length,1);
- assert.equal(f.messages.at(-1),'Backup imported.');
+ assert.equal(f.messages.at(-1),'Clothing, inspiration and outfits imported atomically.');
 });
 test('stale native atomic-import file read cannot call restore bridge',async()=>{
  const f=backupHarness({mode:'?restoreAtomic01=research&nativeLossless04=research',holdFile:true});

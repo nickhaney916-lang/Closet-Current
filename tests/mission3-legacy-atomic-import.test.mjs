@@ -151,6 +151,202 @@ test('no looks or outfit board in a legacy backup preserves originals while addi
   assert.equal(state['outfit-board'].current.slots.top,'shirt');
  }finally{f.close();}
 });
+test('legacy merge without a replacement board refuses category drift in a saved outfit',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  const changed={format:'closet-current',version:3,
+   items:[row(f.owner,'shirt','Shoes')]};
+  await assert.rejects(prep(f,changed),/LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy merge without a replacement board refuses dress-over-bottom suppression',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',row(f.owner,'pants','Bottoms'));
+  await replace(f.db,'state',{id:'outfit-board',
+   current:{slots:{top:'shirt',bottom:'pants'}},
+   saved:[{name:'My saved outfit',slots:{top:'shirt',bottom:'pants'}}]});
+  const before=await snapshot(f.db);
+  const changed={format:'closet-current',version:3,
+   items:[row(f.owner,'shirt','Dresses')]};
+  await assert.rejects(prep(f,changed),/LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('compatible garment update keeps existing saved outfit slots without imported board',async()=>{
+ const f=await fixture();
+ try{
+  const updated={...row(f.owner,'shirt'),color:'Orange'};
+  const p=await prep(f,{format:'closet-current',version:3,items:[updated]});
+  await commit(f,p);
+  const s=await snapshot(f.db),saved=s.state.find(x=>x.id==='outfit-board');
+  assert.equal(s.items.find(x=>x.id==='shirt').color,'Orange');
+  assert.equal(saved.current.slots.top,'shirt');
+  assert.equal(saved.saved[0].slots.top,'shirt');
+ }finally{f.close();}
+});
+test('same legacy ID without source hash cannot silently replace its only saved JPEG',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  // Keep the same ID, garment category, owner and outfit slots. Without an
+  // original-photo receipt, the saved preview is the only source identity.
+  const changed={...row(f.owner),image:'data:image/jpeg;base64,'+
+   Buffer.from([255,216,1,255,217]).toString('base64')};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[changed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+  // Identical bytes with a metadata-only update remain compatible.
+  const safe={...row(f.owner),color:'Orange'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[safe]});
+  await commit(f,plan);
+  const after=await snapshot(f.db);
+  assert.equal(after.items.find(x=>x.id==='shirt').image,jpeg);
+  assert.equal(after.items.find(x=>x.id==='shirt').color,'Orange');
+  assert.equal(after.state.find(x=>x.id==='outfit-board').current.slots.top,'shirt');
+ }finally{f.close();}
+});
+test('same-source verified garment permits new cropped preview without replacing original',async()=>{
+ const f=await fixture();
+ try{
+  const pinned={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',pinned);
+  const editedPreview='data:image/jpeg;base64,'+
+   Buffer.from([255,216,3,255,217]).toString('base64');
+  const update={...pinned,image:editedPreview,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[update]});
+  await commit(f,plan);
+  const after=await snapshot(f.db),saved=after.items.find(x=>x.id==='shirt');
+  assert.equal(saved.image,editedPreview);
+  assert.equal(saved.originalPhoto.image,jpeg);
+  assert.equal(saved.originalPhoto.sha256,sha);
+  assert.equal(saved.sourceHashVerified,true);
+  assert.equal(after.state.find(x=>x.id==='outfit-board').current.slots.top,'shirt');
+ }finally{f.close();}
+});
+test('same-ID legacy unclaimed import cannot erase a saved private garment owner receipt',async()=>{
+ const f=await fixture();
+ try{
+  const before=await snapshot(f.db);
+  for(const unclaimed of [null,'missing']){
+   const incoming={...row(f.owner)};
+   if(unclaimed===null)incoming.ownerId=null;
+   else delete incoming.ownerId;
+   await assert.rejects(prep(f,{format:'closet-current',version:3,
+    items:[incoming]}),/LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT/);
+   assert.deepEqual(await snapshot(f.db),before);
+  }
+ }finally{f.close();}
+});
+test('same-ID original photo owner receipt survives identical-JPEG metadata-only imports',async()=>{
+ const f=await fixture();
+ try{
+  const saved={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{ownerId:f.owner,image:jpeg,sha256:sha}};
+  await replace(f.db,'items',saved);
+  const before=await snapshot(f.db);
+  const downgrading={...saved,color:'Purple',
+   originalPhoto:{...saved.originalPhoto,ownerId:null}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[downgrading]}),/LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+  const safe={...saved,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[safe]});
+  await commit(f,plan);
+  const preserved=(await snapshot(f.db)).items.find(x=>x.id==='shirt');
+  assert.equal(preserved.ownerId,f.owner);
+  assert.equal(preserved.originalPhoto.ownerId,f.owner);
+  assert.equal(preserved.originalPhoto.image,jpeg);
+  assert.equal(preserved.color,'Purple');
+ }finally{f.close();}
+});
+test('legacy same-ID merge cannot overwrite an existing verified original JPEG',async()=>{
+ const f=await fixture();
+ try{
+  const protectedRow={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',protectedRow);
+  const before=await snapshot(f.db);
+  const replacementImage='data:image/jpeg;base64,'+
+   Buffer.from([255,216,0,255,217]).toString('base64');
+  const replacementHash=createHash('sha256')
+   .update(Buffer.from([255,216,0,255,217])).digest('hex');
+  const changed={...row(f.owner),image:replacementImage,
+   originalPhoto:{image:replacementImage,sha256:replacementHash},
+   sourceSHA256:replacementHash,sourceHashVerified:true};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,items:[changed]}),
+   /LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID backup cannot omit an existing saved original',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}});
+  const before=await snapshot(f.db);
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[row(f.owner)]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID backup cannot silently downgrade verified source attestation',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner),sourceSHA256:sha,
+   sourceHashVerified:true,originalPhoto:{image:jpeg,sha256:sha}});
+  const before=await snapshot(f.db);
+  const unverified={...row(f.owner),sourceSHA256:sha,
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[unverified]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID backup protects source piece key and owner review receipt',async()=>{
+ const f=await fixture();
+ try{
+  await replace(f.db,'items',{...row(f.owner),sourceSHA256:sha,
+   sourceHashVerified:true,sourcePieceKey:'item-one',
+   ownerSourceReview88:{schema:'p88-owner-source-review/v1',sourceId:'source-one'},
+   originalPhoto:{image:jpeg,sha256:sha}});
+  const before=await snapshot(f.db);
+  const proposed={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   sourcePieceKey:'item-two',
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[proposed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+  proposed.sourcePieceKey='item-one';
+  await assert.rejects(prep(f,{format:'closet-current',version:3,
+   items:[proposed]}),/LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('legacy same-ID source-preserving color edit keeps exact original and saved outfit',async()=>{
+ const f=await fixture();
+ try{
+  const pinned={...row(f.owner),sourceSHA256:sha,sourceHashVerified:true,
+   sourcePieceKey:'piece-one',ownerSourceReview88:{sourceId:'source-one'},
+   originalPhoto:{image:jpeg,sha256:sha}};
+  await replace(f.db,'items',pinned);
+  const update={...pinned,color:'Purple'};
+  const plan=await prep(f,{format:'closet-current',version:3,items:[update]});
+  await commit(f,plan);
+  const after=await snapshot(f.db),item=after.items.find(x=>x.id==='shirt');
+  assert.equal(item.color,'Purple');
+  assert.equal(item.originalPhoto.image,jpeg);
+  assert.equal(item.sourceSHA256,sha);
+  assert.equal(item.sourceHashVerified,true);
+  assert.deepEqual(item.ownerSourceReview88,pinned.ownerSourceReview88);
+  const saved=after.state.find(x=>x.id==='outfit-board');
+  assert.equal(saved.current.slots.top,'shirt');
+  assert.equal(saved.saved[0].slots.top,'shirt');
+ }finally{f.close();}
+});
 test('duplicate clothing IDs block preflight without touching wardrobe',async()=>{
  const f=await fixture();
  try{
@@ -217,5 +413,57 @@ test('a valid pinned original JPEG remains exactly preserved through the atomic 
   const after=(await snapshot(f.db)).items.find(x=>x.id==='new-top');
   assert.equal(after.originalPhoto.image,jpeg);
   assert.equal(after.sourceSHA256,sha);
+ }finally{f.close();}
+});
+
+test('legacy ownerId null is an unclaimed provenance tag, not a foreign owner',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner);
+  raw.items[0].ownerId=null;
+  raw.items[0].metadata={capture:{ownerId:null}};
+  raw.items[0].originalPhoto={ownerId:null,image:jpeg,sha256:sha};
+  raw.items[0].sourceSHA256=sha;
+  raw.items[0].sourceHashVerified=true;
+  const plan=await prep(f,raw);
+  await commit(f,plan);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='new-top');
+  assert.equal(saved.ownerId,null);
+  assert.equal(saved.originalPhoto.ownerId,null);
+  assert.equal(saved.originalPhoto.image,jpeg);
+  assert.equal(saved.sourceSHA256,sha);
+ }finally{f.close();}
+});
+test('independent atomic helper refuses disagreeing original and source SHA receipts before writing',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner),before=await snapshot(f.db);
+  raw.items[0].sourceSHA256=sha;
+  raw.items[0].originalPhoto={image:jpeg,sha256:'a'.repeat(64)};
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_ORIGINAL_RECEIPT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('verified source flag without a source SHA receipt fails closed even when original bytes exist',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner),before=await snapshot(f.db);
+  raw.items[0].sourceHashVerified=true;
+  raw.items[0].originalPhoto={image:jpeg};
+  await assert.rejects(prep(f,raw),/LEGACY_ATOMIC_ORIGINAL_RECEIPT_CONFLICT/);
+  assert.deepEqual(await snapshot(f.db),before);
+ }finally{f.close();}
+});
+test('unverified legacy original with no SHA still imports without inventing attestation',async()=>{
+ const f=await fixture();
+ try{
+  const raw=backup(f.owner);
+  raw.items[0].originalPhoto={ownerId:null,image:jpeg};
+  const plan=await prep(f,raw);
+  await commit(f,plan);
+  const saved=(await snapshot(f.db)).items.find(x=>x.id==='new-top');
+  assert.equal(saved.originalPhoto.image,jpeg);
+  assert.equal(saved.sourceHashVerified,undefined);
+  assert.equal(saved.sourceSHA256,undefined);
  }finally{f.close();}
 });

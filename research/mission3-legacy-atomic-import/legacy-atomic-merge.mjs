@@ -17,7 +17,9 @@ function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  if(typeof x!=='object'||seen.has(x))throw Error('LEGACY_ATOMIC_INVALID_METADATA');
  if(Object.keys(x).length>1600)throw Error('LEGACY_ATOMIC_METADATA_LIMIT');
  seen.add(x);
- if(plain(x)&&own(x,'ownerId')&&x.ownerId!==owner)
+ // Null is an unclaimed legacy owner tag, not an asserted second account.
+ // Match the default import's raw JSON ownership gate exactly.
+ if(plain(x)&&own(x,'ownerId')&&x.ownerId!==null&&x.ownerId!==owner)
   throw Error('LEGACY_ATOMIC_FOREIGN_OWNER');
  for(const [key,value] of Object.entries(x)){
   if(['__proto__','prototype','constructor'].includes(key))throw Error('LEGACY_ATOMIC_UNSAFE_KEY');
@@ -25,11 +27,11 @@ function inspectTree(x,owner,depth=0,seen=new WeakSet()){
  }
  seen.delete(x);
 }
-async function verifyImage(image,hash=null){
- if(typeof image!=='string'||image.length>3_000_000||!img.test(image))
+async function verifyImage(image,hash=null,{maxEncoded=3_000_000,maxBytes=2_250_000}={}){
+ if(typeof image!=='string'||image.length>maxEncoded||!img.test(image))
   throw Error('LEGACY_ATOMIC_INVALID_JPEG');
  const bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),x=>x.charCodeAt(0));
- if(bytes.length<4||bytes[0]!==255||bytes[1]!==216)
+ if(bytes.length<4||bytes.length>maxBytes||bytes[0]!==255||bytes[1]!==216)
   throw Error('LEGACY_ATOMIC_INVALID_JPEG_BYTES');
  if(hash){
   if(!sha.test(hash))throw Error('LEGACY_ATOMIC_INVALID_SHA');
@@ -85,10 +87,23 @@ export async function prepareLegacyAtomicM3({
    typeof row.image!=='string'||row.image.length>3_000_000)
    throw Error('LEGACY_ATOMIC_INVALID_GARMENT');
   seen.add(row.id);
+  // Treat a verified provenance flag and both available SHA-256 receipts as
+  // one coherent claim. The atomic module is independently callable: it must
+  // not preserve contradictory provenance if a caller bypasses UI preflight.
+  const sourceHash=row.sourceSHA256,originalHash=row.originalPhoto?.sha256;
+  if((sourceHash!==undefined&&!sha.test(sourceHash))||
+     (originalHash!==undefined&&!sha.test(originalHash))||
+     (row.sourceHashVerified===true&&!sourceHash)||
+     (sourceHash&&originalHash&&sourceHash!==originalHash))
+   throw Error('LEGACY_ATOMIC_ORIGINAL_RECEIPT_CONFLICT');
   await verifyImage(row.image,(!row.originalPhoto?.image||row.originalPhoto.image===row.image)
    ?row.sourceSHA256||row.originalPhoto?.sha256||null:null);
   if(row.originalPhoto?.image){
-   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null);
+   // The preview is capped at 3 MB encoded. Preserved camera originals
+   // are a separate lossless asset: match default legacy preflight's 8 MiB
+   // decoded/11.2 MB encoded bound instead of rejecting genuine source JPEGs.
+   await verifyImage(row.originalPhoto.image,row.originalPhoto.sha256||row.sourceSHA256||null,
+    {maxEncoded:11_200_000,maxBytes:8*1024*1024});
   }else if(row.originalPhoto?.sha256||row.sourceSHA256&&row.sourceHashVerified===true){
    throw Error('LEGACY_ATOMIC_MISSING_ORIGINAL');
   }
@@ -104,6 +119,39 @@ export async function prepareLegacyAtomicM3({
  for(const row of rows.items)if(row.ownerId!==undefined&&row.ownerId!==ownerId)
   throw Error('LEGACY_ATOMIC_EXISTING_FOREIGN_OWNER');
  const allItems=new Map(rows.items.map(row=>[row.id,row]));
+ // Legacy imports are merges, not permission to replace an owner's
+ // independently saved camera original or provenance receipt. An incoming
+ // row may update color/metadata or add a genuinely new ID, but collisions
+ // with an existing source-pinned garment must retain its exact bytes and
+ // source identity. Refuse before creating any write transaction.
+ for(const row of incoming){
+  const saved=allItems.get(row.id);
+  if(!saved)continue;
+  // A legacy backup with null/missing owner tags may be admitted as a *new*
+  // unclaimed garment. It must not erase an existing item's independently
+  // saved owner claim, or the camera original's owner claim, under the same ID.
+  // Those claims survive only if the incoming row explicitly preserves them.
+  if((saved.ownerId===ownerId&&row.ownerId!==ownerId)||
+     (saved.originalPhoto?.ownerId===ownerId&&
+       row.originalPhoto?.ownerId!==ownerId))
+   throw Error('LEGACY_ATOMIC_EXISTING_OWNER_CLAIM_CONFLICT');
+  // Older saved pieces may have only a preview JPEG, with no original-photo
+  // receipt. That image is then the sole available source identity. Never
+  // silently replace its pixels under the same saved ID during a merge;
+  // require separate owner review rather than rewriting an existing outfit.
+  if((!saved.originalPhoto?.image&&saved.image!==row.image)||
+     (saved.originalPhoto?.image&&
+       saved.originalPhoto.image!==row.originalPhoto?.image)||
+     (saved.originalPhoto?.sha256&&
+       saved.originalPhoto.sha256!==row.originalPhoto?.sha256)||
+     (saved.sourceSHA256&&saved.sourceSHA256!==row.sourceSHA256)||
+     (saved.sourceHashVerified===true&&row.sourceHashVerified!==true)||
+     (saved.sourcePieceKey&&saved.sourcePieceKey!==row.sourcePieceKey)||
+     (saved.ownerSourceReview88&&
+       JSON.stringify(saved.ownerSourceReview88)!==
+       JSON.stringify(row.ownerSourceReview88)))
+    throw Error('LEGACY_ATOMIC_EXISTING_ORIGINAL_CONFLICT');
+ }
  for(const row of incoming)allItems.set(row.id,row);
  if(allItems.size>1000)throw Error('LEGACY_ATOMIC_CLOSET_LIMIT');
  const ids=new Set(allItems.keys());
@@ -123,6 +171,30 @@ export async function prepareLegacyAtomicM3({
   verifySlotsUnchanged(input.outfitBoard.current||{},cleanCurrent);
   input.outfitBoard.saved.forEach((row,i)=>verifySlotsUnchanged(row,cleanSaved[i]));
   board={id:'outfit-board',current:cleanCurrent,saved:cleanSaved};
+ }
+ // A backup with no outfit board must never silently corrupt already saved
+ // outfits when an incoming item replaces a referenced garment's ID. A category
+ // change can invalidate a slot; changing a shirt into a dress can also hide
+ // previously valid bottoms. Do not rewrite the owner's saved selections.
+ if(board===null && incoming.length){
+  const existingIDs=new Set(rows.items.map(row=>row.id));
+  const replaced=new Set(incoming.filter(row=>existingIDs.has(row.id)).map(row=>row.id));
+  const savedBoard=states.get('outfit-board');
+  if(savedBoard&&replaced.size){
+   const beforeCloset=rows.items.map(normalizeClothing);
+   const afterCloset=[...allItems.values()].map(normalizeClothing);
+   const outfits=[savedBoard.current,
+    ...(Array.isArray(savedBoard.saved)?savedBoard.saved:[])];
+   for(const outfit of outfits){
+    if(!plain(outfit)||!plain(outfit.slots)||
+       !Object.values(outfit.slots).some(id=>replaced.has(id)))continue;
+    const before=cleanOutfitBoard(outfit,beforeCloset);
+    const after=cleanOutfitBoard(outfit,afterCloset);
+    for(const [slot,id] of Object.entries(before.slots))
+     if(after.slots?.[slot]!==id)
+      throw Error('LEGACY_ATOMIC_EXISTING_OUTFIT_CONFLICT');
+   }
+  }
  }
  const marker=states.get('cloud-sync')||{id:'cloud-sync',baseVersion:0,
   baseDocument:null,localRevision:0,dirty:false};

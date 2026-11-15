@@ -1838,12 +1838,25 @@ $('export').onclick=async()=>{
   exportMessage('Backup downloaded. Keep it somewhere you can find again.');
  }catch{exportMessage('Private backup failed; sign in and retry. No data changed.');}
 };
+// A single importer is used in the default legacy path and the original
+// research acceptance harness; keep module resolution testable separately.
+async function mission3AtomicImporter(){
+ // Resolve inside the built app's own folder, including /subpath/ hosting.
+ // ../research would escape a scoped install and break default restoration.
+ return import('./research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs');
+}
 $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if(!file)return;if(!db)return message('Browser storage is unavailable.');if(file.size>100*1024*1024)return message('Backup must be smaller than 100 MB.');
  // A file read and owner confirmation may each take arbitrarily long.
  // A backup selected by one account can never be restored into the next.
  let importLease;
  try{importLease=ownerWardrobeMutationLease();}catch{return message('Sign in to import a private backup.');}
- const assertImport=()=>importLease.assertLease();
+ const assertImport=()=>{
+  importLease.assertLease();
+  // An authenticated principal alone is not enough: a private restore must
+  // also stop when the UI has relocked, even if auth/DB have not rotated yet.
+  if($('authGate')?.hidden!==true||$('appShell')?.hidden!==false)
+   throw Error('Private wardrobe is locked; sign in again before importing.');
+ };
  const importMessage=value=>{try{assertImport();message(value);}catch{}};
  try{const data=JSON.parse(await file.text());assertImport();
  if(new URLSearchParams(location.search).get('restoreAtomic01')==='research'){
@@ -1851,69 +1864,185 @@ $('import').onchange=async e=>{const file=e.target.files[0];e.target.value='';if
       !window.restoreAtomic01Bridge)throw Error('Verified lossless restore unavailable; nothing changed');
    assertImport();
    const restoreBridge=window.restoreAtomic01Bridge;
+   const assertRestore=()=>{
+    assertImport();
+    // A replacement restore controller must not inherit a pending old UI
+    // consent callback or publish an old controller's completed status.
+    if(window.restoreAtomic01Bridge!==restoreBridge)
+     throw Error('Private recovery controls changed. Reopen My Closet and verify restore status.');
+   };
+   assertRestore();
    const result=await restoreBridge.importBackup(data,{
-    confirm:({incoming,existing,savedExisting})=>{assertImport();const accepted=confirm(
+    confirm:({incoming,existing,savedExisting})=>{assertRestore();const accepted=confirm(
      'Replace '+existing+' existing clothes and '+savedExisting+' saved outfits with '+
      incoming.itemCount+' backup clothes and '+incoming.savedCount+
      ' saved outfits? The old local version will be replaced. Cancel keeps everything unchanged.');
-     assertImport();return accepted;}
+     assertRestore();return accepted;}
    });
-   assertImport();
+   assertRestore();
    if(result.cancelled)return importMessage('Restore canceled. Your original closet is unchanged.');
    importMessage('All clothing photos, category corrections and outfits restored together.');
    return;
   }
   if(new URLSearchParams(location.search).get('nativeLossless04')==='research')
    throw Error('Import blocked in lossless research mode BEFORE any wardrobe write: atomic wardrobe+outfit restore requires separate acceptance');
-  // Mission 3 research-only: legacy v1-v3 IMPORT is a single CAS-bound
-  // IndexedDB write for clothes, inspiration, outfit board and cloud revision.
-  // The production legacy path below stays unchanged until owner release.
-  if(new URLSearchParams(location.search).get('legacyAtomicM3')==='research'){
-   assertImport();
-   if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
-    throw Error('Save or discard your unfinished outfit changes before importing.');
-   const {prepareLegacyAtomicM3,commitLegacyAtomicM3}=
-    await import('../research/mission3-legacy-atomic-import/legacy-atomic-merge.mjs');
-   assertImport();
-   const ownerId=window.closetAuth?.user?.id;
-   const prepared=await prepareLegacyAtomicM3({
-    data,ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
-    normalizeClothing,validLook,cleanOutfitBoard
-   });
-   assertImport();
-   if(!confirm('Import '+prepared.counts.garments+' clothing pieces, '+
-      prepared.counts.looks+' inspiration looks and '+
-      prepared.counts.savedOutfits+' saved outfits together? All changes are atomic; '+
-      'Cancel or a conflict keeps the existing closet unchanged.'))
-    return importMessage('Import canceled. Your closet is unchanged.');
-   assertImport();
-   const operation=writes.then(()=>{
-    assertImport();
-    if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
-     throw Error('Your outfit changed during import. Save it and retry.');
-    return commitLegacyAtomicM3({
-     ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
-     prepared,confirmed:true
-    });
-   });
-   writes=operation.catch(()=>{});
-   await operation;
-   assertImport();
-   window.closetCloud?.changed?.();
-   try{
-    if(typeof mission3ReloadOwnerCloudView!=='function')
-     throw Error('Owner-private closet refresh unavailable');
-    await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
-    assertImport();
-    importMessage('Clothing, inspiration and outfits imported atomically.');
-   }catch(error){
-    // Commit has ALREADY succeeded. Never tell the owner nothing was saved.
-    assertImport();
-    importMessage('Backup imported atomically. Reload My Closet to refresh the view.');
+  // Default v1-v3 import now shares the *same* signed-owner, multi-store
+  // atomic IDB merge that was verified in the built Chromium/WebKit PWA.
+  // The file is staged with the app build and cached for offline recovery.
+  // v4 and nativeLossless04 remain independently protected above.
+  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');
+  const importedIds=new Set(),signedImportOwner=window.closetAuth?.user?.id;
+  // JSON backups may carry owner claims deep inside photo, look or outfit
+  // metadata. Validate the complete untrusted tree before the first write,
+  // not merely top-level clothing rows. Reject prototype-pollution keys.
+  const preflightLegacyMetadata=(root)=>{
+   const visited=new WeakSet();
+   const walk=(value,depth)=>{
+    if(depth>32)throw Error('Backup metadata nesting is unsafe. No clothing was imported.');
+    if(value===null||typeof value!=='object')return;
+    if(visited.has(value))
+     throw Error('Backup metadata contains repeated references. No clothing was imported.');
+    visited.add(value);
+    const keys=Object.keys(value);
+    if(keys.length>1600)
+     throw Error('Backup metadata exceeds safe limits. No clothing was imported.');
+    for(const key of keys){
+     if(key==='__proto__'||key==='constructor'||key==='prototype')
+      throw Error('Backup contains unsafe metadata. No clothing was imported.');
+     if(key==='ownerId'&&value[key]!==null&&value[key]!==signedImportOwner)
+      throw Error('Backup belongs to another account. No clothing was imported.');
+     walk(value[key],depth+1);
+    }
+    visited.delete(value);
+   };
+   walk(root,0);
+  };
+  // Inspect the RAW look/garment/outfit JSON before normalization strips
+  // arbitrary owner-bearing metadata, including rejected hidden claims.
+  preflightLegacyMetadata(data);
+  assertImport();
+  const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');
+   // A duplicate after legacy 100-character ID normalization could silently
+   // overwrite a different physical garment. Explicit foreign owner tags
+   // must never be imported into the currently signed private account.
+   const normalizedId=x.id.slice(0,100);
+   if(importedIds.has(normalizedId))
+    throw Error('Backup contains duplicate garment IDs. No clothing was imported.');
+   importedIds.add(normalizedId);
+   for(const tagged of [x,x.originalPhoto]){
+    if(tagged&&tagged.ownerId!==undefined&&tagged.ownerId!==null&&
+       tagged.ownerId!==signedImportOwner)
+     throw Error('Backup belongs to another account. No clothing was imported.');
    }
-   return;
+   return normalizeClothing({...x,id:normalizedId,image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}// Validate supplied source-original JPEG receipts BEFORE the first default
+  // legacy write. A cutout can be a valid garment preview but never silently
+  // substitute for an original whose SHA-256 is asserted in the backup.
+  for(const row of data.items){
+   const original=row.originalPhoto,claimed=row.sourceSHA256,
+    photoClaim=original?.sha256,verified=row.sourceHashVerified===true;
+   if(original!==undefined&&original!==null&&
+      (typeof original!=='object'||Array.isArray(original)))
+    throw Error('Backup contains invalid original photo metadata. No clothing was imported.');
+   const sha=/^[a-f0-9]{64}$/;
+   if((claimed!==undefined&&!sha.test(claimed))||
+      (photoClaim!==undefined&&!sha.test(photoClaim))||
+      (verified&&!claimed)||(claimed&&photoClaim&&claimed!==photoClaim))
+    throw Error('Backup original photo receipt is inconsistent. No clothing was imported.');
+   const image=original?.image===undefined?row.image:original.image;
+   if(original?.image===undefined&&!claimed&&!photoClaim&&!verified)continue;
+   if(typeof image!=='string'||image.length>11200000||
+      !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(image))
+    throw Error('Backup original JPEG is unavailable or invalid. No clothing was imported.');
+   let bytes;
+   try{bytes=Uint8Array.from(atob(image.slice('data:image/jpeg;base64,'.length)),
+    byte=>byte.charCodeAt(0));}catch{
+    throw Error('Backup original JPEG cannot be decoded. No clothing was imported.');
+   }
+   if(bytes.length<4||bytes.length>8388608||bytes[0]!==255||bytes[1]!==216)
+    throw Error('Backup original JPEG is invalid. No clothing was imported.');
+   if(claimed||photoClaim){
+    if(!crypto?.subtle?.digest)
+     throw Error('Original JPEG verification is unavailable. Nothing imported.');
+    const actual=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))]
+     .map(byte=>byte.toString(16).padStart(2,'0')).join('');
+    assertImport();
+    if(actual!==(claimed||photoClaim))
+     throw Error('Backup original JPEG SHA-256 mismatch. No clothing was imported.');
+   }
+   assertImport();
   }
-  if(data.format!=='closet-current'||![1,2,3].includes(data.version)||!Array.isArray(data.items)||data.items.length>1000)throw Error('Choose a Closet Current backup.');const valid=data.items.map(x=>{if(typeof x.id!=='string'||!x.id||typeof x.image!=='string'||!/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(x.image)||x.image.length>3000000)throw Error('Backup contains an invalid image.');return normalizeClothing({...x,id:x.id.slice(0,100),image:x.image,name:String(x.name||'Closet piece').slice(0,120),category:categories.includes(x.category)?x.category:'Uncategorized',color:String(x.color||'').slice(0,120),notes:String(x.notes||'').slice(0,500),savedAt:String(x.savedAt||'')});});if(data.looks){if(!Array.isArray(data.looks)||data.looks.length>100)throw Error('Invalid inspiration backup.');data.looks=data.looks.map(validLook);}assertImport();if(!confirm(`Import ${valid.length} pieces? Matching IDs will update existing pieces.`))return;assertImport();await writeAll(valid);assertImport();const restored=await readAllFrom(importLease.ownerDB);assertImport();items=restored.map(normalizeClothing);if(data.looks){assertImport();await importLooks(data.looks);assertImport();}if(data.outfitBoard&&typeof importBoardBackup==='function'){assertImport();await importBoardBackup(data.outfitBoard);assertImport();}render();importMessage('Backup imported.');}catch(err){importMessage(err.message||'Import failed.');}};
+  // Legacy default v1–v3 restore is not yet a single wardrobe/board commit.
+  // Reject malformed or missing outfit references and live unsaved outfit edits
+  // BEFORE the first garments write, rather than discovering invalid board
+  // data only after clothing has already been imported.
+  const preflightLegacyBoard=()=>{
+   const board=data.outfitBoard;
+   // Clothing-only merges can change pieces referenced by the owner's live
+   // unsaved outfit. The saved board snapshot cannot protect those edits.
+   // Check both before preview and again after confirmation, before commit.
+   if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
+    throw Error('Save or discard unfinished outfit changes before importing a backup.');
+   if(!board||typeof importBoardBackup!=='function')return;
+   const object=value=>value!==null&&typeof value==='object'&&!Array.isArray(value);
+   if(!object(board)||!Array.isArray(board.saved)||board.saved.length>50)
+    throw Error('Backup contains invalid outfit data. No clothing was imported.');
+   const known=new Set([
+    ...(typeof items!=='undefined'&&Array.isArray(items)?items:[]),...valid
+   ].map(item=>item.id));
+   for(const entry of [board.current??{},...board.saved]){
+    if(!object(entry)||entry.slots!==undefined&&!object(entry.slots))
+     throw Error('Backup contains invalid outfit data. No clothing was imported.');
+    for(const id of Object.values(entry.slots||{}))
+     if(typeof id!=='string'||!known.has(id))
+      throw Error('Backup references an unavailable outfit garment. No clothing was imported.');
+   }
+   if(typeof boardHasUnsavedDraft==='function'&&boardHasUnsavedDraft())
+    throw Error('Save or discard unfinished outfit changes before importing a backup.');
+  };
+  preflightLegacyBoard();
+  assertImport();
+  const {prepareLegacyAtomicM3,commitLegacyAtomicM3}=await mission3AtomicImporter();
+  assertImport();
+  const ownerId=window.closetAuth?.user?.id;
+  // Preserve the original v1-v3 import contract: long historical garment
+  // IDs are normalized to 100 characters before the atomic module validates
+  // the incoming rows. Duplicate IDs after truncation were already rejected
+  // above, so no second piece can overwrite the first one by accident.
+  // Preserve raw outfit references; an invalid or now-missing link must fail
+  // closed rather than silently change a saved outfit.
+  const prepared=await prepareLegacyAtomicM3({
+   data:{...data,items:valid},ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+   normalizeClothing,validLook,cleanOutfitBoard
+  });
+  assertImport();
+  if(!confirm('Import '+prepared.counts.garments+' clothing pieces, '+
+     prepared.counts.looks+' inspiration looks and '+
+     prepared.counts.savedOutfits+' saved outfits together? All changes are atomic; '+
+     'Cancel or a conflict keeps the existing closet unchanged.'))
+   return importMessage('Import canceled. Your closet is unchanged.');
+  assertImport();
+  const operation=writes.then(()=>{
+   assertImport();
+   preflightLegacyBoard();
+   return commitLegacyAtomicM3({
+    ownerDB:importLease.ownerDB,ownerId,assertLease:assertImport,
+    prepared,confirmed:true
+   });
+  });
+  writes=operation.catch(()=>{});
+  await operation;
+  assertImport();
+  let cloudNotified=true;
+  try{window.closetCloud?.changed?.();}catch{cloudNotified=false;}
+  let viewReloaded=true;
+  try{
+   await mission3ReloadOwnerCloudView(importLease,{queueUnreviewed:false});
+  }catch{viewReloaded=false;}
+  assertImport();
+  if(!viewReloaded||!cloudNotified)
+   return importMessage('Backup imported atomically. Reload My Closet to refresh the view and confirm cloud backup.');
+  importMessage('Clothing, inspiration and outfits imported atomically.');
+ }catch(err){importMessage(err.message||'Import failed.');}};
 window.addEventListener('beforeunload',e=>{if(batch.length||busy){e.preventDefault();e.returnValue='';}});
 const closetReady=(async()=>{
  await window.closetAuth.ready;
