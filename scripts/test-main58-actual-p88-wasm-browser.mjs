@@ -484,6 +484,23 @@ try{
  assert.equal(after.top,handoff.savedItemId);
  assert.equal(after.savedOutfitCount,1);
  assert.equal(after.cloudDirty,true);
+ // BOARD04's atomic v4 restore rehydrates the durable saved outfit list.
+ // It intentionally starts with the separately persisted current board,
+ // NOT an automatically selected saved outfit. The signed owner must open
+ // the restored saved outfit explicitly through the actual native UI.
+ stage='same-owner-reopen-actual-restored-saved-outfit';
+ await page.waitForFunction(id=>{
+  const board=window.nativeLossless04Bridge;
+  return board?.status()?.active===true&&
+   board.readOnlySnapshot().saved.some(row=>row.slots?.top===id)&&
+   !!document.querySelector('#savedBoards button');
+ },handoff.savedItemId,{timeout:30000});
+ await page.locator('#savedBoards button').first().click();
+ await page.waitForFunction(id=>{
+  const board=window.nativeLossless04Bridge;
+  return board?.status()?.selected===0&&
+   typeof currentBoard!=='undefined'&&currentBoard.slots?.top===id;
+ },handoff.savedItemId,{timeout:30000});
  const restoredGallery=await page.evaluate(async()=>{
   const gallery=window.m58M59Gallery;
   if(!gallery)throw Error('M61 owner original gallery missing');
