@@ -13,6 +13,9 @@
  */
 import {summarizeOriginalPhotoSkirtContactTopology89} from './skirt-contact-topology89.mjs';
 const POSES=Object.freeze(['source','blend-50','relaxed']);
+// Research candidate safety also depends on actual intermediate skinned poses.
+// Static quarter poses do NOT establish continuously swept body/cloth clearance.
+const QUARTERS=Object.freeze(['blend-25','blend-75']);
 const MOVES=Object.freeze([
  Object.freeze({name:'front-15mm',dx:0,dy:0,dz:.015}),
  Object.freeze({name:'front-30mm',dx:0,dy:0,dz:.030}),
@@ -69,13 +72,20 @@ export function compareActualOriginalPhotoSkirtRegistration89({
   ['skinWeight',weights.array.slice()],
   ['sourceSkirt89Rest',rest.array.slice()],['index',index.array.slice()]
  ];
- let clone=null;const baseline=[],trials=[];let best=null;
+ let clone=null;const baseline=[],quarterBaseline=[],trials=[];let best=null;
  try{
   for(const pose of POSES){
    applyPose(pose);
    const evidence=sampleContact(pose);
    if(!validContact(evidence))throw Error('original three-pose whole-body BVH pairs missing');
    baseline.push(evidence);
+  }
+  for(const pose of QUARTERS){
+   applyPose(pose);
+   const evidence=sampleContact(pose);
+   if(!validContact(evidence))
+    throw Error('intermediate-original-source-BVH-pairs-missing');
+   quarterBaseline.push(evidence);
   }
   clone=original.clone();mesh.geometry=clone;
   for(const t of MOVES){
@@ -120,7 +130,26 @@ export function compareActualOriginalPhotoSkirtRegistration89({
       topology.trialStrictCrossingPairSum!==trial||
       topology.newlyIntroducedOriginalBodySkirtFacePairSum!==introduced)
     throw Error('genuine-source-contact-turnover-analysis-failed');
-   const researchOnlyReduction=introduced===0&&!depthIncreased&&trial<original;
+   // A 3-pose reduction is NOT a research candidate if the 25% or 75%
+   // authentic source pose adds any body/cloth crossing or worsens its
+   // oriented contact depth. Do not report unsampled poses as passes.
+   const primaryNonworsening=introduced===0&&!depthIncreased&&trial<original;
+   const quarterPoseContacts=[];
+   if(primaryNonworsening){
+    for(let i=0;i<QUARTERS.length;i++){
+     applyPose(QUARTERS[i]);
+     const after=sampleContact(QUARTERS[i]);
+     if(!validContact(after))
+      throw Error('intermediate-candidate-source-BVH-pairs-missing');
+     quarterPoseContacts.push(Object.freeze({
+      pose:QUARTERS[i],...pairCounts(quarterBaseline[i],after)
+     }));
+    }
+   }
+   const intermediateSafe=quarterPoseContacts.length===QUARTERS.length&&
+    quarterPoseContacts.every(x=>x.newOriginalSourceFacePairIDs===0&&
+     !x.planeDepthIncreased);
+   const researchOnlyReduction=primaryNonworsening&&intermediateSafe;
    const row=Object.freeze({
     name:t.name,localCameraFacingRegistrationMeters:[t.dx,t.dy,t.dz],
     sourceRGBAndReviewAlphaBytesUnchanged:true,originalSkirtUVUnchanged:true,
@@ -134,6 +163,10 @@ export function compareActualOriginalPhotoSkirtRegistration89({
     introducedOriginalSourceFacePairIDs:introduced,
     maxPlaneDepthWorsened:depthIncreased,perPoseContacts:contact,
     genuineOriginalSkirtContactTopology:topology,
+    intermediateAuthenticSkinnedPosesRequired:QUARTERS,
+    intermediatePoseBaselineStrictPairs:quarterBaseline.map(x=>x.count),
+    intermediatePoseContactChecks:quarterPoseContacts,
+    intermediatePoseCrossingGuardPassed:intermediateSafe,
     researchOnlyNonworseningReduction:researchOnlyReduction,
     photographicFrontDepthAlignmentHumanApproved:false,
     garmentAbsolutePhysicalScaleKnown:false,realMotionAndDrapeApproved:false,
@@ -158,6 +191,9 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    original163BoneModelUnchanged:true,
    actualOriginalPhotoSkirtFaces:576,actualOriginalMaleFemaleRigRequired:true,
    original3PoseStrictBodyCrossingPairs:baseline.reduce((n,x)=>n+x.count,0),
+   originalIntermediatePoseStrictBodyCrossingPairs:quarterBaseline.map(x=>x.count),
+   actualIntermediatePoseNamesChecked:QUARTERS,
+   candidateMustPassAllFiveSourcePoses:true,
    trials, bestResearchOnly:best,
    sourcePhotoPixelsAndMasksUnmodified:true,
    skinnedBodyVerticesNeverExported:true,
@@ -179,7 +215,9 @@ export function compareActualOriginalPhotoSkirtRegistration89({
    'original-photo-source-UV-weights-or-faces-altered',
    'photographed source skin/UV/geometry mutated',
    'original photographed skirt photo-derived positions modified',
-   'genuine-source-contact-turnover-analysis-failed'
+   'genuine-source-contact-turnover-analysis-failed',
+   'intermediate-original-source-BVH-pairs-missing',
+   'intermediate-candidate-source-BVH-pairs-missing'
   ]);
   return fail(safe.has(e.message)?e.message:
    'real-photo-skirt-registration-trial-source-not-verifiable');
