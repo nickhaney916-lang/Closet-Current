@@ -47,6 +47,7 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
    Array.isArray(result.samples)&&result.samples.length===4&&
    images&&recomputedDiffs,'pose-matrix-or-independent-byte-evidence-incomplete');
   const expected=new Set();
+  let frameDimensions=null;
   for(const figure of figures)for(const denim of denims)
    for(const variant of variants)for(const pose of poses)for(const angle of angles)
     expected.add(['P84',engine,figure,denim,variant,pose,angle].join('-')+'.png');
@@ -68,7 +69,6 @@ export function auditActualPhotoPoseAB89({result,images,recomputedDiffs,engine}=
   require89(expected.size===0&&Object.keys(images).length===48,
    'missing-or-extra-photographic-source-frames');
   const expectedOutfits=new Set(),pairContactLedger=[];
-  let frameDimensions=null;
   let originalTotal=0,refinedTotal=0,baselineContactWitnesses=0,
       refinedContactWitnesses=0,increasedPoseWitnesses=0,
       candidateTrials=0,refusedTrials=0,changedPixels=0,independentlyRecheckedTransitions=0;
