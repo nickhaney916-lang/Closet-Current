@@ -279,3 +279,25 @@ test('P90 M17 full 360-degree real-source orbit and visible rear provenance warn
  assert.ok(interactions.includes("fullCycle17,finalCamera"));
  assert.ok(workflow.includes('engine: [chromium, webkit]'));
 });
+
+test('P90 M18 real owner original-photo evidence shortcut is focusable and read-only at mobile width',()=>{
+ const installer=readFileSync('scripts/install-parallel90-viewer.mjs','utf8');
+ const interactions=readFileSync('scripts/check-parallel90-interactions.mjs','utf8');
+ const flow=readFileSync('.github/workflows/parallel90-viewer-no-deploy.yml','utf8');
+ assert.ok(installer.includes("const originalPhotos90=el('button','outfit3D01Originals90','View original photos')"));
+ assert.ok(installer.includes("originalPhotos90.setAttribute('aria-label','View original saved clothing photographs and photo-only fallback')"));
+ assert.ok(installer.includes("current();"));
+ assert.ok(installer.includes("if(!shown||!dialog.open)return"));
+ assert.ok(installer.includes("cards.setAttribute('role','region')"));
+ assert.ok(installer.includes("cards.setAttribute('aria-label','Original saved clothing photographs')"));
+ assert.ok(installer.includes("cards.focus({preventScroll:true})"));
+ assert.ok(installer.includes("cards.scrollIntoView({block:'start',behavior:'auto'})"));
+ assert.ok(interactions.includes("await button.click()"));
+ assert.ok(interactions.includes("document.activeElement===n"));
+ assert.ok(interactions.includes("genuineFirstPhotoHash,previous.garmentSources90.dress"));
+ assert.ok(interactions.includes("afterShortcut.garmentSources90,previous.garmentSources90"));
+ assert.ok(interactions.includes("afterShortcut.resources90.geometries,previous.resources90.geometries"));
+ assert.ok(interactions.includes("owner2DSessionRetained:true"));
+ assert.ok(interactions.includes("originalPhotosShortcut18,finalCamera"));
+ assert.ok(flow.includes("engine: [chromium, webkit]"));
+});
