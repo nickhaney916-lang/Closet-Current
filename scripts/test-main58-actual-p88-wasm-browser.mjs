@@ -309,6 +309,17 @@ try{
    sourceIsLocalJpeg:(img.getAttribute('src')||'').startsWith('data:image/jpeg;base64,')}));
  assert.equal(normal2D.decoded,true,"owner's original-photo-derived 2D outfit image was not decoded");
  assert.equal(normal2D.sourceIsLocalJpeg,true,'native photo card did not retain local JPEG');
+ // M70: the actual default native board must say it has a photo reference,
+ // not silently certify one physical garment, a verified segmentation or 3D.
+ const defaultBoardTop=page.locator('#boardSlots .board-slot-top.owned');
+ assert.match(await defaultBoardTop.innerText(),
+  /Photo reference only.*garment outline unverified/i,
+  'real native board hid the physical garment uncertainty on saved photo');
+ assert.match(await defaultBoardTop.getAttribute('aria-label'),
+  /individual garment outline unverified/i,
+  'screen-reader label silently claimed the ambiguous photo was one garment');
+ assert.equal(await defaultBoardTop.evaluate(e=>e.classList.contains('source-unverified')),
+  true,'real native card lost its source-uncertainty state');
  stage='strict verified original preview and unsupported 3D must stay blocked';
  await page.locator('#mission4Preview1054Section button').waitFor({timeout:20000});
  await page.locator('#mission4Preview1054Section button').click();
