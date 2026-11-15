@@ -87,13 +87,13 @@ test('logging out and back in as the SAME owner revokes a delayed legacy backup 
 test('owner switching inside legacy backup confirmation fails closed before any write',async()=>{
  const f=backupHarness({approve:r=>{r.switchOwner();return true;}});
  await f.trigger();
- assert.equal(f.confirmed,1);assert.equal(f.writes.length,0);
+ assert.equal(f.confirmed,1,JSON.stringify(f.messages));assert.equal(f.writes.length,0);
  assert.deepEqual(f.messages,[]);
 });
 test('current owner can still import clothing, looks and outfit references',async()=>{
  const f=backupHarness({withLooks:true});
  await f.trigger();
- assert.equal(f.writes.length,1);
+ assert.equal(f.writes.length,1,JSON.stringify(f.messages));
  assert.equal(f.writes[0][0].id,'shared-row');
  assert.equal(f.looks.length,1);assert.equal(f.boards.length,1);
  assert.equal(f.messages.at(-1),'Clothing, inspiration and outfits imported atomically.');
