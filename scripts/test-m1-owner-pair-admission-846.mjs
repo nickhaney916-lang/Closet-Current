@@ -63,6 +63,7 @@ const harness=[
  "};",
  "window.setupExactSaved88=()=>{",
  "  window.closetAuth.user={id:'owner-A'};session=0;window.autoQueueCount=0;window.persistDraftCount=0;",
+ "  window.writeCount=0;window.stored=[];window.completions=[];window.draftSnapshots=[];window.beforeWriteTest=null;",
  "  items=[{id:'already-owned',image:originalSource88,category:'Tops',itemType:'T-shirt',color:'Blue'}];",
  "  batch=[];return candidate(originalSource88);",
  "};",
