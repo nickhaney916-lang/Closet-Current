@@ -42,6 +42,23 @@ function boundedLabels50(value,allow,max){
  return out;
 }
 const SEGMENT50_CATEGORY_SET=new Set(SEGMENT50_CATEGORIES);
+/**
+ * MAIN54 / P88: rejected non-footwear component evidence is not a garment
+ * identity. This is a NEGATIVE admission flag only. Absence of the flag
+ * never certifies segmentation accuracy, completeness or owner acceptance.
+ * Block known unresolved cases and unknown future component-review statuses.
+ */
+export const UNRESOLVED_SEGMENT_STATUS54='unresolved_fragments_keep_source_mask';
+export function unresolvedSegmentation54(hint){
+ if(!hint||typeof hint!=='object'||Array.isArray(hint))return false;
+ const status=hint.componentReviewStatus;
+ const method=hint.instanceMethod;
+ return status===UNRESOLVED_SEGMENT_STATUS54||
+  method==='native_semantic_group_unresolved_fragments'||
+  (status!==undefined&&status!=='owner_must_confirm_garment_units')||
+  (method!==undefined&&!['native_semantic_group','connected_footwear_component',
+    'connected_semantic_component_unverified'].includes(method));
+}
 export function sanitizeSegmentHint50(hint,{manual=false}={}){
  // A manually marked/contrast-only crop must never acquire an invented
  // detector score, even if a caller submits a counterfeit hint.
@@ -52,8 +69,10 @@ export function sanitizeSegmentHint50(hint,{manual=false}={}){
  const confidence=typeof hint.confidence==='number'&&Number.isFinite(hint.confidence)&&
   hint.confidence>=0&&hint.confidence<=1?hint.confidence:null;
  const clipped=typeof hint.clipped==='boolean'?hint.clipped:null;
- if(!categories.length&&!types.length&&confidence===null&&clipped===null)return null;
- return {categories,types,clipped,confidence};
+ const unresolved=unresolvedSegmentation54(hint);
+ if(!categories.length&&!types.length&&confidence===null&&clipped===null&&!unresolved)return null;
+ return {categories,types,clipped,confidence,
+  ...(unresolved?{componentReviewStatus:UNRESOLVED_SEGMENT_STATUS54}:{})};
 }
 
 export const SHA24=/^[a-f0-9]{64}$/;
@@ -145,6 +164,11 @@ export function verifiedRecord24({proof,ownerId,piece,now=new Date().toISOString
     !JPEG24.test(piece.image)||typeof piece.id!=='string'||!piece.id||
     typeof piece.instanceKey!=='string'||!piece.instanceKey)
   fail('unreviewed or invalid piece');
+ // MAIN54: even correct owner category/color and a manually touched crop
+ // cannot turn an unresolved P88 semantic aggregate into one physical item.
+ // Reject the ENTIRE selected batch; photograph the separate garments.
+ if(unresolvedSegmentation54(piece?.hint))
+  fail('unresolved source fragments require separate garment recapture');
  // DETECTOR57: validate crop review at the final immutable row boundary.
  // A caller bypassing native UI cannot self-assert that an automatic detector
  // crop was reviewed. Both manual and model regions require explicit review.
@@ -229,7 +253,10 @@ export function minimalPieceSnapshot51(piece,proof){
   itemType:p.itemType,color:p.color,manual:p.manual,
   // Drop malformed/noncloneable arbitrary names, which are NOT user labels.
   name:typeof p.name==='string'?p.name.slice(0,120):undefined,
-  hint:sanitizeSegmentHint50(p.hint,{manual:p.manual===true}),
+  // A forged manual=true cannot erase a prior unresolved-source veto.
+  hint:unresolvedSegmentation54(p.hint)?
+   {componentReviewStatus:UNRESOLVED_SEGMENT_STATUS54}:
+   sanitizeSegmentHint50(p.hint,{manual:p.manual===true}),
   maskApplied:p.maskApplied===true,recognitionSuggestion42
  };
 }
