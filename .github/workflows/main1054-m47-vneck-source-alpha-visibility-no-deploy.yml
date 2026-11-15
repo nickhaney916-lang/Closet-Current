@@ -1,0 +1,130 @@
+name: MAIN1054 M47 genuine licensed original V-neck source shader alpha visibility NO DEPLOY
+on:
+  push:
+    branches: [research/main1054-m47-vneck-fragment-alpha-visibility-HOLD]
+  workflow_dispatch: {}
+permissions:
+  contents: read
+jobs:
+  no-deploy-regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact M46 P93 vs M45 true source-renderer parent, restricted research-only paths
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 29a86b523abe0a37f9e014742c51afc68624ddf7 HEAD
+          for path in research/main1054-mask45/vneck-source-region-trial.mjs research/main1054-mask44/priority-source-review.mjs research/main1054-3d46/original-source-p93-m45-render-lease.mjs scripts/test-main46-real-source-3d-browser.mjs scripts/build-main45-real-original-vneck.mjs research/main1054-handoff40/p89-quality-admission.mjs research/native-3d-05/native-preview-bridge.mjs public/outfit-board.js; do
+            test "$(git rev-parse HEAD:$path)" = "$(git rev-parse 29a86b523abe0a37f9e014742c51afc68624ddf7:$path)"
+          done
+          git diff --exit-code 29a86b523abe0a37f9e014742c51afc68624ddf7 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/ research/main1054-handoff40/
+          git diff --name-only 29a86b523abe0a37f9e014742c51afc68624ddf7 HEAD | while IFS= read -r path; do
+            case "$path" in
+              research/main1054-3d47/fragment-visibility-trial.mjs|tests/main47-source-vneck-shader-visibility.test.mjs|scripts/test-main47-real-3d-vneck-fragment-visibility.mjs|research/master-consolidation-1054/MILESTONE47.md|.github/workflows/main1054-m47-vneck-source-alpha-visibility-no-deploy.yml) ;;
+              *) echo "BLOCKED unexpected M47 file $path"; exit 1;;
+            esac
+          done
+          node --check research/main1054-3d47/fragment-visibility-trial.mjs
+          node --check tests/main47-source-vneck-shader-visibility.test.mjs
+          node --check scripts/test-main47-real-3d-vneck-fragment-visibility.mjs
+      - name: Install pinned local no-deploy dependencies
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Unchanged default consumer application build
+        run: node scripts/build.mjs
+      - name: M47 ephemeral source shader front-visibility and original 163bone contact/UV denial checks
+        run: node --test tests/main47-source-vneck-shader-visibility.test.mjs
+      - name: Full inherited application no-deploy regression
+        run: node --test --test-concurrency=1 tests/*.cjs tests/*.mjs
+      - name: No private source or consumer deployment changes
+        run: git diff --exit-code 29a86b523abe0a37f9e014742c51afc68624ddf7 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/
+  genuine-original-photo-vneck-alpha-visibility-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    strategy:
+      fail-fast: false
+      matrix:
+        engine: [chromium, webkit]
+    container:
+      image: mcr.microsoft.com/playwright@sha256:f1e7e01021efd65dd1a2c56064be399f3e4de00fd021ac561325f2bfbb2b837a
+      options: --shm-size=1gb
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: /ms-playwright
+      M46_ENGINE: ${{ matrix.engine }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Local immutable research-only browser packages
+        run: npm install --no-save --no-package-lock --no-audit --no-fund sharp@0.34.3 playwright@1.56.1 fake-indexeddb@6.2.4 three@0.180.0 three-mesh-bvh@0.9.2 axe-core@4.10.3 pg@8.16.3
+      - name: Exact original 3D shader P541, SHA P93 alpha, P92 163bone renderer, P60 and P172
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git merge-base --is-ancestor 29a86b523abe0a37f9e014742c51afc68624ddf7 HEAD
+          git worktree add --detach .native05-donor-541 df6885d6011cb33fb22dceb81a08f35a0ac4dd61
+          git worktree add --detach .m41-p93-donor 690eaeec9ebe911714d6f45fb0d9a59b2ee918d8
+          git worktree add --detach .m46-p92 e8170c9ebce19a189dd03ea2027f87717c821a76
+          git worktree add --detach .m46-p60 6fe5e46b91533a96f3c0d86950ea077cb355c459
+          git worktree add --detach .m46-p172 88d2fdb412f84b0498c86bfa17f4b391425e1958
+          for name in .native05-donor-541 .m41-p93-donor .m46-p92 .m46-p60 .m46-p172; do
+            git config --global --add safe.directory "$GITHUB_WORKSPACE/$name"
+            ln -s ../node_modules "$name/node_modules"
+          done
+      - name: Rebuild genuine original public dress and CC0 163-bone anatomical GLBs
+        working-directory: .native05-donor-541
+        run: |
+          node scripts/build-three-d-31-jeans-proposal.mjs
+          node scripts/build-three-d-37-second-jeans.mjs
+          node scripts/build-work47-benchmark.mjs
+          node research/three-d-20/restore-approved-models.mjs
+      - name: Rebuild actual unchanged original P93 and separate M45 photo mask proposal
+        run: |
+          node .m41-p93-donor/scripts/build-mission2-p93-real-source-mask.mjs
+          node scripts/build-main41-real-source-review.mjs
+          node scripts/build-main42-source-fringe-comparison.mjs
+          node scripts/build-main43-offline-annotator.mjs
+          node scripts/build-main44-guided-source-review.mjs
+          node scripts/build-main45-real-original-vneck.mjs
+      - name: Rebuild exact original P92 source-linked 163-bone renderer in disposable donor only
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd .m46-p60
+          node scripts/install-photo-cloth-realism-164.mjs ../.native05-donor-541
+          cd ../.m46-p92
+          node scripts/install-native-photo-anatomical-fit-171.mjs ../.native05-donor-541
+          node scripts/install-native-photo-torso-173.mjs ../.native05-donor-541 ../.m46-p172
+          node scripts/install-source-shoulder-seam-174.mjs ../.native05-donor-541
+          node scripts/install-native-original-dress-drape-175.mjs ../.native05-donor-541
+          node scripts/install-mission2-source-dress-motion.mjs ../.native05-donor-541
+          node scripts/install-mission2-actual-photo-contact52.mjs ../.native05-donor-541
+          node scripts/install-mission2-p86-preview.mjs ../.native05-donor-541
+          node scripts/install-mission2-p87-preview.mjs ../.native05-donor-541
+          node scripts/install-mission2-p91-preview.mjs ../.native05-donor-541
+      - name: Authentic photographed V neckline P93/M45 color vs M45 alpha front-only true shader fragment cutout on 163bone scenes
+        run: node scripts/test-main47-real-3d-vneck-fragment-visibility.mjs
+      - name: Assert genuine original PNG screenshots and protected consumer assets unchanged
+        run: |
+          git diff --exit-code 29a86b523abe0a37f9e014742c51afc68624ddf7 HEAD -- public/ supabase/ benchmark/ research/native-3d-05/
+          test -f benchmark/main47-original-vneck-alpha-visibility/${{ matrix.engine }}/M47-real-source-P93-M45-alpha-visibility-3D-receipt.json
+      - name: Authentic original-photo source mask front-only shader alpha opening vs unchanged original garment NO APPROVAL
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: main1054-m47-licensed-source-vneck-fragment-alpha-163bone-${{ matrix.engine }}-UNAPPROVED-HOLD
+          path: benchmark/main47-original-vneck-alpha-visibility/${{ matrix.engine }}/
+          retention-days: 14
+          if-no-files-found: ignore
