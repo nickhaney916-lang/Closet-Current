@@ -12,13 +12,15 @@ await mkdir(out,{recursive:true});
 const jpeg='data:image/jpeg;base64,'+(await sharp({create:{
  width:320,height:320,channels:3,background:{r:60,g:110,b:180}
 }}).jpeg().toBuffer()).toString('base64');
-const root=resolve('public'),types={'.html':'text/html','.js':'text/javascript',
+const root=resolve('public'),research=resolve('research'),types={'.html':'text/html','.js':'text/javascript',
  '.mjs':'text/javascript','.css':'text/css','.json':'application/json','.svg':'image/svg+xml'};
 const server=createServer(async(req,res)=>{
  try{
   const pathname=decodeURIComponent(new URL(req.url,'http://localhost').pathname);
-  const full=resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
-  if(!full.startsWith(root+'/')||pathname.includes('\\'))throw Error('Invalid path');
+  const full=pathname.startsWith('/research/')?resolve('.',pathname.slice(1)):
+   resolve(root,'.'+(pathname==='/'?'/index.html':pathname));
+  if((!full.startsWith(root+'/')&&!full.startsWith(research+'/'))||
+     pathname.includes('\\'))throw Error('Invalid path');
   const bytes=await readFile(full);
   res.writeHead(200,{'content-type':types[extname(full)]||'application/octet-stream',
    'cache-control':'no-store'});res.end(bytes);
