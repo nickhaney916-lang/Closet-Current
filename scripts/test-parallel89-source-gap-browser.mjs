@@ -44,7 +44,7 @@ const server=createServer(async(req,res)=>{
 await new Promise(ok=>server.listen(0,'127.0.0.1',ok));
 const origin='http://127.0.0.1:'+server.address().port;
 let browser;
-const receipts=[],shoulderContrasts=[],errors=[],offsite=[];
+const receipts=[],shoulderContrasts=[],researchSelections=[],errors=[],offsite=[];
 try{
  browser=await ({chromium,webkit})[engine].launch({headless:true,...(
   engine==='chromium'?{args:['--use-gl=angle','--use-angle=swiftshader',
@@ -53,7 +53,7 @@ try{
   hasTouch:true,isMobile:true,serviceWorkers:'block'});
  for(const avatar of ['female','male']){
   const byVariant={};
-  for(const variant of ['baseline','trial']){
+  for(const variant of ['baseline','trial','low-drop','low-drop-outward']){
   const page=await ctx.newPage();
   page.on('pageerror',e=>errors.push(String(e.message).slice(0,180)));
   page.on('crash',()=>errors.push('original-webgl-browser-crashed'));
@@ -63,7 +63,7 @@ try{
     return route.continue();
    offsite.push('unauthorized-network-request');return route.abort();
   });
-  await page.goto(origin+'/research/dress-mobile-01/index.html?parallel84Poses=audit&parallel84Denim=gated&parallel89Gap=audit&parallel84Shape='+variant,
+  await page.goto(origin+'/research/dress-mobile-01/index.html?parallel84Poses=audit&parallel84Denim=gated&parallel89Gap=audit&parallel84Shape='+(variant==='baseline'?'baseline':'trial')+'&parallel89ShapeVariant='+variant,
    {waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.ccDress12Diagnostics?.()?.phase==='ready',
    null,{timeout:180000});
@@ -129,21 +129,48 @@ try{
    researchShoulderStatus:shapeProof.status});
   await page.close();
   }
-  const contrast=compareOriginalSourceShoulderGapAB89({avatar,
-   baseline:byVariant.baseline.gap,trial:byVariant.trial.gap,
-   baselineShoulder:byVariant.baseline.shoulder,
-   trialShoulder:byVariant.trial.shoulder});
-  assert.equal(contrast.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED',
-   'genuine original source shoulder contrast rejected: '+contrast.reason);
-  assert.equal(contrast.consumer3DAuthorized,false);
-  assert.equal(contrast.sourcePhoto2DFallbackRequired,true);
-  shoulderContrasts.push(contrast);
+  const candidates=['trial','low-drop','low-drop-outward'];
+  for(const variant of candidates){
+   const contrast=compareOriginalSourceShoulderGapAB89({avatar,
+    baseline:byVariant.baseline.gap,trial:byVariant[variant].gap,
+    baselineShoulder:byVariant.baseline.shoulder,
+    trialShoulder:byVariant[variant].shoulder});
+   assert.equal(contrast.status,'ACTUAL_ORIGINAL_PHOTO_SHOULDER_AB_MEASURED_NOT_CLEARED',
+    'genuine original source shoulder contrast rejected: '+variant+':'+contrast.reason);
+   assert.equal(contrast.consumer3DAuthorized,false);
+   assert.equal(contrast.sourcePhoto2DFallbackRequired,true);
+   assert.ok(['baseline','trial'].includes(contrast.researchOnlyPreferredVariant));
+   shoulderContrasts.push({...contrast,researchShapeVariant:variant});
+  }
+  const passing=shoulderContrasts.filter(x=>x.avatar===avatar&&
+    x.researchCandidateRetainedForStudy===true);
+  // Diagnostic ordering by BEST WORST-POSE shirt/body unsigned gap only.
+  // Never deploy/approve the candidate. Baseline remains the 2D fallback.
+  const ranked=passing.map(row=>({
+   variant:row.researchShapeVariant,
+   closestShirtBodyMeters:Math.min(...byVariant[row.researchShapeVariant].gap
+    .sourcePoseMeasurements.map(p=>p.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters))
+  })).sort((a,b)=>b.closestShirtBodyMeters-a.closestShirtBodyMeters);
+  const baselineClosest=Math.min(...byVariant.baseline.gap.sourcePoseMeasurements
+   .map(p=>p.distances.shirtBody.unsignedMinimumSurfaceDistanceMeters));
+  const selected=ranked.find(x=>x.closestShirtBodyMeters>baselineClosest+.00005);
+  researchSelections.push({
+   avatar,
+   originalBaselineClosestShirtBodyMeters:baselineClosest,
+   referenceResearchOnlyVariant:selected?.variant??'baseline',
+   referenceResearchOnlyClosestShirtBodyMeters:selected?.closestShirtBodyMeters??baselineClosest,
+   signedExteriorClearanceCertified:false,
+   continuousClothCertified:false,
+   humanOriginalPhotoRealismApproved:false,
+   sourcePhoto2DFallbackRequired:true,
+   consumer3DAuthorized:false,releaseAuthorized:false,familyAlpha:'HOLD'
+  });
  }
  assert.deepEqual(errors,[]);
  assert.deepEqual(offsite,[]);
- await writeFile(join(out,'receipt.json'),JSON.stringify({schema:'P89-authentic-licensed-shirt-denim-actual-163bone-static-unsigned-gap-browser/v2',
+ await writeFile(join(out,'receipt.json'),JSON.stringify({schema:'P89-authentic-licensed-shirt-denim-actual-163bone-static-unsigned-gap-browser/v3',
   engine,sourcePhotoOriginalVerified:true,
-  sourceSHA256:SHA,scenes:receipts,shoulderContrasts,
+  sourceSHA256:SHA,scenes:receipts,shoulderContrasts,researchSelections,
   comparativeOriginalSourceShoulderFitIsResearchOnly:true,
   originalPhoto2DFallbackRequired:true,
   signedClearanceCertified:false,realWorldGarmentFitApproved:false,
@@ -162,7 +189,11 @@ try{
     improvedAtLeastHalfMm:x.changedGapImprovedAtLeastHalfMmCount,
     worsenedAtLeastQuarterMm:x.changedGapWorsenedAtLeastQuarterMmCount,
     stillNear2mm:x.candidateStillNear2mmPairPoseCount,
-    newCrossings:x.someStaticCrossingCountWorsened})),
+    newCrossings:x.someStaticCrossingCountWorsened,
+    researchVariant:x.researchShapeVariant,
+    researchOnlyPreferredVariant:x.researchOnlyPreferredVariant,
+    gapWorseningVeto:x.researchSourceGapVetoReason})),
+   researchSelections,
    consumer3DAuthorized:false,releaseAuthorized:false,familyAlpha:'HOLD'}));
 }finally{
  await browser?.close();
