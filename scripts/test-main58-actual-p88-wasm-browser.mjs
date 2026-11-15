@@ -102,7 +102,7 @@ try{
  const page=await context.newPage();
  page.on('pageerror',e=>issues.push('pageerror-'+String(e.message).slice(0,120)));
  page.on('crash',()=>issues.push('browser-crash'));
- page.on('response',res=>{
+ context.on('response',res=>{
   const u=new URL(res.url());
   if(u.hostname==='cdn.jsdelivr.net'||u.hostname==='huggingface.co'||u.hostname.endsWith('.hf.co')){
    modelResponses.push({host:u.hostname,status:res.status()});
