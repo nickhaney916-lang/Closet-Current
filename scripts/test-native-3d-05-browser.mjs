@@ -471,6 +471,7 @@ try{
   }
   if(native102&&width===390){
    const sourceLifecycleOut102='benchmark/native-3d-102'+(engine90==='webkit'?'-webkit':'');
+   const sourceLifecycleReceipt102=engine90==='webkit'?'benchmark/native-3d-102-webkit/acceptance.json':'benchmark/native-3d-102/acceptance.json';
    // Genuine photo-backed original 163-bone donor MUST be visible before the
    // simulated mobile tab-hidden lifecycle event. Browser API lifecycle is
    // emulated through Chromium/WebKit DOM events; NOT a physical phone test.
@@ -527,7 +528,7 @@ try{
    const freezeMeta=await sharp(freezePng).metadata();
    assert.equal(freezeMeta.width,390);
    await writeFile(sourceLifecycleOut102+'/freeze-source-revoked-390.png',freezePng);
-   await writeFile(sourceLifecycleOut102+'/acceptance.json',
+   await writeFile(sourceLifecycleReceipt102,
     JSON.stringify({
      priority:'NATIVE-MOBILE-VISIBILITY-SOURCE-REVOKE-102',
      browser:engine90,simulatedBrowserVisibility:true,
