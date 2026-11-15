@@ -1173,6 +1173,10 @@ test('P88 owner source lease independently hashes original JPEG before atomic pr
  assert.equal(writes[0].value.ownerSourceReview88.ownerReviewed,true);
  assert.equal(writes[0].value.ownerSourceReview88.originalPhotoSha256,
   item.reconciliation70.sourceSha256);
+ assert.equal(writes[0].value.ownerSourceReview88.derivedImageSha256,
+  createHash('sha256').update(Buffer.from(item.image.split(',')[1],'base64')).digest('hex'));
+ assert.equal(writes[0].value.ownerSourceReview88.derivedImageBytesVerified,true);
+ assert.equal(writes[0].value.ownerSourceReview88.rawMaskPixelsIndependentlyVerified,false);
  assert.equal(writes[0].value.ownerSourceReview88.singleGarmentVerified,false);
  assert.equal(writes[0].value.ownerSourceReview88.threeDReady,false);
  assert.equal(writes[1].value.batch.length,0);
@@ -1187,6 +1191,21 @@ test('P88 private source save rejects an absent or tampered owner review receipt
  await assert.rejects(c.saveSourceBoundPiece88(reviewed,[],lease),
   /P88_REVOKED_SOURCE_SAVE/);
  assert.equal(writes.length,0,'unreviewed or forged provenance never enters private DB');
+});
+test('P88 forged saved-crop digest cannot be admitted as approved physical source',async()=>{
+ const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),true);
+ const value=reviewedForSave88(c,structuredClone(item),lease);
+ value.ownerSourceReview88.derivedImageSha256='f'.repeat(64);
+ await assert.rejects(c.saveSourceBoundPiece88(value,[],lease),/P88_REVOKED_SOURCE_SAVE/);
+ assert.equal(writes.length,0);
+});
+test('P88 malformed crop cannot be cryptographically bound despite valid original photo',async()=>{
+ const {c,item,writes}=sourceSaveHarness88();
+ item.image='data:image/jpeg;base64,Tk9UIEpQRUc=';
+ const lease=c.sourceSaveLease88(item);
+ assert.equal(await c.sourceSavePhotoVerified88(lease),false);
+ assert.equal(writes.length,0);
 });
 test('P88 same-ID owner replacement during JPEG hash refuses original session save',async()=>{
  const {c,item,writes}=sourceSaveHarness88(),lease=c.sourceSaveLease88(item);

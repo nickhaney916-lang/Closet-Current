@@ -335,6 +335,26 @@ function sourceSaveLeaseLive88(lease){
   JSON.stringify(item.segmentHint??null)===lease.hintRevision&&
   lease.groupRevision!==''&&sourceGroupRevision88(item)===lease.groupRevision);
 }
+// Source-derived display bytes are distinct from raw model mask pixels.
+// Hash the exact JPEG/PNG crop that the owner reviewed and will save. A
+// successful digest proves BYTE identity only, not one physical garment.
+async function ownerCropPhotoDigest88(image){
+ if(typeof image!=='string'||image.length>12000000||!crypto?.subtle||
+  !/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/]+={0,2}$/.test(image))return null;
+ try{
+  const jpeg=image.startsWith('data:image/jpeg;');
+  const raw=atob(image.slice(image.indexOf(',')+1));
+  const bytes=new Uint8Array(raw.length);
+  for(let k=0;k<raw.length;k++)bytes[k]=raw.charCodeAt(k);
+  if(jpeg){
+   if(bytes.length<4||bytes[0]!==255||bytes[1]!==216||
+    bytes[bytes.length-2]!==255||bytes[bytes.length-1]!==217)return null;
+  }else if(bytes.length<8||[137,80,78,71,13,10,26,10].some((n,k)=>bytes[k]!==n))
+   return null;
+  const digest=await crypto.subtle.digest('SHA-256',bytes);
+  return [...new Uint8Array(digest)].map(n=>n.toString(16).padStart(2,'0')).join('');
+ }catch{return null;}
+}
 async function sourceSavePhotoVerified88(lease){
  if(!sourceSaveLeaseLive88(lease)||typeof lease.original!=='string'||
   lease.original.length>12000000||
@@ -346,7 +366,11 @@ async function sourceSavePhotoVerified88(lease){
   for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
   const hash=await crypto.subtle.digest('SHA-256',bytes);
   const actual=[...new Uint8Array(hash)].map(x=>x.toString(16).padStart(2,'0')).join('');
-  return actual===lease.source&&sourceSaveLeaseLive88(lease);
+  if(actual!==lease.source||!sourceSaveLeaseLive88(lease))return false;
+  const cropDigest=await ownerCropPhotoDigest88(lease.image);
+  if(!cropDigest||!sourceSaveLeaseLive88(lease))return false;
+  lease.derivedImageSha256=cropDigest;
+  return true;
  }catch{return false;}
 }
 // A personally confirmed source/crop/physical-unit decision is not a blind
@@ -356,6 +380,10 @@ function reviewedSourceReceipt88(value,lease){
  const companion=value.shoePair?.companion||value.combinedFragments70?.companion;
  return {schema:'p88-owner-source-review/v1',ownerId:lease.ownerId,
   itemId:value.id,sourceId:lease.sourceId,originalPhotoSha256:lease.source,
+  // Independently rehashed SAVED crop bytes, NOT the original semantic mask.
+  derivedImageSha256:lease.derivedImageSha256||null,
+  derivedImageBytesVerified:Boolean(lease.derivedImageSha256),
+  rawMaskPixelsIndependentlyVerified:false,
   selectedMaskSha256:lease.mask,
   companionMaskSha256:companion?.reconciliation70?.maskSha256||null,
   cropBounds:structuredClone(value.cropBounds??null),
@@ -372,6 +400,10 @@ function reviewedSourceReceiptValid88(value,lease){
   r.ownerReviewed===true&&r.sourcePhotoOriginal===true&&
   r.singleGarmentVerified===false&&r.threeDReady===false&&
   r.independentPhysicalItemVerified===false&&
+  r.derivedImageBytesVerified===true&&
+  r.rawMaskPixelsIndependentlyVerified===false&&
+  /^[a-f0-9]{64}$/.test(r.derivedImageSha256||'')&&
+  r.derivedImageSha256===lease.derivedImageSha256&&
   r.ownerId===lease.ownerId&&r.itemId===value.id&&r.sourceId===lease.sourceId&&
   r.originalPhotoSha256===lease.source&&r.selectedMaskSha256===lease.mask&&
   r.companionMaskSha256===(companion?.reconciliation70?.maskSha256||null)&&
