@@ -42,28 +42,6 @@ function persistDraft(){if(!db)return;const snapshot=structuredClone(batch);retu
 function readDraft(){return new Promise((resolve,reject)=>{const r=db.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result?.batch||[]);r.onerror=()=>reject(r.error);});}
 // P88: ordinary one-photo review must not save into a replacement account
 // while cloud.beforeWrite waits. Freeze source bytes, draft identity and IDB.
-function reviewedSaveLease88(item){
- const user=window.closetAuth?.user;
- return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
-  image:item?.image,original:item?.originalPhoto?.image,
-  recognition:item?.recognitionPhoto?.image,sourceId:item?.outfitSourceId,
-  maskRevision:JSON.stringify(item?.segmentHint??null),
-  cropRevision:JSON.stringify(item?.cropBounds??null)};
-}
-function reviewedSaveLeaseLive88(lease){
- try{
-  const user=window.closetAuth?.user,item=lease?.item;
-  return Boolean(user&&lease?.user===user&&lease.ownerId===user.id&&
-   lease.ownerDb&&db===lease.ownerDb&&
-   db.name==='closet-current-user-'+lease.ownerId&&
-   (lease.wasDraft?batch.includes(item):items.includes(item))&&
-   item.image===lease.image&&item.originalPhoto?.image===lease.original&&
-   item.recognitionPhoto?.image===lease.recognition&&
-   item.outfitSourceId===lease.sourceId&&
-   JSON.stringify(item.segmentHint??null)===lease.maskRevision&&
-   JSON.stringify(item.cropBounds??null)===lease.cropRevision);
- }catch{return false;}
-}
 function savePiece(value,nextBatch,lease){
  if(!reviewedSaveLeaseLive88(lease))
   return Promise.reject(Error('P88_STALE_REVIEWED_OWNER'));
@@ -87,6 +65,31 @@ function savePiece(value,nextBatch,lease){
  });
 }
 function node(tag,text,className){const n=document.createElement(tag);if(text)n.textContent=text;if(className)n.className=className;return n;}
+// Keep exact-owner review helpers in the actual native Adjust source segment
+// also exercised by isolated P82/P846 Chromium and WebKit harnesses.
+function reviewedSaveLease88(item){
+ const user=window.closetAuth?.user;
+ return {item,user,ownerId:user?.id,ownerDb:db,wasDraft:batch.includes(item),
+  image:item?.image,original:item?.originalPhoto?.image,
+  recognition:item?.recognitionPhoto?.image,sourceId:item?.outfitSourceId,
+  maskRevision:JSON.stringify(item?.segmentHint??null),
+  cropRevision:JSON.stringify(item?.cropBounds??null)};
+}
+function reviewedSaveLeaseLive88(lease){
+ try{
+  const user=window.closetAuth?.user,item=lease?.item;
+  return Boolean(user&&lease?.user===user&&lease.ownerId===user.id&&
+   lease.ownerDb&&db===lease.ownerDb&&
+   db.name==='closet-current-user-'+lease.ownerId&&
+   (lease.wasDraft?batch.includes(item):items.includes(item))&&
+   item.image===lease.image&&item.originalPhoto?.image===lease.original&&
+   item.recognitionPhoto?.image===lease.recognition&&
+   item.outfitSourceId===lease.sourceId&&
+   JSON.stringify(item.segmentHint??null)===lease.maskRevision&&
+   JSON.stringify(item.cropBounds??null)===lease.cropRevision);
+ }catch{return false;}
+}
+
 function empty(grid,title,subtitle){const n=node('div',null,'empty');n.append(node('h3',title),node('p',subtitle));grid.append(n);}
 function field(body,title,value,type='input'){const label=node('label',title),input=node(type);input.setAttribute('aria-label',title);if(type==='select'){for(const c of categories){const o=node('option',c);o.value=c;input.append(o);}}input.value=value||'';if(type==='input')input.maxLength=120;if(type==='textarea')input.maxLength=500;label.append(input);body.append(label);return input;}
 function choice(body,title,value,options){const label=node('label',title),select=node('select');select.setAttribute('aria-label',title);for(const option of options)select.append(node('option',option));select.value=options.includes(value)?value:options[0];label.append(select);body.append(label);return select;}
