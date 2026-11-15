@@ -396,6 +396,88 @@ function auditWaistBoneAnchors(){
   'source waist anchor cannot qualify for a consumer app');
  originalBodyPositions();return row;
 }
+/**
+ * True on-screen VISIBILITY of the UNPHOTOGRAPHED provisional neutral rear.
+ * This is a read-only original-source attribution pass, NOT material creation
+ * or a claim that the original photograph had a real backside. In a single
+ * genuine native WebGL frame we temporarily mark only material-index 1
+ * (the 288 strictly unobserved original skirt triangles) flat neon green.
+ * We read aggregate tagged native framebuffer pixels against the matching
+ * original scene, restore the EXACT original material and render again.
+ *
+ * The RGBA frame, anatomical source pixels and owner images are NEVER
+ * persisted/exported. It only reports counts, never validates a 3D fit.
+ */
+function auditOnlyUnobservedRearRenderedPixels(){
+ check(phase==='ready'&&candidate?.mesh?.isSkinnedMesh&&
+  !!source&&source.status==='SOURCE_SKIRT_ALPHA_VERIFIED_NOT_HUMAN_APPROVED'&&
+  candidate.mesh.skeleton?.bones.length===163&&[0,90,180].includes(angle),
+  'real-original-source-native-genuine-skirt-audit-required');
+ const mesh=candidate.mesh,original=mesh.material,geometry=mesh.geometry;
+ check(Array.isArray(original)&&original.length===2&&
+  original[0]?.map?.isDataTexture===true&&
+  original[1]?.isMeshStandardMaterial===true&&
+  geometry.index?.count===1728&&geometry.groups?.length===288,
+  'source-UV-original-photo-front-and-neutral-back-groups-required');
+ const front=geometry.groups.filter(g=>g.materialIndex===0),
+  back=geometry.groups.filter(g=>g.materialIndex===1);
+ check(front.length===144&&back.length===144&&
+  [...front,...back].every(g=>g.count===6),
+  'exact-source-front-versus-unphotographed-rear-triangle-topology-required');
+ const green=new THREE.MeshBasicMaterial({
+  color:0x00ff00,toneMapped:false,side:THREE.DoubleSide,
+  depthTest:true,depthWrite:true
+ });
+ const size=390*690*4,raw=new Uint8Array(size),
+  baseline=new Uint8Array(size),gl=renderer.getContext();
+ let tagged=0,restored=false;
+ const read=out=>{
+  render();
+  gl.readPixels(0,0,390,690,gl.RGBA,gl.UNSIGNED_BYTE,out);
+  check(gl.getError()===gl.NO_ERROR,
+   'native-readonly-source-attribution-framebuffer-not-readable');
+ };
+ try{
+  read(baseline);
+  mesh.material=[original[0],green];
+  read(raw);
+  for(let i=0;i<size;i+=4){
+   if(raw[i]<45&&raw[i+1]>220&&raw[i+2]<45&&
+    Math.abs(raw[i]-baseline[i])+
+    Math.abs(raw[i+1]-baseline[i+1])+
+    Math.abs(raw[i+2]-baseline[i+2])>150)tagged++;
+  }
+ }finally{
+  mesh.material=original;green.dispose();render();restored=true;
+ }
+ check(mesh.material===original&&
+   mesh.material[0].map?.isDataTexture===true&&
+   mesh.material[1].isMeshStandardMaterial===true,
+  'exact-original-skirt-photographic-and-neutral-material-not-restored');
+ const copied=Object.freeze({
+  schema:'P89-actual-original-licensed-photo-visible-provisional-neutral-rear/v1',
+  status:'ORIGINAL_PUBLIC_SKIRT_UNPHOTOGRAPHED_REAR_RENDERED_NOT_REAL_PHOTO',
+  avatar:current,pose,viewAngle:angle,
+  sourcePhotoId:'commons-0043',
+  actual163BoneSourceRig:true,
+  sourceFrontPhotographedSurfaceTriangleCount:288,
+  sourceUnphotographedRearTriangleCount:288,
+  unphotographedRearMarkerPixels:tagged,
+  unphotographedRearFractionOfFullWebGLViewport:
+   Math.round(tagged/(390*690)*1e5)/1e5,
+  originalPhotoFrontUVAndRGBUnchanged:true,
+  originalSkirtSourcePhotoAndAnatomicalGeometryUnchanged:true,
+  temporaryAttributionMaterialDisposedAndRestored:restored,
+  originalRearPhotoObserved:false,
+  inferredBackDoesNotBecomePhotographed:true,
+  originalMaskOwnerApproved:false,
+  dynamicClothAndCollisionCertified:false,
+  sourcePhoto2DFallbackRequired:true,
+  humanAppearanceAccepted:false,
+  consumer3DAdmitted:false,releaseAuthorized:false,familyAlpha:'HOLD'
+ });
+ return copied;
+}
 function setPose(mode){const out=inspectPose(mode);render();return out;}
 function setView(deg){check([0,90,180].includes(deg),'only research original photo views');angle=deg;render();return getState();}
 function toggleSkirt(show){check(phase==='ready','actual photographed skirt not loaded');
@@ -420,7 +502,7 @@ function getState(){return Object.freeze({
 });}
 function close(){if(rigid45Preview)showOnlySourceRigidRegistration45(false,{draw:false});candidate?.dispose();candidate=null;scene.remove(root);root=null;
  renderer.dispose();renderer.forceContextLoss();phase='disposed';return true;}
-window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,close});
+window.nativeP89Skirt=Object.freeze({getState,load,setPose,setView,toggleSkirt,trialNeutralRear,trialMeasuredAnatomyFit,trialRigidRegistration,auditWaistBoneAnchors,showOnlySourceRigidRegistration45,auditOnlyUnobservedRearRenderedPixels,close});
 try{await verifySource();await load('female');}catch(e){
  phase='error';const msg=String(e?.message||e).slice(0,250);
  errors.push(msg);status.textContent='Original-photo 2D fallback: '+msg+' · HOLD';
