@@ -391,6 +391,10 @@ test('P90 M22 source-honest original-photo fallback when WebGL2 is unavailable a
  assert.ok(source.includes("unsupported.modelReady,false"));
  assert.ok(source.includes("unsupported.bones,0"));
  assert.ok(source.includes("await page.locator('#outfit3D01Photos img').count(),4"));
+ assert.ok(source.includes("window.native3D05Bridge?.state()?.active===true"));
+ assert.ok(source.includes("P90_M22_FALLBACK_DIAGNOSTIC"));
+ assert.ok(source.includes("document.querySelectorAll('#outfit3D01Photos img').length===4"));
+ assert.ok(source.includes("timeout:30000"));
  assert.ok(source.includes("crypto.subtle.digest('SHA-256',bytes)"));
  assert.ok(source.includes("photoSHA,expectedSHA"));
  assert.ok(source.includes("stillOwner,savedBefore"));
