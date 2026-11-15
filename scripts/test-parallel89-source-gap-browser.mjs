@@ -113,6 +113,20 @@ try{
   assert.equal(report.originalShirtSHA256,SHA.shirt);
   assert.equal(report.originalDenimSHA256,SHA.denim);
   assert.equal(report.originalSourcePoses,3);
+  assert.equal(report.originalBodyTopologyDoesNotCertifySignedClothClearance,true);
+  const topo=report.originalAnatomicalBodyIndexTopology;
+  assert.equal(topo?.schema,'P89-original-anatomical-body-index-topology/v1');
+  assert.ok(['ORIGINAL_INDEX_TOPOLOGY_NOT_A_CERTIFIED_CLOSED_ORIENTED_VOLUME',
+   'ORIGINAL_INDEX_EDGE_TOPOLOGY_CLOSED_BUT_INSIDE_OUTSIDE_NOT_PROVED'].includes(topo.status),
+   'original full-body topology was not genuinely classified: '+topo.reason);
+  assert.ok(topo.originalWorldSpaceSourceVertices>100);
+  assert.ok(topo.originalSourceTriangleFaces>100);
+  assert.ok(topo.uniqueIndexEdges>100);
+  assert.equal(topo.consumer3DAuthorized,false);
+  assert.equal(topo.signedOutsideBodyCertified,false);
+  assert.equal(topo.meshPhysicalVolumeCertified,false);
+  assert.equal(topo.staticUnsignedGapDoesNotProveOutsideBody,true);
+  assert.equal(topo.familyAlpha,'HOLD');
   assert.equal(report.sourcePoseMeasurements.length,3);
   assert.equal(report.sourcePhoto2DFallbackRequired,true);
   assert.equal(report.independentSignedDistanceOrBodyContainmentVerified,false);
@@ -339,6 +353,14 @@ try{
    poses:x.sourcePoseMeasurements.map(y=>({pose:y.pose,
     surfaceMeters:Object.fromEntries(Object.entries(y.distances).map(([k,v])=>
      [k,v.unsignedMinimumSurfaceDistanceMeters]))}))})),
+   actualAnatomyTopology:receipts.filter(x=>x.researchShoulderMode==='baseline').map(x=>({
+    avatar:x.avatar,
+    indexTopologyStatus:x.originalAnatomicalBodyIndexTopology.status,
+    originalWorldSpaceTriangleFaces:x.originalAnatomicalBodyIndexTopology.originalSourceTriangleFaces,
+    bodyBoundaryIndexEdges:x.originalAnatomicalBodyIndexTopology.boundaryIndexEdges,
+    nonmanifoldIndexEdges:x.originalAnatomicalBodyIndexTopology.nonManifoldIndexEdges,
+    originalClosedVolumeAndOutsideSignedClearanceCertified:false
+   })),
    contrasts:shoulderContrasts.map(x=>({avatar:x.avatar,
     shoulderTrialApplied:x.existingP84ResearchYokeTrialApplied,
     improvedAtLeastHalfMm:x.changedGapImprovedAtLeastHalfMmCount,
