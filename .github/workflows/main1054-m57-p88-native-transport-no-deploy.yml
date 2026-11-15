@@ -31,7 +31,7 @@ jobs:
           git diff --exit-code "$BASE" HEAD -- public/ supabase/ benchmark/ research/mission1-parallel88/ research/parallel89/ research/native-3d-05/
           git diff --name-only "$BASE" HEAD | while IFS= read -r path; do
             case "$path" in
-              research/multi-garment-capture-01/review-ui.mjs|research/master-consolidation-1054/MILESTONE57.md|scripts/test-main57-native-p88-transport-browser.mjs|.github/workflows/main1054-m57-p88-native-transport-no-deploy.yml) ;;
+              research/multi-garment-capture-01/review-ui.mjs|research/master-consolidation-1054/MILESTONE57.md|scripts/test-main57-native-p88-transport-browser.mjs|.github/workflows/main1054-m57-p88-native-transport-no-deploy.yml|tests/detector-manual-recovery-65.test.mjs|tests/invalid-selection-race-71.test.mjs|tests/review-source-epoch-34.test.mjs) ;;
               *) echo "MAIN57 unexpected changed path: $path"; exit 1;;
             esac
           done
